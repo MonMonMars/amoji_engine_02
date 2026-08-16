@@ -18,6 +18,13 @@ export {
 } from "./voice/voiceChatOrchestrator.js";
 
 export {
+  ROBOT_EVENTS,
+  createVoiceRobotBridge,
+  extractRememberedName,
+  planRobotSteps,
+} from "./voice/voiceRobotBridge.js";
+
+export {
   SESSION_ARCHIVE_KIND,
   SESSION_ARCHIVE_SCHEMA_VERSION,
   applySessionArchive,

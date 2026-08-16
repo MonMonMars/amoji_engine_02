@@ -24,6 +24,7 @@
     "test:watch": "vitest",
     "demo": "tsx scripts/demo.ts",
     "demo:dry": "tsx scripts/demo.ts --dry-run",
+    "demo:e2e": "node scripts/voice-chat-e2e-demo.mjs",
     "lint": "eslint src"
   },
   "engines": {
