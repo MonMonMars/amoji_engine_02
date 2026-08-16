@@ -1,0 +1,40 @@
+{
+  "name": "@amoji/engine",
+  "version": "0.1.0",
+  "description": "Cantonese realtime voice chat + Sakura Face Live orchestration stack",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc --project tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint src"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "keywords": [
+    "cantonese",
+    "realtime",
+    "voice",
+    "face-live",
+    "sakura",
+    "vtuber"
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "@types/ws": "^8.5.13",
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.5",
+    "ws": "^8.18.0"
+  }
+}
