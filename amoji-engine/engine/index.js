@@ -16,3 +16,17 @@ export {
   VoiceChatOrchestrator,
   createVoiceChatOrchestrator,
 } from "./voice/voiceChatOrchestrator.js";
+
+export {
+  SESSION_ARCHIVE_KIND,
+  SESSION_ARCHIVE_SCHEMA_VERSION,
+  applySessionArchive,
+  buildSessionArchive,
+  createLabChat,
+  createLabSessionFacade,
+  createTickRecorder,
+  downloadSessionArchiveJson,
+  exportSessionArchive,
+  importSessionArchive,
+  parseSessionArchive,
+} from "./lab/sessionArchive.js";
