@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Amoji Realtime Voice Lab</title>
+    <style>
+      :root {
+        --bg: #1a1410;
+        --panel: #2a211c;
+        --ink: #f3e8d8;
+        --muted: #b9a894;
+        --accent: #e07a3d;
+        --accent-on: #3ecf8e;
+        --line: #4a3c32;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: "Segoe UI", "PingFang HK", "Noto Sans TC", sans-serif;
+        color: var(--ink);
+        background:
+          radial-gradient(ellipse at 20% 0%, #3a2a20 0%, transparent 50%),
+          radial-gradient(ellipse at 80% 100%, #2a1820 0%, transparent 45%),
+          var(--bg);
+        padding: 2rem;
+      }
+      h1 {
+        font-weight: 650;
+        letter-spacing: 0.02em;
+        margin: 0 0 0.35rem;
+      }
+      p.lead {
+        color: var(--muted);
+        margin: 0 0 1.5rem;
+        max-width: 40rem;
+      }
+      .row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+      }
+      button {
+        border: 1px solid var(--line);
+        background: var(--panel);
+        color: var(--ink);
+        border-radius: 10px;
+        padding: 0.7rem 1.1rem;
+        font-size: 0.95rem;
+        cursor: pointer;
+      }
+      button:hover {
+        border-color: var(--accent);
+      }
+      button[aria-pressed="true"] {
+        background: color-mix(in srgb, var(--accent-on) 22%, var(--panel));
+        border-color: var(--accent-on);
+        color: #dff7ea;
+      }
+      #status {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 0.85rem;
+        color: var(--muted);
+        white-space: pre-wrap;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 1rem;
+        background: color-mix(in srgb, var(--panel) 80%, black);
+        min-height: 8rem;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Realtime Voice Lab</h1>
+    <p class="lead">
+      Prototype harness for Cantonese realtime voice + Sakura Face Live.
+      Toggle <strong>Always-on</strong> to run energy-VAD end-of-utterance
+      listen loops (<code>createAlwaysOnListen</code>).
+    </p>
+
+    <div class="row">
+      <button type="button" id="btn-connect">Connect (stub)</button>
+      <button
+        type="button"
+        id="btn-always-on"
+        aria-pressed="false"
+        title="Always-on listen with VAD end-of-utterance"
+      >
+        Always-on: Off
+      </button>
+      <button type="button" id="btn-push-to-talk">Push-to-talk (stub)</button>
+    </div>
+
+    <div id="status">idle — load this page via a local static server that can import ES modules from ../amoji-engine/engine/</div>
+
+    <script type="module">
+      import {
+        createAlwaysOnListen,
+        frameEnergy,
+      } from "../amoji-engine/engine/index.js";
+
+      const statusEl = document.getElementById("status");
+      const alwaysOnBtn = document.getElementById("btn-always-on");
+      const log = (line) => {
+        statusEl.textContent = `${new Date().toISOString().slice(11, 19)} ${line}\n${statusEl.textContent}`
+          .split("\n")
+          .slice(0, 40)
+          .join("\n");
+      };
+
+      /** Lab stub host — replace with Realtime + mic capture in a full app. */
+      const labHost = {
+        listening: false,
+        talking: false,
+        async startListening() {
+          this.listening = true;
+          this.talking = false;
+          log("startListening");
+        },
+        async stopListeningAndTalk(extra) {
+          this.listening = false;
+          this.talking = true;
+          log(`stopListeningAndTalk ${JSON.stringify(extra ?? {})}`);
+          await new Promise((r) => setTimeout(r, 400));
+          this.talking = false;
+        },
+      };
+
+      let unsubscribeMic = null;
+      let mediaStream = null;
+      let audioCtx = null;
+
+      async function openMic() {
+        if (unsubscribeMic) return;
+        mediaStream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            channelCount: 1,
+          },
+        });
+        audioCtx = new AudioContext({ sampleRate: 24000 });
+        const source = audioCtx.createMediaStreamSource(mediaStream);
+        const processor = audioCtx.createScriptProcessor(1024, 1, 1);
+        const listeners = new Set();
+        processor.onaudioprocess = (ev) => {
+          const input = ev.inputBuffer.getChannelData(0);
+          const pcm = new Float32Array(input);
+          for (const cb of listeners) cb(pcm);
+        };
+        source.connect(processor);
+        processor.connect(audioCtx.destination);
+        unsubscribeMic = () => {
+          processor.disconnect();
+          source.disconnect();
+          listeners.clear();
+        };
+        return {
+          onFrame(cb) {
+            listeners.add(cb);
+            return () => listeners.delete(cb);
+          },
+        };
+      }
+
+      let controller = null;
+
+      alwaysOnBtn.addEventListener("click", async () => {
+        const on = alwaysOnBtn.getAttribute("aria-pressed") !== "true";
+        if (on) {
+          try {
+            const mic = await openMic();
+            controller = createAlwaysOnListen({
+              mic,
+              startListening: () => labHost.startListening(),
+              stopListeningAndTalk: (extra) =>
+                labHost.stopListeningAndTalk(extra),
+              getTurnExtra: () => ({
+                source: "realtime-voice-lab",
+                energyHint: "vad",
+              }),
+              energyThreshold: 0.025,
+              minSpeechMs: 150,
+              trailingSilenceMs: 550,
+              sampleRateHz: 24000,
+              onStateChange: (state, prev) =>
+                log(`vad ${prev} → ${state}`),
+              onUtteranceEnded: (info) =>
+                log(`utterance ended speechMs=${info.speechMs | 0}`),
+              onError: (err) => log(`error ${err?.message ?? err}`),
+            });
+            await controller.start();
+            alwaysOnBtn.setAttribute("aria-pressed", "true");
+            alwaysOnBtn.textContent = "Always-on: On";
+            log("Always-on listen started");
+          } catch (err) {
+            log(`mic failed: ${err?.message ?? err}`);
+          }
+        } else {
+          await controller?.stop();
+          controller = null;
+          unsubscribeMic?.();
+          unsubscribeMic = null;
+          mediaStream?.getTracks().forEach((t) => t.stop());
+          mediaStream = null;
+          await audioCtx?.close();
+          audioCtx = null;
+          alwaysOnBtn.setAttribute("aria-pressed", "false");
+          alwaysOnBtn.textContent = "Always-on: Off";
+          log("Always-on listen stopped");
+        }
+      });
+
+      document.getElementById("btn-connect").addEventListener("click", () => {
+        log(`stub connect — frameEnergy(silence)=${frameEnergy(new Float32Array(32))}`);
+      });
+      document.getElementById("btn-push-to-talk").addEventListener("click", () => {
+        log("push-to-talk stub (manual hold not wired in this prototype)");
+      });
+    </script>
+  </body>
+</html>

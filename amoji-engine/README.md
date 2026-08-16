@@ -117,16 +117,19 @@ Or: `npm run demo -- --mock-face-live`
 - [Architecture](./docs/architecture.md)
 - [Setup guide](./docs/setup.md)
 - [Cantonese Realtime tuning](./docs/cantonese-realtime.md)
+- [Always-on listen (VAD)](./docs/always-on-listen.md)
 
 ## Scripts
 
 | Command | Description |
 | --- | --- |
-| `npm test` | Run Vitest unit tests |
+| `npm test` | Run Vitest unit tests (TS + always-on listen) |
 | `npm run build` | Compile TypeScript to `dist/` |
 | `npm run typecheck` | Type-check without emit |
 | `npm run demo:dry` | Mock Face Live smoke test (no API key) |
 | `npm run demo` | Live session (needs `OPENAI_API_KEY`) |
+
+Prototype lab UI: [`../prototypes/realtime-voice-lab.html`](../prototypes/realtime-voice-lab.html) (Always-on button).
 
 ## License
 
