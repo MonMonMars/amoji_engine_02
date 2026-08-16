@@ -1,8 +1,10 @@
 import {
   buildCantoneseRealtimeSession,
   DEFAULT_REALTIME_MODEL,
+  DEFAULT_SAMPLE_RATE_HZ,
   realtimeAuthHeaders,
   realtimeWebSocketUrl,
+  toRealtimeSessionWire,
 } from "./cantoneseConfig.js";
 import type {
   RealtimeClientEvents,
@@ -31,6 +33,7 @@ export interface RealtimeChatOptions {
   apiKey: string;
   model?: string;
   session?: Partial<RealtimeSessionConfig>;
+  sampleRateHz?: number;
   /** Inject a WebSocket implementation (Node `ws` or browser WebSocket). */
   createWebSocket?: (
     url: string,
@@ -38,10 +41,11 @@ export interface RealtimeChatOptions {
   ) => WebSocketLike;
 }
 
-/** Minimal OpenAI Realtime API client for Cantonese duplex voice chat. */
+/** OpenAI Realtime API client for Cantonese duplex voice chat (GA wire format). */
 export class RealtimeChatClient {
   private readonly apiKey: string;
   private readonly model: string;
+  private readonly sampleRateHz: number;
   private readonly sessionConfig: RealtimeSessionConfig;
   private readonly createWebSocket: RealtimeChatOptions["createWebSocket"];
   private socket: WebSocketLike | null = null;
@@ -54,7 +58,11 @@ export class RealtimeChatClient {
   constructor(options: RealtimeChatOptions) {
     this.apiKey = options.apiKey;
     this.model = options.model ?? DEFAULT_REALTIME_MODEL;
-    this.sessionConfig = buildCantoneseRealtimeSession(options.session);
+    this.sampleRateHz = options.sampleRateHz ?? DEFAULT_SAMPLE_RATE_HZ;
+    this.sessionConfig = buildCantoneseRealtimeSession({
+      model: this.model,
+      ...options.session,
+    });
     this.createWebSocket = options.createWebSocket;
   }
 
@@ -76,6 +84,10 @@ export class RealtimeChatClient {
 
   get currentSessionId(): string | null {
     return this.sessionId;
+  }
+
+  get autoCreateResponse(): boolean {
+    return this.sessionConfig.turnDetection.createResponse !== false;
   }
 
   async connect(): Promise<void> {
@@ -110,11 +122,16 @@ export class RealtimeChatClient {
     });
   }
 
-  /** Commit buffered input audio and request a model response. */
-  commitInputAndRespond(): void {
+  /**
+   * Commit buffered input audio and optionally request a model response.
+   * Skip when server VAD has `create_response: true` (auto).
+   */
+  commitInputAndRespond(forceCreate = false): void {
     if (!this.connected) return;
     this.send({ type: "input_audio_buffer.commit" });
-    this.send({ type: "response.create" });
+    if (forceCreate || !this.autoCreateResponse) {
+      this.send({ type: "response.create" });
+    }
   }
 
   /** Cancel an in-flight assistant response (barge-in). */
@@ -125,11 +142,7 @@ export class RealtimeChatClient {
 
   private attachSocketHandlers(socket: WebSocketLike): void {
     const onMessage = (event: unknown) => {
-      const data =
-        typeof (event as MessageEvent).data === "string"
-          ? (event as MessageEvent).data
-          : String(event);
-      this.handleServerMessage(data);
+      this.handleServerMessage(extractSocketData(event));
     };
 
     const onClose = (event: unknown) => {
@@ -183,12 +196,23 @@ export class RealtimeChatClient {
         if (transcript) this.emit("userTranscript", { text: transcript });
         break;
       }
-      case "response.audio_transcript.delta":
-      case "response.audio_transcript.done": {
-        const transcript = String(message.delta ?? message.transcript ?? "");
-        if (transcript) this.emit("assistantTranscript", { text: transcript });
+      case "response.output_audio_transcript.delta":
+      case "response.audio_transcript.delta": {
+        const transcript = String(message.delta ?? "");
+        if (transcript) {
+          this.emit("assistantTranscript", { text: transcript, final: false });
+        }
         break;
       }
+      case "response.output_audio_transcript.done":
+      case "response.audio_transcript.done": {
+        const transcript = String(message.transcript ?? message.delta ?? "");
+        if (transcript) {
+          this.emit("assistantTranscript", { text: transcript, final: true });
+        }
+        break;
+      }
+      case "response.output_audio.delta":
       case "response.audio.delta": {
         const delta = String(message.delta ?? "");
         if (delta) {
@@ -196,6 +220,11 @@ export class RealtimeChatClient {
         }
         break;
       }
+      case "response.done":
+      case "response.output_audio.done":
+      case "response.audio.done":
+        this.emit("responseDone", undefined);
+        break;
       case "error": {
         const err = message.error as { message?: string } | undefined;
         this.emit("error", {
@@ -211,7 +240,7 @@ export class RealtimeChatClient {
   private sendSessionUpdate(): void {
     this.send({
       type: "session.update",
-      session: this.sessionConfig,
+      session: toRealtimeSessionWire(this.sessionConfig, this.sampleRateHz),
     });
   }
 
@@ -265,7 +294,11 @@ function waitForOpen(socket: WebSocketLike): Promise<void> {
 }
 
 export function int16ToBase64(samples: Int16Array): string {
-  const bytes = new Uint8Array(samples.buffer, samples.byteOffset, samples.byteLength);
+  const bytes = new Uint8Array(
+    samples.buffer,
+    samples.byteOffset,
+    samples.byteLength,
+  );
   if (typeof Buffer !== "undefined") {
     return Buffer.from(bytes).toString("base64");
   }
@@ -288,4 +321,20 @@ export function base64ToInt16(base64: string): Int16Array {
     }
   }
   return new Int16Array(bytes.buffer, bytes.byteOffset, bytes.byteLength / 2);
+}
+
+/** Normalize browser MessageEvent / Node `ws` Buffer payloads to a string. */
+function extractSocketData(event: unknown): string {
+  const data = (event as { data?: unknown })?.data ?? event;
+  if (typeof data === "string") return data;
+  if (data instanceof ArrayBuffer) {
+    return new TextDecoder().decode(data);
+  }
+  if (ArrayBuffer.isView(data)) {
+    return new TextDecoder().decode(data);
+  }
+  if (data && typeof (data as { toString?: unknown }).toString === "function") {
+    return (data as { toString: () => string }).toString();
+  }
+  return String(data);
 }

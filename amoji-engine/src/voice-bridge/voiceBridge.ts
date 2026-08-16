@@ -77,6 +77,11 @@ export class VoiceBridge {
     return pcm16;
   }
 
+  /** Drop queued speaker frames (used on barge-in). */
+  clearSpeakerQueue(): void {
+    this.speakerQueue = [];
+  }
+
   /** Pull the next speaker frame if queued. */
   pullSpeakerFrame(): Int16Array | null {
     return this.speakerQueue.shift() ?? null;

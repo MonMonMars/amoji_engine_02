@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { AmojiOrchestrator } from "./orchestrator.js";
+import { startMockFaceLiveBridge } from "../face-live/mockBridge.js";
 
 type MockWsHandler = (event: unknown) => void;
 
@@ -62,7 +63,7 @@ describe("AmojiOrchestrator", () => {
     expect(phases).toContain("listening");
     expect(orchestrator.realtimeClient.connected).toBe(true);
 
-    orchestrator.stop();
+    await orchestrator.stop();
   });
 
   it("routes mic audio through the voice bridge", async () => {
@@ -76,7 +77,7 @@ describe("AmojiOrchestrator", () => {
     orchestrator.pushMicAudio(new Int16Array(480).fill(100));
 
     expect(orchestrator.bridge.getStats().framesSent).toBeGreaterThan(0);
-    orchestrator.stop();
+    await orchestrator.stop();
   });
 
   it("emits transcripts from realtime events", async () => {
@@ -94,7 +95,7 @@ describe("AmojiOrchestrator", () => {
           transcript: "你好",
         },
         {
-          type: "response.audio_transcript.done",
+          type: "response.output_audio_transcript.done",
           transcript: "你好呀！有咩可以幫你？",
         },
       ]),
@@ -107,6 +108,78 @@ describe("AmojiOrchestrator", () => {
       expect(transcripts.length).toBeGreaterThanOrEqual(1);
     });
 
-    orchestrator.stop();
+    await orchestrator.stop();
+  });
+
+  it("returns to listening after response.done", async () => {
+    const phases: string[] = [];
+    const handlers: { message?: MockWsHandler } = {};
+    const createWebSocket = () => {
+      const socket = {
+        readyState: 0,
+        send: vi.fn(),
+        close: vi.fn(),
+        addEventListener: (type: string, listener: MockWsHandler) => {
+          if (type === "message") handlers.message = listener;
+          if (type === "open") {
+            queueMicrotask(() => {
+              (socket as { readyState: number }).readyState = 1;
+              listener({});
+              handlers.message?.({
+                data: JSON.stringify({
+                  type: "session.created",
+                  session: { id: "sess_done" },
+                }),
+              });
+            });
+          }
+        },
+        removeEventListener: () => {},
+      };
+      return socket;
+    };
+
+    const orchestrator = new AmojiOrchestrator({
+      openAiApiKey: "sk-test",
+      voiceOnly: true,
+      createWebSocket,
+    });
+    orchestrator.on("phase", (p) => phases.push(p));
+    await orchestrator.start();
+
+    handlers.message?.({
+      data: JSON.stringify({
+        type: "response.output_audio.delta",
+        delta: Buffer.from(new Int16Array([1, 2, 3, 4]).buffer).toString(
+          "base64",
+        ),
+      }),
+    });
+    handlers.message?.({
+      data: JSON.stringify({ type: "response.done" }),
+    });
+
+    await vi.waitFor(() => {
+      expect(phases).toContain("speaking");
+      expect(orchestrator.currentPhase).toBe("listening");
+    });
+
+    await orchestrator.stop();
+  });
+
+  it("wires Face Live via mock bridge", async () => {
+    const bridge = await startMockFaceLiveBridge();
+    const orchestrator = new AmojiOrchestrator({
+      openAiApiKey: "sk-test",
+      faceLiveUrl: bridge.url,
+      createWebSocket: createMockWebSocketFactory(),
+    });
+
+    await orchestrator.start();
+    expect(orchestrator.faceLiveDriver.isAuthenticated).toBe(true);
+    expect(orchestrator.faceLiveDriver.expression).toBe("neutral");
+
+    await orchestrator.stop();
+    await bridge.close();
   });
 });

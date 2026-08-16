@@ -20,11 +20,19 @@ type WebSocketLike = {
 };
 
 const WS_OPEN = 1;
+const VTS_API = "VTubeStudioPublicAPI";
+const VTS_VERSION = "1.0";
 
 export interface SakuraFaceLiveOptions {
   url?: string;
   pluginName?: string;
   pluginDeveloper?: string;
+  /** Cached auth token from a previous AuthenticationTokenResponse. */
+  authenticationToken?: string;
+  /** Lip-sync smoothing alpha (0–1). Higher = snappier. */
+  lipSyncAlpha?: number;
+  /** Auth handshake timeout in ms (default 8000). */
+  authTimeoutMs?: number;
   createWebSocket?: (url: string) => WebSocketLike;
 }
 
@@ -34,6 +42,7 @@ export interface FaceLiveDriverEvents {
   authenticated: void;
   state: ConnectionState;
   error: { message: string; cause?: unknown };
+  parametersInjected: FaceLiveParameter[];
 }
 
 export type FaceLiveEventName = keyof FaceLiveDriverEvents;
@@ -44,17 +53,26 @@ export type FaceLiveListener<K extends FaceLiveEventName> = (
 /**
  * WebSocket driver for Sakura Face Live.
  *
- * Speaks a VTube Studio–compatible subset: authentication handshake followed
- * by InjectParameterDataRequest messages for Live2D parameter control.
+ * Speaks a VTube Studio–compatible subset:
+ * 1. AuthenticationTokenRequest (or reuse cached token)
+ * 2. AuthenticationRequest with the token
+ * 3. InjectParameterDataRequest for Live2D control
  */
 export class SakuraFaceLiveDriver {
   private readonly url: string;
   private readonly pluginName: string;
   private readonly pluginDeveloper: string;
+  private readonly lipSyncAlpha: number;
+  private readonly authTimeoutMs: number;
   private readonly createWebSocket: SakuraFaceLiveOptions["createWebSocket"];
   private socket: WebSocketLike | null = null;
   private authenticated = false;
+  private authToken: string | null;
   private currentExpression: SakuraExpression = "neutral";
+  private previousMouthOpen = 0;
+  private requestId = 0;
+  private authResolve: (() => void) | null = null;
+  private authReject: ((error: Error) => void) | null = null;
   private readonly listeners = new Map<
     FaceLiveEventName,
     Set<FaceLiveListener<FaceLiveEventName>>
@@ -64,6 +82,9 @@ export class SakuraFaceLiveDriver {
     this.url = options.url ?? "ws://127.0.0.1:8765";
     this.pluginName = options.pluginName ?? "Amoji Engine";
     this.pluginDeveloper = options.pluginDeveloper ?? "MonMonMars";
+    this.lipSyncAlpha = options.lipSyncAlpha ?? 0.45;
+    this.authTimeoutMs = options.authTimeoutMs ?? 8_000;
+    this.authToken = options.authenticationToken ?? null;
     this.createWebSocket = options.createWebSocket;
   }
 
@@ -91,8 +112,12 @@ export class SakuraFaceLiveDriver {
     return this.currentExpression;
   }
 
+  get authenticationToken(): string | null {
+    return this.authToken;
+  }
+
   async connect(): Promise<void> {
-    if (this.connected) return;
+    if (this.connected && this.authenticated) return;
     this.emitState("connecting");
 
     const socket = this.createWebSocket
@@ -111,6 +136,8 @@ export class SakuraFaceLiveDriver {
     this.socket?.close(1000, "client disconnect");
     this.socket = null;
     this.authenticated = false;
+    this.previousMouthOpen = 0;
+    this.rejectAuth(new Error("Disconnected during authentication"));
     this.emitState("disconnected");
   }
 
@@ -120,9 +147,25 @@ export class SakuraFaceLiveDriver {
     await this.injectParameters(SAKURA_EXPRESSION_PRESETS[expression]);
   }
 
-  /** Drive lip-sync from assistant TTS PCM16 audio. */
-  async driveLipSync(pcm16: Int16Array): Promise<void> {
-    await this.injectParameters(lipSyncParameters(pcm16));
+  /** Drive lip-sync from assistant TTS PCM16 audio with smoothing. */
+  async driveLipSync(pcm16: Int16Array): Promise<FaceLiveParameter[]> {
+    const parameters = lipSyncParameters(pcm16, {
+      previousMouthOpen: this.previousMouthOpen,
+      alpha: this.lipSyncAlpha,
+    });
+    const mouth = parameters.find((p) => p.id === "ParamMouthOpenY");
+    if (mouth) this.previousMouthOpen = mouth.value;
+    await this.injectParameters(parameters);
+    return parameters;
+  }
+
+  /** Reset mouth to closed (call when assistant speech ends). */
+  async resetLipSync(): Promise<void> {
+    this.previousMouthOpen = 0;
+    await this.injectParameters([
+      { id: "ParamMouthOpenY", value: 0 },
+      { id: "ParamMouthSmile", value: 0.15 },
+    ]);
   }
 
   /** Infer and apply expression from transcript text. */
@@ -136,8 +179,9 @@ export class SakuraFaceLiveDriver {
   async injectParameters(parameters: FaceLiveParameter[]): Promise<void> {
     if (!this.connected || !this.authenticated) return;
     this.send({
-      apiName: "VTubeStudioPublicAPI",
-      apiVersion: "1.0",
+      apiName: VTS_API,
+      apiVersion: VTS_VERSION,
+      requestID: this.nextRequestId(),
       messageType: "InjectParameterDataRequest",
       data: {
         faceFound: true,
@@ -148,33 +192,71 @@ export class SakuraFaceLiveDriver {
         })),
       },
     });
+    this.emit("parametersInjected", parameters);
   }
 
   private async authenticate(): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
+      this.authResolve = resolve;
+      this.authReject = reject;
+
+      const timeout = setTimeout(() => {
+        this.rejectAuth(new Error("Face Live authentication timed out"));
+      }, this.authTimeoutMs);
+
+      const clear = () => clearTimeout(timeout);
+      const originalResolve = this.authResolve;
+      const originalReject = this.authReject;
+      this.authResolve = () => {
+        clear();
+        originalResolve?.();
+      };
+      this.authReject = (error) => {
+        clear();
+        originalReject?.(error);
+      };
+
+      if (this.authToken) {
+        this.sendAuthenticationRequest(this.authToken);
+      } else {
+        this.send({
+          apiName: VTS_API,
+          apiVersion: VTS_VERSION,
+          requestID: this.nextRequestId(),
+          messageType: "AuthenticationTokenRequest",
+          data: {
+            pluginName: this.pluginName,
+            pluginDeveloper: this.pluginDeveloper,
+            pluginIcon: "",
+          },
+        });
+      }
+    });
+  }
+
+  private sendAuthenticationRequest(token: string): void {
     this.send({
-      apiName: "VTubeStudioPublicAPI",
-      apiVersion: "1.0",
-      messageType: "AuthenticationTokenRequest",
+      apiName: VTS_API,
+      apiVersion: VTS_VERSION,
+      requestID: this.nextRequestId(),
+      messageType: "AuthenticationRequest",
       data: {
         pluginName: this.pluginName,
         pluginDeveloper: this.pluginDeveloper,
-        pluginIcon: "",
+        authenticationToken: token,
       },
     });
   }
 
   private attachHandlers(socket: WebSocketLike): void {
     socket.addEventListener("message", (event: unknown) => {
-      const raw =
-        typeof (event as MessageEvent).data === "string"
-          ? (event as MessageEvent).data
-          : String(event);
-      this.handleMessage(raw);
+      this.handleMessage(extractSocketData(event));
     });
 
     socket.addEventListener("close", (event: unknown) => {
       const closeEvent = event as CloseEvent;
       this.authenticated = false;
+      this.rejectAuth(new Error("Face Live closed during authentication"));
       this.emit("disconnected", {
         code: closeEvent.code ?? 1006,
         reason: closeEvent.reason ?? "",
@@ -199,20 +281,59 @@ export class SakuraFaceLiveDriver {
     }
 
     const messageType = String(message.messageType ?? "");
+    const data = (message.data ?? {}) as Record<string, unknown>;
 
     switch (messageType) {
-      case "AuthenticationTokenResponse":
+      case "AuthenticationTokenResponse": {
+        const token = String(data.authenticationToken ?? "");
+        if (!token) {
+          this.rejectAuth(new Error("Face Live returned empty auth token"));
+          break;
+        }
+        this.authToken = token;
+        this.sendAuthenticationRequest(token);
+        break;
+      }
       case "AuthenticationResponse": {
-        const data = message.data as { authenticated?: boolean } | undefined;
-        if (data?.authenticated !== false) {
+        if (data.authenticated === true) {
           this.authenticated = true;
           this.emit("authenticated", undefined);
+          this.authResolve?.();
+          this.authResolve = null;
+          this.authReject = null;
+        } else {
+          this.authToken = null;
+          const reason = String(
+            data.reason ?? "Face Live authentication rejected",
+          );
+          this.rejectAuth(new Error(reason));
+          this.socket?.close(1000, "auth rejected");
+          this.socket = null;
+          this.authenticated = false;
         }
+        break;
+      }
+      case "APIError": {
+        this.emit("error", {
+          message: String(data.message ?? "Face Live API error"),
+        });
         break;
       }
       default:
         break;
     }
+  }
+
+  private nextRequestId(): string {
+    this.requestId += 1;
+    return `amoji-${this.requestId}`;
+  }
+
+  private rejectAuth(error: Error): void {
+    if (!this.authReject) return;
+    this.authReject(error);
+    this.authResolve = null;
+    this.authReject = null;
   }
 
   private send(payload: Record<string, unknown>): void {
@@ -251,4 +372,20 @@ function waitForOpen(socket: WebSocketLike): Promise<void> {
     socket.addEventListener("open", onOpen);
     socket.addEventListener("error", onError);
   });
+}
+
+/** Normalize browser MessageEvent / Node `ws` Buffer payloads to a string. */
+function extractSocketData(event: unknown): string {
+  const data = (event as { data?: unknown })?.data ?? event;
+  if (typeof data === "string") return data;
+  if (data instanceof ArrayBuffer) {
+    return new TextDecoder().decode(data);
+  }
+  if (ArrayBuffer.isView(data)) {
+    return new TextDecoder().decode(data);
+  }
+  if (data && typeof (data as { toString?: unknown }).toString === "function") {
+    return (data as { toString: () => string }).toString();
+  }
+  return String(data);
 }
