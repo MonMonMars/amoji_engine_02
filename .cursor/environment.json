@@ -1,0 +1,10 @@
+{
+  "name": "Amoji Engine",
+  "install": "cd amoji-engine && npm ci && npm run build",
+  "terminals": [
+    {
+      "name": "test-watch",
+      "command": "cd amoji-engine && npm run test:watch"
+    }
+  ]
+}
