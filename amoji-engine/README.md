@@ -7,7 +7,7 @@ Cantonese **realtime voice chat** + **Sakura Face Live** orchestration stack for
 ```
 ┌─────────────┐    ┌──────────────────┐    ┌─────────────────────┐
 │ Microphone  │───▶│   VoiceBridge    │───▶│  RealtimeChatClient │
-│  (PCM16)    │    │  frame + route   │    │  OpenAI Realtime API│
+│  (PCM16)    │    │  frame + route   │    │  OpenAI Realtime GA │
 └─────────────┘    └──────────────────┘    └──────────┬──────────┘
                                                       │
                                                       ▼
@@ -25,10 +25,10 @@ Cantonese **realtime voice chat** + **Sakura Face Live** orchestration stack for
 
 | Module | Path | Role |
 | --- | --- | --- |
-| **Realtime chat** | `src/realtime-chat/` | OpenAI Realtime API client tuned for Cantonese (`zh` transcription, server VAD) |
+| **Realtime chat** | `src/realtime-chat/` | OpenAI Realtime GA client tuned for Cantonese |
 | **Voice bridge** | `src/voice-bridge/` | Frames mic/speaker PCM16 audio between capture and Realtime |
 | **Face Live driver** | `src/face-live/` | Sakura avatar control via VTube Studio–compatible WebSocket API |
-| **Orchestrator** | `src/orchestrator/` | Coordinates listen → think → speak phases and wires events |
+| **Orchestrator** | `src/orchestrator/` | Coordinates listen → think → speak, barge-in, lip-sync |
 
 ## Quick start
 
@@ -37,6 +37,7 @@ cd amoji-engine
 npm install
 npm test
 npm run build
+npm run demo:dry   # mock Face Live handshake + lip-sync (no API key)
 ```
 
 ### Minimal usage (voice-only)
@@ -49,8 +50,8 @@ const engine = new AmojiOrchestrator({
   voiceOnly: true, // skip Face Live if bridge is offline
 });
 
-engine.on("transcript", ({ role, text }) => {
-  console.log(`[${role}] ${text}`);
+engine.on("transcript", ({ role, text, final }) => {
+  console.log(`[${role}${final === false ? "*" : ""}] ${text}`);
 });
 
 engine.on("audioOut", ({ pcm16 }) => {
@@ -80,21 +81,36 @@ await engine.start();
 ```
 
 The orchestrator will:
-- Stream mic audio to OpenAI Realtime with Cantonese instructions
-- Drive Sakura lip-sync from assistant TTS audio
+- Stream mic audio to OpenAI Realtime with Cantonese instructions (GA wire format)
+- Auto barge-in when the user speaks over the assistant
+- Drive Sakura lip-sync (smoothed RMS) from assistant TTS audio
 - Map transcript keywords to expression presets (happy, surprised, thinking, …)
+
+### Local mock Face Live
+
+```typescript
+import { startMockFaceLiveBridge, SakuraFaceLiveDriver } from "@amoji/engine";
+
+const mock = await startMockFaceLiveBridge(); // ephemeral port
+const face = new SakuraFaceLiveDriver({ url: mock.url });
+await face.connect();
+```
+
+Or: `npm run demo -- --mock-face-live`
 
 ## Configuration
 
 | Option | Default | Description |
 | --- | --- | --- |
 | `openAiApiKey` | — | Required. OpenAI API key |
-| `realtimeModel` | `gpt-4o-realtime-preview-2024-12-17` | Realtime model id |
+| `realtimeModel` | `gpt-realtime` | Realtime model id |
 | `faceLiveUrl` | `ws://127.0.0.1:8765` | Sakura Face Live WebSocket |
 | `voice` | `shimmer` | OpenAI TTS voice |
 | `sampleRateHz` | `24000` | PCM sample rate |
 | `systemInstructions` | Cantonese Sakura persona | Override system prompt |
 | `voiceOnly` | `false` | Skip Face Live connection |
+| `autoCreateResponse` | `true` | Let server VAD create responses |
+| `faceLiveAuthToken` | — | Cached VTS authentication token |
 
 ## Docs
 
@@ -109,6 +125,8 @@ The orchestrator will:
 | `npm test` | Run Vitest unit tests |
 | `npm run build` | Compile TypeScript to `dist/` |
 | `npm run typecheck` | Type-check without emit |
+| `npm run demo:dry` | Mock Face Live smoke test (no API key) |
+| `npm run demo` | Live session (needs `OPENAI_API_KEY`) |
 
 ## License
 

@@ -1,5 +1,7 @@
 import { SakuraFaceLiveDriver } from "../face-live/sakuraDriver.js";
+import type { SakuraFaceLiveOptions } from "../face-live/sakuraDriver.js";
 import { RealtimeChatClient } from "../realtime-chat/realtimeClient.js";
+import type { RealtimeChatOptions } from "../realtime-chat/realtimeClient.js";
 import {
   DEFAULT_FACE_LIVE_URL,
   DEFAULT_SAMPLE_RATE_HZ,
@@ -8,6 +10,7 @@ import { VoiceBridge } from "../voice-bridge/voiceBridge.js";
 import type {
   AmojiEngineConfig,
   ConnectionState,
+  FaceLiveParameter,
   OrchestratorEventMap,
   OrchestratorEventName,
   OrchestratorListener,
@@ -17,9 +20,10 @@ import type {
 export interface AmojiOrchestratorOptions extends AmojiEngineConfig {
   /** Skip Face Live connection (voice-only mode). */
   voiceOnly?: boolean;
-  createWebSocket?: RealtimeChatClient extends never
-    ? never
-    : ConstructorParameters<typeof RealtimeChatClient>[0]["createWebSocket"];
+  /** Cached VTube Studio / Face Live auth token. */
+  faceLiveAuthToken?: string;
+  createWebSocket?: RealtimeChatOptions["createWebSocket"];
+  createFaceLiveWebSocket?: SakuraFaceLiveOptions["createWebSocket"];
 }
 
 /**
@@ -34,6 +38,8 @@ export class AmojiOrchestrator {
   };
   private readonly voiceOnly: boolean;
   private phase: OrchestratorPhase = "idle";
+  private faceLiveAvailable = false;
+  private assistantTranscriptBuffer = "";
   private readonly realtime: RealtimeChatClient;
   private readonly faceLive: SakuraFaceLiveDriver;
   private readonly voiceBridge: VoiceBridge;
@@ -50,26 +56,44 @@ export class AmojiOrchestrator {
       systemInstructions: options.systemInstructions,
       voice: options.voice,
       sampleRateHz: options.sampleRateHz ?? DEFAULT_SAMPLE_RATE_HZ,
+      autoCreateResponse: options.autoCreateResponse,
     };
     this.voiceOnly = options.voiceOnly ?? false;
+
+    const createResponse = options.autoCreateResponse ?? true;
 
     this.realtime = new RealtimeChatClient({
       apiKey: options.openAiApiKey,
       model: options.realtimeModel,
-      session: options.systemInstructions
-        ? { instructions: options.systemInstructions }
-        : undefined,
+      sampleRateHz: this.config.sampleRateHz,
+      session: {
+        ...(options.systemInstructions
+          ? { instructions: options.systemInstructions }
+          : {}),
+        ...(options.voice ? { voice: options.voice } : {}),
+        turnDetection: {
+          type: "server_vad",
+          createResponse,
+        },
+      },
       createWebSocket: options.createWebSocket,
     });
 
     this.faceLive = new SakuraFaceLiveDriver({
       url: this.config.faceLiveUrl,
+      authenticationToken: options.faceLiveAuthToken,
+      createWebSocket: options.createFaceLiveWebSocket,
     });
 
     this.voiceBridge = new VoiceBridge({
       sampleRateHz: this.config.sampleRateHz,
       onMicFrame: (frame) => {
-        if (this.phase === "listening" || this.phase === "idle") {
+        if (
+          this.phase === "listening" ||
+          this.phase === "thinking" ||
+          this.phase === "speaking"
+        ) {
+          // Keep streaming during speaking/thinking so barge-in VAD can fire.
           this.realtime.appendInputAudio(frame);
         }
       },
@@ -116,7 +140,10 @@ export class AmojiOrchestrator {
     if (!this.voiceOnly) {
       try {
         await this.faceLive.connect();
+        this.faceLiveAvailable = true;
+        await this.faceLive.setExpression("neutral");
       } catch (error) {
+        this.faceLiveAvailable = false;
         this.emit("error", {
           source: "face-live",
           message: "Face Live unavailable; continuing voice-only",
@@ -132,6 +159,8 @@ export class AmojiOrchestrator {
     this.voiceBridge.stop();
     this.realtime.disconnect();
     this.faceLive.disconnect();
+    this.faceLiveAvailable = false;
+    this.assistantTranscriptBuffer = "";
     this.setPhase("idle");
   }
 
@@ -145,33 +174,59 @@ export class AmojiOrchestrator {
     this.voiceBridge.pushMicFloat32(float32);
   }
 
-  /** User barge-in: cancel assistant speech. */
+  /** User barge-in: cancel assistant speech and return to listening. */
   interrupt(): void {
     this.realtime.cancelResponse();
+    this.voiceBridge.clearSpeakerQueue();
+    this.assistantTranscriptBuffer = "";
+    if (this.faceLiveAvailable) {
+      void this.faceLive.resetLipSync();
+    }
     this.setPhase("listening");
   }
 
   private wireInternalEvents(): void {
     this.realtime.on("speechStarted", () => {
+      if (this.phase === "speaking" || this.phase === "thinking") {
+        // Barge-in: user started talking over the assistant.
+        this.interrupt();
+        return;
+      }
       this.setPhase("listening");
     });
 
     this.realtime.on("speechStopped", () => {
       this.setPhase("thinking");
-      this.realtime.commitInputAndRespond();
+      if (!this.realtime.autoCreateResponse) {
+        this.realtime.commitInputAndRespond();
+      }
+      if (this.faceLiveAvailable) {
+        void this.faceLive.setExpression("thinking");
+      }
     });
 
     this.realtime.on("userTranscript", ({ text }) => {
-      this.emit("transcript", { role: "user", text });
-      if (!this.voiceOnly) {
+      this.emit("transcript", { role: "user", text, final: true });
+      if (this.faceLiveAvailable) {
         void this.faceLive.reactToTranscript(text);
       }
     });
 
-    this.realtime.on("assistantTranscript", ({ text }) => {
-      this.emit("transcript", { role: "assistant", text });
-      if (!this.voiceOnly) {
-        void this.faceLive.reactToTranscript(text);
+    this.realtime.on("assistantTranscript", ({ text, final }) => {
+      if (final) {
+        this.assistantTranscriptBuffer = text;
+        this.emit("transcript", { role: "assistant", text, final: true });
+        if (this.faceLiveAvailable) {
+          void this.faceLive.reactToTranscript(text);
+        }
+        this.assistantTranscriptBuffer = "";
+      } else {
+        this.assistantTranscriptBuffer += text;
+        this.emit("transcript", {
+          role: "assistant",
+          text: this.assistantTranscriptBuffer,
+          final: false,
+        });
       }
     });
 
@@ -179,6 +234,15 @@ export class AmojiOrchestrator {
       this.setPhase("speaking");
       const out = this.voiceBridge.playAssistantAudio(pcm16);
       this.emit("audioOut", { pcm16: out });
+    });
+
+    this.realtime.on("responseDone", () => {
+      if (this.faceLiveAvailable) {
+        void this.faceLive.resetLipSync();
+      }
+      if (this.phase === "speaking" || this.phase === "thinking") {
+        this.setPhase("listening");
+      }
     });
 
     this.realtime.on("error", ({ message, cause }) => {
@@ -201,18 +265,22 @@ export class AmojiOrchestrator {
     this.faceLive.on("error", ({ message, cause }) => {
       this.emit("error", { source: "face-live", message, cause });
     });
-  }
 
-  private async handleSpeakerFrame(pcm16: Int16Array): Promise<void> {
-    if (this.voiceOnly || !this.faceLive.isAuthenticated) return;
-    await this.faceLive.driveLipSync(pcm16);
-    this.emit("faceLive", {
-      expression: this.faceLive.expression,
-      parameters: [],
+    this.faceLive.on("parametersInjected", (parameters: FaceLiveParameter[]) => {
+      this.emit("faceLive", {
+        expression: this.faceLive.expression,
+        parameters,
+      });
     });
   }
 
+  private async handleSpeakerFrame(pcm16: Int16Array): Promise<void> {
+    if (!this.faceLiveAvailable || !this.faceLive.isAuthenticated) return;
+    await this.faceLive.driveLipSync(pcm16);
+  }
+
   private setPhase(phase: OrchestratorPhase): void {
+    if (this.phase === phase) return;
     this.phase = phase;
     this.emit("phase", phase);
   }

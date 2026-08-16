@@ -16,6 +16,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
+    "demo": "tsx scripts/demo.ts",
+    "demo:dry": "tsx scripts/demo.ts --dry-run",
     "lint": "eslint src"
   },
   "engines": {
@@ -30,11 +32,14 @@
     "vtuber"
   ],
   "license": "MIT",
+  "dependencies": {
+    "ws": "^8.18.0"
+  },
   "devDependencies": {
     "@types/node": "^22.10.0",
     "@types/ws": "^8.5.13",
+    "tsx": "^4.19.2",
     "typescript": "^5.6.3",
-    "vitest": "^2.1.5",
-    "ws": "^8.18.0"
+    "vitest": "^2.1.5"
   }
 }

@@ -10,6 +10,7 @@ export type {
   RealtimeEventName,
   RealtimeListener,
   RealtimeSessionConfig,
+  RealtimeSessionWire,
   SakuraExpression,
   VoiceBridgeStats,
 } from "./types.js";
@@ -23,6 +24,7 @@ export {
   buildCantoneseRealtimeSession,
   realtimeAuthHeaders,
   realtimeWebSocketUrl,
+  toRealtimeSessionWire,
 } from "./realtime-chat/cantoneseConfig.js";
 
 export {
@@ -37,6 +39,7 @@ export {
   inferExpressionFromText,
   lipSyncParameters,
   mouthOpenFromPcm16,
+  smoothMouthOpen,
 } from "./face-live/expressions.js";
 
 export {
@@ -46,6 +49,12 @@ export {
   type FaceLiveListener,
   type SakuraFaceLiveOptions,
 } from "./face-live/sakuraDriver.js";
+
+export {
+  startMockFaceLiveBridge,
+  type MockFaceLiveBridge,
+  type MockFaceLiveBridgeOptions,
+} from "./face-live/mockBridge.js";
 
 export {
   VoiceBridge,
