@@ -9,6 +9,12 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
+    },
+    "./engine": {
+      "import": "./engine/index.js"
+    },
+    "./engine/*": {
+      "import": "./engine/*"
     }
   },
   "scripts": {
