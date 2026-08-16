@@ -25,8 +25,6 @@ Energy-VAD end-of-utterance loop for continuous Cantonese voice turns.
 
 Open [`../../prototypes/realtime-voice-lab.html`](../../prototypes/realtime-voice-lab.html) via a static server that can resolve the `../amoji-engine/engine/` ES module import, then toggle **Always-on**.
 
-## Test
+## Always-on via VoiceChatOrchestrator
 
-```bash
-cd amoji-engine && npm test
-```
+Prefer `VoiceChatOrchestrator` (`engine/voice/voiceChatOrchestrator.js`) when you want a listen/talk host with `startAlwaysOn()` / `stopAlwaysOn()`. See [VOICE_CHAT_ORCHESTRATOR.md](./VOICE_CHAT_ORCHESTRATOR.md).

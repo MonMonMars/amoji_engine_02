@@ -1,5 +1,5 @@
 /**
- * Browser/Node JS engine surface for Amoji always-on listen.
+ * Browser/Node JS engine surface for Amoji always-on listen + voice chat orchestrator.
  * TypeScript package entry remains `src/index.ts` → `dist/`.
  */
 
@@ -11,3 +11,8 @@ export {
   frameEnergy,
   resolveAlwaysOnListenOptions,
 } from "./voice/alwaysOnListen.js";
+
+export {
+  VoiceChatOrchestrator,
+  createVoiceChatOrchestrator,
+} from "./voice/voiceChatOrchestrator.js";
