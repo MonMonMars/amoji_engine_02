@@ -36,15 +36,17 @@
       p.lead {
         color: var(--muted);
         margin: 0 0 1.5rem;
-        max-width: 40rem;
+        max-width: 42rem;
       }
       .row {
         display: flex;
         flex-wrap: wrap;
         gap: 0.75rem;
         margin-bottom: 1rem;
+        align-items: center;
       }
-      button {
+      button,
+      label.file-btn {
         border: 1px solid var(--line);
         background: var(--panel);
         color: var(--ink);
@@ -52,8 +54,10 @@
         padding: 0.7rem 1.1rem;
         font-size: 0.95rem;
         cursor: pointer;
+        display: inline-block;
       }
-      button:hover {
+      button:hover,
+      label.file-btn:hover {
         border-color: var(--accent);
       }
       button[aria-pressed="true"] {
@@ -61,7 +65,11 @@
         border-color: var(--accent-on);
         color: #dff7ea;
       }
-      #status {
+      input[type="file"] {
+        display: none;
+      }
+      #status,
+      #chat {
         font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
         font-size: 0.85rem;
         color: var(--muted);
@@ -70,7 +78,14 @@
         border-radius: 10px;
         padding: 1rem;
         background: color-mix(in srgb, var(--panel) 80%, black);
-        min-height: 8rem;
+        min-height: 6rem;
+        margin-bottom: 1rem;
+      }
+      h2 {
+        font-size: 0.95rem;
+        font-weight: 600;
+        margin: 0 0 0.5rem;
+        color: var(--ink);
       }
     </style>
   </head>
@@ -78,8 +93,9 @@
     <h1>Realtime Voice Lab</h1>
     <p class="lead">
       Prototype harness for Cantonese realtime voice + Sakura Face Live.
-      Toggle <strong>Always-on</strong> to run energy-VAD end-of-utterance
-      listen loops (<code>createAlwaysOnListen</code>).
+      Toggle <strong>Always-on</strong> for energy-VAD listen loops.
+      Use <strong>Export / Import Session</strong> to download or restore
+      persistent <code>labChat</code> + <code>tickRecorder</code> archives.
     </p>
 
     <div class="row">
@@ -93,19 +109,52 @@
         Always-on: Off
       </button>
       <button type="button" id="btn-push-to-talk">Push-to-talk (stub)</button>
+      <button type="button" id="btn-export-session" title="Download session archive JSON">
+        Export Session
+      </button>
+      <label class="file-btn" for="import-session-file">Import Session</label>
+      <input
+        id="import-session-file"
+        type="file"
+        accept="application/json,.json"
+      />
     </div>
 
-    <div id="status">idle — load this page via a local static server that can import ES modules from ../amoji-engine/engine/</div>
+    <h2>Lab chat</h2>
+    <div id="chat">no messages yet</div>
+
+    <h2>Status</h2>
+    <div id="status">idle — load via a static server that can import ../amoji-engine/engine/</div>
 
     <script type="module">
       import {
         createAlwaysOnListen,
+        createLabSessionFacade,
         frameEnergy,
       } from "../amoji-engine/engine/index.js";
 
       const statusEl = document.getElementById("status");
+      const chatEl = document.getElementById("chat");
       const alwaysOnBtn = document.getElementById("btn-always-on");
+
+      const session = createLabSessionFacade({
+        storageKey: "amoji.realtimeVoiceLab.session",
+        meta: {
+          lab: "realtime-voice-lab",
+          branch: "cursor/realtime-voice-chat-0f5c",
+        },
+      });
+
+      const renderChat = () => {
+        const lines = session.labChat.messages.map(
+          (m) => `[${m.ts.slice(11, 19) ?? m.ts}] ${m.role}: ${m.text}`,
+        );
+        chatEl.textContent = lines.length ? lines.join("\n") : "no messages yet";
+      };
+      renderChat();
+
       const log = (line) => {
+        session.recordTick("status", { line });
         statusEl.textContent = `${new Date().toISOString().slice(11, 19)} ${line}\n${statusEl.textContent}`
           .split("\n")
           .slice(0, 40)
@@ -119,13 +168,26 @@
         async startListening() {
           this.listening = true;
           this.talking = false;
+          session.recordTick("phase", { phase: "listening" });
           log("startListening");
         },
         async stopListeningAndTalk(extra) {
           this.listening = false;
           this.talking = true;
+          session.recordTick("phase", { phase: "talking", extra });
+          session.appendChat({
+            role: "user",
+            text: "(utterance ended — stub user turn)",
+            meta: { extra },
+          });
+          renderChat();
           log(`stopListeningAndTalk ${JSON.stringify(extra ?? {})}`);
           await new Promise((r) => setTimeout(r, 400));
+          session.appendChat({
+            role: "assistant",
+            text: "（stub）收到啦，有咩想傾？",
+          });
+          renderChat();
           this.talking = false;
         },
       };
@@ -133,9 +195,10 @@
       let unsubscribeMic = null;
       let mediaStream = null;
       let audioCtx = null;
+      let micHandle = null;
 
       async function openMic() {
-        if (unsubscribeMic) return;
+        if (micHandle) return micHandle;
         mediaStream = await navigator.mediaDevices.getUserMedia({
           audio: {
             echoCancellation: true,
@@ -159,12 +222,14 @@
           source.disconnect();
           listeners.clear();
         };
-        return {
+        micHandle = {
           onFrame(cb) {
             listeners.add(cb);
             return () => listeners.delete(cb);
           },
         };
+        session.recordTick("mic", { open: true });
+        return micHandle;
       }
 
       let controller = null;
@@ -187,8 +252,10 @@
               minSpeechMs: 150,
               trailingSilenceMs: 550,
               sampleRateHz: 24000,
-              onStateChange: (state, prev) =>
-                log(`vad ${prev} → ${state}`),
+              onStateChange: (state, prev) => {
+                session.recordTick("vad", { prev, state });
+                log(`vad ${prev} → ${state}`);
+              },
               onUtteranceEnded: (info) =>
                 log(`utterance ended speechMs=${info.speechMs | 0}`),
               onError: (err) => log(`error ${err?.message ?? err}`),
@@ -205,22 +272,72 @@
           controller = null;
           unsubscribeMic?.();
           unsubscribeMic = null;
+          micHandle = null;
           mediaStream?.getTracks().forEach((t) => t.stop());
           mediaStream = null;
           await audioCtx?.close();
           audioCtx = null;
           alwaysOnBtn.setAttribute("aria-pressed", "false");
           alwaysOnBtn.textContent = "Always-on: Off";
+          session.recordTick("mic", { open: false });
           log("Always-on listen stopped");
         }
       });
 
       document.getElementById("btn-connect").addEventListener("click", () => {
-        log(`stub connect — frameEnergy(silence)=${frameEnergy(new Float32Array(32))}`);
+        session.recordTick("connect", { stub: true });
+        session.appendChat({
+          role: "system",
+          text: "connect stub",
+        });
+        renderChat();
+        log(
+          `stub connect — frameEnergy(silence)=${frameEnergy(new Float32Array(32))}`,
+        );
       });
+
       document.getElementById("btn-push-to-talk").addEventListener("click", () => {
+        session.recordTick("ptt", { stub: true });
         log("push-to-talk stub (manual hold not wired in this prototype)");
       });
+
+      document
+        .getElementById("btn-export-session")
+        .addEventListener("click", () => {
+          const { archive, downloaded } = session.exportSessionArchive({
+            download: true,
+          });
+          session.recordTick("export", {
+            messages: archive.chat.messages.length,
+            ticks: archive.ticks.ticks.length,
+            downloaded,
+          });
+          log(
+            `exported session chat=${archive.chat.messages.length} ticks=${archive.ticks.ticks.length} downloaded=${downloaded}`,
+          );
+        });
+
+      document
+        .getElementById("import-session-file")
+        .addEventListener("change", async (ev) => {
+          const file = ev.target.files?.[0];
+          if (!file) return;
+          try {
+            const archive = await session.importSessionArchive(file);
+            renderChat();
+            session.recordTick("import", {
+              name: file.name,
+              messages: archive.chat.messages.length,
+            });
+            log(
+              `imported ${file.name} chat=${archive.chat.messages.length} ticks=${archive.ticks.ticks.length}`,
+            );
+          } catch (err) {
+            log(`import failed: ${err?.message ?? err}`);
+          } finally {
+            ev.target.value = "";
+          }
+        });
     </script>
   </body>
 </html>

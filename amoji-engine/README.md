@@ -119,6 +119,7 @@ Or: `npm run demo -- --mock-face-live`
 - [Cantonese Realtime tuning](./docs/cantonese-realtime.md)
 - [Always-on listen (VAD)](./docs/always-on-listen.md)
 - [VoiceChatOrchestrator](./docs/VOICE_CHAT_ORCHESTRATOR.md)
+- [Session & presence (lab archive)](./docs/SESSION_AND_PRESENCE.md)
 
 ## Scripts
 
