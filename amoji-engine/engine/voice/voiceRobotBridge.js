@@ -10,6 +10,7 @@ import {
   createRobotMotionAdapter,
   robotMotionPlanSteps,
   formatRobotMotionHud,
+  annotateSoftbankSpeech,
 } from '../robot/talkMotion.js';
 
 const ROBOT_EVENTS = Object.freeze([
@@ -192,6 +193,17 @@ export function createVoiceRobotBridge(opts = {}) {
       return motion.last;
     },
     /**
+     * Sample an animated vendor motion frame while speaking.
+     * @param {number} dtSec
+     * @param {{ speechEnergy?: number }} [frame]
+     */
+    sampleMotionFrame(dtSec = 1 / 30, frame = {}) {
+      return motion.sampleFrame(dtSec, frame);
+    },
+    stopMotion() {
+      motion.stop();
+    },
+    /**
      * @param {string} id
      */
     setLanguage(id) {
@@ -328,6 +340,10 @@ export function createVoiceRobotBridge(opts = {}) {
         language,
       });
       const spoken = prosody.text || replySource;
+      const annotatedReply =
+        motion.vendor === "softbank"
+          ? annotateSoftbankSpeech(spoken, spokenMotion.style)
+          : null;
 
       const speakMs =
         typeof opts.speakMs === "number" ? Math.max(0, opts.speakMs) : 0;
@@ -372,6 +388,7 @@ export function createVoiceRobotBridge(opts = {}) {
           ...plan.steps.slice(-2),
         ],
         reply: spoken,
+        annotatedReply,
         language,
         dialect: detected,
         prosody,
@@ -382,6 +399,7 @@ export function createVoiceRobotBridge(opts = {}) {
       return {
         ...this.getHud(),
         reply: spoken,
+        annotatedReply,
         language,
         dialect: detected,
         prosody,

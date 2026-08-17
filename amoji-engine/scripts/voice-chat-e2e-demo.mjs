@@ -317,7 +317,10 @@ console.log("[e2e] multi-vendor robot motion…");
   const {
     buildRobotMotionPackage,
     nextRobotMotionVendor,
-  } = await import("../engine/robot/talkMotion.js");
+    sampleVendorMotionFrame,
+    createRobotMotionDispatcher,
+    resolveMotionVendorPref,
+  } = await import("../engine/index.js");
   const softbank = buildRobotMotionPackage({
     text: "拜拜",
     vendor: "softbank",
@@ -332,16 +335,36 @@ console.log("[e2e] multi-vendor robot motion…");
   });
   assert(g1.unitree_g1.joints.right_shoulder_pitch > 0.5, "g1 shoulder");
   assert(nextRobotMotionVendor("sakura") === "softbank", "vendor cycle");
+  const frameA = sampleVendorMotionFrame(0.1, { style: "wave", vendor: "reachy" });
+  const frameB = sampleVendorMotionFrame(0.5, { style: "wave", vendor: "reachy" });
+  assert(frameA.reachy.r_arm[5] !== frameB.reachy.r_arm[5], "reachy animates");
+  const disp = createRobotMotionDispatcher();
+  disp.begin(frameA);
+  disp.frame(frameB);
+  disp.end();
+  assert(disp.length === 3, "dispatch log");
+  const pref = resolveMotionVendorPref({
+    search: "?motion=furhat",
+    storage: null,
+    env: {},
+  });
+  assert(pref.vendor === "furhat", "motion pref");
   const robot = createVoiceRobotBridge({ motionVendor: "furhat" });
   const turn = await robot.runTurn("點解呀？", { forceReply: "點解咁呀？" });
   assert(turn.motion.vendor === "furhat", "bridge furhat");
   assert(turn.motion.style === "question", "question style");
+  const softTurn = await createVoiceRobotBridge({
+    motionVendor: "softbank",
+  }).runTurn("hi", { forceReply: "hello" });
+  assert(softTurn.annotatedReply.includes("^start("), "annotated reply");
   console.log(
     "[e2e] robot motion ok →",
     softbank.vendor,
     softbank.softbank.tag,
     "→",
     turn.motion.furhat.name,
+    "disp",
+    disp.length,
   );
 }
 

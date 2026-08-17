@@ -26,6 +26,7 @@
 - Per-joint finger chains (`Prox` → `Mid` → `Tip`) for every digit on both hands, plus hand spread / wrist Z; fingertip Face Live ids via `FINGER_TIP_PARAM_IDS`
 - TypeScript talk-gesture parity (`src/face-live/talkGestures.ts`) + `SakuraFaceLiveDriver.beginTalkGesture` / `driveTalkGesture`; lip-sync merge while speaking; orchestrator wires reply text → gestures
 - Multi-vendor robot talk-motion adapters (`engine/robot/talkMotion.js`) — SoftBank NAOqi tags/ALAnimatedSpeech, Furhat Remote API, Pollen Reachy arm goto, Unitree G1 upper-body joints, ROS JointState, Sakura Face Live; lab Motion vendor cycle + robot bridge plan steps
+- Motion vendor pref (`?motion=`) + animated vendor frames (`sampleVendorMotionFrame`) + mock dispatcher; SoftBank `annotatedReply` on robot turns
 - Lab UI: Always-on, Hold to talk, Ready check, Worker, Face Live, Dialect, VAD, TTS mute/volume, Expression, Gesture, Prosody, Barge-in, Export/Import
 - Docs: REALTIME_VOICE_LAB, VOICE_WORKER, CI matrix, architecture note for JS path
 

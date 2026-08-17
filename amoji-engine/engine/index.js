@@ -34,6 +34,7 @@ export {
   normalizeRobotMotionVendor,
   nextRobotMotionVendor,
   buildRobotMotionPackage,
+  sampleVendorMotionFrame,
   annotateSoftbankSpeech,
   toSoftbankMotion,
   toFurhatMotion,
@@ -44,6 +45,20 @@ export {
   robotMotionPlanSteps,
   createRobotMotionAdapter,
 } from "./robot/talkMotion.js";
+
+export {
+  ROBOT_MOTION_DISPATCH_SCHEMA,
+  createRobotMotionDispatcher,
+} from "./robot/motionDispatcher.js";
+
+export {
+  MOTION_VENDOR_PREF_SCHEMA,
+  MOTION_VENDOR_PREF_STORAGE_KEY,
+  normalizeMotionVendorPref,
+  nextMotionVendorPref,
+  resolveMotionVendorPref,
+  persistMotionVendorPref,
+} from "./lab/motionVendorPref.js";
 
 export {
   DIALECT_DETECT_SCHEMA,

@@ -76,8 +76,9 @@ Ignored while focus is in an input / textarea.
 | `?lang=` / `AMOJI_DIALECT` | `auto` · `yue` · `en` |
 | `?vad=` / `AMOJI_VAD` | `high` · `normal` · `low` |
 | `?vol=` / `AMOJI_TTS_VOLUME` | `soft` · `normal` · `loud` |
+| `?motion=` / `AMOJI_MOTION_VENDOR` | `sakura` · `softbank` · `furhat` · `reachy` · `unitree_g1` · `ros` |
 
-Persisted in `localStorage` as `amoji.voiceWorkerUrl` / `amoji.faceLiveUrl` / `amoji.dialectPref` / `amoji.listenPref` / `amoji.ttsVolume`.
+Persisted in `localStorage` as `amoji.voiceWorkerUrl` / `amoji.faceLiveUrl` / `amoji.dialectPref` / `amoji.listenPref` / `amoji.ttsVolume` / `amoji.motionVendor`.
 
 ## Local stubs
 

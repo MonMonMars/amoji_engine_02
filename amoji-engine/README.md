@@ -67,6 +67,7 @@ Query params (persisted to `localStorage`):
 - `?lang=auto|yue|en` — dialect force lock
 - `?vad=high|normal|low` — VAD sensitivity
 - `?vol=soft|normal|loud` — TTS playback gain
+- `?motion=sakura|softbank|furhat|reachy|unitree_g1|ros` — robot talk-motion vendor
 
 Hotkeys: `Space` PTT · `Esc` barge · `M` mute · `E` expression · `G` gesture · `[`/`]` volume.
 ### Minimal usage (voice-only, TS)
