@@ -233,6 +233,17 @@ export function createVoiceRobotBridge(opts = {}) {
       return motion.cycleVendor();
     },
     /**
+     * Lab Motion demo: apply a talk style package for the active vendor.
+     * @param {string} style
+     * @param {{ emotion?: string, text?: string, timeSec?: number }} [extra]
+     */
+    fromMotionStyle(style, extra = {}) {
+      return motion.fromStyle(style, extra);
+    },
+    get motionStyle() {
+      return motion.style;
+    },
+    /**
      * @param {'sakura'|'lip_sync'|'done'|'aborted'} event
      * @param {(payload: object) => void} cb
      */
@@ -283,54 +294,12 @@ export function createVoiceRobotBridge(opts = {}) {
       const plan = planRobotSteps(cleanText, memory);
       if (plan.rememberedName) memory.userName = plan.rememberedName;
 
-      const replySourceEarly =
-        typeof opts.forceReply === "string"
-          ? opts.forceReply
-          : null;
-      // Prefer reply text for gesture style when caller already knows it.
-      const motionSeedText = replySourceEarly || cleanText;
-      const motionPackage = motion.fromText(motionSeedText, {
-        emotion: plan.emotion,
-      });
-      const motionSteps = robotMotionPlanSteps(motionPackage);
-      const steps = [
-        ...plan.steps.slice(0, -2),
-        ...motionSteps,
-        ...plan.steps.slice(-2),
-      ];
-      const motionHud = formatRobotMotionHud(motionPackage);
-
-      emit("sakura", {
-        phase: "planning",
-        emotion: plan.emotion,
-        summary: plan.summary,
-        steps,
-        language,
-        dialect: detected,
-        motion: motionPackage,
-        motionHud,
-        reply: replySourceEarly || undefined,
-      });
-
-      if (aborted) return this.getHud();
-
-      emit("lip_sync", {
-        phase: "speaking",
-        emotion: plan.emotion,
-        summary: plan.summary,
-        steps,
-        language,
-        motion: motionPackage,
-        motionHud,
-      });
-
-      if (aborted) return this.getHud();
-
+      // Resolve spoken reply + SoftBank ALAnimatedSpeech before sakura begin so
+      // the motion bridge receives annotatedReply on the first package.
       const replySource =
         typeof opts.forceReply === "string"
           ? opts.forceReply
           : buildStubReply(cleanText, memory, language);
-      // Refine motion from the actual spoken reply (content-aware gestures).
       const spokenMotion = motion.fromText(replySource, {
         emotion: plan.emotion,
       });
@@ -344,6 +313,41 @@ export function createVoiceRobotBridge(opts = {}) {
         motion.vendor === "softbank"
           ? annotateSoftbankSpeech(spoken, spokenMotion.style)
           : null;
+      const motionSteps = robotMotionPlanSteps(spokenMotion);
+      const steps = [
+        ...plan.steps.slice(0, -2),
+        ...motionSteps,
+        ...plan.steps.slice(-2),
+      ];
+
+      emit("sakura", {
+        phase: "planning",
+        emotion: plan.emotion,
+        summary: plan.summary,
+        steps,
+        language,
+        dialect: detected,
+        motion: spokenMotion,
+        motionHud: spokenMotionHud,
+        reply: spoken,
+        annotatedReply,
+      });
+
+      if (aborted) return this.getHud();
+
+      emit("lip_sync", {
+        phase: "speaking",
+        emotion: plan.emotion,
+        summary: plan.summary,
+        steps,
+        language,
+        motion: spokenMotion,
+        motionHud: spokenMotionHud,
+        reply: spoken,
+        annotatedReply,
+      });
+
+      if (aborted) return this.getHud();
 
       const speakMs =
         typeof opts.speakMs === "number" ? Math.max(0, opts.speakMs) : 0;
@@ -358,6 +362,7 @@ export function createVoiceRobotBridge(opts = {}) {
               language,
               dialect: detected,
               prosody,
+              annotatedReply,
               barged: true,
             };
           }
@@ -374,6 +379,7 @@ export function createVoiceRobotBridge(opts = {}) {
           language,
           dialect: detected,
           prosody,
+          annotatedReply,
           barged: true,
         };
       }
@@ -382,11 +388,7 @@ export function createVoiceRobotBridge(opts = {}) {
         phase: "done",
         emotion: plan.emotion,
         summary: plan.summary,
-        steps: [
-          ...plan.steps.slice(0, -2),
-          ...robotMotionPlanSteps(spokenMotion),
-          ...plan.steps.slice(-2),
-        ],
+        steps,
         reply: spoken,
         annotatedReply,
         language,

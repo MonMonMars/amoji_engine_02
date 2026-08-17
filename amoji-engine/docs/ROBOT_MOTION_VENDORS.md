@@ -55,7 +55,7 @@ const turn = await robot.runTurn("哈哈好開心");
 turn.motion.unitree_g1.joints; // upper-body rad targets
 ```
 
-Lab: **Motion:** button cycles vendors (`?motion=` / `amoji.motionVendor`); Robot HUD **motion** row shows the active package + dispatch log. SoftBank turns also return `annotatedReply` for ALAnimatedSpeech.
+Lab: **Motion:** button cycles vendors (`?motion=` / `amoji.motionVendor`); **Motion demo** / `V` cycles talk styles into the active vendor and posts to `?motionBridge=`. SoftBank turns emit `annotatedReply` on the `sakura` begin event (and still on `done`) so ALAnimatedSpeech reaches the bridge before TTS. Robot HUD **motion** row shows the active package + dispatch log.
 
 While speaking, the lab samples vendor frames (~12 Hz) through `sampleVendorMotionFrame` / `createRobotMotionDispatcher`. Point the dispatcher at an HTTP motion bridge with `?motionBridge=` (default mock on `:7891`).
 

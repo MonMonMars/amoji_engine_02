@@ -6,6 +6,7 @@
  * KeyM — mute TTS
  * KeyE — expression demo cycle (optional)
  * KeyG — talk gesture style cycle (optional)
+ * KeyV — robot motion style demo cycle (optional)
  * BracketLeft / BracketRight — TTS volume down / up
  */
 export const LAB_HOTKEYS_SCHEMA = "amoji.labHotkeys.v1";
@@ -18,6 +19,7 @@ export const LAB_HOTKEYS_SCHEMA = "amoji.labHotkeys.v1";
  *   onMuteToggle?: () => void,
  *   onExpressionCycle?: () => void,
  *   onGestureCycle?: () => void,
+ *   onMotionCycle?: () => void,
  *   onVolumeDown?: () => void,
  *   onVolumeUp?: () => void,
  *   isTextInputTarget?: (el: EventTarget | null) => boolean,
@@ -87,6 +89,13 @@ export function createLabHotkeys(opts = {}) {
       if (ev.repeat) return;
       ev.preventDefault();
       opts.onGestureCycle?.();
+      return;
+    }
+
+    if (ev.code === "KeyV" || ev.key === "v" || ev.key === "V") {
+      if (ev.repeat) return;
+      ev.preventDefault();
+      opts.onMotionCycle?.();
       return;
     }
 

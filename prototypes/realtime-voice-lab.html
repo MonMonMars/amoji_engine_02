@@ -113,14 +113,15 @@
       <strong>TTS: On/Muted</strong> silences playback without stopping the pipeline.
       <strong>Expression demo</strong> cycles Sakura presets (happy → … → angry).
       <strong>Gesture demo</strong> cycles Disney-style talk body/hand/finger styles from reply content.
-      <strong>Motion</strong> cycles SoftBank / Furhat / Reachy / Unitree / ROS / Sakura command packages.
+      <strong>Motion</strong> cycles SoftBank / Furhat / Reachy / Unitree / ROS / Sakura command packages;
+      <strong>Motion demo</strong> pokes a talk style at the HTTP motion bridge (<code>?motionBridge=</code>).
       Use <strong>Export / Import Session</strong> for archives (includes latency rollup);
       <strong>Export Metrics</strong> downloads turn p50/p95 JSON; <strong>Copy lab URL</strong> shares prefs.
       <strong>Robot steps</strong> HUD tracks
       <code>sakura → lip_sync → done/aborted</code> via
       <code>createVoiceRobotBridge</code>, plus last-turn latency, p50/p95 rollup, and partial ASR.
       Serve with <code>npm run lab</code> from <code>amoji-engine/</code>.
-      Keys: <code>Space</code> hold-to-talk · <code>Esc</code> barge · <code>M</code> mute · <code>E</code> expression · <code>G</code> gesture · <code>[</code>/<code>]</code> volume.
+      Keys: <code>Space</code> hold-to-talk · <code>Esc</code> barge · <code>M</code> mute · <code>E</code> expression · <code>G</code> gesture · <code>V</code> motion · <code>[</code>/<code>]</code> volume.
     </p>
 
     <div class="row">
@@ -200,6 +201,13 @@
         title="Cycle Disney-style talk gestures (hands / shoulders / fingers)"
       >
         Gesture demo
+      </button>
+      <button
+        type="button"
+        id="btn-motion-demo"
+        title="Cycle talk style → vendor motion package → HTTP motion bridge"
+      >
+        Motion demo
       </button>
       <button
         type="button"
@@ -786,8 +794,16 @@
           if (ev === "sakura") {
             pushExpression(payload.emotion || "neutral", { source: "robot" });
             if (payload.motion) {
-              motionDispatcher.begin(payload.motion, { source: "robot" });
+              motionDispatcher.begin(payload.motion, {
+                source: "robot",
+                annotatedReply: payload.annotatedReply || null,
+              });
               motionHudEl.textContent = motionDispatcher.formatHud();
+              if (payload.annotatedReply) {
+                log(
+                  `motion annotated ${String(payload.annotatedReply).slice(0, 72)}`,
+                );
+              }
             }
             if (payload.reply || payload.summary) {
               beginTalkGesture(payload.reply || payload.summary, {
@@ -1458,6 +1474,56 @@
         );
       };
 
+      let motionPreviewTimer = null;
+      const runMotionDemo = () => {
+        const next = nextTalkGestureStyle(robot.motionStyle || "explain");
+        const seedText =
+          next === "wave"
+            ? "拜拜"
+            : next === "point"
+              ? "睇下呢個！"
+              : next === "celebrate"
+                ? "哈哈好開心"
+                : next === "question"
+                  ? "係咪呀？"
+                  : "";
+        const pkg = robot.fromMotionStyle(next, {
+          emotion: emotionEl.textContent || "neutral",
+          text: seedText,
+        });
+        const annotatedReply = pkg?.softbank?.annotatedSay || null;
+        if (motionDispatcher.active) {
+          motionDispatcher.end({ source: "demo", reason: "style-cycle" });
+        }
+        motionDispatcher.begin(pkg, {
+          source: "demo",
+          annotatedReply,
+        });
+        motionHudEl.textContent = motionDispatcher.formatHud();
+        if (motionPreviewTimer) clearTimeout(motionPreviewTimer);
+        motionPreviewTimer = setTimeout(() => {
+          motionPreviewTimer = null;
+          if (!labHost.talking && !ttsPlayer.playing) {
+            motionDispatcher.end({ source: "demo", reason: "preview-done" });
+            robot.stopMotion();
+            motionHudEl.textContent = motionDispatcher.formatHud();
+          }
+        }, 2200);
+        session.recordTick("motion-demo", {
+          style: next,
+          vendor: robot.motionVendor,
+          annotated: Boolean(annotatedReply),
+          source: "demo",
+        });
+        log(
+          `motion demo → ${robot.motionVendor}:${next}` +
+            (annotatedReply
+              ? ` · ${String(annotatedReply).slice(0, 56)}`
+              : ` · ${motionDispatcher.formatHud()}`) +
+            (motionBridgeClient.mode === "http" ? " → bridge" : ""),
+        );
+      };
+
       const labHotkeys = createLabHotkeys({
         onPttPress: () => ptt.press(),
         onPttRelease: () => ptt.release(),
@@ -1465,6 +1531,7 @@
         onMuteToggle: () => applyTtsMute(!ttsMuted, { logChange: true }),
         onExpressionCycle: () => runExpressionDemo(),
         onGestureCycle: () => runGestureDemo(),
+        onMotionCycle: () => runMotionDemo(),
         onVolumeDown: () => {
           applyTtsVolume(persistTtsVolumePref(prevTtsVolume(ttsVolumePref.level)), {
             logChange: true,
@@ -1477,7 +1544,7 @@
         },
       });
       labHotkeys.bind();
-      log("hotkeys Space=PTT Esc=barge M=mute E=expression G=gesture [=vol- ]=vol+");
+      log("hotkeys Space=PTT Esc=barge M=mute E=expression G=gesture V=motion [=vol- ]=vol+");
 
       document.getElementById("btn-robot-demo").addEventListener("click", async () => {
         const text =
@@ -1505,6 +1572,10 @@
 
       document.getElementById("btn-gesture-demo").addEventListener("click", () => {
         runGestureDemo();
+      });
+
+      document.getElementById("btn-motion-demo").addEventListener("click", () => {
+        runMotionDemo();
       });
 
       document.getElementById("btn-motion-vendor").addEventListener("click", () => {

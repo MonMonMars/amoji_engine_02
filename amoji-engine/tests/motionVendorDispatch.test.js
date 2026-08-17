@@ -64,12 +64,19 @@ describe("sampleVendorMotionFrame + dispatcher", () => {
     expect(disp.formatHud()).toContain("idle");
   });
 
-  it("SoftBank turns expose annotated ALAnimatedSpeech reply", async () => {
+  it("SoftBank turns expose annotated ALAnimatedSpeech reply on sakura begin", async () => {
     const robot = createVoiceRobotBridge({ motionVendor: "softbank" });
+    /** @type {object | null} */
+    let sakuraPayload = null;
+    robot.on("sakura", (p) => {
+      sakuraPayload = p;
+    });
     const turn = await robot.runTurn("早晨", { forceReply: "早晨呀！" });
     expect(turn.motion.vendor).toBe("softbank");
     expect(turn.annotatedReply).toContain("^start(");
     expect(turn.annotatedReply).toContain("Hey_1");
+    expect(sakuraPayload?.annotatedReply).toBe(turn.annotatedReply);
+    expect(sakuraPayload?.motion?.softbank?.tag).toBeTruthy();
 
     const adapter = createRobotMotionAdapter({ vendor: "unitree_g1" });
     adapter.fromStyle("point");
@@ -77,6 +84,27 @@ describe("sampleVendorMotionFrame + dispatcher", () => {
     const f2 = adapter.sampleFrame(0.05, { speechEnergy: 0.7 });
     expect(f1.unitree_g1.joints.right_shoulder_pitch).toBeTypeOf("number");
     expect(f2.timeSec).toBeGreaterThan(f1.timeSec);
+  });
+
+  it("dispatcher begin forwards SoftBank annotatedReply via bridge", async () => {
+    const posts = [];
+    const bridge = {
+      mode: "http",
+      begin(pkg, meta) {
+        posts.push({ pkg, meta });
+        return { ok: true };
+      },
+    };
+    const disp = createRobotMotionDispatcher({ bridge });
+    const robot = createVoiceRobotBridge({ motionVendor: "softbank" });
+    const pkg = robot.fromMotionStyle("wave", { text: "拜拜" });
+    disp.begin(pkg, {
+      source: "demo",
+      annotatedReply: pkg.softbank.annotatedSay,
+    });
+    expect(posts).toHaveLength(1);
+    expect(posts[0].meta.annotatedReply).toContain("^start(");
+    expect(posts[0].pkg.vendor).toBe("softbank");
   });
 
   it("share URL includes motion vendor", () => {

@@ -48,8 +48,15 @@ try {
     text: "拜拜",
     vendor: "softbank",
   });
-  const begin = await client.begin(softbank, { source: "smoke" });
+  const begin = await client.begin(softbank, {
+    source: "smoke",
+    annotatedReply: softbank.softbank.annotatedSay,
+  });
   assert(begin.ok, `begin failed ${begin.error || begin.status}`);
+  assert(
+    softbank.softbank.annotatedSay.includes("^start("),
+    "missing SoftBank annotatedSay",
+  );
 
   const frame = sampleVendorMotionFrame(0.4, {
     style: "wave",

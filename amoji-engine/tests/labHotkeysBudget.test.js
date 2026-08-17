@@ -132,6 +132,22 @@ describe("labHotkeys", () => {
     expect(onGestureCycle).toHaveBeenCalledTimes(1);
     hotkeysGesture.unbind();
 
+    const onMotionCycle = vi.fn();
+    const hotkeysMotion = createLabHotkeys({
+      target,
+      onMotionCycle,
+    });
+    hotkeysMotion.bind();
+    listeners.get("keydown")({
+      code: "KeyV",
+      key: "v",
+      target: { tagName: "DIV" },
+      preventDefault: vi.fn(),
+      repeat: false,
+    });
+    expect(onMotionCycle).toHaveBeenCalledTimes(1);
+    hotkeysMotion.unbind();
+
     const onVolumeDown = vi.fn();
     const onVolumeUp = vi.fn();
     const hotkeys2 = createLabHotkeys({

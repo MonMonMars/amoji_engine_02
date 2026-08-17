@@ -43,10 +43,11 @@ Serve the **repository root** (not only `amoji-engine/`) so imports like `../amo
 10. **Expression demo** — cycle Sakura presets (`neutral → happy → thinking → surprised → sad → angry`); injects when Face Live is on. Also **E**.
 11. **Gesture demo** — cycle Disney-style talk styles (`explain → point → emphasize → …`); reply text also picks a style via `inferTalkGestureFromText`. Merges hand/shoulder/body + **per-joint fingers (Prox→Mid→Tip)** with lip-sync while speaking. Also **G**.
 12. **Motion vendor** — cycle Sakura → SoftBank → Furhat → Reachy → Unitree G1 → ROS. Maps the same talk style onto each company's open gesture/joint envelope (see [Robot motion vendors](./ROBOT_MOTION_VENDORS.md)). Optional `?motionBridge=` forwards packages to the HTTP motion bridge (`npm run motion-bridge:mock`).
-13. **Prosody demo** / **Barge-in** — marker text / abort + TTS flush. Barge also **Esc**.
-14. **Export / Import Session** — JSON archive of chat + ticks + turn metrics rollup (p50/p95) + motion dispatch log.
-15. **Export Metrics** — download turn metrics rollup only.
-16. **Copy lab URL** — clipboard share link with `worker` / `face` / `lang` / `vad` / `vol` / `motion` / `motionBridge` query prefs.
+13. **Motion demo** — cycle talk styles (`explain → point → …`) into the active vendor package and POST begin/frames to the motion bridge. SoftBank includes `^start(...)` `annotatedReply` on begin. Also **V**.
+14. **Prosody demo** / **Barge-in** — marker text / abort + TTS flush. Barge also **Esc**.
+15. **Export / Import Session** — JSON archive of chat + ticks + turn metrics rollup (p50/p95) + motion dispatch log.
+16. **Export Metrics** — download turn metrics rollup only.
+17. **Copy lab URL** — clipboard share link with `worker` / `face` / `lang` / `vad` / `vol` / `motion` / `motionBridge` query prefs.
 
 Robot HUD shows expression, **gesture**, **motion** (vendor package), partial ASR text, VAD sensitivity, last-turn latency, rollup, and a soft **budget** line (default Σ ≤ 3500ms).
 
@@ -63,6 +64,7 @@ Hand / shoulder / finger parameter ids (`ParamHandRPoint`, `ParamFingerRIndexTip
 | `M` | Toggle TTS mute |
 | `E` | Cycle expression preset |
 | `G` | Cycle talk gesture style |
+| `V` | Cycle robot motion style (vendor package → bridge) |
 | `[` / `]` | TTS volume down / up |
 
 Ignored while focus is in an input / textarea.
