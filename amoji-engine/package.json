@@ -25,6 +25,7 @@
     "demo": "tsx scripts/demo.ts",
     "demo:dry": "tsx scripts/demo.ts --dry-run",
     "demo:e2e": "node scripts/voice-chat-e2e-demo.mjs",
+    "voice-worker": "python3 scripts/voice_bridge_server.py --port 7890",
     "lint": "eslint src"
   },
   "engines": {

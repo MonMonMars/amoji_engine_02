@@ -202,4 +202,30 @@ console.log("[e2e] barge during speak delay…");
   console.log("[e2e] barge during talk ok");
 }
 
+console.log("[e2e] SenseVoice / CosyVoice worker mock…");
+{
+  const { createVoiceWorkerClient, parseSenseVoiceTranscript } = await import(
+    "../engine/index.js"
+  );
+  const parsed = parseSenseVoiceTranscript(
+    "<|yue|><|HAPPY|><|Speech|>今日好開心呀",
+  );
+  assert(parsed.language === "yue", "sensevoice lang");
+  assert(parsed.serEmotion === "happy", "sensevoice ser");
+  const worker = createVoiceWorkerClient({ mode: "mock" });
+  const turn = await worker.runTurn({
+    text: "<|yue|><|HAPPY|><|Speech|>今日天氣好正呀",
+  });
+  assert(turn.asr.emotion.emotion === "happy", "worker emotion");
+  assert(turn.tts.chunkCount >= 1, "worker tts chunks");
+  assert(turn.reply, "worker reply");
+  console.log(
+    "[e2e] worker ok →",
+    turn.language,
+    turn.emotion.emotion,
+    "chunks",
+    turn.tts.chunkCount,
+  );
+}
+
 console.log("[e2e] all checks passed");

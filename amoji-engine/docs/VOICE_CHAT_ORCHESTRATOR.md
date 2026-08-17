@@ -32,7 +32,7 @@ When `startAlwaysOn()` runs, the orchestrator builds `createAlwaysOnListen({ mic
 4. While busy (talk/TTS), sustained mic energy → `onBargeIn` → host abort
 5. Loop back to `startListening()` until `stopAlwaysOn()`
 
-See also [Always-on listen](./always-on-listen.md), [Session & presence](./SESSION_AND_PRESENCE.md).
+See also [Always-on listen](./always-on-listen.md), [Session & presence](./SESSION_AND_PRESENCE.md), [Voice worker](./VOICE_WORKER.md).
 
 ## Robot bridge (lab HUD)
 

@@ -39,6 +39,34 @@ export {
 } from "./voice/prosodyMarkers.js";
 
 export {
+  SENSE_VOICE_SCHEMA,
+  parseSenseVoiceTranscript,
+  emotionFromTextHeuristics,
+  emotionFromSenseVoice,
+} from "./voice/senseVoice.js";
+
+export {
+  VOICE_WORKER_SCHEMA,
+  callVoiceWorker,
+  callVoiceWorkerTtsStream,
+  mockAsr,
+  mockTtsStream,
+  createVoiceWorkerClient,
+} from "./voice/voiceWorkerClient.js";
+
+export {
+  createPartialAsrWatcher,
+  snapshotMicWavBase64,
+} from "./voice/partialAsr.js";
+
+export {
+  BROWSER_AUDIO_SCHEMA,
+  encodeWavPcm16,
+  arrayBufferToBase64,
+  downsampleMono,
+} from "./voice/browserAudio.js";
+
+export {
   IDLE_PRESENCE_SCHEMA,
   IDLE_FACE_LIVE_IDS,
   sampleIdlePresence,
