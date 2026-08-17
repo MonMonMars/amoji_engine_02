@@ -7,37 +7,22 @@ Two surfaces ship together:
 | Surface | Path | Role |
 | --- | --- | --- |
 | **TypeScript library** | `src/` → `dist/` | OpenAI Realtime GA + Face Live driver + orchestrator |
-| **JS engine + lab** | `engine/` + `../prototypes/realtime-voice-lab.html` | Always-on VAD, SenseVoice/CosyVoice worker, TTS playback, Face Live inject |
-
-## Stack overview
-
-```
-Mic ──▶ Always-on VAD ──▶ SenseVoice ASR ──▶ Robot bridge ──▶ CosyVoice TTS
-              │                                    │                │
-              │                              dialect/prosody    WAV chunks
-              ▼                                    ▼                ▼
-         barge-in                            Sakura emotion    lip-sync RMS
-                                                                   │
-                                                                   ▼
-                                                         Face Live (Live2D)
-```
-
-OpenAI Realtime path (TS): `VoiceBridge` → `RealtimeChatClient` → `AmojiOrchestrator` → `SakuraFaceLiveDriver`.
+| **JS engine + lab** | `engine/` + `../prototypes/` | Companion chat (Grok-style 3D), always-on VAD lab, SenseVoice/CosyVoice worker |
 
 ## Quick start
 
 ```bash
 cd amoji-engine
 npm install
-npm test                 # 117+ tests (TS + JS engine)
-npm run build
-npm run typecheck
-npm run demo:e2e         # offline voice/lab pipeline
-npm run demo:dry         # TS mock Face Live
-npm run demo:facelive-smoke
-npm run demo:http-smoke  # Node mock SenseVoice/CosyVoice worker
-npm run ci               # full offline matrix
+npm run lab              # http://127.0.0.1:5173/ → Amoji Companion (3D chat)
+# optional online LLM:
+# OPENAI_API_KEY=sk-… npm run lab
+npm test
+npm run ci
 ```
+
+Companion: full-bleed low-poly anime avatar, bottom chat bar, emotion + mouth from replies.
+Voice lab: `/prototypes/realtime-voice-lab.html`.
 
 ### Prototype lab
 

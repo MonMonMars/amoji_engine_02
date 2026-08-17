@@ -31,6 +31,7 @@
 - SoftBank `annotatedReply` on `sakura` begin (ALAnimatedSpeech reaches the motion bridge before speak); lab **Motion demo** + `V` hotkey cycles talk styles → vendor packages → bridge
 - Motion demo idle frame stream (~12 Hz) for Reachy / Furhat / Unitree / ROS without a voice turn; Furhat `say` / `sayText` begin meta (SoftBank annotatedSay parity)
 - Fix lab browser init: `mockFaceLiveBridge` no longer statically imports Node `ws` (bare specifier crashed the module graph so every demo button was dead)
+- **Amoji Companion** (Grok-style): full-bleed low-poly 3D anime avatar (Three.js) with emotion + lip-sync, bottom-center chat composer, `POST /api/chat` local/online LLM proxy; 2D fallback if WebGL unavailable
 - Lab UI: Always-on, Hold to talk, Ready check, Worker, Face Live, Dialect, VAD, TTS mute/volume, Expression, Gesture, Prosody, Barge-in, Export/Import
 - Docs: REALTIME_VOICE_LAB, VOICE_WORKER, CI matrix, architecture note for JS path
 
