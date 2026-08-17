@@ -117,9 +117,8 @@ console.log("[e2e] dialect switch yue → en…");
 
 console.log("[e2e] idle presence smoke…");
 {
-  const { createIdlePresenceClock, sampleIdlePresence } = await import(
-    "../engine/face/idlePresence.js"
-  );
+  const { createIdlePresenceClock, sampleIdlePresence, presenceToFaceLiveParams } =
+    await import("../engine/face/idlePresence.js");
   const a = sampleIdlePresence(0.5);
   const b = sampleIdlePresence(1.5);
   assert(a.speechActive === false, "idle not speaking");
@@ -128,7 +127,10 @@ console.log("[e2e] idle presence smoke…");
   const before = clock.timeSec;
   clock.step(0.05);
   assert(clock.timeSec > before, "clock should advance");
-  console.log("[e2e] idle presence ok →", clock.timeSec.toFixed(3));
+  const params = presenceToFaceLiveParams(a);
+  assert(params.some((p) => p.id === "ParamMouthOpenY"), "face params mouth");
+  assert(params.some((p) => p.id === "ParamAngleX"), "face params look");
+  console.log("[e2e] idle presence ok →", clock.timeSec.toFixed(3), "params", params.length);
 }
 
 console.log("[e2e] prosody markers…");
@@ -146,6 +148,58 @@ console.log("[e2e] prosody markers…");
     "speed",
     turn.prosody.speed,
   );
+}
+
+console.log("[e2e] barge during speak delay…");
+{
+  const { createAlwaysOnListen } = await import(
+    "../engine/voice/alwaysOnListen.js"
+  );
+  let frameCb = null;
+  const mic = {
+    onFrame: (cb) => {
+      frameCb = cb;
+      return () => {
+        frameCb = null;
+      };
+    },
+  };
+  const robot = createVoiceRobotBridge();
+  let barged = false;
+  const controller = createAlwaysOnListen({
+    mic,
+    startListening: async () => {},
+    stopListeningAndTalk: async () => {
+      const turn = robot.runTurn("你好", { speakMs: 400, tickMs: 20 });
+      await new Promise((r) => setTimeout(r, 30));
+      frameCb(loud(20));
+      frameCb(loud(20));
+      frameCb(loud(20));
+      frameCb(loud(20));
+      frameCb(loud(20));
+      const result = await turn;
+      barged = Boolean(result.barged);
+    },
+    energyThreshold: 0.05,
+    minSpeechMs: 20,
+    trailingSilenceMs: 40,
+    sampleRateHz: 1000,
+    frameSamples: 20,
+    bargeEnergyThreshold: 0.05,
+    bargeMinSpeechMs: 40,
+    onBargeIn: async () => {
+      robot.abort("e2e-barge");
+    },
+  });
+  await controller.start();
+  frameCb(loud(20));
+  frameCb(loud(20));
+  frameCb(silent(20));
+  frameCb(silent(20));
+  await new Promise((r) => setTimeout(r, 500));
+  assert(barged === true, "expected barged speak turn");
+  await controller.stop();
+  console.log("[e2e] barge during talk ok");
 }
 
 console.log("[e2e] all checks passed");

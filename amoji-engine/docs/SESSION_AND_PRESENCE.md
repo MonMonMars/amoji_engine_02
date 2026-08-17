@@ -39,13 +39,21 @@ See also [VoiceChatOrchestrator](./VOICE_CHAT_ORCHESTRATOR.md) for always-on lis
 
 ## Lab idle presence
 
-While the lab host is not talking, an `IdlePresenceClock` rAF loop updates the Robot HUD **idle** row (breath / jaw / blink). Speaking turns pause idle; Clear resets the clock.
+While the lab host is not talking, an `IdlePresenceClock` rAF loop updates the Robot HUD **idle** row (breath / jaw / blink) and maps morphs to Face Live inject params via `presenceToFaceLiveParams` (jaw → `ParamMouthOpenY`, blink → eye open, look → angle).
 
 ```js
-import { createIdlePresenceClock } from "@amoji/engine/engine";
+import {
+  createIdlePresenceClock,
+  presenceToFaceLiveParams,
+} from "@amoji/engine/engine";
 const idle = createIdlePresenceClock({ emotion: "neutral" });
-// each rAF while !talking: idle.step(dt)
+// each rAF while !talking:
+const presence = idle.step(dt);
+const params = presenceToFaceLiveParams(presence);
+// faceLive.driveIdlePresence(presence) — or inject params directly
 ```
+
+TypeScript: `SakuraFaceLiveDriver.driveIdlePresence(presence)` uses the same mapping.
 
 ## Dialect auto-switch
 
@@ -61,3 +69,21 @@ prosodyFromMarkedText("好呀[pause]，跟住[fast]開心！", { language: "yue"
 ```
 
 Lab: **Prosody demo** / **Barge-in** on `prototypes/realtime-voice-lab.html`.
+
+## Barge-in during TTS
+
+Always-on listen keeps mic frames flowing while `stopListeningAndTalk` is busy. Sustained energy above `bargeEnergyThreshold` for `bargeMinSpeechMs` fires `onBargeIn` so the host can `robot.abort()` / cancel TTS.
+
+```js
+createAlwaysOnListen({
+  mic,
+  startListening,
+  stopListeningAndTalk,
+  bargeDuringTalk: true,
+  bargeEnergyThreshold: 0.04,
+  bargeMinSpeechMs: 100,
+  onBargeIn: (info) => robot.abort("barge-in"),
+});
+```
+
+`VoiceChatOrchestrator` forwards the same hooks via `opts.onBargeIn` / `orch.bargeIn()`.

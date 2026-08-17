@@ -187,11 +187,11 @@ export function createVoiceRobotBridge(opts = {}) {
       });
     },
     /**
-     * Run a stub robot turn: sakura → lip_sync → done (or aborted).
+     * Run a stub robot turn: sakura → lip_sync → (optional speak delay) → done (or aborted).
      * Updates memory when the user introduces a name (e.g. 小明).
      * Auto-switches language from SenseVoice tags / heuristics.
      * @param {string} userText
-     * @param {{ forceReply?: string }} [opts]
+     * @param {{ forceReply?: string, speakMs?: number, tickMs?: number }} [opts]
      */
     async runTurn(userText, opts = {}) {
       aborted = false;
@@ -239,6 +239,39 @@ export function createVoiceRobotBridge(opts = {}) {
       });
       const spoken = prosody.text || replySource;
 
+      const speakMs =
+        typeof opts.speakMs === "number" ? Math.max(0, opts.speakMs) : 0;
+      const tickMs = Math.max(16, opts.tickMs ?? 40);
+      if (speakMs > 0) {
+        let elapsed = 0;
+        while (elapsed < speakMs) {
+          if (aborted) {
+            return {
+              ...this.getHud(),
+              reply: spoken,
+              language,
+              dialect: detected,
+              prosody,
+              barged: true,
+            };
+          }
+          const slice = Math.min(tickMs, speakMs - elapsed);
+          await sleep(slice);
+          elapsed += slice;
+        }
+      }
+
+      if (aborted) {
+        return {
+          ...this.getHud(),
+          reply: spoken,
+          language,
+          dialect: detected,
+          prosody,
+          barged: true,
+        };
+      }
+
       emit("done", {
         phase: "done",
         emotion: plan.emotion,
@@ -259,6 +292,11 @@ export function createVoiceRobotBridge(opts = {}) {
       };
     },
   };
+}
+
+/** @param {number} ms */
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 /**

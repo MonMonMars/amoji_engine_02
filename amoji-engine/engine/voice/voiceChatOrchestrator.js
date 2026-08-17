@@ -3,6 +3,7 @@
  *
  * Wraps {@link createAlwaysOnListen}: when always-on is active, mic frames drive
  * energy VAD end-of-utterance → stopListeningAndTalk → startListening.
+ * Optional `onBargeIn` fires while talk/TTS is busy so the host can abort.
  */
 
 import {
@@ -25,6 +26,11 @@ import {
  * @property {(state: string, prev: string) => void} [onVadStateChange]
  * @property {(info: { speechMs: number, silenceMs: number }) => void} [onUtteranceEnded]
  * @property {(error: unknown) => void} [onError]
+ * @property {(info: { energy: number, speechMs: number }) => void | Promise<void>} [onBargeIn]
+ *   Fired when mic energy is sustained during talk (barge-in during TTS).
+ * @property {boolean} [bargeDuringTalk]
+ * @property {number} [bargeEnergyThreshold]
+ * @property {number} [bargeMinSpeechMs]
  * @property {number} [energyThreshold]
  * @property {number} [minSpeechMs]
  * @property {number} [trailingSilenceMs]
@@ -82,6 +88,15 @@ export class VoiceChatOrchestrator {
   }
 
   /**
+   * Host barge-in during talk (also invoked from always-on mic energy).
+   * @param {{ energy?: number, speechMs?: number, reason?: string }} [info]
+   */
+  async bargeIn(info = {}) {
+    this._phase = "listening";
+    await this.opts.onBargeIn?.(info);
+  }
+
+  /**
    * Start the always-on VAD listen loop.
    * Requires `mic.onFrame`. Enables always-on mode if it was not set at construct time.
    */
@@ -120,6 +135,10 @@ export class VoiceChatOrchestrator {
       onStateChange: this.opts.onVadStateChange,
       onUtteranceEnded: this.opts.onUtteranceEnded,
       onError: this.opts.onError,
+      bargeDuringTalk: this.opts.bargeDuringTalk,
+      bargeEnergyThreshold: this.opts.bargeEnergyThreshold,
+      bargeMinSpeechMs: this.opts.bargeMinSpeechMs,
+      onBargeIn: (info) => this.bargeIn(info),
     });
 
     await this._controller.start();

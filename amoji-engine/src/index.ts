@@ -43,6 +43,12 @@ export {
 } from "./face-live/expressions.js";
 
 export {
+  IDLE_PRESENCE_SCHEMA,
+  presenceToFaceLiveParams,
+  type IdlePresenceSample,
+} from "./face-live/idlePresence.js";
+
+export {
   SakuraFaceLiveDriver,
   type FaceLiveDriverEvents,
   type FaceLiveEventName,

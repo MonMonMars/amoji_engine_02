@@ -3,6 +3,10 @@ import {
   lipSyncParameters,
   SAKURA_EXPRESSION_PRESETS,
 } from "./expressions.js";
+import {
+  presenceToFaceLiveParams,
+  type IdlePresenceSample,
+} from "./idlePresence.js";
 import type {
   ConnectionState,
   FaceLiveParameter,
@@ -166,6 +170,18 @@ export class SakuraFaceLiveDriver {
       { id: "ParamMouthOpenY", value: 0 },
       { id: "ParamMouthSmile", value: 0.15 },
     ]);
+  }
+
+  /**
+   * Drive subtle idle / listen presence morphs (breath, blink, look).
+   * Call from a rAF / clock while not speaking.
+   */
+  async driveIdlePresence(
+    presence: IdlePresenceSample,
+  ): Promise<FaceLiveParameter[]> {
+    const parameters = presenceToFaceLiveParams(presence);
+    await this.injectParameters(parameters);
+    return parameters;
   }
 
   /** Infer and apply expression from transcript text. */
