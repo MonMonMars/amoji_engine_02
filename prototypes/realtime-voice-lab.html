@@ -130,6 +130,13 @@
       <button type="button" id="btn-prosody-demo" title="Stub reply with [pause]/[fast]/[slow] markers">
         Prosody demo
       </button>
+      <button
+        type="button"
+        id="btn-worker-demo"
+        title="Mock SenseVoice ASR → CosyVoice TTS worker turn"
+      >
+        Worker demo
+      </button>
       <button type="button" id="btn-barge" title="Abort current robot turn">
         Barge-in
       </button>
@@ -169,6 +176,7 @@
         createLabSessionFacade,
         createVoiceRobotBridge,
         createIdlePresenceClock,
+        createVoiceWorkerClient,
         presenceToFaceLiveParams,
         frameEnergy,
       } from "../amoji-engine/engine/index.js";
@@ -193,6 +201,18 @@
 
       const robot = createVoiceRobotBridge();
       const idle = createIdlePresenceClock({ emotion: "neutral", intensity: 0.42 });
+      const worker = createVoiceWorkerClient({
+        mode: "mock",
+        language: "yue",
+        onEvent: (ev) => {
+          session.recordTick("worker", {
+            type: ev.type,
+            language: ev.data?.language,
+            emotion: ev.data?.emotion?.emotion || ev.data?.emotion,
+            chunks: ev.data?.chunkCount,
+          });
+        },
+      });
 
       const renderRobotHud = (payload = robot.getHud()) => {
         phaseEl.textContent = payload.phase || "idle";
@@ -459,6 +479,24 @@
           source: "prosody-demo",
         });
         log(`prosody demo reply markers in: ${marked}`);
+      });
+
+      document.getElementById("btn-worker-demo").addEventListener("click", async () => {
+        const asrText =
+          worker.language === "en"
+            ? "<|en|><|NEUTRAL|><|Speech|>Hello there, how are you today?"
+            : "<|yue|><|HAPPY|><|Speech|>今日天氣好正呀，我好開心！";
+        const turn = await worker.runTurn({ text: asrText });
+        idle.setEmotion(turn.emotion?.emotion || "neutral", turn.emotion?.intensity || 0.5);
+        await labHost.stopListeningAndTalk({
+          userText: turn.asr.text,
+          forceReply: turn.reply,
+          speakMs: Math.min(1200, Math.round((turn.tts.durationSec || 0.6) * 1000)),
+          source: "worker-demo",
+        });
+        log(
+          `worker demo asr=${turn.asr.text} emo=${turn.emotion?.emotion} ttsChunks=${turn.tts.chunkCount} lang=${turn.language}`,
+        );
       });
 
       document.getElementById("btn-barge").addEventListener("click", () => {

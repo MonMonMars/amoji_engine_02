@@ -87,3 +87,33 @@ createAlwaysOnListen({
 ```
 
 `VoiceChatOrchestrator` forwards the same hooks via `opts.onBargeIn` / `orch.bargeIn()`.
+
+## SenseVoice + CosyVoice worker
+
+JS client: `createVoiceWorkerClient({ mode: 'mock' | 'http', workerUrl })`.
+
+| Mode | Role |
+| --- | --- |
+| `mock` | Offline ASR/TTS stubs with SenseVoice-style tags |
+| `http` | `POST` to `scripts/voice_bridge_server.py` (`/asr`, `/tts`, `/tts/stream`) |
+
+```js
+import { createVoiceWorkerClient } from "@amoji/engine/engine";
+const worker = createVoiceWorkerClient({ mode: "mock" });
+const turn = await worker.runTurn({
+  text: "<|yue|><|HAPPY|><|Speech|>今日好開心呀",
+});
+// turn.asr.emotion · turn.tts.chunks · turn.reply
+```
+
+Python worker (optional GPU):
+
+```bash
+cd amoji-engine
+# pip install fastapi uvicorn  (+ funasr / CosyVoice when ready)
+npm run voice-worker   # → http://127.0.0.1:7890
+export AMOJI_VOICE_WORKER=http://127.0.0.1:7890
+```
+
+Lab: **Worker demo** runs a mock SenseVoice → CosyVoice pipeline turn.
+Partial ASR: `createPartialAsrWatcher` polls `/asr/partial` while the mic is open.
