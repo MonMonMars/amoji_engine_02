@@ -60,6 +60,7 @@ function pushEntry(event, body) {
     style: body.style || body.package?.style || null,
     source: body.source || null,
     annotatedReply: body.annotatedReply || null,
+    sayText: body.sayText || body.package?.furhat?.say || null,
     command: summarize(body.package || body),
     body,
   };
@@ -137,6 +138,7 @@ const server = http.createServer(async (req, res) => {
         style: entry.style,
         command: entry.command,
         annotatedReply: entry.annotatedReply,
+        sayText: entry.sayText,
         seq: log.length,
       });
       return;

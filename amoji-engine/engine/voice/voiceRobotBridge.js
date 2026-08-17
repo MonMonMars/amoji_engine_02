@@ -313,6 +313,15 @@ export function createVoiceRobotBridge(opts = {}) {
         motion.vendor === "softbank"
           ? annotateSoftbankSpeech(spoken, spokenMotion.style)
           : null;
+      const sayText =
+        motion.vendor === "furhat" ? spoken : spokenMotion.furhat?.say || null;
+      if (sayText && spokenMotion.furhat) {
+        spokenMotion.furhat = {
+          ...spokenMotion.furhat,
+          say: sayText,
+          sayApi: "Furhat Remote API POST /furhat/say",
+        };
+      }
       const motionSteps = robotMotionPlanSteps(spokenMotion);
       const steps = [
         ...plan.steps.slice(0, -2),
@@ -331,6 +340,7 @@ export function createVoiceRobotBridge(opts = {}) {
         motionHud: spokenMotionHud,
         reply: spoken,
         annotatedReply,
+        sayText,
       });
 
       if (aborted) return this.getHud();
@@ -345,6 +355,7 @@ export function createVoiceRobotBridge(opts = {}) {
         motionHud: spokenMotionHud,
         reply: spoken,
         annotatedReply,
+        sayText,
       });
 
       if (aborted) return this.getHud();
@@ -363,6 +374,7 @@ export function createVoiceRobotBridge(opts = {}) {
               dialect: detected,
               prosody,
               annotatedReply,
+              sayText,
               barged: true,
             };
           }
@@ -380,6 +392,7 @@ export function createVoiceRobotBridge(opts = {}) {
           dialect: detected,
           prosody,
           annotatedReply,
+          sayText,
           barged: true,
         };
       }
@@ -391,6 +404,7 @@ export function createVoiceRobotBridge(opts = {}) {
         steps,
         reply: spoken,
         annotatedReply,
+        sayText,
         language,
         dialect: detected,
         prosody,
@@ -402,6 +416,7 @@ export function createVoiceRobotBridge(opts = {}) {
         ...this.getHud(),
         reply: spoken,
         annotatedReply,
+        sayText,
         language,
         dialect: detected,
         prosody,

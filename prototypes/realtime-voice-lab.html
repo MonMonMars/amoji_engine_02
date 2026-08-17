@@ -797,12 +797,15 @@
               motionDispatcher.begin(payload.motion, {
                 source: "robot",
                 annotatedReply: payload.annotatedReply || null,
+                sayText: payload.sayText || payload.motion?.furhat?.say || null,
               });
               motionHudEl.textContent = motionDispatcher.formatHud();
               if (payload.annotatedReply) {
                 log(
                   `motion annotated ${String(payload.annotatedReply).slice(0, 72)}`,
                 );
+              } else if (payload.sayText) {
+                log(`motion say ${String(payload.sayText).slice(0, 72)}`);
               }
             }
             if (payload.reply || payload.summary) {
@@ -1087,17 +1090,18 @@
           } else {
             labHost.lastFaceParams = merged;
           }
-          // Animate / dispatch vendor motion frames (~12 Hz)
-          if (motionDispatcher.active && now - lastMotionFrameAt > 80) {
-            lastMotionFrameAt = now;
-            const frame = robot.sampleMotionFrame(0.08, { speechEnergy });
-            motionDispatcher.frame(frame, { source: "raf" });
-            motionHudEl.textContent = motionDispatcher.formatHud();
-            // When vendor is sakura, Face Live already gets fingertip merge above.
-            if (frame?.sakura?.parameters?.length && robot.motionVendor === "sakura") {
-              /* merged via talkGestures */
-            }
-          }
+        }
+        // Vendor motion frames (~12 Hz) while speaking OR Motion demo preview
+        if (motionDispatcher.active && now - lastMotionFrameAt > 80) {
+          lastMotionFrameAt = now;
+          const speechEnergy = speaking
+            ? lastLipSync?.mouthOpen ?? 0.45
+            : 0.55;
+          const frame = robot.sampleMotionFrame(0.08, { speechEnergy });
+          motionDispatcher.frame(frame, {
+            source: speaking ? "raf" : "demo-raf",
+          });
+          motionHudEl.textContent = motionDispatcher.formatHud();
         }
         requestAnimationFrame(raf);
       }
@@ -1492,12 +1496,14 @@
           text: seedText,
         });
         const annotatedReply = pkg?.softbank?.annotatedSay || null;
+        const sayText = pkg?.furhat?.say || null;
         if (motionDispatcher.active) {
           motionDispatcher.end({ source: "demo", reason: "style-cycle" });
         }
         motionDispatcher.begin(pkg, {
           source: "demo",
           annotatedReply,
+          sayText,
         });
         motionHudEl.textContent = motionDispatcher.formatHud();
         if (motionPreviewTimer) clearTimeout(motionPreviewTimer);
@@ -1513,12 +1519,14 @@
           style: next,
           vendor: robot.motionVendor,
           annotated: Boolean(annotatedReply),
+          say: Boolean(sayText),
           source: "demo",
         });
+        const cue = annotatedReply || sayText;
         log(
           `motion demo → ${robot.motionVendor}:${next}` +
-            (annotatedReply
-              ? ` · ${String(annotatedReply).slice(0, 56)}`
+            (cue
+              ? ` · ${String(cue).slice(0, 56)}`
               : ` · ${motionDispatcher.formatHud()}`) +
             (motionBridgeClient.mode === "http" ? " → bridge" : ""),
         );

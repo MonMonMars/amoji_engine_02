@@ -58,12 +58,25 @@ try {
     "missing SoftBank annotatedSay",
   );
 
-  const frame = sampleVendorMotionFrame(0.4, {
+  const furhat = buildRobotMotionPackage({
+    text: "睇下呢個！",
+    vendor: "furhat",
+    style: "point",
+  });
+  assert(furhat.furhat.say === "睇下呢個！", "missing Furhat say");
+  const furhatBegin = await client.begin(furhat, {
+    source: "smoke",
+    sayText: furhat.furhat.say,
+  });
+  assert(furhatBegin.ok, "furhat begin failed");
+  assert(furhatBegin.data?.sayText === "睇下呢個！", "bridge missing sayText");
+
+  const reachy = sampleVendorMotionFrame(0.2, {
     style: "wave",
     vendor: "reachy",
   });
-  const framed = await client.frame(frame);
-  assert(framed.ok, "frame failed");
+  const reachyFrame = await client.frame(reachy);
+  assert(reachyFrame.ok, "reachy frame failed");
 
   const g1 = buildRobotMotionPackage({
     style: "celebrate",
@@ -88,6 +101,10 @@ try {
   assert(
     remote.log.some((e) => e.vendor === "reachy"),
     "missing reachy",
+  );
+  assert(
+    remote.log.some((e) => e.vendor === "furhat" && e.sayText),
+    "missing furhat sayText",
   );
 
   console.log(
