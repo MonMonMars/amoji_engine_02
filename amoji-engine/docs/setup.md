@@ -76,3 +76,14 @@ await engine.start();
 // feed mic frames...
 await engine.stop();
 ```
+
+## Offline validation (no API key)
+
+```bash
+npm test
+npm run demo:e2e
+npm run demo:facelive-smoke
+npm run demo:http-smoke
+```
+
+Lab walkthrough: [Realtime voice lab](./REALTIME_VOICE_LAB.md). Worker: [Voice worker](./VOICE_WORKER.md).
