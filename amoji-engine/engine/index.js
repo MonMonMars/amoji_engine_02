@@ -155,6 +155,17 @@ export {
 } from "./lab/dialectPref.js";
 
 export {
+  LISTEN_PREF_SCHEMA,
+  LISTEN_PREF_STORAGE_KEY,
+  LISTEN_SENSITIVITY_PRESETS,
+  listenPresetFor,
+  nextListenSensitivity,
+  normalizeListenSensitivity,
+  persistListenPref,
+  resolveListenPref,
+} from "./lab/listenPref.js";
+
+export {
   TURN_METRICS_ROLLUP_SCHEMA,
   createTurnMetricsRollup,
   normalizeTurnMetrics,

@@ -16,7 +16,8 @@
 - Worker `health()` probe (mock always-ok / HTTP `GET /health`)
 - Dialect preference (`?lang=auto|yue|en`) with force lock on worker + robot
 - Emotion → Sakura expression map (`mapEmotionToExpression`) + angry/surprised presets
-- Lab UI: Always-on, Worker, Face Live, Dialect, Expression, Prosody, Barge-in, Export/Import
+- VAD sensitivity prefs (`?vad=high|normal|low`) with hot `configure()` + TTS mute
+- Lab UI: Always-on, Worker, Face Live, Dialect, VAD, TTS mute, Expression, Prosody, Barge-in, Export/Import
 - Docs: REALTIME_VOICE_LAB, VOICE_WORKER, CI matrix, architecture note for JS path
 
 ### Validation

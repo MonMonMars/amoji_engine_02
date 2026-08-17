@@ -50,6 +50,21 @@ describe('tts playback', () => {
     expect(idle).toHaveBeenCalled();
   });
 
+  it('setMuted drops enqueue and flushes', async () => {
+    const started = [];
+    const player = createTtsPlaybackQueue({
+      offline: true,
+      onStart: (c) => started.push(c.index),
+    });
+    expect(player.setMuted(true)).toBe(true);
+    await player.enqueue({ index: 0, durationSec: 0.05, text: 'x' });
+    expect(started).toHaveLength(0);
+    player.setMuted(false);
+    await player.enqueue({ index: 1, durationSec: 0.05, text: 'y' });
+    await new Promise((r) => setTimeout(r, 80));
+    expect(started).toContain(1);
+  });
+
   it('encodeWavPcm16 length matches sample count', () => {
     const samples = new Float32Array(100);
     const buf = encodeWavPcm16(samples, 16000);
