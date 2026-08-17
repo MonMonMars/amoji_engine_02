@@ -17,6 +17,7 @@ Serve the **repository root** (not only `amoji-engine/`) so imports like `../amo
 | Idle presence morphs | `engine/face/idlePresence.js` |
 | Face Live WS inject | `engine/face/sakuraFaceLiveClient.js` |
 | Emotion → expression | `engine/face/emotionExpression.js` (`inferExpressionFromText`) |
+| Disney talk gestures | `engine/face/talkGestures.js` (body / hands / fingers from reply text) |
 | Session archive | `engine/lab/sessionArchive.js` |
 | Clipboard / share URL | `engine/lab/clipboard.js` |
 | Turn latency rollup | `engine/lab/turnMetricsRollup.js` |
@@ -39,14 +40,17 @@ Serve the **repository root** (not only `amoji-engine/`) so imports like `../amo
 8. **TTS mute** — silence CosyVoice playback (pipeline + lip-sync ticks still run when unmuted chunks arrive). Also **M**.
 9. **TTS volume** — Soft → Normal → Loud (`?vol=` / `amoji.ttsVolume`); GainNode when available. Also **[** / **]**.
 10. **Expression demo** — cycle Sakura presets (`neutral → happy → thinking → surprised → sad → angry`); injects when Face Live is on. Also **E**.
-11. **Prosody demo** / **Barge-in** — marker text / abort + TTS flush. Barge also **Esc**.
-12. **Export / Import Session** — JSON archive of chat + ticks + turn metrics rollup (p50/p95).
-13. **Export Metrics** — download turn metrics rollup only.
-14. **Copy lab URL** — clipboard share link with `worker` / `face` / `lang` / `vad` / `vol` query prefs.
+11. **Gesture demo** — cycle Disney-style talk styles (`explain → point → emphasize → …`); reply text also picks a style via `inferTalkGestureFromText`. Merges hand/shoulder/body params with lip-sync while speaking. Also **G**.
+12. **Prosody demo** / **Barge-in** — marker text / abort + TTS flush. Barge also **Esc**.
+13. **Export / Import Session** — JSON archive of chat + ticks + turn metrics rollup (p50/p95).
+14. **Export Metrics** — download turn metrics rollup only.
+15. **Copy lab URL** — clipboard share link with `worker` / `face` / `lang` / `vad` / `vol` query prefs.
 
-Robot HUD shows expression, partial ASR text, VAD sensitivity, last-turn latency, rollup, and a soft **budget** line (default Σ ≤ 3500ms).
+Robot HUD shows expression, **gesture**, partial ASR text, VAD sensitivity, last-turn latency, rollup, and a soft **budget** line (default Σ ≤ 3500ms).
 
-Reply text also drives Face Live via `inferExpressionFromText` / `resolveExpressionFromTurn` when SER emotion is missing.
+Reply text also drives Face Live via `inferExpressionFromText` / `resolveExpressionFromTurn` when SER emotion is missing, and talk gestures via `inferTalkGestureFromText` (point / question / celebrate / count / shrug / wave / …).
+
+Hand / shoulder / finger parameter ids (`ParamHandRPoint`, `ParamFingerRIndex`, `ParamShoulderL`, …) are custom inject names — map them in VTube Studio / Live2D if the Sakura model does not expose them.
 
 ### Keyboard
 
@@ -56,6 +60,7 @@ Reply text also drives Face Live via `inferExpressionFromText` / `resolveExpress
 | `Esc` | Barge-in |
 | `M` | Toggle TTS mute |
 | `E` | Cycle expression preset |
+| `G` | Cycle talk gesture style |
 | `[` / `]` | TTS volume down / up |
 
 Ignored while focus is in an input / textarea.

@@ -115,9 +115,25 @@ describe("labHotkeys", () => {
     });
     expect(onExpressionCycle).toHaveBeenCalledTimes(1);
 
+    const onGestureCycle = vi.fn();
+    hotkeys.unbind();
+    const hotkeysGesture = createLabHotkeys({
+      target,
+      onGestureCycle,
+    });
+    hotkeysGesture.bind();
+    listeners.get("keydown")({
+      code: "KeyG",
+      key: "g",
+      target: { tagName: "DIV" },
+      preventDefault: vi.fn(),
+      repeat: false,
+    });
+    expect(onGestureCycle).toHaveBeenCalledTimes(1);
+    hotkeysGesture.unbind();
+
     const onVolumeDown = vi.fn();
     const onVolumeUp = vi.fn();
-    hotkeys.unbind();
     const hotkeys2 = createLabHotkeys({
       target,
       onVolumeDown,

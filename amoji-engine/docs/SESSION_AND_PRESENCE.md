@@ -55,6 +55,28 @@ const params = presenceToFaceLiveParams(presence);
 
 TypeScript: `SakuraFaceLiveDriver.driveIdlePresence(presence)` uses the same mapping.
 
+## Disney-style talk gestures
+
+While the assistant is speaking (or TTS is playing), `TalkGestureClock` samples body / shoulder / arm / hand / finger poses and merges them with lip-sync Face Live params.
+
+Styles are chosen from reply text via `inferTalkGestureFromText` (pointing, questions, celebrate, count fingers, shrug, wave, thinking, soft, emphasize, explain).
+
+```js
+import {
+  createTalkGestureClock,
+  talkGestureToFaceLiveParams,
+  mergeFaceLiveParams,
+  inferTalkGestureFromText,
+} from "@amoji/engine/engine";
+
+const talk = createTalkGestureClock();
+talk.start("睇下呢個！", { emotion: "happy" }); // → point (or celebrate if happy wins first)
+const sample = talk.step(1 / 60, { speechEnergy: mouthOpen });
+const params = mergeFaceLiveParams(lipParams, talkGestureToFaceLiveParams(sample));
+```
+
+Custom param ids (`ParamHandRPoint`, `ParamFingerRIndex`, `ParamBodyAngleX`, …) must be mapped in VTS / Live2D. Lab: **Gesture demo** / **G**.
+
 ## Dialect auto-switch
 
 `detectLanguage()` reads SenseVoice tags (`<|yue|>`, `<|en|>`, …) and Latin/Cantonese heuristics. The robot bridge sticky-switches language per `runTurn` and returns English or 粵語 stub replies accordingly.

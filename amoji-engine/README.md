@@ -52,8 +52,9 @@ npm run lab                 # http://127.0.0.1:5173 → realtime-voice-lab.html
 | **Always-on** | Mic → VAD → worker ASR → robot → TTS playback + lip-sync |
 | **Hold to talk** | Press-and-hold mic → release runs the same pipeline (`Space`) |
 | **Worker demo** | One mock SenseVoice → CosyVoice turn |
-| **Face Live** | Connect VTS-compatible WS; stream idle + mouth params |
+| **Face Live** | Connect VTS-compatible WS; stream idle + mouth + talk-gesture params |
 | **Dialect / VAD / Vol** | Lock language, mic sensitivity, TTS gain |
+| **Expression / Gesture** | Cycle face presets (`E`) or Disney talk hands/body (`G`) |
 | **Prosody / Barge-in** | Marker reply demo / abort TTS (`Esc`) |
 | **Export Session / Metrics** | Download lab archive or turn latency rollup |
 | **Copy lab URL** | Share link with current query prefs |
@@ -66,7 +67,7 @@ Query params (persisted to `localStorage`):
 - `?vad=high|normal|low` — VAD sensitivity
 - `?vol=soft|normal|loud` — TTS playback gain
 
-Hotkeys: `Space` PTT · `Esc` barge · `M` mute · `E` expression · `[`/`]` volume.
+Hotkeys: `Space` PTT · `Esc` barge · `M` mute · `E` expression · `G` gesture · `[`/`]` volume.
 ### Minimal usage (voice-only, TS)
 
 ```typescript
