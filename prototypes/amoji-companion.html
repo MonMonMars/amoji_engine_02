@@ -74,6 +74,26 @@
         height: 100%;
         z-index: 1;
         display: block;
+        cursor: grab;
+        touch-action: none;
+      }
+
+      .orbit-hint {
+        position: absolute;
+        left: 50%;
+        top: 58%;
+        transform: translateX(-50%);
+        z-index: 4;
+        pointer-events: none;
+        color: var(--muted);
+        font-size: 0.78rem;
+        text-shadow: 0 4px 18px rgba(0, 0, 0, 0.55);
+        opacity: 0.85;
+        transition: opacity 0.6s ease;
+      }
+
+      .orbit-hint.hide {
+        opacity: 0;
       }
 
       .topbar {
@@ -385,7 +405,8 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js"
+          "three": "/amoji-engine/vendor/three.module.js",
+          "three/addons/": "/amoji-engine/vendor/three/addons/"
         }
       }
     </script>
@@ -393,7 +414,8 @@
   <body>
     <div class="stage">
       <div class="atmosphere" aria-hidden="true"></div>
-      <canvas id="avatar-canvas" aria-label="Amoji low-poly companion"></canvas>
+      <canvas id="avatar-canvas" aria-label="Amoji companion — drag to orbit"></canvas>
+      <div class="orbit-hint" id="orbit-hint">Drag to orbit · Scroll to zoom</div>
 
       <header class="topbar">
         <div class="brand">Amoji <span>Live</span></div>
@@ -492,6 +514,13 @@
         apiKey: stored.key || null,
         model: stored.model,
       });
+
+      const orbitHint = document.getElementById("orbit-hint");
+      canvas.addEventListener(
+        "pointerdown",
+        () => orbitHint?.classList.add("hide"),
+        { once: true },
+      );
 
       const setModePill = (mode) => {
         modePill.innerHTML = `LLM · <strong>${mode}</strong>`;
@@ -597,12 +626,25 @@
 
       addBubble(
         "system",
-        `Grok-style companion · ${avatarKind === "webgl3d" ? "3D female" : "2D female"} · anime BG · emotional female voice · 🎤 mic / 🔊 speaker`,
+        `Grok-style companion · ${
+          avatarKind === "gltf3d"
+            ? "HD female 3D"
+            : avatarKind === "webgl3d"
+              ? "3D female"
+              : "2D female"
+        } · drag to orbit · emotional female voice · 🎤 mic / 🔊 speaker`,
       );
       addBubble("assistant", "嗨～我係 Amoji。可以打字，或者撳麥克風同我傾偈！");
       avatar.setEmotion("happy");
       setEmotionPill("happy");
-      void voice.speak("嗨～我係 Amoji。可以打字，或者撳麥克風同我傾偈！", "happy");
+      // Speak only after a user gesture (browser autoplay policy)
+      const greetOnce = () => {
+        void voice.speak("嗨～我係 Amoji。可以打字，或者撳麥克風同我傾偈！", "happy");
+        form.removeEventListener("pointerdown", greetOnce);
+        input.removeEventListener("focus", greetOnce);
+      };
+      form.addEventListener("pointerdown", greetOnce, { once: true });
+      input.addEventListener("focus", greetOnce, { once: true });
 
       btnSettings.addEventListener("click", () => {
         settings.classList.toggle("open");

@@ -33,6 +33,7 @@
 - Fix lab browser init: `mockFaceLiveBridge` no longer statically imports Node `ws` (bare specifier crashed the module graph so every demo button was dead)
 - **Amoji Companion** (Grok-style): full-bleed low-poly 3D anime avatar (Three.js) with emotion + lip-sync, bottom-center chat composer, `POST /api/chat` local/online LLM proxy; 2D fallback if WebGL unavailable
 - Companion voice: female TTS with emotion tone (Web Speech), 🔊 speaker mute, 🎤 mic on/off (SpeechRecognition), anime bedroom background art
+- Companion HD: Michelle GLTF girl + Unreal-style OrbitControls (drag orbit / scroll zoom), closer portrait framing; falls back to procedural/2D when WebGL missing
 - Lab UI: Always-on, Hold to talk, Ready check, Worker, Face Live, Dialect, VAD, TTS mute/volume, Expression, Gesture, Prosody, Barge-in, Export/Import
 - Docs: REALTIME_VOICE_LAB, VOICE_WORKER, CI matrix, architecture note for JS path
 
