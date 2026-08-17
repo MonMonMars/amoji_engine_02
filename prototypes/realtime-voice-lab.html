@@ -108,10 +108,11 @@
       Prototype harness for Cantonese realtime voice + Sakura Face Live.
       Toggle <strong>Always-on</strong> for energy-VAD → SenseVoice/CosyVoice worker pipeline.
       Use <strong>Dialect</strong> to lock Auto / Yue / En (<code>?lang=</code>).
+      <strong>Expression demo</strong> cycles Sakura presets (happy → … → angry).
       Use <strong>Export / Import Session</strong> for archives (includes latency rollup).
       <strong>Robot steps</strong> HUD tracks
       <code>sakura → lip_sync → done/aborted</code> via
-      <code>createVoiceRobotBridge</code>, plus last-turn latency and p50/p95 rollup.
+      <code>createVoiceRobotBridge</code>, plus last-turn latency, p50/p95 rollup, and partial ASR.
     </p>
 
     <div class="row">
@@ -149,6 +150,13 @@
       </button>
       <button
         type="button"
+        id="btn-expression-demo"
+        title="Cycle Sakura Face Live expression presets"
+      >
+        Expression demo
+      </button>
+      <button
+        type="button"
         id="btn-worker-demo"
         title="Mock SenseVoice ASR → CosyVoice TTS worker turn"
       >
@@ -175,6 +183,8 @@
     <div id="robot-hud" aria-live="polite">
       <span class="k">phase</span><span class="v" id="robot-phase">idle</span>
       <span class="k">emotion</span><span class="v" id="robot-emotion">neutral</span>
+      <span class="k">expression</span><span class="v" id="expression-hud">neutral</span>
+      <span class="k">partial</span><span class="v" id="partial-hud">—</span>
       <span class="k">language</span><span class="v" id="robot-language">yue</span>
       <span class="k">dialect</span><span class="v" id="dialect-hud">auto</span>
       <span class="k">idle</span><span class="v" id="idle-hud">—</span>
@@ -206,6 +216,8 @@
         createLipSyncTracker,
         createSakuraFaceLiveClient,
         createTurnMetricsRollup,
+        mapEmotionToExpression,
+        nextExpressionPreset,
         resolveVoiceWorkerConfig,
         resolveFaceLiveConfig,
         resolveDialectPref,
@@ -223,6 +235,8 @@
       const dialectBtn = document.getElementById("btn-dialect");
       const phaseEl = document.getElementById("robot-phase");
       const emotionEl = document.getElementById("robot-emotion");
+      const expressionHudEl = document.getElementById("expression-hud");
+      const partialHudEl = document.getElementById("partial-hud");
       const languageEl = document.getElementById("robot-language");
       const dialectHudEl = document.getElementById("dialect-hud");
       const idleHudEl = document.getElementById("idle-hud");
@@ -236,6 +250,17 @@
 
       const metricsRollup = createTurnMetricsRollup({ maxSamples: 200 });
       let dialectPref = resolveDialectPref();
+      let demoExpression = "neutral";
+
+      const pushExpression = (emotionOrName, { source = "robot" } = {}) => {
+        const expression = mapEmotionToExpression(emotionOrName);
+        expressionHudEl.textContent = `${expression} · ${source}`;
+        demoExpression = expression;
+        if (faceLive.isAuthenticated) {
+          faceLive.setExpression(expression);
+        }
+        return expression;
+      };
 
       const session = createLabSessionFacade({
         storageKey: "amoji.realtimeVoiceLab.session",
@@ -390,6 +415,12 @@
         targetSampleRate: 16000,
         onPartialEmotion: (emo) => {
           idle.setEmotion(emo.emotion || "neutral", emo.intensity ?? 0.5);
+          if (emo.text) {
+            const clip =
+              emo.text.length > 48 ? `${emo.text.slice(0, 48)}…` : emo.text;
+            partialHudEl.textContent = `${emo.emotion || "neutral"} · ${clip}`;
+          }
+          pushExpression(emo.emotion || "neutral", { source: "partial" });
         },
         onTurn: (turn) => {
           session.recordTick("pipeline", {
@@ -425,8 +456,8 @@
         robot.on(ev, (payload) => {
           session.recordTick("robot", { event: ev, phase: payload.phase, language: payload.language });
           renderRobotHud(payload);
-          if (ev === "sakura" && faceLive.isAuthenticated) {
-            faceLive.setExpression(payload.emotion || "neutral");
+          if (ev === "sakura") {
+            pushExpression(payload.emotion || "neutral", { source: "robot" });
           }
           if (ev === "done" || ev === "aborted") {
             idle.setEmotion(payload.emotion || "neutral", 0.42);
@@ -718,6 +749,11 @@
                   text: ev.data.text,
                   emotion: ev.data.emotion,
                 });
+                const clip =
+                  String(ev.data.text || "").length > 48
+                    ? `${String(ev.data.text).slice(0, 48)}…`
+                    : ev.data.text;
+                partialHudEl.textContent = `${ev.data.emotion || "neutral"} · ${clip || "—"}`;
                 log(`partial asr "${ev.data.text}" emo=${ev.data.emotion}`);
               },
             });
@@ -800,7 +836,10 @@
           try {
             log(`face live connecting ${faceLiveConfig.url}…`);
             await faceLive.connect();
-            faceLive.setExpression(robot.getHud().emotion || "neutral");
+            faceLive.setExpression(
+              mapEmotionToExpression(robot.getHud().emotion || "neutral"),
+            );
+            expressionHudEl.textContent = `${faceLive.expression} · connected`;
             log(
               `face live authenticated token=${faceLive.authenticationToken?.slice(0, 12) || "cached"}…`,
             );
@@ -843,6 +882,18 @@
           source: "prosody-demo",
         });
         log(`prosody demo reply markers in: ${marked}`);
+      });
+
+      document.getElementById("btn-expression-demo").addEventListener("click", () => {
+        const next = nextExpressionPreset(demoExpression);
+        const expression = pushExpression(next, { source: "demo" });
+        idle.setEmotion(expression, 0.7);
+        session.recordTick("expression", { expression, source: "demo" });
+        log(
+          `expression demo → ${expression}${
+            faceLive.isAuthenticated ? " (injected)" : " (Face Live off — HUD only)"
+          }`,
+        );
       });
 
       document.getElementById("btn-worker-demo").addEventListener("click", async () => {
@@ -928,6 +979,9 @@
         idle.setEmotion("neutral", 0.42);
         latencyHudEl.textContent = "—";
         rollupHudEl.textContent = "—";
+        partialHudEl.textContent = "—";
+        expressionHudEl.textContent = "neutral";
+        demoExpression = "neutral";
         renderChat();
         renderRobotHud();
         statusEl.textContent = "cleared";
