@@ -107,6 +107,7 @@
     <p class="lead">
       Prototype harness for Cantonese realtime voice + Sakura Face Live.
       Toggle <strong>Always-on</strong> for energy-VAD → SenseVoice/CosyVoice worker pipeline.
+      Use <strong>Dialect</strong> to lock Auto / Yue / En (<code>?lang=</code>).
       Use <strong>Export / Import Session</strong> for archives (includes latency rollup).
       <strong>Robot steps</strong> HUD tracks
       <code>sakura → lip_sync → done/aborted</code> via
@@ -130,6 +131,14 @@
         title="Always-on listen with VAD end-of-utterance"
       >
         Always-on: Off
+      </button>
+      <button
+        type="button"
+        id="btn-dialect"
+        aria-pressed="false"
+        title="Cycle dialect: Auto → Yue → En (?lang=)"
+      >
+        Dialect: Auto
       </button>
       <button type="button" id="btn-push-to-talk">Push-to-talk (stub)</button>
       <button type="button" id="btn-robot-demo" title="Run stub robot turn (我叫小明)">
@@ -167,6 +176,7 @@
       <span class="k">phase</span><span class="v" id="robot-phase">idle</span>
       <span class="k">emotion</span><span class="v" id="robot-emotion">neutral</span>
       <span class="k">language</span><span class="v" id="robot-language">yue</span>
+      <span class="k">dialect</span><span class="v" id="dialect-hud">auto</span>
       <span class="k">idle</span><span class="v" id="idle-hud">—</span>
       <span class="k">lip-sync</span><span class="v" id="lipsync-hud">—</span>
       <span class="k">worker</span><span class="v" id="worker-hud">mock</span>
@@ -198,6 +208,9 @@
         createTurnMetricsRollup,
         resolveVoiceWorkerConfig,
         resolveFaceLiveConfig,
+        resolveDialectPref,
+        persistDialectPref,
+        nextDialectMode,
         runWorkerRobotTurn,
         presenceToFaceLiveParams,
         frameEnergy,
@@ -207,9 +220,11 @@
       const chatEl = document.getElementById("chat");
       const alwaysOnBtn = document.getElementById("btn-always-on");
       const faceLiveBtn = document.getElementById("btn-face-live");
+      const dialectBtn = document.getElementById("btn-dialect");
       const phaseEl = document.getElementById("robot-phase");
       const emotionEl = document.getElementById("robot-emotion");
       const languageEl = document.getElementById("robot-language");
+      const dialectHudEl = document.getElementById("dialect-hud");
       const idleHudEl = document.getElementById("idle-hud");
       const lipsyncHudEl = document.getElementById("lipsync-hud");
       const workerHudEl = document.getElementById("worker-hud");
@@ -220,12 +235,14 @@
       const stepsEl = document.getElementById("robot-steps");
 
       const metricsRollup = createTurnMetricsRollup({ maxSamples: 200 });
+      let dialectPref = resolveDialectPref();
 
       const session = createLabSessionFacade({
         storageKey: "amoji.realtimeVoiceLab.session",
         meta: {
           lab: "realtime-voice-lab",
           branch: "cursor/realtime-voice-chat-0f5c",
+          dialect: dialectPref.mode,
         },
       });
 
@@ -236,9 +253,47 @@
         rollupHudEl.textContent = metricsRollup.formatHud();
       };
 
+      const labelDialect = (mode) => {
+        if (mode === "yue") return "Dialect: Yue";
+        if (mode === "en") return "Dialect: En";
+        return "Dialect: Auto";
+      };
+
+      const applyDialectPref = (pref, { logChange = false } = {}) => {
+        dialectPref = pref;
+        session.meta.dialect = pref.mode;
+        worker.setForceLanguage(pref.forceLanguage);
+        robot.setForceLanguage(pref.forceLanguage);
+        if (pref.forceLanguage) {
+          worker.setLanguage(pref.forceLanguage);
+          robot.setLanguage(pref.forceLanguage);
+        }
+        dialectBtn.textContent = labelDialect(pref.mode);
+        dialectBtn.setAttribute(
+          "aria-pressed",
+          pref.mode === "auto" ? "false" : "true",
+        );
+        dialectHudEl.textContent = `${pref.mode} · ${pref.source}`;
+        languageEl.textContent = robot.language || pref.forceLanguage || "yue";
+        if (logChange) {
+          session.recordTick("dialect", {
+            mode: pref.mode,
+            force: pref.forceLanguage,
+          });
+          log(
+            `dialect ${pref.mode}${
+              pref.forceLanguage ? ` force=${pref.forceLanguage}` : " (auto)"
+            }`,
+          );
+        }
+      };
+
       const workerConfig = resolveVoiceWorkerConfig();
       const faceLiveConfig = resolveFaceLiveConfig();
-      const robot = createVoiceRobotBridge();
+      const robot = createVoiceRobotBridge({
+        language: dialectPref.forceLanguage || "yue",
+        forceLanguage: dialectPref.forceLanguage,
+      });
       const idle = createIdlePresenceClock({ emotion: "neutral", intensity: 0.42 });
       const lipSync = createLipSyncTracker({ alpha: 0.45, sensitivity: 1.6 });
       /** @type {{ mouthOpen: number, parameters: object[] } | null} */
@@ -279,7 +334,8 @@
       const worker = createVoiceWorkerClient({
         mode: workerConfig.mode,
         workerUrl: workerConfig.workerUrl,
-        language: "yue",
+        language: dialectPref.forceLanguage || "yue",
+        forceLanguage: dialectPref.forceLanguage,
         onEvent: (ev) => {
           session.recordTick("worker", {
             type: ev.type,
@@ -292,6 +348,9 @@
       workerHudEl.textContent = workerConfig.mode === "http"
         ? `http · ${workerConfig.source} · ${workerConfig.workerUrl}`
         : "mock";
+
+      // Sync button/HUD before first log (logChange false avoids TDZ on log).
+      applyDialectPref(dialectPref, { logChange: false });
 
       const ttsPlayer = createTtsPlaybackQueue({
         lipSync,
@@ -579,6 +638,9 @@
       log(
         `face live url=${faceLiveConfig.url} (source=${faceLiveConfig.source}; ?face=ws://127.0.0.1:8765)`,
       );
+      log(
+        `dialect ${dialectPref.mode} (source=${dialectPref.source}; ?lang=auto|yue|en)`,
+      );
       lipsyncHudEl.textContent = "—";
       faceLiveHudEl.textContent = "off";
       rollupHudEl.textContent = "—";
@@ -649,7 +711,7 @@
             partialWatcher = createPartialAsrWatcher({
               intervalMs: 450,
               mode: "mock",
-              language: "yue",
+              language: dialectPref.forceLanguage || worker.language || "yue",
               onPartial: (ev) => {
                 turnHost.applyPartial(ev.data);
                 session.recordTick("partial", {
@@ -750,6 +812,12 @@
           faceLive.disconnect();
           log("face live disconnected");
         }
+      });
+
+      dialectBtn.addEventListener("click", () => {
+        const mode = nextDialectMode(dialectPref.mode);
+        const pref = persistDialectPref(mode);
+        applyDialectPref(pref, { logChange: true });
       });
 
       document.getElementById("btn-push-to-talk").addEventListener("click", () => {

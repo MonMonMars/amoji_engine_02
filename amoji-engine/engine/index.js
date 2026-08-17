@@ -137,6 +137,15 @@ export {
 } from "./lab/faceLiveUrl.js";
 
 export {
+  DIALECT_PREF_SCHEMA,
+  DIALECT_PREF_STORAGE_KEY,
+  normalizeDialectMode,
+  nextDialectMode,
+  persistDialectPref,
+  resolveDialectPref,
+} from "./lab/dialectPref.js";
+
+export {
   TURN_METRICS_ROLLUP_SCHEMA,
   createTurnMetricsRollup,
   normalizeTurnMetrics,

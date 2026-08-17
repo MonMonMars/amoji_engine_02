@@ -267,6 +267,7 @@ function sleep(ms) {
  *   mode?: 'mock' | 'http',
  *   workerUrl?: string,
  *   language?: string,
+ *   forceLanguage?: string | null,
  *   chunkDelayMs?: number,
  *   onEvent?: (ev: { type: string, data: object }) => void,
  * }} [opts]
@@ -283,6 +284,10 @@ export function createVoiceWorkerClient(opts = {}) {
     (typeof process !== 'undefined' ? process.env?.AMOJI_VOICE_WORKER : '') ||
     '';
   let language = opts.language || 'yue';
+  let forceLanguage =
+    opts.forceLanguage == null || opts.forceLanguage === ''
+      ? null
+      : String(opts.forceLanguage).toLowerCase();
 
   const emit = (type, data) => opts.onEvent?.({ type, data });
 
@@ -299,9 +304,24 @@ export function createVoiceWorkerClient(opts = {}) {
     get language() {
       return language;
     },
+    get forceLanguage() {
+      return forceLanguage;
+    },
     setLanguage(id) {
       language = id || language;
       return language;
+    },
+    /**
+     * Lock dialect (`yue`/`en`) or pass null/'' for auto-detect.
+     * @param {string | null | undefined} id
+     */
+    setForceLanguage(id) {
+      forceLanguage =
+        id == null || id === '' || id === 'auto'
+          ? null
+          : String(id).toLowerCase();
+      if (forceLanguage) language = forceLanguage;
+      return forceLanguage;
     },
 
     /**
@@ -368,7 +388,7 @@ export function createVoiceWorkerClient(opts = {}) {
           text,
           language: parsed.language || result.language,
         },
-        { sticky: language, preferred: language },
+        { sticky: language, preferred: language, force: forceLanguage },
       );
       language = dialect.id;
       const emotion = emotionFromSenseVoice({

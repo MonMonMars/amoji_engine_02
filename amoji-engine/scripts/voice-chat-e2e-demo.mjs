@@ -113,6 +113,13 @@ console.log("[e2e] dialect switch yue → en…");
   assert(turnEn.language === "en", `expected en got ${turnEn.language}`);
   assert(/got it|talk about/i.test(turnEn.reply), `en reply=${turnEn.reply}`);
   console.log("[e2e] dialect ok →", turnYue.language, "→", turnEn.language, turnEn.reply);
+
+  robot.setForceLanguage("yue");
+  const locked = await robot.runTurn(
+    "<|en|><|Speech|>Hello again, please stay Cantonese",
+  );
+  assert(locked.language === "yue", `force lock expected yue got ${locked.language}`);
+  console.log("[e2e] dialect force lock ok →", locked.language);
 }
 
 console.log("[e2e] idle presence smoke…");

@@ -14,7 +14,8 @@
 - Turn latency metrics (`asrMs` / `robotMs` / `ttsMs` / `totalMs`) on pipeline turns
 - Turn metrics rollup (`createTurnMetricsRollup`) with p50/p95/mean in lab HUD + session export
 - Worker `health()` probe (mock always-ok / HTTP `GET /health`)
-- Lab UI: Always-on, Worker, Face Live, Prosody, Barge-in, Export/Import
+- Dialect preference (`?lang=auto|yue|en`) with force lock on worker + robot
+- Lab UI: Always-on, Worker, Face Live, Dialect, Prosody, Barge-in, Export/Import
 - Docs: REALTIME_VOICE_LAB, VOICE_WORKER, CI matrix, architecture note for JS path
 
 ### Validation
