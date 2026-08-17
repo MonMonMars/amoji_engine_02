@@ -460,7 +460,7 @@
             type="button"
             class="icon-btn"
             id="btn-mic"
-            title="Mic on/off — speak to Amoji"
+            title="Mic on/off — continuous listen; replies when you pause"
             aria-pressed="false"
           >
             🎤
@@ -570,25 +570,43 @@
         onMicText: (text, isFinal) => {
           input.value = text;
           autosize();
-          if (isFinal) void runTurn(text);
+          if (isFinal) {
+            input.value = "";
+            autosize();
+            void runTurn(text, { fromMic: true });
+          }
         },
-        onMicState: () => syncMicBtn(),
+        onMicState: () => {
+          syncMicBtn();
+          if (voice.micOn) {
+            input.placeholder = "Listening… speak, pause → she replies, then listens again";
+          } else if (!busy) {
+            input.placeholder = "同 Amoji 傾偈… or tap 🎤 for continuous talk";
+          }
+        },
         onError: (msg) => {
-          if (msg && msg !== "aborted" && msg !== "no-speech") {
+          if (msg && msg !== "aborted" && msg !== "no-speech" && msg !== "network") {
             addBubble("system", `Mic/TTS: ${msg}`);
           }
           syncMicBtn();
         },
       });
 
-      const runTurn = async (text) => {
+      /** @type {string[]} */
+      const micQueue = [];
+
+      const runTurn = async (text, { fromMic = false } = {}) => {
         const cleaned = String(text || "").trim();
-        if (!cleaned || busy) return;
+        if (!cleaned) return;
+        if (busy) {
+          // Hold the next uttered line until the current reply finishes
+          if (fromMic) micQueue.push(cleaned);
+          return;
+        }
         busy = true;
         sendBtn.disabled = true;
-        btnMic.disabled = true;
-        voice.stopMic();
-        syncMicBtn();
+        // Keep mic button enabled so the user can end continuous listen
+        voice.pauseCapture();
         addBubble("user", cleaned);
         avatar.setEmotion("thinking");
         setEmotionPill("thinking");
@@ -611,8 +629,22 @@
         } finally {
           busy = false;
           sendBtn.disabled = false;
-          btnMic.disabled = !voice.supportsMic;
-          input.focus();
+          voice.resumeCapture();
+          syncMicBtn();
+          if (voice.micOn) {
+            input.placeholder = "Listening… speak, pause → she replies, then listens again";
+            avatar.setEmotion("thinking");
+            setEmotionPill("thinking");
+          } else {
+            input.focus();
+          }
+          // Drain one queued utterance from continuous mic (if any)
+          if (micQueue.length && voice.micOn) {
+            const next = micQueue.shift();
+            void runTurn(next, { fromMic: true });
+          } else {
+            micQueue.length = 0;
+          }
         }
       };
 
@@ -632,14 +664,20 @@
             : avatarKind === "webgl3d"
               ? "3D female"
               : "2D female"
-        } · drag to orbit · emotional female voice · 🎤 mic / 🔊 speaker`,
+        } · drag to orbit · 🎤 continuous talk (reply on each pause) · 🔊 speaker`,
       );
-      addBubble("assistant", "嗨～我係 Amoji。可以打字，或者撳麥克風同我傾偈！");
+      addBubble(
+        "assistant",
+        "嗨～我係 Amoji。撳麥克風保持開啟，你講完停低就會答你，再繼續聽。",
+      );
       avatar.setEmotion("happy");
       setEmotionPill("happy");
       // Speak only after a user gesture (browser autoplay policy)
       const greetOnce = () => {
-        void voice.speak("嗨～我係 Amoji。可以打字，或者撳麥克風同我傾偈！", "happy");
+        void voice.speak(
+          "嗨～我係 Amoji。撳麥克風保持開啟，你講完停低就會答你，再繼續聽。",
+          "happy",
+        );
         form.removeEventListener("pointerdown", greetOnce);
         input.removeEventListener("focus", greetOnce);
       };
@@ -675,20 +713,27 @@
       });
 
       btnMic.addEventListener("click", () => {
-        if (busy) return;
         if (!voice.supportsMic) {
           addBubble("system", "This browser has no speech recognition — type instead.");
           return;
         }
-        voice.toggleMic();
-        syncMicBtn();
-        if (voice.micOn) {
-          input.placeholder = "Listening… speak now";
-          avatar.setEmotion("thinking");
-          setEmotionPill("thinking");
+        const turningOn = !voice.micOn;
+        if (turningOn) {
+          micQueue.length = 0;
+          voice.startMic();
+          addBubble("system", "Mic on · continuous — speak, pause, she replies, listens again. Tap 🎤 to stop.");
+          input.placeholder = "Listening… speak, pause → she replies, then listens again";
+          if (!busy) {
+            avatar.setEmotion("thinking");
+            setEmotionPill("thinking");
+          }
         } else {
-          input.placeholder = "同 Amoji 傾偈… or tap 🎤 to speak";
+          micQueue.length = 0;
+          voice.stopMic();
+          addBubble("system", "Mic off");
+          input.placeholder = "同 Amoji 傾偈… or tap 🎤 for continuous talk";
         }
+        syncMicBtn();
       });
 
       form.addEventListener("submit", async (ev) => {
