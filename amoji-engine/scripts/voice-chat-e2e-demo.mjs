@@ -122,6 +122,24 @@ console.log("[e2e] dialect switch yue → en…");
   console.log("[e2e] dialect force lock ok →", locked.language);
 }
 
+console.log("[e2e] listen pref + TTS mute…");
+{
+  const {
+    resolveListenPref,
+    nextListenSensitivity,
+    createTtsPlaybackQueue,
+  } = await import("../engine/index.js");
+  const pref = resolveListenPref({ search: "?vad=low", storage: null, env: {} });
+  assert(pref.sensitivity === "low", "vad low");
+  assert(pref.vad.energyThreshold > 0.03, "low thr");
+  assert(nextListenSensitivity("low") === "high", "vad cycle");
+  const player = createTtsPlaybackQueue({ offline: true });
+  assert(player.setMuted(true) === true, "mute");
+  await player.enqueue({ index: 0, durationSec: 0.05, text: "x" });
+  assert(player.playedCount === 0, "muted skips play");
+  console.log("[e2e] listen/mute ok →", pref.sensitivity, pref.vad.energyThreshold);
+}
+
 console.log("[e2e] idle presence smoke…");
 {
   const { createIdlePresenceClock, sampleIdlePresence, presenceToFaceLiveParams } =

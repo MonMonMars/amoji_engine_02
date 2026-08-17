@@ -207,6 +207,16 @@ export class TtsChunkPlayer {
   }
 
   /**
+   * Mute / unmute TTS playback. Muting flushes the queue (barge-safe).
+   * @param {boolean} [muted]
+   */
+  setMuted(muted = true) {
+    this.muted = Boolean(muted);
+    if (this.muted) this.flush();
+    return this.muted;
+  }
+
+  /**
    * @param {object} chunk
    */
   async enqueue(chunk) {

@@ -284,6 +284,41 @@ export class AlwaysOnListenController {
     return this._detector;
   }
 
+  /**
+   * Hot-update VAD / barge thresholds (e.g. lab sensitivity cycle).
+   * Resets the utterance detector to idle.
+   * @param {Partial<{
+   *   energyThreshold: number,
+   *   minSpeechMs: number,
+   *   trailingSilenceMs: number,
+   *   sampleRateHz: number,
+   *   frameSamples: number,
+   *   bargeEnergyThreshold: number,
+   *   bargeMinSpeechMs: number,
+   *   bargeDuringTalk: boolean,
+   * }>} overrides
+   */
+  configure(overrides = {}) {
+    Object.assign(this.opts, overrides);
+    this._detector = createUtteranceDetector({
+      energyThreshold: this.opts.energyThreshold,
+      minSpeechMs: this.opts.minSpeechMs,
+      trailingSilenceMs: this.opts.trailingSilenceMs,
+      sampleRateHz: this.opts.sampleRateHz,
+      frameSamples: this.opts.frameSamples,
+      onStateChange: (state, prev) => this.opts.onStateChange?.(state, prev),
+    });
+    this._bargeSpeechMs = 0;
+    this._barging = false;
+    this._bargeFired = false;
+    return {
+      energyThreshold: this.opts.energyThreshold,
+      bargeEnergyThreshold: this.opts.bargeEnergyThreshold,
+      minSpeechMs: this.opts.minSpeechMs,
+      trailingSilenceMs: this.opts.trailingSilenceMs,
+    };
+  }
+
   /** Start the always-on listen loop. */
   async start() {
     if (this._active) return;

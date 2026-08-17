@@ -207,4 +207,31 @@ describe("AlwaysOnListenController", () => {
     });
     await controller.stop();
   });
+
+  it("configure hot-updates energy threshold", async () => {
+    let frameCb = null;
+    const mic = {
+      onFrame(cb) {
+        frameCb = cb;
+        return () => {
+          frameCb = null;
+        };
+      },
+    };
+    const controller = createAlwaysOnListen({
+      mic,
+      startListening: async () => {},
+      stopListeningAndTalk: async () => {},
+      energyThreshold: 0.02,
+      minSpeechMs: 20,
+      trailingSilenceMs: 40,
+      sampleRateHz: 1000,
+      frameSamples: 20,
+    });
+    const cfg = controller.configure({ energyThreshold: 0.05 });
+    expect(cfg.energyThreshold).toBe(0.05);
+    expect(controller.detectorState).toBe("idle");
+    frameCb?.(silentFrame(20));
+    expect(controller.detectorState).toBe("idle");
+  });
 });

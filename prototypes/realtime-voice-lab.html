@@ -108,6 +108,8 @@
       Prototype harness for Cantonese realtime voice + Sakura Face Live.
       Toggle <strong>Always-on</strong> for energy-VAD → SenseVoice/CosyVoice worker pipeline.
       Use <strong>Dialect</strong> to lock Auto / Yue / En (<code>?lang=</code>).
+      <strong>VAD</strong> tunes mic sensitivity (<code>?vad=high|normal|low</code>);
+      <strong>TTS: On/Muted</strong> silences playback without stopping the pipeline.
       <strong>Expression demo</strong> cycles Sakura presets (happy → … → angry).
       Use <strong>Export / Import Session</strong> for archives (includes latency rollup).
       <strong>Robot steps</strong> HUD tracks
@@ -140,6 +142,22 @@
         title="Cycle dialect: Auto → Yue → En (?lang=)"
       >
         Dialect: Auto
+      </button>
+      <button
+        type="button"
+        id="btn-vad"
+        aria-pressed="false"
+        title="Cycle VAD sensitivity: High → Normal → Low (?vad=)"
+      >
+        VAD: Normal
+      </button>
+      <button
+        type="button"
+        id="btn-mute-tts"
+        aria-pressed="false"
+        title="Mute CosyVoice / TTS playback (still runs pipeline)"
+      >
+        TTS: On
       </button>
       <button type="button" id="btn-push-to-talk">Push-to-talk (stub)</button>
       <button type="button" id="btn-robot-demo" title="Run stub robot turn (我叫小明)">
@@ -187,6 +205,8 @@
       <span class="k">partial</span><span class="v" id="partial-hud">—</span>
       <span class="k">language</span><span class="v" id="robot-language">yue</span>
       <span class="k">dialect</span><span class="v" id="dialect-hud">auto</span>
+      <span class="k">vad</span><span class="v" id="vad-hud">normal</span>
+      <span class="k">tts</span><span class="v" id="tts-hud">on</span>
       <span class="k">idle</span><span class="v" id="idle-hud">—</span>
       <span class="k">lip-sync</span><span class="v" id="lipsync-hud">—</span>
       <span class="k">worker</span><span class="v" id="worker-hud">mock</span>
@@ -223,6 +243,9 @@
         resolveDialectPref,
         persistDialectPref,
         nextDialectMode,
+        resolveListenPref,
+        persistListenPref,
+        nextListenSensitivity,
         runWorkerRobotTurn,
         presenceToFaceLiveParams,
         frameEnergy,
@@ -233,12 +256,16 @@
       const alwaysOnBtn = document.getElementById("btn-always-on");
       const faceLiveBtn = document.getElementById("btn-face-live");
       const dialectBtn = document.getElementById("btn-dialect");
+      const vadBtn = document.getElementById("btn-vad");
+      const muteTtsBtn = document.getElementById("btn-mute-tts");
       const phaseEl = document.getElementById("robot-phase");
       const emotionEl = document.getElementById("robot-emotion");
       const expressionHudEl = document.getElementById("expression-hud");
       const partialHudEl = document.getElementById("partial-hud");
       const languageEl = document.getElementById("robot-language");
       const dialectHudEl = document.getElementById("dialect-hud");
+      const vadHudEl = document.getElementById("vad-hud");
+      const ttsHudEl = document.getElementById("tts-hud");
       const idleHudEl = document.getElementById("idle-hud");
       const lipsyncHudEl = document.getElementById("lipsync-hud");
       const workerHudEl = document.getElementById("worker-hud");
@@ -250,7 +277,9 @@
 
       const metricsRollup = createTurnMetricsRollup({ maxSamples: 200 });
       let dialectPref = resolveDialectPref();
+      let listenPref = resolveListenPref();
       let demoExpression = "neutral";
+      let ttsMuted = false;
 
       const pushExpression = (emotionOrName, { source = "robot" } = {}) => {
         const expression = mapEmotionToExpression(emotionOrName);
@@ -268,6 +297,7 @@
           lab: "realtime-voice-lab",
           branch: "cursor/realtime-voice-chat-0f5c",
           dialect: dialectPref.mode,
+          vad: listenPref.sensitivity,
         },
       });
 
@@ -407,6 +437,45 @@
           session.recordTick("tts", { event: "idle" });
         },
       });
+
+      const applyTtsMute = (muted, { logChange = false } = {}) => {
+        ttsMuted = Boolean(muted);
+        ttsPlayer.setMuted(ttsMuted);
+        muteTtsBtn.textContent = ttsMuted ? "TTS: Muted" : "TTS: On";
+        muteTtsBtn.setAttribute("aria-pressed", ttsMuted ? "true" : "false");
+        ttsHudEl.textContent = ttsMuted ? "muted" : "on";
+        if (logChange) {
+          session.recordTick("tts", { event: ttsMuted ? "mute" : "unmute" });
+          log(ttsMuted ? "tts muted (pipeline still runs)" : "tts unmuted");
+        }
+      };
+      applyTtsMute(false, { logChange: false });
+
+      const applyListenPref = (pref, { logChange = false } = {}) => {
+        listenPref = pref;
+        session.meta.vad = pref.sensitivity;
+        vadBtn.textContent = `VAD: ${pref.preset.label}`;
+        vadBtn.setAttribute(
+          "aria-pressed",
+          pref.sensitivity === "normal" ? "false" : "true",
+        );
+        vadHudEl.textContent = `${pref.sensitivity} · thr ${pref.vad.energyThreshold} · ${pref.source}`;
+        if (controller) {
+          controller.configure({
+            ...pref.vad,
+            bargeDuringTalk: true,
+          });
+        }
+        if (logChange) {
+          session.recordTick("vad-pref", {
+            sensitivity: pref.sensitivity,
+            energyThreshold: pref.vad.energyThreshold,
+          });
+          log(
+            `vad ${pref.sensitivity} thr=${pref.vad.energyThreshold} barge=${pref.vad.bargeEnergyThreshold}`,
+          );
+        }
+      };
 
       const turnHost = createWorkerTurnHost({
         worker,
@@ -732,6 +801,10 @@
       }
 
       let controller = null;
+      applyListenPref(listenPref, { logChange: false });
+      log(
+        `vad ${listenPref.sensitivity} thr=${listenPref.vad.energyThreshold} (source=${listenPref.source}; ?vad=high|normal|low)`,
+      );
 
       alwaysOnBtn.addEventListener("click", async () => {
         const on = alwaysOnBtn.getAttribute("aria-pressed") !== "true";
@@ -773,13 +846,13 @@
                 useWorker: true,
                 energyHint: "vad",
               }),
-              energyThreshold: 0.025,
-              minSpeechMs: 150,
-              trailingSilenceMs: 550,
+              energyThreshold: listenPref.vad.energyThreshold,
+              minSpeechMs: listenPref.vad.minSpeechMs,
+              trailingSilenceMs: listenPref.vad.trailingSilenceMs,
               sampleRateHz: 24000,
               bargeDuringTalk: true,
-              bargeEnergyThreshold: 0.04,
-              bargeMinSpeechMs: 100,
+              bargeEnergyThreshold: listenPref.vad.bargeEnergyThreshold,
+              bargeMinSpeechMs: listenPref.vad.bargeMinSpeechMs,
               onBargeIn: (info) =>
                 labHost.bargeIn({ ...info, source: "always-on" }),
               onStateChange: (state, prev) => {
@@ -857,6 +930,16 @@
         const mode = nextDialectMode(dialectPref.mode);
         const pref = persistDialectPref(mode);
         applyDialectPref(pref, { logChange: true });
+      });
+
+      vadBtn.addEventListener("click", () => {
+        const next = nextListenSensitivity(listenPref.sensitivity);
+        const pref = persistListenPref(next);
+        applyListenPref(pref, { logChange: true });
+      });
+
+      muteTtsBtn.addEventListener("click", () => {
+        applyTtsMute(!ttsMuted, { logChange: true });
       });
 
       document.getElementById("btn-push-to-talk").addEventListener("click", () => {
