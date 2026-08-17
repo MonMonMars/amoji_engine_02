@@ -70,7 +70,7 @@ Query params (persisted to `localStorage`):
 - `?motion=sakura|softbank|furhat|reachy|unitree_g1|ros` — robot talk-motion vendor
 - `?motionBridge=http://127.0.0.1:7891` — HTTP robot motion bridge (`npm run motion-bridge:mock`)
 
-Hotkeys: `Space` PTT · `Esc` barge · `M` mute · `E` expression · `G` gesture · `[`/`]` volume.
+Hotkeys: `Space` PTT · `Esc` barge · `M` mute · `E` expression · `G` gesture · `V` motion · `[`/`]` volume.
 ### Minimal usage (voice-only, TS)
 
 ```typescript

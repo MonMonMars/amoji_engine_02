@@ -59,6 +59,7 @@ function pushEntry(event, body) {
     vendor: body.vendor || body.package?.vendor || null,
     style: body.style || body.package?.style || null,
     source: body.source || null,
+    annotatedReply: body.annotatedReply || null,
     command: summarize(body.package || body),
     body,
   };
@@ -135,6 +136,7 @@ const server = http.createServer(async (req, res) => {
         vendor: entry.vendor,
         style: entry.style,
         command: entry.command,
+        annotatedReply: entry.annotatedReply,
         seq: log.length,
       });
       return;
