@@ -18,6 +18,7 @@ Cantonese-first ASR/TTS worker path used by the realtime voice lab.
 | `createMicFrameBuffer` / `createWorkerTurnHost` | Buffer mic → ASR → robot → TTS |
 | `runWorkerRobotTurn` | One-shot pipeline turn (+ `metrics`) |
 | `createTurnMetricsRollup` | Lab p50/p95 latency rollup |
+| `resolveDialectPref` / `setForceLanguage` | Auto vs forced yue/en |
 
 ## Always-on integration
 

@@ -100,6 +100,8 @@ export function planRobotSteps(text, memory = {}) {
  * @param {{
  *   onEvent?: (event: string, payload: object) => void,
  *   memory?: { userName?: string | null },
+ *   language?: string,
+ *   forceLanguage?: string | null,
  * }} [opts]
  */
 export function createVoiceRobotBridge(opts = {}) {
@@ -110,6 +112,11 @@ export function createVoiceRobotBridge(opts = {}) {
   let hud = EMPTY_HUD();
   let memory = { userName: opts.memory?.userName ?? null };
   let language = opts.language || "yue";
+  let forceLanguage =
+    opts.forceLanguage == null || opts.forceLanguage === ""
+      ? null
+      : String(opts.forceLanguage).toLowerCase();
+  if (forceLanguage) language = forceLanguage;
   let aborted = false;
 
   const emit = (event, payload = {}) => {
@@ -157,6 +164,28 @@ export function createVoiceRobotBridge(opts = {}) {
     get language() {
       return language;
     },
+    get forceLanguage() {
+      return forceLanguage;
+    },
+    /**
+     * @param {string} id
+     */
+    setLanguage(id) {
+      language = id || language;
+      return language;
+    },
+    /**
+     * Lock dialect (`yue`/`en`) or pass null/''/'auto' for auto-detect.
+     * @param {string | null | undefined} id
+     */
+    setForceLanguage(id) {
+      forceLanguage =
+        id == null || id === "" || id === "auto"
+          ? null
+          : String(id).toLowerCase();
+      if (forceLanguage) language = forceLanguage;
+      return forceLanguage;
+    },
     /**
      * @param {'sakura'|'lip_sync'|'done'|'aborted'} event
      * @param {(payload: object) => void} cb
@@ -197,7 +226,7 @@ export function createVoiceRobotBridge(opts = {}) {
       aborted = false;
       const detected = detectLanguage(
         { asrRaw: userText, text: userText },
-        { sticky: language, preferred: language },
+        { sticky: language, preferred: language, force: forceLanguage },
       );
       language = detected.id;
       const cleanText = stripAsrTags(userText) || String(userText ?? "");

@@ -5,9 +5,20 @@ export const DIALECT_DETECT_SCHEMA = 'amoji.dialectDetect.v1';
 
 /**
  * @param {{ language?: string, text?: string, asrRaw?: string }} input
- * @param {{ preferred?: string, sticky?: string }} [opts]
+ * @param {{ preferred?: string, sticky?: string, force?: string | null }} [opts]
  */
 export function detectLanguage(input = {}, opts = {}) {
+  const force = opts.force ? String(opts.force).toLowerCase() : '';
+  if (force) {
+    return {
+      schema: DIALECT_DETECT_SCHEMA,
+      id: force,
+      source: 'forced',
+      switched: false,
+      confidence: 1,
+    };
+  }
+
   const raw = String(input.asrRaw || input.text || '');
   const preferred = opts.preferred || 'yue';
   const sticky = opts.sticky || preferred;
