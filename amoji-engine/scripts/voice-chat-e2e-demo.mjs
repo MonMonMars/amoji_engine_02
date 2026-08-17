@@ -158,6 +158,39 @@ console.log("[e2e] push-to-talk hold…");
   console.log("[e2e] ptt ok → talked");
 }
 
+console.log("[e2e] hotkeys + latency budget…");
+{
+  const {
+    checkLatencyBudget,
+    formatLatencyBudget,
+    createLabHotkeys,
+  } = await import("../engine/index.js");
+  const ok = checkLatencyBudget({
+    asrMs: 10,
+    robotMs: 10,
+    ttsMs: 10,
+    totalMs: 30,
+  });
+  assert(ok.ok === true, "budget ok");
+  const miss = checkLatencyBudget(
+    { asrMs: 10, robotMs: 10, ttsMs: 10, totalMs: 99999 },
+    { totalMs: 100 },
+  );
+  assert(miss.ok === false, "budget miss");
+  assert(/miss/.test(formatLatencyBudget(miss)), "budget format");
+  const listeners = new Map();
+  const hotkeys = createLabHotkeys({
+    target: {
+      addEventListener: (t, cb) => listeners.set(t, cb),
+      removeEventListener: (t) => listeners.delete(t),
+    },
+    onBarge: () => {},
+  });
+  assert(hotkeys.bind() === true, "hotkeys bind");
+  assert(hotkeys.unbind() === true, "hotkeys unbind");
+  console.log("[e2e] hotkeys/budget ok →", formatLatencyBudget(ok));
+}
+
 console.log("[e2e] idle presence smoke…");
 {
   const { createIdlePresenceClock, sampleIdlePresence, presenceToFaceLiveParams } =

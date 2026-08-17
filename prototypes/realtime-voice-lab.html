@@ -117,6 +117,7 @@
       <code>sakura → lip_sync → done/aborted</code> via
       <code>createVoiceRobotBridge</code>, plus last-turn latency, p50/p95 rollup, and partial ASR.
       Serve with <code>npm run lab</code> from <code>amoji-engine/</code>.
+      Keys: <code>Space</code> hold-to-talk · <code>Esc</code> barge · <code>M</code> mute · <code>E</code> expression.
     </p>
 
     <div class="row">
@@ -223,6 +224,7 @@
       <span class="k">face live</span><span class="v" id="facelive-hud">off</span>
       <span class="k">latency</span><span class="v" id="latency-hud">—</span>
       <span class="k">rollup</span><span class="v" id="rollup-hud">—</span>
+      <span class="k">budget</span><span class="v" id="budget-hud">—</span>
       <span class="k">summary</span><span class="v" id="robot-summary">—</span>
       <span class="k">first steps</span><span class="v" id="robot-steps">—</span>
     </div>
@@ -248,6 +250,9 @@
         createTurnMetricsRollup,
         createPushToTalk,
         bindPushToTalkPointer,
+        createLabHotkeys,
+        checkLatencyBudget,
+        formatLatencyBudget,
         mapEmotionToExpression,
         nextExpressionPreset,
         resolveVoiceWorkerConfig,
@@ -285,6 +290,7 @@
       const faceLiveHudEl = document.getElementById("facelive-hud");
       const latencyHudEl = document.getElementById("latency-hud");
       const rollupHudEl = document.getElementById("rollup-hud");
+      const budgetHudEl = document.getElementById("budget-hud");
       const summaryEl = document.getElementById("robot-summary");
       const stepsEl = document.getElementById("robot-steps");
 
@@ -293,16 +299,6 @@
       let listenPref = resolveListenPref();
       let demoExpression = "neutral";
       let ttsMuted = false;
-
-      const pushExpression = (emotionOrName, { source = "robot" } = {}) => {
-        const expression = mapEmotionToExpression(emotionOrName);
-        expressionHudEl.textContent = `${expression} · ${source}`;
-        demoExpression = expression;
-        if (faceLive.isAuthenticated) {
-          faceLive.setExpression(expression);
-        }
-        return expression;
-      };
 
       const session = createLabSessionFacade({
         storageKey: "amoji.realtimeVoiceLab.session",
@@ -319,6 +315,15 @@
         metricsRollup.push(metrics);
         latencyHudEl.textContent = `asr ${metrics.asrMs | 0} · robot ${metrics.robotMs | 0} · tts ${metrics.ttsMs | 0} · Σ ${metrics.totalMs | 0}ms`;
         rollupHudEl.textContent = metricsRollup.formatHud();
+        const budget = checkLatencyBudget(metrics);
+        budgetHudEl.textContent = formatLatencyBudget(budget);
+        if (!budget.ok) {
+          session.recordTick("budget", {
+            ok: false,
+            breaches: budget.breaches,
+            totalMs: metrics.totalMs,
+          });
+        }
       };
 
       const labelDialect = (mode) => {
@@ -390,6 +395,16 @@
           }
         },
       });
+
+      const pushExpression = (emotionOrName, { source = "robot" } = {}) => {
+        const expression = mapEmotionToExpression(emotionOrName);
+        expressionHudEl.textContent = `${expression} · ${source}`;
+        demoExpression = expression;
+        if (faceLive.isAuthenticated) {
+          faceLive.setExpression(expression);
+        }
+        return expression;
+      };
 
       const pushFaceParams = (parameters) => {
         if (!parameters?.length) return;
@@ -757,6 +772,7 @@
       lipsyncHudEl.textContent = "—";
       faceLiveHudEl.textContent = "off";
       rollupHudEl.textContent = "—";
+      budgetHudEl.textContent = "—";
       workerHudEl.textContent = workerConfig.mode === "http"
         ? `http · ${workerConfig.source} · ${workerConfig.workerUrl}`
         : "mock";
@@ -1017,6 +1033,28 @@
       });
       bindPushToTalkPointer(pttBtn, ptt);
 
+      const runExpressionDemo = () => {
+        const next = nextExpressionPreset(demoExpression);
+        const expression = pushExpression(next, { source: "demo" });
+        idle.setEmotion(expression, 0.7);
+        session.recordTick("expression", { expression, source: "demo" });
+        log(
+          `expression demo → ${expression}${
+            faceLive.isAuthenticated ? " (injected)" : " (Face Live off — HUD only)"
+          }`,
+        );
+      };
+
+      const labHotkeys = createLabHotkeys({
+        onPttPress: () => ptt.press(),
+        onPttRelease: () => ptt.release(),
+        onBarge: () => labHost.bargeIn({ reason: "hotkey", source: "escape" }),
+        onMuteToggle: () => applyTtsMute(!ttsMuted, { logChange: true }),
+        onExpressionCycle: () => runExpressionDemo(),
+      });
+      labHotkeys.bind();
+      log("hotkeys Space=PTT Esc=barge M=mute E=expression");
+
       document.getElementById("btn-robot-demo").addEventListener("click", async () => {
         const text =
           robot.memory.userName == null ? "我叫小明" : "我叫咩名？";
@@ -1038,15 +1076,7 @@
       });
 
       document.getElementById("btn-expression-demo").addEventListener("click", () => {
-        const next = nextExpressionPreset(demoExpression);
-        const expression = pushExpression(next, { source: "demo" });
-        idle.setEmotion(expression, 0.7);
-        session.recordTick("expression", { expression, source: "demo" });
-        log(
-          `expression demo → ${expression}${
-            faceLive.isAuthenticated ? " (injected)" : " (Face Live off — HUD only)"
-          }`,
-        );
+        runExpressionDemo();
       });
 
       document.getElementById("btn-worker-demo").addEventListener("click", async () => {
@@ -1132,6 +1162,7 @@
         idle.setEmotion("neutral", 0.42);
         latencyHudEl.textContent = "—";
         rollupHudEl.textContent = "—";
+        budgetHudEl.textContent = "—";
         partialHudEl.textContent = "—";
         expressionHudEl.textContent = "neutral";
         demoExpression = "neutral";
