@@ -15,7 +15,8 @@
 - Turn metrics rollup (`createTurnMetricsRollup`) with p50/p95/mean in lab HUD + session export
 - Worker `health()` probe (mock always-ok / HTTP `GET /health`)
 - Dialect preference (`?lang=auto|yue|en`) with force lock on worker + robot
-- Lab UI: Always-on, Worker, Face Live, Dialect, Prosody, Barge-in, Export/Import
+- Emotion → Sakura expression map (`mapEmotionToExpression`) + angry/surprised presets
+- Lab UI: Always-on, Worker, Face Live, Dialect, Expression, Prosody, Barge-in, Export/Import
 - Docs: REALTIME_VOICE_LAB, VOICE_WORKER, CI matrix, architecture note for JS path
 
 ### Validation

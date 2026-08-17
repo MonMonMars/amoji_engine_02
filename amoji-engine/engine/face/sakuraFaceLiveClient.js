@@ -22,25 +22,55 @@ export const SAKURA_EXPRESSION_PRESETS = Object.freeze({
     { id: SAKURA_PARAM_IDS.mouthSmile, value: 0.15 },
     { id: SAKURA_PARAM_IDS.browLeftY, value: 0 },
     { id: SAKURA_PARAM_IDS.browRightY, value: 0 },
+    { id: SAKURA_PARAM_IDS.cheek, value: 0 },
   ],
   happy: [
     { id: SAKURA_PARAM_IDS.mouthOpen, value: 0.35 },
     { id: SAKURA_PARAM_IDS.mouthSmile, value: 0.85 },
     { id: SAKURA_PARAM_IDS.cheek, value: 0.6 },
+    { id: SAKURA_PARAM_IDS.browLeftY, value: 0.1 },
+    { id: SAKURA_PARAM_IDS.browRightY, value: 0.1 },
   ],
   thinking: [
     { id: SAKURA_PARAM_IDS.mouthOpen, value: 0.05 },
     { id: SAKURA_PARAM_IDS.mouthSmile, value: 0 },
     { id: SAKURA_PARAM_IDS.angleY, value: -0.15 },
     { id: SAKURA_PARAM_IDS.browLeftY, value: 0.35 },
+    { id: SAKURA_PARAM_IDS.browRightY, value: 0.1 },
   ],
   sad: [
     { id: SAKURA_PARAM_IDS.mouthOpen, value: 0.1 },
     { id: SAKURA_PARAM_IDS.mouthSmile, value: -0.4 },
     { id: SAKURA_PARAM_IDS.browLeftY, value: -0.5 },
     { id: SAKURA_PARAM_IDS.browRightY, value: -0.5 },
+    { id: SAKURA_PARAM_IDS.angleY, value: 0.1 },
+  ],
+  surprised: [
+    { id: SAKURA_PARAM_IDS.mouthOpen, value: 0.7 },
+    { id: SAKURA_PARAM_IDS.mouthSmile, value: 0 },
+    { id: SAKURA_PARAM_IDS.browLeftY, value: 0.8 },
+    { id: SAKURA_PARAM_IDS.browRightY, value: 0.8 },
+    { id: SAKURA_PARAM_IDS.eyeOpenLeft, value: 1 },
+    { id: SAKURA_PARAM_IDS.eyeOpenRight, value: 1 },
+  ],
+  angry: [
+    { id: SAKURA_PARAM_IDS.mouthOpen, value: 0.2 },
+    { id: SAKURA_PARAM_IDS.mouthSmile, value: -0.35 },
+    { id: SAKURA_PARAM_IDS.browLeftY, value: -0.65 },
+    { id: SAKURA_PARAM_IDS.browRightY, value: -0.65 },
+    { id: SAKURA_PARAM_IDS.cheek, value: 0.25 },
   ],
 });
+
+/** Ordered cycle for lab Expression demo. */
+export const SAKURA_EXPRESSION_CYCLE = Object.freeze([
+  'neutral',
+  'happy',
+  'thinking',
+  'surprised',
+  'sad',
+  'angry',
+]);
 
 const VTS_API = 'VTubeStudioPublicAPI';
 const VTS_VERSION = '1.0';
@@ -288,7 +318,8 @@ export function createSakuraFaceLiveClient(opts = {}) {
      * @param {keyof typeof SAKURA_EXPRESSION_PRESETS | string} name
      */
     setExpression(name = 'neutral') {
-      expression = String(name);
+      const key = String(name || 'neutral').toLowerCase();
+      expression = SAKURA_EXPRESSION_PRESETS[key] ? key : 'neutral';
       const preset =
         SAKURA_EXPRESSION_PRESETS[expression] || SAKURA_EXPRESSION_PRESETS.neutral;
       return this.injectParameters(preset);

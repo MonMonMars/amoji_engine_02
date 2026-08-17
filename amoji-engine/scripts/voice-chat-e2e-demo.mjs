@@ -345,7 +345,16 @@ console.log("[e2e] Face Live client smoke…");
     createSakuraFaceLiveClient,
     presenceToFaceLiveParams,
     sampleIdlePresence,
+    mapEmotionToExpression,
+    nextExpressionPreset,
+    expressionParamsForEmotion,
   } = await import("../engine/index.js");
+  assert(mapEmotionToExpression("joy") === "happy", "emotion map joy");
+  assert(nextExpressionPreset("angry") === "neutral", "expression cycle");
+  assert(
+    expressionParamsForEmotion("surprised").parameters.length >= 1,
+    "surprised params",
+  );
   const bridge = await startMockFaceLiveBridge();
   const client = createSakuraFaceLiveClient({
     url: bridge.url,
@@ -353,12 +362,19 @@ console.log("[e2e] Face Live client smoke…");
   });
   await client.connect();
   assert(client.isAuthenticated, "facelive auth");
+  client.setExpression(mapEmotionToExpression("HAPPY"));
   client.injectParameters(presenceToFaceLiveParams(sampleIdlePresence(0.5)));
   await new Promise((r) => setTimeout(r, 30));
   assert(bridge.injected.length >= 1, "facelive inject");
+  assert(client.expression === "happy", "facelive expression");
   client.disconnect();
   await bridge.close();
-  console.log("[e2e] facelive ok → injects", bridge.injected.length);
+  console.log(
+    "[e2e] facelive ok → injects",
+    bridge.injected.length,
+    "expr",
+    client.expression,
+  );
 }
 
 console.log("[e2e] all checks passed");

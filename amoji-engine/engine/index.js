@@ -105,8 +105,17 @@ export {
   FACE_LIVE_CLIENT_SCHEMA,
   SAKURA_PARAM_IDS,
   SAKURA_EXPRESSION_PRESETS,
+  SAKURA_EXPRESSION_CYCLE,
   createSakuraFaceLiveClient,
 } from "./face/sakuraFaceLiveClient.js";
+
+export {
+  EMOTION_EXPRESSION_SCHEMA,
+  expressionParamsForEmotion,
+  listExpressionPresets,
+  mapEmotionToExpression,
+  nextExpressionPreset,
+} from "./face/emotionExpression.js";
 
 export {
   startMockFaceLiveBridge,
