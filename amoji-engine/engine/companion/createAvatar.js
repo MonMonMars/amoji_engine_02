@@ -1,12 +1,22 @@
 /**
- * Create the best available companion avatar (WebGL low-poly → 2D fallback).
+ * Create the best available companion avatar:
+ * high-poly GLTF Michelle → procedural high-poly → 2D fallback.
  * @param {{ canvas: HTMLCanvasElement, color?: string }} opts
  */
 export async function createCompanionAvatar(opts) {
+  // Prefer skinned GLTF girl + orbit controls
+  try {
+    const { createGltfAvatar } = await import("./gltfAvatar.js");
+    const avatar = await createGltfAvatar(opts);
+    avatar.resize?.();
+    return { avatar, kind: "gltf3d" };
+  } catch (err) {
+    console.warn("[companion] GLTF avatar failed, trying procedural", err);
+  }
+
   try {
     const { createLowPolyAvatar } = await import("./lowPolyAvatar.js");
     const avatar = createLowPolyAvatar(opts);
-    // Force a render probe — some environments construct then fail on first frame.
     avatar.resize?.();
     return { avatar, kind: "webgl3d" };
   } catch (err) {
