@@ -234,10 +234,14 @@ console.log("[e2e] worker↔robot pipeline + mic buffer…");
     createVoiceWorkerClient,
     createVoiceRobotBridge,
     createWorkerTurnHost,
+    createTurnMetricsRollup,
     runWorkerRobotTurn,
   } = await import("../engine/index.js");
   const worker = createVoiceWorkerClient({ mode: "mock" });
+  const health = await worker.health();
+  assert(health.ok === true, "mock worker health");
   const robot = createVoiceRobotBridge();
+  const rollup = createTurnMetricsRollup();
   const piped = await runWorkerRobotTurn({
     worker,
     robot,
@@ -247,6 +251,7 @@ console.log("[e2e] worker↔robot pipeline + mic buffer…");
   assert(piped.tts.chunkCount >= 1, "pipeline tts");
   assert(piped.metrics?.totalMs >= 0, "pipeline metrics");
   assert(piped.metrics?.chunkCount >= 1, "metrics chunks");
+  rollup.push(piped.metrics);
 
   const host = createWorkerTurnHost({ worker, robot, inputRate: 16000 });
   host.beginListen();
@@ -255,6 +260,9 @@ console.log("[e2e] worker↔robot pipeline + mic buffer…");
   const fromMic = await host.runFromBuffer();
   assert(fromMic.asr.text, "mic buffer asr text");
   assert(fromMic.reply, "mic buffer reply");
+  rollup.push(fromMic.metrics);
+  assert(rollup.length === 2, "metrics rollup count");
+  assert(rollup.summary().totalMs.p50 != null, "rollup p50");
   console.log(
     "[e2e] pipeline ok →",
     piped.asr.text,
@@ -262,6 +270,8 @@ console.log("[e2e] worker↔robot pipeline + mic buffer…");
     fromMic.asr.text,
     "chunks",
     fromMic.tts.chunkCount,
+    "rollup",
+    rollup.formatHud(),
   );
 }
 

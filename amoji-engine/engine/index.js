@@ -48,6 +48,7 @@ export {
 export {
   VOICE_WORKER_SCHEMA,
   callVoiceWorker,
+  callVoiceWorkerHealth,
   callVoiceWorkerTtsStream,
   mockAsr,
   mockTtsStream,
@@ -134,3 +135,11 @@ export {
   FACE_LIVE_URL_STORAGE_KEY,
   resolveFaceLiveConfig,
 } from "./lab/faceLiveUrl.js";
+
+export {
+  TURN_METRICS_ROLLUP_SCHEMA,
+  createTurnMetricsRollup,
+  normalizeTurnMetrics,
+  percentileNearest,
+  summarizeSeries,
+} from "./lab/turnMetricsRollup.js";

@@ -83,6 +83,14 @@ describe('voiceWorkerClient mock', () => {
     expect(tts.text).toBe('好呀，跟住開心！');
     expect(tts.prosody.pauseMs).toBeGreaterThan(180);
   });
+
+  it('reports healthy for mock mode', async () => {
+    const client = createVoiceWorkerClient({ mode: 'mock' });
+    const health = await client.health();
+    expect(health.ok).toBe(true);
+    expect(health.mode).toBe('mock');
+    expect(health.asr).toBe('mock');
+  });
 });
 
 describe('browserAudio + partialAsr', () => {
