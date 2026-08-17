@@ -31,6 +31,14 @@ export {
 } from "./voice/dialect.js";
 
 export {
+  PROSODY_MARKERS_SCHEMA,
+  parseProsodyMarkers,
+  applyProsodyMarkerOverrides,
+  resolveProsody,
+  prosodyFromMarkedText,
+} from "./voice/prosodyMarkers.js";
+
+export {
   IDLE_PRESENCE_SCHEMA,
   sampleIdlePresence,
   IdlePresenceClock,

@@ -5,6 +5,7 @@
  * HUD fields: phase, emotion, summary, steps (first steps shown in UI)
  */
 import { detectLanguage, stripAsrTags } from './dialect.js';
+import { prosodyFromMarkedText } from './prosodyMarkers.js';
 
 const ROBOT_EVENTS = Object.freeze([
   "sakura",
@@ -190,8 +191,9 @@ export function createVoiceRobotBridge(opts = {}) {
      * Updates memory when the user introduces a name (e.g. 小明).
      * Auto-switches language from SenseVoice tags / heuristics.
      * @param {string} userText
+     * @param {{ forceReply?: string }} [opts]
      */
-    async runTurn(userText) {
+    async runTurn(userText, opts = {}) {
       aborted = false;
       const detected = detectLanguage(
         { asrRaw: userText, text: userText },
@@ -227,18 +229,34 @@ export function createVoiceRobotBridge(opts = {}) {
 
       if (aborted) return this.getHud();
 
-      const reply = buildStubReply(cleanText, memory, language);
+      const replySource =
+        typeof opts.forceReply === "string"
+          ? opts.forceReply
+          : buildStubReply(cleanText, memory, language);
+      const prosody = prosodyFromMarkedText(replySource, {
+        emotion: plan.emotion,
+        language,
+      });
+      const spoken = prosody.text || replySource;
+
       emit("done", {
         phase: "done",
         emotion: plan.emotion,
         summary: plan.summary,
         steps: plan.steps,
-        reply,
+        reply: spoken,
         language,
         dialect: detected,
+        prosody,
       });
 
-      return { ...this.getHud(), reply, language, dialect: detected };
+      return {
+        ...this.getHud(),
+        reply: spoken,
+        language,
+        dialect: detected,
+        prosody,
+      };
     },
   };
 }
