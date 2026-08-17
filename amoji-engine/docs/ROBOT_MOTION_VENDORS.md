@@ -57,7 +57,27 @@ turn.motion.unitree_g1.joints; // upper-body rad targets
 
 Lab: **Motion:** button cycles vendors (`?motion=` / `amoji.motionVendor`); Robot HUD **motion** row shows the active package + dispatch log. SoftBank turns also return `annotatedReply` for ALAnimatedSpeech.
 
-While speaking, the lab samples vendor frames (~12 Hz) through `sampleVendorMotionFrame` / `createRobotMotionDispatcher` (mock hardware bridge).
+While speaking, the lab samples vendor frames (~12 Hz) through `sampleVendorMotionFrame` / `createRobotMotionDispatcher`. Point the dispatcher at an HTTP motion bridge with `?motionBridge=` (default mock on `:7891`).
+
+## HTTP motion bridge
+
+```bash
+npm run motion-bridge:mock   # :7891
+# lab: ?motion=reachy&motionBridge=http://127.0.0.1:7891
+npm run demo:motion-smoke
+```
+
+| Endpoint | Role |
+| --- | --- |
+| `GET /health` | Ready probe |
+| `POST /motion/begin` | Style package + optional SoftBank `annotatedReply` |
+| `POST /motion/frame` | ~12 Hz animated joint / gesture sample |
+| `POST /motion/end` | Stop / idle |
+| `GET /motion/log` | Recent received packages |
+
+Client: `createMotionBridgeClient` · pref: `resolveMotionBridgeConfig` (`?motionBridge=` / `AMOJI_MOTION_BRIDGE` / `amoji.motionBridgeUrl`). Session export includes `meta.motionDispatch` + `meta.motionBridge`.
+
+Replace the mock with a vendor adapter that translates packages into qi / Furhat Remote API / Reachy SDK / Unitree / ROS commands.
 
 ## Hardware notes
 

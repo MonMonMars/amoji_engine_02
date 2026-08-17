@@ -68,6 +68,7 @@ Query params (persisted to `localStorage`):
 - `?vad=high|normal|low` — VAD sensitivity
 - `?vol=soft|normal|loud` — TTS playback gain
 - `?motion=sakura|softbank|furhat|reachy|unitree_g1|ros` — robot talk-motion vendor
+- `?motionBridge=http://127.0.0.1:7891` — HTTP robot motion bridge (`npm run motion-bridge:mock`)
 
 Hotkeys: `Space` PTT · `Esc` barge · `M` mute · `E` expression · `G` gesture · `[`/`]` volume.
 ### Minimal usage (voice-only, TS)
@@ -153,7 +154,9 @@ Env: `OPENAI_API_KEY`, `AMOJI_FACE_LIVE_URL`, `AMOJI_VOICE_WORKER`.
 | `npm run demo:dry` | TS mock Face Live |
 | `npm run demo:facelive-smoke` | JS Face Live client ↔ mock bridge |
 | `npm run demo:http-smoke` | Mock HTTP voice worker |
+| `npm run demo:motion-smoke` | Mock HTTP robot motion bridge |
 | `npm run voice-worker:mock` | Node SenseVoice/CosyVoice stub on `:7890` |
+| `npm run motion-bridge:mock` | Node robot motion bridge stub on `:7891` |
 | `npm run lab` | Static server for `prototypes/realtime-voice-lab.html` |
 | `npm run ci` | Offline CI matrix (typecheck + build + test + demos) |
 | `npm run voice-worker` | Python worker (FunASR / CosyVoice when installed) |
@@ -163,7 +166,7 @@ Offline CI matrix (local / your Actions runner):
 
 ```bash
 npm run typecheck && npm run build && npm test
-npm run demo:e2e && npm run demo:facelive-smoke && npm run demo:http-smoke
+npm run demo:e2e && npm run demo:facelive-smoke && npm run demo:http-smoke && npm run demo:motion-smoke
 ```
 
 ## License

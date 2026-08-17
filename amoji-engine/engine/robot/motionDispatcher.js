@@ -1,8 +1,8 @@
 /**
  * Mock / lab robot motion dispatcher.
  *
- * Records vendor motion packages as if sent to SoftBank qi, Furhat HTTP,
- * Reachy SDK, Unitree, or ROS — without requiring hardware.
+ * Records vendor motion packages and optionally forwards them to an HTTP
+ * motion bridge (SoftBank / Furhat / Reachy / Unitree / ROS adapters).
  */
 export const ROBOT_MOTION_DISPATCH_SCHEMA = "amoji.robotMotionDispatch.v1";
 
@@ -10,6 +10,12 @@ export const ROBOT_MOTION_DISPATCH_SCHEMA = "amoji.robotMotionDispatch.v1";
  * @param {{
  *   onDispatch?: (event: object) => void,
  *   maxLog?: number,
+ *   bridge?: {
+ *     begin?: Function,
+ *     frame?: Function,
+ *     end?: Function,
+ *     mode?: string,
+ *   } | null,
  * }} [opts]
  */
 export function createRobotMotionDispatcher(opts = {}) {
@@ -20,6 +26,9 @@ export function createRobotMotionDispatcher(opts = {}) {
   /** @type {object | null} */
   let last = null;
   let active = false;
+  let bridge = opts.bridge || null;
+  let bridgeForwarded = 0;
+  let bridgeErrors = 0;
 
   const push = (entry) => {
     last = entry;
@@ -27,6 +36,30 @@ export function createRobotMotionDispatcher(opts = {}) {
     while (log.length > maxLog) log.shift();
     opts.onDispatch?.(entry);
     return entry;
+  };
+
+  const forward = (method, payload, meta) => {
+    if (!bridge || bridge.mode === "off") return;
+    const fn = bridge[method];
+    if (typeof fn !== "function") return;
+    try {
+      const result = fn.call(bridge, payload, meta);
+      if (result && typeof result.then === "function") {
+        result.then(
+          (res) => {
+            if (res?.ok) bridgeForwarded += 1;
+            else if (res && !res.skipped) bridgeErrors += 1;
+          },
+          () => {
+            bridgeErrors += 1;
+          },
+        );
+      } else if (result?.ok) {
+        bridgeForwarded += 1;
+      }
+    } catch {
+      bridgeErrors += 1;
+    }
   };
 
   return {
@@ -45,22 +78,33 @@ export function createRobotMotionDispatcher(opts = {}) {
     get log() {
       return log.slice();
     },
+    get bridgeForwarded() {
+      return bridgeForwarded;
+    },
+    get bridgeErrors() {
+      return bridgeErrors;
+    },
+    setBridge(next) {
+      bridge = next || null;
+      return bridge;
+    },
     clear() {
       log.length = 0;
       last = null;
       active = false;
       sequence = 0;
+      bridgeForwarded = 0;
+      bridgeErrors = 0;
     },
     /**
-     * Begin a talk-motion package (style / vendor command envelope).
      * @param {object | null | undefined} motionPackage
-     * @param {{ source?: string }} [meta]
+     * @param {{ source?: string, annotatedReply?: string | null }} [meta]
      */
     begin(motionPackage, meta = {}) {
       if (!motionPackage) return null;
       active = true;
       sequence += 1;
-      return push({
+      const entry = push({
         schema: ROBOT_MOTION_DISPATCH_SCHEMA,
         event: "begin",
         seq: sequence,
@@ -71,16 +115,17 @@ export function createRobotMotionDispatcher(opts = {}) {
         package: motionPackage,
         command: summarizeCommand(motionPackage),
       });
+      forward("begin", motionPackage, meta);
+      return entry;
     },
     /**
-     * Push a time-sampled vendor frame (Reachy / Unitree / ROS / Sakura).
      * @param {object | null | undefined} frame
      * @param {{ source?: string }} [meta]
      */
     frame(frame, meta = {}) {
       if (!frame || !active) return null;
       sequence += 1;
-      return push({
+      const entry = push({
         schema: ROBOT_MOTION_DISPATCH_SCHEMA,
         event: "frame",
         seq: sequence,
@@ -92,16 +137,17 @@ export function createRobotMotionDispatcher(opts = {}) {
         package: frame,
         command: summarizeCommand(frame),
       });
+      forward("frame", frame, meta);
+      return entry;
     },
     /**
-     * End active motion (barge / TTS idle / turn done).
      * @param {{ source?: string, reason?: string }} [meta]
      */
     end(meta = {}) {
       if (!active && !last) return null;
       active = false;
       sequence += 1;
-      return push({
+      const entry = push({
         schema: ROBOT_MOTION_DISPATCH_SCHEMA,
         event: "end",
         seq: sequence,
@@ -111,20 +157,36 @@ export function createRobotMotionDispatcher(opts = {}) {
         vendor: last?.vendor || null,
         style: last?.style || null,
       });
+      forward(
+        "end",
+        {
+          vendor: last?.vendor || null,
+          reason: meta.reason || "complete",
+          source: meta.source || "done",
+        },
+        meta,
+      );
+      return entry;
     },
     formatHud() {
       if (!last) return "—";
+      const bridgeBit =
+        bridge?.mode === "http"
+          ? ` · bridge ${bridgeForwarded}ok/${bridgeErrors}err`
+          : "";
       if (last.event === "end") {
-        return `${last.vendor || "?"} · idle`;
+        return `${last.vendor || "?"} · idle${bridgeBit}`;
       }
       const cmd = last.command || last.style || "?";
-      return `${last.vendor} · ${last.event} · ${cmd}`;
+      return `${last.vendor} · ${last.event} · ${cmd}${bridgeBit}`;
     },
     toJSON() {
       return {
         schema: ROBOT_MOTION_DISPATCH_SCHEMA,
         active,
         length: log.length,
+        bridgeForwarded,
+        bridgeErrors,
         last,
         log: log.slice(),
       };
