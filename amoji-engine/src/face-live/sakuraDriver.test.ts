@@ -56,7 +56,20 @@ describe("SakuraFaceLiveDriver", () => {
       3,
     );
 
+    const style = driver.beginTalkGesture("睇下呢個！");
+    expect(style).toBe("point");
+    const gesture = await driver.driveTalkGesture(0.05, { speechEnergy: 0.6 });
+    expect(gesture.sample.pose.fingerRIndexTip).toBeGreaterThan(0.8);
+    expect(
+      gesture.parameters.some((p) => p.id === "ParamFingerRIndexTip"),
+    ).toBe(true);
+
+    const merged = await driver.driveLipSync(new Int16Array(128).fill(12_000));
+    expect(merged.some((p) => p.id === "ParamMouthOpenY")).toBe(true);
+    expect(merged.some((p) => p.id === "ParamFingerRIndexTip")).toBe(true);
+
     await driver.resetLipSync();
+    expect(driver.talkGestureClock.active).toBe(false);
     driver.disconnect();
   });
 

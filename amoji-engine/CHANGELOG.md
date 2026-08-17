@@ -24,6 +24,7 @@
 - TTS volume prefs (`?vol=soft|normal|loud`) with GainNode playback + `[`/`]` hotkeys
 - Disney-style talk gestures (`talkGestures.js`) — body / shoulders / hands / fingers driven by reply text; lab Gesture demo + `G` hotkey; merges with lip-sync inject
 - Per-joint finger chains (`Prox` → `Mid` → `Tip`) for every digit on both hands, plus hand spread / wrist Z; fingertip Face Live ids via `FINGER_TIP_PARAM_IDS`
+- TypeScript talk-gesture parity (`src/face-live/talkGestures.ts`) + `SakuraFaceLiveDriver.beginTalkGesture` / `driveTalkGesture`; lip-sync merge while speaking; orchestrator wires reply text → gestures
 - Lab UI: Always-on, Hold to talk, Ready check, Worker, Face Live, Dialect, VAD, TTS mute/volume, Expression, Gesture, Prosody, Barge-in, Export/Import
 - Docs: REALTIME_VOICE_LAB, VOICE_WORKER, CI matrix, architecture note for JS path
 

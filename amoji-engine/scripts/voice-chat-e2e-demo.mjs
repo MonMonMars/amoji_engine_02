@@ -269,6 +269,49 @@ console.log("[e2e] idle presence smoke…");
   console.log("[e2e] idle presence ok →", clock.timeSec.toFixed(3), "params", params.length);
 }
 
+console.log("[e2e] talk gestures fingertips…");
+{
+  const {
+    inferTalkGestureFromText,
+    sampleTalkGesture,
+    talkGestureToFaceLiveParams,
+    listFingerTipParamIds,
+    createTalkGestureClock,
+    mergeFaceLiveParams,
+  } = await import("../engine/face/talkGestures.js");
+  assert(inferTalkGestureFromText("睇下呢個") === "point", "point style");
+  const sample = sampleTalkGesture(0.35, { style: "point", intensity: 1 });
+  assert(sample.pose.fingerRIndexTip > 0.8, "index tip extended");
+  assert(sample.pose.fingerRIndexMid > 0.7, "index mid");
+  assert(sample.pose.fingerRIndexProx > 0.6, "index prox");
+  assert(sample.pose.fingerRMiddleTip < 0.3, "other tips curled");
+  const tips = listFingerTipParamIds();
+  assert(tips.length === 10, "10 fingertips");
+  const gParams = talkGestureToFaceLiveParams(sample);
+  assert(
+    tips.every((id) => gParams.some((p) => p.id === id)),
+    "all tip params present",
+  );
+  const clock = createTalkGestureClock();
+  clock.start("第一、第二、第三");
+  assert(clock.opts.style === "count", "count from text");
+  const step = clock.step(0.05, { speechEnergy: 0.7 });
+  const merged = mergeFaceLiveParams(
+    [{ id: "ParamMouthOpenY", value: 0.4 }],
+    talkGestureToFaceLiveParams(step),
+  );
+  assert(merged.some((p) => p.id === "ParamMouthOpenY"), "merged mouth");
+  assert(merged.some((p) => p.id === "ParamFingerRIndexTip"), "merged tip");
+  console.log(
+    "[e2e] talk gestures ok →",
+    sample.style,
+    "tips",
+    tips.length,
+    "params",
+    gParams.length,
+  );
+}
+
 console.log("[e2e] prosody markers…");
 {
   const robot = createVoiceRobotBridge({ language: "yue" });

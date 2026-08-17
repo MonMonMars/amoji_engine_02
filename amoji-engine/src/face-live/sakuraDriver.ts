@@ -7,6 +7,13 @@ import {
   presenceToFaceLiveParams,
   type IdlePresenceSample,
 } from "./idlePresence.js";
+import {
+  TalkGestureClock,
+  createTalkGestureClock,
+  talkGestureToFaceLiveParams,
+  mergeFaceLiveParams,
+  type TalkGestureSample,
+} from "./talkGestures.js";
 import type {
   ConnectionState,
   FaceLiveParameter,
@@ -74,6 +81,7 @@ export class SakuraFaceLiveDriver {
   private authToken: string | null;
   private currentExpression: SakuraExpression = "neutral";
   private previousMouthOpen = 0;
+  private readonly talkGestures: TalkGestureClock;
   private requestId = 0;
   private authResolve: (() => void) | null = null;
   private authReject: ((error: Error) => void) | null = null;
@@ -90,6 +98,7 @@ export class SakuraFaceLiveDriver {
     this.authTimeoutMs = options.authTimeoutMs ?? 8_000;
     this.authToken = options.authenticationToken ?? null;
     this.createWebSocket = options.createWebSocket;
+    this.talkGestures = createTalkGestureClock({ style: "explain", intensity: 0.72 });
   }
 
   on<K extends FaceLiveEventName>(
@@ -159,6 +168,16 @@ export class SakuraFaceLiveDriver {
     });
     const mouth = parameters.find((p) => p.id === "ParamMouthOpenY");
     if (mouth) this.previousMouthOpen = mouth.value;
+    const speechEnergy = mouth?.value ?? this.previousMouthOpen;
+    if (this.talkGestures.active) {
+      const sample = this.talkGestures.step(1 / 30, { speechEnergy });
+      const merged = mergeFaceLiveParams(
+        parameters,
+        talkGestureToFaceLiveParams(sample),
+      );
+      await this.injectParameters(merged);
+      return merged;
+    }
     await this.injectParameters(parameters);
     return parameters;
   }
@@ -166,6 +185,7 @@ export class SakuraFaceLiveDriver {
   /** Reset mouth to closed (call when assistant speech ends). */
   async resetLipSync(): Promise<void> {
     this.previousMouthOpen = 0;
+    this.talkGestures.stop();
     await this.injectParameters([
       { id: "ParamMouthOpenY", value: 0 },
       { id: "ParamMouthSmile", value: 0.15 },
@@ -182,6 +202,40 @@ export class SakuraFaceLiveDriver {
     const parameters = presenceToFaceLiveParams(presence);
     await this.injectParameters(parameters);
     return parameters;
+  }
+
+  /**
+   * Start / update Disney-style talk gestures from assistant reply text.
+   * Gesture params merge into subsequent `driveLipSync` injects.
+   */
+  beginTalkGesture(
+    text: string,
+    opts: { emotion?: string; intensity?: number } = {},
+  ): string {
+    return this.talkGestures.start(text, opts);
+  }
+
+  /** Stop talk-gesture clock (keeps soft pose until next start). */
+  stopTalkGesture(): void {
+    this.talkGestures.stop();
+  }
+
+  get talkGestureClock(): TalkGestureClock {
+    return this.talkGestures;
+  }
+
+  /**
+   * Sample and inject talk-gesture params (body / hands / fingertips).
+   * Prefer `beginTalkGesture` + `driveLipSync` merge while TTS is playing.
+   */
+  async driveTalkGesture(
+    dtSec = 1 / 30,
+    frame: { speechEnergy?: number } = {},
+  ): Promise<{ sample: TalkGestureSample; parameters: FaceLiveParameter[] }> {
+    const sample = this.talkGestures.step(dtSec, frame);
+    const parameters = talkGestureToFaceLiveParams(sample);
+    await this.injectParameters(parameters);
+    return { sample, parameters };
   }
 
   /** Infer and apply expression from transcript text. */
