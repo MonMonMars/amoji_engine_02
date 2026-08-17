@@ -147,6 +147,7 @@ export class TtsChunkPlayer {
    *   onLipSync?: (payload: { chunk: object, mouthOpen: number, parameters: object[] }) => void,
    *   lipSync?: { pushChunk: Function, reset?: Function } | null,
    *   offline?: boolean,
+   *   gain?: number,
    *   createAudioContext?: () => AudioContext,
    * }} [opts]
    */
@@ -170,6 +171,12 @@ export class TtsChunkPlayer {
     this.muted = false;
     this._played = 0;
     this._lastMouthOpen = 0;
+    this._gain =
+      typeof opts.gain === "number" && Number.isFinite(opts.gain)
+        ? Math.max(0, opts.gain)
+        : 1;
+    /** @type {GainNode | null} */
+    this._gainNode = null;
   }
 
   async ensureCtx() {
@@ -186,7 +193,12 @@ export class TtsChunkPlayer {
         this.ctx = new AC();
       }
     }
-    if (this.ctx.state === 'suspended') await this.ctx.resume();
+    if (this.ctx.state === "suspended") await this.ctx.resume();
+    if (this.ctx && !this._gainNode && typeof this.ctx.createGain === "function") {
+      this._gainNode = this.ctx.createGain();
+      this._gainNode.gain.value = this._gain;
+      this._gainNode.connect(this.ctx.destination);
+    }
     return this.ctx;
   }
 
@@ -204,6 +216,27 @@ export class TtsChunkPlayer {
 
   get lastMouthOpen() {
     return this._lastMouthOpen;
+  }
+
+  get gain() {
+    return this._gain;
+  }
+
+  /**
+   * Linear playback gain (0 = silent, 1 = unity). Applied via GainNode when available.
+   * @param {number} value
+   */
+  setGain(value) {
+    const next = Math.max(0, Number(value));
+    this._gain = Number.isFinite(next) ? next : 1;
+    if (this._gainNode) {
+      try {
+        this._gainNode.gain.value = this._gain;
+      } catch {
+        /* ignore */
+      }
+    }
+    return this._gain;
   }
 
   /**
@@ -287,7 +320,9 @@ export class TtsChunkPlayer {
         if (ctx && !this.offline) {
           const buffer = await decodeChunkToAudioBuffer(ctx, chunk);
           if (gen !== this._generation) break;
-          await playAudioBuffer(ctx, buffer);
+          await playAudioBuffer(ctx, buffer, {
+            destination: this._gainNode || ctx.destination,
+          });
         } else {
           const dur = Math.max(0.04, Number(chunk.durationSec) || 0.12);
           await sleep(dur * 1000);
@@ -321,6 +356,7 @@ export class TtsChunkPlayer {
  *   onLipSync?: (payload: object) => void,
  *   lipSync?: object,
  *   offline?: boolean,
+ *   gain?: number,
  * }} [opts]
  */
 export function createTtsPlaybackQueue(opts = {}) {
@@ -373,12 +409,13 @@ export async function decodeChunkToAudioBuffer(ctx, chunk) {
 /**
  * @param {AudioContext} ctx
  * @param {AudioBuffer} buffer
+ * @param {{ destination?: AudioNode }} [opts]
  */
-function playAudioBuffer(ctx, buffer) {
+function playAudioBuffer(ctx, buffer, opts = {}) {
   return new Promise((resolve) => {
     const src = ctx.createBufferSource();
     src.buffer = buffer;
-    src.connect(ctx.destination);
+    src.connect(opts.destination || ctx.destination);
     src.onended = () => resolve();
     src.start();
   });

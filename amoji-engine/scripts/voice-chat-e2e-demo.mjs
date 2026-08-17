@@ -235,6 +235,22 @@ console.log("[e2e] mic level meter…");
   console.log("[e2e] mic meter ok →", meter.formatHud());
 }
 
+console.log("[e2e] tts volume pref…");
+{
+  const {
+    resolveTtsVolumePref,
+    nextTtsVolume,
+    createTtsPlaybackQueue,
+  } = await import("../engine/index.js");
+  const pref = resolveTtsVolumePref({ search: "?vol=loud", storage: null, env: {} });
+  assert(pref.level === "loud", "vol loud");
+  assert(pref.gain > 1, "loud gain");
+  assert(nextTtsVolume("loud") === "soft", "vol cycle");
+  const player = createTtsPlaybackQueue({ offline: true, gain: pref.gain });
+  assert(player.setGain(0.5) === 0.5, "setGain");
+  console.log("[e2e] tts volume ok →", pref.level, pref.gain);
+}
+
 console.log("[e2e] idle presence smoke…");
 {
   const { createIdlePresenceClock, sampleIdlePresence, presenceToFaceLiveParams } =

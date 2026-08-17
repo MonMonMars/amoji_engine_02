@@ -115,7 +115,33 @@ describe("labHotkeys", () => {
     });
     expect(onExpressionCycle).toHaveBeenCalledTimes(1);
 
-    expect(hotkeys.unbind()).toBe(true);
+    const onVolumeDown = vi.fn();
+    const onVolumeUp = vi.fn();
+    hotkeys.unbind();
+    const hotkeys2 = createLabHotkeys({
+      target,
+      onVolumeDown,
+      onVolumeUp,
+    });
+    hotkeys2.bind();
+    listeners.get("keydown")({
+      code: "BracketLeft",
+      key: "[",
+      target: { tagName: "DIV" },
+      preventDefault: vi.fn(),
+      repeat: false,
+    });
+    listeners.get("keydown")({
+      code: "BracketRight",
+      key: "]",
+      target: { tagName: "DIV" },
+      preventDefault: vi.fn(),
+      repeat: false,
+    });
+    expect(onVolumeDown).toHaveBeenCalledTimes(1);
+    expect(onVolumeUp).toHaveBeenCalledTimes(1);
+
+    expect(hotkeys2.unbind()).toBe(true);
     expect(listeners.size).toBe(0);
   });
 });

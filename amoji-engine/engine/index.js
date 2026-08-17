@@ -186,6 +186,18 @@ export {
 } from "./lab/listenPref.js";
 
 export {
+  TTS_VOLUME_SCHEMA,
+  TTS_VOLUME_STORAGE_KEY,
+  TTS_VOLUME_PRESETS,
+  normalizeTtsVolume,
+  nextTtsVolume,
+  prevTtsVolume,
+  persistTtsVolumePref,
+  resolveTtsVolumePref,
+  ttsVolumePresetFor,
+} from "./lab/ttsVolumePref.js";
+
+export {
   LATENCY_BUDGET_SCHEMA,
   DEFAULT_LATENCY_BUDGET,
   checkLatencyBudget,
