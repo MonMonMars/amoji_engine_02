@@ -60,3 +60,19 @@ await client.tts({ text: "好呀" }, { onChunk: (c) => player.enqueue(c) });
 player.flush(); // barge-in
 ```
 
+## Lip-sync from TTS
+
+`createLipSyncTracker()` + player `onLipSync` map chunk RMS → `ParamMouthOpenY` / smile. Lab HUD shows the **lip-sync** row while chunks play.
+
+```js
+import { createLipSyncTracker, createTtsPlaybackQueue } from "@amoji/engine/engine";
+const lipSync = createLipSyncTracker();
+const player = createTtsPlaybackQueue({
+  lipSync,
+  onLipSync: ({ mouthOpen, parameters }) => faceLive.injectParameters(parameters),
+});
+```
+
+## Lab worker URL
+
+Open the lab with `?worker=http://127.0.0.1:7890` (saved to `localStorage`), or set `AMOJI_VOICE_WORKER`. Default is mock.

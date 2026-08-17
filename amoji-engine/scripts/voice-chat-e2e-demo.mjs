@@ -289,4 +289,34 @@ console.log("[e2e] TTS playback queue (offline)…");
   console.log("[e2e] tts playback ok → played", player.playedCount);
 }
 
+console.log("[e2e] lip-sync from TTS chunks…");
+{
+  const {
+    createLipSyncTracker,
+    createTtsPlaybackQueue,
+    mockTtsStream,
+    resolveVoiceWorkerConfig,
+  } = await import("../engine/index.js");
+  const tts = await mockTtsStream({ text: "開心呀", language: "yue" });
+  const lipSync = createLipSyncTracker();
+  const mouths = [];
+  const player = createTtsPlaybackQueue({
+    offline: true,
+    lipSync,
+    onLipSync: ({ mouthOpen }) => mouths.push(mouthOpen),
+  });
+  await player.enqueueAll(
+    tts.chunks.map((c) => ({ ...c, durationSec: 0.04, pauseMs: 0 })),
+  );
+  assert(mouths.length >= 1, "expected lip-sync events");
+  assert(mouths.some((m) => m > 0), "expected open mouth");
+  const cfg = resolveVoiceWorkerConfig({
+    search: "?worker=http://127.0.0.1:7890",
+    storage: null,
+    env: {},
+  });
+  assert(cfg.mode === "http", "worker url resolve");
+  console.log("[e2e] lipsync ok → events", mouths.length, "max", Math.max(...mouths));
+}
+
 console.log("[e2e] all checks passed");

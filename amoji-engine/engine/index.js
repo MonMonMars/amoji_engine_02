@@ -91,6 +91,16 @@ export {
 } from "./face/idlePresence.js";
 
 export {
+  LIP_SYNC_SCHEMA,
+  LIP_SYNC_PARAM_IDS,
+  mouthOpenFromPcm,
+  smoothMouthOpen,
+  decodePcmBase64ToFloat32,
+  lipSyncParamsFromChunk,
+  createLipSyncTracker,
+} from "./face/lipSyncFromChunk.js";
+
+export {
   SESSION_ARCHIVE_KIND,
   SESSION_ARCHIVE_SCHEMA_VERSION,
   applySessionArchive,
@@ -103,3 +113,8 @@ export {
   importSessionArchive,
   parseSessionArchive,
 } from "./lab/sessionArchive.js";
+
+export {
+  WORKER_URL_STORAGE_KEY,
+  resolveVoiceWorkerConfig,
+} from "./lab/workerUrl.js";
