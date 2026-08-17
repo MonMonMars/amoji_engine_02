@@ -508,6 +508,111 @@ export function robotMotionPlanSteps(motionPackage) {
 }
 
 /**
+ * Time-sampled vendor motion frame for rAF / TTS loops.
+ * SoftBank / Furhat stay tag/name based; Reachy / Unitree / ROS / Sakura animate.
+ *
+ * @param {number} timeSec
+ * @param {{
+ *   style?: string,
+ *   text?: string,
+ *   emotion?: string,
+ *   intensity?: number,
+ *   speechEnergy?: number,
+ *   vendor?: string,
+ *   countDigit?: number,
+ * }} [opts]
+ */
+export function sampleVendorMotionFrame(timeSec, opts = {}) {
+  const vendor = normalizeRobotMotionVendor(opts.vendor);
+  const style =
+    opts.style && TALK_GESTURE_STYLES.includes(String(opts.style))
+      ? String(opts.style)
+      : inferTalkGestureFromText(opts.text || "", { emotion: opts.emotion });
+  const intensity = clamp(opts.intensity ?? 0.72, 0.15, 1.35);
+  const t = Math.max(0, Number(timeSec) || 0);
+  const sample = sampleTalkGesture(t, {
+    style,
+    intensity,
+    emotion: opts.emotion,
+    speechEnergy: opts.speechEnergy,
+    countDigit: opts.countDigit,
+  });
+
+  const base = {
+    schema: ROBOT_MOTION_SCHEMA,
+    vendor,
+    style,
+    intensity,
+    timeSec: Number(t.toFixed(3)),
+    emotion: opts.emotion || "neutral",
+    frame: true,
+    sources: vendorSources(vendor),
+  };
+
+  if (vendor === "softbank") {
+    return { ...base, softbank: toSoftbankMotion(style, opts.text) };
+  }
+  if (vendor === "furhat") {
+    const furhat = toFurhatMotion(style, intensity);
+    // Animate neck pan slightly for wave / point over time
+    const wiggle = Math.sin(t * 4.2 * Math.PI) * 8 * intensity;
+    if (style === "wave" || style === "point") {
+      furhat.definition = {
+        ...furhat.definition,
+        frames: [
+          {
+            time: [0],
+            params: {
+              ...furhatFrameParams(style, furhat.strength),
+              NECK_PAN: wiggle,
+            },
+          },
+        ],
+      };
+    }
+    return { ...base, furhat };
+  }
+  if (vendor === "reachy") {
+    const reachy = toReachyMotion(style, intensity);
+    // Disney beat: time oscillation + talk-pose energy on shoulder / wrist
+    const osc = Math.sin(t * 4.2 * Math.PI) * 12 * intensity;
+    const beatR = sample.pose.armRA ?? 0.2;
+    const beatL = sample.pose.armLA ?? 0.2;
+    reachy.r_arm = reachy.r_arm.map((v, i) =>
+      Number(
+        (
+          v +
+          (i === 0 ? beatR * 8 + osc * 0.35 : 0) +
+          (i === 5 ? beatR * 6 + osc : 0)
+        ).toFixed(2),
+      ),
+    );
+    reachy.l_arm = reachy.l_arm.map((v, i) =>
+      Number((v + (i === 0 ? beatL * 8 : 0)).toFixed(2)),
+    );
+    reachy.timeSec = base.timeSec;
+    return { ...base, reachy };
+  }
+  if (vendor === "unitree_g1") {
+    return {
+      ...base,
+      unitree_g1: toUnitreeG1Motion(style, intensity, sample.pose),
+    };
+  }
+  if (vendor === "ros") {
+    return { ...base, ros: toRosMotion(style, intensity, sample.pose) };
+  }
+  return {
+    ...base,
+    sakura: {
+      parameters: talkGestureToFaceLiveParams(sample),
+      style,
+      fingerTips: sample.fingerTips,
+    },
+  };
+}
+
+/**
  * Stateful adapter used by the lab / robot bridge.
  * @param {{ vendor?: string, intensity?: number }} [opts]
  */
@@ -516,6 +621,11 @@ export function createRobotMotionAdapter(opts = {}) {
   let intensity = opts.intensity ?? 0.72;
   /** @type {object | null} */
   let last = null;
+  let style = "explain";
+  let emotion = "neutral";
+  let text = "";
+  let timeSec = 0;
+  let active = false;
 
   return {
     get schema() {
@@ -526,6 +636,12 @@ export function createRobotMotionAdapter(opts = {}) {
     },
     get last() {
       return last;
+    },
+    get active() {
+      return active;
+    },
+    get style() {
+      return style;
     },
     setVendor(next) {
       vendor = normalizeRobotMotionVendor(next);
@@ -540,34 +656,81 @@ export function createRobotMotionAdapter(opts = {}) {
       return intensity;
     },
     /**
-     * @param {string} text
+     * @param {string} nextText
      * @param {{ emotion?: string, style?: string, timeSec?: number }} [extra]
      */
-    fromText(text, extra = {}) {
+    fromText(nextText, extra = {}) {
+      text = String(nextText || "");
+      emotion = extra.emotion || emotion;
+      if (extra.style) style = extra.style;
+      else {
+        style = inferTalkGestureFromText(text, { emotion });
+      }
+      timeSec = extra.timeSec ?? 0.4;
+      active = true;
       last = buildRobotMotionPackage({
         text,
-        emotion: extra.emotion,
-        style: extra.style,
+        emotion,
+        style,
         intensity,
         vendor,
-        timeSec: extra.timeSec,
+        timeSec,
       });
       return last;
     },
     /**
-     * @param {string} style
+     * @param {string} nextStyle
      * @param {{ emotion?: string, timeSec?: number, text?: string }} [extra]
      */
-    fromStyle(style, extra = {}) {
+    fromStyle(nextStyle, extra = {}) {
+      style = nextStyle || style;
+      if (extra.text) text = extra.text;
+      if (extra.emotion) emotion = extra.emotion;
+      timeSec = extra.timeSec ?? 0.4;
+      active = true;
       last = buildRobotMotionPackage({
         style,
-        text: extra.text,
-        emotion: extra.emotion,
+        text,
+        emotion,
         intensity,
         vendor,
-        timeSec: extra.timeSec,
+        timeSec,
       });
       return last;
+    },
+    /**
+     * Advance animated vendor frame (Reachy / Unitree / ROS / Sakura).
+     * @param {number} dtSec
+     * @param {{ speechEnergy?: number }} [frame]
+     */
+    sampleFrame(dtSec = 1 / 30, frame = {}) {
+      if (!active) {
+        return sampleVendorMotionFrame(timeSec, {
+          style: "soft",
+          intensity: 0.2,
+          vendor,
+          emotion,
+          speechEnergy: frame.speechEnergy,
+        });
+      }
+      timeSec += Math.max(0, dtSec);
+      last = sampleVendorMotionFrame(timeSec, {
+        style,
+        text,
+        emotion,
+        intensity,
+        vendor,
+        speechEnergy: frame.speechEnergy,
+      });
+      return last;
+    },
+    stop() {
+      active = false;
+    },
+    reset() {
+      active = false;
+      timeSec = 0;
+      last = null;
     },
   };
 }

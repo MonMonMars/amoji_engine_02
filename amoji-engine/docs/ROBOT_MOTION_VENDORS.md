@@ -55,7 +55,9 @@ const turn = await robot.runTurn("哈哈好開心");
 turn.motion.unitree_g1.joints; // upper-body rad targets
 ```
 
-Lab: **Motion:** button cycles vendors; Robot HUD **motion** row shows the active package.
+Lab: **Motion:** button cycles vendors (`?motion=` / `amoji.motionVendor`); Robot HUD **motion** row shows the active package + dispatch log. SoftBank turns also return `annotatedReply` for ALAnimatedSpeech.
+
+While speaking, the lab samples vendor frames (~12 Hz) through `sampleVendorMotionFrame` / `createRobotMotionDispatcher` (mock hardware bridge).
 
 ## Hardware notes
 

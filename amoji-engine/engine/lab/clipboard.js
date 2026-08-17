@@ -63,6 +63,7 @@ export async function copyTextToClipboard(text, opts = {}) {
  *   lang?: string,
  *   vad?: string,
  *   vol?: string,
+ *   motion?: string,
  * }} [opts]
  */
 export function buildLabShareUrl(opts = {}) {
@@ -84,5 +85,6 @@ export function buildLabShareUrl(opts = {}) {
   if (opts.lang) url.searchParams.set("lang", opts.lang);
   if (opts.vad) url.searchParams.set("vad", opts.vad);
   if (opts.vol) url.searchParams.set("vol", opts.vol);
+  if (opts.motion) url.searchParams.set("motion", opts.motion);
   return url.toString();
 }

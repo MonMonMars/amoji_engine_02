@@ -297,6 +297,9 @@
         mergeFaceLiveParams,
         nextRobotMotionVendor,
         formatRobotMotionHud,
+        createRobotMotionDispatcher,
+        resolveMotionVendorPref,
+        persistMotionVendorPref,
         exportTurnMetricsRollup,
         buildLabShareUrl,
         copyTextToClipboard,
@@ -354,8 +357,11 @@
       let dialectPref = resolveDialectPref();
       let listenPref = resolveListenPref();
       let ttsVolumePref = resolveTtsVolumePref();
+      let motionVendorPref = resolveMotionVendorPref();
       let demoExpression = "neutral";
       let ttsMuted = false;
+      const motionDispatcher = createRobotMotionDispatcher({ maxLog: 120 });
+      let lastMotionFrameAt = 0;
       const micMeter = createMicLevelMeter({
         threshold: listenPref.vad.energyThreshold,
         alpha: 0.4,
@@ -445,7 +451,7 @@
       const robot = createVoiceRobotBridge({
         language: dialectPref.forceLanguage || "yue",
         forceLanguage: dialectPref.forceLanguage,
-        motionVendor: "sakura",
+        motionVendor: motionVendorPref.vendor,
       });
 
       const labelMotionVendor = (vendor) => {
@@ -460,21 +466,35 @@
         return map[vendor] || vendor;
       };
 
-      const applyMotionVendor = (vendor, { logChange = false } = {}) => {
-        const next = robot.setMotionVendor(vendor);
+      const applyMotionVendor = (vendor, { logChange = false, persist = true } = {}) => {
+        const next = persist
+          ? persistMotionVendorPref(vendor)
+          : robot.setMotionVendor(vendor);
+        robot.setMotionVendor(next);
+        motionVendorPref = {
+          ...motionVendorPref,
+          vendor: next,
+          source: persist ? "ui" : motionVendorPref.source,
+        };
         motionVendorBtn.textContent = `Motion: ${labelMotionVendor(next)}`;
         motionVendorBtn.setAttribute(
           "aria-pressed",
           next === "sakura" ? "false" : "true",
         );
-        motionHudEl.textContent = `${next} · ready`;
+        motionHudEl.textContent = `${next} · ${motionVendorPref.source} · ready`;
         if (logChange) {
-          session.recordTick("motion-vendor", { vendor: next });
-          log(`motion vendor → ${next}`);
+          session.recordTick("motion-vendor", {
+            vendor: next,
+            source: motionVendorPref.source,
+          });
+          log(`motion vendor → ${next} (${motionVendorPref.source})`);
         }
         return next;
       };
-      applyMotionVendor(robot.motionVendor, { logChange: false });
+      applyMotionVendor(motionVendorPref.vendor, {
+        logChange: false,
+        persist: motionVendorPref.source === "query",
+      });
       const idle = createIdlePresenceClock({ emotion: "neutral", intensity: 0.42 });
       const lipSync = createLipSyncTracker({ alpha: 0.45, sensitivity: 1.6 });
       const talkGestures = createTalkGestureClock({ style: "explain", intensity: 0.72 });
@@ -738,6 +758,10 @@
           renderRobotHud(payload);
           if (ev === "sakura") {
             pushExpression(payload.emotion || "neutral", { source: "robot" });
+            if (payload.motion) {
+              motionDispatcher.begin(payload.motion, { source: "robot" });
+              motionHudEl.textContent = motionDispatcher.formatHud();
+            }
             if (payload.reply || payload.summary) {
               beginTalkGesture(payload.reply || payload.summary, {
                 emotion: payload.emotion,
@@ -752,6 +776,12 @@
           }
           if (ev === "done" || ev === "aborted") {
             idle.setEmotion(payload.emotion || "neutral", 0.42);
+            motionDispatcher.end({
+              source: ev,
+              reason: ev === "aborted" ? "aborted" : "complete",
+            });
+            robot.stopMotion();
+            motionHudEl.textContent = motionDispatcher.formatHud();
             if (ev === "aborted") {
               stopTalkGesture({ reset: true });
               if (faceLive.isAuthenticated) {
@@ -945,6 +975,9 @@
           robot.abort(info.reason || "barge-in");
           ttsPlayer.flush();
           stopTalkGesture({ reset: true });
+          motionDispatcher.end({ source: "barge", reason: info.reason || "barge-in" });
+          robot.stopMotion();
+          motionHudEl.textContent = motionDispatcher.formatHud();
           this.talking = false;
           session.recordTick("barge", {
             at: Date.now(),
@@ -1000,9 +1033,8 @@
           if (!talkGestures.active) {
             talkGestures.start("", { emotion: emotionEl.textContent || "neutral" });
           }
-          const sample = talkGestures.step(dt, {
-            speechEnergy: lastLipSync?.mouthOpen ?? 0.45,
-          });
+          const speechEnergy = lastLipSync?.mouthOpen ?? 0.45;
+          const sample = talkGestures.step(dt, { speechEnergy });
           const gParams = talkGestureToFaceLiveParams(sample);
           updateGestureHud(sample);
           const merged = mergeFaceLiveParams(lastLipSync?.parameters, gParams);
@@ -1011,6 +1043,17 @@
             pushFaceParams(merged);
           } else {
             labHost.lastFaceParams = merged;
+          }
+          // Animate / dispatch vendor motion frames (~12 Hz)
+          if (motionDispatcher.active && now - lastMotionFrameAt > 80) {
+            lastMotionFrameAt = now;
+            const frame = robot.sampleMotionFrame(0.08, { speechEnergy });
+            motionDispatcher.frame(frame, { source: "raf" });
+            motionHudEl.textContent = motionDispatcher.formatHud();
+            // When vendor is sakura, Face Live already gets fingertip merge above.
+            if (frame?.sakura?.parameters?.length && robot.motionVendor === "sakura") {
+              /* merged via talkGestures */
+            }
           }
         }
         requestAnimationFrame(raf);
@@ -1026,6 +1069,9 @@
       );
       log(
         `dialect ${dialectPref.mode} (source=${dialectPref.source}; ?lang=auto|yue|en)`,
+      );
+      log(
+        `motion vendor=${motionVendorPref.vendor} (source=${motionVendorPref.source}; ?motion=sakura|softbank|furhat|reachy|unitree_g1|ros)`,
       );
       lipsyncHudEl.textContent = "—";
       gestureHudEl.textContent = "—";
@@ -1389,7 +1435,7 @@
 
       document.getElementById("btn-motion-vendor").addEventListener("click", () => {
         const next = nextRobotMotionVendor(robot.motionVendor);
-        applyMotionVendor(next, { logChange: true });
+        applyMotionVendor(next, { logChange: true, persist: true });
       });
 
       document.getElementById("btn-worker-demo").addEventListener("click", async () => {
@@ -1471,6 +1517,7 @@
           lang: dialectPref.mode,
           vad: listenPref.sensitivity,
           vol: ttsVolumePref.level,
+          motion: robot.motionVendor,
         });
         const result = await copyTextToClipboard(share);
         session.recordTick("copy-url", { ok: result.ok, method: result.method });
@@ -1516,6 +1563,8 @@
         idle.reset();
         idle.setEmotion("neutral", 0.42);
         stopTalkGesture({ reset: true });
+        motionDispatcher.clear();
+        robot.stopMotion();
         latencyHudEl.textContent = "—";
         rollupHudEl.textContent = "—";
         budgetHudEl.textContent = "—";
