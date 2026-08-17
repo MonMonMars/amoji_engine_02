@@ -179,6 +179,7 @@
         createVoiceWorkerClient,
         createWorkerTurnHost,
         createPartialAsrWatcher,
+        createTtsPlaybackQueue,
         runWorkerRobotTurn,
         presenceToFaceLiveParams,
         frameEnergy,
@@ -217,6 +218,26 @@
         },
       });
 
+      const ttsPlayer = createTtsPlaybackQueue({
+        onStart: (chunk) => {
+          session.recordTick("tts", {
+            event: "start",
+            index: chunk.index,
+            text: chunk.text,
+          });
+        },
+        onEnd: (chunk) => {
+          session.recordTick("tts", {
+            event: "end",
+            index: chunk.index,
+            final: chunk.final,
+          });
+        },
+        onIdle: () => {
+          session.recordTick("tts", { event: "idle" });
+        },
+      });
+
       const turnHost = createWorkerTurnHost({
         worker,
         robot,
@@ -233,6 +254,9 @@
             chunks: turn.tts?.chunkCount,
             barged: turn.barged,
           });
+        },
+        onChunk: (chunk) => {
+          void ttsPlayer.enqueue(chunk);
         },
       });
 
@@ -407,6 +431,7 @@
         },
         bargeIn(info = {}) {
           robot.abort(info.reason || "barge-in");
+          ttsPlayer.flush();
           this.talking = false;
           session.recordTick("barge", {
             at: Date.now(),
@@ -416,7 +441,7 @@
           });
           renderRobotHud();
           log(
-            `barge-in → robot aborted${
+            `barge-in → robot aborted + tts flushed${
               info.energy != null ? ` energy=${Number(info.energy).toFixed(3)}` : ""
             }`,
           );
@@ -604,10 +629,14 @@
           worker.language === "en"
             ? "<|en|><|NEUTRAL|><|Speech|>Hello there, how are you today?"
             : "<|yue|><|HAPPY|><|Speech|>今日天氣好正呀，我好開心！";
+        ttsPlayer.flush();
         const turn = await runWorkerRobotTurn({
           worker,
           robot,
           text: asrText,
+          onChunk: (chunk) => {
+            void ttsPlayer.enqueue(chunk);
+          },
         });
         idle.setEmotion(turn.emotion?.emotion || "neutral", turn.emotion?.intensity || 0.5);
         await labHost.stopListeningAndTalk({

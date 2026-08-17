@@ -73,7 +73,12 @@ export {
   BROWSER_AUDIO_SCHEMA,
   encodeWavPcm16,
   arrayBufferToBase64,
+  base64ToBytes,
+  synthesizeWavBase64,
   downsampleMono,
+  TtsChunkPlayer,
+  createTtsPlaybackQueue,
+  decodeChunkToAudioBuffer,
 } from "./voice/browserAudio.js";
 
 export {

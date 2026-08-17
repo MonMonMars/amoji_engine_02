@@ -13,6 +13,7 @@ import {
 } from './senseVoice.js';
 import { detectLanguage, stripAsrTags } from './dialect.js';
 import { prosodyFromMarkedText } from './prosodyMarkers.js';
+import { synthesizeWavBase64 } from './browserAudio.js';
 
 export const VOICE_WORKER_SCHEMA = 'amoji.voiceWorker.v1';
 
@@ -170,10 +171,12 @@ export async function mockTtsStream(input, opts = {}) {
   while (i < chars.length) {
     const slice = chars.slice(i, i + chunkSize).join('');
     i += chunkSize;
+    const durationSec = Math.max(0.12, slice.length * 0.09) / speed;
+    const freq = 200 + (index % 5) * 30 + (language === 'en' ? 40 : 0);
     const chunk = makeTtsChunk({
       index,
       text: slice,
-      durationSec: Math.max(0.12, slice.length * 0.09) / speed,
+      durationSec,
       final: i >= chars.length,
       provider: 'mock',
       langTag,
@@ -181,6 +184,13 @@ export async function mockTtsStream(input, opts = {}) {
       instruct: input.instruct || null,
       speed,
       pauseMs: input.pauseMs ?? 180,
+      sampleRate: 22050,
+      pcmBase64: synthesizeWavBase64({
+        durationSec,
+        sampleRate: 22050,
+        frequencyHz: freq,
+        amplitude: 0.07,
+      }),
     });
     chunks.push(chunk);
     opts.onChunk?.(chunk);
@@ -197,6 +207,12 @@ export async function mockTtsStream(input, opts = {}) {
       emotion: input.emotion || 'neutral',
       instruct: input.instruct || null,
       speed,
+      sampleRate: 22050,
+      pcmBase64: synthesizeWavBase64({
+        durationSec: 0.08,
+        silent: true,
+        sampleRate: 22050,
+      }),
     });
     chunks.push(empty);
     opts.onChunk?.(empty);

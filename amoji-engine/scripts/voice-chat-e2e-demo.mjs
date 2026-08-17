@@ -263,4 +263,30 @@ console.log("[e2e] worker↔robot pipeline + mic buffer…");
   );
 }
 
+console.log("[e2e] TTS playback queue (offline)…");
+{
+  const { createTtsPlaybackQueue, mockTtsStream, base64ToBytes } = await import(
+    "../engine/index.js"
+  );
+  const tts = await mockTtsStream({ text: "測試播放", language: "yue" });
+  assert(tts.chunks[0].pcmBase64, "pcm missing");
+  const head = base64ToBytes(tts.chunks[0].pcmBase64).subarray(0, 4);
+  assert(
+    String.fromCharCode(...head) === "RIFF",
+    "expected RIFF wav",
+  );
+  const player = createTtsPlaybackQueue({ offline: true });
+  let started = 0;
+  player.onStart = () => {
+    started += 1;
+  };
+  await player.enqueueAll(
+    tts.chunks.map((c) => ({ ...c, durationSec: 0.04, pauseMs: 0 })),
+  );
+  assert(started >= 1, "playback should start");
+  assert(player.playedCount >= 1, "playback should finish at least one");
+  player.flush();
+  console.log("[e2e] tts playback ok → played", player.playedCount);
+}
+
 console.log("[e2e] all checks passed");
