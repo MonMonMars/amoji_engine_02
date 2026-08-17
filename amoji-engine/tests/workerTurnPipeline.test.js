@@ -45,6 +45,9 @@ describe('runWorkerRobotTurn', () => {
     expect(turn.tts.chunkCount).toBeGreaterThan(0);
     expect(chunks.length).toBe(turn.tts.chunkCount);
     expect(robot.getHud().phase).toBe('done');
+    expect(turn.metrics.totalMs).toBeGreaterThanOrEqual(0);
+    expect(turn.metrics.asrMs).toBeGreaterThanOrEqual(0);
+    expect(turn.metrics.chunkCount).toBe(turn.tts.chunkCount);
   });
 
   it('mock audio-only ASR rotates stub lines', async () => {

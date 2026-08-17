@@ -1,4 +1,27 @@
+# OS / editor
+.DS_Store
+*.swp
+.idea/
+.vscode/
+
+# Node
+node_modules/
+npm-debug.log*
+dist/
+coverage/
+*.tsbuildinfo
+
+# Env / secrets
+.env
+.env.*
+!.env.example
 
 # Python
 **/__pycache__/
 *.pyc
+.venv/
+venv/
+
+# Lab / local
+*.log
+.cache/

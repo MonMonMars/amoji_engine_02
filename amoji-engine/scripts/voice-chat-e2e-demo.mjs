@@ -245,6 +245,8 @@ console.log("[e2e] worker↔robot pipeline + mic buffer…");
   });
   assert(robot.memory.userName === "小明", "pipeline should teach robot name");
   assert(piped.tts.chunkCount >= 1, "pipeline tts");
+  assert(piped.metrics?.totalMs >= 0, "pipeline metrics");
+  assert(piped.metrics?.chunkCount >= 1, "metrics chunks");
 
   const host = createWorkerTurnHost({ worker, robot, inputRate: 16000 });
   host.beginListen();
