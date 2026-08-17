@@ -312,6 +312,39 @@ console.log("[e2e] talk gestures fingertips…");
   );
 }
 
+console.log("[e2e] multi-vendor robot motion…");
+{
+  const {
+    buildRobotMotionPackage,
+    nextRobotMotionVendor,
+  } = await import("../engine/robot/talkMotion.js");
+  const softbank = buildRobotMotionPackage({
+    text: "拜拜",
+    vendor: "softbank",
+  });
+  assert(softbank.softbank.tag === "hello", "softbank hello tag");
+  assert(softbank.softbank.annotatedSay.includes("^start("), "annotated say");
+  const reachy = buildRobotMotionPackage({ style: "point", vendor: "reachy" });
+  assert(reachy.reachy.r_arm.length === 7, "reachy 7 dof");
+  const g1 = buildRobotMotionPackage({
+    style: "celebrate",
+    vendor: "unitree_g1",
+  });
+  assert(g1.unitree_g1.joints.right_shoulder_pitch > 0.5, "g1 shoulder");
+  assert(nextRobotMotionVendor("sakura") === "softbank", "vendor cycle");
+  const robot = createVoiceRobotBridge({ motionVendor: "furhat" });
+  const turn = await robot.runTurn("點解呀？", { forceReply: "點解咁呀？" });
+  assert(turn.motion.vendor === "furhat", "bridge furhat");
+  assert(turn.motion.style === "question", "question style");
+  console.log(
+    "[e2e] robot motion ok →",
+    softbank.vendor,
+    softbank.softbank.tag,
+    "→",
+    turn.motion.furhat.name,
+  );
+}
+
 console.log("[e2e] prosody markers…");
 {
   const robot = createVoiceRobotBridge({ language: "yue" });

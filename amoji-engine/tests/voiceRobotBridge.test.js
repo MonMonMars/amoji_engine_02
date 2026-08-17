@@ -42,6 +42,9 @@ describe("createVoiceRobotBridge", () => {
       summary: "",
       steps: [],
       language: "yue",
+      motion: null,
+      motionHud: "—",
+      motionVendor: "sakura",
     });
   });
 

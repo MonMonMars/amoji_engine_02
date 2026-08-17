@@ -6,6 +6,11 @@
  */
 import { detectLanguage, stripAsrTags } from './dialect.js';
 import { prosodyFromMarkedText } from './prosodyMarkers.js';
+import {
+  createRobotMotionAdapter,
+  robotMotionPlanSteps,
+  formatRobotMotionHud,
+} from '../robot/talkMotion.js';
 
 const ROBOT_EVENTS = Object.freeze([
   "sakura",
@@ -20,6 +25,8 @@ const EMPTY_HUD = () => ({
   summary: "",
   steps: [],
   language: "yue",
+  motion: null,
+  motionHud: "—",
 });
 
 /**
@@ -102,6 +109,7 @@ export function planRobotSteps(text, memory = {}) {
  *   memory?: { userName?: string | null },
  *   language?: string,
  *   forceLanguage?: string | null,
+ *   motionVendor?: string,
  * }} [opts]
  */
 export function createVoiceRobotBridge(opts = {}) {
@@ -118,6 +126,9 @@ export function createVoiceRobotBridge(opts = {}) {
       : String(opts.forceLanguage).toLowerCase();
   if (forceLanguage) language = forceLanguage;
   let aborted = false;
+  const motion = createRobotMotionAdapter({
+    vendor: opts.motionVendor || "sakura",
+  });
 
   const emit = (event, payload = {}) => {
     if (!ROBOT_EVENTS.includes(event)) {
@@ -129,6 +140,8 @@ export function createVoiceRobotBridge(opts = {}) {
       summary: payload.summary ?? hud.summary,
       steps: Array.isArray(payload.steps) ? payload.steps.slice() : hud.steps,
       language: payload.language ?? language,
+      motion: payload.motion ?? hud.motion,
+      motionHud: payload.motionHud ?? hud.motionHud,
       ...payload,
     };
     hud = {
@@ -137,6 +150,8 @@ export function createVoiceRobotBridge(opts = {}) {
       summary: next.summary,
       steps: next.steps,
       language: next.language,
+      motion: next.motion ?? null,
+      motionHud: next.motionHud || "—",
     };
     opts.onEvent?.(event, next);
     for (const cb of listeners.get(event) ?? []) {
@@ -156,6 +171,9 @@ export function createVoiceRobotBridge(opts = {}) {
         summary: hud.summary,
         steps: hud.steps.slice(),
         language: hud.language || language,
+        motion: hud.motion,
+        motionHud: hud.motionHud || "—",
+        motionVendor: motion.vendor,
       };
     },
     get memory() {
@@ -166,6 +184,12 @@ export function createVoiceRobotBridge(opts = {}) {
     },
     get forceLanguage() {
       return forceLanguage;
+    },
+    get motionVendor() {
+      return motion.vendor;
+    },
+    get lastMotion() {
+      return motion.last;
     },
     /**
      * @param {string} id
@@ -185,6 +209,16 @@ export function createVoiceRobotBridge(opts = {}) {
           : String(id).toLowerCase();
       if (forceLanguage) language = forceLanguage;
       return forceLanguage;
+    },
+    /**
+     * SoftBank / Furhat / Reachy / Unitree G1 / ROS / Sakura motion adapter.
+     * @param {string} vendor
+     */
+    setMotionVendor(vendor) {
+      return motion.setVendor(vendor);
+    },
+    cycleMotionVendor() {
+      return motion.cycleVendor();
     },
     /**
      * @param {'sakura'|'lip_sync'|'done'|'aborted'} event
@@ -237,13 +271,33 @@ export function createVoiceRobotBridge(opts = {}) {
       const plan = planRobotSteps(cleanText, memory);
       if (plan.rememberedName) memory.userName = plan.rememberedName;
 
+      const replySourceEarly =
+        typeof opts.forceReply === "string"
+          ? opts.forceReply
+          : null;
+      // Prefer reply text for gesture style when caller already knows it.
+      const motionSeedText = replySourceEarly || cleanText;
+      const motionPackage = motion.fromText(motionSeedText, {
+        emotion: plan.emotion,
+      });
+      const motionSteps = robotMotionPlanSteps(motionPackage);
+      const steps = [
+        ...plan.steps.slice(0, -2),
+        ...motionSteps,
+        ...plan.steps.slice(-2),
+      ];
+      const motionHud = formatRobotMotionHud(motionPackage);
+
       emit("sakura", {
         phase: "planning",
         emotion: plan.emotion,
         summary: plan.summary,
-        steps: plan.steps,
+        steps,
         language,
         dialect: detected,
+        motion: motionPackage,
+        motionHud,
+        reply: replySourceEarly || undefined,
       });
 
       if (aborted) return this.getHud();
@@ -252,8 +306,10 @@ export function createVoiceRobotBridge(opts = {}) {
         phase: "speaking",
         emotion: plan.emotion,
         summary: plan.summary,
-        steps: plan.steps,
+        steps,
         language,
+        motion: motionPackage,
+        motionHud,
       });
 
       if (aborted) return this.getHud();
@@ -262,6 +318,11 @@ export function createVoiceRobotBridge(opts = {}) {
         typeof opts.forceReply === "string"
           ? opts.forceReply
           : buildStubReply(cleanText, memory, language);
+      // Refine motion from the actual spoken reply (content-aware gestures).
+      const spokenMotion = motion.fromText(replySource, {
+        emotion: plan.emotion,
+      });
+      const spokenMotionHud = formatRobotMotionHud(spokenMotion);
       const prosody = prosodyFromMarkedText(replySource, {
         emotion: plan.emotion,
         language,
@@ -305,11 +366,17 @@ export function createVoiceRobotBridge(opts = {}) {
         phase: "done",
         emotion: plan.emotion,
         summary: plan.summary,
-        steps: plan.steps,
+        steps: [
+          ...plan.steps.slice(0, -2),
+          ...robotMotionPlanSteps(spokenMotion),
+          ...plan.steps.slice(-2),
+        ],
         reply: spoken,
         language,
         dialect: detected,
         prosody,
+        motion: spokenMotion,
+        motionHud: spokenMotionHud,
       });
 
       return {
@@ -318,6 +385,8 @@ export function createVoiceRobotBridge(opts = {}) {
         language,
         dialect: detected,
         prosody,
+        motion: spokenMotion,
+        barged: false,
       };
     },
   };
