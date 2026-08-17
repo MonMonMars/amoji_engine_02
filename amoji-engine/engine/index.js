@@ -118,9 +118,11 @@ export {
 export {
   EMOTION_EXPRESSION_SCHEMA,
   expressionParamsForEmotion,
+  inferExpressionFromText,
   listExpressionPresets,
   mapEmotionToExpression,
   nextExpressionPreset,
+  resolveExpressionFromTurn,
 } from "./face/emotionExpression.js";
 
 export {
@@ -135,11 +137,18 @@ export {
   createLabChat,
   createLabSessionFacade,
   createTickRecorder,
+  downloadJsonFile,
   downloadSessionArchiveJson,
   exportSessionArchive,
+  exportTurnMetricsRollup,
   importSessionArchive,
   parseSessionArchive,
 } from "./lab/sessionArchive.js";
+
+export {
+  buildLabShareUrl,
+  copyTextToClipboard,
+} from "./lab/clipboard.js";
 
 export {
   WORKER_URL_STORAGE_KEY,

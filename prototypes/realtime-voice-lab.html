@@ -112,7 +112,8 @@
       <strong>VAD</strong> tunes mic sensitivity (<code>?vad=high|normal|low</code>);
       <strong>TTS: On/Muted</strong> silences playback without stopping the pipeline.
       <strong>Expression demo</strong> cycles Sakura presets (happy → … → angry).
-      Use <strong>Export / Import Session</strong> for archives (includes latency rollup).
+      Use <strong>Export / Import Session</strong> for archives (includes latency rollup);
+      <strong>Export Metrics</strong> downloads turn p50/p95 JSON; <strong>Copy lab URL</strong> shares prefs.
       <strong>Robot steps</strong> HUD tracks
       <code>sakura → lip_sync → done/aborted</code> via
       <code>createVoiceRobotBridge</code>, plus last-turn latency, p50/p95 rollup, and partial ASR.
@@ -197,6 +198,12 @@
       <button type="button" id="btn-export-session" title="Download session archive JSON">
         Export Session
       </button>
+      <button type="button" id="btn-export-metrics" title="Download turn metrics rollup JSON">
+        Export Metrics
+      </button>
+      <button type="button" id="btn-copy-url" title="Copy shareable lab URL with current prefs">
+        Copy lab URL
+      </button>
       <label class="file-btn" for="import-session-file">Import Session</label>
       <input
         id="import-session-file"
@@ -254,7 +261,12 @@
         checkLatencyBudget,
         formatLatencyBudget,
         mapEmotionToExpression,
+        resolveExpressionFromTurn,
+        inferExpressionFromText,
         nextExpressionPreset,
+        exportTurnMetricsRollup,
+        buildLabShareUrl,
+        copyTextToClipboard,
         resolveVoiceWorkerConfig,
         resolveFaceLiveConfig,
         resolveDialectPref,
@@ -655,6 +667,16 @@
               role: "assistant",
               text: pipelineTurn.reply || "（stub）收到啦",
             });
+            {
+              const resolved = resolveExpressionFromTurn({
+                emotion:
+                  pipelineTurn.emotion?.emotion || pipelineTurn.robot?.emotion,
+                text: pipelineTurn.reply,
+              });
+              pushExpression(resolved.expression, {
+                source: `reply:${resolved.source}`,
+              });
+            }
             if (pipelineTurn.robot?.prosody) {
               session.recordTick("prosody", {
                 speed: pipelineTurn.robot.prosody.speed,
@@ -1125,6 +1147,43 @@
             `exported session chat=${archive.chat.messages.length} ticks=${archive.ticks.ticks.length} turns=${metricsRollup.length} downloaded=${downloaded}`,
           );
         });
+
+      document
+        .getElementById("btn-export-metrics")
+        .addEventListener("click", () => {
+          const { payload, downloaded } = exportTurnMetricsRollup(metricsRollup, {
+            download: true,
+            meta: {
+              lab: "realtime-voice-lab",
+              dialect: dialectPref.mode,
+              vad: listenPref.sensitivity,
+            },
+          });
+          session.recordTick("export-metrics", {
+            turns: payload.summary?.count ?? metricsRollup.length,
+            downloaded,
+          });
+          log(
+            `exported metrics turns=${payload.summary?.count ?? 0} downloaded=${downloaded}`,
+          );
+        });
+
+      document.getElementById("btn-copy-url").addEventListener("click", async () => {
+        const share = buildLabShareUrl({
+          href: globalThis.location?.href,
+          workerUrl: workerConfig.workerUrl || undefined,
+          faceUrl: faceLiveConfig.url,
+          lang: dialectPref.mode,
+          vad: listenPref.sensitivity,
+        });
+        const result = await copyTextToClipboard(share);
+        session.recordTick("copy-url", { ok: result.ok, method: result.method });
+        log(
+          result.ok
+            ? `copied lab url (${result.method}) ${share}`
+            : `copy failed: ${result.error || "unavailable"} · ${share}`,
+        );
+      });
 
       document
         .getElementById("import-session-file")

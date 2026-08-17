@@ -214,7 +214,7 @@ export function applySessionArchive(raw, targets) {
  * @param {string} json
  * @param {string} filename
  */
-export function downloadSessionArchiveJson(json, filename) {
+export function downloadJsonFile(json, filename) {
   if (typeof document === "undefined") return false;
   const blob = new Blob([json], { type: "application/json" });
   const url = URL.createObjectURL(blob);
@@ -227,6 +227,35 @@ export function downloadSessionArchiveJson(json, filename) {
   a.remove();
   URL.revokeObjectURL(url);
   return true;
+}
+
+/** @deprecated alias — use downloadJsonFile */
+export function downloadSessionArchiveJson(json, filename) {
+  return downloadJsonFile(json, filename);
+}
+
+/**
+ * Export turn metrics rollup JSON (optionally download).
+ * @param {{ toJSON: () => object } | object} rollupOrJson
+ * @param {{ download?: boolean, filename?: string, meta?: object }} [opts]
+ */
+export function exportTurnMetricsRollup(rollupOrJson, opts = {}) {
+  const payload =
+    typeof rollupOrJson?.toJSON === "function"
+      ? {
+          exportedAt: new Date().toISOString(),
+          kind: "amoji-turn-metrics-rollup",
+          meta: { ...(opts.meta ?? {}) },
+          ...rollupOrJson.toJSON(),
+        }
+      : rollupOrJson;
+  const json = `${JSON.stringify(payload, null, 2)}\n`;
+  const filename =
+    opts.filename ??
+    `amoji-turn-metrics-${(payload.exportedAt || new Date().toISOString()).replace(/[:.]/g, "-")}.json`;
+  const downloaded =
+    opts.download === false ? false : downloadJsonFile(json, filename);
+  return { json, payload, downloaded };
 }
 
 /**

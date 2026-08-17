@@ -66,6 +66,55 @@ export function expressionParamsForEmotion(emotion) {
 }
 
 /**
+ * Keyword heuristics for Cantonese/English emotion cues in transcripts.
+ * Mirrors TS `inferExpressionFromText` in `src/face-live/expressions.ts`.
+ * @param {string | null | undefined} text
+ * @returns {keyof typeof SAKURA_EXPRESSION_PRESETS}
+ */
+export function inferExpressionFromText(text) {
+  const raw = String(text || "");
+  const lower = raw.toLowerCase();
+  // Order matters: check sad/thinking before generic punctuation surprises.
+  if (/唉|唔開心|傷心|sorry|sad|慘/.test(lower)) return "sad";
+  if (/諗|思考|點解|why|hmm|唔知/.test(lower)) return "thinking";
+  if (/哈哈|開心|好呀|正|掂|thank|thanks|great|鍾意/.test(lower)) return "happy";
+  if (/嬲|生氣|angry|mad|憎/.test(lower)) return "angry";
+  if (/哇|嘩|唔信|真係|嚇死/.test(raw) || /!{2,}|！{2,}/.test(raw)) {
+    return "surprised";
+  }
+  return "neutral";
+}
+
+/**
+ * Prefer an explicit SER/robot emotion label; otherwise infer from text.
+ * @param {{ emotion?: string | null, text?: string | null, fallback?: string }} [input]
+ */
+export function resolveExpressionFromTurn(input = {}) {
+  const emotionKey = String(input.emotion || "")
+    .trim()
+    .toLowerCase();
+  if (
+    emotionKey &&
+    (SAKURA_EXPRESSION_PRESETS[emotionKey] || EMOTION_ALIASES[emotionKey])
+  ) {
+    return {
+      expression: mapEmotionToExpression(emotionKey),
+      source: "emotion",
+    };
+  }
+  if (input.text) {
+    return {
+      expression: inferExpressionFromText(input.text),
+      source: "text",
+    };
+  }
+  return {
+    expression: mapEmotionToExpression(input.fallback || "neutral"),
+    source: "default",
+  };
+}
+
+/**
  * @param {string | null | undefined} current
  * @returns {keyof typeof SAKURA_EXPRESSION_PRESETS}
  */
