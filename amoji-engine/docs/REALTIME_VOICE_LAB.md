@@ -42,11 +42,11 @@ Serve the **repository root** (not only `amoji-engine/`) so imports like `../amo
 9. **TTS volume** — Soft → Normal → Loud (`?vol=` / `amoji.ttsVolume`); GainNode when available. Also **[** / **]**.
 10. **Expression demo** — cycle Sakura presets (`neutral → happy → thinking → surprised → sad → angry`); injects when Face Live is on. Also **E**.
 11. **Gesture demo** — cycle Disney-style talk styles (`explain → point → emphasize → …`); reply text also picks a style via `inferTalkGestureFromText`. Merges hand/shoulder/body + **per-joint fingers (Prox→Mid→Tip)** with lip-sync while speaking. Also **G**.
-12. **Motion vendor** — cycle Sakura → SoftBank → Furhat → Reachy → Unitree G1 → ROS. Maps the same talk style onto each company's open gesture/joint envelope (see [Robot motion vendors](./ROBOT_MOTION_VENDORS.md)).
+12. **Motion vendor** — cycle Sakura → SoftBank → Furhat → Reachy → Unitree G1 → ROS. Maps the same talk style onto each company's open gesture/joint envelope (see [Robot motion vendors](./ROBOT_MOTION_VENDORS.md)). Optional `?motionBridge=` forwards packages to the HTTP motion bridge (`npm run motion-bridge:mock`).
 13. **Prosody demo** / **Barge-in** — marker text / abort + TTS flush. Barge also **Esc**.
-14. **Export / Import Session** — JSON archive of chat + ticks + turn metrics rollup (p50/p95).
+14. **Export / Import Session** — JSON archive of chat + ticks + turn metrics rollup (p50/p95) + motion dispatch log.
 15. **Export Metrics** — download turn metrics rollup only.
-16. **Copy lab URL** — clipboard share link with `worker` / `face` / `lang` / `vad` / `vol` query prefs.
+16. **Copy lab URL** — clipboard share link with `worker` / `face` / `lang` / `vad` / `vol` / `motion` / `motionBridge` query prefs.
 
 Robot HUD shows expression, **gesture**, **motion** (vendor package), partial ASR text, VAD sensitivity, last-turn latency, rollup, and a soft **budget** line (default Σ ≤ 3500ms).
 
@@ -77,8 +77,9 @@ Ignored while focus is in an input / textarea.
 | `?vad=` / `AMOJI_VAD` | `high` · `normal` · `low` |
 | `?vol=` / `AMOJI_TTS_VOLUME` | `soft` · `normal` · `loud` |
 | `?motion=` / `AMOJI_MOTION_VENDOR` | `sakura` · `softbank` · `furhat` · `reachy` · `unitree_g1` · `ros` |
+| `?motionBridge=` / `AMOJI_MOTION_BRIDGE` | HTTP motion bridge base URL (mock `:7891`) |
 
-Persisted in `localStorage` as `amoji.voiceWorkerUrl` / `amoji.faceLiveUrl` / `amoji.dialectPref` / `amoji.listenPref` / `amoji.ttsVolume` / `amoji.motionVendor`.
+Persisted in `localStorage` as `amoji.voiceWorkerUrl` / `amoji.faceLiveUrl` / `amoji.dialectPref` / `amoji.listenPref` / `amoji.ttsVolume` / `amoji.motionVendor` / `amoji.motionBridgeUrl`.
 
 ## Local stubs
 
@@ -87,6 +88,8 @@ cd amoji-engine
 npm run voice-worker:mock      # HTTP ASR/TTS on :7890
 npm run lab                    # static server → realtime-voice-lab.html
 npm run demo:facelive-smoke    # JS client ↔ mock Face Live bridge
+npm run motion-bridge:mock     # HTTP robot motion bridge on :7891
+npm run demo:motion-smoke      # SoftBank / Reachy / Unitree → mock bridge
 npm run demo:http-smoke        # worker HTTP client smoke
 ```
 

@@ -298,6 +298,9 @@
         nextRobotMotionVendor,
         formatRobotMotionHud,
         createRobotMotionDispatcher,
+        createMotionBridgeClient,
+        resolveMotionBridgeConfig,
+        persistMotionBridgeUrl,
         resolveMotionVendorPref,
         persistMotionVendorPref,
         exportTurnMetricsRollup,
@@ -358,9 +361,26 @@
       let listenPref = resolveListenPref();
       let ttsVolumePref = resolveTtsVolumePref();
       let motionVendorPref = resolveMotionVendorPref();
+      const motionBridgeConfig = resolveMotionBridgeConfig({
+        defaultUrl: null,
+      });
       let demoExpression = "neutral";
       let ttsMuted = false;
-      const motionDispatcher = createRobotMotionDispatcher({ maxLog: 120 });
+      const motionBridgeClient = createMotionBridgeClient({
+        bridgeUrl: motionBridgeConfig.bridgeUrl,
+        mode: motionBridgeConfig.mode,
+        onEvent: (ev, payload) => {
+          if (ev === "error") {
+            log(
+              `motion bridge error ${payload?.path || ""} ${payload?.error || payload?.status || ""}`,
+            );
+          }
+        },
+      });
+      const motionDispatcher = createRobotMotionDispatcher({
+        maxLog: 120,
+        bridge: motionBridgeClient,
+      });
       let lastMotionFrameAt = 0;
       const micMeter = createMicLevelMeter({
         threshold: listenPref.vad.energyThreshold,
@@ -392,6 +412,8 @@
           dialect: dialectPref.mode,
           vad: listenPref.sensitivity,
           volume: ttsVolumePref.level,
+          motionVendor: motionVendorPref.vendor,
+          motionBridge: motionBridgeConfig.bridgeUrl,
         },
       });
 
@@ -481,7 +503,9 @@
           "aria-pressed",
           next === "sakura" ? "false" : "true",
         );
-        motionHudEl.textContent = `${next} · ${motionVendorPref.source} · ready`;
+        motionHudEl.textContent = motionDispatcher.last
+          ? motionDispatcher.formatHud()
+          : `${next} · ${motionVendorPref.source} · ready`;
         if (logChange) {
           session.recordTick("motion-vendor", {
             vendor: next,
@@ -495,6 +519,9 @@
         logChange: false,
         persist: motionVendorPref.source === "query",
       });
+      if (motionBridgeConfig.bridgeUrl) {
+        persistMotionBridgeUrl(motionBridgeConfig.bridgeUrl);
+      }
       const idle = createIdlePresenceClock({ emotion: "neutral", intensity: 0.42 });
       const lipSync = createLipSyncTracker({ alpha: 0.45, sensitivity: 1.6 });
       const talkGestures = createTalkGestureClock({ style: "explain", intensity: 0.72 });
@@ -1073,6 +1100,9 @@
       log(
         `motion vendor=${motionVendorPref.vendor} (source=${motionVendorPref.source}; ?motion=sakura|softbank|furhat|reachy|unitree_g1|ros)`,
       );
+      log(
+        `motion bridge=${motionBridgeConfig.bridgeUrl || "off"} (source=${motionBridgeConfig.source}; ?motionBridge=http://127.0.0.1:7891)`,
+      );
       lipsyncHudEl.textContent = "—";
       gestureHudEl.textContent = "—";
       faceLiveHudEl.textContent = "off";
@@ -1095,6 +1125,18 @@
           log(`worker health failed: ${h.error || "unknown"}`);
         }
       });
+
+      if (motionBridgeClient.mode === "http") {
+        void motionBridgeClient.health().then((h) => {
+          if (h.ok) {
+            motionHudEl.textContent = `${robot.motionVendor} · bridge ok · ${motionBridgeConfig.bridgeUrl}`;
+            log(`motion bridge health ok url=${motionBridgeConfig.bridgeUrl}`);
+          } else {
+            motionHudEl.textContent = `${robot.motionVendor} · bridge down`;
+            log(`motion bridge health failed: ${h.error || "unknown"}`);
+          }
+        });
+      }
       let unsubscribeMic = null;
       let mediaStream = null;
       let audioCtx = null;
@@ -1233,16 +1275,48 @@
       document.getElementById("btn-connect").addEventListener("click", async () => {
         session.recordTick("ready-check", { stub: false });
         const health = await worker.health();
+        const motionHealth =
+          motionBridgeClient.mode === "http"
+            ? await motionBridgeClient.health()
+            : { ok: true, skipped: true, mode: "off" };
         const href = globalThis.location?.href || "(no location)";
         log(
           `ready check worker=${health.ok ? "ok" : "down"} mode=${health.mode || worker.mode}` +
             ` dialect=${dialectPref.mode} vad=${listenPref.sensitivity}` +
-            ` face=${faceLive.isAuthenticated ? "on" : "off"}`,
+            ` face=${faceLive.isAuthenticated ? "on" : "off"}` +
+            ` motionBridge=${
+              motionHealth.skipped
+                ? "off"
+                : motionHealth.ok
+                  ? "ok"
+                  : "down"
+            }`,
         );
         log(`lab url ${href}`);
+        if (motionBridgeConfig.bridgeUrl) {
+          log(`motion bridge url ${motionBridgeConfig.bridgeUrl}`);
+          motionHudEl.textContent = motionHealth.ok
+            ? motionDispatcher.formatHud() === "—"
+              ? `${robot.motionVendor} · bridge ok`
+              : motionDispatcher.formatHud()
+            : `${robot.motionVendor} · bridge down`;
+        }
+        session.recordTick("ready-check-motion", {
+          ok: motionHealth.ok,
+          mode: motionHealth.mode || motionBridgeClient.mode,
+          url: motionBridgeConfig.bridgeUrl,
+        });
         session.appendChat({
           role: "system",
-          text: `ready check · worker ${health.ok ? "ok" : "down"} · vad ${listenPref.sensitivity}`,
+          text:
+            `ready check · worker ${health.ok ? "ok" : "down"} · vad ${listenPref.sensitivity}` +
+            ` · motionBridge ${
+              motionHealth.skipped
+                ? "off"
+                : motionHealth.ok
+                  ? "ok"
+                  : "down"
+            }`,
         });
         renderChat();
       });
@@ -1475,6 +1549,13 @@
         .getElementById("btn-export-session")
         .addEventListener("click", () => {
           session.meta.turnMetrics = metricsRollup.toJSON();
+          session.meta.motionDispatch = motionDispatcher.toJSON();
+          session.meta.motionBridge = {
+            url: motionBridgeClient.bridgeUrl,
+            mode: motionBridgeClient.mode,
+            forwarded: motionDispatcher.bridgeForwarded,
+            errors: motionDispatcher.bridgeErrors,
+          };
           const { archive, downloaded } = session.exportSessionArchive({
             download: true,
           });
@@ -1482,10 +1563,11 @@
             messages: archive.chat.messages.length,
             ticks: archive.ticks.ticks.length,
             turns: metricsRollup.length,
+            motionEvents: motionDispatcher.length,
             downloaded,
           });
           log(
-            `exported session chat=${archive.chat.messages.length} ticks=${archive.ticks.ticks.length} turns=${metricsRollup.length} downloaded=${downloaded}`,
+            `exported session chat=${archive.chat.messages.length} ticks=${archive.ticks.ticks.length} turns=${metricsRollup.length} motion=${motionDispatcher.length} downloaded=${downloaded}`,
           );
         });
 
@@ -1518,6 +1600,7 @@
           vad: listenPref.sensitivity,
           vol: ttsVolumePref.level,
           motion: robot.motionVendor,
+          motionBridge: motionBridgeClient.bridgeUrl || undefined,
         });
         const result = await copyTextToClipboard(share);
         session.recordTick("copy-url", { ok: result.ok, method: result.method });
@@ -1544,9 +1627,11 @@
               name: file.name,
               messages: archive.chat.messages.length,
               turns: metricsRollup.length,
+              motionEvents: archive.meta?.motionDispatch?.length ?? 0,
             });
             log(
-              `imported ${file.name} chat=${archive.chat.messages.length} ticks=${archive.ticks.ticks.length} turns=${metricsRollup.length}`,
+              `imported ${file.name} chat=${archive.chat.messages.length} ticks=${archive.ticks.ticks.length} turns=${metricsRollup.length}` +
+                ` motion=${archive.meta?.motionDispatch?.length ?? 0}`,
             );
           } catch (err) {
             log(`import failed: ${err?.message ?? err}`);

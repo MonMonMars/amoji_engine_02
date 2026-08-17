@@ -52,6 +52,18 @@ export {
 } from "./robot/motionDispatcher.js";
 
 export {
+  MOTION_BRIDGE_CLIENT_SCHEMA,
+  createMotionBridgeClient,
+} from "./robot/motionBridgeClient.js";
+
+export {
+  MOTION_BRIDGE_URL_SCHEMA,
+  MOTION_BRIDGE_URL_STORAGE_KEY,
+  resolveMotionBridgeConfig,
+  persistMotionBridgeUrl,
+} from "./lab/motionBridgeUrl.js";
+
+export {
   MOTION_VENDOR_PREF_SCHEMA,
   MOTION_VENDOR_PREF_STORAGE_KEY,
   normalizeMotionVendorPref,

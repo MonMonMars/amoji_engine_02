@@ -20,6 +20,7 @@ npm test
 npm run demo:e2e
 npm run demo:facelive-smoke
 npm run demo:http-smoke
+npm run demo:motion-smoke
 ```
 
 ## GitHub Actions (paste when you have `workflow` scope)
@@ -57,6 +58,7 @@ jobs:
       - run: npm run demo:e2e
       - run: npm run demo:facelive-smoke
       - run: npm run demo:http-smoke
+      - run: npm run demo:motion-smoke
 ```
 
 Or grant the Cursor / `gh` OAuth app the **workflow** scope and ask the agent to add the file.
