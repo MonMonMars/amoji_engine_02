@@ -17,7 +17,8 @@
 - Dialect preference (`?lang=auto|yue|en`) with force lock on worker + robot
 - Emotion → Sakura expression map (`mapEmotionToExpression`) + angry/surprised presets
 - VAD sensitivity prefs (`?vad=high|normal|low`) with hot `configure()` + TTS mute
-- Lab UI: Always-on, Worker, Face Live, Dialect, VAD, TTS mute, Expression, Prosody, Barge-in, Export/Import
+- Push-to-talk hold (`createPushToTalk`) + `npm run lab` static server
+- Lab UI: Always-on, Hold to talk, Ready check, Worker, Face Live, Dialect, VAD, TTS mute, Expression, Prosody, Barge-in, Export/Import
 - Docs: REALTIME_VOICE_LAB, VOICE_WORKER, CI matrix, architecture note for JS path
 
 ### Validation

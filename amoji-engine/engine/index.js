@@ -65,6 +65,12 @@ export {
 } from "./voice/micFrameBuffer.js";
 
 export {
+  PUSH_TO_TALK_SCHEMA,
+  bindPushToTalkPointer,
+  createPushToTalk,
+} from "./voice/pushToTalk.js";
+
+export {
   WORKER_TURN_SCHEMA,
   runWorkerRobotTurn,
   createWorkerTurnHost,

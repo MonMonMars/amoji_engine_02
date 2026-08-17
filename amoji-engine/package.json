@@ -29,6 +29,7 @@
     "voice-worker:mock": "node scripts/mock-voice-worker.mjs --port 7890",
     "demo:http-smoke": "node scripts/voice-worker-http-smoke.mjs",
     "demo:facelive-smoke": "node scripts/face-live-smoke.mjs",
+    "lab": "node scripts/lab-serve.mjs",
     "lint": "eslint src"
   },
   "engines": {

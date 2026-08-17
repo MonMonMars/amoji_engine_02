@@ -106,7 +106,8 @@
     <h1>Realtime Voice Lab</h1>
     <p class="lead">
       Prototype harness for Cantonese realtime voice + Sakura Face Live.
-      Toggle <strong>Always-on</strong> for energy-VAD → SenseVoice/CosyVoice worker pipeline.
+      Toggle <strong>Always-on</strong> for energy-VAD → SenseVoice/CosyVoice worker pipeline,
+      or <strong>Hold to talk</strong> for push-to-talk turns.
       Use <strong>Dialect</strong> to lock Auto / Yue / En (<code>?lang=</code>).
       <strong>VAD</strong> tunes mic sensitivity (<code>?vad=high|normal|low</code>);
       <strong>TTS: On/Muted</strong> silences playback without stopping the pipeline.
@@ -115,10 +116,13 @@
       <strong>Robot steps</strong> HUD tracks
       <code>sakura → lip_sync → done/aborted</code> via
       <code>createVoiceRobotBridge</code>, plus last-turn latency, p50/p95 rollup, and partial ASR.
+      Serve with <code>npm run lab</code> from <code>amoji-engine/</code>.
     </p>
 
     <div class="row">
-      <button type="button" id="btn-connect">Connect (stub)</button>
+      <button type="button" id="btn-connect" title="Probe worker health + log lab URLs">
+        Ready check
+      </button>
       <button
         type="button"
         id="btn-face-live"
@@ -159,7 +163,13 @@
       >
         TTS: On
       </button>
-      <button type="button" id="btn-push-to-talk">Push-to-talk (stub)</button>
+      <button
+        type="button"
+        id="btn-push-to-talk"
+        title="Hold to talk (release to run worker pipeline turn)"
+      >
+        Hold to talk
+      </button>
       <button type="button" id="btn-robot-demo" title="Run stub robot turn (我叫小明)">
         Robot demo
       </button>
@@ -236,6 +246,8 @@
         createLipSyncTracker,
         createSakuraFaceLiveClient,
         createTurnMetricsRollup,
+        createPushToTalk,
+        bindPushToTalkPointer,
         mapEmotionToExpression,
         nextExpressionPreset,
         resolveVoiceWorkerConfig,
@@ -258,6 +270,7 @@
       const dialectBtn = document.getElementById("btn-dialect");
       const vadBtn = document.getElementById("btn-vad");
       const muteTtsBtn = document.getElementById("btn-mute-tts");
+      const pttBtn = document.getElementById("btn-push-to-talk");
       const phaseEl = document.getElementById("robot-phase");
       const emotionEl = document.getElementById("robot-emotion");
       const expressionHudEl = document.getElementById("expression-hud");
@@ -891,16 +904,21 @@
         }
       });
 
-      document.getElementById("btn-connect").addEventListener("click", () => {
-        session.recordTick("connect", { stub: true });
+      document.getElementById("btn-connect").addEventListener("click", async () => {
+        session.recordTick("ready-check", { stub: false });
+        const health = await worker.health();
+        const href = globalThis.location?.href || "(no location)";
+        log(
+          `ready check worker=${health.ok ? "ok" : "down"} mode=${health.mode || worker.mode}` +
+            ` dialect=${dialectPref.mode} vad=${listenPref.sensitivity}` +
+            ` face=${faceLive.isAuthenticated ? "on" : "off"}`,
+        );
+        log(`lab url ${href}`);
         session.appendChat({
           role: "system",
-          text: "connect stub",
+          text: `ready check · worker ${health.ok ? "ok" : "down"} · vad ${listenPref.sensitivity}`,
         });
         renderChat();
-        log(
-          `stub connect — frameEnergy(silence)=${frameEnergy(new Float32Array(32))}`,
-        );
       });
 
       faceLiveBtn.addEventListener("click", async () => {
@@ -942,10 +960,62 @@
         applyTtsMute(!ttsMuted, { logChange: true });
       });
 
-      document.getElementById("btn-push-to-talk").addEventListener("click", () => {
-        session.recordTick("ptt", { stub: true });
-        log("push-to-talk stub (manual hold not wired in this prototype)");
+      let pttUnsubMic = null;
+      const resetPttUi = () => {
+        pttUnsubMic?.();
+        pttUnsubMic = null;
+        pttBtn.setAttribute("aria-pressed", "false");
+        pttBtn.textContent = "Hold to talk";
+        labHost.listening = false;
+        turnHost.endListen();
+        turnHost.buffer.clear();
+      };
+      const ptt = createPushToTalk({
+        minHoldMs: 120,
+        startListening: async () => {
+          if (alwaysOnBtn.getAttribute("aria-pressed") === "true") {
+            throw new Error("turn off Always-on before push-to-talk");
+          }
+          const mic = await openMic();
+          pttUnsubMic?.();
+          pttUnsubMic = mic.onFrame((frame) => turnHost.pushFrame(frame));
+          pttBtn.setAttribute("aria-pressed", "true");
+          pttBtn.textContent = "Listening…";
+          await labHost.startListening();
+        },
+        cancelListening: async () => {
+          resetPttUi();
+        },
+        stopListeningAndTalk: async (extra) => {
+          pttUnsubMic?.();
+          pttUnsubMic = null;
+          pttBtn.setAttribute("aria-pressed", "false");
+          pttBtn.textContent = "Hold to talk";
+          await labHost.stopListeningAndTalk({
+            ...extra,
+            source: "push-to-talk",
+            useWorker: true,
+          });
+        },
+        getTurnExtra: () => ({
+          source: "push-to-talk",
+          useWorker: true,
+          energyHint: "ptt",
+        }),
+        onPress: () => {
+          session.recordTick("ptt", { event: "press" });
+          log("ptt press — hold to speak");
+        },
+        onRelease: ({ heldMs, outcome }) => {
+          session.recordTick("ptt", { event: "release", heldMs, outcome });
+          log(`ptt release heldMs=${heldMs | 0} outcome=${outcome || "?"}`);
+        },
+        onError: (err) => {
+          resetPttUi();
+          log(`ptt error: ${err?.message ?? err}`);
+        },
       });
+      bindPushToTalkPointer(pttBtn, ptt);
 
       document.getElementById("btn-robot-demo").addEventListener("click", async () => {
         const text =
