@@ -106,7 +106,7 @@
     <h1>Realtime Voice Lab</h1>
     <p class="lead">
       Prototype harness for Cantonese realtime voice + Sakura Face Live.
-      Toggle <strong>Always-on</strong> for energy-VAD listen loops.
+      Toggle <strong>Always-on</strong> for energy-VAD → SenseVoice/CosyVoice worker pipeline.
       Use <strong>Export / Import Session</strong> for archives.
       <strong>Robot steps</strong> HUD tracks
       <code>sakura → lip_sync → done/aborted</code> via
@@ -177,6 +177,9 @@
         createVoiceRobotBridge,
         createIdlePresenceClock,
         createVoiceWorkerClient,
+        createWorkerTurnHost,
+        createPartialAsrWatcher,
+        runWorkerRobotTurn,
         presenceToFaceLiveParams,
         frameEnergy,
       } from "../amoji-engine/engine/index.js";
@@ -213,6 +216,28 @@
           });
         },
       });
+
+      const turnHost = createWorkerTurnHost({
+        worker,
+        robot,
+        inputRate: 24000,
+        targetSampleRate: 16000,
+        onPartialEmotion: (emo) => {
+          idle.setEmotion(emo.emotion || "neutral", emo.intensity ?? 0.5);
+        },
+        onTurn: (turn) => {
+          session.recordTick("pipeline", {
+            language: turn.language,
+            emotion: turn.emotion?.emotion,
+            asr: turn.asr?.text,
+            chunks: turn.tts?.chunkCount,
+            barged: turn.barged,
+          });
+        },
+      });
+
+      let partialWatcher = null;
+      let unsubMicBuffer = null;
 
       const renderRobotHud = (payload = robot.getHud()) => {
         phaseEl.textContent = payload.phase || "idle";
@@ -253,7 +278,7 @@
           .join("\n");
       };
 
-      /** Lab stub host — replace with Realtime + mic capture in a full app. */
+      /** Lab stub host — always-on uses worker pipeline; demos can pass forceReply. */
       const labHost = {
         listening: false,
         talking: false,
@@ -261,13 +286,81 @@
         async startListening() {
           this.listening = true;
           this.talking = false;
+          turnHost.beginListen();
           session.recordTick("phase", { phase: "listening" });
           log("startListening");
         },
         async stopListeningAndTalk(extra) {
           this.listening = false;
           this.talking = true;
-          session.recordTick("phase", { phase: "talking", extra });
+          turnHost.endListen();
+          session.recordTick("phase", { phase: "talking", extra: { source: extra?.source } });
+
+          /** @type {object | null} */
+          let pipelineTurn = extra?.pipelineTurn || null;
+
+          if (!pipelineTurn && (extra?.useWorker || extra?.source === "worker-pipeline")) {
+            pipelineTurn = await turnHost.runFromBuffer({
+              text: extra?.userText,
+              replyText: extra?.forceReply,
+            });
+          }
+
+          if (pipelineTurn) {
+            const userText = pipelineTurn.asr?.text || extra?.userText || "(worker asr)";
+            session.appendChat({
+              role: "user",
+              text: userText,
+              meta: { source: extra?.source || "worker-pipeline", language: pipelineTurn.language },
+            });
+            renderChat();
+            log(
+              `pipeline asr="${userText}" emo=${pipelineTurn.emotion?.emotion} lang=${pipelineTurn.language}`,
+            );
+            if (pipelineTurn.barged) {
+              session.recordTick("barge", { during: "talk", source: "pipeline" });
+              log("talk barged — assistant reply cancelled");
+              this.talking = false;
+              return;
+            }
+            const speakMs =
+              typeof extra?.speakMs === "number"
+                ? extra.speakMs
+                : Math.min(
+                    1800,
+                    Math.round((pipelineTurn.tts?.durationSec || 0.5) * 1000),
+                  );
+            if (speakMs > 0) {
+              const started = performance.now();
+              while (this.talking && performance.now() - started < speakMs) {
+                await new Promise((r) => setTimeout(r, 40));
+              }
+            }
+            if (!this.talking) {
+              session.recordTick("barge", { during: "tts-wait", source: "host" });
+              log("tts wait cut short by barge");
+              return;
+            }
+            session.appendChat({
+              role: "assistant",
+              text: pipelineTurn.reply || "（stub）收到啦",
+            });
+            if (pipelineTurn.robot?.prosody) {
+              session.recordTick("prosody", {
+                speed: pipelineTurn.robot.prosody.speed,
+                pauseMs: pipelineTurn.robot.prosody.pauseMs,
+                markers: pipelineTurn.robot.prosody.markers?.length || 0,
+              });
+            }
+            renderChat();
+            idle.setEmotion(
+              pipelineTurn.emotion?.emotion || pipelineTurn.robot?.emotion || "neutral",
+              pipelineTurn.emotion?.intensity ?? 0.42,
+            );
+            this.talking = false;
+            return;
+          }
+
           const userText =
             typeof extra?.userText === "string"
               ? extra.userText
@@ -394,13 +487,34 @@
         if (on) {
           try {
             const mic = await openMic();
+            unsubMicBuffer = mic.onFrame((frame) => turnHost.pushFrame(frame));
+            partialWatcher = createPartialAsrWatcher({
+              intervalMs: 450,
+              mode: "mock",
+              language: "yue",
+              onPartial: (ev) => {
+                turnHost.applyPartial(ev.data);
+                session.recordTick("partial", {
+                  text: ev.data.text,
+                  emotion: ev.data.emotion,
+                });
+                log(`partial asr "${ev.data.text}" emo=${ev.data.emotion}`);
+              },
+            });
+            partialWatcher.start(async () => {
+              if (!turnHost.capturing || turnHost.buffer.speechMs < 280) return null;
+              const ms = Math.round(turnHost.buffer.speechMs);
+              const seq = turnHost.buffer.sequence;
+              return `<|yue|><|NEUTRAL|><|Speech|>（聽緊 ${ms}ms #${seq}）`;
+            });
             controller = createAlwaysOnListen({
               mic,
               startListening: () => labHost.startListening(),
               stopListeningAndTalk: (extra) =>
                 labHost.stopListeningAndTalk(extra),
               getTurnExtra: () => ({
-                source: "realtime-voice-lab",
+                source: "worker-pipeline",
+                useWorker: true,
                 energyHint: "vad",
               }),
               energyThreshold: 0.025,
@@ -423,13 +537,17 @@
             await controller.start();
             alwaysOnBtn.setAttribute("aria-pressed", "true");
             alwaysOnBtn.textContent = "Always-on: On";
-            log("Always-on listen started");
+            log("Always-on listen started (worker pipeline + partial ASR)");
           } catch (err) {
             log(`mic failed: ${err?.message ?? err}`);
           }
         } else {
           await controller?.stop();
           controller = null;
+          partialWatcher?.stop();
+          partialWatcher = null;
+          unsubMicBuffer?.();
+          unsubMicBuffer = null;
           unsubscribeMic?.();
           unsubscribeMic = null;
           micHandle = null;
@@ -486,16 +604,19 @@
           worker.language === "en"
             ? "<|en|><|NEUTRAL|><|Speech|>Hello there, how are you today?"
             : "<|yue|><|HAPPY|><|Speech|>今日天氣好正呀，我好開心！";
-        const turn = await worker.runTurn({ text: asrText });
+        const turn = await runWorkerRobotTurn({
+          worker,
+          robot,
+          text: asrText,
+        });
         idle.setEmotion(turn.emotion?.emotion || "neutral", turn.emotion?.intensity || 0.5);
         await labHost.stopListeningAndTalk({
-          userText: turn.asr.text,
-          forceReply: turn.reply,
-          speakMs: Math.min(1200, Math.round((turn.tts.durationSec || 0.6) * 1000)),
           source: "worker-demo",
+          pipelineTurn: turn,
+          speakMs: Math.min(1200, Math.round((turn.tts?.durationSec || 0.6) * 1000)),
         });
         log(
-          `worker demo asr=${turn.asr.text} emo=${turn.emotion?.emotion} ttsChunks=${turn.tts.chunkCount} lang=${turn.language}`,
+          `worker demo asr=${turn.asr.text} emo=${turn.emotion?.emotion} ttsChunks=${turn.tts?.chunkCount} lang=${turn.language}`,
         );
       });
 

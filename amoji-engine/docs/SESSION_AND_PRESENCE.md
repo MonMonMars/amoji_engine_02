@@ -117,3 +117,30 @@ export AMOJI_VOICE_WORKER=http://127.0.0.1:7890
 
 Lab: **Worker demo** runs a mock SenseVoice → CosyVoice pipeline turn.
 Partial ASR: `createPartialAsrWatcher` polls `/asr/partial` while the mic is open.
+
+## Always-on → worker pipeline
+
+`createWorkerTurnHost({ worker, robot })` buffers mic frames while listening, then on utterance end runs:
+
+`mic WAV → worker.asr → robot.runTurn → worker.tts`
+
+```js
+import {
+  createWorkerTurnHost,
+  createAlwaysOnListen,
+} from "@amoji/engine/engine";
+
+const turnHost = createWorkerTurnHost({ worker, robot });
+createAlwaysOnListen({
+  mic,
+  startListening: () => {
+    turnHost.beginListen();
+    return host.startListening();
+  },
+  getTurnExtra: () => ({ source: "worker-pipeline", useWorker: true }),
+  stopListeningAndTalk: (extra) => host.stopListeningAndTalk(extra),
+});
+// host.stopListeningAndTalk calls turnHost.runFromBuffer() when useWorker
+```
+
+See [Voice worker](./VOICE_WORKER.md).

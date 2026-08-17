@@ -88,20 +88,33 @@ export async function callVoiceWorkerTtsStream(baseUrl, body, opts = {}) {
 }
 
 /**
- * Mock ASR — text passthrough or default happy Cantonese line.
- * @param {{ audioPath?: string, text?: string, language?: string, audioBase64?: string }} [input]
+ * Mock ASR — text passthrough, audio-only stub lines, or default happy Cantonese.
+ * @param {{ audioPath?: string, text?: string, language?: string, audioBase64?: string, speechMs?: number, sequence?: number }} [input]
  */
 export async function mockAsr(input = {}) {
-  const parsed = input.text
-    ? parseSenseVoiceTranscript(input.text)
-    : {
-        text: '今日天氣好正呀，我好開心！',
-        raw: '<|yue|><|HAPPY|><|Speech|>今日天氣好正呀，我好開心！',
-        language: 'yue',
-        serEmotion: 'happy',
-        audioEvent: 'speech',
-        tags: ['yue', 'HAPPY', 'Speech'],
-      };
+  let parsed;
+  if (input.text) {
+    parsed = parseSenseVoiceTranscript(input.text);
+  } else if (input.audioBase64 || input.audioPath || input.speechMs != null) {
+    const seq = Number(input.sequence) || Math.max(1, Math.round((input.speechMs || 400) / 200));
+    const stubs = [
+      '<|yue|><|HAPPY|><|Speech|>今日天氣好正呀',
+      '<|yue|><|NEUTRAL|><|Speech|>喂，你喺度嗎？',
+      '<|yue|><|HAPPY|><|Speech|>我想聽吓歌',
+      '<|en|><|NEUTRAL|><|Speech|>Hello there, how are you?',
+      '<|yue|><|SAD|><|Speech|>我今日有啲攰',
+    ];
+    parsed = parseSenseVoiceTranscript(stubs[Math.abs(seq) % stubs.length]);
+  } else {
+    parsed = {
+      text: '今日天氣好正呀，我好開心！',
+      raw: '<|yue|><|HAPPY|><|Speech|>今日天氣好正呀，我好開心！',
+      language: 'yue',
+      serEmotion: 'happy',
+      audioEvent: 'speech',
+      tags: ['yue', 'HAPPY', 'Speech'],
+    };
+  }
   if (input.language && !parsed.language) parsed.language = input.language;
   return {
     provider: 'mock',
@@ -264,6 +277,9 @@ export function createVoiceWorkerClient(opts = {}) {
           text: input.text,
           language: input.language || language,
           audioBase64: input.audioBase64,
+          audioPath: input.audioPath,
+          speechMs: input.speechMs,
+          sequence: input.sequence,
         });
       }
       const parsed = parseSenseVoiceTranscript(result.raw || result.text || '');
