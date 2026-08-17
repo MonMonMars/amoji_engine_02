@@ -191,6 +191,38 @@ console.log("[e2e] hotkeys + latency budget…");
   console.log("[e2e] hotkeys/budget ok →", formatLatencyBudget(ok));
 }
 
+console.log("[e2e] infer expression + metrics export…");
+{
+  const {
+    inferExpressionFromText,
+    resolveExpressionFromTurn,
+    createTurnMetricsRollup,
+    exportTurnMetricsRollup,
+    buildLabShareUrl,
+    copyTextToClipboard,
+  } = await import("../engine/index.js");
+  assert(inferExpressionFromText("哈哈好開心呀") === "happy", "infer happy");
+  assert(
+    resolveExpressionFromTurn({ text: "唉傷心" }).expression === "sad",
+    "resolve sad",
+  );
+  const rollup = createTurnMetricsRollup();
+  rollup.push({ asrMs: 1, robotMs: 1, ttsMs: 1, totalMs: 3 });
+  const { payload } = exportTurnMetricsRollup(rollup, { download: false });
+  assert(payload.kind === "amoji-turn-metrics-rollup", "metrics kind");
+  const share = buildLabShareUrl({
+    href: "http://127.0.0.1:5173/prototypes/realtime-voice-lab.html",
+    lang: "yue",
+    vad: "high",
+  });
+  assert(share.includes("lang=yue"), "share url");
+  const copied = await copyTextToClipboard(share, {
+    clipboard: { writeText: async () => {} },
+  });
+  assert(copied.ok === true, "clipboard ok");
+  console.log("[e2e] infer/export ok →", payload.summary.count, share.slice(0, 48));
+}
+
 console.log("[e2e] idle presence smoke…");
 {
   const { createIdlePresenceClock, sampleIdlePresence, presenceToFaceLiveParams } =

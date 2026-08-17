@@ -19,6 +19,7 @@
 - VAD sensitivity prefs (`?vad=high|normal|low`) with hot `configure()` + TTS mute
 - Push-to-talk hold (`createPushToTalk`) + `npm run lab` static server
 - Lab hotkeys (Space / Esc / M / E) + soft latency budget HUD (`checkLatencyBudget`)
+- JS `inferExpressionFromText` (TS parity) + Export Metrics / Copy lab URL
 - Lab UI: Always-on, Hold to talk, Ready check, Worker, Face Live, Dialect, VAD, TTS mute, Expression, Prosody, Barge-in, Export/Import
 - Docs: REALTIME_VOICE_LAB, VOICE_WORKER, CI matrix, architecture note for JS path
 

@@ -16,8 +16,9 @@ Serve the **repository root** (not only `amoji-engine/`) so imports like `../amo
 | Lip-sync RMS → Live2D | `engine/face/lipSyncFromChunk.js` |
 | Idle presence morphs | `engine/face/idlePresence.js` |
 | Face Live WS inject | `engine/face/sakuraFaceLiveClient.js` |
-| Emotion → expression | `engine/face/emotionExpression.js` |
+| Emotion → expression | `engine/face/emotionExpression.js` (`inferExpressionFromText`) |
 | Session archive | `engine/lab/sessionArchive.js` |
+| Clipboard / share URL | `engine/lab/clipboard.js` |
 | Turn latency rollup | `engine/lab/turnMetricsRollup.js` |
 | Dialect preference | `engine/lab/dialectPref.js` |
 | VAD sensitivity | `engine/lab/listenPref.js` |
@@ -37,8 +38,12 @@ Serve the **repository root** (not only `amoji-engine/`) so imports like `../amo
 9. **Expression demo** — cycle Sakura presets (`neutral → happy → thinking → surprised → sad → angry`); injects when Face Live is on. Also **E**.
 10. **Prosody demo** / **Barge-in** — marker text / abort + TTS flush. Barge also **Esc**.
 11. **Export / Import Session** — JSON archive of chat + ticks + turn metrics rollup (p50/p95).
+12. **Export Metrics** — download turn metrics rollup only.
+13. **Copy lab URL** — clipboard share link with `worker` / `face` / `lang` / `vad` query prefs.
 
 Robot HUD shows expression, partial ASR text, VAD sensitivity, last-turn latency, rollup, and a soft **budget** line (default Σ ≤ 3500ms).
+
+Reply text also drives Face Live via `inferExpressionFromText` / `resolveExpressionFromTurn` when SER emotion is missing.
 
 ### Keyboard
 

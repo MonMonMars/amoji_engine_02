@@ -29,7 +29,7 @@ OpenAI Realtime path (TS): `VoiceBridge` → `RealtimeChatClient` → `AmojiOrch
 ```bash
 cd amoji-engine
 npm install
-npm test                 # 83+ tests (TS + JS engine)
+npm test                 # 110+ tests (TS + JS engine)
 npm run build
 npm run typecheck
 npm run demo:e2e         # offline voice/lab pipeline

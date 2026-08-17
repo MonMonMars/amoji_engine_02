@@ -2,9 +2,11 @@ import { describe, expect, it } from "vitest";
 import {
   EMOTION_EXPRESSION_SCHEMA,
   expressionParamsForEmotion,
+  inferExpressionFromText,
   listExpressionPresets,
   mapEmotionToExpression,
   nextExpressionPreset,
+  resolveExpressionFromTurn,
 } from "../engine/face/emotionExpression.js";
 import {
   SAKURA_EXPRESSION_PRESETS,
@@ -19,6 +21,26 @@ describe("emotionExpression", () => {
     expect(mapEmotionToExpression("disgust")).toBe("angry");
     expect(mapEmotionToExpression("unknown-xyz")).toBe("neutral");
     expect(mapEmotionToExpression("", { fallback: "thinking" })).toBe("thinking");
+  });
+
+  it("infers expression from Cantonese / English text", () => {
+    expect(inferExpressionFromText("哈哈好開心呀！")).toBe("happy");
+    expect(inferExpressionFromText("哇！真係？")).toBe("surprised");
+    expect(inferExpressionFromText("我諗緊點解")).toBe("thinking");
+    expect(inferExpressionFromText("唉，好傷心")).toBe("sad");
+    expect(inferExpressionFromText("今日天氣幾好")).toBe("neutral");
+    expect(inferExpressionFromText("哈哈！！")).toBe("happy");
+    expect(inferExpressionFromText("我好嬲呀")).toBe("angry");
+  });
+
+  it("resolveExpressionFromTurn prefers emotion then text", () => {
+    expect(
+      resolveExpressionFromTurn({ emotion: "sad", text: "哈哈開心" }).expression,
+    ).toBe("sad");
+    expect(resolveExpressionFromTurn({ text: "哈哈開心" }).source).toBe("text");
+    expect(resolveExpressionFromTurn({ text: "哈哈開心" }).expression).toBe(
+      "happy",
+    );
   });
 
   it("builds injectable parameter payloads", () => {
@@ -46,8 +68,6 @@ describe("emotionExpression", () => {
         throw new Error("no ws");
       },
     });
-    // Bypass auth — injectParameters only queues when authenticated; call setExpression
-    // and inspect via getExpression after poking private path through setExpression state.
     client.setExpression("angry");
     expect(client.expression).toBe("angry");
     client.setExpression("surprised");
