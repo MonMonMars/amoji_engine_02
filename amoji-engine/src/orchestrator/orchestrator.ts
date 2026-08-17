@@ -203,6 +203,7 @@ export class AmojiOrchestrator {
     this.voiceBridge.clearSpeakerQueue();
     this.assistantTranscriptBuffer = "";
     if (this.faceLiveAvailable) {
+      this.faceLive.stopTalkGesture();
       void this.faceLive.resetLipSync();
     }
     this.setPhase("listening");
@@ -273,6 +274,7 @@ export class AmojiOrchestrator {
           void this.faceLive.reactToTranscript(text).then((expression) => {
             this.idlePresence.setEmotion(expression, 0.5);
           });
+          this.faceLive.beginTalkGesture(text);
         }
         this.assistantTranscriptBuffer = "";
       } else {
@@ -282,17 +284,27 @@ export class AmojiOrchestrator {
           text: this.assistantTranscriptBuffer,
           final: false,
         });
+        if (this.faceLiveAvailable && this.assistantTranscriptBuffer.length > 4) {
+          this.faceLive.beginTalkGesture(this.assistantTranscriptBuffer);
+        }
       }
     });
 
     this.realtime.on("audioDelta", ({ pcm16 }) => {
       this.setPhase("speaking");
+      if (
+        this.faceLiveAvailable &&
+        !this.faceLive.talkGestureClock.active
+      ) {
+        this.faceLive.beginTalkGesture(this.assistantTranscriptBuffer || "");
+      }
       const out = this.voiceBridge.playAssistantAudio(pcm16);
       this.emit("audioOut", { pcm16: out });
     });
 
     this.realtime.on("responseDone", () => {
       if (this.faceLiveAvailable) {
+        this.faceLive.stopTalkGesture();
         void this.faceLive.resetLipSync();
       }
       if (this.phase === "speaking" || this.phase === "thinking") {

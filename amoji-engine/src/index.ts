@@ -54,6 +54,28 @@ export {
 } from "./face-live/idlePresence.js";
 
 export {
+  TALK_GESTURE_SCHEMA,
+  TALK_GESTURE_STYLES,
+  TALK_GESTURE_PARAM_IDS,
+  FINGER_DIGITS,
+  FINGER_JOINTS,
+  FINGER_TIP_PARAM_IDS,
+  listFingerTipParamIds,
+  setFingerChain,
+  readFingerTips,
+  inferTalkGestureFromText,
+  nextTalkGestureStyle,
+  sampleTalkGesture,
+  talkGestureToFaceLiveParams,
+  mergeFaceLiveParams,
+  TalkGestureClock,
+  createTalkGestureClock,
+  type TalkGestureSample,
+  type TalkGestureStyle,
+  type PoseMap,
+} from "./face-live/talkGestures.js";
+
+export {
   SakuraFaceLiveDriver,
   type FaceLiveDriverEvents,
   type FaceLiveEventName,

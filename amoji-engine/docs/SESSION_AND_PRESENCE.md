@@ -78,6 +78,15 @@ const params = mergeFaceLiveParams(lipParams, talkGestureToFaceLiveParams(sample
 listFingerTipParamIds(); // 10 tip ids
 ```
 
+TypeScript (`SakuraFaceLiveDriver`):
+
+```ts
+driver.beginTalkGesture(replyText);
+// driveLipSync merges fingertip / hand params while TTS PCM streams
+await driver.driveLipSync(pcm16);
+driver.stopTalkGesture();
+```
+
 Custom param ids (`ParamHandRPoint`, `ParamFingerRIndexTip`, `ParamBodyAngleX`, …) must be mapped in VTS / Live2D. Lab: **Gesture demo** / **G**.
 
 ## Dialect auto-switch
