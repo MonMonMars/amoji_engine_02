@@ -112,13 +112,14 @@
       <strong>VAD</strong> tunes mic sensitivity (<code>?vad=high|normal|low</code>);
       <strong>TTS: On/Muted</strong> silences playback without stopping the pipeline.
       <strong>Expression demo</strong> cycles Sakura presets (happy → … → angry).
+      <strong>Gesture demo</strong> cycles Disney-style talk body/hand/finger styles from reply content.
       Use <strong>Export / Import Session</strong> for archives (includes latency rollup);
       <strong>Export Metrics</strong> downloads turn p50/p95 JSON; <strong>Copy lab URL</strong> shares prefs.
       <strong>Robot steps</strong> HUD tracks
       <code>sakura → lip_sync → done/aborted</code> via
       <code>createVoiceRobotBridge</code>, plus last-turn latency, p50/p95 rollup, and partial ASR.
       Serve with <code>npm run lab</code> from <code>amoji-engine/</code>.
-      Keys: <code>Space</code> hold-to-talk · <code>Esc</code> barge · <code>M</code> mute · <code>E</code> expression · <code>[</code>/<code>]</code> volume.
+      Keys: <code>Space</code> hold-to-talk · <code>Esc</code> barge · <code>M</code> mute · <code>E</code> expression · <code>G</code> gesture · <code>[</code>/<code>]</code> volume.
     </p>
 
     <div class="row">
@@ -194,6 +195,13 @@
       </button>
       <button
         type="button"
+        id="btn-gesture-demo"
+        title="Cycle Disney-style talk gestures (hands / shoulders / fingers)"
+      >
+        Gesture demo
+      </button>
+      <button
+        type="button"
         id="btn-worker-demo"
         title="Mock SenseVoice ASR → CosyVoice TTS worker turn"
       >
@@ -235,6 +243,7 @@
       <span class="k">tts</span><span class="v" id="tts-hud">on</span>
       <span class="k">volume</span><span class="v" id="volume-hud">normal</span>
       <span class="k">idle</span><span class="v" id="idle-hud">—</span>
+      <span class="k">gesture</span><span class="v" id="gesture-hud">—</span>
       <span class="k">lip-sync</span><span class="v" id="lipsync-hud">—</span>
       <span class="k">worker</span><span class="v" id="worker-hud">mock</span>
       <span class="k">face live</span><span class="v" id="facelive-hud">off</span>
@@ -263,6 +272,7 @@
         createTtsPlaybackQueue,
         createLipSyncTracker,
         createSakuraFaceLiveClient,
+        createTalkGestureClock,
         createTurnMetricsRollup,
         createPushToTalk,
         bindPushToTalkPointer,
@@ -273,6 +283,9 @@
         resolveExpressionFromTurn,
         inferExpressionFromText,
         nextExpressionPreset,
+        nextTalkGestureStyle,
+        talkGestureToFaceLiveParams,
+        mergeFaceLiveParams,
         exportTurnMetricsRollup,
         buildLabShareUrl,
         copyTextToClipboard,
@@ -314,6 +327,7 @@
       const ttsHudEl = document.getElementById("tts-hud");
       const volumeHudEl = document.getElementById("volume-hud");
       const idleHudEl = document.getElementById("idle-hud");
+      const gestureHudEl = document.getElementById("gesture-hud");
       const lipsyncHudEl = document.getElementById("lipsync-hud");
       const workerHudEl = document.getElementById("worker-hud");
       const faceLiveHudEl = document.getElementById("facelive-hud");
@@ -421,9 +435,46 @@
       });
       const idle = createIdlePresenceClock({ emotion: "neutral", intensity: 0.42 });
       const lipSync = createLipSyncTracker({ alpha: 0.45, sensitivity: 1.6 });
+      const talkGestures = createTalkGestureClock({ style: "explain", intensity: 0.72 });
       /** @type {{ mouthOpen: number, parameters: object[] } | null} */
       let lastLipSync = null;
       let faceLiveInjectCount = 0;
+      /** @type {ReturnType<typeof setTimeout> | null} */
+      let gesturePreviewTimer = null;
+
+      const updateGestureHud = (sample) => {
+        if (!sample) {
+          gestureHudEl.textContent = talkGestures.active
+            ? talkGestures.opts.style
+            : "—";
+          return;
+        }
+        const point = sample.pose?.handRPoint ?? 0;
+        const arm = sample.pose?.armRA ?? 0;
+        gestureHudEl.textContent = `${sample.style} · arm ${arm.toFixed(2)} · point ${point.toFixed(2)}${
+          talkGestures.active ? "" : " · soft"
+        }`;
+      };
+
+      const beginTalkGesture = (text, { emotion, intensity, source = "talk" } = {}) => {
+        if (gesturePreviewTimer) {
+          clearTimeout(gesturePreviewTimer);
+          gesturePreviewTimer = null;
+        }
+        const style = talkGestures.start(text || "", {
+          emotion: emotion || "neutral",
+          intensity: intensity ?? 0.72,
+        });
+        updateGestureHud(talkGestures.step(0));
+        session.recordTick("gesture", { style, source, emotion: emotion || null });
+        return style;
+      };
+
+      const stopTalkGesture = ({ reset = false } = {}) => {
+        talkGestures.stop();
+        if (reset) talkGestures.reset();
+        updateGestureHud(null);
+      };
 
       const faceLive = createSakuraFaceLiveClient({
         url: faceLiveConfig.url,
@@ -508,11 +559,12 @@
           lastLipSync = { mouthOpen, parameters };
           lipsyncHudEl.textContent = `mouth ${mouthOpen.toFixed(2)} · ${parameters.length}p`;
           session.recordTick("lipsync", { mouthOpen });
-          pushFaceParams(parameters);
+          // Face inject merges lip-sync + talk gestures in the rAF loop.
         },
         onIdle: () => {
           lastLipSync = null;
           lipSync.reset();
+          stopTalkGesture();
           lipsyncHudEl.textContent = "idle";
           if (faceLive.isAuthenticated) faceLive.resetLipSync();
           session.recordTick("tts", { event: "idle" });
@@ -606,6 +658,12 @@
             metrics: turn.metrics,
           });
           applyTurnMetrics(turn.metrics);
+          if (!turn.barged && turn.reply) {
+            beginTalkGesture(turn.reply, {
+              emotion: turn.emotion?.emotion || turn.robot?.emotion,
+              source: "pipeline",
+            });
+          }
         },
         onChunk: (chunk) => {
           void ttsPlayer.enqueue(chunk);
@@ -632,11 +690,25 @@
           renderRobotHud(payload);
           if (ev === "sakura") {
             pushExpression(payload.emotion || "neutral", { source: "robot" });
+            if (payload.reply || payload.summary) {
+              beginTalkGesture(payload.reply || payload.summary, {
+                emotion: payload.emotion,
+                source: "robot",
+              });
+            } else if (!talkGestures.active) {
+              beginTalkGesture("", {
+                emotion: payload.emotion,
+                source: "robot",
+              });
+            }
           }
           if (ev === "done" || ev === "aborted") {
             idle.setEmotion(payload.emotion || "neutral", 0.42);
-            if (ev === "aborted" && faceLive.isAuthenticated) {
-              faceLive.resetLipSync();
+            if (ev === "aborted") {
+              stopTalkGesture({ reset: true });
+              if (faceLive.isAuthenticated) {
+                faceLive.resetLipSync();
+              }
             }
           }
           log(`robot ${ev} phase=${payload.phase} emotion=${payload.emotion} lang=${payload.language || robot.language}`);
@@ -677,6 +749,11 @@
           this.talking = true;
           turnHost.endListen();
           session.recordTick("phase", { phase: "talking", extra: { source: extra?.source } });
+          if (extra?.forceReply) {
+            beginTalkGesture(extra.forceReply, { source: extra?.source || "talk" });
+          } else if (!talkGestures.active) {
+            beginTalkGesture("", { source: extra?.source || "talk" });
+          }
 
           /** @type {object | null} */
           let pipelineTurn = extra?.pipelineTurn || null;
@@ -707,9 +784,15 @@
             if (pipelineTurn.barged) {
               session.recordTick("barge", { during: "talk", source: "pipeline" });
               log("talk barged — assistant reply cancelled");
+              stopTalkGesture({ reset: true });
               this.talking = false;
               return;
             }
+            beginTalkGesture(pipelineTurn.reply || "", {
+              emotion:
+                pipelineTurn.emotion?.emotion || pipelineTurn.robot?.emotion,
+              source: extra?.source || "pipeline",
+            });
             const speakMs =
               typeof extra?.speakMs === "number"
                 ? extra.speakMs
@@ -726,6 +809,7 @@
             if (!this.talking) {
               session.recordTick("barge", { during: "tts-wait", source: "host" });
               log("tts wait cut short by barge");
+              stopTalkGesture({ reset: true });
               return;
             }
             session.appendChat({
@@ -754,6 +838,7 @@
               pipelineTurn.emotion?.emotion || pipelineTurn.robot?.emotion || "neutral",
               pipelineTurn.emotion?.intensity ?? 0.42,
             );
+            if (!ttsPlayer.playing) stopTalkGesture();
             this.talking = false;
             return;
           }
@@ -782,10 +867,15 @@
           if (result.barged) {
             session.recordTick("barge", { during: "talk", source: "robot" });
             log("talk barged — assistant reply cancelled");
+            stopTalkGesture({ reset: true });
           } else {
             session.appendChat({
               role: "assistant",
               text: result.reply ?? "（stub）收到啦，有咩想傾？",
+            });
+            beginTalkGesture(result.reply ?? "（stub）收到啦，有咩想傾？", {
+              emotion: result.emotion || robot.getHud()?.emotion,
+              source: "robot-stub",
             });
             if (result.prosody) {
               session.recordTick("prosody", {
@@ -800,11 +890,13 @@
             }
           }
           renderChat();
+          if (!ttsPlayer.playing) stopTalkGesture();
           this.talking = false;
         },
         bargeIn(info = {}) {
           robot.abort(info.reason || "barge-in");
           ttsPlayer.flush();
+          stopTalkGesture({ reset: true });
           this.talking = false;
           session.recordTick("barge", {
             at: Date.now(),
@@ -823,24 +915,55 @@
 
       let lastFrame = performance.now();
       let lastIdleInjectAt = 0;
+      let lastTalkInjectAt = 0;
       function raf(now) {
         const dt = Math.min(0.05, (now - lastFrame) / 1000);
         lastFrame = now;
-        if (!labHost.talking && !ttsPlayer.playing) {
-          const presence = idle.step(dt);
-          const params = presenceToFaceLiveParams(presence);
-          idleHudEl.textContent = `${presence.emotion} · jaw ${params.find((p) => p.id === "ParamMouthOpenY")?.value} · blink ${presence.blink} · face ${params.length}p`;
-          if (faceLive.isAuthenticated && now - lastIdleInjectAt > 100) {
-            lastIdleInjectAt = now;
-            pushFaceParams(params);
-          } else {
-            labHost.lastFaceParams = params;
+        const speaking = labHost.talking || ttsPlayer.playing;
+        if (!speaking) {
+          if (talkGestures.active && !gesturePreviewTimer) {
+            stopTalkGesture();
           }
-        } else if (lastLipSync) {
-          idleHudEl.textContent = "paused (tts)";
-          labHost.lastFaceParams = lastLipSync.parameters;
+          if (!talkGestures.active) {
+            const presence = idle.step(dt);
+            const params = presenceToFaceLiveParams(presence);
+            idleHudEl.textContent = `${presence.emotion} · jaw ${params.find((p) => p.id === "ParamMouthOpenY")?.value} · blink ${presence.blink} · face ${params.length}p`;
+            if (faceLive.isAuthenticated && now - lastIdleInjectAt > 100) {
+              lastIdleInjectAt = now;
+              pushFaceParams(params);
+            } else {
+              labHost.lastFaceParams = params;
+            }
+          } else {
+            // Gesture demo preview while idle
+            idleHudEl.textContent = "paused (gesture demo)";
+            const sample = talkGestures.step(dt, { speechEnergy: 0.55 });
+            const gParams = talkGestureToFaceLiveParams(sample);
+            updateGestureHud(sample);
+            if (faceLive.isAuthenticated && now - lastTalkInjectAt > 33) {
+              lastTalkInjectAt = now;
+              pushFaceParams(gParams);
+            } else {
+              labHost.lastFaceParams = gParams;
+            }
+          }
         } else {
-          idleHudEl.textContent = "paused (speaking)";
+          idleHudEl.textContent = lastLipSync ? "paused (tts)" : "paused (speaking)";
+          if (!talkGestures.active) {
+            talkGestures.start("", { emotion: emotionEl.textContent || "neutral" });
+          }
+          const sample = talkGestures.step(dt, {
+            speechEnergy: lastLipSync?.mouthOpen ?? 0.45,
+          });
+          const gParams = talkGestureToFaceLiveParams(sample);
+          updateGestureHud(sample);
+          const merged = mergeFaceLiveParams(lastLipSync?.parameters, gParams);
+          if (faceLive.isAuthenticated && now - lastTalkInjectAt > 33) {
+            lastTalkInjectAt = now;
+            pushFaceParams(merged);
+          } else {
+            labHost.lastFaceParams = merged;
+          }
         }
         requestAnimationFrame(raf);
       }
@@ -857,6 +980,7 @@
         `dialect ${dialectPref.mode} (source=${dialectPref.source}; ?lang=auto|yue|en)`,
       );
       lipsyncHudEl.textContent = "—";
+      gestureHudEl.textContent = "—";
       faceLiveHudEl.textContent = "off";
       rollupHudEl.textContent = "—";
       budgetHudEl.textContent = "—";
@@ -1146,12 +1270,33 @@
         );
       };
 
+      const runGestureDemo = () => {
+        const next = nextTalkGestureStyle(talkGestures.opts.style);
+        talkGestures.setStyle(next, { intensity: 0.9 });
+        talkGestures.active = true;
+        updateGestureHud(talkGestures.step(0));
+        if (gesturePreviewTimer) clearTimeout(gesturePreviewTimer);
+        gesturePreviewTimer = setTimeout(() => {
+          gesturePreviewTimer = null;
+          if (!labHost.talking && !ttsPlayer.playing) {
+            stopTalkGesture({ reset: false });
+          }
+        }, 2200);
+        session.recordTick("gesture", { style: next, source: "demo" });
+        log(
+          `gesture demo → ${next}${
+            faceLive.isAuthenticated ? " (injected)" : " (Face Live off — HUD only)"
+          }`,
+        );
+      };
+
       const labHotkeys = createLabHotkeys({
         onPttPress: () => ptt.press(),
         onPttRelease: () => ptt.release(),
         onBarge: () => labHost.bargeIn({ reason: "hotkey", source: "escape" }),
         onMuteToggle: () => applyTtsMute(!ttsMuted, { logChange: true }),
         onExpressionCycle: () => runExpressionDemo(),
+        onGestureCycle: () => runGestureDemo(),
         onVolumeDown: () => {
           applyTtsVolume(persistTtsVolumePref(prevTtsVolume(ttsVolumePref.level)), {
             logChange: true,
@@ -1164,7 +1309,7 @@
         },
       });
       labHotkeys.bind();
-      log("hotkeys Space=PTT Esc=barge M=mute E=expression [=vol- ]=vol+");
+      log("hotkeys Space=PTT Esc=barge M=mute E=expression G=gesture [=vol- ]=vol+");
 
       document.getElementById("btn-robot-demo").addEventListener("click", async () => {
         const text =
@@ -1190,6 +1335,10 @@
         runExpressionDemo();
       });
 
+      document.getElementById("btn-gesture-demo").addEventListener("click", () => {
+        runGestureDemo();
+      });
+
       document.getElementById("btn-worker-demo").addEventListener("click", async () => {
         const asrText =
           worker.language === "en"
@@ -1205,6 +1354,10 @@
           },
         });
         idle.setEmotion(turn.emotion?.emotion || "neutral", turn.emotion?.intensity || 0.5);
+        beginTalkGesture(turn.reply || turn.asr?.text || "", {
+          emotion: turn.emotion?.emotion,
+          source: "worker-demo",
+        });
         await labHost.stopListeningAndTalk({
           source: "worker-demo",
           pipelineTurn: turn,
@@ -1309,11 +1462,13 @@
         robot.clearMemory();
         idle.reset();
         idle.setEmotion("neutral", 0.42);
+        stopTalkGesture({ reset: true });
         latencyHudEl.textContent = "—";
         rollupHudEl.textContent = "—";
         budgetHudEl.textContent = "—";
         partialHudEl.textContent = "—";
         expressionHudEl.textContent = "neutral";
+        gestureHudEl.textContent = "—";
         resetMicMeterHud();
         demoExpression = "neutral";
         renderChat();

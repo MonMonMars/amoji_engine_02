@@ -126,6 +126,19 @@ export {
 } from "./face/emotionExpression.js";
 
 export {
+  TALK_GESTURE_SCHEMA,
+  TALK_GESTURE_STYLES,
+  TALK_GESTURE_PARAM_IDS,
+  inferTalkGestureFromText,
+  nextTalkGestureStyle,
+  sampleTalkGesture,
+  talkGestureToFaceLiveParams,
+  mergeFaceLiveParams,
+  TalkGestureClock,
+  createTalkGestureClock,
+} from "./face/talkGestures.js";
+
+export {
   startMockFaceLiveBridge,
 } from "./face/mockFaceLiveBridge.js";
 

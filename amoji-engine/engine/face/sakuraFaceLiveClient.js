@@ -1,7 +1,9 @@
 /**
  * Browser/Node Sakura Face Live client — VTube Studio–compatible subset.
- * Auth handshake + InjectParameterDataRequest for idle / lip-sync params.
+ * Auth handshake + InjectParameterDataRequest for idle / lip-sync / talk-gesture params.
  */
+import { TALK_GESTURE_PARAM_IDS } from "./talkGestures.js";
+
 export const FACE_LIVE_CLIENT_SCHEMA = 'amoji.faceLiveClient.v1';
 
 export const SAKURA_PARAM_IDS = Object.freeze({
@@ -14,6 +16,8 @@ export const SAKURA_PARAM_IDS = Object.freeze({
   cheek: 'ParamCheek',
   angleX: 'ParamAngleX',
   angleY: 'ParamAngleY',
+  // Disney-style talk body / hands / fingers (map in VTS / Live2D)
+  ...TALK_GESTURE_PARAM_IDS,
 });
 
 export const SAKURA_EXPRESSION_PRESETS = Object.freeze({

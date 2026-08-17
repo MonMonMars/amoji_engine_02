@@ -22,7 +22,8 @@
 - JS `inferExpressionFromText` (TS parity) + Export Metrics / Copy lab URL
 - Live mic level meter HUD (RMS vs VAD threshold) for Always-on / PTT tuning
 - TTS volume prefs (`?vol=soft|normal|loud`) with GainNode playback + `[`/`]` hotkeys
-- Lab UI: Always-on, Hold to talk, Ready check, Worker, Face Live, Dialect, VAD, TTS mute/volume, Expression, Prosody, Barge-in, Export/Import
+- Disney-style talk gestures (`talkGestures.js`) — body / shoulders / hands / fingers driven by reply text; lab Gesture demo + `G` hotkey; merges with lip-sync inject
+- Lab UI: Always-on, Hold to talk, Ready check, Worker, Face Live, Dialect, VAD, TTS mute/volume, Expression, Gesture, Prosody, Barge-in, Export/Import
 - Docs: REALTIME_VOICE_LAB, VOICE_WORKER, CI matrix, architecture note for JS path
 
 ### Validation
