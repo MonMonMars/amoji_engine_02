@@ -117,6 +117,14 @@
       <button type="button" id="btn-connect">Connect (stub)</button>
       <button
         type="button"
+        id="btn-face-live"
+        aria-pressed="false"
+        title="Connect Sakura Face Live WebSocket (?face=ws://…)"
+      >
+        Face Live: Off
+      </button>
+      <button
+        type="button"
         id="btn-always-on"
         aria-pressed="false"
         title="Always-on listen with VAD end-of-utterance"
@@ -162,6 +170,7 @@
       <span class="k">idle</span><span class="v" id="idle-hud">—</span>
       <span class="k">lip-sync</span><span class="v" id="lipsync-hud">—</span>
       <span class="k">worker</span><span class="v" id="worker-hud">mock</span>
+      <span class="k">face live</span><span class="v" id="facelive-hud">off</span>
       <span class="k">summary</span><span class="v" id="robot-summary">—</span>
       <span class="k">first steps</span><span class="v" id="robot-steps">—</span>
     </div>
@@ -183,7 +192,9 @@
         createPartialAsrWatcher,
         createTtsPlaybackQueue,
         createLipSyncTracker,
+        createSakuraFaceLiveClient,
         resolveVoiceWorkerConfig,
+        resolveFaceLiveConfig,
         runWorkerRobotTurn,
         presenceToFaceLiveParams,
         frameEnergy,
@@ -192,12 +203,14 @@
       const statusEl = document.getElementById("status");
       const chatEl = document.getElementById("chat");
       const alwaysOnBtn = document.getElementById("btn-always-on");
+      const faceLiveBtn = document.getElementById("btn-face-live");
       const phaseEl = document.getElementById("robot-phase");
       const emotionEl = document.getElementById("robot-emotion");
       const languageEl = document.getElementById("robot-language");
       const idleHudEl = document.getElementById("idle-hud");
       const lipsyncHudEl = document.getElementById("lipsync-hud");
       const workerHudEl = document.getElementById("worker-hud");
+      const faceLiveHudEl = document.getElementById("facelive-hud");
       const summaryEl = document.getElementById("robot-summary");
       const stepsEl = document.getElementById("robot-steps");
 
@@ -210,11 +223,44 @@
       });
 
       const workerConfig = resolveVoiceWorkerConfig();
+      const faceLiveConfig = resolveFaceLiveConfig();
       const robot = createVoiceRobotBridge();
       const idle = createIdlePresenceClock({ emotion: "neutral", intensity: 0.42 });
       const lipSync = createLipSyncTracker({ alpha: 0.45, sensitivity: 1.6 });
       /** @type {{ mouthOpen: number, parameters: object[] } | null} */
       let lastLipSync = null;
+      let faceLiveInjectCount = 0;
+
+      const faceLive = createSakuraFaceLiveClient({
+        url: faceLiveConfig.url,
+        onEvent: (ev, payload) => {
+          session.recordTick("facelive", { event: ev, ...(payload || {}) });
+          if (ev === "authenticated") {
+            faceLiveHudEl.textContent = `on · ${faceLiveConfig.source}`;
+            faceLiveBtn.setAttribute("aria-pressed", "true");
+            faceLiveBtn.textContent = "Face Live: On";
+          }
+          if (ev === "disconnected") {
+            faceLiveHudEl.textContent = "off";
+            faceLiveBtn.setAttribute("aria-pressed", "false");
+            faceLiveBtn.textContent = "Face Live: Off";
+          }
+          if (ev === "parametersInjected") {
+            faceLiveInjectCount += 1;
+          }
+          if (ev === "error") {
+            log(`face live error: ${payload?.message || ev}`);
+          }
+        },
+      });
+
+      const pushFaceParams = (parameters) => {
+        if (!parameters?.length) return;
+        labHost.lastFaceParams = parameters;
+        if (faceLive.isAuthenticated) {
+          faceLive.injectParameters(parameters);
+        }
+      };
 
       const worker = createVoiceWorkerClient({
         mode: workerConfig.mode,
@@ -253,11 +299,13 @@
           lastLipSync = { mouthOpen, parameters };
           lipsyncHudEl.textContent = `mouth ${mouthOpen.toFixed(2)} · ${parameters.length}p`;
           session.recordTick("lipsync", { mouthOpen });
+          pushFaceParams(parameters);
         },
         onIdle: () => {
           lastLipSync = null;
           lipSync.reset();
           lipsyncHudEl.textContent = "idle";
+          if (faceLive.isAuthenticated) faceLive.resetLipSync();
           session.recordTick("tts", { event: "idle" });
         },
       });
@@ -302,8 +350,14 @@
         robot.on(ev, (payload) => {
           session.recordTick("robot", { event: ev, phase: payload.phase, language: payload.language });
           renderRobotHud(payload);
+          if (ev === "sakura" && faceLive.isAuthenticated) {
+            faceLive.setExpression(payload.emotion || "neutral");
+          }
           if (ev === "done" || ev === "aborted") {
             idle.setEmotion(payload.emotion || "neutral", 0.42);
+            if (ev === "aborted" && faceLive.isAuthenticated) {
+              faceLive.resetLipSync();
+            }
           }
           log(`robot ${ev} phase=${payload.phase} emotion=${payload.emotion} lang=${payload.language || robot.language}`);
         });
@@ -473,16 +527,20 @@
       };
 
       let lastFrame = performance.now();
+      let lastIdleInjectAt = 0;
       function raf(now) {
         const dt = Math.min(0.05, (now - lastFrame) / 1000);
         lastFrame = now;
         if (!labHost.talking && !ttsPlayer.playing) {
           const presence = idle.step(dt);
           const params = presenceToFaceLiveParams(presence);
-          labHost.lastFaceParams = params;
-          const jaw = params.find((p) => p.id === "ParamMouthOpenY")?.value;
-          const blink = presence.blink;
-          idleHudEl.textContent = `${presence.emotion} · jaw ${jaw} · blink ${blink} · face ${params.length}p`;
+          idleHudEl.textContent = `${presence.emotion} · jaw ${params.find((p) => p.id === "ParamMouthOpenY")?.value} · blink ${presence.blink} · face ${params.length}p`;
+          if (faceLive.isAuthenticated && now - lastIdleInjectAt > 100) {
+            lastIdleInjectAt = now;
+            pushFaceParams(params);
+          } else {
+            labHost.lastFaceParams = params;
+          }
         } else if (lastLipSync) {
           idleHudEl.textContent = "paused (tts)";
           labHost.lastFaceParams = lastLipSync.parameters;
@@ -497,7 +555,14 @@
           worker.workerUrl ? ` url=${worker.workerUrl}` : ""
         } (source=${workerConfig.source}; ?worker=http://127.0.0.1:7890)`,
       );
+      log(
+        `face live url=${faceLiveConfig.url} (source=${faceLiveConfig.source}; ?face=ws://127.0.0.1:8765)`,
+      );
       lipsyncHudEl.textContent = "—";
+      faceLiveHudEl.textContent = "off";
+      workerHudEl.textContent = workerConfig.mode === "http"
+        ? `http · ${workerConfig.source} · ${workerConfig.workerUrl}`
+        : "mock";
       let unsubscribeMic = null;
       let mediaStream = null;
       let audioCtx = null;
@@ -630,6 +695,26 @@
         log(
           `stub connect — frameEnergy(silence)=${frameEnergy(new Float32Array(32))}`,
         );
+      });
+
+      faceLiveBtn.addEventListener("click", async () => {
+        const on = faceLiveBtn.getAttribute("aria-pressed") !== "true";
+        if (on) {
+          try {
+            log(`face live connecting ${faceLiveConfig.url}…`);
+            await faceLive.connect();
+            faceLive.setExpression(robot.getHud().emotion || "neutral");
+            log(
+              `face live authenticated token=${faceLive.authenticationToken?.slice(0, 12) || "cached"}…`,
+            );
+          } catch (err) {
+            faceLive.disconnect();
+            log(`face live failed: ${err?.message ?? err}`);
+          }
+        } else {
+          faceLive.disconnect();
+          log("face live disconnected");
+        }
       });
 
       document.getElementById("btn-push-to-talk").addEventListener("click", () => {

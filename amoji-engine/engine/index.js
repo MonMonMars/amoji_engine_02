@@ -101,6 +101,17 @@ export {
 } from "./face/lipSyncFromChunk.js";
 
 export {
+  FACE_LIVE_CLIENT_SCHEMA,
+  SAKURA_PARAM_IDS,
+  SAKURA_EXPRESSION_PRESETS,
+  createSakuraFaceLiveClient,
+} from "./face/sakuraFaceLiveClient.js";
+
+export {
+  startMockFaceLiveBridge,
+} from "./face/mockFaceLiveBridge.js";
+
+export {
   SESSION_ARCHIVE_KIND,
   SESSION_ARCHIVE_SCHEMA_VERSION,
   applySessionArchive,
@@ -118,3 +129,8 @@ export {
   WORKER_URL_STORAGE_KEY,
   resolveVoiceWorkerConfig,
 } from "./lab/workerUrl.js";
+
+export {
+  FACE_LIVE_URL_STORAGE_KEY,
+  resolveFaceLiveConfig,
+} from "./lab/faceLiveUrl.js";
