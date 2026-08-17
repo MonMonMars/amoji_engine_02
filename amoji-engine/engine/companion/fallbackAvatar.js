@@ -35,10 +35,17 @@ export function createFallbackAvatar(opts) {
 
     const cx = w * 0.5;
     const cy = h * 0.44;
-    const breath = Math.sin((now - t0) * 0.002) * 5;
-    const sway = Math.sin((now - t0) * 0.0008) * 8;
+    const breath = Math.sin((now - t0) * 0.0018);
+    // Standing idle — no side-to-side float / hover
+    const blinkCycle = (now - t0) % 4200;
+    const eyeClose =
+      blinkCycle > 3900 && blinkCycle < 4120
+        ? blinkCycle < 4000
+          ? 0.35
+          : 0.15
+        : 1;
 
-    // soft pedestal glow
+    // soft pedestal glow (fixed to ground, not floating with body)
     const g = ctx.createRadialGradient(cx, cy + 150, 10, cx, cy + 160, 240);
     g.addColorStop(0, "rgba(127,212,207,0.28)");
     g.addColorStop(1, "rgba(127,212,207,0)");
@@ -48,7 +55,8 @@ export function createFallbackAvatar(opts) {
     ctx.fill();
 
     ctx.save();
-    ctx.translate(cx + sway * 0.12, cy + breath);
+    // Keep feet planted — only tiny chest-driven vertical (almost none)
+    ctx.translate(cx, cy);
 
     // skirt
     ctx.fillStyle = "#4fa8a4";
@@ -60,33 +68,34 @@ export function createFallbackAvatar(opts) {
     ctx.closePath();
     ctx.fill();
 
-    // torso
+    // torso with breath scale feel
     ctx.fillStyle = "#7fd4cf";
     ctx.beginPath();
-    ctx.moveTo(-48, 20);
-    ctx.quadraticCurveTo(0, 5, 48, 20);
+    const torsoExpand = breath * 2;
+    ctx.moveTo(-48 - torsoExpand * 0.3, 20);
+    ctx.quadraticCurveTo(0, 5 - breath * 1.5, 48 + torsoExpand * 0.3, 20);
     ctx.lineTo(42, 85);
     ctx.quadraticCurveTo(0, 95, -42, 85);
     ctx.closePath();
     ctx.fill();
 
-    // arms
+    // Iconic arms: left relaxed, right hand-on-hip
     const armLift =
       emotion === "happy" || emotion === "surprised"
-        ? 32
+        ? 28
         : emotion === "thinking"
-          ? 48
-          : 10;
+          ? 42
+          : 6;
     ctx.strokeStyle = "#f6c9b4";
     ctx.lineWidth = 16;
     ctx.lineCap = "round";
     ctx.beginPath();
     ctx.moveTo(-48, 45);
-    ctx.quadraticCurveTo(-115, 70 - armLift, -95, 145 - armLift * 0.35);
+    ctx.quadraticCurveTo(-100, 95, -78, 155);
     ctx.stroke();
     ctx.beginPath();
     ctx.moveTo(48, 45);
-    ctx.quadraticCurveTo(115, 70 - armLift, 95, 145 - armLift * 0.35);
+    ctx.quadraticCurveTo(95, 70 - armLift * 0.35, 70, 120 - armLift * 0.15);
     ctx.stroke();
 
     // long hair behind
@@ -120,8 +129,9 @@ export function createFallbackAvatar(opts) {
 
     // eyes
     const eyeY = emotion === "happy" ? -28 : -32;
-    const eyeH =
+    const eyeHBase =
       emotion === "surprised" ? 18 : emotion === "sad" ? 8 : emotion === "happy" ? 7 : 14;
+    const eyeH = Math.max(2, eyeHBase * eyeClose);
     ctx.fillStyle = "#fff8f2";
     ctx.beginPath();
     ctx.ellipse(-26, eyeY, 14, eyeH + 2, 0, 0, Math.PI * 2);

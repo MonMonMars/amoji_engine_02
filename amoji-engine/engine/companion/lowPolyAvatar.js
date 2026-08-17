@@ -7,45 +7,50 @@ import * as THREE from "three";
 export const LOW_POLY_AVATAR_SCHEMA = "amoji.lowPolyAvatar.v1";
 
 const EMOTION_TARGETS = {
+  // Iconic standing idle: grounded, slight hip weight, soft hand pose
   neutral: {
     brow: 0.05,
     eyeOpen: 0.92,
-    smile: 0.18,
-    blush: 0.12,
-    leanX: 0,
+    smile: 0.2,
+    blush: 0.1,
+    leanX: 0.02,
     leanZ: 0,
-    armL: 0.2,
-    armR: 0.2,
+    armL: 0.28,
+    armR: 0.55,
+    hip: 0.04,
   },
   happy: {
     brow: 0.18,
     eyeOpen: 0.7,
     smile: 0.92,
     blush: 0.65,
-    leanX: 0.05,
-    leanZ: -0.03,
-    armL: 0.55,
-    armR: 0.65,
+    leanX: 0.03,
+    leanZ: 0,
+    armL: 0.5,
+    armR: 0.62,
+    hip: 0.05,
   },
   thinking: {
     brow: 0.4,
     eyeOpen: 0.82,
     smile: 0.08,
     blush: 0.15,
-    leanX: -0.1,
-    leanZ: 0.08,
-    armL: 0.85,
-    armR: 0.12,
+    leanX: -0.06,
+    leanZ: 0.02,
+    armL: 0.9,
+    armR: 0.18,
+    hip: 0.03,
   },
   sad: {
     brow: -0.28,
     eyeOpen: 0.52,
     smile: -0.5,
     blush: 0.18,
-    leanX: 0.03,
-    leanZ: 0.12,
-    armL: -0.05,
-    armR: -0.05,
+    leanX: 0.02,
+    leanZ: 0.04,
+    armL: 0.12,
+    armR: 0.12,
+    hip: 0.02,
   },
   surprised: {
     brow: 0.62,
@@ -53,19 +58,21 @@ const EMOTION_TARGETS = {
     smile: 0.12,
     blush: 0.28,
     leanX: 0,
-    leanZ: -0.1,
-    armL: 0.95,
-    armR: 0.95,
+    leanZ: -0.02,
+    armL: 0.9,
+    armR: 0.9,
+    hip: 0,
   },
   angry: {
     brow: -0.58,
     eyeOpen: 0.72,
     smile: -0.4,
     blush: 0.4,
-    leanX: 0.04,
-    leanZ: -0.05,
-    armL: 0.4,
-    armR: 0.4,
+    leanX: 0.03,
+    leanZ: 0,
+    armL: 0.38,
+    armR: 0.38,
+    hip: 0.03,
   },
 };
 
@@ -389,25 +396,41 @@ export function createLowPolyAvatar(opts) {
     const target = EMOTION_TARGETS[emotion] || EMOTION_TARGETS.neutral;
     const k = 1 - Math.exp(-dt * 6);
     for (const key of Object.keys(target)) {
-      current[key] = lerp(current[key], target[key], k);
+      current[key] = lerp(current[key] ?? 0, target[key], k);
     }
 
     const now = performance.now();
-    const breath = Math.sin((now - t0) * 0.002) * 0.018;
-    root.rotation.y = Math.sin((now - t0) * 0.00065) * 0.1;
-    root.position.y = breath;
-    root.rotation.x = current.leanZ;
-    root.rotation.z = current.leanX;
+    // Standing idle: grounded feet, chest breathing only — no floating / air-drift
+    const breath = Math.sin((now - t0) * 0.0018);
+    const blinkCycle = (now - t0) % 4200;
+    const blink =
+      blinkCycle > 3900 && blinkCycle < 4050
+        ? 0.15
+        : blinkCycle >= 4050 && blinkCycle < 4120
+          ? 0.45
+          : 1;
 
-    head.rotation.z = current.leanX * 1.5;
-    head.rotation.x = current.leanZ * 0.85;
+    root.position.y = 0;
+    root.rotation.y = 0.04; // slight iconic 3/4 facing, locked
+    root.rotation.x = current.leanZ * 0.35;
+    root.rotation.z = current.leanX * 0.45 + current.hip * 0.35;
+
+    // Breath lives in torso / skirt scale, not whole-body float
+    chest.scale.set(1.15 + breath * 0.018, 0.85 + breath * 0.03, 0.75 + breath * 0.012);
+    waist.scale.set(1 + breath * 0.012, 1, 1 + breath * 0.01);
+    skirt.rotation.z = current.hip * 0.4;
+    skirt.rotation.y = 0;
+
+    head.rotation.z = current.leanX * 0.55;
+    head.rotation.x = current.leanZ * 0.35 + breath * 0.008;
+    head.rotation.y = -0.03;
 
     browL.rotation.z = 0.1 + current.brow * 0.7;
     browR.rotation.z = -0.1 - current.brow * 0.7;
     browL.position.y = 0.22 + current.brow * 0.045;
     browR.position.y = 0.22 + current.brow * 0.045;
 
-    const eyeScaleY = clamp(current.eyeOpen, 0.22, 1.2);
+    const eyeScaleY = clamp(current.eyeOpen * blink, 0.15, 1.2);
     eyeL.group.scale.set(1, eyeScaleY, 1);
     eyeR.group.scale.set(1, eyeScaleY, 1);
 
@@ -427,13 +450,12 @@ export function createLowPolyAvatar(opts) {
     mouth.position.y = -0.18 - open * 0.035 + smileLift * 0.02;
     mouth.rotation.z = smileLift * -0.12;
 
-    armL.rotation.z = 0.45 + current.armL;
-    armR.rotation.z = -0.45 - current.armR;
-    armL.rotation.x = talking ? Math.sin((now - t0) * 0.01) * 0.18 : 0.08;
-    armR.rotation.x = talking ? Math.cos((now - t0) * 0.011) * 0.2 : 0.08;
-
-    // Skirt sway
-    skirt.rotation.z = Math.sin((now - t0) * 0.0015) * 0.03;
+    // Iconic arms: left relaxed, right hand-on-hip / gentle raise when talking
+    armL.rotation.z = 0.55 + current.armL * 0.55;
+    armR.rotation.z = -0.35 - current.armR * 0.75;
+    armL.rotation.x = talking ? Math.sin((now - t0) * 0.009) * 0.08 : 0.12;
+    armR.rotation.x = talking ? Math.cos((now - t0) * 0.01) * 0.1 : 0.22;
+    armR.rotation.y = 0.15;
   };
 
   let last = performance.now();
