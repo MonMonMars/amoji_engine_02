@@ -28,6 +28,7 @@
     "voice-worker": "python3 scripts/voice_bridge_server.py --port 7890",
     "voice-worker:mock": "node scripts/mock-voice-worker.mjs --port 7890",
     "demo:http-smoke": "node scripts/voice-worker-http-smoke.mjs",
+    "demo:facelive-smoke": "node scripts/face-live-smoke.mjs",
     "lint": "eslint src"
   },
   "engines": {

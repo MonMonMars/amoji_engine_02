@@ -76,3 +76,13 @@ const player = createTtsPlaybackQueue({
 ## Lab worker URL
 
 Open the lab with `?worker=http://127.0.0.1:7890` (saved to `localStorage`), or set `AMOJI_VOICE_WORKER`. Default is mock.
+
+## Sakura Face Live (lab)
+
+JS client: `createSakuraFaceLiveClient({ url })` — VTS auth + `injectParameters`.
+
+```bash
+npm run demo:facelive-smoke
+```
+
+Lab: **Face Live: Off/On** connects to `?face=ws://127.0.0.1:8765` (or `AMOJI_FACE_LIVE_URL`). While connected, idle presence and TTS lip-sync inject Live2D params.
