@@ -113,6 +113,7 @@
       <strong>TTS: On/Muted</strong> silences playback without stopping the pipeline.
       <strong>Expression demo</strong> cycles Sakura presets (happy → … → angry).
       <strong>Gesture demo</strong> cycles Disney-style talk body/hand/finger styles from reply content.
+      <strong>Motion</strong> cycles SoftBank / Furhat / Reachy / Unitree / ROS / Sakura command packages.
       Use <strong>Export / Import Session</strong> for archives (includes latency rollup);
       <strong>Export Metrics</strong> downloads turn p50/p95 JSON; <strong>Copy lab URL</strong> shares prefs.
       <strong>Robot steps</strong> HUD tracks
@@ -202,6 +203,13 @@
       </button>
       <button
         type="button"
+        id="btn-motion-vendor"
+        title="Cycle robot motion vendor: Sakura → SoftBank → Furhat → Reachy → Unitree G1 → ROS"
+      >
+        Motion: Sakura
+      </button>
+      <button
+        type="button"
         id="btn-worker-demo"
         title="Mock SenseVoice ASR → CosyVoice TTS worker turn"
       >
@@ -244,6 +252,7 @@
       <span class="k">volume</span><span class="v" id="volume-hud">normal</span>
       <span class="k">idle</span><span class="v" id="idle-hud">—</span>
       <span class="k">gesture</span><span class="v" id="gesture-hud">—</span>
+      <span class="k">motion</span><span class="v" id="motion-hud">—</span>
       <span class="k">lip-sync</span><span class="v" id="lipsync-hud">—</span>
       <span class="k">worker</span><span class="v" id="worker-hud">mock</span>
       <span class="k">face live</span><span class="v" id="facelive-hud">off</span>
@@ -286,6 +295,8 @@
         nextTalkGestureStyle,
         talkGestureToFaceLiveParams,
         mergeFaceLiveParams,
+        nextRobotMotionVendor,
+        formatRobotMotionHud,
         exportTurnMetricsRollup,
         buildLabShareUrl,
         copyTextToClipboard,
@@ -328,7 +339,9 @@
       const volumeHudEl = document.getElementById("volume-hud");
       const idleHudEl = document.getElementById("idle-hud");
       const gestureHudEl = document.getElementById("gesture-hud");
+      const motionHudEl = document.getElementById("motion-hud");
       const lipsyncHudEl = document.getElementById("lipsync-hud");
+      const motionVendorBtn = document.getElementById("btn-motion-vendor");
       const workerHudEl = document.getElementById("worker-hud");
       const faceLiveHudEl = document.getElementById("facelive-hud");
       const latencyHudEl = document.getElementById("latency-hud");
@@ -432,7 +445,36 @@
       const robot = createVoiceRobotBridge({
         language: dialectPref.forceLanguage || "yue",
         forceLanguage: dialectPref.forceLanguage,
+        motionVendor: "sakura",
       });
+
+      const labelMotionVendor = (vendor) => {
+        const map = {
+          sakura: "Sakura",
+          softbank: "SoftBank",
+          furhat: "Furhat",
+          reachy: "Reachy",
+          unitree_g1: "Unitree G1",
+          ros: "ROS",
+        };
+        return map[vendor] || vendor;
+      };
+
+      const applyMotionVendor = (vendor, { logChange = false } = {}) => {
+        const next = robot.setMotionVendor(vendor);
+        motionVendorBtn.textContent = `Motion: ${labelMotionVendor(next)}`;
+        motionVendorBtn.setAttribute(
+          "aria-pressed",
+          next === "sakura" ? "false" : "true",
+        );
+        motionHudEl.textContent = `${next} · ready`;
+        if (logChange) {
+          session.recordTick("motion-vendor", { vendor: next });
+          log(`motion vendor → ${next}`);
+        }
+        return next;
+      };
+      applyMotionVendor(robot.motionVendor, { logChange: false });
       const idle = createIdlePresenceClock({ emotion: "neutral", intensity: 0.42 });
       const lipSync = createLipSyncTracker({ alpha: 0.45, sensitivity: 1.6 });
       const talkGestures = createTalkGestureClock({ style: "explain", intensity: 0.72 });
@@ -680,6 +722,10 @@
         emotionEl.textContent = payload.emotion || "neutral";
         languageEl.textContent = payload.language || robot.language || "yue";
         summaryEl.textContent = payload.summary || "—";
+        if (payload.motionHud || payload.motion) {
+          motionHudEl.textContent =
+            payload.motionHud || formatRobotMotionHud(payload.motion);
+        }
         const steps = Array.isArray(payload.steps) ? payload.steps : [];
         stepsEl.textContent = steps.length
           ? steps.slice(0, 4).join(" → ")
@@ -1341,6 +1387,11 @@
         runGestureDemo();
       });
 
+      document.getElementById("btn-motion-vendor").addEventListener("click", () => {
+        const next = nextRobotMotionVendor(robot.motionVendor);
+        applyMotionVendor(next, { logChange: true });
+      });
+
       document.getElementById("btn-worker-demo").addEventListener("click", async () => {
         const asrText =
           worker.language === "en"
@@ -1471,6 +1522,7 @@
         partialHudEl.textContent = "—";
         expressionHudEl.textContent = "neutral";
         gestureHudEl.textContent = "—";
+        motionHudEl.textContent = `${robot.motionVendor} · ready`;
         resetMicMeterHud();
         demoExpression = "neutral";
         renderChat();

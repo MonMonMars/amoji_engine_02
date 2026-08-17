@@ -25,6 +25,27 @@ export {
 } from "./voice/voiceRobotBridge.js";
 
 export {
+  ROBOT_MOTION_SCHEMA,
+  ROBOT_MOTION_VENDORS,
+  SOFTBANK_STYLE_MAP,
+  FURHAT_STYLE_MAP,
+  REACHY_STYLE_JOINTS,
+  UNITREE_G1_STYLE_JOINTS,
+  normalizeRobotMotionVendor,
+  nextRobotMotionVendor,
+  buildRobotMotionPackage,
+  annotateSoftbankSpeech,
+  toSoftbankMotion,
+  toFurhatMotion,
+  toReachyMotion,
+  toUnitreeG1Motion,
+  toRosMotion,
+  formatRobotMotionHud,
+  robotMotionPlanSteps,
+  createRobotMotionAdapter,
+} from "./robot/talkMotion.js";
+
+export {
   DIALECT_DETECT_SCHEMA,
   detectLanguage,
   stripAsrTags,
