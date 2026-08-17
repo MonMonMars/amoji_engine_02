@@ -142,6 +142,8 @@ Env: `OPENAI_API_KEY`, `AMOJI_FACE_LIVE_URL`, `AMOJI_VOICE_WORKER`.
 | `npm run voice-worker` | Python worker (FunASR / CosyVoice when installed) |
 | `npm run demo` | Live Realtime session (`OPENAI_API_KEY`) |
 
+GitHub Actions (`.github/workflows/ci.yml`) runs typecheck, build, tests, and smoke scripts on push/PR.
+
 ## License
 
 MIT

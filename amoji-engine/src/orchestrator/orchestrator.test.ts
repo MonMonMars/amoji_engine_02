@@ -173,11 +173,80 @@ describe("AmojiOrchestrator", () => {
       openAiApiKey: "sk-test",
       faceLiveUrl: bridge.url,
       createWebSocket: createMockWebSocketFactory(),
+      idlePresenceIntervalMs: 0, // manual ticks in this test
     });
 
     await orchestrator.start();
     expect(orchestrator.faceLiveDriver.isAuthenticated).toBe(true);
     expect(orchestrator.faceLiveDriver.expression).toBe("neutral");
+
+    const before = bridge.injected.length;
+    orchestrator.tickIdlePresence(0.2);
+    await vi.waitFor(() => {
+      expect(bridge.injected.length).toBeGreaterThan(before);
+    });
+    expect(
+      bridge.injected.some((p) => p.id === "ParamMouthOpenY"),
+    ).toBe(true);
+    expect(orchestrator.idlePresenceClock.timeSec).toBeGreaterThan(0);
+
+    await orchestrator.stop();
+    await bridge.close();
+  });
+
+  it("skips idle presence ticks while speaking", async () => {
+    const bridge = await startMockFaceLiveBridge();
+    const handlers: { message?: MockWsHandler } = {};
+    const createWebSocket = () => {
+      const socket = {
+        readyState: 0,
+        send: vi.fn(),
+        close: vi.fn(),
+        addEventListener: (type: string, listener: MockWsHandler) => {
+          if (type === "message") handlers.message = listener;
+          if (type === "open") {
+            queueMicrotask(() => {
+              (socket as { readyState: number }).readyState = 1;
+              listener({});
+              handlers.message?.({
+                data: JSON.stringify({
+                  type: "session.created",
+                  session: { id: "sess_idle" },
+                }),
+              });
+            });
+          }
+        },
+        removeEventListener: () => {},
+      };
+      return socket;
+    };
+
+    const orchestrator = new AmojiOrchestrator({
+      openAiApiKey: "sk-test",
+      faceLiveUrl: bridge.url,
+      createWebSocket,
+      idlePresenceIntervalMs: 0,
+    });
+    await orchestrator.start();
+
+    handlers.message?.({
+      data: JSON.stringify({
+        type: "response.output_audio.delta",
+        delta: Buffer.from(new Int16Array([1, 2, 3, 4]).buffer).toString(
+          "base64",
+        ),
+      }),
+    });
+    await vi.waitFor(() => {
+      expect(orchestrator.currentPhase).toBe("speaking");
+    });
+
+    const before = bridge.injected.length;
+    const t0 = orchestrator.idlePresenceClock.timeSec;
+    orchestrator.tickIdlePresence(0.5);
+    expect(orchestrator.idlePresenceClock.timeSec).toBe(t0);
+    expect(bridge.injected.length).toBe(before);
 
     await orchestrator.stop();
     await bridge.close();

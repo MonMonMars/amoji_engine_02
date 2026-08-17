@@ -1,5 +1,6 @@
 import { SakuraFaceLiveDriver } from "../face-live/sakuraDriver.js";
 import type { SakuraFaceLiveOptions } from "../face-live/sakuraDriver.js";
+import { IdlePresenceClock } from "../face-live/idlePresence.js";
 import { RealtimeChatClient } from "../realtime-chat/realtimeClient.js";
 import type { RealtimeChatOptions } from "../realtime-chat/realtimeClient.js";
 import {
@@ -24,12 +25,15 @@ export interface AmojiOrchestratorOptions extends AmojiEngineConfig {
   faceLiveAuthToken?: string;
   createWebSocket?: RealtimeChatOptions["createWebSocket"];
   createFaceLiveWebSocket?: SakuraFaceLiveOptions["createWebSocket"];
+  /** Idle presence tick interval while listening (ms). Default 100. Set 0 to disable. */
+  idlePresenceIntervalMs?: number;
 }
 
 /**
  * Top-level coordinator for Cantonese realtime voice + Sakura Face Live.
  *
  * Lifecycle: connect → listen (mic → Realtime) → speak (Realtime TTS → Face Live lip-sync)
+ * While listening/idle, drives subtle Face Live idle presence morphs.
  */
 export class AmojiOrchestrator {
   private readonly config: AmojiEngineConfig & {
@@ -37,12 +41,19 @@ export class AmojiOrchestrator {
     sampleRateHz: number;
   };
   private readonly voiceOnly: boolean;
+  private readonly idlePresenceIntervalMs: number;
   private phase: OrchestratorPhase = "idle";
   private faceLiveAvailable = false;
   private assistantTranscriptBuffer = "";
   private readonly realtime: RealtimeChatClient;
   private readonly faceLive: SakuraFaceLiveDriver;
   private readonly voiceBridge: VoiceBridge;
+  private readonly idlePresence = new IdlePresenceClock({
+    emotion: "neutral",
+    intensity: 0.42,
+  });
+  private idleTimer: ReturnType<typeof setInterval> | null = null;
+  private lastIdleTickAt = 0;
   private readonly listeners = new Map<
     OrchestratorEventName,
     Set<OrchestratorListener<OrchestratorEventName>>
@@ -59,6 +70,10 @@ export class AmojiOrchestrator {
       autoCreateResponse: options.autoCreateResponse,
     };
     this.voiceOnly = options.voiceOnly ?? false;
+    this.idlePresenceIntervalMs =
+      options.idlePresenceIntervalMs === undefined
+        ? 100
+        : Math.max(0, options.idlePresenceIntervalMs);
 
     const createResponse = options.autoCreateResponse ?? true;
 
@@ -121,6 +136,10 @@ export class AmojiOrchestrator {
     return this.voiceBridge;
   }
 
+  get idlePresenceClock(): IdlePresenceClock {
+    return this.idlePresence;
+  }
+
   on<K extends OrchestratorEventName>(
     event: K,
     listener: OrchestratorListener<K>,
@@ -142,6 +161,9 @@ export class AmojiOrchestrator {
         await this.faceLive.connect();
         this.faceLiveAvailable = true;
         await this.faceLive.setExpression("neutral");
+        this.idlePresence.setEmotion("neutral", 0.42);
+        this.idlePresence.reset();
+        this.startIdlePresenceLoop();
       } catch (error) {
         this.faceLiveAvailable = false;
         this.emit("error", {
@@ -156,6 +178,7 @@ export class AmojiOrchestrator {
   }
 
   async stop(): Promise<void> {
+    this.stopIdlePresenceLoop();
     this.voiceBridge.stop();
     this.realtime.disconnect();
     this.faceLive.disconnect();
@@ -185,6 +208,33 @@ export class AmojiOrchestrator {
     this.setPhase("listening");
   }
 
+  /** Manually tick idle presence (tests / custom clocks). */
+  tickIdlePresence(dtSec = 0.1): void {
+    if (!this.faceLiveAvailable) return;
+    if (this.phase !== "listening" && this.phase !== "idle") return;
+    const presence = this.idlePresence.step(dtSec);
+    void this.faceLive.driveIdlePresence(presence);
+  }
+
+  private startIdlePresenceLoop(): void {
+    this.stopIdlePresenceLoop();
+    if (!this.faceLiveAvailable || this.idlePresenceIntervalMs <= 0) return;
+    this.lastIdleTickAt = Date.now();
+    this.idleTimer = setInterval(() => {
+      const now = Date.now();
+      const dt = Math.min(0.25, (now - this.lastIdleTickAt) / 1000);
+      this.lastIdleTickAt = now;
+      this.tickIdlePresence(dt);
+    }, this.idlePresenceIntervalMs);
+  }
+
+  private stopIdlePresenceLoop(): void {
+    if (this.idleTimer) {
+      clearInterval(this.idleTimer);
+      this.idleTimer = null;
+    }
+  }
+
   private wireInternalEvents(): void {
     this.realtime.on("speechStarted", () => {
       if (this.phase === "speaking" || this.phase === "thinking") {
@@ -201,6 +251,7 @@ export class AmojiOrchestrator {
         this.realtime.commitInputAndRespond();
       }
       if (this.faceLiveAvailable) {
+        this.idlePresence.setEmotion("thinking", 0.55);
         void this.faceLive.setExpression("thinking");
       }
     });
@@ -208,7 +259,9 @@ export class AmojiOrchestrator {
     this.realtime.on("userTranscript", ({ text }) => {
       this.emit("transcript", { role: "user", text, final: true });
       if (this.faceLiveAvailable) {
-        void this.faceLive.reactToTranscript(text);
+        void this.faceLive.reactToTranscript(text).then((expression) => {
+          this.idlePresence.setEmotion(expression, 0.55);
+        });
       }
     });
 
@@ -217,7 +270,9 @@ export class AmojiOrchestrator {
         this.assistantTranscriptBuffer = text;
         this.emit("transcript", { role: "assistant", text, final: true });
         if (this.faceLiveAvailable) {
-          void this.faceLive.reactToTranscript(text);
+          void this.faceLive.reactToTranscript(text).then((expression) => {
+            this.idlePresence.setEmotion(expression, 0.5);
+          });
         }
         this.assistantTranscriptBuffer = "";
       } else {
