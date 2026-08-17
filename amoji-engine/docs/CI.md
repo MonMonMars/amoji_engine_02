@@ -6,6 +6,13 @@ This agent’s GitHub token lacks the `workflow` scope, so `.github/workflows/*.
 
 ```bash
 cd amoji-engine
+npm run ci
+```
+
+Or step-by-step:
+
+```bash
+cd amoji-engine
 npm install
 npm run typecheck
 npm run build

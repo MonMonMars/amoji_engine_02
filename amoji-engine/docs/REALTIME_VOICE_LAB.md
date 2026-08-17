@@ -22,6 +22,7 @@ Serve the **repository root** (not only `amoji-engine/`) so imports like `../amo
 | Turn latency rollup | `engine/lab/turnMetricsRollup.js` |
 | Dialect preference | `engine/lab/dialectPref.js` |
 | VAD sensitivity | `engine/lab/listenPref.js` |
+| Mic level meter | `engine/lab/micLevelMeter.js` |
 | Lab hotkeys | `engine/lab/labHotkeys.js` |
 | Latency budget | `engine/lab/latencyBudget.js` |
 
@@ -33,7 +34,7 @@ Serve the **repository root** (not only `amoji-engine/`) so imports like `../amo
 4. **Worker demo** — one tagged SenseVoice stub → robot reply → CosyVoice-style chunks + playback.
 5. **Face Live** — connect to `?face=` URL; idle (~10 Hz) + lip-sync injects while talking.
 6. **Dialect** — cycle Auto → Yue → En (`?lang=` / `amoji.dialectPref`); force lock skips SenseVoice tag auto-switch.
-7. **VAD** — cycle High → Normal → Low (`?vad=` / `amoji.listenPref`); hot-updates thresholds while listening.
+7. **VAD** — cycle High → Normal → Low (`?vad=` / `amoji.listenPref`); hot-updates thresholds while listening. Live **mic** HUD shows smoothed RMS vs threshold (`SPEECH` / `quiet`).
 8. **TTS mute** — silence CosyVoice playback (pipeline + lip-sync ticks still run when unmuted chunks arrive). Also **M**.
 9. **Expression demo** — cycle Sakura presets (`neutral → happy → thinking → surprised → sad → angry`); injects when Face Live is on. Also **E**.
 10. **Prosody demo** / **Barge-in** — marker text / abort + TTS flush. Barge also **Esc**.

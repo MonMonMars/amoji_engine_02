@@ -145,6 +145,7 @@ Env: `OPENAI_API_KEY`, `AMOJI_FACE_LIVE_URL`, `AMOJI_VOICE_WORKER`.
 | `npm run demo:http-smoke` | Mock HTTP voice worker |
 | `npm run voice-worker:mock` | Node SenseVoice/CosyVoice stub on `:7890` |
 | `npm run lab` | Static server for `prototypes/realtime-voice-lab.html` |
+| `npm run ci` | Offline CI matrix (typecheck + build + test + demos) |
 | `npm run voice-worker` | Python worker (FunASR / CosyVoice when installed) |
 | `npm run demo` | Live Realtime session (`OPENAI_API_KEY`) |
 
