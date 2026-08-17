@@ -5,6 +5,7 @@
  * Escape — barge-in
  * KeyM — mute TTS
  * KeyE — expression demo cycle (optional)
+ * BracketLeft / BracketRight — TTS volume down / up
  */
 export const LAB_HOTKEYS_SCHEMA = "amoji.labHotkeys.v1";
 
@@ -15,6 +16,8 @@ export const LAB_HOTKEYS_SCHEMA = "amoji.labHotkeys.v1";
  *   onBarge?: () => void,
  *   onMuteToggle?: () => void,
  *   onExpressionCycle?: () => void,
+ *   onVolumeDown?: () => void,
+ *   onVolumeUp?: () => void,
  *   isTextInputTarget?: (el: EventTarget | null) => boolean,
  *   target?: { addEventListener: Function, removeEventListener: Function },
  * }} [opts]
@@ -75,6 +78,20 @@ export function createLabHotkeys(opts = {}) {
       if (ev.repeat) return;
       ev.preventDefault();
       opts.onExpressionCycle?.();
+      return;
+    }
+
+    if (ev.code === "BracketLeft" || ev.key === "[") {
+      if (ev.repeat) return;
+      ev.preventDefault();
+      opts.onVolumeDown?.();
+      return;
+    }
+
+    if (ev.code === "BracketRight" || ev.key === "]") {
+      if (ev.repeat) return;
+      ev.preventDefault();
+      opts.onVolumeUp?.();
     }
   };
 

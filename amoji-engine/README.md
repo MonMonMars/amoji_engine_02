@@ -29,13 +29,14 @@ OpenAI Realtime path (TS): `VoiceBridge` → `RealtimeChatClient` → `AmojiOrch
 ```bash
 cd amoji-engine
 npm install
-npm test                 # 110+ tests (TS + JS engine)
+npm test                 # 117+ tests (TS + JS engine)
 npm run build
 npm run typecheck
 npm run demo:e2e         # offline voice/lab pipeline
 npm run demo:dry         # TS mock Face Live
 npm run demo:facelive-smoke
 npm run demo:http-smoke  # Node mock SenseVoice/CosyVoice worker
+npm run ci               # full offline matrix
 ```
 
 ### Prototype lab
@@ -49,17 +50,23 @@ npm run lab                 # http://127.0.0.1:5173 → realtime-voice-lab.html
 | Control | What it does |
 | --- | --- |
 | **Always-on** | Mic → VAD → worker ASR → robot → TTS playback + lip-sync |
-| **Hold to talk** | Press-and-hold mic → release runs the same pipeline |
+| **Hold to talk** | Press-and-hold mic → release runs the same pipeline (`Space`) |
 | **Worker demo** | One mock SenseVoice → CosyVoice turn |
 | **Face Live** | Connect VTS-compatible WS; stream idle + mouth params |
-| **Prosody / Barge-in** | Marker reply demo / abort TTS |
-| **Export Session** | Download lab chat + tick archive |
+| **Dialect / VAD / Vol** | Lock language, mic sensitivity, TTS gain |
+| **Prosody / Barge-in** | Marker reply demo / abort TTS (`Esc`) |
+| **Export Session / Metrics** | Download lab archive or turn latency rollup |
+| **Copy lab URL** | Share link with current query prefs |
 
 Query params (persisted to `localStorage`):
 
 - `?worker=http://127.0.0.1:7890` — HTTP voice worker (`npm run voice-worker:mock`)
 - `?face=ws://127.0.0.1:8765` — Sakura Face Live / VTube Studio API
+- `?lang=auto|yue|en` — dialect force lock
+- `?vad=high|normal|low` — VAD sensitivity
+- `?vol=soft|normal|loud` — TTS playback gain
 
+Hotkeys: `Space` PTT · `Esc` barge · `M` mute · `E` expression · `[`/`]` volume.
 ### Minimal usage (voice-only, TS)
 
 ```typescript

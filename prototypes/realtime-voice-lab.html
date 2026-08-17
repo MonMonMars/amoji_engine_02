@@ -118,7 +118,7 @@
       <code>sakura → lip_sync → done/aborted</code> via
       <code>createVoiceRobotBridge</code>, plus last-turn latency, p50/p95 rollup, and partial ASR.
       Serve with <code>npm run lab</code> from <code>amoji-engine/</code>.
-      Keys: <code>Space</code> hold-to-talk · <code>Esc</code> barge · <code>M</code> mute · <code>E</code> expression.
+      Keys: <code>Space</code> hold-to-talk · <code>Esc</code> barge · <code>M</code> mute · <code>E</code> expression · <code>[</code>/<code>]</code> volume.
     </p>
 
     <div class="row">
@@ -164,6 +164,13 @@
         title="Mute CosyVoice / TTS playback (still runs pipeline)"
       >
         TTS: On
+      </button>
+      <button
+        type="button"
+        id="btn-tts-vol"
+        title="Cycle TTS volume: Soft → Normal → Loud (?vol=) · [ ]"
+      >
+        Vol: Normal
       </button>
       <button
         type="button"
@@ -226,6 +233,7 @@
       <span class="k">vad</span><span class="v" id="vad-hud">normal</span>
       <span class="k">mic</span><span class="v" id="mic-hud">—</span>
       <span class="k">tts</span><span class="v" id="tts-hud">on</span>
+      <span class="k">volume</span><span class="v" id="volume-hud">normal</span>
       <span class="k">idle</span><span class="v" id="idle-hud">—</span>
       <span class="k">lip-sync</span><span class="v" id="lipsync-hud">—</span>
       <span class="k">worker</span><span class="v" id="worker-hud">mock</span>
@@ -269,6 +277,10 @@
         buildLabShareUrl,
         copyTextToClipboard,
         createMicLevelMeter,
+        resolveTtsVolumePref,
+        persistTtsVolumePref,
+        nextTtsVolume,
+        prevTtsVolume,
         resolveVoiceWorkerConfig,
         resolveFaceLiveConfig,
         resolveDialectPref,
@@ -289,6 +301,7 @@
       const dialectBtn = document.getElementById("btn-dialect");
       const vadBtn = document.getElementById("btn-vad");
       const muteTtsBtn = document.getElementById("btn-mute-tts");
+      const ttsVolBtn = document.getElementById("btn-tts-vol");
       const pttBtn = document.getElementById("btn-push-to-talk");
       const phaseEl = document.getElementById("robot-phase");
       const emotionEl = document.getElementById("robot-emotion");
@@ -299,6 +312,7 @@
       const vadHudEl = document.getElementById("vad-hud");
       const micHudEl = document.getElementById("mic-hud");
       const ttsHudEl = document.getElementById("tts-hud");
+      const volumeHudEl = document.getElementById("volume-hud");
       const idleHudEl = document.getElementById("idle-hud");
       const lipsyncHudEl = document.getElementById("lipsync-hud");
       const workerHudEl = document.getElementById("worker-hud");
@@ -312,6 +326,7 @@
       const metricsRollup = createTurnMetricsRollup({ maxSamples: 200 });
       let dialectPref = resolveDialectPref();
       let listenPref = resolveListenPref();
+      let ttsVolumePref = resolveTtsVolumePref();
       let demoExpression = "neutral";
       let ttsMuted = false;
       const micMeter = createMicLevelMeter({
@@ -343,6 +358,7 @@
           branch: "cursor/realtime-voice-chat-0f5c",
           dialect: dialectPref.mode,
           vad: listenPref.sensitivity,
+          volume: ttsVolumePref.level,
         },
       });
 
@@ -473,6 +489,7 @@
 
       const ttsPlayer = createTtsPlaybackQueue({
         lipSync,
+        gain: ttsVolumePref.gain,
         onStart: (chunk) => {
           session.recordTick("tts", {
             event: "start",
@@ -514,6 +531,26 @@
         }
       };
       applyTtsMute(false, { logChange: false });
+
+      const applyTtsVolume = (pref, { logChange = false } = {}) => {
+        ttsVolumePref = pref;
+        session.meta.volume = pref.level;
+        ttsPlayer.setGain(pref.gain);
+        ttsVolBtn.textContent = `Vol: ${pref.preset.label}`;
+        ttsVolBtn.setAttribute(
+          "aria-pressed",
+          pref.level === "normal" ? "false" : "true",
+        );
+        volumeHudEl.textContent = `${pref.level} · ×${pref.gain} · ${pref.source}`;
+        if (logChange) {
+          session.recordTick("tts-volume", {
+            level: pref.level,
+            gain: pref.gain,
+          });
+          log(`tts volume ${pref.level} gain=${pref.gain}`);
+        }
+      };
+      applyTtsVolume(ttsVolumePref, { logChange: false });
 
       const applyListenPref = (pref, { logChange = false } = {}) => {
         listenPref = pref;
@@ -1031,6 +1068,11 @@
         applyTtsMute(!ttsMuted, { logChange: true });
       });
 
+      ttsVolBtn.addEventListener("click", () => {
+        const next = nextTtsVolume(ttsVolumePref.level);
+        applyTtsVolume(persistTtsVolumePref(next), { logChange: true });
+      });
+
       let pttUnsubMic = null;
       const resetPttUi = () => {
         pttUnsubMic?.();
@@ -1110,9 +1152,19 @@
         onBarge: () => labHost.bargeIn({ reason: "hotkey", source: "escape" }),
         onMuteToggle: () => applyTtsMute(!ttsMuted, { logChange: true }),
         onExpressionCycle: () => runExpressionDemo(),
+        onVolumeDown: () => {
+          applyTtsVolume(persistTtsVolumePref(prevTtsVolume(ttsVolumePref.level)), {
+            logChange: true,
+          });
+        },
+        onVolumeUp: () => {
+          applyTtsVolume(persistTtsVolumePref(nextTtsVolume(ttsVolumePref.level)), {
+            logChange: true,
+          });
+        },
       });
       labHotkeys.bind();
-      log("hotkeys Space=PTT Esc=barge M=mute E=expression");
+      log("hotkeys Space=PTT Esc=barge M=mute E=expression [=vol- ]=vol+");
 
       document.getElementById("btn-robot-demo").addEventListener("click", async () => {
         const text =
@@ -1212,6 +1264,7 @@
           faceUrl: faceLiveConfig.url,
           lang: dialectPref.mode,
           vad: listenPref.sensitivity,
+          vol: ttsVolumePref.level,
         });
         const result = await copyTextToClipboard(share);
         session.recordTick("copy-url", { ok: result.ok, method: result.method });
