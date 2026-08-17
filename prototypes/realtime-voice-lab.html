@@ -127,6 +127,12 @@
       <button type="button" id="btn-robot-demo" title="Run stub robot turn (我叫小明)">
         Robot demo
       </button>
+      <button type="button" id="btn-prosody-demo" title="Stub reply with [pause]/[fast]/[slow] markers">
+        Prosody demo
+      </button>
+      <button type="button" id="btn-barge" title="Abort current robot turn">
+        Barge-in
+      </button>
       <button type="button" id="btn-export-session" title="Download session archive JSON">
         Export Session
       </button>
@@ -251,11 +257,24 @@
           });
           renderChat();
           log(`stopListeningAndTalk ${JSON.stringify(extra ?? {})}`);
-          const result = await robot.runTurn(userText);
+          const result = await robot.runTurn(userText, {
+            forceReply: extra?.forceReply,
+          });
           session.appendChat({
             role: "assistant",
             text: result.reply ?? "（stub）收到啦，有咩想傾？",
           });
+          if (result.prosody) {
+            session.recordTick("prosody", {
+              speed: result.prosody.speed,
+              pauseMs: result.prosody.pauseMs,
+              markers: result.prosody.markers?.length || 0,
+              instruct: result.prosody.instruct,
+            });
+            log(
+              `prosody speed=${result.prosody.speed} pause=${result.prosody.pauseMs}ms markers=${result.prosody.markers?.length || 0}`,
+            );
+          }
           renderChat();
           this.talking = false;
         },
@@ -388,6 +407,27 @@
           robot.memory.userName == null ? "我叫小明" : "我叫咩名？";
         await labHost.stopListeningAndTalk({ userText: text, source: "robot-demo" });
         log(`robot demo turn: ${text}`);
+      });
+
+      document.getElementById("btn-prosody-demo").addEventListener("click", async () => {
+        const marked =
+          robot.language === "en"
+            ? "Okay[pause], I will speak [slow]slowly then [fast][bright]cheer up!"
+            : "好呀[pause]，我慢慢[slow]講畀你聽。跟住[fast][bright]開心啲！";
+        await labHost.stopListeningAndTalk({
+          userText: "prosody demo",
+          forceReply: marked,
+          source: "prosody-demo",
+        });
+        log(`prosody demo reply markers in: ${marked}`);
+      });
+
+      document.getElementById("btn-barge").addEventListener("click", () => {
+        robot.abort("barge-in");
+        labHost.talking = false;
+        session.recordTick("barge", { at: Date.now() });
+        renderRobotHud();
+        log("barge-in → robot aborted");
       });
 
       document

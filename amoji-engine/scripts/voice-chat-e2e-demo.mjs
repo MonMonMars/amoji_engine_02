@@ -131,4 +131,21 @@ console.log("[e2e] idle presence smoke…");
   console.log("[e2e] idle presence ok →", clock.timeSec.toFixed(3));
 }
 
+console.log("[e2e] prosody markers…");
+{
+  const robot = createVoiceRobotBridge({ language: "yue" });
+  const turn = await robot.runTurn("prosody", {
+    forceReply: "好呀[pause:0.4]，我[slow]慢慢講，跟住[fast][bright]開心！",
+  });
+  assert(turn.reply === "好呀，我慢慢講，跟住開心！", `reply=${turn.reply}`);
+  assert(turn.prosody?.markers?.length >= 3, "expected markers");
+  assert(turn.prosody.pauseMs >= 400, `pause=${turn.prosody.pauseMs}`);
+  console.log(
+    "[e2e] prosody ok → pause",
+    turn.prosody.pauseMs,
+    "speed",
+    turn.prosody.speed,
+  );
+}
+
 console.log("[e2e] all checks passed");

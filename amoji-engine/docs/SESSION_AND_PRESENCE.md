@@ -50,3 +50,14 @@ const idle = createIdlePresenceClock({ emotion: "neutral" });
 ## Dialect auto-switch
 
 `detectLanguage()` reads SenseVoice tags (`<|yue|>`, `<|en|>`, …) and Latin/Cantonese heuristics. The robot bridge sticky-switches language per `runTurn` and returns English or 粵語 stub replies accordingly.
+
+## Prosody markers
+
+Inline markers in reply text: `[pause]`, `[pause:0.5]`, `[fast]`, `[slow]`, `[soft]`, `[bright]`, `[rate:1.2]`.
+
+```js
+import { prosodyFromMarkedText } from "@amoji/engine/engine";
+prosodyFromMarkedText("好呀[pause]，跟住[fast]開心！", { language: "yue" });
+```
+
+Lab: **Prosody demo** / **Barge-in** on `prototypes/realtime-voice-lab.html`.
