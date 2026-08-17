@@ -41,6 +41,7 @@ describe("createVoiceRobotBridge", () => {
       emotion: "neutral",
       summary: "",
       steps: [],
+      language: "yue",
     });
   });
 

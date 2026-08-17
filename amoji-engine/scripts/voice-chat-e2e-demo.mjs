@@ -102,4 +102,33 @@ console.log("[e2e] robot bridge events…");
   console.log("[e2e] robot events ok →", seen.join(" → "));
 }
 
+console.log("[e2e] dialect switch yue → en…");
+{
+  const robot = createVoiceRobotBridge({ language: "yue" });
+  const turnYue = await robot.runTurn("<|yue|><|HAPPY|><|Speech|>早晨呀");
+  assert(turnYue.language === "yue", `expected yue got ${turnYue.language}`);
+  const turnEn = await robot.runTurn(
+    "<|en|><|NEUTRAL|><|Speech|>Hello there, how are you today?",
+  );
+  assert(turnEn.language === "en", `expected en got ${turnEn.language}`);
+  assert(/got it|talk about/i.test(turnEn.reply), `en reply=${turnEn.reply}`);
+  console.log("[e2e] dialect ok →", turnYue.language, "→", turnEn.language, turnEn.reply);
+}
+
+console.log("[e2e] idle presence smoke…");
+{
+  const { createIdlePresenceClock, sampleIdlePresence } = await import(
+    "../engine/face/idlePresence.js"
+  );
+  const a = sampleIdlePresence(0.5);
+  const b = sampleIdlePresence(1.5);
+  assert(a.speechActive === false, "idle not speaking");
+  assert(a.lookX !== b.lookX, "look should drift");
+  const clock = createIdlePresenceClock({ emotion: "neutral" });
+  const before = clock.timeSec;
+  clock.step(0.05);
+  assert(clock.timeSec > before, "clock should advance");
+  console.log("[e2e] idle presence ok →", clock.timeSec.toFixed(3));
+}
+
 console.log("[e2e] all checks passed");

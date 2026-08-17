@@ -145,6 +145,8 @@
     <div id="robot-hud" aria-live="polite">
       <span class="k">phase</span><span class="v" id="robot-phase">idle</span>
       <span class="k">emotion</span><span class="v" id="robot-emotion">neutral</span>
+      <span class="k">language</span><span class="v" id="robot-language">yue</span>
+      <span class="k">idle</span><span class="v" id="idle-hud">—</span>
       <span class="k">summary</span><span class="v" id="robot-summary">—</span>
       <span class="k">first steps</span><span class="v" id="robot-steps">—</span>
     </div>
@@ -160,6 +162,7 @@
         createAlwaysOnListen,
         createLabSessionFacade,
         createVoiceRobotBridge,
+        createIdlePresenceClock,
         frameEnergy,
       } from "../amoji-engine/engine/index.js";
 
@@ -168,6 +171,8 @@
       const alwaysOnBtn = document.getElementById("btn-always-on");
       const phaseEl = document.getElementById("robot-phase");
       const emotionEl = document.getElementById("robot-emotion");
+      const languageEl = document.getElementById("robot-language");
+      const idleHudEl = document.getElementById("idle-hud");
       const summaryEl = document.getElementById("robot-summary");
       const stepsEl = document.getElementById("robot-steps");
 
@@ -180,10 +185,12 @@
       });
 
       const robot = createVoiceRobotBridge();
+      const idle = createIdlePresenceClock({ emotion: "neutral", intensity: 0.42 });
 
       const renderRobotHud = (payload = robot.getHud()) => {
         phaseEl.textContent = payload.phase || "idle";
         emotionEl.textContent = payload.emotion || "neutral";
+        languageEl.textContent = payload.language || robot.language || "yue";
         summaryEl.textContent = payload.summary || "—";
         const steps = Array.isArray(payload.steps) ? payload.steps : [];
         stepsEl.textContent = steps.length
@@ -193,9 +200,12 @@
 
       for (const ev of ["sakura", "lip_sync", "done", "aborted"]) {
         robot.on(ev, (payload) => {
-          session.recordTick("robot", { event: ev, phase: payload.phase });
+          session.recordTick("robot", { event: ev, phase: payload.phase, language: payload.language });
           renderRobotHud(payload);
-          log(`robot ${ev} phase=${payload.phase} emotion=${payload.emotion}`);
+          if (ev === "done" || ev === "aborted") {
+            idle.setEmotion(payload.emotion || "neutral", 0.42);
+          }
+          log(`robot ${ev} phase=${payload.phase} emotion=${payload.emotion} lang=${payload.language || robot.language}`);
         });
       }
       renderRobotHud();
@@ -251,6 +261,19 @@
         },
       };
 
+      let lastFrame = performance.now();
+      function raf(now) {
+        const dt = Math.min(0.05, (now - lastFrame) / 1000);
+        lastFrame = now;
+        if (!labHost.talking) {
+          const presence = idle.step(dt);
+          idleHudEl.textContent = `${presence.emotion} · jaw ${presence.jawOpen} · blink ${presence.blink}`;
+        } else {
+          idleHudEl.textContent = "paused (speaking)";
+        }
+        requestAnimationFrame(raf);
+      }
+      requestAnimationFrame(raf);
       let unsubscribeMic = null;
       let mediaStream = null;
       let audioCtx = null;
@@ -409,6 +432,8 @@
         session.clear();
         robot.reset();
         robot.clearMemory();
+        idle.reset();
+        idle.setEmotion("neutral", 0.42);
         renderChat();
         renderRobotHud();
         statusEl.textContent = "cleared";

@@ -25,6 +25,19 @@ export {
 } from "./voice/voiceRobotBridge.js";
 
 export {
+  DIALECT_DETECT_SCHEMA,
+  detectLanguage,
+  stripAsrTags,
+} from "./voice/dialect.js";
+
+export {
+  IDLE_PRESENCE_SCHEMA,
+  sampleIdlePresence,
+  IdlePresenceClock,
+  createIdlePresenceClock,
+} from "./face/idlePresence.js";
+
+export {
   SESSION_ARCHIVE_KIND,
   SESSION_ARCHIVE_SCHEMA_VERSION,
   applySessionArchive,
