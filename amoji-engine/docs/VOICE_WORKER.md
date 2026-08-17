@@ -42,3 +42,21 @@ export AMOJI_VOICE_WORKER=http://127.0.0.1:7890
 ```
 
 Without CosyVoice installed, `/tts` still returns mock-wav chunks so the JS client can be validated end-to-end.
+
+## Mock HTTP worker (no Python)
+
+```bash
+npm run voice-worker:mock   # node scripts/mock-voice-worker.mjs
+npm run demo:http-smoke     # spawn mock worker + ASR/TTS + playback queue
+```
+
+## TTS playback
+
+`createTtsPlaybackQueue()` / `TtsChunkPlayer` drains WAV/`pcmBase64` chunks (Web Audio in browser; offline duration clock in Node). Barge-in calls `flush()`.
+
+```js
+const player = createTtsPlaybackQueue();
+await client.tts({ text: "好呀" }, { onChunk: (c) => player.enqueue(c) });
+player.flush(); // barge-in
+```
+

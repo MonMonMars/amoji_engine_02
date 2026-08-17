@@ -1,6 +1,6 @@
 /**
- * Browser / Node audio helpers for SenseVoice WAV snapshots.
- * Mic capture / playback stay in the lab host; these are pure codecs.
+ * Browser / Node audio helpers for SenseVoice WAV snapshots + TTS playback.
+ * Pure codecs work in Node; `TtsChunkPlayer` needs a browser (or offline clock).
  */
 export const BROWSER_AUDIO_SCHEMA = 'amoji.browserAudio.v1';
 
@@ -56,6 +56,49 @@ export function arrayBufferToBase64(buffer) {
 }
 
 /**
+ * @param {string} b64
+ * @returns {Uint8Array}
+ */
+export function base64ToBytes(b64) {
+  if (typeof Buffer !== 'undefined') {
+    return new Uint8Array(Buffer.from(String(b64), 'base64'));
+  }
+  const binary = atob(String(b64));
+  const out = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i += 1) out[i] = binary.charCodeAt(i);
+  return out;
+}
+
+/**
+ * Soft tone (or silence) WAV for mock CosyVoice chunks — playable in Web Audio.
+ * @param {{
+ *   durationSec?: number,
+ *   sampleRate?: number,
+ *   frequencyHz?: number,
+ *   amplitude?: number,
+ *   silent?: boolean,
+ * }} [opts]
+ */
+export function synthesizeWavBase64(opts = {}) {
+  const sampleRate = opts.sampleRate || 22050;
+  const durationSec = Math.max(0.04, Number(opts.durationSec) || 0.2);
+  const n = Math.max(1, Math.floor(sampleRate * durationSec));
+  const samples = new Float32Array(n);
+  if (!opts.silent) {
+    const freq = opts.frequencyHz ?? 220;
+    const amp = opts.amplitude ?? 0.08;
+    for (let i = 0; i < n; i += 1) {
+      const t = i / sampleRate;
+      const env =
+        Math.min(1, i / (0.01 * sampleRate)) *
+        Math.min(1, (n - i) / (0.02 * sampleRate));
+      samples[i] = Math.sin(2 * Math.PI * freq * t) * amp * env;
+    }
+  }
+  return arrayBufferToBase64(encodeWavPcm16(samples, sampleRate));
+}
+
+/**
  * @param {Float32Array | number[]} samples
  * @param {number} fromRate
  * @param {number} toRate
@@ -83,4 +126,207 @@ export function downsampleMono(samples, fromRate, toRate) {
     out[i] = count ? sum / count : samples[start] || 0;
   }
   return out;
+}
+
+/** @param {number} ms */
+function sleep(ms) {
+  return new Promise((r) => setTimeout(r, ms));
+}
+
+/**
+ * Queue + play streamed TTS chunks (WAV or raw PCM base64).
+ * Browser uses Web Audio; Node / tests use duration-based offline clock.
+ */
+export class TtsChunkPlayer {
+  /**
+   * @param {{
+   *   onStart?: (chunk: object) => void,
+   *   onEnd?: (chunk: object) => void,
+   *   onIdle?: () => void,
+   *   offline?: boolean,
+   *   createAudioContext?: () => AudioContext,
+   * }} [opts]
+   */
+  constructor(opts = {}) {
+    this.onStart = opts.onStart || null;
+    this.onEnd = opts.onEnd || null;
+    this.onIdle = opts.onIdle || null;
+    this.offline =
+      opts.offline === true ||
+      (typeof globalThis.AudioContext === 'undefined' &&
+        typeof globalThis.webkitAudioContext === 'undefined');
+    this.createAudioContext = opts.createAudioContext || null;
+    /** @type {AudioContext | null} */
+    this.ctx = null;
+    /** @type {object[]} */
+    this._queue = [];
+    this._playing = false;
+    this._generation = 0;
+    this.muted = false;
+    this._played = 0;
+  }
+
+  async ensureCtx() {
+    if (this.offline) return null;
+    if (!this.ctx) {
+      if (this.createAudioContext) {
+        this.ctx = this.createAudioContext();
+      } else {
+        const AC = globalThis.AudioContext || globalThis.webkitAudioContext;
+        if (!AC) {
+          this.offline = true;
+          return null;
+        }
+        this.ctx = new AC();
+      }
+    }
+    if (this.ctx.state === 'suspended') await this.ctx.resume();
+    return this.ctx;
+  }
+
+  get playing() {
+    return this._playing;
+  }
+
+  get queueLength() {
+    return this._queue.length;
+  }
+
+  get playedCount() {
+    return this._played;
+  }
+
+  /**
+   * @param {object} chunk
+   */
+  async enqueue(chunk) {
+    if (this.muted) return;
+    this._queue.push(chunk);
+    if (!this._playing) await this._drain();
+  }
+
+  /** Enqueue many chunks (e.g. worker.tts result). */
+  async enqueueAll(chunks = []) {
+    for (const c of chunks) {
+      if (this.muted) return;
+      this._queue.push(c);
+    }
+    if (!this._playing && this._queue.length) await this._drain();
+  }
+
+  /** Barge-in: drop queued + stop current audio. */
+  flush() {
+    this._generation += 1;
+    this._queue = [];
+    this._playing = false;
+    try {
+      this.ctx?.suspend?.();
+    } catch {
+      /* ignore */
+    }
+    this.onIdle?.();
+  }
+
+  async _drain() {
+    const gen = this._generation;
+    this._playing = true;
+    const ctx = await this.ensureCtx();
+    while (this._queue.length && gen === this._generation) {
+      const chunk = this._queue.shift();
+      this.onStart?.(chunk);
+      try {
+        if (ctx && !this.offline) {
+          const buffer = await decodeChunkToAudioBuffer(ctx, chunk);
+          if (gen !== this._generation) break;
+          await playAudioBuffer(ctx, buffer);
+        } else {
+          const dur = Math.max(0.04, Number(chunk.durationSec) || 0.12);
+          await sleep(dur * 1000);
+        }
+      } catch {
+        const dur = Math.max(0.04, Number(chunk.durationSec) || 0.12);
+        await sleep(dur * 1000);
+      }
+      if (gen !== this._generation) break;
+      this._played += 1;
+      this.onEnd?.(chunk);
+      const pauseMs = chunk.prosody?.pauseMs || chunk.pauseMs || 0;
+      if (pauseMs > 0 && this._queue.length) {
+        await sleep(Math.min(pauseMs, 600));
+      }
+    }
+    if (gen === this._generation) {
+      this._playing = false;
+      this.onIdle?.();
+    }
+  }
+}
+
+/**
+ * @param {{
+ *   onStart?: (chunk: object) => void,
+ *   onEnd?: (chunk: object) => void,
+ *   onIdle?: () => void,
+ *   offline?: boolean,
+ * }} [opts]
+ */
+export function createTtsPlaybackQueue(opts = {}) {
+  return new TtsChunkPlayer(opts);
+}
+
+/**
+ * @param {AudioContext} ctx
+ * @param {object} chunk
+ */
+export async function decodeChunkToAudioBuffer(ctx, chunk) {
+  if (chunk?.pcmBase64) {
+    const bytes = base64ToBytes(chunk.pcmBase64);
+    if (
+      bytes.length >= 12 &&
+      String.fromCharCode(bytes[0], bytes[1], bytes[2], bytes[3]) === 'RIFF'
+    ) {
+      const ab = bytes.buffer.slice(
+        bytes.byteOffset,
+        bytes.byteOffset + bytes.byteLength,
+      );
+      return ctx.decodeAudioData(ab.slice(0));
+    }
+    const sampleRate = chunk.sampleRate || 22050;
+    const samples = Math.floor(bytes.length / 2);
+    const audio = ctx.createBuffer(1, samples, sampleRate);
+    const ch = audio.getChannelData(0);
+    const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+    for (let i = 0; i < samples; i += 1) {
+      ch[i] = view.getInt16(i * 2, true) / 0x8000;
+    }
+    return audio;
+  }
+  const dur = Math.max(0.05, Number(chunk.durationSec) || 0.12);
+  const sampleRate = chunk.sampleRate || 22050;
+  const n = Math.floor(sampleRate * dur);
+  const audio = ctx.createBuffer(1, n, sampleRate);
+  const ch = audio.getChannelData(0);
+  const freq = 180 + (String(chunk.text || '').length % 8) * 20;
+  for (let i = 0; i < n; i += 1) {
+    const t = i / sampleRate;
+    const env =
+      Math.min(1, i / (0.01 * sampleRate)) *
+      Math.min(1, (n - i) / (0.02 * sampleRate));
+    ch[i] = Math.sin(2 * Math.PI * freq * t) * 0.08 * env;
+  }
+  return audio;
+}
+
+/**
+ * @param {AudioContext} ctx
+ * @param {AudioBuffer} buffer
+ */
+function playAudioBuffer(ctx, buffer) {
+  return new Promise((resolve) => {
+    const src = ctx.createBufferSource();
+    src.buffer = buffer;
+    src.connect(ctx.destination);
+    src.onended = () => resolve();
+    src.start();
+  });
 }
