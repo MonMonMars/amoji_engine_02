@@ -151,6 +151,11 @@ export {
 } from "./lab/clipboard.js";
 
 export {
+  MIC_LEVEL_METER_SCHEMA,
+  createMicLevelMeter,
+} from "./lab/micLevelMeter.js";
+
+export {
   WORKER_URL_STORAGE_KEY,
   resolveVoiceWorkerConfig,
 } from "./lab/workerUrl.js";

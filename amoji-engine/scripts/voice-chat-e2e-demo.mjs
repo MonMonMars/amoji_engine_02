@@ -223,6 +223,18 @@ console.log("[e2e] infer expression + metrics export…");
   console.log("[e2e] infer/export ok →", payload.summary.count, share.slice(0, 48));
 }
 
+console.log("[e2e] mic level meter…");
+{
+  const { createMicLevelMeter } = await import("../engine/index.js");
+  const meter = createMicLevelMeter({ alpha: 1, threshold: 0.05 });
+  const silent = new Int16Array(480);
+  const loud = new Int16Array(480).fill(12_000);
+  assert(meter.push(silent).over === false, "quiet");
+  assert(meter.push(loud).over === true, "speech");
+  assert(/SPEECH/.test(meter.formatHud()), "hud speech");
+  console.log("[e2e] mic meter ok →", meter.formatHud());
+}
+
 console.log("[e2e] idle presence smoke…");
 {
   const { createIdlePresenceClock, sampleIdlePresence, presenceToFaceLiveParams } =

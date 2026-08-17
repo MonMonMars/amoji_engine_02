@@ -224,6 +224,7 @@
       <span class="k">language</span><span class="v" id="robot-language">yue</span>
       <span class="k">dialect</span><span class="v" id="dialect-hud">auto</span>
       <span class="k">vad</span><span class="v" id="vad-hud">normal</span>
+      <span class="k">mic</span><span class="v" id="mic-hud">—</span>
       <span class="k">tts</span><span class="v" id="tts-hud">on</span>
       <span class="k">idle</span><span class="v" id="idle-hud">—</span>
       <span class="k">lip-sync</span><span class="v" id="lipsync-hud">—</span>
@@ -267,6 +268,7 @@
         exportTurnMetricsRollup,
         buildLabShareUrl,
         copyTextToClipboard,
+        createMicLevelMeter,
         resolveVoiceWorkerConfig,
         resolveFaceLiveConfig,
         resolveDialectPref,
@@ -295,6 +297,7 @@
       const languageEl = document.getElementById("robot-language");
       const dialectHudEl = document.getElementById("dialect-hud");
       const vadHudEl = document.getElementById("vad-hud");
+      const micHudEl = document.getElementById("mic-hud");
       const ttsHudEl = document.getElementById("tts-hud");
       const idleHudEl = document.getElementById("idle-hud");
       const lipsyncHudEl = document.getElementById("lipsync-hud");
@@ -311,6 +314,27 @@
       let listenPref = resolveListenPref();
       let demoExpression = "neutral";
       let ttsMuted = false;
+      const micMeter = createMicLevelMeter({
+        threshold: listenPref.vad.energyThreshold,
+        alpha: 0.4,
+      });
+      let lastMicHudAt = 0;
+
+      const feedMicMeter = (frame) => {
+        micMeter.push(frame);
+        const now =
+          typeof performance !== "undefined" ? performance.now() : Date.now();
+        if (now - lastMicHudAt > 80) {
+          lastMicHudAt = now;
+          micHudEl.textContent = micMeter.formatHud();
+        }
+      };
+
+      const resetMicMeterHud = () => {
+        micMeter.reset();
+        micHudEl.textContent = "—";
+        lastMicHudAt = 0;
+      };
 
       const session = createLabSessionFacade({
         storageKey: "amoji.realtimeVoiceLab.session",
@@ -500,6 +524,10 @@
           pref.sensitivity === "normal" ? "false" : "true",
         );
         vadHudEl.textContent = `${pref.sensitivity} · thr ${pref.vad.energyThreshold} · ${pref.source}`;
+        micMeter.setThreshold(pref.vad.energyThreshold);
+        if (micHudEl.textContent !== "—") {
+          micHudEl.textContent = micMeter.formatHud();
+        }
         if (controller) {
           controller.configure({
             ...pref.vad,
@@ -795,6 +823,7 @@
       faceLiveHudEl.textContent = "off";
       rollupHudEl.textContent = "—";
       budgetHudEl.textContent = "—";
+      micHudEl.textContent = "—";
       workerHudEl.textContent = workerConfig.mode === "http"
         ? `http · ${workerConfig.source} · ${workerConfig.workerUrl}`
         : "mock";
@@ -862,7 +891,10 @@
         if (on) {
           try {
             const mic = await openMic();
-            unsubMicBuffer = mic.onFrame((frame) => turnHost.pushFrame(frame));
+            unsubMicBuffer = mic.onFrame((frame) => {
+              feedMicMeter(frame);
+              turnHost.pushFrame(frame);
+            });
             partialWatcher = createPartialAsrWatcher({
               intervalMs: 450,
               mode: "mock",
@@ -928,6 +960,7 @@
           partialWatcher = null;
           unsubMicBuffer?.();
           unsubMicBuffer = null;
+          resetMicMeterHud();
           unsubscribeMic?.();
           unsubscribeMic = null;
           micHandle = null;
@@ -1007,6 +1040,7 @@
         labHost.listening = false;
         turnHost.endListen();
         turnHost.buffer.clear();
+        resetMicMeterHud();
       };
       const ptt = createPushToTalk({
         minHoldMs: 120,
@@ -1016,7 +1050,10 @@
           }
           const mic = await openMic();
           pttUnsubMic?.();
-          pttUnsubMic = mic.onFrame((frame) => turnHost.pushFrame(frame));
+          pttUnsubMic = mic.onFrame((frame) => {
+            feedMicMeter(frame);
+            turnHost.pushFrame(frame);
+          });
           pttBtn.setAttribute("aria-pressed", "true");
           pttBtn.textContent = "Listening…";
           await labHost.startListening();
@@ -1224,6 +1261,7 @@
         budgetHudEl.textContent = "—";
         partialHudEl.textContent = "—";
         expressionHudEl.textContent = "neutral";
+        resetMicMeterHud();
         demoExpression = "neutral";
         renderChat();
         renderRobotHud();
