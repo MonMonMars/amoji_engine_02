@@ -1,11 +1,50 @@
 /**
- * Disney-style talk gestures — body, shoulders, hands, and fingers
- * for Sakura Face Live / VTube Studio–compatible inject params.
+ * Disney-style talk gestures — body, shoulders, hands, and per-joint
+ * fingers down to the fingertips for Sakura Face Live / VTube Studio.
  *
  * Custom parameter ids are injectable; map them in VTS / Live2D if the
  * Sakura model does not expose the same names out of the box.
+ *
+ * Finger values: 0 = curled closed, 1 = extended open.
+ * Each digit has Prox (base) → Mid → Tip (fingertip).
  */
-export const TALK_GESTURE_SCHEMA = "amoji.talkGesture.v1";
+export const TALK_GESTURE_SCHEMA = "amoji.talkGesture.v2";
+
+/** @type {readonly string[]} */
+export const FINGER_DIGITS = Object.freeze([
+  "Thumb",
+  "Index",
+  "Middle",
+  "Ring",
+  "Pinky",
+]);
+
+/** @type {readonly string[]} */
+export const FINGER_JOINTS = Object.freeze(["Prox", "Mid", "Tip"]);
+
+/**
+ * Build per-joint Face Live ids for both hands.
+ * @returns {Record<string, string>}
+ */
+function buildFingerJointParamIds() {
+  /** @type {Record<string, string>} */
+  const ids = {};
+  for (const side of ["L", "R"]) {
+    for (const digit of FINGER_DIGITS) {
+      for (const joint of FINGER_JOINTS) {
+        const key = `finger${side}${digit}${joint}`;
+        ids[key] = `ParamFinger${side}${digit}${joint}`;
+      }
+      // Lateral spread at the fingertip (splay)
+      ids[`finger${side}${digit}Spread`] = `ParamFinger${side}${digit}Spread`;
+      // Aggregate alias = tip extension (compat + HUD)
+      ids[`finger${side}${digit}`] = `ParamFinger${side}${digit}`;
+    }
+  }
+  return ids;
+}
+
+const FINGER_JOINT_PARAM_IDS = buildFingerJointParamIds();
 
 /** Body / hand / finger parameter ids injected while speaking. */
 export const TALK_GESTURE_PARAM_IDS = Object.freeze({
@@ -19,26 +58,42 @@ export const TALK_GESTURE_PARAM_IDS = Object.freeze({
   armRA: "ParamArmRA",
   armLB: "ParamArmLB",
   armRB: "ParamArmRB",
+  // Wrist / palm
   handLX: "ParamHandLX",
   handLY: "ParamHandLY",
+  handLZ: "ParamHandLZ",
   handRX: "ParamHandRX",
   handRY: "ParamHandRY",
+  handRZ: "ParamHandRZ",
   handLOpen: "ParamHandLOpen",
   handROpen: "ParamHandROpen",
   handLPoint: "ParamHandLPoint",
   handRPoint: "ParamHandRPoint",
-  // Fingers: 0 closed → 1 extended (index = pointing digit)
-  fingerLThumb: "ParamFingerLThumb",
-  fingerLIndex: "ParamFingerLIndex",
-  fingerLMiddle: "ParamFingerLMiddle",
-  fingerLRing: "ParamFingerLRing",
-  fingerLPinky: "ParamFingerLPinky",
-  fingerRThumb: "ParamFingerRThumb",
-  fingerRIndex: "ParamFingerRIndex",
-  fingerRMiddle: "ParamFingerRMiddle",
-  fingerRRing: "ParamFingerRRing",
-  fingerRPinky: "ParamFingerRPinky",
+  handLSpread: "ParamHandLSpread",
+  handRSpread: "ParamHandRSpread",
+  // Per-joint fingers → fingertips (+ aggregate tip aliases)
+  ...FINGER_JOINT_PARAM_IDS,
 });
+
+/** Tip-only Face Live ids (fingertips) for both hands. */
+export const FINGER_TIP_PARAM_IDS = Object.freeze(
+  Object.fromEntries(
+    ["L", "R"].flatMap((side) =>
+      FINGER_DIGITS.map((digit) => [
+        `finger${side}${digit}Tip`,
+        `ParamFinger${side}${digit}Tip`,
+      ]),
+    ),
+  ),
+);
+
+/**
+ * Ordered list of fingertip param ids (L then R, thumb→pinky).
+ * @returns {string[]}
+ */
+export function listFingerTipParamIds() {
+  return Object.values(FINGER_TIP_PARAM_IDS);
+}
 
 /**
  * Ordered gesture styles for demos / cycling.
@@ -169,23 +224,20 @@ export function sampleTalkGesture(timeSec, opts = {}) {
     armRB: 0.05,
     handLX: 0,
     handLY: 0.1,
+    handLZ: 0,
     handRX: 0,
     handRY: 0.1,
+    handRZ: 0,
     handLOpen: 0.45,
     handROpen: 0.45,
     handLPoint: 0,
     handRPoint: 0,
-    fingerLThumb: 0.4,
-    fingerLIndex: 0.55,
-    fingerLMiddle: 0.55,
-    fingerLRing: 0.5,
-    fingerLPinky: 0.45,
-    fingerRThumb: 0.4,
-    fingerRIndex: 0.55,
-    fingerRMiddle: 0.55,
-    fingerRRing: 0.5,
-    fingerRPinky: 0.45,
+    handLSpread: 0.35,
+    handRSpread: 0.35,
   };
+
+  // Neutral rest: each finger Prox → Mid → Tip slightly open
+  seedFingerPose(pose);
 
   applyStylePose(pose, style, {
     t,
@@ -196,6 +248,8 @@ export function sampleTalkGesture(timeSec, opts = {}) {
     energy,
     countDigit: opts.countDigit,
   });
+
+  syncFingerAggregates(pose);
 
   // Round for stable inject payloads
   for (const key of Object.keys(pose)) {
@@ -210,6 +264,7 @@ export function sampleTalkGesture(timeSec, opts = {}) {
     emotion: opts.emotion || "neutral",
     speechActive: true,
     pose,
+    fingerTips: readFingerTips(pose),
   };
 }
 
@@ -224,36 +279,43 @@ function applyStylePose(pose, style, ctx) {
 
   switch (style) {
     case "point": {
-      // Dominant right-hand index point — Disney “and THIS!”
+      // Dominant right-hand index point — Disney “and THIS!” to the tip
       pose.armRA = 0.55 + beat * 0.12 * i;
       pose.armRB = 0.35;
       pose.handRX = 0.25 + sway * 0.08;
       pose.handRY = 0.35 + bob * 0.1;
+      pose.handRZ = 0.12;
       pose.handROpen = 0.15;
       pose.handRPoint = 0.85 + beat * 0.1;
-      pose.fingerRThumb = 0.25;
-      pose.fingerRIndex = 0.95;
-      pose.fingerRMiddle = 0.12;
-      pose.fingerRRing = 0.08;
-      pose.fingerRPinky = 0.08;
+      pose.handRSpread = 0.15;
+      setFingerChain(pose, "R", "Index", 0.98, { tipBias: 1.05 });
+      setFingerChain(pose, "R", "Thumb", 0.28, { tipBias: 0.7 });
+      setFingerChain(pose, "R", "Middle", 0.1, { tipBias: 0.55 });
+      setFingerChain(pose, "R", "Ring", 0.08, { tipBias: 0.5 });
+      setFingerChain(pose, "R", "Pinky", 0.06, { tipBias: 0.45 });
       pose.armLA = 0.12;
       pose.handLOpen = 0.35;
+      pose.handLSpread = 0.25;
+      curlFingers(pose, "L", 0.45);
       pose.shoulderR = 0.22 + beat * 0.1;
       pose.bodyAngleY = 0.06 * i;
       break;
     }
     case "emphasize": {
-      // Both hands punch the air on beats
       pose.armLA = 0.45 + beat * 0.25 * i;
       pose.armRA = 0.45 + (1 - beat) * 0.25 * i;
       pose.handLY = 0.4 + beat * 0.15;
       pose.handRY = 0.4 + (1 - beat) * 0.15;
+      pose.handLZ = beat * 0.08;
+      pose.handRZ = (1 - beat) * 0.08;
       pose.handLOpen = 0.7;
       pose.handROpen = 0.7;
+      pose.handLSpread = 0.55;
+      pose.handRSpread = 0.55;
       pose.shoulderL = 0.28 + beat * 0.12;
       pose.shoulderR = 0.28 + (1 - beat) * 0.12;
       pose.bodyAngleZ = sway * 0.08 * i;
-      openFingers(pose, "both", 0.75);
+      openFingers(pose, "both", 0.78, { tipLead: true });
       break;
     }
     case "shrug": {
@@ -263,10 +325,12 @@ function applyStylePose(pose, style, ctx) {
       pose.armRA = 0.35;
       pose.handLOpen = 0.85;
       pose.handROpen = 0.85;
+      pose.handLSpread = 0.7;
+      pose.handRSpread = 0.7;
       pose.handLY = 0.25;
       pose.handRY = 0.25;
       pose.bodyAngleX = 0;
-      openFingers(pose, "both", 0.9);
+      openFingers(pose, "both", 0.92, { tipLead: true, splay: 0.55 });
       break;
     }
     case "celebrate": {
@@ -276,11 +340,13 @@ function applyStylePose(pose, style, ctx) {
       pose.handRY = 0.7;
       pose.handLOpen = 0.9;
       pose.handROpen = 0.9;
+      pose.handLSpread = 0.85;
+      pose.handRSpread = 0.85;
       pose.shoulderL = 0.4;
       pose.shoulderR = 0.4;
       pose.bodyAngleY = Math.sin(t * 2.4) * 0.1 * i;
       pose.breath = 0.55 + beat * 0.3;
-      openFingers(pose, "both", 0.95);
+      openFingers(pose, "both", 0.96, { tipLead: true, splay: 0.7 });
       break;
     }
     case "count": {
@@ -290,11 +356,15 @@ function applyStylePose(pose, style, ctx) {
       );
       pose.armRA = 0.5;
       pose.handRY = 0.45;
+      pose.handRZ = 0.08;
       pose.handROpen = 0.2;
       pose.handRPoint = digit === 1 ? 0.7 : 0.2;
+      pose.handRSpread = 0.2 + digit * 0.08;
       setCountFingers(pose, "R", digit);
       pose.armLA = 0.1;
       pose.handLOpen = 0.3;
+      pose.handLSpread = 0.2;
+      curlFingers(pose, "L", 0.5);
       pose.shoulderR = 0.2;
       break;
     }
@@ -303,10 +373,13 @@ function applyStylePose(pose, style, ctx) {
       pose.armRA = 0.65;
       pose.handRX = w * 0.35 * i;
       pose.handRY = 0.55;
+      pose.handRZ = w * 0.15;
       pose.handROpen = 0.8;
-      openFingers(pose, "R", 0.85);
+      pose.handRSpread = 0.65;
+      openFingers(pose, "R", 0.88, { tipLead: true, splay: 0.5, flutter: w });
       pose.armLA = 0.12;
       pose.shoulderR = 0.3;
+      curlFingers(pose, "L", 0.4);
       break;
     }
     case "question": {
@@ -314,12 +387,14 @@ function applyStylePose(pose, style, ctx) {
       pose.armRA = 0.4 + (1 - beat) * 0.08;
       pose.handLOpen = 0.9;
       pose.handROpen = 0.9;
+      pose.handLSpread = 0.75;
+      pose.handRSpread = 0.75;
       pose.handLY = 0.35;
       pose.handRY = 0.35;
       pose.shoulderL = 0.25;
       pose.shoulderR = 0.25;
       pose.bodyAngleY = -0.05;
-      openFingers(pose, "both", 0.92);
+      openFingers(pose, "both", 0.94, { tipLead: true, splay: 0.6 });
       break;
     }
     case "soft": {
@@ -327,25 +402,33 @@ function applyStylePose(pose, style, ctx) {
       pose.armRA = 0.18;
       pose.handLOpen = 0.35;
       pose.handROpen = 0.35;
+      pose.handLSpread = 0.2;
+      pose.handRSpread = 0.2;
       pose.shoulderL = 0.05;
       pose.shoulderR = 0.05;
       pose.bodyAngleY = 0.04;
       pose.breath = 0.3 + beat * 0.12;
-      curlFingers(pose, "both", 0.35);
+      curlFingers(pose, "both", 0.42);
       break;
     }
     case "thinking": {
-      // Left hand near chin, slight lean
+      // Left index tip near chin
       pose.armLA = 0.55;
       pose.armLB = 0.4;
       pose.handLX = -0.15;
       pose.handLY = 0.5;
+      pose.handLZ = 0.1;
       pose.handLOpen = 0.25;
-      pose.fingerLIndex = 0.7;
-      pose.fingerLThumb = 0.55;
-      pose.fingerLMiddle = 0.2;
+      pose.handLSpread = 0.15;
+      setFingerChain(pose, "L", "Index", 0.82, { tipBias: 1.1 });
+      setFingerChain(pose, "L", "Thumb", 0.58, { tipBias: 0.85 });
+      setFingerChain(pose, "L", "Middle", 0.18, { tipBias: 0.5 });
+      setFingerChain(pose, "L", "Ring", 0.12, { tipBias: 0.45 });
+      setFingerChain(pose, "L", "Pinky", 0.1, { tipBias: 0.4 });
       pose.armRA = 0.1;
       pose.handROpen = 0.3;
+      pose.handRSpread = 0.2;
+      curlFingers(pose, "R", 0.48);
       pose.bodyAngleX = -0.06;
       pose.bodyAngleY = 0.08;
       pose.shoulderL = 0.18;
@@ -353,7 +436,6 @@ function applyStylePose(pose, style, ctx) {
     }
     case "explain":
     default: {
-      // Alternating open-hand beats — classic Disney talk
       const leftLead = beat > 0.5;
       pose.armLA = leftLead ? 0.42 + energy * 0.1 : 0.22;
       pose.armRA = leftLead ? 0.22 : 0.42 + energy * 0.1;
@@ -361,51 +443,148 @@ function applyStylePose(pose, style, ctx) {
       pose.handRY = leftLead ? 0.12 : 0.32 + bob * 0.08;
       pose.handLOpen = leftLead ? 0.75 : 0.4;
       pose.handROpen = leftLead ? 0.4 : 0.75;
+      pose.handLSpread = leftLead ? 0.55 : 0.28;
+      pose.handRSpread = leftLead ? 0.28 : 0.55;
       pose.handLX = leftLead ? sway * 0.1 : 0;
       pose.handRX = leftLead ? 0 : sway * -0.1;
+      pose.handLZ = leftLead ? 0.06 : 0;
+      pose.handRZ = leftLead ? 0 : 0.06;
       pose.shoulderL = leftLead ? 0.18 : 0.1;
       pose.shoulderR = leftLead ? 0.1 : 0.18;
       pose.bodyAngleZ = sway * 0.05 * i;
-      openFingers(pose, leftLead ? "L" : "R", 0.8);
-      curlFingers(pose, leftLead ? "R" : "L", 0.4);
+      openFingers(pose, leftLead ? "L" : "R", 0.82, {
+        tipLead: true,
+        splay: 0.4,
+      });
+      curlFingers(pose, leftLead ? "R" : "L", 0.42);
       break;
     }
   }
 }
 
-/** @param {Record<string, number>} pose @param {'L'|'R'|'both'} side @param {number} open */
-function openFingers(pose, side, open) {
+/** Neutral rest pose for every Prox/Mid/Tip (+ spread). */
+function seedFingerPose(pose) {
+  for (const side of ["L", "R"]) {
+    for (const digit of FINGER_DIGITS) {
+      const base =
+        digit === "Thumb" ? 0.4 : digit === "Pinky" ? 0.45 : 0.52;
+      setFingerChain(pose, side, digit, base, { tipBias: 1 });
+      pose[`finger${side}${digit}Spread`] = 0.25;
+    }
+  }
+}
+
+/**
+ * Set one finger Prox → Mid → Tip from an extension amount (0 curled … 1 open).
+ * Tip leads slightly when extending; curls first when closing (Disney cascade).
+ * @param {Record<string, number>} pose
+ * @param {'L'|'R'} side
+ * @param {string} digit
+ * @param {number} extension
+ * @param {{ tipBias?: number }} [opts]
+ */
+export function setFingerChain(pose, side, digit, extension, opts = {}) {
+  const tipBias = opts.tipBias ?? 1;
+  const ext = clamp(extension, 0, 1.05);
+  // Cascade: tip most extreme, then mid, then prox
+  const tip = clamp(ext * tipBias, 0, 1);
+  const mid = clamp(ext * (0.92 + (tipBias - 1) * 0.3), 0, 1);
+  const prox = clamp(ext * 0.82 + (1 - tipBias) * 0.05, 0, 1);
+  pose[`finger${side}${digit}Prox`] = prox;
+  pose[`finger${side}${digit}Mid`] = mid;
+  pose[`finger${side}${digit}Tip`] = tip;
+}
+
+/**
+ * @param {Record<string, number>} pose
+ * @param {'L'|'R'|'both'} side
+ * @param {number} open
+ * @param {{ tipLead?: boolean, splay?: number, flutter?: number }} [opts]
+ */
+function openFingers(pose, side, open, opts = {}) {
   const sides = side === "both" ? ["L", "R"] : [side];
+  const tipBias = opts.tipLead ? 1.08 : 1;
+  const splay = opts.splay ?? 0.35;
+  const flutter = opts.flutter ?? 0;
   for (const s of sides) {
-    pose[`finger${s}Thumb`] = open * 0.85;
-    pose[`finger${s}Index`] = open;
-    pose[`finger${s}Middle`] = open;
-    pose[`finger${s}Ring`] = open * 0.95;
-    pose[`finger${s}Pinky`] = open * 0.9;
+    for (const digit of FINGER_DIGITS) {
+      const scale =
+        digit === "Thumb" ? 0.88 : digit === "Pinky" ? 0.92 : 1;
+      const tipWiggle =
+        digit === "Pinky" || digit === "Index" ? flutter * 0.04 : 0;
+      setFingerChain(pose, s, digit, open * scale + tipWiggle, { tipBias });
+      pose[`finger${s}${digit}Spread`] = clamp(
+        splay * (digit === "Pinky" || digit === "Index" ? 1.15 : 1),
+        0,
+        1,
+      );
+    }
   }
 }
 
 /** @param {Record<string, number>} pose @param {'L'|'R'|'both'} side @param {number} curl */
 function curlFingers(pose, side, curl) {
-  openFingers(pose, side, clamp(1 - curl, 0, 1) * 0.45);
+  const open = clamp(1 - curl, 0, 1) * 0.42;
+  openFingers(pose, side, open, { tipLead: false, splay: 0.12 });
+  // Tips curl harder than base when closing
+  const sides = side === "both" ? ["L", "R"] : [side];
+  for (const s of sides) {
+    for (const digit of FINGER_DIGITS) {
+      const tipKey = `finger${s}${digit}Tip`;
+      const midKey = `finger${s}${digit}Mid`;
+      pose[tipKey] = clamp((pose[tipKey] ?? 0) * 0.75, 0, 1);
+      pose[midKey] = clamp((pose[midKey] ?? 0) * 0.88, 0, 1);
+    }
+  }
 }
 
 /** @param {Record<string, number>} pose @param {'L'|'R'} side @param {number} digit 1–5 */
 function setCountFingers(pose, side, digit) {
-  const order = ["Thumb", "Index", "Middle", "Ring", "Pinky"];
-  for (let i = 0; i < order.length; i += 1) {
-    pose[`finger${side}${order[i]}`] = i < digit ? 0.95 : 0.08;
+  for (let i = 0; i < FINGER_DIGITS.length; i += 1) {
+    const name = FINGER_DIGITS[i];
+    if (i < digit) {
+      setFingerChain(pose, side, name, 0.96, { tipBias: 1.08 });
+      pose[`finger${side}${name}Spread`] = 0.45;
+    } else {
+      setFingerChain(pose, side, name, 0.08, { tipBias: 0.45 });
+      pose[`finger${side}${name}Spread`] = 0.08;
+    }
   }
   if (digit === 1) {
-    pose[`finger${side}Thumb`] = 0.2;
-    pose[`finger${side}Index`] = 0.98;
+    // Classic point-count: thumb tucked, index tip fully out
+    setFingerChain(pose, side, "Thumb", 0.18, { tipBias: 0.6 });
+    setFingerChain(pose, side, "Index", 0.99, { tipBias: 1.12 });
   }
+}
+
+/** Mirror tip values onto aggregate finger* aliases for HUD / older maps. */
+function syncFingerAggregates(pose) {
+  for (const side of ["L", "R"]) {
+    for (const digit of FINGER_DIGITS) {
+      pose[`finger${side}${digit}`] = pose[`finger${side}${digit}Tip`] ?? 0;
+    }
+  }
+}
+
+/**
+ * @param {Record<string, number>} pose
+ * @returns {Record<string, number>}
+ */
+export function readFingerTips(pose = {}) {
+  /** @type {Record<string, number>} */
+  const tips = {};
+  for (const side of ["L", "R"]) {
+    for (const digit of FINGER_DIGITS) {
+      const key = `finger${side}${digit}Tip`;
+      tips[key] = Number(pose[key] ?? 0);
+    }
+  }
+  return tips;
 }
 
 function inferCountDigit(t) {
   return 1 + (Math.floor(t * 0.55) % 5);
 }
-
 /**
  * Map a talk-gesture sample to Face Live inject parameters.
  * @param {{ pose?: Record<string, number> }} sample

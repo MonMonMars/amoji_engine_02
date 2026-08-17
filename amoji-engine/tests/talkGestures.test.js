@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
   TALK_GESTURE_STYLES,
+  TALK_GESTURE_PARAM_IDS,
+  FINGER_DIGITS,
+  FINGER_JOINTS,
+  FINGER_TIP_PARAM_IDS,
+  listFingerTipParamIds,
+  setFingerChain,
+  readFingerTips,
   inferTalkGestureFromText,
   nextTalkGestureStyle,
   sampleTalkGesture,
@@ -39,27 +46,68 @@ describe("sampleTalkGesture", () => {
     const point = sampleTalkGesture(0.4, { style: "point", intensity: 1 });
     expect(point.style).toBe("point");
     expect(point.pose.handRPoint).toBeGreaterThan(0.7);
-    expect(point.pose.fingerRIndex).toBeGreaterThan(0.8);
-    expect(point.pose.fingerRMiddle).toBeLessThan(0.3);
+    expect(point.pose.fingerRIndexTip).toBeGreaterThan(0.8);
+    expect(point.pose.fingerRIndexMid).toBeGreaterThan(0.7);
+    expect(point.pose.fingerRIndexProx).toBeGreaterThan(0.6);
+    expect(point.pose.fingerRMiddleTip).toBeLessThan(0.3);
+    expect(point.pose.fingerRIndex).toBe(point.pose.fingerRIndexTip);
     expect(point.pose.shoulderR).toBeGreaterThan(0.1);
     expect(point.pose.bodyAngleY).not.toBe(0);
+    expect(point.fingerTips.fingerRIndexTip).toBe(point.pose.fingerRIndexTip);
 
     const explainA = sampleTalkGesture(0.1, { style: "explain" });
     const explainB = sampleTalkGesture(0.9, { style: "explain" });
     expect(explainA.pose.armLA).not.toEqual(explainB.pose.armLA);
 
     const count = sampleTalkGesture(0.2, { style: "count", countDigit: 3 });
-    expect(count.pose.fingerRThumb).toBeGreaterThan(0.8);
-    expect(count.pose.fingerRIndex).toBeGreaterThan(0.8);
-    expect(count.pose.fingerRMiddle).toBeGreaterThan(0.8);
-    expect(count.pose.fingerRRing).toBeLessThan(0.2);
+    expect(count.pose.fingerRThumbTip).toBeGreaterThan(0.8);
+    expect(count.pose.fingerRIndexTip).toBeGreaterThan(0.8);
+    expect(count.pose.fingerRMiddleTip).toBeGreaterThan(0.8);
+    expect(count.pose.fingerRRingTip).toBeLessThan(0.2);
+  });
+
+  it("drives every finger Prox/Mid/Tip to the fingertip", () => {
+    const sample = sampleTalkGesture(0.5, { style: "celebrate" });
+    for (const side of ["L", "R"]) {
+      for (const digit of FINGER_DIGITS) {
+        for (const joint of FINGER_JOINTS) {
+          const key = `finger${side}${digit}${joint}`;
+          expect(sample.pose[key]).toBeTypeOf("number");
+          expect(TALK_GESTURE_PARAM_IDS[key]).toBe(
+            `ParamFinger${side}${digit}${joint}`,
+          );
+        }
+        expect(sample.pose[`finger${side}${digit}Spread`]).toBeTypeOf("number");
+      }
+    }
+    const tips = listFingerTipParamIds();
+    expect(tips).toHaveLength(10);
+    expect(tips).toContain("ParamFingerRIndexTip");
+    expect(Object.keys(FINGER_TIP_PARAM_IDS)).toHaveLength(10);
+
+    const params = talkGestureToFaceLiveParams(sample);
+    for (const tipId of tips) {
+      expect(params.some((p) => p.id === tipId)).toBe(true);
+    }
+    expect(params.some((p) => p.id === "ParamFingerRIndexProx")).toBe(true);
+    expect(params.some((p) => p.id === "ParamFingerRIndexMid")).toBe(true);
+    expect(params.some((p) => p.id === "ParamHandRSpread")).toBe(true);
+  });
+
+  it("setFingerChain cascades tip ahead of mid/prox when extending", () => {
+    /** @type {Record<string, number>} */
+    const pose = {};
+    setFingerChain(pose, "R", "Index", 0.9, { tipBias: 1.1 });
+    expect(pose.fingerRIndexTip).toBeGreaterThan(pose.fingerRIndexMid);
+    expect(pose.fingerRIndexMid).toBeGreaterThan(pose.fingerRIndexProx);
+    expect(readFingerTips(pose).fingerRIndexTip).toBe(pose.fingerRIndexTip);
   });
 
   it("maps to Face Live param ids and merges with lip-sync", () => {
     const sample = sampleTalkGesture(0.3, { style: "wave" });
     const params = talkGestureToFaceLiveParams(sample);
     expect(params.some((p) => p.id === "ParamArmRA")).toBe(true);
-    expect(params.some((p) => p.id === "ParamFingerRIndex")).toBe(true);
+    expect(params.some((p) => p.id === "ParamFingerRIndexTip")).toBe(true);
 
     const merged = mergeFaceLiveParams(
       [{ id: "ParamMouthOpenY", value: 0.5 }],

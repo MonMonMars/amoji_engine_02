@@ -57,25 +57,28 @@ TypeScript: `SakuraFaceLiveDriver.driveIdlePresence(presence)` uses the same map
 
 ## Disney-style talk gestures
 
-While the assistant is speaking (or TTS is playing), `TalkGestureClock` samples body / shoulder / arm / hand / finger poses and merges them with lip-sync Face Live params.
+While the assistant is speaking (or TTS is playing), `TalkGestureClock` samples body / shoulder / arm / hand / **per-joint finger** poses and merges them with lip-sync Face Live params.
 
-Styles are chosen from reply text via `inferTalkGestureFromText` (pointing, questions, celebrate, count fingers, shrug, wave, thinking, soft, emphasize, explain).
+Each finger on both hands is driven **Prox → Mid → Tip** (fingertip), plus lateral `Spread`. Aggregate `ParamFingerRIndex` mirrors the tip for older maps. Styles are chosen from reply text via `inferTalkGestureFromText` (pointing, questions, celebrate, count fingers, shrug, wave, thinking, soft, emphasize, explain).
 
 ```js
 import {
   createTalkGestureClock,
   talkGestureToFaceLiveParams,
   mergeFaceLiveParams,
-  inferTalkGestureFromText,
+  listFingerTipParamIds,
+  setFingerChain,
 } from "@amoji/engine/engine";
 
 const talk = createTalkGestureClock();
-talk.start("睇下呢個！", { emotion: "happy" }); // → point (or celebrate if happy wins first)
+talk.start("睇下呢個！", { emotion: "happy" });
 const sample = talk.step(1 / 60, { speechEnergy: mouthOpen });
+// sample.pose.fingerRIndexTip / Mid / Prox — full chain to the fingertip
 const params = mergeFaceLiveParams(lipParams, talkGestureToFaceLiveParams(sample));
+listFingerTipParamIds(); // 10 tip ids
 ```
 
-Custom param ids (`ParamHandRPoint`, `ParamFingerRIndex`, `ParamBodyAngleX`, …) must be mapped in VTS / Live2D. Lab: **Gesture demo** / **G**.
+Custom param ids (`ParamHandRPoint`, `ParamFingerRIndexTip`, `ParamBodyAngleX`, …) must be mapped in VTS / Live2D. Lab: **Gesture demo** / **G**.
 
 ## Dialect auto-switch
 
