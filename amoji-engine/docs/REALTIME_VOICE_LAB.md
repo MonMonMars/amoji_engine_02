@@ -9,6 +9,7 @@ Serve the **repository root** (not only `amoji-engine/`) so imports like `../amo
 | Piece | Module |
 | --- | --- |
 | Always-on energy VAD | `engine/voice/alwaysOnListen.js` |
+| Push-to-talk hold | `engine/voice/pushToTalk.js` |
 | Mic → ASR → robot → TTS | `engine/voice/workerTurnPipeline.js` |
 | SenseVoice / CosyVoice client | `engine/voice/voiceWorkerClient.js` |
 | TTS WAV playback + barge flush | `engine/voice/browserAudio.js` |
@@ -24,14 +25,16 @@ Serve the **repository root** (not only `amoji-engine/`) so imports like `../amo
 ## Controls
 
 1. **Always-on** — mic permission, VAD loop, worker pipeline turns, partial ASR emotion prefires.
-2. **Worker demo** — one tagged SenseVoice stub → robot reply → CosyVoice-style chunks + playback.
-3. **Face Live** — connect to `?face=` URL; idle (~10 Hz) + lip-sync injects while talking.
-4. **Dialect** — cycle Auto → Yue → En (`?lang=` / `amoji.dialectPref`); force lock skips SenseVoice tag auto-switch.
-5. **VAD** — cycle High → Normal → Low (`?vad=` / `amoji.listenPref`); hot-updates thresholds while listening.
-6. **TTS mute** — silence CosyVoice playback (pipeline + lip-sync ticks still run when unmuted chunks arrive).
-7. **Expression demo** — cycle Sakura presets (`neutral → happy → thinking → surprised → sad → angry`); injects when Face Live is on.
-8. **Prosody demo** / **Barge-in** — marker text / abort + TTS flush.
-9. **Export / Import Session** — JSON archive of chat + ticks + turn metrics rollup (p50/p95).
+2. **Hold to talk** — press-and-hold mic capture → release runs the worker pipeline (turn Always-on off first).
+3. **Ready check** — probe worker `health()` and log current lab URL / dialect / VAD.
+4. **Worker demo** — one tagged SenseVoice stub → robot reply → CosyVoice-style chunks + playback.
+5. **Face Live** — connect to `?face=` URL; idle (~10 Hz) + lip-sync injects while talking.
+6. **Dialect** — cycle Auto → Yue → En (`?lang=` / `amoji.dialectPref`); force lock skips SenseVoice tag auto-switch.
+7. **VAD** — cycle High → Normal → Low (`?vad=` / `amoji.listenPref`); hot-updates thresholds while listening.
+8. **TTS mute** — silence CosyVoice playback (pipeline + lip-sync ticks still run when unmuted chunks arrive).
+9. **Expression demo** — cycle Sakura presets (`neutral → happy → thinking → surprised → sad → angry`); injects when Face Live is on.
+10. **Prosody demo** / **Barge-in** — marker text / abort + TTS flush.
+11. **Export / Import Session** — JSON archive of chat + ticks + turn metrics rollup (p50/p95).
 
 Robot HUD shows expression, partial ASR text, VAD sensitivity, last-turn latency, and a rolling **rollup** line (`n=… Σ p50 · p95 · μ`).
 
@@ -51,9 +54,12 @@ Persisted in `localStorage` as `amoji.voiceWorkerUrl` / `amoji.faceLiveUrl` / `a
 ```bash
 cd amoji-engine
 npm run voice-worker:mock      # HTTP ASR/TTS on :7890
+npm run lab                    # static server → realtime-voice-lab.html
 npm run demo:facelive-smoke    # JS client ↔ mock Face Live bridge
 npm run demo:http-smoke        # worker HTTP client smoke
 ```
+
+`npm run lab` serves the **repo root** on `http://127.0.0.1:5173` (override with `--port`).
 
 Point a real VTube Studio API at `?face=ws://127.0.0.1:8001` after enabling the plugin API.
 

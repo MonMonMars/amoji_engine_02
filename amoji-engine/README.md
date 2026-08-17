@@ -40,13 +40,16 @@ npm run demo:http-smoke  # Node mock SenseVoice/CosyVoice worker
 
 ### Prototype lab
 
-Serve the repo root (so ES modules resolve), then open:
-
-[`../prototypes/realtime-voice-lab.html`](../prototypes/realtime-voice-lab.html)
+```bash
+cd amoji-engine
+npm run voice-worker:mock   # optional HTTP worker on :7890
+npm run lab                 # http://127.0.0.1:5173 → realtime-voice-lab.html
+```
 
 | Control | What it does |
 | --- | --- |
 | **Always-on** | Mic → VAD → worker ASR → robot → TTS playback + lip-sync |
+| **Hold to talk** | Press-and-hold mic → release runs the same pipeline |
 | **Worker demo** | One mock SenseVoice → CosyVoice turn |
 | **Face Live** | Connect VTS-compatible WS; stream idle + mouth params |
 | **Prosody / Barge-in** | Marker reply demo / abort TTS |
@@ -141,6 +144,7 @@ Env: `OPENAI_API_KEY`, `AMOJI_FACE_LIVE_URL`, `AMOJI_VOICE_WORKER`.
 | `npm run demo:facelive-smoke` | JS Face Live client ↔ mock bridge |
 | `npm run demo:http-smoke` | Mock HTTP voice worker |
 | `npm run voice-worker:mock` | Node SenseVoice/CosyVoice stub on `:7890` |
+| `npm run lab` | Static server for `prototypes/realtime-voice-lab.html` |
 | `npm run voice-worker` | Python worker (FunASR / CosyVoice when installed) |
 | `npm run demo` | Live Realtime session (`OPENAI_API_KEY`) |
 

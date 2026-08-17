@@ -140,6 +140,24 @@ console.log("[e2e] listen pref + TTS mute…");
   console.log("[e2e] listen/mute ok →", pref.sensitivity, pref.vad.energyThreshold);
 }
 
+console.log("[e2e] push-to-talk hold…");
+{
+  const { createPushToTalk } = await import("../engine/index.js");
+  let t = 0;
+  const startListening = async () => {};
+  const stopListeningAndTalk = async () => {};
+  const ptt = createPushToTalk({
+    startListening,
+    stopListeningAndTalk,
+    minHoldMs: 50,
+    nowMs: () => t,
+  });
+  assert((await ptt.press()) === true, "ptt press");
+  t += 80;
+  assert((await ptt.release()) === "talked", "ptt release");
+  console.log("[e2e] ptt ok → talked");
+}
+
 console.log("[e2e] idle presence smoke…");
 {
   const { createIdlePresenceClock, sampleIdlePresence, presenceToFaceLiveParams } =
