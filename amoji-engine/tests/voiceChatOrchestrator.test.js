@@ -119,4 +119,15 @@ describe("VoiceChatOrchestrator always-on wiring", () => {
     expect(orch.phase).toBe("talking");
     expect(onStopListeningAndTalk).toHaveBeenCalledWith({ manual: true });
   });
+
+  it("bargeIn invokes onBargeIn and returns phase to listening", async () => {
+    const onBargeIn = vi.fn(async () => {});
+    const orch = createVoiceChatOrchestrator({ onBargeIn });
+    await orch.startListening();
+    await orch.stopListeningAndTalk({});
+    expect(orch.phase).toBe("talking");
+    await orch.bargeIn({ energy: 0.2, speechMs: 120 });
+    expect(orch.phase).toBe("listening");
+    expect(onBargeIn).toHaveBeenCalledWith({ energy: 0.2, speechMs: 120 });
+  });
 });

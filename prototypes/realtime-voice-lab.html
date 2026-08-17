@@ -169,6 +169,7 @@
         createLabSessionFacade,
         createVoiceRobotBridge,
         createIdlePresenceClock,
+        presenceToFaceLiveParams,
         frameEnergy,
       } from "../amoji-engine/engine/index.js";
 
@@ -236,6 +237,7 @@
       const labHost = {
         listening: false,
         talking: false,
+        lastFaceParams: [],
         async startListening() {
           this.listening = true;
           this.talking = false;
@@ -257,26 +259,54 @@
           });
           renderChat();
           log(`stopListeningAndTalk ${JSON.stringify(extra ?? {})}`);
+          const speakMs =
+            typeof extra?.speakMs === "number"
+              ? extra.speakMs
+              : extra?.source === "prosody-demo"
+                ? 900
+                : 650;
           const result = await robot.runTurn(userText, {
             forceReply: extra?.forceReply,
+            speakMs,
           });
-          session.appendChat({
-            role: "assistant",
-            text: result.reply ?? "（stub）收到啦，有咩想傾？",
-          });
-          if (result.prosody) {
-            session.recordTick("prosody", {
-              speed: result.prosody.speed,
-              pauseMs: result.prosody.pauseMs,
-              markers: result.prosody.markers?.length || 0,
-              instruct: result.prosody.instruct,
+          if (result.barged) {
+            session.recordTick("barge", { during: "talk", source: "robot" });
+            log("talk barged — assistant reply cancelled");
+          } else {
+            session.appendChat({
+              role: "assistant",
+              text: result.reply ?? "（stub）收到啦，有咩想傾？",
             });
-            log(
-              `prosody speed=${result.prosody.speed} pause=${result.prosody.pauseMs}ms markers=${result.prosody.markers?.length || 0}`,
-            );
+            if (result.prosody) {
+              session.recordTick("prosody", {
+                speed: result.prosody.speed,
+                pauseMs: result.prosody.pauseMs,
+                markers: result.prosody.markers?.length || 0,
+                instruct: result.prosody.instruct,
+              });
+              log(
+                `prosody speed=${result.prosody.speed} pause=${result.prosody.pauseMs}ms markers=${result.prosody.markers?.length || 0}`,
+              );
+            }
           }
           renderChat();
           this.talking = false;
+        },
+        bargeIn(info = {}) {
+          robot.abort(info.reason || "barge-in");
+          this.talking = false;
+          session.recordTick("barge", {
+            at: Date.now(),
+            energy: info.energy,
+            speechMs: info.speechMs,
+            source: info.source || "manual",
+          });
+          renderRobotHud();
+          log(
+            `barge-in → robot aborted${
+              info.energy != null ? ` energy=${Number(info.energy).toFixed(3)}` : ""
+            }`,
+          );
         },
       };
 
@@ -286,7 +316,11 @@
         lastFrame = now;
         if (!labHost.talking) {
           const presence = idle.step(dt);
-          idleHudEl.textContent = `${presence.emotion} · jaw ${presence.jawOpen} · blink ${presence.blink}`;
+          const params = presenceToFaceLiveParams(presence);
+          labHost.lastFaceParams = params;
+          const jaw = params.find((p) => p.id === "ParamMouthOpenY")?.value;
+          const blink = presence.blink;
+          idleHudEl.textContent = `${presence.emotion} · jaw ${jaw} · blink ${blink} · face ${params.length}p`;
         } else {
           idleHudEl.textContent = "paused (speaking)";
         }
@@ -353,6 +387,11 @@
               minSpeechMs: 150,
               trailingSilenceMs: 550,
               sampleRateHz: 24000,
+              bargeDuringTalk: true,
+              bargeEnergyThreshold: 0.04,
+              bargeMinSpeechMs: 100,
+              onBargeIn: (info) =>
+                labHost.bargeIn({ ...info, source: "always-on" }),
               onStateChange: (state, prev) => {
                 session.recordTick("vad", { prev, state });
                 log(`vad ${prev} → ${state}`);
@@ -423,11 +462,7 @@
       });
 
       document.getElementById("btn-barge").addEventListener("click", () => {
-        robot.abort("barge-in");
-        labHost.talking = false;
-        session.recordTick("barge", { at: Date.now() });
-        renderRobotHud();
-        log("barge-in → robot aborted");
+        labHost.bargeIn({ reason: "barge-in", source: "button" });
       });
 
       document

@@ -20,6 +20,7 @@ JS engine coordinator for listen → talk turns, with optional **always-on** ene
 | `opts.alwaysOn` | `true` or VAD overrides — marks always-on mode |
 | `startAlwaysOn()` / `stopAlwaysOn()` | Start/stop `createAlwaysOnListen` loop |
 | `startListening()` / `stopListeningAndTalk(extra)` | Turn hooks used by always-on and manual PTT |
+| `bargeIn(info)` / `opts.onBargeIn` | Abort talk while TTS busy (mic energy or manual) |
 
 ## Always-on wiring
 
@@ -28,7 +29,8 @@ When `startAlwaysOn()` runs, the orchestrator builds `createAlwaysOnListen({ mic
 1. `startListening()` → host `onStartListening`
 2. Mic frames → utterance detector (`idle → speaking → trailing → ended`)
 3. On end → `getTurnExtra?` → `stopListeningAndTalk(extra)` → host `onStopListeningAndTalk`
-4. Loop back to `startListening()` until `stopAlwaysOn()`
+4. While busy (talk/TTS), sustained mic energy → `onBargeIn` → host abort
+5. Loop back to `startListening()` until `stopAlwaysOn()`
 
 See also [Always-on listen](./always-on-listen.md), [Session & presence](./SESSION_AND_PRESENCE.md).
 

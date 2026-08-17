@@ -42,6 +42,20 @@ describe("SakuraFaceLiveDriver", () => {
     expect(params[0]?.id).toBe("ParamMouthOpenY");
     expect(params[0]?.value).toBeGreaterThan(0);
 
+    const idleParams = await driver.driveIdlePresence({
+      jawOpen: 0.05,
+      blink: 0.2,
+      lookX: 0.1,
+      lookY: -0.05,
+      emotion: "neutral",
+      morphs: { jawOpen: 0.05, eyeBlink: 0.2, browInnerUp: 0.08 },
+    });
+    expect(idleParams.some((p) => p.id === "ParamEyeLOpen")).toBe(true);
+    expect(idleParams.find((p) => p.id === "ParamEyeLOpen")?.value).toBeCloseTo(
+      0.8,
+      3,
+    );
+
     await driver.resetLipSync();
     driver.disconnect();
   });

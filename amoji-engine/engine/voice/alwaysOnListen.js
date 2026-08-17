@@ -208,6 +208,9 @@ export function createUtteranceDetector(opts = {}) {
  *
  * Subscribes to `mic.onFrame`, runs energy VAD, and on utterance end calls
  * `stopListeningAndTalk(extra)` then loops `startListening()` until stopped.
+ *
+ * While talk is in flight (`_busy`), optional barge-in watches mic energy and
+ * calls `onBargeIn` so the host can abort TTS / robot speech.
  */
 export class AlwaysOnListenController {
   /**
@@ -224,6 +227,10 @@ export class AlwaysOnListenController {
    *   onStateChange?: (state: string, prev: string) => void,
    *   onUtteranceEnded?: (info: { speechMs: number, silenceMs: number }) => void,
    *   onError?: (error: unknown) => void,
+   *   bargeDuringTalk?: boolean,
+   *   bargeEnergyThreshold?: number,
+   *   bargeMinSpeechMs?: number,
+   *   onBargeIn?: (info: { energy: number, speechMs: number }) => void | Promise<void>,
    * }} opts
    */
   constructor(opts) {
@@ -251,10 +258,22 @@ export class AlwaysOnListenController {
       frameSamples: opts.frameSamples,
       onStateChange: (state, prev) => opts.onStateChange?.(state, prev),
     });
+    this._bargeSpeechMs = 0;
+    this._barging = false;
+    this._bargeFired = false;
   }
 
   get active() {
     return this._active;
+  }
+
+  get busy() {
+    return this._busy;
+  }
+
+  get bargeEnabled() {
+    if (this.opts.bargeDuringTalk === false) return false;
+    return typeof this.opts.onBargeIn === "function";
   }
 
   get detectorState() {
@@ -284,16 +303,27 @@ export class AlwaysOnListenController {
       this._unsubscribe = null;
     }
     this._detector.reset();
+    this._bargeSpeechMs = 0;
+    this._barging = false;
+    this._bargeFired = false;
   }
 
   /** @param {Int16Array | Float32Array | ArrayLike<number>} frame */
   async _onFrame(frame) {
-    if (!this._active || this._busy) return;
+    if (!this._active) return;
+
+    if (this._busy) {
+      await this._maybeBarge(frame);
+      return;
+    }
 
     const next = this._detector.pushFrame(frame);
     if (next !== "ended") return;
 
     this._busy = true;
+    this._bargeSpeechMs = 0;
+    this._barging = false;
+    this._bargeFired = false;
     try {
       const info = this._detector.endedInfo;
       this.opts.onUtteranceEnded?.(info);
@@ -318,6 +348,48 @@ export class AlwaysOnListenController {
       }
     } finally {
       this._busy = false;
+      this._bargeSpeechMs = 0;
+      this._barging = false;
+      this._bargeFired = false;
+    }
+  }
+
+  /**
+   * While TTS / robot talk is running, sustained mic energy → barge-in.
+   * @param {Int16Array | Float32Array | ArrayLike<number>} frame
+   */
+  async _maybeBarge(frame) {
+    if (!this.bargeEnabled || this._barging || this._bargeFired) return;
+
+    const config = this._detector.config;
+    const threshold =
+      this.opts.bargeEnergyThreshold ??
+      Math.max(config.energyThreshold * 1.35, config.energyThreshold + 0.01);
+    const minMs = this.opts.bargeMinSpeechMs ?? 90;
+    const energy = frameEnergy(frame);
+    const dt =
+      ((frame.length || config.frameSamples) / config.sampleRateHz) * 1000;
+
+    if (energy >= threshold) {
+      this._bargeSpeechMs += dt;
+    } else {
+      this._bargeSpeechMs = 0;
+      return;
+    }
+
+    if (this._bargeSpeechMs < minMs) return;
+
+    this._barging = true;
+    this._bargeFired = true;
+    try {
+      await this.opts.onBargeIn?.({
+        energy,
+        speechMs: this._bargeSpeechMs,
+      });
+    } catch (error) {
+      this.opts.onError?.(error);
+    } finally {
+      this._barging = false;
     }
   }
 }

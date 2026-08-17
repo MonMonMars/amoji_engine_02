@@ -150,4 +150,61 @@ describe("AlwaysOnListenController", () => {
         }),
     ).toThrow(/mic.onFrame/);
   });
+
+  it("fires onBargeIn when mic energy sustains during talk", async () => {
+    let frameCb = null;
+    const mic = {
+      onFrame: (cb) => {
+        frameCb = cb;
+        return () => {
+          frameCb = null;
+        };
+      },
+    };
+
+    const onBargeIn = vi.fn(async () => {});
+    let resolveTalk;
+    const talkGate = new Promise((resolve) => {
+      resolveTalk = resolve;
+    });
+
+    const controller = createAlwaysOnListen({
+      mic,
+      startListening: async () => {},
+      stopListeningAndTalk: async () => talkGate,
+      energyThreshold: 0.05,
+      minSpeechMs: 20,
+      trailingSilenceMs: 40,
+      sampleRateHz: 1000,
+      frameSamples: 20,
+      bargeEnergyThreshold: 0.05,
+      bargeMinSpeechMs: 40,
+      onBargeIn,
+    });
+
+    await controller.start();
+    frameCb(loudFrame(20));
+    frameCb(loudFrame(20));
+    frameCb(silentFrame(20));
+    frameCb(silentFrame(20));
+
+    await vi.waitFor(() => {
+      expect(controller.busy).toBe(true);
+    });
+
+    frameCb(loudFrame(20));
+    frameCb(loudFrame(20));
+    frameCb(loudFrame(20));
+
+    await vi.waitFor(() => {
+      expect(onBargeIn).toHaveBeenCalledTimes(1);
+    });
+    expect(onBargeIn.mock.calls[0][0].speechMs).toBeGreaterThanOrEqual(40);
+
+    resolveTalk();
+    await vi.waitFor(() => {
+      expect(controller.busy).toBe(false);
+    });
+    await controller.stop();
+  });
 });

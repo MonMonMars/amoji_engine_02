@@ -34,4 +34,18 @@ describe('dialect + idle presence', () => {
     clock.step(0.1);
     expect(clock.timeSec).toBeGreaterThan(0);
   });
+
+  it('maps idle presence to Face Live parameters', async () => {
+    const { presenceToFaceLiveParams } = await import(
+      '../engine/face/idlePresence.js'
+    );
+    const presence = sampleIdlePresence(0.5, { emotion: 'thinking' });
+    const params = presenceToFaceLiveParams(presence);
+    const ids = params.map((p) => p.id);
+    expect(ids).toContain('ParamMouthOpenY');
+    expect(ids).toContain('ParamEyeLOpen');
+    expect(ids).toContain('ParamAngleX');
+    const eye = params.find((p) => p.id === 'ParamEyeLOpen');
+    expect(eye.value).toBeCloseTo(1 - presence.blink, 3);
+  });
 });
