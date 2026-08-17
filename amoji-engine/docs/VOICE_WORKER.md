@@ -14,6 +14,12 @@ Cantonese-first ASR/TTS worker path used by the realtime voice lab.
 | `client.runTurn({ text, replyText? })` | ASR → emotion → TTS |
 | `parseSenseVoiceTranscript` / `emotionFromSenseVoice` | Tag parse + SER blend |
 | `createPartialAsrWatcher` | Interim ASR while mic is open |
+| `createMicFrameBuffer` / `createWorkerTurnHost` | Buffer mic → ASR → robot → TTS |
+| `runWorkerRobotTurn` | One-shot pipeline turn |
+
+## Always-on integration
+
+Lab always-on listen feeds `turnHost.pushFrame` in parallel with VAD. On end-of-utterance, `useWorker: true` runs `turnHost.runFromBuffer()` so each spoken turn goes through SenseVoice (mock/HTTP) and CosyVoice TTS chunks before the next listen loop.
 
 ## Python worker
 

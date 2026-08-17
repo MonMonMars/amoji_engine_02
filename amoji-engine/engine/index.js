@@ -60,6 +60,16 @@ export {
 } from "./voice/partialAsr.js";
 
 export {
+  createMicFrameBuffer,
+} from "./voice/micFrameBuffer.js";
+
+export {
+  WORKER_TURN_SCHEMA,
+  runWorkerRobotTurn,
+  createWorkerTurnHost,
+} from "./voice/workerTurnPipeline.js";
+
+export {
   BROWSER_AUDIO_SCHEMA,
   encodeWavPcm16,
   arrayBufferToBase64,

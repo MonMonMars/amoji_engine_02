@@ -228,4 +228,39 @@ console.log("[e2e] SenseVoice / CosyVoice worker mock…");
   );
 }
 
+console.log("[e2e] worker↔robot pipeline + mic buffer…");
+{
+  const {
+    createVoiceWorkerClient,
+    createVoiceRobotBridge,
+    createWorkerTurnHost,
+    runWorkerRobotTurn,
+  } = await import("../engine/index.js");
+  const worker = createVoiceWorkerClient({ mode: "mock" });
+  const robot = createVoiceRobotBridge();
+  const piped = await runWorkerRobotTurn({
+    worker,
+    robot,
+    text: "<|yue|><|HAPPY|><|Speech|>我叫小明",
+  });
+  assert(robot.memory.userName === "小明", "pipeline should teach robot name");
+  assert(piped.tts.chunkCount >= 1, "pipeline tts");
+
+  const host = createWorkerTurnHost({ worker, robot, inputRate: 16000 });
+  host.beginListen();
+  const frame = new Float32Array(800).fill(0.15);
+  for (let i = 0; i < 25; i += 1) host.pushFrame(frame);
+  const fromMic = await host.runFromBuffer();
+  assert(fromMic.asr.text, "mic buffer asr text");
+  assert(fromMic.reply, "mic buffer reply");
+  console.log(
+    "[e2e] pipeline ok →",
+    piped.asr.text,
+    "→",
+    fromMic.asr.text,
+    "chunks",
+    fromMic.tts.chunkCount,
+  );
+}
+
 console.log("[e2e] all checks passed");
