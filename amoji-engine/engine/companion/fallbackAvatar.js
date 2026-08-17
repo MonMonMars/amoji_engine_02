@@ -1,6 +1,5 @@
 /**
- * 2D canvas fallback when WebGL is unavailable.
- * Same control surface as createLowPolyAvatar.
+ * 2D canvas fallback — more detailed feminine anime companion.
  */
 export const FALLBACK_AVATAR_SCHEMA = "amoji.fallbackAvatar.v1";
 
@@ -14,7 +13,6 @@ function clamp(v, lo, hi) {
 export function createFallbackAvatar(opts) {
   const canvas = opts.canvas;
   const ctx = canvas.getContext("2d");
-  /** @type {string} */
   let emotion = "neutral";
   let mouthOpen = 0;
   let talking = false;
@@ -30,134 +28,156 @@ export function createFallbackAvatar(opts) {
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   };
 
-  const palette = {
-    skin: "#f2c4a8",
-    hair: "#2a1f3d",
-    outfit: "#6ec8c4",
-    blush: "#ff8fab",
-    lip: "#c45c6a",
-  };
-
   const draw = (now) => {
     const w = canvas.clientWidth || 640;
     const h = canvas.clientHeight || 800;
     ctx.clearRect(0, 0, w, h);
 
     const cx = w * 0.5;
-    const cy = h * 0.46;
-    const breath = Math.sin((now - t0) * 0.002) * 6;
-    const sway = Math.sin((now - t0) * 0.0008) * 10;
+    const cy = h * 0.44;
+    const breath = Math.sin((now - t0) * 0.002) * 5;
+    const sway = Math.sin((now - t0) * 0.0008) * 8;
 
-    // glow
-    const g = ctx.createRadialGradient(cx, cy + 120, 20, cx, cy + 140, 220);
-    g.addColorStop(0, "rgba(110,200,196,0.25)");
-    g.addColorStop(1, "rgba(110,200,196,0)");
+    // soft pedestal glow
+    const g = ctx.createRadialGradient(cx, cy + 150, 10, cx, cy + 160, 240);
+    g.addColorStop(0, "rgba(127,212,207,0.28)");
+    g.addColorStop(1, "rgba(127,212,207,0)");
     ctx.fillStyle = g;
     ctx.beginPath();
-    ctx.ellipse(cx, cy + 160, 180, 50, 0, 0, Math.PI * 2);
+    ctx.ellipse(cx, cy + 170, 200, 55, 0, 0, Math.PI * 2);
     ctx.fill();
 
     ctx.save();
-    ctx.translate(cx + sway * 0.15, cy + breath);
+    ctx.translate(cx + sway * 0.12, cy + breath);
 
-    // body
-    ctx.fillStyle = palette.outfit;
+    // skirt
+    ctx.fillStyle = "#4fa8a4";
     ctx.beginPath();
-    ctx.moveTo(-70, 40);
-    ctx.lineTo(70, 40);
-    ctx.lineTo(90, 180);
-    ctx.lineTo(-90, 180);
+    ctx.moveTo(-55, 70);
+    ctx.lineTo(55, 70);
+    ctx.lineTo(105, 195);
+    ctx.lineTo(-105, 195);
+    ctx.closePath();
+    ctx.fill();
+
+    // torso
+    ctx.fillStyle = "#7fd4cf";
+    ctx.beginPath();
+    ctx.moveTo(-48, 20);
+    ctx.quadraticCurveTo(0, 5, 48, 20);
+    ctx.lineTo(42, 85);
+    ctx.quadraticCurveTo(0, 95, -42, 85);
     ctx.closePath();
     ctx.fill();
 
     // arms
     const armLift =
       emotion === "happy" || emotion === "surprised"
-        ? 25
+        ? 32
         : emotion === "thinking"
-          ? 40
-          : 8;
-    ctx.strokeStyle = palette.skin;
-    ctx.lineWidth = 18;
+          ? 48
+          : 10;
+    ctx.strokeStyle = "#f6c9b4";
+    ctx.lineWidth = 16;
     ctx.lineCap = "round";
     ctx.beginPath();
-    ctx.moveTo(-70, 70);
-    ctx.quadraticCurveTo(-120, 90 - armLift, -100, 150 - armLift * 0.4);
+    ctx.moveTo(-48, 45);
+    ctx.quadraticCurveTo(-115, 70 - armLift, -95, 145 - armLift * 0.35);
     ctx.stroke();
     ctx.beginPath();
-    ctx.moveTo(70, 70);
-    ctx.quadraticCurveTo(120, 90 - armLift, 100, 150 - armLift * 0.4);
+    ctx.moveTo(48, 45);
+    ctx.quadraticCurveTo(115, 70 - armLift, 95, 145 - armLift * 0.35);
     ctx.stroke();
+
+    // long hair behind
+    ctx.fillStyle = "#3b2348";
+    ctx.beginPath();
+    ctx.ellipse(-78, 30, 28, 110, -0.25, 0, Math.PI * 2);
+    ctx.ellipse(78, 30, 28, 110, 0.25, 0, Math.PI * 2);
+    ctx.fill();
 
     // head
-    ctx.fillStyle = palette.skin;
+    ctx.fillStyle = "#f6c9b4";
     ctx.beginPath();
-    ctx.arc(0, -20, 78, 0, Math.PI * 2);
+    ctx.ellipse(0, -35, 72, 82, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    // hair
-    ctx.fillStyle = palette.hair;
+    // hair dome + bangs
+    ctx.fillStyle = "#3b2348";
     ctx.beginPath();
-    ctx.ellipse(0, -55, 88, 55, 0, Math.PI, 0);
+    ctx.ellipse(0, -70, 86, 58, 0, Math.PI, Math.PI * 2);
     ctx.fill();
     ctx.beginPath();
-    ctx.ellipse(-70, -10, 22, 55, -0.3, 0, Math.PI * 2);
+    ctx.ellipse(0, -48, 78, 34, 0, 0, Math.PI);
     ctx.fill();
+    ctx.fillStyle = "#6a3d7a";
     ctx.beginPath();
-    ctx.ellipse(70, -10, 22, 55, 0.3, 0, Math.PI * 2);
+    ctx.moveTo(-60, -55);
+    ctx.quadraticCurveTo(-20, -10, 5, -40);
+    ctx.quadraticCurveTo(35, -5, 62, -55);
+    ctx.closePath();
     ctx.fill();
 
     // eyes
-    const eyeY = emotion === "happy" ? -18 : -22;
+    const eyeY = emotion === "happy" ? -28 : -32;
     const eyeH =
-      emotion === "surprised" ? 16 : emotion === "sad" ? 8 : emotion === "happy" ? 7 : 12;
-    ctx.fillStyle = "#1a1420";
+      emotion === "surprised" ? 18 : emotion === "sad" ? 8 : emotion === "happy" ? 7 : 14;
+    ctx.fillStyle = "#fff8f2";
     ctx.beginPath();
-    ctx.ellipse(-28, eyeY, 10, eyeH, 0, 0, Math.PI * 2);
-    ctx.ellipse(28, eyeY, 10, eyeH, 0, 0, Math.PI * 2);
+    ctx.ellipse(-26, eyeY, 14, eyeH + 2, 0, 0, Math.PI * 2);
+    ctx.ellipse(26, eyeY, 14, eyeH + 2, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#3d2a55";
+    ctx.beginPath();
+    ctx.ellipse(-26, eyeY, 9, eyeH, 0, 0, Math.PI * 2);
+    ctx.ellipse(26, eyeY, 9, eyeH, 0, 0, Math.PI * 2);
     ctx.fill();
     ctx.fillStyle = "#fff";
     ctx.beginPath();
-    ctx.arc(-24, eyeY - 4, 3, 0, Math.PI * 2);
-    ctx.arc(32, eyeY - 4, 3, 0, Math.PI * 2);
+    ctx.arc(-22, eyeY - 4, 3.5, 0, Math.PI * 2);
+    ctx.arc(30, eyeY - 4, 3.5, 0, Math.PI * 2);
     ctx.fill();
 
     // brows
-    ctx.strokeStyle = palette.hair;
-    ctx.lineWidth = 4;
+    ctx.strokeStyle = "#3b2348";
+    ctx.lineWidth = 3.5;
     const browTilt =
-      emotion === "angry" ? 0.4 : emotion === "thinking" ? -0.25 : emotion === "surprised" ? -0.35 : 0;
+      emotion === "angry" ? 0.45 : emotion === "thinking" ? -0.3 : emotion === "surprised" ? -0.4 : 0.05;
     ctx.beginPath();
-    ctx.moveTo(-40, -40 - browTilt * 10);
-    ctx.lineTo(-16, -42 + browTilt * 10);
-    ctx.moveTo(16, -42 + browTilt * 10);
-    ctx.lineTo(40, -40 - browTilt * 10);
+    ctx.moveTo(-42, -52 - browTilt * 12);
+    ctx.lineTo(-14, -54 + browTilt * 10);
+    ctx.moveTo(14, -54 + browTilt * 10);
+    ctx.lineTo(42, -52 - browTilt * 12);
     ctx.stroke();
 
     // blush
     if (emotion === "happy" || emotion === "angry" || emotion === "surprised") {
-      ctx.fillStyle = "rgba(255,143,171,0.45)";
+      ctx.fillStyle = "rgba(255,143,171,0.5)";
       ctx.beginPath();
-      ctx.ellipse(-48, 0, 14, 8, 0, 0, Math.PI * 2);
-      ctx.ellipse(48, 0, 14, 8, 0, 0, Math.PI * 2);
+      ctx.ellipse(-48, -5, 15, 9, 0, 0, Math.PI * 2);
+      ctx.ellipse(48, -5, 15, 9, 0, 0, Math.PI * 2);
       ctx.fill();
     }
 
-    // mouth
-    const talk =
-      talking
-        ? 0.25 + Math.abs(Math.sin(now * 0.03)) * 0.75
-        : 0;
-    const open = clamp(Math.max(mouthOpen, talk), 0, 1);
-    ctx.fillStyle = palette.lip;
+    // earrings
+    ctx.fillStyle = "#f0d48a";
     ctx.beginPath();
-    if (emotion === "happy" && open < 0.2) {
-      ctx.arc(0, 18, 16, 0.15 * Math.PI, 0.85 * Math.PI);
-      ctx.strokeStyle = palette.lip;
-      ctx.lineWidth = 4;
+    ctx.arc(-68, -10, 5, 0, Math.PI * 2);
+    ctx.arc(68, -10, 5, 0, Math.PI * 2);
+    ctx.fill();
+
+    // mouth
+    const talk = talking ? 0.25 + Math.abs(Math.sin(now * 0.03)) * 0.75 : 0;
+    const open = clamp(Math.max(mouthOpen, talk), 0, 1);
+    ctx.fillStyle = "#d46378";
+    ctx.beginPath();
+    if (emotion === "happy" && open < 0.18) {
+      ctx.strokeStyle = "#d46378";
+      ctx.lineWidth = 3.5;
+      ctx.arc(0, 8, 16, 0.12 * Math.PI, 0.88 * Math.PI);
       ctx.stroke();
     } else {
-      ctx.ellipse(0, 22, 14 + open * 4, 4 + open * 14, 0, 0, Math.PI * 2);
+      ctx.ellipse(0, 12, 13 + open * 5, 3.5 + open * 15, 0, 0, Math.PI * 2);
       ctx.fill();
     }
 

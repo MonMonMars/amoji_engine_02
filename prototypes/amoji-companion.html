@@ -52,10 +52,8 @@
         position: absolute;
         inset: 0;
         background:
-          radial-gradient(ellipse 80% 55% at 50% 18%, rgba(127, 212, 207, 0.22), transparent 60%),
-          radial-gradient(ellipse 70% 50% at 70% 80%, rgba(255, 158, 122, 0.16), transparent 55%),
-          radial-gradient(ellipse 50% 40% at 20% 70%, rgba(120, 140, 255, 0.1), transparent 50%),
-          linear-gradient(180deg, #101826 0%, #070a10 55%, #05070c 100%);
+          linear-gradient(180deg, rgba(7, 10, 16, 0.25) 0%, rgba(7, 10, 16, 0.55) 55%, rgba(5, 7, 12, 0.82) 100%),
+          url("/prototypes/assets/companion-bg-anime.png") center / cover no-repeat;
         z-index: 0;
       }
 
@@ -64,7 +62,7 @@
         position: absolute;
         inset: 0;
         background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.08'/%3E%3C/svg%3E");
-        opacity: 0.35;
+        opacity: 0.28;
         pointer-events: none;
         mix-blend-mode: soft-light;
       }
@@ -205,7 +203,7 @@
       .composer {
         pointer-events: auto;
         display: flex;
-        gap: 0.55rem;
+        gap: 0.45rem;
         align-items: flex-end;
         padding: 0.45rem;
         border-radius: 1.6rem;
@@ -214,6 +212,52 @@
         box-shadow: var(--shadow);
         backdrop-filter: blur(22px);
         -webkit-backdrop-filter: blur(22px);
+      }
+
+      .icon-btn {
+        width: 2.75rem;
+        height: 2.75rem;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.06);
+        color: var(--ink);
+        cursor: pointer;
+        flex-shrink: 0;
+        font-size: 1.05rem;
+        line-height: 1;
+        transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+      }
+
+      .icon-btn:hover {
+        transform: translateY(-1px);
+        background: rgba(255, 255, 255, 0.1);
+      }
+
+      .icon-btn.on {
+        background: rgba(127, 212, 207, 0.22);
+        border-color: rgba(127, 212, 207, 0.55);
+      }
+
+      .icon-btn.mic-live {
+        background: rgba(255, 122, 144, 0.28);
+        border-color: rgba(255, 122, 144, 0.7);
+        animation: pulseMic 1.1s ease-in-out infinite;
+      }
+
+      .icon-btn:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      @keyframes pulseMic {
+        0%,
+        100% {
+          box-shadow: 0 0 0 0 rgba(255, 122, 144, 0.35);
+        }
+        50% {
+          box-shadow: 0 0 0 10px rgba(255, 122, 144, 0);
+        }
       }
 
       .composer textarea {
@@ -356,6 +400,7 @@
         <div class="meta">
           <div class="pill" id="mode-pill">LLM · <strong>local</strong></div>
           <div class="pill" id="emotion-pill">feel · <strong>neutral</strong></div>
+          <div class="pill" id="voice-pill">voice · <strong>…</strong></div>
           <a class="lab-link" href="/prototypes/realtime-voice-lab.html">Lab</a>
           <button type="button" class="gear" id="btn-settings" title="LLM settings">⚙</button>
         </div>
@@ -380,10 +425,28 @@
       <div class="chat-layer">
         <div class="transcript" id="transcript" aria-live="polite"></div>
         <form class="composer" id="composer">
+          <button
+            type="button"
+            class="icon-btn on"
+            id="btn-speaker"
+            title="Speaker on/off"
+            aria-pressed="true"
+          >
+            🔊
+          </button>
+          <button
+            type="button"
+            class="icon-btn"
+            id="btn-mic"
+            title="Mic on/off — speak to Amoji"
+            aria-pressed="false"
+          >
+            🎤
+          </button>
           <textarea
             id="input"
             rows="1"
-            placeholder="同 Amoji 傾偈… / Chat with Amoji"
+            placeholder="同 Amoji 傾偈… or tap 🎤 to speak"
             enterkeyhint="send"
           ></textarea>
           <button class="send" id="send" type="submit" aria-label="Send">↑</button>
@@ -394,6 +457,7 @@
     <script type="module">
       import { createCompanionAvatar } from "../amoji-engine/engine/companion/createAvatar.js";
       import { createCompanionChat } from "../amoji-engine/engine/companion/chatLlm.js";
+      import { createCompanionVoice } from "../amoji-engine/engine/companion/companionVoice.js";
 
       const canvas = document.getElementById("avatar-canvas");
       const transcript = document.getElementById("transcript");
@@ -402,8 +466,11 @@
       const sendBtn = document.getElementById("send");
       const modePill = document.getElementById("mode-pill");
       const emotionPill = document.getElementById("emotion-pill");
+      const voicePill = document.getElementById("voice-pill");
       const settings = document.getElementById("settings");
       const btnSettings = document.getElementById("btn-settings");
+      const btnSpeaker = document.getElementById("btn-speaker");
+      const btnMic = document.getElementById("btn-mic");
 
       const params = new URLSearchParams(location.search);
       const stored = {
@@ -432,6 +499,9 @@
       const setEmotionPill = (emotion) => {
         emotionPill.innerHTML = `feel · <strong>${emotion}</strong>`;
       };
+      const setVoicePill = (label) => {
+        voicePill.innerHTML = `voice · <strong>${label}</strong>`;
+      };
       setModePill(chat.mode);
 
       const addBubble = (role, text) => {
@@ -443,13 +513,96 @@
         return el;
       };
 
+      let busy = false;
+
+      const autosize = () => {
+        input.style.height = "auto";
+        input.style.height = `${Math.min(input.scrollHeight, 120)}px`;
+      };
+      input.addEventListener("input", autosize);
+
+      const syncMicBtn = () => {
+        btnMic.classList.toggle("mic-live", voice.micOn);
+        btnMic.classList.toggle("on", voice.micOn);
+        btnMic.setAttribute("aria-pressed", voice.micOn ? "true" : "false");
+        btnMic.textContent = voice.micOn ? "⏺" : "🎤";
+      };
+
+      const syncSpeakerBtn = () => {
+        btnSpeaker.classList.toggle("on", voice.speakerOn);
+        btnSpeaker.setAttribute("aria-pressed", voice.speakerOn ? "true" : "false");
+        btnSpeaker.textContent = voice.speakerOn ? "🔊" : "🔇";
+      };
+
+      const voice = createCompanionVoice({
+        lang: "zh-HK",
+        onMouth: (open) => avatar.setMouthOpen(open),
+        onTalking: (on) => avatar.setTalking(on),
+        onMicText: (text, isFinal) => {
+          input.value = text;
+          autosize();
+          if (isFinal) void runTurn(text);
+        },
+        onMicState: () => syncMicBtn(),
+        onError: (msg) => {
+          if (msg && msg !== "aborted" && msg !== "no-speech") {
+            addBubble("system", `Mic/TTS: ${msg}`);
+          }
+          syncMicBtn();
+        },
+      });
+
+      const runTurn = async (text) => {
+        const cleaned = String(text || "").trim();
+        if (!cleaned || busy) return;
+        busy = true;
+        sendBtn.disabled = true;
+        btnMic.disabled = true;
+        voice.stopMic();
+        syncMicBtn();
+        addBubble("user", cleaned);
+        avatar.setEmotion("thinking");
+        setEmotionPill("thinking");
+        avatar.setTalking(false);
+        avatar.setMouthOpen(0);
+
+        try {
+          const result = await chat.reply(cleaned);
+          setModePill(result.mode || chat.mode);
+          const reply = result.reply || "……";
+          const emotion = result.emotion || "happy";
+          addBubble("assistant", reply);
+          avatar.setEmotion(emotion);
+          setEmotionPill(emotion);
+          await voice.speak(reply, emotion);
+        } catch (err) {
+          addBubble("system", `Chat failed: ${err?.message || err}`);
+          avatar.setEmotion("sad");
+          setEmotionPill("sad");
+        } finally {
+          busy = false;
+          sendBtn.disabled = false;
+          btnMic.disabled = !voice.supportsMic;
+          input.focus();
+        }
+      };
+
+      void voice.ensureVoices().then((v) => {
+        setVoicePill(v?.name?.split(" ")[0] || (voice.supportsSpeak ? "female" : "off"));
+      });
+
+      btnMic.disabled = !voice.supportsMic;
+      syncSpeakerBtn();
+      syncMicBtn();
+
       addBubble(
         "system",
-        `Grok-style companion · ${avatarKind === "webgl3d" ? "3D low-poly" : "2D"} emotion + lip sync. Type below — local brain works offline; ⚙ for online LLM.`,
+        `Grok-style companion · ${avatarKind === "webgl3d" ? "3D female" : "2D female"} · anime BG · emotional female voice · 🎤 mic / 🔊 speaker`,
       );
-      addBubble("assistant", "嗨～我係 Amoji。想傾啲咩？");
+      addBubble("assistant", "嗨～我係 Amoji。可以打字，或者撳麥克風同我傾偈！");
       avatar.setEmotion("happy");
       setEmotionPill("happy");
+      void voice.speak("嗨～我係 Amoji。可以打字，或者撳麥克風同我傾偈！", "happy");
 
       btnSettings.addEventListener("click", () => {
         settings.classList.toggle("open");
@@ -473,71 +626,35 @@
         );
       });
 
-      const autosize = () => {
-        input.style.height = "auto";
-        input.style.height = `${Math.min(input.scrollHeight, 120)}px`;
-      };
-      input.addEventListener("input", autosize);
+      btnSpeaker.addEventListener("click", () => {
+        voice.setSpeakerOn(!voice.speakerOn);
+        syncSpeakerBtn();
+        addBubble("system", voice.speakerOn ? "Speaker on" : "Speaker muted");
+      });
 
-      const speakViseme = async (text, emotion) => {
-        avatar.setEmotion(emotion || "happy");
-        setEmotionPill(emotion || "happy");
-        avatar.setTalking(true);
-        const chars = Math.max(8, String(text || "").length);
-        const ms = Math.min(4200, 450 + chars * 42);
-        const start = performance.now();
-        await new Promise((resolve) => {
-          const tick = (now) => {
-            const t = (now - start) / ms;
-            if (t >= 1) {
-              avatar.setMouthOpen(0);
-              avatar.setTalking(false);
-              resolve();
-              return;
-            }
-            const pulse =
-              0.2 +
-              Math.abs(Math.sin(now * 0.03)) * 0.75 * (1 - t * 0.35);
-            avatar.setMouthOpen(pulse);
-            requestAnimationFrame(tick);
-          };
-          requestAnimationFrame(tick);
-        });
-        // Soft settle to emotion idle
-        avatar.setMouthOpen(0);
-      };
+      btnMic.addEventListener("click", () => {
+        if (busy) return;
+        if (!voice.supportsMic) {
+          addBubble("system", "This browser has no speech recognition — type instead.");
+          return;
+        }
+        voice.toggleMic();
+        syncMicBtn();
+        if (voice.micOn) {
+          input.placeholder = "Listening… speak now";
+          avatar.setEmotion("thinking");
+          setEmotionPill("thinking");
+        } else {
+          input.placeholder = "同 Amoji 傾偈… or tap 🎤 to speak";
+        }
+      });
 
-      let busy = false;
       form.addEventListener("submit", async (ev) => {
         ev.preventDefault();
-        if (busy) return;
         const text = input.value.trim();
-        if (!text) return;
-        busy = true;
-        sendBtn.disabled = true;
         input.value = "";
         autosize();
-        addBubble("user", text);
-        avatar.setEmotion("thinking");
-        setEmotionPill("thinking");
-        avatar.setTalking(false);
-        avatar.setMouthOpen(0);
-
-        try {
-          const result = await chat.reply(text);
-          setModePill(result.mode || chat.mode);
-          const reply = result.reply || "……";
-          addBubble("assistant", reply);
-          await speakViseme(reply, result.emotion || "happy");
-        } catch (err) {
-          addBubble("system", `Chat failed: ${err?.message || err}`);
-          avatar.setEmotion("sad");
-          setEmotionPill("sad");
-        } finally {
-          busy = false;
-          sendBtn.disabled = false;
-          input.focus();
-        }
+        await runTurn(text);
       });
 
       input.addEventListener("keydown", (ev) => {
