@@ -4,6 +4,7 @@
  * Events: sakura | lip_sync | done | aborted
  * HUD fields: phase, emotion, summary, steps (first steps shown in UI)
  */
+import { detectLanguage, stripAsrTags } from './dialect.js';
 
 const ROBOT_EVENTS = Object.freeze([
   "sakura",
@@ -17,6 +18,7 @@ const EMPTY_HUD = () => ({
   emotion: "neutral",
   summary: "",
   steps: [],
+  language: "yue",
 });
 
 /**
@@ -106,6 +108,7 @@ export function createVoiceRobotBridge(opts = {}) {
 
   let hud = EMPTY_HUD();
   let memory = { userName: opts.memory?.userName ?? null };
+  let language = opts.language || "yue";
   let aborted = false;
 
   const emit = (event, payload = {}) => {
@@ -117,6 +120,7 @@ export function createVoiceRobotBridge(opts = {}) {
       emotion: payload.emotion ?? hud.emotion,
       summary: payload.summary ?? hud.summary,
       steps: Array.isArray(payload.steps) ? payload.steps.slice() : hud.steps,
+      language: payload.language ?? language,
       ...payload,
     };
     hud = {
@@ -124,6 +128,7 @@ export function createVoiceRobotBridge(opts = {}) {
       emotion: next.emotion,
       summary: next.summary,
       steps: next.steps,
+      language: next.language,
     };
     opts.onEvent?.(event, next);
     for (const cb of listeners.get(event) ?? []) {
@@ -142,10 +147,14 @@ export function createVoiceRobotBridge(opts = {}) {
         emotion: hud.emotion,
         summary: hud.summary,
         steps: hud.steps.slice(),
+        language: hud.language || language,
       };
     },
     get memory() {
       return { ...memory };
+    },
+    get language() {
+      return language;
     },
     /**
      * @param {'sakura'|'lip_sync'|'done'|'aborted'} event
@@ -173,19 +182,28 @@ export function createVoiceRobotBridge(opts = {}) {
         phase: "aborted",
         summary: String(reason),
         steps: hud.steps,
+        language,
       });
     },
     /**
      * Run a stub robot turn: sakura → lip_sync → done (or aborted).
      * Updates memory when the user introduces a name (e.g. 小明).
+     * Auto-switches language from SenseVoice tags / heuristics.
      * @param {string} userText
      */
     async runTurn(userText) {
       aborted = false;
-      const learned = extractRememberedName(userText);
+      const detected = detectLanguage(
+        { asrRaw: userText, text: userText },
+        { sticky: language, preferred: language },
+      );
+      language = detected.id;
+      const cleanText = stripAsrTags(userText) || String(userText ?? "");
+
+      const learned = extractRememberedName(cleanText);
       if (learned) memory.userName = learned;
 
-      const plan = planRobotSteps(userText, memory);
+      const plan = planRobotSteps(cleanText, memory);
       if (plan.rememberedName) memory.userName = plan.rememberedName;
 
       emit("sakura", {
@@ -193,6 +211,8 @@ export function createVoiceRobotBridge(opts = {}) {
         emotion: plan.emotion,
         summary: plan.summary,
         steps: plan.steps,
+        language,
+        dialect: detected,
       });
 
       if (aborted) return this.getHud();
@@ -202,20 +222,23 @@ export function createVoiceRobotBridge(opts = {}) {
         emotion: plan.emotion,
         summary: plan.summary,
         steps: plan.steps,
+        language,
       });
 
       if (aborted) return this.getHud();
 
-      const reply = buildStubReply(userText, memory);
+      const reply = buildStubReply(cleanText, memory, language);
       emit("done", {
         phase: "done",
         emotion: plan.emotion,
         summary: plan.summary,
         steps: plan.steps,
         reply,
+        language,
+        dialect: detected,
       });
 
-      return { ...this.getHud(), reply };
+      return { ...this.getHud(), reply, language, dialect: detected };
     },
   };
 }
@@ -223,11 +246,25 @@ export function createVoiceRobotBridge(opts = {}) {
 /**
  * @param {string} userText
  * @param {{ userName?: string | null }} memory
+ * @param {string} [language]
  */
-function buildStubReply(userText, memory) {
+function buildStubReply(userText, memory, language = "yue") {
   const askingName = /我叫咩名|我叫什么|我叫什麼|what('?s| is) my name/i.test(
     userText,
   );
+  if (language === "en") {
+    if (askingName && memory.userName) {
+      return `You're ${memory.userName}!`;
+    }
+    if (askingName) {
+      return "I don't remember your name yet — tell me again?";
+    }
+    const learned = extractRememberedName(userText);
+    if (learned) {
+      return `Hi ${learned}! Nice to meet you.`;
+    }
+    return "Got it — what would you like to talk about?";
+  }
   if (askingName && memory.userName) {
     return `你叫${memory.userName}呀！`;
   }

@@ -36,3 +36,17 @@ await session.importSessionArchive(fileFromInput);
 ```
 
 See also [VoiceChatOrchestrator](./VOICE_CHAT_ORCHESTRATOR.md) for always-on listen wiring.
+
+## Lab idle presence
+
+While the lab host is not talking, an `IdlePresenceClock` rAF loop updates the Robot HUD **idle** row (breath / jaw / blink). Speaking turns pause idle; Clear resets the clock.
+
+```js
+import { createIdlePresenceClock } from "@amoji/engine/engine";
+const idle = createIdlePresenceClock({ emotion: "neutral" });
+// each rAF while !talking: idle.step(dt)
+```
+
+## Dialect auto-switch
+
+`detectLanguage()` reads SenseVoice tags (`<|yue|>`, `<|en|>`, …) and Latin/Cantonese heuristics. The robot bridge sticky-switches language per `runTurn` and returns English or 粵語 stub replies accordingly.
