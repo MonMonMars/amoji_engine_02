@@ -25,6 +25,8 @@ export async function runWorkerRobotTurn(opts) {
     throw new TypeError('runWorkerRobotTurn requires worker.asr and robot.runTurn');
   }
 
+  const t0 = nowMs();
+  const asrStarted = t0;
   const asr = await opts.worker.asr({
     text: opts.text,
     audioBase64: opts.audioBase64,
@@ -32,6 +34,7 @@ export async function runWorkerRobotTurn(opts) {
     sequence: opts.sequence,
     language: opts.language,
   });
+  const asrMs = Math.round(nowMs() - asrStarted);
 
   if (typeof opts.worker.setLanguage === 'function') {
     opts.worker.setLanguage(asr.language);
@@ -40,11 +43,13 @@ export async function runWorkerRobotTurn(opts) {
   const emotion = asr.emotion?.emotion || 'neutral';
   const intensity = asr.emotion?.intensity ?? 0.5;
 
+  const robotStarted = nowMs();
   // Robot plans immediately; host can animate speak using tts.durationSec.
   const robotResult = await opts.robot.runTurn(asr.text, {
     forceReply: opts.replyText,
     speakMs: typeof opts.speakMs === 'number' ? opts.speakMs : 0,
   });
+  const robotMs = Math.round(nowMs() - robotStarted);
 
   if (robotResult.barged) {
     return {
@@ -56,10 +61,21 @@ export async function runWorkerRobotTurn(opts) {
       emotion: { emotion, intensity, ...(asr.emotion || {}) },
       reply: robotResult.reply || '',
       barged: true,
+      metrics: {
+        schema: 'amoji.turnMetrics.v1',
+        asrMs,
+        robotMs,
+        ttsMs: 0,
+        totalMs: Math.round(nowMs() - t0),
+        speechMs: opts.speechMs ?? null,
+        ttsDurationSec: 0,
+        chunkCount: 0,
+      },
     };
   }
 
   const reply = robotResult.reply || opts.replyText || '';
+  const ttsStarted = nowMs();
   const tts = await opts.worker.tts(
     {
       text: reply,
@@ -68,6 +84,7 @@ export async function runWorkerRobotTurn(opts) {
     },
     { onChunk: opts.onChunk },
   );
+  const ttsMs = Math.round(nowMs() - ttsStarted);
 
   return {
     schema: WORKER_TURN_SCHEMA,
@@ -78,7 +95,23 @@ export async function runWorkerRobotTurn(opts) {
     emotion: { emotion, intensity, ...(asr.emotion || {}) },
     reply: tts.text || reply,
     barged: false,
+    metrics: {
+      schema: 'amoji.turnMetrics.v1',
+      asrMs,
+      robotMs,
+      ttsMs,
+      totalMs: Math.round(nowMs() - t0),
+      speechMs: opts.speechMs ?? null,
+      ttsDurationSec: Number(tts.durationSec) || 0,
+      chunkCount: tts.chunkCount || tts.chunks?.length || 0,
+    },
   };
+}
+
+function nowMs() {
+  return typeof performance !== 'undefined' && performance.now
+    ? performance.now()
+    : Date.now();
 }
 
 /**

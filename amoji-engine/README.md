@@ -127,6 +127,8 @@ Env: `OPENAI_API_KEY`, `AMOJI_FACE_LIVE_URL`, `AMOJI_VOICE_WORKER`.
 - [Session & presence](./docs/SESSION_AND_PRESENCE.md)
 - [Voice worker (SenseVoice / CosyVoice)](./docs/VOICE_WORKER.md)
 - [Realtime voice lab](./docs/REALTIME_VOICE_LAB.md)
+- [CI / offline validation](./docs/CI.md)
+- [Changelog](./CHANGELOG.md)
 
 ## Scripts
 
