@@ -449,9 +449,11 @@
             : "—";
           return;
         }
+        const tip =
+          sample.pose?.fingerRIndexTip ?? sample.pose?.fingerRIndex ?? 0;
         const point = sample.pose?.handRPoint ?? 0;
         const arm = sample.pose?.armRA ?? 0;
-        gestureHudEl.textContent = `${sample.style} · arm ${arm.toFixed(2)} · point ${point.toFixed(2)}${
+        gestureHudEl.textContent = `${sample.style} · arm ${arm.toFixed(2)} · tip ${tip.toFixed(2)} · point ${point.toFixed(2)}${
           talkGestures.active ? "" : " · soft"
         }`;
       };
