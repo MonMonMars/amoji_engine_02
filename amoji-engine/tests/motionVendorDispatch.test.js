@@ -107,6 +107,51 @@ describe("sampleVendorMotionFrame + dispatcher", () => {
     expect(posts[0].pkg.vendor).toBe("softbank");
   });
 
+  it("Motion demo streams Reachy frames and Furhat sayText on begin", async () => {
+    const frames = [];
+    const begins = [];
+    const bridge = {
+      mode: "http",
+      begin(pkg, meta) {
+        begins.push({ pkg, meta });
+        return { ok: true };
+      },
+      frame(pkg) {
+        frames.push(pkg);
+        return { ok: true };
+      },
+    };
+    const robot = createVoiceRobotBridge({ motionVendor: "reachy" });
+    const pkg = robot.fromMotionStyle("wave", { text: "拜拜" });
+    const disp = createRobotMotionDispatcher({ bridge });
+    disp.begin(pkg, { source: "demo" });
+    disp.frame(robot.sampleMotionFrame(0.08, { speechEnergy: 0.55 }), {
+      source: "demo-raf",
+    });
+    disp.frame(robot.sampleMotionFrame(0.08, { speechEnergy: 0.55 }), {
+      source: "demo-raf",
+    });
+    expect(frames.length).toBe(2);
+    expect(frames[0].vendor).toBe("reachy");
+    expect(frames[0].reachy.r_arm).toHaveLength(7);
+    expect(frames[1].timeSec).toBeGreaterThan(frames[0].timeSec);
+
+    robot.setMotionVendor("furhat");
+    const furhat = robot.fromMotionStyle("point", { text: "睇下呢個！" });
+    expect(furhat.furhat.say).toBe("睇下呢個！");
+    disp.begin(furhat, {
+      source: "demo",
+      sayText: furhat.furhat.say,
+    });
+    expect(begins.at(-1).meta.sayText).toBe("睇下呢個！");
+
+    const turn = await createVoiceRobotBridge({
+      motionVendor: "furhat",
+    }).runTurn("你好", { forceReply: "你好呀！" });
+    expect(turn.sayText).toBe("你好呀！");
+    expect(turn.motion.furhat.say).toBe("你好呀！");
+  });
+
   it("share URL includes motion vendor", () => {
     const url = buildLabShareUrl({
       href: "http://127.0.0.1:5173/prototypes/realtime-voice-lab.html",

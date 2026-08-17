@@ -29,6 +29,7 @@
 - Motion vendor pref (`?motion=`) + animated vendor frames (`sampleVendorMotionFrame`) + mock dispatcher; SoftBank `annotatedReply` on robot turns
 - HTTP motion bridge (`scripts/mock-motion-bridge.mjs` `:7891`) + `createMotionBridgeClient` / `?motionBridge=` pref; lab Ready check + session `motionDispatch` export; `npm run demo:motion-smoke`
 - SoftBank `annotatedReply` on `sakura` begin (ALAnimatedSpeech reaches the motion bridge before speak); lab **Motion demo** + `V` hotkey cycles talk styles → vendor packages → bridge
+- Motion demo idle frame stream (~12 Hz) for Reachy / Furhat / Unitree / ROS without a voice turn; Furhat `say` / `sayText` begin meta (SoftBank annotatedSay parity)
 - Lab UI: Always-on, Hold to talk, Ready check, Worker, Face Live, Dialect, VAD, TTS mute/volume, Expression, Gesture, Prosody, Barge-in, Export/Import
 - Docs: REALTIME_VOICE_LAB, VOICE_WORKER, CI matrix, architecture note for JS path
 

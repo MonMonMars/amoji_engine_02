@@ -127,6 +127,10 @@ export function createMotionBridgeClient(opts = {}) {
         package: motionPackage,
         source: meta.source || "client",
         annotatedReply: meta.annotatedReply || null,
+        sayText:
+          meta.sayText ||
+          motionPackage?.furhat?.say ||
+          null,
       });
     },
     frame(framePackage, meta = {}) {

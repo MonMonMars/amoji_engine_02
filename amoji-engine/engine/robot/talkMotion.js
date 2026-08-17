@@ -306,7 +306,7 @@ export function buildRobotMotionPackage(opts = {}) {
     case "softbank":
       return { ...base, softbank: toSoftbankMotion(style, opts.text) };
     case "furhat":
-      return { ...base, furhat: toFurhatMotion(style, intensity) };
+      return { ...base, furhat: toFurhatMotion(style, intensity, opts.text) };
     case "reachy":
       return { ...base, reachy: toReachyMotion(style, intensity) };
     case "unitree_g1":
@@ -356,15 +356,19 @@ export function toSoftbankMotion(style, text) {
   };
 }
 
-/** @param {string} style @param {number} intensity */
-export function toFurhatMotion(style, intensity) {
+/** @param {string} style @param {number} intensity @param {string} [text] */
+export function toFurhatMotion(style, intensity, text = "") {
   const map = FURHAT_STYLE_MAP[style] || FURHAT_STYLE_MAP.explain;
   const strength = Number((map.strength * intensity).toFixed(3));
+  const say = String(text || "").trim() || null;
   return {
     api: "Furhat Remote API POST /furhat/gesture",
     name: map.name,
     strength,
     duration: 1,
+    // Spoken line for POST /furhat/say (SoftBank annotatedSay parity)
+    say,
+    sayApi: say ? "Furhat Remote API POST /furhat/say" : null,
     // Optional custom keyframe body (Remote API GestureDefinition shape)
     definition: {
       name: `amoji_${style}`,
@@ -553,7 +557,7 @@ export function sampleVendorMotionFrame(timeSec, opts = {}) {
     return { ...base, softbank: toSoftbankMotion(style, opts.text) };
   }
   if (vendor === "furhat") {
-    const furhat = toFurhatMotion(style, intensity);
+    const furhat = toFurhatMotion(style, intensity, opts.text);
     // Animate neck pan slightly for wave / point over time
     const wiggle = Math.sin(t * 4.2 * Math.PI) * 8 * intensity;
     if (style === "wave" || style === "point") {
