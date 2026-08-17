@@ -21,22 +21,35 @@ Serve the **repository root** (not only `amoji-engine/`) so imports like `../amo
 | Turn latency rollup | `engine/lab/turnMetricsRollup.js` |
 | Dialect preference | `engine/lab/dialectPref.js` |
 | VAD sensitivity | `engine/lab/listenPref.js` |
+| Lab hotkeys | `engine/lab/labHotkeys.js` |
+| Latency budget | `engine/lab/latencyBudget.js` |
 
 ## Controls
 
 1. **Always-on** — mic permission, VAD loop, worker pipeline turns, partial ASR emotion prefires.
-2. **Hold to talk** — press-and-hold mic capture → release runs the worker pipeline (turn Always-on off first).
+2. **Hold to talk** — press-and-hold mic capture → release runs the worker pipeline (turn Always-on off first). Also **Space**.
 3. **Ready check** — probe worker `health()` and log current lab URL / dialect / VAD.
 4. **Worker demo** — one tagged SenseVoice stub → robot reply → CosyVoice-style chunks + playback.
 5. **Face Live** — connect to `?face=` URL; idle (~10 Hz) + lip-sync injects while talking.
 6. **Dialect** — cycle Auto → Yue → En (`?lang=` / `amoji.dialectPref`); force lock skips SenseVoice tag auto-switch.
 7. **VAD** — cycle High → Normal → Low (`?vad=` / `amoji.listenPref`); hot-updates thresholds while listening.
-8. **TTS mute** — silence CosyVoice playback (pipeline + lip-sync ticks still run when unmuted chunks arrive).
-9. **Expression demo** — cycle Sakura presets (`neutral → happy → thinking → surprised → sad → angry`); injects when Face Live is on.
-10. **Prosody demo** / **Barge-in** — marker text / abort + TTS flush.
+8. **TTS mute** — silence CosyVoice playback (pipeline + lip-sync ticks still run when unmuted chunks arrive). Also **M**.
+9. **Expression demo** — cycle Sakura presets (`neutral → happy → thinking → surprised → sad → angry`); injects when Face Live is on. Also **E**.
+10. **Prosody demo** / **Barge-in** — marker text / abort + TTS flush. Barge also **Esc**.
 11. **Export / Import Session** — JSON archive of chat + ticks + turn metrics rollup (p50/p95).
 
-Robot HUD shows expression, partial ASR text, VAD sensitivity, last-turn latency, and a rolling **rollup** line (`n=… Σ p50 · p95 · μ`).
+Robot HUD shows expression, partial ASR text, VAD sensitivity, last-turn latency, rollup, and a soft **budget** line (default Σ ≤ 3500ms).
+
+### Keyboard
+
+| Key | Action |
+| --- | --- |
+| `Space` | Hold-to-talk (same as PTT button) |
+| `Esc` | Barge-in |
+| `M` | Toggle TTS mute |
+| `E` | Cycle expression preset |
+
+Ignored while focus is in an input / textarea.
 
 ## URL / env
 

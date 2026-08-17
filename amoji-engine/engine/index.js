@@ -172,6 +172,19 @@ export {
 } from "./lab/listenPref.js";
 
 export {
+  LATENCY_BUDGET_SCHEMA,
+  DEFAULT_LATENCY_BUDGET,
+  checkLatencyBudget,
+  formatLatencyBudget,
+  resolveLatencyBudget,
+} from "./lab/latencyBudget.js";
+
+export {
+  LAB_HOTKEYS_SCHEMA,
+  createLabHotkeys,
+} from "./lab/labHotkeys.js";
+
+export {
   TURN_METRICS_ROLLUP_SCHEMA,
   createTurnMetricsRollup,
   normalizeTurnMetrics,
