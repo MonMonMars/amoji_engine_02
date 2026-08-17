@@ -45,7 +45,12 @@ export {
 export {
   IDLE_PRESENCE_SCHEMA,
   presenceToFaceLiveParams,
+  sampleIdlePresence,
+  IdlePresenceClock,
+  createIdlePresenceClock,
+  idlePresenceParameters,
   type IdlePresenceSample,
+  type IdlePresenceOptions,
 } from "./face-live/idlePresence.js";
 
 export {
