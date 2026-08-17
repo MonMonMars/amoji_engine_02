@@ -58,4 +58,12 @@ When `autoCreateResponse` is true (default), server VAD creates responses — th
 - **Custom WebSocket factory** — required in browser (auth headers) or for local proxies
 - **Expression presets** — edit `SAKURA_EXPRESSION_PRESETS` in `expressions.ts`
 - **Persona** — pass `systemInstructions` to orchestrator options
+
+## JS engine + lab (parallel path)
+
+Browser/lab modules under `engine/` implement the same product loop **without** requiring OpenAI Realtime:
+
+`always-on VAD → SenseVoice worker ASR → robot bridge → CosyVoice TTS chunks → Web Audio + lip-sync → Face Live inject`
+
+See [Realtime voice lab](./REALTIME_VOICE_LAB.md) and [Voice worker](./VOICE_WORKER.md). The TS `AmojiOrchestrator` remains the production Realtime path; the lab proves barge-in, dialect, prosody, and Sakura inject offline.
 - **Mock Face Live** — `startMockFaceLiveBridge()` for CI / dry-run demos
