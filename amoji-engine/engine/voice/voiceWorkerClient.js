@@ -37,6 +37,34 @@ export async function callVoiceWorker(baseUrl, path, body) {
 }
 
 /**
+ * GET /health on an HTTP voice worker.
+ * @param {string} baseUrl
+ * @param {{ signal?: AbortSignal, timeoutMs?: number }} [opts]
+ */
+export async function callVoiceWorkerHealth(baseUrl, opts = {}) {
+  const url = `${String(baseUrl).replace(/\/$/, '')}/health`;
+  const timeoutMs = Number(opts.timeoutMs) || 2500;
+  const ctrl = opts.signal ? null : new AbortController();
+  const timer =
+    ctrl && timeoutMs > 0
+      ? setTimeout(() => ctrl.abort(), timeoutMs)
+      : null;
+  try {
+    const res = await fetch(url, {
+      method: 'GET',
+      signal: opts.signal || ctrl?.signal,
+    });
+    if (!res.ok) {
+      throw new Error(`voice worker health ${res.status}`);
+    }
+    const body = await res.json();
+    return { ok: true, ...body, url };
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
+
+/**
  * Stream NDJSON lines from POST /tts/stream.
  * @param {string} baseUrl
  * @param {object} body
@@ -274,6 +302,40 @@ export function createVoiceWorkerClient(opts = {}) {
     setLanguage(id) {
       language = id || language;
       return language;
+    },
+
+    /**
+     * Probe worker readiness (mock always ok; HTTP hits GET /health).
+     * @param {{ signal?: AbortSignal, timeoutMs?: number }} [healthOpts]
+     */
+    async health(healthOpts = {}) {
+      if (mode !== 'http' || !workerUrl) {
+        const out = {
+          ok: true,
+          mode: 'mock',
+          asr: 'mock',
+          tts: 'mock',
+        };
+        emit('health', out);
+        return out;
+      }
+      try {
+        const out = {
+          mode: 'http',
+          ...(await callVoiceWorkerHealth(workerUrl, healthOpts)),
+        };
+        emit('health', out);
+        return out;
+      } catch (err) {
+        const out = {
+          ok: false,
+          mode: 'http',
+          url: workerUrl,
+          error: err?.message || String(err),
+        };
+        emit('health', out);
+        return out;
+      }
     },
 
     /**

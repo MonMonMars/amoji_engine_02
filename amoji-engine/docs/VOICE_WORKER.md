@@ -9,13 +9,15 @@ Cantonese-first ASR/TTS worker path used by the realtime voice lab.
 | API | Role |
 | --- | --- |
 | `createVoiceWorkerClient({ mode, workerUrl })` | Mock or HTTP façade |
+| `client.health()` | Mock always-ok or `GET /health` |
 | `client.asr({ text \| audioBase64 })` | SenseVoice parse + dialect + SER emotion |
 | `client.tts({ text, emotion, … })` | CosyVoice-style chunk stream (prosody markers stripped) |
 | `client.runTurn({ text, replyText? })` | ASR → emotion → TTS |
 | `parseSenseVoiceTranscript` / `emotionFromSenseVoice` | Tag parse + SER blend |
 | `createPartialAsrWatcher` | Interim ASR while mic is open |
 | `createMicFrameBuffer` / `createWorkerTurnHost` | Buffer mic → ASR → robot → TTS |
-| `runWorkerRobotTurn` | One-shot pipeline turn |
+| `runWorkerRobotTurn` | One-shot pipeline turn (+ `metrics`) |
+| `createTurnMetricsRollup` | Lab p50/p95 latency rollup |
 
 ## Always-on integration
 

@@ -107,10 +107,10 @@
     <p class="lead">
       Prototype harness for Cantonese realtime voice + Sakura Face Live.
       Toggle <strong>Always-on</strong> for energy-VAD → SenseVoice/CosyVoice worker pipeline.
-      Use <strong>Export / Import Session</strong> for archives.
+      Use <strong>Export / Import Session</strong> for archives (includes latency rollup).
       <strong>Robot steps</strong> HUD tracks
       <code>sakura → lip_sync → done/aborted</code> via
-      <code>createVoiceRobotBridge</code>.
+      <code>createVoiceRobotBridge</code>, plus last-turn latency and p50/p95 rollup.
     </p>
 
     <div class="row">
@@ -172,6 +172,7 @@
       <span class="k">worker</span><span class="v" id="worker-hud">mock</span>
       <span class="k">face live</span><span class="v" id="facelive-hud">off</span>
       <span class="k">latency</span><span class="v" id="latency-hud">—</span>
+      <span class="k">rollup</span><span class="v" id="rollup-hud">—</span>
       <span class="k">summary</span><span class="v" id="robot-summary">—</span>
       <span class="k">first steps</span><span class="v" id="robot-steps">—</span>
     </div>
@@ -194,6 +195,7 @@
         createTtsPlaybackQueue,
         createLipSyncTracker,
         createSakuraFaceLiveClient,
+        createTurnMetricsRollup,
         resolveVoiceWorkerConfig,
         resolveFaceLiveConfig,
         runWorkerRobotTurn,
@@ -213,8 +215,11 @@
       const workerHudEl = document.getElementById("worker-hud");
       const faceLiveHudEl = document.getElementById("facelive-hud");
       const latencyHudEl = document.getElementById("latency-hud");
+      const rollupHudEl = document.getElementById("rollup-hud");
       const summaryEl = document.getElementById("robot-summary");
       const stepsEl = document.getElementById("robot-steps");
+
+      const metricsRollup = createTurnMetricsRollup({ maxSamples: 200 });
 
       const session = createLabSessionFacade({
         storageKey: "amoji.realtimeVoiceLab.session",
@@ -223,6 +228,13 @@
           branch: "cursor/realtime-voice-chat-0f5c",
         },
       });
+
+      const applyTurnMetrics = (metrics) => {
+        if (!metrics) return;
+        metricsRollup.push(metrics);
+        latencyHudEl.textContent = `asr ${metrics.asrMs | 0} · robot ${metrics.robotMs | 0} · tts ${metrics.ttsMs | 0} · Σ ${metrics.totalMs | 0}ms`;
+        rollupHudEl.textContent = metricsRollup.formatHud();
+      };
 
       const workerConfig = resolveVoiceWorkerConfig();
       const faceLiveConfig = resolveFaceLiveConfig();
@@ -329,9 +341,7 @@
             barged: turn.barged,
             metrics: turn.metrics,
           });
-          if (turn.metrics) {
-            latencyHudEl.textContent = `asr ${turn.metrics.asrMs|0} · robot ${turn.metrics.robotMs|0} · tts ${turn.metrics.ttsMs|0} · Σ ${turn.metrics.totalMs|0}ms`;
-          }
+          applyTurnMetrics(turn.metrics);
         },
         onChunk: (chunk) => {
           void ttsPlayer.enqueue(chunk);
@@ -428,9 +438,8 @@
                   ? ` latency=${pipelineTurn.metrics.totalMs}ms`
                   : ""),
             );
-            if (pipelineTurn.metrics) {
-              latencyHudEl.textContent = `asr ${pipelineTurn.metrics.asrMs|0} · robot ${pipelineTurn.metrics.robotMs|0} · tts ${pipelineTurn.metrics.ttsMs|0} · Σ ${pipelineTurn.metrics.totalMs|0}ms`;
-            }
+            // Pre-built turns (Worker demo) skip turnHost.onTurn — record here.
+            if (extra?.pipelineTurn) applyTurnMetrics(pipelineTurn.metrics);
             if (pipelineTurn.barged) {
               session.recordTick("barge", { during: "talk", source: "pipeline" });
               log("talk barged — assistant reply cancelled");
@@ -572,9 +581,23 @@
       );
       lipsyncHudEl.textContent = "—";
       faceLiveHudEl.textContent = "off";
+      rollupHudEl.textContent = "—";
       workerHudEl.textContent = workerConfig.mode === "http"
         ? `http · ${workerConfig.source} · ${workerConfig.workerUrl}`
         : "mock";
+
+      void worker.health().then((h) => {
+        if (h.ok) {
+          workerHudEl.textContent =
+            workerConfig.mode === "http"
+              ? `ok · ${h.asr || "asr"}/${h.tts || "tts"} · ${workerConfig.workerUrl}`
+              : "mock · healthy";
+          log(`worker health ok mode=${h.mode} asr=${h.asr} tts=${h.tts}`);
+        } else {
+          workerHudEl.textContent = `down · ${h.error || "health failed"}`;
+          log(`worker health failed: ${h.error || "unknown"}`);
+        }
+      });
       let unsubscribeMic = null;
       let mediaStream = null;
       let audioCtx = null;
@@ -786,16 +809,18 @@
       document
         .getElementById("btn-export-session")
         .addEventListener("click", () => {
+          session.meta.turnMetrics = metricsRollup.toJSON();
           const { archive, downloaded } = session.exportSessionArchive({
             download: true,
           });
           session.recordTick("export", {
             messages: archive.chat.messages.length,
             ticks: archive.ticks.ticks.length,
+            turns: metricsRollup.length,
             downloaded,
           });
           log(
-            `exported session chat=${archive.chat.messages.length} ticks=${archive.ticks.ticks.length} downloaded=${downloaded}`,
+            `exported session chat=${archive.chat.messages.length} ticks=${archive.ticks.ticks.length} turns=${metricsRollup.length} downloaded=${downloaded}`,
           );
         });
 
@@ -806,13 +831,18 @@
           if (!file) return;
           try {
             const archive = await session.importSessionArchive(file);
+            if (archive.meta?.turnMetrics) {
+              metricsRollup.fromJSON(archive.meta.turnMetrics);
+              rollupHudEl.textContent = metricsRollup.formatHud();
+            }
             renderChat();
             session.recordTick("import", {
               name: file.name,
               messages: archive.chat.messages.length,
+              turns: metricsRollup.length,
             });
             log(
-              `imported ${file.name} chat=${archive.chat.messages.length} ticks=${archive.ticks.ticks.length}`,
+              `imported ${file.name} chat=${archive.chat.messages.length} ticks=${archive.ticks.ticks.length} turns=${metricsRollup.length}`,
             );
           } catch (err) {
             log(`import failed: ${err?.message ?? err}`);
@@ -823,14 +853,17 @@
 
       document.getElementById("btn-clear").addEventListener("click", () => {
         session.clear();
+        metricsRollup.clear();
         robot.reset();
         robot.clearMemory();
         idle.reset();
         idle.setEmotion("neutral", 0.42);
+        latencyHudEl.textContent = "—";
+        rollupHudEl.textContent = "—";
         renderChat();
         renderRobotHud();
         statusEl.textContent = "cleared";
-        log("cleared chat, ticks, and robot HUD");
+        log("cleared chat, ticks, metrics rollup, and robot HUD");
       });
     </script>
   </body>

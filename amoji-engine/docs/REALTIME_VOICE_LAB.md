@@ -16,6 +16,7 @@ Serve the **repository root** (not only `amoji-engine/`) so imports like `../amo
 | Idle presence morphs | `engine/face/idlePresence.js` |
 | Face Live WS inject | `engine/face/sakuraFaceLiveClient.js` |
 | Session archive | `engine/lab/sessionArchive.js` |
+| Turn latency rollup | `engine/lab/turnMetricsRollup.js` |
 
 ## Controls
 
@@ -23,7 +24,9 @@ Serve the **repository root** (not only `amoji-engine/`) so imports like `../amo
 2. **Worker demo** — one tagged SenseVoice stub → robot reply → CosyVoice-style chunks + playback.
 3. **Face Live** — connect to `?face=` URL; idle (~10 Hz) + lip-sync injects while talking.
 4. **Prosody demo** / **Barge-in** — marker text / abort + TTS flush.
-5. **Export / Import Session** — JSON archive of chat + ticks.
+5. **Export / Import Session** — JSON archive of chat + ticks + turn metrics rollup (p50/p95).
+
+Robot HUD shows last-turn latency and a rolling **rollup** line (`n=… Σ p50 · p95 · μ`).
 
 ## URL / env
 
