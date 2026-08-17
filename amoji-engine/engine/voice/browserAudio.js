@@ -136,6 +136,7 @@ function sleep(ms) {
 /**
  * Queue + play streamed TTS chunks (WAV or raw PCM base64).
  * Browser uses Web Audio; Node / tests use duration-based offline clock.
+ * Optional `onLipSync` receives Face Live mouth params per chunk.
  */
 export class TtsChunkPlayer {
   /**
@@ -143,6 +144,8 @@ export class TtsChunkPlayer {
    *   onStart?: (chunk: object) => void,
    *   onEnd?: (chunk: object) => void,
    *   onIdle?: () => void,
+   *   onLipSync?: (payload: { chunk: object, mouthOpen: number, parameters: object[] }) => void,
+   *   lipSync?: { pushChunk: Function, reset?: Function } | null,
    *   offline?: boolean,
    *   createAudioContext?: () => AudioContext,
    * }} [opts]
@@ -151,6 +154,8 @@ export class TtsChunkPlayer {
     this.onStart = opts.onStart || null;
     this.onEnd = opts.onEnd || null;
     this.onIdle = opts.onIdle || null;
+    this.onLipSync = opts.onLipSync || null;
+    this.lipSync = opts.lipSync || null;
     this.offline =
       opts.offline === true ||
       (typeof globalThis.AudioContext === 'undefined' &&
@@ -164,6 +169,7 @@ export class TtsChunkPlayer {
     this._generation = 0;
     this.muted = false;
     this._played = 0;
+    this._lastMouthOpen = 0;
   }
 
   async ensureCtx() {
@@ -196,6 +202,10 @@ export class TtsChunkPlayer {
     return this._played;
   }
 
+  get lastMouthOpen() {
+    return this._lastMouthOpen;
+  }
+
   /**
    * @param {object} chunk
    */
@@ -219,12 +229,40 @@ export class TtsChunkPlayer {
     this._generation += 1;
     this._queue = [];
     this._playing = false;
+    this._lastMouthOpen = 0;
+    this.lipSync?.reset?.();
     try {
       this.ctx?.suspend?.();
     } catch {
       /* ignore */
     }
     this.onIdle?.();
+  }
+
+  /**
+   * @param {object} chunk
+   */
+  _emitLipSync(chunk) {
+    if (!this.onLipSync && !this.lipSync) return;
+    let mouthOpen = 0;
+    /** @type {object[]} */
+    let parameters = [];
+    if (this.lipSync?.pushChunk) {
+      const result = this.lipSync.pushChunk(chunk);
+      mouthOpen = result.mouthOpen;
+      parameters = result.parameters || [];
+    } else {
+      mouthOpen = Math.min(
+        0.9,
+        0.2 + String(chunk.text || '').length * 0.05,
+      );
+      parameters = [
+        { id: 'ParamMouthOpenY', value: mouthOpen },
+        { id: 'ParamMouthSmile', value: mouthOpen > 0.1 ? 0.25 : 0.12 },
+      ];
+    }
+    this._lastMouthOpen = mouthOpen;
+    this.onLipSync?.({ chunk, mouthOpen, parameters });
   }
 
   async _drain() {
@@ -234,6 +272,7 @@ export class TtsChunkPlayer {
     while (this._queue.length && gen === this._generation) {
       const chunk = this._queue.shift();
       this.onStart?.(chunk);
+      this._emitLipSync(chunk);
       try {
         if (ctx && !this.offline) {
           const buffer = await decodeChunkToAudioBuffer(ctx, chunk);
@@ -257,6 +296,8 @@ export class TtsChunkPlayer {
     }
     if (gen === this._generation) {
       this._playing = false;
+      this._lastMouthOpen = 0;
+      this.lipSync?.reset?.();
       this.onIdle?.();
     }
   }
@@ -267,6 +308,8 @@ export class TtsChunkPlayer {
  *   onStart?: (chunk: object) => void,
  *   onEnd?: (chunk: object) => void,
  *   onIdle?: () => void,
+ *   onLipSync?: (payload: object) => void,
+ *   lipSync?: object,
  *   offline?: boolean,
  * }} [opts]
  */
