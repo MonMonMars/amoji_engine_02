@@ -11,6 +11,19 @@ import { getLlmProvider, LLM_PROVIDERS } from "./companionLlmProviders.js";
 
 export const COMPANION_LLM_CONNECT_SCHEMA = "amoji.companionLlmConnect.v1";
 
+/** True when opened from a public URL (Vercel / GitHub Pages), not localhost. */
+export function isHostedCompanion() {
+  if (typeof globalThis.location === "undefined") return false;
+  const h = globalThis.location.hostname;
+  return (
+    Boolean(h) &&
+    h !== "localhost" &&
+    h !== "127.0.0.1" &&
+    !h.startsWith("192.168.") &&
+    !h.endsWith(".local")
+  );
+}
+
 export const OLLAMA_PROBE_HOSTS = Object.freeze([
   "http://localhost:11434",
   "http://127.0.0.1:11434",
@@ -49,14 +62,31 @@ export async function fetchLlmStatus(fetchImpl = globalThis.fetch) {
  * @param {{ ok?: boolean, models?: string[] }} [directOllama]
  */
 export function rankAvailableProviders(status, directOllama) {
+  const hosted = Boolean(status?.hosted || isHostedCompanion());
   const ollamaModels =
-    status?.ollama?.models ||
-    (directOllama?.ok ? directOllama.models : []) ||
-    [];
-  const ollamaUp = Boolean(status?.ollama?.ok || directOllama?.ok);
+    hosted
+      ? []
+      : status?.ollama?.models ||
+        (directOllama?.ok ? directOllama.models : []) ||
+        [];
+  const ollamaUp = !hosted && Boolean(status?.ollama?.ok || directOllama?.ok);
 
   /** @type {{ id: string, model?: string, reason: string }[]} */
   const ranked = [];
+
+  if (hosted && status?.groq?.ok) {
+    ranked.push({ id: "groq", reason: "cloud Groq" });
+  }
+  if (hosted && status?.openrouter?.ok) {
+    ranked.push({ id: "openrouter-gemma", reason: "cloud OpenRouter" });
+  }
+  if (hosted && status?.openai?.ok) {
+    ranked.push({ id: "auto", reason: "cloud OpenAI" });
+  }
+  if (hosted && ranked.length) {
+    ranked.push({ id: "auto", reason: "cloud auto" });
+    return ranked;
+  }
 
   if (ollamaUp && ollamaModels.length) {
     const has4b = ollamaModels.some((m) => m === "qwen3:4b" || m.startsWith("qwen3:4b"));
@@ -104,9 +134,10 @@ export function pickBestProviderId(ranked) {
  */
 export async function autoConnectLlm(opts) {
   const fetchImpl = opts.fetchImpl || globalThis.fetch;
+  const hosted = isHostedCompanion();
   const [status, direct] = await Promise.all([
     fetchLlmStatus(fetchImpl),
-    probeOllamaDirect(),
+    hosted ? Promise.resolve({ ok: false, models: [] }) : probeOllamaDirect(),
   ]);
 
   const ranked = rankAvailableProviders(status, direct);
@@ -130,11 +161,14 @@ export async function autoConnectLlm(opts) {
  * @param {{ ok?: boolean, models?: string[] }} [directOllama]
  */
 export function probeProviderAvailability(status, directOllama) {
+  const hosted = Boolean(status?.hosted || isHostedCompanion());
   const ollamaModels =
-    status?.ollama?.models ||
-    (directOllama?.ok ? directOllama.models : []) ||
-    [];
-  const ollamaUp = Boolean(status?.ollama?.ok || directOllama?.ok);
+    hosted
+      ? []
+      : status?.ollama?.models ||
+        (directOllama?.ok ? directOllama.models : []) ||
+        [];
+  const ollamaUp = !hosted && Boolean(status?.ollama?.ok || directOllama?.ok);
 
   /** @type {Record<string, boolean>} */
   const available = {};
@@ -142,7 +176,14 @@ export function probeProviderAvailability(status, directOllama) {
   for (const p of LLM_PROVIDERS) {
     switch (p.id) {
       case "auto":
-        available[p.id] = ollamaUp || Boolean(status?.groq?.ok || status?.openai?.ok);
+        available[p.id] =
+          ollamaUp ||
+          Boolean(
+            status?.groq?.ok ||
+              status?.openai?.ok ||
+              status?.openrouter?.ok ||
+              status?.cloudReady,
+          );
         break;
       case "ollama-qwen4":
         available[p.id] = ollamaModels.some(

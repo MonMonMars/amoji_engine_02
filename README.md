@@ -11,7 +11,9 @@
 
 ## Quick start
 
-**Windows:** see [WINDOWS.md](./WINDOWS.md) — double-click `start-companion.cmd` or run `node amoji-engine\scripts\lab-serve.mjs` from CMD (avoids PowerShell `npm` policy errors).
+**Online (no local PC):** see [DEPLOY.md](./DEPLOY.md) — deploy to Vercel, open your `*.vercel.app` URL.
+
+**Windows local:** see [WINDOWS.md](./WINDOWS.md) — double-click `start-companion.cmd` or run `node amoji-engine\scripts\lab-serve.mjs` from CMD.
 
 ```bash
 cd amoji-engine

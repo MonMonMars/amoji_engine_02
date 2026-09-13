@@ -113,9 +113,13 @@ export function createCompanionLlmSwitcher(opts) {
       opts.onSystem?.(
         `Auto-connected · ${getLlmProvider(activeId).label} (${connected.reason})`,
       );
+    } else if (connected.status?.hosted) {
+      opts.onSystem?.(
+        "Cloud mode — add GROQ_API_KEY on Vercel for smart replies, or use Basic offline",
+      );
     } else {
       opts.onSystem?.(
-        "No LLM detected — start Ollama (ollama serve) or use Basic offline mode",
+        "No LLM detected — deploy online (see DEPLOY.md) or start Ollama locally",
       );
     }
     return connected;
