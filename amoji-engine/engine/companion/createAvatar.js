@@ -1,7 +1,13 @@
 /**
  * Create the female anime companion avatar.
  * Default: VRM anime girl → GLTF fallback → procedural → 2D.
- * @param {{ canvas: HTMLCanvasElement, color?: string, modelUrl?: string, prefer?: 'vrm'|'gltf'|'auto' }} opts
+ * @param {{
+ *   canvas: HTMLCanvasElement,
+ *   color?: string,
+ *   modelUrl?: string,
+ *   prefer?: 'vrm'|'gltf'|'auto',
+ *   onCharacterTap?: (info: { point?: unknown }) => void,
+ * }} opts
  */
 export async function createCompanionAvatar(opts) {
   const prefer = opts.prefer || "vrm";
@@ -18,6 +24,7 @@ export async function createCompanionAvatar(opts) {
       const avatar = await createVrmAvatar({
         canvas: opts.canvas,
         modelUrl: modelUrl || "/prototypes/assets/companion-girl.vrm",
+        onCharacterTap: opts.onCharacterTap,
       });
       avatar.resize?.();
       return { avatar, kind: "vrm3d" };

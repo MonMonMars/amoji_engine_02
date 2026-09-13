@@ -7,14 +7,29 @@
  *   npm run lab
  *   npm run lab -- --port 5173
  *
- * Optional online LLM (OpenAI-compatible):
- *   OPENAI_API_KEY=sk-… OPENAI_BASE_URL=https://api.openai.com/v1 npm run lab
+ * Local LLM via Ollama (default — start Ollama on your machine first):
+ *   ollama serve
+ *   ollama pull llama3.2
+ *   npm run lab
+ *
+ * Optional cloud LLM (OpenAI-compatible):
+ *   OPENAI_API_KEY=sk-… npm run lab
+ *
+ * Custom Ollama host (e.g. if not on 11434):
+ *   OLLAMA_HOST=http://127.0.0.1:11434 npm run lab
  */
 import http from "node:http";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { CANTONESE_COMPANION_PROMPT } from "../engine/companion/companionBodyMotion.js";
+import {
+  chatOllama,
+  isOllamaReachable,
+  listOllamaModels,
+  pickOllamaModel,
+  OLLAMA_DEFAULT_HOST,
+} from "../engine/companion/companionOllama.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, "../..");
@@ -139,27 +154,77 @@ async function handleChatApi(req, res) {
       return;
     }
 
+    const ollamaHost =
+      process.env.OLLAMA_HOST ||
+      process.env.OLLAMA_BASE_URL ||
+      OLLAMA_DEFAULT_HOST;
+    const ollamaUp = await isOllamaReachable(ollamaHost);
     const apiKeyProbe =
       process.env.OPENAI_API_KEY ||
       process.env.AMOJI_LLM_KEY ||
       process.env.GROQ_API_KEY ||
       "";
+
     if (message === "__ping__") {
+      let mode = "local";
+      let model =
+        body.model ||
+        process.env.OLLAMA_MODEL ||
+        process.env.AMOJI_LLM_MODEL ||
+        "llama3.2";
+      if (ollamaUp) {
+        mode = "ollama";
+        const models = await listOllamaModels(ollamaHost);
+        model = pickOllamaModel(models, model);
+      } else if (apiKeyProbe) {
+        mode = "online";
+        model =
+          process.env.OPENAI_MODEL ||
+          (process.env.GROQ_API_KEY ? "llama-3.3-70b-versatile" : "gpt-4o");
+      }
       send(
         res,
         200,
-        {
-          ok: true,
-          mode: apiKeyProbe ? "online" : "local",
-          model:
-            body.model ||
-            process.env.AMOJI_LLM_MODEL ||
-            process.env.OPENAI_MODEL ||
-            (process.env.GROQ_API_KEY ? "llama-3.3-70b-versatile" : "gpt-4o"),
-        },
+        { ok: true, mode, model, ollama: ollamaUp, host: ollamaHost },
         { "Content-Type": "application/json; charset=utf-8" },
       );
       return;
+    }
+
+    const messages = [
+      { role: "system", content: system },
+      ...history.slice(-12),
+    ];
+    const last = messages[messages.length - 1];
+    if (!last || last.role !== "user" || last.content !== message) {
+      messages.push({ role: "user", content: message });
+    }
+
+    if (ollamaUp && process.env.OLLAMA_DISABLED !== "1") {
+      const ollama = await chatOllama({
+        base: ollamaHost,
+        model:
+          body.model ||
+          process.env.OLLAMA_MODEL ||
+          process.env.AMOJI_LLM_MODEL,
+        messages,
+        fetchImpl: fetch,
+      });
+      if (ollama.ok) {
+        send(
+          res,
+          200,
+          {
+            ok: true,
+            reply: ollama.reply,
+            mode: "ollama",
+            model: ollama.model,
+          },
+          { "Content-Type": "application/json; charset=utf-8" },
+        );
+        return;
+      }
+      console.warn("[lab] Ollama failed", ollama.error);
     }
 
     const apiKey =
@@ -189,11 +254,7 @@ async function handleChatApi(req, res) {
         body: JSON.stringify({
           model,
           temperature: 0.75,
-          messages: [
-            { role: "system", content: system },
-            ...history.slice(-12),
-            // history may already include the latest user turn from client
-          ].filter((m, i, arr) => {
+          messages: messages.filter((m, i, arr) => {
             // Avoid duplicate trailing user message if client already pushed it
             if (i === arr.length - 1 && m.role === "user" && m.content === message) {
               return true;
@@ -256,6 +317,22 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  if (req.method === "GET" && url.pathname === "/api/ollama/tags") {
+    cors(res);
+    const host =
+      process.env.OLLAMA_HOST ||
+      process.env.OLLAMA_BASE_URL ||
+      OLLAMA_DEFAULT_HOST;
+    const models = await listOllamaModels(host);
+    send(
+      res,
+      200,
+      { ok: true, models, host, reachable: models.length > 0 },
+      { "Content-Type": "application/json; charset=utf-8" },
+    );
+    return;
+  }
+
   if (req.method !== "GET" && req.method !== "HEAD") {
     send(res, 405, "Method Not Allowed");
     return;
@@ -297,5 +374,5 @@ server.listen(port, "0.0.0.0", () => {
   console.log(
     `[lab] voice lab http://127.0.0.1:${port}/prototypes/realtime-voice-lab.html`,
   );
-  console.log(`[lab] chat API POST /api/chat (set OPENAI_API_KEY for online LLM)`);
+  console.log(`[lab] chat API POST /api/chat (Ollama @ ${OLLAMA_DEFAULT_HOST} or OPENAI_API_KEY)`);
 });

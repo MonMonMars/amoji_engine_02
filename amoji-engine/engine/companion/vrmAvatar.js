@@ -19,35 +19,38 @@ const EMOTION_EXPRESSIONS = {
   angry: { [VRMExpressionPresetName.Angry]: 0.8 },
 };
 
-/** Frame camera on the head — face centered, portrait distance. */
+/** Grok Ani–style framing: upper body visible, not extreme face close-up. */
 function frameFaceCamera({ vrm, model, camera, controls, fitted }) {
   const fittedSize = fitted.getSize(new THREE.Vector3());
   const head =
     vrm.humanoid?.getNormalizedBoneNode?.("head") ||
     vrm.humanoid?.getNormalizedBoneNode?.("neck");
-  const face = new THREE.Vector3();
+  const anchor = new THREE.Vector3();
+  const upperBodyY = fitted.min.y + fittedSize.y * 0.58;
   if (head) {
     model.updateWorldMatrix(true, true);
-    head.getWorldPosition(face);
+    head.getWorldPosition(anchor);
+    anchor.y = anchor.y * 0.25 + upperBodyY * 0.75;
   } else {
-    face.set(0, fitted.min.y + fittedSize.y * 0.88, 0);
+    anchor.set(0, upperBodyY, 0);
   }
 
-  const portraitDist = Math.max(0.28, fittedSize.y * 0.22);
-  controls.target.copy(face);
-  camera.position.set(face.x, face.y + 0.01, face.z + portraitDist);
-  controls.minDistance = portraitDist * 0.65;
-  controls.maxDistance = portraitDist * 2.4;
-  controls.minPolarAngle = Math.PI * 0.46;
-  controls.maxPolarAngle = Math.PI * 0.54;
+  const portraitDist = Math.max(1.35, fittedSize.y * 1.05);
+  controls.target.copy(anchor);
+  camera.position.set(anchor.x, anchor.y + 0.04, anchor.z + portraitDist);
+  controls.minDistance = portraitDist * 0.72;
+  controls.maxDistance = portraitDist * 3.4;
+  controls.minPolarAngle = Math.PI * 0.32;
+  controls.maxPolarAngle = Math.PI * 0.68;
   controls.update();
-  return { face, portraitDist };
+  return { face: anchor, portraitDist };
 }
 
 /**
  * @param {{
  *   canvas: HTMLCanvasElement,
  *   modelUrl?: string,
+ *   onCharacterTap?: (info: { point: import('three').Vector3 }) => void,
  * }} opts
  */
 export async function createVrmAvatar(opts) {
@@ -79,8 +82,8 @@ export async function createVrmAvatar(opts) {
   }
 
   const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(28, 1, 0.05, 100);
-  camera.position.set(0, 1.35, 2.35);
+  const camera = new THREE.PerspectiveCamera(34, 1, 0.05, 100);
+  camera.position.set(0, 1.28, 2.85);
 
   scene.add(new THREE.HemisphereLight(0xffe8dc, 0x1a2030, 1.05));
   const key = new THREE.DirectionalLight(0xfff6ee, 1.55);
@@ -151,7 +154,7 @@ export async function createVrmAvatar(opts) {
   const box = new THREE.Box3().setFromObject(model);
   const size = box.getSize(new THREE.Vector3());
   const center = box.getCenter(new THREE.Vector3());
-  const scale = 1.55 / Math.max(size.y, 0.001);
+  const scale = 0.92 / Math.max(size.y, 0.001);
   model.scale.setScalar(scale);
   model.position.x = -center.x * scale;
   model.position.z = -center.z * scale;
@@ -169,9 +172,10 @@ export async function createVrmAvatar(opts) {
     controls,
     fitted,
   });
-  const faceWorld = new THREE.Vector3();
-  const camDir = new THREE.Vector3();
-  const camDesired = new THREE.Vector3();
+  const raycaster = new THREE.Raycaster();
+  const pointer = new THREE.Vector2();
+  /** @type {{ x: number, y: number } | null} */
+  let pointerDown = null;
 
   // Subtle look-at toward camera
   if (vrm.lookAt) {
@@ -292,14 +296,6 @@ export async function createVrmAvatar(opts) {
     vrm.update(dt);
     bodyMotion.update(dt, { talking, now });
 
-    const head = vrm.humanoid?.getNormalizedBoneNode?.("head");
-    if (head) {
-      head.getWorldPosition(faceWorld);
-      controls.target.lerp(faceWorld, Math.min(1, dt * 6));
-      camDir.subVectors(camera.position, controls.target).normalize();
-      camDesired.copy(faceWorld).addScaledVector(camDir, portraitDist);
-      camera.position.lerp(camDesired, Math.min(1, dt * 4));
-    }
     controls.update();
 
     mouthOpen += (mouthTarget - mouthOpen) * Math.min(1, dt * 14);
@@ -335,13 +331,45 @@ export async function createVrmAvatar(opts) {
   raf = requestAnimationFrame(frame);
   globalThis.addEventListener?.("resize", resize);
 
+  const reactToTap = () => {
+    setEmotion("happy");
+    playGesture("wave");
+    return emotion;
+  };
+
   canvas.style.touchAction = "none";
   canvas.style.cursor = "grab";
-  canvas.addEventListener("pointerdown", () => {
+  canvas.addEventListener("pointerdown", (e) => {
+    pointerDown = { x: e.clientX, y: e.clientY };
     canvas.style.cursor = "grabbing";
   });
-  canvas.addEventListener("pointerup", () => {
+  canvas.addEventListener("pointerup", (e) => {
     canvas.style.cursor = "grab";
+    if (!pointerDown) return;
+    const dx = e.clientX - pointerDown.x;
+    const dy = e.clientY - pointerDown.y;
+    pointerDown = null;
+    if (dx * dx + dy * dy > 144) return;
+
+    const rect = canvas.getBoundingClientRect();
+    pointer.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+    pointer.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+    raycaster.setFromCamera(pointer, camera);
+    const hits = raycaster.intersectObject(model, true);
+    if (!hits.length) return;
+
+    canvas.style.cursor = "pointer";
+    reactToTap();
+    opts.onCharacterTap?.({ point: hits[0].point });
+  });
+  canvas.addEventListener("pointermove", (e) => {
+    if (pointerDown) return;
+    const rect = canvas.getBoundingClientRect();
+    pointer.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+    pointer.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+    raycaster.setFromCamera(pointer, camera);
+    const hits = raycaster.intersectObject(model, true);
+    canvas.style.cursor = hits.length ? "pointer" : "grab";
   });
 
   return {
@@ -355,6 +383,7 @@ export async function createVrmAvatar(opts) {
     setTalkEnergy,
     playGesture,
     playGestureForText,
+    reactToTap,
     get emotion() {
       return emotion;
     },

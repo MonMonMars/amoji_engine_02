@@ -29,7 +29,7 @@ export function createCompanionChat(opts = {}) {
       : null);
   let apiUrl = normalizeUrl(opts.apiUrl);
   let apiKey = String(opts.apiKey || "").trim() || null;
-  let model = opts.model || "gpt-4o";
+  let model = opts.model || "llama3.2";
   const systemPrompt = opts.systemPrompt || CANTONESE_COMPANION_PROMPT;
 
   const finalizeReply = (replyText) => {
@@ -44,7 +44,11 @@ export function createCompanionChat(opts = {}) {
   /** @type {{ role: string, content: string }[]} */
   const history = [];
 
-  const mode = () => (apiUrl && fetchImpl ? "online" : "local");
+  const mode = () => {
+    if (apiUrl && /11434|ollama/i.test(apiUrl)) return "ollama";
+    if (apiUrl && fetchImpl) return "online";
+    return "local";
+  };
 
   /**
    * @param {string} userText
@@ -106,11 +110,12 @@ export function createCompanionChat(opts = {}) {
         if (online.ok) {
           const finalized = finalizeReply(online.reply);
           history.push({ role: "assistant", content: finalized.reply });
+          const clientMode = /11434|ollama/i.test(apiUrl) ? "ollama" : "online";
           return {
             ok: true,
             reply: finalized.reply,
             emotion: finalized.emotion,
-            mode: "online",
+            mode: clientMode,
             model: online.model || model,
           };
         }
