@@ -806,6 +806,25 @@
         }
       }
     </script>
+    <script>
+      (function () {
+        window.__amojiStart = { tapped: false, ready: false, run: null };
+        window.__amojiStartTap = function (ev) {
+          ev?.preventDefault?.();
+          ev?.stopPropagation?.();
+          const btn = document.getElementById("start-talking");
+          if (!btn || btn.disabled || btn.classList.contains("hide")) return false;
+          window.__amojiStart.tapped = true;
+          btn.classList.add("starting");
+          btn.textContent = "⏳ Starting…";
+          btn.setAttribute("aria-busy", "true");
+          if (window.__amojiStart.ready && typeof window.__amojiStart.run === "function") {
+            void window.__amojiStart.run();
+          }
+          return false;
+        };
+      })();
+    </script>
   </head>
   <body>
     <div class="stage">
@@ -920,25 +939,6 @@
       </div>
     </div>
 
-    <script>
-      (function () {
-        window.__amojiStart = { tapped: false, ready: false, run: null };
-        window.__amojiStartTap = function (ev) {
-          ev?.preventDefault?.();
-          ev?.stopPropagation?.();
-          const btn = document.getElementById("start-talking");
-          if (!btn || btn.disabled || btn.classList.contains("hide")) return false;
-          window.__amojiStart.tapped = true;
-          btn.classList.add("starting");
-          btn.textContent = "⏳ Starting…";
-          btn.setAttribute("aria-busy", "true");
-          if (window.__amojiStart.ready && typeof window.__amojiStart.run === "function") {
-            void window.__amojiStart.run();
-          }
-          return false;
-        };
-      })();
-    </script>
     <script type="module">
       import {
         createCompanionAvatar,
