@@ -54,9 +54,9 @@ export function createCompanionLlmSwitcher(opts) {
   root.append(label, track);
   opts.container.appendChild(root);
 
-  let activeId =
-    storage?.getItem(LLM_PROVIDER_STORAGE_KEY) ||
-    "auto";
+  let storedId = storage?.getItem(LLM_PROVIDER_STORAGE_KEY) || "auto";
+  if (storedId === "ollama") storedId = "ollama-qwen4";
+  let activeId = storedId;
 
   const setActiveUi = (id) => {
     activeId = id;

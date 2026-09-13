@@ -30,12 +30,22 @@ export const LLM_PROVIDERS = Object.freeze([
     kind: "proxy",
   },
   {
-    id: "ollama",
-    label: "Ollama",
-    short: "Ollama",
-    description: "Local LLM on your PC (ollama serve)",
-    url: "http://127.0.0.1:11434/v1",
-    model: "llama3.2",
+    id: "ollama-qwen4",
+    label: "Qwen 4B",
+    short: "Qwen4",
+    description: "Local Ollama — qwen3:4b (fast, D:\\Ollama)",
+    url: "http://localhost:11434/v1",
+    model: "qwen3:4b",
+    needsKey: false,
+    kind: "local",
+  },
+  {
+    id: "ollama-qwen8",
+    label: "Qwen 8B",
+    short: "Qwen8",
+    description: "Local Ollama — qwen3:8b (smarter, slower)",
+    url: "http://localhost:11434/v1",
+    model: "qwen3:8b",
     needsKey: false,
     kind: "local",
   },
@@ -149,7 +159,7 @@ export function resolveProviderConfig(providerId, opts = {}) {
     return {
       provider,
       url: null,
-      model: opts.fallbackModel || "llama3.2",
+      model: opts.fallbackModel || "qwen3:4b",
       apiKey: null,
       forceLocal: false,
       mode: "proxy",
@@ -157,13 +167,14 @@ export function resolveProviderConfig(providerId, opts = {}) {
   }
   const storedKey = readProviderApiKey(provider.id, storage);
   const apiKey = storedKey || String(opts.fallbackKey || "").trim() || null;
-  const mode =
-    /11434|ollama/i.test(provider.url) ? "ollama" : provider.kind === "local" ? "ollama" : "online";
+  const isOllama =
+    provider.kind === "local" || /11434|ollama|localhost/i.test(provider.url);
+  const mode = isOllama ? "ollama" : "online";
   return {
     provider,
     url: provider.url.replace(/\/$/, ""),
     model: provider.model,
-    apiKey: provider.needsKey ? apiKey : null,
+    apiKey: provider.needsKey ? apiKey : isOllama ? "ollama" : null,
     forceLocal: false,
     mode,
   };

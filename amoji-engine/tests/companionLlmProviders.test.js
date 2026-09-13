@@ -6,10 +6,11 @@ import {
 } from "../engine/companion/companionLlmProviders.js";
 
 describe("companionLlmProviders", () => {
-  it("resolves ollama provider", () => {
-    const cfg = resolveProviderConfig("ollama");
+  it("resolves qwen4 ollama provider", () => {
+    const cfg = resolveProviderConfig("ollama-qwen4");
     expect(cfg.url).toContain("11434");
-    expect(cfg.model).toBe("llama3.2");
+    expect(cfg.model).toBe("qwen3:4b");
+    expect(cfg.apiKey).toBe("ollama");
     expect(cfg.forceLocal).toBe(false);
   });
 

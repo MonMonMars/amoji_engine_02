@@ -4,7 +4,9 @@
 export const COMPANION_OLLAMA_SCHEMA = "amoji.companionOllama.v1";
 
 export const OLLAMA_DEFAULT_HOST = "http://127.0.0.1:11434";
-export const OLLAMA_DEFAULT_MODEL = "llama3.2";
+export const OLLAMA_DEFAULT_MODEL = "qwen3:4b";
+/** OpenAI-compatible clients (Cursor, etc.) expect a non-empty API key. */
+export const OLLAMA_PLACEHOLDER_API_KEY = "ollama";
 
 /**
  * @param {string} [base]
@@ -65,10 +67,15 @@ export function pickOllamaModel(models, preferred) {
   const score = (name) => {
     const n = name.toLowerCase();
     let s = 0;
+    if (/qwen3:4b|qwen3-4b/.test(n)) s += 100;
+    if (/qwen3:8b|qwen3-8b/.test(n)) s += 88;
+    if (/qwen3/.test(n)) s += 75;
+    if (/qwen2\.5|qwen2/.test(n)) s += 50;
     if (/llama3\.2|llama3\.1|llama3/.test(n)) s += 40;
-    if (/qwen2\.5|qwen2|gemma2|mistral|phi/.test(n)) s += 35;
+    if (/gemma2|mistral|phi/.test(n)) s += 35;
     if (/70b|72b/.test(n)) s += 10;
-    if (/8b|7b|3b/.test(n)) s += 8;
+    if (/4b|3b/.test(n)) s += 12;
+    if (/8b|7b/.test(n)) s += 8;
     if (/:latest$/.test(n)) s += 2;
     return s;
   };
@@ -95,7 +102,10 @@ export async function chatOllama(opts) {
   const endpoint = `${host}/v1/chat/completions`;
   const res = await fetchImpl(endpoint, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${OLLAMA_PLACEHOLDER_API_KEY}`,
+    },
     body: JSON.stringify({
       model,
       temperature: opts.temperature ?? 0.75,

@@ -9,7 +9,7 @@
  *
  * Local LLM via Ollama (default — start Ollama on your machine first):
  *   ollama serve
- *   ollama pull llama3.2
+ *   ollama pull qwen3:4b
  *   npm run lab
  *
  * Optional cloud LLM (OpenAI-compatible):
@@ -171,7 +171,7 @@ async function handleChatApi(req, res) {
         body.model ||
         process.env.OLLAMA_MODEL ||
         process.env.AMOJI_LLM_MODEL ||
-        "llama3.2";
+        "qwen3:4b";
       if (ollamaUp) {
         mode = "ollama";
         const models = await listOllamaModels(ollamaHost);

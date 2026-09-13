@@ -34,7 +34,7 @@ export function createCompanionChat(opts = {}) {
       : null);
   let apiUrl = normalizeUrl(opts.apiUrl);
   let apiKey = String(opts.apiKey || "").trim() || null;
-  let model = opts.model || "llama3.2";
+  let model = opts.model || "qwen3:4b";
   let providerId =
     opts.providerId ||
     globalThis.localStorage?.getItem(LLM_PROVIDER_STORAGE_KEY) ||
@@ -295,7 +295,9 @@ async function callOpenAiCompatible({
     ? apiUrl
     : `${apiUrl}/chat/completions`;
   const headers = { "Content-Type": "application/json" };
-  if (apiKey) headers.Authorization = `Bearer ${apiKey}`;
+  const authKey =
+    apiKey || (/11434|ollama|localhost/i.test(apiUrl) ? "ollama" : null);
+  if (authKey) headers.Authorization = `Bearer ${authKey}`;
   const messages = [
     { role: "system", content: systemPrompt },
     ...history.slice(-12),
