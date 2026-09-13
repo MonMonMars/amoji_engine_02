@@ -283,6 +283,8 @@ export async function createVrmAvatar(opts) {
     return talking;
   };
 
+  const setTalkEnergy = (v) => bodyMotion.setTalkEnergy(v);
+
   let raf = 0;
   const frame = () => {
     const dt = clock.getDelta();
@@ -350,6 +352,7 @@ export async function createVrmAvatar(opts) {
     setMouthOpen,
     setMouthShape,
     setTalking,
+    setTalkEnergy,
     playGesture,
     playGestureForText,
     get emotion() {

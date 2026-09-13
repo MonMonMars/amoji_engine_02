@@ -1,34 +1,18 @@
 /**
- * Create the best available companion avatar:
- * VRM anime girl → GLTF Michelle → procedural high-poly → 2D fallback.
+ * Create the female anime companion avatar.
+ * Default: VRM anime girl → GLTF fallback → procedural → 2D.
  * @param {{ canvas: HTMLCanvasElement, color?: string, modelUrl?: string, prefer?: 'vrm'|'gltf'|'auto' }} opts
  */
 export async function createCompanionAvatar(opts) {
-  const prefer = opts.prefer || "auto";
-  const modelUrl =
-    opts.modelUrl ||
-    (prefer === "gltf" ? "/prototypes/assets/companion-girl.glb" : undefined);
-
+  const prefer = opts.prefer || "vrm";
+  const modelUrl = opts.modelUrl || undefined;
+  const wantsGltf = prefer === "gltf";
   const wantsVrm =
     prefer === "vrm" ||
+    prefer === "auto" ||
     Boolean(modelUrl && /\.vrm($|\?)/i.test(modelUrl));
 
-  // Prefer GLTF Michelle for Grok Ani–style idle body animation (auto mode)
-  if (!wantsVrm) {
-    try {
-      const { createGltfAvatar } = await import("./gltfAvatar.js");
-      const avatar = await createGltfAvatar({
-        canvas: opts.canvas,
-        modelUrl: modelUrl || "/prototypes/assets/companion-girl.glb",
-      });
-      avatar.resize?.();
-      return { avatar, kind: "gltf3d" };
-    } catch (err) {
-      console.warn("[companion] GLTF avatar failed, trying VRM", err);
-    }
-  }
-
-  if (wantsVrm || prefer !== "gltf") {
+  if (wantsVrm && !wantsGltf) {
     try {
       const { createVrmAvatar } = await import("./vrmAvatar.js");
       const avatar = await createVrmAvatar({
@@ -42,17 +26,21 @@ export async function createCompanionAvatar(opts) {
     }
   }
 
-  // Skinned GLTF girl + orbit controls
-  try {
-    const { createGltfAvatar } = await import("./gltfAvatar.js");
-    const avatar = await createGltfAvatar({
-      canvas: opts.canvas,
-      modelUrl: modelUrl || "/prototypes/assets/companion-girl.glb",
-    });
-    avatar.resize?.();
-    return { avatar, kind: "gltf3d" };
-  } catch (err) {
-    console.warn("[companion] GLTF avatar failed, trying procedural", err);
+  if (wantsGltf || prefer === "auto") {
+    try {
+      const { createGltfAvatar } = await import("./gltfAvatar.js");
+      const avatar = await createGltfAvatar({
+        canvas: opts.canvas,
+        modelUrl:
+          modelUrl && /\.glb($|\?)/i.test(modelUrl)
+            ? modelUrl
+            : "/prototypes/assets/companion-girl.glb",
+      });
+      avatar.resize?.();
+      return { avatar, kind: "gltf3d" };
+    } catch (err) {
+      console.warn("[companion] GLTF avatar failed, trying procedural", err);
+    }
   }
 
   try {

@@ -53,24 +53,43 @@ export function charToViseme(ch) {
  * Prefer a female / higher-pitch voice, Cantonese/Chinese when available.
  * @param {SpeechSynthesisVoice[]} voices
  */
+const MALE_VOICE_RE =
+  /\b(male|man|boy|david|daniel|ravi|keda|alex|fred|bruce|tom|jorge|lee|james|mark|aaron|guy|richard|nathan|oliver|matthew|ryan|paul)\b/i;
+
 export function pickFemaleVoice(voices) {
-  const list = (Array.isArray(voices) ? voices : []).filter(
-    (v) => v && typeof v.name === "string",
-  );
+  const list = (Array.isArray(voices) ? voices : []).filter((v) => {
+    if (!v || typeof v.name !== "string") return false;
+    if (v.gender === "male") return false;
+    const name = `${v.name} ${v.lang || ""}`;
+    if (MALE_VOICE_RE.test(name) && !/female|woman|girl/i.test(name)) return false;
+    return true;
+  });
   const score = (v) => {
     const name = `${v.name} ${v.lang || ""}`.toLowerCase();
     let s = 0;
-    if (/zh-hk|yue|cantonese|hong kong/.test(name)) s += 50;
-    if (/zh-tw|zh-cn|cmn|chinese|mandarin/.test(name)) s += 35;
-    if (/en-hk|en-gb|en-us|en-au/.test(name)) s += 15;
-    if (/female|woman|girl|samantha|karen|moira|tingting|ting-ting|meijia|sinji|xiaoxiao|xiaoyi|hana|google uk english female|microsoft xiaoxiao|microsoft hsiao/.test(name)) {
-      s += 40;
+    if (v.gender === "female") s += 80;
+    if (/zh-hk|yue|cantonese|hong kong/.test(name)) s += 55;
+    if (/zh-tw|zh-cn|cmn|chinese|mandarin/.test(name)) s += 40;
+    if (/female|woman|girl/.test(name)) s += 45;
+    if (/samantha|karen|moira|tingting|ting-ting|meijia|sinji|xiaoxiao|xiaoyi|hsiao|sin-ji|yuna|mei-jia/.test(name)) {
+      s += 50;
     }
-    if (/male|man|david|daniel|ravi|keda/.test(name) && !/female/.test(name)) s -= 30;
+    if (/en-hk|en-gb|en-au/.test(name)) s += 10;
     if (v.localService) s += 5;
     return s;
   };
-  return [...list].sort((a, b) => score(b) - score(a))[0] || null;
+  const picked = [...list].sort((a, b) => score(b) - score(a))[0] || null;
+  return picked;
+}
+
+/** Human label for the voice pill — always female-presenting. */
+export function femaleVoiceLabel(voice) {
+  if (!voice?.name) return "female";
+  const n = voice.name.toLowerCase();
+  if (/xiaoxiao|hsiao|sin-?ji|ting-?ting|meijia|yuna/.test(n)) return "女聲·粵";
+  if (/zh-hk|yue|cantonese/.test(`${n} ${voice.lang || ""}`)) return "女聲·粵";
+  if (/female|woman|girl|samantha|karen|moira/.test(n)) return "女聲";
+  return "女聲";
 }
 
 /**

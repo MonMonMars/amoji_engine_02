@@ -188,7 +188,7 @@ async function handleChatApi(req, res) {
         },
         body: JSON.stringify({
           model,
-          temperature: 0.8,
+          temperature: 0.75,
           messages: [
             { role: "system", content: system },
             ...history.slice(-12),
