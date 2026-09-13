@@ -37,4 +37,13 @@ describe("chatApiHandler cloud", () => {
     expect(result.mode).toBe("online");
     expect(result.hosted).toBe(true);
   });
+
+  it("accepts client-supplied groq key in request body", async () => {
+    const result = await processChatRequest({
+      message: "__ping__",
+      providerId: "groq",
+      apiKey: "gsk_client_test_key",
+    });
+    expect(result.mode).toBe("online");
+  });
 });

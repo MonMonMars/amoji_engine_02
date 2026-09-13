@@ -10,15 +10,22 @@ Everything loads in the browser. **No npm, Ollama, or local server on your compu
 
 Opens the full 3D companion in your browser — avatar, tap, voice, chat. No local PC needed.
 
-### Enable smart chat (one step left)
+### Enable smart chat — pick any option (no desktop login required)
 
-The project is claimed under **mars2350-1971**. Basic brain works now; for **Groq** smart replies:
+**Option A — Paste key in the app (easiest)**  
+1. On your **phone**, sign up at [console.groq.com](https://console.groq.com) with **email** (skip Google if 2FA fails)  
+   — or [openrouter.ai/keys](https://openrouter.ai/keys) (free models)  
+2. Copy the API key  
+3. Open the live app → tap **⚙** → paste key → **Save key & connect**  
+   Key stays in your browser only — no Vercel login needed.
 
-1. Open [Project → Settings → Environment Variables](https://vercel.com/mars2350-1971/temporary-rushing-oxygen-ok5jzhd/settings/environment-variables)
-2. Add **`GROQ_API_KEY`** — free key from [console.groq.com](https://console.groq.com)
-3. **Deployments** → latest deployment → **Redeploy** (required after adding env vars)
+**Option B — Vercel env var (permanent for all visitors)**  
+1. [Environment Variables](https://vercel.com/mars2350-1971/temporary-rushing-oxygen-ok5jzhd/settings/environment-variables)  
+2. Add **`GROQ_API_KEY`** or **`OPENROUTER_API_KEY`**  
+3. Redeploy
 
-After redeploy, refresh the app — Brain should auto-connect to **Groq**.
+**Option C — Basic brain**  
+Works now with no key — canned Cantonese replies, avatar + voice still work.
 
 ## One-click deploy (Vercel)
 

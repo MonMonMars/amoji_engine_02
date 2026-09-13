@@ -724,27 +724,46 @@
       </header>
 
       <div class="settings" id="settings">
-        <label>
-          LLM base URL (OpenAI-compatible)
-          <input id="api-url" placeholder="http://127.0.0.1:11434/v1 or leave blank for lab proxy" />
-        </label>
-        <label>
-          Model
-          <input id="api-model" placeholder="qwen3:4b" />
-        </label>
-        <label>
-          API key (optional — Ollama needs none)
-          <input id="api-key" type="password" placeholder="sk-… only for OpenAI/Groq" autocomplete="off" />
-        </label>
-        <p class="settings-hint">
-          <strong>Ollama:</strong> <code>ollama serve</code> on your PC (e.g. D:\Ollama). Tap
-          <strong>Qwen4</strong> / <strong>Qwen8</strong> below. URL:
-          <code>http://localhost:11434/v1</code> · key: <code>ollama</code> · model:
-          <code>qwen3:4b</code>
-        </p>
-        <button type="button" class="btn-secondary" id="btn-list-ollama">List Ollama models</button>
-        <p class="settings-hint" id="ollama-model-list"></p>
-        <button type="button" id="btn-save-llm">Save LLM</button>
+        <div id="settings-local">
+          <label>
+            LLM base URL (OpenAI-compatible)
+            <input id="api-url" placeholder="http://127.0.0.1:11434/v1 or leave blank for lab proxy" />
+          </label>
+          <label>
+            Model
+            <input id="api-model" placeholder="qwen3:4b" />
+          </label>
+          <label>
+            API key (optional — Ollama needs none)
+            <input id="api-key" type="password" placeholder="sk-… only for OpenAI/Groq" autocomplete="off" />
+          </label>
+          <p class="settings-hint">
+            <strong>Ollama:</strong> <code>ollama serve</code> on your PC (e.g. D:\Ollama). Tap
+            <strong>Qwen4</strong> / <strong>Qwen8</strong> below. URL:
+            <code>http://localhost:11434/v1</code> · key: <code>ollama</code> · model:
+            <code>qwen3:4b</code>
+          </p>
+          <button type="button" class="btn-secondary" id="btn-list-ollama">List Ollama models</button>
+          <p class="settings-hint" id="ollama-model-list"></p>
+          <button type="button" id="btn-save-llm">Save LLM</button>
+        </div>
+        <div id="settings-cloud" hidden>
+          <p class="settings-hint">
+            <strong>Smart brain (no Vercel login needed)</strong> — get a free key on your
+            <strong>phone</strong>, paste here. Stays in this browser only.
+          </p>
+          <label>
+            Free API key
+            <input id="cloud-api-key" type="password" placeholder="gsk_… (Groq) or sk-or-… (OpenRouter)" autocomplete="off" />
+          </label>
+          <p class="settings-hint">
+            <a href="https://console.groq.com/keys" target="_blank" rel="noopener">Groq</a>
+            (email signup works if Google fails) ·
+            <a href="https://openrouter.ai/keys" target="_blank" rel="noopener">OpenRouter</a>
+            (free Gemma/Llama)
+          </p>
+          <button type="button" id="btn-save-cloud-key">Save key &amp; connect</button>
+        </div>
       </div>
 
       <div class="chat-shell">
@@ -798,6 +817,7 @@
       } from "../amoji-engine/engine/companion/companionUi.js";
       import { createCompanionLlmSwitcher } from "../amoji-engine/engine/companion/companionLlmUi.js";
       import { isHostedCompanion } from "../amoji-engine/engine/companion/companionLlmConnect.js";
+      import { inferKeyProvider } from "../amoji-engine/engine/companion/companionClientKeys.js";
       import { saveProviderApiKey } from "../amoji-engine/engine/companion/companionLlmProviders.js";
 
       const hostedOnline = isHostedCompanion();
@@ -843,10 +863,12 @@
       };
 
       if (hostedOnline) {
-        document.getElementById("btn-settings")?.remove();
-        document.getElementById("settings")?.remove();
         document.getElementById("lab-link")?.remove();
         document.querySelector(".brand span").textContent = "Cloud";
+        document.getElementById("settings-local").hidden = true;
+        document.getElementById("settings-cloud").hidden = false;
+        document.getElementById("btn-settings").hidden = false;
+        document.getElementById("btn-settings").title = "Paste API key (smart brain)";
       } else {
         document.getElementById("btn-settings").hidden = false;
         document.getElementById("api-url").value = stored.url;
@@ -1158,7 +1180,7 @@
             : avatarKind === "webgl3d"
               ? "3D female"
               : "2D female";
-      createCompanionLlmSwitcher({
+      const llmSwitcher = createCompanionLlmSwitcher({
         container: document.getElementById("llm-switcher-wrap"),
         chat,
         onMode: (label) => setModePill(label),
@@ -1176,11 +1198,31 @@
       setEmotionPill("happy");
       setTimeout(() => void startSession(), 600);
 
-      if (!hostedOnline) {
       btnSettings.addEventListener("click", () => {
         settings.classList.toggle("open");
       });
 
+      if (hostedOnline) {
+        document.getElementById("btn-save-cloud-key").addEventListener("click", () => {
+          const key = document.getElementById("cloud-api-key").value.trim();
+          if (!key) {
+            addBubble("system", "Paste a Groq (gsk_) or OpenRouter (sk-or-) key first");
+            return;
+          }
+          const provider = inferKeyProvider(key);
+          if (!provider) {
+            addBubble("system", "Key should start with gsk_ (Groq) or sk-or- (OpenRouter)");
+            return;
+          }
+          saveProviderApiKey(provider, key);
+          chat.setProvider(provider);
+          void llmSwitcher.refreshAvailability();
+          settings.classList.remove("open");
+          addBubble("system", "Key saved in this browser — smart brain connected");
+        });
+      }
+
+      if (!hostedOnline) {
       document.getElementById("btn-save-llm").addEventListener("click", () => {
         const url = document.getElementById("api-url").value.trim();
         const key = document.getElementById("api-key").value.trim();

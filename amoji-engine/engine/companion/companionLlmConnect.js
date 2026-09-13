@@ -7,6 +7,11 @@ import {
   pickOllamaModel,
   OLLAMA_DEFAULT_HOST,
 } from "./companionOllama.js";
+import {
+  hasAnyClientCloudKey,
+  hasClientGroqKey,
+  hasClientOpenRouterKey,
+} from "./companionClientKeys.js";
 import { getLlmProvider, LLM_PROVIDERS } from "./companionLlmProviders.js";
 
 export const COMPANION_LLM_CONNECT_SCHEMA = "amoji.companionLlmConnect.v1";
@@ -74,11 +79,17 @@ export function rankAvailableProviders(status, directOllama) {
   /** @type {{ id: string, model?: string, reason: string }[]} */
   const ranked = [];
 
-  if (hosted && status?.groq?.ok) {
-    ranked.push({ id: "groq", reason: "cloud Groq" });
+  if (hosted && (status?.groq?.ok || hasClientGroqKey())) {
+    ranked.push({
+      id: "groq",
+      reason: status?.groq?.ok ? "cloud Groq" : "your Groq key",
+    });
   }
-  if (hosted && status?.openrouter?.ok) {
-    ranked.push({ id: "openrouter-gemma", reason: "cloud OpenRouter" });
+  if (hosted && (status?.openrouter?.ok || hasClientOpenRouterKey())) {
+    ranked.push({
+      id: "openrouter-gemma",
+      reason: status?.openrouter?.ok ? "cloud OpenRouter" : "your OpenRouter key",
+    });
   }
   if (hosted && status?.openai?.ok) {
     ranked.push({ id: "auto", reason: "cloud OpenAI" });
@@ -182,7 +193,8 @@ export function probeProviderAvailability(status, directOllama) {
             status?.groq?.ok ||
               status?.openai?.ok ||
               status?.openrouter?.ok ||
-              status?.cloudReady,
+              status?.cloudReady ||
+              hasAnyClientCloudKey(),
           );
         break;
       case "ollama-qwen4":
@@ -196,11 +208,13 @@ export function probeProviderAvailability(status, directOllama) {
         );
         break;
       case "groq":
-        available[p.id] = Boolean(status?.groq?.ok);
+        available[p.id] = Boolean(status?.groq?.ok || hasClientGroqKey());
         break;
       case "openrouter-gemma":
       case "openrouter-llama":
-        available[p.id] = Boolean(status?.openrouter?.ok);
+        available[p.id] = Boolean(
+          status?.openrouter?.ok || hasClientOpenRouterKey(),
+        );
         break;
       case "together":
         available[p.id] = Boolean(status?.together?.ok);
