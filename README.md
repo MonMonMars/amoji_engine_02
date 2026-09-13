@@ -11,7 +11,7 @@
 
 ## Quick start
 
-**Online (no local PC):** open **[live demo](https://temporary-rushing-oxygen-ok5jzhd.vercel.app)** or see [DEPLOY.md](./DEPLOY.md) to claim your own Vercel URL.
+**Online (no local PC):** open **[Amoji live](https://temporary-rushing-oxygen-ok5jzhd.vercel.app)** · [Vercel dashboard](https://vercel.com/mars2350-1971/temporary-rushing-oxygen-ok5jzhd) · [DEPLOY.md](./DEPLOY.md)
 
 **Windows local:** see [WINDOWS.md](./WINDOWS.md) — double-click `start-companion.cmd` or run `node amoji-engine\scripts\lab-serve.mjs` from CMD.
 

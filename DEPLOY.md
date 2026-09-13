@@ -2,14 +2,23 @@
 
 Everything loads in the browser. **No npm, Ollama, or local server on your computer.**
 
-## Live demo (try now)
+## Live app (your Vercel project)
 
 **https://temporary-rushing-oxygen-ok5jzhd.vercel.app**
 
-Opens the full 3D companion in your browser — avatar, tap, voice, chat.  
-Smart LLM (Groq) needs a one-time API key on Vercel (see below). Without it, **Basic brain** still works.
+**Dashboard:** [vercel.com/mars2350-1971/temporary-rushing-oxygen-ok5jzhd](https://vercel.com/mars2350-1971/temporary-rushing-oxygen-ok5jzhd)
 
-**Keep this URL forever:** [Claim deployment on Vercel](https://vercel.com/claim-deployment?code=d021c0a5-ff40-475c-af70-7fa6e5c15140) → add `GROQ_API_KEY` → redeploy.
+Opens the full 3D companion in your browser — avatar, tap, voice, chat. No local PC needed.
+
+### Enable smart chat (one step left)
+
+The project is claimed under **mars2350-1971**. Basic brain works now; for **Groq** smart replies:
+
+1. Open [Project → Settings → Environment Variables](https://vercel.com/mars2350-1971/temporary-rushing-oxygen-ok5jzhd/settings/environment-variables)
+2. Add **`GROQ_API_KEY`** — free key from [console.groq.com](https://console.groq.com)
+3. **Deployments** → latest deployment → **Redeploy** (required after adding env vars)
+
+After redeploy, refresh the app — Brain should auto-connect to **Groq**.
 
 ## One-click deploy (Vercel)
 
