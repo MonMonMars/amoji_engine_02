@@ -63,7 +63,8 @@ export async function createVrmAvatar(opts) {
       canvas,
       antialias: true,
       alpha: true,
-      powerPreference: "high-performance",
+      powerPreference: "default",
+      failIfMajorPerformanceCaveat: false,
     });
     if (!renderer.getContext?.()) throw new Error("WebGL context missing");
   } catch (err) {
