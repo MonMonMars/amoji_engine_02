@@ -15,8 +15,12 @@ import {
   saveProviderApiKey,
 } from "./companionLlmProviders.js";
 import { chatOllama, OLLAMA_PROBE_HOSTS } from "./companionOllama.js";
-import { resolveClientApiKey } from "./companionClientKeys.js";
+import {
+  hasAnyClientCloudKey,
+  resolveClientApiKey,
+} from "./companionClientKeys.js";
 import { isHostedCompanion, probeOllamaDirect } from "./companionLlmConnect.js";
+import { getLlmProvider, readProviderApiKey } from "./companionLlmProviders.js";
 
 export const COMPANION_CHAT_SCHEMA = "amoji.companionChat.v1";
 
@@ -72,6 +76,7 @@ export function createCompanionChat(opts = {}) {
       fallbackKey: extra.apiKey || apiKey || "",
     });
     forceLocal = resolved.forceLocal;
+    let useProvider = resolved.provider;
     if (extra.apiKey && resolved.provider.keyStorageKey) {
       saveProviderApiKey(providerId, extra.apiKey);
     }
@@ -79,8 +84,27 @@ export function createCompanionChat(opts = {}) {
       apiUrl = null;
       apiKey = null;
     } else if (resolved.provider.id === "auto") {
-      apiUrl = null;
-      apiKey = null;
+      const hosted = isHostedCompanion();
+      const orKey =
+        readProviderApiKey("openrouter-gemma") ||
+        readProviderApiKey("openrouter-llama");
+      const groqKey = readProviderApiKey("groq");
+      if (hosted && orKey) {
+        useProvider = getLlmProvider("openrouter-gemma");
+        apiUrl = normalizeUrl(useProvider.url);
+        apiKey = orKey;
+        model = useProvider.model || "openrouter/auto";
+        providerId = useProvider.id;
+      } else if (hosted && groqKey) {
+        useProvider = getLlmProvider("groq");
+        apiUrl = normalizeUrl(useProvider.url);
+        apiKey = groqKey;
+        model = useProvider.model;
+        providerId = useProvider.id;
+      } else {
+        apiUrl = null;
+        apiKey = null;
+      }
     } else {
       apiUrl = normalizeUrl(resolved.url);
       apiKey = resolved.apiKey;
@@ -120,7 +144,51 @@ export function createCompanionChat(opts = {}) {
     history.push({ role: "user", content: text });
     const onToken = opts.onToken;
 
-    // Prefer lab proxy first — uses server-side Ollama / API keys when configured
+    // Hosted + browser key → call OpenRouter/Groq directly (no Vercel env needed)
+    if (
+      !forceLocal &&
+      apiUrl &&
+      apiKey &&
+      fetchImpl &&
+      isHostedCompanion() &&
+      !isOllamaUrl(apiUrl)
+    ) {
+      try {
+        const online = await callOpenAiCompatible({
+          fetchImpl,
+          apiUrl,
+          apiKey,
+          model,
+          systemPrompt,
+          history,
+          onToken,
+          stream: Boolean(onToken),
+          extraHeaders: apiUrl.includes("openrouter")
+            ? {
+                "HTTP-Referer": globalThis.location?.origin || "https://amoji.app",
+                "X-Title": "Amoji Companion",
+              }
+            : {},
+        });
+        if (online.ok) {
+          const finalized = finalizeReply(online.reply);
+          if (onToken && !online.streamed) await emitTypewriter(finalized.reply, onToken);
+          history.push({ role: "assistant", content: finalized.reply });
+          return {
+            ok: true,
+            reply: finalized.reply,
+            emotion: finalized.emotion,
+            mode: "online",
+            model: online.model || model,
+          };
+        }
+        console.warn("[companion] hosted direct llm failed", online.error);
+      } catch (err) {
+        console.warn("[companion] hosted direct llm error", err);
+      }
+    }
+
+    // Prefer lab proxy — server-side keys when configured
     if (!forceLocal && fetchImpl) {
       try {
         const proxied = await callLocalProxy({
@@ -383,11 +451,12 @@ async function callOpenAiCompatible({
   history,
   onToken,
   stream,
+  extraHeaders = {},
 }) {
   const endpoint = apiUrl.includes("/chat/completions")
     ? apiUrl
     : `${apiUrl}/chat/completions`;
-  const headers = { "Content-Type": "application/json" };
+  const headers = { "Content-Type": "application/json", ...extraHeaders };
   const authKey =
     apiKey || (/11434|ollama|localhost/i.test(apiUrl) ? "ollama" : null);
   if (authKey) headers.Authorization = `Bearer ${authKey}`;
