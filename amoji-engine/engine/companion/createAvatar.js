@@ -11,6 +11,7 @@ export function createStubAvatar() {
   return {
     resize: noop,
     setEmotion: noop,
+    setListening: noop,
     setMouthOpen: noop,
     setMouthShape: noop,
     setTalking: noop,

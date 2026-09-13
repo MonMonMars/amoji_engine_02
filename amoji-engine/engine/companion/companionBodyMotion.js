@@ -1,226 +1,30 @@
 /**
- * Grok Ani–style body motion: emotion poses + talk gestures for VRM humanoid rigs.
+ * VRM body motion — rest/listen arms-down; talkGestures library while speaking.
  */
 import { inferTalkGestureFromText } from "../face/talkGestures.js";
 import {
-  blendBodyPoses,
   inferTalkStyleFromChunk,
   sampleBodyTalkMotion,
 } from "./companionTalkMotionBridge.js";
+import {
+  buildBasePose,
+  clampArmPose,
+  companionGestureStyle,
+  GESTURE_DURATION_SEC,
+  HEAD_GESTURE_NOD,
+  mergePoses,
+  sampleVrmTalkPose,
+  VRM_ARM_REST_ROTATIONS,
+} from "./companionPoseLibrary.js";
 
 export const COMPANION_BODY_SCHEMA = "amoji.companionBody.v1";
-
-/** Standing pose offsets layered on top of lowered arms. */
-const EMOTION_POSE = Object.freeze({
-  neutral: {
-    headX: 0,
-    headZ: 0,
-    spineX: 0.02,
-    chestX: -0.01,
-    hipZ: 0,
-    armLiftL: 0.12,
-    armLiftR: 0.12,
-    leanY: 0,
-  },
-  happy: {
-    headX: -0.04,
-    headZ: 0.04,
-    spineX: 0.03,
-    chestX: 0,
-    hipZ: -0.02,
-    armLiftL: 0.35,
-    armLiftR: 0.42,
-    leanY: 0.03,
-  },
-  thinking: {
-    headX: 0.07,
-    headZ: -0.09,
-    spineX: 0.05,
-    chestX: 0.02,
-    hipZ: 0.03,
-    armLiftL: 0.82,
-    armLiftR: 0.08,
-    leanY: -0.02,
-  },
-  sad: {
-    headX: 0.09,
-    headZ: 0.05,
-    spineX: 0.07,
-    chestX: 0.04,
-    hipZ: 0.04,
-    armLiftL: 0.02,
-    armLiftR: 0.02,
-    leanY: 0.02,
-  },
-  surprised: {
-    headX: -0.1,
-    headZ: 0,
-    spineX: -0.03,
-    chestX: -0.02,
-    hipZ: -0.03,
-    armLiftL: 0.55,
-    armLiftR: 0.55,
-    leanY: -0.04,
-  },
-  angry: {
-    headX: 0.05,
-    headZ: -0.05,
-    spineX: 0.06,
-    chestX: 0.03,
-    hipZ: 0,
-    armLiftL: 0.28,
-    armLiftR: 0.28,
-    leanY: 0.01,
-  },
-});
-
-/** Short gesture overlays (0–1 phase). */
-const GESTURE_WAVE = Object.freeze({
-  duration: 1.6,
-  sample(phase) {
-    const t = Math.sin(phase * Math.PI * 3) * (1 - phase * 0.35);
-    return {
-      armLiftR: 0.55 + t * 0.35,
-      armLiftL: 0.1,
-      headZ: 0.06,
-      leanY: 0.04,
-    };
-  },
-});
-
-const GESTURE_CELEBRATE = Object.freeze({
-  duration: 1.4,
-  sample(phase) {
-    const bounce = Math.sin(phase * Math.PI * 2) * (1 - phase);
-    return {
-      armLiftL: 0.7 + bounce * 0.2,
-      armLiftR: 0.7 + bounce * 0.2,
-      headX: -0.05,
-      leanY: -0.03 - bounce * 0.02,
-    };
-  },
-});
-
-const GESTURE_THINKING = Object.freeze({
-  duration: 2.2,
-  sample(phase) {
-    const ease = Math.min(1, phase * 2);
-    return {
-      armLiftL: 0.75 * ease,
-      armLiftR: 0.05,
-      headX: 0.08 * ease,
-      headZ: -0.1 * ease,
-    };
-  },
-});
-
-const GESTURE_SHRUG = Object.freeze({
-  duration: 1.3,
-  sample(phase) {
-    const up = Math.sin(phase * Math.PI);
-    return {
-      armLiftL: 0.25 + up * 0.2,
-      armLiftR: 0.25 + up * 0.2,
-      headZ: 0.03,
-      spineX: 0.02 + up * 0.03,
-    };
-  },
-});
-
-const GESTURE_POINT = Object.freeze({
-  duration: 1.5,
-  sample(phase) {
-    const ease = Math.min(1, phase * 2.5);
-    return {
-      armLiftR: 0.45 * ease,
-      armLiftL: 0.08,
-      headZ: -0.05 * ease,
-      leanY: 0.02 * ease,
-    };
-  },
-});
-
-const GESTURE_QUESTION = Object.freeze({
-  duration: 1.4,
-  sample(phase) {
-    const tilt = Math.sin(phase * Math.PI);
-    return {
-      headZ: -0.12 * tilt,
-      armLiftL: 0.35 * tilt,
-      armLiftR: 0.15,
-    };
-  },
-});
-
-const GESTURE_EXPLAIN = Object.freeze({
-  duration: 2,
-  sample(phase) {
-    const sway = Math.sin(phase * Math.PI * 2);
-    return {
-      armLiftL: 0.3 + sway * 0.12,
-      armLiftR: 0.35 - sway * 0.12,
-      leanY: sway * 0.02,
-    };
-  },
-});
-
-const GESTURE_NOD = Object.freeze({
-  duration: 0.9,
-  sample(phase) {
-    const nod = Math.sin(phase * Math.PI * 2);
-    return {
-      headX: -0.12 * nod,
-      leanY: nod * 0.02,
-    };
-  },
-});
-
-const GESTURE_DISAGREE = Object.freeze({
-  duration: 1.1,
-  sample(phase) {
-    const shake = Math.sin(phase * Math.PI * 4);
-    return {
-      headZ: shake * 0.14,
-      armLiftL: 0.18,
-      armLiftR: 0.18,
-    };
-  },
-});
-
-const GESTURE_LEAN = Object.freeze({
-  duration: 1.8,
-  sample(phase) {
-    const ease = Math.min(1, phase * 1.8);
-    return {
-      leanY: 0.08 * ease,
-      headX: 0.05 * ease,
-      armLiftL: 0.22 * ease,
-      armLiftR: 0.28 * ease,
-    };
-  },
-});
-
-const GESTURES = Object.freeze({
-  wave: GESTURE_WAVE,
-  celebrate: GESTURE_CELEBRATE,
-  thinking: GESTURE_THINKING,
-  shrug: GESTURE_SHRUG,
-  point: GESTURE_POINT,
-  question: GESTURE_QUESTION,
-  explain: GESTURE_EXPLAIN,
-  emphasize: GESTURE_CELEBRATE,
-  soft: GESTURE_EXPLAIN,
-  count: GESTURE_EXPLAIN,
-  nod: GESTURE_NOD,
-  disagree: GESTURE_DISAGREE,
-  lean: GESTURE_LEAN,
-});
 
 /**
  * @param {import('@pixiv/three-vrm').VRMHumanoid | null | undefined} humanoid
  */
 export function createCompanionBodyMotion(humanoid) {
   let emotion = "neutral";
+  let listening = false;
   /** @type {string | null} */
   let activeGesture = null;
   let gesturePhase = 0;
@@ -235,45 +39,60 @@ export function createCompanionBodyMotion(humanoid) {
 
   const setEmotion = (next) => {
     emotion = String(next || "neutral").toLowerCase();
-    if (!EMOTION_POSE[emotion]) emotion = "neutral";
+    humanoid?.resetNormalizedPose?.();
     return emotion;
   };
 
+  const setListening = (on) => {
+    listening = Boolean(on);
+    humanoid?.resetNormalizedPose?.();
+    return listening;
+  };
+
   const playGesture = (style) => {
-    const key = String(style || "").toLowerCase();
-    if (!GESTURES[key]) return false;
-    activeGesture = key;
-    gesturePhase = 0;
-    gestureDuration = GESTURES[key].duration;
+    const key = companionGestureStyle(style);
+    if (key === "nod") {
+      activeGesture = "nod";
+      gesturePhase = 0;
+      gestureDuration = HEAD_GESTURE_NOD.duration;
+      return true;
+    }
+    if (key === "point") {
+      activeGesture = "point";
+      gesturePhase = 0;
+      gestureDuration = GESTURE_DURATION_SEC.point;
+      return true;
+    }
+    talkStyle = key;
+    talkTime = 0;
     return true;
   };
 
   const playGestureForText = (text, opts = {}) => {
-    const style = inferTalkGestureFromText(text, {
+    const raw = inferTalkGestureFromText(text, {
       emotion: opts.emotion || emotion,
     });
+    const style = companionGestureStyle(raw);
     talkStyle = style;
     talkTime = 0;
-    return playGesture(style);
+    if (style === "nod" || style === "point") {
+      return playGesture(style);
+    }
+    return true;
   };
 
   const setTalkStyle = (style) => {
-    const key = String(style || "").toLowerCase();
-    if (GESTURES[key] || key === "explain") {
-      talkStyle = key;
-      talkTime = 0;
-      return talkStyle;
-    }
-    talkStyle = inferTalkGestureFromText(key, { emotion });
+    talkStyle = companionGestureStyle(style || talkStyle);
     talkTime = 0;
     return talkStyle;
   };
 
   const reactToSpeechChunk = (chunk, opts = {}) => {
-    const next = inferTalkStyleFromChunk(chunk, {
+    const raw = inferTalkStyleFromChunk(chunk, {
       emotion: opts.emotion || emotion,
       prevStyle: talkStyle,
     });
+    const next = companionGestureStyle(raw);
     if (next !== talkStyle) {
       talkStyle = next;
       talkTime = 0;
@@ -297,50 +116,81 @@ export function createCompanionBodyMotion(humanoid) {
     return talkEnergy;
   };
 
-  const applyPose = (pose, intensity = 1) => {
+  const ARM_BONE_NAMES = [
+    "leftUpperArm",
+    "rightUpperArm",
+    "leftLowerArm",
+    "rightLowerArm",
+  ];
+
+  const applyBoneRotation = (name, rot) => {
+    const b = bone(name);
+    if (!b || !rot) return;
+    b.rotation.x = rot.x ?? 0;
+    b.rotation.y = rot.y ?? 0;
+    b.rotation.z = rot.z ?? 0;
+  };
+
+  const applyArmRest = () => {
+    for (const name of ARM_BONE_NAMES) {
+      applyBoneRotation(name, VRM_ARM_REST_ROTATIONS[name]);
+    }
+  };
+
+  const applyPointArms = (pose, k) => {
+    const safe = clampArmPose(pose);
+    const restL = VRM_ARM_REST_ROTATIONS.leftUpperArm;
+    const restR = VRM_ARM_REST_ROTATIONS.rightUpperArm;
+    const restLl = VRM_ARM_REST_ROTATIONS.leftLowerArm;
+    const restRl = VRM_ARM_REST_ROTATIONS.rightLowerArm;
+    const liftL = Math.min(0.22, (safe.armLiftL ?? 0) * k);
+    const liftR = Math.min(0.22, (safe.armLiftR ?? 0) * k);
+    const foreL = Math.min(0.18, (safe.forearmL ?? 0) * k);
+    const foreR = Math.min(0.18, (safe.forearmR ?? 0) * k);
+    applyBoneRotation("leftUpperArm", {
+      x: restL.x,
+      y: restL.y,
+      z: restL.z + liftL * 0.45,
+    });
+    applyBoneRotation("rightUpperArm", {
+      x: restR.x,
+      y: restR.y,
+      z: restR.z - liftR * 0.45,
+    });
+    applyBoneRotation("leftLowerArm", {
+      x: restLl.x + foreL,
+      y: restLl.y,
+      z: restLl.z,
+    });
+    applyBoneRotation("rightLowerArm", {
+      x: restRl.x + foreR,
+      y: restRl.y,
+      z: restRl.z,
+    });
+  };
+
+  const applyPose = (pose, intensity = 1, opts = {}) => {
     if (!humanoid) return;
     const k = Math.max(0, Math.min(1, intensity));
+    const allowArms = opts.allowArms === true;
 
-    const lua = bone("leftUpperArm");
-    const rua = bone("rightUpperArm");
-    const lla = bone("leftLowerArm");
-    const rla = bone("rightLowerArm");
+    if (allowArms) {
+      applyPointArms(pose, k);
+    } else {
+      applyArmRest();
+    }
+
     const head = bone("head");
     const spine = bone("spine");
     const chest = bone("chest");
     const hips = bone("hips");
 
-    const baseArmZ = 1.4;
-    const baseArmX = 0.12;
-    const liftL = (pose.armLiftL ?? 0.12) * k;
-    const liftR = (pose.armLiftR ?? 0.12) * k;
-
-    if (lua) {
-      lua.rotation.z = baseArmZ + liftL * 0.35;
-      lua.rotation.x = baseArmX + (pose.spineX || 0) * 0.3;
-      lua.rotation.y = 0;
-    }
-    if (rua) {
-      rua.rotation.z = -baseArmZ - liftR * 0.35;
-      rua.rotation.x = baseArmX + (pose.spineX || 0) * 0.3;
-      rua.rotation.y = 0;
-    }
-    const foreL = (pose.forearmL ?? 0) * k;
-    const foreR = (pose.forearmR ?? 0) * k;
-    if (lla) {
-      lla.rotation.z = 0.15 + liftL * 0.08 + (pose.handWaveL || 0) * k;
-      lla.rotation.x = 0.05 + foreL;
-    }
-    if (rla) {
-      rla.rotation.z = -0.15 - liftR * 0.08 + (pose.handWaveR || 0) * k;
-      rla.rotation.x = 0.05 + foreR;
-    }
     if (head) {
       head.rotation.x = (pose.headX || 0) * k;
       head.rotation.z = (pose.headZ || 0) * k;
     }
     if (spine) {
-      spine.rotation.x = (pose.spineX || 0.02) * k;
+      spine.rotation.x = (pose.spineX || 0.01) * k;
       spine.rotation.y = (pose.leanY || 0) * k;
     }
     if (chest) {
@@ -354,79 +204,65 @@ export function createCompanionBodyMotion(humanoid) {
   const update = (dt, opts = {}) => {
     const now = opts.now ?? performance.now();
     const elapsed = (now - t0) * 0.001;
-    const base = EMOTION_POSE[emotion] || EMOTION_POSE.neutral;
 
-    /** @type {Record<string, number>} */
-    let pose = { ...base };
+    let pose = buildBasePose({ listening, emotion });
+    const energy = talking ? Math.max(0.2, talkEnergy) : 0;
 
-    const energy = talking ? Math.max(0.25, talkEnergy) : 0;
-
-    // Idle life — subtle sway like Grok Ani
     if (!talking) {
-      pose.leanY = (pose.leanY || 0) + Math.sin(elapsed * 0.9) * 0.025;
-      pose.headZ = (pose.headZ || 0) + Math.sin(elapsed * 1.1 + 0.5) * 0.02;
-      pose.spineX = (pose.spineX || 0) + Math.sin(elapsed * 1.4) * 0.008;
+      pose.leanY = (pose.leanY || 0) + Math.sin(elapsed * 0.85) * 0.018;
+      pose.headZ = (pose.headZ || 0) + Math.sin(elapsed * 1.05 + 0.5) * 0.015;
+      if (listening) {
+        pose.headX = (pose.headX || 0) + Math.sin(elapsed * 0.6) * 0.012;
+      }
     } else {
       talkTime += dt;
       const motion = sampleBodyTalkMotion(talkTime, {
-        style: talkStyle,
+        style: companionGestureStyle(talkStyle),
         emotion,
         speechEnergy: energy,
+        includeArms: false,
       });
-      pose = blendBodyPoses(pose, motion.body, 0.55 + energy * 0.4);
+      pose = mergePoses(pose, motion.body, 0.22 + energy * 0.15);
 
-      const beat = Math.sin(elapsed * 7.2);
-      const beat2 = Math.sin(elapsed * 5.4 + 0.6);
-      pose.headX = (pose.headX || 0) + beat * 0.018 * energy;
-      pose.leanY = (pose.leanY || 0) + beat2 * 0.014 * energy;
-
-      switch (emotion) {
-        case "happy":
-          pose.headZ = (pose.headZ || 0) + beat2 * 0.04 * energy;
-          pose.hipZ = (pose.hipZ || 0) - beat * 0.02 * energy;
-          break;
-        case "thinking":
-          pose.armLiftL = Math.max(pose.armLiftL || 0, 0.55 + beat * 0.08 * energy);
-          pose.headX = (pose.headX || 0) + 0.04;
-          break;
-        case "sad":
-          pose.headX = (pose.headX || 0) + 0.05;
-          pose.armLiftL = (pose.armLiftL || 0) * 0.6;
-          pose.armLiftR = (pose.armLiftR || 0) * 0.6;
-          break;
-        case "surprised":
-          pose.armLiftL = (pose.armLiftL || 0) + 0.2 * energy;
-          pose.armLiftR = (pose.armLiftR || 0) + 0.2 * energy;
-          pose.headX = (pose.headX || 0) - 0.04 * energy;
-          break;
-        case "angry":
-          pose.headZ = (pose.headZ || 0) - beat * 0.03 * energy;
-          pose.spineX = (pose.spineX || 0) + 0.02 * energy;
-          break;
-        default:
-          break;
-      }
+      const beat = Math.sin(elapsed * 6.8);
+      pose.headX = (pose.headX || 0) + beat * 0.012 * energy;
+      pose.leanY = (pose.leanY || 0) + Math.sin(elapsed * 5.2) * 0.01 * energy;
     }
 
+    let allowArms = false;
     if (activeGesture) {
       gesturePhase += dt / gestureDuration;
       if (gesturePhase >= 1) {
         activeGesture = null;
         gesturePhase = 0;
-      } else {
-        const g = GESTURES[activeGesture];
-        const overlay = g.sample(gesturePhase);
-        pose = { ...pose, ...overlay };
+      } else if (activeGesture === "nod") {
+        pose = mergePoses(pose, HEAD_GESTURE_NOD.sample(gesturePhase), 1);
+      } else if (activeGesture === "point") {
+        const tSec = gesturePhase * gestureDuration;
+        const overlay = sampleVrmTalkPose("point", tSec, {
+          emotion,
+          speechEnergy: 0.3,
+          intensity: 0.32,
+          includeArms: true,
+        });
+        const fade = gesturePhase < 0.15
+          ? gesturePhase / 0.15
+          : gesturePhase > 0.85
+            ? (1 - gesturePhase) / 0.15
+            : 1;
+        pose = mergePoses(pose, overlay, 0.22 * fade);
+        allowArms = true;
       }
     }
 
-    applyPose(pose, 1);
+    applyPose(pose, 1, { allowArms });
     return pose;
   };
 
   return {
     schema: COMPANION_BODY_SCHEMA,
     setEmotion,
+    setListening,
     playGesture,
     playGestureForText,
     setTalkStyle,
@@ -436,6 +272,9 @@ export function createCompanionBodyMotion(humanoid) {
     update,
     get emotion() {
       return emotion;
+    },
+    get listening() {
+      return listening;
     },
     get activeGesture() {
       return activeGesture;
@@ -451,18 +290,27 @@ export function parseReplyMood(text) {
   const raw = String(text || "").trim();
   const moodMatch = raw.match(/\s*\[mood:(\w+)\]\s*$/i);
   if (moodMatch) {
-    const emotion = moodMatch[1].toLowerCase();
+    const parsedEmotion = moodMatch[1].toLowerCase();
     const reply = raw.replace(/\s*\[mood:\w+\]\s*$/i, "").trim();
-    return { reply, emotion };
+    return { reply, emotion: parsedEmotion };
   }
   return { reply: raw, emotion: null };
 }
 
-/** Cantonese-first companion system prompt (Grok Ani tone). */
+/** Cantonese-first companion system prompt (anime companion tone). */
 export const CANTONESE_COMPANION_PROMPT = [
-  "You are Amoji, a playful anime companion like Grok Ani.",
+  "You are Amoji, a playful anime companion.",
   "ALWAYS reply in spoken Cantonese (粵語口語) with natural particles: 呀、啦、囉、咩、喎、嘛。",
   "Only use English if the user clearly writes in English.",
+  "Keep replies short (1–3 sentences), warm, witty, and emotionally expressive.",
+  "End EVERY reply with exactly one mood tag on its own: [mood:happy], [mood:thinking], [mood:sad], [mood:surprised], or [mood:angry].",
+  "Pick the mood that matches your reply energy. Never mention being an AI.",
+].join(" ");
+
+/** English companion mode — free Edge TTS + English replies. */
+export const ENGLISH_COMPANION_PROMPT = [
+  "You are Amoji, a playful anime companion.",
+  "ALWAYS reply in natural spoken English.",
   "Keep replies short (1–3 sentences), warm, witty, and emotionally expressive.",
   "End EVERY reply with exactly one mood tag on its own: [mood:happy], [mood:thinking], [mood:sad], [mood:surprised], or [mood:angry].",
   "Pick the mood that matches your reply energy. Never mention being an AI.",

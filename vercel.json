@@ -2,9 +2,10 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "version": 2,
   "name": "amoji-companion",
-  "installCommand": "cd amoji-engine && npm install",
+  "installCommand": "npm install && cd amoji-engine && npm install",
   "rewrites": [
     { "source": "/api/chat", "destination": "/api/chat" },
+    { "source": "/api/tts", "destination": "/api/tts" },
     { "source": "/api/llm/status", "destination": "/api/llm/status" },
     { "source": "/api/ollama/tags", "destination": "/api/ollama/tags" },
     { "source": "/prototypes/realtime-voice-lab.html", "destination": "/prototypes/realtime-voice-lab.html" },
@@ -41,15 +42,16 @@
       ]
     },
     {
-      "source": "/amoji-engine/engine/companion/:path*",
+      "source": "/amoji-engine/engine/companion/(.*)",
       "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }
+        { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" },
+        { "key": "Pragma", "value": "no-cache" }
       ]
     },
     {
-      "source": "/amoji-engine/:path*",
+      "source": "/amoji-engine/(.*)",
       "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=86400" }
+        { "key": "Cache-Control", "value": "public, max-age=3600, must-revalidate" }
       ]
     }
   ]

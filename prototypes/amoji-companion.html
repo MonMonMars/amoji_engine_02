@@ -107,9 +107,11 @@
         left: 50%;
         bottom: 28%;
         transform: translateX(-50%);
-        z-index: 8;
+        z-index: 100;
         pointer-events: auto;
         cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
         padding: 0.75rem 1.4rem;
         border-radius: 999px;
         background: rgba(124, 156, 255, 0.22);
@@ -137,6 +139,42 @@
         opacity: 0.55;
         cursor: wait;
         pointer-events: none;
+      }
+
+      .start-talking.starting {
+        background: rgba(124, 156, 255, 0.38);
+        border-color: rgba(124, 156, 255, 0.85);
+        transform: translateX(-50%) scale(0.98);
+      }
+
+      .companion-toast {
+        position: fixed;
+        left: 50%;
+        bottom: max(1.25rem, env(safe-area-inset-bottom));
+        transform: translateX(-50%) translateY(120%);
+        z-index: 200;
+        max-width: min(92vw, 420px);
+        padding: 0.75rem 1rem;
+        border-radius: 0.85rem;
+        background: rgba(18, 22, 32, 0.94);
+        border: 1px solid rgba(255, 122, 144, 0.55);
+        color: #ffd8de;
+        font-size: 0.88rem;
+        line-height: 1.45;
+        box-shadow: var(--shadow);
+        opacity: 0;
+        transition: transform 0.28s ease, opacity 0.28s ease;
+        pointer-events: none;
+      }
+
+      .companion-toast.show {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+      }
+
+      .companion-toast.info {
+        border-color: rgba(127, 212, 207, 0.55);
+        color: #dff8f6;
       }
 
       .topbar {
@@ -200,10 +238,26 @@
         color: var(--accent);
       }
 
+      .pill.avatar-load-pill {
+        border-color: rgba(127, 212, 207, 0.35);
+        color: var(--muted);
+        transition: opacity 0.4s ease, transform 0.4s ease;
+      }
+
+      .pill.avatar-load-pill strong {
+        color: var(--accent);
+      }
+
+      .pill.avatar-load-pill.hide {
+        opacity: 0;
+        transform: translateY(-4px);
+        pointer-events: none;
+      }
+
       .avatar-loading {
         position: absolute;
         inset: 0;
-        z-index: 8;
+        z-index: 20;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -774,13 +828,78 @@
         }
       }
     </script>
+    <script>
+      (function () {
+        window.__amojiStart = { tapped: false, ready: false, run: null, sessionStarted: false };
+        window.__amojiHideLoading = function () {
+          const el = document.querySelector(".avatar-loading");
+          if (!el || el.classList.contains("hide")) return;
+          el.classList.add("hide");
+          setTimeout(function () {
+            el.remove();
+          }, 600);
+        };
+        setTimeout(window.__amojiHideLoading, 10000);
+        window.__amojiUnlockAudio = function () {
+          try {
+            var AC = window.AudioContext || window.webkitAudioContext;
+            if (AC) {
+              var ctx = window.__amojiAudioCtx || new AC();
+              window.__amojiAudioCtx = ctx;
+              if (ctx.state === "suspended") ctx.resume();
+            }
+            var a = window.__amojiPrimeAudio || new Audio();
+            window.__amojiPrimeAudio = a;
+            a.preload = "auto";
+            a.setAttribute("playsinline", "");
+            a.setAttribute("webkit-playsinline", "");
+            a.playsInline = true;
+            a.volume = 0.001;
+            a.src =
+              "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEAQB8AAEAfAAABAAgAZGF0YQQAAAAAAA==";
+            a.play().catch(function () {});
+            window.__amojiAudioUnlocked = true;
+          } catch (e) {}
+        };
+        window.__amojiStartTap = function (ev) {
+          ev?.preventDefault?.();
+          ev?.stopPropagation?.();
+          window.__amojiUnlockAudio();
+          const btn = document.getElementById("start-talking");
+          if (!btn || btn.disabled || btn.classList.contains("hide")) return false;
+          window.__amojiStart.tapped = true;
+          btn.textContent = "⏳ Starting…";
+          btn.classList.add("hide");
+          btn.setAttribute("aria-hidden", "true");
+          btn.setAttribute("disabled", "true");
+          btn.classList.remove("starting");
+          btn.removeAttribute("aria-busy");
+          document.getElementById("input")?.focus();
+          setTimeout(function () {
+            if (window.__amojiStart.sessionStarted) return;
+            if (typeof window.__amojiStart.run === "function") {
+              window.__amojiStart.run({ fromTimeout: true });
+            }
+          }, 2000);
+          if (window.__amojiStart.ready && typeof window.__amojiStart.run === "function") {
+            void window.__amojiStart.run();
+          }
+          return false;
+        };
+      })();
+    </script>
   </head>
   <body>
     <div class="stage">
       <div class="atmosphere" aria-hidden="true"></div>
       <canvas id="avatar-canvas" aria-label="Amoji companion — drag to orbit"></canvas>
       <div class="orbit-hint" id="orbit-hint">Drag to orbit · Tap character · Scroll to zoom</div>
-      <button type="button" class="start-talking" id="start-talking">
+      <button
+        type="button"
+        class="start-talking"
+        id="start-talking"
+        onclick="return window.__amojiStartTap && window.__amojiStartTap(event)"
+      >
         👆 Tap to start · 點一下開始
       </button>
 
@@ -788,9 +907,13 @@
         <div class="brand">Amoji <span>Live</span></div>
         <div class="meta">
           <div class="pill" id="status-pill">state · <strong>idle</strong></div>
+          <div class="pill avatar-load-pill" id="avatar-load-pill" hidden>
+            avatar · <strong>loading…</strong>
+          </div>
           <div class="pill" id="mode-pill">LLM · <strong>local</strong></div>
           <div class="pill" id="emotion-pill">feel · <strong>neutral</strong></div>
           <div class="pill" id="voice-pill">voice · <strong>…</strong></div>
+          <a class="lab-link" id="lang-pill" href="?lang=yue" title="Switch language">粵</a>
           <a class="lab-link" id="lab-link" href="/prototypes/realtime-voice-lab.html">Lab</a>
           <button type="button" class="key-btn" id="btn-cloud-key" hidden title="Paste API key">🔑 Key</button>
           <button type="button" class="gear" id="btn-settings" title="LLM settings" hidden>⚙</button>
@@ -891,9 +1014,17 @@
       import { createCompanionChat } from "../amoji-engine/engine/companion/chatLlm.js";
       import {
         createCompanionVoice,
+        CLOUD_CANTONESE_VOICE,
+        CLOUD_ENGLISH_VOICE,
         femaleVoiceLabel,
         formatMicError,
+        unlockAudioSync,
       } from "../amoji-engine/engine/companion/companionVoice.js";
+      import {
+        CANTONESE_COMPANION_PROMPT,
+        ENGLISH_COMPANION_PROMPT,
+      } from "../amoji-engine/engine/companion/companionBodyMotion.js";
+      import { resolveDialectPref } from "../amoji-engine/engine/lab/dialectPref.js";
       import {
         createCompanionStatus,
         createLoadingOverlay,
@@ -911,8 +1042,23 @@
 
       const stage = document.querySelector(".stage");
       const canvas = document.getElementById("avatar-canvas");
+      const startTalkingEl = document.getElementById("start-talking");
       const loading = createLoadingOverlay(stage);
       loading.show();
+
+      const showToast = (msg, kind = "error") => {
+        const t = document.createElement("div");
+        t.className = `companion-toast ${kind === "info" ? "info" : ""}`;
+        t.setAttribute("role", "alert");
+        t.textContent = String(msg || "Something went wrong");
+        document.body.appendChild(t);
+        requestAnimationFrame(() => t.classList.add("show"));
+        setTimeout(() => {
+          t.classList.remove("show");
+          setTimeout(() => t.remove(), 320);
+        }, 5200);
+      };
+
       const transcript = document.getElementById("transcript");
       const form = document.getElementById("composer");
       const input = document.getElementById("input");
@@ -927,6 +1073,8 @@
       const btnMic = document.getElementById("btn-mic");
 
       const params = new URLSearchParams(location.search);
+      const dialect = resolveDialectPref();
+      const isEnglish = dialect.forceLanguage === "en";
       const autoMic = params.get("automic") !== "0";
       const avatarModelUrl =
         params.get("vrm") ||
@@ -975,18 +1123,26 @@
         document.getElementById("api-model").value = stored.model;
       }
 
-      const tapLines = [
-        "喂～你戳我呀？好開心㗎！",
-        "嘿嘿，見到我啦？有咩想傾？",
-        "哎呀～唔好撩我啦，會面紅㗎！",
-        "你點我？我喺度聽緊你㗎～",
-      ];
+      const tapLines = isEnglish
+        ? [
+            "Hey! You poked me — I'm so happy!",
+            "Hehe, you found me! What's on your mind?",
+            "Aww, don't tease me — I'll blush!",
+            "You tapped me? I'm listening~",
+          ]
+        : [
+            "喂～你戳我呀？好開心㗎！",
+            "嘿嘿，見到我啦？有咩想傾？",
+            "哎呀～唔好撩我啦，會面紅㗎！",
+            "你點我？我喺度聽緊你㗎～",
+          ];
       let lastTapAt = 0;
       /** @type {(() => void) | null} */
       let handleCharacterTap = null;
 
       let avatar = createStubAvatar();
       let avatarKind = "loading";
+<<<<<<< HEAD
       let currentEmotion = "happy";
       const avatarLoadPromise = createCompanionAvatar({
         canvas,
@@ -999,17 +1155,65 @@
           avatarKind = loaded.kind;
           avatar.setEmotion?.(currentEmotion);
           return loaded;
+=======
+      let avatarLoadStarted = false;
+      let currentEmotion = "neutral";
+      /** @type {Promise<{ avatar: ReturnType<typeof createStubAvatar>, kind: string }>} */
+      let avatarLoadPromise = Promise.resolve({ avatar, kind: avatarKind });
+
+      const beginAvatarLoad = () => {
+        if (avatarLoadStarted) return avatarLoadPromise;
+        avatarLoadStarted = true;
+        showAvatarLoadPill();
+        avatarLoadPromise = createCompanionAvatar({
+          canvas,
+          modelUrl: avatarModelUrl || undefined,
+          prefer: avatarPrefer,
+          onCharacterTap: () => handleCharacterTap?.(),
+>>>>>>> cursor/vrm-companion-6647
         })
-        .catch((err) => {
-          console.warn("[companion] avatar load failed", err);
-          return { avatar, kind: avatarKind };
-        });
+          .then((loaded) => {
+            avatar = loaded.avatar;
+            avatarKind = loaded.kind;
+            avatar.setEmotion?.(currentEmotion);
+            return loaded;
+          })
+          .catch((err) => {
+            console.warn("[companion] avatar load failed", err);
+            return { avatar, kind: avatarKind };
+          })
+          .finally(() => hideAvatarLoadPill());
+        return avatarLoadPromise;
+      };
+
+      const scheduleAvatarLoad = () => {
+        const run = () => beginAvatarLoad();
+        if (typeof requestIdleCallback === "function") {
+          requestIdleCallback(run, { timeout: 1800 });
+        } else {
+          setTimeout(run, 150);
+        }
+      };
 
       const chat = createCompanionChat({
         apiUrl: stored.url || null,
         apiKey: stored.key || null,
         model: stored.model,
+        systemPrompt: isEnglish ? ENGLISH_COMPANION_PROMPT : CANTONESE_COMPANION_PROMPT,
       });
+
+      const langPill = document.getElementById("lang-pill");
+      if (langPill) {
+        langPill.textContent = isEnglish ? "EN" : "粵";
+        langPill.href = isEnglish ? "?lang=yue" : "?lang=en";
+        langPill.title = isEnglish
+          ? "Switch to Cantonese (粵語)"
+          : "Switch to English (free Edge TTS)";
+      }
+      if (isEnglish) {
+        document.documentElement.lang = "en";
+        input.placeholder = "Chat with Amoji…";
+      }
 
       const orbitHint = document.getElementById("orbit-hint");
       canvas.addEventListener(
@@ -1043,6 +1247,10 @@
       });
       status.idle();
       setModePill(chat.mode);
+
+      loading.hide();
+      window.__amojiHideLoading?.();
+      setTimeout(() => loading.remove(), 600);
 
       const interim = createInterimBubble(transcript);
 
@@ -1088,6 +1296,11 @@
         btnMic.textContent = voice.micOn ? "⏺" : "🎤";
       };
 
+      const syncListenPose = () => {
+        const listen = voice.micOn && !busy && !voice.speaking;
+        avatar.setListening?.(listen);
+      };
+
       const syncSpeakerBtn = () => {
         btnSpeaker.classList.toggle("on", voice.speakerOn);
         btnSpeaker.setAttribute("aria-pressed", voice.speakerOn ? "true" : "false");
@@ -1097,7 +1310,10 @@
       let speakEmotion = "neutral";
 
       const voice = createCompanionVoice({
-        lang: "zh-HK",
+        lang: isEnglish ? "en-US" : "zh-HK",
+        cloudVoice: isEnglish ? CLOUD_ENGLISH_VOICE : CLOUD_CANTONESE_VOICE,
+        cloudTtsUrl: hostedOnline ? "/api/tts" : null,
+        preferCloudTts: hostedOnline,
         onMouth: (open, shape) => {
           if (shape && avatar.setMouthShape) avatar.setMouthShape(shape);
           else if (!shape && avatar.setMouthShape) avatar.setMouthShape(null);
@@ -1150,7 +1366,15 @@
               "tts-timeout",
             ]);
             if (code && !soft.has(code)) {
-              addBubble("system", `Mic/TTS: ${code}`);
+              const isVoice =
+                /tts|cloud|audio|speech|synthesis|notallowed|play/i.test(code);
+              const friendly = isVoice
+                ? code.includes("play-blocked") || /notallowed/i.test(code)
+                  ? "Voice blocked — tap 🔊 then tap Start again (browser needs a tap to play sound)."
+                  : `Voice error: ${code}`
+                : `Mic/TTS: ${code}`;
+              addBubble("system", friendly);
+              if (isVoice) showToast(friendly, "error");
             }
           }
           syncMicBtn();
@@ -1166,7 +1390,7 @@
         addBubble("assistant", line);
         avatar.setEmotion("happy");
         setEmotionPill("happy");
-        avatar.playGestureForText?.(line);
+        avatar.setTalkStyle?.("soft");
         speakEmotion = "happy";
         status.speaking();
         void voice.speak(line, "happy").finally(() => {
@@ -1191,8 +1415,9 @@
         voice.pauseCapture();
         interim.clear();
         addBubble("user", cleaned);
-        avatar.setEmotion("thinking");
-        setEmotionPill("thinking");
+        avatar.setEmotion("neutral");
+        setEmotionPill("neutral");
+        avatar.setListening?.(false);
         status.thinking();
         avatar.setTalking(false);
         avatar.setMouthOpen(0);
@@ -1220,9 +1445,8 @@
           assistantBubble.textContent = reply;
           avatar.setEmotion(emotion);
           setEmotionPill(emotion);
-          avatar.playGestureForText?.(reply);
           avatar.setTalkStyle?.(
-            reply.includes("?") || reply.includes("？") ? "question" : "explain",
+            reply.includes("?") || reply.includes("？") ? "question" : "soft",
           );
           speakEmotion = emotion;
           status.speaking();
@@ -1240,13 +1464,15 @@
           syncMicBtn();
           if (voice.micOn) {
             input.placeholder = "Listening… speak, pause → she replies, then listens again";
-            avatar.setEmotion("thinking");
-            setEmotionPill("thinking");
+            avatar.setEmotion("neutral");
+            setEmotionPill("neutral");
             status.listening();
           } else {
+            avatar.setListening?.(false);
             status.idle();
             input.focus();
           }
+          syncListenPose();
           // Drain one queued utterance from continuous mic (if any)
           if (micQueue.length && voice.micOn) {
             const next = micQueue.shift();
@@ -1257,66 +1483,177 @@
         }
       };
 
-      const GREETING =
-        "嗨呀～我係 Amoji！同我傾偈啦，我會用粵語答你，仲會做表情同身體動作㗎。";
-      const startTalkingEl = document.getElementById("start-talking");
+      const GREETING = isEnglish
+        ? "Hi! I'm Amoji — chat with me and I'll reply with expressions and body motion!"
+        : "嗨呀～我係 Amoji！同我傾偈啦，我會用粵語答你，仲會做表情同身體動作㗎。";
 
       let sessionStarted = false;
       let sessionStarting = false;
+      /** @type {ReturnType<typeof setTimeout> | null} */
+      let startTimeoutId = null;
+      const START_TIMEOUT_MS = 2000;
+      const avatarLoadPill = document.getElementById("avatar-load-pill");
 
-      const startSession = async () => {
-        if (sessionStarted || sessionStarting) return;
-        sessionStarting = true;
+      const showAvatarLoadPill = () => {
+        if (!avatarLoadPill) return;
+        avatarLoadPill.hidden = false;
+        avatarLoadPill.classList.remove("hide");
+      };
+
+      const hideAvatarLoadPill = () => {
+        if (!avatarLoadPill) return;
+        avatarLoadPill.classList.add("hide");
+        setTimeout(() => {
+          avatarLoadPill.hidden = true;
+        }, 450);
+      };
+
+      showAvatarLoadPill();
+      scheduleAvatarLoad();
+
+      const resetStartButton = () => {
+        if (!startTalkingEl) return;
+        startTalkingEl.classList.remove("hide", "starting");
+        startTalkingEl.removeAttribute("aria-hidden");
+        startTalkingEl.removeAttribute("aria-busy");
+        startTalkingEl.removeAttribute("disabled");
+        startTalkingEl.textContent = voice.supportsMic
+          ? isEnglish
+            ? "👆 Tap to start"
+            : "👆 Tap to start · 點一下開始"
+          : isEnglish
+            ? "👆 Tap to start (type to chat)"
+            : "👆 Tap to start (type to chat)";
+      };
+
+      const markSessionReady = ({ fromTimeout = false } = {}) => {
+        if (sessionStarted) return;
+        sessionStarted = true;
+        sessionStarting = false;
+        window.__amojiStart.sessionStarted = true;
+        if (startTimeoutId) {
+          clearTimeout(startTimeoutId);
+          startTimeoutId = null;
+        }
+
+        startTalkingEl?.classList.remove("starting");
+        startTalkingEl?.removeAttribute("aria-busy");
         startTalkingEl?.classList.add("hide");
         startTalkingEl?.setAttribute("aria-hidden", "true");
         startTalkingEl?.setAttribute("disabled", "true");
+        setTimeout(() => startTalkingEl?.remove(), 600);
 
+<<<<<<< HEAD
         await voice.primeAudio?.();
         const v = await voice.ensureVoices();
         setVoicePill(femaleVoiceLabel(v) || (voice.supportsSpeak ? "女聲" : "off"));
+=======
+        if (!busy && !voice.micOn && !voice.speaking) status.idle();
+        input.focus();
+        scheduleAvatarLoad();
+
+        if (fromTimeout) {
+          showToast("Session ready — avatar or voice may still be loading", "info");
+        }
+      };
+
+      const speakGreetingAsync = () => {
+        avatar.setEmotion("happy");
+        setEmotionPill("happy");
+        avatar.playGesture?.("nod");
+        speakEmotion = "happy";
+        status.speaking();
+        return voice.speak(GREETING, "happy").then((spoke) => {
+          if (spoke?.ok === false && spoke?.reason) {
+            const reason = String(spoke.reason);
+            const hint =
+              /play-blocked|notallowed/i.test(reason)
+                ? "Tap 🔊 then tap Start again — your browser blocked audio."
+                : reason.includes("cloud-tts")
+                  ? "Cloud voice failed — trying browser voice or check connection."
+                  : reason;
+            addBubble("system", `Voice: ${hint} — you can still type to chat.`);
+            showToast(hint, "error");
+          } else if (spoke?.muted) {
+            addBubble("system", "Speaker is muted — tap 🔊 to hear Amoji.");
+          }
+          if (!busy && !voice.micOn) status.idle();
+          syncListenPose();
+          return spoke;
+        });
+      };
+
+      const requestMicAsync = () => {
+        if (!autoMic || !voice.supportsMic) return;
+        void voice.startMic().then((micOk) => {
+          syncMicBtn();
+          if (micOk) {
+            status.listening();
+            avatar.setEmotion("neutral");
+            setEmotionPill("neutral");
+            syncListenPose();
+            input.placeholder =
+              "Listening… speak, pause → she replies, then listens again";
+            addBubble(
+              "system",
+              isEnglish
+                ? "Mic on — speak, pause to send."
+                : "Mic on — speak Cantonese or English, pause to send.",
+            );
+          } else if (!busy) {
+            status.idle();
+            input.placeholder = "同 Amoji 傾偈… tap 🎤 after allowing microphone";
+          }
+        });
+      };
+
+      const startSession = ({ fromTimeout = false } = {}) => {
+        if (sessionStarted || sessionStarting) return;
+        unlockAudioSync();
+        sessionStarting = true;
+        startTalkingEl?.classList.add("starting");
+        startTalkingEl?.setAttribute("aria-busy", "true");
+        if (startTalkingEl?.textContent?.includes("Starting") === false) {
+          startTalkingEl.textContent = "⏳ Starting…";
+        }
+>>>>>>> cursor/vrm-companion-6647
 
         if (!voice.supportsMic) {
           addBubble("system", formatMicError("unsupported"));
         }
 
-        avatar.setEmotion("happy");
-        setEmotionPill("happy");
-        avatar.playGestureForText?.(GREETING);
-        speakEmotion = "happy";
-        status.speaking();
-        await voice.speak(GREETING, "happy");
+        startTimeoutId = setTimeout(() => {
+          if (!sessionStarted) markSessionReady({ fromTimeout: true });
+        }, START_TIMEOUT_MS);
 
-        if (autoMic && voice.supportsMic) {
-          const micOk = await voice.startMic();
-          syncMicBtn();
-          if (micOk) {
-            status.listening();
-            input.placeholder =
-              "Listening… speak, pause → she replies, then listens again";
-            addBubble("system", "Mic on — speak Cantonese or English, pause to send.");
-          } else {
-            status.idle();
-            input.placeholder = "同 Amoji 傾偈… tap 🎤 after allowing microphone";
-          }
-        } else {
-          status.idle();
-        }
+        requestAnimationFrame(() => markSessionReady({ fromTimeout }));
 
-        sessionStarted = true;
-        sessionStarting = false;
-        setTimeout(() => startTalkingEl?.remove(), 600);
+        void voice.ensureVoices().then((v) => {
+          const label =
+            femaleVoiceLabel(v) ||
+            (hostedOnline ? "女聲·粵·曉曼" : voice.supportsSpeak ? "女聲" : "off");
+          setVoicePill(label);
+        });
+        void voice
+          .primeAudio?.()
+          .catch(() => {})
+          .then(() => speakGreetingAsync())
+          .finally(() => {
+            requestMicAsync();
+          });
       };
+
+      window.__amojiStart.run = () => void startSession();
+      window.__amojiStart.ready = true;
+      if (window.__amojiStart.tapped) void startSession();
 
       btnMic.disabled = !voice.supportsMic;
       syncSpeakerBtn();
       syncMicBtn();
 
-      startTalkingEl?.addEventListener("click", () => void startSession());
-      if (!voice.supportsMic) {
+      if (!voice.supportsMic && startTalkingEl) {
         startTalkingEl.textContent = "👆 Tap to start (type to chat)";
       }
-      loading.hide();
-      setTimeout(() => loading.remove(), 600);
 
       const avatarLabel =
         avatarKind === "vrm3d"
@@ -1368,12 +1705,16 @@
       addBubble(
         "system",
         hostedOnline
-          ? `☁️ 全網上運行 · ${avatarLabel} · 粵語傾偈 · 表情同身體動作 · 唔使本地 PC · 🎤 連續對話`
-          : `Grok Ani 風格 · ${avatarLabel} · 粵語傾偈 · 表情同身體動作 · Brain 按鈕切 LLM · 🎤 連續對話`,
+          ? isEnglish
+            ? `☁️ Cloud · ${avatarLabel} · English chat · free Edge TTS · 🎤 continuous talk`
+            : `☁️ 全網上運行 · ${avatarLabel} · 粵語傾偈 · 免費 Edge TTS · 唔使本地 PC · 🎤 連續對話`
+          : isEnglish
+            ? `Anime companion · ${avatarLabel} · English · free Edge TTS · Brain button switches LLM · 🎤`
+            : `動漫同伴 · ${avatarLabel} · 粵語傾偈 · 免費 Edge TTS · Brain 按鈕切 LLM · 🎤 連續對話`,
       );
       addBubble("assistant", GREETING);
-      avatar.setEmotion("happy");
-      setEmotionPill("happy");
+      avatar.setEmotion("neutral");
+      setEmotionPill("neutral");
 
       btnSettings.addEventListener("click", () => {
         settings.classList.toggle("open");
@@ -1436,6 +1777,7 @@
       }
 
       btnSpeaker.addEventListener("click", () => {
+        unlockAudioSync();
         voice.setSpeakerOn(!voice.speakerOn);
         syncSpeakerBtn();
         addBubble("system", voice.speakerOn ? "Speaker on" : "Speaker muted");
@@ -1448,7 +1790,7 @@
         }
         const turningOn = !voice.micOn;
         if (turningOn) {
-          if (!sessionStarted) await startSession();
+          if (!sessionStarted) startSession();
           micQueue.length = 0;
           const micOk = await voice.startMic();
           syncMicBtn();
@@ -1459,13 +1801,15 @@
           );
           input.placeholder = "Listening… speak, pause → she replies, then listens again";
           if (!busy) {
-            avatar.setEmotion("thinking");
-            setEmotionPill("thinking");
+            avatar.setEmotion("neutral");
+            setEmotionPill("neutral");
+            syncListenPose();
             status.listening();
           }
         } else {
           micQueue.length = 0;
           voice.stopMic();
+          avatar.setListening?.(false);
           addBubble("system", "Mic off");
           input.placeholder = "同 Amoji 傾偈… or tap 🎤 for continuous talk";
           syncMicBtn();
@@ -1478,7 +1822,7 @@
         input.value = "";
         autosize();
         if (!sessionStarted && !sessionStarting) {
-          await voice.primeAudio?.();
+          startSession();
         }
         await runTurn(text);
       });
