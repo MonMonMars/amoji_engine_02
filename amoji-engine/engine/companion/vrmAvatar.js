@@ -6,6 +6,7 @@ import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { VRMLoaderPlugin, VRMExpressionPresetName } from "@pixiv/three-vrm";
+import { createCompanionBodyMotion } from "./companionBodyMotion.js";
 
 export const VRM_AVATAR_SCHEMA = "amoji.vrmAvatar.v1";
 
@@ -18,10 +19,38 @@ const EMOTION_EXPRESSIONS = {
   angry: { [VRMExpressionPresetName.Angry]: 0.8 },
 };
 
+/** Grok Ani–style framing: upper body visible, not extreme face close-up. */
+function frameFaceCamera({ vrm, model, camera, controls, fitted }) {
+  const fittedSize = fitted.getSize(new THREE.Vector3());
+  const head =
+    vrm.humanoid?.getNormalizedBoneNode?.("head") ||
+    vrm.humanoid?.getNormalizedBoneNode?.("neck");
+  const anchor = new THREE.Vector3();
+  const upperBodyY = fitted.min.y + fittedSize.y * 0.58;
+  if (head) {
+    model.updateWorldMatrix(true, true);
+    head.getWorldPosition(anchor);
+    anchor.y = anchor.y * 0.25 + upperBodyY * 0.75;
+  } else {
+    anchor.set(0, upperBodyY, 0);
+  }
+
+  const portraitDist = Math.max(1.35, fittedSize.y * 1.05);
+  controls.target.copy(anchor);
+  camera.position.set(anchor.x, anchor.y + 0.04, anchor.z + portraitDist);
+  controls.minDistance = portraitDist * 0.72;
+  controls.maxDistance = portraitDist * 3.4;
+  controls.minPolarAngle = Math.PI * 0.32;
+  controls.maxPolarAngle = Math.PI * 0.68;
+  controls.update();
+  return { face: anchor, portraitDist };
+}
+
 /**
  * @param {{
  *   canvas: HTMLCanvasElement,
  *   modelUrl?: string,
+ *   onCharacterTap?: (info: { point: import('three').Vector3 }) => void,
  * }} opts
  */
 export async function createVrmAvatar(opts) {
@@ -34,7 +63,8 @@ export async function createVrmAvatar(opts) {
       canvas,
       antialias: true,
       alpha: true,
-      powerPreference: "high-performance",
+      powerPreference: "default",
+      failIfMajorPerformanceCaveat: false,
     });
     if (!renderer.getContext?.()) throw new Error("WebGL context missing");
   } catch (err) {
@@ -53,8 +83,8 @@ export async function createVrmAvatar(opts) {
   }
 
   const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(28, 1, 0.05, 100);
-  camera.position.set(0, 1.35, 2.35);
+  const camera = new THREE.PerspectiveCamera(34, 1, 0.05, 100);
+  camera.position.set(0, 1.28, 2.85);
 
   scene.add(new THREE.HemisphereLight(0xffe8dc, 0x1a2030, 1.05));
   const key = new THREE.DirectionalLight(0xfff6ee, 1.55);
@@ -125,19 +155,28 @@ export async function createVrmAvatar(opts) {
   const box = new THREE.Box3().setFromObject(model);
   const size = box.getSize(new THREE.Vector3());
   const center = box.getCenter(new THREE.Vector3());
-  const scale = 1.55 / Math.max(size.y, 0.001);
+  const scale = 0.92 / Math.max(size.y, 0.001);
   model.scale.setScalar(scale);
   model.position.x = -center.x * scale;
   model.position.z = -center.z * scale;
   model.position.y = -box.min.y * scale;
   scene.add(model);
+  vrm.update(0);
+  const bodyMotion = createCompanionBodyMotion(vrm.humanoid);
+  bodyMotion.update(0);
 
   const fitted = new THREE.Box3().setFromObject(model);
-  const fittedSize = fitted.getSize(new THREE.Vector3());
-  const lookY = fitted.min.y + fittedSize.y * 0.62;
-  controls.target.set(0, lookY, 0);
-  camera.position.set(0.15, lookY + 0.12, Math.max(1.55, fittedSize.y * 1.05));
-  controls.update();
+  const { face: faceAnchor, portraitDist } = frameFaceCamera({
+    vrm,
+    model,
+    camera,
+    controls,
+    fitted,
+  });
+  const raycaster = new THREE.Raycaster();
+  const pointer = new THREE.Vector2();
+  /** @type {{ x: number, y: number } | null} */
+  let pointerDown = null;
 
   // Subtle look-at toward camera
   if (vrm.lookAt) {
@@ -161,6 +200,9 @@ export async function createVrmAvatar(opts) {
 
   let emotion = "neutral";
   let mouthOpen = 0;
+  let mouthTarget = 0;
+  /** @type {string | null} */
+  let mouthShape = null;
   let talking = false;
   let t0 = performance.now();
   const clock = new THREE.Clock();
@@ -192,43 +234,78 @@ export async function createVrmAvatar(opts) {
   };
 
   const setEmotion = (next) => {
-    emotion = String(next || "neutral").toLowerCase();
+    emotion = bodyMotion.setEmotion(next);
     applyEmotionExpressions(emotion);
-    // Subtle body pose via humanoid if available
-    const head = vrm.humanoid?.getNormalizedBoneNode?.("head");
-    if (head) {
-      head.rotation.z =
-        emotion === "thinking" ? -0.06 : emotion === "sad" ? 0.04 : 0;
-      head.rotation.x =
-        emotion === "surprised" ? -0.05 : emotion === "sad" ? 0.05 : 0;
-    }
     return emotion;
   };
 
-  const setMouthOpen = (v) => {
-    mouthOpen = Math.max(0, Math.min(1, Number(v) || 0));
-    if (expr && mouthPresets.length) {
-      const idx = Math.min(
-        mouthPresets.length - 1,
-        Math.floor(mouthOpen * mouthPresets.length),
-      );
-      for (const preset of mouthPresets) expr.setValue(preset, 0);
-      expr.setValue(mouthPresets[idx], mouthOpen);
+  const setListening = (on) => bodyMotion.setListening(on);
+
+  const playGesture = (style) => bodyMotion.playGesture(style);
+  const playGestureForText = (text) =>
+    bodyMotion.playGestureForText(text, { emotion });
+
+  const shapeToPreset = (shape) => {
+    const key = String(shape || "aa").toLowerCase();
+    const map = {
+      aa: VRMExpressionPresetName.Aa,
+      ih: VRMExpressionPresetName.Ih,
+      ou: VRMExpressionPresetName.Ou,
+      ee: VRMExpressionPresetName.Ee,
+      oh: VRMExpressionPresetName.Oh,
+    };
+    const preset = map[key];
+    if (preset && expr?.getExpression?.(preset)) return preset;
+    return mouthPresets[0] || null;
+  };
+
+  const applyMouth = (v) => {
+    if (!expr || !mouthPresets.length) return;
+    for (const preset of mouthPresets) expr.setValue(preset, 0);
+    const preset = mouthShape ? shapeToPreset(mouthShape) : null;
+    if (preset) {
+      expr.setValue(preset, v);
+      return;
     }
-    return mouthOpen;
+    const idx = Math.min(
+      mouthPresets.length - 1,
+      Math.floor(v * mouthPresets.length),
+    );
+    expr.setValue(mouthPresets[idx], v);
+  };
+
+  const setMouthOpen = (v) => {
+    mouthTarget = Math.max(0, Math.min(1, Number(v) || 0));
+    return mouthTarget;
+  };
+
+  const setMouthShape = (shape) => {
+    mouthShape = shape ? String(shape).toLowerCase() : null;
+    return mouthShape;
   };
 
   const setTalking = (on) => {
     talking = Boolean(on);
+    bodyMotion.setTalking(talking);
     return talking;
   };
+
+  const setTalkEnergy = (v) => bodyMotion.setTalkEnergy(v);
+  const setTalkStyle = (style) => bodyMotion.setTalkStyle(style);
+  const reactToSpeechChunk = (chunk, opts) =>
+    bodyMotion.reactToSpeechChunk(chunk, opts);
 
   let raf = 0;
   const frame = () => {
     const dt = clock.getDelta();
     const now = performance.now();
     vrm.update(dt);
+    bodyMotion.update(dt, { talking, now });
+
     controls.update();
+
+    mouthOpen += (mouthTarget - mouthOpen) * Math.min(1, dt * 14);
+    applyMouth(mouthOpen);
 
     // Auto blink
     if (expr?.getExpression?.(VRMExpressionPresetName.Blink)) {
@@ -250,15 +327,6 @@ export async function createVrmAvatar(opts) {
     const s = scale * (1 + breath);
     model.scale.set(s, s, s);
 
-    if (talking && mouthPresets.length) {
-      const pulse = 0.25 + Math.abs(Math.sin((now - t0) * 0.03)) * 0.65;
-      setMouthOpen(Math.max(mouthOpen, pulse));
-    }
-
-    if (!talking) {
-      model.rotation.y = Math.sin((now - t0) * 0.00035) * 0.02;
-    }
-
     faceLight.intensity = 0.55 + (talking ? 0.2 : 0) + Math.sin((now - t0) * 0.002) * 0.05;
     renderer.render(scene, camera);
     raf = requestAnimationFrame(frame);
@@ -269,13 +337,45 @@ export async function createVrmAvatar(opts) {
   raf = requestAnimationFrame(frame);
   globalThis.addEventListener?.("resize", resize);
 
+  const reactToTap = () => {
+    setEmotion("happy");
+    playGesture("nod");
+    return emotion;
+  };
+
   canvas.style.touchAction = "none";
   canvas.style.cursor = "grab";
-  canvas.addEventListener("pointerdown", () => {
+  canvas.addEventListener("pointerdown", (e) => {
+    pointerDown = { x: e.clientX, y: e.clientY };
     canvas.style.cursor = "grabbing";
   });
-  canvas.addEventListener("pointerup", () => {
+  canvas.addEventListener("pointerup", (e) => {
     canvas.style.cursor = "grab";
+    if (!pointerDown) return;
+    const dx = e.clientX - pointerDown.x;
+    const dy = e.clientY - pointerDown.y;
+    pointerDown = null;
+    if (dx * dx + dy * dy > 144) return;
+
+    const rect = canvas.getBoundingClientRect();
+    pointer.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+    pointer.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+    raycaster.setFromCamera(pointer, camera);
+    const hits = raycaster.intersectObject(model, true);
+    if (!hits.length) return;
+
+    canvas.style.cursor = "pointer";
+    reactToTap();
+    opts.onCharacterTap?.({ point: hits[0].point });
+  });
+  canvas.addEventListener("pointermove", (e) => {
+    if (pointerDown) return;
+    const rect = canvas.getBoundingClientRect();
+    pointer.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+    pointer.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+    raycaster.setFromCamera(pointer, camera);
+    const hits = raycaster.intersectObject(model, true);
+    canvas.style.cursor = hits.length ? "pointer" : "grab";
   });
 
   return {
@@ -283,8 +383,16 @@ export async function createVrmAvatar(opts) {
     kind: "vrm",
     vrm,
     setEmotion,
+    setListening,
     setMouthOpen,
+    setMouthShape,
     setTalking,
+    setTalkEnergy,
+    setTalkStyle,
+    reactToSpeechChunk,
+    playGesture,
+    playGestureForText,
+    reactToTap,
     get emotion() {
       return emotion;
     },
