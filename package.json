@@ -5,5 +5,8 @@
   "description": "Amoji Companion — cloud-hosted 3D chat (Vercel)",
   "engines": {
     "node": ">=20"
+  },
+  "dependencies": {
+    "edge-tts-universal": "^1.4.0"
   }
 }

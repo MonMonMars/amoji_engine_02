@@ -14,27 +14,34 @@ export const COMPANION_TALK_MOTION_BRIDGE_SCHEMA =
  * Map Face Live talk-gesture pose channels to companion body pose keys.
  * @param {Record<string, number>} pose
  */
-export function talkGesturePoseToBody(pose) {
+export function talkGesturePoseToBody(pose, opts = {}) {
   const p = pose || {};
+  const includeArms = opts.includeArms === true;
   const armL = Number(p.armLA ?? 0.15);
   const armR = Number(p.armRA ?? 0.15);
   const shoulderL = Number(p.shoulderL ?? 0.08);
   const shoulderR = Number(p.shoulderR ?? 0.08);
 
-  return {
+  /** @type {Record<string, number>} */
+  const body = {
     headX: -Number(p.bodyAngleX ?? 0) * 0.55,
     headZ: Number(p.bodyAngleZ ?? 0) * 0.75,
     spineX: Number(p.bodyAngleX ?? 0) * 0.35 + Number(p.breath ?? 0.35) * 0.04,
     chestX: -Number(p.bodyAngleY ?? 0) * 0.25,
     hipZ: Number(p.bodyAngleZ ?? 0) * 0.45,
     leanY: Number(p.bodyAngleY ?? 0) * 0.65,
-    armLiftL: 0.08 + armL * 0.92 + shoulderL * 0.28,
-    armLiftR: 0.08 + armR * 0.92 + shoulderR * 0.28,
-    forearmL: Number(p.armLB ?? 0.05) + Number(p.handLY ?? 0.1) * 0.35,
-    forearmR: Number(p.armRB ?? 0.05) + Number(p.handRY ?? 0.1) * 0.35,
-    handWaveR: Number(p.handRX ?? 0) * 0.4,
-    handWaveL: Number(p.handLX ?? 0) * 0.4,
   };
+
+  if (includeArms) {
+    body.armLiftL = 0.03 + armL * 0.34 + shoulderL * 0.1;
+    body.armLiftR = 0.03 + armR * 0.34 + shoulderR * 0.1;
+    body.forearmL = Number(p.armLB ?? 0.05) + Number(p.handLY ?? 0.1) * 0.35;
+    body.forearmR = Number(p.armRB ?? 0.05) + Number(p.handRY ?? 0.1) * 0.35;
+    body.handWaveR = Number(p.handRX ?? 0) * 0.4;
+    body.handWaveL = Number(p.handLX ?? 0) * 0.4;
+  }
+
+  return body;
 }
 
 /**
@@ -68,11 +75,13 @@ export function sampleBodyTalkMotion(timeSec, opts = {}) {
     style,
     emotion: opts.emotion || "neutral",
     speechEnergy: opts.speechEnergy ?? 0.5,
-    intensity: 0.78 + (opts.speechEnergy ?? 0.5) * 0.35,
+    intensity: 0.45 + (opts.speechEnergy ?? 0.5) * 0.2,
   });
   return {
     style: sample.style,
-    body: talkGesturePoseToBody(sample.pose),
+    body: talkGesturePoseToBody(sample.pose, {
+      includeArms: opts.includeArms === true,
+    }),
   };
 }
 

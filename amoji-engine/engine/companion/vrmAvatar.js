@@ -63,7 +63,8 @@ export async function createVrmAvatar(opts) {
       canvas,
       antialias: true,
       alpha: true,
-      powerPreference: "high-performance",
+      powerPreference: "default",
+      failIfMajorPerformanceCaveat: false,
     });
     if (!renderer.getContext?.()) throw new Error("WebGL context missing");
   } catch (err) {
@@ -238,6 +239,8 @@ export async function createVrmAvatar(opts) {
     return emotion;
   };
 
+  const setListening = (on) => bodyMotion.setListening(on);
+
   const playGesture = (style) => bodyMotion.playGesture(style);
   const playGestureForText = (text) =>
     bodyMotion.playGestureForText(text, { emotion });
@@ -336,7 +339,7 @@ export async function createVrmAvatar(opts) {
 
   const reactToTap = () => {
     setEmotion("happy");
-    playGesture("wave");
+    playGesture("nod");
     return emotion;
   };
 
@@ -380,6 +383,7 @@ export async function createVrmAvatar(opts) {
     kind: "vrm",
     vrm,
     setEmotion,
+    setListening,
     setMouthOpen,
     setMouthShape,
     setTalking,
