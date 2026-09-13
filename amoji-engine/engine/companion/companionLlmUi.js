@@ -87,7 +87,9 @@ export function createCompanionLlmSwitcher(opts) {
     setActiveUi(id);
     const labelText = formatLlmModeLabel(info.mode, info.model);
     opts.onMode?.(labelText);
-    opts.onSystem?.(`Switched to ${provider.label}${info.model ? ` · ${info.model}` : ""}`);
+    const modelNote =
+      provider.id !== "basic" && info.model ? ` · ${info.model}` : "";
+    opts.onSystem?.(`Switched to ${provider.label}${modelNote}`);
     return info;
   };
 
