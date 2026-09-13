@@ -228,30 +228,14 @@ export async function processChatRequest(body) {
     clientKey.startsWith("sk-or-") ? clientKey : "";
 
   const autoProvider = !providerId || providerId === "auto";
-  const wantGroq =
-    providerId === "groq" || (autoProvider && (cloud || !ollamaUp));
   const groqApiKey = process.env.GROQ_API_KEY || clientGroqKey;
-  if (wantGroq && groqApiKey) {
-    const groq = await callCloudChat({
-      base: "https://api.groq.com/openai/v1",
-      apiKey: groqApiKey,
-      model: requestedModel || process.env.GROQ_MODEL || "llama-3.3-70b-versatile",
-      messages,
-    });
-    if (groq.ok) {
-      return { ok: true, reply: groq.reply, mode: "online", model: groq.model };
-    }
-    console.warn("[chat-api] Groq failed", groq.error);
-  }
-
-  const wantOpenRouter =
-    providerId?.startsWith("openrouter") ||
-    (autoProvider &&
-      cloud &&
-      !groqApiKey &&
-      (process.env.OPENROUTER_API_KEY || clientOpenRouterKey));
   const openRouterApiKey =
     process.env.OPENROUTER_API_KEY || clientOpenRouterKey;
+
+  // OpenRouter first on cloud — Groq console/signup is often flaky
+  const wantOpenRouter =
+    providerId?.startsWith("openrouter") ||
+    (autoProvider && cloud && openRouterApiKey);
   if (wantOpenRouter && openRouterApiKey) {
     const orModel =
       requestedModel ||
@@ -277,6 +261,21 @@ export async function processChatRequest(body) {
       };
     }
     console.warn("[chat-api] OpenRouter failed", openrouter.error);
+  }
+
+  const wantGroq =
+    providerId === "groq" || (autoProvider && (cloud || !ollamaUp));
+  if (wantGroq && groqApiKey) {
+    const groq = await callCloudChat({
+      base: "https://api.groq.com/openai/v1",
+      apiKey: groqApiKey,
+      model: requestedModel || process.env.GROQ_MODEL || "llama-3.3-70b-versatile",
+      messages,
+    });
+    if (groq.ok) {
+      return { ok: true, reply: groq.reply, mode: "online", model: groq.model };
+    }
+    console.warn("[chat-api] Groq failed", groq.error);
   }
 
   if (providerId === "together" && process.env.TOGETHER_API_KEY) {

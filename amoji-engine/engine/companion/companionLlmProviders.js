@@ -53,7 +53,7 @@ export const LLM_PROVIDERS = Object.freeze([
     id: "groq",
     label: "Groq",
     short: "Groq",
-    description: "Free fast cloud — get key at console.groq.com",
+    description: "Groq cloud — console.groq.com (often down; try OpenRouter instead)",
     url: "https://api.groq.com/openai/v1",
     model: "llama-3.3-70b-versatile",
     needsKey: true,
@@ -64,7 +64,7 @@ export const LLM_PROVIDERS = Object.freeze([
     id: "openrouter-gemma",
     label: "Gemma free",
     short: "Gemma",
-    description: "OpenRouter free Gemma model",
+    description: "OpenRouter free Gemma — recommended (openrouter.ai/keys)",
     url: "https://openrouter.ai/api/v1",
     model: "google/gemma-2-9b-it:free",
     needsKey: true,
@@ -120,7 +120,18 @@ export function getLlmProvider(id) {
  */
 export function getVisibleLlmProviders(hosted = false) {
   if (!hosted) return LLM_PROVIDERS;
-  return LLM_PROVIDERS.filter((p) => p.kind !== "local");
+  const filtered = LLM_PROVIDERS.filter((p) => p.kind !== "local");
+  const hostedOrder = [
+    "auto",
+    "openrouter-gemma",
+    "openrouter-llama",
+    "groq",
+    "together",
+    "basic",
+  ];
+  return [...filtered].sort(
+    (a, b) => hostedOrder.indexOf(a.id) - hostedOrder.indexOf(b.id),
+  );
 }
 
 /**

@@ -13,15 +13,14 @@ Opens the full 3D companion in your browser — avatar, tap, voice, chat. No loc
 ### Enable smart chat — pick any option (no desktop login required)
 
 **Option A — Paste key in the app (easiest)**  
-1. On your **phone**, sign up at [console.groq.com](https://console.groq.com) with **email** (skip Google if 2FA fails)  
-   — or [openrouter.ai/keys](https://openrouter.ai/keys) (free models)  
-2. Copy the API key  
+1. On your **phone**, sign up at **[openrouter.ai/keys](https://openrouter.ai/keys)** (recommended — Groq console is often down)  
+2. Copy the key (starts with `sk-or-`)  
 3. Open the live app → tap **⚙** → paste key → **Save key & connect**  
    Key stays in your browser only — no Vercel login needed.
 
 **Option B — Vercel env var (permanent for all visitors)**  
 1. [Environment Variables](https://vercel.com/mars2350-1971/temporary-rushing-oxygen-ok5jzhd/settings/environment-variables)  
-2. Add **`GROQ_API_KEY`** or **`OPENROUTER_API_KEY`**  
+2. Add **`OPENROUTER_API_KEY`** (recommended) or **`GROQ_API_KEY`**  
 3. Redeploy
 
 **Option C — Basic brain**  
