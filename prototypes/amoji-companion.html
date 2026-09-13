@@ -127,6 +127,12 @@
         transform: translateX(-50%) translateY(8px);
       }
 
+      .start-talking:disabled {
+        opacity: 0.55;
+        cursor: wait;
+        pointer-events: none;
+      }
+
       .topbar {
         position: absolute;
         top: 0;
@@ -872,7 +878,10 @@
     </div>
 
     <script type="module">
-      import { createCompanionAvatar } from "../amoji-engine/engine/companion/createAvatar.js";
+      import {
+        createCompanionAvatar,
+        createStubAvatar,
+      } from "../amoji-engine/engine/companion/createAvatar.js";
       import { createCompanionChat } from "../amoji-engine/engine/companion/chatLlm.js";
       import {
         createCompanionVoice,
@@ -921,7 +930,11 @@
       const avatarPrefer =
         params.get("avatar") === "gltf"
           ? "gltf"
-          : "vrm";
+          : params.get("avatar") === "vrm"
+            ? "vrm"
+            : hostedOnline
+              ? "gltf"
+              : "vrm";
       const stored = {
         url:
           localStorage.getItem("amoji.companion.apiUrl") ||
@@ -970,21 +983,23 @@
       /** @type {(() => void) | null} */
       let handleCharacterTap = null;
 
-      let avatar;
+      let avatar = createStubAvatar();
       let avatarKind = "loading";
-      try {
-        const loaded = await createCompanionAvatar({
-          canvas,
-          modelUrl: avatarModelUrl || undefined,
-          prefer: avatarPrefer,
-          onCharacterTap: () => handleCharacterTap?.(),
+      const avatarLoadPromise = createCompanionAvatar({
+        canvas,
+        modelUrl: avatarModelUrl || undefined,
+        prefer: avatarPrefer,
+        onCharacterTap: () => handleCharacterTap?.(),
+      })
+        .then((loaded) => {
+          avatar = loaded.avatar;
+          avatarKind = loaded.kind;
+          return loaded;
+        })
+        .catch((err) => {
+          console.warn("[companion] avatar load failed", err);
+          return { avatar, kind: avatarKind };
         });
-        avatar = loaded.avatar;
-        avatarKind = loaded.kind;
-      } finally {
-        loading.hide();
-        setTimeout(() => loading.remove(), 600);
-      }
 
       const chat = createCompanionChat({
         apiUrl: stored.url || null,
@@ -1251,6 +1266,7 @@
         startTalkingEl?.setAttribute("aria-hidden", "true");
         startTalkingEl?.setAttribute("disabled", "true");
 
+        await avatarLoadPromise.catch(() => {});
         await voice.primeAudio?.();
         const v = await voice.ensureVoices();
         setVoicePill(femaleVoiceLabel(v) || (voice.supportsSpeak ? "女聲" : "off"));
@@ -1290,6 +1306,13 @@
       btnMic.disabled = !voice.supportsMic;
       syncSpeakerBtn();
       syncMicBtn();
+
+      startTalkingEl?.addEventListener("click", () => void startSession());
+      if (!voice.supportsMic) {
+        startTalkingEl.textContent = "👆 Tap to start (type to chat)";
+      }
+      loading.hide();
+      setTimeout(() => loading.remove(), 600);
 
       const avatarLabel =
         avatarKind === "vrm3d"
@@ -1347,10 +1370,6 @@
       addBubble("assistant", GREETING);
       avatar.setEmotion("happy");
       setEmotionPill("happy");
-      startTalkingEl?.addEventListener("click", () => void startSession());
-      if (!voice.supportsMic) {
-        startTalkingEl.textContent = "👆 Tap to start (type to chat)";
-      }
 
       btnSettings.addEventListener("click", () => {
         settings.classList.toggle("open");
@@ -1454,6 +1473,9 @@
         const text = input.value.trim();
         input.value = "";
         autosize();
+        if (!sessionStarted && !sessionStarting) {
+          await voice.primeAudio?.();
+        }
         await runTurn(text);
       });
 

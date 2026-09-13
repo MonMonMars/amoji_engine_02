@@ -41,6 +41,12 @@
       ]
     },
     {
+      "source": "/amoji-engine/engine/companion/:path*",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }
+      ]
+    },
+    {
       "source": "/amoji-engine/:path*",
       "headers": [
         { "key": "Cache-Control", "value": "public, max-age=86400" }
