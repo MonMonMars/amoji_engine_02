@@ -1,6 +1,7 @@
 /**
  * In-app LLM provider switcher — auto-connect, no API key prompts.
  */
+import { hasAnyClientCloudKey } from "./companionClientKeys.js";
 import {
   autoConnectLlm,
   isHostedCompanion,
@@ -11,6 +12,7 @@ import {
   getLlmProvider,
   getVisibleLlmProviders,
   LLM_PROVIDER_STORAGE_KEY,
+  readProviderApiKey,
 } from "./companionLlmProviders.js";
 
 export const COMPANION_LLM_UI_SCHEMA = "amoji.companionLlmUi.v1";
@@ -76,10 +78,14 @@ export function createCompanionLlmSwitcher(opts) {
 
   const apply = (id, extra = {}) => {
     const provider = getLlmProvider(id);
-    if (availability[id] === false) {
+    const hasClientKey =
+      hosted &&
+      (readProviderApiKey(id) ||
+        (id === "auto" && hasAnyClientCloudKey()));
+    if (availability[id] === false && !hasClientKey) {
       opts.onSystem?.(
         hosted
-          ? `${provider.label} not available — add GROQ_API_KEY on Vercel`
+          ? `${provider.label} not available — tap ⚙ and paste a free API key`
           : `${provider.label} not available — start Ollama or add server API keys`,
       );
       return null;
@@ -123,7 +129,9 @@ export function createCompanionLlmSwitcher(opts) {
       );
     } else if (connected.status?.hosted) {
       opts.onSystem?.(
-        "Cloud mode — add GROQ_API_KEY on Vercel for smart replies, or use Basic offline",
+        hasAnyClientCloudKey()
+          ? "Cloud mode · using your saved API key"
+          : "Cloud mode — tap ⚙ paste a free Groq/OpenRouter key from your phone, or use Basic",
       );
     } else {
       opts.onSystem?.(

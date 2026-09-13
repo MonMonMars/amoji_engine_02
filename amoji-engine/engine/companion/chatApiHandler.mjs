@@ -171,10 +171,16 @@ export async function processChatRequest(body) {
     if (ollamaUp) {
       mode = "ollama";
       model = pickOllamaModel(ollamaResolved.models, model);
-    } else if (process.env.GROQ_API_KEY) {
+    } else if (
+      process.env.GROQ_API_KEY ||
+      String(body.apiKey || "").startsWith("gsk_")
+    ) {
       mode = "online";
       model = process.env.GROQ_MODEL || "llama-3.3-70b-versatile";
-    } else if (process.env.OPENROUTER_API_KEY) {
+    } else if (
+      process.env.OPENROUTER_API_KEY ||
+      String(body.apiKey || "").startsWith("sk-or-")
+    ) {
       mode = "online";
       model = process.env.OPENROUTER_MODEL || "google/gemma-2-9b-it:free";
     } else if (process.env.OPENAI_API_KEY || process.env.AMOJI_LLM_KEY) {
@@ -215,13 +221,20 @@ export async function processChatRequest(body) {
     process.env.OLLAMA_MODEL ||
     process.env.AMOJI_LLM_MODEL;
 
+  const clientKey = String(body.apiKey || "").trim();
+  const clientGroqKey =
+    clientKey.startsWith("gsk_") ? clientKey : "";
+  const clientOpenRouterKey =
+    clientKey.startsWith("sk-or-") ? clientKey : "";
+
   const autoProvider = !providerId || providerId === "auto";
   const wantGroq =
     providerId === "groq" || (autoProvider && (cloud || !ollamaUp));
-  if (wantGroq && process.env.GROQ_API_KEY) {
+  const groqApiKey = process.env.GROQ_API_KEY || clientGroqKey;
+  if (wantGroq && groqApiKey) {
     const groq = await callCloudChat({
       base: "https://api.groq.com/openai/v1",
-      apiKey: process.env.GROQ_API_KEY,
+      apiKey: groqApiKey,
       model: requestedModel || process.env.GROQ_MODEL || "llama-3.3-70b-versatile",
       messages,
     });
@@ -235,9 +248,11 @@ export async function processChatRequest(body) {
     providerId?.startsWith("openrouter") ||
     (autoProvider &&
       cloud &&
-      !process.env.GROQ_API_KEY &&
-      process.env.OPENROUTER_API_KEY);
-  if (wantOpenRouter && process.env.OPENROUTER_API_KEY) {
+      !groqApiKey &&
+      (process.env.OPENROUTER_API_KEY || clientOpenRouterKey));
+  const openRouterApiKey =
+    process.env.OPENROUTER_API_KEY || clientOpenRouterKey;
+  if (wantOpenRouter && openRouterApiKey) {
     const orModel =
       requestedModel ||
       providerPreset?.model ||
@@ -245,7 +260,7 @@ export async function processChatRequest(body) {
       "google/gemma-2-9b-it:free";
     const openrouter = await callCloudChat({
       base: "https://openrouter.ai/api/v1",
-      apiKey: process.env.OPENROUTER_API_KEY,
+      apiKey: openRouterApiKey,
       model: orModel,
       messages,
       extraHeaders: {

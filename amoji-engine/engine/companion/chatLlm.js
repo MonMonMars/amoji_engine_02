@@ -15,6 +15,7 @@ import {
   saveProviderApiKey,
 } from "./companionLlmProviders.js";
 import { chatOllama, OLLAMA_PROBE_HOSTS } from "./companionOllama.js";
+import { resolveClientApiKey } from "./companionClientKeys.js";
 import { isHostedCompanion, probeOllamaDirect } from "./companionLlmConnect.js";
 
 export const COMPANION_CHAT_SCHEMA = "amoji.companionChat.v1";
@@ -349,6 +350,7 @@ async function callLocalProxy({
       system: systemPrompt,
       model,
       providerId: providerId && providerId !== "custom" ? providerId : undefined,
+      apiKey: resolveClientApiKey(providerId) || undefined,
     }),
   });
   if (!res.ok) return { ok: false, error: `HTTP ${res.status}` };
