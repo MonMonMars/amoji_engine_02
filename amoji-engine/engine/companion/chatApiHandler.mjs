@@ -10,6 +10,7 @@ import {
   OLLAMA_DEFAULT_HOST,
 } from "./companionOllama.js";
 import { getLlmProvider } from "./companionLlmProviders.js";
+import { isOllamaLocalModel } from "./companionModelIds.js";
 
 export const CHAT_API_HANDLER_SCHEMA = "amoji.chatApiHandler.v1";
 
@@ -36,6 +37,20 @@ export function corsHeaders(extra = {}) {
     "Access-Control-Allow-Headers": "Content-Type, Authorization",
     ...extra,
   };
+}
+
+export { isOllamaLocalModel } from "./companionModelIds.js";
+
+/**
+ * Pick an OpenRouter model id — never pass through Ollama-only names from the client.
+ * @param {string | undefined | null} requested
+ * @param {string | undefined | null} presetModel
+ */
+export function resolveOpenRouterModel(requested, presetModel) {
+  const envModel = process.env.OPENROUTER_MODEL || "openrouter/auto";
+  if (requested && !isOllamaLocalModel(requested)) return requested;
+  if (presetModel && !isOllamaLocalModel(presetModel)) return presetModel;
+  return envModel;
 }
 
 async function resolveOllamaHost() {
@@ -237,11 +252,10 @@ export async function processChatRequest(body) {
     providerId?.startsWith("openrouter") ||
     (autoProvider && cloud && openRouterApiKey);
   if (wantOpenRouter && openRouterApiKey) {
-    const orModel =
-      requestedModel ||
-      providerPreset?.model ||
-      process.env.OPENROUTER_MODEL ||
-      "openrouter/auto";
+    const orModel = resolveOpenRouterModel(
+      requestedModel,
+      providerPreset?.model,
+    );
     const openrouter = await callCloudChat({
       base: "https://openrouter.ai/api/v1",
       apiKey: openRouterApiKey,

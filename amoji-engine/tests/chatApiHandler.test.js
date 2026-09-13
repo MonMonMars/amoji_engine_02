@@ -3,7 +3,9 @@ import {
   getLlmStatusPayload,
   isCloudDeploy,
   processChatRequest,
+  resolveOpenRouterModel,
 } from "../engine/companion/chatApiHandler.mjs";
+import { isOllamaLocalModel } from "../engine/companion/companionModelIds.js";
 
 describe("chatApiHandler cloud", () => {
   const env = { ...process.env };
@@ -45,5 +47,19 @@ describe("chatApiHandler cloud", () => {
       apiKey: "gsk_client_test_key",
     });
     expect(result.mode).toBe("online");
+  });
+
+  it("detects ollama-only model names", () => {
+    expect(isOllamaLocalModel("qwen3:4b")).toBe(true);
+    expect(isOllamaLocalModel("openrouter/auto")).toBe(false);
+    expect(isOllamaLocalModel("meta-llama/llama-3.2-3b-instruct")).toBe(false);
+  });
+
+  it("resolves openrouter model instead of client ollama default", () => {
+    process.env.OPENROUTER_MODEL = "openrouter/auto";
+    expect(resolveOpenRouterModel("qwen3:4b", null)).toBe("openrouter/auto");
+    expect(resolveOpenRouterModel("meta-llama/llama-3.2-3b-instruct", null)).toBe(
+      "meta-llama/llama-3.2-3b-instruct",
+    );
   });
 });
