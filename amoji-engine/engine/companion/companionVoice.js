@@ -195,6 +195,9 @@ export function pickFemaleVoice(voices) {
 
 /** Human label for the voice pill — always female-presenting. */
 export function femaleVoiceLabel(voice) {
+  if (voice?.cloud && /aria|en-us/i.test(String(voice.name || ""))) {
+    return "Female·EN·Aria";
+  }
   if (voice?.cloud && /hiumaan|hiugaai|zh-hk/i.test(String(voice.name || ""))) {
     return "女聲·粵·曉曼";
   }
@@ -215,6 +218,12 @@ export const CLOUD_CANTONESE_VOICE = Object.freeze({
   cloud: true,
 });
 
+export const CLOUD_ENGLISH_VOICE = Object.freeze({
+  name: "en-US-AriaNeural",
+  lang: "en-US",
+  cloud: true,
+});
+
 /**
  * @param {{
  *   onMouth?: (open: number, shape?: string) => void,
@@ -226,6 +235,7 @@ export const CLOUD_CANTONESE_VOICE = Object.freeze({
  *   lang?: string,
  *   cloudTtsUrl?: string | null,
  *   preferCloudTts?: boolean,
+ *   cloudVoice?: { name: string, lang: string, cloud?: boolean },
  * }} [opts]
  */
 export function createCompanionVoice(opts = {}) {
@@ -269,10 +279,12 @@ export function createCompanionVoice(opts = {}) {
   /** @type {ReturnType<typeof setTimeout>[]} */
   let mouthTimeouts = [];
 
+  const cloudVoicePreset = () => opts.cloudVoice || CLOUD_CANTONESE_VOICE;
+
   const ensureVoices = () =>
     new Promise((resolve) => {
       if (usingCloudTts && opts.cloudTtsUrl) {
-        voice = CLOUD_CANTONESE_VOICE;
+        voice = cloudVoicePreset();
         return resolve(voice);
       }
       if (!synth) return resolve(null);
@@ -311,10 +323,16 @@ export function createCompanionVoice(opts = {}) {
     stopCloudAudio();
     synth?.cancel();
 
+    const preset = cloudVoicePreset();
     const res = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text: clean, emotion }),
+      body: JSON.stringify({
+        text: clean,
+        emotion,
+        voice: preset.name,
+        lang: preset.lang,
+      }),
     });
     if (!res.ok) {
       const errText = await res.text().catch(() => "");
@@ -354,7 +372,7 @@ export function createCompanionVoice(opts = {}) {
       audio.onended = () => {
         finish({
           ok: true,
-          voice: CLOUD_CANTONESE_VOICE.name,
+          voice: preset.name,
           emotion,
           cloud: true,
         });
@@ -571,7 +589,7 @@ export function createCompanionVoice(opts = {}) {
         const cloudResult = await speakCloud(clean, emotion);
         if (cloudResult.ok) {
           usingCloudTts = true;
-          voice = CLOUD_CANTONESE_VOICE;
+          voice = cloudVoicePreset();
           return cloudResult;
         }
         usingCloudTts = false;
@@ -686,10 +704,17 @@ export function createCompanionVoice(opts = {}) {
     await ensureVoices();
     if (opts.cloudTtsUrl) {
       try {
+        const preset = cloudVoicePreset();
+        const primeWord = preset.lang?.startsWith("en") ? "Hi" : "好";
         const res = await fetch(opts.cloudTtsUrl, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ text: "好", emotion: "neutral" }),
+          body: JSON.stringify({
+            text: primeWord,
+            emotion: "neutral",
+            voice: preset.name,
+            lang: preset.lang,
+          }),
         });
         if (res.ok) {
           const blob = await res.blob();
@@ -705,7 +730,7 @@ export function createCompanionVoice(opts = {}) {
             URL.revokeObjectURL(objectUrl);
             if (played) {
               usingCloudTts = true;
-              voice = CLOUD_CANTONESE_VOICE;
+              voice = cloudVoicePreset();
               return true;
             }
           }

@@ -913,6 +913,7 @@
           <div class="pill" id="mode-pill">LLM · <strong>local</strong></div>
           <div class="pill" id="emotion-pill">feel · <strong>neutral</strong></div>
           <div class="pill" id="voice-pill">voice · <strong>…</strong></div>
+          <a class="lab-link" id="lang-pill" href="?lang=yue" title="Switch language">粵</a>
           <a class="lab-link" id="lab-link" href="/prototypes/realtime-voice-lab.html">Lab</a>
           <button type="button" class="key-btn" id="btn-cloud-key" hidden title="Paste API key">🔑 Key</button>
           <button type="button" class="gear" id="btn-settings" title="LLM settings" hidden>⚙</button>
@@ -1013,10 +1014,17 @@
       import { createCompanionChat } from "../amoji-engine/engine/companion/chatLlm.js";
       import {
         createCompanionVoice,
+        CLOUD_CANTONESE_VOICE,
+        CLOUD_ENGLISH_VOICE,
         femaleVoiceLabel,
         formatMicError,
         unlockAudioSync,
       } from "../amoji-engine/engine/companion/companionVoice.js";
+      import {
+        CANTONESE_COMPANION_PROMPT,
+        ENGLISH_COMPANION_PROMPT,
+      } from "../amoji-engine/engine/companion/companionBodyMotion.js";
+      import { resolveDialectPref } from "../amoji-engine/engine/lab/dialectPref.js";
       import {
         createCompanionStatus,
         createLoadingOverlay,
@@ -1065,6 +1073,8 @@
       const btnMic = document.getElementById("btn-mic");
 
       const params = new URLSearchParams(location.search);
+      const dialect = resolveDialectPref();
+      const isEnglish = dialect.forceLanguage === "en";
       const autoMic = params.get("automic") !== "0";
       const avatarModelUrl =
         params.get("vrm") ||
@@ -1113,12 +1123,19 @@
         document.getElementById("api-model").value = stored.model;
       }
 
-      const tapLines = [
-        "喂～你戳我呀？好開心㗎！",
-        "嘿嘿，見到我啦？有咩想傾？",
-        "哎呀～唔好撩我啦，會面紅㗎！",
-        "你點我？我喺度聽緊你㗎～",
-      ];
+      const tapLines = isEnglish
+        ? [
+            "Hey! You poked me — I'm so happy!",
+            "Hehe, you found me! What's on your mind?",
+            "Aww, don't tease me — I'll blush!",
+            "You tapped me? I'm listening~",
+          ]
+        : [
+            "喂～你戳我呀？好開心㗎！",
+            "嘿嘿，見到我啦？有咩想傾？",
+            "哎呀～唔好撩我啦，會面紅㗎！",
+            "你點我？我喺度聽緊你㗎～",
+          ];
       let lastTapAt = 0;
       /** @type {(() => void) | null} */
       let handleCharacterTap = null;
@@ -1167,7 +1184,21 @@
         apiUrl: stored.url || null,
         apiKey: stored.key || null,
         model: stored.model,
+        systemPrompt: isEnglish ? ENGLISH_COMPANION_PROMPT : CANTONESE_COMPANION_PROMPT,
       });
+
+      const langPill = document.getElementById("lang-pill");
+      if (langPill) {
+        langPill.textContent = isEnglish ? "EN" : "粵";
+        langPill.href = isEnglish ? "?lang=yue" : "?lang=en";
+        langPill.title = isEnglish
+          ? "Switch to Cantonese (粵語)"
+          : "Switch to English (free Edge TTS)";
+      }
+      if (isEnglish) {
+        document.documentElement.lang = "en";
+        input.placeholder = "Chat with Amoji…";
+      }
 
       const orbitHint = document.getElementById("orbit-hint");
       canvas.addEventListener(
@@ -1264,7 +1295,8 @@
       let speakEmotion = "neutral";
 
       const voice = createCompanionVoice({
-        lang: "zh-HK",
+        lang: isEnglish ? "en-US" : "zh-HK",
+        cloudVoice: isEnglish ? CLOUD_ENGLISH_VOICE : CLOUD_CANTONESE_VOICE,
         cloudTtsUrl: hostedOnline ? "/api/tts" : null,
         preferCloudTts: hostedOnline,
         onMouth: (open, shape) => {
@@ -1436,8 +1468,9 @@
         }
       };
 
-      const GREETING =
-        "嗨呀～我係 Amoji！同我傾偈啦，我會用粵語答你，仲會做表情同身體動作㗎。";
+      const GREETING = isEnglish
+        ? "Hi! I'm Amoji — chat with me and I'll reply with expressions and body motion!"
+        : "嗨呀～我係 Amoji！同我傾偈啦，我會用粵語答你，仲會做表情同身體動作㗎。";
 
       let sessionStarted = false;
       let sessionStarting = false;
@@ -1470,8 +1503,12 @@
         startTalkingEl.removeAttribute("aria-busy");
         startTalkingEl.removeAttribute("disabled");
         startTalkingEl.textContent = voice.supportsMic
-          ? "👆 Tap to start · 點一下開始"
-          : "👆 Tap to start (type to chat)";
+          ? isEnglish
+            ? "👆 Tap to start"
+            : "👆 Tap to start · 點一下開始"
+          : isEnglish
+            ? "👆 Tap to start (type to chat)"
+            : "👆 Tap to start (type to chat)";
       };
 
       const markSessionReady = ({ fromTimeout = false } = {}) => {
@@ -1537,7 +1574,12 @@
             syncListenPose();
             input.placeholder =
               "Listening… speak, pause → she replies, then listens again";
-            addBubble("system", "Mic on — speak Cantonese or English, pause to send.");
+            addBubble(
+              "system",
+              isEnglish
+                ? "Mic on — speak, pause to send."
+                : "Mic on — speak Cantonese or English, pause to send.",
+            );
           } else if (!busy) {
             status.idle();
             input.placeholder = "同 Amoji 傾偈… tap 🎤 after allowing microphone";
@@ -1642,8 +1684,12 @@
       addBubble(
         "system",
         hostedOnline
-          ? `☁️ 全網上運行 · ${avatarLabel} · 粵語傾偈 · 表情同身體動作 · 唔使本地 PC · 🎤 連續對話`
-          : `Grok Ani 風格 · ${avatarLabel} · 粵語傾偈 · 表情同身體動作 · Brain 按鈕切 LLM · 🎤 連續對話`,
+          ? isEnglish
+            ? `☁️ Cloud · ${avatarLabel} · English chat · free Edge TTS · 🎤 continuous talk`
+            : `☁️ 全網上運行 · ${avatarLabel} · 粵語傾偈 · 免費 Edge TTS · 唔使本地 PC · 🎤 連續對話`
+          : isEnglish
+            ? `Anime companion · ${avatarLabel} · English · free Edge TTS · Brain button switches LLM · 🎤`
+            : `動漫同伴 · ${avatarLabel} · 粵語傾偈 · 免費 Edge TTS · Brain 按鈕切 LLM · 🎤 連續對話`,
       );
       addBubble("assistant", GREETING);
       avatar.setEmotion("neutral");
