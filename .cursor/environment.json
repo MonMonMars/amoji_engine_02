@@ -1,6 +1,6 @@
 {
   "name": "Amoji Engine",
-  "install": "cd amoji-engine\nnpm ci\nnpm run build",
+  "install": "cd amoji-engine && npm ci && npm run build",
   "terminals": [
     {
       "name": "lab",
