@@ -30,10 +30,19 @@ describe("companionPoseLibrary", () => {
     expect(pose.forearmL ?? 0).toBeLessThan(0.05);
   });
 
-  it("maps talk gesture library to VRM body channels", () => {
-    const explain = sampleVrmTalkPose("explain", 0.5, { intensity: 0.6 });
+  it("maps talk gesture library to VRM body channels when arms enabled", () => {
+    const explain = sampleVrmTalkPose("explain", 0.5, {
+      intensity: 0.6,
+      includeArms: true,
+    });
     expect(explain.armLiftL).toBeDefined();
     expect(explain.armLiftL).toBeLessThan(0.15);
+  });
+
+  it("keeps talk pose head-only by default", () => {
+    const explain = sampleVrmTalkPose("explain", 0.5, { intensity: 0.6 });
+    expect(explain.armLiftL).toBeUndefined();
+    expect(explain.headX).toBeDefined();
   });
 
   it("remaps celebrate to soft for VRM companion", () => {
