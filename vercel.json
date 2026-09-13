@@ -1,0 +1,58 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "version": 2,
+  "name": "amoji-companion",
+  "installCommand": "npm install && cd amoji-engine && npm install",
+  "rewrites": [
+    { "source": "/api/chat", "destination": "/api/chat" },
+    { "source": "/api/tts", "destination": "/api/tts" },
+    { "source": "/api/llm/status", "destination": "/api/llm/status" },
+    { "source": "/api/ollama/tags", "destination": "/api/ollama/tags" },
+    { "source": "/prototypes/realtime-voice-lab.html", "destination": "/prototypes/realtime-voice-lab.html" },
+    { "source": "/amoji-engine/(.*)", "destination": "/amoji-engine/$1" },
+    { "source": "/prototypes/(.*)", "destination": "/prototypes/$1" },
+    { "source": "/setup", "destination": "/prototypes/amoji-setup.html" },
+    { "source": "/", "destination": "/prototypes/amoji-companion.html" }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "Access-Control-Allow-Origin", "value": "*" }
+      ]
+    },
+    {
+      "source": "/prototypes/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }
+      ]
+    },
+    {
+      "source": "/prototypes/assets/companion-girl.vrm",
+      "headers": [
+        { "key": "Content-Type", "value": "model/gltf-binary" },
+        { "key": "Access-Control-Allow-Origin", "value": "*" }
+      ]
+    },
+    {
+      "source": "/prototypes/assets/companion-girl.glb",
+      "headers": [
+        { "key": "Content-Type", "value": "model/gltf-binary" },
+        { "key": "Access-Control-Allow-Origin", "value": "*" }
+      ]
+    },
+    {
+      "source": "/amoji-engine/engine/companion/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" },
+        { "key": "Pragma", "value": "no-cache" }
+      ]
+    },
+    {
+      "source": "/amoji-engine/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=3600, must-revalidate" }
+      ]
+    }
+  ]
+}
