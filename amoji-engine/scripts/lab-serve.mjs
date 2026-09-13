@@ -5,15 +5,19 @@
  *
  * Usage (from amoji-engine/):
  *   npm run lab
- *   npm run lab -- --port 5173
  *
- * Optional online LLM (OpenAI-compatible):
- *   OPENAI_API_KEY=sk-… OPENAI_BASE_URL=https://api.openai.com/v1 npm run lab
+ * Cloud (no local PC): deploy to Vercel — see DEPLOY.md
  */
 import http from "node:http";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import {
+  corsHeaders,
+  getLlmStatusPayload,
+  getOllamaTagsPayload,
+  processChatRequest,
+} from "../engine/companion/chatApiHandler.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, "../..");
@@ -63,12 +67,6 @@ function send(res, status, body, headers = {}) {
   res.end(payload);
 }
 
-function cors(res) {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET,HEAD,POST,OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
-}
-
 function readJson(req) {
   return new Promise((resolve, reject) => {
     const chunks = [];
@@ -85,128 +83,22 @@ function readJson(req) {
   });
 }
 
-/** Tiny Cantonese/English fallback when no API key is configured. */
-function localCompanionReply(message, history = []) {
-  const text = String(message || "").trim();
-  const lower = text.toLowerCase();
-  const lastUser = [...history].reverse().find((m) => m.role === "user");
-  const nameMatch = text.match(/我叫\s*([^\s，。！？,.!?]+)/);
-  if (nameMatch) return `你好${nameMatch[1]}！好開心認識你～今日想傾啲咩？`;
-  if (/哈哈|開心|happy|great|鍾意/.test(lower)) {
-    return "哈哈我都開心到跳起！再講多啲啦～";
-  }
-  if (/唉|傷心|sad|慘|唔開心/.test(lower)) {
-    return "抱抱你。慢慢講，我喺度聽住。";
-  }
-  if (/點解|why|諗|hmm/.test(lower)) {
-    return "嗯…等我諗一諗。你覺得邊方面最關鍵？";
-  }
-  if (/hello|hi|hey|你好|早晨|晚安/.test(lower)) {
-    return "嗨～我係 Amoji。想傾粵語定英文都得！";
-  }
-  if (/你係邊個|who are you|你叫咩/.test(lower)) {
-    return "我係 Amoji，一個低面數 3D 動漫夥伴，會跟住你嘅對話做出表情同口型。";
-  }
-  if (lastUser?.content && /再见|拜拜|bye/.test(lower)) {
-    return "拜拜～記得返嚟搵我呀！";
-  }
-  const snippets = [
-    `「${text.slice(0, 24)}」——我聽到啦。再講深啲？`,
-    "有意思！你想我用開心定認真嘅口吻答你？",
-    "嗯嗯，繼續講，我跟住你情緒走。",
-  ];
-  return snippets[Math.floor(Math.random() * snippets.length)];
-}
-
 async function handleChatApi(req, res) {
-  cors(res);
   try {
     const body = await readJson(req);
-    const message = String(body.message || body.text || "").trim();
-    const history = Array.isArray(body.history) ? body.history : [];
-    const system =
-      body.system ||
-      "You are Amoji, a warm Cantonese-first anime companion. Keep replies short (1-3 sentences).";
-
-    if (!message) {
-      send(res, 400, { ok: false, error: "empty message" }, {
-        "Content-Type": "application/json; charset=utf-8",
-      });
-      return;
-    }
-
-    const apiKey =
-      process.env.OPENAI_API_KEY ||
-      process.env.AMOJI_LLM_KEY ||
-      process.env.GROQ_API_KEY ||
-      "";
-    const base =
-      process.env.OPENAI_BASE_URL ||
-      process.env.AMOJI_LLM_URL ||
-      (process.env.GROQ_API_KEY ? "https://api.groq.com/openai/v1" : "") ||
-      "https://api.openai.com/v1";
-    const model =
-      process.env.AMOJI_LLM_MODEL ||
-      process.env.OPENAI_MODEL ||
-      (process.env.GROQ_API_KEY ? "llama-3.1-8b-instant" : "gpt-4o-mini");
-
-    if (apiKey) {
-      const endpoint = `${base.replace(/\/$/, "")}/chat/completions`;
-      const upstream = await fetch(endpoint, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify({
-          model,
-          temperature: 0.8,
-          messages: [
-            { role: "system", content: system },
-            ...history.slice(-12),
-            // history may already include the latest user turn from client
-          ].filter((m, i, arr) => {
-            // Avoid duplicate trailing user message if client already pushed it
-            if (i === arr.length - 1 && m.role === "user" && m.content === message) {
-              return true;
-            }
-            return true;
-          }),
-        }),
-      });
-      const data = await upstream.json().catch(() => ({}));
-      const reply = data?.choices?.[0]?.message?.content;
-      if (upstream.ok && reply) {
-        send(
-          res,
-          200,
-          { ok: true, reply: String(reply).trim(), mode: "online", model },
-          { "Content-Type": "application/json; charset=utf-8" },
-        );
-        return;
-      }
-      // fall through to local with error hint
-      console.warn("[lab] LLM upstream failed", upstream.status, data?.error || data);
-    }
-
-    const reply = localCompanionReply(message, history);
-    send(
-      res,
-      200,
-      {
-        ok: true,
-        reply,
-        mode: apiKey ? "local-fallback" : "local",
-        model: null,
-      },
-      { "Content-Type": "application/json; charset=utf-8" },
-    );
+    const result = await processChatRequest(body);
+    const status =
+      result.ok === false && result.error === "empty message" ? 400 : 200;
+    send(res, status, result, {
+      ...corsHeaders(),
+      "Content-Type": "application/json; charset=utf-8",
+    });
   } catch (err) {
     send(
       res,
       500,
       { ok: false, error: err?.message || String(err) },
-      { "Content-Type": "application/json; charset=utf-8" },
+      { ...corsHeaders(), "Content-Type": "application/json; charset=utf-8" },
     );
   }
 }
@@ -214,7 +106,10 @@ async function handleChatApi(req, res) {
 const port = parsePort(process.argv.slice(2));
 
 const server = http.createServer(async (req, res) => {
-  cors(res);
+  const cors = corsHeaders();
+  for (const [key, value] of Object.entries(cors)) {
+    res.setHeader(key, value);
+  }
 
   if (req.method === "OPTIONS") {
     send(res, 204, "");
@@ -225,6 +120,24 @@ const server = http.createServer(async (req, res) => {
 
   if (req.method === "POST" && url.pathname === "/api/chat") {
     await handleChatApi(req, res);
+    return;
+  }
+
+  if (req.method === "GET" && url.pathname === "/api/ollama/tags") {
+    const payload = await getOllamaTagsPayload();
+    send(res, 200, payload, {
+      ...corsHeaders(),
+      "Content-Type": "application/json; charset=utf-8",
+    });
+    return;
+  }
+
+  if (req.method === "GET" && url.pathname === "/api/llm/status") {
+    const payload = await getLlmStatusPayload();
+    send(res, 200, payload, {
+      ...corsHeaders(),
+      "Content-Type": "application/json; charset=utf-8",
+    });
     return;
   }
 
@@ -239,7 +152,6 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // Companion is the featured demo; lab remains at /prototypes/realtime-voice-lab.html
   if (req.url === "/" || req.url?.startsWith("/?")) {
     target = path.join(REPO_ROOT, "prototypes/amoji-companion.html");
   }
@@ -266,8 +178,5 @@ const server = http.createServer(async (req, res) => {
 server.listen(port, "0.0.0.0", () => {
   console.log(`[lab] serving ${REPO_ROOT}`);
   console.log(`[lab] companion http://127.0.0.1:${port}/`);
-  console.log(
-    `[lab] voice lab http://127.0.0.1:${port}/prototypes/realtime-voice-lab.html`,
-  );
-  console.log(`[lab] chat API POST /api/chat (set OPENAI_API_KEY for online LLM)`);
+  console.log(`[lab] cloud deploy: see DEPLOY.md (Vercel — no local PC needed)`);
 });
