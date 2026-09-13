@@ -26,3 +26,4 @@ venv/
 *.log
 .cache/
 .vercel
+.env*
