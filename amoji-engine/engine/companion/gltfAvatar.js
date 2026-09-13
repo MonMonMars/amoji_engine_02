@@ -134,9 +134,26 @@ export async function createGltfAvatar(opts) {
 
   const fitted = new THREE.Box3().setFromObject(model);
   const fittedSize = fitted.getSize(new THREE.Vector3());
-  const lookY = fitted.min.y + fittedSize.y * 0.62;
-  controls.target.set(0, lookY, 0);
-  camera.position.set(0.15, lookY + 0.12, Math.max(1.55, fittedSize.y * 1.05));
+  /** @type {THREE.Object3D | null} */
+  let headBone = null;
+  model.traverse((obj) => {
+    if (headBone) return;
+    if (/head|face|neck/i.test(obj.name) && obj.isBone) headBone = obj;
+  });
+  const face = new THREE.Vector3();
+  if (headBone) {
+    model.updateWorldMatrix(true, true);
+    headBone.getWorldPosition(face);
+  } else {
+    face.set(0, fitted.min.y + fittedSize.y * 0.88, 0);
+  }
+  const portraitDist = Math.max(0.42, fittedSize.y * 0.34);
+  controls.target.copy(face);
+  camera.position.set(face.x, face.y + 0.02, face.z + portraitDist);
+  controls.minDistance = portraitDist * 0.72;
+  controls.maxDistance = portraitDist * 2.8;
+  controls.minPolarAngle = Math.PI * 0.44;
+  controls.maxPolarAngle = Math.PI * 0.56;
   controls.update();
 
   /** @type {THREE.AnimationMixer | null} */
