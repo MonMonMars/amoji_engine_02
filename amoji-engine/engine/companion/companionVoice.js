@@ -201,6 +201,10 @@ export function createCompanionVoice(opts = {}) {
   let restartTimer = null;
   let speaking = false;
   let micPermissionPrimed = false;
+  /** @type {HTMLAudioElement | null} */
+  let currentCloudAudio = null;
+  /** Serialize TTS so greeting + replies do not overlap or cut each other off. */
+  let speakChain = Promise.resolve();
   /** @type {ReturnType<typeof setInterval> | null} */
   let mouthTimer = null;
   /** @type {ReturnType<typeof setTimeout>[]} */
@@ -225,6 +229,17 @@ export function createCompanionVoice(opts = {}) {
 
   void ensureVoices();
 
+  const stopCloudAudio = () => {
+    if (!currentCloudAudio) return;
+    try {
+      currentCloudAudio.pause();
+      currentCloudAudio.src = "";
+    } catch {
+      /* ignore */
+    }
+    currentCloudAudio = null;
+  };
+
   /**
    * Play MP3 from cloud TTS (Cantonese neural female).
    * @param {string} clean
@@ -233,6 +248,9 @@ export function createCompanionVoice(opts = {}) {
   const speakCloud = async (clean, emotion) => {
     const url = opts.cloudTtsUrl;
     if (!url) return { ok: false, reason: "no-cloud-tts-url" };
+
+    stopCloudAudio();
+    synth?.cancel();
 
     const res = await fetch(url, {
       method: "POST",
@@ -254,35 +272,33 @@ export function createCompanionVoice(opts = {}) {
     startLipSync(clean);
     speaking = true;
 
-    const maxMs = Math.min(20000, 900 + clean.length * 65);
-    return await Promise.race([
-      new Promise((resolve) => {
-        const audio = new Audio(objectUrl);
-        audio.onended = () => {
-          URL.revokeObjectURL(objectUrl);
-          resolve({
-            ok: true,
-            voice: CLOUD_CANTONESE_VOICE.name,
-            emotion,
-            cloud: true,
-          });
-        };
-        audio.onerror = () => {
-          URL.revokeObjectURL(objectUrl);
-          resolve({ ok: false, reason: "cloud-audio-play-failed" });
-        };
-        void audio.play().catch((err) => {
-          URL.revokeObjectURL(objectUrl);
-          resolve({
-            ok: false,
-            reason: err?.message || "cloud-audio-play-blocked",
-          });
+    return await new Promise((resolve) => {
+      const audio = new Audio(objectUrl);
+      currentCloudAudio = audio;
+      const finish = (result) => {
+        if (currentCloudAudio === audio) currentCloudAudio = null;
+        URL.revokeObjectURL(objectUrl);
+        speaking = false;
+        stopMouth();
+        resolve(result);
+      };
+      audio.onended = () => {
+        finish({
+          ok: true,
+          voice: CLOUD_CANTONESE_VOICE.name,
+          emotion,
+          cloud: true,
         });
-      }),
-      sleep(maxMs).then(() => ({ ok: false, reason: "cloud-tts-timeout" })),
-    ]).finally(() => {
-      speaking = false;
-      stopMouth();
+      };
+      audio.onerror = () => {
+        finish({ ok: false, reason: "cloud-audio-play-failed" });
+      };
+      void audio.play().catch((err) => {
+        finish({
+          ok: false,
+          reason: err?.message || "cloud-audio-play-blocked",
+        });
+      });
     });
   };
 
@@ -462,7 +478,7 @@ export function createCompanionVoice(opts = {}) {
    * @param {string} text
    * @param {string} [emotion]
    */
-  const speak = async (text, emotion = "neutral") => {
+  const speakOnce = async (text, emotion = "neutral") => {
     const clean = String(text || "")
       .replace(/[*_`#>/\\]/g, " ")
       .replace(/\s+/g, " ")
@@ -560,10 +576,18 @@ export function createCompanionVoice(opts = {}) {
     }
   };
 
+  const speak = (text, emotion = "neutral") => {
+    const next = speakChain.then(() => speakOnce(text, emotion));
+    speakChain = next.catch(() => {});
+    return next;
+  };
+
   const stopSpeak = () => {
+    stopCloudAudio();
     synth?.cancel();
     speaking = false;
     stopMouth();
+    speakChain = Promise.resolve();
   };
 
   const setSpeakerOn = (on) => {

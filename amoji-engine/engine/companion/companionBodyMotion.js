@@ -8,9 +8,10 @@ import {
 } from "./companionTalkMotionBridge.js";
 import {
   buildBasePose,
+  clampArmPose,
+  companionGestureStyle,
   GESTURE_DURATION_SEC,
   HEAD_GESTURE_NOD,
-  isTalkGestureStyle,
   mergePoses,
   sampleVrmTalkPose,
 } from "./companionPoseLibrary.js";
@@ -46,14 +47,13 @@ export function createCompanionBodyMotion(humanoid) {
   };
 
   const playGesture = (style) => {
-    const key = String(style || "").toLowerCase();
+    const key = companionGestureStyle(style);
     if (key === "nod") {
       activeGesture = "nod";
       gesturePhase = 0;
       gestureDuration = HEAD_GESTURE_NOD.duration;
       return true;
     }
-    if (!isTalkGestureStyle(key)) return false;
     activeGesture = key;
     gesturePhase = 0;
     gestureDuration = GESTURE_DURATION_SEC[key] || 1.5;
@@ -70,13 +70,7 @@ export function createCompanionBodyMotion(humanoid) {
   };
 
   const setTalkStyle = (style) => {
-    const key = String(style || "").toLowerCase();
-    if (isTalkGestureStyle(key) || key === "explain") {
-      talkStyle = key;
-      talkTime = 0;
-      return talkStyle;
-    }
-    talkStyle = inferTalkGestureFromText(key, { emotion });
+    talkStyle = companionGestureStyle(style || talkStyle);
     talkTime = 0;
     return talkStyle;
   };
@@ -111,7 +105,9 @@ export function createCompanionBodyMotion(humanoid) {
 
   const applyPose = (pose, intensity = 1) => {
     if (!humanoid) return;
+    humanoid.resetNormalizedPose?.();
     const k = Math.max(0, Math.min(1, intensity));
+    const safe = clampArmPose(pose);
 
     const lua = bone("leftUpperArm");
     const rua = bone("rightUpperArm");
@@ -122,44 +118,44 @@ export function createCompanionBodyMotion(humanoid) {
     const chest = bone("chest");
     const hips = bone("hips");
 
-    const baseArmZ = 0.08;
-    const baseArmX = 0.04;
-    const liftL = Math.min(0.38, (pose.armLiftL ?? 0.02) * k);
-    const liftR = Math.min(0.38, (pose.armLiftR ?? 0.02) * k);
+    const baseArmZ = 0;
+    const baseArmX = 0.03;
+    const liftL = Math.min(0.14, (safe.armLiftL ?? 0.02) * k);
+    const liftR = Math.min(0.14, (safe.armLiftR ?? 0.02) * k);
 
     if (lua) {
-      lua.rotation.z = baseArmZ + liftL * 0.5;
-      lua.rotation.x = baseArmX + (pose.spineX || 0) * 0.15;
+      lua.rotation.z = baseArmZ + liftL * 0.35;
+      lua.rotation.x = baseArmX + (safe.spineX || 0) * 0.1;
       lua.rotation.y = 0;
     }
     if (rua) {
-      rua.rotation.z = -baseArmZ - liftR * 0.5;
-      rua.rotation.x = baseArmX + (pose.spineX || 0) * 0.15;
+      rua.rotation.z = -baseArmZ - liftR * 0.35;
+      rua.rotation.x = baseArmX + (safe.spineX || 0) * 0.1;
       rua.rotation.y = 0;
     }
-    const foreL = (pose.forearmL ?? 0) * k;
-    const foreR = (pose.forearmR ?? 0) * k;
+    const foreL = Math.min(0.1, (safe.forearmL ?? 0) * k);
+    const foreR = Math.min(0.1, (safe.forearmR ?? 0) * k);
     if (lla) {
-      lla.rotation.z = 0.1 + liftL * 0.06 + (pose.handWaveL || 0) * k;
-      lla.rotation.x = 0.04 + foreL;
+      lla.rotation.z = 0.02 + liftL * 0.03;
+      lla.rotation.x = 0.02 + foreL;
     }
     if (rla) {
-      rla.rotation.z = -0.1 - liftR * 0.06 + (pose.handWaveR || 0) * k;
-      rla.rotation.x = 0.04 + foreR;
+      rla.rotation.z = -0.02 - liftR * 0.03;
+      rla.rotation.x = 0.02 + foreR;
     }
     if (head) {
-      head.rotation.x = (pose.headX || 0) * k;
-      head.rotation.z = (pose.headZ || 0) * k;
+      head.rotation.x = (safe.headX || 0) * k;
+      head.rotation.z = (safe.headZ || 0) * k;
     }
     if (spine) {
-      spine.rotation.x = (pose.spineX || 0.01) * k;
-      spine.rotation.y = (pose.leanY || 0) * k;
+      spine.rotation.x = (safe.spineX || 0.01) * k;
+      spine.rotation.y = (safe.leanY || 0) * k;
     }
     if (chest) {
-      chest.rotation.x = (pose.chestX || -0.01) * k;
+      chest.rotation.x = (safe.chestX || -0.01) * k;
     }
     if (hips) {
-      hips.rotation.z = (pose.hipZ || 0) * k;
+      hips.rotation.z = (safe.hipZ || 0) * k;
     }
   };
 
@@ -179,11 +175,12 @@ export function createCompanionBodyMotion(humanoid) {
     } else {
       talkTime += dt;
       const motion = sampleBodyTalkMotion(talkTime, {
-        style: talkStyle,
+        style: companionGestureStyle(talkStyle),
         emotion,
         speechEnergy: energy,
+        includeArms: false,
       });
-      pose = mergePoses(pose, motion.body, 0.28 + energy * 0.22);
+      pose = mergePoses(pose, motion.body, 0.22 + energy * 0.15);
 
       const beat = Math.sin(elapsed * 6.8);
       pose.headX = (pose.headX || 0) + beat * 0.012 * energy;
@@ -201,15 +198,16 @@ export function createCompanionBodyMotion(humanoid) {
         const tSec = gesturePhase * gestureDuration;
         const overlay = sampleVrmTalkPose(activeGesture, tSec, {
           emotion,
-          speechEnergy: 0.5,
-          intensity: 0.52,
+          speechEnergy: 0.3,
+          intensity: 0.32,
+          includeArms: activeGesture === "point",
         });
         const fade = gesturePhase < 0.15
           ? gesturePhase / 0.15
           : gesturePhase > 0.85
             ? (1 - gesturePhase) / 0.15
             : 1;
-        pose = mergePoses(pose, overlay, 0.45 * fade);
+        pose = mergePoses(pose, overlay, 0.22 * fade);
       }
     }
 
