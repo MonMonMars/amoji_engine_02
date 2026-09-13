@@ -25,6 +25,69 @@ const SOFT_MIC_ERRORS = new Set([
   "network",
 ]);
 
+/** Human-readable mic permission errors for the UI. */
+export const MIC_ERROR_MESSAGES = Object.freeze({
+  "not-allowed":
+    "Microphone blocked — tap 🔒 in the address bar and allow mic, then tap 🎤 again.",
+  "service-not-allowed":
+    "Speech recognition blocked — use Chrome/Edge on HTTPS, or type your message.",
+  "audio-capture": "No microphone found — plug in a mic or type your message.",
+  unsupported: "This browser has no speech recognition — type instead.",
+  "no-getusermedia":
+    "Cannot request mic permission in this browser — try Chrome/Edge on HTTPS.",
+  "no-mic": "No microphone detected — connect a mic or type your message.",
+});
+
+/**
+ * @param {string} code
+ * @returns {string}
+ */
+export function formatMicError(code) {
+  const key = String(code || "").trim();
+  return MIC_ERROR_MESSAGES[key] || `Mic error: ${key || "unknown"}`;
+}
+
+/**
+ * Prime microphone permission via getUserMedia (clearer errors than SpeechRecognition alone).
+ * @returns {Promise<{ ok: boolean, reason?: string }>}
+ */
+export async function requestMicPermission() {
+  const Rec =
+    globalThis.SpeechRecognition || globalThis.webkitSpeechRecognition || null;
+  if (!Rec) return { ok: false, reason: "unsupported" };
+
+  const md = globalThis.navigator?.mediaDevices;
+  if (!md?.getUserMedia) {
+    return { ok: true, reason: "no-getusermedia" };
+  }
+
+  /** @type {MediaStream | null} */
+  let stream = null;
+  try {
+    stream = await md.getUserMedia({ audio: true });
+    return { ok: true };
+  } catch (err) {
+    const name = err?.name || "";
+    if (name === "NotAllowedError" || name === "PermissionDeniedError") {
+      return { ok: false, reason: "not-allowed" };
+    }
+    if (name === "NotFoundError" || name === "DevicesNotFoundError") {
+      return { ok: false, reason: "no-mic" };
+    }
+    return { ok: false, reason: err?.message || "mic-error" };
+  } finally {
+    if (stream) {
+      for (const track of stream.getTracks()) {
+        try {
+          track.stop();
+        } catch {
+          /* ignore */
+        }
+      }
+    }
+  }
+}
+
 /**
  * Map a character to a viseme shape + openness for lip sync.
  * @param {string} ch
@@ -122,6 +185,7 @@ export function createCompanionVoice(opts = {}) {
   let recognitionActive = false;
   let restartTimer = null;
   let speaking = false;
+  let micPermissionPrimed = false;
   /** @type {ReturnType<typeof setInterval> | null} */
   let mouthTimer = null;
   /** @type {ReturnType<typeof setTimeout>[]} */
@@ -421,10 +485,53 @@ export function createCompanionVoice(opts = {}) {
     return false;
   };
 
-  const startMic = () => {
-    if (!Rec) {
-      opts.onError?.("Speech recognition not supported in this browser");
+  /** Unlock TTS after a user gesture (required by Chrome/Safari autoplay policy). */
+  const primeAudio = async () => {
+    if (!synth) return false;
+    await ensureVoices();
+    try {
+      if (synth.paused) synth.resume();
+      synth.cancel();
+      const utter = new SpeechSynthesisUtterance(" ");
+      utter.volume = 0.01;
+      utter.rate = 2;
+      if (voice) utter.voice = voice;
+      await new Promise((resolve) => {
+        utter.onend = resolve;
+        utter.onerror = resolve;
+        synth.speak(utter);
+        setTimeout(resolve, 400);
+      });
+      synth.cancel();
+      return true;
+    } catch {
       return false;
+    }
+  };
+
+  const primeMicPermission = async () => {
+    if (micPermissionPrimed) return true;
+    const perm = await requestMicPermission();
+    if (!perm.ok) {
+      opts.onError?.(perm.reason || "not-allowed");
+      return false;
+    }
+    micPermissionPrimed = true;
+    return true;
+  };
+
+  const startMic = async (startOpts = {}) => {
+    if (!Rec) {
+      opts.onError?.("unsupported");
+      return false;
+    }
+    if (!startOpts.skipPermission) {
+      const permitted = await primeMicPermission();
+      if (!permitted) {
+        micDesired = false;
+        opts.onMicState?.(false);
+        return false;
+      }
     }
     if (micDesired) {
       if (!recognitionActive && pauseDepth === 0) beginRecognition();
@@ -462,6 +569,8 @@ export function createCompanionVoice(opts = {}) {
       return Boolean(synth);
     },
     ensureVoices,
+    primeAudio,
+    primeMicPermission,
     speak,
     stopSpeak,
     setSpeakerOn,
