@@ -24,6 +24,7 @@ import {
   probeOllamaDirect,
   OLLAMA_PROBE_HOSTS,
 } from "./companionLlmConnect.js";
+import { isOllamaLocalModel } from "./companionModelIds.js";
 import { getLlmProvider, readProviderApiKey } from "./companionLlmProviders.js";
 
 export const COMPANION_CHAT_SCHEMA = "amoji.companionChat.v1";
@@ -413,6 +414,9 @@ async function callLocalProxy({
   model,
   providerId,
 }) {
+  const hosted = isHostedCompanion();
+  const proxyModel =
+    hosted && isOllamaLocalModel(model) ? undefined : model || undefined;
   const res = await fetchImpl("/api/chat", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -420,7 +424,7 @@ async function callLocalProxy({
       message: text,
       history: history.slice(-12),
       system: systemPrompt,
-      model,
+      model: proxyModel,
       providerId: providerId && providerId !== "custom" ? providerId : undefined,
       apiKey: resolveClientApiKey(providerId) || undefined,
     }),
