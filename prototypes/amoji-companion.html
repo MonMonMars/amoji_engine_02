@@ -663,14 +663,65 @@
         font-size: 0.66rem;
       }
 
-      .gear {
+      .gear,
+      .key-btn {
         pointer-events: auto;
         border: 1px solid var(--line);
         background: var(--glass);
         color: var(--ink);
         border-radius: 999px;
+        cursor: pointer;
+        font: inherit;
+      }
+
+      .gear {
         width: 2.1rem;
         height: 2.1rem;
+      }
+
+      .key-btn {
+        padding: 0.35rem 0.75rem;
+        font-size: 0.75rem;
+        font-weight: 650;
+        background: rgba(124, 156, 255, 0.18);
+        border-color: rgba(124, 156, 255, 0.45);
+        color: #c8d8ff;
+      }
+
+      .cloud-key-banner {
+        display: none;
+        gap: 0.5rem;
+        padding: 0.55rem 0.65rem;
+        margin-bottom: 0.45rem;
+        border-radius: 0.85rem;
+        background: rgba(124, 156, 255, 0.12);
+        border: 1px solid rgba(124, 156, 255, 0.35);
+        flex-wrap: wrap;
+        align-items: center;
+      }
+
+      .cloud-key-banner.show {
+        display: flex;
+      }
+
+      .cloud-key-banner input {
+        flex: 1 1 12rem;
+        min-width: 8rem;
+        border: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.06);
+        color: var(--ink);
+        border-radius: 0.6rem;
+        padding: 0.45rem 0.6rem;
+        font: inherit;
+      }
+
+      .cloud-key-banner button {
+        border: 0;
+        border-radius: 0.6rem;
+        padding: 0.45rem 0.75rem;
+        background: var(--accent);
+        color: #061018;
+        font-weight: 650;
         cursor: pointer;
       }
 
@@ -719,6 +770,7 @@
           <div class="pill" id="emotion-pill">feel · <strong>neutral</strong></div>
           <div class="pill" id="voice-pill">voice · <strong>…</strong></div>
           <a class="lab-link" id="lab-link" href="/prototypes/realtime-voice-lab.html">Lab</a>
+          <button type="button" class="key-btn" id="btn-cloud-key" hidden title="Paste API key">🔑 Key</button>
           <button type="button" class="gear" id="btn-settings" title="LLM settings" hidden>⚙</button>
         </div>
       </header>
@@ -772,6 +824,11 @@
           <div class="transcript" id="transcript" aria-live="polite"></div>
         </div>
         <div class="composer-wrap">
+          <div class="cloud-key-banner" id="cloud-key-banner">
+            <span>🔑 Paste OpenRouter key for smart chat</span>
+            <input id="cloud-key-inline" type="password" placeholder="sk-or-v1-…" autocomplete="off" />
+            <button type="button" id="btn-save-cloud-key-inline">Save</button>
+          </div>
           <div class="llm-switcher-wrap" id="llm-switcher-wrap"></div>
           <form class="composer" id="composer">
             <button
@@ -818,7 +875,10 @@
       } from "../amoji-engine/engine/companion/companionUi.js";
       import { createCompanionLlmSwitcher } from "../amoji-engine/engine/companion/companionLlmUi.js";
       import { isHostedCompanion } from "../amoji-engine/engine/companion/companionLlmConnect.js";
-      import { inferKeyProvider } from "../amoji-engine/engine/companion/companionClientKeys.js";
+      import {
+        hasAnyClientCloudKey,
+        inferKeyProvider,
+      } from "../amoji-engine/engine/companion/companionClientKeys.js";
       import { saveProviderApiKey } from "../amoji-engine/engine/companion/companionLlmProviders.js";
 
       const hostedOnline = isHostedCompanion();
@@ -870,6 +930,10 @@
         document.getElementById("settings-cloud").hidden = false;
         document.getElementById("btn-settings").hidden = false;
         document.getElementById("btn-settings").title = "Paste API key (smart brain)";
+        document.getElementById("btn-cloud-key").hidden = false;
+        if (!hasAnyClientCloudKey()) {
+          document.getElementById("cloud-key-banner")?.classList.add("show");
+        }
       } else {
         document.getElementById("btn-settings").hidden = false;
         document.getElementById("api-url").value = stored.url;
@@ -1188,6 +1252,38 @@
         onSystem: (msg) => addBubble("system", msg),
       });
 
+      const saveCloudKey = (key) => {
+        const trimmed = String(key || "").trim();
+        const provider = inferKeyProvider(trimmed);
+        if (!provider) return false;
+        saveProviderApiKey(provider, trimmed);
+        chat.setProvider(provider);
+        void llmSwitcher.refreshAvailability();
+        document.getElementById("cloud-key-banner")?.classList.remove("show");
+        return true;
+      };
+
+      const openKeyPanel = () => {
+        settings.classList.add("open");
+        document.getElementById("cloud-api-key")?.focus();
+      };
+
+      if (hostedOnline) {
+        document.getElementById("btn-cloud-key")?.addEventListener("click", openKeyPanel);
+        document.getElementById("btn-save-cloud-key-inline")?.addEventListener("click", () => {
+          const key = document.getElementById("cloud-key-inline")?.value?.trim();
+          if (!key) {
+            addBubble("system", "Paste your sk-or-… key first");
+            return;
+          }
+          if (!saveCloudKey(key)) {
+            addBubble("system", "Key should start with sk-or- (OpenRouter)");
+            return;
+          }
+          addBubble("system", "Smart brain connected — try chatting!");
+        });
+      }
+
       addBubble(
         "system",
         hostedOnline
@@ -1207,19 +1303,15 @@
         document.getElementById("btn-save-cloud-key").addEventListener("click", () => {
           const key = document.getElementById("cloud-api-key").value.trim();
           if (!key) {
-            addBubble("system", "Paste a Groq (gsk_) or OpenRouter (sk-or-) key first");
+            addBubble("system", "Paste your sk-or-… OpenRouter key first");
             return;
           }
-          const provider = inferKeyProvider(key);
-          if (!provider) {
-            addBubble("system", "Key should start with gsk_ (Groq) or sk-or- (OpenRouter)");
+          if (!saveCloudKey(key)) {
+            addBubble("system", "Key should start with sk-or- (OpenRouter)");
             return;
           }
-          saveProviderApiKey(provider, key);
-          chat.setProvider(provider);
-          void llmSwitcher.refreshAvailability();
           settings.classList.remove("open");
-          addBubble("system", "Key saved in this browser — smart brain connected");
+          addBubble("system", "Smart brain connected — try chatting!");
         });
       }
 

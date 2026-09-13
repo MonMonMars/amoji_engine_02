@@ -182,7 +182,7 @@ export async function processChatRequest(body) {
       String(body.apiKey || "").startsWith("sk-or-")
     ) {
       mode = "online";
-      model = process.env.OPENROUTER_MODEL || "google/gemma-2-9b-it:free";
+      model = process.env.OPENROUTER_MODEL || "openrouter/auto";
     } else if (process.env.OPENAI_API_KEY || process.env.AMOJI_LLM_KEY) {
       mode = "online";
       model = process.env.OPENAI_MODEL || "gpt-4o-mini";
@@ -241,7 +241,7 @@ export async function processChatRequest(body) {
       requestedModel ||
       providerPreset?.model ||
       process.env.OPENROUTER_MODEL ||
-      "google/gemma-2-9b-it:free";
+      "openrouter/auto";
     const openrouter = await callCloudChat({
       base: "https://openrouter.ai/api/v1",
       apiKey: openRouterApiKey,
