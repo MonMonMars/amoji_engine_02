@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   charToViseme,
+  femaleVoiceLabel,
   formatMicError,
   pickFemaleVoice,
 } from "../engine/companion/companionVoice.js";
@@ -23,5 +24,15 @@ describe("companionVoice", () => {
       { name: "Sin-Ji", lang: "zh-HK", localService: true },
     ];
     expect(pickFemaleVoice(voices)?.name).toBe("Sin-Ji");
+  });
+
+  it("labels cloud Cantonese neural voice", () => {
+    expect(
+      femaleVoiceLabel({
+        name: "zh-HK-HiuMaanNeural",
+        lang: "zh-HK",
+        cloud: true,
+      }),
+    ).toBe("女聲·粵·曉曼");
   });
 });

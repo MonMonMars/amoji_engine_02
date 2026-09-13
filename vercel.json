@@ -5,6 +5,7 @@
   "installCommand": "cd amoji-engine && npm install",
   "rewrites": [
     { "source": "/api/chat", "destination": "/api/chat" },
+    { "source": "/api/tts", "destination": "/api/tts" },
     { "source": "/api/llm/status", "destination": "/api/llm/status" },
     { "source": "/api/ollama/tags", "destination": "/api/ollama/tags" },
     { "source": "/prototypes/realtime-voice-lab.html", "destination": "/prototypes/realtime-voice-lab.html" },
