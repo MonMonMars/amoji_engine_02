@@ -1,83 +1,59 @@
 # Amoji on Windows
 
-## Your errors explained
+## Double-click does nothing / window flashes?
 
-| Error | Cause | Fix |
-| --- | --- | --- |
-| `找不到 ... amoji-engine` | You were in `C:\Windows\System32`, not the project folder | `cd` to where you cloned the repo (see below) |
-| `npm.ps1 ... 已停用指令碼執行` | PowerShell blocks `npm` scripts | Use **CMD** or `npm.cmd`, or run `node` directly (easiest below) |
+1. Use **`Start Companion.vbs`** instead of `start-companion.cmd` — keeps CMD open so you can read errors.
+2. Or right-click `start-companion.cmd` → **Run as administrator** (rarely needed).
+3. Check log file next to the script: **`start-companion.log`**
 
-## Easiest: double-click launcher
+Common errors in the log:
 
-1. Clone or open the repo folder (must contain `amoji-engine\` and `prototypes\`).
-2. Double-click **`start-companion.cmd`** in the repo root.
-3. Open http://127.0.0.1:5173/
+| Message | Fix |
+| --- | --- |
+| `Node not found` | Install Node from https://nodejs.org or add `D:\devtools\node` to PATH |
+| `lab-serve.mjs missing` | Wrong folder — run **`setup-amoji.cmd`** (clones to `D:\amoji_engine_02`) |
+| `npm install failed` | Run CMD as user: `cd D:\amoji_engine_02\amoji-engine` then `npm.cmd install` |
 
-No PowerShell, no `npm run` needed.
+## Don't have the repo yet? (easiest)
 
-## Find your project folder
+Double-click **`setup-amoji.cmd`** — it will:
 
-If you are not sure where the repo is:
-
-```powershell
-# PowerShell — search common drives (may take a minute)
-Get-ChildItem -Path D:\, C:\Users\$env:USERNAME -Filter "amoji_engine_02" -Directory -Recurse -ErrorAction SilentlyContinue | Select-Object -First 3 FullName
-```
-
-Or clone fresh:
-
-```powershell
-cd D:\projects
-git clone https://github.com/MonMonMars/amoji_engine_02.git
-cd amoji_engine_02
-```
-
-## Run from CMD (recommended)
-
-Open **Command Prompt** (cmd.exe), not PowerShell:
-
-```cmd
-cd /d D:\projects\amoji_engine_02\amoji-engine
-node scripts\lab-serve.mjs
-```
+1. Clone to **`D:\amoji_engine_02`**
+2. `npm install`
+3. Start the companion
 
 Then open http://127.0.0.1:5173/
 
-## If you prefer PowerShell
+## Find existing folder (fast — not a full disk search)
 
-**Option A — use npm.cmd (bypasses script policy):**
+Double-click **`find-amoji-quick.cmd`** — checks common paths in seconds and writes **`find-amoji-result.txt`**.
+
+Or in PowerShell (max depth 3 on D: only — finishes quickly):
 
 ```powershell
-cd D:\projects\amoji_engine_02\amoji-engine
-& "D:\devtools\node\npm.cmd" run lab
+Get-ChildItem D:\ -Filter "amoji_engine_02" -Directory -Depth 3 -ErrorAction SilentlyContinue | Select-Object FullName
 ```
 
-**Option B — use node directly (same as the .cmd launcher):**
+**Do not** use `-Recurse` on whole `D:\` — that can run for hours.
 
-```powershell
-cd D:\projects\amoji_engine_02\amoji-engine
+## Run manually (CMD, not PowerShell)
+
+```cmd
+cd /d D:\amoji_engine_02\amoji-engine
 node scripts\lab-serve.mjs
 ```
 
-**Option C — allow scripts (admin PowerShell, once):**
+Browser: http://127.0.0.1:5173/
+
+## PowerShell npm policy error
+
+Use **`npm.cmd`** instead of `npm`, or skip npm entirely:
 
 ```powershell
-Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
+cd D:\amoji_engine_02\amoji-engine
+node scripts\lab-serve.mjs
 ```
 
-## Ollama (your setup)
+## Ollama
 
-You already have Ollama on `D:\Ollama` with `qwen3:4b` and `qwen3:8b`.
-
-1. Start Ollama (app or `ollama serve` in another terminal).
-2. Start the companion (`start-companion.cmd` or `node scripts\lab-serve.mjs`).
-3. In the app, **Qwen4** should auto-connect.
-
-## First time only
-
-```cmd
-cd /d D:\projects\amoji_engine_02\amoji-engine
-npm.cmd install
-```
-
-Then use `start-companion.cmd` or `node scripts\lab-serve.mjs` every time.
+Keep Ollama running (`qwen3:4b` on `D:\Ollama`). App auto-picks **Qwen4**.
