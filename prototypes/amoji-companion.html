@@ -1142,20 +1142,6 @@
 
       let avatar = createStubAvatar();
       let avatarKind = "loading";
-<<<<<<< HEAD
-      let currentEmotion = "happy";
-      const avatarLoadPromise = createCompanionAvatar({
-        canvas,
-        modelUrl: avatarModelUrl || undefined,
-        prefer: avatarPrefer,
-        onCharacterTap: () => handleCharacterTap?.(),
-      })
-        .then((loaded) => {
-          avatar = loaded.avatar;
-          avatarKind = loaded.kind;
-          avatar.setEmotion?.(currentEmotion);
-          return loaded;
-=======
       let avatarLoadStarted = false;
       let currentEmotion = "neutral";
       /** @type {Promise<{ avatar: ReturnType<typeof createStubAvatar>, kind: string }>} */
@@ -1170,7 +1156,6 @@
           modelUrl: avatarModelUrl || undefined,
           prefer: avatarPrefer,
           onCharacterTap: () => handleCharacterTap?.(),
->>>>>>> cursor/vrm-companion-6647
         })
           .then((loaded) => {
             avatar = loaded.avatar;
@@ -1543,11 +1528,6 @@
         startTalkingEl?.setAttribute("disabled", "true");
         setTimeout(() => startTalkingEl?.remove(), 600);
 
-<<<<<<< HEAD
-        await voice.primeAudio?.();
-        const v = await voice.ensureVoices();
-        setVoicePill(femaleVoiceLabel(v) || (voice.supportsSpeak ? "女聲" : "off"));
-=======
         if (!busy && !voice.micOn && !voice.speaking) status.idle();
         input.focus();
         scheduleAvatarLoad();
@@ -1616,7 +1596,6 @@
         if (startTalkingEl?.textContent?.includes("Starting") === false) {
           startTalkingEl.textContent = "⏳ Starting…";
         }
->>>>>>> cursor/vrm-companion-6647
 
         if (!voice.supportsMic) {
           addBubble("system", formatMicError("unsupported"));
