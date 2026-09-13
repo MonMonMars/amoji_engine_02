@@ -170,13 +170,15 @@ export function resolveProviderConfig(providerId, opts = {}) {
   const isOllama =
     provider.kind === "local" || /11434|ollama|localhost/i.test(provider.url);
   const mode = isOllama ? "ollama" : "online";
+  const proxyOnly = provider.needsKey && !apiKey;
   return {
     provider,
-    url: provider.url.replace(/\/$/, ""),
+    url: proxyOnly ? null : provider.url.replace(/\/$/, ""),
     model: provider.model,
     apiKey: provider.needsKey ? apiKey : isOllama ? "ollama" : null,
+    proxyOnly,
     forceLocal: false,
-    mode,
+    mode: proxyOnly ? "proxy" : mode,
   };
 }
 

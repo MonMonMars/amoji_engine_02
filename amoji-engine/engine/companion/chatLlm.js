@@ -14,6 +14,8 @@ import {
   resolveProviderConfig,
   saveProviderApiKey,
 } from "./companionLlmProviders.js";
+import { chatOllama, OLLAMA_PROBE_HOSTS } from "./companionOllama.js";
+import { probeOllamaDirect } from "./companionLlmConnect.js";
 
 export const COMPANION_CHAT_SCHEMA = "amoji.companionChat.v1";
 
@@ -56,8 +58,8 @@ export function createCompanionChat(opts = {}) {
 
   const mode = () => {
     if (forceLocal) return "local";
-    if (!apiUrl && !forceLocal) return "proxy";
-    if (apiUrl && /11434|ollama/i.test(apiUrl)) return "ollama";
+    if (!apiUrl) return "proxy";
+    if (isOllamaUrl(apiUrl)) return "ollama";
     if (apiUrl && fetchImpl) return "online";
     return "local";
   };
@@ -82,6 +84,10 @@ export function createCompanionChat(opts = {}) {
       apiUrl = normalizeUrl(resolved.url);
       apiKey = resolved.apiKey;
       model = resolved.model || model;
+      if (resolved.proxyOnly) {
+        apiUrl = null;
+        apiKey = null;
+      }
     }
     if (extra.model) model = extra.model;
     globalThis.localStorage?.setItem(LLM_PROVIDER_STORAGE_KEY, providerId);
@@ -122,6 +128,7 @@ export function createCompanionChat(opts = {}) {
           history,
           systemPrompt,
           model,
+          providerId,
         });
         if (proxied.ok && isSmartProxyMode(proxied.mode)) {
           const finalized = finalizeReply(proxied.reply);
@@ -150,7 +157,7 @@ export function createCompanionChat(opts = {}) {
           systemPrompt,
           history,
           onToken,
-          stream: Boolean(onToken),
+          stream: Boolean(onToken) && !isOllamaUrl(apiUrl),
         });
         if (online.ok) {
           const finalized = finalizeReply(online.reply);
@@ -170,6 +177,32 @@ export function createCompanionChat(opts = {}) {
       }
     }
 
+    if (!forceLocal && fetchImpl && isOllamaProvider(providerId)) {
+      try {
+        const direct = await tryDirectOllama({
+          fetchImpl,
+          model,
+          systemPrompt,
+          history,
+          onToken,
+        });
+        if (direct.ok) {
+          const finalized = finalizeReply(direct.reply);
+          if (onToken && !direct.streamed) await emitTypewriter(finalized.reply, onToken);
+          history.push({ role: "assistant", content: finalized.reply });
+          return {
+            ok: true,
+            reply: finalized.reply,
+            emotion: finalized.emotion,
+            mode: "ollama",
+            model: direct.model || model,
+          };
+        }
+      } catch (err) {
+        console.warn("[companion] direct ollama error", err);
+      }
+    }
+
     if (!forceLocal && fetchImpl) {
       try {
         const proxied = await callLocalProxy({
@@ -178,8 +211,12 @@ export function createCompanionChat(opts = {}) {
           history,
           systemPrompt,
           model,
+          providerId,
         });
-        if (proxied.ok) {
+        if (
+          proxied.ok &&
+          (proxied.mode !== "local-fallback" || providerId === "basic")
+        ) {
           const finalized = finalizeReply(proxied.reply);
           if (onToken) await emitTypewriter(finalized.reply, onToken);
           history.push({ role: "assistant", content: finalized.reply });
@@ -243,13 +280,61 @@ function isSmartProxyMode(mode) {
   return mode === "ollama" || mode === "online" || mode === "proxy";
 }
 
+function isOllamaUrl(url) {
+  return /11434|ollama|localhost/i.test(String(url || ""));
+}
+
+function isOllamaProvider(id) {
+  return (
+    id === "auto" ||
+    String(id || "").startsWith("ollama") ||
+    id === "custom"
+  );
+}
+
 function normalizeUrl(url) {
   const raw = String(url || "").trim();
   if (!raw || raw === "off" || raw === "local") return null;
   return raw.replace(/\/$/, "");
 }
 
-async function callLocalProxy({ fetchImpl, text, history, systemPrompt, model }) {
+async function tryDirectOllama({
+  fetchImpl,
+  model,
+  systemPrompt,
+  history,
+  onToken,
+}) {
+  const probed = await probeOllamaDirect(OLLAMA_PROBE_HOSTS);
+  if (!probed.ok) return { ok: false, error: "ollama offline" };
+
+  const messages = [
+    { role: "system", content: systemPrompt },
+    ...history.slice(-12),
+  ];
+  const result = await chatOllama({
+    base: probed.host,
+    model,
+    messages,
+    fetchImpl,
+  });
+  if (!result.ok || !result.reply) return { ok: false, error: result.error };
+  return {
+    ok: true,
+    reply: result.reply,
+    model: result.model,
+    streamed: false,
+  };
+}
+
+async function callLocalProxy({
+  fetchImpl,
+  text,
+  history,
+  systemPrompt,
+  model,
+  providerId,
+}) {
   const res = await fetchImpl("/api/chat", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -258,6 +343,7 @@ async function callLocalProxy({ fetchImpl, text, history, systemPrompt, model })
       history: history.slice(-12),
       system: systemPrompt,
       model,
+      providerId: providerId && providerId !== "custom" ? providerId : undefined,
     }),
   });
   if (!res.ok) return { ok: false, error: `HTTP ${res.status}` };

@@ -112,7 +112,7 @@ export async function chatOllama(opts) {
       stream: false,
       messages: opts.messages,
     }),
-    signal: AbortSignal.timeout(120000),
+    signal: AbortSignal.timeout(180000),
   });
 
   const data = await res.json().catch(() => ({}));

@@ -1,14 +1,15 @@
 /**
- * In-app LLM provider switcher — local + free cloud presets.
+ * In-app LLM provider switcher — auto-connect, no API key prompts.
  */
+import {
+  autoConnectLlm,
+  probeProviderAvailability,
+} from "./companionLlmConnect.js";
 import {
   formatLlmModeLabel,
   getLlmProvider,
   LLM_PROVIDER_STORAGE_KEY,
   LLM_PROVIDERS,
-  readProviderApiKey,
-  resolveProviderConfig,
-  saveProviderApiKey,
 } from "./companionLlmProviders.js";
 
 export const COMPANION_LLM_UI_SCHEMA = "amoji.companionLlmUi.v1";
@@ -54,42 +55,35 @@ export function createCompanionLlmSwitcher(opts) {
   root.append(label, track);
   opts.container.appendChild(root);
 
-  let storedId = storage?.getItem(LLM_PROVIDER_STORAGE_KEY) || "auto";
-  if (storedId === "ollama") storedId = "ollama-qwen4";
-  let activeId = storedId;
+  let activeId = "auto";
+  /** @type {Record<string, boolean>} */
+  let availability = {};
 
   const setActiveUi = (id) => {
     activeId = id;
     for (const [pid, btn] of Object.entries(buttons)) {
       const on = pid === id;
       btn.classList.toggle("active", on);
+      btn.classList.toggle("unavailable", availability[pid] === false);
       btn.setAttribute("aria-pressed", on ? "true" : "false");
+      btn.disabled = availability[pid] === false && pid !== "basic";
     }
   };
 
   const apply = (id, extra = {}) => {
     const provider = getLlmProvider(id);
-    if (provider.needsKey && !readProviderApiKey(id, storage) && !extra.apiKey) {
-      const key = globalThis.prompt?.(
-        `${provider.label} API key (stored in this browser only):`,
-        readProviderApiKey(id, storage),
-      );
-      if (!key) {
-        opts.onSystem?.(`${provider.label} needs an API key — open ⚙ settings or try again`);
-        return null;
-      }
-      saveProviderApiKey(id, key, storage);
-      extra.apiKey = key;
+    if (availability[id] === false) {
+      opts.onSystem?.(`${provider.label} not available — start Ollama or add server API keys`);
+      return null;
     }
 
     const info = opts.chat.setProvider(id, extra);
     storage?.setItem(LLM_PROVIDER_STORAGE_KEY, id);
     setActiveUi(id);
-    const labelText = formatLlmModeLabel(info.mode, info.model);
-    opts.onMode?.(labelText);
+    opts.onMode?.(formatLlmModeLabel(info.mode, info.model));
     const modelNote =
       provider.id !== "basic" && info.model ? ` · ${info.model}` : "";
-    opts.onSystem?.(`Switched to ${provider.label}${modelNote}`);
+    opts.onSystem?.(`Connected · ${provider.label}${modelNote}`);
     return info;
   };
 
@@ -100,30 +94,34 @@ export function createCompanionLlmSwitcher(opts) {
     });
   }
 
-  const pingProxy = async () => {
-    try {
-      const res = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: "__ping__", history: [] }),
-      });
-      const data = await res.json();
-      if (data?.mode === "ollama") {
-        opts.onMode?.(formatLlmModeLabel("ollama", data.model));
-      } else if (data?.mode === "online") {
-        opts.onMode?.(formatLlmModeLabel("online", data.model));
-      } else if (activeId === "auto") {
-        opts.onMode?.(formatLlmModeLabel("local"));
-      }
-    } catch {
-      /* offline file open */
+  const refreshAvailability = async () => {
+    const connected = await autoConnectLlm({
+      chat: opts.chat,
+      fetchImpl: globalThis.fetch,
+    });
+    availability = probeProviderAvailability(
+      connected.status,
+      connected.directOllama,
+    );
+    activeId = connected.providerId;
+    storage?.setItem(LLM_PROVIDER_STORAGE_KEY, activeId);
+    setActiveUi(activeId);
+    opts.onMode?.(
+      formatLlmModeLabel(connected.info?.mode || "ollama", connected.info?.model),
+    );
+    if (connected.ok) {
+      opts.onSystem?.(
+        `Auto-connected · ${getLlmProvider(activeId).label} (${connected.reason})`,
+      );
+    } else {
+      opts.onSystem?.(
+        "No LLM detected — start Ollama (ollama serve) or use Basic offline mode",
+      );
     }
+    return connected;
   };
 
-  setActiveUi(activeId);
-  const initial = resolveProviderConfig(activeId, { storage });
-  opts.chat.setProvider(activeId, { apiKey: initial.apiKey || undefined });
-  void pingProxy();
+  void refreshAvailability();
 
   return {
     schema: COMPANION_LLM_UI_SCHEMA,
@@ -132,6 +130,6 @@ export function createCompanionLlmSwitcher(opts) {
       return activeId;
     },
     apply,
-    refreshPing: pingProxy,
+    refreshAvailability,
   };
 }
