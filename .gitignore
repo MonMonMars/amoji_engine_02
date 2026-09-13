@@ -25,3 +25,4 @@ venv/
 # Lab / local
 *.log
 .cache/
+.vercel

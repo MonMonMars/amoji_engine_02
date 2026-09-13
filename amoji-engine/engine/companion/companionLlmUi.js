@@ -3,13 +3,14 @@
  */
 import {
   autoConnectLlm,
+  isHostedCompanion,
   probeProviderAvailability,
 } from "./companionLlmConnect.js";
 import {
   formatLlmModeLabel,
   getLlmProvider,
+  getVisibleLlmProviders,
   LLM_PROVIDER_STORAGE_KEY,
-  LLM_PROVIDERS,
 } from "./companionLlmProviders.js";
 
 export const COMPANION_LLM_UI_SCHEMA = "amoji.companionLlmUi.v1";
@@ -40,7 +41,10 @@ export function createCompanionLlmSwitcher(opts) {
   /** @type {Record<string, HTMLButtonElement>} */
   const buttons = {};
 
-  for (const provider of LLM_PROVIDERS) {
+  const hosted = isHostedCompanion();
+  const visibleProviders = getVisibleLlmProviders(hosted);
+
+  for (const provider of visibleProviders) {
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = "llm-chip";
@@ -73,7 +77,11 @@ export function createCompanionLlmSwitcher(opts) {
   const apply = (id, extra = {}) => {
     const provider = getLlmProvider(id);
     if (availability[id] === false) {
-      opts.onSystem?.(`${provider.label} not available — start Ollama or add server API keys`);
+      opts.onSystem?.(
+        hosted
+          ? `${provider.label} not available — add GROQ_API_KEY on Vercel`
+          : `${provider.label} not available — start Ollama or add server API keys`,
+      );
       return null;
     }
 

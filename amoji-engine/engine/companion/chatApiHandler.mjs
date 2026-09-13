@@ -215,7 +215,9 @@ export async function processChatRequest(body) {
     process.env.OLLAMA_MODEL ||
     process.env.AMOJI_LLM_MODEL;
 
-  const wantGroq = providerId === "groq" || (!providerId && (cloud || !ollamaUp));
+  const autoProvider = !providerId || providerId === "auto";
+  const wantGroq =
+    providerId === "groq" || (autoProvider && (cloud || !ollamaUp));
   if (wantGroq && process.env.GROQ_API_KEY) {
     const groq = await callCloudChat({
       base: "https://api.groq.com/openai/v1",
@@ -231,7 +233,10 @@ export async function processChatRequest(body) {
 
   const wantOpenRouter =
     providerId?.startsWith("openrouter") ||
-    (!providerId && cloud && !process.env.GROQ_API_KEY && process.env.OPENROUTER_API_KEY);
+    (autoProvider &&
+      cloud &&
+      !process.env.GROQ_API_KEY &&
+      process.env.OPENROUTER_API_KEY);
   if (wantOpenRouter && process.env.OPENROUTER_API_KEY) {
     const orModel =
       requestedModel ||

@@ -26,7 +26,21 @@
       ]
     },
     {
-      "source": "/amoji-engine/(.*\\.(js|mjs|vrm|glb|png|webp|svg))",
+      "source": "/prototypes/assets/companion-girl.vrm",
+      "headers": [
+        { "key": "Content-Type", "value": "model/gltf-binary" },
+        { "key": "Access-Control-Allow-Origin", "value": "*" }
+      ]
+    },
+    {
+      "source": "/prototypes/assets/companion-girl.glb",
+      "headers": [
+        { "key": "Content-Type", "value": "model/gltf-binary" },
+        { "key": "Access-Control-Allow-Origin", "value": "*" }
+      ]
+    },
+    {
+      "source": "/amoji-engine/:path*",
       "headers": [
         { "key": "Cache-Control", "value": "public, max-age=86400" }
       ]

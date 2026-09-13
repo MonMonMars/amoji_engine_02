@@ -718,8 +718,8 @@
           <div class="pill" id="mode-pill">LLM · <strong>local</strong></div>
           <div class="pill" id="emotion-pill">feel · <strong>neutral</strong></div>
           <div class="pill" id="voice-pill">voice · <strong>…</strong></div>
-          <a class="lab-link" href="/prototypes/realtime-voice-lab.html">Lab</a>
-          <button type="button" class="gear" id="btn-settings" title="LLM settings">⚙</button>
+          <a class="lab-link" id="lab-link" href="/prototypes/realtime-voice-lab.html">Lab</a>
+          <button type="button" class="gear" id="btn-settings" title="LLM settings" hidden>⚙</button>
         </div>
       </header>
 
@@ -797,7 +797,10 @@
         createInterimBubble,
       } from "../amoji-engine/engine/companion/companionUi.js";
       import { createCompanionLlmSwitcher } from "../amoji-engine/engine/companion/companionLlmUi.js";
+      import { isHostedCompanion } from "../amoji-engine/engine/companion/companionLlmConnect.js";
       import { saveProviderApiKey } from "../amoji-engine/engine/companion/companionLlmProviders.js";
+
+      const hostedOnline = isHostedCompanion();
 
       const stage = document.querySelector(".stage");
       const canvas = document.getElementById("avatar-canvas");
@@ -839,9 +842,17 @@
           "qwen3:4b",
       };
 
-      document.getElementById("api-url").value = stored.url;
-      document.getElementById("api-key").value = stored.key;
-      document.getElementById("api-model").value = stored.model;
+      if (hostedOnline) {
+        document.getElementById("btn-settings")?.remove();
+        document.getElementById("settings")?.remove();
+        document.getElementById("lab-link")?.remove();
+        document.querySelector(".brand span").textContent = "Cloud";
+      } else {
+        document.getElementById("btn-settings").hidden = false;
+        document.getElementById("api-url").value = stored.url;
+        document.getElementById("api-key").value = stored.key;
+        document.getElementById("api-model").value = stored.model;
+      }
 
       const tapLines = [
         "喂～你戳我呀？好開心㗎！",
@@ -1156,13 +1167,16 @@
 
       addBubble(
         "system",
-        `Grok Ani 風格 · ${avatarLabel} · 粵語傾偈 · 表情同身體動作 · Brain 按鈕切 LLM · 🎤 連續對話`,
+        hostedOnline
+          ? `☁️ 全網上運行 · ${avatarLabel} · 粵語傾偈 · 表情同身體動作 · 唔使本地 PC · 🎤 連續對話`
+          : `Grok Ani 風格 · ${avatarLabel} · 粵語傾偈 · 表情同身體動作 · Brain 按鈕切 LLM · 🎤 連續對話`,
       );
       addBubble("assistant", GREETING);
       avatar.setEmotion("happy");
       setEmotionPill("happy");
       setTimeout(() => void startSession(), 600);
 
+      if (!hostedOnline) {
       btnSettings.addEventListener("click", () => {
         settings.classList.toggle("open");
       });
@@ -1204,6 +1218,7 @@
           el.textContent = "Cannot reach Ollama — run ollama serve (e.g. D:\\Ollama)";
         }
       });
+      }
 
       btnSpeaker.addEventListener("click", () => {
         voice.setSpeakerOn(!voice.speakerOn);

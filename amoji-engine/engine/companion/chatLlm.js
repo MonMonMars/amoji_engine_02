@@ -15,7 +15,7 @@ import {
   saveProviderApiKey,
 } from "./companionLlmProviders.js";
 import { chatOllama, OLLAMA_PROBE_HOSTS } from "./companionOllama.js";
-import { probeOllamaDirect } from "./companionLlmConnect.js";
+import { isHostedCompanion, probeOllamaDirect } from "./companionLlmConnect.js";
 
 export const COMPANION_CHAT_SCHEMA = "amoji.companionChat.v1";
 
@@ -177,7 +177,12 @@ export function createCompanionChat(opts = {}) {
       }
     }
 
-    if (!forceLocal && fetchImpl && isOllamaProvider(providerId)) {
+    if (
+      !forceLocal &&
+      fetchImpl &&
+      !isHostedCompanion() &&
+      isOllamaProvider(providerId)
+    ) {
       try {
         const direct = await tryDirectOllama({
           fetchImpl,
