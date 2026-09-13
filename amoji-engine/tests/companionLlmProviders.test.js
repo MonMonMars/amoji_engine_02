@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   formatLlmModeLabel,
   getLlmProvider,
+  getVisibleLlmProviders,
   resolveProviderConfig,
 } from "../engine/companion/companionLlmProviders.js";
 
@@ -27,5 +28,11 @@ describe("companionLlmProviders", () => {
 
   it("falls back to auto provider", () => {
     expect(getLlmProvider("missing").id).toBe("auto");
+  });
+
+  it("hides local ollama presets when hosted", () => {
+    const hosted = getVisibleLlmProviders(true);
+    expect(hosted.some((p) => p.id.startsWith("ollama"))).toBe(false);
+    expect(hosted.some((p) => p.id === "groq")).toBe(true);
   });
 });

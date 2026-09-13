@@ -2,6 +2,15 @@
 
 Everything loads in the browser. **No npm, Ollama, or local server on your computer.**
 
+## Live demo (try now)
+
+**https://temporary-rushing-oxygen-ok5jzhd.vercel.app**
+
+Opens the full 3D companion in your browser — avatar, tap, voice, chat.  
+Smart LLM (Groq) needs a one-time API key on Vercel (see below). Without it, **Basic brain** still works.
+
+**Keep this URL forever:** [Claim deployment on Vercel](https://vercel.com/claim-deployment?code=d021c0a5-ff40-475c-af70-7fa6e5c15140) → add `GROQ_API_KEY` → redeploy.
+
 ## One-click deploy (Vercel)
 
 1. Push this repo to GitHub (or use the existing repo).

@@ -115,6 +115,15 @@ export function getLlmProvider(id) {
 }
 
 /**
+ * Providers shown in the UI — hides local Ollama presets when hosted online.
+ * @param {boolean} [hosted]
+ */
+export function getVisibleLlmProviders(hosted = false) {
+  if (!hosted) return LLM_PROVIDERS;
+  return LLM_PROVIDERS.filter((p) => p.kind !== "local");
+}
+
+/**
  * @param {string} providerId
  * @param {Storage | null} [storage]
  */
