@@ -1214,6 +1214,11 @@
         btnMic.textContent = voice.micOn ? "⏺" : "🎤";
       };
 
+      const syncListenPose = () => {
+        const listen = voice.micOn && !busy && !voice.speaking;
+        avatar.setListening?.(listen);
+      };
+
       const syncSpeakerBtn = () => {
         btnSpeaker.classList.toggle("on", voice.speakerOn);
         btnSpeaker.setAttribute("aria-pressed", voice.speakerOn ? "true" : "false");
@@ -1319,8 +1324,9 @@
         voice.pauseCapture();
         interim.clear();
         addBubble("user", cleaned);
-        avatar.setEmotion("thinking");
-        setEmotionPill("thinking");
+        avatar.setEmotion("neutral");
+        setEmotionPill("neutral");
+        avatar.setListening?.(false);
         status.thinking();
         avatar.setTalking(false);
         avatar.setMouthOpen(0);
@@ -1372,9 +1378,11 @@
             setEmotionPill("neutral");
             status.listening();
           } else {
+            avatar.setListening?.(false);
             status.idle();
             input.focus();
           }
+          syncListenPose();
           // Drain one queued utterance from continuous mic (if any)
           if (micQueue.length && voice.micOn) {
             const next = micQueue.shift();
@@ -1470,6 +1478,9 @@
           syncMicBtn();
           if (micOk) {
             status.listening();
+            avatar.setEmotion("neutral");
+            setEmotionPill("neutral");
+            syncListenPose();
             input.placeholder =
               "Listening… speak, pause → she replies, then listens again";
             addBubble("system", "Mic on — speak Cantonese or English, pause to send.");
@@ -1665,13 +1676,15 @@
           );
           input.placeholder = "Listening… speak, pause → she replies, then listens again";
           if (!busy) {
-            avatar.setEmotion("thinking");
-            setEmotionPill("thinking");
+            avatar.setEmotion("neutral");
+            setEmotionPill("neutral");
+            syncListenPose();
             status.listening();
           }
         } else {
           micQueue.length = 0;
           voice.stopMic();
+          avatar.setListening?.(false);
           addBubble("system", "Mic off");
           input.placeholder = "同 Amoji 傾偈… or tap 🎤 for continuous talk";
           syncMicBtn();
