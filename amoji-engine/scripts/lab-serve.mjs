@@ -30,6 +30,8 @@ const MIME = {
   ".jpg": "image/jpeg",
   ".jpeg": "image/jpeg",
   ".webp": "image/webp",
+  ".glb": "model/gltf-binary",
+  ".vrm": "model/vnd.vrm",
   ".wav": "audio/wav",
   ".map": "application/json",
   ".md": "text/markdown; charset=utf-8",
