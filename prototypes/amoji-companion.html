@@ -718,15 +718,17 @@
         </label>
         <label>
           Model
-          <input id="api-model" placeholder="llama3.2" />
+          <input id="api-model" placeholder="qwen3:4b" />
         </label>
         <label>
           API key (optional — Ollama needs none)
           <input id="api-key" type="password" placeholder="sk-… only for OpenAI/Groq" autocomplete="off" />
         </label>
         <p class="settings-hint">
-          <strong>Ollama (recommended):</strong> on your PC run <code>ollama serve</code> then
-          <code>ollama pull llama3.2</code>. Leave URL blank when using <code>npm run lab</code> — the server auto-detects Ollama at <code>127.0.0.1:11434</code>.
+          <strong>Ollama:</strong> <code>ollama serve</code> on your PC (e.g. D:\Ollama). Tap
+          <strong>Qwen4</strong> / <strong>Qwen8</strong> below. URL:
+          <code>http://localhost:11434/v1</code> · key: <code>ollama</code> · model:
+          <code>qwen3:4b</code>
         </p>
         <button type="button" class="btn-secondary" id="btn-list-ollama">List Ollama models</button>
         <p class="settings-hint" id="ollama-model-list"></p>
@@ -822,7 +824,7 @@
         model:
           localStorage.getItem("amoji.companion.model") ||
           params.get("model") ||
-          "llama3.2",
+          "qwen3:4b",
       };
 
       document.getElementById("api-url").value = stored.url;
@@ -1156,7 +1158,7 @@
       document.getElementById("btn-save-llm").addEventListener("click", () => {
         const url = document.getElementById("api-url").value.trim();
         const key = document.getElementById("api-key").value.trim();
-        const model = document.getElementById("api-model").value.trim() || "llama3.2";
+        const model = document.getElementById("api-model").value.trim() || "qwen3:4b";
         localStorage.setItem("amoji.companion.apiUrl", url);
         localStorage.setItem("amoji.companion.apiKey", key);
         localStorage.setItem("amoji.companion.model", model);
@@ -1182,7 +1184,7 @@
           if (direct.ok) {
             const tags = await direct.json();
             const names = (tags.models || []).map((m) => m.name).join(", ");
-            el.textContent = names || "No models — run: ollama pull llama3.2";
+            el.textContent = names || "No models — run: ollama pull qwen3:4b";
             return;
           }
           el.textContent = "Ollama not running — start ollama serve on your PC";
