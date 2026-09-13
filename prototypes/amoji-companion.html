@@ -101,9 +101,11 @@
         left: 50%;
         bottom: 28%;
         transform: translateX(-50%);
-        z-index: 8;
+        z-index: 100;
         pointer-events: auto;
         cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
         padding: 0.75rem 1.4rem;
         border-radius: 999px;
         background: rgba(124, 156, 255, 0.22);
@@ -131,6 +133,42 @@
         opacity: 0.55;
         cursor: wait;
         pointer-events: none;
+      }
+
+      .start-talking.starting {
+        background: rgba(124, 156, 255, 0.38);
+        border-color: rgba(124, 156, 255, 0.85);
+        transform: translateX(-50%) scale(0.98);
+      }
+
+      .companion-toast {
+        position: fixed;
+        left: 50%;
+        bottom: max(1.25rem, env(safe-area-inset-bottom));
+        transform: translateX(-50%) translateY(120%);
+        z-index: 200;
+        max-width: min(92vw, 420px);
+        padding: 0.75rem 1rem;
+        border-radius: 0.85rem;
+        background: rgba(18, 22, 32, 0.94);
+        border: 1px solid rgba(255, 122, 144, 0.55);
+        color: #ffd8de;
+        font-size: 0.88rem;
+        line-height: 1.45;
+        box-shadow: var(--shadow);
+        opacity: 0;
+        transition: transform 0.28s ease, opacity 0.28s ease;
+        pointer-events: none;
+      }
+
+      .companion-toast.show {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+      }
+
+      .companion-toast.info {
+        border-color: rgba(127, 212, 207, 0.55);
+        color: #dff8f6;
       }
 
       .topbar {
@@ -197,7 +235,7 @@
       .avatar-loading {
         position: absolute;
         inset: 0;
-        z-index: 8;
+        z-index: 20;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -774,7 +812,12 @@
       <div class="atmosphere" aria-hidden="true"></div>
       <canvas id="avatar-canvas" aria-label="Amoji companion — drag to orbit"></canvas>
       <div class="orbit-hint" id="orbit-hint">Drag to orbit · Tap character · Scroll to zoom</div>
-      <button type="button" class="start-talking" id="start-talking">
+      <button
+        type="button"
+        class="start-talking"
+        id="start-talking"
+        onclick="return window.__amojiStartTap && window.__amojiStartTap(event)"
+      >
         👆 Tap to start · 點一下開始
       </button>
 
@@ -877,6 +920,25 @@
       </div>
     </div>
 
+    <script>
+      (function () {
+        window.__amojiStart = { tapped: false, ready: false, run: null };
+        window.__amojiStartTap = function (ev) {
+          ev?.preventDefault?.();
+          ev?.stopPropagation?.();
+          const btn = document.getElementById("start-talking");
+          if (!btn || btn.disabled || btn.classList.contains("hide")) return false;
+          window.__amojiStart.tapped = true;
+          btn.classList.add("starting");
+          btn.textContent = "⏳ Starting…";
+          btn.setAttribute("aria-busy", "true");
+          if (window.__amojiStart.ready && typeof window.__amojiStart.run === "function") {
+            void window.__amojiStart.run();
+          }
+          return false;
+        };
+      })();
+    </script>
     <script type="module">
       import {
         createCompanionAvatar,
@@ -905,8 +967,23 @@
 
       const stage = document.querySelector(".stage");
       const canvas = document.getElementById("avatar-canvas");
+      const startTalkingEl = document.getElementById("start-talking");
       const loading = createLoadingOverlay(stage);
       loading.show();
+
+      const showToast = (msg, kind = "error") => {
+        const t = document.createElement("div");
+        t.className = `companion-toast ${kind === "info" ? "info" : ""}`;
+        t.setAttribute("role", "alert");
+        t.textContent = String(msg || "Something went wrong");
+        document.body.appendChild(t);
+        requestAnimationFrame(() => t.classList.add("show"));
+        setTimeout(() => {
+          t.classList.remove("show");
+          setTimeout(() => t.remove(), 320);
+        }, 5200);
+      };
+
       const transcript = document.getElementById("transcript");
       const form = document.getElementById("composer");
       const input = document.getElementById("input");
@@ -1254,61 +1331,94 @@
 
       const GREETING =
         "嗨呀～我係 Amoji！同我傾偈啦，我會用粵語答你，仲會做表情同身體動作㗎。";
-      const startTalkingEl = document.getElementById("start-talking");
 
       let sessionStarted = false;
       let sessionStarting = false;
 
+      const resetStartButton = () => {
+        if (!startTalkingEl) return;
+        startTalkingEl.classList.remove("hide", "starting");
+        startTalkingEl.removeAttribute("aria-hidden");
+        startTalkingEl.removeAttribute("aria-busy");
+        startTalkingEl.removeAttribute("disabled");
+        startTalkingEl.textContent = voice.supportsMic
+          ? "👆 Tap to start · 點一下開始"
+          : "👆 Tap to start (type to chat)";
+      };
+
       const startSession = async () => {
         if (sessionStarted || sessionStarting) return;
         sessionStarting = true;
-        startTalkingEl?.classList.add("hide");
-        startTalkingEl?.setAttribute("aria-hidden", "true");
-        startTalkingEl?.setAttribute("disabled", "true");
-
-        await avatarLoadPromise.catch(() => {});
-        await voice.primeAudio?.();
-        const v = await voice.ensureVoices();
-        setVoicePill(femaleVoiceLabel(v) || (voice.supportsSpeak ? "女聲" : "off"));
-
-        if (!voice.supportsMic) {
-          addBubble("system", formatMicError("unsupported"));
+        startTalkingEl?.classList.add("starting");
+        startTalkingEl?.setAttribute("aria-busy", "true");
+        if (startTalkingEl?.textContent?.includes("Starting") === false) {
+          startTalkingEl.textContent = "⏳ Starting…";
         }
 
-        avatar.setEmotion("happy");
-        setEmotionPill("happy");
-        avatar.playGestureForText?.(GREETING);
-        speakEmotion = "happy";
-        status.speaking();
-        await voice.speak(GREETING, "happy");
+        try {
+          await avatarLoadPromise.catch(() => {});
+          await voice.primeAudio?.();
+          const v = await voice.ensureVoices();
+          setVoicePill(femaleVoiceLabel(v) || (voice.supportsSpeak ? "女聲" : "off"));
 
-        if (autoMic && voice.supportsMic) {
-          const micOk = await voice.startMic();
-          syncMicBtn();
-          if (micOk) {
-            status.listening();
-            input.placeholder =
-              "Listening… speak, pause → she replies, then listens again";
-            addBubble("system", "Mic on — speak Cantonese or English, pause to send.");
+          startTalkingEl?.classList.add("hide");
+          startTalkingEl?.setAttribute("aria-hidden", "true");
+          startTalkingEl?.setAttribute("disabled", "true");
+
+          if (!voice.supportsMic) {
+            addBubble("system", formatMicError("unsupported"));
+          }
+
+          avatar.setEmotion("happy");
+          setEmotionPill("happy");
+          avatar.playGestureForText?.(GREETING);
+          speakEmotion = "happy";
+          status.speaking();
+          const spoke = await voice.speak(GREETING, "happy");
+          if (spoke?.ok === false && spoke?.reason) {
+            addBubble("system", `Voice: ${spoke.reason} — you can still type to chat.`);
+            showToast("Voice unavailable — type your message below", "info");
+          }
+
+          if (autoMic && voice.supportsMic) {
+            const micOk = await voice.startMic();
+            syncMicBtn();
+            if (micOk) {
+              status.listening();
+              input.placeholder =
+                "Listening… speak, pause → she replies, then listens again";
+              addBubble("system", "Mic on — speak Cantonese or English, pause to send.");
+            } else {
+              status.idle();
+              input.placeholder = "同 Amoji 傾偈… tap 🎤 after allowing microphone";
+            }
           } else {
             status.idle();
-            input.placeholder = "同 Amoji 傾偈… tap 🎤 after allowing microphone";
           }
-        } else {
-          status.idle();
-        }
 
-        sessionStarted = true;
-        sessionStarting = false;
-        setTimeout(() => startTalkingEl?.remove(), 600);
+          sessionStarted = true;
+          setTimeout(() => startTalkingEl?.remove(), 600);
+        } catch (err) {
+          console.error("[companion] startSession failed", err);
+          resetStartButton();
+          const msg = err?.message || String(err);
+          showToast(`Could not start: ${msg}`);
+          addBubble("system", `Start failed: ${msg} — tap the button again or type below.`);
+          status.idle();
+        } finally {
+          sessionStarting = false;
+        }
       };
+
+      window.__amojiStart.run = () => void startSession();
+      window.__amojiStart.ready = true;
+      if (window.__amojiStart.tapped) void startSession();
 
       btnMic.disabled = !voice.supportsMic;
       syncSpeakerBtn();
       syncMicBtn();
 
-      startTalkingEl?.addEventListener("click", () => void startSession());
-      if (!voice.supportsMic) {
+      if (!voice.supportsMic && startTalkingEl) {
         startTalkingEl.textContent = "👆 Tap to start (type to chat)";
       }
       loading.hide();
