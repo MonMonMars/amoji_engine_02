@@ -6,6 +6,7 @@ import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { VRMLoaderPlugin, VRMExpressionPresetName } from "@pixiv/three-vrm";
+import { createCompanionBodyMotion } from "./companionBodyMotion.js";
 
 export const VRM_AVATAR_SCHEMA = "amoji.vrmAvatar.v1";
 
@@ -17,36 +18,6 @@ const EMOTION_EXPRESSIONS = {
   surprised: { [VRMExpressionPresetName.Surprised]: 0.9 },
   angry: { [VRMExpressionPresetName.Angry]: 0.8 },
 };
-
-/** Lower T-pose arms into a relaxed standing pose (re-applied each frame). */
-function applyStandingPose(vrm) {
-  const humanoid = vrm.humanoid;
-  if (!humanoid) return;
-
-  const lua = humanoid.getNormalizedBoneNode?.("leftUpperArm");
-  const rua = humanoid.getNormalizedBoneNode?.("rightUpperArm");
-  const lla = humanoid.getNormalizedBoneNode?.("leftLowerArm");
-  const rla = humanoid.getNormalizedBoneNode?.("rightLowerArm");
-
-  if (lua) {
-    lua.rotation.z = 1.4;
-    lua.rotation.x = 0.12;
-    lua.rotation.y = 0;
-  }
-  if (rua) {
-    rua.rotation.z = -1.4;
-    rua.rotation.x = 0.12;
-    rua.rotation.y = 0;
-  }
-  if (lla) {
-    lla.rotation.z = 0.15;
-    lla.rotation.x = 0.05;
-  }
-  if (rla) {
-    rla.rotation.z = -0.15;
-    rla.rotation.x = 0.05;
-  }
-}
 
 /** Frame camera on the head — face centered, portrait distance. */
 function frameFaceCamera({ vrm, model, camera, controls, fitted }) {
@@ -187,7 +158,8 @@ export async function createVrmAvatar(opts) {
   model.position.y = -box.min.y * scale;
   scene.add(model);
   vrm.update(0);
-  applyStandingPose(vrm);
+  const bodyMotion = createCompanionBodyMotion(vrm.humanoid);
+  bodyMotion.update(0);
 
   const fitted = new THREE.Box3().setFromObject(model);
   const { face: faceAnchor, portraitDist } = frameFaceCamera({
@@ -257,18 +229,14 @@ export async function createVrmAvatar(opts) {
   };
 
   const setEmotion = (next) => {
-    emotion = String(next || "neutral").toLowerCase();
+    emotion = bodyMotion.setEmotion(next);
     applyEmotionExpressions(emotion);
-    // Subtle body pose via humanoid if available
-    const head = vrm.humanoid?.getNormalizedBoneNode?.("head");
-    if (head) {
-      head.rotation.z =
-        emotion === "thinking" ? -0.06 : emotion === "sad" ? 0.04 : 0;
-      head.rotation.x =
-        emotion === "surprised" ? -0.05 : emotion === "sad" ? 0.05 : 0;
-    }
     return emotion;
   };
+
+  const playGesture = (style) => bodyMotion.playGesture(style);
+  const playGestureForText = (text) =>
+    bodyMotion.playGestureForText(text, { emotion });
 
   const shapeToPreset = (shape) => {
     const key = String(shape || "aa").toLowerCase();
@@ -311,6 +279,7 @@ export async function createVrmAvatar(opts) {
 
   const setTalking = (on) => {
     talking = Boolean(on);
+    bodyMotion.setTalking(talking);
     return talking;
   };
 
@@ -319,7 +288,7 @@ export async function createVrmAvatar(opts) {
     const dt = clock.getDelta();
     const now = performance.now();
     vrm.update(dt);
-    applyStandingPose(vrm);
+    bodyMotion.update(dt, { talking, now });
 
     const head = vrm.humanoid?.getNormalizedBoneNode?.("head");
     if (head) {
@@ -354,10 +323,6 @@ export async function createVrmAvatar(opts) {
     const s = scale * (1 + breath);
     model.scale.set(s, s, s);
 
-    if (!talking) {
-      model.rotation.y = Math.sin((now - t0) * 0.00035) * 0.02;
-    }
-
     faceLight.intensity = 0.55 + (talking ? 0.2 : 0) + Math.sin((now - t0) * 0.002) * 0.05;
     renderer.render(scene, camera);
     raf = requestAnimationFrame(frame);
@@ -385,6 +350,8 @@ export async function createVrmAvatar(opts) {
     setMouthOpen,
     setMouthShape,
     setTalking,
+    playGesture,
+    playGestureForText,
     get emotion() {
       return emotion;
     },

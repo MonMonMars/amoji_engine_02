@@ -9,8 +9,26 @@ export async function createCompanionAvatar(opts) {
     opts.modelUrl ||
     (prefer === "gltf" ? "/prototypes/assets/companion-girl.glb" : undefined);
 
-  // Prefer VRM girl (expressions, spring bones, MToon)
-  if (prefer !== "gltf") {
+  const wantsVrm =
+    prefer === "vrm" ||
+    Boolean(modelUrl && /\.vrm($|\?)/i.test(modelUrl));
+
+  // Prefer GLTF Michelle for Grok Ani–style idle body animation (auto mode)
+  if (!wantsVrm) {
+    try {
+      const { createGltfAvatar } = await import("./gltfAvatar.js");
+      const avatar = await createGltfAvatar({
+        canvas: opts.canvas,
+        modelUrl: modelUrl || "/prototypes/assets/companion-girl.glb",
+      });
+      avatar.resize?.();
+      return { avatar, kind: "gltf3d" };
+    } catch (err) {
+      console.warn("[companion] GLTF avatar failed, trying VRM", err);
+    }
+  }
+
+  if (wantsVrm || prefer !== "gltf") {
     try {
       const { createVrmAvatar } = await import("./vrmAvatar.js");
       const avatar = await createVrmAvatar({
