@@ -9,6 +9,17 @@ import { talkGesturePoseToBody } from "./companionTalkMotionBridge.js";
 
 export const COMPANION_POSE_LIBRARY_SCHEMA = "amoji.companionPoseLibrary.v1";
 
+/**
+ * Normalized bone rotations that drop this VRM rig from bind T-pose to A-pose rest.
+ * (0,0,0) on upper arms is horizontal T-pose — not arms-at-sides.
+ */
+export const VRM_ARM_REST_ROTATIONS = Object.freeze({
+  leftUpperArm: { x: 0, y: 0, z: -1.1 },
+  rightUpperArm: { x: 0, y: 0, z: 1.1 },
+  leftLowerArm: { x: 0.12, y: 0, z: 0.02 },
+  rightLowerArm: { x: 0.12, y: 0, z: -0.02 },
+});
+
 /** Natural standing — arms relaxed at sides (A-pose VRM). */
 export const REST_POSE = Object.freeze({
   armLiftL: 0.02,
@@ -115,7 +126,7 @@ export function sampleVrmTalkPose(style, timeSec, opts = {}) {
     intensity: opts.intensity ?? 0.38,
   });
   return clampArmPose(
-    talkGesturePoseToBody(sample.pose, { includeArms: opts.includeArms !== false }),
+    talkGesturePoseToBody(sample.pose, { includeArms: opts.includeArms === true }),
   );
 }
 

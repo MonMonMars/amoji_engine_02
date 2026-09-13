@@ -16,7 +16,7 @@ export const COMPANION_TALK_MOTION_BRIDGE_SCHEMA =
  */
 export function talkGesturePoseToBody(pose, opts = {}) {
   const p = pose || {};
-  const includeArms = opts.includeArms !== false;
+  const includeArms = opts.includeArms === true;
   const armL = Number(p.armLA ?? 0.15);
   const armR = Number(p.armRA ?? 0.15);
   const shoulderL = Number(p.shoulderL ?? 0.08);
@@ -80,7 +80,7 @@ export function sampleBodyTalkMotion(timeSec, opts = {}) {
   return {
     style: sample.style,
     body: talkGesturePoseToBody(sample.pose, {
-      includeArms: opts.includeArms !== false,
+      includeArms: opts.includeArms === true,
     }),
   };
 }
