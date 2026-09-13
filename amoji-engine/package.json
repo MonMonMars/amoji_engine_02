@@ -49,6 +49,7 @@
   "license": "MIT",
   "dependencies": {
     "@pixiv/three-vrm": "^3.5.5",
+    "edge-tts-universal": "^1.4.0",
     "ws": "^8.18.0"
   },
   "devDependencies": {

@@ -147,13 +147,25 @@ export function pickFemaleVoice(voices) {
 
 /** Human label for the voice pill — always female-presenting. */
 export function femaleVoiceLabel(voice) {
-  if (!voice?.name) return "female";
+  if (voice?.cloud && /hiumaan|hiugaai|zh-hk/i.test(String(voice.name || ""))) {
+    return "女聲·粵·曉曼";
+  }
+  if (!voice?.name) return "女聲·粵";
   const n = voice.name.toLowerCase();
-  if (/xiaoxiao|hsiao|sin-?ji|ting-?ting|meijia|yuna/.test(n)) return "女聲·粵";
+  if (/xiaoxiao|hsiao|sin-?ji|ting-?ting|meijia|yuna|hiumaan|hiugaai/.test(n)) {
+    return "女聲·粵";
+  }
   if (/zh-hk|yue|cantonese/.test(`${n} ${voice.lang || ""}`)) return "女聲·粵";
   if (/female|woman|girl|samantha|karen|moira/.test(n)) return "女聲";
-  return "女聲";
+  return "女聲·粵";
 }
+
+/** @type {Record<string, { rate: string, pitch: string }>} */
+export const CLOUD_CANTONESE_VOICE = Object.freeze({
+  name: "zh-HK-HiuMaanNeural",
+  lang: "zh-HK",
+  cloud: true,
+});
 
 /**
  * @param {{
@@ -164,6 +176,8 @@ export function femaleVoiceLabel(voice) {
  *   onError?: (msg: string) => void,
  *   onSpeakChunk?: (chunk: string, charIndex: number) => void,
  *   lang?: string,
+ *   cloudTtsUrl?: string | null,
+ *   preferCloudTts?: boolean,
  * }} [opts]
  */
 export function createCompanionVoice(opts = {}) {
@@ -175,6 +189,7 @@ export function createCompanionVoice(opts = {}) {
     globalThis.SpeechRecognition || globalThis.webkitSpeechRecognition || null;
 
   let voice = null;
+  let usingCloudTts = Boolean(opts.preferCloudTts && opts.cloudTtsUrl);
   let speakerOn = true;
   /** User wants continuous listen mode on. */
   let micDesired = false;
@@ -193,6 +208,10 @@ export function createCompanionVoice(opts = {}) {
 
   const ensureVoices = () =>
     new Promise((resolve) => {
+      if (usingCloudTts && opts.cloudTtsUrl) {
+        voice = CLOUD_CANTONESE_VOICE;
+        return resolve(voice);
+      }
       if (!synth) return resolve(null);
       const pick = () => {
         voice = pickFemaleVoice(synth.getVoices());
@@ -205,6 +224,67 @@ export function createCompanionVoice(opts = {}) {
     });
 
   void ensureVoices();
+
+  /**
+   * Play MP3 from cloud TTS (Cantonese neural female).
+   * @param {string} clean
+   * @param {string} emotion
+   */
+  const speakCloud = async (clean, emotion) => {
+    const url = opts.cloudTtsUrl;
+    if (!url) return { ok: false, reason: "no-cloud-tts-url" };
+
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: clean, emotion }),
+    });
+    if (!res.ok) {
+      const errText = await res.text().catch(() => "");
+      return {
+        ok: false,
+        reason: `cloud-tts-${res.status}${errText ? `: ${errText.slice(0, 80)}` : ""}`,
+      };
+    }
+
+    const blob = await res.blob();
+    if (!blob.size) return { ok: false, reason: "cloud-tts-empty" };
+
+    const objectUrl = URL.createObjectURL(blob);
+    startLipSync(clean);
+    speaking = true;
+
+    const maxMs = Math.min(20000, 900 + clean.length * 65);
+    return await Promise.race([
+      new Promise((resolve) => {
+        const audio = new Audio(objectUrl);
+        audio.onended = () => {
+          URL.revokeObjectURL(objectUrl);
+          resolve({
+            ok: true,
+            voice: CLOUD_CANTONESE_VOICE.name,
+            emotion,
+            cloud: true,
+          });
+        };
+        audio.onerror = () => {
+          URL.revokeObjectURL(objectUrl);
+          resolve({ ok: false, reason: "cloud-audio-play-failed" });
+        };
+        void audio.play().catch((err) => {
+          URL.revokeObjectURL(objectUrl);
+          resolve({
+            ok: false,
+            reason: err?.message || "cloud-audio-play-blocked",
+          });
+        });
+      }),
+      sleep(maxMs).then(() => ({ ok: false, reason: "cloud-tts-timeout" })),
+    ]).finally(() => {
+      speaking = false;
+      stopMouth();
+    });
+  };
 
   const emitViseme = (ch) => {
     const { shape, open } = charToViseme(ch);
@@ -397,6 +477,22 @@ export function createCompanionVoice(opts = {}) {
         stopMouth();
         return { ok: true, muted: true };
       }
+      await ensureVoices();
+
+      const tryCloud =
+        Boolean(opts.cloudTtsUrl) &&
+        (usingCloudTts || opts.preferCloudTts !== false);
+      if (tryCloud) {
+        const cloudResult = await speakCloud(clean, emotion);
+        if (cloudResult.ok) {
+          usingCloudTts = true;
+          voice = CLOUD_CANTONESE_VOICE;
+          return cloudResult;
+        }
+        usingCloudTts = false;
+        opts.onError?.(cloudResult.reason || "cloud-tts-failed");
+      }
+
       if (!synth) {
         startLipSync(clean);
         await sleep(Math.min(2800, 450 + clean.length * 36));
@@ -404,7 +500,6 @@ export function createCompanionVoice(opts = {}) {
         return { ok: false, reason: "no-speech-synthesis" };
       }
 
-      await ensureVoices();
       synth.cancel();
       speaking = true;
 
@@ -487,15 +582,42 @@ export function createCompanionVoice(opts = {}) {
 
   /** Unlock TTS after a user gesture (required by Chrome/Safari autoplay policy). */
   const primeAudio = async () => {
-    if (!synth) return false;
     await ensureVoices();
+    if (opts.cloudTtsUrl) {
+      try {
+        const res = await fetch(opts.cloudTtsUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text: "好", emotion: "neutral" }),
+        });
+        if (res.ok) {
+          const blob = await res.blob();
+          const objectUrl = URL.createObjectURL(blob);
+          const audio = new Audio(objectUrl);
+          audio.volume = 0.04;
+          await new Promise((resolve) => {
+            audio.onended = resolve;
+            audio.onerror = resolve;
+            void audio.play().catch(resolve);
+            setTimeout(resolve, 600);
+          });
+          URL.revokeObjectURL(objectUrl);
+          usingCloudTts = true;
+          voice = CLOUD_CANTONESE_VOICE;
+          return true;
+        }
+      } catch {
+        /* fall through to browser TTS */
+      }
+    }
+    if (!synth) return false;
     try {
       if (synth.paused) synth.resume();
       synth.cancel();
       const utter = new SpeechSynthesisUtterance(" ");
       utter.volume = 0.01;
       utter.rate = 2;
-      if (voice) utter.voice = voice;
+      if (voice && !voice.cloud) utter.voice = voice;
       await new Promise((resolve) => {
         utter.onend = resolve;
         utter.onerror = resolve;
@@ -561,6 +683,9 @@ export function createCompanionVoice(opts = {}) {
     },
     get voiceName() {
       return voice?.name || null;
+    },
+    get cloudTts() {
+      return usingCloudTts;
     },
     get supportsMic() {
       return Boolean(Rec);

@@ -1224,6 +1224,8 @@
 
       const voice = createCompanionVoice({
         lang: "zh-HK",
+        cloudTtsUrl: hostedOnline ? "/api/tts" : null,
+        preferCloudTts: hostedOnline,
         onMouth: (open, shape) => {
           if (shape && avatar.setMouthShape) avatar.setMouthShape(shape);
           else if (!shape && avatar.setMouthShape) avatar.setMouthShape(null);
@@ -1499,7 +1501,10 @@
 
         void voice.primeAudio?.().catch(() => {});
         void voice.ensureVoices().then((v) => {
-          setVoicePill(femaleVoiceLabel(v) || (voice.supportsSpeak ? "女聲" : "off"));
+          const label =
+            femaleVoiceLabel(v) ||
+            (hostedOnline ? "女聲·粵·曉曼" : voice.supportsSpeak ? "女聲" : "off");
+          setVoicePill(label);
         });
         speakGreetingAsync();
         requestMicAsync();
