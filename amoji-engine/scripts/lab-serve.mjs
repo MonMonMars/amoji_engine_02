@@ -5,91 +5,19 @@
  *
  * Usage (from amoji-engine/):
  *   npm run lab
- *   npm run lab -- --port 5173
  *
- * Local LLM via Ollama (default — start Ollama on your machine first):
- *   ollama serve
- *   ollama pull qwen3:4b
- *   npm run lab
- *
- * Optional cloud LLM (OpenAI-compatible):
- *   OPENAI_API_KEY=sk-… npm run lab
- *
- * Custom Ollama host (e.g. if not on 11434):
- *   OLLAMA_HOST=http://127.0.0.1:11434 npm run lab
+ * Cloud (no local PC): deploy to Vercel — see DEPLOY.md
  */
 import http from "node:http";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { CANTONESE_COMPANION_PROMPT } from "../engine/companion/companionBodyMotion.js";
 import {
-  chatOllama,
-  isOllamaReachable,
-  listOllamaModels,
-  pickOllamaModel,
-  OLLAMA_DEFAULT_HOST,
-} from "../engine/companion/companionOllama.js";
-import { getLlmProvider } from "../engine/companion/companionLlmProviders.js";
-
-const OLLAMA_HOST_CANDIDATES = [
-  process.env.OLLAMA_HOST,
-  process.env.OLLAMA_BASE_URL,
-  "http://localhost:11434",
-  "http://127.0.0.1:11434",
-  OLLAMA_DEFAULT_HOST,
-].filter(Boolean);
-
-async function resolveOllamaHost() {
-  for (const host of OLLAMA_HOST_CANDIDATES) {
-    if (await isOllamaReachable(host)) {
-      return {
-        host,
-        models: await listOllamaModels(host),
-        up: true,
-      };
-    }
-  }
-  return { host: OLLAMA_HOST_CANDIDATES[0] || OLLAMA_DEFAULT_HOST, models: [], up: false };
-}
-
-async function getLlmStatusPayload() {
-  const ollama = await resolveOllamaHost();
-  return {
-    ok: true,
-    ollama: {
-      ok: ollama.up,
-      host: ollama.host,
-      models: ollama.models,
-    },
-    groq: { ok: Boolean(process.env.GROQ_API_KEY) },
-    openai: { ok: Boolean(process.env.OPENAI_API_KEY || process.env.AMOJI_LLM_KEY) },
-    openrouter: { ok: Boolean(process.env.OPENROUTER_API_KEY) },
-    together: { ok: Boolean(process.env.TOGETHER_API_KEY) },
-  };
-}
-
-async function callCloudChat({ base, apiKey, model, messages }) {
-  const endpoint = `${base.replace(/\/$/, "")}/chat/completions`;
-  const upstream = await fetch(endpoint, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model,
-      temperature: 0.75,
-      messages,
-    }),
-  });
-  const data = await upstream.json().catch(() => ({}));
-  const reply = data?.choices?.[0]?.message?.content;
-  if (!upstream.ok || !reply) {
-    return { ok: false, error: data?.error?.message || `HTTP ${upstream.status}` };
-  }
-  return { ok: true, reply: String(reply).trim(), model };
-}
+  corsHeaders,
+  getLlmStatusPayload,
+  getOllamaTagsPayload,
+  processChatRequest,
+} from "../engine/companion/chatApiHandler.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, "../..");
@@ -139,12 +67,6 @@ function send(res, status, body, headers = {}) {
   res.end(payload);
 }
 
-function cors(res) {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET,HEAD,POST,OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
-}
-
 function readJson(req) {
   return new Promise((resolve, reject) => {
     const chunks = [];
@@ -161,287 +83,22 @@ function readJson(req) {
   });
 }
 
-/** Tiny Cantonese/English fallback when no API key is configured. */
-function localCompanionReply(message, history = []) {
-  const text = String(message || "").trim();
-  const lower = text.toLowerCase();
-  const lastUser = [...history].reverse().find((m) => m.role === "user");
-  const nameMatch = text.match(/我叫\s*([^\s，。！？,.!?]+)/);
-  if (nameMatch) {
-    return `你好呀${nameMatch[1]}！好開心認識你～今日想傾啲咩？ [mood:happy]`;
-  }
-  if (/哈哈|開心|happy|great|鍾意/.test(lower)) {
-    return "哈哈我都開心到跳起！再講多啲啦～ [mood:happy]";
-  }
-  if (/唉|傷心|sad|慘|唔開心/.test(lower)) {
-    return "抱抱你呀…慢慢講，我喺度聽住。 [mood:sad]";
-  }
-  if (/點解|why|諗|hmm/.test(lower)) {
-    return "嗯…等我諗一諗先。你覺得邊方面最關鍵？ [mood:thinking]";
-  }
-  if (/hello|hi|hey|你好|早晨|晚安/.test(lower)) {
-    return "嗨呀～我係 Amoji！同我傾偈啦，我會用粵語答你㗎。 [mood:happy]";
-  }
-  if (/你係邊個|who are you|你叫咩/.test(lower)) {
-    return "我係 Amoji 呀，你嘅動漫夥伴，會做表情同手勢㗎！ [mood:happy]";
-  }
-  if (/哇|嘩|唔信|真係/.test(text)) {
-    return "嘩！真係呀？講多啲俾我聽啦！ [mood:surprised]";
-  }
-  if (lastUser?.content && /再见|拜拜|bye/.test(lower)) {
-    return "拜拜啦～記得返嚟搵我呀！ [mood:happy]";
-  }
-  const snippets = [
-    `「${text.slice(0, 24)}」——我聽到啦，再講深啲？ [mood:thinking]`,
-    "有意思喎！我覺得幾好玩呀～ [mood:happy]",
-    "嗯嗯，繼續講，我跟住你情緒走。 [mood:neutral]",
-  ];
-  return snippets[Math.floor(Math.random() * snippets.length)];
-}
-
 async function handleChatApi(req, res) {
-  cors(res);
   try {
     const body = await readJson(req);
-    const message = String(body.message || body.text || "").trim();
-    const history = Array.isArray(body.history) ? body.history : [];
-    const system = body.system || CANTONESE_COMPANION_PROMPT;
-
-    if (!message) {
-      send(res, 400, { ok: false, error: "empty message" }, {
-        "Content-Type": "application/json; charset=utf-8",
-      });
-      return;
-    }
-
-    const providerId = String(body.providerId || "").trim();
-    const providerPreset = providerId ? getLlmProvider(providerId) : null;
-    const ollamaResolved = await resolveOllamaHost();
-    const ollamaHost = ollamaResolved.host;
-    const ollamaUp = ollamaResolved.up;
-    const apiKeyProbe =
-      process.env.OPENAI_API_KEY ||
-      process.env.AMOJI_LLM_KEY ||
-      process.env.GROQ_API_KEY ||
-      "";
-
-    if (message === "__ping__") {
-      let mode = "local";
-      let model =
-        body.model ||
-        providerPreset?.model ||
-        process.env.OLLAMA_MODEL ||
-        process.env.AMOJI_LLM_MODEL ||
-        "qwen3:4b";
-      if (ollamaUp) {
-        mode = "ollama";
-        model = pickOllamaModel(ollamaResolved.models, model);
-      } else if (apiKeyProbe) {
-        mode = "online";
-        model =
-          process.env.OPENAI_MODEL ||
-          (process.env.GROQ_API_KEY ? "llama-3.3-70b-versatile" : "gpt-4o");
-      }
-      send(
-        res,
-        200,
-        { ok: true, mode, model, ollama: ollamaUp, host: ollamaHost },
-        { "Content-Type": "application/json; charset=utf-8" },
-      );
-      return;
-    }
-
-    const messages = [
-      { role: "system", content: system },
-      ...history.slice(-12),
-    ];
-    const last = messages[messages.length - 1];
-    if (!last || last.role !== "user" || last.content !== message) {
-      messages.push({ role: "user", content: message });
-    }
-
-    if (providerId === "basic") {
-      const reply = localCompanionReply(message, history);
-      send(
-        res,
-        200,
-        { ok: true, reply, mode: "local", model: null },
-        { "Content-Type": "application/json; charset=utf-8" },
-      );
-      return;
-    }
-
-    const requestedModel =
-      body.model ||
-      providerPreset?.model ||
-      process.env.OLLAMA_MODEL ||
-      process.env.AMOJI_LLM_MODEL;
-
-    const tryGroq =
-      providerId === "groq" ||
-      (!providerId && !ollamaUp && process.env.GROQ_API_KEY);
-    if (tryGroq && process.env.GROQ_API_KEY) {
-      const cloud = await callCloudChat({
-        base: "https://api.groq.com/openai/v1",
-        apiKey: process.env.GROQ_API_KEY,
-        model: requestedModel || "llama-3.3-70b-versatile",
-        messages,
-      });
-      if (cloud.ok) {
-        send(
-          res,
-          200,
-          { ok: true, reply: cloud.reply, mode: "online", model: cloud.model },
-          { "Content-Type": "application/json; charset=utf-8" },
-        );
-        return;
-      }
-      console.warn("[lab] Groq failed", cloud.error);
-    }
-
-    const tryOpenRouter =
-      providerId?.startsWith("openrouter") && process.env.OPENROUTER_API_KEY;
-    if (tryOpenRouter) {
-      const cloud = await callCloudChat({
-        base: "https://openrouter.ai/api/v1",
-        apiKey: process.env.OPENROUTER_API_KEY,
-        model: requestedModel || providerPreset?.model || "google/gemma-2-9b-it:free",
-        messages,
-      });
-      if (cloud.ok) {
-        send(
-          res,
-          200,
-          { ok: true, reply: cloud.reply, mode: "online", model: cloud.model },
-          { "Content-Type": "application/json; charset=utf-8" },
-        );
-        return;
-      }
-      console.warn("[lab] OpenRouter failed", cloud.error);
-    }
-
-    const tryTogether = providerId === "together" && process.env.TOGETHER_API_KEY;
-    if (tryTogether) {
-      const cloud = await callCloudChat({
-        base: "https://api.together.xyz/v1",
-        apiKey: process.env.TOGETHER_API_KEY,
-        model: requestedModel || providerPreset?.model,
-        messages,
-      });
-      if (cloud.ok) {
-        send(
-          res,
-          200,
-          { ok: true, reply: cloud.reply, mode: "online", model: cloud.model },
-          { "Content-Type": "application/json; charset=utf-8" },
-        );
-        return;
-      }
-      console.warn("[lab] Together failed", cloud.error);
-    }
-
-    const skipOllama =
-      providerId === "groq" ||
-      providerId?.startsWith("openrouter") ||
-      providerId === "together";
-
-    if (
-      !skipOllama &&
-      ollamaUp &&
-      process.env.OLLAMA_DISABLED !== "1"
-    ) {
-      const ollama = await chatOllama({
-        base: ollamaHost,
-        model: requestedModel,
-        messages,
-        fetchImpl: fetch,
-      });
-      if (ollama.ok) {
-        send(
-          res,
-          200,
-          {
-            ok: true,
-            reply: ollama.reply,
-            mode: "ollama",
-            model: ollama.model,
-          },
-          { "Content-Type": "application/json; charset=utf-8" },
-        );
-        return;
-      }
-      console.warn("[lab] Ollama failed", ollama.error);
-    }
-
-    const apiKey =
-      process.env.OPENAI_API_KEY ||
-      process.env.AMOJI_LLM_KEY ||
-      process.env.GROQ_API_KEY ||
-      "";
-    const base =
-      process.env.OPENAI_BASE_URL ||
-      process.env.AMOJI_LLM_URL ||
-      (process.env.GROQ_API_KEY ? "https://api.groq.com/openai/v1" : "") ||
-      "https://api.openai.com/v1";
-    const model =
-      body.model ||
-      process.env.AMOJI_LLM_MODEL ||
-      process.env.OPENAI_MODEL ||
-      (process.env.GROQ_API_KEY ? "llama-3.3-70b-versatile" : "gpt-4o");
-
-    if (apiKey) {
-      const endpoint = `${base.replace(/\/$/, "")}/chat/completions`;
-      const upstream = await fetch(endpoint, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify({
-          model,
-          temperature: 0.75,
-          messages: messages.filter((m, i, arr) => {
-            // Avoid duplicate trailing user message if client already pushed it
-            if (i === arr.length - 1 && m.role === "user" && m.content === message) {
-              return true;
-            }
-            return true;
-          }),
-        }),
-      });
-      const data = await upstream.json().catch(() => ({}));
-      const reply = data?.choices?.[0]?.message?.content;
-      if (upstream.ok && reply) {
-        send(
-          res,
-          200,
-          { ok: true, reply: String(reply).trim(), mode: "online", model },
-          { "Content-Type": "application/json; charset=utf-8" },
-        );
-        return;
-      }
-      // fall through to local with error hint
-      console.warn("[lab] LLM upstream failed", upstream.status, data?.error || data);
-    }
-
-    const reply = localCompanionReply(message, history);
-    send(
-      res,
-      200,
-      {
-        ok: true,
-        reply,
-        mode: apiKey ? "local-fallback" : "local",
-        model: null,
-      },
-      { "Content-Type": "application/json; charset=utf-8" },
-    );
+    const result = await processChatRequest(body);
+    const status =
+      result.ok === false && result.error === "empty message" ? 400 : 200;
+    send(res, status, result, {
+      ...corsHeaders(),
+      "Content-Type": "application/json; charset=utf-8",
+    });
   } catch (err) {
     send(
       res,
       500,
       { ok: false, error: err?.message || String(err) },
-      { "Content-Type": "application/json; charset=utf-8" },
+      { ...corsHeaders(), "Content-Type": "application/json; charset=utf-8" },
     );
   }
 }
@@ -449,7 +106,10 @@ async function handleChatApi(req, res) {
 const port = parsePort(process.argv.slice(2));
 
 const server = http.createServer(async (req, res) => {
-  cors(res);
+  const cors = corsHeaders();
+  for (const [key, value] of Object.entries(cors)) {
+    res.setHeader(key, value);
+  }
 
   if (req.method === "OPTIONS") {
     send(res, 204, "");
@@ -464,26 +124,20 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (req.method === "GET" && url.pathname === "/api/ollama/tags") {
-    cors(res);
-    const ollama = await resolveOllamaHost();
-    send(
-      res,
-      200,
-      {
-        ok: true,
-        models: ollama.models,
-        host: ollama.host,
-        reachable: ollama.up,
-      },
-      { "Content-Type": "application/json; charset=utf-8" },
-    );
+    const payload = await getOllamaTagsPayload();
+    send(res, 200, payload, {
+      ...corsHeaders(),
+      "Content-Type": "application/json; charset=utf-8",
+    });
     return;
   }
 
   if (req.method === "GET" && url.pathname === "/api/llm/status") {
-    cors(res);
     const payload = await getLlmStatusPayload();
-    send(res, 200, payload, { "Content-Type": "application/json; charset=utf-8" });
+    send(res, 200, payload, {
+      ...corsHeaders(),
+      "Content-Type": "application/json; charset=utf-8",
+    });
     return;
   }
 
@@ -498,7 +152,6 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // Companion is the featured demo; lab remains at /prototypes/realtime-voice-lab.html
   if (req.url === "/" || req.url?.startsWith("/?")) {
     target = path.join(REPO_ROOT, "prototypes/amoji-companion.html");
   }
@@ -525,8 +178,5 @@ const server = http.createServer(async (req, res) => {
 server.listen(port, "0.0.0.0", () => {
   console.log(`[lab] serving ${REPO_ROOT}`);
   console.log(`[lab] companion http://127.0.0.1:${port}/`);
-  console.log(
-    `[lab] voice lab http://127.0.0.1:${port}/prototypes/realtime-voice-lab.html`,
-  );
-  console.log(`[lab] chat API POST /api/chat (Ollama @ ${OLLAMA_DEFAULT_HOST} or OPENAI_API_KEY)`);
+  console.log(`[lab] cloud deploy: see DEPLOY.md (Vercel — no local PC needed)`);
 });
