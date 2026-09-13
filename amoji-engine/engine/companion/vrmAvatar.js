@@ -336,7 +336,7 @@ export async function createVrmAvatar(opts) {
 
   const reactToTap = () => {
     setEmotion("happy");
-    playGesture("wave");
+    playGesture("nod");
     return emotion;
   };
 

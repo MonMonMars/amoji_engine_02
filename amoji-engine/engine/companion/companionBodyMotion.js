@@ -18,29 +18,30 @@ const EMOTION_POSE = Object.freeze({
     spineX: 0.02,
     chestX: -0.01,
     hipZ: 0,
-    armLiftL: 0.12,
-    armLiftR: 0.12,
+    armLiftL: 0.04,
+    armLiftR: 0.04,
     leanY: 0,
   },
   happy: {
-    headX: -0.04,
-    headZ: 0.04,
-    spineX: 0.03,
+    headX: -0.03,
+    headZ: 0.03,
+    spineX: 0.02,
     chestX: 0,
-    hipZ: -0.02,
-    armLiftL: 0.35,
-    armLiftR: 0.42,
-    leanY: 0.03,
+    hipZ: -0.01,
+    armLiftL: 0.1,
+    armLiftR: 0.12,
+    leanY: 0.02,
   },
   thinking: {
-    headX: 0.07,
-    headZ: -0.09,
-    spineX: 0.05,
-    chestX: 0.02,
-    hipZ: 0.03,
-    armLiftL: 0.82,
-    armLiftR: 0.08,
-    leanY: -0.02,
+    headX: 0.05,
+    headZ: -0.05,
+    spineX: 0.03,
+    chestX: 0.01,
+    hipZ: 0.02,
+    armLiftL: 0.22,
+    armLiftR: 0.06,
+    forearmL: 0.28,
+    leanY: -0.01,
   },
   sad: {
     headX: 0.09,
@@ -80,10 +81,11 @@ const GESTURE_WAVE = Object.freeze({
   sample(phase) {
     const t = Math.sin(phase * Math.PI * 3) * (1 - phase * 0.35);
     return {
-      armLiftR: 0.55 + t * 0.35,
-      armLiftL: 0.1,
-      headZ: 0.06,
-      leanY: 0.04,
+      armLiftR: 0.28 + t * 0.18,
+      armLiftL: 0.06,
+      forearmR: 0.12 + t * 0.08,
+      headZ: 0.04,
+      leanY: 0.02,
     };
   },
 });
@@ -93,10 +95,10 @@ const GESTURE_CELEBRATE = Object.freeze({
   sample(phase) {
     const bounce = Math.sin(phase * Math.PI * 2) * (1 - phase);
     return {
-      armLiftL: 0.7 + bounce * 0.2,
-      armLiftR: 0.7 + bounce * 0.2,
-      headX: -0.05,
-      leanY: -0.03 - bounce * 0.02,
+      armLiftL: 0.32 + bounce * 0.12,
+      armLiftR: 0.32 + bounce * 0.12,
+      headX: -0.04,
+      leanY: -0.02 - bounce * 0.01,
     };
   },
 });
@@ -106,10 +108,11 @@ const GESTURE_THINKING = Object.freeze({
   sample(phase) {
     const ease = Math.min(1, phase * 2);
     return {
-      armLiftL: 0.75 * ease,
+      armLiftL: 0.28 * ease,
       armLiftR: 0.05,
-      headX: 0.08 * ease,
-      headZ: -0.1 * ease,
+      forearmL: 0.22 * ease,
+      headX: 0.05 * ease,
+      headZ: -0.06 * ease,
     };
   },
 });
@@ -310,19 +313,21 @@ export function createCompanionBodyMotion(humanoid) {
     const chest = bone("chest");
     const hips = bone("hips");
 
-    const baseArmZ = 1.4;
-    const baseArmX = 0.12;
-    const liftL = (pose.armLiftL ?? 0.12) * k;
-    const liftR = (pose.armLiftR ?? 0.12) * k;
+    // A-pose VRM models (companion-girl.vrm): rest is near zero — avoid T-pose
+    // correction (~1.4 rad) which pins arms up into the hair.
+    const baseArmZ = 0.1;
+    const baseArmX = 0.05;
+    const liftL = Math.min(0.45, (pose.armLiftL ?? 0.04) * k);
+    const liftR = Math.min(0.45, (pose.armLiftR ?? 0.04) * k);
 
     if (lua) {
-      lua.rotation.z = baseArmZ + liftL * 0.35;
-      lua.rotation.x = baseArmX + (pose.spineX || 0) * 0.3;
+      lua.rotation.z = baseArmZ + liftL * 0.55;
+      lua.rotation.x = baseArmX + (pose.spineX || 0) * 0.2;
       lua.rotation.y = 0;
     }
     if (rua) {
-      rua.rotation.z = -baseArmZ - liftR * 0.35;
-      rua.rotation.x = baseArmX + (pose.spineX || 0) * 0.3;
+      rua.rotation.z = -baseArmZ - liftR * 0.55;
+      rua.rotation.x = baseArmX + (pose.spineX || 0) * 0.2;
       rua.rotation.y = 0;
     }
     const foreL = (pose.forearmL ?? 0) * k;
@@ -373,7 +378,7 @@ export function createCompanionBodyMotion(humanoid) {
         emotion,
         speechEnergy: energy,
       });
-      pose = blendBodyPoses(pose, motion.body, 0.55 + energy * 0.4);
+      pose = blendBodyPoses(pose, motion.body, 0.32 + energy * 0.28);
 
       const beat = Math.sin(elapsed * 7.2);
       const beat2 = Math.sin(elapsed * 5.4 + 0.6);
@@ -386,8 +391,8 @@ export function createCompanionBodyMotion(humanoid) {
           pose.hipZ = (pose.hipZ || 0) - beat * 0.02 * energy;
           break;
         case "thinking":
-          pose.armLiftL = Math.max(pose.armLiftL || 0, 0.55 + beat * 0.08 * energy);
-          pose.headX = (pose.headX || 0) + 0.04;
+          pose.forearmL = Math.max(pose.forearmL || 0, 0.2 + beat * 0.04 * energy);
+          pose.headX = (pose.headX || 0) + 0.03;
           break;
         case "sad":
           pose.headX = (pose.headX || 0) + 0.05;

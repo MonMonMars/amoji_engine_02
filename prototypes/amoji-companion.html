@@ -1094,7 +1094,7 @@
       let avatar = createStubAvatar();
       let avatarKind = "loading";
       let avatarLoadStarted = false;
-      let currentEmotion = "happy";
+      let currentEmotion = "neutral";
       /** @type {Promise<{ avatar: ReturnType<typeof createStubAvatar>, kind: string }>} */
       let avatarLoadPromise = Promise.resolve({ avatar, kind: avatarKind });
 
@@ -1366,8 +1366,8 @@
           syncMicBtn();
           if (voice.micOn) {
             input.placeholder = "Listening… speak, pause → she replies, then listens again";
-            avatar.setEmotion("thinking");
-            setEmotionPill("thinking");
+            avatar.setEmotion("neutral");
+            setEmotionPill("neutral");
             status.listening();
           } else {
             status.idle();
@@ -1450,7 +1450,7 @@
       const speakGreetingAsync = () => {
         avatar.setEmotion("happy");
         setEmotionPill("happy");
-        avatar.playGestureForText?.(GREETING);
+        avatar.playGesture?.("nod");
         speakEmotion = "happy";
         status.speaking();
         void voice.speak(GREETING, "happy").then((spoke) => {
@@ -1573,8 +1573,8 @@
           : `Grok Ani 風格 · ${avatarLabel} · 粵語傾偈 · 表情同身體動作 · Brain 按鈕切 LLM · 🎤 連續對話`,
       );
       addBubble("assistant", GREETING);
-      avatar.setEmotion("happy");
-      setEmotionPill("happy");
+      avatar.setEmotion("neutral");
+      setEmotionPill("neutral");
 
       btnSettings.addEventListener("click", () => {
         settings.classList.toggle("open");
