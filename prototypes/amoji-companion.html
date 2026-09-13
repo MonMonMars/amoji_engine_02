@@ -10,6 +10,12 @@
       href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap"
       rel="stylesheet"
     />
+    <link
+      rel="preload"
+      href="/prototypes/assets/companion-girl.vrm"
+      as="fetch"
+      crossorigin="anonymous"
+    />
     <style>
       :root {
         --ink: #f7f1e8;
@@ -930,11 +936,7 @@
       const avatarPrefer =
         params.get("avatar") === "gltf"
           ? "gltf"
-          : params.get("avatar") === "vrm"
-            ? "vrm"
-            : hostedOnline
-              ? "gltf"
-              : "vrm";
+          : "vrm";
       const stored = {
         url:
           localStorage.getItem("amoji.companion.apiUrl") ||
@@ -985,6 +987,7 @@
 
       let avatar = createStubAvatar();
       let avatarKind = "loading";
+      let currentEmotion = "happy";
       const avatarLoadPromise = createCompanionAvatar({
         canvas,
         modelUrl: avatarModelUrl || undefined,
@@ -994,6 +997,7 @@
         .then((loaded) => {
           avatar = loaded.avatar;
           avatarKind = loaded.kind;
+          avatar.setEmotion?.(currentEmotion);
           return loaded;
         })
         .catch((err) => {
@@ -1018,6 +1022,7 @@
         modePill.innerHTML = `LLM · <strong>${mode}</strong>`;
       };
       const setEmotionPill = (emotion) => {
+        currentEmotion = emotion;
         emotionPill.innerHTML = `feel · <strong>${emotion}</strong>`;
       };
       const setVoicePill = (label) => {
@@ -1266,7 +1271,6 @@
         startTalkingEl?.setAttribute("aria-hidden", "true");
         startTalkingEl?.setAttribute("disabled", "true");
 
-        await avatarLoadPromise.catch(() => {});
         await voice.primeAudio?.();
         const v = await voice.ensureVoices();
         setVoicePill(femaleVoiceLabel(v) || (voice.supportsSpeak ? "女聲" : "off"));
