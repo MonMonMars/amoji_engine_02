@@ -840,9 +840,31 @@
           }, 600);
         };
         setTimeout(window.__amojiHideLoading, 10000);
+        window.__amojiUnlockAudio = function () {
+          try {
+            var AC = window.AudioContext || window.webkitAudioContext;
+            if (AC) {
+              var ctx = window.__amojiAudioCtx || new AC();
+              window.__amojiAudioCtx = ctx;
+              if (ctx.state === "suspended") ctx.resume();
+            }
+            var a = window.__amojiPrimeAudio || new Audio();
+            window.__amojiPrimeAudio = a;
+            a.preload = "auto";
+            a.setAttribute("playsinline", "");
+            a.setAttribute("webkit-playsinline", "");
+            a.playsInline = true;
+            a.volume = 0.001;
+            a.src =
+              "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEAQB8AAEAfAAABAAgAZGF0YQQAAAAAAA==";
+            a.play().catch(function () {});
+            window.__amojiAudioUnlocked = true;
+          } catch (e) {}
+        };
         window.__amojiStartTap = function (ev) {
           ev?.preventDefault?.();
           ev?.stopPropagation?.();
+          window.__amojiUnlockAudio();
           const btn = document.getElementById("start-talking");
           if (!btn || btn.disabled || btn.classList.contains("hide")) return false;
           window.__amojiStart.tapped = true;
@@ -993,6 +1015,7 @@
         createCompanionVoice,
         femaleVoiceLabel,
         formatMicError,
+        unlockAudioSync,
       } from "../amoji-engine/engine/companion/companionVoice.js";
       import {
         createCompanionStatus,
@@ -1296,7 +1319,15 @@
               "tts-timeout",
             ]);
             if (code && !soft.has(code)) {
-              addBubble("system", `Mic/TTS: ${code}`);
+              const isVoice =
+                /tts|cloud|audio|speech|synthesis|notallowed|play/i.test(code);
+              const friendly = isVoice
+                ? code.includes("play-blocked") || /notallowed/i.test(code)
+                  ? "Voice blocked — tap 🔊 then tap Start again (browser needs a tap to play sound)."
+                  : `Voice error: ${code}`
+                : `Mic/TTS: ${code}`;
+              addBubble("system", friendly);
+              if (isVoice) showToast(friendly, "error");
             }
           }
           syncMicBtn();
@@ -1477,8 +1508,17 @@
         status.speaking();
         return voice.speak(GREETING, "happy").then((spoke) => {
           if (spoke?.ok === false && spoke?.reason) {
-            addBubble("system", `Voice: ${spoke.reason} — you can still type to chat.`);
-            showToast("Voice unavailable — type your message below", "info");
+            const reason = String(spoke.reason);
+            const hint =
+              /play-blocked|notallowed/i.test(reason)
+                ? "Tap 🔊 then tap Start again — your browser blocked audio."
+                : reason.includes("cloud-tts")
+                  ? "Cloud voice failed — trying browser voice or check connection."
+                  : reason;
+            addBubble("system", `Voice: ${hint} — you can still type to chat.`);
+            showToast(hint, "error");
+          } else if (spoke?.muted) {
+            addBubble("system", "Speaker is muted — tap 🔊 to hear Amoji.");
           }
           if (!busy && !voice.micOn) status.idle();
           syncListenPose();
@@ -1507,6 +1547,7 @@
 
       const startSession = ({ fromTimeout = false } = {}) => {
         if (sessionStarted || sessionStarting) return;
+        unlockAudioSync();
         sessionStarting = true;
         startTalkingEl?.classList.add("starting");
         startTalkingEl?.setAttribute("aria-busy", "true");
@@ -1669,6 +1710,7 @@
       }
 
       btnSpeaker.addEventListener("click", () => {
+        unlockAudioSync();
         voice.setSpeakerOn(!voice.speakerOn);
         syncSpeakerBtn();
         addBubble("system", voice.speakerOn ? "Speaker on" : "Speaker muted");
