@@ -1,0 +1,61 @@
+{
+  "name": "@amoji/engine",
+  "version": "0.1.0",
+  "description": "Cantonese realtime voice chat + Sakura Face Live orchestration stack",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./engine": {
+      "import": "./engine/index.js"
+    },
+    "./engine/*": {
+      "import": "./engine/*"
+    }
+  },
+  "scripts": {
+    "build": "tsc --project tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "demo": "tsx scripts/demo.ts",
+    "demo:dry": "tsx scripts/demo.ts --dry-run",
+    "demo:e2e": "node scripts/voice-chat-e2e-demo.mjs",
+    "voice-worker": "python3 scripts/voice_bridge_server.py --port 7890",
+    "voice-worker:mock": "node scripts/mock-voice-worker.mjs --port 7890",
+    "motion-bridge:mock": "node scripts/mock-motion-bridge.mjs --port 7891",
+    "demo:http-smoke": "node scripts/voice-worker-http-smoke.mjs",
+    "demo:motion-smoke": "node scripts/motion-bridge-smoke.mjs",
+    "demo:facelive-smoke": "node scripts/face-live-smoke.mjs",
+    "lab": "node scripts/lab-serve.mjs",
+    "ci": "npm run typecheck && npm run build && npm test && npm run demo:e2e && npm run demo:facelive-smoke && npm run demo:http-smoke && npm run demo:motion-smoke",
+    "lint": "eslint src"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "keywords": [
+    "cantonese",
+    "realtime",
+    "voice",
+    "face-live",
+    "sakura",
+    "vtuber"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@pixiv/three-vrm": "^3.5.5",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "@types/ws": "^8.5.13",
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.5"
+  }
+}

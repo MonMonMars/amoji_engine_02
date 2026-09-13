@@ -1,0 +1,1748 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Amoji Realtime Voice Lab</title>
+    <style>
+      :root {
+        --bg: #1a1410;
+        --panel: #2a211c;
+        --ink: #f3e8d8;
+        --muted: #b9a894;
+        --accent: #e07a3d;
+        --accent-on: #3ecf8e;
+        --line: #4a3c32;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: "Segoe UI", "PingFang HK", "Noto Sans TC", sans-serif;
+        color: var(--ink);
+        background:
+          radial-gradient(ellipse at 20% 0%, #3a2a20 0%, transparent 50%),
+          radial-gradient(ellipse at 80% 100%, #2a1820 0%, transparent 45%),
+          var(--bg);
+        padding: 2rem;
+      }
+      h1 {
+        font-weight: 650;
+        letter-spacing: 0.02em;
+        margin: 0 0 0.35rem;
+      }
+      p.lead {
+        color: var(--muted);
+        margin: 0 0 1.5rem;
+        max-width: 42rem;
+      }
+      .row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+        align-items: center;
+      }
+      button,
+      label.file-btn {
+        border: 1px solid var(--line);
+        background: var(--panel);
+        color: var(--ink);
+        border-radius: 10px;
+        padding: 0.7rem 1.1rem;
+        font-size: 0.95rem;
+        cursor: pointer;
+        display: inline-block;
+      }
+      button:hover,
+      label.file-btn:hover {
+        border-color: var(--accent);
+      }
+      button[aria-pressed="true"] {
+        background: color-mix(in srgb, var(--accent-on) 22%, var(--panel));
+        border-color: var(--accent-on);
+        color: #dff7ea;
+      }
+      input[type="file"] {
+        display: none;
+      }
+      #status,
+      #chat,
+      #robot-hud {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 0.85rem;
+        color: var(--muted);
+        white-space: pre-wrap;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 1rem;
+        background: color-mix(in srgb, var(--panel) 80%, black);
+        min-height: 6rem;
+        margin-bottom: 1rem;
+      }
+      #robot-hud {
+        display: grid;
+        grid-template-columns: 7rem 1fr;
+        gap: 0.35rem 0.75rem;
+        white-space: normal;
+      }
+      #robot-hud .k {
+        color: var(--accent);
+      }
+      #robot-hud .v {
+        color: var(--ink);
+      }
+      h2 {
+        font-size: 0.95rem;
+        font-weight: 600;
+        margin: 0 0 0.5rem;
+        color: var(--ink);
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Realtime Voice Lab</h1>
+    <p class="lead">
+      Prototype harness for Cantonese realtime voice + Sakura Face Live.
+      Toggle <strong>Always-on</strong> for energy-VAD → SenseVoice/CosyVoice worker pipeline,
+      or <strong>Hold to talk</strong> for push-to-talk turns.
+      Use <strong>Dialect</strong> to lock Auto / Yue / En (<code>?lang=</code>).
+      <strong>VAD</strong> tunes mic sensitivity (<code>?vad=high|normal|low</code>);
+      <strong>TTS: On/Muted</strong> silences playback without stopping the pipeline.
+      <strong>Expression demo</strong> cycles Sakura presets (happy → … → angry).
+      <strong>Gesture demo</strong> cycles Disney-style talk body/hand/finger styles from reply content.
+      <strong>Motion</strong> cycles SoftBank / Furhat / Reachy / Unitree / ROS / Sakura command packages;
+      <strong>Motion demo</strong> pokes a talk style at the HTTP motion bridge (<code>?motionBridge=</code>).
+      Use <strong>Export / Import Session</strong> for archives (includes latency rollup);
+      <strong>Export Metrics</strong> downloads turn p50/p95 JSON; <strong>Copy lab URL</strong> shares prefs.
+      <strong>Robot steps</strong> HUD tracks
+      <code>sakura → lip_sync → done/aborted</code> via
+      <code>createVoiceRobotBridge</code>, plus last-turn latency, p50/p95 rollup, and partial ASR.
+      Serve with <code>npm run lab</code> from <code>amoji-engine/</code>.
+      Keys: <code>Space</code> hold-to-talk · <code>Esc</code> barge · <code>M</code> mute · <code>E</code> expression · <code>G</code> gesture · <code>V</code> motion · <code>[</code>/<code>]</code> volume.
+    </p>
+
+    <div class="row">
+      <button type="button" id="btn-connect" title="Probe worker health + log lab URLs">
+        Ready check
+      </button>
+      <button
+        type="button"
+        id="btn-face-live"
+        aria-pressed="false"
+        title="Connect Sakura Face Live WebSocket (?face=ws://…)"
+      >
+        Face Live: Off
+      </button>
+      <button
+        type="button"
+        id="btn-always-on"
+        aria-pressed="false"
+        title="Always-on listen with VAD end-of-utterance"
+      >
+        Always-on: Off
+      </button>
+      <button
+        type="button"
+        id="btn-dialect"
+        aria-pressed="false"
+        title="Cycle dialect: Auto → Yue → En (?lang=)"
+      >
+        Dialect: Auto
+      </button>
+      <button
+        type="button"
+        id="btn-vad"
+        aria-pressed="false"
+        title="Cycle VAD sensitivity: High → Normal → Low (?vad=)"
+      >
+        VAD: Normal
+      </button>
+      <button
+        type="button"
+        id="btn-mute-tts"
+        aria-pressed="false"
+        title="Mute CosyVoice / TTS playback (still runs pipeline)"
+      >
+        TTS: On
+      </button>
+      <button
+        type="button"
+        id="btn-tts-vol"
+        title="Cycle TTS volume: Soft → Normal → Loud (?vol=) · [ ]"
+      >
+        Vol: Normal
+      </button>
+      <button
+        type="button"
+        id="btn-push-to-talk"
+        title="Hold to talk (release to run worker pipeline turn)"
+      >
+        Hold to talk
+      </button>
+      <button type="button" id="btn-robot-demo" title="Run stub robot turn (我叫小明)">
+        Robot demo
+      </button>
+      <button type="button" id="btn-prosody-demo" title="Stub reply with [pause]/[fast]/[slow] markers">
+        Prosody demo
+      </button>
+      <button
+        type="button"
+        id="btn-expression-demo"
+        title="Cycle Sakura Face Live expression presets"
+      >
+        Expression demo
+      </button>
+      <button
+        type="button"
+        id="btn-gesture-demo"
+        title="Cycle Disney-style talk gestures (hands / shoulders / fingers)"
+      >
+        Gesture demo
+      </button>
+      <button
+        type="button"
+        id="btn-motion-demo"
+        title="Cycle talk style → vendor motion package → HTTP motion bridge"
+      >
+        Motion demo
+      </button>
+      <button
+        type="button"
+        id="btn-motion-vendor"
+        title="Cycle robot motion vendor: Sakura → SoftBank → Furhat → Reachy → Unitree G1 → ROS"
+      >
+        Motion: Sakura
+      </button>
+      <button
+        type="button"
+        id="btn-worker-demo"
+        title="Mock SenseVoice ASR → CosyVoice TTS worker turn"
+      >
+        Worker demo
+      </button>
+      <button type="button" id="btn-barge" title="Abort current robot turn">
+        Barge-in
+      </button>
+      <button type="button" id="btn-export-session" title="Download session archive JSON">
+        Export Session
+      </button>
+      <button type="button" id="btn-export-metrics" title="Download turn metrics rollup JSON">
+        Export Metrics
+      </button>
+      <button type="button" id="btn-copy-url" title="Copy shareable lab URL with current prefs">
+        Copy lab URL
+      </button>
+      <label class="file-btn" for="import-session-file">Import Session</label>
+      <input
+        id="import-session-file"
+        type="file"
+        accept="application/json,.json"
+      />
+      <button type="button" id="btn-clear" title="Clear chat, ticks, and robot HUD">
+        Clear
+      </button>
+    </div>
+
+    <h2>Robot steps</h2>
+    <div id="robot-hud" aria-live="polite">
+      <span class="k">phase</span><span class="v" id="robot-phase">idle</span>
+      <span class="k">emotion</span><span class="v" id="robot-emotion">neutral</span>
+      <span class="k">expression</span><span class="v" id="expression-hud">neutral</span>
+      <span class="k">partial</span><span class="v" id="partial-hud">—</span>
+      <span class="k">language</span><span class="v" id="robot-language">yue</span>
+      <span class="k">dialect</span><span class="v" id="dialect-hud">auto</span>
+      <span class="k">vad</span><span class="v" id="vad-hud">normal</span>
+      <span class="k">mic</span><span class="v" id="mic-hud">—</span>
+      <span class="k">tts</span><span class="v" id="tts-hud">on</span>
+      <span class="k">volume</span><span class="v" id="volume-hud">normal</span>
+      <span class="k">idle</span><span class="v" id="idle-hud">—</span>
+      <span class="k">gesture</span><span class="v" id="gesture-hud">—</span>
+      <span class="k">motion</span><span class="v" id="motion-hud">—</span>
+      <span class="k">lip-sync</span><span class="v" id="lipsync-hud">—</span>
+      <span class="k">worker</span><span class="v" id="worker-hud">mock</span>
+      <span class="k">face live</span><span class="v" id="facelive-hud">off</span>
+      <span class="k">latency</span><span class="v" id="latency-hud">—</span>
+      <span class="k">rollup</span><span class="v" id="rollup-hud">—</span>
+      <span class="k">budget</span><span class="v" id="budget-hud">—</span>
+      <span class="k">summary</span><span class="v" id="robot-summary">—</span>
+      <span class="k">first steps</span><span class="v" id="robot-steps">—</span>
+    </div>
+
+    <h2>Lab chat</h2>
+    <div id="chat">no messages yet</div>
+
+    <h2>Status</h2>
+    <div id="status">idle — load via a static server that can import ../amoji-engine/engine/</div>
+
+    <script type="module">
+      import {
+        createAlwaysOnListen,
+        createLabSessionFacade,
+        createVoiceRobotBridge,
+        createIdlePresenceClock,
+        createVoiceWorkerClient,
+        createWorkerTurnHost,
+        createPartialAsrWatcher,
+        createTtsPlaybackQueue,
+        createLipSyncTracker,
+        createSakuraFaceLiveClient,
+        createTalkGestureClock,
+        createTurnMetricsRollup,
+        createPushToTalk,
+        bindPushToTalkPointer,
+        createLabHotkeys,
+        checkLatencyBudget,
+        formatLatencyBudget,
+        mapEmotionToExpression,
+        resolveExpressionFromTurn,
+        inferExpressionFromText,
+        nextExpressionPreset,
+        nextTalkGestureStyle,
+        talkGestureToFaceLiveParams,
+        mergeFaceLiveParams,
+        nextRobotMotionVendor,
+        formatRobotMotionHud,
+        createRobotMotionDispatcher,
+        createMotionBridgeClient,
+        resolveMotionBridgeConfig,
+        persistMotionBridgeUrl,
+        resolveMotionVendorPref,
+        persistMotionVendorPref,
+        exportTurnMetricsRollup,
+        buildLabShareUrl,
+        copyTextToClipboard,
+        createMicLevelMeter,
+        resolveTtsVolumePref,
+        persistTtsVolumePref,
+        nextTtsVolume,
+        prevTtsVolume,
+        resolveVoiceWorkerConfig,
+        resolveFaceLiveConfig,
+        resolveDialectPref,
+        persistDialectPref,
+        nextDialectMode,
+        resolveListenPref,
+        persistListenPref,
+        nextListenSensitivity,
+        runWorkerRobotTurn,
+        presenceToFaceLiveParams,
+        frameEnergy,
+      } from "../amoji-engine/engine/index.js";
+
+      const statusEl = document.getElementById("status");
+      const chatEl = document.getElementById("chat");
+      const alwaysOnBtn = document.getElementById("btn-always-on");
+      const faceLiveBtn = document.getElementById("btn-face-live");
+      const dialectBtn = document.getElementById("btn-dialect");
+      const vadBtn = document.getElementById("btn-vad");
+      const muteTtsBtn = document.getElementById("btn-mute-tts");
+      const ttsVolBtn = document.getElementById("btn-tts-vol");
+      const pttBtn = document.getElementById("btn-push-to-talk");
+      const phaseEl = document.getElementById("robot-phase");
+      const emotionEl = document.getElementById("robot-emotion");
+      const expressionHudEl = document.getElementById("expression-hud");
+      const partialHudEl = document.getElementById("partial-hud");
+      const languageEl = document.getElementById("robot-language");
+      const dialectHudEl = document.getElementById("dialect-hud");
+      const vadHudEl = document.getElementById("vad-hud");
+      const micHudEl = document.getElementById("mic-hud");
+      const ttsHudEl = document.getElementById("tts-hud");
+      const volumeHudEl = document.getElementById("volume-hud");
+      const idleHudEl = document.getElementById("idle-hud");
+      const gestureHudEl = document.getElementById("gesture-hud");
+      const motionHudEl = document.getElementById("motion-hud");
+      const lipsyncHudEl = document.getElementById("lipsync-hud");
+      const motionVendorBtn = document.getElementById("btn-motion-vendor");
+      const workerHudEl = document.getElementById("worker-hud");
+      const faceLiveHudEl = document.getElementById("facelive-hud");
+      const latencyHudEl = document.getElementById("latency-hud");
+      const rollupHudEl = document.getElementById("rollup-hud");
+      const budgetHudEl = document.getElementById("budget-hud");
+      const summaryEl = document.getElementById("robot-summary");
+      const stepsEl = document.getElementById("robot-steps");
+
+      const metricsRollup = createTurnMetricsRollup({ maxSamples: 200 });
+      let dialectPref = resolveDialectPref();
+      let listenPref = resolveListenPref();
+      let ttsVolumePref = resolveTtsVolumePref();
+      let motionVendorPref = resolveMotionVendorPref();
+      const motionBridgeConfig = resolveMotionBridgeConfig({
+        defaultUrl: null,
+      });
+      let demoExpression = "neutral";
+      let ttsMuted = false;
+      const motionBridgeClient = createMotionBridgeClient({
+        bridgeUrl: motionBridgeConfig.bridgeUrl,
+        mode: motionBridgeConfig.mode,
+        onEvent: (ev, payload) => {
+          if (ev === "error") {
+            log(
+              `motion bridge error ${payload?.path || ""} ${payload?.error || payload?.status || ""}`,
+            );
+          }
+        },
+      });
+      const motionDispatcher = createRobotMotionDispatcher({
+        maxLog: 120,
+        bridge: motionBridgeClient,
+      });
+      let lastMotionFrameAt = 0;
+      const micMeter = createMicLevelMeter({
+        threshold: listenPref.vad.energyThreshold,
+        alpha: 0.4,
+      });
+      let lastMicHudAt = 0;
+
+      const feedMicMeter = (frame) => {
+        micMeter.push(frame);
+        const now =
+          typeof performance !== "undefined" ? performance.now() : Date.now();
+        if (now - lastMicHudAt > 80) {
+          lastMicHudAt = now;
+          micHudEl.textContent = micMeter.formatHud();
+        }
+      };
+
+      const resetMicMeterHud = () => {
+        micMeter.reset();
+        micHudEl.textContent = "—";
+        lastMicHudAt = 0;
+      };
+
+      const session = createLabSessionFacade({
+        storageKey: "amoji.realtimeVoiceLab.session",
+        meta: {
+          lab: "realtime-voice-lab",
+          branch: "cursor/realtime-voice-chat-0f5c",
+          dialect: dialectPref.mode,
+          vad: listenPref.sensitivity,
+          volume: ttsVolumePref.level,
+          motionVendor: motionVendorPref.vendor,
+          motionBridge: motionBridgeConfig.bridgeUrl,
+        },
+      });
+
+      const applyTurnMetrics = (metrics) => {
+        if (!metrics) return;
+        metricsRollup.push(metrics);
+        latencyHudEl.textContent = `asr ${metrics.asrMs | 0} · robot ${metrics.robotMs | 0} · tts ${metrics.ttsMs | 0} · Σ ${metrics.totalMs | 0}ms`;
+        rollupHudEl.textContent = metricsRollup.formatHud();
+        const budget = checkLatencyBudget(metrics);
+        budgetHudEl.textContent = formatLatencyBudget(budget);
+        if (!budget.ok) {
+          session.recordTick("budget", {
+            ok: false,
+            breaches: budget.breaches,
+            totalMs: metrics.totalMs,
+          });
+        }
+      };
+
+      const labelDialect = (mode) => {
+        if (mode === "yue") return "Dialect: Yue";
+        if (mode === "en") return "Dialect: En";
+        return "Dialect: Auto";
+      };
+
+      const applyDialectPref = (pref, { logChange = false } = {}) => {
+        dialectPref = pref;
+        session.meta.dialect = pref.mode;
+        worker.setForceLanguage(pref.forceLanguage);
+        robot.setForceLanguage(pref.forceLanguage);
+        if (pref.forceLanguage) {
+          worker.setLanguage(pref.forceLanguage);
+          robot.setLanguage(pref.forceLanguage);
+        }
+        dialectBtn.textContent = labelDialect(pref.mode);
+        dialectBtn.setAttribute(
+          "aria-pressed",
+          pref.mode === "auto" ? "false" : "true",
+        );
+        dialectHudEl.textContent = `${pref.mode} · ${pref.source}`;
+        languageEl.textContent = robot.language || pref.forceLanguage || "yue";
+        if (logChange) {
+          session.recordTick("dialect", {
+            mode: pref.mode,
+            force: pref.forceLanguage,
+          });
+          log(
+            `dialect ${pref.mode}${
+              pref.forceLanguage ? ` force=${pref.forceLanguage}` : " (auto)"
+            }`,
+          );
+        }
+      };
+
+      const workerConfig = resolveVoiceWorkerConfig();
+      const faceLiveConfig = resolveFaceLiveConfig();
+      const robot = createVoiceRobotBridge({
+        language: dialectPref.forceLanguage || "yue",
+        forceLanguage: dialectPref.forceLanguage,
+        motionVendor: motionVendorPref.vendor,
+      });
+
+      const labelMotionVendor = (vendor) => {
+        const map = {
+          sakura: "Sakura",
+          softbank: "SoftBank",
+          furhat: "Furhat",
+          reachy: "Reachy",
+          unitree_g1: "Unitree G1",
+          ros: "ROS",
+        };
+        return map[vendor] || vendor;
+      };
+
+      const applyMotionVendor = (vendor, { logChange = false, persist = true } = {}) => {
+        const next = persist
+          ? persistMotionVendorPref(vendor)
+          : robot.setMotionVendor(vendor);
+        robot.setMotionVendor(next);
+        motionVendorPref = {
+          ...motionVendorPref,
+          vendor: next,
+          source: persist ? "ui" : motionVendorPref.source,
+        };
+        motionVendorBtn.textContent = `Motion: ${labelMotionVendor(next)}`;
+        motionVendorBtn.setAttribute(
+          "aria-pressed",
+          next === "sakura" ? "false" : "true",
+        );
+        motionHudEl.textContent = motionDispatcher.last
+          ? motionDispatcher.formatHud()
+          : `${next} · ${motionVendorPref.source} · ready`;
+        if (logChange) {
+          session.recordTick("motion-vendor", {
+            vendor: next,
+            source: motionVendorPref.source,
+          });
+          log(`motion vendor → ${next} (${motionVendorPref.source})`);
+        }
+        return next;
+      };
+      applyMotionVendor(motionVendorPref.vendor, {
+        logChange: false,
+        persist: motionVendorPref.source === "query",
+      });
+      if (motionBridgeConfig.bridgeUrl) {
+        persistMotionBridgeUrl(motionBridgeConfig.bridgeUrl);
+      }
+      const idle = createIdlePresenceClock({ emotion: "neutral", intensity: 0.42 });
+      const lipSync = createLipSyncTracker({ alpha: 0.45, sensitivity: 1.6 });
+      const talkGestures = createTalkGestureClock({ style: "explain", intensity: 0.72 });
+      /** @type {{ mouthOpen: number, parameters: object[] } | null} */
+      let lastLipSync = null;
+      let faceLiveInjectCount = 0;
+      /** @type {ReturnType<typeof setTimeout> | null} */
+      let gesturePreviewTimer = null;
+
+      const updateGestureHud = (sample) => {
+        if (!sample) {
+          gestureHudEl.textContent = talkGestures.active
+            ? talkGestures.opts.style
+            : "—";
+          return;
+        }
+        const tip =
+          sample.pose?.fingerRIndexTip ?? sample.pose?.fingerRIndex ?? 0;
+        const point = sample.pose?.handRPoint ?? 0;
+        const arm = sample.pose?.armRA ?? 0;
+        gestureHudEl.textContent = `${sample.style} · arm ${arm.toFixed(2)} · tip ${tip.toFixed(2)} · point ${point.toFixed(2)}${
+          talkGestures.active ? "" : " · soft"
+        }`;
+      };
+
+      const beginTalkGesture = (text, { emotion, intensity, source = "talk" } = {}) => {
+        if (gesturePreviewTimer) {
+          clearTimeout(gesturePreviewTimer);
+          gesturePreviewTimer = null;
+        }
+        const style = talkGestures.start(text || "", {
+          emotion: emotion || "neutral",
+          intensity: intensity ?? 0.72,
+        });
+        updateGestureHud(talkGestures.step(0));
+        session.recordTick("gesture", { style, source, emotion: emotion || null });
+        return style;
+      };
+
+      const stopTalkGesture = ({ reset = false } = {}) => {
+        talkGestures.stop();
+        if (reset) talkGestures.reset();
+        updateGestureHud(null);
+      };
+
+      const faceLive = createSakuraFaceLiveClient({
+        url: faceLiveConfig.url,
+        onEvent: (ev, payload) => {
+          session.recordTick("facelive", { event: ev, ...(payload || {}) });
+          if (ev === "authenticated") {
+            faceLiveHudEl.textContent = `on · ${faceLiveConfig.source}`;
+            faceLiveBtn.setAttribute("aria-pressed", "true");
+            faceLiveBtn.textContent = "Face Live: On";
+          }
+          if (ev === "disconnected") {
+            faceLiveHudEl.textContent = "off";
+            faceLiveBtn.setAttribute("aria-pressed", "false");
+            faceLiveBtn.textContent = "Face Live: Off";
+          }
+          if (ev === "parametersInjected") {
+            faceLiveInjectCount += 1;
+          }
+          if (ev === "error") {
+            log(`face live error: ${payload?.message || ev}`);
+          }
+        },
+      });
+
+      const pushExpression = (emotionOrName, { source = "robot" } = {}) => {
+        const expression = mapEmotionToExpression(emotionOrName);
+        expressionHudEl.textContent = `${expression} · ${source}`;
+        demoExpression = expression;
+        if (faceLive.isAuthenticated) {
+          faceLive.setExpression(expression);
+        }
+        return expression;
+      };
+
+      const pushFaceParams = (parameters) => {
+        if (!parameters?.length) return;
+        labHost.lastFaceParams = parameters;
+        if (faceLive.isAuthenticated) {
+          faceLive.injectParameters(parameters);
+        }
+      };
+
+      const worker = createVoiceWorkerClient({
+        mode: workerConfig.mode,
+        workerUrl: workerConfig.workerUrl,
+        language: dialectPref.forceLanguage || "yue",
+        forceLanguage: dialectPref.forceLanguage,
+        onEvent: (ev) => {
+          session.recordTick("worker", {
+            type: ev.type,
+            language: ev.data?.language,
+            emotion: ev.data?.emotion?.emotion || ev.data?.emotion,
+            chunks: ev.data?.chunkCount,
+          });
+        },
+      });
+      workerHudEl.textContent = workerConfig.mode === "http"
+        ? `http · ${workerConfig.source} · ${workerConfig.workerUrl}`
+        : "mock";
+
+      // Sync button/HUD before first log (logChange false avoids TDZ on log).
+      applyDialectPref(dialectPref, { logChange: false });
+
+      const ttsPlayer = createTtsPlaybackQueue({
+        lipSync,
+        gain: ttsVolumePref.gain,
+        onStart: (chunk) => {
+          session.recordTick("tts", {
+            event: "start",
+            index: chunk.index,
+            text: chunk.text,
+          });
+        },
+        onEnd: (chunk) => {
+          session.recordTick("tts", {
+            event: "end",
+            index: chunk.index,
+            final: chunk.final,
+          });
+        },
+        onLipSync: ({ mouthOpen, parameters }) => {
+          lastLipSync = { mouthOpen, parameters };
+          lipsyncHudEl.textContent = `mouth ${mouthOpen.toFixed(2)} · ${parameters.length}p`;
+          session.recordTick("lipsync", { mouthOpen });
+          // Face inject merges lip-sync + talk gestures in the rAF loop.
+        },
+        onIdle: () => {
+          lastLipSync = null;
+          lipSync.reset();
+          stopTalkGesture();
+          lipsyncHudEl.textContent = "idle";
+          if (faceLive.isAuthenticated) faceLive.resetLipSync();
+          session.recordTick("tts", { event: "idle" });
+        },
+      });
+
+      const applyTtsMute = (muted, { logChange = false } = {}) => {
+        ttsMuted = Boolean(muted);
+        ttsPlayer.setMuted(ttsMuted);
+        muteTtsBtn.textContent = ttsMuted ? "TTS: Muted" : "TTS: On";
+        muteTtsBtn.setAttribute("aria-pressed", ttsMuted ? "true" : "false");
+        ttsHudEl.textContent = ttsMuted ? "muted" : "on";
+        if (logChange) {
+          session.recordTick("tts", { event: ttsMuted ? "mute" : "unmute" });
+          log(ttsMuted ? "tts muted (pipeline still runs)" : "tts unmuted");
+        }
+      };
+      applyTtsMute(false, { logChange: false });
+
+      const applyTtsVolume = (pref, { logChange = false } = {}) => {
+        ttsVolumePref = pref;
+        session.meta.volume = pref.level;
+        ttsPlayer.setGain(pref.gain);
+        ttsVolBtn.textContent = `Vol: ${pref.preset.label}`;
+        ttsVolBtn.setAttribute(
+          "aria-pressed",
+          pref.level === "normal" ? "false" : "true",
+        );
+        volumeHudEl.textContent = `${pref.level} · ×${pref.gain} · ${pref.source}`;
+        if (logChange) {
+          session.recordTick("tts-volume", {
+            level: pref.level,
+            gain: pref.gain,
+          });
+          log(`tts volume ${pref.level} gain=${pref.gain}`);
+        }
+      };
+      applyTtsVolume(ttsVolumePref, { logChange: false });
+
+      const applyListenPref = (pref, { logChange = false } = {}) => {
+        listenPref = pref;
+        session.meta.vad = pref.sensitivity;
+        vadBtn.textContent = `VAD: ${pref.preset.label}`;
+        vadBtn.setAttribute(
+          "aria-pressed",
+          pref.sensitivity === "normal" ? "false" : "true",
+        );
+        vadHudEl.textContent = `${pref.sensitivity} · thr ${pref.vad.energyThreshold} · ${pref.source}`;
+        micMeter.setThreshold(pref.vad.energyThreshold);
+        if (micHudEl.textContent !== "—") {
+          micHudEl.textContent = micMeter.formatHud();
+        }
+        if (controller) {
+          controller.configure({
+            ...pref.vad,
+            bargeDuringTalk: true,
+          });
+        }
+        if (logChange) {
+          session.recordTick("vad-pref", {
+            sensitivity: pref.sensitivity,
+            energyThreshold: pref.vad.energyThreshold,
+          });
+          log(
+            `vad ${pref.sensitivity} thr=${pref.vad.energyThreshold} barge=${pref.vad.bargeEnergyThreshold}`,
+          );
+        }
+      };
+
+      const turnHost = createWorkerTurnHost({
+        worker,
+        robot,
+        inputRate: 24000,
+        targetSampleRate: 16000,
+        onPartialEmotion: (emo) => {
+          idle.setEmotion(emo.emotion || "neutral", emo.intensity ?? 0.5);
+          if (emo.text) {
+            const clip =
+              emo.text.length > 48 ? `${emo.text.slice(0, 48)}…` : emo.text;
+            partialHudEl.textContent = `${emo.emotion || "neutral"} · ${clip}`;
+          }
+          pushExpression(emo.emotion || "neutral", { source: "partial" });
+        },
+        onTurn: (turn) => {
+          session.recordTick("pipeline", {
+            language: turn.language,
+            emotion: turn.emotion?.emotion,
+            asr: turn.asr?.text,
+            chunks: turn.tts?.chunkCount,
+            barged: turn.barged,
+            metrics: turn.metrics,
+          });
+          applyTurnMetrics(turn.metrics);
+          if (!turn.barged && turn.reply) {
+            beginTalkGesture(turn.reply, {
+              emotion: turn.emotion?.emotion || turn.robot?.emotion,
+              source: "pipeline",
+            });
+          }
+        },
+        onChunk: (chunk) => {
+          void ttsPlayer.enqueue(chunk);
+        },
+      });
+
+      let partialWatcher = null;
+      let unsubMicBuffer = null;
+
+      const renderRobotHud = (payload = robot.getHud()) => {
+        phaseEl.textContent = payload.phase || "idle";
+        emotionEl.textContent = payload.emotion || "neutral";
+        languageEl.textContent = payload.language || robot.language || "yue";
+        summaryEl.textContent = payload.summary || "—";
+        if (payload.motionHud || payload.motion) {
+          motionHudEl.textContent =
+            payload.motionHud || formatRobotMotionHud(payload.motion);
+        }
+        const steps = Array.isArray(payload.steps) ? payload.steps : [];
+        stepsEl.textContent = steps.length
+          ? steps.slice(0, 4).join(" → ")
+          : "—";
+      };
+
+      for (const ev of ["sakura", "lip_sync", "done", "aborted"]) {
+        robot.on(ev, (payload) => {
+          session.recordTick("robot", { event: ev, phase: payload.phase, language: payload.language });
+          renderRobotHud(payload);
+          if (ev === "sakura") {
+            pushExpression(payload.emotion || "neutral", { source: "robot" });
+            if (payload.motion) {
+              motionDispatcher.begin(payload.motion, {
+                source: "robot",
+                annotatedReply: payload.annotatedReply || null,
+                sayText: payload.sayText || payload.motion?.furhat?.say || null,
+              });
+              motionHudEl.textContent = motionDispatcher.formatHud();
+              if (payload.annotatedReply) {
+                log(
+                  `motion annotated ${String(payload.annotatedReply).slice(0, 72)}`,
+                );
+              } else if (payload.sayText) {
+                log(`motion say ${String(payload.sayText).slice(0, 72)}`);
+              }
+            }
+            if (payload.reply || payload.summary) {
+              beginTalkGesture(payload.reply || payload.summary, {
+                emotion: payload.emotion,
+                source: "robot",
+              });
+            } else if (!talkGestures.active) {
+              beginTalkGesture("", {
+                emotion: payload.emotion,
+                source: "robot",
+              });
+            }
+          }
+          if (ev === "done" || ev === "aborted") {
+            idle.setEmotion(payload.emotion || "neutral", 0.42);
+            motionDispatcher.end({
+              source: ev,
+              reason: ev === "aborted" ? "aborted" : "complete",
+            });
+            robot.stopMotion();
+            motionHudEl.textContent = motionDispatcher.formatHud();
+            if (ev === "aborted") {
+              stopTalkGesture({ reset: true });
+              if (faceLive.isAuthenticated) {
+                faceLive.resetLipSync();
+              }
+            }
+          }
+          log(`robot ${ev} phase=${payload.phase} emotion=${payload.emotion} lang=${payload.language || robot.language}`);
+        });
+      }
+      renderRobotHud();
+
+      const renderChat = () => {
+        const lines = session.labChat.messages.map(
+          (m) => `[${m.ts.slice(11, 19) ?? m.ts}] ${m.role}: ${m.text}`,
+        );
+        chatEl.textContent = lines.length ? lines.join("\n") : "no messages yet";
+      };
+      renderChat();
+
+      const log = (line) => {
+        session.recordTick("status", { line });
+        statusEl.textContent = `${new Date().toISOString().slice(11, 19)} ${line}\n${statusEl.textContent}`
+          .split("\n")
+          .slice(0, 40)
+          .join("\n");
+      };
+
+      /** Lab stub host — always-on uses worker pipeline; demos can pass forceReply. */
+      const labHost = {
+        listening: false,
+        talking: false,
+        lastFaceParams: [],
+        async startListening() {
+          this.listening = true;
+          this.talking = false;
+          turnHost.beginListen();
+          session.recordTick("phase", { phase: "listening" });
+          log("startListening");
+        },
+        async stopListeningAndTalk(extra) {
+          this.listening = false;
+          this.talking = true;
+          turnHost.endListen();
+          session.recordTick("phase", { phase: "talking", extra: { source: extra?.source } });
+          if (extra?.forceReply) {
+            beginTalkGesture(extra.forceReply, { source: extra?.source || "talk" });
+          } else if (!talkGestures.active) {
+            beginTalkGesture("", { source: extra?.source || "talk" });
+          }
+
+          /** @type {object | null} */
+          let pipelineTurn = extra?.pipelineTurn || null;
+
+          if (!pipelineTurn && (extra?.useWorker || extra?.source === "worker-pipeline")) {
+            pipelineTurn = await turnHost.runFromBuffer({
+              text: extra?.userText,
+              replyText: extra?.forceReply,
+            });
+          }
+
+          if (pipelineTurn) {
+            const userText = pipelineTurn.asr?.text || extra?.userText || "(worker asr)";
+            session.appendChat({
+              role: "user",
+              text: userText,
+              meta: { source: extra?.source || "worker-pipeline", language: pipelineTurn.language },
+            });
+            renderChat();
+            log(
+              `pipeline asr="${userText}" emo=${pipelineTurn.emotion?.emotion} lang=${pipelineTurn.language}` +
+                (pipelineTurn.metrics
+                  ? ` latency=${pipelineTurn.metrics.totalMs}ms`
+                  : ""),
+            );
+            // Pre-built turns (Worker demo) skip turnHost.onTurn — record here.
+            if (extra?.pipelineTurn) applyTurnMetrics(pipelineTurn.metrics);
+            if (pipelineTurn.barged) {
+              session.recordTick("barge", { during: "talk", source: "pipeline" });
+              log("talk barged — assistant reply cancelled");
+              stopTalkGesture({ reset: true });
+              this.talking = false;
+              return;
+            }
+            beginTalkGesture(pipelineTurn.reply || "", {
+              emotion:
+                pipelineTurn.emotion?.emotion || pipelineTurn.robot?.emotion,
+              source: extra?.source || "pipeline",
+            });
+            const speakMs =
+              typeof extra?.speakMs === "number"
+                ? extra.speakMs
+                : Math.min(
+                    1800,
+                    Math.round((pipelineTurn.tts?.durationSec || 0.5) * 1000),
+                  );
+            if (speakMs > 0) {
+              const started = performance.now();
+              while (this.talking && performance.now() - started < speakMs) {
+                await new Promise((r) => setTimeout(r, 40));
+              }
+            }
+            if (!this.talking) {
+              session.recordTick("barge", { during: "tts-wait", source: "host" });
+              log("tts wait cut short by barge");
+              stopTalkGesture({ reset: true });
+              return;
+            }
+            session.appendChat({
+              role: "assistant",
+              text: pipelineTurn.reply || "（stub）收到啦",
+            });
+            {
+              const resolved = resolveExpressionFromTurn({
+                emotion:
+                  pipelineTurn.emotion?.emotion || pipelineTurn.robot?.emotion,
+                text: pipelineTurn.reply,
+              });
+              pushExpression(resolved.expression, {
+                source: `reply:${resolved.source}`,
+              });
+            }
+            if (pipelineTurn.robot?.prosody) {
+              session.recordTick("prosody", {
+                speed: pipelineTurn.robot.prosody.speed,
+                pauseMs: pipelineTurn.robot.prosody.pauseMs,
+                markers: pipelineTurn.robot.prosody.markers?.length || 0,
+              });
+            }
+            renderChat();
+            idle.setEmotion(
+              pipelineTurn.emotion?.emotion || pipelineTurn.robot?.emotion || "neutral",
+              pipelineTurn.emotion?.intensity ?? 0.42,
+            );
+            if (!ttsPlayer.playing) stopTalkGesture();
+            this.talking = false;
+            return;
+          }
+
+          const userText =
+            typeof extra?.userText === "string"
+              ? extra.userText
+              : "(utterance ended — stub user turn)";
+          session.appendChat({
+            role: "user",
+            text: userText,
+            meta: { extra },
+          });
+          renderChat();
+          log(`stopListeningAndTalk ${JSON.stringify(extra ?? {})}`);
+          const speakMs =
+            typeof extra?.speakMs === "number"
+              ? extra.speakMs
+              : extra?.source === "prosody-demo"
+                ? 900
+                : 650;
+          const result = await robot.runTurn(userText, {
+            forceReply: extra?.forceReply,
+            speakMs,
+          });
+          if (result.barged) {
+            session.recordTick("barge", { during: "talk", source: "robot" });
+            log("talk barged — assistant reply cancelled");
+            stopTalkGesture({ reset: true });
+          } else {
+            session.appendChat({
+              role: "assistant",
+              text: result.reply ?? "（stub）收到啦，有咩想傾？",
+            });
+            beginTalkGesture(result.reply ?? "（stub）收到啦，有咩想傾？", {
+              emotion: result.emotion || robot.getHud()?.emotion,
+              source: "robot-stub",
+            });
+            if (result.prosody) {
+              session.recordTick("prosody", {
+                speed: result.prosody.speed,
+                pauseMs: result.prosody.pauseMs,
+                markers: result.prosody.markers?.length || 0,
+                instruct: result.prosody.instruct,
+              });
+              log(
+                `prosody speed=${result.prosody.speed} pause=${result.prosody.pauseMs}ms markers=${result.prosody.markers?.length || 0}`,
+              );
+            }
+          }
+          renderChat();
+          if (!ttsPlayer.playing) stopTalkGesture();
+          this.talking = false;
+        },
+        bargeIn(info = {}) {
+          robot.abort(info.reason || "barge-in");
+          ttsPlayer.flush();
+          stopTalkGesture({ reset: true });
+          motionDispatcher.end({ source: "barge", reason: info.reason || "barge-in" });
+          robot.stopMotion();
+          motionHudEl.textContent = motionDispatcher.formatHud();
+          this.talking = false;
+          session.recordTick("barge", {
+            at: Date.now(),
+            energy: info.energy,
+            speechMs: info.speechMs,
+            source: info.source || "manual",
+          });
+          renderRobotHud();
+          log(
+            `barge-in → robot aborted + tts flushed${
+              info.energy != null ? ` energy=${Number(info.energy).toFixed(3)}` : ""
+            }`,
+          );
+        },
+      };
+
+      let lastFrame = performance.now();
+      let lastIdleInjectAt = 0;
+      let lastTalkInjectAt = 0;
+      function raf(now) {
+        const dt = Math.min(0.05, (now - lastFrame) / 1000);
+        lastFrame = now;
+        const speaking = labHost.talking || ttsPlayer.playing;
+        if (!speaking) {
+          if (talkGestures.active && !gesturePreviewTimer) {
+            stopTalkGesture();
+          }
+          if (!talkGestures.active) {
+            const presence = idle.step(dt);
+            const params = presenceToFaceLiveParams(presence);
+            idleHudEl.textContent = `${presence.emotion} · jaw ${params.find((p) => p.id === "ParamMouthOpenY")?.value} · blink ${presence.blink} · face ${params.length}p`;
+            if (faceLive.isAuthenticated && now - lastIdleInjectAt > 100) {
+              lastIdleInjectAt = now;
+              pushFaceParams(params);
+            } else {
+              labHost.lastFaceParams = params;
+            }
+          } else {
+            // Gesture demo preview while idle
+            idleHudEl.textContent = "paused (gesture demo)";
+            const sample = talkGestures.step(dt, { speechEnergy: 0.55 });
+            const gParams = talkGestureToFaceLiveParams(sample);
+            updateGestureHud(sample);
+            if (faceLive.isAuthenticated && now - lastTalkInjectAt > 33) {
+              lastTalkInjectAt = now;
+              pushFaceParams(gParams);
+            } else {
+              labHost.lastFaceParams = gParams;
+            }
+          }
+        } else {
+          idleHudEl.textContent = lastLipSync ? "paused (tts)" : "paused (speaking)";
+          if (!talkGestures.active) {
+            talkGestures.start("", { emotion: emotionEl.textContent || "neutral" });
+          }
+          const speechEnergy = lastLipSync?.mouthOpen ?? 0.45;
+          const sample = talkGestures.step(dt, { speechEnergy });
+          const gParams = talkGestureToFaceLiveParams(sample);
+          updateGestureHud(sample);
+          const merged = mergeFaceLiveParams(lastLipSync?.parameters, gParams);
+          if (faceLive.isAuthenticated && now - lastTalkInjectAt > 33) {
+            lastTalkInjectAt = now;
+            pushFaceParams(merged);
+          } else {
+            labHost.lastFaceParams = merged;
+          }
+        }
+        // Vendor motion frames (~12 Hz) while speaking OR Motion demo preview
+        if (motionDispatcher.active && now - lastMotionFrameAt > 80) {
+          lastMotionFrameAt = now;
+          const speechEnergy = speaking
+            ? lastLipSync?.mouthOpen ?? 0.45
+            : 0.55;
+          const frame = robot.sampleMotionFrame(0.08, { speechEnergy });
+          motionDispatcher.frame(frame, {
+            source: speaking ? "raf" : "demo-raf",
+          });
+          motionHudEl.textContent = motionDispatcher.formatHud();
+        }
+        requestAnimationFrame(raf);
+      }
+      requestAnimationFrame(raf);
+      log(
+        `worker mode=${worker.mode}${
+          worker.workerUrl ? ` url=${worker.workerUrl}` : ""
+        } (source=${workerConfig.source}; ?worker=http://127.0.0.1:7890)`,
+      );
+      log(
+        `face live url=${faceLiveConfig.url} (source=${faceLiveConfig.source}; ?face=ws://127.0.0.1:8765)`,
+      );
+      log(
+        `dialect ${dialectPref.mode} (source=${dialectPref.source}; ?lang=auto|yue|en)`,
+      );
+      log(
+        `motion vendor=${motionVendorPref.vendor} (source=${motionVendorPref.source}; ?motion=sakura|softbank|furhat|reachy|unitree_g1|ros)`,
+      );
+      log(
+        `motion bridge=${motionBridgeConfig.bridgeUrl || "off"} (source=${motionBridgeConfig.source}; ?motionBridge=http://127.0.0.1:7891)`,
+      );
+      lipsyncHudEl.textContent = "—";
+      gestureHudEl.textContent = "—";
+      faceLiveHudEl.textContent = "off";
+      rollupHudEl.textContent = "—";
+      budgetHudEl.textContent = "—";
+      micHudEl.textContent = "—";
+      workerHudEl.textContent = workerConfig.mode === "http"
+        ? `http · ${workerConfig.source} · ${workerConfig.workerUrl}`
+        : "mock";
+
+      void worker.health().then((h) => {
+        if (h.ok) {
+          workerHudEl.textContent =
+            workerConfig.mode === "http"
+              ? `ok · ${h.asr || "asr"}/${h.tts || "tts"} · ${workerConfig.workerUrl}`
+              : "mock · healthy";
+          log(`worker health ok mode=${h.mode} asr=${h.asr} tts=${h.tts}`);
+        } else {
+          workerHudEl.textContent = `down · ${h.error || "health failed"}`;
+          log(`worker health failed: ${h.error || "unknown"}`);
+        }
+      });
+
+      if (motionBridgeClient.mode === "http") {
+        void motionBridgeClient.health().then((h) => {
+          if (h.ok) {
+            motionHudEl.textContent = `${robot.motionVendor} · bridge ok · ${motionBridgeConfig.bridgeUrl}`;
+            log(`motion bridge health ok url=${motionBridgeConfig.bridgeUrl}`);
+          } else {
+            motionHudEl.textContent = `${robot.motionVendor} · bridge down`;
+            log(`motion bridge health failed: ${h.error || "unknown"}`);
+          }
+        });
+      }
+      let unsubscribeMic = null;
+      let mediaStream = null;
+      let audioCtx = null;
+      let micHandle = null;
+
+      async function openMic() {
+        if (micHandle) return micHandle;
+        mediaStream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            channelCount: 1,
+          },
+        });
+        audioCtx = new AudioContext({ sampleRate: 24000 });
+        const source = audioCtx.createMediaStreamSource(mediaStream);
+        const processor = audioCtx.createScriptProcessor(1024, 1, 1);
+        const listeners = new Set();
+        processor.onaudioprocess = (ev) => {
+          const input = ev.inputBuffer.getChannelData(0);
+          const pcm = new Float32Array(input);
+          for (const cb of listeners) cb(pcm);
+        };
+        source.connect(processor);
+        processor.connect(audioCtx.destination);
+        unsubscribeMic = () => {
+          processor.disconnect();
+          source.disconnect();
+          listeners.clear();
+        };
+        micHandle = {
+          onFrame(cb) {
+            listeners.add(cb);
+            return () => listeners.delete(cb);
+          },
+        };
+        session.recordTick("mic", { open: true });
+        return micHandle;
+      }
+
+      let controller = null;
+      applyListenPref(listenPref, { logChange: false });
+      log(
+        `vad ${listenPref.sensitivity} thr=${listenPref.vad.energyThreshold} (source=${listenPref.source}; ?vad=high|normal|low)`,
+      );
+
+      alwaysOnBtn.addEventListener("click", async () => {
+        const on = alwaysOnBtn.getAttribute("aria-pressed") !== "true";
+        if (on) {
+          try {
+            const mic = await openMic();
+            unsubMicBuffer = mic.onFrame((frame) => {
+              feedMicMeter(frame);
+              turnHost.pushFrame(frame);
+            });
+            partialWatcher = createPartialAsrWatcher({
+              intervalMs: 450,
+              mode: "mock",
+              language: dialectPref.forceLanguage || worker.language || "yue",
+              onPartial: (ev) => {
+                turnHost.applyPartial(ev.data);
+                session.recordTick("partial", {
+                  text: ev.data.text,
+                  emotion: ev.data.emotion,
+                });
+                const clip =
+                  String(ev.data.text || "").length > 48
+                    ? `${String(ev.data.text).slice(0, 48)}…`
+                    : ev.data.text;
+                partialHudEl.textContent = `${ev.data.emotion || "neutral"} · ${clip || "—"}`;
+                log(`partial asr "${ev.data.text}" emo=${ev.data.emotion}`);
+              },
+            });
+            partialWatcher.start(async () => {
+              if (!turnHost.capturing || turnHost.buffer.speechMs < 280) return null;
+              const ms = Math.round(turnHost.buffer.speechMs);
+              const seq = turnHost.buffer.sequence;
+              return `<|yue|><|NEUTRAL|><|Speech|>（聽緊 ${ms}ms #${seq}）`;
+            });
+            controller = createAlwaysOnListen({
+              mic,
+              startListening: () => labHost.startListening(),
+              stopListeningAndTalk: (extra) =>
+                labHost.stopListeningAndTalk(extra),
+              getTurnExtra: () => ({
+                source: "worker-pipeline",
+                useWorker: true,
+                energyHint: "vad",
+              }),
+              energyThreshold: listenPref.vad.energyThreshold,
+              minSpeechMs: listenPref.vad.minSpeechMs,
+              trailingSilenceMs: listenPref.vad.trailingSilenceMs,
+              sampleRateHz: 24000,
+              bargeDuringTalk: true,
+              bargeEnergyThreshold: listenPref.vad.bargeEnergyThreshold,
+              bargeMinSpeechMs: listenPref.vad.bargeMinSpeechMs,
+              onBargeIn: (info) =>
+                labHost.bargeIn({ ...info, source: "always-on" }),
+              onStateChange: (state, prev) => {
+                session.recordTick("vad", { prev, state });
+                log(`vad ${prev} → ${state}`);
+              },
+              onUtteranceEnded: (info) =>
+                log(`utterance ended speechMs=${info.speechMs | 0}`),
+              onError: (err) => log(`error ${err?.message ?? err}`),
+            });
+            await controller.start();
+            alwaysOnBtn.setAttribute("aria-pressed", "true");
+            alwaysOnBtn.textContent = "Always-on: On";
+            log("Always-on listen started (worker pipeline + partial ASR)");
+          } catch (err) {
+            log(`mic failed: ${err?.message ?? err}`);
+          }
+        } else {
+          await controller?.stop();
+          controller = null;
+          partialWatcher?.stop();
+          partialWatcher = null;
+          unsubMicBuffer?.();
+          unsubMicBuffer = null;
+          resetMicMeterHud();
+          unsubscribeMic?.();
+          unsubscribeMic = null;
+          micHandle = null;
+          mediaStream?.getTracks().forEach((t) => t.stop());
+          mediaStream = null;
+          await audioCtx?.close();
+          audioCtx = null;
+          alwaysOnBtn.setAttribute("aria-pressed", "false");
+          alwaysOnBtn.textContent = "Always-on: Off";
+          session.recordTick("mic", { open: false });
+          log("Always-on listen stopped");
+        }
+      });
+
+      document.getElementById("btn-connect").addEventListener("click", async () => {
+        session.recordTick("ready-check", { stub: false });
+        const health = await worker.health();
+        const motionHealth =
+          motionBridgeClient.mode === "http"
+            ? await motionBridgeClient.health()
+            : { ok: true, skipped: true, mode: "off" };
+        const href = globalThis.location?.href || "(no location)";
+        log(
+          `ready check worker=${health.ok ? "ok" : "down"} mode=${health.mode || worker.mode}` +
+            ` dialect=${dialectPref.mode} vad=${listenPref.sensitivity}` +
+            ` face=${faceLive.isAuthenticated ? "on" : "off"}` +
+            ` motionBridge=${
+              motionHealth.skipped
+                ? "off"
+                : motionHealth.ok
+                  ? "ok"
+                  : "down"
+            }`,
+        );
+        log(`lab url ${href}`);
+        if (motionBridgeConfig.bridgeUrl) {
+          log(`motion bridge url ${motionBridgeConfig.bridgeUrl}`);
+          motionHudEl.textContent = motionHealth.ok
+            ? motionDispatcher.formatHud() === "—"
+              ? `${robot.motionVendor} · bridge ok`
+              : motionDispatcher.formatHud()
+            : `${robot.motionVendor} · bridge down`;
+        }
+        session.recordTick("ready-check-motion", {
+          ok: motionHealth.ok,
+          mode: motionHealth.mode || motionBridgeClient.mode,
+          url: motionBridgeConfig.bridgeUrl,
+        });
+        session.appendChat({
+          role: "system",
+          text:
+            `ready check · worker ${health.ok ? "ok" : "down"} · vad ${listenPref.sensitivity}` +
+            ` · motionBridge ${
+              motionHealth.skipped
+                ? "off"
+                : motionHealth.ok
+                  ? "ok"
+                  : "down"
+            }`,
+        });
+        renderChat();
+      });
+
+      faceLiveBtn.addEventListener("click", async () => {
+        const on = faceLiveBtn.getAttribute("aria-pressed") !== "true";
+        if (on) {
+          try {
+            log(`face live connecting ${faceLiveConfig.url}…`);
+            await faceLive.connect();
+            faceLive.setExpression(
+              mapEmotionToExpression(robot.getHud().emotion || "neutral"),
+            );
+            expressionHudEl.textContent = `${faceLive.expression} · connected`;
+            log(
+              `face live authenticated token=${faceLive.authenticationToken?.slice(0, 12) || "cached"}…`,
+            );
+          } catch (err) {
+            faceLive.disconnect();
+            log(`face live failed: ${err?.message ?? err}`);
+          }
+        } else {
+          faceLive.disconnect();
+          log("face live disconnected");
+        }
+      });
+
+      dialectBtn.addEventListener("click", () => {
+        const mode = nextDialectMode(dialectPref.mode);
+        const pref = persistDialectPref(mode);
+        applyDialectPref(pref, { logChange: true });
+      });
+
+      vadBtn.addEventListener("click", () => {
+        const next = nextListenSensitivity(listenPref.sensitivity);
+        const pref = persistListenPref(next);
+        applyListenPref(pref, { logChange: true });
+      });
+
+      muteTtsBtn.addEventListener("click", () => {
+        applyTtsMute(!ttsMuted, { logChange: true });
+      });
+
+      ttsVolBtn.addEventListener("click", () => {
+        const next = nextTtsVolume(ttsVolumePref.level);
+        applyTtsVolume(persistTtsVolumePref(next), { logChange: true });
+      });
+
+      let pttUnsubMic = null;
+      const resetPttUi = () => {
+        pttUnsubMic?.();
+        pttUnsubMic = null;
+        pttBtn.setAttribute("aria-pressed", "false");
+        pttBtn.textContent = "Hold to talk";
+        labHost.listening = false;
+        turnHost.endListen();
+        turnHost.buffer.clear();
+        resetMicMeterHud();
+      };
+      const ptt = createPushToTalk({
+        minHoldMs: 120,
+        startListening: async () => {
+          if (alwaysOnBtn.getAttribute("aria-pressed") === "true") {
+            throw new Error("turn off Always-on before push-to-talk");
+          }
+          const mic = await openMic();
+          pttUnsubMic?.();
+          pttUnsubMic = mic.onFrame((frame) => {
+            feedMicMeter(frame);
+            turnHost.pushFrame(frame);
+          });
+          pttBtn.setAttribute("aria-pressed", "true");
+          pttBtn.textContent = "Listening…";
+          await labHost.startListening();
+        },
+        cancelListening: async () => {
+          resetPttUi();
+        },
+        stopListeningAndTalk: async (extra) => {
+          pttUnsubMic?.();
+          pttUnsubMic = null;
+          pttBtn.setAttribute("aria-pressed", "false");
+          pttBtn.textContent = "Hold to talk";
+          await labHost.stopListeningAndTalk({
+            ...extra,
+            source: "push-to-talk",
+            useWorker: true,
+          });
+        },
+        getTurnExtra: () => ({
+          source: "push-to-talk",
+          useWorker: true,
+          energyHint: "ptt",
+        }),
+        onPress: () => {
+          session.recordTick("ptt", { event: "press" });
+          log("ptt press — hold to speak");
+        },
+        onRelease: ({ heldMs, outcome }) => {
+          session.recordTick("ptt", { event: "release", heldMs, outcome });
+          log(`ptt release heldMs=${heldMs | 0} outcome=${outcome || "?"}`);
+        },
+        onError: (err) => {
+          resetPttUi();
+          log(`ptt error: ${err?.message ?? err}`);
+        },
+      });
+      bindPushToTalkPointer(pttBtn, ptt);
+
+      const runExpressionDemo = () => {
+        const next = nextExpressionPreset(demoExpression);
+        const expression = pushExpression(next, { source: "demo" });
+        idle.setEmotion(expression, 0.7);
+        session.recordTick("expression", { expression, source: "demo" });
+        log(
+          `expression demo → ${expression}${
+            faceLive.isAuthenticated ? " (injected)" : " (Face Live off — HUD only)"
+          }`,
+        );
+      };
+
+      const runGestureDemo = () => {
+        const next = nextTalkGestureStyle(talkGestures.opts.style);
+        talkGestures.setStyle(next, { intensity: 0.9 });
+        talkGestures.active = true;
+        updateGestureHud(talkGestures.step(0));
+        if (gesturePreviewTimer) clearTimeout(gesturePreviewTimer);
+        gesturePreviewTimer = setTimeout(() => {
+          gesturePreviewTimer = null;
+          if (!labHost.talking && !ttsPlayer.playing) {
+            stopTalkGesture({ reset: false });
+          }
+        }, 2200);
+        session.recordTick("gesture", { style: next, source: "demo" });
+        log(
+          `gesture demo → ${next}${
+            faceLive.isAuthenticated ? " (injected)" : " (Face Live off — HUD only)"
+          }`,
+        );
+      };
+
+      let motionPreviewTimer = null;
+      const runMotionDemo = () => {
+        const next = nextTalkGestureStyle(robot.motionStyle || "explain");
+        const seedText =
+          next === "wave"
+            ? "拜拜"
+            : next === "point"
+              ? "睇下呢個！"
+              : next === "celebrate"
+                ? "哈哈好開心"
+                : next === "question"
+                  ? "係咪呀？"
+                  : "";
+        const pkg = robot.fromMotionStyle(next, {
+          emotion: emotionEl.textContent || "neutral",
+          text: seedText,
+        });
+        const annotatedReply = pkg?.softbank?.annotatedSay || null;
+        const sayText = pkg?.furhat?.say || null;
+        if (motionDispatcher.active) {
+          motionDispatcher.end({ source: "demo", reason: "style-cycle" });
+        }
+        motionDispatcher.begin(pkg, {
+          source: "demo",
+          annotatedReply,
+          sayText,
+        });
+        motionHudEl.textContent = motionDispatcher.formatHud();
+        if (motionPreviewTimer) clearTimeout(motionPreviewTimer);
+        motionPreviewTimer = setTimeout(() => {
+          motionPreviewTimer = null;
+          if (!labHost.talking && !ttsPlayer.playing) {
+            motionDispatcher.end({ source: "demo", reason: "preview-done" });
+            robot.stopMotion();
+            motionHudEl.textContent = motionDispatcher.formatHud();
+          }
+        }, 2200);
+        session.recordTick("motion-demo", {
+          style: next,
+          vendor: robot.motionVendor,
+          annotated: Boolean(annotatedReply),
+          say: Boolean(sayText),
+          source: "demo",
+        });
+        const cue = annotatedReply || sayText;
+        log(
+          `motion demo → ${robot.motionVendor}:${next}` +
+            (cue
+              ? ` · ${String(cue).slice(0, 56)}`
+              : ` · ${motionDispatcher.formatHud()}`) +
+            (motionBridgeClient.mode === "http" ? " → bridge" : ""),
+        );
+      };
+
+      const labHotkeys = createLabHotkeys({
+        onPttPress: () => ptt.press(),
+        onPttRelease: () => ptt.release(),
+        onBarge: () => labHost.bargeIn({ reason: "hotkey", source: "escape" }),
+        onMuteToggle: () => applyTtsMute(!ttsMuted, { logChange: true }),
+        onExpressionCycle: () => runExpressionDemo(),
+        onGestureCycle: () => runGestureDemo(),
+        onMotionCycle: () => runMotionDemo(),
+        onVolumeDown: () => {
+          applyTtsVolume(persistTtsVolumePref(prevTtsVolume(ttsVolumePref.level)), {
+            logChange: true,
+          });
+        },
+        onVolumeUp: () => {
+          applyTtsVolume(persistTtsVolumePref(nextTtsVolume(ttsVolumePref.level)), {
+            logChange: true,
+          });
+        },
+      });
+      labHotkeys.bind();
+      log("hotkeys Space=PTT Esc=barge M=mute E=expression G=gesture V=motion [=vol- ]=vol+");
+
+      document.getElementById("btn-robot-demo").addEventListener("click", async () => {
+        const text =
+          robot.memory.userName == null ? "我叫小明" : "我叫咩名？";
+        await labHost.stopListeningAndTalk({ userText: text, source: "robot-demo" });
+        log(`robot demo turn: ${text}`);
+      });
+
+      document.getElementById("btn-prosody-demo").addEventListener("click", async () => {
+        const marked =
+          robot.language === "en"
+            ? "Okay[pause], I will speak [slow]slowly then [fast][bright]cheer up!"
+            : "好呀[pause]，我慢慢[slow]講畀你聽。跟住[fast][bright]開心啲！";
+        await labHost.stopListeningAndTalk({
+          userText: "prosody demo",
+          forceReply: marked,
+          source: "prosody-demo",
+        });
+        log(`prosody demo reply markers in: ${marked}`);
+      });
+
+      document.getElementById("btn-expression-demo").addEventListener("click", () => {
+        runExpressionDemo();
+      });
+
+      document.getElementById("btn-gesture-demo").addEventListener("click", () => {
+        runGestureDemo();
+      });
+
+      document.getElementById("btn-motion-demo").addEventListener("click", () => {
+        runMotionDemo();
+      });
+
+      document.getElementById("btn-motion-vendor").addEventListener("click", () => {
+        const next = nextRobotMotionVendor(robot.motionVendor);
+        applyMotionVendor(next, { logChange: true, persist: true });
+      });
+
+      document.getElementById("btn-worker-demo").addEventListener("click", async () => {
+        const asrText =
+          worker.language === "en"
+            ? "<|en|><|NEUTRAL|><|Speech|>Hello there, how are you today?"
+            : "<|yue|><|HAPPY|><|Speech|>今日天氣好正呀，我好開心！";
+        ttsPlayer.flush();
+        const turn = await runWorkerRobotTurn({
+          worker,
+          robot,
+          text: asrText,
+          onChunk: (chunk) => {
+            void ttsPlayer.enqueue(chunk);
+          },
+        });
+        idle.setEmotion(turn.emotion?.emotion || "neutral", turn.emotion?.intensity || 0.5);
+        beginTalkGesture(turn.reply || turn.asr?.text || "", {
+          emotion: turn.emotion?.emotion,
+          source: "worker-demo",
+        });
+        await labHost.stopListeningAndTalk({
+          source: "worker-demo",
+          pipelineTurn: turn,
+          speakMs: Math.min(1200, Math.round((turn.tts?.durationSec || 0.6) * 1000)),
+        });
+        log(
+          `worker demo asr=${turn.asr.text} emo=${turn.emotion?.emotion} ttsChunks=${turn.tts?.chunkCount} lang=${turn.language}`,
+        );
+      });
+
+      document.getElementById("btn-barge").addEventListener("click", () => {
+        labHost.bargeIn({ reason: "barge-in", source: "button" });
+      });
+
+      document
+        .getElementById("btn-export-session")
+        .addEventListener("click", () => {
+          session.meta.turnMetrics = metricsRollup.toJSON();
+          session.meta.motionDispatch = motionDispatcher.toJSON();
+          session.meta.motionBridge = {
+            url: motionBridgeClient.bridgeUrl,
+            mode: motionBridgeClient.mode,
+            forwarded: motionDispatcher.bridgeForwarded,
+            errors: motionDispatcher.bridgeErrors,
+          };
+          const { archive, downloaded } = session.exportSessionArchive({
+            download: true,
+          });
+          session.recordTick("export", {
+            messages: archive.chat.messages.length,
+            ticks: archive.ticks.ticks.length,
+            turns: metricsRollup.length,
+            motionEvents: motionDispatcher.length,
+            downloaded,
+          });
+          log(
+            `exported session chat=${archive.chat.messages.length} ticks=${archive.ticks.ticks.length} turns=${metricsRollup.length} motion=${motionDispatcher.length} downloaded=${downloaded}`,
+          );
+        });
+
+      document
+        .getElementById("btn-export-metrics")
+        .addEventListener("click", () => {
+          const { payload, downloaded } = exportTurnMetricsRollup(metricsRollup, {
+            download: true,
+            meta: {
+              lab: "realtime-voice-lab",
+              dialect: dialectPref.mode,
+              vad: listenPref.sensitivity,
+            },
+          });
+          session.recordTick("export-metrics", {
+            turns: payload.summary?.count ?? metricsRollup.length,
+            downloaded,
+          });
+          log(
+            `exported metrics turns=${payload.summary?.count ?? 0} downloaded=${downloaded}`,
+          );
+        });
+
+      document.getElementById("btn-copy-url").addEventListener("click", async () => {
+        const share = buildLabShareUrl({
+          href: globalThis.location?.href,
+          workerUrl: workerConfig.workerUrl || undefined,
+          faceUrl: faceLiveConfig.url,
+          lang: dialectPref.mode,
+          vad: listenPref.sensitivity,
+          vol: ttsVolumePref.level,
+          motion: robot.motionVendor,
+          motionBridge: motionBridgeClient.bridgeUrl || undefined,
+        });
+        const result = await copyTextToClipboard(share);
+        session.recordTick("copy-url", { ok: result.ok, method: result.method });
+        log(
+          result.ok
+            ? `copied lab url (${result.method}) ${share}`
+            : `copy failed: ${result.error || "unavailable"} · ${share}`,
+        );
+      });
+
+      document
+        .getElementById("import-session-file")
+        .addEventListener("change", async (ev) => {
+          const file = ev.target.files?.[0];
+          if (!file) return;
+          try {
+            const archive = await session.importSessionArchive(file);
+            if (archive.meta?.turnMetrics) {
+              metricsRollup.fromJSON(archive.meta.turnMetrics);
+              rollupHudEl.textContent = metricsRollup.formatHud();
+            }
+            renderChat();
+            session.recordTick("import", {
+              name: file.name,
+              messages: archive.chat.messages.length,
+              turns: metricsRollup.length,
+              motionEvents: archive.meta?.motionDispatch?.length ?? 0,
+            });
+            log(
+              `imported ${file.name} chat=${archive.chat.messages.length} ticks=${archive.ticks.ticks.length} turns=${metricsRollup.length}` +
+                ` motion=${archive.meta?.motionDispatch?.length ?? 0}`,
+            );
+          } catch (err) {
+            log(`import failed: ${err?.message ?? err}`);
+          } finally {
+            ev.target.value = "";
+          }
+        });
+
+      document.getElementById("btn-clear").addEventListener("click", () => {
+        session.clear();
+        metricsRollup.clear();
+        robot.reset();
+        robot.clearMemory();
+        idle.reset();
+        idle.setEmotion("neutral", 0.42);
+        stopTalkGesture({ reset: true });
+        motionDispatcher.clear();
+        robot.stopMotion();
+        latencyHudEl.textContent = "—";
+        rollupHudEl.textContent = "—";
+        budgetHudEl.textContent = "—";
+        partialHudEl.textContent = "—";
+        expressionHudEl.textContent = "neutral";
+        gestureHudEl.textContent = "—";
+        motionHudEl.textContent = `${robot.motionVendor} · ready`;
+        resetMicMeterHud();
+        demoExpression = "neutral";
+        renderChat();
+        renderRobotHud();
+        statusEl.textContent = "cleared";
+        log("cleared chat, ticks, metrics rollup, and robot HUD");
+      });
+    </script>
+  </body>
+</html>
