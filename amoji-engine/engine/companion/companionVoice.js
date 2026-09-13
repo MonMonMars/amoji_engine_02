@@ -327,24 +327,48 @@ export function createCompanionVoice(opts = {}) {
 
       startLipSync(clean, utter);
 
-      return await new Promise((resolve) => {
-        utter.onend = () => {
-          speaking = false;
-          stopMouth();
-          resolve({
-            ok: true,
-            voice: voice?.name || null,
-            emotion,
-          });
-        };
-        utter.onerror = (ev) => {
-          speaking = false;
-          stopMouth();
-          opts.onError?.(ev?.error || "tts-error");
-          resolve({ ok: false, reason: ev?.error || "tts-error" });
-        };
-        synth.speak(utter);
-      });
+      const maxMs = Math.min(15000, 700 + clean.length * 55);
+      let settled = false;
+      const finishSpeak = (result) => {
+        if (settled) return result;
+        settled = true;
+        speaking = false;
+        stopMouth();
+        return result;
+      };
+      const spoken = await Promise.race([
+        new Promise((resolve) => {
+          utter.onend = () => {
+            resolve(
+              finishSpeak({
+                ok: true,
+                voice: voice?.name || null,
+                emotion,
+              }),
+            );
+          };
+          utter.onerror = (ev) => {
+            const reason = ev?.error || "tts-error";
+            if (reason !== "interrupted" && reason !== "canceled") {
+              opts.onError?.(reason);
+            }
+            resolve(finishSpeak({ ok: false, reason }));
+          };
+          try {
+            synth.speak(utter);
+          } catch (err) {
+            resolve(
+              finishSpeak({ ok: false, reason: err?.message || "tts-speak-failed" }),
+            );
+          }
+        }),
+        sleep(maxMs).then(() => {
+          if (settled) return { ok: true, voice: voice?.name || null, emotion };
+          synth?.cancel();
+          return finishSpeak({ ok: false, reason: "tts-timeout" });
+        }),
+      ]);
+      return spoken;
     } finally {
       resumeCapture();
     }

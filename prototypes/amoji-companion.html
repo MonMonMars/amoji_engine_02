@@ -848,7 +848,17 @@
           }
         },
         onError: (msg) => {
-          if (msg && msg !== "aborted" && msg !== "no-speech" && msg !== "network") {
+          const soft = new Set([
+            "aborted",
+            "no-speech",
+            "network",
+            "not-allowed",
+            "service-not-allowed",
+            "interrupted",
+            "canceled",
+            "tts-timeout",
+          ]);
+          if (msg && !soft.has(msg)) {
             addBubble("system", `Mic/TTS: ${msg}`);
           }
           syncMicBtn();
@@ -959,29 +969,41 @@
       );
       avatar.setEmotion("happy");
       setEmotionPill("happy");
-      // Speak only after a user gesture (browser autoplay policy)
-      const greetOnce = () => {
+      // Optional greeting on canvas tap — never blocks typing in the composer
+      let greeted = false;
+      const greetOnce = async () => {
+        if (greeted) return;
+        greeted = true;
         status.speaking();
-        void voice
-          .speak(
-            "嗨～我係 Amoji。撳麥克風保持開啟，你講完停低就會答你，再繼續聽。",
-            "happy",
-          )
-          .then(() => {
-            if (autoMic && voice.supportsMic && !voice.micOn) {
+        const result = await voice.speak(
+          "嗨～我係 Amoji。撳麥克風保持開啟，你講完停低就會答你，再繼續聽。",
+          "happy",
+        );
+        if (!result?.ok) {
+          addBubble(
+            "system",
+            "Speaker unavailable in this browser — type below to chat.",
+          );
+          status.idle();
+          return;
+        }
+        if (autoMic && voice.supportsMic && !voice.micOn) {
+          try {
+            const perm = await navigator.permissions?.query?.({ name: "microphone" });
+            if (perm?.state === "granted") {
               voice.startMic();
               addBubble("system", "Mic on automatically — speak anytime.");
               status.listening();
               syncMicBtn();
-            } else {
-              status.idle();
+              return;
             }
-          });
-        form.removeEventListener("pointerdown", greetOnce);
-        input.removeEventListener("focus", greetOnce);
+          } catch {
+            /* permissions API unavailable */
+          }
+        }
+        status.idle();
       };
-      form.addEventListener("pointerdown", greetOnce, { once: true });
-      input.addEventListener("focus", greetOnce, { once: true });
+      canvas.addEventListener("pointerdown", () => void greetOnce(), { once: true });
 
       btnSettings.addEventListener("click", () => {
         settings.classList.toggle("open");
