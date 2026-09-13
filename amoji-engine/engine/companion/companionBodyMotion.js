@@ -182,6 +182,7 @@ export function createCompanionBodyMotion(humanoid) {
   let gesturePhase = 0;
   let gestureDuration = 1;
   let talking = false;
+  let talkEnergy = 0;
   let t0 = performance.now();
 
   const bone = (name) => humanoid?.getNormalizedBoneNode?.(name) || null;
@@ -210,7 +211,13 @@ export function createCompanionBodyMotion(humanoid) {
 
   const setTalking = (on) => {
     talking = Boolean(on);
+    if (!talking) talkEnergy = 0;
     return talking;
+  };
+
+  const setTalkEnergy = (v) => {
+    talkEnergy = Math.max(0, Math.min(1, Number(v) || 0));
+    return talkEnergy;
   };
 
   const applyPose = (pose, intensity = 1) => {
@@ -273,15 +280,47 @@ export function createCompanionBodyMotion(humanoid) {
     /** @type {Record<string, number>} */
     let pose = { ...base };
 
+    const energy = talking ? Math.max(0.25, talkEnergy) : 0;
+
     // Idle life — subtle sway like Grok Ani
     if (!talking) {
       pose.leanY = (pose.leanY || 0) + Math.sin(elapsed * 0.9) * 0.025;
       pose.headZ = (pose.headZ || 0) + Math.sin(elapsed * 1.1 + 0.5) * 0.02;
       pose.spineX = (pose.spineX || 0) + Math.sin(elapsed * 1.4) * 0.008;
     } else {
-      // Talking bounce — chest/head nod
-      pose.headX = (pose.headX || 0) + Math.sin(elapsed * 6.5) * 0.015;
-      pose.leanY = (pose.leanY || 0) + Math.sin(elapsed * 5.2) * 0.012;
+      const beat = Math.sin(elapsed * 7.2);
+      const beat2 = Math.sin(elapsed * 5.4 + 0.6);
+      pose.headX = (pose.headX || 0) + beat * 0.022 * energy;
+      pose.leanY = (pose.leanY || 0) + beat2 * 0.018 * energy;
+      pose.armLiftL = (pose.armLiftL || 0) + beat * 0.14 * energy;
+      pose.armLiftR = (pose.armLiftR || 0) + beat2 * 0.12 * energy;
+
+      switch (emotion) {
+        case "happy":
+          pose.headZ = (pose.headZ || 0) + beat2 * 0.04 * energy;
+          pose.hipZ = (pose.hipZ || 0) - beat * 0.02 * energy;
+          break;
+        case "thinking":
+          pose.armLiftL = Math.max(pose.armLiftL || 0, 0.55 + beat * 0.08 * energy);
+          pose.headX = (pose.headX || 0) + 0.04;
+          break;
+        case "sad":
+          pose.headX = (pose.headX || 0) + 0.05;
+          pose.armLiftL = (pose.armLiftL || 0) * 0.6;
+          pose.armLiftR = (pose.armLiftR || 0) * 0.6;
+          break;
+        case "surprised":
+          pose.armLiftL = (pose.armLiftL || 0) + 0.2 * energy;
+          pose.armLiftR = (pose.armLiftR || 0) + 0.2 * energy;
+          pose.headX = (pose.headX || 0) - 0.04 * energy;
+          break;
+        case "angry":
+          pose.headZ = (pose.headZ || 0) - beat * 0.03 * energy;
+          pose.spineX = (pose.spineX || 0) + 0.02 * energy;
+          break;
+        default:
+          break;
+      }
     }
 
     if (activeGesture) {
@@ -306,6 +345,7 @@ export function createCompanionBodyMotion(humanoid) {
     playGesture,
     playGestureForText,
     setTalking,
+    setTalkEnergy,
     update,
     get emotion() {
       return emotion;

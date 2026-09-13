@@ -205,6 +205,7 @@ export async function createGltfAvatar(opts) {
   let emotion = "neutral";
   let mouthOpen = 0;
   let talking = false;
+  let talkEnergy = 0;
   /** @type {string | null} */
   let activeGesture = null;
   let gesturePhase = 0;
@@ -274,10 +275,16 @@ export async function createGltfAvatar(opts) {
 
   const setTalking = (on) => {
     talking = Boolean(on);
+    if (!talking) talkEnergy = 0;
     if (idleAction) {
       idleAction.setEffectiveTimeScale(talking ? 1.15 : 0.85);
     }
     return talking;
+  };
+
+  const setTalkEnergy = (v) => {
+    talkEnergy = Math.max(0, Math.min(1, Number(v) || 0));
+    return talkEnergy;
   };
 
   let raf = 0;
@@ -324,10 +331,12 @@ export async function createGltfAvatar(opts) {
       if (gesturePhase >= 1) activeGesture = null;
     }
 
+    const energy = talking ? Math.max(0.25, talkEnergy) : 0;
     const sway = talking
-      ? Math.sin((now - t0) * 0.005) * 0.015
+      ? Math.sin((now - t0) * 0.005) * 0.015 * energy
       : Math.sin((now - t0) * 0.0009) * 0.025;
-    model.rotation.x = leanX + (talking ? Math.sin((now - t0) * 0.006) * 0.012 : 0);
+    model.rotation.x =
+      leanX + (talking ? Math.sin((now - t0) * 0.006) * 0.02 * energy : 0);
     model.rotation.z = leanZ + sway;
     model.rotation.y = leanY + Math.sin((now - t0) * 0.0005) * 0.02;
 
@@ -363,6 +372,7 @@ export async function createGltfAvatar(opts) {
     setEmotion,
     setMouthOpen,
     setTalking,
+    setTalkEnergy,
     playGesture,
     playGestureForText,
     get emotion() {

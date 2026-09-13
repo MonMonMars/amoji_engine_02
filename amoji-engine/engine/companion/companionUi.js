@@ -36,8 +36,8 @@ export function createLoadingOverlay(root) {
   el.innerHTML = `
     <div class="avatar-loading-card">
       <div class="avatar-loading-ring" aria-hidden="true"></div>
-      <p class="avatar-loading-title">Loading Amoji</p>
-      <p class="avatar-loading-sub">VRM anime girl · expressions · spring bones</p>
+      <p class="avatar-loading-title">Amoji</p>
+      <p class="avatar-loading-sub">Loading anime companion · expressions · body motion</p>
     </div>
   `;
   root.appendChild(el);

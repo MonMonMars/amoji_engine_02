@@ -96,6 +96,29 @@
         opacity: 0;
       }
 
+      .start-talking {
+        position: absolute;
+        left: 50%;
+        bottom: 28%;
+        transform: translateX(-50%);
+        z-index: 7;
+        pointer-events: none;
+        padding: 0.65rem 1.25rem;
+        border-radius: 999px;
+        background: rgba(10, 14, 22, 0.72);
+        border: 1px solid var(--line);
+        backdrop-filter: blur(14px);
+        font-size: 0.92rem;
+        color: var(--ink);
+        opacity: 1;
+        transition: opacity 0.5s ease, transform 0.5s ease;
+      }
+
+      .start-talking.hide {
+        opacity: 0;
+        transform: translateX(-50%) translateY(8px);
+      }
+
       .topbar {
         position: absolute;
         top: 0;
@@ -586,6 +609,7 @@
       <div class="atmosphere" aria-hidden="true"></div>
       <canvas id="avatar-canvas" aria-label="Amoji companion — drag to orbit"></canvas>
       <div class="orbit-hint" id="orbit-hint">Drag to orbit · Scroll to zoom</div>
+      <div class="start-talking" id="start-talking">Start talking…</div>
 
       <header class="topbar">
         <div class="brand">Amoji <span>Live</span></div>
@@ -654,7 +678,10 @@
     <script type="module">
       import { createCompanionAvatar } from "../amoji-engine/engine/companion/createAvatar.js";
       import { createCompanionChat } from "../amoji-engine/engine/companion/chatLlm.js";
-      import { createCompanionVoice } from "../amoji-engine/engine/companion/companionVoice.js";
+      import {
+        createCompanionVoice,
+        femaleVoiceLabel,
+      } from "../amoji-engine/engine/companion/companionVoice.js";
       import {
         createCompanionStatus,
         createLoadingOverlay,
@@ -686,11 +713,9 @@
         localStorage.getItem("amoji.companion.vrmUrl") ||
         "";
       const avatarPrefer =
-        params.get("avatar") === "vrm"
-          ? "vrm"
-          : params.get("avatar") === "gltf"
-            ? "gltf"
-            : "auto";
+        params.get("avatar") === "gltf"
+          ? "gltf"
+          : "vrm";
       const stored = {
         url: localStorage.getItem("amoji.companion.apiUrl") || params.get("llm") || "",
         key: localStorage.getItem("amoji.companion.apiKey") || "",
@@ -828,6 +853,7 @@
           if (shape && avatar.setMouthShape) avatar.setMouthShape(shape);
           else if (!shape && avatar.setMouthShape) avatar.setMouthShape(null);
           avatar.setMouthOpen(open);
+          avatar.setTalkEnergy?.(open);
         },
         onTalking: (on) => avatar.setTalking(on),
         onMicText: (text, isFinal) => {
@@ -949,9 +975,28 @@
         }
       };
 
-      void voice.ensureVoices().then((v) => {
-        setVoicePill(v?.name?.split(" ")[0] || (voice.supportsSpeak ? "female" : "off"));
-      });
+      const GREETING =
+        "嗨呀～我係 Amoji！同我傾偈啦，我會用粵語答你，仲會做表情同身體動作㗎。";
+      const startTalkingEl = document.getElementById("start-talking");
+
+      const startSession = async () => {
+        const v = await voice.ensureVoices();
+        setVoicePill(femaleVoiceLabel(v) || (voice.supportsSpeak ? "女聲" : "off"));
+        avatar.setEmotion("happy");
+        setEmotionPill("happy");
+        avatar.playGestureForText?.(GREETING);
+        startTalkingEl?.classList.add("hide");
+        status.speaking();
+        await voice.speak(GREETING, "happy");
+        if (autoMic && voice.supportsMic) {
+          voice.startMic();
+          syncMicBtn();
+          status.listening();
+          input.placeholder = "Listening… speak, pause → she replies, then listens again";
+        } else {
+          status.idle();
+        }
+      };
 
       btnMic.disabled = !voice.supportsMic;
       syncSpeakerBtn();
@@ -969,48 +1014,10 @@
         "system",
         `Grok Ani 風格 · ${avatarLabel} · 粵語傾偈 · 表情同身體動作 · 🎤 連續對話 · ⚙ 設定 LLM`,
       );
-      addBubble(
-        "assistant",
-        "嗨呀～我係 Amoji！同我傾偈啦，我會用粵語答你，仲會做表情同手勢㗎。",
-      );
+      addBubble("assistant", GREETING);
       avatar.setEmotion("happy");
       setEmotionPill("happy");
-      // Optional greeting on canvas tap — never blocks typing in the composer
-      let greeted = false;
-      const greetOnce = async () => {
-        if (greeted) return;
-        greeted = true;
-        status.speaking();
-        avatar.playGestureForText?.("嗨呀～開心見到你！");
-        const result = await voice.speak(
-          "嗨呀～我係 Amoji！同我傾偈啦，我會用粵語答你，仲會做表情同手勢㗎。",
-          "happy",
-        );
-        if (!result?.ok) {
-          addBubble(
-            "system",
-            "Speaker unavailable in this browser — type below to chat.",
-          );
-          status.idle();
-          return;
-        }
-        if (autoMic && voice.supportsMic && !voice.micOn) {
-          try {
-            const perm = await navigator.permissions?.query?.({ name: "microphone" });
-            if (perm?.state === "granted") {
-              voice.startMic();
-              addBubble("system", "Mic on automatically — speak anytime.");
-              status.listening();
-              syncMicBtn();
-              return;
-            }
-          } catch {
-            /* permissions API unavailable */
-          }
-        }
-        status.idle();
-      };
-      canvas.addEventListener("pointerdown", () => void greetOnce(), { once: true });
+      setTimeout(() => void startSession(), 600);
 
       btnSettings.addEventListener("click", () => {
         settings.classList.toggle("open");
