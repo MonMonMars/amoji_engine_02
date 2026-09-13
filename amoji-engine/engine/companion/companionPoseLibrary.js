@@ -1,0 +1,130 @@
+/**
+ * VRM companion pose library — arms-down rest/listen, talkGestures for speech only.
+ */
+import {
+  sampleTalkGesture,
+  TALK_GESTURE_STYLES,
+} from "../face/talkGestures.js";
+import { talkGesturePoseToBody } from "./companionTalkMotionBridge.js";
+
+export const COMPANION_POSE_LIBRARY_SCHEMA = "amoji.companionPoseLibrary.v1";
+
+/** Natural standing — arms relaxed at sides (A-pose VRM). */
+export const REST_POSE = Object.freeze({
+  armLiftL: 0.02,
+  armLiftR: 0.02,
+  forearmL: 0,
+  forearmR: 0,
+  headX: 0,
+  headZ: 0,
+  spineX: 0.01,
+  chestX: -0.01,
+  hipZ: 0,
+  leanY: 0,
+});
+
+/** Mic on / waiting — attentive but arms stay down (humans don't raise arms to listen). */
+export const LISTENING_POSE = Object.freeze({
+  ...REST_POSE,
+  headX: -0.025,
+  headZ: 0.035,
+  leanY: 0.025,
+  spineX: 0.012,
+});
+
+/** Face-only emotion offsets layered on rest/listen — no arm lifts. */
+export const EMOTION_FACE_OFFSET = Object.freeze({
+  neutral: { headX: 0, headZ: 0, spineX: 0 },
+  happy: { headX: -0.02, headZ: 0.025, spineX: 0.008, hipZ: -0.008 },
+  thinking: { headX: 0.035, headZ: -0.04, spineX: 0.015 },
+  sad: { headX: 0.05, headZ: 0.03, spineX: 0.025, chestX: 0.02 },
+  surprised: { headX: -0.06, headZ: 0, spineX: -0.02, chestX: -0.015 },
+  angry: { headX: 0.03, headZ: -0.035, spineX: 0.02, chestX: 0.015 },
+});
+
+/** One-shot gesture length (seconds) — from talkGestures styles. */
+export const GESTURE_DURATION_SEC = Object.freeze({
+  explain: 2.4,
+  point: 1.6,
+  emphasize: 1.5,
+  shrug: 1.4,
+  celebrate: 1.6,
+  count: 1.8,
+  wave: 1.8,
+  question: 1.5,
+  soft: 2,
+  thinking: 2.2,
+  nod: 0.9,
+  lean: 1.6,
+});
+
+/** Head-only micro-gestures (no arm overlay). */
+export const HEAD_GESTURE_NOD = Object.freeze({
+  duration: 0.9,
+  sample(phase) {
+    const nod = Math.sin(phase * Math.PI * 2);
+    return { headX: -0.1 * nod, leanY: nod * 0.015 };
+  },
+});
+
+/**
+ * @param {string} style
+ * @returns {boolean}
+ */
+export function isTalkGestureStyle(style) {
+  return TALK_GESTURE_STYLES.includes(String(style || ""));
+}
+
+/**
+ * Sample a talk-gesture pose at time and map to VRM body channels.
+ * @param {string} style
+ * @param {number} timeSec
+ * @param {{ emotion?: string, speechEnergy?: number, intensity?: number }} [opts]
+ */
+export function sampleVrmTalkPose(style, timeSec, opts = {}) {
+  const key = isTalkGestureStyle(style) ? style : "explain";
+  const sample = sampleTalkGesture(timeSec, {
+    style: key,
+    emotion: opts.emotion || "neutral",
+    speechEnergy: opts.speechEnergy ?? 0.45,
+    intensity: opts.intensity ?? 0.58,
+  });
+  return talkGesturePoseToBody(sample.pose);
+}
+
+/**
+ * @param {Record<string, number>} base
+ * @param {Record<string, number>} overlay
+ * @param {number} weight
+ */
+export function mergePoses(base, overlay, weight) {
+  const w = Math.max(0, Math.min(1, Number(weight) || 0));
+  if (w <= 0) return { ...base };
+  /** @type {Record<string, number>} */
+  const out = { ...base };
+  for (const [key, val] of Object.entries(overlay)) {
+    const a = Number(out[key] ?? 0);
+    const b = Number(val ?? 0);
+    out[key] = a + (b - a) * w;
+  }
+  return out;
+}
+
+/**
+ * Build idle / listen / emotion base pose (arms always from rest unless overridden later).
+ * @param {{ listening?: boolean, emotion?: string }} opts
+ */
+export function buildBasePose(opts = {}) {
+  const emotion = String(opts.emotion || "neutral").toLowerCase();
+  const face =
+    EMOTION_FACE_OFFSET[emotion] || EMOTION_FACE_OFFSET.neutral;
+  const base = opts.listening ? { ...LISTENING_POSE } : { ...REST_POSE };
+  /** @type {Record<string, number>} */
+  const out = { ...base };
+  for (const [key, val] of Object.entries(face)) {
+    if (Number(val) !== 0) {
+      out[key] = (out[key] ?? 0) + Number(val);
+    }
+  }
+  return out;
+}

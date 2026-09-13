@@ -238,6 +238,8 @@ export async function createVrmAvatar(opts) {
     return emotion;
   };
 
+  const setListening = (on) => bodyMotion.setListening(on);
+
   const playGesture = (style) => bodyMotion.playGesture(style);
   const playGestureForText = (text) =>
     bodyMotion.playGestureForText(text, { emotion });
@@ -380,6 +382,7 @@ export async function createVrmAvatar(opts) {
     kind: "vrm",
     vrm,
     setEmotion,
+    setListening,
     setMouthOpen,
     setMouthShape,
     setTalking,
