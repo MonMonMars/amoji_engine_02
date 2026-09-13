@@ -99,6 +99,7 @@ export function femaleVoiceLabel(voice) {
  *   onMicText?: (text: string, isFinal: boolean) => void,
  *   onMicState?: (on: boolean) => void,
  *   onError?: (msg: string) => void,
+ *   onSpeakChunk?: (chunk: string, charIndex: number) => void,
  *   lang?: string,
  * }} [opts]
  */
@@ -173,9 +174,11 @@ export function createCompanionVoice(opts = {}) {
       utter.onboundary = (ev) => {
         boundaryWorks = true;
         const idx = ev.charIndex ?? 0;
-        const slice = clean.slice(idx, idx + (ev.charLength || 1));
+        const len = ev.charLength || 1;
+        const slice = clean.slice(idx, idx + len);
         const ch = slice[0] || clean[idx] || " ";
         emitViseme(ch);
+        if (slice.trim()) opts.onSpeakChunk?.(slice, idx);
       };
     }
 
@@ -188,7 +191,12 @@ export function createCompanionVoice(opts = {}) {
         opts.onMouth?.(0.06, "ee");
         return;
       }
-      emitViseme(clean[i]);
+      const ch = clean[i];
+      emitViseme(ch);
+      if (i % 4 === 0 && ch.trim()) {
+        const chunk = clean.slice(Math.max(0, i - 2), i + 3);
+        opts.onSpeakChunk?.(chunk, i);
+      }
       i += 1;
     }, msPerChar);
 
