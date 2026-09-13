@@ -406,7 +406,8 @@
       {
         "imports": {
           "three": "/amoji-engine/vendor/three.module.js",
-          "three/addons/": "/amoji-engine/vendor/three/addons/"
+          "three/addons/": "/amoji-engine/vendor/three/addons/",
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js"
         }
       }
     </script>
@@ -495,6 +496,12 @@
       const btnMic = document.getElementById("btn-mic");
 
       const params = new URLSearchParams(location.search);
+      const avatarModelUrl =
+        params.get("vrm") ||
+        params.get("model3d") ||
+        localStorage.getItem("amoji.companion.vrmUrl") ||
+        "";
+      const avatarPrefer = params.get("avatar") === "gltf" ? "gltf" : "auto";
       const stored = {
         url: localStorage.getItem("amoji.companion.apiUrl") || params.get("llm") || "",
         key: localStorage.getItem("amoji.companion.apiKey") || "",
@@ -508,7 +515,11 @@
       document.getElementById("api-key").value = stored.key;
       document.getElementById("api-model").value = stored.model;
 
-      const { avatar, kind: avatarKind } = await createCompanionAvatar({ canvas });
+      const { avatar, kind: avatarKind } = await createCompanionAvatar({
+        canvas,
+        modelUrl: avatarModelUrl || undefined,
+        prefer: avatarPrefer,
+      });
       const chat = createCompanionChat({
         apiUrl: stored.url || null,
         apiKey: stored.key || null,
@@ -656,15 +667,17 @@
       syncSpeakerBtn();
       syncMicBtn();
 
-      addBubble(
-        "system",
-        `Grok-style companion · ${
-          avatarKind === "gltf3d"
+      const avatarLabel =
+        avatarKind === "vrm3d"
+          ? "VRM anime girl"
+          : avatarKind === "gltf3d"
             ? "HD female 3D"
             : avatarKind === "webgl3d"
               ? "3D female"
-              : "2D female"
-        } · drag to orbit · 🎤 continuous talk (reply on each pause) · 🔊 speaker`,
+              : "2D female";
+      addBubble(
+        "system",
+        `Grok-style companion · ${avatarLabel} · drag to orbit · 🎤 continuous talk (reply on each pause) · 🔊 speaker · real LLM via ⚙ or /api/chat`,
       );
       addBubble(
         "assistant",
