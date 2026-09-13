@@ -563,6 +563,23 @@
         cursor: pointer;
       }
 
+      .settings .btn-secondary {
+        background: rgba(255, 255, 255, 0.08);
+        color: var(--ink);
+        border: 1px solid var(--line);
+      }
+
+      .settings-hint {
+        margin: 0;
+        font-size: 0.68rem;
+        color: var(--muted);
+        line-height: 1.45;
+      }
+
+      .settings-hint code {
+        font-size: 0.66rem;
+      }
+
       .gear {
         pointer-events: auto;
         border: 1px solid var(--line);
@@ -608,7 +625,7 @@
     <div class="stage">
       <div class="atmosphere" aria-hidden="true"></div>
       <canvas id="avatar-canvas" aria-label="Amoji companion — drag to orbit"></canvas>
-      <div class="orbit-hint" id="orbit-hint">Drag to orbit · Scroll to zoom</div>
+      <div class="orbit-hint" id="orbit-hint">Drag to orbit · Tap character · Scroll to zoom</div>
       <div class="start-talking" id="start-talking">Start talking…</div>
 
       <header class="topbar">
@@ -625,17 +642,23 @@
 
       <div class="settings" id="settings">
         <label>
-          Online API base (OpenAI-compatible)
-          <input id="api-url" placeholder="https://api.openai.com/v1 or leave blank for local" />
-        </label>
-        <label>
-          API key (stored only in this browser)
-          <input id="api-key" type="password" placeholder="sk-… optional" autocomplete="off" />
+          LLM base URL (OpenAI-compatible)
+          <input id="api-url" placeholder="http://127.0.0.1:11434/v1 or leave blank for lab proxy" />
         </label>
         <label>
           Model
-          <input id="api-model" placeholder="gpt-4o" />
+          <input id="api-model" placeholder="llama3.2" />
         </label>
+        <label>
+          API key (optional — Ollama needs none)
+          <input id="api-key" type="password" placeholder="sk-… only for OpenAI/Groq" autocomplete="off" />
+        </label>
+        <p class="settings-hint">
+          <strong>Ollama (recommended):</strong> on your PC run <code>ollama serve</code> then
+          <code>ollama pull llama3.2</code>. Leave URL blank when using <code>npm run lab</code> — the server auto-detects Ollama at <code>127.0.0.1:11434</code>.
+        </p>
+        <button type="button" class="btn-secondary" id="btn-list-ollama">List Ollama models</button>
+        <p class="settings-hint" id="ollama-model-list"></p>
         <button type="button" id="btn-save-llm">Save LLM</button>
       </div>
 
@@ -717,17 +740,30 @@
           ? "gltf"
           : "vrm";
       const stored = {
-        url: localStorage.getItem("amoji.companion.apiUrl") || params.get("llm") || "",
+        url:
+          localStorage.getItem("amoji.companion.apiUrl") ||
+          params.get("llm") ||
+          "",
         key: localStorage.getItem("amoji.companion.apiKey") || "",
         model:
           localStorage.getItem("amoji.companion.model") ||
           params.get("model") ||
-          "gpt-4o",
+          "llama3.2",
       };
 
       document.getElementById("api-url").value = stored.url;
       document.getElementById("api-key").value = stored.key;
       document.getElementById("api-model").value = stored.model;
+
+      const tapLines = [
+        "喂～你戳我呀？好開心㗎！",
+        "嘿嘿，見到我啦？有咩想傾？",
+        "哎呀～唔好撩我啦，會面紅㗎！",
+        "你點我？我喺度聽緊你㗎～",
+      ];
+      let lastTapAt = 0;
+      /** @type {(() => void) | null} */
+      let handleCharacterTap = null;
 
       let avatar;
       let avatarKind = "loading";
@@ -736,6 +772,7 @@
           canvas,
           modelUrl: avatarModelUrl || undefined,
           prefer: avatarPrefer,
+          onCharacterTap: () => handleCharacterTap?.(),
         });
         avatar = loaded.avatar;
         avatarKind = loaded.kind;
@@ -789,10 +826,12 @@
       })
         .then((r) => r.json())
         .then((data) => {
-          if (data?.mode === "online") {
+          if (data?.mode === "ollama") {
+            setModePill(`ollama · ${data.model || "llama3.2"}`);
+          } else if (data?.mode === "online") {
             setModePill(`online · ${data.model || "gpt-4o"}`);
-          } else if (data?.mode === "local-fallback") {
-            setModePill("basic brain");
+          } else if (data?.mode === "local" || data?.mode === "local-fallback") {
+            setModePill("basic brain — start Ollama");
           }
         })
         .catch(() => {});
@@ -895,6 +934,22 @@
           syncMicBtn();
         },
       });
+
+      handleCharacterTap = () => {
+        const now = Date.now();
+        if (now - lastTapAt < 1400 || busy) return;
+        lastTapAt = now;
+        avatar.reactToTap?.();
+        const line = tapLines[Math.floor(Math.random() * tapLines.length)];
+        addBubble("assistant", line);
+        avatar.setEmotion("happy");
+        setEmotionPill("happy");
+        avatar.playGestureForText?.(line);
+        status.speaking();
+        void voice.speak(line, "happy").finally(() => {
+          if (!busy && !voice.micOn) status.idle();
+        });
+      };
 
       /** @type {string[]} */
       const micQueue = [];
@@ -1026,7 +1081,7 @@
       document.getElementById("btn-save-llm").addEventListener("click", () => {
         const url = document.getElementById("api-url").value.trim();
         const key = document.getElementById("api-key").value.trim();
-        const model = document.getElementById("api-model").value.trim() || "gpt-4o";
+        const model = document.getElementById("api-model").value.trim() || "llama3.2";
         localStorage.setItem("amoji.companion.apiUrl", url);
         localStorage.setItem("amoji.companion.apiKey", key);
         localStorage.setItem("amoji.companion.model", model);
@@ -1035,10 +1090,47 @@
         settings.classList.remove("open");
         addBubble(
           "system",
-          info.mode === "online"
-            ? `Online LLM ready · ${model}`
-            : "Using local / proxy companion brain",
+          info.mode === "ollama"
+            ? `Ollama direct · ${model}`
+            : info.mode === "online"
+              ? `Online LLM ready · ${model}`
+              : "Lab proxy / local brain — run ollama serve for smart replies",
         );
+        void fetch("/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: "__ping__", history: [] }),
+        })
+          .then((r) => r.json())
+          .then((data) => {
+            if (data?.mode === "ollama") {
+              setModePill(`ollama · ${data.model || model}`);
+            }
+          })
+          .catch(() => {});
+      });
+
+      document.getElementById("btn-list-ollama").addEventListener("click", async () => {
+        const el = document.getElementById("ollama-model-list");
+        el.textContent = "Checking Ollama…";
+        try {
+          const r = await fetch("/api/ollama/tags");
+          const data = await r.json();
+          if (data?.models?.length) {
+            el.textContent = `Found: ${data.models.join(", ")}`;
+            return;
+          }
+          const direct = await fetch("http://127.0.0.1:11434/api/tags");
+          if (direct.ok) {
+            const tags = await direct.json();
+            const names = (tags.models || []).map((m) => m.name).join(", ");
+            el.textContent = names || "No models — run: ollama pull llama3.2";
+            return;
+          }
+          el.textContent = "Ollama not running — start ollama serve on your PC";
+        } catch {
+          el.textContent = "Cannot reach Ollama — run ollama serve (e.g. D:\\Ollama)";
+        }
       });
 
       btnSpeaker.addEventListener("click", () => {
