@@ -2,7 +2,7 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "version": 2,
   "name": "amoji-companion",
-  "installCommand": "cd amoji-engine && npm install",
+  "installCommand": "npm install && cd amoji-engine && npm install",
   "rewrites": [
     { "source": "/api/chat", "destination": "/api/chat" },
     { "source": "/api/tts", "destination": "/api/tts" },
