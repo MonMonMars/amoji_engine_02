@@ -288,6 +288,9 @@ export async function createVrmAvatar(opts) {
   };
 
   const setTalkEnergy = (v) => bodyMotion.setTalkEnergy(v);
+  const setTalkStyle = (style) => bodyMotion.setTalkStyle(style);
+  const reactToSpeechChunk = (chunk, opts) =>
+    bodyMotion.reactToSpeechChunk(chunk, opts);
 
   let raf = 0;
   const frame = () => {
@@ -381,6 +384,8 @@ export async function createVrmAvatar(opts) {
     setMouthShape,
     setTalking,
     setTalkEnergy,
+    setTalkStyle,
+    reactToSpeechChunk,
     playGesture,
     playGestureForText,
     reactToTap,

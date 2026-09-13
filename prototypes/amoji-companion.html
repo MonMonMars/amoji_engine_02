@@ -394,6 +394,77 @@
         max-width: 100%;
       }
 
+      .llm-switcher-wrap {
+        pointer-events: auto;
+        padding: 0 1rem 0.35rem;
+        width: min(720px, 100%);
+        margin: 0 auto;
+      }
+
+      .llm-switcher {
+        display: flex;
+        align-items: center;
+        gap: 0.45rem;
+        padding: 0.35rem 0.5rem;
+        border-radius: 1rem;
+        background: rgba(10, 14, 22, 0.62);
+        border: 1px solid var(--line);
+        backdrop-filter: blur(14px);
+      }
+
+      .llm-switcher-label {
+        flex-shrink: 0;
+        font-size: 0.68rem;
+        font-weight: 600;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        padding-left: 0.25rem;
+      }
+
+      .llm-switcher-track {
+        display: flex;
+        gap: 0.35rem;
+        overflow-x: auto;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+        padding-bottom: 1px;
+      }
+
+      .llm-switcher-track::-webkit-scrollbar {
+        display: none;
+      }
+
+      .llm-chip {
+        flex-shrink: 0;
+        border: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.05);
+        color: var(--muted);
+        font: inherit;
+        font-size: 0.72rem;
+        font-weight: 600;
+        padding: 0.35rem 0.62rem;
+        border-radius: 999px;
+        cursor: pointer;
+        transition:
+          background 0.15s ease,
+          border-color 0.15s ease,
+          color 0.15s ease,
+          transform 0.15s ease;
+      }
+
+      .llm-chip:hover {
+        color: var(--ink);
+        background: rgba(255, 255, 255, 0.1);
+        transform: translateY(-1px);
+      }
+
+      .llm-chip.active {
+        color: #061018;
+        background: linear-gradient(135deg, var(--accent), #5bb8d6);
+        border-color: transparent;
+      }
+
       .composer-wrap {
         pointer-events: auto;
         padding: 0 1rem max(1rem, env(safe-area-inset-bottom));
@@ -667,6 +738,7 @@
           <div class="transcript" id="transcript" aria-live="polite"></div>
         </div>
         <div class="composer-wrap">
+          <div class="llm-switcher-wrap" id="llm-switcher-wrap"></div>
           <form class="composer" id="composer">
             <button
               type="button"
@@ -710,6 +782,8 @@
         createLoadingOverlay,
         createInterimBubble,
       } from "../amoji-engine/engine/companion/companionUi.js";
+      import { createCompanionLlmSwitcher } from "../amoji-engine/engine/companion/companionLlmUi.js";
+      import { saveProviderApiKey } from "../amoji-engine/engine/companion/companionLlmProviders.js";
 
       const stage = document.querySelector(".stage");
       const canvas = document.getElementById("avatar-canvas");
@@ -818,23 +892,6 @@
       });
       status.idle();
       setModePill(chat.mode);
-      // Probe lab proxy for server-side LLM (OPENAI_API_KEY on lab server)
-      fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: "__ping__", history: [] }),
-      })
-        .then((r) => r.json())
-        .then((data) => {
-          if (data?.mode === "ollama") {
-            setModePill(`ollama · ${data.model || "llama3.2"}`);
-          } else if (data?.mode === "online") {
-            setModePill(`online · ${data.model || "gpt-4o"}`);
-          } else if (data?.mode === "local" || data?.mode === "local-fallback") {
-            setModePill("basic brain — start Ollama");
-          }
-        })
-        .catch(() => {});
 
       const interim = createInterimBubble(transcript);
 
@@ -886,6 +943,8 @@
         btnSpeaker.textContent = voice.speakerOn ? "🔊" : "🔇";
       };
 
+      let speakEmotion = "neutral";
+
       const voice = createCompanionVoice({
         lang: "zh-HK",
         onMouth: (open, shape) => {
@@ -895,6 +954,9 @@
           avatar.setTalkEnergy?.(open);
         },
         onTalking: (on) => avatar.setTalking(on),
+        onSpeakChunk: (chunk) => {
+          avatar.reactToSpeechChunk?.(chunk, { emotion: speakEmotion });
+        },
         onMicText: (text, isFinal) => {
           if (isFinal) {
             interim.clear();
@@ -945,6 +1007,7 @@
         avatar.setEmotion("happy");
         setEmotionPill("happy");
         avatar.playGestureForText?.(line);
+        speakEmotion = "happy";
         status.speaking();
         void voice.speak(line, "happy").finally(() => {
           if (!busy && !voice.micOn) status.idle();
@@ -998,6 +1061,10 @@
           avatar.setEmotion(emotion);
           setEmotionPill(emotion);
           avatar.playGestureForText?.(reply);
+          avatar.setTalkStyle?.(
+            reply.includes("?") || reply.includes("？") ? "question" : "explain",
+          );
+          speakEmotion = emotion;
           status.speaking();
           await voice.speak(reply, emotion);
         } catch (err) {
@@ -1041,6 +1108,7 @@
         setEmotionPill("happy");
         avatar.playGestureForText?.(GREETING);
         startTalkingEl?.classList.add("hide");
+        speakEmotion = "happy";
         status.speaking();
         await voice.speak(GREETING, "happy");
         if (autoMic && voice.supportsMic) {
@@ -1065,9 +1133,16 @@
             : avatarKind === "webgl3d"
               ? "3D female"
               : "2D female";
+      createCompanionLlmSwitcher({
+        container: document.getElementById("llm-switcher-wrap"),
+        chat,
+        onMode: (label) => setModePill(label),
+        onSystem: (msg) => addBubble("system", msg),
+      });
+
       addBubble(
         "system",
-        `Grok Ani 風格 · ${avatarLabel} · 粵語傾偈 · 表情同身體動作 · 🎤 連續對話 · ⚙ 設定 LLM`,
+        `Grok Ani 風格 · ${avatarLabel} · 粵語傾偈 · 表情同身體動作 · Brain 按鈕切 LLM · 🎤 連續對話`,
       );
       addBubble("assistant", GREETING);
       avatar.setEmotion("happy");
@@ -1085,29 +1160,12 @@
         localStorage.setItem("amoji.companion.apiUrl", url);
         localStorage.setItem("amoji.companion.apiKey", key);
         localStorage.setItem("amoji.companion.model", model);
+        if (key.includes("gsk_")) saveProviderApiKey("groq", key);
+        if (key.startsWith("sk-or-")) saveProviderApiKey("openrouter-gemma", key);
         const info = chat.setApi({ url, key, model });
         setModePill(info.mode);
         settings.classList.remove("open");
-        addBubble(
-          "system",
-          info.mode === "ollama"
-            ? `Ollama direct · ${model}`
-            : info.mode === "online"
-              ? `Online LLM ready · ${model}`
-              : "Lab proxy / local brain — run ollama serve for smart replies",
-        );
-        void fetch("/api/chat", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message: "__ping__", history: [] }),
-        })
-          .then((r) => r.json())
-          .then((data) => {
-            if (data?.mode === "ollama") {
-              setModePill(`ollama · ${data.model || model}`);
-            }
-          })
-          .catch(() => {});
+        addBubble("system", `Custom LLM saved · ${model || info.mode}`);
       });
 
       document.getElementById("btn-list-ollama").addEventListener("click", async () => {

@@ -2,6 +2,11 @@
  * Grok Ani–style body motion: emotion poses + talk gestures for VRM humanoid rigs.
  */
 import { inferTalkGestureFromText } from "../face/talkGestures.js";
+import {
+  blendBodyPoses,
+  inferTalkStyleFromChunk,
+  sampleBodyTalkMotion,
+} from "./companionTalkMotionBridge.js";
 
 export const COMPANION_BODY_SCHEMA = "amoji.companionBody.v1";
 
@@ -159,6 +164,42 @@ const GESTURE_EXPLAIN = Object.freeze({
   },
 });
 
+const GESTURE_NOD = Object.freeze({
+  duration: 0.9,
+  sample(phase) {
+    const nod = Math.sin(phase * Math.PI * 2);
+    return {
+      headX: -0.12 * nod,
+      leanY: nod * 0.02,
+    };
+  },
+});
+
+const GESTURE_DISAGREE = Object.freeze({
+  duration: 1.1,
+  sample(phase) {
+    const shake = Math.sin(phase * Math.PI * 4);
+    return {
+      headZ: shake * 0.14,
+      armLiftL: 0.18,
+      armLiftR: 0.18,
+    };
+  },
+});
+
+const GESTURE_LEAN = Object.freeze({
+  duration: 1.8,
+  sample(phase) {
+    const ease = Math.min(1, phase * 1.8);
+    return {
+      leanY: 0.08 * ease,
+      headX: 0.05 * ease,
+      armLiftL: 0.22 * ease,
+      armLiftR: 0.28 * ease,
+    };
+  },
+});
+
 const GESTURES = Object.freeze({
   wave: GESTURE_WAVE,
   celebrate: GESTURE_CELEBRATE,
@@ -170,6 +211,9 @@ const GESTURES = Object.freeze({
   emphasize: GESTURE_CELEBRATE,
   soft: GESTURE_EXPLAIN,
   count: GESTURE_EXPLAIN,
+  nod: GESTURE_NOD,
+  disagree: GESTURE_DISAGREE,
+  lean: GESTURE_LEAN,
 });
 
 /**
@@ -183,6 +227,8 @@ export function createCompanionBodyMotion(humanoid) {
   let gestureDuration = 1;
   let talking = false;
   let talkEnergy = 0;
+  let talkStyle = "explain";
+  let talkTime = 0;
   let t0 = performance.now();
 
   const bone = (name) => humanoid?.getNormalizedBoneNode?.(name) || null;
@@ -206,12 +252,43 @@ export function createCompanionBodyMotion(humanoid) {
     const style = inferTalkGestureFromText(text, {
       emotion: opts.emotion || emotion,
     });
+    talkStyle = style;
+    talkTime = 0;
     return playGesture(style);
+  };
+
+  const setTalkStyle = (style) => {
+    const key = String(style || "").toLowerCase();
+    if (GESTURES[key] || key === "explain") {
+      talkStyle = key;
+      talkTime = 0;
+      return talkStyle;
+    }
+    talkStyle = inferTalkGestureFromText(key, { emotion });
+    talkTime = 0;
+    return talkStyle;
+  };
+
+  const reactToSpeechChunk = (chunk, opts = {}) => {
+    const next = inferTalkStyleFromChunk(chunk, {
+      emotion: opts.emotion || emotion,
+      prevStyle: talkStyle,
+    });
+    if (next !== talkStyle) {
+      talkStyle = next;
+      talkTime = 0;
+    }
+    return talkStyle;
   };
 
   const setTalking = (on) => {
     talking = Boolean(on);
-    if (!talking) talkEnergy = 0;
+    if (!talking) {
+      talkEnergy = 0;
+      talkTime = 0;
+    } else {
+      talkTime = 0;
+    }
     return talking;
   };
 
@@ -248,13 +325,15 @@ export function createCompanionBodyMotion(humanoid) {
       rua.rotation.x = baseArmX + (pose.spineX || 0) * 0.3;
       rua.rotation.y = 0;
     }
+    const foreL = (pose.forearmL ?? 0) * k;
+    const foreR = (pose.forearmR ?? 0) * k;
     if (lla) {
-      lla.rotation.z = 0.15 + liftL * 0.08;
-      lla.rotation.x = 0.05;
+      lla.rotation.z = 0.15 + liftL * 0.08 + (pose.handWaveL || 0) * k;
+      lla.rotation.x = 0.05 + foreL;
     }
     if (rla) {
-      rla.rotation.z = -0.15 - liftR * 0.08;
-      rla.rotation.x = 0.05;
+      rla.rotation.z = -0.15 - liftR * 0.08 + (pose.handWaveR || 0) * k;
+      rla.rotation.x = 0.05 + foreR;
     }
     if (head) {
       head.rotation.x = (pose.headX || 0) * k;
@@ -288,12 +367,18 @@ export function createCompanionBodyMotion(humanoid) {
       pose.headZ = (pose.headZ || 0) + Math.sin(elapsed * 1.1 + 0.5) * 0.02;
       pose.spineX = (pose.spineX || 0) + Math.sin(elapsed * 1.4) * 0.008;
     } else {
+      talkTime += dt;
+      const motion = sampleBodyTalkMotion(talkTime, {
+        style: talkStyle,
+        emotion,
+        speechEnergy: energy,
+      });
+      pose = blendBodyPoses(pose, motion.body, 0.55 + energy * 0.4);
+
       const beat = Math.sin(elapsed * 7.2);
       const beat2 = Math.sin(elapsed * 5.4 + 0.6);
-      pose.headX = (pose.headX || 0) + beat * 0.022 * energy;
-      pose.leanY = (pose.leanY || 0) + beat2 * 0.018 * energy;
-      pose.armLiftL = (pose.armLiftL || 0) + beat * 0.14 * energy;
-      pose.armLiftR = (pose.armLiftR || 0) + beat2 * 0.12 * energy;
+      pose.headX = (pose.headX || 0) + beat * 0.018 * energy;
+      pose.leanY = (pose.leanY || 0) + beat2 * 0.014 * energy;
 
       switch (emotion) {
         case "happy":
@@ -344,6 +429,8 @@ export function createCompanionBodyMotion(humanoid) {
     setEmotion,
     playGesture,
     playGestureForText,
+    setTalkStyle,
+    reactToSpeechChunk,
     setTalking,
     setTalkEnergy,
     update,

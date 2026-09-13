@@ -9,6 +9,11 @@ import {
   CANTONESE_COMPANION_PROMPT,
   parseReplyMood,
 } from "./companionBodyMotion.js";
+import {
+  LLM_PROVIDER_STORAGE_KEY,
+  resolveProviderConfig,
+  saveProviderApiKey,
+} from "./companionLlmProviders.js";
 
 export const COMPANION_CHAT_SCHEMA = "amoji.companionChat.v1";
 
@@ -30,6 +35,11 @@ export function createCompanionChat(opts = {}) {
   let apiUrl = normalizeUrl(opts.apiUrl);
   let apiKey = String(opts.apiKey || "").trim() || null;
   let model = opts.model || "llama3.2";
+  let providerId =
+    opts.providerId ||
+    globalThis.localStorage?.getItem(LLM_PROVIDER_STORAGE_KEY) ||
+    "auto";
+  let forceLocal = false;
   const systemPrompt = opts.systemPrompt || CANTONESE_COMPANION_PROMPT;
 
   const finalizeReply = (replyText) => {
@@ -45,9 +55,44 @@ export function createCompanionChat(opts = {}) {
   const history = [];
 
   const mode = () => {
+    if (forceLocal) return "local";
+    if (!apiUrl && !forceLocal) return "proxy";
     if (apiUrl && /11434|ollama/i.test(apiUrl)) return "ollama";
     if (apiUrl && fetchImpl) return "online";
     return "local";
+  };
+
+  const applyProvider = (id, extra = {}) => {
+    providerId = String(id || "auto");
+    const resolved = resolveProviderConfig(providerId, {
+      fallbackModel: model,
+      fallbackKey: extra.apiKey || apiKey || "",
+    });
+    forceLocal = resolved.forceLocal;
+    if (extra.apiKey && resolved.provider.keyStorageKey) {
+      saveProviderApiKey(providerId, extra.apiKey);
+    }
+    if (resolved.forceLocal) {
+      apiUrl = null;
+      apiKey = null;
+    } else if (resolved.provider.id === "auto") {
+      apiUrl = null;
+      apiKey = null;
+    } else {
+      apiUrl = normalizeUrl(resolved.url);
+      apiKey = resolved.apiKey;
+      model = resolved.model || model;
+    }
+    if (extra.model) model = extra.model;
+    globalThis.localStorage?.setItem(LLM_PROVIDER_STORAGE_KEY, providerId);
+    return {
+      providerId,
+      apiUrl,
+      hasKey: Boolean(apiKey),
+      model,
+      mode: mode(),
+      forceLocal,
+    };
   };
 
   /**
@@ -68,8 +113,8 @@ export function createCompanionChat(opts = {}) {
     history.push({ role: "user", content: text });
     const onToken = opts.onToken;
 
-    // Prefer lab proxy first — uses server-side OPENAI_API_KEY when configured
-    if (fetchImpl) {
+    // Prefer lab proxy first — uses server-side Ollama / API keys when configured
+    if (!forceLocal && fetchImpl) {
       try {
         const proxied = await callLocalProxy({
           fetchImpl,
@@ -78,7 +123,7 @@ export function createCompanionChat(opts = {}) {
           systemPrompt,
           model,
         });
-        if (proxied.ok && proxied.mode !== "local") {
+        if (proxied.ok && isSmartProxyMode(proxied.mode)) {
           const finalized = finalizeReply(proxied.reply);
           if (onToken) await emitTypewriter(finalized.reply, onToken);
           history.push({ role: "assistant", content: finalized.reply });
@@ -95,7 +140,7 @@ export function createCompanionChat(opts = {}) {
       }
     }
 
-    if (apiUrl && fetchImpl) {
+    if (!forceLocal && apiUrl && fetchImpl) {
       try {
         const online = await callOpenAiCompatible({
           fetchImpl,
@@ -125,7 +170,7 @@ export function createCompanionChat(opts = {}) {
       }
     }
 
-    if (fetchImpl) {
+    if (!forceLocal && fetchImpl) {
       try {
         const proxied = await callLocalProxy({
           fetchImpl,
@@ -169,20 +214,33 @@ export function createCompanionChat(opts = {}) {
     get mode() {
       return mode();
     },
+    get providerId() {
+      return providerId;
+    },
     get history() {
       return history.slice();
     },
-    setApi({ url, key, model: nextModel } = {}) {
+    setProvider(id, extra = {}) {
+      return applyProvider(id, extra);
+    },
+    setApi({ url, key, model: nextModel, provider: nextProvider } = {}) {
+      if (nextProvider) return applyProvider(nextProvider, { apiKey: key });
       if (url !== undefined) apiUrl = normalizeUrl(url);
       if (key !== undefined) apiKey = String(key || "").trim() || null;
       if (nextModel) model = nextModel;
-      return { apiUrl, hasKey: Boolean(apiKey), model, mode: mode() };
+      forceLocal = false;
+      providerId = "custom";
+      return { apiUrl, hasKey: Boolean(apiKey), model, mode: mode(), providerId };
     },
     clearHistory() {
       history.length = 0;
     },
     reply,
   };
+}
+
+function isSmartProxyMode(mode) {
+  return mode === "ollama" || mode === "online" || mode === "proxy";
 }
 
 function normalizeUrl(url) {
