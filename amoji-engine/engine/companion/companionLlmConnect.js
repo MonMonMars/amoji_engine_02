@@ -79,16 +79,16 @@ export function rankAvailableProviders(status, directOllama) {
   /** @type {{ id: string, model?: string, reason: string }[]} */
   const ranked = [];
 
-  if (hosted && (status?.groq?.ok || hasClientGroqKey())) {
-    ranked.push({
-      id: "groq",
-      reason: status?.groq?.ok ? "cloud Groq" : "your Groq key",
-    });
-  }
   if (hosted && (status?.openrouter?.ok || hasClientOpenRouterKey())) {
     ranked.push({
       id: "openrouter-gemma",
       reason: status?.openrouter?.ok ? "cloud OpenRouter" : "your OpenRouter key",
+    });
+  }
+  if (hosted && (status?.groq?.ok || hasClientGroqKey())) {
+    ranked.push({
+      id: "groq",
+      reason: status?.groq?.ok ? "cloud Groq" : "your Groq key",
     });
   }
   if (hosted && status?.openai?.ok) {

@@ -749,18 +749,19 @@
         </div>
         <div id="settings-cloud" hidden>
           <p class="settings-hint">
-            <strong>Smart brain (no Vercel login needed)</strong> — get a free key on your
-            <strong>phone</strong>, paste here. Stays in this browser only.
+            <strong>Smart brain</strong> — get a free key on your phone, paste here. Stays in
+            this browser only.
           </p>
           <label>
             Free API key
-            <input id="cloud-api-key" type="password" placeholder="gsk_… (Groq) or sk-or-… (OpenRouter)" autocomplete="off" />
+            <input id="cloud-api-key" type="password" placeholder="sk-or-… (OpenRouter — recommended)" autocomplete="off" />
           </label>
           <p class="settings-hint">
-            <a href="https://console.groq.com/keys" target="_blank" rel="noopener">Groq</a>
-            (email signup works if Google fails) ·
+            <strong>Recommended:</strong>
             <a href="https://openrouter.ai/keys" target="_blank" rel="noopener">OpenRouter</a>
-            (free Gemma/Llama)
+            (free Gemma/Llama, email signup) ·
+            <a href="https://console.groq.com/keys" target="_blank" rel="noopener">Groq</a>
+            (if site is up)
           </p>
           <button type="button" id="btn-save-cloud-key">Save key &amp; connect</button>
         </div>
