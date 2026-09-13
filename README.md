@@ -11,6 +11,8 @@
 
 ## Quick start
 
+**Windows:** see [WINDOWS.md](./WINDOWS.md) — double-click `start-companion.cmd` or run `node amoji-engine\scripts\lab-serve.mjs` from CMD (avoids PowerShell `npm` policy errors).
+
 ```bash
 cd amoji-engine
 npm install
