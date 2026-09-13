@@ -14,12 +14,16 @@ import {
   resolveProviderConfig,
   saveProviderApiKey,
 } from "./companionLlmProviders.js";
-import { chatOllama, OLLAMA_PROBE_HOSTS } from "./companionOllama.js";
+import { chatOllama } from "./companionOllama.js";
 import {
   hasAnyClientCloudKey,
   resolveClientApiKey,
 } from "./companionClientKeys.js";
-import { isHostedCompanion, probeOllamaDirect } from "./companionLlmConnect.js";
+import {
+  isHostedCompanion,
+  probeOllamaDirect,
+  OLLAMA_PROBE_HOSTS,
+} from "./companionLlmConnect.js";
 import { getLlmProvider, readProviderApiKey } from "./companionLlmProviders.js";
 
 export const COMPANION_CHAT_SCHEMA = "amoji.companionChat.v1";
