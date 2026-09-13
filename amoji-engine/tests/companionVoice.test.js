@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
   charToViseme,
+  configureCompanionAudioElement,
   femaleVoiceLabel,
   formatMicError,
   pickFemaleVoice,
+  unlockAudioSync,
 } from "../engine/companion/companionVoice.js";
 
 describe("companionVoice", () => {
@@ -34,5 +36,19 @@ describe("companionVoice", () => {
         cloud: true,
       }),
     ).toBe("女聲·粵·曉曼");
+  });
+
+  it("configures audio elements for inline mobile playback", () => {
+    const audio = configureCompanionAudioElement({
+      preload: "",
+      setAttribute() {},
+      playsInline: false,
+    });
+    expect(audio.preload).toBe("auto");
+    expect(audio.playsInline).toBe(true);
+  });
+
+  it("unlockAudioSync is safe without window", () => {
+    expect(unlockAudioSync()).toBe(false);
   });
 });

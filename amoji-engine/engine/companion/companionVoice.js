@@ -9,6 +9,54 @@
 
 export const COMPANION_VOICE_SCHEMA = "amoji.companionVoice.v1";
 
+/** Tiny silent WAV — unlocks iOS/Safari audio in the same user-gesture turn. */
+const SILENT_AUDIO_DATA_URI =
+  "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEAQB8AAEAfAAABAAgAZGF0YQQAAAAAAA==";
+
+/**
+ * Configure an HTMLAudioElement for mobile Safari + desktop autoplay policies.
+ * @param {HTMLAudioElement} audio
+ */
+export function configureCompanionAudioElement(audio) {
+  if (!audio) return audio;
+  audio.preload = "auto";
+  audio.setAttribute("playsinline", "");
+  audio.setAttribute("webkit-playsinline", "");
+  audio.playsInline = true;
+  return audio;
+}
+
+/**
+ * Synchronous audio unlock — call directly inside click/touch handlers before any await.
+ * Safe to call multiple times.
+ * @returns {boolean}
+ */
+export function unlockAudioSync() {
+  if (typeof globalThis.window === "undefined") return false;
+  if (globalThis.window.__amojiAudioUnlocked) return true;
+  try {
+    const AC = globalThis.AudioContext || globalThis.webkitAudioContext;
+    if (AC) {
+      const ctx =
+        globalThis.window.__amojiAudioCtx ||
+        new AC({ latencyHint: "interactive" });
+      globalThis.window.__amojiAudioCtx = ctx;
+      if (ctx.state === "suspended") void ctx.resume();
+    }
+    const audio =
+      globalThis.window.__amojiPrimeAudio ||
+      configureCompanionAudioElement(new Audio());
+    globalThis.window.__amojiPrimeAudio = audio;
+    audio.volume = 0.001;
+    if (!audio.src || audio.src === "") audio.src = SILENT_AUDIO_DATA_URI;
+    void audio.play().catch(() => {});
+    globalThis.window.__amojiAudioUnlocked = true;
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 const EMOTION_PROSODY = {
   neutral: { rate: 1.02, pitch: 1.15, volume: 1 },
   happy: { rate: 1.12, pitch: 1.35, volume: 1 },
@@ -203,6 +251,17 @@ export function createCompanionVoice(opts = {}) {
   let micPermissionPrimed = false;
   /** @type {HTMLAudioElement | null} */
   let currentCloudAudio = null;
+
+  const getSharedAudio = () => {
+    if (typeof globalThis.window === "undefined") {
+      return configureCompanionAudioElement(new Audio());
+    }
+    const shared =
+      globalThis.window.__amojiPrimeAudio ||
+      configureCompanionAudioElement(new Audio());
+    globalThis.window.__amojiPrimeAudio = shared;
+    return shared;
+  };
   /** Serialize TTS so greeting + replies do not overlap or cut each other off. */
   let speakChain = Promise.resolve();
   /** @type {ReturnType<typeof setInterval> | null} */
@@ -233,7 +292,6 @@ export function createCompanionVoice(opts = {}) {
     if (!currentCloudAudio) return;
     try {
       currentCloudAudio.pause();
-      currentCloudAudio.src = "";
     } catch {
       /* ignore */
     }
@@ -249,6 +307,7 @@ export function createCompanionVoice(opts = {}) {
     const url = opts.cloudTtsUrl;
     if (!url) return { ok: false, reason: "no-cloud-tts-url" };
 
+    unlockAudioSync();
     stopCloudAudio();
     synth?.cancel();
 
@@ -267,14 +326,24 @@ export function createCompanionVoice(opts = {}) {
 
     const blob = await res.blob();
     if (!blob.size) return { ok: false, reason: "cloud-tts-empty" };
+    const mime = blob.type || res.headers.get("content-type") || "";
+    if (mime && !mime.includes("audio") && !mime.includes("mpeg")) {
+      const preview = await blob.text().catch(() => "");
+      return {
+        ok: false,
+        reason: `cloud-tts-bad-mime:${mime || "unknown"}:${preview.slice(0, 60)}`,
+      };
+    }
 
     const objectUrl = URL.createObjectURL(blob);
     startLipSync(clean);
     speaking = true;
 
     return await new Promise((resolve) => {
-      const audio = new Audio(objectUrl);
+      const audio = configureCompanionAudioElement(getSharedAudio());
       currentCloudAudio = audio;
+      audio.volume = 1;
+      audio.src = objectUrl;
       const finish = (result) => {
         if (currentCloudAudio === audio) currentCloudAudio = null;
         URL.revokeObjectURL(objectUrl);
@@ -506,14 +575,21 @@ export function createCompanionVoice(opts = {}) {
           return cloudResult;
         }
         usingCloudTts = false;
-        opts.onError?.(cloudResult.reason || "cloud-tts-failed");
+        const cloudReason = cloudResult.reason || "cloud-tts-failed";
+        opts.onError?.(cloudReason);
+        if (/cloud-audio-play-blocked|notallowed/i.test(cloudReason)) {
+          unlockAudioSync();
+        }
       }
 
       if (!synth) {
         startLipSync(clean);
         await sleep(Math.min(2800, 450 + clean.length * 36));
         stopMouth();
-        return { ok: false, reason: "no-speech-synthesis" };
+        return {
+          ok: false,
+          reason: tryCloud ? "cloud-and-browser-tts-unavailable" : "no-speech-synthesis",
+        };
       }
 
       synth.cancel();
@@ -606,6 +682,7 @@ export function createCompanionVoice(opts = {}) {
 
   /** Unlock TTS after a user gesture (required by Chrome/Safari autoplay policy). */
   const primeAudio = async () => {
+    unlockAudioSync();
     await ensureVoices();
     if (opts.cloudTtsUrl) {
       try {
@@ -616,19 +693,22 @@ export function createCompanionVoice(opts = {}) {
         });
         if (res.ok) {
           const blob = await res.blob();
-          const objectUrl = URL.createObjectURL(blob);
-          const audio = new Audio(objectUrl);
-          audio.volume = 0.04;
-          await new Promise((resolve) => {
-            audio.onended = resolve;
-            audio.onerror = resolve;
-            void audio.play().catch(resolve);
-            setTimeout(resolve, 600);
-          });
-          URL.revokeObjectURL(objectUrl);
-          usingCloudTts = true;
-          voice = CLOUD_CANTONESE_VOICE;
-          return true;
+          if (blob.size > 0) {
+            const objectUrl = URL.createObjectURL(blob);
+            const audio = configureCompanionAudioElement(getSharedAudio());
+            audio.volume = 0.12;
+            audio.src = objectUrl;
+            const played = await audio
+              .play()
+              .then(() => true)
+              .catch(() => false);
+            URL.revokeObjectURL(objectUrl);
+            if (played) {
+              usingCloudTts = true;
+              voice = CLOUD_CANTONESE_VOICE;
+              return true;
+            }
+          }
         }
       } catch {
         /* fall through to browser TTS */
@@ -715,9 +795,10 @@ export function createCompanionVoice(opts = {}) {
       return Boolean(Rec);
     },
     get supportsSpeak() {
-      return Boolean(synth);
+      return Boolean(synth) || Boolean(opts.cloudTtsUrl);
     },
     ensureVoices,
+    unlockAudioSync,
     primeAudio,
     primeMicPermission,
     speak,
