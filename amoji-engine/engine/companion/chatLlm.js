@@ -25,10 +25,17 @@ export function createCompanionChat(opts = {}) {
       : null);
   let apiUrl = normalizeUrl(opts.apiUrl);
   let apiKey = String(opts.apiKey || "").trim() || null;
-  let model = opts.model || "gpt-4o-mini";
+  let model = opts.model || "gpt-4o";
   const systemPrompt =
     opts.systemPrompt ||
-    "You are Amoji, a warm Cantonese-first anime companion. Keep replies short (1-3 sentences), expressive, and friendly. Mix 粵語 naturally when the user writes Chinese; use English when they write English. Never mention being an API.";
+    [
+      "You are Amoji, a witty, emotionally intelligent anime companion.",
+      "Reply in the user's language (Cantonese/中文/English).",
+      "Be specific, curious, and helpful — never generic or robotic.",
+      "Keep answers concise (1–4 sentences) unless they ask for detail.",
+      "Show personality: warm humor, empathy, light teasing when appropriate.",
+      "Never mention APIs, models, or being an AI assistant.",
+    ].join(" ");
 
   const robot = createVoiceRobotBridge({ language: "yue" });
   /** @type {{ role: string, content: string }[]} */
@@ -38,8 +45,9 @@ export function createCompanionChat(opts = {}) {
 
   /**
    * @param {string} userText
+   * @param {{ onToken?: (chunk: string, full: string) => void }} [opts]
    */
-  async function reply(userText) {
+  async function reply(userText, opts = {}) {
     const text = String(userText || "").trim();
     if (!text) {
       return {
@@ -51,6 +59,34 @@ export function createCompanionChat(opts = {}) {
       };
     }
     history.push({ role: "user", content: text });
+    const onToken = opts.onToken;
+
+    // Prefer lab proxy first — uses server-side OPENAI_API_KEY when configured
+    if (fetchImpl) {
+      try {
+        const proxied = await callLocalProxy({
+          fetchImpl,
+          text,
+          history,
+          systemPrompt,
+          model,
+        });
+        if (proxied.ok && proxied.mode !== "local") {
+          const replyText = proxied.reply;
+          if (onToken) await emitTypewriter(replyText, onToken);
+          history.push({ role: "assistant", content: replyText });
+          return {
+            ok: true,
+            reply: replyText,
+            emotion: inferExpressionFromText(replyText),
+            mode: proxied.mode || "proxy",
+            model: proxied.model || model,
+          };
+        }
+      } catch {
+        /* try client online or local stub */
+      }
+    }
 
     if (apiUrl && fetchImpl) {
       try {
@@ -61,6 +97,8 @@ export function createCompanionChat(opts = {}) {
           model,
           systemPrompt,
           history,
+          onToken,
+          stream: Boolean(onToken),
         });
         if (online.ok) {
           history.push({ role: "assistant", content: online.reply });
@@ -72,14 +110,12 @@ export function createCompanionChat(opts = {}) {
             model: online.model || model,
           };
         }
-        // fall through to local on soft failure
         online.error && console.warn("[companion] online llm failed", online.error);
       } catch (err) {
         console.warn("[companion] online llm error", err);
       }
     }
 
-    // Local / same-origin proxy first
     if (fetchImpl) {
       try {
         const proxied = await callLocalProxy({
@@ -87,13 +123,16 @@ export function createCompanionChat(opts = {}) {
           text,
           history,
           systemPrompt,
+          model,
         });
         if (proxied.ok) {
-          history.push({ role: "assistant", content: proxied.reply });
+          const replyText = proxied.reply;
+          if (onToken) await emitTypewriter(replyText, onToken);
+          history.push({ role: "assistant", content: replyText });
           return {
             ok: true,
-            reply: proxied.reply,
-            emotion: inferExpressionFromText(proxied.reply),
+            reply: replyText,
+            emotion: inferExpressionFromText(replyText),
             mode: proxied.mode || "proxy",
             model: proxied.model || null,
           };
@@ -105,6 +144,7 @@ export function createCompanionChat(opts = {}) {
 
     const turn = await robot.runTurn(text, { speakMs: 0 });
     const replyText = turn.reply || "嗯，我喺度呀！";
+    if (onToken) await emitTypewriter(replyText, onToken);
     history.push({ role: "assistant", content: replyText });
     return {
       ok: true,
@@ -142,7 +182,7 @@ function normalizeUrl(url) {
   return raw.replace(/\/$/, "");
 }
 
-async function callLocalProxy({ fetchImpl, text, history, systemPrompt }) {
+async function callLocalProxy({ fetchImpl, text, history, systemPrompt, model }) {
   const res = await fetchImpl("/api/chat", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -150,6 +190,7 @@ async function callLocalProxy({ fetchImpl, text, history, systemPrompt }) {
       message: text,
       history: history.slice(-12),
       system: systemPrompt,
+      model,
     }),
   });
   if (!res.ok) return { ok: false, error: `HTTP ${res.status}` };
@@ -163,6 +204,16 @@ async function callLocalProxy({ fetchImpl, text, history, systemPrompt }) {
   };
 }
 
+async function emitTypewriter(text, onToken) {
+  const full = String(text || "");
+  let acc = "";
+  for (const ch of full) {
+    acc += ch;
+    onToken(ch, acc);
+    await new Promise((r) => setTimeout(r, 18));
+  }
+}
+
 async function callOpenAiCompatible({
   fetchImpl,
   apiUrl,
@@ -170,22 +221,49 @@ async function callOpenAiCompatible({
   model,
   systemPrompt,
   history,
+  onToken,
+  stream,
 }) {
   const endpoint = apiUrl.includes("/chat/completions")
     ? apiUrl
     : `${apiUrl}/chat/completions`;
   const headers = { "Content-Type": "application/json" };
   if (apiKey) headers.Authorization = `Bearer ${apiKey}`;
+  const messages = [
+    { role: "system", content: systemPrompt },
+    ...history.slice(-12),
+  ];
+
+  if (stream && onToken) {
+    const res = await fetchImpl(endpoint, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        model,
+        temperature: 0.8,
+        stream: true,
+        messages,
+      }),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      return {
+        ok: false,
+        error: data?.error?.message || `HTTP ${res.status}`,
+      };
+    }
+    const streamed = await readOpenAiStream(res, onToken);
+    if (!streamed) return { ok: false, error: "empty stream" };
+    return { ok: true, reply: streamed.trim(), model };
+  }
+
   const res = await fetchImpl(endpoint, {
     method: "POST",
     headers,
     body: JSON.stringify({
       model,
       temperature: 0.8,
-      messages: [
-        { role: "system", content: systemPrompt },
-        ...history.slice(-12),
-      ],
+      messages,
     }),
   });
   const data = await res.json().catch(() => ({}));
@@ -198,4 +276,36 @@ async function callOpenAiCompatible({
   const reply = data?.choices?.[0]?.message?.content;
   if (!reply) return { ok: false, error: "empty completion" };
   return { ok: true, reply: String(reply).trim(), model };
+}
+
+async function readOpenAiStream(res, onToken) {
+  const reader = res.body?.getReader?.();
+  if (!reader) return "";
+  const decoder = new TextDecoder();
+  let buffer = "";
+  let full = "";
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split("\n");
+    buffer = lines.pop() || "";
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed.startsWith("data:")) continue;
+      const payload = trimmed.slice(5).trim();
+      if (payload === "[DONE]") continue;
+      try {
+        const json = JSON.parse(payload);
+        const chunk = json?.choices?.[0]?.delta?.content || "";
+        if (chunk) {
+          full += chunk;
+          onToken(chunk, full);
+        }
+      } catch {
+        /* partial SSE */
+      }
+    }
+  }
+  return full;
 }

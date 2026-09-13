@@ -3,9 +3,8 @@
  * Uses Web Speech API: speechSynthesis (female voice + emotion tone)
  * and SpeechRecognition for continuous microphone conversation.
  *
- * Mic mode: stays open until the user turns it off. Each time speech
- * stops (final result / pause), onMicText(text, true) fires so the UI
- * can reply, then listening resumes after TTS.
+ * Lip sync: maps spoken words/characters to mouth shapes via
+ * SpeechSynthesisUtterance boundary events (with timed fallback).
  */
 
 export const COMPANION_VOICE_SCHEMA = "amoji.companionVoice.v1";
@@ -25,6 +24,30 @@ const SOFT_MIC_ERRORS = new Set([
   "aborted",
   "network",
 ]);
+
+/**
+ * Map a character to a viseme shape + openness for lip sync.
+ * @param {string} ch
+ * @returns {{ shape: string, open: number }}
+ */
+export function charToViseme(ch) {
+  const c = String(ch || " ").toLowerCase();
+  if (/[\s.,!?;:'"()\-—…]/.test(c)) return { shape: "ee", open: 0.08 };
+  if (/[aeæəàáâãäå]/.test(c)) return { shape: "aa", open: 0.82 };
+  if (/[iɪyìíîï]/.test(c)) return { shape: "ih", open: 0.58 };
+  if (/[oɔòóôõö]/.test(c)) return { shape: "oh", open: 0.72 };
+  if (/[uʊwùúûü]/.test(c)) return { shape: "ou", open: 0.68 };
+  if (/[eɛèéêë]/.test(c)) return { shape: "ee", open: 0.62 };
+  if (/[mbp]/.test(c)) return { shape: "ee", open: 0.12 };
+  if (/[fv]/.test(c)) return { shape: "ih", open: 0.22 };
+  if (/[\u4e00-\u9fff\u3400-\u4dbf]/.test(c)) {
+    const mod = c.charCodeAt(0) % 5;
+    const shapes = ["aa", "ih", "oh", "ou", "ee"];
+    const opens = [0.78, 0.55, 0.7, 0.65, 0.6];
+    return { shape: shapes[mod], open: opens[mod] };
+  }
+  return { shape: "aa", open: 0.45 };
+}
 
 /**
  * Prefer a female / higher-pitch voice, Cantonese/Chinese when available.
@@ -50,7 +73,7 @@ export function pickFemaleVoice(voices) {
 
 /**
  * @param {{
- *   onMouth?: (open: number) => void,
+ *   onMouth?: (open: number, shape?: string) => void,
  *   onTalking?: (on: boolean) => void,
  *   onMicText?: (text: string, isFinal: boolean) => void,
  *   onMicState?: (on: boolean) => void,
@@ -77,7 +100,10 @@ export function createCompanionVoice(opts = {}) {
   let recognitionActive = false;
   let restartTimer = null;
   let speaking = false;
+  /** @type {ReturnType<typeof setInterval> | null} */
   let mouthTimer = null;
+  /** @type {ReturnType<typeof setTimeout>[]} */
+  let mouthTimeouts = [];
 
   const ensureVoices = () =>
     new Promise((resolve) => {
@@ -94,24 +120,63 @@ export function createCompanionVoice(opts = {}) {
 
   void ensureVoices();
 
+  const emitViseme = (ch) => {
+    const { shape, open } = charToViseme(ch);
+    opts.onMouth?.(open, shape);
+  };
+
   const stopMouth = () => {
     if (mouthTimer) {
       clearInterval(mouthTimer);
       mouthTimer = null;
     }
-    opts.onMouth?.(0);
+    for (const t of mouthTimeouts) clearTimeout(t);
+    mouthTimeouts = [];
+    opts.onMouth?.(0, null);
     opts.onTalking?.(false);
   };
 
-  const startMouthPulse = () => {
+  /**
+   * Drive mouth shapes from text — boundary events when available, else timed walk.
+   * @param {string} text
+   * @param {SpeechSynthesisUtterance} [utter]
+   */
+  const startLipSync = (text, utter) => {
     stopMouth();
     opts.onTalking?.(true);
-    const t0 = performance.now();
+    const clean = String(text || "");
+    if (!clean) return;
+
+    let boundaryWorks = false;
+    if (utter && "onboundary" in utter) {
+      utter.onboundary = (ev) => {
+        boundaryWorks = true;
+        const idx = ev.charIndex ?? 0;
+        const slice = clean.slice(idx, idx + (ev.charLength || 1));
+        const ch = slice[0] || clean[idx] || " ";
+        emitViseme(ch);
+      };
+    }
+
+    // Timed fallback — also backs muted speaker / browsers without boundary
+    const msPerChar = 48;
+    let i = 0;
     mouthTimer = setInterval(() => {
-      const pulse =
-        0.22 + Math.abs(Math.sin((performance.now() - t0) * 0.028)) * 0.78;
-      opts.onMouth?.(pulse);
-    }, 40);
+      if (boundaryWorks) return;
+      if (i >= clean.length) {
+        opts.onMouth?.(0.06, "ee");
+        return;
+      }
+      emitViseme(clean[i]);
+      i += 1;
+    }, msPerChar);
+
+    const totalMs = Math.min(12000, clean.length * msPerChar + 400);
+    mouthTimeouts.push(
+      setTimeout(() => {
+        if (!boundaryWorks) opts.onMouth?.(0, null);
+      }, totalMs),
+    );
   };
 
   const clearRestart = () => {
@@ -152,7 +217,6 @@ export function createCompanionVoice(opts = {}) {
     recognition = rec;
     rec.lang = opts.lang || "zh-HK";
     rec.interimResults = true;
-    // continuous + restart-on-end: keep the session open across pauses
     rec.continuous = true;
     rec.maxAlternatives = 1;
 
@@ -167,7 +231,6 @@ export function createCompanionVoice(opts = {}) {
       if (interim) opts.onMicText?.(interim, false);
       const trimmed = finalText.trim();
       if (trimmed) {
-        // Speech paused / utterance ended — notify UI; keep mic desired on
         opts.onMicText?.(trimmed, true);
       }
     };
@@ -186,7 +249,6 @@ export function createCompanionVoice(opts = {}) {
     rec.onend = () => {
       recognitionActive = false;
       if (recognition === rec) recognition = null;
-      // Chrome ends sessions often; restart while user still wants mic on
       if (shouldListen()) {
         restartTimer = setTimeout(() => {
           restartTimer = null;
@@ -212,17 +274,11 @@ export function createCompanionVoice(opts = {}) {
     }
   };
 
-  /**
-   * Pause capture (refcount) so TTS / LLM turns do not feed the mic.
-   */
   const pauseCapture = () => {
     pauseDepth += 1;
     if (pauseDepth === 1) haltRecognition();
   };
 
-  /**
-   * Resume capture when pause depth hits 0 and mic is still desired.
-   */
   const resumeCapture = () => {
     pauseDepth = Math.max(0, pauseDepth - 1);
     if (pauseDepth === 0 && micDesired) beginRecognition();
@@ -230,7 +286,6 @@ export function createCompanionVoice(opts = {}) {
 
   /**
    * Speak reply with female voice + emotion tone. Resolves when finished.
-   * Pauses mic capture for the duration to avoid echo loops.
    * @param {string} text
    * @param {string} [emotion]
    */
@@ -244,13 +299,13 @@ export function createCompanionVoice(opts = {}) {
     pauseCapture();
     try {
       if (!speakerOn) {
-        startMouthPulse();
+        startLipSync(clean);
         await sleep(Math.min(2200, 400 + clean.length * 28));
         stopMouth();
         return { ok: true, muted: true };
       }
       if (!synth) {
-        startMouthPulse();
+        startLipSync(clean);
         await sleep(Math.min(2800, 450 + clean.length * 36));
         stopMouth();
         return { ok: false, reason: "no-speech-synthesis" };
@@ -259,7 +314,6 @@ export function createCompanionVoice(opts = {}) {
       await ensureVoices();
       synth.cancel();
       speaking = true;
-      startMouthPulse();
 
       const prosody = EMOTION_PROSODY[emotion] || EMOTION_PROSODY.neutral;
       const utter = new SpeechSynthesisUtterance(clean);
@@ -268,6 +322,8 @@ export function createCompanionVoice(opts = {}) {
       utter.rate = prosody.rate;
       utter.pitch = prosody.pitch;
       utter.volume = prosody.volume;
+
+      startLipSync(clean, utter);
 
       return await new Promise((resolve) => {
         utter.onend = () => {
@@ -323,7 +379,6 @@ export function createCompanionVoice(opts = {}) {
     }
     micDesired = true;
     opts.onMicState?.(true);
-    // Respect pauseDepth so we do not listen over an in-flight TTS reply
     if (pauseDepth === 0) beginRecognition();
     return true;
   };

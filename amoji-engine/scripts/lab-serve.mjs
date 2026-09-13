@@ -126,12 +126,42 @@ async function handleChatApi(req, res) {
     const history = Array.isArray(body.history) ? body.history : [];
     const system =
       body.system ||
-      "You are Amoji, a warm Cantonese-first anime companion. Keep replies short (1-3 sentences).";
+      [
+        "You are Amoji, a witty, emotionally intelligent anime companion.",
+        "Reply in the user's language (Cantonese/中文/English).",
+        "Be specific, curious, and helpful — never generic or robotic.",
+        "Keep answers concise (1–4 sentences) unless they ask for detail.",
+        "Show personality: warm humor, empathy, light teasing when appropriate.",
+        "Never mention APIs, models, or being an AI assistant.",
+      ].join(" ");
 
     if (!message) {
       send(res, 400, { ok: false, error: "empty message" }, {
         "Content-Type": "application/json; charset=utf-8",
       });
+      return;
+    }
+
+    const apiKeyProbe =
+      process.env.OPENAI_API_KEY ||
+      process.env.AMOJI_LLM_KEY ||
+      process.env.GROQ_API_KEY ||
+      "";
+    if (message === "__ping__") {
+      send(
+        res,
+        200,
+        {
+          ok: true,
+          mode: apiKeyProbe ? "online" : "local",
+          model:
+            body.model ||
+            process.env.AMOJI_LLM_MODEL ||
+            process.env.OPENAI_MODEL ||
+            (process.env.GROQ_API_KEY ? "llama-3.3-70b-versatile" : "gpt-4o"),
+        },
+        { "Content-Type": "application/json; charset=utf-8" },
+      );
       return;
     }
 
@@ -146,9 +176,10 @@ async function handleChatApi(req, res) {
       (process.env.GROQ_API_KEY ? "https://api.groq.com/openai/v1" : "") ||
       "https://api.openai.com/v1";
     const model =
+      body.model ||
       process.env.AMOJI_LLM_MODEL ||
       process.env.OPENAI_MODEL ||
-      (process.env.GROQ_API_KEY ? "llama-3.1-8b-instant" : "gpt-4o-mini");
+      (process.env.GROQ_API_KEY ? "llama-3.3-70b-versatile" : "gpt-4o");
 
     if (apiKey) {
       const endpoint = `${base.replace(/\/$/, "")}/chat/completions`;

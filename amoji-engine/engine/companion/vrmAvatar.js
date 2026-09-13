@@ -18,6 +18,57 @@ const EMOTION_EXPRESSIONS = {
   angry: { [VRMExpressionPresetName.Angry]: 0.8 },
 };
 
+/** Lower T-pose arms into a relaxed standing pose. */
+function applyStandingPose(vrm) {
+  const humanoid = vrm.humanoid;
+  if (!humanoid) return;
+  humanoid.resetNormalizedPose?.();
+
+  const pose = [
+    ["leftUpperArm", { z: 1.35, x: 0.08 }],
+    ["rightUpperArm", { z: -1.35, x: 0.08 }],
+    ["leftLowerArm", { z: 0.12 }],
+    ["rightLowerArm", { z: -0.12 }],
+    ["leftHand", { x: 0.05 }],
+    ["rightHand", { x: 0.05 }],
+    ["spine", { x: 0.02 }],
+    ["chest", { x: -0.02 }],
+  ];
+
+  for (const [bone, rot] of pose) {
+    const node = humanoid.getNormalizedBoneNode?.(bone);
+    if (!node) continue;
+    if (rot.x) node.rotation.x += rot.x;
+    if (rot.y) node.rotation.y += rot.y;
+    if (rot.z) node.rotation.z += rot.z;
+  }
+}
+
+/** Frame camera on the head — face centered, portrait distance. */
+function frameFaceCamera({ vrm, model, camera, controls, fitted }) {
+  const fittedSize = fitted.getSize(new THREE.Vector3());
+  const head =
+    vrm.humanoid?.getNormalizedBoneNode?.("head") ||
+    vrm.humanoid?.getNormalizedBoneNode?.("neck");
+  const face = new THREE.Vector3();
+  if (head) {
+    model.updateWorldMatrix(true, true);
+    head.getWorldPosition(face);
+  } else {
+    face.set(0, fitted.min.y + fittedSize.y * 0.88, 0);
+  }
+
+  const portraitDist = Math.max(0.42, fittedSize.y * 0.34);
+  controls.target.copy(face);
+  camera.position.set(face.x, face.y + 0.02, face.z + portraitDist);
+  controls.minDistance = portraitDist * 0.72;
+  controls.maxDistance = portraitDist * 2.8;
+  controls.minPolarAngle = Math.PI * 0.44;
+  controls.maxPolarAngle = Math.PI * 0.56;
+  controls.update();
+  return face;
+}
+
 /**
  * @param {{
  *   canvas: HTMLCanvasElement,
@@ -131,13 +182,10 @@ export async function createVrmAvatar(opts) {
   model.position.z = -center.z * scale;
   model.position.y = -box.min.y * scale;
   scene.add(model);
+  applyStandingPose(vrm);
 
   const fitted = new THREE.Box3().setFromObject(model);
-  const fittedSize = fitted.getSize(new THREE.Vector3());
-  const lookY = fitted.min.y + fittedSize.y * 0.62;
-  controls.target.set(0, lookY, 0);
-  camera.position.set(0.15, lookY + 0.12, Math.max(1.55, fittedSize.y * 1.05));
-  controls.update();
+  const faceAnchor = frameFaceCamera({ vrm, model, camera, controls, fitted });
 
   // Subtle look-at toward camera
   if (vrm.lookAt) {
@@ -161,6 +209,9 @@ export async function createVrmAvatar(opts) {
 
   let emotion = "neutral";
   let mouthOpen = 0;
+  let mouthTarget = 0;
+  /** @type {string | null} */
+  let mouthShape = null;
   let talking = false;
   let t0 = performance.now();
   const clock = new THREE.Clock();
@@ -205,17 +256,43 @@ export async function createVrmAvatar(opts) {
     return emotion;
   };
 
-  const setMouthOpen = (v) => {
-    mouthOpen = Math.max(0, Math.min(1, Number(v) || 0));
-    if (expr && mouthPresets.length) {
-      const idx = Math.min(
-        mouthPresets.length - 1,
-        Math.floor(mouthOpen * mouthPresets.length),
-      );
-      for (const preset of mouthPresets) expr.setValue(preset, 0);
-      expr.setValue(mouthPresets[idx], mouthOpen);
+  const shapeToPreset = (shape) => {
+    const key = String(shape || "aa").toLowerCase();
+    const map = {
+      aa: VRMExpressionPresetName.Aa,
+      ih: VRMExpressionPresetName.Ih,
+      ou: VRMExpressionPresetName.Ou,
+      ee: VRMExpressionPresetName.Ee,
+      oh: VRMExpressionPresetName.Oh,
+    };
+    const preset = map[key];
+    if (preset && expr?.getExpression?.(preset)) return preset;
+    return mouthPresets[0] || null;
+  };
+
+  const applyMouth = (v) => {
+    if (!expr || !mouthPresets.length) return;
+    for (const preset of mouthPresets) expr.setValue(preset, 0);
+    const preset = mouthShape ? shapeToPreset(mouthShape) : null;
+    if (preset) {
+      expr.setValue(preset, v);
+      return;
     }
-    return mouthOpen;
+    const idx = Math.min(
+      mouthPresets.length - 1,
+      Math.floor(v * mouthPresets.length),
+    );
+    expr.setValue(mouthPresets[idx], v);
+  };
+
+  const setMouthOpen = (v) => {
+    mouthTarget = Math.max(0, Math.min(1, Number(v) || 0));
+    return mouthTarget;
+  };
+
+  const setMouthShape = (shape) => {
+    mouthShape = shape ? String(shape).toLowerCase() : null;
+    return mouthShape;
   };
 
   const setTalking = (on) => {
@@ -229,6 +306,9 @@ export async function createVrmAvatar(opts) {
     const now = performance.now();
     vrm.update(dt);
     controls.update();
+
+    mouthOpen += (mouthTarget - mouthOpen) * Math.min(1, dt * 14);
+    applyMouth(mouthOpen);
 
     // Auto blink
     if (expr?.getExpression?.(VRMExpressionPresetName.Blink)) {
@@ -249,11 +329,6 @@ export async function createVrmAvatar(opts) {
     const breath = Math.sin((now - t0) * 0.0018) * 0.004;
     const s = scale * (1 + breath);
     model.scale.set(s, s, s);
-
-    if (talking && mouthPresets.length) {
-      const pulse = 0.25 + Math.abs(Math.sin((now - t0) * 0.03)) * 0.65;
-      setMouthOpen(Math.max(mouthOpen, pulse));
-    }
 
     if (!talking) {
       model.rotation.y = Math.sin((now - t0) * 0.00035) * 0.02;
@@ -284,6 +359,7 @@ export async function createVrmAvatar(opts) {
     vrm,
     setEmotion,
     setMouthOpen,
+    setMouthShape,
     setTalking,
     get emotion() {
       return emotion;
