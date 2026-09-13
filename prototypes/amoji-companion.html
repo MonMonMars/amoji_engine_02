@@ -831,6 +831,15 @@
     <script>
       (function () {
         window.__amojiStart = { tapped: false, ready: false, run: null, sessionStarted: false };
+        window.__amojiHideLoading = function () {
+          const el = document.querySelector(".avatar-loading");
+          if (!el || el.classList.contains("hide")) return;
+          el.classList.add("hide");
+          setTimeout(function () {
+            el.remove();
+          }, 600);
+        };
+        setTimeout(window.__amojiHideLoading, 10000);
         window.__amojiStartTap = function (ev) {
           ev?.preventDefault?.();
           ev?.stopPropagation?.();
@@ -1169,6 +1178,10 @@
       });
       status.idle();
       setModePill(chat.mode);
+
+      loading.hide();
+      window.__amojiHideLoading?.();
+      setTimeout(() => loading.remove(), 600);
 
       const interim = createInterimBubble(transcript);
 
@@ -1511,16 +1524,19 @@
 
         requestAnimationFrame(() => markSessionReady({ fromTimeout }));
 
-        void voice.primeAudio?.().catch(() => {});
         void voice.ensureVoices().then((v) => {
           const label =
             femaleVoiceLabel(v) ||
             (hostedOnline ? "女聲·粵·曉曼" : voice.supportsSpeak ? "女聲" : "off");
           setVoicePill(label);
         });
-        void speakGreetingAsync().finally(() => {
-          requestMicAsync();
-        });
+        void voice
+          .primeAudio?.()
+          .catch(() => {})
+          .then(() => speakGreetingAsync())
+          .finally(() => {
+            requestMicAsync();
+          });
       };
 
       window.__amojiStart.run = () => void startSession();
@@ -1534,8 +1550,6 @@
       if (!voice.supportsMic && startTalkingEl) {
         startTalkingEl.textContent = "👆 Tap to start (type to chat)";
       }
-      loading.hide();
-      setTimeout(() => loading.remove(), 600);
 
       const avatarLabel =
         avatarKind === "vrm3d"

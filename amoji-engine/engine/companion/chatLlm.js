@@ -355,8 +355,31 @@ export function createCompanionChat(opts = {}) {
   };
 }
 
+const CHAT_FETCH_TIMEOUT_MS = 28_000;
+
 function isSmartProxyMode(mode) {
-  return mode === "ollama" || mode === "online" || mode === "proxy";
+  return (
+    mode === "ollama" ||
+    mode === "online" ||
+    mode === "proxy" ||
+    mode === "local-fallback"
+  );
+}
+
+/**
+ * @param {typeof fetch} fetchImpl
+ * @param {string} url
+ * @param {RequestInit} init
+ * @param {number} [ms]
+ */
+async function fetchWithTimeout(fetchImpl, url, init, ms = CHAT_FETCH_TIMEOUT_MS) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), ms);
+  try {
+    return await fetchImpl(url, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 function isOllamaUrl(url) {
@@ -417,18 +440,24 @@ async function callLocalProxy({
   const hosted = isHostedCompanion();
   const proxyModel =
     hosted && isOllamaLocalModel(model) ? undefined : model || undefined;
-  const res = await fetchImpl("/api/chat", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      message: text,
-      history: history.slice(-12),
-      system: systemPrompt,
-      model: proxyModel,
-      providerId: providerId && providerId !== "custom" ? providerId : undefined,
-      apiKey: resolveClientApiKey(providerId) || undefined,
-    }),
-  });
+  let res;
+  try {
+    res = await fetchWithTimeout(fetchImpl, "/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        message: text,
+        history: history.slice(-12),
+        system: systemPrompt,
+        model: proxyModel,
+        providerId: providerId && providerId !== "custom" ? providerId : undefined,
+        apiKey: resolveClientApiKey(providerId) || undefined,
+      }),
+    });
+  } catch (err) {
+    const aborted = err?.name === "AbortError";
+    return { ok: false, error: aborted ? "chat-timeout" : err?.message || "fetch failed" };
+  }
   if (!res.ok) return { ok: false, error: `HTTP ${res.status}` };
   const data = await res.json().catch(() => ({}));
   if (!data?.reply) return { ok: false, error: data?.error || "no reply" };

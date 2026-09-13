@@ -38,11 +38,13 @@ export function createCompanionBodyMotion(humanoid) {
 
   const setEmotion = (next) => {
     emotion = String(next || "neutral").toLowerCase();
+    humanoid?.resetNormalizedPose?.();
     return emotion;
   };
 
   const setListening = (on) => {
     listening = Boolean(on);
+    humanoid?.resetNormalizedPose?.();
     return listening;
   };
 
@@ -57,6 +59,7 @@ export function createCompanionBodyMotion(humanoid) {
     activeGesture = key;
     gesturePhase = 0;
     gestureDuration = GESTURE_DURATION_SEC[key] || 1.5;
+    humanoid?.resetNormalizedPose?.();
     return true;
   };
 
@@ -105,7 +108,8 @@ export function createCompanionBodyMotion(humanoid) {
 
   const applyPose = (pose, intensity = 1) => {
     if (!humanoid) return;
-    humanoid.resetNormalizedPose?.();
+    // Do not call resetNormalizedPose every frame — it walks the full skeleton
+    // and can freeze WebGL on desktop GPUs. We set absolute rotations each frame.
     const k = Math.max(0, Math.min(1, intensity));
     const safe = clampArmPose(pose);
 
