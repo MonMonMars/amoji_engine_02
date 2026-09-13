@@ -39,13 +39,11 @@ export function createCompanionBodyMotion(humanoid) {
 
   const setEmotion = (next) => {
     emotion = String(next || "neutral").toLowerCase();
-    humanoid?.resetNormalizedPose?.();
     return emotion;
   };
 
   const setListening = (on) => {
     listening = Boolean(on);
-    humanoid?.resetNormalizedPose?.();
     return listening;
   };
 
