@@ -12,6 +12,9 @@ export const CANTONESE_FEMALE_VOICE = "zh-HK-HiuMaanNeural";
 /** Alternate Cantonese female — 曉佳 */
 export const CANTONESE_FEMALE_VOICE_ALT = "zh-HK-HiuGaaiNeural";
 
+/** English (US) female — Aria */
+export const ENGLISH_FEMALE_VOICE = "en-US-AriaNeural";
+
 const EMOTION_EDGE_PROSODY = Object.freeze({
   neutral: { rate: "+6%", pitch: "+10Hz" },
   happy: { rate: "+14%", pitch: "+16Hz" },
@@ -23,10 +26,10 @@ const EMOTION_EDGE_PROSODY = Object.freeze({
 
 /**
  * @param {string} text
- * @param {{ voice?: string, emotion?: string, rate?: string, pitch?: string }} [opts]
+ * @param {{ voice?: string, emotion?: string, rate?: string, pitch?: string, lang?: string }} [opts]
  * @returns {Promise<{ audio: Buffer, voice: string, contentType: string }>}
  */
-export async function synthesizeCantoneseSpeech(text, opts = {}) {
+export async function synthesizeSpeech(text, opts = {}) {
   const clean = String(text || "")
     .replace(/[*_`#>/\\]/g, " ")
     .replace(/\s+/g, " ")
@@ -39,7 +42,10 @@ export async function synthesizeCantoneseSpeech(text, opts = {}) {
   const emotion = String(opts.emotion || "neutral").toLowerCase();
   const prosody =
     EMOTION_EDGE_PROSODY[emotion] || EMOTION_EDGE_PROSODY.neutral;
-  const voice = opts.voice || CANTONESE_FEMALE_VOICE;
+  const lang = String(opts.lang || "").toLowerCase();
+  const defaultVoice =
+    lang === "en" || lang === "en-us" ? ENGLISH_FEMALE_VOICE : CANTONESE_FEMALE_VOICE;
+  const voice = opts.voice || defaultVoice;
 
   const tts = new EdgeTTS(clean, voice, {
     rate: opts.rate || prosody.rate,
@@ -54,6 +60,9 @@ export async function synthesizeCantoneseSpeech(text, opts = {}) {
     contentType: "audio/mpeg",
   };
 }
+
+/** @deprecated Use synthesizeSpeech */
+export const synthesizeCantoneseSpeech = synthesizeSpeech;
 
 export function ttsCorsHeaders() {
   return {
@@ -85,11 +94,13 @@ export async function processTtsRequest(req) {
       : req.body || {};
   const text = raw.text ?? raw.message ?? "";
   const emotion = raw.emotion ?? "neutral";
+  const lang = raw.lang ?? raw.language ?? "";
 
   try {
-    const { audio, voice, contentType } = await synthesizeCantoneseSpeech(text, {
+    const { audio, voice, contentType } = await synthesizeSpeech(text, {
       emotion,
       voice: raw.voice,
+      lang,
     });
     return {
       status: 200,

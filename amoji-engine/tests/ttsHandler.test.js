@@ -1,13 +1,14 @@
 import { describe, expect, it } from "vitest";
 import {
   CANTONESE_FEMALE_VOICE,
+  ENGLISH_FEMALE_VOICE,
   processTtsRequest,
-  synthesizeCantoneseSpeech,
+  synthesizeSpeech,
 } from "../engine/companion/ttsHandler.mjs";
 
 describe("ttsHandler", () => {
   it("rejects empty text", async () => {
-    await expect(synthesizeCantoneseSpeech("   ")).rejects.toThrow(/empty/i);
+    await expect(synthesizeSpeech("   ")).rejects.toThrow(/empty/i);
   });
 
   it("returns OPTIONS 204", async () => {
@@ -18,10 +19,23 @@ describe("ttsHandler", () => {
   it(
     "synthesizes Cantonese female audio",
     async () => {
-      const { audio, voice } = await synthesizeCantoneseSpeech("你好", {
+      const { audio, voice } = await synthesizeSpeech("你好", {
         emotion: "happy",
       });
       expect(voice).toBe(CANTONESE_FEMALE_VOICE);
+      expect(audio.byteLength).toBeGreaterThan(1000);
+    },
+    15000,
+  );
+
+  it(
+    "synthesizes English female audio",
+    async () => {
+      const { audio, voice } = await synthesizeSpeech("Hello", {
+        emotion: "happy",
+        lang: "en",
+      });
+      expect(voice).toBe(ENGLISH_FEMALE_VOICE);
       expect(audio.byteLength).toBeGreaterThan(1000);
     },
     15000,
