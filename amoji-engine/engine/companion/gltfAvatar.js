@@ -5,6 +5,7 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { inferTalkGestureFromText } from "../face/talkGestures.js";
 
 export const GLTF_AVATAR_SCHEMA = "amoji.gltfAvatar.v1";
 
@@ -15,6 +16,15 @@ const EMOTION_TINT = {
   sad: { color: 0x8aa0c8, intensity: 0.18 },
   surprised: { color: 0xffe0a8, intensity: 0.2 },
   angry: { color: 0xff8a8a, intensity: 0.25 },
+};
+
+const EMOTION_BODY = {
+  neutral: { leanX: 0, leanZ: 0, leanY: 0, bounce: 0 },
+  happy: { leanX: -0.02, leanZ: 0.03, leanY: 0.04, bounce: 0.012 },
+  thinking: { leanX: 0.05, leanZ: -0.04, leanY: -0.02, bounce: 0.004 },
+  sad: { leanX: 0.06, leanZ: 0.04, leanY: 0.02, bounce: 0.002 },
+  surprised: { leanX: -0.05, leanZ: 0, leanY: -0.05, bounce: 0.015 },
+  angry: { leanX: 0.03, leanZ: -0.03, leanY: 0.01, bounce: 0.008 },
 };
 
 /**
@@ -195,6 +205,9 @@ export async function createGltfAvatar(opts) {
   let emotion = "neutral";
   let mouthOpen = 0;
   let talking = false;
+  /** @type {string | null} */
+  let activeGesture = null;
+  let gesturePhase = 0;
   let t0 = performance.now();
   const clock = new THREE.Clock();
   const blushMats = [];
@@ -234,10 +247,18 @@ export async function createGltfAvatar(opts) {
         m.emissiveIntensity = tint.intensity * 0.35;
       }
     }
-    // Subtle head pose offsets
-    model.rotation.z = emotion === "thinking" ? -0.04 : emotion === "sad" ? 0.03 : 0;
-    model.rotation.x = emotion === "surprised" ? -0.03 : emotion === "sad" ? 0.04 : 0;
     return emotion;
+  };
+
+  const playGesture = (style) => {
+    activeGesture = String(style || "").toLowerCase();
+    gesturePhase = 0;
+    return Boolean(activeGesture);
+  };
+
+  const playGestureForText = (text) => {
+    const style = inferTalkGestureFromText(text, { emotion });
+    return playGesture(style);
   };
 
   const setMouthOpen = (v) => {
@@ -266,22 +287,54 @@ export async function createGltfAvatar(opts) {
     mixer?.update(dt);
     controls.update();
 
-    // Standing breath if no animation clips — scale uniformly, feet planted
+    const body = EMOTION_BODY[emotion] || EMOTION_BODY.neutral;
+    let leanX = body.leanX;
+    let leanZ = body.leanZ;
+    let leanY = body.leanY;
+
+    if (gesturePhase < 1 && activeGesture) {
+      gesturePhase += dt * 0.85;
+      const p = gesturePhase;
+      const wave = Math.sin(p * Math.PI * 3) * (1 - p);
+      switch (activeGesture) {
+        case "celebrate":
+        case "emphasize":
+          leanY -= wave * 0.06;
+          leanZ += wave * 0.08;
+          break;
+        case "wave":
+          leanZ += wave * 0.1;
+          leanY += wave * 0.04;
+          break;
+        case "thinking":
+          leanX += Math.min(1, p * 2) * 0.06;
+          leanZ -= Math.min(1, p * 2) * 0.08;
+          break;
+        case "shrug":
+          leanZ += Math.sin(p * Math.PI) * 0.05;
+          break;
+        case "point":
+        case "question":
+          leanZ -= Math.sin(p * Math.PI) * 0.06;
+          break;
+        default:
+          leanY += Math.sin(p * Math.PI * 2) * 0.03;
+          break;
+      }
+      if (gesturePhase >= 1) activeGesture = null;
+    }
+
+    const sway = talking
+      ? Math.sin((now - t0) * 0.005) * 0.015
+      : Math.sin((now - t0) * 0.0009) * 0.025;
+    model.rotation.x = leanX + (talking ? Math.sin((now - t0) * 0.006) * 0.012 : 0);
+    model.rotation.z = leanZ + sway;
+    model.rotation.y = leanY + Math.sin((now - t0) * 0.0005) * 0.02;
+
     if (!mixer) {
-      const breath = Math.sin((now - t0) * 0.0018) * 0.006;
+      const breath = Math.sin((now - t0) * 0.0018) * body.bounce;
       const s = scale * (1 + breath);
       model.scale.set(s, s, s);
-    }
-
-    // Procedural mouth pulse while talking when morph missing
-    if (talking && !mouthMorph) {
-      const pulse = 0.2 + Math.abs(Math.sin((now - t0) * 0.03)) * 0.55;
-      setMouthOpen(Math.max(mouthOpen, pulse * 0.45));
-    }
-
-    // Tiny weight-shift only (not floating / spinning)
-    if (!talking) {
-      model.rotation.y = Math.sin((now - t0) * 0.00035) * 0.02;
     }
 
     faceLight.intensity = 0.55 + (talking ? 0.2 : 0) + Math.sin((now - t0) * 0.002) * 0.05;
@@ -310,6 +363,8 @@ export async function createGltfAvatar(opts) {
     setEmotion,
     setMouthOpen,
     setTalking,
+    playGesture,
+    playGestureForText,
     get emotion() {
       return emotion;
     },

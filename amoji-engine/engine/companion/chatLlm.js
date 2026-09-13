@@ -5,6 +5,10 @@ import {
   createVoiceRobotBridge,
 } from "../voice/voiceRobotBridge.js";
 import { inferExpressionFromText } from "../face/emotionExpression.js";
+import {
+  CANTONESE_COMPANION_PROMPT,
+  parseReplyMood,
+} from "./companionBodyMotion.js";
 
 export const COMPANION_CHAT_SCHEMA = "amoji.companionChat.v1";
 
@@ -26,16 +30,15 @@ export function createCompanionChat(opts = {}) {
   let apiUrl = normalizeUrl(opts.apiUrl);
   let apiKey = String(opts.apiKey || "").trim() || null;
   let model = opts.model || "gpt-4o";
-  const systemPrompt =
-    opts.systemPrompt ||
-    [
-      "You are Amoji, a witty, emotionally intelligent anime companion.",
-      "Reply in the user's language (Cantonese/中文/English).",
-      "Be specific, curious, and helpful — never generic or robotic.",
-      "Keep answers concise (1–4 sentences) unless they ask for detail.",
-      "Show personality: warm humor, empathy, light teasing when appropriate.",
-      "Never mention APIs, models, or being an AI assistant.",
-    ].join(" ");
+  const systemPrompt = opts.systemPrompt || CANTONESE_COMPANION_PROMPT;
+
+  const finalizeReply = (replyText) => {
+    const { reply, emotion: tagged } = parseReplyMood(replyText);
+    return {
+      reply,
+      emotion: tagged || inferExpressionFromText(reply),
+    };
+  };
 
   const robot = createVoiceRobotBridge({ language: "yue" });
   /** @type {{ role: string, content: string }[]} */
@@ -72,13 +75,13 @@ export function createCompanionChat(opts = {}) {
           model,
         });
         if (proxied.ok && proxied.mode !== "local") {
-          const replyText = proxied.reply;
-          if (onToken) await emitTypewriter(replyText, onToken);
-          history.push({ role: "assistant", content: replyText });
+          const finalized = finalizeReply(proxied.reply);
+          if (onToken) await emitTypewriter(finalized.reply, onToken);
+          history.push({ role: "assistant", content: finalized.reply });
           return {
             ok: true,
-            reply: replyText,
-            emotion: inferExpressionFromText(replyText),
+            reply: finalized.reply,
+            emotion: finalized.emotion,
             mode: proxied.mode || "proxy",
             model: proxied.model || model,
           };
@@ -101,11 +104,12 @@ export function createCompanionChat(opts = {}) {
           stream: Boolean(onToken),
         });
         if (online.ok) {
-          history.push({ role: "assistant", content: online.reply });
+          const finalized = finalizeReply(online.reply);
+          history.push({ role: "assistant", content: finalized.reply });
           return {
             ok: true,
-            reply: online.reply,
-            emotion: inferExpressionFromText(online.reply),
+            reply: finalized.reply,
+            emotion: finalized.emotion,
             mode: "online",
             model: online.model || model,
           };
@@ -126,13 +130,13 @@ export function createCompanionChat(opts = {}) {
           model,
         });
         if (proxied.ok) {
-          const replyText = proxied.reply;
-          if (onToken) await emitTypewriter(replyText, onToken);
-          history.push({ role: "assistant", content: replyText });
+          const finalized = finalizeReply(proxied.reply);
+          if (onToken) await emitTypewriter(finalized.reply, onToken);
+          history.push({ role: "assistant", content: finalized.reply });
           return {
             ok: true,
-            reply: replyText,
-            emotion: inferExpressionFromText(replyText),
+            reply: finalized.reply,
+            emotion: finalized.emotion,
             mode: proxied.mode || "proxy",
             model: proxied.model || null,
           };
@@ -143,13 +147,13 @@ export function createCompanionChat(opts = {}) {
     }
 
     const turn = await robot.runTurn(text, { speakMs: 0 });
-    const replyText = turn.reply || "嗯，我喺度呀！";
-    if (onToken) await emitTypewriter(replyText, onToken);
-    history.push({ role: "assistant", content: replyText });
+    const finalized = finalizeReply(turn.reply || "嗯，我喺度呀！");
+    if (onToken) await emitTypewriter(finalized.reply, onToken);
+    history.push({ role: "assistant", content: finalized.reply });
     return {
       ok: true,
-      reply: replyText,
-      emotion: turn.emotion || inferExpressionFromText(replyText),
+      reply: finalized.reply,
+      emotion: turn.emotion || finalized.emotion,
       mode: "local",
       annotatedReply: turn.annotatedReply || null,
     };

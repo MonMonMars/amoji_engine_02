@@ -642,7 +642,7 @@
             <textarea
               id="input"
               rows="1"
-              placeholder="Message Amoji…"
+              placeholder="同 Amoji 傾偈…"
               enterkeyhint="send"
             ></textarea>
             <button class="send" id="send" type="submit" aria-label="Send">↑</button>
@@ -685,7 +685,12 @@
         params.get("model3d") ||
         localStorage.getItem("amoji.companion.vrmUrl") ||
         "";
-      const avatarPrefer = params.get("avatar") === "gltf" ? "gltf" : "auto";
+      const avatarPrefer =
+        params.get("avatar") === "vrm"
+          ? "vrm"
+          : params.get("avatar") === "gltf"
+            ? "gltf"
+            : "auto";
       const stored = {
         url: localStorage.getItem("amoji.companion.apiUrl") || params.get("llm") || "",
         key: localStorage.getItem("amoji.companion.apiKey") || "",
@@ -900,7 +905,7 @@
                 assistantBubble.classList.remove("thinking");
                 assistantBubble.classList.add("typing");
               }
-              assistantBubble.textContent = full;
+              assistantBubble.textContent = full.replace(/\s*\[mood:\w+\]\s*$/i, "");
               scrollTranscript();
             },
           });
@@ -911,6 +916,7 @@
           assistantBubble.textContent = reply;
           avatar.setEmotion(emotion);
           setEmotionPill(emotion);
+          avatar.playGestureForText?.(reply);
           status.speaking();
           await voice.speak(reply, emotion);
         } catch (err) {
@@ -961,11 +967,11 @@
               : "2D female";
       addBubble(
         "system",
-        `Grok-style companion · ${avatarLabel} · drag to orbit · 🎤 continuous talk (reply on each pause) · 🔊 speaker · real LLM via ⚙ or /api/chat`,
+        `Grok Ani 風格 · ${avatarLabel} · 粵語傾偈 · 表情同身體動作 · 🎤 連續對話 · ⚙ 設定 LLM`,
       );
       addBubble(
         "assistant",
-        "嗨～我係 Amoji。撳麥克風保持開啟，你講完停低就會答你，再繼續聽。",
+        "嗨呀～我係 Amoji！同我傾偈啦，我會用粵語答你，仲會做表情同手勢㗎。",
       );
       avatar.setEmotion("happy");
       setEmotionPill("happy");
@@ -975,8 +981,9 @@
         if (greeted) return;
         greeted = true;
         status.speaking();
+        avatar.playGestureForText?.("嗨呀～開心見到你！");
         const result = await voice.speak(
-          "嗨～我係 Amoji。撳麥克風保持開啟，你講完停低就會答你，再繼續聽。",
+          "嗨呀～我係 Amoji！同我傾偈啦，我會用粵語答你，仲會做表情同手勢㗎。",
           "happy",
         );
         if (!result?.ok) {

@@ -14,6 +14,7 @@ import http from "node:http";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { CANTONESE_COMPANION_PROMPT } from "../engine/companion/companionBodyMotion.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, "../..");
@@ -91,29 +92,34 @@ function localCompanionReply(message, history = []) {
   const lower = text.toLowerCase();
   const lastUser = [...history].reverse().find((m) => m.role === "user");
   const nameMatch = text.match(/我叫\s*([^\s，。！？,.!?]+)/);
-  if (nameMatch) return `你好${nameMatch[1]}！好開心認識你～今日想傾啲咩？`;
+  if (nameMatch) {
+    return `你好呀${nameMatch[1]}！好開心認識你～今日想傾啲咩？ [mood:happy]`;
+  }
   if (/哈哈|開心|happy|great|鍾意/.test(lower)) {
-    return "哈哈我都開心到跳起！再講多啲啦～";
+    return "哈哈我都開心到跳起！再講多啲啦～ [mood:happy]";
   }
   if (/唉|傷心|sad|慘|唔開心/.test(lower)) {
-    return "抱抱你。慢慢講，我喺度聽住。";
+    return "抱抱你呀…慢慢講，我喺度聽住。 [mood:sad]";
   }
   if (/點解|why|諗|hmm/.test(lower)) {
-    return "嗯…等我諗一諗。你覺得邊方面最關鍵？";
+    return "嗯…等我諗一諗先。你覺得邊方面最關鍵？ [mood:thinking]";
   }
   if (/hello|hi|hey|你好|早晨|晚安/.test(lower)) {
-    return "嗨～我係 Amoji。想傾粵語定英文都得！";
+    return "嗨呀～我係 Amoji！同我傾偈啦，我會用粵語答你㗎。 [mood:happy]";
   }
   if (/你係邊個|who are you|你叫咩/.test(lower)) {
-    return "我係 Amoji，一個低面數 3D 動漫夥伴，會跟住你嘅對話做出表情同口型。";
+    return "我係 Amoji 呀，你嘅動漫夥伴，會做表情同手勢㗎！ [mood:happy]";
+  }
+  if (/哇|嘩|唔信|真係/.test(text)) {
+    return "嘩！真係呀？講多啲俾我聽啦！ [mood:surprised]";
   }
   if (lastUser?.content && /再见|拜拜|bye/.test(lower)) {
-    return "拜拜～記得返嚟搵我呀！";
+    return "拜拜啦～記得返嚟搵我呀！ [mood:happy]";
   }
   const snippets = [
-    `「${text.slice(0, 24)}」——我聽到啦。再講深啲？`,
-    "有意思！你想我用開心定認真嘅口吻答你？",
-    "嗯嗯，繼續講，我跟住你情緒走。",
+    `「${text.slice(0, 24)}」——我聽到啦，再講深啲？ [mood:thinking]`,
+    "有意思喎！我覺得幾好玩呀～ [mood:happy]",
+    "嗯嗯，繼續講，我跟住你情緒走。 [mood:neutral]",
   ];
   return snippets[Math.floor(Math.random() * snippets.length)];
 }
@@ -124,16 +130,7 @@ async function handleChatApi(req, res) {
     const body = await readJson(req);
     const message = String(body.message || body.text || "").trim();
     const history = Array.isArray(body.history) ? body.history : [];
-    const system =
-      body.system ||
-      [
-        "You are Amoji, a witty, emotionally intelligent anime companion.",
-        "Reply in the user's language (Cantonese/中文/English).",
-        "Be specific, curious, and helpful — never generic or robotic.",
-        "Keep answers concise (1–4 sentences) unless they ask for detail.",
-        "Show personality: warm humor, empathy, light teasing when appropriate.",
-        "Never mention APIs, models, or being an AI assistant.",
-      ].join(" ");
+    const system = body.system || CANTONESE_COMPANION_PROMPT;
 
     if (!message) {
       send(res, 400, { ok: false, error: "empty message" }, {
