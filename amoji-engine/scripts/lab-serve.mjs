@@ -30,6 +30,66 @@ import {
   pickOllamaModel,
   OLLAMA_DEFAULT_HOST,
 } from "../engine/companion/companionOllama.js";
+import { getLlmProvider } from "../engine/companion/companionLlmProviders.js";
+
+const OLLAMA_HOST_CANDIDATES = [
+  process.env.OLLAMA_HOST,
+  process.env.OLLAMA_BASE_URL,
+  "http://localhost:11434",
+  "http://127.0.0.1:11434",
+  OLLAMA_DEFAULT_HOST,
+].filter(Boolean);
+
+async function resolveOllamaHost() {
+  for (const host of OLLAMA_HOST_CANDIDATES) {
+    if (await isOllamaReachable(host)) {
+      return {
+        host,
+        models: await listOllamaModels(host),
+        up: true,
+      };
+    }
+  }
+  return { host: OLLAMA_HOST_CANDIDATES[0] || OLLAMA_DEFAULT_HOST, models: [], up: false };
+}
+
+async function getLlmStatusPayload() {
+  const ollama = await resolveOllamaHost();
+  return {
+    ok: true,
+    ollama: {
+      ok: ollama.up,
+      host: ollama.host,
+      models: ollama.models,
+    },
+    groq: { ok: Boolean(process.env.GROQ_API_KEY) },
+    openai: { ok: Boolean(process.env.OPENAI_API_KEY || process.env.AMOJI_LLM_KEY) },
+    openrouter: { ok: Boolean(process.env.OPENROUTER_API_KEY) },
+    together: { ok: Boolean(process.env.TOGETHER_API_KEY) },
+  };
+}
+
+async function callCloudChat({ base, apiKey, model, messages }) {
+  const endpoint = `${base.replace(/\/$/, "")}/chat/completions`;
+  const upstream = await fetch(endpoint, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model,
+      temperature: 0.75,
+      messages,
+    }),
+  });
+  const data = await upstream.json().catch(() => ({}));
+  const reply = data?.choices?.[0]?.message?.content;
+  if (!upstream.ok || !reply) {
+    return { ok: false, error: data?.error?.message || `HTTP ${upstream.status}` };
+  }
+  return { ok: true, reply: String(reply).trim(), model };
+}
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, "../..");
@@ -154,11 +214,11 @@ async function handleChatApi(req, res) {
       return;
     }
 
-    const ollamaHost =
-      process.env.OLLAMA_HOST ||
-      process.env.OLLAMA_BASE_URL ||
-      OLLAMA_DEFAULT_HOST;
-    const ollamaUp = await isOllamaReachable(ollamaHost);
+    const providerId = String(body.providerId || "").trim();
+    const providerPreset = providerId ? getLlmProvider(providerId) : null;
+    const ollamaResolved = await resolveOllamaHost();
+    const ollamaHost = ollamaResolved.host;
+    const ollamaUp = ollamaResolved.up;
     const apiKeyProbe =
       process.env.OPENAI_API_KEY ||
       process.env.AMOJI_LLM_KEY ||
@@ -169,13 +229,13 @@ async function handleChatApi(req, res) {
       let mode = "local";
       let model =
         body.model ||
+        providerPreset?.model ||
         process.env.OLLAMA_MODEL ||
         process.env.AMOJI_LLM_MODEL ||
         "qwen3:4b";
       if (ollamaUp) {
         mode = "ollama";
-        const models = await listOllamaModels(ollamaHost);
-        model = pickOllamaModel(models, model);
+        model = pickOllamaModel(ollamaResolved.models, model);
       } else if (apiKeyProbe) {
         mode = "online";
         model =
@@ -200,13 +260,99 @@ async function handleChatApi(req, res) {
       messages.push({ role: "user", content: message });
     }
 
-    if (ollamaUp && process.env.OLLAMA_DISABLED !== "1") {
+    if (providerId === "basic") {
+      const reply = localCompanionReply(message, history);
+      send(
+        res,
+        200,
+        { ok: true, reply, mode: "local", model: null },
+        { "Content-Type": "application/json; charset=utf-8" },
+      );
+      return;
+    }
+
+    const requestedModel =
+      body.model ||
+      providerPreset?.model ||
+      process.env.OLLAMA_MODEL ||
+      process.env.AMOJI_LLM_MODEL;
+
+    const tryGroq =
+      providerId === "groq" ||
+      (!providerId && !ollamaUp && process.env.GROQ_API_KEY);
+    if (tryGroq && process.env.GROQ_API_KEY) {
+      const cloud = await callCloudChat({
+        base: "https://api.groq.com/openai/v1",
+        apiKey: process.env.GROQ_API_KEY,
+        model: requestedModel || "llama-3.3-70b-versatile",
+        messages,
+      });
+      if (cloud.ok) {
+        send(
+          res,
+          200,
+          { ok: true, reply: cloud.reply, mode: "online", model: cloud.model },
+          { "Content-Type": "application/json; charset=utf-8" },
+        );
+        return;
+      }
+      console.warn("[lab] Groq failed", cloud.error);
+    }
+
+    const tryOpenRouter =
+      providerId?.startsWith("openrouter") && process.env.OPENROUTER_API_KEY;
+    if (tryOpenRouter) {
+      const cloud = await callCloudChat({
+        base: "https://openrouter.ai/api/v1",
+        apiKey: process.env.OPENROUTER_API_KEY,
+        model: requestedModel || providerPreset?.model || "google/gemma-2-9b-it:free",
+        messages,
+      });
+      if (cloud.ok) {
+        send(
+          res,
+          200,
+          { ok: true, reply: cloud.reply, mode: "online", model: cloud.model },
+          { "Content-Type": "application/json; charset=utf-8" },
+        );
+        return;
+      }
+      console.warn("[lab] OpenRouter failed", cloud.error);
+    }
+
+    const tryTogether = providerId === "together" && process.env.TOGETHER_API_KEY;
+    if (tryTogether) {
+      const cloud = await callCloudChat({
+        base: "https://api.together.xyz/v1",
+        apiKey: process.env.TOGETHER_API_KEY,
+        model: requestedModel || providerPreset?.model,
+        messages,
+      });
+      if (cloud.ok) {
+        send(
+          res,
+          200,
+          { ok: true, reply: cloud.reply, mode: "online", model: cloud.model },
+          { "Content-Type": "application/json; charset=utf-8" },
+        );
+        return;
+      }
+      console.warn("[lab] Together failed", cloud.error);
+    }
+
+    const skipOllama =
+      providerId === "groq" ||
+      providerId?.startsWith("openrouter") ||
+      providerId === "together";
+
+    if (
+      !skipOllama &&
+      ollamaUp &&
+      process.env.OLLAMA_DISABLED !== "1"
+    ) {
       const ollama = await chatOllama({
         base: ollamaHost,
-        model:
-          body.model ||
-          process.env.OLLAMA_MODEL ||
-          process.env.AMOJI_LLM_MODEL,
+        model: requestedModel,
         messages,
         fetchImpl: fetch,
       });
@@ -319,17 +465,25 @@ const server = http.createServer(async (req, res) => {
 
   if (req.method === "GET" && url.pathname === "/api/ollama/tags") {
     cors(res);
-    const host =
-      process.env.OLLAMA_HOST ||
-      process.env.OLLAMA_BASE_URL ||
-      OLLAMA_DEFAULT_HOST;
-    const models = await listOllamaModels(host);
+    const ollama = await resolveOllamaHost();
     send(
       res,
       200,
-      { ok: true, models, host, reachable: models.length > 0 },
+      {
+        ok: true,
+        models: ollama.models,
+        host: ollama.host,
+        reachable: ollama.up,
+      },
       { "Content-Type": "application/json; charset=utf-8" },
     );
+    return;
+  }
+
+  if (req.method === "GET" && url.pathname === "/api/llm/status") {
+    cors(res);
+    const payload = await getLlmStatusPayload();
+    send(res, 200, payload, { "Content-Type": "application/json; charset=utf-8" });
     return;
   }
 

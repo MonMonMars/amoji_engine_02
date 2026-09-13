@@ -465,6 +465,18 @@
         border-color: transparent;
       }
 
+      .llm-chip.unavailable {
+        opacity: 0.38;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      .llm-chip.unavailable:hover {
+        transform: none;
+        background: rgba(255, 255, 255, 0.05);
+        color: var(--muted);
+      }
+
       .composer-wrap {
         pointer-events: auto;
         padding: 0 1rem max(1rem, env(safe-area-inset-bottom));
