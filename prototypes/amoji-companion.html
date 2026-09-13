@@ -238,6 +238,22 @@
         color: var(--accent);
       }
 
+      .pill.avatar-load-pill {
+        border-color: rgba(127, 212, 207, 0.35);
+        color: var(--muted);
+        transition: opacity 0.4s ease, transform 0.4s ease;
+      }
+
+      .pill.avatar-load-pill strong {
+        color: var(--accent);
+      }
+
+      .pill.avatar-load-pill.hide {
+        opacity: 0;
+        transform: translateY(-4px);
+        pointer-events: none;
+      }
+
       .avatar-loading {
         position: absolute;
         inset: 0;
@@ -814,16 +830,26 @@
     </script>
     <script>
       (function () {
-        window.__amojiStart = { tapped: false, ready: false, run: null };
+        window.__amojiStart = { tapped: false, ready: false, run: null, sessionStarted: false };
         window.__amojiStartTap = function (ev) {
           ev?.preventDefault?.();
           ev?.stopPropagation?.();
           const btn = document.getElementById("start-talking");
           if (!btn || btn.disabled || btn.classList.contains("hide")) return false;
           window.__amojiStart.tapped = true;
-          btn.classList.add("starting");
           btn.textContent = "⏳ Starting…";
-          btn.setAttribute("aria-busy", "true");
+          btn.classList.add("hide");
+          btn.setAttribute("aria-hidden", "true");
+          btn.setAttribute("disabled", "true");
+          btn.classList.remove("starting");
+          btn.removeAttribute("aria-busy");
+          document.getElementById("input")?.focus();
+          setTimeout(function () {
+            if (window.__amojiStart.sessionStarted) return;
+            if (typeof window.__amojiStart.run === "function") {
+              window.__amojiStart.run({ fromTimeout: true });
+            }
+          }, 2000);
           if (window.__amojiStart.ready && typeof window.__amojiStart.run === "function") {
             void window.__amojiStart.run();
           }
@@ -850,6 +876,9 @@
         <div class="brand">Amoji <span>Live</span></div>
         <div class="meta">
           <div class="pill" id="status-pill">state · <strong>idle</strong></div>
+          <div class="pill avatar-load-pill" id="avatar-load-pill" hidden>
+            avatar · <strong>loading…</strong>
+          </div>
           <div class="pill" id="mode-pill">LLM · <strong>local</strong></div>
           <div class="pill" id="emotion-pill">feel · <strong>neutral</strong></div>
           <div class="pill" id="voice-pill">voice · <strong>…</strong></div>
@@ -1064,23 +1093,43 @@
 
       let avatar = createStubAvatar();
       let avatarKind = "loading";
+      let avatarLoadStarted = false;
       let currentEmotion = "happy";
-      const avatarLoadPromise = createCompanionAvatar({
-        canvas,
-        modelUrl: avatarModelUrl || undefined,
-        prefer: avatarPrefer,
-        onCharacterTap: () => handleCharacterTap?.(),
-      })
-        .then((loaded) => {
-          avatar = loaded.avatar;
-          avatarKind = loaded.kind;
-          avatar.setEmotion?.(currentEmotion);
-          return loaded;
+      /** @type {Promise<{ avatar: ReturnType<typeof createStubAvatar>, kind: string }>} */
+      let avatarLoadPromise = Promise.resolve({ avatar, kind: avatarKind });
+
+      const beginAvatarLoad = () => {
+        if (avatarLoadStarted) return avatarLoadPromise;
+        avatarLoadStarted = true;
+        showAvatarLoadPill();
+        avatarLoadPromise = createCompanionAvatar({
+          canvas,
+          modelUrl: avatarModelUrl || undefined,
+          prefer: avatarPrefer,
+          onCharacterTap: () => handleCharacterTap?.(),
         })
-        .catch((err) => {
-          console.warn("[companion] avatar load failed", err);
-          return { avatar, kind: avatarKind };
-        });
+          .then((loaded) => {
+            avatar = loaded.avatar;
+            avatarKind = loaded.kind;
+            avatar.setEmotion?.(currentEmotion);
+            return loaded;
+          })
+          .catch((err) => {
+            console.warn("[companion] avatar load failed", err);
+            return { avatar, kind: avatarKind };
+          })
+          .finally(() => hideAvatarLoadPill());
+        return avatarLoadPromise;
+      };
+
+      const scheduleAvatarLoad = () => {
+        const run = () => beginAvatarLoad();
+        if (typeof requestIdleCallback === "function") {
+          requestIdleCallback(run, { timeout: 1800 });
+        } else {
+          setTimeout(run, 150);
+        }
+      };
 
       const chat = createCompanionChat({
         apiUrl: stored.url || null,
@@ -1339,6 +1388,27 @@
 
       let sessionStarted = false;
       let sessionStarting = false;
+      /** @type {ReturnType<typeof setTimeout> | null} */
+      let startTimeoutId = null;
+      const START_TIMEOUT_MS = 2000;
+      const avatarLoadPill = document.getElementById("avatar-load-pill");
+
+      const showAvatarLoadPill = () => {
+        if (!avatarLoadPill) return;
+        avatarLoadPill.hidden = false;
+        avatarLoadPill.classList.remove("hide");
+      };
+
+      const hideAvatarLoadPill = () => {
+        if (!avatarLoadPill) return;
+        avatarLoadPill.classList.add("hide");
+        setTimeout(() => {
+          avatarLoadPill.hidden = true;
+        }, 450);
+      };
+
+      showAvatarLoadPill();
+      scheduleAvatarLoad();
 
       const resetStartButton = () => {
         if (!startTalkingEl) return;
@@ -1351,7 +1421,64 @@
           : "👆 Tap to start (type to chat)";
       };
 
-      const startSession = async () => {
+      const markSessionReady = ({ fromTimeout = false } = {}) => {
+        if (sessionStarted) return;
+        sessionStarted = true;
+        sessionStarting = false;
+        window.__amojiStart.sessionStarted = true;
+        if (startTimeoutId) {
+          clearTimeout(startTimeoutId);
+          startTimeoutId = null;
+        }
+
+        startTalkingEl?.classList.remove("starting");
+        startTalkingEl?.removeAttribute("aria-busy");
+        startTalkingEl?.classList.add("hide");
+        startTalkingEl?.setAttribute("aria-hidden", "true");
+        startTalkingEl?.setAttribute("disabled", "true");
+        setTimeout(() => startTalkingEl?.remove(), 600);
+
+        if (!busy && !voice.micOn && !voice.speaking) status.idle();
+        input.focus();
+        scheduleAvatarLoad();
+
+        if (fromTimeout) {
+          showToast("Session ready — avatar or voice may still be loading", "info");
+        }
+      };
+
+      const speakGreetingAsync = () => {
+        avatar.setEmotion("happy");
+        setEmotionPill("happy");
+        avatar.playGestureForText?.(GREETING);
+        speakEmotion = "happy";
+        status.speaking();
+        void voice.speak(GREETING, "happy").then((spoke) => {
+          if (spoke?.ok === false && spoke?.reason) {
+            addBubble("system", `Voice: ${spoke.reason} — you can still type to chat.`);
+            showToast("Voice unavailable — type your message below", "info");
+          }
+          if (!busy && !voice.micOn) status.idle();
+        });
+      };
+
+      const requestMicAsync = () => {
+        if (!autoMic || !voice.supportsMic) return;
+        void voice.startMic().then((micOk) => {
+          syncMicBtn();
+          if (micOk) {
+            status.listening();
+            input.placeholder =
+              "Listening… speak, pause → she replies, then listens again";
+            addBubble("system", "Mic on — speak Cantonese or English, pause to send.");
+          } else if (!busy) {
+            status.idle();
+            input.placeholder = "同 Amoji 傾偈… tap 🎤 after allowing microphone";
+          }
+        });
+      };
+
+      const startSession = ({ fromTimeout = false } = {}) => {
         if (sessionStarted || sessionStarting) return;
         sessionStarting = true;
         startTalkingEl?.classList.add("starting");
@@ -1360,58 +1487,22 @@
           startTalkingEl.textContent = "⏳ Starting…";
         }
 
-        try {
-          await voice.primeAudio?.();
-          const v = await voice.ensureVoices();
-          setVoicePill(femaleVoiceLabel(v) || (voice.supportsSpeak ? "女聲" : "off"));
-
-          startTalkingEl?.classList.add("hide");
-          startTalkingEl?.setAttribute("aria-hidden", "true");
-          startTalkingEl?.setAttribute("disabled", "true");
-
-          if (!voice.supportsMic) {
-            addBubble("system", formatMicError("unsupported"));
-          }
-
-          avatar.setEmotion("happy");
-          setEmotionPill("happy");
-          avatar.playGestureForText?.(GREETING);
-          speakEmotion = "happy";
-          status.speaking();
-          const spoke = await voice.speak(GREETING, "happy");
-          if (spoke?.ok === false && spoke?.reason) {
-            addBubble("system", `Voice: ${spoke.reason} — you can still type to chat.`);
-            showToast("Voice unavailable — type your message below", "info");
-          }
-
-          if (autoMic && voice.supportsMic) {
-            const micOk = await voice.startMic();
-            syncMicBtn();
-            if (micOk) {
-              status.listening();
-              input.placeholder =
-                "Listening… speak, pause → she replies, then listens again";
-              addBubble("system", "Mic on — speak Cantonese or English, pause to send.");
-            } else {
-              status.idle();
-              input.placeholder = "同 Amoji 傾偈… tap 🎤 after allowing microphone";
-            }
-          } else {
-            status.idle();
-          }
-
-          sessionStarted = true;
-          setTimeout(() => startTalkingEl?.remove(), 600);
-        } catch (err) {
-          console.error("[companion] startSession failed", err);
-          resetStartButton();
-          const msg = err?.message || String(err);
-          showToast(`Could not start: ${msg}`);
-          addBubble("system", `Start failed: ${msg} — tap the button again or type below.`);
-          status.idle();
-        } finally {
-          sessionStarting = false;
+        if (!voice.supportsMic) {
+          addBubble("system", formatMicError("unsupported"));
         }
+
+        startTimeoutId = setTimeout(() => {
+          if (!sessionStarted) markSessionReady({ fromTimeout: true });
+        }, START_TIMEOUT_MS);
+
+        requestAnimationFrame(() => markSessionReady({ fromTimeout }));
+
+        void voice.primeAudio?.().catch(() => {});
+        void voice.ensureVoices().then((v) => {
+          setVoicePill(femaleVoiceLabel(v) || (voice.supportsSpeak ? "女聲" : "off"));
+        });
+        speakGreetingAsync();
+        requestMicAsync();
       };
 
       window.__amojiStart.run = () => void startSession();
@@ -1558,7 +1649,7 @@
         }
         const turningOn = !voice.micOn;
         if (turningOn) {
-          if (!sessionStarted) await startSession();
+          if (!sessionStarted) startSession();
           micQueue.length = 0;
           const micOk = await voice.startMic();
           syncMicBtn();
@@ -1588,7 +1679,7 @@
         input.value = "";
         autosize();
         if (!sessionStarted && !sessionStarting) {
-          await voice.primeAudio?.();
+          startSession();
         }
         await runTurn(text);
       });
