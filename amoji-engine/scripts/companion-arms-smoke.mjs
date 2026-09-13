@@ -13,7 +13,7 @@ import { chromium } from "playwright-core";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DEFAULT_URL =
-  "http://127.0.0.1:5173/prototypes/amoji-companion.html?automic=0";
+  "http://127.0.0.1:5173/prototypes/vrm-arm-test.html";
 
 function parseArg(name, fallback) {
   const idx = process.argv.indexOf(name);
@@ -33,21 +33,25 @@ async function main() {
 
   await page.goto(url, { waitUntil: "networkidle", timeout: 60000 });
   await page.waitForSelector("#avatar-canvas", { timeout: 20000 });
-  await page.waitForTimeout(2500);
+  await page.waitForFunction(
+    () => window.__armTest?.ready === true,
+    undefined,
+    { timeout: 45000 },
+  );
+  await page.waitForTimeout(1500);
 
-  const armRotations = await page.evaluate(async () => {
-    const mod = await import("/amoji-engine/engine/companion/vrmAvatar.js");
-    return { ok: Boolean(mod?.VRM_AVATAR_SCHEMA) };
-  });
+  const armRotations = await page.evaluate(() => ({
+    leftUpperArmZ: window.__armTest?.readArmZ?.() ?? null,
+  }));
 
   const shotPath = join(outDir, "companion-arms-rest.png");
   await page.locator("#avatar-canvas").screenshot({ path: shotPath });
 
   const report = {
-    ok: true,
+    ok: armRotations.leftUpperArmZ !== null && armRotations.leftUpperArmZ < -0.5,
     url,
     screenshot: shotPath,
-    moduleLoaded: armRotations.ok,
+    leftUpperArmZ: armRotations.leftUpperArmZ,
   };
   await writeFile(
     join(outDir, "companion-arms-smoke.json"),
