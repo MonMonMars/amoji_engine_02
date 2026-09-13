@@ -18,29 +18,33 @@ const EMOTION_EXPRESSIONS = {
   angry: { [VRMExpressionPresetName.Angry]: 0.8 },
 };
 
-/** Lower T-pose arms into a relaxed standing pose. */
+/** Lower T-pose arms into a relaxed standing pose (re-applied each frame). */
 function applyStandingPose(vrm) {
   const humanoid = vrm.humanoid;
   if (!humanoid) return;
-  humanoid.resetNormalizedPose?.();
 
-  const pose = [
-    ["leftUpperArm", { z: 1.35, x: 0.08 }],
-    ["rightUpperArm", { z: -1.35, x: 0.08 }],
-    ["leftLowerArm", { z: 0.12 }],
-    ["rightLowerArm", { z: -0.12 }],
-    ["leftHand", { x: 0.05 }],
-    ["rightHand", { x: 0.05 }],
-    ["spine", { x: 0.02 }],
-    ["chest", { x: -0.02 }],
-  ];
+  const lua = humanoid.getNormalizedBoneNode?.("leftUpperArm");
+  const rua = humanoid.getNormalizedBoneNode?.("rightUpperArm");
+  const lla = humanoid.getNormalizedBoneNode?.("leftLowerArm");
+  const rla = humanoid.getNormalizedBoneNode?.("rightLowerArm");
 
-  for (const [bone, rot] of pose) {
-    const node = humanoid.getNormalizedBoneNode?.(bone);
-    if (!node) continue;
-    if (rot.x) node.rotation.x += rot.x;
-    if (rot.y) node.rotation.y += rot.y;
-    if (rot.z) node.rotation.z += rot.z;
+  if (lua) {
+    lua.rotation.z = 1.4;
+    lua.rotation.x = 0.12;
+    lua.rotation.y = 0;
+  }
+  if (rua) {
+    rua.rotation.z = -1.4;
+    rua.rotation.x = 0.12;
+    rua.rotation.y = 0;
+  }
+  if (lla) {
+    lla.rotation.z = 0.15;
+    lla.rotation.x = 0.05;
+  }
+  if (rla) {
+    rla.rotation.z = -0.15;
+    rla.rotation.x = 0.05;
   }
 }
 
@@ -58,15 +62,15 @@ function frameFaceCamera({ vrm, model, camera, controls, fitted }) {
     face.set(0, fitted.min.y + fittedSize.y * 0.88, 0);
   }
 
-  const portraitDist = Math.max(0.42, fittedSize.y * 0.34);
+  const portraitDist = Math.max(0.28, fittedSize.y * 0.22);
   controls.target.copy(face);
-  camera.position.set(face.x, face.y + 0.02, face.z + portraitDist);
-  controls.minDistance = portraitDist * 0.72;
-  controls.maxDistance = portraitDist * 2.8;
-  controls.minPolarAngle = Math.PI * 0.44;
-  controls.maxPolarAngle = Math.PI * 0.56;
+  camera.position.set(face.x, face.y + 0.01, face.z + portraitDist);
+  controls.minDistance = portraitDist * 0.65;
+  controls.maxDistance = portraitDist * 2.4;
+  controls.minPolarAngle = Math.PI * 0.46;
+  controls.maxPolarAngle = Math.PI * 0.54;
   controls.update();
-  return face;
+  return { face, portraitDist };
 }
 
 /**
@@ -182,10 +186,20 @@ export async function createVrmAvatar(opts) {
   model.position.z = -center.z * scale;
   model.position.y = -box.min.y * scale;
   scene.add(model);
+  vrm.update(0);
   applyStandingPose(vrm);
 
   const fitted = new THREE.Box3().setFromObject(model);
-  const faceAnchor = frameFaceCamera({ vrm, model, camera, controls, fitted });
+  const { face: faceAnchor, portraitDist } = frameFaceCamera({
+    vrm,
+    model,
+    camera,
+    controls,
+    fitted,
+  });
+  const faceWorld = new THREE.Vector3();
+  const camDir = new THREE.Vector3();
+  const camDesired = new THREE.Vector3();
 
   // Subtle look-at toward camera
   if (vrm.lookAt) {
@@ -305,6 +319,16 @@ export async function createVrmAvatar(opts) {
     const dt = clock.getDelta();
     const now = performance.now();
     vrm.update(dt);
+    applyStandingPose(vrm);
+
+    const head = vrm.humanoid?.getNormalizedBoneNode?.("head");
+    if (head) {
+      head.getWorldPosition(faceWorld);
+      controls.target.lerp(faceWorld, Math.min(1, dt * 6));
+      camDir.subVectors(camera.position, controls.target).normalize();
+      camDesired.copy(faceWorld).addScaledVector(camDir, portraitDist);
+      camera.position.lerp(camDesired, Math.min(1, dt * 4));
+    }
     controls.update();
 
     mouthOpen += (mouthTarget - mouthOpen) * Math.min(1, dt * 14);

@@ -54,9 +54,11 @@ export function charToViseme(ch) {
  * @param {SpeechSynthesisVoice[]} voices
  */
 export function pickFemaleVoice(voices) {
-  const list = Array.isArray(voices) ? voices : [];
+  const list = (Array.isArray(voices) ? voices : []).filter(
+    (v) => v && typeof v.name === "string",
+  );
   const score = (v) => {
-    const name = `${v.name} ${v.lang}`.toLowerCase();
+    const name = `${v.name} ${v.lang || ""}`.toLowerCase();
     let s = 0;
     if (/zh-hk|yue|cantonese|hong kong/.test(name)) s += 50;
     if (/zh-tw|zh-cn|cmn|chinese|mandarin/.test(name)) s += 35;
