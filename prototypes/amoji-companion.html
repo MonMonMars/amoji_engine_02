@@ -1299,7 +1299,7 @@
         addBubble("assistant", line);
         avatar.setEmotion("happy");
         setEmotionPill("happy");
-        avatar.playGestureForText?.(line);
+        avatar.setTalkStyle?.("soft");
         speakEmotion = "happy";
         status.speaking();
         void voice.speak(line, "happy").finally(() => {
@@ -1354,9 +1354,8 @@
           assistantBubble.textContent = reply;
           avatar.setEmotion(emotion);
           setEmotionPill(emotion);
-          avatar.playGestureForText?.(reply);
           avatar.setTalkStyle?.(
-            reply.includes("?") || reply.includes("？") ? "question" : "explain",
+            reply.includes("?") || reply.includes("？") ? "question" : "soft",
           );
           speakEmotion = emotion;
           status.speaking();
@@ -1463,12 +1462,14 @@
         avatar.playGesture?.("nod");
         speakEmotion = "happy";
         status.speaking();
-        void voice.speak(GREETING, "happy").then((spoke) => {
+        return voice.speak(GREETING, "happy").then((spoke) => {
           if (spoke?.ok === false && spoke?.reason) {
             addBubble("system", `Voice: ${spoke.reason} — you can still type to chat.`);
             showToast("Voice unavailable — type your message below", "info");
           }
           if (!busy && !voice.micOn) status.idle();
+          syncListenPose();
+          return spoke;
         });
       };
 
@@ -1517,8 +1518,9 @@
             (hostedOnline ? "女聲·粵·曉曼" : voice.supportsSpeak ? "女聲" : "off");
           setVoicePill(label);
         });
-        speakGreetingAsync();
-        requestMicAsync();
+        void speakGreetingAsync().finally(() => {
+          requestMicAsync();
+        });
       };
 
       window.__amojiStart.run = () => void startSession();

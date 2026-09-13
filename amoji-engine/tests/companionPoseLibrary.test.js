@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   buildBasePose,
+  clampArmPose,
+  companionGestureStyle,
   LISTENING_POSE,
   REST_POSE,
   sampleVrmTalkPose,
@@ -31,6 +33,16 @@ describe("companionPoseLibrary", () => {
   it("maps talk gesture library to VRM body channels", () => {
     const explain = sampleVrmTalkPose("explain", 0.5, { intensity: 0.6 });
     expect(explain.armLiftL).toBeDefined();
-    expect(explain.armLiftL).toBeLessThan(0.35);
+    expect(explain.armLiftL).toBeLessThan(0.15);
+  });
+
+  it("remaps celebrate to soft for VRM companion", () => {
+    expect(companionGestureStyle("celebrate")).toBe("soft");
+  });
+
+  it("clamps arm lift", () => {
+    const out = clampArmPose({ armLiftL: 0.9, armLiftR: 0.8 });
+    expect(out.armLiftL).toBeLessThanOrEqual(0.14);
+    expect(out.armLiftR).toBeLessThanOrEqual(0.14);
   });
 });

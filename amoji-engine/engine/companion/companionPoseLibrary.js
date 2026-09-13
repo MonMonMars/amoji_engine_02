@@ -81,15 +81,42 @@ export function isTalkGestureStyle(style) {
  * @param {number} timeSec
  * @param {{ emotion?: string, speechEnergy?: number, intensity?: number }} [opts]
  */
+/** VRM-safe: no celebrate/wave/thinking arm poses — use soft/explain instead. */
+export function companionGestureStyle(style) {
+  const key = String(style || "explain").toLowerCase();
+  if (key === "nod") return "nod";
+  if (key === "soft" || key === "explain") return key;
+  if (key === "point" || key === "question") return key;
+  return "soft";
+}
+
+/**
+ * Clamp arm channels so hands stay away from hair on A-pose VRM rigs.
+ * @param {Record<string, number>} pose
+ */
+export function clampArmPose(pose) {
+  const out = { ...pose };
+  const maxLift = 0.14;
+  const maxFore = 0.12;
+  if ("armLiftL" in out) out.armLiftL = Math.min(maxLift, Math.max(0, out.armLiftL));
+  if ("armLiftR" in out) out.armLiftR = Math.min(maxLift, Math.max(0, out.armLiftR));
+  if ("forearmL" in out) out.forearmL = Math.min(maxFore, Math.max(0, out.forearmL ?? 0));
+  if ("forearmR" in out) out.forearmR = Math.min(maxFore, Math.max(0, out.forearmR ?? 0));
+  return out;
+}
+
 export function sampleVrmTalkPose(style, timeSec, opts = {}) {
-  const key = isTalkGestureStyle(style) ? style : "explain";
+  const key = companionGestureStyle(style);
+  if (key === "nod") return {};
   const sample = sampleTalkGesture(timeSec, {
     style: key,
     emotion: opts.emotion || "neutral",
-    speechEnergy: opts.speechEnergy ?? 0.45,
-    intensity: opts.intensity ?? 0.58,
+    speechEnergy: opts.speechEnergy ?? 0.35,
+    intensity: opts.intensity ?? 0.38,
   });
-  return talkGesturePoseToBody(sample.pose);
+  return clampArmPose(
+    talkGesturePoseToBody(sample.pose, { includeArms: opts.includeArms !== false }),
+  );
 }
 
 /**
