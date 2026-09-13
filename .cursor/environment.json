@@ -1,0 +1,11 @@
+{
+  "name": "Amoji Engine",
+  "install": "cd amoji-engine && npm ci && npm run build",
+  "terminals": [
+    {
+      "name": "lab",
+      "command": "cd amoji-engine && npm run lab"
+    }
+  ],
+  "ports": [5173]
+}

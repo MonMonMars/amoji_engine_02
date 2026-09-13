@@ -1,0 +1,286 @@
+/**
+ * Browser/Node JS engine surface for Amoji always-on listen + voice chat orchestrator.
+ * TypeScript package entry remains `src/index.ts` → `dist/`.
+ */
+
+export {
+  ALWAYS_ON_LISTEN_SCHEMA,
+  AlwaysOnListenController,
+  createAlwaysOnListen,
+  createUtteranceDetector,
+  frameEnergy,
+  resolveAlwaysOnListenOptions,
+} from "./voice/alwaysOnListen.js";
+
+export {
+  VoiceChatOrchestrator,
+  createVoiceChatOrchestrator,
+} from "./voice/voiceChatOrchestrator.js";
+
+export {
+  ROBOT_EVENTS,
+  createVoiceRobotBridge,
+  extractRememberedName,
+  planRobotSteps,
+} from "./voice/voiceRobotBridge.js";
+
+export {
+  ROBOT_MOTION_SCHEMA,
+  ROBOT_MOTION_VENDORS,
+  SOFTBANK_STYLE_MAP,
+  FURHAT_STYLE_MAP,
+  REACHY_STYLE_JOINTS,
+  UNITREE_G1_STYLE_JOINTS,
+  normalizeRobotMotionVendor,
+  nextRobotMotionVendor,
+  buildRobotMotionPackage,
+  sampleVendorMotionFrame,
+  annotateSoftbankSpeech,
+  toSoftbankMotion,
+  toFurhatMotion,
+  toReachyMotion,
+  toUnitreeG1Motion,
+  toRosMotion,
+  formatRobotMotionHud,
+  robotMotionPlanSteps,
+  createRobotMotionAdapter,
+} from "./robot/talkMotion.js";
+
+export {
+  ROBOT_MOTION_DISPATCH_SCHEMA,
+  createRobotMotionDispatcher,
+} from "./robot/motionDispatcher.js";
+
+export {
+  MOTION_BRIDGE_CLIENT_SCHEMA,
+  createMotionBridgeClient,
+} from "./robot/motionBridgeClient.js";
+
+export {
+  MOTION_BRIDGE_URL_SCHEMA,
+  MOTION_BRIDGE_URL_STORAGE_KEY,
+  resolveMotionBridgeConfig,
+  persistMotionBridgeUrl,
+} from "./lab/motionBridgeUrl.js";
+
+export {
+  MOTION_VENDOR_PREF_SCHEMA,
+  MOTION_VENDOR_PREF_STORAGE_KEY,
+  normalizeMotionVendorPref,
+  nextMotionVendorPref,
+  resolveMotionVendorPref,
+  persistMotionVendorPref,
+} from "./lab/motionVendorPref.js";
+
+export {
+  DIALECT_DETECT_SCHEMA,
+  detectLanguage,
+  stripAsrTags,
+} from "./voice/dialect.js";
+
+export {
+  PROSODY_MARKERS_SCHEMA,
+  parseProsodyMarkers,
+  applyProsodyMarkerOverrides,
+  resolveProsody,
+  prosodyFromMarkedText,
+} from "./voice/prosodyMarkers.js";
+
+export {
+  SENSE_VOICE_SCHEMA,
+  parseSenseVoiceTranscript,
+  emotionFromTextHeuristics,
+  emotionFromSenseVoice,
+} from "./voice/senseVoice.js";
+
+export {
+  VOICE_WORKER_SCHEMA,
+  callVoiceWorker,
+  callVoiceWorkerHealth,
+  callVoiceWorkerTtsStream,
+  mockAsr,
+  mockTtsStream,
+  createVoiceWorkerClient,
+} from "./voice/voiceWorkerClient.js";
+
+export {
+  createPartialAsrWatcher,
+  snapshotMicWavBase64,
+} from "./voice/partialAsr.js";
+
+export {
+  createMicFrameBuffer,
+} from "./voice/micFrameBuffer.js";
+
+export {
+  PUSH_TO_TALK_SCHEMA,
+  bindPushToTalkPointer,
+  createPushToTalk,
+} from "./voice/pushToTalk.js";
+
+export {
+  WORKER_TURN_SCHEMA,
+  runWorkerRobotTurn,
+  createWorkerTurnHost,
+} from "./voice/workerTurnPipeline.js";
+
+export {
+  BROWSER_AUDIO_SCHEMA,
+  encodeWavPcm16,
+  arrayBufferToBase64,
+  base64ToBytes,
+  synthesizeWavBase64,
+  downsampleMono,
+  TtsChunkPlayer,
+  createTtsPlaybackQueue,
+  decodeChunkToAudioBuffer,
+} from "./voice/browserAudio.js";
+
+export {
+  IDLE_PRESENCE_SCHEMA,
+  IDLE_FACE_LIVE_IDS,
+  sampleIdlePresence,
+  presenceToFaceLiveParams,
+  IdlePresenceClock,
+  createIdlePresenceClock,
+} from "./face/idlePresence.js";
+
+export {
+  LIP_SYNC_SCHEMA,
+  LIP_SYNC_PARAM_IDS,
+  mouthOpenFromPcm,
+  smoothMouthOpen,
+  decodePcmBase64ToFloat32,
+  lipSyncParamsFromChunk,
+  createLipSyncTracker,
+} from "./face/lipSyncFromChunk.js";
+
+export {
+  FACE_LIVE_CLIENT_SCHEMA,
+  SAKURA_PARAM_IDS,
+  SAKURA_EXPRESSION_PRESETS,
+  SAKURA_EXPRESSION_CYCLE,
+  createSakuraFaceLiveClient,
+} from "./face/sakuraFaceLiveClient.js";
+
+export {
+  EMOTION_EXPRESSION_SCHEMA,
+  expressionParamsForEmotion,
+  inferExpressionFromText,
+  listExpressionPresets,
+  mapEmotionToExpression,
+  nextExpressionPreset,
+  resolveExpressionFromTurn,
+} from "./face/emotionExpression.js";
+
+export {
+  TALK_GESTURE_SCHEMA,
+  TALK_GESTURE_STYLES,
+  TALK_GESTURE_PARAM_IDS,
+  FINGER_DIGITS,
+  FINGER_JOINTS,
+  FINGER_TIP_PARAM_IDS,
+  listFingerTipParamIds,
+  setFingerChain,
+  readFingerTips,
+  inferTalkGestureFromText,
+  nextTalkGestureStyle,
+  sampleTalkGesture,
+  talkGestureToFaceLiveParams,
+  mergeFaceLiveParams,
+  TalkGestureClock,
+  createTalkGestureClock,
+} from "./face/talkGestures.js";
+
+export {
+  startMockFaceLiveBridge,
+} from "./face/mockFaceLiveBridge.js";
+
+export {
+  SESSION_ARCHIVE_KIND,
+  SESSION_ARCHIVE_SCHEMA_VERSION,
+  applySessionArchive,
+  buildSessionArchive,
+  createLabChat,
+  createLabSessionFacade,
+  createTickRecorder,
+  downloadJsonFile,
+  downloadSessionArchiveJson,
+  exportSessionArchive,
+  exportTurnMetricsRollup,
+  importSessionArchive,
+  parseSessionArchive,
+} from "./lab/sessionArchive.js";
+
+export {
+  buildLabShareUrl,
+  copyTextToClipboard,
+} from "./lab/clipboard.js";
+
+export {
+  MIC_LEVEL_METER_SCHEMA,
+  createMicLevelMeter,
+} from "./lab/micLevelMeter.js";
+
+export {
+  WORKER_URL_STORAGE_KEY,
+  resolveVoiceWorkerConfig,
+} from "./lab/workerUrl.js";
+
+export {
+  FACE_LIVE_URL_STORAGE_KEY,
+  resolveFaceLiveConfig,
+} from "./lab/faceLiveUrl.js";
+
+export {
+  DIALECT_PREF_SCHEMA,
+  DIALECT_PREF_STORAGE_KEY,
+  normalizeDialectMode,
+  nextDialectMode,
+  persistDialectPref,
+  resolveDialectPref,
+} from "./lab/dialectPref.js";
+
+export {
+  LISTEN_PREF_SCHEMA,
+  LISTEN_PREF_STORAGE_KEY,
+  LISTEN_SENSITIVITY_PRESETS,
+  listenPresetFor,
+  nextListenSensitivity,
+  normalizeListenSensitivity,
+  persistListenPref,
+  resolveListenPref,
+} from "./lab/listenPref.js";
+
+export {
+  TTS_VOLUME_SCHEMA,
+  TTS_VOLUME_STORAGE_KEY,
+  TTS_VOLUME_PRESETS,
+  normalizeTtsVolume,
+  nextTtsVolume,
+  prevTtsVolume,
+  persistTtsVolumePref,
+  resolveTtsVolumePref,
+  ttsVolumePresetFor,
+} from "./lab/ttsVolumePref.js";
+
+export {
+  LATENCY_BUDGET_SCHEMA,
+  DEFAULT_LATENCY_BUDGET,
+  checkLatencyBudget,
+  formatLatencyBudget,
+  resolveLatencyBudget,
+} from "./lab/latencyBudget.js";
+
+export {
+  LAB_HOTKEYS_SCHEMA,
+  createLabHotkeys,
+} from "./lab/labHotkeys.js";
+
+export {
+  TURN_METRICS_ROLLUP_SCHEMA,
+  createTurnMetricsRollup,
+  normalizeTurnMetrics,
+  percentileNearest,
+  summarizeSeries,
+} from "./lab/turnMetricsRollup.js";
