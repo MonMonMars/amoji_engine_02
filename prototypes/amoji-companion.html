@@ -832,14 +832,31 @@
       (function () {
         window.__amojiStart = { tapped: false, ready: false, run: null, sessionStarted: false };
         window.__amojiHideLoading = function () {
-          const el = document.querySelector(".avatar-loading");
-          if (!el || el.classList.contains("hide")) return;
-          el.classList.add("hide");
-          setTimeout(function () {
-            el.remove();
-          }, 600);
+          document.querySelectorAll(".avatar-loading").forEach(function (el) {
+            if (el.classList.contains("hide")) return;
+            el.classList.add("hide");
+            setTimeout(function () {
+              el.remove();
+            }, 600);
+          });
+          var start = document.getElementById("start-talking");
+          if (start) {
+            start.classList.remove("hide", "starting");
+            start.removeAttribute("aria-hidden");
+            start.removeAttribute("disabled");
+            start.removeAttribute("aria-busy");
+          }
         };
-        setTimeout(window.__amojiHideLoading, 8000);
+        setTimeout(window.__amojiHideLoading, 5000);
+        setTimeout(function () {
+          if (!window.__amojiStart?.ready) {
+            window.__amojiHideLoading();
+            var start = document.getElementById("start-talking");
+            if (start && !window.__amojiStart?.sessionStarted) {
+              start.textContent = "👆 Tap to start · 點一下開始 (retry)";
+            }
+          }
+        }, 12000);
         window.__amojiUnlockAudio = function () {
           try {
             var AC = window.AudioContext || window.webkitAudioContext;
@@ -1045,6 +1062,11 @@
       const startTalkingEl = document.getElementById("start-talking");
       const loading = createLoadingOverlay(stage);
       loading.show();
+      const dismissLoading = () => {
+        loading.hide();
+        window.__amojiHideLoading?.();
+        setTimeout(() => loading.remove(), 600);
+      };
 
       const showToast = (msg, kind = "error") => {
         const t = document.createElement("div");
@@ -1075,7 +1097,9 @@
       const params = new URLSearchParams(location.search);
       const dialect = resolveDialectPref();
       const isEnglish = dialect.forceLanguage === "en";
+      const liteMode = params.get("lite") === "1";
       const autoMic = params.get("automic") !== "0";
+      dismissLoading();
       const avatarModelUrl =
         params.get("vrm") ||
         params.get("model3d") ||
@@ -1172,11 +1196,12 @@
       };
 
       const scheduleAvatarLoad = () => {
+        if (liteMode) return;
         const run = () => beginAvatarLoad();
         if (typeof requestIdleCallback === "function") {
-          requestIdleCallback(run, { timeout: 1800 });
+          requestIdleCallback(run, { timeout: 4000 });
         } else {
-          setTimeout(run, 150);
+          setTimeout(run, 800);
         }
       };
 
@@ -1232,10 +1257,6 @@
       });
       status.idle();
       setModePill(chat.mode);
-
-      loading.hide();
-      window.__amojiHideLoading?.();
-      setTimeout(() => loading.remove(), 600);
 
       const interim = createInterimBubble(transcript);
 
@@ -1493,9 +1514,6 @@
         }, 450);
       };
 
-      showAvatarLoadPill();
-      scheduleAvatarLoad();
-
       const resetStartButton = () => {
         if (!startTalkingEl) return;
         startTalkingEl.classList.remove("hide", "starting");
@@ -1624,6 +1642,7 @@
 
       window.__amojiStart.run = () => void startSession();
       window.__amojiStart.ready = true;
+      dismissLoading();
       if (window.__amojiStart.tapped) void startSession();
 
       btnMic.disabled = !voice.supportsMic;
