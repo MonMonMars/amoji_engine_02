@@ -206,10 +206,13 @@ export function analyzeStreamingReply(partialText) {
     parsed.emotion || inferExpressionFromText(parsed.reply) || "thinking";
   const nuance = inferContentNuance(parsed.reply);
   const talkStyle = inferTalkGestureFromText(parsed.reply, { emotion });
+  const actionMatch = String(partialText || "").match(/\[action:(\w+)\]/i);
+  const action = actionMatch ? actionMatch[1].toLowerCase() : null;
   return {
     emotion,
     nuance,
     talkStyle,
+    action,
     expressionBlend: buildVrmExpressionBlend(emotion, nuance),
     speechEnergy: inferSpeechEnergy(parsed.reply, emotion, nuance),
   };

@@ -300,15 +300,24 @@ export async function createVrmAvatar(opts) {
   const setListening = (on) => bodyMotion.setListening(on);
 
   const playGesture = (style) => bodyMotion.playGesture(style);
-  const playAction = (action, opts = {}) =>
-    bodyMotion.playAction(action, { emotion: opts.emotion || emotion });
-  const stopAction = () => bodyMotion.stopAction();
+  const playAction = (action, opts = {}) => {
+    const ok = bodyMotion.playAction(action, { emotion: opts.emotion || emotion });
+    emotion = bodyMotion.emotion;
+    applyEmotionExpressions(emotion);
+    return ok;
+  };
+  const stopAction = () => {
+    const ok = bodyMotion.stopAction();
+    applyEmotionExpressions(emotion);
+    return ok;
+  };
   const playGestureForText = (text, opts = {}) =>
     bodyMotion.playGestureForText(text, { emotion: opts.emotion || emotion });
 
   const applyContentFromReply = (text, moodHint = null) => {
     const analysis = bodyMotion.applyContentFromReply(text, moodHint);
     emotion = analysis.emotion;
+    applyEmotionExpressions(emotion);
     setExpressionTargetFromBlend(analysis.expressionBlend);
     return analysis;
   };
