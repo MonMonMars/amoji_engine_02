@@ -2055,7 +2055,7 @@
         try {
           const result = await motionClient.ensureBasicPack();
           basicMotionPackReady = Boolean(result?.ok);
-          if (showPackUi) {
+          if (showPackUi && waitAct?.state?.kind === "motion-pack") {
             waitAct?.update({
               phase: "ready",
               progress: 1,
@@ -2066,7 +2066,7 @@
           return result;
         } catch (err) {
           basicMotionPackReady = true;
-          if (showPackUi) waitAct?.stop();
+          if (showPackUi && waitAct?.state?.kind === "motion-pack") waitAct?.stop();
           return { ok: false, error: err?.message || String(err) };
         }
       };
