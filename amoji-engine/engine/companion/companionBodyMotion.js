@@ -8,6 +8,9 @@ import {
 } from "./companionTalkMotionBridge.js";
 import {
   analyzeCompanionReply,
+  analyzeSpeechChunk,
+  analyzeStreamingReply,
+  analyzeUserInput,
 } from "./companionContentMotion.js";
 import {
   buildBasePose,
@@ -28,7 +31,10 @@ export const COMPANION_BODY_SCHEMA = "amoji.companionBody.v1";
 export function createCompanionBodyMotion(humanoid) {
   let emotion = "neutral";
   let nuance = "none";
+  let thinking = false;
   let listening = false;
+  let lastChunkAt = 0;
+  let styleCycle = 0;
   /** @type {string | null} */
   let activeGesture = null;
   let gesturePhase = 0;
@@ -53,7 +59,19 @@ export function createCompanionBodyMotion(humanoid) {
 
   const setListening = (on) => {
     listening = Boolean(on);
+    if (listening) thinking = false;
     return listening;
+  };
+
+  const setThinking = (on) => {
+    thinking = Boolean(on);
+    if (thinking) {
+      emotion = "thinking";
+      talkStyle = "thinking";
+      talkTime = 0;
+      listening = false;
+    }
+    return thinking;
   };
 
   const playGesture = (style) => {
@@ -111,16 +129,49 @@ export function createCompanionBodyMotion(humanoid) {
   };
 
   const reactToSpeechChunk = (chunk, opts = {}) => {
-    const raw = inferTalkStyleFromChunk(chunk, {
+    const analysis = analyzeSpeechChunk(chunk, {
       emotion: opts.emotion || emotion,
-      prevStyle: talkStyle,
+      nuance: opts.nuance || nuance,
     });
-    const next = companionGestureStyle(raw);
-    if (next !== talkStyle) {
+    if (analysis.emotion && analysis.emotion !== "neutral") {
+      emotion = analysis.emotion;
+    }
+    if (analysis.nuance && analysis.nuance !== "none") {
+      nuance = analysis.nuance;
+    }
+    const next = companionGestureStyle(analysis.talkStyle);
+    if (next !== talkStyle || analysis.boundary) {
       talkStyle = next;
       talkTime = 0;
+      setTalkEnergy(analysis.speechEnergy);
     }
-    return talkStyle;
+    lastChunkAt = performance.now();
+    if (analysis.gesture && !activeGesture) {
+      playGesture(analysis.gesture);
+    } else if (analysis.boundary && Math.random() < 0.35) {
+      playGesture("nod");
+    }
+    return analysis;
+  };
+
+  const applyStreamingContent = (partialText) => {
+    const analysis = analyzeStreamingReply(partialText);
+    emotion = analysis.emotion;
+    nuance = analysis.nuance;
+    talkStyle = companionGestureStyle(analysis.talkStyle);
+    talkTime = 0;
+    setTalkEnergy(analysis.speechEnergy);
+    return analysis;
+  };
+
+  const prepareThinkingFromUser = (userText, isEnglish = false) => {
+    const input = analyzeUserInput(userText, isEnglish);
+    emotion = input.emotion === "neutral" ? "thinking" : input.emotion;
+    nuance = input.nuance;
+    talkStyle = "thinking";
+    talkTime = 0;
+    setTalkEnergy(0.25);
+    return input;
   };
 
   const setTalking = (on) => {
@@ -231,7 +282,17 @@ export function createCompanionBodyMotion(humanoid) {
     let pose = buildBasePose({ listening, emotion, nuance });
     const energy = talking ? Math.max(0.2, talkEnergy) : 0;
 
-    if (!talking) {
+    if (thinking && !talking) {
+      const thinkMotion = sampleBodyTalkMotion(elapsed, {
+        style: "thinking",
+        emotion: "thinking",
+        speechEnergy: 0.28,
+        includeArms: false,
+      });
+      pose = mergePoses(pose, thinkMotion.body, 0.38);
+      pose.headX = (pose.headX || 0) + Math.sin(elapsed * 0.55) * 0.028;
+      pose.headZ = (pose.headZ || 0) + Math.sin(elapsed * 0.42 + 0.8) * 0.022;
+    } else if (!talking) {
       pose.leanY = (pose.leanY || 0) + Math.sin(elapsed * 0.85) * 0.018;
       pose.headZ = (pose.headZ || 0) + Math.sin(elapsed * 1.05 + 0.5) * 0.015;
       if (listening) {
@@ -239,17 +300,28 @@ export function createCompanionBodyMotion(humanoid) {
       }
     } else {
       talkTime += dt;
+      const nowMs = performance.now();
+      if (nowMs - lastChunkAt > 1400) {
+        styleCycle += 1;
+        const styles = ["explain", "soft", "question", "emphasize"];
+        talkStyle = companionGestureStyle(
+          styles[styleCycle % styles.length] || talkStyle,
+        );
+        talkTime = 0;
+        lastChunkAt = nowMs;
+      }
       const motion = sampleBodyTalkMotion(talkTime, {
         style: companionGestureStyle(talkStyle),
         emotion,
         speechEnergy: energy,
         includeArms: false,
       });
-      pose = mergePoses(pose, motion.body, 0.22 + energy * 0.15);
+      pose = mergePoses(pose, motion.body, 0.32 + energy * 0.22);
 
       const beat = Math.sin(elapsed * 6.8);
-      pose.headX = (pose.headX || 0) + beat * 0.012 * energy;
-      pose.leanY = (pose.leanY || 0) + Math.sin(elapsed * 5.2) * 0.01 * energy;
+      pose.headX = (pose.headX || 0) + beat * 0.018 * energy;
+      pose.leanY = (pose.leanY || 0) + Math.sin(elapsed * 5.2) * 0.014 * energy;
+      pose.headZ = (pose.headZ || 0) + Math.sin(elapsed * 4.1) * 0.01 * energy;
     }
 
     let allowArms = false;
@@ -286,10 +358,13 @@ export function createCompanionBodyMotion(humanoid) {
     schema: COMPANION_BODY_SCHEMA,
     setEmotion,
     setContentNuance,
+    setThinking,
     setListening,
     playGesture,
     playGestureForText,
     applyContentFromReply,
+    applyStreamingContent,
+    prepareThinkingFromUser,
     setTalkStyle,
     reactToSpeechChunk,
     setTalking,

@@ -968,7 +968,7 @@
     </script>
     <script>
       (function () {
-        window.__amojiBuild = "2026-09-14-v15-content-motion";
+        window.__amojiBuild = "2026-09-14-v16-continuous-motion";
         window.__amojiModuleBooted = false;
         window.__amojiStart = {
           tapped: false,
@@ -1157,7 +1157,7 @@
     </script>
   </head>
   <body>
-    <!-- amoji-build: 2026-09-14-v15-content-motion — Grok/ChatGPT-style content expressions -->
+    <!-- amoji-build: 2026-09-14-v16-continuous-motion — streaming emotion + thinking voice -->
     <noscript>
       <div
         style="
@@ -1760,6 +1760,8 @@
       };
 
       let speakEmotion = "neutral";
+      /** @type {{ emotion?: string, nuance?: string }} */
+      let speakContent = { emotion: "neutral", nuance: "none" };
 
       const voice = createCompanionVoice({
         lang: isEnglish ? "en-US" : "zh-HK",
@@ -1775,7 +1777,14 @@
         },
         onTalking: (on) => avatar.setTalking(on),
         onSpeakChunk: (chunk) => {
-          avatar.reactToSpeechChunk?.(chunk, { emotion: speakEmotion });
+          const analysis = avatar.reactToSpeechChunk?.(chunk, {
+            emotion: speakContent.emotion || speakEmotion,
+            nuance: speakContent.nuance || "none",
+          });
+          if (analysis?.emotion) {
+            speakEmotion = analysis.emotion;
+            setEmotionPill(analysis.emotion);
+          }
         },
         onMicText: (text, isFinal) => {
           if (isFinal) {
@@ -1887,12 +1896,14 @@
         voice.pauseCapture();
         interim.clear();
         addBubble("user", cleaned);
-        avatar.setEmotion("thinking");
-        setEmotionPill("thinking");
         avatar.setListening?.(false);
-        status.thinking();
         avatar.setTalking(false);
         avatar.setMouthOpen(0);
+        avatar.setThinking?.(true);
+        avatar.prepareThinkingFromUser?.(cleaned, isEnglish);
+        setEmotionPill(avatar.emotion || "thinking");
+        status.thinking();
+        void voice.speakThinking?.({ isEnglish });
 
         const assistantBubble = addBubble("assistant", "");
         showThinking(assistantBubble);
@@ -1903,17 +1914,26 @@
             onToken: (_chunk, full) => {
               if (!gotToken) {
                 gotToken = true;
+                voice.stopSpeak();
+                avatar.setThinking?.(false);
                 assistantBubble.classList.remove("thinking");
                 assistantBubble.classList.add("typing");
               }
-              assistantBubble.textContent = full.replace(/\s*\[mood:\w+\]\s*$/i, "");
+              const visible = full.replace(/\s*\[mood:\w+\]\s*$/i, "");
+              assistantBubble.textContent = visible;
+              const stream = avatar.applyStreamingContent?.(full);
+              if (stream?.emotion) {
+                setEmotionPill(stream.emotion);
+              }
               scrollTranscript();
             },
           });
           setModePill(result.mode || chat.mode);
           const reply = result.reply || "……";
+          avatar.setThinking?.(false);
           const content = applyReplyPerformance(reply, result.emotion || "happy");
           const emotion = content.emotion || "happy";
+          speakContent = content;
           assistantBubble.classList.remove("thinking", "typing");
           assistantBubble.textContent = reply;
           speakEmotion = emotion;

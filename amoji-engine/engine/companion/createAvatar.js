@@ -38,6 +38,9 @@ export function createStubAvatar() {
     reactToSpeechChunk: noop,
     playGestureForText: noop,
     applyContentFromReply: () => ({ emotion: "neutral", talkStyle: "explain" }),
+    setThinking: noop,
+    applyStreamingContent: () => ({ emotion: "thinking", talkStyle: "thinking" }),
+    prepareThinkingFromUser: () => ({ emotion: "thinking", talkStyle: "thinking" }),
   };
 }
 

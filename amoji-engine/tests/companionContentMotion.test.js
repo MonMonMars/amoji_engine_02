@@ -1,10 +1,14 @@
 import { describe, expect, it } from "vitest";
 import {
   analyzeCompanionReply,
+  analyzeSpeechChunk,
+  analyzeStreamingReply,
+  analyzeUserInput,
   buildVrmExpressionBlend,
   inferContentNuance,
   inferOneShotGesture,
   parseReplyMood,
+  pickThinkingPhrase,
 } from "../engine/companion/companionContentMotion.js";
 
 describe("companionContentMotion", () => {
@@ -38,5 +42,30 @@ describe("companionContentMotion", () => {
     const blend = buildVrmExpressionBlend("happy", "excited");
     expect(blend.Happy).toBeGreaterThan(0.85);
     expect(blend.Surprised).toBeGreaterThan(0.1);
+  });
+
+  it("infers user worry as stress nuance for thinking pose", () => {
+    const input = analyzeUserInput("我好擔心呀", false);
+    expect(input.nuance).toBe("stress");
+    expect(input.expressionBlend).toBeTruthy();
+  });
+
+  it("streams partial reply into thinking then happy emotion", () => {
+    const early = analyzeStreamingReply("");
+    expect(early.emotion).toBe("thinking");
+    const mid = analyzeStreamingReply("哈哈好開心");
+    expect(mid.emotion).toBe("happy");
+    expect(mid.talkStyle).toBeTruthy();
+  });
+
+  it("detects speech chunk boundaries for gestures", () => {
+    const chunk = analyzeSpeechChunk("好呀！", { emotion: "happy" });
+    expect(chunk.boundary).toBe(true);
+    expect(chunk.gesture).toBe("nod");
+  });
+
+  it("picks a thinking phrase", () => {
+    expect(pickThinkingPhrase(false)).toMatch(/…|\.{3}/);
+    expect(pickThinkingPhrase(true).length).toBeGreaterThan(2);
   });
 });

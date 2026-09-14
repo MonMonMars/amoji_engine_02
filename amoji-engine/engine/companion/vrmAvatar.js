@@ -310,6 +310,29 @@ export async function createVrmAvatar(opts) {
     return analysis;
   };
 
+  const setThinking = (on) => {
+    bodyMotion.setThinking(on);
+    if (on) {
+      emotion = "thinking";
+      applyEmotionExpressions("thinking");
+    }
+    return Boolean(on);
+  };
+
+  const applyStreamingContent = (partialText) => {
+    const analysis = bodyMotion.applyStreamingContent(partialText);
+    emotion = analysis.emotion;
+    setExpressionTargetFromBlend(analysis.expressionBlend);
+    return analysis;
+  };
+
+  const prepareThinkingFromUser = (userText, isEnglish = false) => {
+    const analysis = bodyMotion.prepareThinkingFromUser(userText, isEnglish);
+    emotion = analysis.emotion;
+    setExpressionTargetFromBlend(analysis.expressionBlend);
+    return analysis;
+  };
+
   const shapeToPreset = (shape) => {
     const key = String(shape || "aa").toLowerCase();
     const map = {
@@ -357,8 +380,14 @@ export async function createVrmAvatar(opts) {
 
   const setTalkEnergy = (v) => bodyMotion.setTalkEnergy(v);
   const setTalkStyle = (style) => bodyMotion.setTalkStyle(style);
-  const reactToSpeechChunk = (chunk, opts) =>
-    bodyMotion.reactToSpeechChunk(chunk, opts);
+  const reactToSpeechChunk = (chunk, opts) => {
+    const analysis = bodyMotion.reactToSpeechChunk(chunk, opts);
+    if (analysis?.expressionBlend) {
+      emotion = analysis.emotion || emotion;
+      setExpressionTargetFromBlend(analysis.expressionBlend);
+    }
+    return analysis;
+  };
 
   let raf = 0;
 
@@ -469,6 +498,9 @@ export async function createVrmAvatar(opts) {
     playGesture,
     playGestureForText,
     applyContentFromReply,
+    setThinking,
+    applyStreamingContent,
+    prepareThinkingFromUser,
     reactToTap,
     get emotion() {
       return emotion;

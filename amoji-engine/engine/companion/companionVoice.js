@@ -4,6 +4,7 @@ import {
   MIC_ERROR_MESSAGES,
   requestMicPermission,
 } from "./companionMicUtils.js";
+import { pickThinkingPhrase } from "./companionContentMotion.js";
 
 export { formatMicError, MIC_ERROR_MESSAGES, requestMicPermission };
 
@@ -210,6 +211,9 @@ export function createCompanionVoice(opts = {}) {
   });
   /** @type {HTMLAudioElement | null} */
   let currentCloudAudio = null;
+  /** @type {HTMLAudioElement | null} */
+  let thinkingCloudAudio = null;
+  let thinkingActive = false;
 
   const getSharedAudio = () => {
     if (typeof globalThis.window === "undefined") {
@@ -257,6 +261,17 @@ export function createCompanionVoice(opts = {}) {
       /* ignore */
     }
     currentCloudAudio = null;
+  };
+
+  const stopThinkingAudio = () => {
+    thinkingActive = false;
+    if (!thinkingCloudAudio) return;
+    try {
+      thinkingCloudAudio.pause();
+    } catch {
+      /* ignore */
+    }
+    thinkingCloudAudio = null;
   };
 
   /**
@@ -389,8 +404,8 @@ export function createCompanionVoice(opts = {}) {
       }
       const ch = clean[i];
       emitViseme(ch);
-      if (i % 4 === 0 && ch.trim()) {
-        const chunk = clean.slice(Math.max(0, i - 2), i + 3);
+      if (i % 2 === 0 && ch.trim()) {
+        const chunk = clean.slice(Math.max(0, i - 2), i + 6);
         opts.onSpeakChunk?.(chunk, i);
       }
       i += 1;
@@ -424,6 +439,7 @@ export function createCompanionVoice(opts = {}) {
       .trim();
     if (!clean) return { ok: false, reason: "empty" };
 
+    stopThinkingAudio();
     pauseCapture();
     try {
       if (!speakerOn) {
@@ -529,11 +545,91 @@ export function createCompanionVoice(opts = {}) {
   };
 
   const stopSpeak = () => {
+    stopThinkingAudio();
     stopCloudAudio();
     synth?.cancel();
     speaking = false;
     stopMouth();
     speakChain = Promise.resolve();
+  };
+
+  /** Soft thinking phrase while LLM loads — parallel to reply queue; cancel with stopSpeak(). */
+  const speakThinking = async ({ isEnglish = false } = {}) => {
+    const phrase = pickThinkingPhrase(isEnglish);
+    if (!phrase || !speakerOn) return { ok: false, reason: "muted-or-empty" };
+
+    stopThinkingAudio();
+    thinkingActive = true;
+    unlockAudioSync();
+    await ensureVoices();
+
+    const preset = cloudVoicePreset();
+    const lang = isEnglish ? "en-US" : preset.lang || "zh-HK";
+    const voiceName = isEnglish ? CLOUD_ENGLISH_VOICE.name : preset.name;
+
+    if (opts.cloudTtsUrl) {
+      try {
+        const res = await fetch(opts.cloudTtsUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            text: phrase,
+            emotion: "thinking",
+            voice: voiceName,
+            lang,
+          }),
+        });
+        if (!thinkingActive) return { ok: false, reason: "cancelled" };
+        if (res.ok) {
+          const blob = await res.blob();
+          if (blob.size > 0 && thinkingActive) {
+            const objectUrl = URL.createObjectURL(blob);
+            const audio = configureCompanionAudioElement(getSharedAudio());
+            thinkingCloudAudio = audio;
+            audio.volume = 0.58;
+            audio.src = objectUrl;
+            await new Promise((resolve) => {
+              const finish = () => {
+                if (thinkingCloudAudio === audio) thinkingCloudAudio = null;
+                URL.revokeObjectURL(objectUrl);
+                resolve();
+              };
+              audio.onended = finish;
+              audio.onerror = finish;
+              void audio.play().catch(finish);
+            });
+            return { ok: true, cloud: true, phrase };
+          }
+        }
+      } catch {
+        /* fall through */
+      }
+    }
+
+    if (!thinkingActive || !synth) {
+      return { ok: false, reason: "cancelled-or-no-tts" };
+    }
+
+    const prosody = EMOTION_PROSODY.thinking;
+    const utter = new SpeechSynthesisUtterance(phrase);
+    if (voice && !voice.cloud) utter.voice = voice;
+    utter.lang = lang;
+    utter.rate = prosody.rate;
+    utter.pitch = prosody.pitch;
+    utter.volume = prosody.volume * 0.85;
+
+    await new Promise((resolve) => {
+      utter.onend = resolve;
+      utter.onerror = resolve;
+      try {
+        synth.speak(utter);
+      } catch {
+        resolve();
+      }
+      setTimeout(resolve, 2200);
+    });
+
+    return { ok: true, phrase };
   };
 
   const setSpeakerOn = (on) => {
@@ -662,6 +758,7 @@ export function createCompanionVoice(opts = {}) {
     primeAudio,
     primeMicPermission,
     speak,
+    speakThinking,
     stopSpeak,
     setSpeakerOn,
     pauseCapture,
