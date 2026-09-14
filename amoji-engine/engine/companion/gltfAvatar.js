@@ -290,13 +290,32 @@ export async function createGltfAvatar(opts) {
     activeAction = key;
     actionElapsed = 0;
     if (opts.emotion) setEmotion(opts.emotion);
-    else if (key === "kungfu" || key === "jump" || key === "laugh") {
+    else if (
+      key === "kungfu" ||
+      key === "jump" ||
+      key === "laugh" ||
+      key === "dance" ||
+      key === "celebrate" ||
+      key === "cheer"
+    ) {
       setEmotion("happy");
+    } else if (key === "cry" || key === "facepalm") {
+      setEmotion("sad");
+    } else if (key === "angry" || key === "punch" || key === "kick") {
+      setEmotion("angry");
     }
-    if (key === "wave") playGesture("wave");
-    else if (key === "kungfu" || key === "celebrate" || key === "jump") {
+    if (key === "wave" || key === "point") playGesture("wave");
+    else if (
+      key === "kungfu" ||
+      key === "celebrate" ||
+      key === "jump" ||
+      key === "dance" ||
+      key === "cheer" ||
+      key === "run"
+    ) {
       playGesture("celebrate");
-    } else if (key === "laugh") playGesture("emphasize");
+    } else if (key === "laugh" || key === "clap") playGesture("emphasize");
+    else if (key === "nod" || key === "thinking") playGesture("nod");
     return true;
   };
 
