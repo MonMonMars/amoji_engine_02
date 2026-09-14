@@ -306,12 +306,13 @@
 
       /* CSS-only safety net: dismiss bootstrap overlay even if JS fails (stale cache). */
       .avatar-loading.bootstrap-fallback {
-        animation: bootstrapOverlayDismiss 8s forwards;
+        animation: bootstrapOverlayDismiss 3s forwards;
+        pointer-events: none;
       }
 
       @keyframes bootstrapOverlayDismiss {
         0%,
-        87.5% {
+        70% {
           opacity: 1;
           visibility: visible;
         }
@@ -842,7 +843,7 @@
     </script>
     <script>
       (function () {
-        window.__amojiBuild = "2026-09-14-v2";
+        window.__amojiBuild = "2026-09-14-v3";
         window.__amojiStart = { tapped: false, ready: false, run: null, sessionStarted: false };
         window.__amojiHideLoading = function () {
           document.querySelectorAll(".avatar-loading").forEach(function (el) {
@@ -861,16 +862,27 @@
             start.removeAttribute("aria-busy");
           }
         };
-        setTimeout(window.__amojiHideLoading, 8000);
+        function bootDismiss() {
+          window.__amojiHideLoading();
+        }
+        if (document.readyState === "loading") {
+          document.addEventListener("DOMContentLoaded", bootDismiss, { once: true });
+        } else {
+          bootDismiss();
+        }
+        setTimeout(bootDismiss, 1500);
         setTimeout(function () {
           if (!window.__amojiStart?.ready) {
-            window.__amojiHideLoading();
+            bootDismiss();
             var start = document.getElementById("start-talking");
             if (start && !window.__amojiStart?.sessionStarted) {
-              start.textContent = "👆 Tap to start · 點一下開始 (retry)";
+              start.textContent = "👆 Tap to start · 點一下開始";
+              start.classList.remove("hide", "starting");
+              start.removeAttribute("aria-hidden");
+              start.removeAttribute("disabled");
             }
           }
-        }, 12000);
+        }, 6000);
         window.addEventListener(
           "error",
           function (ev) {
@@ -910,32 +922,49 @@
           ev?.preventDefault?.();
           ev?.stopPropagation?.();
           window.__amojiUnlockAudio();
+          window.__amojiHideLoading();
           const btn = document.getElementById("start-talking");
-          if (!btn || btn.disabled || btn.classList.contains("hide")) return false;
+          if (!btn || btn.disabled) return false;
+          if (window.__amojiStart.sessionStarted) return false;
           window.__amojiStart.tapped = true;
-          btn.textContent = "⏳ Starting…";
-          btn.classList.add("hide");
-          btn.setAttribute("aria-hidden", "true");
-          btn.setAttribute("disabled", "true");
-          btn.classList.remove("starting");
-          btn.removeAttribute("aria-busy");
-          document.getElementById("input")?.focus();
-          setTimeout(function () {
-            if (window.__amojiStart.sessionStarted) return;
-            if (typeof window.__amojiStart.run === "function") {
-              window.__amojiStart.run({ fromTimeout: true });
-            }
-          }, 2000);
           if (window.__amojiStart.ready && typeof window.__amojiStart.run === "function") {
+            btn.textContent = "⏳ Starting…";
+            btn.classList.add("starting");
+            btn.setAttribute("aria-busy", "true");
             void window.__amojiStart.run();
+            return false;
           }
+          btn.textContent = "⏳ Loading app… tap again";
+          btn.classList.add("starting");
+          btn.setAttribute("aria-busy", "true");
+          var tries = 0;
+          var poll = setInterval(function () {
+            tries += 1;
+            if (window.__amojiStart.sessionStarted) {
+              clearInterval(poll);
+              return;
+            }
+            if (window.__amojiStart.ready && typeof window.__amojiStart.run === "function") {
+              clearInterval(poll);
+              btn.textContent = "⏳ Starting…";
+              void window.__amojiStart.run({ fromTimeout: true });
+              return;
+            }
+            if (tries >= 40) {
+              clearInterval(poll);
+              btn.textContent = "👆 Tap to retry · 點一下重試";
+              btn.classList.remove("starting");
+              btn.removeAttribute("aria-busy");
+              window.__amojiStart.tapped = false;
+            }
+          }, 250);
           return false;
         };
       })();
     </script>
   </head>
   <body>
-    <!-- amoji-build: 2026-09-14-v2 -->
+    <!-- amoji-build: 2026-09-14-v3 -->
     <div
       class="avatar-loading bootstrap-fallback"
       id="bootstrap-loading"
@@ -1085,7 +1114,6 @@
       import { resolveDialectPref } from "../amoji-engine/engine/lab/dialectPref.js";
       import {
         createCompanionStatus,
-        createLoadingOverlay,
         createInterimBubble,
       } from "../amoji-engine/engine/companion/companionUi.js";
       import { createCompanionLlmSwitcher } from "../amoji-engine/engine/companion/companionLlmUi.js";
@@ -1101,27 +1129,11 @@
       const stage = document.querySelector(".stage");
       const canvas = document.getElementById("avatar-canvas");
       const startTalkingEl = document.getElementById("start-talking");
-      const bootstrapLoading = document.getElementById("bootstrap-loading");
-      const loading = bootstrapLoading
-        ? {
-            show() {
-              bootstrapLoading.classList.remove("hide");
-            },
-            hide() {
-              bootstrapLoading.classList.add("hide");
-              bootstrapLoading.classList.remove("bootstrap-fallback");
-            },
-            remove() {
-              bootstrapLoading.remove();
-            },
-          }
-        : createLoadingOverlay(stage);
-      if (!bootstrapLoading) loading.show();
       const dismissLoading = () => {
-        loading.hide();
         window.__amojiHideLoading?.();
-        setTimeout(() => loading.remove(), 600);
+        document.getElementById("bootstrap-loading")?.remove();
       };
+      dismissLoading();
 
       const showToast = (msg, kind = "error") => {
         const t = document.createElement("div");
