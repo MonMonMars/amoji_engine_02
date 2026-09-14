@@ -252,7 +252,7 @@
     </div>
     <script>
       (function () {
-        window.__amojiBuild = "lite-v2";
+        window.__amojiBuild = "lite-v3";
         window.__amojiLite = { ready: true, ttsCalls: 0, chatCalls: 0 };
 
         var params = new URLSearchParams(location.search);
@@ -280,7 +280,7 @@
         var speakerOn = true;
         var micOn = false;
         var busy = false;
-        var recognition = null;
+        var micCapture = null;
         var audioEl = new Audio();
         audioEl.preload = "auto";
 
@@ -297,7 +297,8 @@
               errModule: "Cloud chat unavailable. Check your network.",
               errChat: "Chat failed",
               errTts: "TTS failed (reply still shown)",
-              errMic: "Mic not supported in this browser",
+              errMic: "Mic not available — allow microphone when prompted",
+              errMicBlocked: "Microphone blocked — allow mic in browser settings",
             }
           : {
               placeholder: "輸入訊息…",
@@ -311,7 +312,8 @@
               errModule: "雲端聊天不可用，請檢查網絡。",
               errChat: "聊天失敗",
               errTts: "語音失敗（文字回覆已顯示）",
-              errMic: "此瀏覽器唔支援麥克風",
+              errMic: "麥克風不可用 — 請允許使用麥克風",
+              errMicBlocked: "麥克風被封鎖 — 請在瀏覽器設定中允許",
             };
 
         els.input.placeholder = strings.placeholder;
@@ -439,48 +441,31 @@
           }
         }
 
-        function stopMic() {
-          micOn = false;
-          els.mic.classList.remove("active");
-          if (recognition) {
-            try {
-              recognition.stop();
-            } catch (_) {}
-          }
-          if (!busy) setStatus(strings.statusReady);
-        }
-
-        function startMic() {
-          var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-          if (!SR) {
-            showError(strings.errMic);
-            return;
-          }
-          if (!recognition) {
-            recognition = new SR();
-            recognition.continuous = false;
-            recognition.interimResults = false;
-            recognition.lang = isEn ? "en-US" : "zh-HK";
-            recognition.onresult = function (ev) {
-              var t = ev.results[0] && ev.results[0][0] ? ev.results[0][0].transcript : "";
-              stopMic();
-              if (t) sendMessage(t);
-            };
-            recognition.onerror = function () {
-              stopMic();
-            };
-            recognition.onend = function () {
-              if (micOn) stopMic();
-            };
-          }
-          micOn = true;
-          els.mic.classList.add("active");
-          setStatus(strings.statusMic);
-          try {
-            recognition.start();
-          } catch (_) {
-            stopMic();
-          }
+        function ensureMicCapture() {
+          if (micCapture) return Promise.resolve(micCapture);
+          return import("/amoji-engine/engine/companion/companionMicCapture.js").then(function (mod) {
+            micCapture = mod.createMicCapture({
+              lang: isEn ? "en-US" : "zh-HK",
+              cloudSttUrl: hosted ? "/api/stt" : null,
+              onText: function (text, isFinal) {
+                if (isFinal && text) sendMessage(text);
+              },
+              onState: function (on) {
+                micOn = on;
+                els.mic.classList.toggle("active", on);
+                if (!busy) setStatus(on ? strings.statusMic : strings.statusReady);
+              },
+              onError: function (code) {
+                var msg = mod.formatMicError(code);
+                showError(code === "not-allowed" ? strings.errMicBlocked : msg);
+                if (micOn) {
+                  micOn = false;
+                  els.mic.classList.remove("active");
+                }
+              },
+            });
+            return micCapture;
+          });
         }
 
         function activate() {
@@ -489,6 +474,9 @@
           addBubble(strings.welcome, "bot");
           setStatus(strings.statusReady);
           els.input.focus();
+          void ensureMicCapture().then(function (mic) {
+            if (mic.supportsMic) void mic.primePermission();
+          });
         }
 
         els.start.addEventListener("click", activate);
@@ -505,8 +493,19 @@
           }
         });
         els.mic.addEventListener("click", function () {
-          if (micOn) stopMic();
-          else startMic();
+          void ensureMicCapture().then(function (mic) {
+            if (!mic.supportsMic) {
+              showError(strings.errMic);
+              return;
+            }
+            if (micOn) {
+              mic.stop();
+              return;
+            }
+            void mic.start().then(function (ok) {
+              if (!ok && !micOn) showError(strings.errMicBlocked);
+            });
+          });
         });
 
         if (hosted) {

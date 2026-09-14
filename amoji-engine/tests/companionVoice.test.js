@@ -16,7 +16,7 @@ describe("companionVoice", () => {
 
   it("formats mic permission errors for the UI", () => {
     expect(formatMicError("not-allowed")).toMatch(/Microphone blocked/i);
-    expect(formatMicError("unsupported")).toMatch(/speech recognition/i);
+    expect(formatMicError("unsupported")).toMatch(/Mic unavailable/i);
     expect(formatMicError("unknown-code")).toMatch(/Mic error/);
   });
 
