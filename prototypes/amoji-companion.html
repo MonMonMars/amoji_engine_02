@@ -968,7 +968,7 @@
     </script>
     <script>
       (function () {
-        window.__amojiBuild = "2026-09-14-v16-continuous-motion";
+        window.__amojiBuild = "2026-09-14-v17-phase-a";
         window.__amojiModuleBooted = false;
         window.__amojiStart = {
           tapped: false,
@@ -1157,7 +1157,7 @@
     </script>
   </head>
   <body>
-    <!-- amoji-build: 2026-09-14-v16-continuous-motion — streaming emotion + thinking voice -->
+    <!-- amoji-build: 2026-09-14-v17-phase-a — stream TTS + barge-in -->
     <noscript>
       <div
         style="
@@ -1346,6 +1346,8 @@
         { saveProviderApiKey },
         voiceCatalogMod,
         contentMotionMod,
+        streamSpeakMod,
+        bargeMod,
       ] = await Promise.all([
         import("../amoji-engine/engine/companion/createAvatar.js"),
         import("../amoji-engine/engine/companion/chatLlm.js"),
@@ -1359,6 +1361,8 @@
         import("../amoji-engine/engine/companion/companionLlmProviders.js"),
         import("../amoji-engine/engine/companion/companionVoiceCatalog.js"),
         import("../amoji-engine/engine/companion/companionContentMotion.js"),
+        import("../amoji-engine/engine/companion/companionStreamSpeak.js"),
+        import("../amoji-engine/engine/companion/companionBargeMonitor.js"),
       ]);
       window.__amojiModuleBooted = true;
       const {
@@ -1381,7 +1385,9 @@
         voicePresetById,
         voiceShortLabel,
       } = voiceCatalogMod;
-      const { analyzeCompanionReply } = contentMotionMod;
+      const { analyzeCompanionReply, analyzeStreamingReply } = contentMotionMod;
+      const { createStreamSpeakPlanner } = streamSpeakMod;
+      const { createCompanionBargeMonitor } = bargeMod;
 
       const hostedOnline = isHostedCompanion();
 
@@ -1881,19 +1887,62 @@
 
       /** @type {string[]} */
       const micQueue = [];
+      const phaseAEnabled = new URLSearchParams(location.search).get("phaseA") !== "0";
+      let turnSeq = 0;
+      /** @type {{ id: number, aborted: boolean, assistantRow: HTMLElement | null } | null} */
+      let activeTurn = null;
+
+      const bargeMonitor = createCompanionBargeMonitor({
+        onBargeIn: () => {
+          if (!busy || !activeTurn) return;
+          abortActiveTurn("energy-barge");
+        },
+      });
+
+      const stopBargeWatch = () => {
+        bargeMonitor.stop();
+      };
+
+      const startBargeWatch = () => {
+        if (!phaseAEnabled || !voice.micOn) return;
+        void bargeMonitor.start();
+      };
+
+      const abortActiveTurn = (reason = "barge-in") => {
+        if (!activeTurn || activeTurn.aborted) return;
+        activeTurn.aborted = true;
+        chat.abort?.();
+        voice.cancelStreamSpeak?.();
+        voice.stopSpeak();
+        avatar.setThinking?.(false);
+        avatar.setTalking?.(false);
+        stopBargeWatch();
+        if (activeTurn.assistantRow) {
+          const bubble = activeTurn.assistantRow.querySelector(".bubble");
+          if (bubble && !bubble.textContent?.trim()) {
+            activeTurn.assistantRow.remove();
+          }
+        }
+        window.__amojiLastBarge = reason;
+      };
 
       const runTurn = async (text, { fromMic = false } = {}) => {
         const cleaned = String(text || "").trim();
         if (!cleaned) return;
         if (busy) {
-          // Hold the next uttered line until the current reply finishes
+          if (phaseAEnabled && fromMic) {
+            abortActiveTurn("mic-barge");
+            await new Promise((r) => setTimeout(r, 60));
+            void runTurn(cleaned, { fromMic: true });
+            return;
+          }
           if (fromMic) micQueue.push(cleaned);
           return;
         }
         busy = true;
         sendBtn.disabled = true;
-        // Keep mic button enabled so the user can end continuous listen
-        voice.pauseCapture();
+        const keepMicForBarge = phaseAEnabled && voice.micOn;
+        if (!keepMicForBarge) voice.pauseCapture();
         interim.clear();
         addBubble("user", cleaned);
         avatar.setListening?.(false);
@@ -1906,12 +1955,40 @@
         void voice.speakThinking?.({ isEnglish });
 
         const assistantBubble = addBubble("assistant", "");
+        const assistantRow = assistantBubble.closest(".msg-row");
+        const turnId = ++turnSeq;
+        activeTurn = { id: turnId, aborted: false, assistantRow };
         showThinking(assistantBubble);
+
+        const streamPlanner = createStreamSpeakPlanner();
         let gotToken = false;
+        let streamSpeakStarted = false;
+        let streamEmotion = "neutral";
+
+        if (phaseAEnabled) {
+          voice.beginStreamSpeak?.("neutral", { pauseCapture: !keepMicForBarge });
+          startBargeWatch();
+        }
+
+        const enqueueStreamSegments = (segments, fullText) => {
+          if (!phaseAEnabled || !segments.length) return;
+          const analysis = analyzeStreamingReply(fullText);
+          streamEmotion = analysis.emotion || streamEmotion;
+          for (const seg of segments) {
+            void voice.pushStreamSpeak?.(seg, streamEmotion);
+          }
+          if (!streamSpeakStarted) {
+            streamSpeakStarted = true;
+            avatar.setThinking?.(false);
+            avatar.setTalking?.(true);
+            status.speaking();
+          }
+        };
 
         try {
           const result = await chat.reply(cleaned, {
             onToken: (_chunk, full) => {
+              if (activeTurn?.aborted) return;
               if (!gotToken) {
                 gotToken = true;
                 voice.stopSpeak();
@@ -1924,34 +2001,57 @@
               const stream = avatar.applyStreamingContent?.(full);
               if (stream?.emotion) {
                 setEmotionPill(stream.emotion);
+                streamEmotion = stream.emotion;
               }
+              enqueueStreamSegments(streamPlanner.feed(full), full);
               scrollTranscript();
             },
           });
+
+          if (activeTurn?.aborted || result.aborted) {
+            return;
+          }
+
           setModePill(result.mode || chat.mode);
           const reply = result.reply || "……";
           avatar.setThinking?.(false);
           const content = applyReplyPerformance(reply, result.emotion || "happy");
           const emotion = content.emotion || "happy";
           speakContent = content;
+          speakEmotion = emotion;
           assistantBubble.classList.remove("thinking", "typing");
           assistantBubble.textContent = reply;
-          speakEmotion = emotion;
-          status.speaking();
-          await voice.speak(reply, emotion);
+
+          if (phaseAEnabled) {
+            enqueueStreamSegments(streamPlanner.flush(reply), reply);
+            await voice.finishStreamSpeak?.();
+          } else {
+            status.speaking();
+            await voice.speak(reply, emotion);
+          }
         } catch (err) {
+          if (activeTurn?.aborted || err?.name === "AbortError") {
+            voice.cancelStreamSpeak?.();
+            return;
+          }
+          voice.cancelStreamSpeak?.();
           assistantBubble.classList.remove("thinking", "typing");
           assistantBubble.closest(".msg-row")?.remove();
           addBubble("system", `Chat failed: ${err?.message || err}`);
           avatar.setEmotion("sad");
           setEmotionPill("sad");
         } finally {
+          stopBargeWatch();
+          if (activeTurn?.id === turnId) activeTurn = null;
           busy = false;
           sendBtn.disabled = false;
-          voice.resumeCapture();
+          if (!keepMicForBarge) voice.resumeCapture();
           syncMicBtn();
+          avatar.setTalking?.(false);
           if (voice.micOn) {
-            input.placeholder = "Listening… speak, pause → she replies, then listens again";
+            input.placeholder = phaseAEnabled
+              ? "Listening… speak anytime to barge in"
+              : "Listening… speak, pause → she replies, then listens again";
             avatar.setEmotion("neutral");
             setEmotionPill("neutral");
             status.listening();
@@ -1961,7 +2061,6 @@
             input.focus();
           }
           syncListenPose();
-          // Drain one queued utterance from continuous mic (if any)
           if (micQueue.length && voice.micOn) {
             const next = micQueue.shift();
             void runTurn(next, { fromMic: true });
@@ -2365,6 +2464,11 @@
           ev.preventDefault();
           form.requestSubmit();
         }
+      });
+
+      window.addEventListener("keydown", (ev) => {
+        if (ev.key !== "Escape" || !phaseAEnabled || !busy) return;
+        abortActiveTurn("hotkey-barge");
       });
 
       input.focus();
