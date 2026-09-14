@@ -355,6 +355,12 @@ export function createMicCapture(opts = {}) {
     releaseRecordStream();
   };
 
+  const setLang = (next) => {
+    opts.lang = next || opts.lang || "zh-HK";
+    if (recognition) recognition.lang = opts.lang;
+    return opts.lang;
+  };
+
   const primePermission = async () => {
     if (permissionPrimed) return true;
     const perm = await requestMicPermission();
@@ -417,12 +423,17 @@ export function createMicCapture(opts = {}) {
       );
     },
     get supportsMic() {
-      return Boolean(Rec) || canCloudStt;
+      return (
+        Boolean(Rec) ||
+        canCloudStt ||
+        Boolean(globalThis.navigator?.mediaDevices?.getUserMedia)
+      );
     },
     get usesCloudStt() {
       return !Rec && canCloudStt;
     },
     primePermission,
+    setLang,
     start,
     stop,
     pause,

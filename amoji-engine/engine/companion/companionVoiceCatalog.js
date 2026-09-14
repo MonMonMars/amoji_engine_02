@@ -177,7 +177,7 @@ export function defaultVoiceForLang(langCode, currentVoiceId) {
 export function buildCompanionHref(opts = {}) {
   const q = new URLSearchParams();
   const langCode = companionLangCode(opts.lang);
-  if (langCode === "en") q.set("lang", "en");
+  q.set("lang", langCode === "en" ? "en" : "yue");
   if (opts.voiceId) q.set("voice", opts.voiceId);
   if (opts.extra) {
     for (const [key, value] of Object.entries(opts.extra)) {

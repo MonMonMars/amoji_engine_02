@@ -2,5 +2,5 @@
   "ok": true,
   "url": "http://127.0.0.1:5173/prototypes/vrm-arm-test.html",
   "screenshot": "/workspace/artifacts/companion-arms-rest.png",
-  "leftUpperArmZ": -1.1
+  "leftUpperArmZ": -1.42
 }

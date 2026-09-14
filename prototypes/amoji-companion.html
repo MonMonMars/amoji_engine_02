@@ -917,9 +917,16 @@
         .chat-column {
           padding-top: 4.8rem;
         }
-        .topbar .meta .pill:not(#status-pill) {
+        .topbar .meta .pill:not(#status-pill):not(#voice-pill):not(#lang-pill) {
           display: none;
         }
+      }
+
+      .icon-btn.lang-switch {
+        min-width: 2.4rem;
+        font-size: 0.78rem;
+        font-weight: 700;
+        letter-spacing: 0.02em;
       }
     </style>
     <script type="importmap">
@@ -933,7 +940,7 @@
     </script>
     <script>
       (function () {
-        window.__amojiBuild = "2026-09-14-v10-start-arms";
+        window.__amojiBuild = "2026-09-14-v11-lang-mic-arms";
         window.__amojiModuleBooted = false;
         window.__amojiStart = {
           tapped: false,
@@ -1267,6 +1274,22 @@
             >
               🎤
             </button>
+            <button
+              type="button"
+              class="icon-btn lang-switch"
+              id="btn-voice-switch"
+              title="Switch voice"
+            >
+              曉曼
+            </button>
+            <button
+              type="button"
+              class="icon-btn lang-switch"
+              id="btn-lang-switch"
+              title="Switch language"
+            >
+              粵
+            </button>
             <textarea
               id="input"
               rows="1"
@@ -1364,11 +1387,15 @@
       const btnSettings = document.getElementById("btn-settings");
       const btnSpeaker = document.getElementById("btn-speaker");
       const btnMic = document.getElementById("btn-mic");
+      const btnVoiceSwitch = document.getElementById("btn-voice-switch");
+      const btnLangSwitch = document.getElementById("btn-lang-switch");
 
       const params = new URLSearchParams(location.search);
       const dialect = resolveDialectPref();
-      const isEnglish = dialect.forceLanguage === "en";
-      const langCode = companionLangCode(isEnglish ? "en" : "yue");
+      const langCode = companionLangCode(
+        params.get("lang") || dialect.forceLanguage || "yue",
+      );
+      const isEnglish = langCode === "en";
       let voiceId = resolveVoiceId({
         lang: langCode,
         voiceParam: params.get("voice"),
@@ -1536,22 +1563,33 @@
       });
 
       const langPill = document.getElementById("lang-pill");
-      const updateLangPill = () => {
-        if (!langPill) return;
+      const languageSwitchHref = () => {
         const targetLang = isEnglish ? "yue" : "en";
         const targetVoice = defaultVoiceForLang(targetLang, voiceId);
-        langPill.textContent = isEnglish ? "EN" : "粵";
-        langPill.href = buildCompanionHref({
+        return buildCompanionHref({
           basePath: location.pathname,
           lang: targetLang,
           voiceId: targetVoice,
           extra: liteMode ? { lite: "1" } : undefined,
         });
-        langPill.title = isEnglish
+      };
+
+      const updateLangPill = () => {
+        const href = languageSwitchHref();
+        const switchTitle = isEnglish
           ? "Switch to Cantonese (粵語)"
           : "Switch to English";
+        if (langPill) {
+          langPill.textContent = isEnglish ? "EN" : "粵";
+          langPill.href = href;
+          langPill.title = switchTitle;
+        }
+        if (btnLangSwitch) {
+          btnLangSwitch.textContent = isEnglish ? "EN" : "粵";
+          btnLangSwitch.title = switchTitle;
+        }
       };
-      updateLangPill();
+
       const liteLink = document.getElementById("lite-link");
       if (liteLink) {
         liteLink.href = buildCompanionHref({
@@ -1589,7 +1627,13 @@
           ? "Tap to switch voice"
           : "按一下切換語音";
       };
-      setVoicePill(voiceShortLabel(voiceId, langCode, isEnglish));
+      /** @type {(nextVoiceId: string) => void} */
+      let applyVoiceSelection = (nextVoiceId) => {
+        voiceId = nextVoiceId;
+        persistVoiceId(voiceId);
+        syncVoiceToUrl(voiceId);
+      };
+
       const status = createCompanionStatus({
         onState: (s) => {
           statusPill.className = `pill status-${s}`;
@@ -1735,6 +1779,24 @@
           syncMicBtn();
         },
       });
+
+      applyVoiceSelection = (nextVoiceId) => {
+        voiceId = nextVoiceId;
+        persistVoiceId(voiceId);
+        syncVoiceToUrl(voiceId);
+        const preset = voicePresetById(voiceId);
+        voice.setCloudVoice(preset);
+        const label = voiceShortLabel(voiceId, langCode, isEnglish);
+        setVoicePill(label);
+        if (btnVoiceSwitch) {
+          btnVoiceSwitch.textContent = label;
+          btnVoiceSwitch.title = isEnglish
+            ? "Tap to switch voice"
+            : "按一下切換語音";
+        }
+      };
+      applyVoiceSelection(voiceId);
+      updateLangPill();
 
       handleCharacterTap = () => {
         const now = Date.now();
@@ -2009,7 +2071,6 @@
         void startSession();
       }
 
-      btnMic.disabled = !voice.supportsMic;
       syncSpeakerBtn();
       syncMicBtn();
 
@@ -2121,19 +2182,29 @@
       });
       }
 
-      voicePill.addEventListener("click", () => {
-        voiceId = nextVoiceId(voiceId, langCode);
-        persistVoiceId(voiceId);
-        syncVoiceToUrl(voiceId);
+      const cycleVoice = () => {
+        const nextId = nextVoiceId(voiceId, langCode);
+        applyVoiceSelection(nextId);
         updateLangPill();
-        voice.setCloudVoice(voicePresetById(voiceId));
-        const label = voiceShortLabel(voiceId, langCode, isEnglish);
-        setVoicePill(label);
         addBubble(
           "system",
-          isEnglish ? `Voice: ${label}` : `語音：${label}`,
+          isEnglish
+            ? `Voice: ${voiceShortLabel(nextId, langCode, true)}`
+            : `語音：${voiceShortLabel(nextId, langCode, false)}`,
         );
+      };
+
+      voicePill.addEventListener("click", cycleVoice);
+      btnVoiceSwitch?.addEventListener("click", cycleVoice);
+
+      const switchLanguage = () => {
+        location.href = languageSwitchHref();
+      };
+      langPill?.addEventListener("click", (ev) => {
+        ev.preventDefault();
+        switchLanguage();
       });
+      btnLangSwitch?.addEventListener("click", switchLanguage);
 
       btnSpeaker.addEventListener("click", () => {
         unlockAudioSync();
@@ -2143,18 +2214,32 @@
       });
 
       btnMic.addEventListener("click", async () => {
+        unlockAudioSync();
         if (!voice.supportsMic) {
-          addBubble("system", formatMicError("unsupported"));
+          addBubble(
+            "system",
+            isEnglish
+              ? formatMicError("unsupported")
+              : "此瀏覽器唔支援麥克風 — 請用 Chrome/Edge，或打字傾偈。",
+          );
           return;
         }
         const turningOn = !voice.micOn;
         if (turningOn) {
-          unlockAudioSync();
           if (!sessionStarted) startSession();
           micQueue.length = 0;
+          await voice.primeMicPermission();
           const micOk = await voice.startMic();
           syncMicBtn();
-          if (!micOk) return;
+          if (!micOk) {
+            addBubble(
+              "system",
+              isEnglish
+                ? "Mic blocked — allow microphone in browser settings, then tap 🎤 again."
+                : "麥克風被封鎖 — 請在瀏覽器設定允許麥克風，再按 🎤。",
+            );
+            return;
+          }
           addBubble(
             "system",
             "Mic on · speak, pause, she replies. Tap 🎤 to stop.",

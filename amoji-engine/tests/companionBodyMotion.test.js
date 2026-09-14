@@ -19,7 +19,9 @@ function mockHumanoid() {
   }
   return {
     getNormalizedBoneNode: (name) => bones.get(name) || null,
+    getRawBoneNode: (name) => bones.get(name) || null,
     resetNormalizedPose: () => {},
+    update: () => {},
     bones,
   };
 }
