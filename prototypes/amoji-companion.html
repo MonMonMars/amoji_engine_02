@@ -733,8 +733,12 @@
         -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 6%);
       }
 
-      /* Focus on the live exchange — older lines fade out of the strip */
-      .stage.mic-mode .msg-row:not(:nth-last-child(-n+3)) {
+      /* Mic captions: hide status chatter, keep the live user/assistant exchange */
+      .stage.mic-mode .msg-row.system {
+        display: none;
+      }
+
+      .stage.mic-mode .msg-row:not(:nth-last-child(-n+4)) {
         display: none;
       }
 
