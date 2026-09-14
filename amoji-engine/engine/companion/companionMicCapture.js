@@ -2,6 +2,10 @@
  * Microphone capture — Web Speech API when available, cloud STT fallback otherwise.
  */
 import {
+  createMicLevelSmoother,
+  rmsFromByteTimeDomain,
+} from "./companionMicLevel.js";
+import {
   formatMicError,
   requestMicPermission,
 } from "./companionMicUtils.js";
@@ -33,6 +37,7 @@ function pickRecorderMimeType() {
  *   cloudSttUrl?: string | null,
  *   onText?: (text: string, isFinal: boolean) => void,
  *   onSpeechDetected?: (info: { source: string, text?: string, rms?: number }) => void,
+ *   onMicLevel?: (info: { level: number, rms: number }) => void,
  *   shouldDetectBarge?: () => boolean,
  *   bargeWhilePaused?: boolean,
  *   onState?: (on: boolean) => void,
@@ -78,11 +83,106 @@ export function createMicCapture(opts = {}) {
   let cloudSpeechSignalFired = false;
   let lastBargeEmitAt = 0;
 
+  /** @type {MediaStream | null} */
+  let levelStream = null;
+  /** @type {AudioContext | null} */
+  let levelAudioCtx = null;
+  /** @type {AnalyserNode | null} */
+  let levelAnalyser = null;
+  /** @type {Uint8Array | null} */
+  let levelBuf = null;
+  /** @type {number} */
+  let levelRaf = 0;
+  let levelSmoother = createMicLevelSmoother();
+  let levelMonitorStarting = false;
+
   const silenceMs = opts.silenceMs ?? 1400;
   const maxUtteranceMs = opts.maxUtteranceMs ?? 12000;
 
   const shouldListen = () =>
     desired && pauseDepth === 0 && (Boolean(Rec) || canCloudStt);
+
+  const emitMicLevel = (rms) => {
+    const level = levelSmoother.push(rms);
+    opts.onMicLevel?.({ level, rms });
+  };
+
+  const resetMicLevel = () => {
+    levelSmoother.reset();
+    opts.onMicLevel?.({ level: 0, rms: 0 });
+  };
+
+  const stopLevelMonitor = () => {
+    if (levelRaf) {
+      cancelAnimationFrame(levelRaf);
+      levelRaf = 0;
+    }
+    levelMonitorStarting = false;
+    if (levelAudioCtx) {
+      levelAudioCtx.close().catch(() => {});
+      levelAudioCtx = null;
+    }
+    levelAnalyser = null;
+    levelBuf = null;
+    if (levelStream) {
+      for (const track of levelStream.getTracks()) {
+        try {
+          track.stop();
+        } catch {
+          /* ignore */
+        }
+      }
+    }
+    levelStream = null;
+    resetMicLevel();
+  };
+
+  const tickLevelMonitor = () => {
+    levelRaf = 0;
+    if (!levelAnalyser || !levelBuf || !shouldListen()) {
+      stopLevelMonitor();
+      return;
+    }
+    levelAnalyser.getByteTimeDomainData(levelBuf);
+    emitMicLevel(rmsFromByteTimeDomain(levelBuf));
+    levelRaf = requestAnimationFrame(tickLevelMonitor);
+  };
+
+  const startLevelMonitor = async () => {
+    if (
+      levelAnalyser ||
+      levelMonitorStarting ||
+      !shouldListen() ||
+      !globalThis.navigator?.mediaDevices?.getUserMedia
+    ) {
+      return;
+    }
+    levelMonitorStarting = true;
+    try {
+      levelStream = await globalThis.navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        },
+      });
+      if (!shouldListen()) {
+        stopLevelMonitor();
+        return;
+      }
+      levelAudioCtx = new AudioContext();
+      const source = levelAudioCtx.createMediaStreamSource(levelStream);
+      levelAnalyser = levelAudioCtx.createAnalyser();
+      levelAnalyser.fftSize = 512;
+      source.connect(levelAnalyser);
+      levelBuf = new Uint8Array(levelAnalyser.fftSize);
+      levelRaf = requestAnimationFrame(tickLevelMonitor);
+    } catch {
+      stopLevelMonitor();
+    } finally {
+      levelMonitorStarting = false;
+    }
+  };
 
   const clearRestart = () => {
     if (restartTimer) {
@@ -261,12 +361,8 @@ export function createMicCapture(opts = {}) {
     silenceTimer = setInterval(() => {
       if (!shouldListen() || !mediaRecorder) return;
       analyser.getByteTimeDomainData(buf);
-      let sum = 0;
-      for (let i = 0; i < buf.length; i += 1) {
-        const v = (buf[i] - 128) / 128;
-        sum += v * v;
-      }
-      const rms = Math.sqrt(sum / buf.length);
+      const rms = rmsFromByteTimeDomain(buf);
+      emitMicLevel(rms);
       if (rms > 0.011) {
         heardSpeech = true;
         silentSince = Date.now();
@@ -378,13 +474,16 @@ export function createMicCapture(opts = {}) {
 
   const beginListening = () => {
     if (!shouldListen()) return;
-    if (Rec) beginRecognition();
-    else if (canCloudStt) void beginCloudUtterance();
+    if (Rec) {
+      beginRecognition();
+      void startLevelMonitor();
+    } else if (canCloudStt) void beginCloudUtterance();
   };
 
   const haltListening = () => {
     haltRecognition();
     releaseRecordStream();
+    stopLevelMonitor();
   };
 
   const setLang = (next) => {

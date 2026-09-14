@@ -189,6 +189,7 @@ export const CLOUD_ENGLISH_VOICE = Object.freeze({
  *   onTalking?: (on: boolean) => void,
  *   onMicText?: (text: string, isFinal: boolean) => void,
  *   onSpeechDetected?: (info: { source: string, text?: string, rms?: number }) => void,
+ *   onMicLevel?: (info: { level: number, rms: number }) => void,
  *   onMicState?: (on: boolean) => void,
  *   onError?: (msg: string) => void,
  *   onSpeakChunk?: (chunk: string, charIndex: number) => void,
@@ -229,6 +230,7 @@ export function createCompanionVoice(opts = {}) {
     shouldDetectBarge: () => isAssistantOutputActive() || keepMicDuringSpeak,
     onText: (text, isFinal) => opts.onMicText?.(text, isFinal),
     onSpeechDetected: (info) => opts.onSpeechDetected?.(info),
+    onMicLevel: (info) => opts.onMicLevel?.(info),
     onState: (on) => opts.onMicState?.(on),
     onError: (code) => opts.onError?.(code),
   });
