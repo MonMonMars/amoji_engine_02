@@ -940,7 +940,7 @@
     </script>
     <script>
       (function () {
-        window.__amojiBuild = "2026-09-14-v11-lang-mic-arms";
+        window.__amojiBuild = "2026-09-14-v13-session-mic";
         window.__amojiModuleBooted = false;
         window.__amojiStart = {
           tapped: false,
@@ -1129,7 +1129,7 @@
     </script>
   </head>
   <body>
-    <!-- amoji-build: 2026-09-14-v12-stability — fix VRM load ReferenceError; health endpoint -->
+    <!-- amoji-build: 2026-09-14-v13-session-mic — auto mic on start; boot failure UX -->
     <noscript>
       <div
         style="
@@ -1304,7 +1304,6 @@
 
     <script type="module">
       (async () => {
-      window.__amojiModuleBooted = true;
       try {
       const [
         { createCompanionAvatar, createStubAvatar },
@@ -1331,6 +1330,7 @@
         import("../amoji-engine/engine/companion/companionLlmProviders.js"),
         import("../amoji-engine/engine/companion/companionVoiceCatalog.js"),
       ]);
+      window.__amojiModuleBooted = true;
       const {
         createCompanionVoice,
         formatMicError,
@@ -1402,7 +1402,7 @@
       });
       persistVoiceId(voiceId);
       const liteMode = params.get("lite") === "1";
-      const autoMic = params.get("automic") === "1";
+      const autoMic = params.get("automic") !== "0";
       dismissLoading();
       const avatarModelUrl =
         params.get("vrm") ||
@@ -1537,6 +1537,12 @@
           })
           .catch((err) => {
             console.warn("[companion] avatar load failed", err);
+            showToast(
+              isEnglish
+                ? "3D avatar failed — chat and mic still work. Try reload or ?lite=1"
+                : "3D 載入失敗 — 仍可打字同用麥克風。可重新載入或加 ?lite=1",
+              "info",
+            );
             return { avatar, kind: avatarKind };
           })
           .finally(() => hideAvatarLoadPill());
@@ -1797,6 +1803,7 @@
       };
       applyVoiceSelection(voiceId);
       updateLangPill();
+      window.__amojiSupportsMic = voice.supportsMic;
 
       handleCharacterTap = () => {
         const now = Date.now();
@@ -1999,27 +2006,47 @@
       };
 
       const requestMicAsync = () => {
-        if (!autoMic || !voice.supportsMic) return;
-        void voice.startMic().then((micOk) => {
-          syncMicBtn();
-          if (micOk) {
-            status.listening();
-            avatar.setEmotion("neutral");
-            setEmotionPill("neutral");
-            syncListenPose();
-            input.placeholder =
-              "Listening… speak, pause → she replies, then listens again";
+        if (!autoMic || !voice.supportsMic) {
+          if (!voice.supportsMic) {
             addBubble(
               "system",
               isEnglish
-                ? "Mic on — speak, pause to send."
-                : "Mic on — speak Cantonese or English, pause to send.",
+                ? formatMicError("unsupported")
+                : "此瀏覽器唔支援麥克風 — 請用 Chrome/Edge，或打字傾偈。",
             );
-          } else if (!busy) {
-            status.idle();
-            input.placeholder = "同 Amoji 傾偈… tap 🎤 after allowing microphone";
           }
-        });
+          return;
+        }
+        void voice.primeMicPermission().then(() =>
+          voice.startMic().then((micOk) => {
+            syncMicBtn();
+            if (micOk) {
+              status.listening();
+              avatar.setEmotion("neutral");
+              setEmotionPill("neutral");
+              syncListenPose();
+              input.placeholder =
+                "Listening… speak, pause → she replies, then listens again";
+              addBubble(
+                "system",
+                isEnglish
+                  ? "Mic on — speak, pause to send."
+                  : "Mic on — speak Cantonese or English, pause to send.",
+              );
+            } else if (!busy) {
+              status.idle();
+              addBubble(
+                "system",
+                isEnglish
+                  ? "Mic blocked — tap 🎤 and allow microphone, or type below."
+                  : "麥克風被封鎖 — 按 🎤 允許麥克風，或直接打字。",
+              );
+              input.placeholder = isEnglish
+                ? "Type to chat… or tap 🎤 after allowing microphone"
+                : "打字傾偈… 或按 🎤 允許麥克風";
+            }
+          }),
+        );
       };
 
       const startSession = ({ fromTimeout = false } = {}) => {
@@ -2044,11 +2071,6 @@
         try {
           unlockAudioSync();
           void voice.primeMicPermission();
-
-          if (!voice.supportsMic) {
-            addBubble("system", formatMicError("unsupported"));
-          }
-
           markSessionReady({ fromTimeout });
         } catch (err) {
           console.error("[companion] startSession failed", err);
@@ -2062,14 +2084,16 @@
           .primeAudio?.()
           .catch(() => {})
           .then(() => speakGreetingAsync());
+        requestMicAsync();
+        addBubble(
+          "system",
+          isEnglish
+            ? "Ready — speak (mic), type below, or tap the character."
+            : "已開始 — 可以講嘢（麥克風）、打字，或者點一下角色。",
+        );
       };
 
       window.__amojiStart.run = () => void startSession();
-      window.__amojiStart.ready = true;
-      dismissLoading();
-      if (window.__amojiStart.tapped && !window.__amojiStart.sessionStarted) {
-        void startSession();
-      }
 
       syncSpeakerBtn();
       syncMicBtn();
@@ -2280,14 +2304,20 @@
       });
 
       input.focus();
+
+      window.__amojiStart.ready = true;
+      dismissLoading();
+      if (window.__amojiStart.tapped && !window.__amojiStart.sessionStarted) {
+        void startSession();
+      }
       } catch (err) {
         console.error("[companion] module boot failed", err);
+        window.__amojiModuleBooted = false;
         window.__amojiHideLoading?.();
         window.__amojiShowBootFallback?.(
-          "App modules failed — tap Start or reload. Text-only: /companion (" +
+          "App modules failed to load — tap reload or use text-only /companion (" +
             (err?.message || err) +
             ")",
-          { soft: true },
         );
         window.__amojiStaticFallback?.(
           "App modules failed to load — refresh or use /companion for text-only chat. (" +
@@ -2296,8 +2326,9 @@
         );
         window.__amojiStart.ready = true;
         window.__amojiStart.run = function () {
-          window.__amojiDismissStartButton?.();
-          window.__amojiStaticFallback?.("Modules unavailable — refresh or use ?lite=1");
+          window.__amojiShowBootFallback?.(
+            "App modules failed — tap reload below or open /companion for text chat.",
+          );
         };
         if (window.__amojiStart.tapped && !window.__amojiStart.sessionStarted) {
           window.__amojiStart.run();
