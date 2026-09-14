@@ -1049,7 +1049,7 @@
     </script>
     <script>
       (function () {
-        window.__amojiBuild = "2026-09-14-v23-emotion-action-voice";
+        window.__amojiBuild = "2026-09-14-v24-short-greeting";
         window.__amojiModuleBooted = false;
         window.__amojiStart = {
           tapped: false,
@@ -1238,7 +1238,7 @@
     </script>
   </head>
   <body>
-    <!-- amoji-build: 2026-09-14-v23-emotion-action-voice — emotion/action motion + gender voice labels -->
+    <!-- amoji-build: 2026-09-14-v24-short-greeting — short hi/hello first phase -->
     <noscript>
       <div
         style="
@@ -1661,7 +1661,8 @@
       let avatarLoadStarted = false;
       let currentEmotion = "neutral";
       /** @type {HTMLElement | null} */
-      let introBubble = null;
+      /** @type {HTMLElement | null} */
+      let greetingBubble = null;
       /** @type {Promise<{ avatar: ReturnType<typeof createStubAvatar>, kind: string }>} */
       let avatarLoadPromise = Promise.resolve({ avatar, kind: avatarKind });
 
@@ -1720,7 +1721,6 @@
                       ? "2D fallback (3D failed)"
                       : "2D 後備（3D 載入失敗）";
             addBubble("system", label);
-            if (introBubble) introBubble.textContent = theaterLine();
             return loaded;
           })
           .catch((err) => {
@@ -2340,10 +2340,8 @@
         }
       };
 
-      const GREETING_SHORT = isEnglish ? "Hi!" : "嗨！";
-      const START_PAGE_TAGLINE = isEnglish
-        ? "I'm Amoji — chat with me and I'll reply with expressions and body motion!"
-        : "我係 Amoji！同我傾偈啦，我會用粵語答你，仲會做表情同身體動作㗎。";
+      const GREETING_SHORT = isEnglish ? "Hello!" : "嗨！";
+      const START_PAGE_TAGLINE = GREETING_SHORT;
       const startTaglineEl = document.getElementById("start-tagline");
       if (startTaglineEl) startTaglineEl.textContent = START_PAGE_TAGLINE;
 
@@ -2425,6 +2423,9 @@
         speakEmotion = "happy";
         status.speaking();
         armBargeIn();
+        if (!greetingBubble) {
+          greetingBubble = addBubble("assistant", GREETING_SHORT);
+        }
         return voice.speak(GREETING_SHORT, "happy").then((spoke) => {
           if (spoke?.ok === false && spoke?.reason) {
             const reason = String(spoke.reason);
@@ -2526,12 +2527,7 @@
           .catch(() => {})
           .then(() => speakGreetingAsync());
         requestMicAsync();
-        addBubble(
-          "system",
-          isEnglish
-            ? "Ready — speak (mic), type below, or tap the character."
-            : "已開始 — 可以講嘢（麥克風）、打字，或者點一下角色。",
-        );
+        addBubble("system", isEnglish ? "Ready." : "已開始。");
       };
 
       window.__amojiStart.run = () => void startSession();
@@ -2582,8 +2578,6 @@
         });
       }
 
-      introBubble = addBubble("system", theaterLine());
-      addBubble("assistant", GREETING_SHORT);
       avatar.setEmotion("neutral");
       setEmotionPill("neutral");
 
