@@ -7,6 +7,7 @@ import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { VRMLoaderPlugin, VRMExpressionPresetName } from "@pixiv/three-vrm";
 import { createCompanionBodyMotion } from "./companionBodyMotion.js";
+import { sampleIdleExpressionBlend } from "./companionIdleMotion.js";
 
 export const VRM_AVATAR_SCHEMA = "amoji.vrmAvatar.v1";
 
@@ -459,6 +460,22 @@ export async function createVrmAvatar(opts) {
       console.warn("[vrm] frame update failed", err);
     }
 
+    if (!talking && !bodyMotion.currentAction && !bodyMotion.thinking) {
+      const idleBlend = sampleIdleExpressionBlend(
+        (now - t0) * 0.001,
+        emotion,
+      );
+      for (const [key, weight] of Object.entries(idleBlend)) {
+        const preset = VRM_BLEND_PRESET_MAP[key];
+        if (preset && expr?.getExpression?.(preset)) {
+          expressionTarget[preset] = Math.max(
+            expressionTarget[preset] ?? 0,
+            weight,
+          );
+        }
+      }
+    }
+
     mouthOpen += (mouthTarget - mouthOpen) * Math.min(1, dt * 14);
     tickExpressionBlend(dt);
     applyMouth(mouthOpen);
@@ -478,8 +495,9 @@ export async function createVrmAvatar(opts) {
       }
     }
 
-    // Standing breath — subtle scale when not driven by clips
-    const breath = Math.sin((now - t0) * 0.0018) * 0.004;
+    const idleLife = !talking && !bodyMotion.currentAction;
+    const breathAmp = idleLife ? 0.007 : 0.004;
+    const breath = Math.sin((now - t0) * 0.0018) * breathAmp;
     const s = scale * (1 + breath);
     model.scale.set(s, s, s);
 

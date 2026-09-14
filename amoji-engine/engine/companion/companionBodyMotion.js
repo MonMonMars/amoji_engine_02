@@ -19,6 +19,11 @@ import {
   sampleActionRootMotion,
 } from "./companionActionMotion.js";
 import {
+  advanceIdleBeat,
+  createIdleBeatState,
+  sampleIdleBodyMotion,
+} from "./companionIdleMotion.js";
+import {
   buildBasePose,
   clampArmPose,
   companionGestureStyle,
@@ -58,6 +63,7 @@ export function createCompanionBodyMotion(humanoid) {
   let actionLoop = false;
   /** @type {{ y: number, rotY: number }} */
   let rootMotion = { y: 0, rotY: 0 };
+  let idleBeatState = createIdleBeatState();
 
   const bone = (name) => humanoid?.getNormalizedBoneNode?.(name) || null;
 
@@ -448,11 +454,12 @@ export function createCompanionBodyMotion(humanoid) {
         pose.headX = (pose.headX || 0) + Math.sin(elapsed * 0.72) * 0.042;
         pose.headZ = (pose.headZ || 0) + Math.sin(elapsed * 0.55 + 0.8) * 0.034;
       } else if (!talking) {
-        pose.leanY = (pose.leanY || 0) + Math.sin(elapsed * 0.95) * 0.028;
-        pose.headZ = (pose.headZ || 0) + Math.sin(elapsed * 1.2 + 0.5) * 0.022;
-        pose.headX = (pose.headX || 0) + Math.sin(elapsed * 0.78) * 0.016;
-        if (listening) {
-          pose.headX = (pose.headX || 0) + Math.sin(elapsed * 0.85) * 0.018;
+        const idleMotion = sampleIdleBodyMotion(elapsed, { listening, emotion });
+        pose = mergePoses(pose, idleMotion, listening ? 0.88 : 0.82);
+        const beat = advanceIdleBeat(idleBeatState, dt, now);
+        idleBeatState = beat.state;
+        if (beat.overlay && Object.keys(beat.overlay).length) {
+          pose = mergePoses(pose, beat.overlay, 0.92);
         }
       } else {
         talkTime += dt;
@@ -492,6 +499,8 @@ export function createCompanionBodyMotion(humanoid) {
     }
     if (talking && !activeGesture && !activeAction) {
       talkArmBlend = 0.28 + energy * 0.32;
+    } else if (!talking && !thinking && !activeGesture && !activeAction) {
+      talkArmBlend = listening ? 0.42 : 0.36;
     }
     if (activeGesture) {
       gesturePhase += dt / gestureDuration;
@@ -545,6 +554,9 @@ export function createCompanionBodyMotion(humanoid) {
     },
     get listening() {
       return listening;
+    },
+    get thinking() {
+      return thinking;
     },
     get activeGesture() {
       return activeGesture;

@@ -11,6 +11,7 @@ import {
   actionLoops,
   sampleActionRootMotion,
 } from "./companionActionMotion.js";
+import { sampleIdleBodyMotion } from "./companionIdleMotion.js";
 
 export const GLTF_AVATAR_SCHEMA = "amoji.gltfAvatar.v1";
 
@@ -385,9 +386,19 @@ export async function createGltfAvatar(opts) {
     }
 
     const energy = talking ? Math.max(0.25, talkEnergy) : 0;
-    const sway = talking
+    const elapsed = (now - t0) * 0.001;
+    let sway = talking
       ? Math.sin((now - t0) * 0.005) * 0.015 * energy
-      : Math.sin((now - t0) * 0.0009) * 0.025;
+      : 0;
+    if (!talking && !activeAction) {
+      const idle = sampleIdleBodyMotion(elapsed, { emotion });
+      leanX += idle.headX * 0.55;
+      leanZ += idle.headZ * 0.85 + idle.hipZ * 0.65;
+      leanY += idle.leanY * 0.75;
+      sway += idle.leanY * 0.4;
+    } else if (!talking) {
+      sway = Math.sin((now - t0) * 0.0009) * 0.025;
+    }
     model.rotation.x =
       leanX + (talking ? Math.sin((now - t0) * 0.006) * 0.02 * energy : 0);
     model.rotation.z = leanZ + sway;

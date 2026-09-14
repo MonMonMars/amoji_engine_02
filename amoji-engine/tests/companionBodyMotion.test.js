@@ -39,16 +39,14 @@ describe("createCompanionBodyMotion", () => {
     expect(rot.z).not.toBe(rest.z);
   });
 
-  it("restores arm bones when idle", () => {
+  it("applies gentle idle sway when not talking", () => {
     const humanoid = mockHumanoid();
     const motion = createCompanionBodyMotion(humanoid);
     motion.setTalking(false);
-    motion.update(1 / 60);
+    for (let i = 0; i < 45; i += 1) motion.update(1 / 30);
     const rot = humanoid.bones.get("leftUpperArm").rotation;
     const rest = VRM_ARM_REST_ROTATIONS.leftUpperArm;
-    expect(rot.x).toBe(rest.x);
-    expect(rot.y).toBe(rest.y);
-    expect(rot.z).toBe(rest.z);
+    expect(Math.abs(rot.z - rest.z)).toBeGreaterThan(0.008);
   });
 
   it("uses content-aware nod for happy laughter without arm overlay", () => {
