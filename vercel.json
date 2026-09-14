@@ -12,7 +12,8 @@
     { "source": "/amoji-engine/(.*)", "destination": "/amoji-engine/$1" },
     { "source": "/prototypes/(.*)", "destination": "/prototypes/$1" },
     { "source": "/setup", "destination": "/prototypes/amoji-setup.html" },
-    { "source": "/", "destination": "/prototypes/amoji-companion.html" }
+    { "source": "/companion", "destination": "/prototypes/amoji-lite.html" },
+    { "source": "/", "destination": "/prototypes/amoji-lite.html" }
   ],
   "headers": [
     {
