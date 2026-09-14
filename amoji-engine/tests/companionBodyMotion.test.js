@@ -67,6 +67,17 @@ describe("createCompanionBodyMotion", () => {
     expect(analysis.talkStyle).toBe("celebrate");
   });
 
+  it("plays kungfu action with visible arm lift", () => {
+    const humanoid = mockHumanoid();
+    const motion = createCompanionBodyMotion(humanoid);
+    motion.playAction("kungfu", { emotion: "happy" });
+    motion.update(1 / 30);
+    const rot = humanoid.bones.get("leftUpperArm").rotation;
+    const rest = VRM_ARM_REST_ROTATIONS.leftUpperArm;
+    expect(Math.abs(rot.z - rest.z)).toBeGreaterThan(0.08);
+    expect(motion.currentAction).toBe("kungfu");
+  });
+
   it("allows nod gesture without arm overlay", () => {
     const humanoid = mockHumanoid();
     const motion = createCompanionBodyMotion(humanoid);

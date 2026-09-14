@@ -1,3 +1,5 @@
+import { isIosLike } from "./companionPlatform.js";
+
 export const COMPANION_AVATAR_SCHEMA = "amoji.createAvatar.v1";
 
 /** Per-stage timeout so slow mobile networks do not block the whole page. */
@@ -85,7 +87,9 @@ function withLoadTimeout(promise, ms, label = "avatar") {
  * }} opts
  */
 export async function createCompanionAvatar(opts) {
-  const timeoutMs = opts.timeoutMs ?? AVATAR_LOAD_TIMEOUT_MS;
+  const timeoutMs =
+    opts.timeoutMs ??
+    (isIosLike() ? 45_000 : AVATAR_LOAD_TIMEOUT_MS);
   const prefer = opts.prefer || "vrm";
   const modelUrl = opts.modelUrl || undefined;
   let canvas = opts.canvas;
