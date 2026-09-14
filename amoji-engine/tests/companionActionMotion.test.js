@@ -42,6 +42,12 @@ describe("companionActionMotion", () => {
     ).toBe("kungfu");
   });
 
+  it("treats action:none as no motion", () => {
+    expect(
+      inferActionFromReply("我飛唔到呀 [action:none] [mood:sad]", null),
+    ).toBeNull();
+  });
+
   it("samples jump pose with vertical motion", () => {
     const mid = sampleActionBodyPose("jump", 0.5, 0.5);
     expect(mid.spineX).toBeLessThan(0);

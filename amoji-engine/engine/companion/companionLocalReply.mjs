@@ -1,6 +1,10 @@
 /**
  * Rich offline/basic companion replies — mood + action tags + optional web context.
  */
+import {
+  isLikelyImpossibleAction,
+  suggestClosestActions,
+} from "./companionActionIntent.js";
 import { inferActionFromUserText } from "./companionActionMotion.js";
 
 /** @type {Record<string, string>} */
@@ -55,6 +59,14 @@ export function localCompanionReply(message, history = [], webContext = "") {
   const text = String(message || "").trim();
   const lower = text.toLowerCase();
   const taggedAction = inferActionFromUserText(text);
+
+  if (isLikelyImpossibleAction(text)) {
+    const alt = suggestClosestActions(text, 1)[0];
+    if (alt) {
+      return `我做不到呢個呀，但我可以${LOCAL_ACTION_LINES[alt.id]?.replace(/[！!～~]/g, "") || alt.id}代替～ [action:${alt.id}] [mood:happy]`;
+    }
+    return "唉呀，我做不到呢個動作呀… [action:none] [mood:sad]";
+  }
 
   if (taggedAction) {
     const line =

@@ -387,14 +387,18 @@ export function buildActionPromptFragment(isEnglish = false) {
   const list = PLAYABLE_ACTIONS.join(", ");
   if (isEnglish) {
     return [
-      `When the user asks you to move, pose, or perform ANY physical action, pick the closest tag from this list and add it before the mood tag: [action:${PLAYABLE_ACTIONS[0]}], … [action:…] where action is one of: ${list}.`,
-      "Examples: dance→[action:dance], bow→[action:bow], clap→[action:clap], sit→[action:sit], cry→[action:cry], angry stomp→[action:angry], think→[action:thinking], run→[action:run].",
-      "If the user says stop, use [action:stop]. If no movement fits, omit the action tag.",
+      `When the user asks you to move, pose, or perform a physical action, YOU choose the motion via an action tag before the mood tag. Supported actions only: ${list}.`,
+      "If the request is close (e.g. backflip), perform the nearest supported move (e.g. spin) and say briefly you are approximating it.",
+      "If the request is impossible (fly, teleport, swim underwater), reply honestly that you cannot do it and use [action:none] — do not play a random unrelated motion.",
+      "Examples: dance→[action:dance], bow→[action:bow], impossible fly→\"I can't fly\" [action:none] [mood:sad], backflip approx→\"I'll spin instead\" [action:spin].",
+      "Stop commands: [action:stop].",
     ].join(" ");
   }
   return [
-    `當用家叫你做動作、擺 pose、表演時，請從以下列表揀最接近嘅動作 tag，放喺 mood tag 前面：[action:動作名]。可用動作：${list}。`,
-    "例子：跳舞→[action:dance]、鞠躬→[action:bow]、拍手→[action:clap]、坐下→[action:sit]、哭→[action:cry]、生氣→[action:angry]、諗嘢→[action:thinking]、跑步→[action:run]、飛吻→[action:kiss]。",
-    "用家話停/唔好再動就用 [action:stop]。冇合適動作就唔加 action tag。",
+    `當用家叫你做動作、擺 pose、表演時，由你決定動作 tag（放喺 mood tag 前）。只可用：${list}。`,
+    "近似就得：例如後空翻做不到可以講「我轉一圈代替」再用 [action:spin]。",
+    "真係做不到（飛行、潛水、瞬移等）要坦白講做不到，用 [action:none]，唔好亂做其他動作。",
+    "例子：跳舞→[action:dance]、做不到飛→「我飛唔到呀」[action:none] [mood:sad]。",
+    "停手：用家話停/唔好再動→[action:stop]。",
   ].join(" ");
 }

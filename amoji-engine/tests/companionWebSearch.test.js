@@ -10,6 +10,8 @@ describe("companionWebSearch", () => {
     expect(needsWebSearch("今日香港天氣點呀？")).toBe(true);
     expect(needsWebSearch("你好呀")).toBe(false);
     expect(shouldTryWebSearch("what is AI?", { basicMode: true })).toBe(true);
+    expect(shouldTryWebSearch("香港人口幾多", { basicMode: true })).toBe(true);
+    expect(shouldTryWebSearch("hello", { basicMode: true })).toBe(false);
   });
 
   it("returns duckduckgo summary when available", async () => {
