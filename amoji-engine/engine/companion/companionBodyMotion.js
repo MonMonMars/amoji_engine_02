@@ -15,7 +15,7 @@ import {
 import {
   actionDurationSec,
   actionLoops,
-  getActionDef,
+  getActionDefExtended,
   resolveAction,
   sampleActionBodyPose,
   sampleActionRootMotion,
@@ -151,13 +151,13 @@ export function createCompanionBodyMotion(humanoid) {
       }
       return false;
     }
-    if (!getActionDef(key)) return false;
+    if (!getActionDefExtended(key)) return false;
     activeAction = key;
     actionPhase = 0;
     actionElapsed = 0;
     actionDuration = actionDurationSec(key);
     actionLoop = opts.loop ?? actionLoops(key);
-    const def = getActionDef(key);
+    const def = getActionDefExtended(key);
     if (opts.emotion && opts.emotion !== "neutral") {
       emotion = opts.emotion;
     } else if (def?.emotion) {

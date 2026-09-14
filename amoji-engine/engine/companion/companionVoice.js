@@ -8,6 +8,11 @@ import {
   pickNextThinkingPhrase,
   pickThinkingPhrase,
 } from "./companionContentMotion.js";
+import {
+  learnPhaseForProgress,
+  pickLearnPhrase,
+  pickNextLearnPhrase,
+} from "./companionLearnDialogue.js";
 import { isIosLike, shouldPauseMicDuringTts } from "./companionPlatform.js";
 
 export { formatMicError, MIC_ERROR_MESSAGES, requestMicPermission };
@@ -216,7 +221,9 @@ export function createCompanionVoice(opts = {}) {
   const isAssistantOutputActive = () =>
     speaking ||
     thinkingLoopActive ||
+    learnLoopActive ||
     thinkingActive ||
+    learnActive ||
     Boolean(streamSession);
 
   const syncAssistantOutput = () => {
@@ -243,6 +250,14 @@ export function createCompanionVoice(opts = {}) {
   let thinkingPhraseIndex = -1;
   /** @type {ReturnType<typeof setTimeout> | null} */
   let thinkingLoopTimer = null;
+  let learnLoopActive = false;
+  let learnActive = false;
+  let learnPhraseIndex = -1;
+  /** @type {import('./companionLearnDialogue.js').LearnPhase} */
+  let learnPhase = "learning";
+  let learnProgress = 0;
+  /** @type {ReturnType<typeof setTimeout> | null} */
+  let learnLoopTimer = null;
 
   const getSharedAudio = () => {
     if (typeof globalThis.window === "undefined") {
@@ -303,9 +318,19 @@ export function createCompanionVoice(opts = {}) {
     currentCloudAudio = null;
   };
 
+  const stopLearnAudio = () => {
+    learnActive = false;
+    learnLoopActive = false;
+    if (learnLoopTimer) {
+      clearTimeout(learnLoopTimer);
+      learnLoopTimer = null;
+    }
+  };
+
   const stopThinkingAudio = () => {
     thinkingActive = false;
     thinkingLoopActive = false;
+    stopLearnAudio();
     if (thinkingLoopTimer) {
       clearTimeout(thinkingLoopTimer);
       thinkingLoopTimer = null;
@@ -814,6 +839,143 @@ export function createCompanionVoice(opts = {}) {
     syncAssistantOutput();
   };
 
+  /** Spoken filler while a motion downloads / installs from the cloud. */
+  const speakLearn = async ({
+    isEnglish = false,
+    phase = learnPhase,
+    progress = learnProgress,
+    phrase: forcedPhrase,
+  } = {}) => {
+    const ctx = { pct: Math.round(progress * 100) };
+    const picked = forcedPhrase
+      ? { phrase: forcedPhrase, index: learnPhraseIndex }
+      : pickNextLearnPhrase(phase, isEnglish, learnPhraseIndex, ctx);
+    const phrase = picked.phrase || pickLearnPhrase(phase, isEnglish, ctx);
+    learnPhraseIndex = picked.index;
+    if (!phrase || !speakerOn) return { ok: false, reason: "muted-or-empty" };
+
+    if (!learnLoopActive) stopThinkingAudio();
+    learnActive = true;
+    unlockAudioSync();
+    await ensureVoices();
+
+    const preset = cloudVoicePreset();
+    const lang = isEnglish ? "en-US" : preset.lang || "zh-HK";
+    const voiceName = isEnglish ? CLOUD_ENGLISH_VOICE.name : preset.name;
+
+    if (opts.cloudTtsUrl) {
+      try {
+        const res = await fetch(opts.cloudTtsUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            text: phrase,
+            emotion: "thinking",
+            voice: voiceName,
+            lang,
+          }),
+        });
+        if (!learnActive) return { ok: false, reason: "cancelled" };
+        if (res.ok) {
+          const blob = await res.blob();
+          if (blob.size > 0 && learnActive) {
+            const objectUrl = URL.createObjectURL(blob);
+            const audio = configureCompanionAudioElement(getSharedAudio());
+            thinkingCloudAudio = audio;
+            audio.volume = 0.62;
+            audio.src = objectUrl;
+            await new Promise((resolve) => {
+              const finish = () => {
+                if (thinkingCloudAudio === audio) thinkingCloudAudio = null;
+                URL.revokeObjectURL(objectUrl);
+                resolve();
+              };
+              audio.onended = finish;
+              audio.onerror = finish;
+              void audio.play().catch(finish);
+            });
+            return { ok: true, cloud: true, phrase, phase };
+          }
+        }
+      } catch {
+        /* fall through */
+      }
+    }
+
+    if (!learnActive || !synth) {
+      return { ok: false, reason: "cancelled-or-no-tts" };
+    }
+
+    const prosody = EMOTION_PROSODY.thinking;
+    const utter = new SpeechSynthesisUtterance(phrase);
+    if (voice && !voice.cloud) utter.voice = voice;
+    utter.lang = lang;
+    utter.rate = prosody.rate;
+    utter.pitch = prosody.pitch;
+    utter.volume = prosody.volume * 0.85;
+
+    await new Promise((resolve) => {
+      utter.onend = resolve;
+      utter.onerror = resolve;
+      try {
+        synth.speak(utter);
+      } catch {
+        resolve();
+      }
+      setTimeout(resolve, 2400);
+    });
+
+    return { ok: true, phrase, phase };
+  };
+
+  const startLearnLoop = ({
+    isEnglish = false,
+    phase = "learning",
+    progress = 0,
+    intervalMs = 2600,
+  } = {}) => {
+    stopThinkingLoop();
+    stopLearnAudio();
+    learnLoopActive = true;
+    learnActive = true;
+    learnPhase = phase;
+    learnProgress = progress;
+    syncAssistantOutput();
+
+    const tick = async () => {
+      if (!learnLoopActive) return;
+      const activePhase = learnPhaseForProgress(learnProgress) || learnPhase;
+      await speakLearn({
+        isEnglish,
+        phase: activePhase,
+        progress: learnProgress,
+      });
+      if (!learnLoopActive) return;
+      learnLoopTimer = setTimeout(() => {
+        void tick();
+      }, intervalMs);
+    };
+
+    void tick();
+    return true;
+  };
+
+  const updateLearnLoop = ({ phase, progress } = {}) => {
+    if (phase) learnPhase = phase;
+    if (progress != null) learnProgress = progress;
+    return { phase: learnPhase, progress: learnProgress };
+  };
+
+  const stopLearnLoop = () => {
+    learnLoopActive = false;
+    learnActive = false;
+    if (learnLoopTimer) {
+      clearTimeout(learnLoopTimer);
+      learnLoopTimer = null;
+    }
+    syncAssistantOutput();
+  };
+
   const interruptAssistantOutput = () => {
     stopSpeak();
     return true;
@@ -925,6 +1087,9 @@ export function createCompanionVoice(opts = {}) {
     get thinkingLoopOn() {
       return thinkingLoopActive;
     },
+    get learnLoopOn() {
+      return learnLoopActive;
+    },
     get assistantOutputActive() {
       return isAssistantOutputActive();
     },
@@ -958,6 +1123,10 @@ export function createCompanionVoice(opts = {}) {
     speakThinking,
     startThinkingLoop,
     stopThinkingLoop,
+    speakLearn,
+    startLearnLoop,
+    updateLearnLoop,
+    stopLearnLoop,
     setKeepMicDuringSpeak,
     beginStreamSpeak,
     pushStreamSpeak,

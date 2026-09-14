@@ -7,17 +7,34 @@ import {
   actionDurationFromCatalog,
   actionLoopsFromCatalog,
   inferActionFromCatalogText,
-  resolveAction,
+  resolveAction as resolveCatalogAction,
 } from "./companionActionCatalog.js";
+import { resolveCloudAction } from "./motionPackData.mjs";
+import { getExtendedActionDef, resolveMotionSamplerKey } from "./companionMotionLibrary.js";
 
 export {
   ACTION_CATALOG,
   COMPANION_ACTIONS,
   PLAYABLE_ACTIONS,
   buildActionPromptFragment,
-  getActionDef,
-  resolveAction,
 } from "./companionActionCatalog.js";
+
+export { getActionDef } from "./companionActionCatalog.js";
+
+/**
+ * Resolve catalog or cloud-extension action id.
+ * @param {string | null | undefined} input
+ */
+export function resolveAction(input) {
+  return resolveCatalogAction(input) || resolveCloudAction(input);
+}
+
+/**
+ * @param {string} actionId
+ */
+export function getActionDefExtended(actionId) {
+  return getExtendedActionDef(actionId);
+}
 
 export const COMPANION_ACTION_MOTION_SCHEMA = "amoji.companionActionMotion.v1";
 
@@ -66,7 +83,7 @@ export function isUserStopCommand(text) {
  */
 export function inferActionFromUserText(text) {
   if (isUserStopCommand(text)) return "stop";
-  return inferActionFromCatalogText(text);
+  return inferActionFromCatalogText(text) || resolveCloudAction(text);
 }
 
 /**
@@ -87,6 +104,9 @@ export function inferActionFromReply(text, taggedAction = null) {
  * @param {string} action
  */
 export function actionDurationSec(action) {
+  const key = resolveAction(action);
+  const ext = key ? getExtendedActionDef(key) : null;
+  if (ext?.duration) return ext.duration;
   return actionDurationFromCatalog(action);
 }
 
@@ -94,6 +114,9 @@ export function actionDurationSec(action) {
  * @param {string} action
  */
 export function actionLoops(action) {
+  const key = resolveAction(action);
+  const ext = key ? getExtendedActionDef(key) : null;
+  if (ext) return Boolean(ext.loops);
   return actionLoopsFromCatalog(action);
 }
 
@@ -190,6 +213,30 @@ const BODY_SAMPLERS = {
       headX: 0.06 * amp,
       headZ: sway(t, 1.8, 0.03 * amp),
       leanY: -0.04 * amp,
+    };
+  },
+  learning(_p, t, amp) {
+    const p = beat(t, 2.4);
+    return {
+      armLiftL: 0.06 * amp + p * 0.05 * amp,
+      armLiftR: 0.1 * amp,
+      forearmR: 0.14 * amp + sway(t, 3.2, 0.05 * amp),
+      headX: 0.08 * amp + sway(t, 1.6, 0.04 * amp),
+      headZ: sway(t, 2.1, 0.05 * amp),
+      leanY: -0.05 * amp,
+      spineX: 0.03 * amp,
+    };
+  },
+  downloading(_p, t, amp) {
+    const pulse = beat(t, 4.5);
+    return {
+      armLiftL: 0.05 * amp + pulse * 0.04 * amp,
+      armLiftR: 0.05 * amp + pulse * 0.04 * amp,
+      forearmL: pulse * 0.06 * amp,
+      forearmR: pulse * 0.06 * amp,
+      headX: 0.04 * amp,
+      headZ: sway(t, 5.5, 0.03 * amp),
+      hipZ: pulse * 0.02 * amp,
     };
   },
   dance(_p, t, amp) {
@@ -532,7 +579,9 @@ const ROOT_SAMPLERS = {
  * @param {number} elapsedSec wall clock for loops
  */
 export function sampleActionBodyPose(action, phase, elapsedSec = 0) {
-  const key = resolveAction(action) || String(action || "").toLowerCase();
+  const key = resolveMotionSamplerKey(
+    resolveAction(action) || String(action || "").toLowerCase(),
+  );
   const p = Math.max(0, Math.min(1, phase));
   const t = elapsedSec;
   const amp = 1.75;
@@ -548,7 +597,9 @@ export function sampleActionBodyPose(action, phase, elapsedSec = 0) {
  * @returns {{ y: number, rotY: number }}
  */
 export function sampleActionRootMotion(action, phase, elapsedSec = 0) {
-  const key = resolveAction(action) || String(action || "").toLowerCase();
+  const key = resolveMotionSamplerKey(
+    resolveAction(action) || String(action || "").toLowerCase(),
+  );
   const p = Math.max(0, Math.min(1, phase));
   const t = elapsedSec;
   const amp = 1.85;
