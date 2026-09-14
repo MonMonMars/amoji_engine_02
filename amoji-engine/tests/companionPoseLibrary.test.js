@@ -49,6 +49,10 @@ describe("companionPoseLibrary", () => {
     expect(companionGestureStyle("celebrate")).toBe("soft");
   });
 
+  it("keeps thinking style for loading pose", () => {
+    expect(companionGestureStyle("thinking")).toBe("thinking");
+  });
+
   it("clamps arm lift", () => {
     const out = clampArmPose({ armLiftL: 0.9, armLiftR: 0.8 });
     expect(out.armLiftL).toBeLessThanOrEqual(0.14);

@@ -4,7 +4,10 @@ import {
   MIC_ERROR_MESSAGES,
   requestMicPermission,
 } from "./companionMicUtils.js";
-import { pickThinkingPhrase } from "./companionContentMotion.js";
+import {
+  pickNextThinkingPhrase,
+  pickThinkingPhrase,
+} from "./companionContentMotion.js";
 
 export { formatMicError, MIC_ERROR_MESSAGES, requestMicPermission };
 
@@ -219,6 +222,10 @@ export function createCompanionVoice(opts = {}) {
   /** @type {HTMLAudioElement | null} */
   let thinkingCloudAudio = null;
   let thinkingActive = false;
+  let thinkingLoopActive = false;
+  let thinkingPhraseIndex = -1;
+  /** @type {ReturnType<typeof setTimeout> | null} */
+  let thinkingLoopTimer = null;
 
   const getSharedAudio = () => {
     if (typeof globalThis.window === "undefined") {
@@ -272,6 +279,11 @@ export function createCompanionVoice(opts = {}) {
 
   const stopThinkingAudio = () => {
     thinkingActive = false;
+    thinkingLoopActive = false;
+    if (thinkingLoopTimer) {
+      clearTimeout(thinkingLoopTimer);
+      thinkingLoopTimer = null;
+    }
     if (!thinkingCloudAudio) return;
     try {
       thinkingCloudAudio.pause();
@@ -647,11 +659,15 @@ export function createCompanionVoice(opts = {}) {
   };
 
   /** Soft thinking phrase while LLM loads — parallel to reply queue; cancel with stopSpeak(). */
-  const speakThinking = async ({ isEnglish = false } = {}) => {
-    const phrase = pickThinkingPhrase(isEnglish);
+  const speakThinking = async ({ isEnglish = false, phrase: forcedPhrase } = {}) => {
+    const picked = forcedPhrase
+      ? { phrase: forcedPhrase, index: thinkingPhraseIndex }
+      : pickNextThinkingPhrase(isEnglish, thinkingPhraseIndex);
+    const phrase = picked.phrase || pickThinkingPhrase(isEnglish);
+    thinkingPhraseIndex = picked.index;
     if (!phrase || !speakerOn) return { ok: false, reason: "muted-or-empty" };
 
-    stopThinkingAudio();
+    if (!thinkingLoopActive) stopThinkingAudio();
     thinkingActive = true;
     unlockAudioSync();
     await ensureVoices();
@@ -723,6 +739,29 @@ export function createCompanionVoice(opts = {}) {
     });
 
     return { ok: true, phrase };
+  };
+
+  const startThinkingLoop = ({ isEnglish = false, intervalMs = 2300 } = {}) => {
+    stopThinkingLoop();
+    thinkingLoopActive = true;
+    thinkingActive = true;
+
+    const tick = async () => {
+      if (!thinkingLoopActive) return;
+      await speakThinking({ isEnglish });
+      if (!thinkingLoopActive) return;
+      thinkingLoopTimer = setTimeout(() => {
+        void tick();
+      }, intervalMs);
+    };
+
+    void tick();
+    return true;
+  };
+
+  const stopThinkingLoop = () => {
+    thinkingLoopActive = false;
+    stopThinkingAudio();
   };
 
   const setSpeakerOn = (on) => {
@@ -852,6 +891,8 @@ export function createCompanionVoice(opts = {}) {
     primeMicPermission,
     speak,
     speakThinking,
+    startThinkingLoop,
+    stopThinkingLoop,
     setKeepMicDuringSpeak,
     beginStreamSpeak,
     pushStreamSpeak,

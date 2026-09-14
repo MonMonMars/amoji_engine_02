@@ -1198,7 +1198,7 @@
     </script>
   </head>
   <body>
-    <!-- amoji-build: 2026-09-14-v19-grok-layout-motion — Grok bottom chat + motion + barge -->
+    <!-- amoji-build: 2026-09-14-v20-voice-gate-web-thinking — voice gate + web LLM + thinking loop -->
     <noscript>
       <div
         style="
@@ -1389,6 +1389,7 @@
         contentMotionMod,
         streamSpeakMod,
         bargeMod,
+        voiceGateMod,
       ] = await Promise.all([
         import("../amoji-engine/engine/companion/createAvatar.js"),
         import("../amoji-engine/engine/companion/chatLlm.js"),
@@ -1404,6 +1405,7 @@
         import("../amoji-engine/engine/companion/companionContentMotion.js"),
         import("../amoji-engine/engine/companion/companionStreamSpeak.js"),
         import("../amoji-engine/engine/companion/companionBargeMonitor.js"),
+        import("../amoji-engine/engine/companion/companionVoiceGate.js"),
       ]);
       window.__amojiModuleBooted = true;
       const {
@@ -1429,6 +1431,7 @@
       const { analyzeCompanionReply, analyzeStreamingReply } = contentMotionMod;
       const { createStreamSpeakPlanner } = streamSpeakMod;
       const { createCompanionBargeMonitor } = bargeMod;
+      const { createCompanionVoiceGate } = voiceGateMod;
 
       const hostedOnline = isHostedCompanion();
 
@@ -1837,6 +1840,7 @@
       let shouldAutoStopOnUserSpeech = () => false;
       /** @type {(reason?: string) => boolean} */
       let handleUserSpeechBarge = () => false;
+      const voiceGate = createCompanionVoiceGate();
 
       const voice = createCompanionVoice({
         lang: isEnglish ? "en-US" : "zh-HK",
@@ -1861,13 +1865,23 @@
             setEmotionPill(analysis.emotion);
           }
         },
-        onSpeechDetected: () => {
-          handleUserSpeechBarge("mic-energy");
+        onSpeechDetected: (info = {}) => {
+          const gate = voiceGate.shouldBarge({
+            source: info.source || "mic-energy",
+            text: info.text,
+            rms: info.rms,
+            speechMs: info.speechMs,
+          });
+          if (gate.allow) handleUserSpeechBarge(info.source || "mic-energy");
         },
         onMicText: (text, isFinal) => {
           const trimmed = String(text || "").trim();
           if (!isFinal && trimmed && shouldAutoStopOnUserSpeech()) {
-            handleUserSpeechBarge("interim-speech");
+            const gate = voiceGate.shouldBarge({
+              source: "interim-speech",
+              text: trimmed,
+            });
+            if (gate.allow) handleUserSpeechBarge("interim-speech");
           }
           if (!isFinal && trimmed) {
             interim.set(trimmed);
@@ -1959,8 +1973,13 @@
       window.__amojiSupportsMic = voice.supportsMic;
 
       bargeMonitor = createCompanionBargeMonitor({
-        onBargeIn: () => {
-          handleUserSpeechBarge("energy-barge");
+        onBargeIn: (info) => {
+          const gate = voiceGate.shouldBarge({
+            source: "energy-barge",
+            rms: info?.energy,
+            speechMs: info?.speechMs,
+          });
+          if (gate.allow) handleUserSpeechBarge("energy-barge");
         },
       });
 
@@ -1981,6 +2000,7 @@
         if (!activeTurn || activeTurn.aborted) return;
         activeTurn.aborted = true;
         chat.abort?.();
+        voice.stopThinkingLoop?.();
         voice.cancelStreamSpeak?.();
         voice.stopSpeak();
         avatar.setThinking?.(false);
@@ -2005,6 +2025,7 @@
           return true;
         }
         if (voice.speaking) {
+          voice.stopThinkingLoop?.();
           voice.cancelStreamSpeak?.();
           voice.stopSpeak();
           avatar.setTalking?.(false);
@@ -2062,7 +2083,7 @@
         avatar.prepareThinkingFromUser?.(cleaned, isEnglish);
         setEmotionPill(avatar.emotion || "thinking");
         status.thinking();
-        void voice.speakThinking?.({ isEnglish });
+        voice.startThinkingLoop?.({ isEnglish, intervalMs: 2200 });
 
         const assistantBubble = addBubble("assistant", "");
         const assistantRow = assistantBubble.closest(".msg-row");
@@ -2101,6 +2122,7 @@
               if (activeTurn?.aborted) return;
               if (!gotToken) {
                 gotToken = true;
+                voice.stopThinkingLoop?.();
                 voice.stopSpeak();
                 avatar.setThinking?.(false);
                 assistantBubble.classList.remove("thinking");
@@ -2122,8 +2144,13 @@
             return;
           }
 
-          setModePill(result.mode || chat.mode);
+          setModePill(
+            result.web?.searched
+              ? `${result.mode || chat.mode || "online"}+web`
+              : result.mode || chat.mode,
+          );
           const reply = result.reply || "……";
+          voice.stopThinkingLoop?.();
           avatar.setThinking?.(false);
           const content = applyReplyPerformance(reply, result.emotion || "happy");
           const emotion = content.emotion || "happy";

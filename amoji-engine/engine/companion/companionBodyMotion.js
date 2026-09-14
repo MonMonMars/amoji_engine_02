@@ -322,14 +322,14 @@ export function createCompanionBodyMotion(humanoid) {
 
     if (thinking && !talking) {
       const thinkMotion = sampleBodyTalkMotion(elapsed, {
-        style: "thinking",
+        style: companionGestureStyle("thinking"),
         emotion: "thinking",
         speechEnergy: 0.28,
-        includeArms: false,
+        includeArms: true,
       });
-      pose = mergePoses(pose, thinkMotion.body, 0.52);
-      pose.headX = (pose.headX || 0) + Math.sin(elapsed * 0.72) * 0.038;
-      pose.headZ = (pose.headZ || 0) + Math.sin(elapsed * 0.55 + 0.8) * 0.03;
+      pose = mergePoses(pose, thinkMotion.body, 0.64);
+      pose.headX = (pose.headX || 0) + Math.sin(elapsed * 0.72) * 0.042;
+      pose.headZ = (pose.headZ || 0) + Math.sin(elapsed * 0.55 + 0.8) * 0.034;
     } else if (!talking) {
       pose.leanY = (pose.leanY || 0) + Math.sin(elapsed * 0.95) * 0.028;
       pose.headZ = (pose.headZ || 0) + Math.sin(elapsed * 1.2 + 0.5) * 0.022;

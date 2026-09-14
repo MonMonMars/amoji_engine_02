@@ -8,6 +8,7 @@ import {
   inferContentNuance,
   inferOneShotGesture,
   parseReplyMood,
+  pickNextThinkingPhrase,
   pickThinkingPhrase,
 } from "../engine/companion/companionContentMotion.js";
 
@@ -67,5 +68,8 @@ describe("companionContentMotion", () => {
   it("picks a thinking phrase", () => {
     expect(pickThinkingPhrase(false)).toMatch(/…|\.{3}/);
     expect(pickThinkingPhrase(true).length).toBeGreaterThan(2);
+    const next = pickNextThinkingPhrase(false, 0);
+    expect(next.phrase.length).toBeGreaterThan(1);
+    expect(next.index).toBeGreaterThanOrEqual(0);
   });
 });

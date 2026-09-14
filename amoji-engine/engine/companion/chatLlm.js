@@ -417,11 +417,13 @@ export function createCompanionChat(opts = {}) {
 const CHAT_FETCH_TIMEOUT_MS = 28_000;
 
 function isSmartProxyMode(mode) {
+  const m = String(mode || "");
   return (
-    mode === "ollama" ||
-    mode === "online" ||
-    mode === "proxy" ||
-    mode === "local-fallback"
+    m === "ollama" ||
+    m === "online" ||
+    m.startsWith("online+") ||
+    m === "proxy" ||
+    m === "local-fallback"
   );
 }
 

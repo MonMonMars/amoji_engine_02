@@ -236,14 +236,48 @@ export function analyzeSpeechChunk(chunk, opts = {}) {
   };
 }
 
+/** @type {readonly string[]} */
+export const THINKING_PHRASES_YUE = Object.freeze([
+  "嗯…",
+  "嗯嗯…",
+  "呃…",
+  "咁呀…",
+  "等我諗諗…",
+  "讓我想想…",
+  "等陣先…",
+  "thing 呀…",
+]);
+
+/** @type {readonly string[]} */
+export const THINKING_PHRASES_EN = Object.freeze([
+  "Hmm…",
+  "Um…",
+  "Uh…",
+  "Let me think…",
+  "One moment…",
+  "Okay…",
+  "Thing is…",
+]);
+
 /**
  * @param {boolean} [isEnglish]
  */
 export function pickThinkingPhrase(isEnglish = false) {
-  const yue = ["嗯…", "等我諗諗…", "咁呀…", "讓我想想…"];
-  const en = ["Hmm…", "Let me think…", "Okay…", "One moment…"];
-  const list = isEnglish ? en : yue;
+  const list = isEnglish ? THINKING_PHRASES_EN : THINKING_PHRASES_YUE;
   return list[Math.floor(Math.random() * list.length)];
+}
+
+/**
+ * Cycle through thinking fillers without immediate repeats.
+ * @param {boolean} [isEnglish]
+ * @param {number} [lastIndex]
+ */
+export function pickNextThinkingPhrase(isEnglish = false, lastIndex = -1) {
+  const list = isEnglish ? THINKING_PHRASES_EN : THINKING_PHRASES_YUE;
+  if (list.length <= 1) return { phrase: list[0], index: 0 };
+  let index = Math.floor(Math.random() * list.length);
+  if (index === lastIndex) index = (index + 1) % list.length;
+  return { phrase: list[index], index };
 }
 
 export function analyzeCompanionReply(text, moodHint = null) {

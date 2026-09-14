@@ -5,6 +5,7 @@
   "installCommand": "npm install && cd amoji-engine && npm install",
   "rewrites": [
     { "source": "/api/chat", "destination": "/api/chat" },
+    { "source": "/api/search", "destination": "/api/search" },
     { "source": "/api/tts", "destination": "/api/tts" },
     { "source": "/api/stt", "destination": "/api/stt" },
     { "source": "/api/llm/status", "destination": "/api/llm/status" },
