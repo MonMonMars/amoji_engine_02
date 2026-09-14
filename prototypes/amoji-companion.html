@@ -1447,8 +1447,30 @@
       let avatarKind = "loading";
       let avatarLoadStarted = false;
       let currentEmotion = "neutral";
+      /** @type {HTMLElement | null} */
+      let introBubble = null;
       /** @type {Promise<{ avatar: ReturnType<typeof createStubAvatar>, kind: string }>} */
       let avatarLoadPromise = Promise.resolve({ avatar, kind: avatarKind });
+
+      const resolveAvatarLabel = (kind = avatarKind) =>
+        kind === "vrm3d"
+          ? "VRM anime girl"
+          : kind === "gltf3d"
+            ? "HD female 3D"
+            : kind === "webgl3d"
+              ? "3D female"
+              : liteMode
+                ? "text chat"
+                : "3D loading…";
+
+      const theaterLine = () =>
+        hostedOnline
+          ? isEnglish
+            ? `☁️ Cloud · ${resolveAvatarLabel()} · English · tap 🎤 to talk`
+            : `☁️ 全網上運行 · ${resolveAvatarLabel()} · 粵語傾偈 · 按 🎤 講嘢`
+          : isEnglish
+            ? `Anime companion · ${resolveAvatarLabel()} · English · free Edge TTS · Brain button switches LLM · 🎤`
+            : `動漫同伴 · ${resolveAvatarLabel()} · 粵語傾偈 · 免費 Edge TTS · Brain 按鈕切 LLM · 🎤 連續對話`;
 
       const beginAvatarLoad = () => {
         if (avatarLoadStarted) return avatarLoadPromise;
@@ -1483,6 +1505,7 @@
                       ? "2D fallback (3D failed)"
                       : "2D 後備（3D 載入失敗）";
             addBubble("system", label);
+            if (introBubble) introBubble.textContent = theaterLine();
             return loaded;
           })
           .catch((err) => {
@@ -1943,8 +1966,6 @@
           markSessionReady({ fromTimeout });
           return;
         }
-        unlockAudioSync();
-        void voice.primeMicPermission();
         sessionStarting = true;
         window.__amojiStart.starting = true;
         const startBtn = document.getElementById("start-talking");
@@ -1954,15 +1975,23 @@
           startBtn.textContent = "⏳ Starting…";
         }
 
-        if (!voice.supportsMic) {
-          addBubble("system", formatMicError("unsupported"));
-        }
-
         startTimeoutId = setTimeout(() => {
           if (!sessionStarted) markSessionReady({ fromTimeout: true });
         }, START_TIMEOUT_MS);
 
-        markSessionReady({ fromTimeout });
+        try {
+          unlockAudioSync();
+          void voice.primeMicPermission();
+
+          if (!voice.supportsMic) {
+            addBubble("system", formatMicError("unsupported"));
+          }
+
+          markSessionReady({ fromTimeout });
+        } catch (err) {
+          console.error("[companion] startSession failed", err);
+          markSessionReady({ fromTimeout: true });
+        }
 
         void voice.ensureVoices().then(() => {
           setVoicePill(voiceShortLabel(voiceId, langCode, isEnglish));
@@ -1988,16 +2017,6 @@
         startTalkingEl.textContent = "👆 Tap to start (type to chat)";
       }
 
-      const avatarLabel =
-        avatarKind === "vrm3d"
-          ? "VRM anime girl"
-          : avatarKind === "gltf3d"
-            ? "HD female 3D"
-            : avatarKind === "webgl3d"
-              ? "3D female"
-              : liteMode
-                ? "text chat"
-                : "3D loading…";
       const llmSwitcher = createCompanionLlmSwitcher({
         container: document.getElementById("llm-switcher-wrap"),
         chat,
@@ -2037,16 +2056,7 @@
         });
       }
 
-      addBubble(
-        "system",
-        hostedOnline
-          ? isEnglish
-            ? `☁️ Cloud · ${avatarLabel} · English · tap 🎤 to talk`
-            : `☁️ 全網上運行 · ${avatarLabel} · 粵語傾偈 · 按 🎤 講嘢`
-          : isEnglish
-            ? `Anime companion · ${avatarLabel} · English · free Edge TTS · Brain button switches LLM · 🎤`
-            : `動漫同伴 · ${avatarLabel} · 粵語傾偈 · 免費 Edge TTS · Brain 按鈕切 LLM · 🎤 連續對話`,
-      );
+      introBubble = addBubble("system", theaterLine());
       addBubble("assistant", GREETING);
       avatar.setEmotion("neutral");
       setEmotionPill("neutral");
