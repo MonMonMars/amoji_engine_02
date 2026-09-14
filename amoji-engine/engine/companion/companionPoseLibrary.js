@@ -14,10 +14,10 @@ export const COMPANION_POSE_LIBRARY_SCHEMA = "amoji.companionPoseLibrary.v1";
  * (0,0,0) on upper arms is horizontal T-pose — not arms-at-sides.
  */
 export const VRM_ARM_REST_ROTATIONS = Object.freeze({
-  leftUpperArm: { x: 0, y: 0, z: -1.1 },
-  rightUpperArm: { x: 0, y: 0, z: 1.1 },
-  leftLowerArm: { x: 0.12, y: 0, z: 0.02 },
-  rightLowerArm: { x: 0.12, y: 0, z: -0.02 },
+  leftUpperArm: { x: 0.1, y: 0, z: -1.48 },
+  rightUpperArm: { x: 0.1, y: 0, z: 1.48 },
+  leftLowerArm: { x: 0.2, y: 0, z: 0.04 },
+  rightLowerArm: { x: 0.2, y: 0, z: -0.04 },
 });
 
 /** Natural standing — arms relaxed at sides (A-pose VRM). */

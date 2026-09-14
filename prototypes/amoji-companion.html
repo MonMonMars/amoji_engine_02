@@ -933,9 +933,15 @@
     </script>
     <script>
       (function () {
-        window.__amojiBuild = "2026-09-14-v9-voices";
+        window.__amojiBuild = "2026-09-14-v10-start-arms";
         window.__amojiModuleBooted = false;
-        window.__amojiStart = { tapped: false, ready: false, run: null, sessionStarted: false };
+        window.__amojiStart = {
+          tapped: false,
+          ready: false,
+          run: null,
+          sessionStarted: false,
+          starting: false,
+        };
         window.__amojiShowBootFallback = function (msg, opts) {
           var soft = opts && opts.soft;
           if (soft) {
@@ -958,12 +964,27 @@
             el.remove();
           });
           var start = document.getElementById("start-talking");
-          if (start) {
+          if (
+            start &&
+            !window.__amojiStart?.sessionStarted &&
+            !window.__amojiStart?.starting
+          ) {
             start.classList.remove("hide", "starting");
             start.removeAttribute("aria-hidden");
             start.removeAttribute("disabled");
             start.removeAttribute("aria-busy");
           }
+        };
+        window.__amojiDismissStartButton = function () {
+          var start = document.getElementById("start-talking");
+          if (!start) return;
+          window.__amojiStart.sessionStarted = true;
+          window.__amojiStart.starting = false;
+          start.classList.add("hide");
+          start.setAttribute("aria-hidden", "true");
+          start.setAttribute("disabled", "true");
+          start.removeAttribute("aria-busy");
+          start.remove();
         };
         window.__amojiHideLoading();
         window.__amojiStaticFallback = function (msg) {
@@ -1064,16 +1085,15 @@
           if (!btn || btn.disabled) return false;
           if (window.__amojiStart.sessionStarted) return false;
           window.__amojiStart.tapped = true;
+          window.__amojiStart.starting = true;
+          btn.textContent = "⏳ Starting…";
+          btn.classList.add("starting");
+          btn.setAttribute("aria-busy", "true");
           if (window.__amojiStart.ready && typeof window.__amojiStart.run === "function") {
-            btn.textContent = "⏳ Starting…";
-            btn.classList.add("starting");
-            btn.setAttribute("aria-busy", "true");
             void window.__amojiStart.run();
             return false;
           }
-          btn.textContent = "⏳ Loading app… tap again";
-          btn.classList.add("starting");
-          btn.setAttribute("aria-busy", "true");
+          btn.textContent = "⏳ Loading app…";
           var tries = 0;
           var poll = setInterval(function () {
             tries += 1;
@@ -1093,6 +1113,7 @@
               btn.classList.remove("starting");
               btn.removeAttribute("aria-busy");
               window.__amojiStart.tapped = false;
+              window.__amojiStart.starting = false;
             }
           }, 250);
           return false;
@@ -1839,17 +1860,23 @@
         sessionStarted = true;
         sessionStarting = false;
         window.__amojiStart.sessionStarted = true;
+        window.__amojiStart.starting = false;
         if (startTimeoutId) {
           clearTimeout(startTimeoutId);
           startTimeoutId = null;
         }
 
-        startTalkingEl?.classList.remove("starting");
-        startTalkingEl?.removeAttribute("aria-busy");
-        startTalkingEl?.classList.add("hide");
-        startTalkingEl?.setAttribute("aria-hidden", "true");
-        startTalkingEl?.setAttribute("disabled", "true");
-        startTalkingEl?.remove();
+        if (typeof window.__amojiDismissStartButton === "function") {
+          window.__amojiDismissStartButton();
+        } else {
+          const startBtn = document.getElementById("start-talking");
+          startBtn?.classList.remove("starting");
+          startBtn?.removeAttribute("aria-busy");
+          startBtn?.classList.add("hide");
+          startBtn?.setAttribute("aria-hidden", "true");
+          startBtn?.setAttribute("disabled", "true");
+          startBtn?.remove();
+        }
 
         if (!busy && !voice.micOn && !voice.speaking) status.idle();
         input.focus();
@@ -1911,14 +1938,20 @@
       };
 
       const startSession = ({ fromTimeout = false } = {}) => {
-        if (sessionStarted || sessionStarting) return;
+        if (sessionStarted) return;
+        if (sessionStarting) {
+          markSessionReady({ fromTimeout });
+          return;
+        }
         unlockAudioSync();
         void voice.primeMicPermission();
         sessionStarting = true;
-        startTalkingEl?.classList.add("starting");
-        startTalkingEl?.setAttribute("aria-busy", "true");
-        if (startTalkingEl?.textContent?.includes("Starting") === false) {
-          startTalkingEl.textContent = "⏳ Starting…";
+        window.__amojiStart.starting = true;
+        const startBtn = document.getElementById("start-talking");
+        startBtn?.classList.add("starting");
+        startBtn?.setAttribute("aria-busy", "true");
+        if (startBtn?.textContent?.includes("Starting") === false) {
+          startBtn.textContent = "⏳ Starting…";
         }
 
         if (!voice.supportsMic) {
@@ -1929,7 +1962,7 @@
           if (!sessionStarted) markSessionReady({ fromTimeout: true });
         }, START_TIMEOUT_MS);
 
-        requestAnimationFrame(() => markSessionReady({ fromTimeout }));
+        markSessionReady({ fromTimeout });
 
         void voice.ensureVoices().then(() => {
           setVoicePill(voiceShortLabel(voiceId, langCode, isEnglish));
@@ -1943,7 +1976,9 @@
       window.__amojiStart.run = () => void startSession();
       window.__amojiStart.ready = true;
       dismissLoading();
-      if (window.__amojiStart.tapped) void startSession();
+      if (window.__amojiStart.tapped && !window.__amojiStart.sessionStarted) {
+        void startSession();
+      }
 
       btnMic.disabled = !voice.supportsMic;
       syncSpeakerBtn();
@@ -2166,8 +2201,12 @@
         );
         window.__amojiStart.ready = true;
         window.__amojiStart.run = function () {
+          window.__amojiDismissStartButton?.();
           window.__amojiStaticFallback?.("Modules unavailable — refresh or use ?lite=1");
         };
+        if (window.__amojiStart.tapped && !window.__amojiStart.sessionStarted) {
+          window.__amojiStart.run();
+        }
       }
       })();
     </script>

@@ -48,7 +48,7 @@ async function main() {
   await page.locator("#avatar-canvas").screenshot({ path: shotPath });
 
   const report = {
-    ok: armRotations.leftUpperArmZ !== null && armRotations.leftUpperArmZ < -0.5,
+    ok: armRotations.leftUpperArmZ !== null && armRotations.leftUpperArmZ < -1.2,
     url,
     screenshot: shotPath,
     leftUpperArmZ: armRotations.leftUpperArmZ,

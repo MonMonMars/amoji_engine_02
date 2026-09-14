@@ -161,9 +161,10 @@ export async function createVrmAvatar(opts) {
   model.position.z = -center.z * scale;
   model.position.y = -box.min.y * scale;
   scene.add(model);
-  vrm.update(0);
+  vrm.humanoid?.resetNormalizedPose?.();
   const bodyMotion = createCompanionBodyMotion(vrm.humanoid);
   bodyMotion.update(0);
+  vrm.update(0);
 
   const fitted = new THREE.Box3().setFromObject(model);
   const { face: faceAnchor, portraitDist } = frameFaceCamera({
