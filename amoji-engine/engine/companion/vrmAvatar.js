@@ -163,9 +163,18 @@ export async function createVrmAvatar(opts) {
   scene.add(model);
   vrm.humanoid?.resetNormalizedPose?.();
   const bodyMotion = createCompanionBodyMotion(vrm.humanoid);
+
+  const syncHumanoidPose = () => {
+    try {
+      vrm.humanoid?.update?.(0);
+    } catch (err) {
+      console.warn("[vrm] humanoid.update failed", err);
+    }
+  };
+
   for (let i = 0; i < 4; i += 1) {
     bodyMotion.update(1 / 60);
-    vrm.humanoid?.update?.(0);
+    syncHumanoidPose();
     vrm.update(1 / 60);
   }
 
@@ -300,14 +309,18 @@ export async function createVrmAvatar(opts) {
     bodyMotion.reactToSpeechChunk(chunk, opts);
 
   let raf = 0;
+
   const frame = () => {
     const dt = clock.getDelta();
     const now = performance.now();
-    bodyMotion.update(dt, { talking, now });
-    vrm.humanoid?.update?.(0);
-    vrm.update(dt);
-
-    controls.update();
+    try {
+      bodyMotion.update(dt, { talking, now });
+      syncHumanoidPose();
+      vrm.update(dt);
+      controls.update();
+    } catch (err) {
+      console.warn("[vrm] frame update failed", err);
+    }
 
     mouthOpen += (mouthTarget - mouthOpen) * Math.min(1, dt * 14);
     applyMouth(mouthOpen);
