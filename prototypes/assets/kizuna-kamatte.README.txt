@@ -1,0 +1,95 @@
+================================================================================
+  Kizuna AI KAMATTE VRM モデル & モーションデータ
+  Kizuna AI KAMATTE VRM Model & Motion Data
+================================================================================
+
+■ 内容物 / Contents
+──────────────────────────────────────────────────────────────────────────────────
+
+1. VRM モデル / VRM Model (Kizuna_AI_KAMATTE.vrm)
+   - シェーダー: MToon / Shader: MToon
+   - 揺れもの: VRM Spring Bone / Secondary motion: VRM Spring Bone
+   - 表情: VRM プリセット (19種) / Expressions: VRM presets (19 types)
+   - テクスチャ解像度: 4K / Texture resolution: 4K
+
+2. Unity Prefab (Kizuna_AI_KAMATTE.prefab)
+   - Unity 上ですぐに使用可能なプリセットアップ済みプレハブ
+   - Pre-configured prefab ready to use in Unity
+
+3. サンプルシーン / Sample Scene (Kizuna_AI_KAMATTE.unity)
+   - モデル・モーション・Timeline がセットアップ済みのシーン（そのまま再生可能）
+   - Pre-configured scene with model, motion, and Timeline (ready to play)
+
+4. モーションデータ / Motion Data (Motion/)
+   - Kizuna_AI_KAMATTE_Kamacho_Motion.anim : Humanoid モーション / Humanoid motion
+   - TL_Kizuna_AI_KAMATTE.playable : Timeline セットアップ / Timeline setup
+
+■ 動作環境 / Requirements
+──────────────────────────────────────────────────────────────────────────────────
+
+- Unity 6000.0.36f1 以上推奨 / Unity 6000.0.36f1 or later recommended
+- UniVRM (VRM 1.0 対応版) が必要です / UniVRM (VRM 1.0 compatible) required
+  https://github.com/vrm-c/UniVRM/releases
+
+■ 導入手順 / Setup
+──────────────────────────────────────────────────────────────────────────────────
+
+【UnityPackage の場合 / UnityPackage】
+1. Unity プロジェクトに UniVRM をインポート / Import UniVRM into your Unity project
+2. 本 UnityPackage をインポート (Assets > Import Package > Custom Package)
+   / Import this UnityPackage (Assets > Import Package > Custom Package)
+3. 以下のいずれかの方法で利用する / Use either of the following methods:
+   【方法A / Option A】Kizuna_AI_KAMATTE.unity を開く（セットアップ済みシーンをそのまま使用）
+   / Open Kizuna_AI_KAMATTE.unity (use the pre-configured scene as-is)
+   【方法B / Option B】Kizuna_AI_KAMATTE.prefab をシーンにドラッグ＆ドロップで配置する
+   / Drag & drop Kizuna_AI_KAMATTE.prefab into your scene
+
+【VRM 単体の場合 / VRM Only】
+1. VRM 1.0 に対応したアプリケーションに Kizuna_AI_KAMATTE.vrm を読み込む
+   / Load Kizuna_AI_KAMATTE.vrm in a VRM 1.0 compatible application
+   ※ 下記「VRM 1.0 互換性について」を必ずご確認ください
+   / Please check "VRM 1.0 Compatibility" below
+
+■ VRM 1.0 互換性について / VRM 1.0 Compatibility
+──────────────────────────────────────────────────────────────────────────────────
+
+本モデルは VRM 1.0 形式です。VRM 1.0 は比較的新しい規格であり、
+多くのアプリケーションがまだ VRM 0.x のみ対応のため、
+VRM 1.0 ファイルを正常に読み込めない場合があります。
+
+This model uses the VRM 1.0 format. VRM 1.0 is a relatively new
+specification, and many applications still only support VRM 0.x.
+This file may not load correctly in those applications.
+
+ご利用前に、お使いのアプリケーションが VRM 1.0 に対応しているか
+必ずご確認ください。
+Please verify that your application supports VRM 1.0 before use.
+
+■ 注意事項 / Notes
+──────────────────────────────────────────────────────────────────────────────────
+
+- MToon シェーダーの制限により、透明部分の模様のスクロール
+  (動画テクスチャ) には対応していません。
+  Due to MToon shader limitations, scrolling patterns on transparent
+  areas (video textures) are not supported.
+
+■ フォルダ構成 / Folder Structure
+──────────────────────────────────────────────────────────────────────────────────
+
+Kizuna_AI_KAMATTE/
+├── Kizuna_AI_KAMATTE.vrm           ... VRM モデルファイル / VRM model file
+├── Kizuna_AI_KAMATTE.prefab        ... Unity プレハブ / Unity prefab
+├── Kizuna_AI_KAMATTE.unity         ... サンプルシーン（セットアップ済み） / Sample scene (pre-configured)
+├── Kizuna_AI_KAMATTE.vrm1.Assets/  ... 表情プリセット / Expression presets
+├── Kizuna_AI_KAMATTE.vrm1.Materials/ ... マテリアル (MToon) / Materials (MToon)
+├── Kizuna_AI_KAMATTE.vrm1.Textures/ ... テクスチャ (4K) / Textures (4K)
+│   ├── lit/       ... メインカラー / Main color
+│   ├── shade/     ... シェードカラー / Shade color
+│   ├── outline/   ... アウトラインカラー / Outline color
+│   └── rimmask/   ... リムライトマスク / Rim light mask
+├── Motion/                         ... モーションデータ / Motion data
+└── README.txt                      ... このファイル / This file
+
+================================================================================
+  (C) Kizuna AI Inc. 
+================================================================================

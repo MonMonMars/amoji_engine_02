@@ -51,6 +51,9 @@ describe("companionCharacterCatalog", () => {
     const sora = characterAvatarConfig("sora", "yue");
     expect(sora.avatarPrefer).toBe("gltf");
     expect(sora.modelUrl).toContain(".glb");
-    expect(getCharacter("kizuna").traits.en).toContain("energetic");
+    const kizuna = getCharacter("kizuna");
+    expect(kizuna.traits.en).toContain("energetic");
+    expect(kizuna.modelUrl).toContain("kizuna-kamatte.vrm");
+    expect(characterAvatarConfig("kizuna", "en").avatarPrefer).toBe("vrm");
   });
 });
