@@ -97,11 +97,11 @@
       }
 
       .start-talking {
-        position: absolute;
+        position: fixed;
         left: 50%;
         bottom: 28%;
         transform: translateX(-50%);
-        z-index: 100;
+        z-index: 9999;
         pointer-events: auto;
         cursor: pointer;
         -webkit-tap-highlight-color: transparent;
@@ -248,79 +248,10 @@
         pointer-events: none;
       }
 
+      /* Legacy overlay cleanup only — never shown in v4+. */
       .avatar-loading {
-        position: absolute;
-        inset: 0;
-        z-index: 20;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: rgba(7, 10, 16, 0.72);
-        backdrop-filter: blur(10px);
-        transition: opacity 0.5s ease, visibility 0.5s ease;
-      }
-
-      .avatar-loading.hide {
-        opacity: 0;
-        visibility: hidden;
-        pointer-events: none;
-      }
-
-      .avatar-loading-card {
-        text-align: center;
-        padding: 1.5rem 2rem;
-        border-radius: 1.25rem;
-        border: 1px solid var(--line);
-        background: var(--glass-strong);
-        box-shadow: var(--shadow);
-      }
-
-      .avatar-loading-ring {
-        width: 3rem;
-        height: 3rem;
-        margin: 0 auto 1rem;
-        border-radius: 50%;
-        border: 3px solid rgba(127, 212, 207, 0.2);
-        border-top-color: var(--accent);
-        animation: spin 0.9s linear infinite;
-      }
-
-      .avatar-loading-title {
-        margin: 0;
-        font-family: var(--font-display);
-        font-weight: 700;
-        font-size: 1.1rem;
-      }
-
-      .avatar-loading-sub {
-        margin: 0.35rem 0 0;
-        color: var(--muted);
-        font-size: 0.82rem;
-      }
-
-      @keyframes spin {
-        to {
-          transform: rotate(360deg);
-        }
-      }
-
-      /* CSS-only safety net: dismiss bootstrap overlay even if JS fails (stale cache). */
-      .avatar-loading.bootstrap-fallback {
-        animation: bootstrapOverlayDismiss 3s forwards;
-        pointer-events: none;
-      }
-
-      @keyframes bootstrapOverlayDismiss {
-        0%,
-        70% {
-          opacity: 1;
-          visibility: visible;
-        }
-        100% {
-          opacity: 0;
-          visibility: hidden;
-          pointer-events: none;
-        }
+        display: none !important;
+        pointer-events: none !important;
       }
 
       .bubble.user.interim {
@@ -843,16 +774,11 @@
     </script>
     <script>
       (function () {
-        window.__amojiBuild = "2026-09-14-v3";
+        window.__amojiBuild = "2026-09-14-v4";
         window.__amojiStart = { tapped: false, ready: false, run: null, sessionStarted: false };
         window.__amojiHideLoading = function () {
           document.querySelectorAll(".avatar-loading").forEach(function (el) {
-            if (el.classList.contains("hide")) return;
-            el.classList.add("hide");
-            el.classList.remove("bootstrap-fallback");
-            setTimeout(function () {
-              el.remove();
-            }, 600);
+            el.remove();
           });
           var start = document.getElementById("start-talking");
           if (start) {
@@ -862,27 +788,28 @@
             start.removeAttribute("aria-busy");
           }
         };
-        function bootDismiss() {
-          window.__amojiHideLoading();
-        }
-        if (document.readyState === "loading") {
-          document.addEventListener("DOMContentLoaded", bootDismiss, { once: true });
-        } else {
-          bootDismiss();
-        }
-        setTimeout(bootDismiss, 1500);
+        window.__amojiHideLoading();
+        window.__amojiStaticFallback = function (msg) {
+          var transcript = document.getElementById("transcript");
+          if (!transcript || transcript.dataset.staticFallback) return;
+          transcript.dataset.staticFallback = "1";
+          var row = document.createElement("div");
+          row.className = "msg-row system";
+          var bubble = document.createElement("div");
+          bubble.className = "bubble system";
+          bubble.textContent =
+            msg ||
+            "Modules still loading — tap Start above. Add ?lite=1 to skip 3D avatar on slow networks.";
+          row.appendChild(bubble);
+          transcript.appendChild(row);
+        };
         setTimeout(function () {
-          if (!window.__amojiStart?.ready) {
-            bootDismiss();
-            var start = document.getElementById("start-talking");
-            if (start && !window.__amojiStart?.sessionStarted) {
-              start.textContent = "👆 Tap to start · 點一下開始";
-              start.classList.remove("hide", "starting");
-              start.removeAttribute("aria-hidden");
-              start.removeAttribute("disabled");
-            }
+          if (!window.__amojiStart?.ready && !window.__amojiStart?.sessionStarted) {
+            window.__amojiStaticFallback(
+              "Still loading app modules — tap 👆 Start above. Try ?lite=1 if this persists.",
+            );
           }
-        }, 6000);
+        }, 8000);
         window.addEventListener(
           "error",
           function (ev) {
@@ -964,19 +891,7 @@
     </script>
   </head>
   <body>
-    <!-- amoji-build: 2026-09-14-v3 -->
-    <div
-      class="avatar-loading bootstrap-fallback"
-      id="bootstrap-loading"
-      aria-busy="true"
-      aria-label="Loading Amoji companion"
-    >
-      <div class="avatar-loading-card">
-        <div class="avatar-loading-ring" aria-hidden="true"></div>
-        <p class="avatar-loading-title">Amoji</p>
-        <p class="avatar-loading-sub">Loading anime companion · expressions · body motion</p>
-      </div>
-    </div>
+    <!-- amoji-build: 2026-09-14-v4 — no blocking overlay; Start is always tappable -->
     <div class="stage">
       <div class="atmosphere" aria-hidden="true"></div>
       <canvas id="avatar-canvas" aria-label="Amoji companion — drag to orbit"></canvas>
@@ -1094,35 +1009,42 @@
     </div>
 
     <script type="module">
-      import {
-        createCompanionAvatar,
-        createStubAvatar,
-      } from "../amoji-engine/engine/companion/createAvatar.js";
-      import { createCompanionChat } from "../amoji-engine/engine/companion/chatLlm.js";
-      import {
+      (async () => {
+      try {
+      const [
+        { createCompanionAvatar, createStubAvatar },
+        { createCompanionChat },
+        voiceMod,
+        bodyMod,
+        { resolveDialectPref },
+        uiMod,
+        { createCompanionLlmSwitcher },
+        { isHostedCompanion },
+        keysMod,
+        { saveProviderApiKey },
+      ] = await Promise.all([
+        import("../amoji-engine/engine/companion/createAvatar.js"),
+        import("../amoji-engine/engine/companion/chatLlm.js"),
+        import("../amoji-engine/engine/companion/companionVoice.js"),
+        import("../amoji-engine/engine/companion/companionBodyMotion.js"),
+        import("../amoji-engine/engine/lab/dialectPref.js"),
+        import("../amoji-engine/engine/companion/companionUi.js"),
+        import("../amoji-engine/engine/companion/companionLlmUi.js"),
+        import("../amoji-engine/engine/companion/companionLlmConnect.js"),
+        import("../amoji-engine/engine/companion/companionClientKeys.js"),
+        import("../amoji-engine/engine/companion/companionLlmProviders.js"),
+      ]);
+      const {
         createCompanionVoice,
         CLOUD_CANTONESE_VOICE,
         CLOUD_ENGLISH_VOICE,
         femaleVoiceLabel,
         formatMicError,
         unlockAudioSync,
-      } from "../amoji-engine/engine/companion/companionVoice.js";
-      import {
-        CANTONESE_COMPANION_PROMPT,
-        ENGLISH_COMPANION_PROMPT,
-      } from "../amoji-engine/engine/companion/companionBodyMotion.js";
-      import { resolveDialectPref } from "../amoji-engine/engine/lab/dialectPref.js";
-      import {
-        createCompanionStatus,
-        createInterimBubble,
-      } from "../amoji-engine/engine/companion/companionUi.js";
-      import { createCompanionLlmSwitcher } from "../amoji-engine/engine/companion/companionLlmUi.js";
-      import { isHostedCompanion } from "../amoji-engine/engine/companion/companionLlmConnect.js";
-      import {
-        hasAnyClientCloudKey,
-        inferKeyProvider,
-      } from "../amoji-engine/engine/companion/companionClientKeys.js";
-      import { saveProviderApiKey } from "../amoji-engine/engine/companion/companionLlmProviders.js";
+      } = voiceMod;
+      const { CANTONESE_COMPANION_PROMPT, ENGLISH_COMPANION_PROMPT } = bodyMod;
+      const { createCompanionStatus, createInterimBubble } = uiMod;
+      const { hasAnyClientCloudKey, inferKeyProvider } = keysMod;
 
       const hostedOnline = isHostedCompanion();
 
@@ -1131,7 +1053,6 @@
       const startTalkingEl = document.getElementById("start-talking");
       const dismissLoading = () => {
         window.__amojiHideLoading?.();
-        document.getElementById("bootstrap-loading")?.remove();
       };
       dismissLoading();
 
@@ -1900,6 +1821,20 @@
       });
 
       input.focus();
+      } catch (err) {
+        console.error("[companion] module boot failed", err);
+        window.__amojiHideLoading?.();
+        window.__amojiStaticFallback?.(
+          "App modules failed to load — refresh the page or try ?lite=1 on slow networks. (" +
+            (err?.message || err) +
+            ")",
+        );
+        window.__amojiStart.ready = true;
+        window.__amojiStart.run = function () {
+          window.__amojiStaticFallback?.("Modules unavailable — refresh or use ?lite=1");
+        };
+      }
+      })();
     </script>
   </body>
 </html>
