@@ -5,6 +5,13 @@ export const COMPANION_OLLAMA_SCHEMA = "amoji.companionOllama.v1";
 
 export const OLLAMA_DEFAULT_HOST = "http://127.0.0.1:11434";
 export const OLLAMA_DEFAULT_MODEL = "qwen3:4b";
+
+/** Hosts probed when auto-detecting local Ollama (also re-exported for legacy imports). */
+export const OLLAMA_PROBE_HOSTS = Object.freeze([
+  "http://localhost:11434",
+  "http://127.0.0.1:11434",
+  OLLAMA_DEFAULT_HOST,
+]);
 /** OpenAI-compatible clients (Cursor, etc.) expect a non-empty API key. */
 export const OLLAMA_PLACEHOLDER_API_KEY = "ollama";
 

@@ -6,6 +6,7 @@ import {
   listOllamaModels,
   pickOllamaModel,
   OLLAMA_DEFAULT_HOST,
+  OLLAMA_PROBE_HOSTS,
 } from "./companionOllama.js";
 import {
   hasAnyClientCloudKey,
@@ -29,11 +30,7 @@ export function isHostedCompanion() {
   );
 }
 
-export const OLLAMA_PROBE_HOSTS = Object.freeze([
-  "http://localhost:11434",
-  "http://127.0.0.1:11434",
-  OLLAMA_DEFAULT_HOST,
-]);
+export { OLLAMA_PROBE_HOSTS };
 
 /**
  * @param {string[]} [hosts]
