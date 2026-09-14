@@ -20,6 +20,9 @@ export const CHARACTER_STORAGE_KEY = "amoji.companion.characterId";
  *   traits: { yue: string[], en: string[] },
  *   modelUrl: string,
  *   avatarPrefer: "vrm" | "gltf",
+ *   previewImage: string,
+ *   accent: string,
+ *   badge?: { yue?: string, en?: string } | null,
  *   voices: { yue: string, en: string },
  *   personalityYue: string,
  *   personalityEn: string,
@@ -43,6 +46,8 @@ export const COMPANION_CHARACTERS = Object.freeze({
     },
     modelUrl: "/prototypes/assets/companion-girl.vrm",
     avatarPrefer: "vrm",
+    previewImage: "/prototypes/assets/companion-girl-ref.png",
+    accent: "#7fd4cf",
     voices: {
       yue: "zh-HK-HiuMaanNeural",
       en: "en-US-AriaNeural",
@@ -78,6 +83,8 @@ export const COMPANION_CHARACTERS = Object.freeze({
     },
     modelUrl: "/prototypes/assets/companion-girl.glb",
     avatarPrefer: "gltf",
+    previewImage: "/prototypes/assets/companion-face-tex.png",
+    accent: "#9ad7ff",
     voices: {
       yue: "zh-HK-HiuGaaiNeural",
       en: "en-US-JennyNeural",
@@ -113,6 +120,9 @@ export const COMPANION_CHARACTERS = Object.freeze({
     },
     modelUrl: "/prototypes/assets/kizuna-kamatte.vrm",
     avatarPrefer: "vrm",
+    previewImage: "/prototypes/assets/companion-char-kizuna.png",
+    accent: "#ff9e7a",
+    badge: { yue: "官方 VRM", en: "Official VRM" },
     voices: {
       yue: "zh-HK-HiuGaaiNeural",
       en: "en-US-AriaNeural",
@@ -151,6 +161,9 @@ export const COMPANION_CHARACTERS = Object.freeze({
     },
     modelUrl: "/prototypes/assets/companion-girl.vrm",
     avatarPrefer: "vrm",
+    previewImage: "/prototypes/assets/companion-face-tex.png",
+    accent: "#c8a8ff",
+    badge: { yue: "男聲", en: "Male voice" },
     voices: {
       yue: "zh-HK-WanLungNeural",
       en: "en-US-GuyNeural",
@@ -327,6 +340,28 @@ export function characterAvatarConfig(characterId, langCode = "yue") {
  *   extra?: Record<string, string>,
  * }} opts
  */
+/**
+ * Grok Ani–style companion list for the character picker grid.
+ * @param {"yue" | "en"} [langCode]
+ */
+export function listCompanionCharacters(langCode = "yue") {
+  const en = langCode === "en";
+  return CHARACTER_IDS.map((id) => {
+    const def = getCharacter(id);
+    return {
+      id,
+      name: en ? def.name.en : def.name.yue,
+      tagline: en ? def.tagline.en : def.tagline.yue,
+      traits: en ? def.traits.en : def.traits.yue,
+      previewImage: def.previewImage,
+      accent: def.accent,
+      badge: def.badge ? (en ? def.badge.en : def.badge.yue) : null,
+      avatarPrefer: def.avatarPrefer,
+      modelUrl: def.modelUrl,
+    };
+  });
+}
+
 export function buildCharacterCompanionHref(opts = {}) {
   const def = getCharacter(opts.characterId || "amoji");
   const langCode = opts.lang === "en" ? "en" : "yue";

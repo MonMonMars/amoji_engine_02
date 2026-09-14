@@ -1145,6 +1145,300 @@
         font-weight: 700;
         letter-spacing: 0.02em;
       }
+
+      /* Grok Ani–style companion picker */
+      .companions-btn {
+        pointer-events: auto;
+        border: 1px solid rgba(124, 156, 255, 0.45);
+        background: rgba(124, 156, 255, 0.16);
+        color: #dce8ff;
+        border-radius: 999px;
+        padding: 0.38rem 0.82rem;
+        font: inherit;
+        font-size: 0.74rem;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      body.companion-picker-open {
+        overflow: hidden;
+      }
+
+      .companion-picker {
+        position: fixed;
+        inset: 0;
+        z-index: 12000;
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+        pointer-events: none;
+      }
+
+      .companion-picker[hidden] {
+        display: none !important;
+      }
+
+      .companion-picker.is-open {
+        pointer-events: auto;
+      }
+
+      .companion-picker-backdrop {
+        position: absolute;
+        inset: 0;
+        background: rgba(4, 6, 12, 0.62);
+        backdrop-filter: blur(6px);
+        opacity: 0;
+        transition: opacity 0.28s ease;
+      }
+
+      .companion-picker.is-open .companion-picker-backdrop {
+        opacity: 1;
+      }
+
+      .companion-picker-sheet {
+        position: relative;
+        width: min(100%, 520px);
+        max-height: min(86dvh, 720px);
+        margin: 0 auto;
+        padding: 1rem 1rem calc(1.2rem + env(safe-area-inset-bottom));
+        border-radius: 1.35rem 1.35rem 0 0;
+        background: linear-gradient(
+          180deg,
+          rgba(18, 22, 34, 0.98),
+          rgba(10, 12, 20, 0.98)
+        );
+        border: 1px solid rgba(247, 241, 232, 0.12);
+        box-shadow: 0 -18px 48px rgba(0, 0, 0, 0.45);
+        transform: translateY(110%);
+        transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+        overflow: auto;
+      }
+
+      .companion-picker.is-open .companion-picker-sheet {
+        transform: translateY(0);
+      }
+
+      .companion-picker-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 0.75rem;
+        margin-bottom: 0.85rem;
+      }
+
+      .companion-picker-title {
+        margin: 0;
+        font-family: Syne, system-ui, sans-serif;
+        font-size: 1.35rem;
+        letter-spacing: -0.03em;
+      }
+
+      .companion-picker-sub {
+        margin: 0.25rem 0 0;
+        color: var(--muted);
+        font-size: 0.82rem;
+        line-height: 1.45;
+      }
+
+      .companion-picker-close {
+        border: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.04);
+        color: var(--ink);
+        width: 2rem;
+        height: 2rem;
+        border-radius: 999px;
+        cursor: pointer;
+        font-size: 0.9rem;
+      }
+
+      .companion-picker-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.7rem;
+      }
+
+      .companion-card {
+        display: flex;
+        flex-direction: column;
+        gap: 0.55rem;
+        padding: 0.55rem;
+        border-radius: 1rem;
+        border: 1px solid rgba(247, 241, 232, 0.1);
+        background: rgba(255, 255, 255, 0.03);
+        color: inherit;
+        text-align: left;
+        cursor: pointer;
+        transition:
+          border-color 0.2s ease,
+          transform 0.2s ease,
+          box-shadow 0.2s ease;
+      }
+
+      .companion-card:hover {
+        transform: translateY(-2px);
+        border-color: color-mix(in srgb, var(--card-accent) 55%, white);
+      }
+
+      .companion-card.is-selected {
+        border-color: var(--card-accent, var(--accent));
+        box-shadow: 0 0 0 1px color-mix(in srgb, var(--card-accent) 40%, transparent),
+          0 10px 28px rgba(0, 0, 0, 0.28);
+      }
+
+      .companion-card-portrait {
+        position: relative;
+        aspect-ratio: 3 / 4;
+        border-radius: 0.8rem;
+        overflow: hidden;
+        background: linear-gradient(
+          160deg,
+          color-mix(in srgb, var(--card-accent) 28%, #111),
+          #0a0e16
+        );
+      }
+
+      .companion-card-portrait img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center top;
+      }
+
+      .companion-card-badge {
+        position: absolute;
+        top: 0.45rem;
+        left: 0.45rem;
+        padding: 0.18rem 0.45rem;
+        border-radius: 999px;
+        font-size: 0.62rem;
+        font-weight: 700;
+        background: rgba(0, 0, 0, 0.55);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+      }
+
+      .companion-card-check {
+        position: absolute;
+        right: 0.45rem;
+        bottom: 0.45rem;
+        width: 1.5rem;
+        height: 1.5rem;
+        border-radius: 999px;
+        display: grid;
+        place-items: center;
+        font-size: 0.82rem;
+        font-weight: 800;
+        background: var(--card-accent, var(--accent));
+        color: #061018;
+        opacity: 0;
+        transform: scale(0.8);
+        transition:
+          opacity 0.2s ease,
+          transform 0.2s ease;
+      }
+
+      .companion-card.is-selected .companion-card-check {
+        opacity: 1;
+        transform: scale(1);
+      }
+
+      .companion-card-name {
+        margin: 0;
+        font-size: 0.95rem;
+        font-weight: 750;
+      }
+
+      .companion-card-tagline {
+        margin: 0.15rem 0 0;
+        color: var(--muted);
+        font-size: 0.72rem;
+        line-height: 1.35;
+      }
+
+      .companion-card-traits {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.28rem;
+        margin-top: 0.35rem;
+      }
+
+      .companion-card-trait {
+        font-size: 0.62rem;
+        padding: 0.12rem 0.38rem;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.06);
+        color: rgba(247, 241, 232, 0.78);
+      }
+
+      .companion-picker-foot {
+        margin: 0.85rem 0 0;
+        color: var(--muted);
+        font-size: 0.72rem;
+        line-height: 1.45;
+        text-align: center;
+      }
+
+      .companion-switch-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 11000;
+        display: grid;
+        place-items: center;
+        background: rgba(6, 8, 14, 0.55);
+        backdrop-filter: blur(4px);
+        pointer-events: auto;
+      }
+
+      .companion-switch-overlay[hidden] {
+        display: none !important;
+      }
+
+      .companion-switch-card {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 1.2rem 1.4rem;
+        border-radius: 1.1rem;
+        background: rgba(12, 16, 24, 0.92);
+        border: 1px solid rgba(247, 241, 232, 0.12);
+        min-width: min(82vw, 240px);
+      }
+
+      .companion-switch-ring {
+        --pct: 0;
+        width: 5.5rem;
+        height: 5.5rem;
+        border-radius: 999px;
+        display: grid;
+        place-items: center;
+        background: conic-gradient(
+          var(--accent) calc(var(--pct) * 1%),
+          rgba(255, 255, 255, 0.08) 0
+        );
+        position: relative;
+      }
+
+      .companion-switch-ring::before {
+        content: "";
+        position: absolute;
+        inset: 0.45rem;
+        border-radius: inherit;
+        background: #0a0e16;
+      }
+
+      .companion-switch-pct {
+        position: relative;
+        z-index: 1;
+        font-weight: 800;
+        font-size: 0.95rem;
+      }
+
+      .companion-switch-label {
+        margin: 0;
+        color: var(--muted);
+        font-size: 0.82rem;
+        text-align: center;
+      }
     </style>
     <script type="importmap">
       {
@@ -1157,7 +1451,7 @@
     </script>
     <script>
       (function () {
-        window.__amojiBuild = "2026-09-14-v36-kizuna-vrm";
+        window.__amojiBuild = "2026-09-14-v37-companion-picker";
         window.__amojiModuleBooted = false;
         window.__amojiStart = {
           tapped: false,
@@ -1346,7 +1640,7 @@
     </script>
   </head>
   <body>
-    <!-- amoji-build: 2026-09-14-v36-kizuna-vrm — official Kizuna AI KAMATTE VRM -->
+    <!-- amoji-build: 2026-09-14-v37-companion-picker — Grok Ani–style character grid -->
     <noscript>
       <div
         style="
@@ -1391,6 +1685,14 @@
       <header class="topbar">
         <div class="brand"><span id="brand-name">Amoji</span> <span>Live</span></div>
         <div class="meta">
+          <button
+            type="button"
+            class="companions-btn"
+            id="companions-btn"
+            title="Choose companion"
+          >
+            Companions
+          </button>
           <button
             type="button"
             class="pill pill-btn"
@@ -1550,6 +1852,8 @@
         platformMod,
         characterMod,
         motionDownloadMod,
+        characterPickerMod,
+        characterSwitchMod,
       ] = await Promise.all([
         import("../amoji-engine/engine/companion/createAvatar.js"),
         import("../amoji-engine/engine/companion/chatLlm.js"),
@@ -1569,6 +1873,8 @@
         import("../amoji-engine/engine/companion/companionPlatform.js"),
         import("../amoji-engine/engine/companion/companionCharacterCatalog.js"),
         import("../amoji-engine/engine/companion/companionMotionDownload.js"),
+        import("../amoji-engine/engine/companion/companionCharacterPicker.js"),
+        import("../amoji-engine/engine/companion/companionCharacterSwitch.js"),
       ]);
       window.__amojiModuleBooted = true;
       const {
@@ -1817,7 +2123,7 @@
         avatarPrefer: params.get("avatar"),
       });
       persistCharacterId(characterId);
-      const charConfig = characterAvatarConfig(characterId, langCode);
+      let charConfig = characterAvatarConfig(characterId, langCode);
       let voiceId = params.get("voice")
         ? resolveVoiceId({ lang: langCode, voiceParam: params.get("voice") })
         : charConfig.voiceId;
@@ -1825,12 +2131,12 @@
       const liteMode = params.get("lite") === "1";
       const autoMic = params.get("automic") !== "0";
       dismissLoading();
-      const avatarModelUrl =
+      let avatarModelUrl =
         params.get("vrm") ||
         params.get("model3d") ||
         localStorage.getItem("amoji.companion.vrmUrl") ||
         charConfig.modelUrl;
-      const avatarPrefer =
+      let avatarPrefer =
         params.get("avatar") === "gltf" || charConfig.avatarPrefer === "gltf"
           ? "gltf"
           : "vrm";
@@ -1874,7 +2180,10 @@
         document.getElementById("api-model").value = stored.model;
       }
 
-      const tapLines = characterTapLines(characterId, isEnglish);
+      const pickTapLine = () => {
+        const lines = characterTapLines(characterId, isEnglish);
+        return lines[Math.floor(Math.random() * lines.length)];
+      };
       let lastTapAt = 0;
       /** @type {(() => void) | null} */
       let handleCharacterTap = null;
@@ -1975,8 +2284,12 @@
         if (characterPill) {
           characterPill.innerHTML = `char · <strong>${name}</strong>`;
           characterPill.title = isEnglish
-            ? `${tagline} — ${traits}. Tap to switch character.`
-            : `${tagline} — ${traits}。按一下切換角色。`;
+            ? `${tagline} — ${traits}. Tap to open Companions.`
+            : `${tagline} — ${traits}。按一下打開同伴列表。`;
+        }
+        const companionsBtnEl = document.getElementById("companions-btn");
+        if (companionsBtnEl) {
+          companionsBtnEl.textContent = isEnglish ? "Companions" : "同伴";
         }
         const startTagline = document.getElementById("start-tagline");
         if (startTagline) startTagline.textContent = tagline;
@@ -2349,20 +2662,107 @@
       applyVoiceSelection(voiceId);
       updateLangPill();
 
-      const switchCharacter = (nextId) => {
-        persistCharacterId(nextId);
-        const href = buildCharacterCompanionHref({
-          basePath: location.pathname,
-          lang: langCode,
-          characterId: nextId,
-          extra: liteMode ? { lite: "1" } : undefined,
-        });
-        location.assign(href);
+      const { createCompanionCharacterPicker, createCompanionSwitchOverlay } =
+        characterPickerMod;
+      const { switchCompanionCharacter } = characterSwitchMod;
+      const companionsBtn = document.getElementById("companions-btn");
+      const switchOverlay = createCompanionSwitchOverlay({ root: document.body });
+      let characterSwitching = false;
+
+      const applyCharacterSession = (nextId, { announce = true } = {}) => {
+        characterId = nextId;
+        persistCharacterId(characterId);
+        const nextConfig = characterAvatarConfig(characterId, langCode);
+        charConfig = nextConfig;
+        avatarModelUrl =
+          params.get("vrm") ||
+          params.get("model3d") ||
+          nextConfig.modelUrl;
+        avatarPrefer =
+          params.get("avatar") === "gltf" || nextConfig.avatarPrefer === "gltf"
+            ? "gltf"
+            : "vrm";
+        applyVoiceSelection(nextConfig.voiceId);
+        chat.setSystemPrompt?.(
+          buildCharacterSystemPrompt(characterId, isEnglish),
+        );
+        setCharacterUi();
+        characterPicker?.setSelected(characterId);
+        if (announce) {
+          const name = characterDisplayName(characterId, langCode, isEnglish);
+          showToast(
+            isEnglish ? `Switched to ${name}` : `已切換到 ${name}`,
+            "info",
+          );
+        }
       };
 
-      characterPill?.addEventListener("click", () => {
-        switchCharacter(nextCharacterId(characterId));
+      const hotSwapCharacter = async (nextId) => {
+        if (characterSwitching || nextId === characterId) return;
+        characterSwitching = true;
+        const name = characterDisplayName(nextId, langCode, isEnglish);
+        switchOverlay.show(
+          isEnglish ? `Loading ${name}…` : `載入 ${name} 中…`,
+        );
+        try {
+          const result = await switchCompanionCharacter({
+            canvas,
+            characterId: nextId,
+            langCode,
+            currentAvatar: avatarKind !== "loading" ? avatar : null,
+            onProgress: (pct, label) => switchOverlay.update(pct, label),
+            onCharacterTap: () => handleCharacterTap?.(),
+          });
+          avatar = result.avatar;
+          avatarKind = result.kind;
+          if (result.canvas) canvas = result.canvas;
+          window.__amojiAvatarKind = avatarKind;
+          window.__amojiAvatar = avatar;
+          avatar.setEmotion?.(currentEmotion);
+          syncAvatarPerformance();
+          applyCharacterSession(nextId, { announce: false });
+          addBubble(
+            "system",
+            isEnglish
+              ? `${name} is ready — ${resolveAvatarLabel(avatarKind)}`
+              : `${name} 已就緒 — ${resolveAvatarLabel(avatarKind)}`,
+          );
+        } catch (err) {
+          console.warn("[companion] character switch failed", err);
+          showToast(
+            isEnglish
+              ? "Couldn't load that companion — try again."
+              : "載入同伴失敗，請再試一次。",
+            "error",
+          );
+        } finally {
+          switchOverlay.hide();
+          characterSwitching = false;
+        }
+      };
+
+      const characterPicker = createCompanionCharacterPicker({
+        isEnglish,
+        selectedId: characterId,
+        onSelect: (nextId) => {
+          characterPicker.close();
+          void hotSwapCharacter(nextId);
+        },
       });
+
+      const openCharacterPicker = () => {
+        characterPicker.setSelected(characterId);
+        characterPicker.open();
+      };
+
+      companionsBtn?.addEventListener("click", openCharacterPicker);
+      characterPill?.addEventListener("click", openCharacterPicker);
+      if (companionsBtn) {
+        companionsBtn.textContent = isEnglish ? "Companions" : "同伴";
+        companionsBtn.title = isEnglish
+          ? "Choose a companion (Grok Ani style)"
+          : "揀同伴（類似 Grok Ani）";
+      }
       window.__amojiSupportsMic = voice.supportsMic;
 
       bargeMonitor = createCompanionBargeMonitor({
@@ -2426,7 +2826,7 @@
         if (now - lastTapAt < 1400 || busy) return;
         lastTapAt = now;
         avatar.reactToTap?.();
-        const line = tapLines[Math.floor(Math.random() * tapLines.length)];
+        const line = pickTapLine();
         addBubble("assistant", line);
         avatar.setEmotion("happy");
         setEmotionPill("happy");

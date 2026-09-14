@@ -52,7 +52,7 @@ export function createCompanionChat(opts = {}) {
     globalThis.localStorage?.getItem(LLM_PROVIDER_STORAGE_KEY) ||
     "auto";
   let forceLocal = false;
-  const systemPrompt = opts.systemPrompt || CANTONESE_COMPANION_PROMPT;
+  let systemPrompt = opts.systemPrompt || CANTONESE_COMPANION_PROMPT;
 
   const finalizeReply = (replyText) => {
     const raw = String(replyText || "").trim();
@@ -454,6 +454,13 @@ export function createCompanionChat(opts = {}) {
     },
     clearHistory() {
       history.length = 0;
+    },
+    setSystemPrompt(next) {
+      systemPrompt = String(next || CANTONESE_COMPANION_PROMPT);
+      return systemPrompt;
+    },
+    get systemPrompt() {
+      return systemPrompt;
     },
     abort,
     reply,
