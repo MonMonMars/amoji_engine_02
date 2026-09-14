@@ -15,9 +15,9 @@ export const COMPANION_VOICE_GATE_SCHEMA = "amoji.companionVoiceGate.v1";
  * }} [opts]
  */
 export function createCompanionVoiceGate(opts = {}) {
-  const minInterimChars = opts.minInterimChars ?? 2;
-  const energyMultiplier = opts.energyMultiplier ?? 2.75;
-  const minSpeechMs = opts.minSpeechMs ?? 110;
+  const minInterimChars = opts.minInterimChars ?? 1;
+  const energyMultiplier = opts.energyMultiplier ?? 2.1;
+  const minSpeechMs = opts.minSpeechMs ?? 70;
   const cooldownMs = opts.cooldownMs ?? 360;
   const minEnergyFloor = opts.minEnergyFloor ?? 0.017;
 

@@ -4,20 +4,22 @@
  */
 import { inferExpressionFromText } from "../face/emotionExpression.js";
 import { inferTalkGestureFromText } from "../face/talkGestures.js";
+import {
+  inferActionFromReply,
+  inferActionFromUserText,
+  isUserStopCommand,
+  parseReplyTags,
+} from "./companionActionMotion.js";
 
 /**
  * @param {string} text
  */
 export function parseReplyMood(text) {
-  const raw = String(text || "").trim();
-  const moodMatch = raw.match(/\s*\[mood:(\w+)\]\s*$/i);
-  if (moodMatch) {
-    const parsedEmotion = moodMatch[1].toLowerCase();
-    const reply = raw.replace(/\s*\[mood:\w+\]\s*$/i, "").trim();
-    return { reply, emotion: parsedEmotion };
-  }
-  return { reply: raw, emotion: null };
+  const parsed = parseReplyTags(text);
+  return { reply: parsed.reply, emotion: parsed.emotion };
 }
+
+export { isUserStopCommand, inferActionFromUserText, parseReplyTags } from "./companionActionMotion.js";
 
 export const COMPANION_CONTENT_MOTION_SCHEMA = "amoji.companionContentMotion.v1";
 
@@ -170,10 +172,12 @@ export function analyzeUserInput(text, isEnglish = false) {
   const emotion = inferExpressionFromText(raw) || "neutral";
   const nuance = inferContentNuance(raw);
   const talkStyle = inferTalkGestureFromText(raw, { emotion });
+  const action = inferActionFromUserText(raw);
   return {
     emotion,
     nuance,
     talkStyle,
+    action,
     expressionBlend: buildVrmExpressionBlend(emotion, nuance),
     speechEnergy: inferSpeechEnergy(raw, emotion, nuance),
   };
@@ -185,6 +189,7 @@ export function analyzeUserInput(text, isEnglish = false) {
  */
 export function analyzeStreamingReply(partialText) {
   const visible = String(partialText || "")
+    .replace(/\s*\[action:\w*\]?/i, "")
     .replace(/\s*\[mood:\w*\]?/i, "")
     .trim();
   if (!visible) {
@@ -281,14 +286,14 @@ export function pickNextThinkingPhrase(isEnglish = false, lastIndex = -1) {
 }
 
 export function analyzeCompanionReply(text, moodHint = null) {
-  const parsed = parseReplyMood(String(text || ""));
-  const reply = parsed.reply;
-  const tagged = parsed.emotion || moodHint || null;
-  const inferred = inferExpressionFromText(reply);
-  const emotion = tagged || inferred || "neutral";
+  const tagged = parseReplyTags(String(text || ""));
+  const reply = tagged.reply;
+  const emotion =
+    tagged.emotion || moodHint || inferExpressionFromText(reply) || "neutral";
   const nuance = inferContentNuance(reply);
   const talkStyle = inferTalkGestureFromText(reply, { emotion });
   const gesture = inferOneShotGesture(reply, emotion, nuance);
+  const action = inferActionFromReply(String(text || ""), tagged.action);
   const speechEnergy = inferSpeechEnergy(reply, emotion, nuance);
   const expressionBlend = buildVrmExpressionBlend(emotion, nuance);
 
@@ -299,6 +304,7 @@ export function analyzeCompanionReply(text, moodHint = null) {
     nuance,
     talkStyle,
     gesture,
+    action,
     speechEnergy,
     expressionBlend,
   };
