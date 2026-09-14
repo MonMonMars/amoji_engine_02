@@ -196,6 +196,42 @@ export function sampleActionBodyPose(action, phase, elapsedSec = 0) {
 }
 
 /**
+ * Whole-body root motion so actions read clearly on small screens.
+ * @param {string} action
+ * @param {number} phase 0..1
+ * @param {number} elapsedSec
+ * @returns {{ y: number, rotY: number }}
+ */
+export function sampleActionRootMotion(action, phase, elapsedSec = 0) {
+  const key = String(action || "").toLowerCase();
+  const p = Math.max(0, Math.min(1, phase));
+  const t = elapsedSec;
+
+  switch (key) {
+    case "jump": {
+      const hop = Math.sin(p * Math.PI);
+      return { y: hop * 0.14, rotY: 0 };
+    }
+    case "kungfu": {
+      const combo = Math.floor(t * 1.6) % 4;
+      const beat = Math.sin(t * 8.4 + combo);
+      return { y: Math.abs(beat) * 0.02, rotY: beat * 0.18 };
+    }
+    case "laugh": {
+      return { y: Math.sin(t * 10) * 0.015, rotY: Math.sin(t * 7.5) * 0.06 };
+    }
+    case "celebrate": {
+      return { y: Math.sin(t * 6.8) * 0.03, rotY: Math.sin(t * 5.2) * 0.1 };
+    }
+    case "wave": {
+      return { y: 0, rotY: Math.sin(t * 5.8) * 0.05 };
+    }
+    default:
+      return { y: 0, rotY: 0 };
+  }
+}
+
+/**
  * @param {string} action
  */
 export function actionLoops(action) {

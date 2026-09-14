@@ -8,6 +8,7 @@ import {
   pickNextThinkingPhrase,
   pickThinkingPhrase,
 } from "./companionContentMotion.js";
+import { isIosLike, shouldPauseMicDuringTts } from "./companionPlatform.js";
 
 export { formatMicError, MIC_ERROR_MESSAGES, requestMicPermission };
 
@@ -48,13 +49,16 @@ export function unlockAudioSync() {
   if (typeof globalThis.window === "undefined") return false;
   if (globalThis.window.__amojiAudioUnlocked) return true;
   try {
-    const AC = globalThis.AudioContext || globalThis.webkitAudioContext;
-    if (AC) {
-      const ctx =
-        globalThis.window.__amojiAudioCtx ||
-        new AC({ latencyHint: "interactive" });
-      globalThis.window.__amojiAudioCtx = ctx;
-      if (ctx.state === "suspended") void ctx.resume();
+    // iOS routes TTS to the earpiece when Web Audio + mic run together — unlock via <audio> only.
+    if (!isIosLike()) {
+      const AC = globalThis.AudioContext || globalThis.webkitAudioContext;
+      if (AC) {
+        const ctx =
+          globalThis.window.__amojiAudioCtx ||
+          new AC({ latencyHint: "interactive" });
+        globalThis.window.__amojiAudioCtx = ctx;
+        if (ctx.state === "suspended") void ctx.resume();
+      }
     }
     const audio =
       globalThis.window.__amojiPrimeAudio ||
@@ -242,12 +246,21 @@ export function createCompanionVoice(opts = {}) {
     if (typeof globalThis.window === "undefined") {
       return configureCompanionAudioElement(new Audio());
     }
-    const shared =
-      globalThis.window.__amojiPrimeAudio ||
-      configureCompanionAudioElement(new Audio());
-    globalThis.window.__amojiPrimeAudio = shared;
-    return shared;
+    if (!globalThis.window.__amojiTtsAudio) {
+      globalThis.window.__amojiTtsAudio = configureCompanionAudioElement(
+        new Audio(),
+      );
+    }
+    return globalThis.window.__amojiTtsAudio;
   };
+
+  const ttsPlaybackVolume = () => {
+    if (shouldPauseMicDuringTts()) return 1;
+    return keepMicDuringSpeak ? 0.38 : 1;
+  };
+
+  const mustPauseMicForTts = () =>
+    !keepMicDuringSpeak || shouldPauseMicDuringTts();
   /** Serialize TTS so greeting + replies do not overlap or cut each other off. */
   let speakChain = Promise.resolve();
   /** @type {{ emotion: string, closed: boolean, capturePaused: boolean } | null} */
@@ -355,7 +368,7 @@ export function createCompanionVoice(opts = {}) {
     return await new Promise((resolve) => {
       const audio = configureCompanionAudioElement(getSharedAudio());
       currentCloudAudio = audio;
-      audio.volume = keepMicDuringSpeak ? 0.38 : 1;
+      audio.volume = ttsPlaybackVolume();
       audio.src = objectUrl;
       const finish = (result) => {
         if (currentCloudAudio === audio) currentCloudAudio = null;
@@ -522,7 +535,11 @@ export function createCompanionVoice(opts = {}) {
       utter.lang = voice?.lang || opts.lang || "zh-HK";
       utter.rate = prosody.rate;
       utter.pitch = prosody.pitch;
-      utter.volume = keepMicDuringSpeak ? prosody.volume * 0.4 : prosody.volume;
+      utter.volume = shouldPauseMicDuringTts()
+        ? prosody.volume
+        : keepMicDuringSpeak
+          ? prosody.volume * 0.4
+          : prosody.volume;
 
       startLipSync(clean, utter);
 
@@ -579,11 +596,12 @@ export function createCompanionVoice(opts = {}) {
    * @param {string} [emotion]
    */
   const speakOnce = async (text, emotion = "neutral") => {
-    if (!keepMicDuringSpeak) pauseCapture();
+    const pauseMic = mustPauseMicForTts();
+    if (pauseMic) pauseCapture();
     try {
       return await speakOnceCore(text, emotion);
     } finally {
-      if (!keepMicDuringSpeak) resumeCapture();
+      if (pauseMic) resumeCapture();
     }
   };
 
@@ -628,13 +646,14 @@ export function createCompanionVoice(opts = {}) {
     }
     stopTtsPlayback();
     speakChain = Promise.resolve();
-    const pauseMic = sessionOpts.pauseCapture !== false;
+    const pauseMic =
+      sessionOpts.pauseCapture !== false || shouldPauseMicDuringTts();
     streamSession = {
       emotion: defaultEmotion,
       closed: false,
       capturePaused: pauseMic,
     };
-    if (pauseMic && !keepMicDuringSpeak) pauseCapture();
+    if (pauseMic) pauseCapture();
     syncAssistantOutput();
     return streamSession;
   };
@@ -672,7 +691,7 @@ export function createCompanionVoice(opts = {}) {
       await speakChain;
       return { ok: true };
     } finally {
-      if (session.capturePaused && !keepMicDuringSpeak) resumeCapture();
+      if (session.capturePaused) resumeCapture();
       syncAssistantOutput();
     }
   };
@@ -681,7 +700,7 @@ export function createCompanionVoice(opts = {}) {
   const cancelStreamSpeak = () => {
     const session = streamSession;
     stopSpeak();
-    if (session?.capturePaused && !keepMicDuringSpeak) resumeCapture();
+    if (session?.capturePaused) resumeCapture();
     return true;
   };
 

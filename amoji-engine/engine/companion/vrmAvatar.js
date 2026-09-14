@@ -168,6 +168,8 @@ export async function createVrmAvatar(opts) {
   model.position.x = -center.x * scale;
   model.position.z = -center.z * scale;
   model.position.y = -box.min.y * scale;
+  const baseModelY = model.position.y;
+  const baseModelRotY = model.rotation.y;
   scene.add(model);
   vrm.humanoid?.resetNormalizedPose?.();
   const bodyMotion = createCompanionBodyMotion(vrm.humanoid);
@@ -415,6 +417,9 @@ export async function createVrmAvatar(opts) {
     try {
       bodyMotion.update(dt, { talking, now });
       syncHumanoidPose();
+      const root = bodyMotion.getRootMotion?.() || { y: 0, rotY: 0 };
+      model.position.y = baseModelY + (root.y || 0);
+      model.rotation.y = baseModelRotY + (root.rotY || 0);
       vrm.update(dt);
       controls.update();
     } catch (err) {

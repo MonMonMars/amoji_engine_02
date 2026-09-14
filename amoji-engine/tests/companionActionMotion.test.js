@@ -5,6 +5,7 @@ import {
   isUserStopCommand,
   parseReplyTags,
   sampleActionBodyPose,
+  sampleActionRootMotion,
 } from "../engine/companion/companionActionMotion.js";
 
 describe("companionActionMotion", () => {
@@ -45,5 +46,10 @@ describe("companionActionMotion", () => {
     const mid = sampleActionBodyPose("jump", 0.5, 0.5);
     expect(mid.spineX).toBeLessThan(0);
     expect(mid.armLiftL).toBeGreaterThan(0);
+  });
+
+  it("samples jump root bounce", () => {
+    const mid = sampleActionRootMotion("jump", 0.5, 0.5);
+    expect(mid.y).toBeGreaterThan(0);
   });
 });

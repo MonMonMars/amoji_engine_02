@@ -16,6 +16,7 @@ import {
   actionDurationSec,
   actionLoops,
   sampleActionBodyPose,
+  sampleActionRootMotion,
 } from "./companionActionMotion.js";
 import {
   buildBasePose,
@@ -55,6 +56,8 @@ export function createCompanionBodyMotion(humanoid) {
   let actionDuration = 1;
   let actionElapsed = 0;
   let actionLoop = false;
+  /** @type {{ y: number, rotY: number }} */
+  let rootMotion = { y: 0, rotY: 0 };
 
   const bone = (name) => humanoid?.getNormalizedBoneNode?.(name) || null;
 
@@ -125,6 +128,7 @@ export function createCompanionBodyMotion(humanoid) {
     actionPhase = 0;
     actionElapsed = 0;
     actionLoop = false;
+    rootMotion = { y: 0, rotY: 0 };
     return true;
   };
 
@@ -418,55 +422,66 @@ export function createCompanionBodyMotion(humanoid) {
         sampleActionBodyPose(activeAction, actionPhase, actionElapsed),
       );
       const actionBlend =
-        activeAction === "kungfu" || activeAction === "laugh" ? 0.78 : 0.68;
+        activeAction === "kungfu" || activeAction === "laugh" ? 0.88 : 0.78;
       pose = mergePoses(pose, actionPose, actionBlend);
+      rootMotion = sampleActionRootMotion(
+        activeAction,
+        actionPhase,
+        actionElapsed,
+      );
       if (!actionLoop && actionElapsed >= actionDuration) {
         stopAction();
       }
-    } else if (thinking && !talking) {
-      const thinkMotion = sampleBodyTalkMotion(elapsed, {
-        style: companionGestureStyle("thinking"),
-        emotion: "thinking",
-        speechEnergy: 0.28,
-        includeArms: true,
-      });
-      pose = mergePoses(pose, thinkMotion.body, 0.64);
-      pose.headX = (pose.headX || 0) + Math.sin(elapsed * 0.72) * 0.042;
-      pose.headZ = (pose.headZ || 0) + Math.sin(elapsed * 0.55 + 0.8) * 0.034;
-    } else if (!talking) {
-      pose.leanY = (pose.leanY || 0) + Math.sin(elapsed * 0.95) * 0.028;
-      pose.headZ = (pose.headZ || 0) + Math.sin(elapsed * 1.2 + 0.5) * 0.022;
-      pose.headX = (pose.headX || 0) + Math.sin(elapsed * 0.78) * 0.016;
-      if (listening) {
-        pose.headX = (pose.headX || 0) + Math.sin(elapsed * 0.85) * 0.018;
-      }
     } else {
-      talkTime += dt;
-      const nowMs = performance.now();
-      if (nowMs - lastChunkAt > 850) {
-        styleCycle += 1;
-        const styles = ["explain", "soft", "question", "emphasize"];
-        talkStyle = companionGestureStyle(
-          styles[styleCycle % styles.length] || talkStyle,
-        );
-        talkTime = 0;
-        lastChunkAt = nowMs;
-      }
-      const motion = sampleBodyTalkMotion(talkTime, {
-        style: companionGestureStyle(talkStyle),
-        emotion,
-        speechEnergy: energy,
-        includeArms: true,
-      });
-      const talkBlend = 0.5 + energy * 0.38;
-      pose = mergePoses(pose, motion.body, talkBlend);
+      rootMotion = { y: 0, rotY: 0 };
+    }
 
-      const beat = Math.sin(elapsed * 7.4);
-      const sway = Math.sin(elapsed * 3.6 + talkTime * 2.1);
-      pose.headX = (pose.headX || 0) + beat * 0.032 * energy + sway * 0.012;
-      pose.leanY = (pose.leanY || 0) + Math.sin(elapsed * 5.8) * 0.026 * energy;
-      pose.headZ = (pose.headZ || 0) + Math.sin(elapsed * 4.6) * 0.02 * energy;
-      pose.spineX = (pose.spineX || 0) + Math.sin(elapsed * 4.2) * 0.015 * energy;
+    if (!activeAction) {
+      if (thinking && !talking) {
+        const thinkMotion = sampleBodyTalkMotion(elapsed, {
+          style: companionGestureStyle("thinking"),
+          emotion: "thinking",
+          speechEnergy: 0.28,
+          includeArms: true,
+        });
+        pose = mergePoses(pose, thinkMotion.body, 0.64);
+        pose.headX = (pose.headX || 0) + Math.sin(elapsed * 0.72) * 0.042;
+        pose.headZ = (pose.headZ || 0) + Math.sin(elapsed * 0.55 + 0.8) * 0.034;
+      } else if (!talking) {
+        pose.leanY = (pose.leanY || 0) + Math.sin(elapsed * 0.95) * 0.028;
+        pose.headZ = (pose.headZ || 0) + Math.sin(elapsed * 1.2 + 0.5) * 0.022;
+        pose.headX = (pose.headX || 0) + Math.sin(elapsed * 0.78) * 0.016;
+        if (listening) {
+          pose.headX = (pose.headX || 0) + Math.sin(elapsed * 0.85) * 0.018;
+        }
+      } else {
+        talkTime += dt;
+        const nowMs = performance.now();
+        if (nowMs - lastChunkAt > 850) {
+          styleCycle += 1;
+          const styles = ["explain", "soft", "question", "emphasize"];
+          talkStyle = companionGestureStyle(
+            styles[styleCycle % styles.length] || talkStyle,
+          );
+          talkTime = 0;
+          lastChunkAt = nowMs;
+        }
+        const motion = sampleBodyTalkMotion(talkTime, {
+          style: companionGestureStyle(talkStyle),
+          emotion,
+          speechEnergy: energy,
+          includeArms: true,
+        });
+        const talkBlend = 0.5 + energy * 0.38;
+        pose = mergePoses(pose, motion.body, talkBlend);
+
+        const beat = Math.sin(elapsed * 7.4);
+        const sway = Math.sin(elapsed * 3.6 + talkTime * 2.1);
+        pose.headX = (pose.headX || 0) + beat * 0.032 * energy + sway * 0.012;
+        pose.leanY = (pose.leanY || 0) + Math.sin(elapsed * 5.8) * 0.026 * energy;
+        pose.headZ = (pose.headZ || 0) + Math.sin(elapsed * 4.6) * 0.02 * energy;
+        pose.spineX = (pose.spineX || 0) + Math.sin(elapsed * 4.2) * 0.015 * energy;
+      }
     }
 
     let allowArms = false;
@@ -536,6 +551,9 @@ export function createCompanionBodyMotion(humanoid) {
     },
     get currentAction() {
       return activeAction;
+    },
+    getRootMotion() {
+      return rootMotion;
     },
   };
 }
