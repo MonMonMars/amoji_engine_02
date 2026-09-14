@@ -968,7 +968,7 @@
     </script>
     <script>
       (function () {
-        window.__amojiBuild = "2026-09-14-v17-phase-a";
+        window.__amojiBuild = "2026-09-14-v18-auto-stop-on-speech";
         window.__amojiModuleBooted = false;
         window.__amojiStart = {
           tapped: false,
@@ -1157,7 +1157,7 @@
     </script>
   </head>
   <body>
-    <!-- amoji-build: 2026-09-14-v17-phase-a — stream TTS + barge-in -->
+    <!-- amoji-build: 2026-09-14-v18-auto-stop-on-speech — instant stop when user speaks -->
     <noscript>
       <div
         style="
@@ -1769,6 +1769,22 @@
       /** @type {{ emotion?: string, nuance?: string }} */
       let speakContent = { emotion: "neutral", nuance: "none" };
 
+      const phaseAEnabled = new URLSearchParams(location.search).get("phaseA") !== "0";
+      /** @type {string[]} */
+      const micQueue = [];
+      let turnSeq = 0;
+      /** @type {{ id: number, aborted: boolean, assistantRow: HTMLElement | null } | null} */
+      let activeTurn = null;
+      /** @type {ReturnType<typeof createCompanionBargeMonitor>} */
+      let bargeMonitor;
+      let stopBargeWatch = () => {};
+      let startBargeWatch = () => {};
+      /** @type {(reason?: string) => void} */
+      let abortActiveTurn = () => {};
+      let shouldAutoStopOnUserSpeech = () => false;
+      /** @type {(reason?: string) => boolean} */
+      let handleUserSpeechBarge = () => false;
+
       const voice = createCompanionVoice({
         lang: isEnglish ? "en-US" : "zh-HK",
         cloudVoice: voicePresetById(voiceId),
@@ -1792,12 +1808,23 @@
             setEmotionPill(analysis.emotion);
           }
         },
+        onSpeechDetected: () => {
+          handleUserSpeechBarge("mic-energy");
+        },
         onMicText: (text, isFinal) => {
+          const trimmed = String(text || "").trim();
+          if (!isFinal && trimmed && shouldAutoStopOnUserSpeech()) {
+            handleUserSpeechBarge("interim-speech");
+            interim.set(trimmed);
+            input.value = trimmed;
+            autosize();
+            return;
+          }
           if (isFinal) {
             interim.clear();
             input.value = "";
             autosize();
-            void runTurn(text, { fromMic: true });
+            void runTurn(trimmed, { fromMic: true });
             return;
           }
           interim.set(text);
@@ -1809,7 +1836,9 @@
           if (voice.micOn && !busy) status.listening();
           else if (!busy && !voice.speaking) status.idle();
           if (voice.micOn) {
-            input.placeholder = "Listening… speak, pause → she replies, then listens again";
+            input.placeholder = phaseAEnabled
+              ? "Listening… speak anytime to interrupt her"
+              : "Listening… speak, pause → she replies, then listens again";
           } else if (!busy) {
             input.placeholder = "同 Amoji 傾偈… or tap 🎤 for continuous talk";
           }
@@ -1868,47 +1897,26 @@
       updateLangPill();
       window.__amojiSupportsMic = voice.supportsMic;
 
-      handleCharacterTap = () => {
-        const now = Date.now();
-        if (now - lastTapAt < 1400 || busy) return;
-        lastTapAt = now;
-        avatar.reactToTap?.();
-        const line = tapLines[Math.floor(Math.random() * tapLines.length)];
-        addBubble("assistant", line);
-        avatar.setEmotion("happy");
-        setEmotionPill("happy");
-        avatar.setTalkStyle?.("soft");
-        speakEmotion = "happy";
-        status.speaking();
-        void voice.speak(line, "happy").finally(() => {
-          if (!busy && !voice.micOn) status.idle();
-        });
-      };
-
-      /** @type {string[]} */
-      const micQueue = [];
-      const phaseAEnabled = new URLSearchParams(location.search).get("phaseA") !== "0";
-      let turnSeq = 0;
-      /** @type {{ id: number, aborted: boolean, assistantRow: HTMLElement | null } | null} */
-      let activeTurn = null;
-
-      const bargeMonitor = createCompanionBargeMonitor({
+      bargeMonitor = createCompanionBargeMonitor({
         onBargeIn: () => {
-          if (!busy || !activeTurn) return;
-          abortActiveTurn("energy-barge");
+          handleUserSpeechBarge("energy-barge");
         },
       });
 
-      const stopBargeWatch = () => {
+      stopBargeWatch = () => {
         bargeMonitor.stop();
       };
 
-      const startBargeWatch = () => {
+      startBargeWatch = () => {
         if (!phaseAEnabled || !voice.micOn) return;
+        bargeMonitor.reset?.();
         void bargeMonitor.start();
       };
 
-      const abortActiveTurn = (reason = "barge-in") => {
+      shouldAutoStopOnUserSpeech = () =>
+        phaseAEnabled && voice.micOn && (busy || voice.speaking);
+
+      abortActiveTurn = (reason = "barge-in") => {
         if (!activeTurn || activeTurn.aborted) return;
         activeTurn.aborted = true;
         chat.abort?.();
@@ -1924,6 +1932,46 @@
           }
         }
         window.__amojiLastBarge = reason;
+      };
+
+      handleUserSpeechBarge = (reason = "user-speech") => {
+        if (!shouldAutoStopOnUserSpeech()) return false;
+        if (busy && activeTurn && !activeTurn.aborted) {
+          abortActiveTurn(reason);
+          avatar.setListening?.(true);
+          setEmotionPill("neutral");
+          status.listening();
+          return true;
+        }
+        if (voice.speaking) {
+          voice.cancelStreamSpeak?.();
+          voice.stopSpeak();
+          avatar.setTalking?.(false);
+          avatar.setMouthOpen?.(0);
+          avatar.setListening?.(true);
+          status.listening();
+          return true;
+        }
+        return false;
+      };
+
+      handleCharacterTap = () => {
+        const now = Date.now();
+        if (now - lastTapAt < 1400 || busy) return;
+        lastTapAt = now;
+        avatar.reactToTap?.();
+        const line = tapLines[Math.floor(Math.random() * tapLines.length)];
+        addBubble("assistant", line);
+        avatar.setEmotion("happy");
+        setEmotionPill("happy");
+        avatar.setTalkStyle?.("soft");
+        speakEmotion = "happy";
+        status.speaking();
+        if (phaseAEnabled && voice.micOn) startBargeWatch();
+        void voice.speak(line, "happy").finally(() => {
+          stopBargeWatch();
+          if (!busy && !voice.micOn) status.idle();
+        });
       };
 
       const runTurn = async (text, { fromMic = false } = {}) => {
@@ -1967,8 +2015,8 @@
 
         if (phaseAEnabled) {
           voice.beginStreamSpeak?.("neutral", { pauseCapture: !keepMicForBarge });
-          startBargeWatch();
         }
+        if (keepMicForBarge) startBargeWatch();
 
         const enqueueStreamSegments = (segments, fullText) => {
           if (!phaseAEnabled || !segments.length) return;

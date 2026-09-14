@@ -32,6 +32,7 @@ function pickRecorderMimeType() {
  *   lang?: string,
  *   cloudSttUrl?: string | null,
  *   onText?: (text: string, isFinal: boolean) => void,
+ *   onSpeechDetected?: (info: { source: string, text?: string, rms?: number }) => void,
  *   onState?: (on: boolean) => void,
  *   onError?: (code: string) => void,
  *   silenceMs?: number,
@@ -72,6 +73,7 @@ export function createMicCapture(opts = {}) {
   let recordChunks = [];
   let cloudLoopActive = false;
   let cloudTranscribing = false;
+  let cloudSpeechSignalFired = false;
 
   const silenceMs = opts.silenceMs ?? 1400;
   const maxUtteranceMs = opts.maxUtteranceMs ?? 12000;
@@ -232,6 +234,7 @@ export function createMicCapture(opts = {}) {
     }
 
     recordChunks = [];
+    cloudSpeechSignalFired = false;
     mediaRecorder = new MediaRecorder(
       recordStream,
       recorderMime ? { mimeType: recorderMime } : undefined,
@@ -259,9 +262,13 @@ export function createMicCapture(opts = {}) {
         sum += v * v;
       }
       const rms = Math.sqrt(sum / buf.length);
-      if (rms > 0.018) {
+      if (rms > 0.016) {
         heardSpeech = true;
         silentSince = Date.now();
+        if (!cloudSpeechSignalFired) {
+          cloudSpeechSignalFired = true;
+          opts.onSpeechDetected?.({ source: "cloud-energy", rms });
+        }
         return;
       }
       if (heardSpeech && Date.now() - silentSince >= silenceMs) {
@@ -298,7 +305,10 @@ export function createMicCapture(opts = {}) {
         if (ev.results[i].isFinal) finalText += chunk;
         else interim += chunk;
       }
-      if (interim) opts.onText?.(interim, false);
+      if (interim) {
+        opts.onSpeechDetected?.({ source: "interim", text: interim });
+        opts.onText?.(interim, false);
+      }
       const trimmed = finalText.trim();
       if (trimmed) opts.onText?.(trimmed, true);
     };

@@ -181,6 +181,7 @@ export const CLOUD_ENGLISH_VOICE = Object.freeze({
  *   onMouth?: (open: number, shape?: string) => void,
  *   onTalking?: (on: boolean) => void,
  *   onMicText?: (text: string, isFinal: boolean) => void,
+ *   onSpeechDetected?: (info: { source: string, text?: string, rms?: number }) => void,
  *   onMicState?: (on: boolean) => void,
  *   onError?: (msg: string) => void,
  *   onSpeakChunk?: (chunk: string, charIndex: number) => void,
@@ -206,6 +207,7 @@ export function createCompanionVoice(opts = {}) {
     lang: opts.lang || "zh-HK",
     cloudSttUrl: opts.cloudSttUrl || null,
     onText: (text, isFinal) => opts.onMicText?.(text, isFinal),
+    onSpeechDetected: (info) => opts.onSpeechDetected?.(info),
     onState: (on) => opts.onMicState?.(on),
     onError: (code) => opts.onError?.(code),
   });
