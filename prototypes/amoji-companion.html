@@ -1238,7 +1238,7 @@
     </script>
   </head>
   <body>
-    <!-- amoji-build: 2026-09-14-v22-barge-greeting-web-motion — barge fix + short hi + web + motion -->
+    <!-- amoji-build: 2026-09-14-v23-emotion-action-voice — emotion/action motion + gender voice labels -->
     <noscript>
       <div
         style="
@@ -1390,7 +1390,7 @@
               id="btn-voice-switch"
               title="Switch voice"
             >
-              曉曼
+              女聲
             </button>
             <button
               type="button"
@@ -1467,6 +1467,7 @@
         resolveVoiceId,
         syncVoiceToUrl,
         voicePresetById,
+        voiceGenderLabel,
         voiceShortLabel,
       } = voiceCatalogMod;
       const {
@@ -2057,7 +2058,7 @@
         syncVoiceToUrl(voiceId);
         const preset = voicePresetById(voiceId);
         voice.setCloudVoice(preset);
-        const label = voiceShortLabel(voiceId, langCode, isEnglish);
+        const label = voiceGenderLabel(voiceId, langCode, isEnglish);
         setVoicePill(label);
         if (btnVoiceSwitch) {
           btnVoiceSwitch.textContent = label;
@@ -2250,7 +2251,10 @@
           const reply = result.reply || "……";
           voice.stopThinkingLoop?.();
           avatar.setThinking?.(false);
-          const content = applyReplyPerformance(reply, result.emotion || "happy");
+          const content = applyReplyPerformance(
+            result.raw || reply,
+            result.emotion || "happy",
+          );
           const emotion = content.emotion || "happy";
           speakContent = content;
           speakEmotion = emotion;
@@ -2287,8 +2291,12 @@
             input.placeholder = phaseAEnabled
               ? "Listening… speak anytime to barge in"
               : "Listening… speak, pause → she replies, then listens again";
-            avatar.setEmotion("neutral");
-            setEmotionPill("neutral");
+            if (!avatar.currentAction) {
+              avatar.setEmotion("neutral");
+              setEmotionPill("neutral");
+            } else {
+              setEmotionPill(avatar.emotion || speakEmotion || "happy");
+            }
             status.listening();
           } else {
             avatar.setListening?.(false);
@@ -2484,7 +2492,7 @@
         }
 
         void voice.ensureVoices().then(() => {
-          setVoicePill(voiceShortLabel(voiceId, langCode, isEnglish));
+          setVoicePill(voiceGenderLabel(voiceId, langCode, isEnglish));
         });
         void voice
           .primeAudio?.()
@@ -2619,8 +2627,8 @@
         addBubble(
           "system",
           isEnglish
-            ? `Voice: ${voiceShortLabel(nextId, langCode, true)}`
-            : `語音：${voiceShortLabel(nextId, langCode, false)}`,
+            ? `Voice: ${voiceGenderLabel(nextId, langCode, true)}`
+            : `語音：${voiceGenderLabel(nextId, langCode, false)}`,
         );
       };
 

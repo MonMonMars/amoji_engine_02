@@ -5,6 +5,7 @@ import {
   companionLangCode,
   nextVoiceId,
   resolveVoiceId,
+  voiceGenderLabel,
   voicePresetById,
 } from "../engine/companion/companionVoiceCatalog.js";
 
@@ -46,6 +47,13 @@ describe("companionVoiceCatalog", () => {
   it("labels cloud voices", () => {
     expect(cloudVoiceLabel("zh-HK-WanLungNeural")).toMatch(/男聲/);
     expect(cloudVoiceLabel("en-US-AriaNeural")).toMatch(/Aria/);
+  });
+
+  it("shows gender labels for voice buttons", () => {
+    expect(voiceGenderLabel("zh-HK-HiuMaanNeural", "yue", false)).toBe("女聲");
+    expect(voiceGenderLabel("zh-HK-WanLungNeural", "yue", false)).toBe("男聲");
+    expect(voiceGenderLabel("en-US-AriaNeural", "en", true)).toBe("Female");
+    expect(voiceGenderLabel("en-US-JennyNeural", "en", true)).toBe("Female");
   });
 
   it("maps voice preset", () => {

@@ -15,6 +15,15 @@ describe("companionActionMotion", () => {
     expect(parsed.emotion).toBe("happy");
   });
 
+  it("parses tags anywhere in the reply", () => {
+    const parsed = parseReplyTags(
+      "[action:kungfu] 哈！睇招！ [mood:happy] 再來！",
+    );
+    expect(parsed.reply).toBe("哈！睇招！ 再來！");
+    expect(parsed.action).toBe("kungfu");
+    expect(parsed.emotion).toBe("happy");
+  });
+
   it("detects user stop commands", () => {
     expect(isUserStopCommand("停")).toBe(true);
     expect(isUserStopCommand("stop moving")).toBe(true);

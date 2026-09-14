@@ -5,10 +5,8 @@ import {
   createVoiceRobotBridge,
 } from "../voice/voiceRobotBridge.js";
 import { inferExpressionFromText } from "../face/emotionExpression.js";
-import {
-  CANTONESE_COMPANION_PROMPT,
-  parseReplyMood,
-} from "./companionBodyMotion.js";
+import { CANTONESE_COMPANION_PROMPT } from "./companionBodyMotion.js";
+import { parseReplyTags } from "./companionActionMotion.js";
 import {
   LLM_PROVIDER_STORAGE_KEY,
   resolveProviderConfig,
@@ -55,10 +53,13 @@ export function createCompanionChat(opts = {}) {
   const systemPrompt = opts.systemPrompt || CANTONESE_COMPANION_PROMPT;
 
   const finalizeReply = (replyText) => {
-    const { reply, emotion: tagged } = parseReplyMood(replyText);
+    const raw = String(replyText || "").trim();
+    const parsed = parseReplyTags(raw);
     return {
-      reply,
-      emotion: tagged || inferExpressionFromText(reply),
+      reply: parsed.reply,
+      raw,
+      emotion: parsed.emotion || inferExpressionFromText(parsed.reply),
+      action: parsed.action,
     };
   };
 
@@ -191,7 +192,9 @@ export function createCompanionChat(opts = {}) {
           return {
             ok: true,
             reply: finalized.reply,
+            raw: finalized.raw,
             emotion: finalized.emotion,
+            action: finalized.action,
             mode: proxied.mode || "proxy",
             model: proxied.model || model,
           };
@@ -240,7 +243,9 @@ export function createCompanionChat(opts = {}) {
           return {
             ok: true,
             reply: finalized.reply,
+            raw: finalized.raw,
             emotion: finalized.emotion,
+            action: finalized.action,
             mode: "online",
             model: online.model || model,
           };
@@ -274,7 +279,9 @@ export function createCompanionChat(opts = {}) {
           return {
             ok: true,
             reply: finalized.reply,
+            raw: finalized.raw,
             emotion: finalized.emotion,
+            action: finalized.action,
             mode: clientMode,
             model: online.model || model,
           };
@@ -310,7 +317,9 @@ export function createCompanionChat(opts = {}) {
           return {
             ok: true,
             reply: finalized.reply,
+            raw: finalized.raw,
             emotion: finalized.emotion,
+            action: finalized.action,
             mode: "ollama",
             model: direct.model || model,
           };
@@ -342,7 +351,9 @@ export function createCompanionChat(opts = {}) {
           return {
             ok: true,
             reply: finalized.reply,
+            raw: finalized.raw,
             emotion: finalized.emotion,
+            action: finalized.action,
             mode: proxied.mode || "proxy",
             model: proxied.model || null,
           };
@@ -362,7 +373,9 @@ export function createCompanionChat(opts = {}) {
     return {
       ok: true,
       reply: finalized.reply,
+      raw: finalized.raw,
       emotion: turn.emotion || finalized.emotion,
+      action: finalized.action,
       mode: "local",
       annotatedReply: turn.annotatedReply || null,
     };

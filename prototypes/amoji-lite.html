@@ -244,7 +244,7 @@
         <h1>A<span>moji</span></h1>
         <div class="header-actions">
           <a class="btn-3d" id="btn-3d" href="/companion-full">3D avatar</a>
-          <button type="button" class="btn-voice" id="btn-voice" title="Switch voice">曉曼</button>
+          <button type="button" class="btn-voice" id="btn-voice" title="Switch voice">女聲</button>
           <a class="btn-lang" id="btn-lang" href="?lang=en" title="Switch language">粵</a>
           <span class="tag" id="build-tag">lite-v2</span>
           <span class="tag cloud hidden" id="cloud-tag">☁️ Cloud LLM</span>
@@ -272,6 +272,7 @@
         persistVoiceId,
         resolveVoiceId,
         syncVoiceToUrl,
+        voiceGenderLabel,
         voiceShortLabel,
       } from "/amoji-engine/engine/companion/companionVoiceCatalog.js";
 
@@ -376,7 +377,7 @@
               : "Switch to English";
           }
           if (btnVoice) {
-            btnVoice.textContent = voiceShortLabel(voiceId, langCode, isEn);
+            btnVoice.textContent = voiceGenderLabel(voiceId, langCode, isEn);
             btnVoice.title = isEn ? "Tap to switch voice" : "按一下切換語音";
           }
         }
@@ -390,8 +391,8 @@
             updateSwitcherUi();
             setStatus(
               isEn
-                ? "Voice: " + voiceShortLabel(voiceId, langCode, true)
-                : "語音：" + voiceShortLabel(voiceId, langCode, false),
+                ? "Voice: " + voiceGenderLabel(voiceId, langCode, true)
+                : "語音：" + voiceGenderLabel(voiceId, langCode, false),
             );
           });
         }

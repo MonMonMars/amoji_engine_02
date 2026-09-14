@@ -126,6 +126,21 @@ export function voiceShortLabel(voiceId, langCode, englishUi = false) {
 }
 
 /**
+ * User-facing voice toggle label — gender only (avoids confusing neural names).
+ * @param {string} voiceId
+ * @param {"yue" | "en"} langCode
+ * @param {boolean} [englishUi]
+ */
+export function voiceGenderLabel(voiceId, langCode, englishUi = false) {
+  const list = voicesForLang(langCode);
+  const entry = list.find((v) => v.id === voiceId) || list[0];
+  if (englishUi) {
+    return entry.gender === "male" ? "Male" : "Female";
+  }
+  return entry.gender === "male" ? "男聲" : "女聲";
+}
+
+/**
  * @param {string} voiceId
  */
 export function cloudVoiceLabel(voiceId) {

@@ -334,7 +334,13 @@ export async function createVrmAvatar(opts) {
   const applyStreamingContent = (partialText) => {
     const analysis = bodyMotion.applyStreamingContent(partialText);
     emotion = analysis.emotion;
+    applyEmotionExpressions(emotion);
     setExpressionTargetFromBlend(analysis.expressionBlend);
+    if (analysis.action === "stop") {
+      stopAction();
+    } else if (analysis.action) {
+      playAction(analysis.action, { emotion: analysis.emotion });
+    }
     return analysis;
   };
 
@@ -518,6 +524,9 @@ export async function createVrmAvatar(opts) {
     reactToTap,
     get emotion() {
       return emotion;
+    },
+    get currentAction() {
+      return bodyMotion.currentAction;
     },
     get mouthOpen() {
       return mouthOpen;
