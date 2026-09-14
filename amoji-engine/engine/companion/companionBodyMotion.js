@@ -147,7 +147,8 @@ export function createCompanionBodyMotion(humanoid) {
       emotion = "happy";
       setTalkEnergy(0.72);
     } else if (key === "kungfu") {
-      emotion = opts.emotion || "neutral";
+      emotion =
+        opts.emotion && opts.emotion !== "neutral" ? opts.emotion : "happy";
       setTalkEnergy(0.78);
     } else if (key === "jump" || key === "celebrate") {
       emotion = "happy";
