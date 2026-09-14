@@ -1307,7 +1307,7 @@
       const dialect = resolveDialectPref();
       const isEnglish = dialect.forceLanguage === "en";
       const liteMode = params.get("lite") === "1";
-      const autoMic = params.get("automic") !== "0";
+      const autoMic = params.get("automic") === "1";
       dismissLoading();
       const avatarModelUrl =
         params.get("vrm") ||
@@ -1845,11 +1845,7 @@
       const startSession = ({ fromTimeout = false } = {}) => {
         if (sessionStarted || sessionStarting) return;
         unlockAudioSync();
-        if (autoMic && voice.supportsMic) {
-          void voice.startMic();
-        } else {
-          void voice.primeMicPermission();
-        }
+        void voice.primeMicPermission();
         sessionStarting = true;
         startTalkingEl?.classList.add("starting");
         startTalkingEl?.setAttribute("aria-busy", "true");
@@ -1945,8 +1941,8 @@
         "system",
         hostedOnline
           ? isEnglish
-            ? `☁️ Cloud · ${avatarLabel} · English chat · free Edge TTS · 🎤 continuous talk`
-            : `☁️ 全網上運行 · ${avatarLabel} · 粵語傾偈 · 免費 Edge TTS · 唔使本地 PC · 🎤 連續對話`
+            ? `☁️ Cloud · ${avatarLabel} · English · tap 🎤 to talk`
+            : `☁️ 全網上運行 · ${avatarLabel} · 粵語傾偈 · 按 🎤 講嘢`
           : isEnglish
             ? `Anime companion · ${avatarLabel} · English · free Edge TTS · Brain button switches LLM · 🎤`
             : `動漫同伴 · ${avatarLabel} · 粵語傾偈 · 免費 Edge TTS · Brain 按鈕切 LLM · 🎤 連續對話`,
