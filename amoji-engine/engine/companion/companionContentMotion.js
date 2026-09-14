@@ -169,10 +169,18 @@ export function buildVrmExpressionBlend(emotion, nuance) {
  */
 export function analyzeUserInput(text, isEnglish = false) {
   const raw = String(text || "").trim();
-  const emotion = inferExpressionFromText(raw) || "neutral";
+  let emotion = inferExpressionFromText(raw) || "neutral";
   const nuance = inferContentNuance(raw);
   const talkStyle = inferTalkGestureFromText(raw, { emotion });
   const action = inferActionFromUserText(raw);
+  if (
+    action === "jump" ||
+    action === "laugh" ||
+    action === "kungfu" ||
+    action === "celebrate"
+  ) {
+    emotion = "happy";
+  }
   return {
     emotion,
     nuance,
