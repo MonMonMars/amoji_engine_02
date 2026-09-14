@@ -908,10 +908,16 @@
     </script>
     <script>
       (function () {
-        window.__amojiBuild = "2026-09-14-v5";
+        window.__amojiBuild = "2026-09-14-v6";
         window.__amojiModuleBooted = false;
         window.__amojiStart = { tapped: false, ready: false, run: null, sessionStarted: false };
-        window.__amojiShowBootFallback = function (msg) {
+        window.__amojiShowBootFallback = function (msg, opts) {
+          var soft = opts && opts.soft;
+          if (soft) {
+            window.__amojiStaticFallback(msg);
+            window.__amojiHideLoading();
+            return;
+          }
           var el = document.getElementById("amoji-boot-fallback");
           if (!el) return;
           if (msg) {
@@ -952,11 +958,11 @@
         setTimeout(function () {
           if (!window.__amojiModuleBooted && !window.__amojiStart?.sessionStarted) {
             window.__amojiShowBootFallback(
-              "App modules are taking too long — tap below to reload. Add ?lite=1 to skip 3D.",
+              "App modules are taking too long — tap below to reload or use text-only chat.",
             );
           } else if (!window.__amojiStart?.ready && !window.__amojiStart?.sessionStarted) {
             window.__amojiStaticFallback(
-              "Still loading app modules — tap 👆 Start above. Try ?lite=1 if this persists.",
+              "Still loading app modules — tap 👆 Start above or type below to chat while 3D loads.",
             );
           }
         }, 12000);
@@ -973,7 +979,8 @@
             var target = ev.target;
             if (target && target.tagName === "SCRIPT" && target.type === "module") {
               window.__amojiShowBootFallback(
-                "App modules failed to load — tap below to reload or try ?lite=1.",
+                "App modules failed to load — tap Start or reload. Text-only: /companion",
+                { soft: true },
               );
               return;
             }
@@ -986,7 +993,8 @@
               window.__amojiHideLoading();
               if (!window.__amojiModuleBooted) {
                 window.__amojiShowBootFallback(
-                  "A script failed to load — tap below to reload or try ?lite=1.",
+                  "A script failed to load — tap Start or reload. Text-only: /companion",
+                  { soft: true },
                 );
               }
             }
@@ -996,7 +1004,8 @@
         window.addEventListener("unhandledrejection", function (ev) {
           if (!window.__amojiModuleBooted) {
             window.__amojiShowBootFallback(
-              "App failed to start — tap below to reload or try ?lite=1.",
+              "App failed to start — tap Start or reload. Text-only: /companion",
+              { soft: true },
             );
           }
         });
@@ -1067,7 +1076,7 @@
     </script>
   </head>
   <body>
-    <!-- amoji-build: 2026-09-14-v5 — critical inline CSS; module-failure fallback -->
+    <!-- amoji-build: 2026-09-14-v6 — instant chat before 3D; soft module-failure fallback -->
     <noscript>
       <div
         style="
@@ -1092,8 +1101,8 @@
       <p class="boot-fallback-msg" style="margin: 0; max-width: 22rem; line-height: 1.5">
         App modules didn't load.
       </p>
-      <a id="amoji-reload-lite" href="?lite=1">Tap to reload (lite mode)</a>
-      <a id="amoji-reload" href="javascript:location.reload()">Tap to reload</a>
+      <a id="amoji-reload-lite" href="/companion">Text-only chat (/companion)</a>
+      <a id="amoji-reload" href="javascript:location.reload()">Tap to reload 3D</a>
     </div>
     <div class="stage">
       <div class="atmosphere" aria-hidden="true"></div>
@@ -1119,6 +1128,7 @@
           <div class="pill" id="emotion-pill">feel · <strong>neutral</strong></div>
           <div class="pill" id="voice-pill">voice · <strong>…</strong></div>
           <a class="lab-link" id="lang-pill" href="?lang=yue" title="Switch language">粵</a>
+          <a class="lab-link" id="lite-link" href="/companion" title="Text-only chat (no 3D)">Lite</a>
           <a class="lab-link" id="lab-link" href="/prototypes/realtime-voice-lab.html">Lab</a>
           <button type="button" class="key-btn" id="btn-cloud-key" hidden title="Paste API key">🔑 Key</button>
           <button type="button" class="gear" id="btn-settings" title="LLM settings" hidden>⚙</button>
@@ -1315,6 +1325,8 @@
 
       if (hostedOnline) {
         document.getElementById("lab-link")?.remove();
+        const liteLink = document.getElementById("lite-link");
+        if (liteLink) liteLink.textContent = isEnglish ? "Text" : "文字版";
         document.querySelector(".brand span").textContent = "Cloud";
         document.getElementById("settings-local").hidden = true;
         document.getElementById("settings-cloud").hidden = false;
@@ -2033,12 +2045,13 @@
         console.error("[companion] module boot failed", err);
         window.__amojiHideLoading?.();
         window.__amojiShowBootFallback?.(
-          "App modules failed — tap below to reload or try ?lite=1. (" +
+          "App modules failed — tap Start or reload. Text-only: /companion (" +
             (err?.message || err) +
             ")",
+          { soft: true },
         );
         window.__amojiStaticFallback?.(
-          "App modules failed to load — refresh the page or try ?lite=1 on slow networks. (" +
+          "App modules failed to load — refresh or use /companion for text-only chat. (" +
             (err?.message || err) +
             ")",
         );

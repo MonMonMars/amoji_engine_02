@@ -193,14 +193,49 @@
       .hidden {
         display: none !important;
       }
+      .header-actions {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        flex-shrink: 0;
+      }
+      .btn-3d {
+        font-size: 0.72rem;
+        font-weight: 650;
+        letter-spacing: 0.02em;
+        padding: 0.28rem 0.55rem;
+        border-radius: 0.45rem;
+        background: rgba(127, 212, 207, 0.14);
+        border: 1px solid rgba(127, 212, 207, 0.42);
+        color: #9ee8e3;
+        text-decoration: none;
+        white-space: nowrap;
+      }
+      .btn-3d:hover {
+        background: rgba(127, 212, 207, 0.22);
+      }
+      .btn-lang {
+        font-size: 0.72rem;
+        font-weight: 600;
+        padding: 0.28rem 0.5rem;
+        border-radius: 0.45rem;
+        background: rgba(247, 241, 232, 0.06);
+        border: 1px solid rgba(247, 241, 232, 0.14);
+        color: rgba(247, 241, 232, 0.72);
+        text-decoration: none;
+      }
     </style>
   </head>
   <body>
     <div class="app" id="app">
       <header>
         <h1>A<span>moji</span></h1>
-        <span class="tag" id="build-tag">lite-v2</span>
-        <span class="tag cloud hidden" id="cloud-tag">☁️ Cloud LLM</span>
+        <div class="header-actions">
+          <a class="btn-3d" id="btn-3d" href="/companion-full">3D avatar</a>
+          <a class="btn-lang" id="btn-lang" href="?lang=en" title="Switch language">粵</a>
+          <span class="tag" id="build-tag">lite-v2</span>
+          <span class="tag cloud hidden" id="cloud-tag">☁️ Cloud LLM</span>
+        </div>
       </header>
       <div class="status" id="status" aria-live="polite"></div>
       <div class="error-box" id="error-box" role="alert"></div>
@@ -282,6 +317,18 @@
         els.input.placeholder = strings.placeholder;
         els.start.textContent = strings.start;
         document.documentElement.lang = isEn ? "en" : "zh-Hant";
+
+        var btn3d = document.getElementById("btn-3d");
+        var btnLang = document.getElementById("btn-lang");
+        if (btn3d) {
+          btn3d.textContent = isEn ? "3D avatar" : "3D 同伴";
+          btn3d.href = "/companion-full" + (isEn ? "?lang=en" : "");
+        }
+        if (btnLang) {
+          btnLang.textContent = isEn ? "EN" : "粵";
+          btnLang.href = isEn ? "?lang=yue" : "?lang=en";
+          btnLang.title = isEn ? "Switch to Cantonese" : "Switch to English";
+        }
 
         function setStatus(t) {
           els.status.textContent = t || "";
