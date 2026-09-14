@@ -880,15 +880,56 @@
         background: rgba(255, 255, 255, 0.1);
       }
 
+      .icon-btn.mic-live:hover {
+        transform: translateY(calc(var(--mic-bounce) * -1))
+          scale(calc(1 + var(--mic-level) * 0.16));
+        background: rgba(255, 122, 144, calc(0.28 + var(--mic-level) * 0.24));
+      }
+
       .icon-btn.on {
         background: rgba(127, 212, 207, 0.22);
         border-color: rgba(127, 212, 207, 0.55);
       }
 
       .icon-btn.mic-live {
-        background: rgba(255, 122, 144, 0.28);
-        border-color: rgba(255, 122, 144, 0.7);
-        animation: pulseMic 1.1s ease-in-out infinite;
+        --mic-level: 0;
+        --mic-bounce: 0px;
+        position: relative;
+        z-index: 2;
+        overflow: visible;
+        background: rgba(255, 122, 144, calc(0.24 + var(--mic-level) * 0.22));
+        border-color: rgba(255, 122, 144, calc(0.68 + var(--mic-level) * 0.32));
+        animation: none;
+        transform: translateY(calc(var(--mic-bounce) * -1))
+          scale(calc(1 + var(--mic-level) * 0.16));
+        box-shadow:
+          0 0 calc(4px + var(--mic-level) * 22px)
+            rgba(255, 122, 144, calc(0.28 + var(--mic-level) * 0.55)),
+          0 0 calc(1px + var(--mic-level) * 10px)
+            rgba(127, 212, 207, calc(var(--mic-level) * 0.42));
+        transition:
+          background 0.06s linear,
+          border-color 0.06s linear,
+          box-shadow 0.06s linear;
+      }
+
+      .icon-btn.mic-live::before,
+      .icon-btn.mic-live::after {
+        content: "";
+        position: absolute;
+        inset: -2px;
+        border-radius: 50%;
+        pointer-events: none;
+        border: 2px solid rgba(255, 122, 144, 0.55);
+        opacity: calc(0.15 + var(--mic-level) * 0.85);
+      }
+
+      .icon-btn.mic-live::before {
+        animation: micRingPulse 1.35s ease-out infinite;
+      }
+
+      .icon-btn.mic-live::after {
+        animation: micRingPulse 1.35s ease-out infinite 0.42s;
       }
 
       .icon-btn:disabled {
@@ -897,13 +938,14 @@
         transform: none;
       }
 
-      @keyframes pulseMic {
-        0%,
-        100% {
-          box-shadow: 0 0 0 0 rgba(255, 122, 144, 0.35);
+      @keyframes micRingPulse {
+        0% {
+          transform: scale(1);
+          opacity: calc(0.35 + var(--mic-level) * 0.65);
         }
-        50% {
-          box-shadow: 0 0 0 10px rgba(255, 122, 144, 0);
+        100% {
+          transform: scale(calc(1.55 + var(--mic-level) * 0.75));
+          opacity: 0;
         }
       }
 
@@ -1115,7 +1157,7 @@
     </script>
     <script>
       (function () {
-        window.__amojiBuild = "2026-09-14-v30-idle-life";
+        window.__amojiBuild = "2026-09-14-v31-mic-meter";
         window.__amojiModuleBooted = false;
         window.__amojiStart = {
           tapped: false,
@@ -1304,7 +1346,7 @@
     </script>
   </head>
   <body>
-    <!-- amoji-build: 2026-09-14-v30-idle-life — idle sway, micro-gestures, soft expressions -->
+    <!-- amoji-build: 2026-09-14-v31-mic-meter — audio-reactive mic button bounce + rings -->
     <noscript>
       <div
         style="
@@ -1970,12 +2012,29 @@
       };
       input.addEventListener("input", autosize);
 
+      const resetMicMeterVisual = () => {
+        btnMic.style.removeProperty("--mic-level");
+        btnMic.style.removeProperty("--mic-bounce");
+      };
+
+      const applyMicMeterVisual = (level) => {
+        if (!voice.micOn) {
+          resetMicMeterVisual();
+          return;
+        }
+        const clamped = Math.max(0, Math.min(1, Number(level) || 0));
+        const bouncePx = 4 + clamped * 14;
+        btnMic.style.setProperty("--mic-level", clamped.toFixed(3));
+        btnMic.style.setProperty("--mic-bounce", `${bouncePx.toFixed(2)}px`);
+      };
+
       const syncMicBtn = () => {
         btnMic.classList.toggle("mic-live", voice.micOn);
         btnMic.classList.toggle("on", voice.micOn);
         btnMic.setAttribute("aria-pressed", voice.micOn ? "true" : "false");
         btnMic.textContent = voice.micOn ? "⏺" : "🎤";
         stage.classList.toggle("mic-mode", voice.micOn);
+        if (!voice.micOn) resetMicMeterVisual();
         if (voice.micOn) scrollTranscript(true);
         voice.setKeepMicDuringSpeak?.(
           phaseAEnabled && voice.micOn && !shouldPauseMicDuringTts(),
@@ -2054,6 +2113,9 @@
             speakEmotion = analysis.emotion;
             setEmotionPill(analysis.emotion);
           }
+        },
+        onMicLevel: ({ level } = {}) => {
+          applyMicMeterVisual(level);
         },
         onSpeechDetected: (info = {}) => {
           if (!shouldAutoStopOnUserSpeech()) return;
