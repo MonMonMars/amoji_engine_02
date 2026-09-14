@@ -1,7 +1,16 @@
+import { createMicCapture } from "./companionMicCapture.js";
+import {
+  formatMicError,
+  MIC_ERROR_MESSAGES,
+  requestMicPermission,
+} from "./companionMicUtils.js";
+
+export { formatMicError, MIC_ERROR_MESSAGES, requestMicPermission };
+
 /**
  * Browser female TTS + mic capture for the companion demo (Grok-style).
  * Uses Web Speech API: speechSynthesis (female voice + emotion tone)
- * and SpeechRecognition for continuous microphone conversation.
+ * and SpeechRecognition (or cloud STT fallback) for microphone conversation.
  *
  * Lip sync: maps spoken words/characters to mouth shapes via
  * SpeechSynthesisUtterance boundary events (with timed fallback).
@@ -65,76 +74,6 @@ const EMOTION_PROSODY = {
   surprised: { rate: 1.18, pitch: 1.45, volume: 1 },
   angry: { rate: 1.08, pitch: 0.95, volume: 1 },
 };
-
-/** Errors that should not kill continuous listening. */
-const SOFT_MIC_ERRORS = new Set([
-  "no-speech",
-  "aborted",
-  "network",
-]);
-
-/** Human-readable mic permission errors for the UI. */
-export const MIC_ERROR_MESSAGES = Object.freeze({
-  "not-allowed":
-    "Microphone blocked — tap 🔒 in the address bar and allow mic, then tap 🎤 again.",
-  "service-not-allowed":
-    "Speech recognition blocked — use Chrome/Edge on HTTPS, or type your message.",
-  "audio-capture": "No microphone found — plug in a mic or type your message.",
-  unsupported: "This browser has no speech recognition — type instead.",
-  "no-getusermedia":
-    "Cannot request mic permission in this browser — try Chrome/Edge on HTTPS.",
-  "no-mic": "No microphone detected — connect a mic or type your message.",
-});
-
-/**
- * @param {string} code
- * @returns {string}
- */
-export function formatMicError(code) {
-  const key = String(code || "").trim();
-  return MIC_ERROR_MESSAGES[key] || `Mic error: ${key || "unknown"}`;
-}
-
-/**
- * Prime microphone permission via getUserMedia (clearer errors than SpeechRecognition alone).
- * @returns {Promise<{ ok: boolean, reason?: string }>}
- */
-export async function requestMicPermission() {
-  const Rec =
-    globalThis.SpeechRecognition || globalThis.webkitSpeechRecognition || null;
-  if (!Rec) return { ok: false, reason: "unsupported" };
-
-  const md = globalThis.navigator?.mediaDevices;
-  if (!md?.getUserMedia) {
-    return { ok: true, reason: "no-getusermedia" };
-  }
-
-  /** @type {MediaStream | null} */
-  let stream = null;
-  try {
-    stream = await md.getUserMedia({ audio: true });
-    return { ok: true };
-  } catch (err) {
-    const name = err?.name || "";
-    if (name === "NotAllowedError" || name === "PermissionDeniedError") {
-      return { ok: false, reason: "not-allowed" };
-    }
-    if (name === "NotFoundError" || name === "DevicesNotFoundError") {
-      return { ok: false, reason: "no-mic" };
-    }
-    return { ok: false, reason: err?.message || "mic-error" };
-  } finally {
-    if (stream) {
-      for (const track of stream.getTracks()) {
-        try {
-          track.stop();
-        } catch {
-          /* ignore */
-        }
-      }
-    }
-  }
-}
 
 /**
  * Map a character to a viseme shape + openness for lip sync.
@@ -234,6 +173,7 @@ export const CLOUD_ENGLISH_VOICE = Object.freeze({
  *   onSpeakChunk?: (chunk: string, charIndex: number) => void,
  *   lang?: string,
  *   cloudTtsUrl?: string | null,
+ *   cloudSttUrl?: string | null,
  *   preferCloudTts?: boolean,
  *   cloudVoice?: { name: string, lang: string, cloud?: boolean },
  * }} [opts]
@@ -243,22 +183,19 @@ export function createCompanionVoice(opts = {}) {
     typeof globalThis.speechSynthesis !== "undefined"
       ? globalThis.speechSynthesis
       : null;
-  const Rec =
-    globalThis.SpeechRecognition || globalThis.webkitSpeechRecognition || null;
 
   let voice = null;
   let usingCloudTts = Boolean(opts.preferCloudTts && opts.cloudTtsUrl);
   let speakerOn = true;
-  /** User wants continuous listen mode on. */
-  let micDesired = false;
-  /** Nested pause while LLM/TTS runs so the mic does not hear itself. */
-  let pauseDepth = 0;
-  /** @type {SpeechRecognition | null} */
-  let recognition = null;
-  let recognitionActive = false;
-  let restartTimer = null;
   let speaking = false;
-  let micPermissionPrimed = false;
+
+  const micCapture = createMicCapture({
+    lang: opts.lang || "zh-HK",
+    cloudSttUrl: opts.cloudSttUrl || null,
+    onText: (text, isFinal) => opts.onMicText?.(text, isFinal),
+    onState: (on) => opts.onMicState?.(on),
+    onError: (code) => opts.onError?.(code),
+  });
   /** @type {HTMLAudioElement | null} */
   let currentCloudAudio = null;
 
@@ -455,109 +392,12 @@ export function createCompanionVoice(opts = {}) {
     );
   };
 
-  const clearRestart = () => {
-    if (restartTimer) {
-      clearTimeout(restartTimer);
-      restartTimer = null;
-    }
-  };
-
-  const haltRecognition = () => {
-    clearRestart();
-    const rec = recognition;
-    recognition = null;
-    recognitionActive = false;
-    if (!rec) return;
-    try {
-      rec.onresult = null;
-      rec.onerror = null;
-      rec.onend = null;
-      rec.stop();
-    } catch {
-      try {
-        rec.abort();
-      } catch {
-        /* ignore */
-      }
-    }
-  };
-
-  const shouldListen = () => micDesired && pauseDepth === 0 && Boolean(Rec);
-
-  const beginRecognition = () => {
-    if (!shouldListen()) return;
-    if (recognitionActive) return;
-
-    clearRestart();
-    const rec = new Rec();
-    recognition = rec;
-    rec.lang = opts.lang || "zh-HK";
-    rec.interimResults = true;
-    rec.continuous = true;
-    rec.maxAlternatives = 1;
-
-    rec.onresult = (ev) => {
-      let interim = "";
-      let finalText = "";
-      for (let i = ev.resultIndex; i < ev.results.length; i += 1) {
-        const chunk = ev.results[i][0]?.transcript || "";
-        if (ev.results[i].isFinal) finalText += chunk;
-        else interim += chunk;
-      }
-      if (interim) opts.onMicText?.(interim, false);
-      const trimmed = finalText.trim();
-      if (trimmed) {
-        opts.onMicText?.(trimmed, true);
-      }
-    };
-
-    rec.onerror = (ev) => {
-      const code = ev?.error || "mic-error";
-      if (SOFT_MIC_ERRORS.has(code)) return;
-      opts.onError?.(code);
-      if (code === "not-allowed" || code === "service-not-allowed" || code === "audio-capture") {
-        micDesired = false;
-        haltRecognition();
-        opts.onMicState?.(false);
-      }
-    };
-
-    rec.onend = () => {
-      recognitionActive = false;
-      if (recognition === rec) recognition = null;
-      if (shouldListen()) {
-        restartTimer = setTimeout(() => {
-          restartTimer = null;
-          beginRecognition();
-        }, 140);
-      }
-    };
-
-    try {
-      rec.start();
-      recognitionActive = true;
-    } catch (err) {
-      recognitionActive = false;
-      recognition = null;
-      if (shouldListen()) {
-        restartTimer = setTimeout(() => {
-          restartTimer = null;
-          beginRecognition();
-        }, 280);
-      } else {
-        opts.onError?.(err?.message || String(err));
-      }
-    }
-  };
-
   const pauseCapture = () => {
-    pauseDepth += 1;
-    if (pauseDepth === 1) haltRecognition();
+    micCapture.pause();
   };
 
   const resumeCapture = () => {
-    pauseDepth = Math.max(0, pauseDepth - 1);
-    if (pauseDepth === 0 && micDesired) beginRecognition();
+    micCapture.resume();
   };
 
   /**
@@ -690,13 +530,7 @@ export function createCompanionVoice(opts = {}) {
     return speakerOn;
   };
 
-  const stopMic = () => {
-    micDesired = false;
-    clearRestart();
-    haltRecognition();
-    opts.onMicState?.(false);
-    return false;
-  };
+  const stopMic = () => micCapture.stop();
 
   /** Unlock TTS after a user gesture (required by Chrome/Safari autoplay policy). */
   const primeAudio = async () => {
@@ -760,41 +594,11 @@ export function createCompanionVoice(opts = {}) {
     }
   };
 
-  const primeMicPermission = async () => {
-    if (micPermissionPrimed) return true;
-    const perm = await requestMicPermission();
-    if (!perm.ok) {
-      opts.onError?.(perm.reason || "not-allowed");
-      return false;
-    }
-    micPermissionPrimed = true;
-    return true;
-  };
+  const primeMicPermission = () => micCapture.primePermission();
 
-  const startMic = async (startOpts = {}) => {
-    if (!Rec) {
-      opts.onError?.("unsupported");
-      return false;
-    }
-    if (!startOpts.skipPermission) {
-      const permitted = await primeMicPermission();
-      if (!permitted) {
-        micDesired = false;
-        opts.onMicState?.(false);
-        return false;
-      }
-    }
-    if (micDesired) {
-      if (!recognitionActive && pauseDepth === 0) beginRecognition();
-      return true;
-    }
-    micDesired = true;
-    opts.onMicState?.(true);
-    if (pauseDepth === 0) beginRecognition();
-    return true;
-  };
+  const startMic = (startOpts = {}) => micCapture.start(startOpts);
 
-  const toggleMic = () => (micDesired ? stopMic() : startMic());
+  const toggleMic = () => (micCapture.on ? stopMic() : startMic());
 
   return {
     schema: COMPANION_VOICE_SCHEMA,
@@ -802,13 +606,13 @@ export function createCompanionVoice(opts = {}) {
       return speakerOn;
     },
     get micOn() {
-      return micDesired;
+      return micCapture.on;
     },
     get speaking() {
       return speaking;
     },
     get listening() {
-      return recognitionActive && pauseDepth === 0;
+      return micCapture.listening;
     },
     get voiceName() {
       return voice?.name || null;
@@ -817,7 +621,10 @@ export function createCompanionVoice(opts = {}) {
       return usingCloudTts;
     },
     get supportsMic() {
-      return Boolean(Rec);
+      return micCapture.supportsMic;
+    },
+    get usesCloudStt() {
+      return micCapture.usesCloudStt;
     },
     get supportsSpeak() {
       return Boolean(synth) || Boolean(opts.cloudTtsUrl);

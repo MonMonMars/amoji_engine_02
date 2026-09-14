@@ -908,7 +908,7 @@
     </script>
     <script>
       (function () {
-        window.__amojiBuild = "2026-09-14-v6";
+        window.__amojiBuild = "2026-09-14-v7-mic";
         window.__amojiModuleBooted = false;
         window.__amojiStart = { tapped: false, ready: false, run: null, sessionStarted: false };
         window.__amojiShowBootFallback = function (msg, opts) {
@@ -1076,7 +1076,7 @@
     </script>
   </head>
   <body>
-    <!-- amoji-build: 2026-09-14-v6 — instant chat before 3D; soft module-failure fallback -->
+    <!-- amoji-build: 2026-09-14-v7-mic — mic permission on tap; cloud STT fallback for iOS -->
     <noscript>
       <div
         style="
@@ -1527,6 +1527,7 @@
         lang: isEnglish ? "en-US" : "zh-HK",
         cloudVoice: isEnglish ? CLOUD_ENGLISH_VOICE : CLOUD_CANTONESE_VOICE,
         cloudTtsUrl: hostedOnline ? "/api/tts" : null,
+        cloudSttUrl: hostedOnline ? "/api/stt" : null,
         preferCloudTts: hostedOnline,
         onMouth: (open, shape) => {
           if (shape && avatar.setMouthShape) avatar.setMouthShape(shape);
@@ -1816,6 +1817,7 @@
       const startSession = ({ fromTimeout = false } = {}) => {
         if (sessionStarted || sessionStarting) return;
         unlockAudioSync();
+        void voice.primeMicPermission();
         sessionStarting = true;
         startTalkingEl?.classList.add("starting");
         startTalkingEl?.setAttribute("aria-busy", "true");
