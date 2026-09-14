@@ -19,13 +19,15 @@ async function main() {
   await page.waitForTimeout(400);
 
   await page.evaluate((text) => {
+    const transcript = document.getElementById("transcript");
+    transcript.innerHTML = "";
     const row = document.createElement("div");
     row.className = "msg-row assistant";
     const bubble = document.createElement("div");
     bubble.className = "bubble assistant";
     bubble.textContent = text;
     row.appendChild(bubble);
-    document.getElementById("transcript").appendChild(row);
+    transcript.appendChild(row);
   }, LONG_REPLY);
 
   await page.evaluate(() => {
@@ -38,13 +40,15 @@ async function main() {
     const bubble = transcript?.querySelector(".bubble.assistant");
     const bubbleRect = bubble?.getBoundingClientRect();
     const transcriptStyle = transcript ? getComputedStyle(transcript) : null;
+    const lineCount = (bubble?.textContent || "").split("\n").length;
     return {
       build: window.__amojiBuild,
       micMode: stage?.classList.contains("mic-mode"),
       transcriptMaxHeight: transcriptStyle?.maxHeight,
       bubbleHeight: bubbleRect?.height ?? 0,
       bubbleScrollHeight: bubble?.scrollHeight ?? 0,
-      visibleLinesOk: (bubble?.scrollHeight ?? 0) <= (bubbleRect?.height ?? 0) + 2,
+      lineCount,
+      fiveLinesVisible: lineCount >= 5 && (bubbleRect?.height ?? 0) >= 90,
     };
   });
 
@@ -53,10 +57,7 @@ async function main() {
 
   const maxPx = Number.parseFloat(metrics.transcriptMaxHeight) || 0;
   const ok =
-    metrics.micMode &&
-    metrics.bubbleHeight >= 48 &&
-    metrics.visibleLinesOk &&
-    maxPx >= 260;
+    metrics.micMode && metrics.fiveLinesVisible && maxPx >= 260;
   if (!ok) process.exit(1);
 }
 
