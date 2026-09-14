@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>VRM body action test</title>
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "/amoji-engine/vendor/three.module.js",
+          "three/addons/": "/amoji-engine/vendor/three/addons/",
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js"
+        }
+      }
+    </script>
+    <style>
+      html, body { margin: 0; height: 100%; background: #111; }
+      #avatar-canvas { width: 640px; height: 800px; display: block; }
+    </style>
+  </head>
+  <body>
+    <canvas id="avatar-canvas" width="640" height="800"></canvas>
+    <script type="module">
+      import { createVrmAvatar } from "/amoji-engine/engine/companion/vrmAvatar.js";
+      import { VRM_ARM_REST_ROTATIONS } from "/amoji-engine/engine/companion/companionPoseLibrary.js";
+
+      const params = new URLSearchParams(location.search);
+      const modelUrl = params.get("model") || "/prototypes/assets/companion-girl.vrm";
+
+      window.__bodyActionTest = { ready: false };
+
+      try {
+        const canvas = document.getElementById("avatar-canvas");
+        const avatar = await createVrmAvatar({ canvas, modelUrl });
+        const humanoid = avatar.vrm?.humanoid;
+        const leftArm = humanoid?.getNormalizedBoneNode?.("leftUpperArm");
+        const restZ = VRM_ARM_REST_ROTATIONS.leftUpperArm.z;
+
+        const readArmDelta = () => {
+          const z = leftArm?.rotation?.z ?? 0;
+          return Math.abs(z - restZ);
+        };
+
+        const readRootY = () => avatar.vrm?.scene?.position?.y ?? 0;
+
+        const baselineArm = readArmDelta();
+        const baselineRoot = readRootY();
+
+        avatar.playAction("kungfu", { emotion: "happy", loop: true });
+
+        let maxArm = baselineArm;
+        let maxRoot = baselineRoot;
+        for (let i = 0; i < 90; i += 1) {
+          await new Promise((r) => requestAnimationFrame(r));
+          maxArm = Math.max(maxArm, readArmDelta());
+          maxRoot = Math.max(maxRoot, Math.abs(readRootY() - baselineRoot));
+        }
+
+        window.__bodyActionTest = {
+          ready: true,
+          ok: Boolean(leftArm) && maxArm > 0.06,
+          hasLeftArm: Boolean(leftArm),
+          baselineArm,
+          maxArmDelta: maxArm,
+          maxRootDelta: maxRoot,
+          currentAction: avatar.currentAction,
+          armMoves: maxArm > 0.06,
+          rootMoves: maxRoot > 0.008,
+        };
+      } catch (err) {
+        window.__bodyActionTest = {
+          ready: false,
+          ok: false,
+          error: err?.message || String(err),
+        };
+      }
+    </script>
+  </body>
+</html>

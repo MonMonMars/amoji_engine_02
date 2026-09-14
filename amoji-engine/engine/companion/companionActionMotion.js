@@ -141,6 +141,10 @@ const BODY_SAMPLERS = {
       forearmL: hop * 0.14 * amp,
       forearmR: hop * 0.14 * amp,
       leanY: hop * 0.06 * amp,
+      upperLegL: hop * 0.18 * amp,
+      upperLegR: hop * 0.18 * amp,
+      lowerLegL: hop * 0.28 * amp,
+      lowerLegR: hop * 0.28 * amp,
     };
   },
   laugh(_p, t, amp) {
@@ -167,12 +171,18 @@ const BODY_SAMPLERS = {
       pose.forearmL = 0.16 * amp + beat(t, 8.4 + combo) * 0.1 * amp;
       pose.leanY = b * 0.08 * amp;
       pose.headZ = -0.08 * amp;
+      pose.upperLegL = 0.14 * amp + b * 0.06 * amp;
+      pose.upperLegR = 0.05 * amp;
+      pose.lowerLegL = 0.12 * amp;
     } else {
       pose.armLiftR = 0.2 * amp + b * 0.08 * amp;
       pose.armLiftL = 0.06 * amp;
       pose.forearmR = 0.16 * amp + beat(t, 8.4 + combo) * 0.1 * amp;
       pose.leanY = -b * 0.08 * amp;
       pose.headZ = 0.08 * amp;
+      pose.upperLegR = 0.14 * amp + b * 0.06 * amp;
+      pose.upperLegL = 0.05 * amp;
+      pose.lowerLegR = 0.12 * amp;
     }
     return pose;
   },
@@ -247,6 +257,10 @@ const BODY_SAMPLERS = {
       hipZ: sway(t, 4.8, 0.08 * amp),
       leanY: sway(t, 3.6, 0.1 * amp),
       headZ: sway(t, 6.2, 0.05 * amp),
+      upperLegL: 0.08 * amp + b * 0.05 * amp,
+      upperLegR: 0.08 * amp - b * 0.05 * amp,
+      lowerLegL: beat(t, 5.5) * 0.1 * amp,
+      lowerLegR: beat(t, 5.5 + Math.PI) * 0.1 * amp,
     };
   },
   bow(p, _t, amp) {
@@ -584,7 +598,7 @@ export function sampleActionBodyPose(action, phase, elapsedSec = 0) {
   );
   const p = Math.max(0, Math.min(1, phase));
   const t = elapsedSec;
-  const amp = 1.75;
+  const amp = 2.15;
   const sampler = BODY_SAMPLERS[key];
   return sampler ? sampler(p, t, amp) : {};
 }

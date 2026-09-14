@@ -432,7 +432,6 @@ export async function createVrmAvatar(opts) {
     const now = performance.now();
     try {
       bodyMotion.update(dt, { talking, now });
-      syncHumanoidPose();
       const root = bodyMotion.getRootMotion?.() || { y: 0, rotY: 0 };
       model.position.y = baseModelY + (root.y || 0);
       model.rotation.y = baseModelRotY + (root.rotY || 0);
@@ -460,7 +459,11 @@ export async function createVrmAvatar(opts) {
         actionCamBlend = 0;
       }
 
+      if (vrm.lookAt) {
+        vrm.lookAt.autoUpdate = !bodyMotion.currentAction;
+      }
       vrm.update(dt);
+      syncHumanoidPose();
       controls.update();
     } catch (err) {
       console.warn("[vrm] frame update failed", err);

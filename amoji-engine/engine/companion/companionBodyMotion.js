@@ -28,8 +28,10 @@ import {
 } from "./companionIdleMotion.js";
 import {
   buildBasePose,
+  clampActionPose,
   clampArmPose,
   companionGestureStyle,
+  VRM_LEG_REST_ROTATIONS,
   GESTURE_DURATION_SEC,
   HEAD_GESTURE_NOD,
   mergePoses,
@@ -69,6 +71,7 @@ export function createCompanionBodyMotion(humanoid) {
   let idleBeatState = createIdleBeatState();
 
   const bone = (name) => humanoid?.getNormalizedBoneNode?.(name) || null;
+  const rawBone = (name) => humanoid?.getRawBoneNode?.(name) || null;
 
   const setEmotion = (next) => {
     emotion = String(next || "neutral").toLowerCase();
@@ -280,11 +283,13 @@ export function createCompanionBodyMotion(humanoid) {
   ];
 
   const applyBoneRotation = (name, rot) => {
-    const b = bone(name);
-    if (!b || !rot) return;
-    b.rotation.x = rot.x ?? 0;
-    b.rotation.y = rot.y ?? 0;
-    b.rotation.z = rot.z ?? 0;
+    if (!rot) return;
+    for (const b of [bone(name), rawBone(name)]) {
+      if (!b) continue;
+      b.rotation.x = rot.x ?? 0;
+      b.rotation.y = rot.y ?? 0;
+      b.rotation.z = rot.z ?? 0;
+    }
   };
 
   const applyArmRest = () => {
@@ -326,15 +331,15 @@ export function createCompanionBodyMotion(humanoid) {
   };
 
   const applyActionArms = (pose, k) => {
-    const safe = clampArmPose(pose);
+    const safe = clampActionPose(pose);
     const restL = VRM_ARM_REST_ROTATIONS.leftUpperArm;
     const restR = VRM_ARM_REST_ROTATIONS.rightUpperArm;
     const restLl = VRM_ARM_REST_ROTATIONS.leftLowerArm;
     const restRl = VRM_ARM_REST_ROTATIONS.rightLowerArm;
-    const liftL = Math.min(0.55, (safe.armLiftL ?? 0) * k);
-    const liftR = Math.min(0.55, (safe.armLiftR ?? 0) * k);
-    const foreL = Math.min(0.42, (safe.forearmL ?? 0) * k);
-    const foreR = Math.min(0.42, (safe.forearmR ?? 0) * k);
+    const liftL = Math.min(0.82, (safe.armLiftL ?? 0) * k);
+    const liftR = Math.min(0.82, (safe.armLiftR ?? 0) * k);
+    const foreL = Math.min(0.62, (safe.forearmL ?? 0) * k);
+    const foreR = Math.min(0.62, (safe.forearmR ?? 0) * k);
     applyBoneRotation("leftUpperArm", {
       x: restL.x + Math.sin(actionPhase * Math.PI * 2) * 0.03 * k,
       y: restL.y,
@@ -389,6 +394,38 @@ export function createCompanionBodyMotion(humanoid) {
     });
   };
 
+  const applyLegPose = (pose, k, actionMode = false) => {
+    const restUL = VRM_LEG_REST_ROTATIONS.leftUpperLeg;
+    const restUR = VRM_LEG_REST_ROTATIONS.rightUpperLeg;
+    const restLL = VRM_LEG_REST_ROTATIONS.leftLowerLeg;
+    const restLR = VRM_LEG_REST_ROTATIONS.rightLowerLeg;
+    const legScale = actionMode ? 1 : 0.55;
+    const upperL = Math.min(0.72, (pose.upperLegL ?? 0) * k * legScale);
+    const upperR = Math.min(0.72, (pose.upperLegR ?? 0) * k * legScale);
+    const lowerL = Math.min(0.78, (pose.lowerLegL ?? 0) * k * legScale);
+    const lowerR = Math.min(0.78, (pose.lowerLegR ?? 0) * k * legScale);
+    applyBoneRotation("leftUpperLeg", {
+      x: restUL.x + upperL,
+      y: restUL.y,
+      z: restUL.z + (pose.hipZ ?? 0) * 0.35 * k,
+    });
+    applyBoneRotation("rightUpperLeg", {
+      x: restUR.x + upperR,
+      y: restUR.y,
+      z: restUR.z - (pose.hipZ ?? 0) * 0.35 * k,
+    });
+    applyBoneRotation("leftLowerLeg", {
+      x: restLL.x + lowerL,
+      y: restLL.y,
+      z: restLL.z,
+    });
+    applyBoneRotation("rightLowerLeg", {
+      x: restLR.x + lowerR,
+      y: restLR.y,
+      z: restLR.z,
+    });
+  };
+
   const applyPose = (pose, intensity = 1, opts = {}) => {
     if (!humanoid) return;
     const k = Math.max(0, Math.min(1, intensity));
@@ -425,6 +462,7 @@ export function createCompanionBodyMotion(humanoid) {
     if (hips) {
       hips.rotation.z = (pose.hipZ || 0) * k;
     }
+    applyLegPose(pose, k, opts.actionArms === true);
   };
 
   const update = (dt, opts = {}) => {
@@ -437,11 +475,11 @@ export function createCompanionBodyMotion(humanoid) {
     if (activeAction) {
       actionElapsed += dt;
       actionPhase = (actionElapsed % actionDuration) / actionDuration;
-      const actionPose = clampArmPose(
+      const actionPose = clampActionPose(
         sampleActionBodyPose(activeAction, actionPhase, actionElapsed),
       );
       const actionBlend =
-        activeAction === "kungfu" || activeAction === "laugh" ? 0.88 : 0.78;
+        activeAction === "kungfu" || activeAction === "laugh" ? 0.94 : 0.86;
       pose = mergePoses(pose, actionPose, actionBlend);
       rootMotion = sampleActionRootMotion(
         activeAction,

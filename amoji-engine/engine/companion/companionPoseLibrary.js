@@ -20,6 +20,14 @@ export const VRM_ARM_REST_ROTATIONS = Object.freeze({
   rightLowerArm: { x: 0.18, y: 0, z: -0.04 },
 });
 
+/** Standing leg rest — slight knee bend reads natural on most VRM rigs. */
+export const VRM_LEG_REST_ROTATIONS = Object.freeze({
+  leftUpperLeg: { x: 0.02, y: 0, z: 0 },
+  rightUpperLeg: { x: 0.02, y: 0, z: 0 },
+  leftLowerLeg: { x: 0.06, y: 0, z: 0 },
+  rightLowerLeg: { x: 0.06, y: 0, z: 0 },
+});
+
 /** Natural standing — arms relaxed at sides (A-pose VRM). */
 export const REST_POSE = Object.freeze({
   armLiftL: 0.02,
@@ -124,6 +132,27 @@ export function clampArmPose(pose) {
   if ("armLiftR" in out) out.armLiftR = Math.min(maxLift, Math.max(0, out.armLiftR));
   if ("forearmL" in out) out.forearmL = Math.min(maxFore, Math.max(0, out.forearmL ?? 0));
   if ("forearmR" in out) out.forearmR = Math.min(maxFore, Math.max(0, out.forearmR ?? 0));
+  return out;
+}
+
+/**
+ * Looser limits for scripted full-body actions (kungfu, dance, jump).
+ * Talk-gesture clampArmPose must not be used here — it flattens visible motion.
+ * @param {Record<string, number>} pose
+ */
+export function clampActionPose(pose) {
+  const out = { ...pose };
+  const maxLift = 0.52;
+  const maxFore = 0.46;
+  const maxLeg = 0.62;
+  if ("armLiftL" in out) out.armLiftL = Math.min(maxLift, Math.max(-0.08, out.armLiftL));
+  if ("armLiftR" in out) out.armLiftR = Math.min(maxLift, Math.max(-0.08, out.armLiftR));
+  if ("forearmL" in out) out.forearmL = Math.min(maxFore, Math.max(0, out.forearmL ?? 0));
+  if ("forearmR" in out) out.forearmR = Math.min(maxFore, Math.max(0, out.forearmR ?? 0));
+  if ("upperLegL" in out) out.upperLegL = Math.min(maxLeg, Math.max(-0.12, out.upperLegL));
+  if ("upperLegR" in out) out.upperLegR = Math.min(maxLeg, Math.max(-0.12, out.upperLegR));
+  if ("lowerLegL" in out) out.lowerLegL = Math.min(maxLeg, Math.max(0, out.lowerLegL ?? 0));
+  if ("lowerLegR" in out) out.lowerLegR = Math.min(maxLeg, Math.max(0, out.lowerLegR ?? 0));
   return out;
 }
 
