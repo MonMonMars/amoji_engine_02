@@ -1425,6 +1425,10 @@
       );
 
       const setModePill = (mode) => {
+        if (hostedOnline) {
+          modePill.innerHTML = `☁️ <strong>Cloud LLM</strong>`;
+          return;
+        }
         modePill.innerHTML = `LLM · <strong>${mode}</strong>`;
       };
       const setEmotionPill = (emotion) => {

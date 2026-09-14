@@ -91,8 +91,12 @@ export function rankAvailableProviders(status, directOllama) {
   if (hosted && status?.openai?.ok) {
     ranked.push({ id: "auto", reason: "cloud OpenAI" });
   }
-  if (hosted && ranked.length) {
-    ranked.push({ id: "auto", reason: "cloud auto" });
+  if (hosted) {
+    ranked.push({
+      id: "auto",
+      reason: status?.cloudReady ? "cloud auto" : "cloud /api/chat",
+    });
+    ranked.push({ id: "basic", reason: "offline fallback" });
     return ranked;
   }
 
@@ -184,15 +188,16 @@ export function probeProviderAvailability(status, directOllama) {
   for (const p of LLM_PROVIDERS) {
     switch (p.id) {
       case "auto":
-        available[p.id] =
-          ollamaUp ||
-          Boolean(
-            status?.groq?.ok ||
-              status?.openai?.ok ||
-              status?.openrouter?.ok ||
-              status?.cloudReady ||
-              hasAnyClientCloudKey(),
-          );
+        available[p.id] = hosted
+          ? true
+          : ollamaUp ||
+            Boolean(
+              status?.groq?.ok ||
+                status?.openai?.ok ||
+                status?.openrouter?.ok ||
+                status?.cloudReady ||
+                hasAnyClientCloudKey(),
+            );
         break;
       case "ollama-qwen4":
         available[p.id] = ollamaModels.some(

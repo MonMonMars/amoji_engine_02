@@ -53,6 +53,13 @@
         border: 1px solid rgba(247, 241, 232, 0.12);
         border-radius: 0.35rem;
       }
+      .tag.cloud {
+        text-transform: none;
+        letter-spacing: 0;
+        color: #9ed4ff;
+        border-color: rgba(126, 196, 255, 0.35);
+        background: rgba(80, 150, 220, 0.12);
+      }
       .status {
         font-size: 0.8rem;
         color: rgba(247, 241, 232, 0.55);
@@ -193,6 +200,7 @@
       <header>
         <h1>A<span>moji</span></h1>
         <span class="tag" id="build-tag">lite-v2</span>
+        <span class="tag cloud hidden" id="cloud-tag">☁️ Cloud LLM</span>
       </header>
       <div class="status" id="status" aria-live="polite"></div>
       <div class="error-box" id="error-box" role="alert"></div>
@@ -215,6 +223,12 @@
         var params = new URLSearchParams(location.search);
         var lang = (params.get("lang") || "yue").toLowerCase();
         var isEn = lang === "en" || lang === "en-us";
+        var hosted =
+          location.hostname &&
+          location.hostname !== "localhost" &&
+          location.hostname !== "127.0.0.1" &&
+          !location.hostname.startsWith("192.168.") &&
+          !location.hostname.endsWith(".local");
 
         var els = {
           status: document.getElementById("status"),
@@ -240,12 +254,12 @@
               placeholder: "Type a message…",
               start: "Start chatting",
               statusReady: "Ready — tap Send or mic",
-              statusLoading: "Loading chat engine…",
+              statusLoading: "Connecting to cloud chat…",
               statusThinking: "Thinking…",
               statusSpeaking: "Speaking…",
               statusMic: "Listening…",
               welcome: "Hi! I'm Amoji. Say hello!",
-              errModule: "Failed to load chat engine. Check your network.",
+              errModule: "Cloud chat unavailable. Check your network.",
               errChat: "Chat failed",
               errTts: "TTS failed (reply still shown)",
               errMic: "Mic not supported in this browser",
@@ -254,12 +268,12 @@
               placeholder: "輸入訊息…",
               start: "開始傾計",
               statusReady: "準備好 — 按發送或麥克風",
-              statusLoading: "載入聊天引擎…",
+              statusLoading: "連接雲端聊天…",
               statusThinking: "諗緊…",
               statusSpeaking: "講緊…",
               statusMic: "聽緊…",
               welcome: "你好呀！我係 Amoji，傾下計啦！",
-              errModule: "載入聊天引擎失敗，請檢查網絡。",
+              errModule: "雲端聊天不可用，請檢查網絡。",
               errChat: "聊天失敗",
               errTts: "語音失敗（文字回覆已顯示）",
               errMic: "此瀏覽器唔支援麥克風",
@@ -448,8 +462,21 @@
           else startMic();
         });
 
+        if (hosted) {
+          document.getElementById("build-tag").classList.add("hidden");
+          document.getElementById("cloud-tag").classList.remove("hidden");
+        }
+
         setSpeakerUi();
-        setStatus(isEn ? "Tap Start to chat in English" : "按「開始傾計」開始");
+        setStatus(
+          hosted
+            ? isEn
+              ? "☁️ Cloud LLM — tap Start to chat"
+              : "☁️ 雲端 LLM — 按「開始傾計」"
+            : isEn
+              ? "Tap Start to chat in English"
+              : "按「開始傾計」開始",
+        );
       })();
     </script>
   </body>
