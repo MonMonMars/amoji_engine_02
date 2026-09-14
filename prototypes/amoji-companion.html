@@ -67,13 +67,35 @@
         -webkit-tap-highlight-color: transparent;
         touch-action: manipulation;
       }
-      .composer-wrap {
+      .chat-shell {
         position: absolute;
-        left: 0;
-        right: 0;
-        bottom: 0;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
         z-index: 6;
+        pointer-events: none;
+      }
+      .chat-column {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        pointer-events: none;
+      }
+      .transcript {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        pointer-events: auto;
+        padding: 0.5rem 1rem 1rem;
+      }
+      .composer-wrap {
+        position: relative;
+        flex-shrink: 0;
+        z-index: 7;
         padding: 0 1rem max(1rem, env(safe-area-inset-bottom));
+        pointer-events: auto;
       }
       .composer {
         display: flex;
@@ -506,14 +528,17 @@
       .transcript {
         pointer-events: auto;
         flex: 1;
+        min-height: 0;
         overflow-y: auto;
         display: flex;
         flex-direction: column;
         justify-content: flex-end;
         gap: 1.1rem;
-        padding: 0.5rem 0.25rem 1rem;
+        padding: 0.5rem 0.25rem 1.25rem;
         scrollbar-width: thin;
         scroll-behavior: smooth;
+        scroll-padding-bottom: 1.25rem;
+        -webkit-overflow-scrolling: touch;
       }
 
       .msg-row {
@@ -655,9 +680,12 @@
       }
 
       .composer-wrap {
+        position: relative;
+        flex-shrink: 0;
         pointer-events: auto;
         padding: 0 1rem max(1rem, env(safe-area-inset-bottom));
-        background: linear-gradient(180deg, transparent, rgba(5, 7, 12, 0.85) 35%);
+        background: linear-gradient(180deg, transparent, rgba(5, 7, 12, 0.92) 28%);
+        z-index: 7;
       }
 
       @keyframes rise {
@@ -940,7 +968,7 @@
     </script>
     <script>
       (function () {
-        window.__amojiBuild = "2026-09-14-v13-session-mic";
+        window.__amojiBuild = "2026-09-14-v14-chat-layout";
         window.__amojiModuleBooted = false;
         window.__amojiStart = {
           tapped: false,
@@ -1129,7 +1157,7 @@
     </script>
   </head>
   <body>
-    <!-- amoji-build: 2026-09-14-v13-session-mic — auto mic on start; boot failure UX -->
+    <!-- amoji-build: 2026-09-14-v14-chat-layout — fix messages hidden behind composer -->
     <noscript>
       <div
         style="
