@@ -27,24 +27,28 @@ function mockHumanoid() {
 }
 
 describe("createCompanionBodyMotion", () => {
-  it("forces arm bones to A-pose rest every frame", () => {
+  it("applies subtle arm sway while talking", () => {
     const humanoid = mockHumanoid();
     const motion = createCompanionBodyMotion(humanoid);
     motion.setEmotion("happy");
     motion.setTalking(true);
+    motion.setTalkEnergy(0.7);
     motion.update(1 / 60);
-    for (const name of [
-      "leftUpperArm",
-      "rightUpperArm",
-      "leftLowerArm",
-      "rightLowerArm",
-    ]) {
-      const rot = humanoid.bones.get(name).rotation;
-      const rest = VRM_ARM_REST_ROTATIONS[name];
-      expect(rot.x).toBe(rest.x);
-      expect(rot.y).toBe(rest.y);
-      expect(rot.z).toBe(rest.z);
-    }
+    const rot = humanoid.bones.get("leftUpperArm").rotation;
+    const rest = VRM_ARM_REST_ROTATIONS.leftUpperArm;
+    expect(rot.z).not.toBe(rest.z);
+  });
+
+  it("restores arm bones when idle", () => {
+    const humanoid = mockHumanoid();
+    const motion = createCompanionBodyMotion(humanoid);
+    motion.setTalking(false);
+    motion.update(1 / 60);
+    const rot = humanoid.bones.get("leftUpperArm").rotation;
+    const rest = VRM_ARM_REST_ROTATIONS.leftUpperArm;
+    expect(rot.x).toBe(rest.x);
+    expect(rot.y).toBe(rest.y);
+    expect(rot.z).toBe(rest.z);
   });
 
   it("uses content-aware nod for happy laughter without arm overlay", () => {

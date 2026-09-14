@@ -202,10 +202,13 @@ export function createCompanionVoice(opts = {}) {
   let usingCloudTts = Boolean(opts.preferCloudTts && opts.cloudTtsUrl);
   let speakerOn = true;
   let speaking = false;
+  let keepMicDuringSpeak = false;
 
   const micCapture = createMicCapture({
     lang: opts.lang || "zh-HK",
     cloudSttUrl: opts.cloudSttUrl || null,
+    bargeWhilePaused: true,
+    shouldDetectBarge: () => speaking || keepMicDuringSpeak,
     onText: (text, isFinal) => opts.onMicText?.(text, isFinal),
     onSpeechDetected: (info) => opts.onSpeechDetected?.(info),
     onState: (on) => opts.onMicState?.(on),
@@ -328,7 +331,7 @@ export function createCompanionVoice(opts = {}) {
     return await new Promise((resolve) => {
       const audio = configureCompanionAudioElement(getSharedAudio());
       currentCloudAudio = audio;
-      audio.volume = 1;
+      audio.volume = keepMicDuringSpeak ? 0.38 : 1;
       audio.src = objectUrl;
       const finish = (result) => {
         if (currentCloudAudio === audio) currentCloudAudio = null;
@@ -493,7 +496,7 @@ export function createCompanionVoice(opts = {}) {
       utter.lang = voice?.lang || opts.lang || "zh-HK";
       utter.rate = prosody.rate;
       utter.pitch = prosody.pitch;
-      utter.volume = prosody.volume;
+      utter.volume = keepMicDuringSpeak ? prosody.volume * 0.4 : prosody.volume;
 
       startLipSync(clean, utter);
 
@@ -550,12 +553,17 @@ export function createCompanionVoice(opts = {}) {
    * @param {string} [emotion]
    */
   const speakOnce = async (text, emotion = "neutral") => {
-    pauseCapture();
+    if (!keepMicDuringSpeak) pauseCapture();
     try {
       return await speakOnceCore(text, emotion);
     } finally {
-      resumeCapture();
+      if (!keepMicDuringSpeak) resumeCapture();
     }
+  };
+
+  const setKeepMicDuringSpeak = (on) => {
+    keepMicDuringSpeak = Boolean(on);
+    return keepMicDuringSpeak;
   };
 
   const speak = (text, emotion = "neutral") => {
@@ -590,7 +598,7 @@ export function createCompanionVoice(opts = {}) {
       closed: false,
       capturePaused: pauseMic,
     };
-    if (pauseMic) pauseCapture();
+    if (pauseMic && !keepMicDuringSpeak) pauseCapture();
     return streamSession;
   };
 
@@ -626,7 +634,7 @@ export function createCompanionVoice(opts = {}) {
       await speakChain;
       return { ok: true };
     } finally {
-      if (session.capturePaused) resumeCapture();
+      if (session.capturePaused && !keepMicDuringSpeak) resumeCapture();
     }
   };
 
@@ -634,7 +642,7 @@ export function createCompanionVoice(opts = {}) {
   const cancelStreamSpeak = () => {
     const session = streamSession;
     stopSpeak();
-    if (session?.capturePaused) resumeCapture();
+    if (session?.capturePaused && !keepMicDuringSpeak) resumeCapture();
     return true;
   };
 
@@ -844,6 +852,7 @@ export function createCompanionVoice(opts = {}) {
     primeMicPermission,
     speak,
     speakThinking,
+    setKeepMicDuringSpeak,
     beginStreamSpeak,
     pushStreamSpeak,
     finishStreamSpeak,
