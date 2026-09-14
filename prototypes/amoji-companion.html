@@ -1049,7 +1049,7 @@
     </script>
     <script>
       (function () {
-        window.__amojiBuild = "2026-09-14-v25-companion-polish";
+        window.__amojiBuild = "2026-09-14-v26-ios-speaker-motion";
         window.__amojiModuleBooted = false;
         window.__amojiStart = {
           tapped: false,
@@ -1238,7 +1238,7 @@
     </script>
   </head>
   <body>
-    <!-- amoji-build: 2026-09-14-v25-companion-polish — greeting + emotion sync polish -->
+    <!-- amoji-build: 2026-09-14-v26-ios-speaker-motion — iPhone loudspeaker + body motion -->
     <noscript>
       <div
         style="
@@ -1431,6 +1431,7 @@
         streamSpeakMod,
         bargeMod,
         voiceGateMod,
+        platformMod,
       ] = await Promise.all([
         import("../amoji-engine/engine/companion/createAvatar.js"),
         import("../amoji-engine/engine/companion/chatLlm.js"),
@@ -1447,6 +1448,7 @@
         import("../amoji-engine/engine/companion/companionStreamSpeak.js"),
         import("../amoji-engine/engine/companion/companionBargeMonitor.js"),
         import("../amoji-engine/engine/companion/companionVoiceGate.js"),
+        import("../amoji-engine/engine/companion/companionPlatform.js"),
       ]);
       window.__amojiModuleBooted = true;
       const {
@@ -1479,6 +1481,7 @@
       const { createStreamSpeakPlanner } = streamSpeakMod;
       const { createCompanionBargeMonitor } = bargeMod;
       const { createCompanionVoiceGate } = voiceGateMod;
+      const { isIosLike, shouldPauseMicDuringTts } = platformMod;
 
       const hostedOnline = isHostedCompanion();
 
@@ -1496,7 +1499,7 @@
         lastAvatarPerformance = content;
         currentEmotion = content.emotion || "neutral";
         avatar.setEmotion?.(content.emotion || "neutral");
-        setEmotionPill(content.emotion || "neutral");
+        setEmotionPill(content.emotion || "neutral", content.action || null);
         avatar.setTalkStyle?.(content.talkStyle);
         avatar.setTalkEnergy?.(content.speechEnergy);
         if (content.action === "stop") {
@@ -1816,9 +1819,13 @@
         }
         modePill.innerHTML = `LLM · <strong>${mode}</strong>`;
       };
-      const setEmotionPill = (emotion) => {
+      const setEmotionPill = (emotion, action = null) => {
         currentEmotion = emotion;
-        emotionPill.innerHTML = `feel · <strong>${emotion}</strong>`;
+        const actionLabel =
+          action || avatar.currentAction || lastAvatarPerformance?.action;
+        const suffix =
+          actionLabel && actionLabel !== "none" ? ` · ${actionLabel}` : "";
+        emotionPill.innerHTML = `feel · <strong>${emotion}${suffix}</strong>`;
       };
       const setVoicePill = (label) => {
         voicePill.innerHTML = `voice · <strong>${label}</strong>`;
@@ -1903,7 +1910,9 @@
         btnMic.setAttribute("aria-pressed", voice.micOn ? "true" : "false");
         btnMic.textContent = voice.micOn ? "⏺" : "🎤";
         stage.classList.toggle("mic-mode", voice.micOn);
-        voice.setKeepMicDuringSpeak?.(phaseAEnabled && voice.micOn);
+        voice.setKeepMicDuringSpeak?.(
+          phaseAEnabled && voice.micOn && !shouldPauseMicDuringTts(),
+        );
       };
 
       const syncListenPose = () => {
