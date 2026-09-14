@@ -24,7 +24,8 @@ jobs:
         run: cd amoji-engine && npm test
 
       - name: Deploy to Vercel
-        if: ${{ secrets.VERCEL_TOKEN != '' }}
+        id: vercel_deploy
+        continue-on-error: true
         uses: amondnet/vercel-action@v25
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
@@ -33,8 +34,8 @@ jobs:
           working-directory: .
           vercel-args: "--prod"
 
-      - name: Skip deploy (no Vercel secrets)
-        if: ${{ secrets.VERCEL_TOKEN == '' }}
+      - name: Deploy note (when GitHub secrets missing)
+        if: steps.vercel_deploy.outcome == 'failure'
         run: |
-          echo "VERCEL_TOKEN not set — skipping GitHub deploy."
-          echo "Vercel Git integration may still auto-deploy on push to main."
+          echo "GitHub Vercel deploy skipped or failed (VERCEL_TOKEN may be unset)."
+          echo "Production may still update via Vercel Git integration on push to main."
