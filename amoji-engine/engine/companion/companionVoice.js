@@ -1,14 +1,78 @@
+import { createMicCapture } from "./companionMicCapture.js";
+import {
+  formatMicError,
+  MIC_ERROR_MESSAGES,
+  requestMicPermission,
+} from "./companionMicUtils.js";
+import {
+  pickNextThinkingPhrase,
+  pickThinkingPhrase,
+} from "./companionContentMotion.js";
+import { isIosLike, shouldPauseMicDuringTts } from "./companionPlatform.js";
+
+export { formatMicError, MIC_ERROR_MESSAGES, requestMicPermission };
+
 /**
  * Browser female TTS + mic capture for the companion demo (Grok-style).
  * Uses Web Speech API: speechSynthesis (female voice + emotion tone)
- * and SpeechRecognition for continuous microphone conversation.
+ * and SpeechRecognition (or cloud STT fallback) for microphone conversation.
  *
- * Mic mode: stays open until the user turns it off. Each time speech
- * stops (final result / pause), onMicText(text, true) fires so the UI
- * can reply, then listening resumes after TTS.
+ * Lip sync: maps spoken words/characters to mouth shapes via
+ * SpeechSynthesisUtterance boundary events (with timed fallback).
  */
 
 export const COMPANION_VOICE_SCHEMA = "amoji.companionVoice.v1";
+
+/** Tiny silent WAV — unlocks iOS/Safari audio in the same user-gesture turn. */
+const SILENT_AUDIO_DATA_URI =
+  "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEAQB8AAEAfAAABAAgAZGF0YQQAAAAAAA==";
+
+/**
+ * Configure an HTMLAudioElement for mobile Safari + desktop autoplay policies.
+ * @param {HTMLAudioElement} audio
+ */
+export function configureCompanionAudioElement(audio) {
+  if (!audio) return audio;
+  audio.preload = "auto";
+  audio.setAttribute("playsinline", "");
+  audio.setAttribute("webkit-playsinline", "");
+  audio.playsInline = true;
+  return audio;
+}
+
+/**
+ * Synchronous audio unlock — call directly inside click/touch handlers before any await.
+ * Safe to call multiple times.
+ * @returns {boolean}
+ */
+export function unlockAudioSync() {
+  if (typeof globalThis.window === "undefined") return false;
+  if (globalThis.window.__amojiAudioUnlocked) return true;
+  try {
+    // iOS routes TTS to the earpiece when Web Audio + mic run together — unlock via <audio> only.
+    if (!isIosLike()) {
+      const AC = globalThis.AudioContext || globalThis.webkitAudioContext;
+      if (AC) {
+        const ctx =
+          globalThis.window.__amojiAudioCtx ||
+          new AC({ latencyHint: "interactive" });
+        globalThis.window.__amojiAudioCtx = ctx;
+        if (ctx.state === "suspended") void ctx.resume();
+      }
+    }
+    const audio =
+      globalThis.window.__amojiPrimeAudio ||
+      configureCompanionAudioElement(new Audio());
+    globalThis.window.__amojiPrimeAudio = audio;
+    audio.volume = 0.001;
+    if (!audio.src || audio.src === "") audio.src = SILENT_AUDIO_DATA_URI;
+    void audio.play().catch(() => {});
+    globalThis.window.__amojiAudioUnlocked = true;
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 const EMOTION_PROSODY = {
   neutral: { rate: 1.02, pitch: 1.15, volume: 1 },
@@ -19,43 +83,121 @@ const EMOTION_PROSODY = {
   angry: { rate: 1.08, pitch: 0.95, volume: 1 },
 };
 
-/** Errors that should not kill continuous listening. */
-const SOFT_MIC_ERRORS = new Set([
-  "no-speech",
-  "aborted",
-  "network",
-]);
+/**
+ * Map a character to a viseme shape + openness for lip sync.
+ * @param {string} ch
+ * @returns {{ shape: string, open: number }}
+ */
+export function charToViseme(ch) {
+  const c = String(ch || " ").toLowerCase();
+  if (/[\s.,!?;:'"()\-—…]/.test(c)) return { shape: "ee", open: 0.08 };
+  if (/[aeæəàáâãäå]/.test(c)) return { shape: "aa", open: 0.82 };
+  if (/[iɪyìíîï]/.test(c)) return { shape: "ih", open: 0.58 };
+  if (/[oɔòóôõö]/.test(c)) return { shape: "oh", open: 0.72 };
+  if (/[uʊwùúûü]/.test(c)) return { shape: "ou", open: 0.68 };
+  if (/[eɛèéêë]/.test(c)) return { shape: "ee", open: 0.62 };
+  if (/[mbp]/.test(c)) return { shape: "ee", open: 0.12 };
+  if (/[fv]/.test(c)) return { shape: "ih", open: 0.22 };
+  if (/[\u4e00-\u9fff\u3400-\u4dbf]/.test(c)) {
+    const mod = c.charCodeAt(0) % 5;
+    const shapes = ["aa", "ih", "oh", "ou", "ee"];
+    const opens = [0.78, 0.55, 0.7, 0.65, 0.6];
+    return { shape: shapes[mod], open: opens[mod] };
+  }
+  return { shape: "aa", open: 0.45 };
+}
 
 /**
  * Prefer a female / higher-pitch voice, Cantonese/Chinese when available.
  * @param {SpeechSynthesisVoice[]} voices
  */
+const MALE_VOICE_RE =
+  /\b(male|man|boy|david|daniel|ravi|keda|alex|fred|bruce|tom|jorge|lee|james|mark|aaron|guy|richard|nathan|oliver|matthew|ryan|paul)\b/i;
+
 export function pickFemaleVoice(voices) {
-  const list = Array.isArray(voices) ? voices : [];
+  const list = (Array.isArray(voices) ? voices : []).filter((v) => {
+    if (!v || typeof v.name !== "string") return false;
+    if (v.gender === "male") return false;
+    const name = `${v.name} ${v.lang || ""}`;
+    if (MALE_VOICE_RE.test(name) && !/female|woman|girl/i.test(name)) return false;
+    return true;
+  });
   const score = (v) => {
-    const name = `${v.name} ${v.lang}`.toLowerCase();
+    const name = `${v.name} ${v.lang || ""}`.toLowerCase();
     let s = 0;
-    if (/zh-hk|yue|cantonese|hong kong/.test(name)) s += 50;
-    if (/zh-tw|zh-cn|cmn|chinese|mandarin/.test(name)) s += 35;
-    if (/en-hk|en-gb|en-us|en-au/.test(name)) s += 15;
-    if (/female|woman|girl|samantha|karen|moira|tingting|ting-ting|meijia|sinji|xiaoxiao|xiaoyi|hana|google uk english female|microsoft xiaoxiao|microsoft hsiao/.test(name)) {
-      s += 40;
+    if (v.gender === "female") s += 80;
+    if (/zh-hk|yue|cantonese|hong kong/.test(name)) s += 55;
+    if (/zh-tw|zh-cn|cmn|chinese|mandarin/.test(name)) s += 40;
+    if (/female|woman|girl/.test(name)) s += 45;
+    if (/samantha|karen|moira|tingting|ting-ting|meijia|sinji|xiaoxiao|xiaoyi|hsiao|sin-ji|yuna|mei-jia/.test(name)) {
+      s += 50;
     }
-    if (/male|man|david|daniel|ravi|keda/.test(name) && !/female/.test(name)) s -= 30;
+    if (/en-hk|en-gb|en-au/.test(name)) s += 10;
     if (v.localService) s += 5;
     return s;
   };
-  return [...list].sort((a, b) => score(b) - score(a))[0] || null;
+  const picked = [...list].sort((a, b) => score(b) - score(a))[0] || null;
+  return picked;
 }
+
+/** Human label for the voice pill. */
+export function femaleVoiceLabel(voice) {
+  if (voice?.cloud && /wanlung/i.test(String(voice.name || ""))) {
+    return "男聲·粵·雲龍";
+  }
+  if (voice?.cloud && /hiugaai/i.test(String(voice.name || ""))) {
+    return "女聲·粵·曉佳";
+  }
+  if (voice?.cloud && /hiumaan/i.test(String(voice.name || ""))) {
+    return "女聲·粵·曉曼";
+  }
+  if (voice?.cloud && /jenny/i.test(String(voice.name || ""))) {
+    return "Female·EN·Jenny";
+  }
+  if (voice?.cloud && /aria|en-us/i.test(String(voice.name || ""))) {
+    return "Female·EN·Aria";
+  }
+  if (voice?.cloud && /zh-hk|yue|cantonese/i.test(String(voice.lang || ""))) {
+    return "女聲·粵";
+  }
+  if (!voice?.name) return "女聲·粵";
+  const n = voice.name.toLowerCase();
+  if (/xiaoxiao|hsiao|sin-?ji|ting-?ting|meijia|yuna|hiumaan|hiugaai/.test(n)) {
+    return "女聲·粵";
+  }
+  if (/zh-hk|yue|cantonese/.test(`${n} ${voice.lang || ""}`)) return "女聲·粵";
+  if (/female|woman|girl|samantha|karen|moira/.test(n)) return "女聲";
+  return "女聲·粵";
+}
+
+/** @type {Record<string, { rate: string, pitch: string }>} */
+export const CLOUD_CANTONESE_VOICE = Object.freeze({
+  name: "zh-HK-HiuMaanNeural",
+  lang: "zh-HK",
+  cloud: true,
+});
+
+export const CLOUD_ENGLISH_VOICE = Object.freeze({
+  name: "en-US-AriaNeural",
+  lang: "en-US",
+  cloud: true,
+});
 
 /**
  * @param {{
- *   onMouth?: (open: number) => void,
+ *   onMouth?: (open: number, shape?: string) => void,
  *   onTalking?: (on: boolean) => void,
  *   onMicText?: (text: string, isFinal: boolean) => void,
+ *   onSpeechDetected?: (info: { source: string, text?: string, rms?: number }) => void,
  *   onMicState?: (on: boolean) => void,
  *   onError?: (msg: string) => void,
+ *   onSpeakChunk?: (chunk: string, charIndex: number) => void,
+ *   onAssistantOutputChange?: (active: boolean) => void,
  *   lang?: string,
+ *   cloudTtsUrl?: string | null,
+ *   cloudSttUrl?: string | null,
+ *   preferCloudTts?: boolean,
+ *   cloudVoice?: { name: string, lang: string, cloud?: boolean },
  * }} [opts]
  */
 export function createCompanionVoice(opts = {}) {
@@ -63,24 +205,79 @@ export function createCompanionVoice(opts = {}) {
     typeof globalThis.speechSynthesis !== "undefined"
       ? globalThis.speechSynthesis
       : null;
-  const Rec =
-    globalThis.SpeechRecognition || globalThis.webkitSpeechRecognition || null;
 
   let voice = null;
+  let usingCloudTts = Boolean(opts.preferCloudTts && opts.cloudTtsUrl);
   let speakerOn = true;
-  /** User wants continuous listen mode on. */
-  let micDesired = false;
-  /** Nested pause while LLM/TTS runs so the mic does not hear itself. */
-  let pauseDepth = 0;
-  /** @type {SpeechRecognition | null} */
-  let recognition = null;
-  let recognitionActive = false;
-  let restartTimer = null;
   let speaking = false;
+  let keepMicDuringSpeak = false;
+
+  const isAssistantOutputActive = () =>
+    speaking ||
+    thinkingLoopActive ||
+    thinkingActive ||
+    Boolean(streamSession);
+
+  const syncAssistantOutput = () => {
+    opts.onAssistantOutputChange?.(isAssistantOutputActive());
+  };
+
+  const micCapture = createMicCapture({
+    lang: opts.lang || "zh-HK",
+    cloudSttUrl: opts.cloudSttUrl || null,
+    bargeWhilePaused: true,
+    shouldDetectBarge: () => isAssistantOutputActive() || keepMicDuringSpeak,
+    onText: (text, isFinal) => opts.onMicText?.(text, isFinal),
+    onSpeechDetected: (info) => opts.onSpeechDetected?.(info),
+    onState: (on) => opts.onMicState?.(on),
+    onError: (code) => opts.onError?.(code),
+  });
+  /** @type {HTMLAudioElement | null} */
+  let currentCloudAudio = null;
+  /** @type {HTMLAudioElement | null} */
+  let thinkingCloudAudio = null;
+  let thinkingActive = false;
+  let thinkingLoopActive = false;
+  let thinkingPhraseIndex = -1;
+  /** @type {ReturnType<typeof setTimeout> | null} */
+  let thinkingLoopTimer = null;
+
+  const getSharedAudio = () => {
+    if (typeof globalThis.window === "undefined") {
+      return configureCompanionAudioElement(new Audio());
+    }
+    if (!globalThis.window.__amojiTtsAudio) {
+      globalThis.window.__amojiTtsAudio = configureCompanionAudioElement(
+        new Audio(),
+      );
+    }
+    return globalThis.window.__amojiTtsAudio;
+  };
+
+  const ttsPlaybackVolume = () => {
+    if (shouldPauseMicDuringTts()) return 1;
+    return keepMicDuringSpeak ? 0.38 : 1;
+  };
+
+  const mustPauseMicForTts = () =>
+    !keepMicDuringSpeak || shouldPauseMicDuringTts();
+  /** Serialize TTS so greeting + replies do not overlap or cut each other off. */
+  let speakChain = Promise.resolve();
+  /** @type {{ emotion: string, closed: boolean, capturePaused: boolean } | null} */
+  let streamSession = null;
+  /** @type {ReturnType<typeof setInterval> | null} */
   let mouthTimer = null;
+  /** @type {ReturnType<typeof setTimeout>[]} */
+  let mouthTimeouts = [];
+
+  const cloudVoicePreset = () => opts.cloudVoice || CLOUD_CANTONESE_VOICE;
 
   const ensureVoices = () =>
     new Promise((resolve) => {
+      if (usingCloudTts && opts.cloudTtsUrl) {
+        voice = cloudVoicePreset();
+        return resolve(voice);
+      }
       if (!synth) return resolve(null);
       const pick = () => {
         voice = pickFemaleVoice(synth.getVoices());
@@ -94,172 +291,243 @@ export function createCompanionVoice(opts = {}) {
 
   void ensureVoices();
 
+  const stopCloudAudio = () => {
+    if (!currentCloudAudio) return;
+    try {
+      currentCloudAudio.pause();
+    } catch {
+      /* ignore */
+    }
+    currentCloudAudio = null;
+  };
+
+  const stopThinkingAudio = () => {
+    thinkingActive = false;
+    thinkingLoopActive = false;
+    if (thinkingLoopTimer) {
+      clearTimeout(thinkingLoopTimer);
+      thinkingLoopTimer = null;
+    }
+    if (!thinkingCloudAudio) return;
+    try {
+      thinkingCloudAudio.pause();
+    } catch {
+      /* ignore */
+    }
+    thinkingCloudAudio = null;
+  };
+
+  /**
+   * Play MP3 from cloud TTS (Cantonese neural female).
+   * @param {string} clean
+   * @param {string} emotion
+   */
+  const speakCloud = async (clean, emotion) => {
+    const url = opts.cloudTtsUrl;
+    if (!url) return { ok: false, reason: "no-cloud-tts-url" };
+
+    unlockAudioSync();
+    stopCloudAudio();
+    synth?.cancel();
+
+    const preset = cloudVoicePreset();
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        text: clean,
+        emotion,
+        voice: preset.name,
+        lang: preset.lang,
+      }),
+    });
+    if (!res.ok) {
+      const errText = await res.text().catch(() => "");
+      return {
+        ok: false,
+        reason: `cloud-tts-${res.status}${errText ? `: ${errText.slice(0, 80)}` : ""}`,
+      };
+    }
+
+    const blob = await res.blob();
+    if (!blob.size) return { ok: false, reason: "cloud-tts-empty" };
+    const mime = blob.type || res.headers.get("content-type") || "";
+    if (mime && !mime.includes("audio") && !mime.includes("mpeg")) {
+      const preview = await blob.text().catch(() => "");
+      return {
+        ok: false,
+        reason: `cloud-tts-bad-mime:${mime || "unknown"}:${preview.slice(0, 60)}`,
+      };
+    }
+
+    const objectUrl = URL.createObjectURL(blob);
+    startLipSync(clean);
+    speaking = true;
+    syncAssistantOutput();
+
+    return await new Promise((resolve) => {
+      const audio = configureCompanionAudioElement(getSharedAudio());
+      currentCloudAudio = audio;
+      audio.volume = ttsPlaybackVolume();
+      audio.src = objectUrl;
+      const finish = (result) => {
+        if (currentCloudAudio === audio) currentCloudAudio = null;
+        URL.revokeObjectURL(objectUrl);
+        speaking = false;
+        stopMouth();
+        syncAssistantOutput();
+        resolve(result);
+      };
+      audio.onended = () => {
+        finish({
+          ok: true,
+          voice: preset.name,
+          emotion,
+          cloud: true,
+        });
+      };
+      audio.onerror = () => {
+        finish({ ok: false, reason: "cloud-audio-play-failed" });
+      };
+      void audio.play().catch((err) => {
+        finish({
+          ok: false,
+          reason: err?.message || "cloud-audio-play-blocked",
+        });
+      });
+    });
+  };
+
+  const emitViseme = (ch) => {
+    const { shape, open } = charToViseme(ch);
+    opts.onMouth?.(open, shape);
+  };
+
   const stopMouth = () => {
     if (mouthTimer) {
       clearInterval(mouthTimer);
       mouthTimer = null;
     }
-    opts.onMouth?.(0);
+    for (const t of mouthTimeouts) clearTimeout(t);
+    mouthTimeouts = [];
+    opts.onMouth?.(0, null);
     opts.onTalking?.(false);
   };
 
-  const startMouthPulse = () => {
+  /**
+   * Drive mouth shapes from text — boundary events when available, else timed walk.
+   * @param {string} text
+   * @param {SpeechSynthesisUtterance} [utter]
+   */
+  const startLipSync = (text, utter) => {
     stopMouth();
     opts.onTalking?.(true);
-    const t0 = performance.now();
+    const clean = String(text || "");
+    if (!clean) return;
+
+    let boundaryWorks = false;
+    if (utter && "onboundary" in utter) {
+      utter.onboundary = (ev) => {
+        boundaryWorks = true;
+        const idx = ev.charIndex ?? 0;
+        const len = ev.charLength || 1;
+        const slice = clean.slice(idx, idx + len);
+        const ch = slice[0] || clean[idx] || " ";
+        emitViseme(ch);
+        if (slice.trim()) opts.onSpeakChunk?.(slice, idx);
+      };
+    }
+
+    // Timed fallback — also backs muted speaker / browsers without boundary
+    const msPerChar = 48;
+    let i = 0;
     mouthTimer = setInterval(() => {
-      const pulse =
-        0.22 + Math.abs(Math.sin((performance.now() - t0) * 0.028)) * 0.78;
-      opts.onMouth?.(pulse);
-    }, 40);
+      if (boundaryWorks) return;
+      if (i >= clean.length) {
+        opts.onMouth?.(0.06, "ee");
+        return;
+      }
+      const ch = clean[i];
+      emitViseme(ch);
+      if (i % 2 === 0 && ch.trim()) {
+        const chunk = clean.slice(Math.max(0, i - 2), i + 6);
+        opts.onSpeakChunk?.(chunk, i);
+      }
+      i += 1;
+    }, msPerChar);
+
+    const totalMs = Math.min(12000, clean.length * msPerChar + 400);
+    mouthTimeouts.push(
+      setTimeout(() => {
+        if (!boundaryWorks) opts.onMouth?.(0, null);
+      }, totalMs),
+    );
   };
 
-  const clearRestart = () => {
-    if (restartTimer) {
-      clearTimeout(restartTimer);
-      restartTimer = null;
-    }
-  };
-
-  const haltRecognition = () => {
-    clearRestart();
-    const rec = recognition;
-    recognition = null;
-    recognitionActive = false;
-    if (!rec) return;
-    try {
-      rec.onresult = null;
-      rec.onerror = null;
-      rec.onend = null;
-      rec.stop();
-    } catch {
-      try {
-        rec.abort();
-      } catch {
-        /* ignore */
-      }
-    }
-  };
-
-  const shouldListen = () => micDesired && pauseDepth === 0 && Boolean(Rec);
-
-  const beginRecognition = () => {
-    if (!shouldListen()) return;
-    if (recognitionActive) return;
-
-    clearRestart();
-    const rec = new Rec();
-    recognition = rec;
-    rec.lang = opts.lang || "zh-HK";
-    rec.interimResults = true;
-    // continuous + restart-on-end: keep the session open across pauses
-    rec.continuous = true;
-    rec.maxAlternatives = 1;
-
-    rec.onresult = (ev) => {
-      let interim = "";
-      let finalText = "";
-      for (let i = ev.resultIndex; i < ev.results.length; i += 1) {
-        const chunk = ev.results[i][0]?.transcript || "";
-        if (ev.results[i].isFinal) finalText += chunk;
-        else interim += chunk;
-      }
-      if (interim) opts.onMicText?.(interim, false);
-      const trimmed = finalText.trim();
-      if (trimmed) {
-        // Speech paused / utterance ended — notify UI; keep mic desired on
-        opts.onMicText?.(trimmed, true);
-      }
-    };
-
-    rec.onerror = (ev) => {
-      const code = ev?.error || "mic-error";
-      if (SOFT_MIC_ERRORS.has(code)) return;
-      opts.onError?.(code);
-      if (code === "not-allowed" || code === "service-not-allowed" || code === "audio-capture") {
-        micDesired = false;
-        haltRecognition();
-        opts.onMicState?.(false);
-      }
-    };
-
-    rec.onend = () => {
-      recognitionActive = false;
-      if (recognition === rec) recognition = null;
-      // Chrome ends sessions often; restart while user still wants mic on
-      if (shouldListen()) {
-        restartTimer = setTimeout(() => {
-          restartTimer = null;
-          beginRecognition();
-        }, 140);
-      }
-    };
-
-    try {
-      rec.start();
-      recognitionActive = true;
-    } catch (err) {
-      recognitionActive = false;
-      recognition = null;
-      if (shouldListen()) {
-        restartTimer = setTimeout(() => {
-          restartTimer = null;
-          beginRecognition();
-        }, 280);
-      } else {
-        opts.onError?.(err?.message || String(err));
-      }
-    }
-  };
-
-  /**
-   * Pause capture (refcount) so TTS / LLM turns do not feed the mic.
-   */
   const pauseCapture = () => {
-    pauseDepth += 1;
-    if (pauseDepth === 1) haltRecognition();
+    micCapture.pause();
   };
 
-  /**
-   * Resume capture when pause depth hits 0 and mic is still desired.
-   */
   const resumeCapture = () => {
-    pauseDepth = Math.max(0, pauseDepth - 1);
-    if (pauseDepth === 0 && micDesired) beginRecognition();
+    micCapture.resume();
   };
 
-  /**
-   * Speak reply with female voice + emotion tone. Resolves when finished.
-   * Pauses mic capture for the duration to avoid echo loops.
-   * @param {string} text
-   * @param {string} [emotion]
-   */
-  const speak = async (text, emotion = "neutral") => {
-    const clean = String(text || "")
+  const cleanSpeakText = (text) =>
+    String(text || "")
       .replace(/[*_`#>/\\]/g, " ")
       .replace(/\s+/g, " ")
       .trim();
+
+  /**
+   * Core TTS playback (no mic pause/resume — used by stream queue).
+   * @param {string} text
+   * @param {string} [emotion]
+   */
+  const speakOnceCore = async (text, emotion = "neutral") => {
+    const clean = cleanSpeakText(text);
     if (!clean) return { ok: false, reason: "empty" };
 
-    pauseCapture();
+    stopThinkingAudio();
     try {
       if (!speakerOn) {
-        startMouthPulse();
+        startLipSync(clean);
         await sleep(Math.min(2200, 400 + clean.length * 28));
         stopMouth();
         return { ok: true, muted: true };
       }
-      if (!synth) {
-        startMouthPulse();
-        await sleep(Math.min(2800, 450 + clean.length * 36));
-        stopMouth();
-        return { ok: false, reason: "no-speech-synthesis" };
+      await ensureVoices();
+
+      const tryCloud =
+        Boolean(opts.cloudTtsUrl) &&
+        (usingCloudTts || opts.preferCloudTts !== false);
+      if (tryCloud) {
+        const cloudResult = await speakCloud(clean, emotion);
+        if (cloudResult.ok) {
+          usingCloudTts = true;
+          voice = cloudVoicePreset();
+          return cloudResult;
+        }
+        usingCloudTts = false;
+        const cloudReason = cloudResult.reason || "cloud-tts-failed";
+        opts.onError?.(cloudReason);
+        if (/cloud-audio-play-blocked|notallowed/i.test(cloudReason)) {
+          unlockAudioSync();
+        }
       }
 
-      await ensureVoices();
+      if (!synth) {
+        startLipSync(clean);
+        await sleep(Math.min(2800, 450 + clean.length * 36));
+        stopMouth();
+        return {
+          ok: false,
+          reason: tryCloud ? "cloud-and-browser-tts-unavailable" : "no-speech-synthesis",
+        };
+      }
+
       synth.cancel();
       speaking = true;
-      startMouthPulse();
+      syncAssistantOutput();
 
       const prosody = EMOTION_PROSODY[emotion] || EMOTION_PROSODY.neutral;
       const utter = new SpeechSynthesisUtterance(clean);
@@ -267,35 +535,286 @@ export function createCompanionVoice(opts = {}) {
       utter.lang = voice?.lang || opts.lang || "zh-HK";
       utter.rate = prosody.rate;
       utter.pitch = prosody.pitch;
-      utter.volume = prosody.volume;
+      utter.volume = shouldPauseMicDuringTts()
+        ? prosody.volume
+        : keepMicDuringSpeak
+          ? prosody.volume * 0.4
+          : prosody.volume;
 
-      return await new Promise((resolve) => {
-        utter.onend = () => {
-          speaking = false;
-          stopMouth();
-          resolve({
-            ok: true,
-            voice: voice?.name || null,
-            emotion,
-          });
-        };
-        utter.onerror = (ev) => {
-          speaking = false;
-          stopMouth();
-          opts.onError?.(ev?.error || "tts-error");
-          resolve({ ok: false, reason: ev?.error || "tts-error" });
-        };
-        synth.speak(utter);
-      });
-    } finally {
-      resumeCapture();
+      startLipSync(clean, utter);
+
+      const maxMs = Math.min(15000, 700 + clean.length * 55);
+      let settled = false;
+      const finishSpeak = (result) => {
+        if (settled) return result;
+        settled = true;
+        speaking = false;
+        stopMouth();
+        return result;
+      };
+      const spoken = await Promise.race([
+        new Promise((resolve) => {
+          utter.onend = () => {
+            resolve(
+              finishSpeak({
+                ok: true,
+                voice: voice?.name || null,
+                emotion,
+              }),
+            );
+          };
+          utter.onerror = (ev) => {
+            const reason = ev?.error || "tts-error";
+            if (reason !== "interrupted" && reason !== "canceled") {
+              opts.onError?.(reason);
+            }
+            resolve(finishSpeak({ ok: false, reason }));
+          };
+          try {
+            synth.speak(utter);
+          } catch (err) {
+            resolve(
+              finishSpeak({ ok: false, reason: err?.message || "tts-speak-failed" }),
+            );
+          }
+        }),
+        sleep(maxMs).then(() => {
+          if (settled) return { ok: true, voice: voice?.name || null, emotion };
+          synth?.cancel();
+          return finishSpeak({ ok: false, reason: "tts-timeout" });
+        }),
+      ]);
+      return spoken;
+    } catch (err) {
+      return { ok: false, reason: err?.message || "speak-failed" };
     }
   };
 
-  const stopSpeak = () => {
+  /**
+   * Speak reply with female voice + emotion tone. Resolves when finished.
+   * @param {string} text
+   * @param {string} [emotion]
+   */
+  const speakOnce = async (text, emotion = "neutral") => {
+    const pauseMic = mustPauseMicForTts();
+    if (pauseMic) pauseCapture();
+    try {
+      return await speakOnceCore(text, emotion);
+    } finally {
+      if (pauseMic) resumeCapture();
+    }
+  };
+
+  const setKeepMicDuringSpeak = (on) => {
+    keepMicDuringSpeak = Boolean(on);
+    return keepMicDuringSpeak;
+  };
+
+  const speak = (text, emotion = "neutral") => {
+    const next = speakChain.then(() => speakOnce(text, emotion));
+    speakChain = next.catch(() => {});
+    return next;
+  };
+
+  const stopTtsPlayback = () => {
+    stopCloudAudio();
     synth?.cancel();
     speaking = false;
     stopMouth();
+    syncAssistantOutput();
+  };
+
+  const stopSpeak = () => {
+    if (streamSession) {
+      streamSession.closed = true;
+      streamSession = null;
+    }
+    stopThinkingAudio();
+    stopTtsPlayback();
+    speakChain = Promise.resolve();
+  };
+
+  /**
+   * Phase A — begin streaming TTS session (sentence chunks while LLM streams).
+   * @param {string} [defaultEmotion]
+   * @param {{ pauseCapture?: boolean }} [sessionOpts]
+   */
+  const beginStreamSpeak = (defaultEmotion = "neutral", sessionOpts = {}) => {
+    if (streamSession) {
+      streamSession.closed = true;
+      streamSession = null;
+    }
+    stopTtsPlayback();
+    speakChain = Promise.resolve();
+    const pauseMic =
+      sessionOpts.pauseCapture !== false || shouldPauseMicDuringTts();
+    streamSession = {
+      emotion: defaultEmotion,
+      closed: false,
+      capturePaused: pauseMic,
+    };
+    if (pauseMic) pauseCapture();
+    syncAssistantOutput();
+    return streamSession;
+  };
+
+  /**
+   * Queue one speakable segment during a stream session.
+   * @param {string} text
+   * @param {string} [emotion]
+   */
+  const pushStreamSpeak = (text, emotion) => {
+    if (!streamSession || streamSession.closed) {
+      return Promise.resolve({ ok: false, reason: "no-stream-session" });
+    }
+    const clean = cleanSpeakText(text);
+    if (!clean) return Promise.resolve({ ok: false, reason: "empty" });
+    const em = emotion || streamSession.emotion || "neutral";
+    const next = speakChain.then(() => {
+      if (!streamSession || streamSession.closed) {
+        return { ok: false, reason: "stream-closed" };
+      }
+      return speakOnceCore(clean, em);
+    });
+    speakChain = next.catch(() => {});
+    return next;
+  };
+
+  /** Wait for queued stream segments to finish and end the session. */
+  const finishStreamSpeak = async () => {
+    const session = streamSession;
+    if (!session) return { ok: true };
+    session.closed = true;
+    streamSession = null;
+    syncAssistantOutput();
+    try {
+      await speakChain;
+      return { ok: true };
+    } finally {
+      if (session.capturePaused) resumeCapture();
+      syncAssistantOutput();
+    }
+  };
+
+  /** Barge-in: cancel stream session + flush TTS immediately. */
+  const cancelStreamSpeak = () => {
+    const session = streamSession;
+    stopSpeak();
+    if (session?.capturePaused) resumeCapture();
+    return true;
+  };
+
+  /** Soft thinking phrase while LLM loads — parallel to reply queue; cancel with stopSpeak(). */
+  const speakThinking = async ({ isEnglish = false, phrase: forcedPhrase } = {}) => {
+    const picked = forcedPhrase
+      ? { phrase: forcedPhrase, index: thinkingPhraseIndex }
+      : pickNextThinkingPhrase(isEnglish, thinkingPhraseIndex);
+    const phrase = picked.phrase || pickThinkingPhrase(isEnglish);
+    thinkingPhraseIndex = picked.index;
+    if (!phrase || !speakerOn) return { ok: false, reason: "muted-or-empty" };
+
+    if (!thinkingLoopActive) stopThinkingAudio();
+    thinkingActive = true;
+    unlockAudioSync();
+    await ensureVoices();
+
+    const preset = cloudVoicePreset();
+    const lang = isEnglish ? "en-US" : preset.lang || "zh-HK";
+    const voiceName = isEnglish ? CLOUD_ENGLISH_VOICE.name : preset.name;
+
+    if (opts.cloudTtsUrl) {
+      try {
+        const res = await fetch(opts.cloudTtsUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            text: phrase,
+            emotion: "thinking",
+            voice: voiceName,
+            lang,
+          }),
+        });
+        if (!thinkingActive) return { ok: false, reason: "cancelled" };
+        if (res.ok) {
+          const blob = await res.blob();
+          if (blob.size > 0 && thinkingActive) {
+            const objectUrl = URL.createObjectURL(blob);
+            const audio = configureCompanionAudioElement(getSharedAudio());
+            thinkingCloudAudio = audio;
+            audio.volume = 0.58;
+            audio.src = objectUrl;
+            await new Promise((resolve) => {
+              const finish = () => {
+                if (thinkingCloudAudio === audio) thinkingCloudAudio = null;
+                URL.revokeObjectURL(objectUrl);
+                resolve();
+              };
+              audio.onended = finish;
+              audio.onerror = finish;
+              void audio.play().catch(finish);
+            });
+            return { ok: true, cloud: true, phrase };
+          }
+        }
+      } catch {
+        /* fall through */
+      }
+    }
+
+    if (!thinkingActive || !synth) {
+      return { ok: false, reason: "cancelled-or-no-tts" };
+    }
+
+    const prosody = EMOTION_PROSODY.thinking;
+    const utter = new SpeechSynthesisUtterance(phrase);
+    if (voice && !voice.cloud) utter.voice = voice;
+    utter.lang = lang;
+    utter.rate = prosody.rate;
+    utter.pitch = prosody.pitch;
+    utter.volume = prosody.volume * 0.85;
+
+    await new Promise((resolve) => {
+      utter.onend = resolve;
+      utter.onerror = resolve;
+      try {
+        synth.speak(utter);
+      } catch {
+        resolve();
+      }
+      setTimeout(resolve, 2200);
+    });
+
+    return { ok: true, phrase };
+  };
+
+  const startThinkingLoop = ({ isEnglish = false, intervalMs = 2300 } = {}) => {
+    stopThinkingLoop();
+    thinkingLoopActive = true;
+    thinkingActive = true;
+    syncAssistantOutput();
+
+    const tick = async () => {
+      if (!thinkingLoopActive) return;
+      await speakThinking({ isEnglish });
+      if (!thinkingLoopActive) return;
+      thinkingLoopTimer = setTimeout(() => {
+        void tick();
+      }, intervalMs);
+    };
+
+    void tick();
+    return true;
+  };
+
+  const stopThinkingLoop = () => {
+    thinkingLoopActive = false;
+    stopThinkingAudio();
+    syncAssistantOutput();
+  };
+
+  const interruptAssistantOutput = () => {
+    stopSpeak();
+    return true;
   };
 
   const setSpeakerOn = (on) => {
@@ -304,31 +823,91 @@ export function createCompanionVoice(opts = {}) {
     return speakerOn;
   };
 
-  const stopMic = () => {
-    micDesired = false;
-    clearRestart();
-    haltRecognition();
-    opts.onMicState?.(false);
-    return false;
-  };
+  const stopMic = () => micCapture.stop();
 
-  const startMic = () => {
-    if (!Rec) {
-      opts.onError?.("Speech recognition not supported in this browser");
+  /** Unlock TTS after a user gesture (required by Chrome/Safari autoplay policy). */
+  const primeAudio = async () => {
+    unlockAudioSync();
+    await ensureVoices();
+    if (opts.cloudTtsUrl) {
+      try {
+        const preset = cloudVoicePreset();
+        const primeWord = preset.lang?.startsWith("en") ? "Hi" : "好";
+        const res = await fetch(opts.cloudTtsUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            text: primeWord,
+            emotion: "neutral",
+            voice: preset.name,
+            lang: preset.lang,
+          }),
+        });
+        if (res.ok) {
+          const blob = await res.blob();
+          if (blob.size > 0) {
+            const objectUrl = URL.createObjectURL(blob);
+            const audio = configureCompanionAudioElement(getSharedAudio());
+            audio.volume = 0.12;
+            audio.src = objectUrl;
+            const played = await audio
+              .play()
+              .then(() => true)
+              .catch(() => false);
+            URL.revokeObjectURL(objectUrl);
+            if (played) {
+              usingCloudTts = true;
+              voice = cloudVoicePreset();
+              return true;
+            }
+          }
+        }
+      } catch {
+        /* fall through to browser TTS */
+      }
+    }
+    if (!synth) return false;
+    try {
+      if (synth.paused) synth.resume();
+      synth.cancel();
+      const utter = new SpeechSynthesisUtterance(" ");
+      utter.volume = 0.01;
+      utter.rate = 2;
+      if (voice && !voice.cloud) utter.voice = voice;
+      await new Promise((resolve) => {
+        utter.onend = resolve;
+        utter.onerror = resolve;
+        synth.speak(utter);
+        setTimeout(resolve, 400);
+      });
+      synth.cancel();
+      return true;
+    } catch {
       return false;
     }
-    if (micDesired) {
-      if (!recognitionActive && pauseDepth === 0) beginRecognition();
-      return true;
-    }
-    micDesired = true;
-    opts.onMicState?.(true);
-    // Respect pauseDepth so we do not listen over an in-flight TTS reply
-    if (pauseDepth === 0) beginRecognition();
-    return true;
   };
 
-  const toggleMic = () => (micDesired ? stopMic() : startMic());
+  const primeMicPermission = () => micCapture.primePermission();
+
+  const startMic = (startOpts = {}) => micCapture.start(startOpts);
+
+  const toggleMic = () => (micCapture.on ? stopMic() : startMic());
+
+  const setLang = (next) => {
+    const lang = String(next || opts.lang || "zh-HK");
+    opts.lang = lang;
+    micCapture.setLang?.(lang);
+    return lang;
+  };
+
+  const setCloudVoice = (preset) => {
+    if (!preset?.name) return voice;
+    opts.cloudVoice = preset;
+    voice = preset;
+    if (preset.lang) setLang(preset.lang);
+    usingCloudTts = Boolean(opts.cloudTtsUrl);
+    return voice;
+  };
 
   return {
     schema: COMPANION_VOICE_SCHEMA,
@@ -336,25 +915,52 @@ export function createCompanionVoice(opts = {}) {
       return speakerOn;
     },
     get micOn() {
-      return micDesired;
+      return micCapture.on;
     },
     get speaking() {
       return speaking;
     },
+    get thinkingLoopOn() {
+      return thinkingLoopActive;
+    },
+    get assistantOutputActive() {
+      return isAssistantOutputActive();
+    },
+    get keepMicDuringSpeak() {
+      return keepMicDuringSpeak;
+    },
+    interruptAssistantOutput,
     get listening() {
-      return recognitionActive && pauseDepth === 0;
+      return micCapture.listening;
     },
     get voiceName() {
       return voice?.name || null;
     },
+    get cloudTts() {
+      return usingCloudTts;
+    },
     get supportsMic() {
-      return Boolean(Rec);
+      return micCapture.supportsMic;
+    },
+    get usesCloudStt() {
+      return micCapture.usesCloudStt;
     },
     get supportsSpeak() {
-      return Boolean(synth);
+      return Boolean(synth) || Boolean(opts.cloudTtsUrl);
     },
     ensureVoices,
+    unlockAudioSync,
+    primeAudio,
+    primeMicPermission,
     speak,
+    speakThinking,
+    startThinkingLoop,
+    stopThinkingLoop,
+    setKeepMicDuringSpeak,
+    beginStreamSpeak,
+    pushStreamSpeak,
+    finishStreamSpeak,
+    cancelStreamSpeak,
     stopSpeak,
     setSpeakerOn,
     pauseCapture,
@@ -362,6 +968,8 @@ export function createCompanionVoice(opts = {}) {
     startMic,
     stopMic,
     toggleMic,
+    setCloudVoice,
+    setLang,
   };
 }
 

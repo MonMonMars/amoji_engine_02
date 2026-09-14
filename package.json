@@ -1,0 +1,13 @@
+{
+  "name": "amoji-companion-host",
+  "private": true,
+  "type": "module",
+  "description": "Amoji Companion — cloud-hosted 3D chat (Vercel)",
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "edge-tts-universal": "^1.4.0",
+    "playwright": "^1.63.0"
+  }
+}

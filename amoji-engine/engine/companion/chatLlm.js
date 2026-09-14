@@ -5,6 +5,25 @@ import {
   createVoiceRobotBridge,
 } from "../voice/voiceRobotBridge.js";
 import { inferExpressionFromText } from "../face/emotionExpression.js";
+import { CANTONESE_COMPANION_PROMPT } from "./companionBodyMotion.js";
+import { parseReplyTags } from "./companionActionMotion.js";
+import {
+  LLM_PROVIDER_STORAGE_KEY,
+  resolveProviderConfig,
+  saveProviderApiKey,
+} from "./companionLlmProviders.js";
+import { chatOllama } from "./companionOllama.js";
+import {
+  hasAnyClientCloudKey,
+  resolveClientApiKey,
+} from "./companionClientKeys.js";
+import {
+  isHostedCompanion,
+  probeOllamaDirect,
+  OLLAMA_PROBE_HOSTS,
+} from "./companionLlmConnect.js";
+import { isOllamaLocalModel } from "./companionModelIds.js";
+import { getLlmProvider, readProviderApiKey } from "./companionLlmProviders.js";
 
 export const COMPANION_CHAT_SCHEMA = "amoji.companionChat.v1";
 
@@ -25,21 +44,106 @@ export function createCompanionChat(opts = {}) {
       : null);
   let apiUrl = normalizeUrl(opts.apiUrl);
   let apiKey = String(opts.apiKey || "").trim() || null;
-  let model = opts.model || "gpt-4o-mini";
-  const systemPrompt =
-    opts.systemPrompt ||
-    "You are Amoji, a warm Cantonese-first anime companion. Keep replies short (1-3 sentences), expressive, and friendly. Mix 粵語 naturally when the user writes Chinese; use English when they write English. Never mention being an API.";
+  let model = opts.model || "qwen3:4b";
+  let providerId =
+    opts.providerId ||
+    globalThis.localStorage?.getItem(LLM_PROVIDER_STORAGE_KEY) ||
+    "auto";
+  let forceLocal = false;
+  const systemPrompt = opts.systemPrompt || CANTONESE_COMPANION_PROMPT;
+
+  const finalizeReply = (replyText) => {
+    const raw = String(replyText || "").trim();
+    const parsed = parseReplyTags(raw);
+    return {
+      reply: parsed.reply,
+      raw,
+      emotion: parsed.emotion || inferExpressionFromText(parsed.reply),
+      action: parsed.action,
+    };
+  };
 
   const robot = createVoiceRobotBridge({ language: "yue" });
   /** @type {{ role: string, content: string }[]} */
   const history = [];
+  /** @type {AbortController | null} */
+  let replyAbort = null;
 
-  const mode = () => (apiUrl && fetchImpl ? "online" : "local");
+  const mode = () => {
+    if (forceLocal) return "local";
+    if (!apiUrl) return "proxy";
+    if (isOllamaUrl(apiUrl)) return "ollama";
+    if (apiUrl && fetchImpl) return "online";
+    return "local";
+  };
+
+  const applyProvider = (id, extra = {}) => {
+    providerId = String(id || "auto");
+    const resolved = resolveProviderConfig(providerId, {
+      fallbackModel: model,
+      fallbackKey: extra.apiKey || apiKey || "",
+    });
+    forceLocal = resolved.forceLocal;
+    let useProvider = resolved.provider;
+    if (extra.apiKey && resolved.provider.keyStorageKey) {
+      saveProviderApiKey(providerId, extra.apiKey);
+    }
+    if (resolved.forceLocal) {
+      apiUrl = null;
+      apiKey = null;
+    } else if (resolved.provider.id === "auto") {
+      const hosted = isHostedCompanion();
+      const orKey =
+        readProviderApiKey("openrouter-gemma") ||
+        readProviderApiKey("openrouter-llama");
+      const groqKey = readProviderApiKey("groq");
+      if (hosted) {
+        apiUrl = null;
+        apiKey = null;
+        if (orKey) {
+          useProvider = getLlmProvider("openrouter-gemma");
+          model = useProvider.model || "openrouter/auto";
+          providerId = useProvider.id;
+        } else if (groqKey) {
+          useProvider = getLlmProvider("groq");
+          model = useProvider.model;
+          providerId = useProvider.id;
+        }
+      } else {
+        apiUrl = null;
+        apiKey = null;
+      }
+    } else {
+      apiUrl = normalizeUrl(resolved.url);
+      apiKey = resolved.apiKey;
+      model = resolved.model || model;
+      if (resolved.proxyOnly) {
+        apiUrl = null;
+        apiKey = null;
+      }
+    }
+    if (extra.model) model = extra.model;
+    globalThis.localStorage?.setItem(LLM_PROVIDER_STORAGE_KEY, providerId);
+    return {
+      providerId,
+      apiUrl,
+      hasKey: Boolean(apiKey),
+      model,
+      mode: mode(),
+      forceLocal,
+    };
+  };
 
   /**
    * @param {string} userText
+   * @param {{ onToken?: (chunk: string, full: string) => void }} [opts]
    */
-  async function reply(userText) {
+  function abort() {
+    replyAbort?.abort();
+    replyAbort = null;
+  }
+
+  async function reply(userText, opts = {}) {
     const text = String(userText || "").trim();
     if (!text) {
       return {
@@ -50,10 +154,68 @@ export function createCompanionChat(opts = {}) {
         mode: mode(),
       };
     }
-    history.push({ role: "user", content: text });
+    abort();
+    const turnAbort = new AbortController();
+    replyAbort = turnAbort;
+    const signal = turnAbort.signal;
 
-    if (apiUrl && fetchImpl) {
+    history.push({ role: "user", content: text });
+    const onToken = opts.onToken;
+
+    const throwIfAborted = () => {
+      if (signal.aborted) {
+        const err = new Error("aborted");
+        err.name = "AbortError";
+        throw err;
+      }
+    };
+
+    try {
+    // Prefer lab/cloud proxy — server-side keys when configured
+    if (!forceLocal && fetchImpl) {
       try {
+        throwIfAborted();
+        const proxied = await callLocalProxy({
+          fetchImpl,
+          text,
+          history,
+          systemPrompt,
+          model,
+          providerId,
+          signal,
+        });
+        if (proxied.ok && isSmartProxyMode(proxied.mode)) {
+          const finalized = finalizeReply(proxied.reply);
+          if (onToken) await emitTypewriter(finalized.reply, onToken, signal);
+          throwIfAborted();
+          history.push({ role: "assistant", content: finalized.reply });
+          return {
+            ok: true,
+            reply: finalized.reply,
+            raw: finalized.raw,
+            emotion: finalized.emotion,
+            action: finalized.action,
+            mode: proxied.mode || "proxy",
+            model: proxied.model || model,
+          };
+        }
+      } catch (err) {
+        if (signal.aborted || err?.name === "AbortError") throw err;
+        /* try client online or local stub */
+      }
+    }
+
+    // Hosted + browser key → call OpenRouter/Groq directly (no Vercel env needed)
+    if (
+      !forceLocal &&
+      apiUrl &&
+      apiKey &&
+      fetchImpl &&
+      isHostedCompanion() &&
+      !isOllamaUrl(apiUrl)
+    ) {
+      try {
+        throwIfAborted();
         const online = await callOpenAiCompatible({
           fetchImpl,
           apiUrl,
@@ -61,58 +223,177 @@ export function createCompanionChat(opts = {}) {
           model,
           systemPrompt,
           history,
+          onToken,
+          stream: Boolean(onToken),
+          signal,
+          extraHeaders: apiUrl.includes("openrouter")
+            ? {
+                "HTTP-Referer": globalThis.location?.origin || "https://amoji.app",
+                "X-Title": "Amoji Companion",
+              }
+            : {},
         });
         if (online.ok) {
-          history.push({ role: "assistant", content: online.reply });
+          const finalized = finalizeReply(online.reply);
+          if (onToken && !online.streamed) {
+            await emitTypewriter(finalized.reply, onToken, signal);
+          }
+          throwIfAborted();
+          history.push({ role: "assistant", content: finalized.reply });
           return {
             ok: true,
-            reply: online.reply,
-            emotion: inferExpressionFromText(online.reply),
+            reply: finalized.reply,
+            raw: finalized.raw,
+            emotion: finalized.emotion,
+            action: finalized.action,
             mode: "online",
             model: online.model || model,
           };
         }
-        // fall through to local on soft failure
+        console.warn("[companion] hosted direct llm failed", online.error);
+      } catch (err) {
+        if (signal.aborted || err?.name === "AbortError") throw err;
+        console.warn("[companion] hosted direct llm error", err);
+      }
+    }
+
+    if (!forceLocal && apiUrl && fetchImpl) {
+      try {
+        throwIfAborted();
+        const online = await callOpenAiCompatible({
+          fetchImpl,
+          apiUrl,
+          apiKey,
+          model,
+          systemPrompt,
+          history,
+          onToken,
+          stream: Boolean(onToken) && !isOllamaUrl(apiUrl),
+          signal,
+        });
+        if (online.ok) {
+          const finalized = finalizeReply(online.reply);
+          throwIfAborted();
+          history.push({ role: "assistant", content: finalized.reply });
+          const clientMode = /11434|ollama/i.test(apiUrl) ? "ollama" : "online";
+          return {
+            ok: true,
+            reply: finalized.reply,
+            raw: finalized.raw,
+            emotion: finalized.emotion,
+            action: finalized.action,
+            mode: clientMode,
+            model: online.model || model,
+          };
+        }
         online.error && console.warn("[companion] online llm failed", online.error);
       } catch (err) {
+        if (signal.aborted || err?.name === "AbortError") throw err;
         console.warn("[companion] online llm error", err);
       }
     }
 
-    // Local / same-origin proxy first
-    if (fetchImpl) {
+    if (
+      !forceLocal &&
+      fetchImpl &&
+      !isHostedCompanion() &&
+      isOllamaProvider(providerId)
+    ) {
+      try {
+        const direct = await tryDirectOllama({
+          fetchImpl,
+          model,
+          systemPrompt,
+          history,
+          onToken,
+        });
+        if (direct.ok) {
+          const finalized = finalizeReply(direct.reply);
+          if (onToken && !direct.streamed) {
+            await emitTypewriter(finalized.reply, onToken, signal);
+          }
+          throwIfAborted();
+          history.push({ role: "assistant", content: finalized.reply });
+          return {
+            ok: true,
+            reply: finalized.reply,
+            raw: finalized.raw,
+            emotion: finalized.emotion,
+            action: finalized.action,
+            mode: "ollama",
+            model: direct.model || model,
+          };
+        }
+      } catch (err) {
+        if (signal.aborted || err?.name === "AbortError") throw err;
+        console.warn("[companion] direct ollama error", err);
+      }
+    }
+
+    if (!forceLocal && fetchImpl) {
       try {
         const proxied = await callLocalProxy({
           fetchImpl,
           text,
           history,
           systemPrompt,
+          model,
+          providerId,
         });
-        if (proxied.ok) {
-          history.push({ role: "assistant", content: proxied.reply });
+        if (
+          proxied.ok &&
+          (proxied.mode !== "local-fallback" || providerId === "basic")
+        ) {
+          const finalized = finalizeReply(proxied.reply);
+          if (onToken) await emitTypewriter(finalized.reply, onToken, signal);
+          throwIfAborted();
+          history.push({ role: "assistant", content: finalized.reply });
           return {
             ok: true,
-            reply: proxied.reply,
-            emotion: inferExpressionFromText(proxied.reply),
+            reply: finalized.reply,
+            raw: finalized.raw,
+            emotion: finalized.emotion,
+            action: finalized.action,
             mode: proxied.mode || "proxy",
             model: proxied.model || null,
           };
         }
-      } catch {
+      } catch (err) {
+        if (signal.aborted || err?.name === "AbortError") throw err;
         /* local stub */
       }
     }
 
+    throwIfAborted();
     const turn = await robot.runTurn(text, { speakMs: 0 });
-    const replyText = turn.reply || "嗯，我喺度呀！";
-    history.push({ role: "assistant", content: replyText });
+    const finalized = finalizeReply(turn.reply || "嗯，我喺度呀！");
+    if (onToken) await emitTypewriter(finalized.reply, onToken, signal);
+    throwIfAborted();
+    history.push({ role: "assistant", content: finalized.reply });
     return {
       ok: true,
-      reply: replyText,
-      emotion: turn.emotion || inferExpressionFromText(replyText),
+      reply: finalized.reply,
+      raw: finalized.raw,
+      emotion: turn.emotion || finalized.emotion,
+      action: finalized.action,
       mode: "local",
       annotatedReply: turn.annotatedReply || null,
     };
+    } catch (err) {
+      if (signal.aborted || err?.name === "AbortError") {
+        return {
+          ok: false,
+          aborted: true,
+          error: "aborted",
+          reply: "",
+          emotion: "neutral",
+          mode: mode(),
+        };
+      }
+      throw err;
+    } finally {
+      if (replyAbort === turnAbort) replyAbort = null;
+    }
   }
 
   return {
@@ -120,20 +401,81 @@ export function createCompanionChat(opts = {}) {
     get mode() {
       return mode();
     },
+    get providerId() {
+      return providerId;
+    },
     get history() {
       return history.slice();
     },
-    setApi({ url, key, model: nextModel } = {}) {
+    setProvider(id, extra = {}) {
+      return applyProvider(id, extra);
+    },
+    setApi({ url, key, model: nextModel, provider: nextProvider } = {}) {
+      if (nextProvider) return applyProvider(nextProvider, { apiKey: key });
       if (url !== undefined) apiUrl = normalizeUrl(url);
       if (key !== undefined) apiKey = String(key || "").trim() || null;
       if (nextModel) model = nextModel;
-      return { apiUrl, hasKey: Boolean(apiKey), model, mode: mode() };
+      forceLocal = false;
+      providerId = "custom";
+      return { apiUrl, hasKey: Boolean(apiKey), model, mode: mode(), providerId };
     },
     clearHistory() {
       history.length = 0;
     },
+    abort,
     reply,
   };
+}
+
+const CHAT_FETCH_TIMEOUT_MS = 28_000;
+
+function isSmartProxyMode(mode) {
+  const m = String(mode || "");
+  return (
+    m === "ollama" ||
+    m === "online" ||
+    m.startsWith("online+") ||
+    m === "local+web" ||
+    m === "proxy" ||
+    m === "local-fallback"
+  );
+}
+
+/**
+ * @param {typeof fetch} fetchImpl
+ * @param {string} url
+ * @param {RequestInit} init
+ * @param {number} [ms]
+ */
+async function fetchWithTimeout(
+  fetchImpl,
+  url,
+  init,
+  ms = CHAT_FETCH_TIMEOUT_MS,
+  externalSignal = null,
+) {
+  const controller = new AbortController();
+  const onExternalAbort = () => controller.abort();
+  externalSignal?.addEventListener?.("abort", onExternalAbort);
+  const timer = setTimeout(() => controller.abort(), ms);
+  try {
+    return await fetchImpl(url, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+    externalSignal?.removeEventListener?.("abort", onExternalAbort);
+  }
+}
+
+function isOllamaUrl(url) {
+  return /11434|ollama|localhost/i.test(String(url || ""));
+}
+
+function isOllamaProvider(id) {
+  return (
+    id === "auto" ||
+    String(id || "").startsWith("ollama") ||
+    id === "custom"
+  );
 }
 
 function normalizeUrl(url) {
@@ -142,16 +484,71 @@ function normalizeUrl(url) {
   return raw.replace(/\/$/, "");
 }
 
-async function callLocalProxy({ fetchImpl, text, history, systemPrompt }) {
-  const res = await fetchImpl("/api/chat", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      message: text,
-      history: history.slice(-12),
-      system: systemPrompt,
-    }),
+async function tryDirectOllama({
+  fetchImpl,
+  model,
+  systemPrompt,
+  history,
+  onToken,
+}) {
+  const probed = await probeOllamaDirect(OLLAMA_PROBE_HOSTS);
+  if (!probed.ok) return { ok: false, error: "ollama offline" };
+
+  const messages = [
+    { role: "system", content: systemPrompt },
+    ...history.slice(-12),
+  ];
+  const result = await chatOllama({
+    base: probed.host,
+    model,
+    messages,
+    fetchImpl,
   });
+  if (!result.ok || !result.reply) return { ok: false, error: result.error };
+  return {
+    ok: true,
+    reply: result.reply,
+    model: result.model,
+    streamed: false,
+  };
+}
+
+async function callLocalProxy({
+  fetchImpl,
+  text,
+  history,
+  systemPrompt,
+  model,
+  providerId,
+  signal = null,
+}) {
+  const hosted = isHostedCompanion();
+  const proxyModel =
+    hosted && isOllamaLocalModel(model) ? undefined : model || undefined;
+  let res;
+  try {
+    res = await fetchWithTimeout(
+      fetchImpl,
+      "/api/chat",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: text,
+          history: history.slice(-12),
+          system: systemPrompt,
+          model: proxyModel,
+          providerId: providerId && providerId !== "custom" ? providerId : undefined,
+          apiKey: resolveClientApiKey(providerId) || undefined,
+        }),
+      },
+      CHAT_FETCH_TIMEOUT_MS,
+      signal,
+    );
+  } catch (err) {
+    const aborted = err?.name === "AbortError";
+    return { ok: false, error: aborted ? "chat-timeout" : err?.message || "fetch failed" };
+  }
   if (!res.ok) return { ok: false, error: `HTTP ${res.status}` };
   const data = await res.json().catch(() => ({}));
   if (!data?.reply) return { ok: false, error: data?.error || "no reply" };
@@ -163,6 +560,17 @@ async function callLocalProxy({ fetchImpl, text, history, systemPrompt }) {
   };
 }
 
+async function emitTypewriter(text, onToken, signal = null) {
+  const full = String(text || "");
+  let acc = "";
+  for (const ch of full) {
+    if (signal?.aborted) return;
+    acc += ch;
+    onToken(ch, acc);
+    await new Promise((r) => setTimeout(r, 18));
+  }
+}
+
 async function callOpenAiCompatible({
   fetchImpl,
   apiUrl,
@@ -170,22 +578,55 @@ async function callOpenAiCompatible({
   model,
   systemPrompt,
   history,
+  onToken,
+  stream,
+  signal = null,
+  extraHeaders = {},
 }) {
   const endpoint = apiUrl.includes("/chat/completions")
     ? apiUrl
     : `${apiUrl}/chat/completions`;
-  const headers = { "Content-Type": "application/json" };
-  if (apiKey) headers.Authorization = `Bearer ${apiKey}`;
+  const headers = { "Content-Type": "application/json", ...extraHeaders };
+  const authKey =
+    apiKey || (/11434|ollama|localhost/i.test(apiUrl) ? "ollama" : null);
+  if (authKey) headers.Authorization = `Bearer ${authKey}`;
+  const messages = [
+    { role: "system", content: systemPrompt },
+    ...history.slice(-12),
+  ];
+
+  if (stream && onToken) {
+    const res = await fetchImpl(endpoint, {
+      method: "POST",
+      headers,
+      signal: signal || undefined,
+      body: JSON.stringify({
+        model,
+        temperature: 0.8,
+        stream: true,
+        messages,
+      }),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      return {
+        ok: false,
+        error: data?.error?.message || `HTTP ${res.status}`,
+      };
+    }
+    const streamed = await readOpenAiStream(res, onToken, signal);
+    if (!streamed) return { ok: false, error: "empty stream" };
+    return { ok: true, reply: streamed.trim(), model };
+  }
+
   const res = await fetchImpl(endpoint, {
     method: "POST",
     headers,
+    signal: signal || undefined,
     body: JSON.stringify({
       model,
       temperature: 0.8,
-      messages: [
-        { role: "system", content: systemPrompt },
-        ...history.slice(-12),
-      ],
+      messages,
     }),
   });
   const data = await res.json().catch(() => ({}));
@@ -198,4 +639,44 @@ async function callOpenAiCompatible({
   const reply = data?.choices?.[0]?.message?.content;
   if (!reply) return { ok: false, error: "empty completion" };
   return { ok: true, reply: String(reply).trim(), model };
+}
+
+async function readOpenAiStream(res, onToken, signal = null) {
+  const reader = res.body?.getReader?.();
+  if (!reader) return "";
+  const decoder = new TextDecoder();
+  let buffer = "";
+  let full = "";
+  while (true) {
+    if (signal?.aborted) {
+      try {
+        await reader.cancel();
+      } catch {
+        /* ignore */
+      }
+      return full;
+    }
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split("\n");
+    buffer = lines.pop() || "";
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed.startsWith("data:")) continue;
+      const payload = trimmed.slice(5).trim();
+      if (payload === "[DONE]") continue;
+      try {
+        const json = JSON.parse(payload);
+        const chunk = json?.choices?.[0]?.delta?.content || "";
+        if (chunk) {
+          full += chunk;
+          onToken(chunk, full);
+        }
+      } catch {
+        /* partial SSE */
+      }
+    }
+  }
+  return full;
 }
