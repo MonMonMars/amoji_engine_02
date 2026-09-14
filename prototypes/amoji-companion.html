@@ -1049,7 +1049,7 @@
     </script>
     <script>
       (function () {
-        window.__amojiBuild = "2026-09-14-v24-short-greeting";
+        window.__amojiBuild = "2026-09-14-v25-companion-polish";
         window.__amojiModuleBooted = false;
         window.__amojiStart = {
           tapped: false,
@@ -1238,7 +1238,7 @@
     </script>
   </head>
   <body>
-    <!-- amoji-build: 2026-09-14-v24-short-greeting — short hi/hello first phase -->
+    <!-- amoji-build: 2026-09-14-v25-companion-polish — greeting + emotion sync polish -->
     <noscript>
       <div
         style="
@@ -1504,6 +1504,11 @@
           avatar.setTalking?.(false);
         } else if (content.action) {
           avatar.playAction?.(content.action, { emotion: content.emotion });
+          const liveEmotion = avatar.emotion;
+          if (liveEmotion && liveEmotion !== "neutral") {
+            currentEmotion = liveEmotion;
+            setEmotionPill(liveEmotion);
+          }
         } else if (content.gesture) {
           avatar.playGesture?.(content.gesture);
         }
@@ -1884,6 +1889,7 @@
       };
 
       let busy = false;
+      const shownMicErrors = new Set();
 
       const autosize = () => {
         input.style.height = "auto";
@@ -2033,6 +2039,8 @@
             code === "unsupported" ||
             code === "no-mic"
           ) {
+            if (shownMicErrors.has(code)) return;
+            shownMicErrors.add(code);
             addBubble("system", formatMicError(code));
           } else {
             const soft = new Set([
@@ -2526,6 +2534,9 @@
           .primeAudio?.()
           .catch(() => {})
           .then(() => speakGreetingAsync());
+        if (!greetingBubble) {
+          greetingBubble = addBubble("assistant", GREETING_SHORT);
+        }
         requestMicAsync();
         addBubble("system", isEnglish ? "Ready." : "已開始。");
       };
