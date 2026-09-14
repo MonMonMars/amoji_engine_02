@@ -60,7 +60,7 @@ export function inferOneShotGesture(text, emotion, nuance) {
     return "point";
   }
   if (
-    /^(係|係呀|冇錯|啱|exactly|right|ok|okay|好呀|好嘅)[.!？?~]*$/i.test(
+    /^(係|係呀|冇錯|啱|exactly|right|ok|okay|好呀|好嘅)[.!?。！？?~，,]*$/i.test(
       String(text || "").trim(),
     )
   ) {
@@ -160,6 +160,92 @@ export function buildVrmExpressionBlend(emotion, nuance) {
  * @param {string | null | undefined} text
  * @param {string | null | undefined} [moodHint]
  */
+/**
+ * Infer how the companion should feel while replying to this user message.
+ * @param {string | null | undefined} text
+ * @param {boolean} [isEnglish]
+ */
+export function analyzeUserInput(text, isEnglish = false) {
+  const raw = String(text || "").trim();
+  const emotion = inferExpressionFromText(raw) || "neutral";
+  const nuance = inferContentNuance(raw);
+  const talkStyle = inferTalkGestureFromText(raw, { emotion });
+  return {
+    emotion,
+    nuance,
+    talkStyle,
+    expressionBlend: buildVrmExpressionBlend(emotion, nuance),
+    speechEnergy: inferSpeechEnergy(raw, emotion, nuance),
+  };
+}
+
+/**
+ * Incremental analysis while LLM tokens stream in (before mood tag is complete).
+ * @param {string | null | undefined} partialText
+ */
+export function analyzeStreamingReply(partialText) {
+  const visible = String(partialText || "")
+    .replace(/\s*\[mood:\w*\]?/i, "")
+    .trim();
+  if (!visible) {
+    return {
+      emotion: "thinking",
+      nuance: "none",
+      talkStyle: "thinking",
+      expressionBlend: buildVrmExpressionBlend("thinking", "none"),
+      speechEnergy: 0.28,
+    };
+  }
+  const parsed = parseReplyMood(visible);
+  const emotion =
+    parsed.emotion || inferExpressionFromText(parsed.reply) || "thinking";
+  const nuance = inferContentNuance(parsed.reply);
+  const talkStyle = inferTalkGestureFromText(parsed.reply, { emotion });
+  return {
+    emotion,
+    nuance,
+    talkStyle,
+    expressionBlend: buildVrmExpressionBlend(emotion, nuance),
+    speechEnergy: inferSpeechEnergy(parsed.reply, emotion, nuance),
+  };
+}
+
+/**
+ * Per speech-chunk analysis for continuous motion while talking.
+ * @param {string | null | undefined} chunk
+ * @param {{ emotion?: string, nuance?: string }} [opts]
+ */
+export function analyzeSpeechChunk(chunk, opts = {}) {
+  const raw = String(chunk || "").trim();
+  const emotion = opts.emotion || inferExpressionFromText(raw) || "neutral";
+  const nuance = opts.nuance || inferContentNuance(raw);
+  const talkStyle = inferTalkGestureFromText(raw, { emotion });
+  const boundary = /[.!?。！？,，、:：\uFF01\uFF1F]/.test(raw);
+  const gesture =
+    boundary && /[.!?。！？\uFF01\uFF1F]/.test(raw)
+      ? inferOneShotGesture(raw, emotion, nuance)
+      : null;
+  return {
+    emotion,
+    nuance,
+    talkStyle,
+    gesture,
+    boundary,
+    speechEnergy: inferSpeechEnergy(raw, emotion, nuance),
+    expressionBlend: buildVrmExpressionBlend(emotion, nuance),
+  };
+}
+
+/**
+ * @param {boolean} [isEnglish]
+ */
+export function pickThinkingPhrase(isEnglish = false) {
+  const yue = ["嗯…", "等我諗諗…", "咁呀…", "讓我想想…"];
+  const en = ["Hmm…", "Let me think…", "Okay…", "One moment…"];
+  const list = isEnglish ? en : yue;
+  return list[Math.floor(Math.random() * list.length)];
+}
+
 export function analyzeCompanionReply(text, moodHint = null) {
   const parsed = parseReplyMood(String(text || ""));
   const reply = parsed.reply;

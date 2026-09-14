@@ -59,8 +59,8 @@ describe("createCompanionBodyMotion", () => {
     const humanoid = mockHumanoid();
     const motion = createCompanionBodyMotion(humanoid);
     motion.setEmotion("happy");
-    const style = motion.reactToSpeechChunk("你好呀！", { emotion: "happy" });
-    expect(style).toBe("soft");
+    const analysis = motion.reactToSpeechChunk("你好呀！", { emotion: "happy" });
+    expect(analysis.talkStyle).toBe("celebrate");
   });
 
   it("allows nod gesture without arm overlay", () => {
