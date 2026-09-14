@@ -2,9 +2,10 @@ import { describe, expect, it } from "vitest";
 import { localCompanionReply } from "../engine/companion/companionLocalReply.mjs";
 
 describe("companionLocalReply", () => {
-  it("returns short hello with mood tag", () => {
-    expect(localCompanionReply("hello")).toContain("[mood:happy]");
-    expect(localCompanionReply("hello").length).toBeLessThan(24);
+  it("returns hello with wave action and mood tag", () => {
+    const reply = localCompanionReply("hello");
+    expect(reply).toContain("[mood:happy]");
+    expect(reply).toContain("[action:wave]");
   });
 
   it("returns kung fu action tag", () => {

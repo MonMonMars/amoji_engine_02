@@ -4,11 +4,13 @@
  */
 import { inferExpressionFromText } from "../face/emotionExpression.js";
 import { inferTalkGestureFromText } from "../face/talkGestures.js";
+import { getActionDef } from "./companionActionCatalog.js";
 import {
   inferActionFromReply,
   inferActionFromUserText,
   isUserStopCommand,
   parseReplyTags,
+  resolveAction,
 } from "./companionActionMotion.js";
 
 /**
@@ -173,14 +175,8 @@ export function analyzeUserInput(text, isEnglish = false) {
   const nuance = inferContentNuance(raw);
   const talkStyle = inferTalkGestureFromText(raw, { emotion });
   const action = inferActionFromUserText(raw);
-  if (
-    action === "jump" ||
-    action === "laugh" ||
-    action === "kungfu" ||
-    action === "celebrate"
-  ) {
-    emotion = "happy";
-  }
+  const actionDef = action ? getActionDef(action) : null;
+  if (actionDef?.emotion) emotion = actionDef.emotion;
   return {
     emotion,
     nuance,
@@ -215,7 +211,7 @@ export function analyzeStreamingReply(partialText) {
   const nuance = inferContentNuance(parsed.reply);
   const talkStyle = inferTalkGestureFromText(parsed.reply, { emotion });
   const actionMatch = String(partialText || "").match(/\[action:(\w+)\]/i);
-  const action = actionMatch ? actionMatch[1].toLowerCase() : null;
+  const action = actionMatch ? resolveAction(actionMatch[1]) : null;
   return {
     emotion,
     nuance,

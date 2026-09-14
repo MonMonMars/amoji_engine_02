@@ -15,6 +15,9 @@ import {
 import {
   actionDurationSec,
   actionLoops,
+  buildActionPromptFragment,
+  getActionDef,
+  resolveAction,
   sampleActionBodyPose,
   sampleActionRootMotion,
 } from "./companionActionMotion.js";
@@ -139,7 +142,7 @@ export function createCompanionBodyMotion(humanoid) {
   };
 
   const playAction = (action, opts = {}) => {
-    const key = String(action || "").toLowerCase();
+    const key = resolveAction(action) || String(action || "").toLowerCase();
     if (!key || key === "none" || key === "stop") {
       stopAction();
       if (key === "stop") {
@@ -148,21 +151,31 @@ export function createCompanionBodyMotion(humanoid) {
       }
       return false;
     }
+    if (!getActionDef(key)) return false;
     activeAction = key;
     actionPhase = 0;
     actionElapsed = 0;
     actionDuration = actionDurationSec(key);
     actionLoop = opts.loop ?? actionLoops(key);
-    if (key === "laugh") {
-      emotion = "happy";
-      setTalkEnergy(0.72);
-    } else if (key === "kungfu") {
-      emotion =
-        opts.emotion && opts.emotion !== "neutral" ? opts.emotion : "happy";
-      setTalkEnergy(0.78);
-    } else if (key === "jump" || key === "celebrate") {
-      emotion = "happy";
+    const def = getActionDef(key);
+    if (opts.emotion && opts.emotion !== "neutral") {
+      emotion = opts.emotion;
+    } else if (def?.emotion) {
+      emotion = def.emotion;
+    }
+    if (key === "laugh") setTalkEnergy(0.72);
+    else if (key === "kungfu") setTalkEnergy(0.78);
+    else if (
+      key === "jump" ||
+      key === "celebrate" ||
+      key === "dance" ||
+      key === "cheer"
+    ) {
       setTalkEnergy(0.65);
+    } else if (key === "angry" || key === "punch" || key === "kick") {
+      setTalkEnergy(0.7);
+    } else if (key === "thinking") {
+      setTalkEnergy(0.32);
     }
     talkTime = 0;
     return true;
@@ -579,7 +592,7 @@ export const CANTONESE_COMPANION_PROMPT = [
   "Only use English if the user clearly writes in English.",
   "Keep replies short (1–3 sentences), warm, witty, and emotionally expressive.",
   "End EVERY reply with exactly one mood tag: [mood:happy], [mood:thinking], [mood:sad], [mood:surprised], or [mood:angry].",
-  "When the user asks you to MOVE or PERFORM (jump, laugh together, kung fu, wave, celebrate, stop), add an action tag before the mood tag: [action:jump], [action:laugh], [action:kungfu], [action:wave], [action:celebrate], or [action:stop].",
+  buildActionPromptFragment(false),
   "If the user says stop / 停 / 唔好再動, reply briefly and use [action:stop].",
   "Pick mood + action that match your reply energy. Never mention being an AI.",
 ].join(" ");
@@ -590,7 +603,7 @@ export const ENGLISH_COMPANION_PROMPT = [
   "ALWAYS reply in natural spoken English.",
   "Keep replies short (1–3 sentences), warm, witty, and emotionally expressive.",
   "End EVERY reply with exactly one mood tag: [mood:happy], [mood:thinking], [mood:sad], [mood:surprised], or [mood:angry].",
-  "When the user asks you to jump, laugh with them, do kung fu, wave, celebrate, or stop moving, add [action:jump], [action:laugh], [action:kungfu], [action:wave], [action:celebrate], or [action:stop] before the mood tag.",
+  buildActionPromptFragment(true),
   "If the user says stop, reply briefly and use [action:stop].",
   "Pick mood + action that match your reply energy. Never mention being an AI.",
 ].join(" ");
