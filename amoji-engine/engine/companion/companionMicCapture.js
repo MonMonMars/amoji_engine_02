@@ -33,6 +33,8 @@ function pickRecorderMimeType() {
  *   cloudSttUrl?: string | null,
  *   onText?: (text: string, isFinal: boolean) => void,
  *   onSpeechDetected?: (info: { source: string, text?: string, rms?: number }) => void,
+ *   shouldDetectBarge?: () => boolean,
+ *   bargeWhilePaused?: boolean,
  *   onState?: (on: boolean) => void,
  *   onError?: (code: string) => void,
  *   silenceMs?: number,
@@ -74,6 +76,7 @@ export function createMicCapture(opts = {}) {
   let cloudLoopActive = false;
   let cloudTranscribing = false;
   let cloudSpeechSignalFired = false;
+  let lastBargeEmitAt = 0;
 
   const silenceMs = opts.silenceMs ?? 1400;
   const maxUtteranceMs = opts.maxUtteranceMs ?? 12000;
@@ -262,10 +265,15 @@ export function createMicCapture(opts = {}) {
         sum += v * v;
       }
       const rms = Math.sqrt(sum / buf.length);
-      if (rms > 0.016) {
+      if (rms > 0.011) {
         heardSpeech = true;
         silentSince = Date.now();
-        if (!cloudSpeechSignalFired) {
+        const bargeMode = opts.shouldDetectBarge?.() === true;
+        const now = Date.now();
+        if (bargeMode && now - lastBargeEmitAt > 180) {
+          lastBargeEmitAt = now;
+          opts.onSpeechDetected?.({ source: "cloud-energy", rms });
+        } else if (!cloudSpeechSignalFired) {
           cloudSpeechSignalFired = true;
           opts.onSpeechDetected?.({ source: "cloud-energy", rms });
         }
@@ -414,7 +422,7 @@ export function createMicCapture(opts = {}) {
 
   const pause = () => {
     pauseDepth += 1;
-    if (pauseDepth === 1) haltListening();
+    if (pauseDepth === 1 && !opts.bargeWhilePaused) haltListening();
   };
 
   const resume = () => {

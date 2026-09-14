@@ -504,41 +504,48 @@
         z-index: 6;
         display: flex;
         flex-direction: column;
+        justify-content: flex-end;
         pointer-events: none;
         background: linear-gradient(
           180deg,
-          rgba(7, 10, 16, 0.08) 0%,
-          rgba(7, 10, 16, 0.22) 38%,
-          rgba(5, 7, 12, 0.72) 72%,
-          rgba(5, 7, 12, 0.92) 100%
+          transparent 0%,
+          transparent 52%,
+          rgba(5, 7, 12, 0.22) 68%,
+          rgba(5, 7, 12, 0.82) 88%,
+          rgba(5, 7, 12, 0.94) 100%
         );
       }
 
       .chat-column {
-        flex: 1;
+        flex: 0 0 auto;
         display: flex;
         flex-direction: column;
-        width: min(720px, 100%);
+        width: min(680px, 100%);
         margin: 0 auto;
-        padding: 5.5rem 1rem 0;
+        padding: 0 1rem 0.15rem;
+        max-height: min(36vh, 300px);
         min-height: 0;
         pointer-events: none;
       }
 
       .transcript {
         pointer-events: auto;
-        flex: 1;
+        flex: 0 1 auto;
+        max-height: min(36vh, 300px);
         min-height: 0;
         overflow-y: auto;
+        overflow-x: hidden;
         display: flex;
         flex-direction: column;
         justify-content: flex-end;
-        gap: 1.1rem;
-        padding: 0.5rem 0.25rem 1.25rem;
+        gap: 0.55rem;
+        padding: 0.35rem 0.15rem 0.5rem;
         scrollbar-width: thin;
         scroll-behavior: smooth;
-        scroll-padding-bottom: 1.25rem;
+        scroll-padding-bottom: 0.5rem;
         -webkit-overflow-scrolling: touch;
+        mask-image: linear-gradient(180deg, transparent 0%, #000 18%);
+        -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 18%);
       }
 
       .msg-row {
@@ -557,19 +564,21 @@
       }
 
       .bubble {
-        max-width: min(88%, 520px);
-        line-height: 1.55;
-        font-size: 0.98rem;
+        max-width: min(92%, 520px);
+        line-height: 1.45;
+        font-size: 0.92rem;
         white-space: pre-wrap;
         word-break: break-word;
       }
 
       .bubble.user {
-        padding: 0.7rem 1rem;
-        border-radius: 1.25rem;
-        background: var(--user);
-        border: 1px solid rgba(127, 212, 207, 0.28);
-        box-shadow: 0 8px 28px rgba(0, 0, 0, 0.22);
+        padding: 0.42rem 0.72rem;
+        border-radius: 1rem;
+        background: rgba(127, 212, 207, 0.12);
+        border: 1px solid rgba(127, 212, 207, 0.22);
+        box-shadow: none;
+        font-size: 0.84rem;
+        opacity: 0.9;
       }
 
       .bubble.user.interim {
@@ -579,12 +588,14 @@
       }
 
       .bubble.assistant {
-        padding: 0.15rem 0;
+        padding: 0.1rem 0;
         background: transparent;
         border: none;
         box-shadow: none;
         color: var(--ink);
         max-width: 100%;
+        font-size: 0.95rem;
+        text-shadow: 0 1px 12px rgba(0, 0, 0, 0.55);
       }
 
       .bubble.system {
@@ -683,9 +694,39 @@
         position: relative;
         flex-shrink: 0;
         pointer-events: auto;
-        padding: 0 1rem max(1rem, env(safe-area-inset-bottom));
-        background: linear-gradient(180deg, transparent, rgba(5, 7, 12, 0.92) 28%);
+        padding: 0 1rem max(0.75rem, env(safe-area-inset-bottom));
+        background: linear-gradient(180deg, transparent, rgba(5, 7, 12, 0.94) 35%);
         z-index: 7;
+      }
+
+      /* Grok Ani — mic mode: compact dock, hide text field, more avatar visible */
+      .stage.mic-mode .chat-column {
+        max-height: min(22vh, 170px);
+      }
+
+      .stage.mic-mode .transcript {
+        max-height: min(22vh, 170px);
+      }
+
+      .stage.mic-mode .composer textarea,
+      .stage.mic-mode .composer .send {
+        display: none !important;
+      }
+
+      .stage.mic-mode .llm-switcher-wrap,
+      .stage.mic-mode .cloud-key-banner {
+        display: none !important;
+      }
+
+      .stage.mic-mode .composer {
+        justify-content: center;
+        gap: 0.7rem;
+        max-width: 380px;
+        padding: 0.4rem 0.55rem;
+      }
+
+      .stage.mic-mode .composer-wrap {
+        padding-bottom: max(1rem, env(safe-area-inset-bottom));
       }
 
       @keyframes rise {
@@ -968,7 +1009,7 @@
     </script>
     <script>
       (function () {
-        window.__amojiBuild = "2026-09-14-v18-auto-stop-on-speech";
+        window.__amojiBuild = "2026-09-14-v19-grok-layout-motion";
         window.__amojiModuleBooted = false;
         window.__amojiStart = {
           tapped: false,
@@ -1157,7 +1198,7 @@
     </script>
   </head>
   <body>
-    <!-- amoji-build: 2026-09-14-v18-auto-stop-on-speech — instant stop when user speaks -->
+    <!-- amoji-build: 2026-09-14-v19-grok-layout-motion — Grok bottom chat + motion + barge -->
     <noscript>
       <div
         style="
@@ -1721,6 +1762,15 @@
         }
       };
 
+      const trimTranscriptHistory = () => {
+        const rows = transcript.querySelectorAll(".msg-row:not(.interim)");
+        if (rows.length > 8) {
+          for (let i = 0; i < rows.length - 8; i += 1) {
+            rows[i].remove();
+          }
+        }
+      };
+
       const addBubble = (role, text) => {
         const row = document.createElement("div");
         row.className = `msg-row ${role}`;
@@ -1729,6 +1779,7 @@
         el.textContent = text;
         row.appendChild(el);
         transcript.appendChild(row);
+        trimTranscriptHistory();
         scrollTranscript(true);
         return el;
       };
@@ -1752,6 +1803,8 @@
         btnMic.classList.toggle("on", voice.micOn);
         btnMic.setAttribute("aria-pressed", voice.micOn ? "true" : "false");
         btnMic.textContent = voice.micOn ? "⏺" : "🎤";
+        stage.classList.toggle("mic-mode", voice.micOn);
+        voice.setKeepMicDuringSpeak?.(phaseAEnabled && voice.micOn);
       };
 
       const syncListenPose = () => {
@@ -1815,21 +1868,29 @@
           const trimmed = String(text || "").trim();
           if (!isFinal && trimmed && shouldAutoStopOnUserSpeech()) {
             handleUserSpeechBarge("interim-speech");
+          }
+          if (!isFinal && trimmed) {
             interim.set(trimmed);
-            input.value = trimmed;
-            autosize();
+            if (!voice.micOn) {
+              input.value = trimmed;
+              autosize();
+            }
             return;
           }
           if (isFinal) {
             interim.clear();
-            input.value = "";
-            autosize();
+            if (!voice.micOn) {
+              input.value = "";
+              autosize();
+            }
             void runTurn(trimmed, { fromMic: true });
             return;
           }
-          interim.set(text);
-          input.value = text;
-          autosize();
+          if (!voice.micOn) {
+            interim.set(text);
+            input.value = text;
+            autosize();
+          }
         },
         onMicState: () => {
           syncMicBtn();
@@ -1905,12 +1966,12 @@
 
       stopBargeWatch = () => {
         bargeMonitor.stop();
+        if (!voice.micOn) voice.setKeepMicDuringSpeak?.(false);
       };
 
       startBargeWatch = () => {
         if (!phaseAEnabled || !voice.micOn) return;
-        bargeMonitor.reset?.();
-        void bargeMonitor.start();
+        voice.setKeepMicDuringSpeak?.(true);
       };
 
       shouldAutoStopOnUserSpeech = () =>
@@ -1990,6 +2051,7 @@
         busy = true;
         sendBtn.disabled = true;
         const keepMicForBarge = phaseAEnabled && voice.micOn;
+        voice.setKeepMicDuringSpeak?.(keepMicForBarge);
         if (!keepMicForBarge) voice.pauseCapture();
         interim.clear();
         addBubble("user", cleaned);

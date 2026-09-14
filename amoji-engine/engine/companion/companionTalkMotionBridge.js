@@ -75,7 +75,7 @@ export function sampleBodyTalkMotion(timeSec, opts = {}) {
     style,
     emotion: opts.emotion || "neutral",
     speechEnergy: opts.speechEnergy ?? 0.5,
-    intensity: 0.45 + (opts.speechEnergy ?? 0.5) * 0.2,
+    intensity: 0.58 + (opts.speechEnergy ?? 0.5) * 0.32,
   });
   return {
     style: sample.style,
