@@ -55,6 +55,14 @@ export const COMPANION_VOICES = Object.freeze({
       gender: "female",
       source: "Edge TTS",
     },
+    {
+      id: "en-US-GuyNeural",
+      shortLabel: "Guy",
+      shortLabelEn: "Guy",
+      lang: "en-US",
+      gender: "male",
+      source: "Edge TTS",
+    },
   ]),
 });
 

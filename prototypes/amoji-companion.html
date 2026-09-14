@@ -1134,7 +1134,7 @@
         .chat-column {
           padding-top: 4.8rem;
         }
-        .topbar .meta .pill:not(#status-pill):not(#voice-pill):not(#lang-pill) {
+        .topbar .meta .pill:not(#status-pill):not(#voice-pill):not(#lang-pill):not(#character-pill) {
           display: none;
         }
       }
@@ -1157,7 +1157,7 @@
     </script>
     <script>
       (function () {
-        window.__amojiBuild = "2026-09-14-v33-llm-actions-web";
+        window.__amojiBuild = "2026-09-14-v34-character-personas";
         window.__amojiModuleBooted = false;
         window.__amojiStart = {
           tapped: false,
@@ -1346,7 +1346,7 @@
     </script>
   </head>
   <body>
-    <!-- amoji-build: 2026-09-14-v33-llm-actions-web — LLM action pick/decline + web search -->
+    <!-- amoji-build: 2026-09-14-v34-character-personas — per-character voice + personality -->
     <noscript>
       <div
         style="
@@ -1389,8 +1389,16 @@
       </button>
 
       <header class="topbar">
-        <div class="brand">Amoji <span>Live</span></div>
+        <div class="brand"><span id="brand-name">Amoji</span> <span>Live</span></div>
         <div class="meta">
+          <button
+            type="button"
+            class="pill pill-btn"
+            id="character-pill"
+            title="Switch character"
+          >
+            char · <strong>…</strong>
+          </button>
           <div class="pill" id="status-pill">state · <strong>idle</strong></div>
           <div class="pill avatar-load-pill" id="avatar-load-pill" hidden>
             avatar · <strong>loading…</strong>
@@ -1540,6 +1548,7 @@
         bargeMod,
         voiceGateMod,
         platformMod,
+        characterMod,
       ] = await Promise.all([
         import("../amoji-engine/engine/companion/createAvatar.js"),
         import("../amoji-engine/engine/companion/chatLlm.js"),
@@ -1557,6 +1566,7 @@
         import("../amoji-engine/engine/companion/companionBargeMonitor.js"),
         import("../amoji-engine/engine/companion/companionVoiceGate.js"),
         import("../amoji-engine/engine/companion/companionPlatform.js"),
+        import("../amoji-engine/engine/companion/companionCharacterCatalog.js"),
       ]);
       window.__amojiModuleBooted = true;
       const {
@@ -1564,7 +1574,19 @@
         formatMicError,
         unlockAudioSync,
       } = voiceMod;
-      const { CANTONESE_COMPANION_PROMPT, ENGLISH_COMPANION_PROMPT } = bodyMod;
+      const {
+        buildCharacterSystemPrompt,
+        characterAvatarConfig,
+        characterDisplayName,
+        characterTagline,
+        characterTapLines,
+        characterTraitsLabel,
+        getCharacter,
+        nextCharacterId,
+        persistCharacterId,
+        resolveCharacterId,
+        buildCharacterCompanionHref,
+      } = characterMod;
       const { createCompanionStatus, createInterimBubble } = uiMod;
       const { hasAnyClientCloudKey, inferKeyProvider } = keysMod;
       const {
@@ -1696,6 +1718,8 @@
       const modePill = document.getElementById("mode-pill");
       const emotionPill = document.getElementById("emotion-pill");
       const statusPill = document.getElementById("status-pill");
+      const characterPill = document.getElementById("character-pill");
+      const brandName = document.getElementById("brand-name");
       const voicePill = document.getElementById("voice-pill");
       const settings = document.getElementById("settings");
       const btnSettings = document.getElementById("btn-settings");
@@ -1710,21 +1734,27 @@
         params.get("lang") || dialect.forceLanguage || "yue",
       );
       const isEnglish = langCode === "en";
-      let voiceId = resolveVoiceId({
-        lang: langCode,
-        voiceParam: params.get("voice"),
-      });
+      let voiceId = params.get("voice")
+        ? resolveVoiceId({ lang: langCode, voiceParam: params.get("voice") })
+        : charConfig.voiceId;
       persistVoiceId(voiceId);
       const liteMode = params.get("lite") === "1";
       const autoMic = params.get("automic") !== "0";
       dismissLoading();
+      let characterId = resolveCharacterId({
+        characterParam: params.get("character"),
+        modelUrl: params.get("vrm") || params.get("model3d"),
+        avatarPrefer: params.get("avatar"),
+      });
+      persistCharacterId(characterId);
+      const charConfig = characterAvatarConfig(characterId, langCode);
       const avatarModelUrl =
         params.get("vrm") ||
         params.get("model3d") ||
         localStorage.getItem("amoji.companion.vrmUrl") ||
-        "";
+        charConfig.modelUrl;
       const avatarPrefer =
-        params.get("avatar") === "gltf"
+        params.get("avatar") === "gltf" || charConfig.avatarPrefer === "gltf"
           ? "gltf"
           : "vrm";
       const stored = {
@@ -1767,19 +1797,7 @@
         document.getElementById("api-model").value = stored.model;
       }
 
-      const tapLines = isEnglish
-        ? [
-            "Hey! You poked me — I'm so happy!",
-            "Hehe, you found me! What's on your mind?",
-            "Aww, don't tease me — I'll blush!",
-            "You tapped me? I'm listening~",
-          ]
-        : [
-            "喂～你戳我呀？好開心㗎！",
-            "嘿嘿，見到我啦？有咩想傾？",
-            "哎呀～唔好撩我啦，會面紅㗎！",
-            "你點我？我喺度聽緊你㗎～",
-          ];
+      const tapLines = characterTapLines(characterId, isEnglish);
       let lastTapAt = 0;
       /** @type {(() => void) | null} */
       let handleCharacterTap = null;
@@ -1794,16 +1812,15 @@
       /** @type {Promise<{ avatar: ReturnType<typeof createStubAvatar>, kind: string }>} */
       let avatarLoadPromise = Promise.resolve({ avatar, kind: avatarKind });
 
-      const resolveAvatarLabel = (kind = avatarKind) =>
-        kind === "vrm3d"
-          ? "VRM anime girl"
-          : kind === "gltf3d"
-            ? "HD female 3D"
-            : kind === "webgl3d"
-              ? "3D female"
-              : liteMode
-                ? "text chat"
-                : "3D loading…";
+      const resolveAvatarLabel = (kind = avatarKind) => {
+        const def = getCharacter(characterId);
+        if (kind === "vrm3d" || kind === "gltf3d") {
+          return isEnglish ? def.avatarLabel.en : def.avatarLabel.yue;
+        }
+        if (kind === "webgl3d") return isEnglish ? "3D companion" : "3D 同伴";
+        if (liteMode) return isEnglish ? "text chat" : "文字版";
+        return isEnglish ? "3D loading…" : "3D 載入中…";
+      };
 
       const theaterLine = () =>
         hostedOnline
@@ -1865,12 +1882,29 @@
         return avatarLoadPromise;
       };
 
+      const systemPrompt = buildCharacterSystemPrompt(characterId, isEnglish);
       const chat = createCompanionChat({
         apiUrl: stored.url || null,
         apiKey: stored.key || null,
         model: stored.model,
-        systemPrompt: isEnglish ? ENGLISH_COMPANION_PROMPT : CANTONESE_COMPANION_PROMPT,
+        systemPrompt,
       });
+
+      const setCharacterUi = () => {
+        const name = characterDisplayName(characterId, langCode, isEnglish);
+        const tagline = characterTagline(characterId, langCode);
+        const traits = characterTraitsLabel(characterId, langCode);
+        if (brandName) brandName.textContent = name;
+        if (characterPill) {
+          characterPill.innerHTML = `char · <strong>${name}</strong>`;
+          characterPill.title = isEnglish
+            ? `${tagline} — ${traits}. Tap to switch character.`
+            : `${tagline} — ${traits}。按一下切換角色。`;
+        }
+        const startTagline = document.getElementById("start-tagline");
+        if (startTagline) startTagline.textContent = tagline;
+      };
+      setCharacterUi();
 
       const langPill = document.getElementById("lang-pill");
       const languageSwitchHref = () => {
@@ -2222,6 +2256,21 @@
       };
       applyVoiceSelection(voiceId);
       updateLangPill();
+
+      const switchCharacter = (nextId) => {
+        persistCharacterId(nextId);
+        const href = buildCharacterCompanionHref({
+          basePath: location.pathname,
+          lang: langCode,
+          characterId: nextId,
+          extra: liteMode ? { lite: "1" } : undefined,
+        });
+        location.assign(href);
+      };
+
+      characterPill?.addEventListener("click", () => {
+        switchCharacter(nextCharacterId(characterId));
+      });
       window.__amojiSupportsMic = voice.supportsMic;
 
       bargeMonitor = createCompanionBargeMonitor({
