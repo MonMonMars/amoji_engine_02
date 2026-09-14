@@ -165,6 +165,7 @@ export async function createVrmAvatar(opts) {
   const bodyMotion = createCompanionBodyMotion(vrm.humanoid);
   for (let i = 0; i < 4; i += 1) {
     bodyMotion.update(1 / 60);
+    vrm.humanoid?.update?.(0);
     vrm.update(1 / 60);
   }
 
@@ -302,8 +303,9 @@ export async function createVrmAvatar(opts) {
   const frame = () => {
     const dt = clock.getDelta();
     const now = performance.now();
-    vrm.update(dt);
     bodyMotion.update(dt, { talking, now });
+    vrm.humanoid?.update?.(0);
+    vrm.update(dt);
 
     controls.update();
 
@@ -338,6 +340,7 @@ export async function createVrmAvatar(opts) {
   resize();
   setEmotion("neutral");
   bodyMotion.update(1 / 60);
+  vrm.humanoid?.update?.(0);
   vrm.update(1 / 60);
   renderer.render(scene, camera);
   raf = requestAnimationFrame(frame);

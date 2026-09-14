@@ -34,6 +34,13 @@ describe("companionVoiceCatalog", () => {
         voiceId: "en-US-AriaNeural",
       }),
     ).toBe("/companion-full?lang=en&voice=en-US-AriaNeural");
+    expect(
+      buildCompanionHref({
+        basePath: "/companion-full",
+        lang: "yue",
+        voiceId: "zh-HK-HiuMaanNeural",
+      }),
+    ).toBe("/companion-full?lang=yue&voice=zh-HK-HiuMaanNeural");
   });
 
   it("labels cloud voices", () => {

@@ -612,10 +612,18 @@ export function createCompanionVoice(opts = {}) {
 
   const toggleMic = () => (micCapture.on ? stopMic() : startMic());
 
+  const setLang = (next) => {
+    const lang = String(next || opts.lang || "zh-HK");
+    opts.lang = lang;
+    micCapture.setLang?.(lang);
+    return lang;
+  };
+
   const setCloudVoice = (preset) => {
     if (!preset?.name) return voice;
     opts.cloudVoice = preset;
     voice = preset;
+    if (preset.lang) setLang(preset.lang);
     usingCloudTts = Boolean(opts.cloudTtsUrl);
     return voice;
   };
@@ -662,6 +670,7 @@ export function createCompanionVoice(opts = {}) {
     stopMic,
     toggleMic,
     setCloudVoice,
+    setLang,
   };
 }
 
