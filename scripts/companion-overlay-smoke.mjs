@@ -47,7 +47,7 @@ const snap = await page.evaluate(() => {
   };
 });
 console.log(JSON.stringify(snap, null, 2));
-if (!snap.topIsStart || snap.overlayCount > 0 || snap.build !== "2026-09-14-v5") {
+if (!snap.topIsStart || snap.overlayCount > 0 || snap.build !== "2026-09-14-v6") {
   process.exitCode = 1;
 }
 await browser.close();
