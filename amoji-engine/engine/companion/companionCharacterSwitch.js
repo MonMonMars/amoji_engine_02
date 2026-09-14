@@ -52,6 +52,13 @@ export async function switchCompanionCharacter(opts) {
     modelUrl: config.modelUrl,
     prefer: config.avatarPrefer,
     onCharacterTap,
+    onProgress: (pct, _label) => {
+      const mapped = 22 + Math.round((Math.max(0, Math.min(100, pct)) / 100) * 58);
+      emit(
+        mapped,
+        isEnglish ? "Downloading model…" : "下載模型中…",
+      );
+    },
   });
 
   emit(88, isEnglish ? "Warming up…" : "熱身中…");

@@ -39,12 +39,16 @@ export const LEARN_DIALOGUE = Object.freeze({
       "動作檔下載中，唔好急…",
       "我拎緊動作包落來…",
       "下載中呀，就快好…",
+      "條下載 bar 行緊喇，我仲拎緊檔案…",
+      "網絡傳送中，我陪住你等…",
     ],
     en: [
       "Downloading the new move — hang on…",
       "Pulling the motion pack now…",
       "Still downloading — almost there…",
       "Getting the motion file…",
+      "The progress bar is moving — I'm still fetching it…",
+      "Hang tight — the file is on its way…",
     ],
   },
   learning: {
@@ -54,6 +58,8 @@ export const LEARN_DIALOGUE = Object.freeze({
       "新動作呀！等我練熟先…",
       "我學緊呢個動作，稍等…",
       "唔好意思，我要學吓先至做得出…",
+      "我而家練緊舞步，睇住呀…",
+      "等我記住呢套動作先，好快就得…",
     ],
     en: [
       "I haven't learned this move yet — give me a moment…",
@@ -61,6 +67,8 @@ export const LEARN_DIALOGUE = Object.freeze({
       "I'm learning this one now — hold on…",
       "Sorry, I need to study this move first…",
       "Let me practice this before I show you…",
+      "Watch me rehearse this — almost got it…",
+      "New skill incoming — give me a sec to nail it…",
     ],
   },
   installing: {

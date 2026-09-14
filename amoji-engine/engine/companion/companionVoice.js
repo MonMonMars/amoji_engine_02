@@ -251,11 +251,13 @@ export function createCompanionVoice(opts = {}) {
   /** @type {ReturnType<typeof setTimeout> | null} */
   let thinkingLoopTimer = null;
   let learnLoopActive = false;
+  let learnLoopIsEnglish = false;
   let learnActive = false;
   let learnPhraseIndex = -1;
   /** @type {import('./companionLearnDialogue.js').LearnPhase} */
   let learnPhase = "learning";
   let learnProgress = 0;
+  let learnAnnouncedPct = -1;
   /** @type {ReturnType<typeof setTimeout> | null} */
   let learnLoopTimer = null;
 
@@ -937,16 +939,18 @@ export function createCompanionVoice(opts = {}) {
     stopThinkingLoop();
     stopLearnAudio();
     learnLoopActive = true;
+    learnLoopIsEnglish = isEnglish;
     learnActive = true;
     learnPhase = phase;
     learnProgress = progress;
+    learnAnnouncedPct = -1;
     syncAssistantOutput();
 
     const tick = async () => {
       if (!learnLoopActive) return;
       const activePhase = learnPhaseForProgress(learnProgress) || learnPhase;
       await speakLearn({
-        isEnglish,
+        isEnglish: learnLoopIsEnglish,
         phase: activePhase,
         progress: learnProgress,
       });
@@ -963,6 +967,24 @@ export function createCompanionVoice(opts = {}) {
   const updateLearnLoop = ({ phase, progress } = {}) => {
     if (phase) learnPhase = phase;
     if (progress != null) learnProgress = progress;
+    const pct = Math.round(learnProgress * 100);
+    if (
+      learnLoopActive &&
+      pct >= 8 &&
+      pct - learnAnnouncedPct >= 15 &&
+      phase !== "failed"
+    ) {
+      learnAnnouncedPct = pct;
+      const activePhase =
+        phase === "progress"
+          ? "progress"
+          : learnPhaseForProgress(learnProgress) || learnPhase;
+      void speakLearn({
+        isEnglish: learnLoopIsEnglish,
+        phase: activePhase,
+        progress: learnProgress,
+      });
+    }
     return { phase: learnPhase, progress: learnProgress };
   };
 

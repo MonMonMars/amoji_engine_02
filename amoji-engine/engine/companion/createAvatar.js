@@ -84,9 +84,12 @@ function withLoadTimeout(promise, ms, label = "avatar") {
  *   prefer?: 'vrm'|'gltf'|'auto',
  *   timeoutMs?: number,
  *   onCharacterTap?: (info: { point?: unknown }) => void,
+ *   onProgress?: (pct: number, label: string) => void,
  * }} opts
  */
 export async function createCompanionAvatar(opts) {
+  const emit = (pct, label) => opts.onProgress?.(pct, label);
+  emit(4, "boot");
   const timeoutMs =
     opts.timeoutMs ??
     (isIosLike() ? 45_000 : AVATAR_LOAD_TIMEOUT_MS);
@@ -102,16 +105,21 @@ export async function createCompanionAvatar(opts) {
   if (wantsVrm && !wantsGltf) {
     try {
       const { createVrmAvatar } = await import("./vrmAvatar.js");
+      emit(8, "vrm");
       const avatar = await withLoadTimeout(
         createVrmAvatar({
           canvas,
           modelUrl: modelUrl || "/prototypes/assets/companion-girl.vrm",
           onCharacterTap: opts.onCharacterTap,
+          onProgress: (ratio, label) => {
+            emit(8 + Math.round(ratio * 78), label || "vrm");
+          },
         }),
         timeoutMs,
         "vrm",
       );
       avatar.resize?.();
+      emit(96, "ready");
       return { avatar, kind: "vrm3d", canvas };
     } catch (err) {
       console.warn("[companion] VRM avatar failed, trying GLTF", err);
@@ -122,6 +130,7 @@ export async function createCompanionAvatar(opts) {
   if (wantsGltf || prefer === "auto") {
     try {
       const { createGltfAvatar } = await import("./gltfAvatar.js");
+      emit(8, "gltf");
       const avatar = await withLoadTimeout(
         createGltfAvatar({
           canvas,
@@ -129,11 +138,15 @@ export async function createCompanionAvatar(opts) {
             modelUrl && /\.glb($|\?)/i.test(modelUrl)
               ? modelUrl
               : "/prototypes/assets/companion-girl.glb",
+          onProgress: (ratio, label) => {
+            emit(8 + Math.round(ratio * 78), label || "gltf");
+          },
         }),
         timeoutMs,
         "gltf",
       );
       avatar.resize?.();
+      emit(96, "ready");
       return { avatar, kind: "gltf3d", canvas };
     } catch (err) {
       console.warn("[companion] GLTF avatar failed, trying procedural", err);
