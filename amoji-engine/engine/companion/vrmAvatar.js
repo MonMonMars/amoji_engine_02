@@ -163,8 +163,10 @@ export async function createVrmAvatar(opts) {
   scene.add(model);
   vrm.humanoid?.resetNormalizedPose?.();
   const bodyMotion = createCompanionBodyMotion(vrm.humanoid);
-  bodyMotion.update(0);
-  vrm.update(0);
+  for (let i = 0; i < 4; i += 1) {
+    bodyMotion.update(1 / 60);
+    vrm.update(1 / 60);
+  }
 
   const fitted = new THREE.Box3().setFromObject(model);
   const { face: faceAnchor, portraitDist } = frameFaceCamera({
@@ -335,6 +337,9 @@ export async function createVrmAvatar(opts) {
 
   resize();
   setEmotion("neutral");
+  bodyMotion.update(1 / 60);
+  vrm.update(1 / 60);
+  renderer.render(scene, camera);
   raf = requestAnimationFrame(frame);
   globalThis.addEventListener?.("resize", resize);
 
