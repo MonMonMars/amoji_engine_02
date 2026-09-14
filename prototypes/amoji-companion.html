@@ -4,6 +4,13 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>Amoji · Companion</title>
+    <link
+      rel="preload"
+      href="/prototypes/assets/companion-girl.vrm"
+      as="fetch"
+      type="model/gltf-binary"
+      crossorigin
+    />
     <!-- Critical paint: zero external deps — visible in &lt;1s even if modules/fonts fail -->
     <style id="amoji-critical-css">
       html,
@@ -908,7 +915,7 @@
     </script>
     <script>
       (function () {
-        window.__amojiBuild = "2026-09-14-v7-mic";
+        window.__amojiBuild = "2026-09-14-v8";
         window.__amojiModuleBooted = false;
         window.__amojiStart = { tapped: false, ready: false, run: null, sessionStarted: false };
         window.__amojiShowBootFallback = function (msg, opts) {
@@ -1263,7 +1270,7 @@
       const hostedOnline = isHostedCompanion();
 
       const stage = document.querySelector(".stage");
-      const canvas = document.getElementById("avatar-canvas");
+      let canvas = document.getElementById("avatar-canvas");
       const startTalkingEl = document.getElementById("start-talking");
       const dismissLoading = () => {
         window.__amojiHideLoading?.();
@@ -1388,7 +1395,26 @@
           .then((loaded) => {
             avatar = loaded.avatar;
             avatarKind = loaded.kind;
+            if (loaded.canvas) canvas = loaded.canvas;
+            window.__amojiAvatarKind = avatarKind;
             avatar.setEmotion?.(currentEmotion);
+            const label =
+              avatarKind === "vrm3d"
+                ? isEnglish
+                  ? "VRM anime girl loaded"
+                  : "VRM 動漫女孩已載入"
+                : avatarKind === "gltf3d"
+                  ? isEnglish
+                    ? "3D avatar loaded"
+                    : "3D 同伴已載入"
+                  : avatarKind === "webgl3d"
+                    ? isEnglish
+                      ? "3D avatar ready"
+                      : "3D 已就緒"
+                    : isEnglish
+                      ? "2D fallback (3D failed)"
+                      : "2D 後備（3D 載入失敗）";
+            addBubble("system", label);
             return loaded;
           })
           .catch((err) => {
@@ -1403,11 +1429,13 @@
         if (liteMode) return;
         const run = () => beginAvatarLoad();
         if (typeof requestIdleCallback === "function") {
-          requestIdleCallback(run, { timeout: 4000 });
+          requestIdleCallback(run, { timeout: 1200 });
         } else {
-          setTimeout(run, 800);
+          setTimeout(run, 200);
         }
       };
+
+      if (!liteMode) scheduleAvatarLoad();
 
       const chat = createCompanionChat({
         apiUrl: stored.url || null,
@@ -1757,7 +1785,7 @@
 
         if (!busy && !voice.micOn && !voice.speaking) status.idle();
         input.focus();
-        scheduleAvatarLoad();
+        if (!liteMode && !avatarLoadStarted) scheduleAvatarLoad();
 
         if (fromTimeout) {
           showToast("Session ready — avatar or voice may still be loading", "info");
@@ -1817,7 +1845,11 @@
       const startSession = ({ fromTimeout = false } = {}) => {
         if (sessionStarted || sessionStarting) return;
         unlockAudioSync();
-        void voice.primeMicPermission();
+        if (autoMic && voice.supportsMic) {
+          void voice.startMic();
+        } else {
+          void voice.primeMicPermission();
+        }
         sessionStarting = true;
         startTalkingEl?.classList.add("starting");
         startTalkingEl?.setAttribute("aria-busy", "true");
@@ -1844,10 +1876,7 @@
         void voice
           .primeAudio?.()
           .catch(() => {})
-          .then(() => speakGreetingAsync())
-          .finally(() => {
-            requestMicAsync();
-          });
+          .then(() => speakGreetingAsync());
       };
 
       window.__amojiStart.run = () => void startSession();
@@ -1870,7 +1899,9 @@
             ? "HD female 3D"
             : avatarKind === "webgl3d"
               ? "3D female"
-              : "2D female";
+              : liteMode
+                ? "text chat"
+                : "3D loading…";
       const llmSwitcher = createCompanionLlmSwitcher({
         container: document.getElementById("llm-switcher-wrap"),
         chat,
@@ -1998,6 +2029,7 @@
         }
         const turningOn = !voice.micOn;
         if (turningOn) {
+          unlockAudioSync();
           if (!sessionStarted) startSession();
           micQueue.length = 0;
           const micOk = await voice.startMic();

@@ -6,6 +6,23 @@ export const STT_HANDLER_SCHEMA = "amoji.sttHandler.v1";
 
 const GROQ_STT_URL = "https://api.groq.com/openai/v1/audio/transcriptions";
 const OPENAI_STT_URL = "https://api.openai.com/v1/audio/transcriptions";
+const OPENROUTER_STT_URL = "https://openrouter.ai/api/v1/audio/transcriptions";
+
+/**
+ * @param {string} mimeType
+ * @returns {string}
+ */
+export function sttAudioFormat(mimeType) {
+  const m = String(mimeType || "").toLowerCase();
+  if (m.includes("webm")) return "webm";
+  if (m.includes("mp4") || m.includes("m4a")) return "m4a";
+  if (m.includes("ogg")) return "ogg";
+  if (m.includes("wav")) return "wav";
+  if (m.includes("mp3") || m.includes("mpeg")) return "mp3";
+  if (m.includes("aac")) return "aac";
+  if (m.includes("flac")) return "flac";
+  return "webm";
+}
 
 /**
  * @param {string} lang
@@ -24,15 +41,27 @@ export function resolveSttProvider() {
   const groqKey = process.env.GROQ_API_KEY;
   if (groqKey) {
     return {
+      kind: "groq",
       url: GROQ_STT_URL,
       apiKey: groqKey,
       model: process.env.GROQ_STT_MODEL || "whisper-large-v3-turbo",
+    };
+  }
+  const openrouterKey = process.env.OPENROUTER_API_KEY;
+  if (openrouterKey) {
+    return {
+      kind: "openrouter",
+      url: OPENROUTER_STT_URL,
+      apiKey: openrouterKey,
+      model: process.env.OPENROUTER_STT_MODEL || "openai/whisper-large-v3",
+      referer: process.env.OPENROUTER_REFERER || "https://amoji.app",
     };
   }
   const openaiKey = process.env.OPENAI_API_KEY || process.env.AMOJI_LLM_KEY;
   if (openaiKey) {
     const base = process.env.OPENAI_BASE_URL?.replace(/\/$/, "");
     return {
+      kind: "openai",
       url: base ? `${base}/audio/transcriptions` : OPENAI_STT_URL,
       apiKey: openaiKey,
       model: process.env.OPENAI_STT_MODEL || "whisper-1",
@@ -64,25 +93,50 @@ export async function transcribeAudioBuffer(audio, opts = {}) {
   }
 
   const mimeType = opts.mimeType || "audio/webm";
-  const ext = mimeType.includes("mp4") ? "m4a" : "webm";
-  const form = new FormData();
-  form.append(
-    "file",
-    new Blob([audio], { type: mimeType }),
-    `speech.${ext}`,
-  );
-  form.append("model", provider.model);
-  form.append("language", sttLanguageCode(opts.lang));
-  form.append("response_format", "json");
-  form.append("temperature", "0");
+  const language = sttLanguageCode(opts.lang);
 
-  const res = await fetch(provider.url, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${provider.apiKey}` },
-    body: form,
-  });
+  let res;
+  let data;
 
-  const data = await res.json().catch(() => ({}));
+  if (provider.kind === "openrouter") {
+    res = await fetch(provider.url, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${provider.apiKey}`,
+        "Content-Type": "application/json",
+        "HTTP-Referer": provider.referer || "https://amoji.app",
+      },
+      body: JSON.stringify({
+        model: provider.model,
+        input_audio: {
+          data: audio.toString("base64"),
+          format: sttAudioFormat(mimeType),
+        },
+        language,
+      }),
+    });
+    data = await res.json().catch(() => ({}));
+  } else {
+    const ext = mimeType.includes("mp4") ? "m4a" : "webm";
+    const form = new FormData();
+    form.append(
+      "file",
+      new Blob([audio], { type: mimeType }),
+      `speech.${ext}`,
+    );
+    form.append("model", provider.model);
+    form.append("language", language);
+    form.append("response_format", "json");
+    form.append("temperature", "0");
+
+    res = await fetch(provider.url, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${provider.apiKey}` },
+      body: form,
+    });
+    data = await res.json().catch(() => ({}));
+  }
+
   if (!res.ok) {
     const msg =
       data?.error?.message || data?.error || `STT HTTP ${res.status}`;

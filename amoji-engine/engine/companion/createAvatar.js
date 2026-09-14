@@ -4,6 +4,23 @@ export const COMPANION_AVATAR_SCHEMA = "amoji.createAvatar.v1";
 export const AVATAR_LOAD_TIMEOUT_MS = 22_000;
 
 /**
+ * Replace canvas so a failed WebGL context does not block the next renderer.
+ * @param {HTMLCanvasElement} canvas
+ * @returns {HTMLCanvasElement}
+ */
+export function replaceAvatarCanvas(canvas) {
+  const parent = canvas?.parentNode;
+  if (!parent) return canvas;
+  const fresh = canvas.cloneNode(false);
+  fresh.id = canvas.id;
+  fresh.className = canvas.className;
+  const aria = canvas.getAttribute("aria-label");
+  if (aria) fresh.setAttribute("aria-label", aria);
+  parent.replaceChild(fresh, canvas);
+  return fresh;
+}
+
+/**
  * No-op avatar used while the real 3D model loads — keeps chat/voice alive.
  */
 export function createStubAvatar() {
@@ -65,6 +82,7 @@ export async function createCompanionAvatar(opts) {
   const timeoutMs = opts.timeoutMs ?? AVATAR_LOAD_TIMEOUT_MS;
   const prefer = opts.prefer || "vrm";
   const modelUrl = opts.modelUrl || undefined;
+  let canvas = opts.canvas;
   const wantsGltf = prefer === "gltf";
   const wantsVrm =
     prefer === "vrm" ||
@@ -76,7 +94,7 @@ export async function createCompanionAvatar(opts) {
       const { createVrmAvatar } = await import("./vrmAvatar.js");
       const avatar = await withLoadTimeout(
         createVrmAvatar({
-          canvas: opts.canvas,
+          canvas,
           modelUrl: modelUrl || "/prototypes/assets/companion-girl.vrm",
           onCharacterTap: opts.onCharacterTap,
         }),
@@ -84,9 +102,10 @@ export async function createCompanionAvatar(opts) {
         "vrm",
       );
       avatar.resize?.();
-      return { avatar, kind: "vrm3d" };
+      return { avatar, kind: "vrm3d", canvas };
     } catch (err) {
       console.warn("[companion] VRM avatar failed, trying GLTF", err);
+      canvas = replaceAvatarCanvas(canvas);
     }
   }
 
@@ -95,7 +114,7 @@ export async function createCompanionAvatar(opts) {
       const { createGltfAvatar } = await import("./gltfAvatar.js");
       const avatar = await withLoadTimeout(
         createGltfAvatar({
-          canvas: opts.canvas,
+          canvas,
           modelUrl:
             modelUrl && /\.glb($|\?)/i.test(modelUrl)
               ? modelUrl
@@ -105,20 +124,22 @@ export async function createCompanionAvatar(opts) {
         "gltf",
       );
       avatar.resize?.();
-      return { avatar, kind: "gltf3d" };
+      return { avatar, kind: "gltf3d", canvas };
     } catch (err) {
       console.warn("[companion] GLTF avatar failed, trying procedural", err);
+      canvas = replaceAvatarCanvas(canvas);
     }
   }
 
   try {
     const { createLowPolyAvatar } = await import("./lowPolyAvatar.js");
-    const avatar = createLowPolyAvatar(opts);
+    const avatar = createLowPolyAvatar({ ...opts, canvas });
     avatar.resize?.();
-    return { avatar, kind: "webgl3d" };
+    return { avatar, kind: "webgl3d", canvas };
   } catch (err) {
     console.warn("[companion] WebGL avatar unavailable, using 2D fallback", err);
+    canvas = replaceAvatarCanvas(canvas);
     const { createFallbackAvatar } = await import("./fallbackAvatar.js");
-    return { avatar: createFallbackAvatar(opts), kind: "canvas2d" };
+    return { avatar: createFallbackAvatar({ ...opts, canvas }), kind: "canvas2d", canvas };
   }
 }
