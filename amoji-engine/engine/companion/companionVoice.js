@@ -584,16 +584,20 @@ export function createCompanionVoice(opts = {}) {
     return next;
   };
 
+  const stopTtsPlayback = () => {
+    stopCloudAudio();
+    synth?.cancel();
+    speaking = false;
+    stopMouth();
+  };
+
   const stopSpeak = () => {
     if (streamSession) {
       streamSession.closed = true;
       streamSession = null;
     }
     stopThinkingAudio();
-    stopCloudAudio();
-    synth?.cancel();
-    speaking = false;
-    stopMouth();
+    stopTtsPlayback();
     speakChain = Promise.resolve();
   };
 
@@ -603,7 +607,12 @@ export function createCompanionVoice(opts = {}) {
    * @param {{ pauseCapture?: boolean }} [sessionOpts]
    */
   const beginStreamSpeak = (defaultEmotion = "neutral", sessionOpts = {}) => {
-    stopSpeak();
+    if (streamSession) {
+      streamSession.closed = true;
+      streamSession = null;
+    }
+    stopTtsPlayback();
+    speakChain = Promise.resolve();
     const pauseMic = sessionOpts.pauseCapture !== false;
     streamSession = {
       emotion: defaultEmotion,
@@ -866,6 +875,9 @@ export function createCompanionVoice(opts = {}) {
     },
     get speaking() {
       return speaking;
+    },
+    get thinkingLoopOn() {
+      return thinkingLoopActive;
     },
     get listening() {
       return micCapture.listening;

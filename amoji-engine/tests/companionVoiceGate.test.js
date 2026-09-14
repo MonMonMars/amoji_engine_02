@@ -12,11 +12,11 @@ describe("companionVoiceGate", () => {
     expect(result.reason).toBe("stt-interim");
   });
 
-  it("rejects very short interim noise", () => {
+  it("rejects punctuation-only interim", () => {
     const gate = createCompanionVoiceGate();
     const result = gate.shouldBarge({
       source: "interim",
-      text: "嗯",
+      text: "…",
     });
     expect(result.allow).toBe(false);
   });

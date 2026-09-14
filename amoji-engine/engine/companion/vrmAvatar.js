@@ -300,6 +300,9 @@ export async function createVrmAvatar(opts) {
   const setListening = (on) => bodyMotion.setListening(on);
 
   const playGesture = (style) => bodyMotion.playGesture(style);
+  const playAction = (action, opts = {}) =>
+    bodyMotion.playAction(action, { emotion: opts.emotion || emotion });
+  const stopAction = () => bodyMotion.stopAction();
   const playGestureForText = (text, opts = {}) =>
     bodyMotion.playGestureForText(text, { emotion: opts.emotion || emotion });
 
@@ -496,6 +499,8 @@ export async function createVrmAvatar(opts) {
     setTalkStyle,
     reactToSpeechChunk,
     playGesture,
+    playAction,
+    stopAction,
     playGestureForText,
     applyContentFromReply,
     setThinking,

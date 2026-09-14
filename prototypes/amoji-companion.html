@@ -699,17 +699,32 @@
         z-index: 7;
       }
 
-      /* Grok Ani — mic mode: compact dock, hide text field, more avatar visible */
+      /* Mic mode — hide text box, tiny transcript, max avatar visible */
+      .stage.mic-mode .chat-shell {
+        background: linear-gradient(
+          180deg,
+          transparent 0%,
+          transparent 72%,
+          rgba(5, 7, 12, 0.18) 86%,
+          rgba(5, 7, 12, 0.42) 100%
+        );
+      }
+
       .stage.mic-mode .chat-column {
-        max-height: min(22vh, 170px);
+        max-height: min(12vh, 96px);
+        padding-bottom: 0;
       }
 
       .stage.mic-mode .transcript {
-        max-height: min(22vh, 170px);
+        max-height: min(12vh, 96px);
+        padding-bottom: 0.15rem;
+        mask-image: linear-gradient(180deg, transparent 0%, #000 28%);
+        -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 28%);
       }
 
       .stage.mic-mode .composer textarea,
-      .stage.mic-mode .composer .send {
+      .stage.mic-mode .composer .send,
+      .stage.mic-mode .composer .lang-switch {
         display: none !important;
       }
 
@@ -718,15 +733,29 @@
         display: none !important;
       }
 
-      .stage.mic-mode .composer {
-        justify-content: center;
-        gap: 0.7rem;
-        max-width: 380px;
-        padding: 0.4rem 0.55rem;
+      .stage.mic-mode .composer-wrap {
+        padding: 0 1rem max(0.45rem, env(safe-area-inset-bottom));
+        background: transparent;
       }
 
-      .stage.mic-mode .composer-wrap {
-        padding-bottom: max(1rem, env(safe-area-inset-bottom));
+      .stage.mic-mode .composer {
+        justify-content: center;
+        gap: 0.55rem;
+        max-width: 220px;
+        padding: 0.28rem 0.4rem;
+        background: rgba(10, 14, 22, 0.55);
+        border: 1px solid rgba(247, 241, 232, 0.1);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+      }
+
+      .stage.mic-mode .bubble.assistant {
+        font-size: 0.82rem;
+        opacity: 0.88;
+      }
+
+      .stage.mic-mode .bubble.user {
+        font-size: 0.76rem;
+        padding: 0.3rem 0.55rem;
       }
 
       @keyframes rise {
@@ -1198,7 +1227,7 @@
     </script>
   </head>
   <body>
-    <!-- amoji-build: 2026-09-14-v20-voice-gate-web-thinking — voice gate + web LLM + thinking loop -->
+    <!-- amoji-build: 2026-09-14-v21-mic-layout-barge-actions — mic UI + barge + actions -->
     <noscript>
       <div
         style="
@@ -1428,17 +1457,34 @@
         voicePresetById,
         voiceShortLabel,
       } = voiceCatalogMod;
-      const { analyzeCompanionReply, analyzeStreamingReply } = contentMotionMod;
+      const {
+        analyzeCompanionReply,
+        analyzeStreamingReply,
+        analyzeUserInput,
+        isUserStopCommand,
+      } = contentMotionMod;
       const { createStreamSpeakPlanner } = streamSpeakMod;
       const { createCompanionBargeMonitor } = bargeMod;
       const { createCompanionVoiceGate } = voiceGateMod;
 
       const hostedOnline = isHostedCompanion();
 
+      const stripReplyTags = (text) =>
+        String(text || "")
+          .replace(/\s*\[action:\w+\]\s*/gi, "")
+          .replace(/\s*\[mood:\w+\]\s*$/i, "")
+          .trim();
+
       const applyReplyPerformance = (replyText, moodHint) => {
         if (typeof avatar.applyContentFromReply === "function") {
           const content = avatar.applyContentFromReply(replyText, moodHint);
           setEmotionPill(content.emotion);
+          if (content.action === "stop") {
+            avatar.stopAction?.();
+            avatar.setTalking?.(false);
+          } else if (content.action) {
+            avatar.playAction?.(content.action, { emotion: content.emotion });
+          }
           return content;
         }
         const content = analyzeCompanionReply(replyText, moodHint);
@@ -1446,10 +1492,32 @@
         setEmotionPill(content.emotion);
         avatar.setTalkStyle?.(content.talkStyle);
         avatar.setTalkEnergy?.(content.speechEnergy);
-        if (!content.gesture) {
+        if (content.action === "stop") {
+          avatar.stopAction?.();
+          avatar.setTalking?.(false);
+        } else if (content.action) {
+          avatar.playAction?.(content.action, { emotion: content.emotion });
+        } else if (!content.gesture) {
           avatar.playGestureForText?.(replyText, { emotion: content.emotion });
         }
         return content;
+      };
+
+      const handleUserStopCommand = (text) => {
+        if (!isUserStopCommand(text)) return false;
+        voice.stopThinkingLoop?.();
+        voice.cancelStreamSpeak?.();
+        voice.stopSpeak();
+        avatar.stopAction?.();
+        avatar.setTalking?.(false);
+        avatar.setThinking?.(false);
+        avatar.setMouthOpen?.(0);
+        if (busy && activeTurn && !activeTurn.aborted) {
+          abortActiveTurn("user-stop");
+        }
+        status.listening();
+        setEmotionPill("neutral");
+        return true;
       };
 
       const stage = document.querySelector(".stage");
@@ -1866,6 +1934,11 @@
           }
         },
         onSpeechDetected: (info = {}) => {
+          if (!shouldAutoStopOnUserSpeech()) return;
+          if (info.text) {
+            handleUserSpeechBarge(info.source || "interim-speech");
+            return;
+          }
           const gate = voiceGate.shouldBarge({
             source: info.source || "mic-energy",
             text: info.text,
@@ -1876,12 +1949,12 @@
         },
         onMicText: (text, isFinal) => {
           const trimmed = String(text || "").trim();
+          if (trimmed && handleUserStopCommand(trimmed)) {
+            interim.clear();
+            return;
+          }
           if (!isFinal && trimmed && shouldAutoStopOnUserSpeech()) {
-            const gate = voiceGate.shouldBarge({
-              source: "interim-speech",
-              text: trimmed,
-            });
-            if (gate.allow) handleUserSpeechBarge("interim-speech");
+            handleUserSpeechBarge("interim-speech");
           }
           if (!isFinal && trimmed) {
             interim.set(trimmed);
@@ -1994,7 +2067,9 @@
       };
 
       shouldAutoStopOnUserSpeech = () =>
-        phaseAEnabled && voice.micOn && (busy || voice.speaking);
+        phaseAEnabled &&
+        voice.micOn &&
+        (busy || voice.speaking || voice.thinkingLoopOn);
 
       abortActiveTurn = (reason = "barge-in") => {
         if (!activeTurn || activeTurn.aborted) return;
@@ -2024,11 +2099,12 @@
           status.listening();
           return true;
         }
-        if (voice.speaking) {
+        if (voice.speaking || voice.thinkingLoopOn) {
           voice.stopThinkingLoop?.();
           voice.cancelStreamSpeak?.();
           voice.stopSpeak();
           avatar.setTalking?.(false);
+          avatar.setThinking?.(false);
           avatar.setMouthOpen?.(0);
           avatar.setListening?.(true);
           status.listening();
@@ -2059,6 +2135,7 @@
       const runTurn = async (text, { fromMic = false } = {}) => {
         const cleaned = String(text || "").trim();
         if (!cleaned) return;
+        if (handleUserStopCommand(cleaned)) return;
         if (busy) {
           if (phaseAEnabled && fromMic) {
             abortActiveTurn("mic-barge");
@@ -2080,10 +2157,14 @@
         avatar.setTalking(false);
         avatar.setMouthOpen(0);
         avatar.setThinking?.(true);
+        const userMotion = analyzeUserInput?.(cleaned, isEnglish);
         avatar.prepareThinkingFromUser?.(cleaned, isEnglish);
+        if (userMotion?.action && userMotion.action !== "stop") {
+          avatar.playAction?.(userMotion.action, { emotion: userMotion.emotion });
+        }
         setEmotionPill(avatar.emotion || "thinking");
         status.thinking();
-        voice.startThinkingLoop?.({ isEnglish, intervalMs: 2200 });
+        voice.startThinkingLoop?.({ isEnglish, intervalMs: 1800 });
 
         const assistantBubble = addBubble("assistant", "");
         const assistantRow = assistantBubble.closest(".msg-row");
@@ -2096,23 +2177,24 @@
         let streamSpeakStarted = false;
         let streamEmotion = "neutral";
 
-        if (phaseAEnabled) {
-          voice.beginStreamSpeak?.("neutral", { pauseCapture: !keepMicForBarge });
-        }
         if (keepMicForBarge) startBargeWatch();
 
         const enqueueStreamSegments = (segments, fullText) => {
           if (!phaseAEnabled || !segments.length) return;
           const analysis = analyzeStreamingReply(fullText);
           streamEmotion = analysis.emotion || streamEmotion;
-          for (const seg of segments) {
-            void voice.pushStreamSpeak?.(seg, streamEmotion);
-          }
           if (!streamSpeakStarted) {
             streamSpeakStarted = true;
+            voice.stopThinkingLoop?.();
+            voice.beginStreamSpeak?.(streamEmotion, {
+              pauseCapture: !keepMicForBarge,
+            });
             avatar.setThinking?.(false);
             avatar.setTalking?.(true);
             status.speaking();
+          }
+          for (const seg of segments) {
+            void voice.pushStreamSpeak?.(seg, streamEmotion);
           }
         };
 
@@ -2128,7 +2210,7 @@
                 assistantBubble.classList.remove("thinking");
                 assistantBubble.classList.add("typing");
               }
-              const visible = full.replace(/\s*\[mood:\w+\]\s*$/i, "");
+              const visible = stripReplyTags(full);
               assistantBubble.textContent = visible;
               const stream = avatar.applyStreamingContent?.(full);
               if (stream?.emotion) {
@@ -2157,7 +2239,7 @@
           speakContent = content;
           speakEmotion = emotion;
           assistantBubble.classList.remove("thinking", "typing");
-          assistantBubble.textContent = reply;
+          assistantBubble.textContent = stripReplyTags(reply);
 
           if (phaseAEnabled) {
             enqueueStreamSegments(streamPlanner.flush(reply), reply);
