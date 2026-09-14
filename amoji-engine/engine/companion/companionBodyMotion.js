@@ -7,6 +7,9 @@ import {
   sampleBodyTalkMotion,
 } from "./companionTalkMotionBridge.js";
 import {
+  analyzeCompanionReply,
+} from "./companionContentMotion.js";
+import {
   buildBasePose,
   clampArmPose,
   companionGestureStyle,
@@ -24,6 +27,7 @@ export const COMPANION_BODY_SCHEMA = "amoji.companionBody.v1";
  */
 export function createCompanionBodyMotion(humanoid) {
   let emotion = "neutral";
+  let nuance = "none";
   let listening = false;
   /** @type {string | null} */
   let activeGesture = null;
@@ -40,6 +44,11 @@ export function createCompanionBodyMotion(humanoid) {
   const setEmotion = (next) => {
     emotion = String(next || "neutral").toLowerCase();
     return emotion;
+  };
+
+  const setContentNuance = (next) => {
+    nuance = String(next || "none").toLowerCase();
+    return nuance;
   };
 
   const setListening = (on) => {
@@ -67,16 +76,32 @@ export function createCompanionBodyMotion(humanoid) {
   };
 
   const playGestureForText = (text, opts = {}) => {
-    const raw = inferTalkGestureFromText(text, {
-      emotion: opts.emotion || emotion,
-    });
-    const style = companionGestureStyle(raw);
-    talkStyle = style;
+    const analysis = analyzeCompanionReply(text, opts.emotion || emotion);
+    if (opts.emotion) emotion = analysis.emotion;
+    nuance = analysis.nuance;
+    talkStyle = companionGestureStyle(analysis.talkStyle);
     talkTime = 0;
-    if (style === "nod" || style === "point") {
-      return playGesture(style);
+    setTalkEnergy(analysis.speechEnergy);
+    if (analysis.gesture) {
+      return playGesture(analysis.gesture);
+    }
+    if (talkStyle === "nod" || talkStyle === "point") {
+      return playGesture(talkStyle);
     }
     return true;
+  };
+
+  const applyContentFromReply = (text, moodHint = null) => {
+    const analysis = analyzeCompanionReply(text, moodHint || emotion);
+    emotion = analysis.emotion;
+    nuance = analysis.nuance;
+    talkStyle = companionGestureStyle(analysis.talkStyle);
+    talkTime = 0;
+    setTalkEnergy(analysis.speechEnergy);
+    if (analysis.gesture) {
+      playGesture(analysis.gesture);
+    }
+    return analysis;
   };
 
   const setTalkStyle = (style) => {
@@ -203,7 +228,7 @@ export function createCompanionBodyMotion(humanoid) {
     const now = opts.now ?? performance.now();
     const elapsed = (now - t0) * 0.001;
 
-    let pose = buildBasePose({ listening, emotion });
+    let pose = buildBasePose({ listening, emotion, nuance });
     const energy = talking ? Math.max(0.2, talkEnergy) : 0;
 
     if (!talking) {
@@ -260,9 +285,11 @@ export function createCompanionBodyMotion(humanoid) {
   return {
     schema: COMPANION_BODY_SCHEMA,
     setEmotion,
+    setContentNuance,
     setListening,
     playGesture,
     playGestureForText,
+    applyContentFromReply,
     setTalkStyle,
     reactToSpeechChunk,
     setTalking,
@@ -280,20 +307,7 @@ export function createCompanionBodyMotion(humanoid) {
   };
 }
 
-/**
- * Strip `[mood:happy]` tag from LLM replies and return emotion.
- * @param {string} text
- */
-export function parseReplyMood(text) {
-  const raw = String(text || "").trim();
-  const moodMatch = raw.match(/\s*\[mood:(\w+)\]\s*$/i);
-  if (moodMatch) {
-    const parsedEmotion = moodMatch[1].toLowerCase();
-    const reply = raw.replace(/\s*\[mood:\w+\]\s*$/i, "").trim();
-    return { reply, emotion: parsedEmotion };
-  }
-  return { reply: raw, emotion: null };
-}
+export { parseReplyMood } from "./companionContentMotion.js";
 
 /** Cantonese-first companion system prompt (anime companion tone). */
 export const CANTONESE_COMPANION_PROMPT = [

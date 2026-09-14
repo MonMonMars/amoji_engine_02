@@ -47,12 +47,12 @@ describe("createCompanionBodyMotion", () => {
     }
   });
 
-  it("blocks celebrate from triggering arm gesture overlays", () => {
+  it("uses content-aware nod for happy laughter without arm overlay", () => {
     const humanoid = mockHumanoid();
     const motion = createCompanionBodyMotion(humanoid);
     motion.playGestureForText("哈哈好開心！", { emotion: "happy" });
-    expect(motion.activeGesture).toBeNull();
-    expect(motion.emotion).toBe("neutral");
+    expect(motion.activeGesture).toBe("nod");
+    expect(motion.emotion).toBe("happy");
   });
 
   it("remaps happy speech chunks away from celebrate", () => {

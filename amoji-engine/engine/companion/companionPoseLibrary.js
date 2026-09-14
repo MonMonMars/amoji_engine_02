@@ -53,6 +53,16 @@ export const EMOTION_FACE_OFFSET = Object.freeze({
   angry: { headX: 0.03, headZ: -0.035, spineX: 0.02, chestX: 0.015 },
 });
 
+/** Grok Ani–style nuance overlays on top of base emotion pose. */
+export const NUANCE_FACE_OFFSET = Object.freeze({
+  none: { headX: 0, headZ: 0, leanY: 0, spineX: 0 },
+  shy: { headX: 0.045, headZ: 0.055, leanY: -0.01, spineX: 0.01 },
+  curious: { headX: -0.03, headZ: -0.05, leanY: 0.028, spineX: 0.008 },
+  excited: { headX: -0.045, headZ: 0.02, leanY: 0.015, hipZ: -0.01 },
+  love: { headX: -0.025, headZ: 0.04, leanY: 0.02, spineX: 0.006 },
+  stress: { headX: 0.025, headZ: -0.03, leanY: -0.008, spineX: 0.018 },
+});
+
 /** One-shot gesture length (seconds) — from talkGestures styles. */
 export const GESTURE_DURATION_SEC = Object.freeze({
   explain: 2.4,
@@ -150,16 +160,24 @@ export function mergePoses(base, overlay, weight) {
 
 /**
  * Build idle / listen / emotion base pose (arms always from rest unless overridden later).
- * @param {{ listening?: boolean, emotion?: string }} opts
+ * @param {{ listening?: boolean, emotion?: string, nuance?: string }} opts
  */
 export function buildBasePose(opts = {}) {
   const emotion = String(opts.emotion || "neutral").toLowerCase();
+  const nuance = String(opts.nuance || "none").toLowerCase();
   const face =
     EMOTION_FACE_OFFSET[emotion] || EMOTION_FACE_OFFSET.neutral;
+  const nuanceFace =
+    NUANCE_FACE_OFFSET[nuance] || NUANCE_FACE_OFFSET.none;
   const base = opts.listening ? { ...LISTENING_POSE } : { ...REST_POSE };
   /** @type {Record<string, number>} */
   const out = { ...base };
   for (const [key, val] of Object.entries(face)) {
+    if (Number(val) !== 0) {
+      out[key] = (out[key] ?? 0) + Number(val);
+    }
+  }
+  for (const [key, val] of Object.entries(nuanceFace)) {
     if (Number(val) !== 0) {
       out[key] = (out[key] ?? 0) + Number(val);
     }

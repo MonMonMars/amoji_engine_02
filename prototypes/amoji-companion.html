@@ -968,7 +968,7 @@
     </script>
     <script>
       (function () {
-        window.__amojiBuild = "2026-09-14-v14-chat-layout";
+        window.__amojiBuild = "2026-09-14-v15-content-motion";
         window.__amojiModuleBooted = false;
         window.__amojiStart = {
           tapped: false,
@@ -1157,7 +1157,7 @@
     </script>
   </head>
   <body>
-    <!-- amoji-build: 2026-09-14-v14-chat-layout — fix messages hidden behind composer -->
+    <!-- amoji-build: 2026-09-14-v15-content-motion — Grok/ChatGPT-style content expressions -->
     <noscript>
       <div
         style="
@@ -1345,6 +1345,7 @@
         keysMod,
         { saveProviderApiKey },
         voiceCatalogMod,
+        contentMotionMod,
       ] = await Promise.all([
         import("../amoji-engine/engine/companion/createAvatar.js"),
         import("../amoji-engine/engine/companion/chatLlm.js"),
@@ -1357,6 +1358,7 @@
         import("../amoji-engine/engine/companion/companionClientKeys.js"),
         import("../amoji-engine/engine/companion/companionLlmProviders.js"),
         import("../amoji-engine/engine/companion/companionVoiceCatalog.js"),
+        import("../amoji-engine/engine/companion/companionContentMotion.js"),
       ]);
       window.__amojiModuleBooted = true;
       const {
@@ -1379,8 +1381,26 @@
         voicePresetById,
         voiceShortLabel,
       } = voiceCatalogMod;
+      const { analyzeCompanionReply } = contentMotionMod;
 
       const hostedOnline = isHostedCompanion();
+
+      const applyReplyPerformance = (replyText, moodHint) => {
+        if (typeof avatar.applyContentFromReply === "function") {
+          const content = avatar.applyContentFromReply(replyText, moodHint);
+          setEmotionPill(content.emotion);
+          return content;
+        }
+        const content = analyzeCompanionReply(replyText, moodHint);
+        avatar.setEmotion?.(content.emotion);
+        setEmotionPill(content.emotion);
+        avatar.setTalkStyle?.(content.talkStyle);
+        avatar.setTalkEnergy?.(content.speechEnergy);
+        if (!content.gesture) {
+          avatar.playGestureForText?.(replyText, { emotion: content.emotion });
+        }
+        return content;
+      };
 
       const stage = document.querySelector(".stage");
       let canvas = document.getElementById("avatar-canvas");
@@ -1867,8 +1887,8 @@
         voice.pauseCapture();
         interim.clear();
         addBubble("user", cleaned);
-        avatar.setEmotion("neutral");
-        setEmotionPill("neutral");
+        avatar.setEmotion("thinking");
+        setEmotionPill("thinking");
         avatar.setListening?.(false);
         status.thinking();
         avatar.setTalking(false);
@@ -1892,14 +1912,10 @@
           });
           setModePill(result.mode || chat.mode);
           const reply = result.reply || "……";
-          const emotion = result.emotion || "happy";
+          const content = applyReplyPerformance(reply, result.emotion || "happy");
+          const emotion = content.emotion || "happy";
           assistantBubble.classList.remove("thinking", "typing");
           assistantBubble.textContent = reply;
-          avatar.setEmotion(emotion);
-          setEmotionPill(emotion);
-          avatar.setTalkStyle?.(
-            reply.includes("?") || reply.includes("？") ? "question" : "soft",
-          );
           speakEmotion = emotion;
           status.speaking();
           await voice.speak(reply, emotion);
