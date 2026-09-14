@@ -710,27 +710,32 @@
         z-index: 7;
       }
 
-      /* Mic mode — hide text box, tiny transcript, max avatar visible */
+      /* Mic mode — hide text box, readable captions, max avatar visible */
       .stage.mic-mode .chat-shell {
         background: linear-gradient(
           180deg,
           transparent 0%,
-          transparent 72%,
-          rgba(5, 7, 12, 0.18) 86%,
+          transparent 64%,
+          rgba(5, 7, 12, 0.18) 80%,
           rgba(5, 7, 12, 0.42) 100%
         );
       }
 
       .stage.mic-mode .chat-column {
-        max-height: min(12vh, 96px);
+        max-height: min(26vh, 188px);
         padding-bottom: 0;
       }
 
       .stage.mic-mode .transcript {
-        max-height: min(12vh, 96px);
-        padding-bottom: 0.15rem;
-        mask-image: linear-gradient(180deg, transparent 0%, #000 28%);
-        -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 28%);
+        max-height: min(26vh, 188px);
+        padding-bottom: 0.35rem;
+        mask-image: linear-gradient(180deg, transparent 0%, #000 6%);
+        -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 6%);
+      }
+
+      /* Focus on the live exchange — older lines fade out of the strip */
+      .stage.mic-mode .msg-row:not(:nth-last-child(-n+3)) {
+        display: none;
       }
 
       .stage.mic-mode .composer textarea,
@@ -760,13 +765,32 @@
       }
 
       .stage.mic-mode .bubble.assistant {
-        font-size: 0.82rem;
-        opacity: 0.88;
+        font-size: 0.84rem;
+        line-height: 1.5;
+        opacity: 0.82;
+      }
+
+      .stage.mic-mode .msg-row:last-child .bubble.assistant,
+      .stage.mic-mode .msg-row:nth-last-child(2) .bubble.assistant {
+        font-size: 0.94rem;
+        opacity: 1;
       }
 
       .stage.mic-mode .bubble.user {
-        font-size: 0.76rem;
-        padding: 0.3rem 0.55rem;
+        font-size: 0.8rem;
+        line-height: 1.45;
+        padding: 0.32rem 0.58rem;
+      }
+
+      .stage.mic-mode .bubble.user.interim {
+        opacity: 0.9;
+      }
+
+      @media (max-width: 640px) {
+        .stage.mic-mode .chat-column,
+        .stage.mic-mode .transcript {
+          max-height: min(32vh, 228px);
+        }
       }
 
       @keyframes rise {
@@ -1049,7 +1073,7 @@
     </script>
     <script>
       (function () {
-        window.__amojiBuild = "2026-09-14-v26-ios-speaker-motion";
+        window.__amojiBuild = "2026-09-14-v27-mic-captions";
         window.__amojiModuleBooted = false;
         window.__amojiStart = {
           tapped: false,
@@ -1238,7 +1262,7 @@
     </script>
   </head>
   <body>
-    <!-- amoji-build: 2026-09-14-v26-ios-speaker-motion — iPhone loudspeaker + body motion -->
+    <!-- amoji-build: 2026-09-14-v27-mic-captions — mic mode readable multi-line captions -->
     <noscript>
       <div
         style="
@@ -1910,6 +1934,7 @@
         btnMic.setAttribute("aria-pressed", voice.micOn ? "true" : "false");
         btnMic.textContent = voice.micOn ? "⏺" : "🎤";
         stage.classList.toggle("mic-mode", voice.micOn);
+        if (voice.micOn) scrollTranscript(true);
         voice.setKeepMicDuringSpeak?.(
           phaseAEnabled && voice.micOn && !shouldPauseMicDuringTts(),
         );
