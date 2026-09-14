@@ -19,6 +19,14 @@ const EMOTION_EXPRESSIONS = {
   angry: { [VRMExpressionPresetName.Angry]: 0.8 },
 };
 
+const VRM_BLEND_PRESET_MAP = {
+  Happy: VRMExpressionPresetName.Happy,
+  Relaxed: VRMExpressionPresetName.Relaxed,
+  Sad: VRMExpressionPresetName.Sad,
+  Surprised: VRMExpressionPresetName.Surprised,
+  Angry: VRMExpressionPresetName.Angry,
+};
+
 /** Grok Ani–style framing: upper body visible, not extreme face close-up. */
 function frameFaceCamera({ vrm, model, camera, controls, fitted }) {
   const fittedSize = fitted.getSize(new THREE.Vector3());
@@ -221,20 +229,57 @@ export async function createVrmAvatar(opts) {
   const clock = new THREE.Clock();
   let blinkTimer = 0;
   let nextBlink = 2.4 + Math.random() * 2.5;
+  /** @type {Record<string, number>} */
+  let expressionTarget = {};
+  /** @type {Record<string, number>} */
+  let expressionCurrent = {};
 
-  const clearExpressions = () => {
-    if (!expr) return;
-    for (const preset of Object.values(VRMExpressionPresetName)) {
-      if (expr.getExpression?.(preset)) expr.setValue(preset, 0);
+  const emotionPresetKeys = () =>
+    Object.values(VRM_BLEND_PRESET_MAP).filter((preset) =>
+      expr?.getExpression?.(preset),
+    );
+
+  const clearExpressionTargets = () => {
+    expressionTarget = {};
+    for (const preset of emotionPresetKeys()) {
+      expressionTarget[preset] = 0;
+    }
+  };
+
+  const setExpressionTargetFromBlend = (blend) => {
+    clearExpressionTargets();
+    for (const [key, weight] of Object.entries(blend || {})) {
+      const preset = VRM_BLEND_PRESET_MAP[key];
+      if (preset && expr?.getExpression?.(preset)) {
+        expressionTarget[preset] = Math.max(0, Math.min(1, Number(weight) || 0));
+      }
     }
   };
 
   const applyEmotionExpressions = (next) => {
-    if (!expr) return;
-    clearExpressions();
     const blend = EMOTION_EXPRESSIONS[next] || EMOTION_EXPRESSIONS.neutral;
+    clearExpressionTargets();
     for (const [preset, weight] of Object.entries(blend)) {
-      if (expr.getExpression?.(preset)) expr.setValue(preset, weight);
+      if (expr?.getExpression?.(preset)) {
+        expressionTarget[preset] = weight;
+      }
+    }
+  };
+
+  const tickExpressionBlend = (dt) => {
+    if (!expr) return;
+    const rate = Math.min(1, dt * 9);
+    for (const preset of emotionPresetKeys()) {
+      const target = expressionTarget[preset] ?? 0;
+      const current = expressionCurrent[preset] ?? 0;
+      const next = current + (target - current) * rate;
+      expressionCurrent[preset] = next;
+      if (next > 0.001) {
+        expr.setValue(preset, next);
+      } else {
+        expr.setValue(preset, 0);
+        expressionCurrent[preset] = 0;
+      }
     }
   };
 
@@ -255,8 +300,15 @@ export async function createVrmAvatar(opts) {
   const setListening = (on) => bodyMotion.setListening(on);
 
   const playGesture = (style) => bodyMotion.playGesture(style);
-  const playGestureForText = (text) =>
-    bodyMotion.playGestureForText(text, { emotion });
+  const playGestureForText = (text, opts = {}) =>
+    bodyMotion.playGestureForText(text, { emotion: opts.emotion || emotion });
+
+  const applyContentFromReply = (text, moodHint = null) => {
+    const analysis = bodyMotion.applyContentFromReply(text, moodHint);
+    emotion = analysis.emotion;
+    setExpressionTargetFromBlend(analysis.expressionBlend);
+    return analysis;
+  };
 
   const shapeToPreset = (shape) => {
     const key = String(shape || "aa").toLowerCase();
@@ -323,6 +375,7 @@ export async function createVrmAvatar(opts) {
     }
 
     mouthOpen += (mouthTarget - mouthOpen) * Math.min(1, dt * 14);
+    tickExpressionBlend(dt);
     applyMouth(mouthOpen);
 
     // Auto blink
@@ -351,6 +404,7 @@ export async function createVrmAvatar(opts) {
   };
 
   resize();
+  clearExpressionTargets();
   setEmotion("neutral");
   bodyMotion.update(1 / 60);
   vrm.humanoid?.update?.(0);
@@ -414,6 +468,7 @@ export async function createVrmAvatar(opts) {
     reactToSpeechChunk,
     playGesture,
     playGestureForText,
+    applyContentFromReply,
     reactToTap,
     get emotion() {
       return emotion;
