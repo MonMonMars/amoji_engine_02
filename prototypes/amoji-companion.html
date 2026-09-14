@@ -4,12 +4,145 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>Amoji · Companion</title>
+    <!-- Critical paint: zero external deps — visible in &lt;1s even if modules/fonts fail -->
+    <style id="amoji-critical-css">
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+        min-height: 100dvh;
+        background: #070a10 !important;
+        color: #f7f1e8 !important;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      }
+      .stage {
+        min-height: 100dvh;
+      }
+      .topbar {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 5;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: max(1rem, env(safe-area-inset-top)) 1.25rem 0.5rem;
+      }
+      .brand {
+        font-weight: 800;
+        font-size: clamp(1.5rem, 4vw, 2rem);
+        color: #f7f1e8;
+        letter-spacing: -0.04em;
+      }
+      .brand span {
+        color: #7fd4cf;
+      }
+      .start-talking {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        position: fixed;
+        left: 50%;
+        bottom: 28%;
+        transform: translateX(-50%);
+        z-index: 9999;
+        pointer-events: auto;
+        padding: 0.75rem 1.4rem;
+        border-radius: 999px;
+        background: rgba(124, 156, 255, 0.28);
+        border: 1px solid rgba(124, 156, 255, 0.55);
+        color: #e8eeff;
+        font: inherit;
+        font-size: 0.95rem;
+        font-weight: 650;
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
+      }
+      .composer-wrap {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 6;
+        padding: 0 1rem max(1rem, env(safe-area-inset-bottom));
+      }
+      .composer {
+        display: flex;
+        gap: 0.45rem;
+        align-items: flex-end;
+        padding: 0.45rem;
+        border-radius: 1.1rem;
+        background: rgba(10, 14, 22, 0.82);
+        border: 1px solid rgba(247, 241, 232, 0.14);
+      }
+      .composer textarea {
+        flex: 1;
+        min-height: 2.4rem;
+        max-height: 6rem;
+        resize: none;
+        border: none;
+        background: transparent;
+        color: #f7f1e8;
+        font: inherit;
+        font-size: 0.95rem;
+        outline: none;
+      }
+      .composer .send {
+        width: 2.4rem;
+        height: 2.4rem;
+        border-radius: 999px;
+        border: none;
+        background: linear-gradient(135deg, #7fd4cf, #5bb8d6);
+        color: #061018;
+        font-weight: 700;
+        cursor: pointer;
+      }
+      #amoji-boot-fallback {
+        display: none;
+        position: fixed;
+        inset: 0;
+        z-index: 100000;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        gap: 1rem;
+        padding: 1.5rem;
+        background: #070a10;
+        color: #f7f1e8;
+        text-align: center;
+        font-family: system-ui, -apple-system, sans-serif;
+      }
+      #amoji-boot-fallback.show {
+        display: flex;
+      }
+      #amoji-boot-fallback a {
+        color: #7fd4cf;
+        font-weight: 700;
+        font-size: 1.05rem;
+        text-decoration: underline;
+        padding: 0.75rem 1.25rem;
+      }
+      .avatar-loading {
+        display: none !important;
+        pointer-events: none !important;
+      }
+    </style>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap"
       rel="stylesheet"
+      media="print"
+      onload="this.media='all'"
     />
+    <noscript>
+      <link
+        href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap"
+        rel="stylesheet"
+      />
+    </noscript>
     <style>
       :root {
         --ink: #f7f1e8;
@@ -35,6 +168,7 @@
       body {
         margin: 0;
         height: 100%;
+        min-height: 100dvh;
         overflow: hidden;
         font-family: var(--font-body);
         color: var(--ink);
@@ -774,8 +908,20 @@
     </script>
     <script>
       (function () {
-        window.__amojiBuild = "2026-09-14-v4";
+        window.__amojiBuild = "2026-09-14-v5";
+        window.__amojiModuleBooted = false;
         window.__amojiStart = { tapped: false, ready: false, run: null, sessionStarted: false };
+        window.__amojiShowBootFallback = function (msg) {
+          var el = document.getElementById("amoji-boot-fallback");
+          if (!el) return;
+          if (msg) {
+            var note = el.querySelector(".boot-fallback-msg");
+            if (note) note.textContent = msg;
+          }
+          el.classList.add("show");
+          el.removeAttribute("hidden");
+          window.__amojiHideLoading();
+        };
         window.__amojiHideLoading = function () {
           document.querySelectorAll(".avatar-loading").forEach(function (el) {
             el.remove();
@@ -804,26 +950,56 @@
           transcript.appendChild(row);
         };
         setTimeout(function () {
-          if (!window.__amojiStart?.ready && !window.__amojiStart?.sessionStarted) {
+          if (!window.__amojiModuleBooted && !window.__amojiStart?.sessionStarted) {
+            window.__amojiShowBootFallback(
+              "App modules are taking too long — tap below to reload. Add ?lite=1 to skip 3D.",
+            );
+          } else if (!window.__amojiStart?.ready && !window.__amojiStart?.sessionStarted) {
             window.__amojiStaticFallback(
               "Still loading app modules — tap 👆 Start above. Try ?lite=1 if this persists.",
             );
           }
-        }, 8000);
+        }, 12000);
+        setTimeout(function () {
+          if (!window.__amojiStart?.ready && !window.__amojiStart?.sessionStarted) {
+            window.__amojiStaticFallback(
+              "Modules still loading — tap Start above. Add ?lite=1 to skip 3D avatar on slow networks.",
+            );
+          }
+        }, 3000);
         window.addEventListener(
           "error",
           function (ev) {
-            var src = String(ev.filename || ev.target?.src || "");
+            var target = ev.target;
+            if (target && target.tagName === "SCRIPT" && target.type === "module") {
+              window.__amojiShowBootFallback(
+                "App modules failed to load — tap below to reload or try ?lite=1.",
+              );
+              return;
+            }
+            var src = String(ev.filename || target?.src || "");
             if (
               src.includes("amoji-companion") ||
               src.includes("/amoji-engine/") ||
               ev.message === "Script error."
             ) {
               window.__amojiHideLoading();
+              if (!window.__amojiModuleBooted) {
+                window.__amojiShowBootFallback(
+                  "A script failed to load — tap below to reload or try ?lite=1.",
+                );
+              }
             }
           },
           true,
         );
+        window.addEventListener("unhandledrejection", function (ev) {
+          if (!window.__amojiModuleBooted) {
+            window.__amojiShowBootFallback(
+              "App failed to start — tap below to reload or try ?lite=1.",
+            );
+          }
+        });
         window.__amojiUnlockAudio = function () {
           try {
             var AC = window.AudioContext || window.webkitAudioContext;
@@ -891,7 +1067,34 @@
     </script>
   </head>
   <body>
-    <!-- amoji-build: 2026-09-14-v4 — no blocking overlay; Start is always tappable -->
+    <!-- amoji-build: 2026-09-14-v5 — critical inline CSS; module-failure fallback -->
+    <noscript>
+      <div
+        style="
+          min-height: 100dvh;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: #070a10;
+          color: #f7f1e8;
+          font-family: system-ui, sans-serif;
+          padding: 1.5rem;
+          text-align: center;
+        "
+      >
+        <p>
+          JavaScript is required for Amoji.
+          <a href="?lite=1" style="color: #7fd4cf">Try lite mode</a>
+        </p>
+      </div>
+    </noscript>
+    <div id="amoji-boot-fallback" hidden aria-live="assertive" role="alert">
+      <p class="boot-fallback-msg" style="margin: 0; max-width: 22rem; line-height: 1.5">
+        App modules didn't load.
+      </p>
+      <a id="amoji-reload-lite" href="?lite=1">Tap to reload (lite mode)</a>
+      <a id="amoji-reload" href="javascript:location.reload()">Tap to reload</a>
+    </div>
     <div class="stage">
       <div class="atmosphere" aria-hidden="true"></div>
       <canvas id="avatar-canvas" aria-label="Amoji companion — drag to orbit"></canvas>
@@ -1010,6 +1213,7 @@
 
     <script type="module">
       (async () => {
+      window.__amojiModuleBooted = true;
       try {
       const [
         { createCompanionAvatar, createStubAvatar },
@@ -1824,6 +2028,11 @@
       } catch (err) {
         console.error("[companion] module boot failed", err);
         window.__amojiHideLoading?.();
+        window.__amojiShowBootFallback?.(
+          "App modules failed — tap below to reload or try ?lite=1. (" +
+            (err?.message || err) +
+            ")",
+        );
         window.__amojiStaticFallback?.(
           "App modules failed to load — refresh the page or try ?lite=1 on slow networks. (" +
             (err?.message || err) +
