@@ -389,6 +389,24 @@
         pointer-events: none;
       }
 
+      .pill-btn,
+      .lab-link.pill-btn {
+        cursor: pointer;
+        font: inherit;
+        text-decoration: none;
+      }
+
+      .pill-btn:hover,
+      .lab-link.pill-btn:hover {
+        border-color: rgba(127, 212, 207, 0.45);
+        color: var(--ink);
+      }
+
+      button.pill-btn {
+        appearance: none;
+        -webkit-appearance: none;
+      }
+
       /* Legacy overlay cleanup only — never shown in v4+. */
       .avatar-loading {
         display: none !important;
@@ -915,7 +933,7 @@
     </script>
     <script>
       (function () {
-        window.__amojiBuild = "2026-09-14-v8";
+        window.__amojiBuild = "2026-09-14-v9-voices";
         window.__amojiModuleBooted = false;
         window.__amojiStart = { tapped: false, ready: false, run: null, sessionStarted: false };
         window.__amojiShowBootFallback = function (msg, opts) {
@@ -1133,8 +1151,20 @@
           </div>
           <div class="pill" id="mode-pill">LLM · <strong>local</strong></div>
           <div class="pill" id="emotion-pill">feel · <strong>neutral</strong></div>
-          <div class="pill" id="voice-pill">voice · <strong>…</strong></div>
-          <a class="lab-link" id="lang-pill" href="?lang=yue" title="Switch language">粵</a>
+          <button
+            type="button"
+            class="pill pill-btn"
+            id="voice-pill"
+            title="Tap to switch voice"
+          >
+            voice · <strong>…</strong>
+          </button>
+          <a
+            class="lab-link pill-btn"
+            id="lang-pill"
+            href="?lang=yue"
+            title="Switch language"
+          >粵</a>
           <a class="lab-link" id="lite-link" href="/companion" title="Text-only chat (no 3D)">Lite</a>
           <a class="lab-link" id="lab-link" href="/prototypes/realtime-voice-lab.html">Lab</a>
           <button type="button" class="key-btn" id="btn-cloud-key" hidden title="Paste API key">🔑 Key</button>
@@ -1243,6 +1273,7 @@
         { isHostedCompanion },
         keysMod,
         { saveProviderApiKey },
+        voiceCatalogMod,
       ] = await Promise.all([
         import("../amoji-engine/engine/companion/createAvatar.js"),
         import("../amoji-engine/engine/companion/chatLlm.js"),
@@ -1254,18 +1285,28 @@
         import("../amoji-engine/engine/companion/companionLlmConnect.js"),
         import("../amoji-engine/engine/companion/companionClientKeys.js"),
         import("../amoji-engine/engine/companion/companionLlmProviders.js"),
+        import("../amoji-engine/engine/companion/companionVoiceCatalog.js"),
       ]);
       const {
         createCompanionVoice,
-        CLOUD_CANTONESE_VOICE,
-        CLOUD_ENGLISH_VOICE,
-        femaleVoiceLabel,
         formatMicError,
         unlockAudioSync,
       } = voiceMod;
       const { CANTONESE_COMPANION_PROMPT, ENGLISH_COMPANION_PROMPT } = bodyMod;
       const { createCompanionStatus, createInterimBubble } = uiMod;
       const { hasAnyClientCloudKey, inferKeyProvider } = keysMod;
+      const {
+        buildCompanionHref,
+        cloudVoiceLabel,
+        companionLangCode,
+        defaultVoiceForLang,
+        nextVoiceId,
+        persistVoiceId,
+        resolveVoiceId,
+        syncVoiceToUrl,
+        voicePresetById,
+        voiceShortLabel,
+      } = voiceCatalogMod;
 
       const hostedOnline = isHostedCompanion();
 
@@ -1306,6 +1347,12 @@
       const params = new URLSearchParams(location.search);
       const dialect = resolveDialectPref();
       const isEnglish = dialect.forceLanguage === "en";
+      const langCode = companionLangCode(isEnglish ? "en" : "yue");
+      let voiceId = resolveVoiceId({
+        lang: langCode,
+        voiceParam: params.get("voice"),
+      });
+      persistVoiceId(voiceId);
       const liteMode = params.get("lite") === "1";
       const autoMic = params.get("automic") === "1";
       dismissLoading();
@@ -1445,12 +1492,29 @@
       });
 
       const langPill = document.getElementById("lang-pill");
-      if (langPill) {
+      const updateLangPill = () => {
+        if (!langPill) return;
+        const targetLang = isEnglish ? "yue" : "en";
+        const targetVoice = defaultVoiceForLang(targetLang, voiceId);
         langPill.textContent = isEnglish ? "EN" : "粵";
-        langPill.href = isEnglish ? "?lang=yue" : "?lang=en";
+        langPill.href = buildCompanionHref({
+          basePath: location.pathname,
+          lang: targetLang,
+          voiceId: targetVoice,
+          extra: liteMode ? { lite: "1" } : undefined,
+        });
         langPill.title = isEnglish
           ? "Switch to Cantonese (粵語)"
-          : "Switch to English (free Edge TTS)";
+          : "Switch to English";
+      };
+      updateLangPill();
+      const liteLink = document.getElementById("lite-link");
+      if (liteLink) {
+        liteLink.href = buildCompanionHref({
+          basePath: "/companion",
+          lang: langCode,
+          voiceId,
+        });
       }
       if (isEnglish) {
         document.documentElement.lang = "en";
@@ -1477,7 +1541,11 @@
       };
       const setVoicePill = (label) => {
         voicePill.innerHTML = `voice · <strong>${label}</strong>`;
+        voicePill.title = isEnglish
+          ? "Tap to switch voice"
+          : "按一下切換語音";
       };
+      setVoicePill(voiceShortLabel(voiceId, langCode, isEnglish));
       const status = createCompanionStatus({
         onState: (s) => {
           statusPill.className = `pill status-${s}`;
@@ -1553,7 +1621,7 @@
 
       const voice = createCompanionVoice({
         lang: isEnglish ? "en-US" : "zh-HK",
-        cloudVoice: isEnglish ? CLOUD_ENGLISH_VOICE : CLOUD_CANTONESE_VOICE,
+        cloudVoice: voicePresetById(voiceId),
         cloudTtsUrl: hostedOnline ? "/api/tts" : null,
         cloudSttUrl: hostedOnline ? "/api/stt" : null,
         preferCloudTts: hostedOnline,
@@ -1863,11 +1931,8 @@
 
         requestAnimationFrame(() => markSessionReady({ fromTimeout }));
 
-        void voice.ensureVoices().then((v) => {
-          const label =
-            femaleVoiceLabel(v) ||
-            (hostedOnline ? "女聲·粵·曉曼" : voice.supportsSpeak ? "女聲" : "off");
-          setVoicePill(label);
+        void voice.ensureVoices().then(() => {
+          setVoicePill(voiceShortLabel(voiceId, langCode, isEnglish));
         });
         void voice
           .primeAudio?.()
@@ -2010,6 +2075,20 @@
         }
       });
       }
+
+      voicePill.addEventListener("click", () => {
+        voiceId = nextVoiceId(voiceId, langCode);
+        persistVoiceId(voiceId);
+        syncVoiceToUrl(voiceId);
+        updateLangPill();
+        voice.setCloudVoice(voicePresetById(voiceId));
+        const label = voiceShortLabel(voiceId, langCode, isEnglish);
+        setVoicePill(label);
+        addBubble(
+          "system",
+          isEnglish ? `Voice: ${label}` : `語音：${label}`,
+        );
+      });
 
       btnSpeaker.addEventListener("click", () => {
         unlockAudioSync();

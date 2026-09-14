@@ -214,7 +214,8 @@
       .btn-3d:hover {
         background: rgba(127, 212, 207, 0.22);
       }
-      .btn-lang {
+      .btn-lang,
+      .btn-voice {
         font-size: 0.72rem;
         font-weight: 600;
         padding: 0.28rem 0.5rem;
@@ -223,6 +224,17 @@
         border: 1px solid rgba(247, 241, 232, 0.14);
         color: rgba(247, 241, 232, 0.72);
         text-decoration: none;
+        cursor: pointer;
+        font-family: inherit;
+      }
+      .btn-voice {
+        background: rgba(180, 140, 255, 0.12);
+        border-color: rgba(180, 140, 255, 0.35);
+        color: #d4c4ff;
+      }
+      .btn-lang:hover,
+      .btn-voice:hover {
+        filter: brightness(1.08);
       }
     </style>
   </head>
@@ -232,6 +244,7 @@
         <h1>A<span>moji</span></h1>
         <div class="header-actions">
           <a class="btn-3d" id="btn-3d" href="/companion-full">3D avatar</a>
+          <button type="button" class="btn-voice" id="btn-voice" title="Switch voice">曉曼</button>
           <a class="btn-lang" id="btn-lang" href="?lang=en" title="Switch language">粵</a>
           <span class="tag" id="build-tag">lite-v2</span>
           <span class="tag cloud hidden" id="cloud-tag">☁️ Cloud LLM</span>
@@ -250,14 +263,30 @@
         </div>
       </form>
     </div>
-    <script>
+    <script type="module">
+      import {
+        buildCompanionHref,
+        companionLangCode,
+        defaultVoiceForLang,
+        nextVoiceId,
+        persistVoiceId,
+        resolveVoiceId,
+        syncVoiceToUrl,
+        voiceShortLabel,
+      } from "/amoji-engine/engine/companion/companionVoiceCatalog.js";
+
       (function () {
-        window.__amojiBuild = "lite-v4";
+        window.__amojiBuild = "lite-v5";
         window.__amojiLite = { ready: true, ttsCalls: 0, chatCalls: 0 };
 
         var params = new URLSearchParams(location.search);
-        var lang = (params.get("lang") || "yue").toLowerCase();
-        var isEn = lang === "en" || lang === "en-us";
+        var langCode = companionLangCode(params.get("lang"));
+        var isEn = langCode === "en";
+        var voiceId = resolveVoiceId({
+          lang: langCode,
+          voiceParam: params.get("voice"),
+        });
+        persistVoiceId(voiceId);
         var hosted =
           location.hostname &&
           location.hostname !== "localhost" &&
@@ -322,14 +351,49 @@
 
         var btn3d = document.getElementById("btn-3d");
         var btnLang = document.getElementById("btn-lang");
-        if (btn3d) {
-          btn3d.textContent = isEn ? "3D avatar" : "3D 同伴";
-          btn3d.href = "/companion-full" + (isEn ? "?lang=en" : "");
+        var btnVoice = document.getElementById("btn-voice");
+
+        function updateSwitcherUi() {
+          if (btn3d) {
+            btn3d.textContent = isEn ? "3D avatar" : "3D 同伴";
+            btn3d.href = buildCompanionHref({
+              basePath: "/companion-full",
+              lang: langCode,
+              voiceId,
+            });
+          }
+          if (btnLang) {
+            var targetLang = isEn ? "yue" : "en";
+            var targetVoice = defaultVoiceForLang(targetLang, voiceId);
+            btnLang.textContent = isEn ? "EN" : "粵";
+            btnLang.href = buildCompanionHref({
+              basePath: "/companion",
+              lang: targetLang,
+              voiceId: targetVoice,
+            });
+            btnLang.title = isEn
+              ? "Switch to Cantonese (粵語)"
+              : "Switch to English";
+          }
+          if (btnVoice) {
+            btnVoice.textContent = voiceShortLabel(voiceId, langCode, isEn);
+            btnVoice.title = isEn ? "Tap to switch voice" : "按一下切換語音";
+          }
         }
-        if (btnLang) {
-          btnLang.textContent = isEn ? "EN" : "粵";
-          btnLang.href = isEn ? "?lang=yue" : "?lang=en";
-          btnLang.title = isEn ? "Switch to Cantonese" : "Switch to English";
+        updateSwitcherUi();
+
+        if (btnVoice) {
+          btnVoice.addEventListener("click", function () {
+            voiceId = nextVoiceId(voiceId, langCode);
+            persistVoiceId(voiceId);
+            syncVoiceToUrl(voiceId);
+            updateSwitcherUi();
+            setStatus(
+              isEn
+                ? "Voice: " + voiceShortLabel(voiceId, langCode, true)
+                : "語音：" + voiceShortLabel(voiceId, langCode, false),
+            );
+          });
         }
 
         function setStatus(t) {
@@ -391,6 +455,7 @@
                 text: text,
                 emotion: emotion || "neutral",
                 lang: isEn ? "en" : "yue",
+                voice: voiceId,
               }),
             });
             if (!res.ok) throw new Error("HTTP " + res.status);
