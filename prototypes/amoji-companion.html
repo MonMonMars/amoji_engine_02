@@ -4,12 +4,185 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>Amoji · Companion</title>
+    <link
+      rel="preload"
+      href="/prototypes/assets/companion-girl.vrm"
+      as="fetch"
+      type="model/gltf-binary"
+      crossorigin
+    />
+    <!-- Critical paint: zero external deps — visible in &lt;1s even if modules/fonts fail -->
+    <style id="amoji-critical-css">
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+        min-height: 100dvh;
+        background: #070a10 !important;
+        color: #f7f1e8 !important;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      }
+      .stage {
+        min-height: 100dvh;
+      }
+      .topbar {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 5;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: max(1rem, env(safe-area-inset-top)) 1.25rem 0.5rem;
+      }
+      .brand {
+        font-weight: 800;
+        font-size: clamp(1.5rem, 4vw, 2rem);
+        color: #f7f1e8;
+        letter-spacing: -0.04em;
+      }
+      .brand span {
+        color: #7fd4cf;
+      }
+      .start-talking {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        position: fixed;
+        left: 50%;
+        bottom: 28%;
+        transform: translateX(-50%);
+        z-index: 9999;
+        pointer-events: auto;
+        padding: 0.85rem 1.35rem;
+        border-radius: 1.1rem;
+        background: rgba(124, 156, 255, 0.28);
+        border: 1px solid rgba(124, 156, 255, 0.55);
+        color: #e8eeff;
+        font: inherit;
+        font-size: 0.95rem;
+        font-weight: 650;
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
+        max-width: min(92vw, 420px);
+        text-align: center;
+        line-height: 1.35;
+      }
+
+      .start-talking .start-tagline {
+        display: block;
+        margin-top: 0.35rem;
+        font-size: 0.78rem;
+        font-weight: 500;
+        opacity: 0.82;
+      }
+      .chat-shell {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        z-index: 6;
+        pointer-events: none;
+      }
+      .chat-column {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        pointer-events: none;
+      }
+      .transcript {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        pointer-events: auto;
+        padding: 0.5rem 1rem 1rem;
+      }
+      .composer-wrap {
+        position: relative;
+        flex-shrink: 0;
+        z-index: 7;
+        padding: 0 1rem max(1rem, env(safe-area-inset-bottom));
+        pointer-events: auto;
+      }
+      .composer {
+        display: flex;
+        gap: 0.45rem;
+        align-items: flex-end;
+        padding: 0.45rem;
+        border-radius: 1.1rem;
+        background: rgba(10, 14, 22, 0.82);
+        border: 1px solid rgba(247, 241, 232, 0.14);
+      }
+      .composer textarea {
+        flex: 1;
+        min-height: 2.4rem;
+        max-height: 6rem;
+        resize: none;
+        border: none;
+        background: transparent;
+        color: #f7f1e8;
+        font: inherit;
+        font-size: 0.95rem;
+        outline: none;
+      }
+      .composer .send {
+        width: 2.4rem;
+        height: 2.4rem;
+        border-radius: 999px;
+        border: none;
+        background: linear-gradient(135deg, #7fd4cf, #5bb8d6);
+        color: #061018;
+        font-weight: 700;
+        cursor: pointer;
+      }
+      #amoji-boot-fallback {
+        display: none;
+        position: fixed;
+        inset: 0;
+        z-index: 100000;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        gap: 1rem;
+        padding: 1.5rem;
+        background: #070a10;
+        color: #f7f1e8;
+        text-align: center;
+        font-family: system-ui, -apple-system, sans-serif;
+      }
+      #amoji-boot-fallback.show {
+        display: flex;
+      }
+      #amoji-boot-fallback a {
+        color: #7fd4cf;
+        font-weight: 700;
+        font-size: 1.05rem;
+        text-decoration: underline;
+        padding: 0.75rem 1.25rem;
+      }
+      .avatar-loading {
+        display: none !important;
+        pointer-events: none !important;
+      }
+    </style>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap"
       rel="stylesheet"
+      media="print"
+      onload="this.media='all'"
     />
+    <noscript>
+      <link
+        href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap"
+        rel="stylesheet"
+      />
+    </noscript>
     <style>
       :root {
         --ink: #f7f1e8;
@@ -35,6 +208,7 @@
       body {
         margin: 0;
         height: 100%;
+        min-height: 100dvh;
         overflow: hidden;
         font-family: var(--font-body);
         color: var(--ink);
@@ -81,7 +255,7 @@
       .orbit-hint {
         position: absolute;
         left: 50%;
-        top: 58%;
+        top: 42%;
         transform: translateX(-50%);
         z-index: 4;
         pointer-events: none;
@@ -94,6 +268,81 @@
 
       .orbit-hint.hide {
         opacity: 0;
+      }
+
+      .start-talking {
+        position: fixed;
+        left: 50%;
+        bottom: 28%;
+        transform: translateX(-50%);
+        z-index: 9999;
+        pointer-events: auto;
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
+        padding: 0.75rem 1.4rem;
+        border-radius: 999px;
+        background: rgba(124, 156, 255, 0.22);
+        border: 1px solid rgba(124, 156, 255, 0.55);
+        backdrop-filter: blur(14px);
+        font-size: 0.95rem;
+        font-weight: 650;
+        color: #e8eeff;
+        opacity: 1;
+        box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
+        transition: opacity 0.5s ease, transform 0.5s ease, background 0.15s ease;
+      }
+
+      .start-talking:hover {
+        background: rgba(124, 156, 255, 0.32);
+        transform: translateX(-50%) translateY(-2px);
+      }
+
+      .start-talking.hide {
+        opacity: 0;
+        transform: translateX(-50%) translateY(8px);
+      }
+
+      .start-talking:disabled {
+        opacity: 0.55;
+        cursor: wait;
+        pointer-events: none;
+      }
+
+      .start-talking.starting {
+        background: rgba(124, 156, 255, 0.38);
+        border-color: rgba(124, 156, 255, 0.85);
+        transform: translateX(-50%) scale(0.98);
+      }
+
+      .companion-toast {
+        position: fixed;
+        left: 50%;
+        bottom: max(1.25rem, env(safe-area-inset-bottom));
+        transform: translateX(-50%) translateY(120%);
+        z-index: 200;
+        max-width: min(92vw, 420px);
+        padding: 0.75rem 1rem;
+        border-radius: 0.85rem;
+        background: rgba(18, 22, 32, 0.94);
+        border: 1px solid rgba(255, 122, 144, 0.55);
+        color: #ffd8de;
+        font-size: 0.88rem;
+        line-height: 1.45;
+        box-shadow: var(--shadow);
+        opacity: 0;
+        transition: transform 0.28s ease, opacity 0.28s ease;
+        pointer-events: none;
+      }
+
+      .companion-toast.show {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+      }
+
+      .companion-toast.info {
+        border-color: rgba(127, 212, 207, 0.55);
+        color: #dff8f6;
       }
 
       .topbar {
@@ -145,68 +394,379 @@
         font-weight: 600;
       }
 
-      .chat-layer {
+      .pill.status-listening strong {
+        color: #ff9eaa;
+      }
+
+      .pill.status-thinking strong {
+        color: #b8d4ff;
+      }
+
+      .pill.status-speaking strong {
+        color: var(--accent);
+      }
+
+      .pill.avatar-load-pill {
+        border-color: rgba(127, 212, 207, 0.35);
+        color: var(--muted);
+        transition: opacity 0.4s ease, transform 0.4s ease;
+      }
+
+      .pill.avatar-load-pill strong {
+        color: var(--accent);
+      }
+
+      .pill.avatar-load-pill.hide {
+        opacity: 0;
+        transform: translateY(-4px);
+        pointer-events: none;
+      }
+
+      .pill-btn,
+      .lab-link.pill-btn {
+        cursor: pointer;
+        font: inherit;
+        text-decoration: none;
+      }
+
+      .pill-btn:hover,
+      .lab-link.pill-btn:hover {
+        border-color: rgba(127, 212, 207, 0.45);
+        color: var(--ink);
+      }
+
+      button.pill-btn {
+        appearance: none;
+        -webkit-appearance: none;
+      }
+
+      /* Legacy overlay cleanup only — never shown in v4+. */
+      .avatar-loading {
+        display: none !important;
+        pointer-events: none !important;
+      }
+
+      .bubble.user.interim {
+        opacity: 0.72;
+        border-style: dashed;
+        font-style: italic;
+      }
+
+      .bubble.assistant.typing::after {
+        content: "▍";
+        animation: blink 0.9s step-end infinite;
+        margin-left: 0.1em;
+        opacity: 0.7;
+      }
+
+      .bubble.assistant.thinking {
+        background: transparent;
+        border: none;
+        box-shadow: none;
+        padding: 0.35rem 0;
+        min-height: 1.5rem;
+      }
+
+      .thinking-dots {
+        display: inline-flex;
+        gap: 0.28rem;
+        align-items: center;
+        height: 1.25rem;
+      }
+
+      .thinking-dots span {
+        width: 0.42rem;
+        height: 0.42rem;
+        border-radius: 50%;
+        background: var(--muted);
+        animation: thinkDot 1.2s ease-in-out infinite;
+      }
+
+      .thinking-dots span:nth-child(2) {
+        animation-delay: 0.15s;
+      }
+
+      .thinking-dots span:nth-child(3) {
+        animation-delay: 0.3s;
+      }
+
+      @keyframes thinkDot {
+        0%,
+        80%,
+        100% {
+          opacity: 0.35;
+          transform: translateY(0);
+        }
+        40% {
+          opacity: 1;
+          transform: translateY(-3px);
+        }
+      }
+
+      @keyframes blink {
+        50% {
+          opacity: 0;
+        }
+      }
+
+      .chat-shell {
         position: absolute;
-        left: 50%;
-        transform: translateX(-50%);
-        bottom: 0;
+        inset: 0;
         z-index: 6;
-        width: min(560px, calc(100% - 1.25rem));
-        padding-bottom: max(1rem, env(safe-area-inset-bottom));
         display: flex;
         flex-direction: column;
-        gap: 0.75rem;
+        justify-content: flex-end;
+        pointer-events: none;
+        background: linear-gradient(
+          180deg,
+          transparent 0%,
+          transparent 52%,
+          rgba(5, 7, 12, 0.22) 68%,
+          rgba(5, 7, 12, 0.82) 88%,
+          rgba(5, 7, 12, 0.94) 100%
+        );
+      }
+
+      .chat-column {
+        flex: 0 0 auto;
+        display: flex;
+        flex-direction: column;
+        width: min(680px, 100%);
+        margin: 0 auto;
+        padding: 0 1rem 0.15rem;
+        max-height: min(36vh, 300px);
+        min-height: 0;
         pointer-events: none;
       }
 
       .transcript {
         pointer-events: auto;
-        max-height: min(38vh, 320px);
-        overflow: auto;
+        flex: 0 1 auto;
+        max-height: min(36vh, 300px);
+        min-height: 0;
+        overflow-y: auto;
+        overflow-x: hidden;
         display: flex;
         flex-direction: column;
+        justify-content: flex-end;
         gap: 0.55rem;
-        padding: 0.25rem 0.15rem;
-        mask-image: linear-gradient(180deg, transparent, #000 18%);
-        -webkit-mask-image: linear-gradient(180deg, transparent, #000 18%);
+        padding: 0.35rem 0.15rem 0.5rem;
         scrollbar-width: thin;
+        scroll-behavior: smooth;
+        scroll-padding-bottom: 0.5rem;
+        -webkit-overflow-scrolling: touch;
+        mask-image: linear-gradient(180deg, transparent 0%, #000 18%);
+        -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 18%);
+      }
+
+      .msg-row {
+        display: flex;
+        width: 100%;
+        animation: rise 0.35s ease-out both;
+      }
+
+      .msg-row.user {
+        justify-content: flex-end;
+      }
+
+      .msg-row.assistant,
+      .msg-row.system {
+        justify-content: flex-start;
       }
 
       .bubble {
-        max-width: 88%;
-        padding: 0.75rem 0.95rem;
-        border-radius: 1.15rem;
+        max-width: min(92%, 520px);
         line-height: 1.45;
-        font-size: 0.95rem;
-        box-shadow: var(--shadow);
-        border: 1px solid var(--line);
-        backdrop-filter: blur(16px);
-        -webkit-backdrop-filter: blur(16px);
-        animation: rise 0.35s ease-out both;
+        font-size: 0.92rem;
         white-space: pre-wrap;
         word-break: break-word;
       }
 
       .bubble.user {
-        align-self: flex-end;
-        background: var(--user);
-        border-bottom-right-radius: 0.35rem;
+        padding: 0.42rem 0.72rem;
+        border-radius: 1rem;
+        background: rgba(127, 212, 207, 0.12);
+        border: 1px solid rgba(127, 212, 207, 0.22);
+        box-shadow: none;
+        font-size: 0.84rem;
+        opacity: 0.9;
+      }
+
+      .bubble.user.interim {
+        opacity: 0.72;
+        border-style: dashed;
+        font-style: italic;
       }
 
       .bubble.assistant {
-        align-self: flex-start;
-        background: var(--bot);
-        border-bottom-left-radius: 0.35rem;
-      }
-
-      .bubble.system {
-        align-self: center;
+        padding: 0.1rem 0;
         background: transparent;
         border: none;
         box-shadow: none;
+        color: var(--ink);
+        max-width: 100%;
+        font-size: 0.95rem;
+        text-shadow: 0 1px 12px rgba(0, 0, 0, 0.55);
+      }
+
+      .bubble.system {
         color: var(--muted);
-        font-size: 0.8rem;
-        padding: 0.2rem;
+        font-size: 0.78rem;
+        padding: 0.15rem 0;
+        text-align: center;
+        width: 100%;
+        max-width: 100%;
+      }
+
+      .llm-switcher-wrap {
+        pointer-events: auto;
+        padding: 0 1rem 0.35rem;
+        width: min(720px, 100%);
+        margin: 0 auto;
+      }
+
+      .llm-switcher {
+        display: flex;
+        align-items: center;
+        gap: 0.45rem;
+        padding: 0.35rem 0.5rem;
+        border-radius: 1rem;
+        background: rgba(10, 14, 22, 0.62);
+        border: 1px solid var(--line);
+        backdrop-filter: blur(14px);
+      }
+
+      .llm-switcher-label {
+        flex-shrink: 0;
+        font-size: 0.68rem;
+        font-weight: 600;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        padding-left: 0.25rem;
+      }
+
+      .llm-switcher-track {
+        display: flex;
+        gap: 0.35rem;
+        overflow-x: auto;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+        padding-bottom: 1px;
+      }
+
+      .llm-switcher-track::-webkit-scrollbar {
+        display: none;
+      }
+
+      .llm-chip {
+        flex-shrink: 0;
+        border: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.05);
+        color: var(--muted);
+        font: inherit;
+        font-size: 0.72rem;
+        font-weight: 600;
+        padding: 0.35rem 0.62rem;
+        border-radius: 999px;
+        cursor: pointer;
+        transition:
+          background 0.15s ease,
+          border-color 0.15s ease,
+          color 0.15s ease,
+          transform 0.15s ease;
+      }
+
+      .llm-chip:hover {
+        color: var(--ink);
+        background: rgba(255, 255, 255, 0.1);
+        transform: translateY(-1px);
+      }
+
+      .llm-chip.active {
+        color: #061018;
+        background: linear-gradient(135deg, var(--accent), #5bb8d6);
+        border-color: transparent;
+      }
+
+      .llm-chip.unavailable {
+        opacity: 0.38;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      .llm-chip.unavailable:hover {
+        transform: none;
+        background: rgba(255, 255, 255, 0.05);
+        color: var(--muted);
+      }
+
+      .composer-wrap {
+        position: relative;
+        flex-shrink: 0;
+        pointer-events: auto;
+        padding: 0 1rem max(0.75rem, env(safe-area-inset-bottom));
+        background: linear-gradient(180deg, transparent, rgba(5, 7, 12, 0.94) 35%);
+        z-index: 7;
+      }
+
+      /* Mic mode — hide text box, tiny transcript, max avatar visible */
+      .stage.mic-mode .chat-shell {
+        background: linear-gradient(
+          180deg,
+          transparent 0%,
+          transparent 72%,
+          rgba(5, 7, 12, 0.18) 86%,
+          rgba(5, 7, 12, 0.42) 100%
+        );
+      }
+
+      .stage.mic-mode .chat-column {
+        max-height: min(12vh, 96px);
+        padding-bottom: 0;
+      }
+
+      .stage.mic-mode .transcript {
+        max-height: min(12vh, 96px);
+        padding-bottom: 0.15rem;
+        mask-image: linear-gradient(180deg, transparent 0%, #000 28%);
+        -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 28%);
+      }
+
+      .stage.mic-mode .composer textarea,
+      .stage.mic-mode .composer .send,
+      .stage.mic-mode .composer .lang-switch {
+        display: none !important;
+      }
+
+      .stage.mic-mode .llm-switcher-wrap,
+      .stage.mic-mode .cloud-key-banner {
+        display: none !important;
+      }
+
+      .stage.mic-mode .composer-wrap {
+        padding: 0 1rem max(0.45rem, env(safe-area-inset-bottom));
+        background: transparent;
+      }
+
+      .stage.mic-mode .composer {
+        justify-content: center;
+        gap: 0.55rem;
+        max-width: 220px;
+        padding: 0.28rem 0.4rem;
+        background: rgba(10, 14, 22, 0.55);
+        border: 1px solid rgba(247, 241, 232, 0.1);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+      }
+
+      .stage.mic-mode .bubble.assistant {
+        font-size: 0.82rem;
+        opacity: 0.88;
+      }
+
+      .stage.mic-mode .bubble.user {
+        font-size: 0.76rem;
+        padding: 0.3rem 0.55rem;
       }
 
       @keyframes rise {
@@ -221,7 +781,6 @@
       }
 
       .composer {
-        pointer-events: auto;
         display: flex;
         gap: 0.45rem;
         align-items: flex-end;
@@ -232,6 +791,8 @@
         box-shadow: var(--shadow);
         backdrop-filter: blur(22px);
         -webkit-backdrop-filter: blur(22px);
+        width: min(720px, 100%);
+        margin: 0 auto;
       }
 
       .icon-btn {
@@ -371,14 +932,82 @@
         cursor: pointer;
       }
 
-      .gear {
+      .settings .btn-secondary {
+        background: rgba(255, 255, 255, 0.08);
+        color: var(--ink);
+        border: 1px solid var(--line);
+      }
+
+      .settings-hint {
+        margin: 0;
+        font-size: 0.68rem;
+        color: var(--muted);
+        line-height: 1.45;
+      }
+
+      .settings-hint code {
+        font-size: 0.66rem;
+      }
+
+      .gear,
+      .key-btn {
         pointer-events: auto;
         border: 1px solid var(--line);
         background: var(--glass);
         color: var(--ink);
         border-radius: 999px;
+        cursor: pointer;
+        font: inherit;
+      }
+
+      .gear {
         width: 2.1rem;
         height: 2.1rem;
+      }
+
+      .key-btn {
+        padding: 0.35rem 0.75rem;
+        font-size: 0.75rem;
+        font-weight: 650;
+        background: rgba(124, 156, 255, 0.18);
+        border-color: rgba(124, 156, 255, 0.45);
+        color: #c8d8ff;
+      }
+
+      .cloud-key-banner {
+        display: none;
+        gap: 0.5rem;
+        padding: 0.55rem 0.65rem;
+        margin-bottom: 0.45rem;
+        border-radius: 0.85rem;
+        background: rgba(124, 156, 255, 0.12);
+        border: 1px solid rgba(124, 156, 255, 0.35);
+        flex-wrap: wrap;
+        align-items: center;
+      }
+
+      .cloud-key-banner.show {
+        display: flex;
+      }
+
+      .cloud-key-banner input {
+        flex: 1 1 12rem;
+        min-width: 8rem;
+        border: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.06);
+        color: var(--ink);
+        border-radius: 0.6rem;
+        padding: 0.45rem 0.6rem;
+        font: inherit;
+      }
+
+      .cloud-key-banner button {
+        border: 0;
+        border-radius: 0.6rem;
+        padding: 0.45rem 0.75rem;
+        background: var(--accent);
+        color: #061018;
+        font-weight: 650;
         cursor: pointer;
       }
 
@@ -394,12 +1023,19 @@
       }
 
       @media (max-width: 640px) {
-        .chat-layer {
-          width: calc(100% - 0.75rem);
+        .chat-column {
+          padding-top: 4.8rem;
         }
-        .transcript {
-          max-height: 34vh;
+        .topbar .meta .pill:not(#status-pill):not(#voice-pill):not(#lang-pill) {
+          display: none;
         }
+      }
+
+      .icon-btn.lang-switch {
+        min-width: 2.4rem;
+        font-size: 0.78rem;
+        font-weight: 700;
+        letter-spacing: 0.02em;
       }
     </style>
     <script type="importmap">
@@ -411,120 +1047,763 @@
         }
       }
     </script>
+    <script>
+      (function () {
+        window.__amojiBuild = "2026-09-14-v26-ios-speaker-motion";
+        window.__amojiModuleBooted = false;
+        window.__amojiStart = {
+          tapped: false,
+          ready: false,
+          run: null,
+          sessionStarted: false,
+          starting: false,
+        };
+        window.__amojiShowBootFallback = function (msg, opts) {
+          var soft = opts && opts.soft;
+          if (soft) {
+            window.__amojiStaticFallback(msg);
+            window.__amojiHideLoading();
+            return;
+          }
+          var el = document.getElementById("amoji-boot-fallback");
+          if (!el) return;
+          if (msg) {
+            var note = el.querySelector(".boot-fallback-msg");
+            if (note) note.textContent = msg;
+          }
+          el.classList.add("show");
+          el.removeAttribute("hidden");
+          window.__amojiHideLoading();
+        };
+        window.__amojiHideLoading = function () {
+          document.querySelectorAll(".avatar-loading").forEach(function (el) {
+            el.remove();
+          });
+          var start = document.getElementById("start-talking");
+          if (
+            start &&
+            !window.__amojiStart?.sessionStarted &&
+            !window.__amojiStart?.starting
+          ) {
+            start.classList.remove("hide", "starting");
+            start.removeAttribute("aria-hidden");
+            start.removeAttribute("disabled");
+            start.removeAttribute("aria-busy");
+          }
+        };
+        window.__amojiDismissStartButton = function () {
+          var start = document.getElementById("start-talking");
+          if (!start) return;
+          window.__amojiStart.sessionStarted = true;
+          window.__amojiStart.starting = false;
+          start.classList.add("hide");
+          start.setAttribute("aria-hidden", "true");
+          start.setAttribute("disabled", "true");
+          start.removeAttribute("aria-busy");
+          start.remove();
+        };
+        window.__amojiHideLoading();
+        window.__amojiStaticFallback = function (msg) {
+          var transcript = document.getElementById("transcript");
+          if (!transcript || transcript.dataset.staticFallback) return;
+          transcript.dataset.staticFallback = "1";
+          var row = document.createElement("div");
+          row.className = "msg-row system";
+          var bubble = document.createElement("div");
+          bubble.className = "bubble system";
+          bubble.textContent =
+            msg ||
+            "Modules still loading — tap Start above. Add ?lite=1 to skip 3D avatar on slow networks.";
+          row.appendChild(bubble);
+          transcript.appendChild(row);
+        };
+        setTimeout(function () {
+          if (!window.__amojiModuleBooted && !window.__amojiStart?.sessionStarted) {
+            window.__amojiShowBootFallback(
+              "App modules are taking too long — tap below to reload or use text-only chat.",
+            );
+          } else if (!window.__amojiStart?.ready && !window.__amojiStart?.sessionStarted) {
+            window.__amojiStaticFallback(
+              "Still loading app modules — tap 👆 Start above or type below to chat while 3D loads.",
+            );
+          }
+        }, 12000);
+        setTimeout(function () {
+          if (!window.__amojiStart?.ready && !window.__amojiStart?.sessionStarted) {
+            window.__amojiStaticFallback(
+              "Modules still loading — tap Start above. Add ?lite=1 to skip 3D avatar on slow networks.",
+            );
+          }
+        }, 3000);
+        window.addEventListener(
+          "error",
+          function (ev) {
+            var target = ev.target;
+            if (target && target.tagName === "SCRIPT" && target.type === "module") {
+              window.__amojiShowBootFallback(
+                "App modules failed to load — tap Start or reload. Text-only: /companion",
+                { soft: true },
+              );
+              return;
+            }
+            var src = String(ev.filename || target?.src || "");
+            if (
+              src.includes("amoji-companion") ||
+              src.includes("/amoji-engine/") ||
+              ev.message === "Script error."
+            ) {
+              window.__amojiHideLoading();
+              if (!window.__amojiModuleBooted) {
+                window.__amojiShowBootFallback(
+                  "A script failed to load — tap Start or reload. Text-only: /companion",
+                  { soft: true },
+                );
+              }
+            }
+          },
+          true,
+        );
+        window.addEventListener("unhandledrejection", function (ev) {
+          if (!window.__amojiModuleBooted) {
+            window.__amojiShowBootFallback(
+              "App failed to start — tap Start or reload. Text-only: /companion",
+              { soft: true },
+            );
+          }
+        });
+        window.__amojiUnlockAudio = function () {
+          try {
+            var AC = window.AudioContext || window.webkitAudioContext;
+            if (AC) {
+              var ctx = window.__amojiAudioCtx || new AC();
+              window.__amojiAudioCtx = ctx;
+              if (ctx.state === "suspended") ctx.resume();
+            }
+            var a = window.__amojiPrimeAudio || new Audio();
+            window.__amojiPrimeAudio = a;
+            a.preload = "auto";
+            a.setAttribute("playsinline", "");
+            a.setAttribute("webkit-playsinline", "");
+            a.playsInline = true;
+            a.volume = 0.001;
+            a.src =
+              "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEAQB8AAEAfAAABAAgAZGF0YQQAAAAAAA==";
+            a.play().catch(function () {});
+            window.__amojiAudioUnlocked = true;
+          } catch (e) {}
+        };
+        window.__amojiStartTap = function (ev) {
+          ev?.preventDefault?.();
+          ev?.stopPropagation?.();
+          window.__amojiUnlockAudio();
+          window.__amojiHideLoading();
+          const btn = document.getElementById("start-talking");
+          if (!btn || btn.disabled) return false;
+          if (window.__amojiStart.sessionStarted) return false;
+          window.__amojiStart.tapped = true;
+          window.__amojiStart.starting = true;
+          btn.textContent = "⏳ Starting…";
+          btn.classList.add("starting");
+          btn.setAttribute("aria-busy", "true");
+          if (window.__amojiStart.ready && typeof window.__amojiStart.run === "function") {
+            void window.__amojiStart.run();
+            return false;
+          }
+          btn.textContent = "⏳ Loading app…";
+          var tries = 0;
+          var poll = setInterval(function () {
+            tries += 1;
+            if (window.__amojiStart.sessionStarted) {
+              clearInterval(poll);
+              return;
+            }
+            if (window.__amojiStart.ready && typeof window.__amojiStart.run === "function") {
+              clearInterval(poll);
+              btn.textContent = "⏳ Starting…";
+              void window.__amojiStart.run({ fromTimeout: true });
+              return;
+            }
+            if (tries >= 40) {
+              clearInterval(poll);
+              btn.textContent = "👆 Tap to retry · 點一下重試";
+              btn.classList.remove("starting");
+              btn.removeAttribute("aria-busy");
+              window.__amojiStart.tapped = false;
+              window.__amojiStart.starting = false;
+            }
+          }, 250);
+          return false;
+        };
+      })();
+    </script>
   </head>
   <body>
+    <!-- amoji-build: 2026-09-14-v26-ios-speaker-motion — iPhone loudspeaker + body motion -->
+    <noscript>
+      <div
+        style="
+          min-height: 100dvh;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: #070a10;
+          color: #f7f1e8;
+          font-family: system-ui, sans-serif;
+          padding: 1.5rem;
+          text-align: center;
+        "
+      >
+        <p>
+          JavaScript is required for Amoji.
+          <a href="?lite=1" style="color: #7fd4cf">Try lite mode</a>
+        </p>
+      </div>
+    </noscript>
+    <div id="amoji-boot-fallback" hidden aria-live="assertive" role="alert">
+      <p class="boot-fallback-msg" style="margin: 0; max-width: 22rem; line-height: 1.5">
+        App modules didn't load.
+      </p>
+      <a id="amoji-reload-lite" href="/companion">Text-only chat (/companion)</a>
+      <a id="amoji-reload" href="javascript:location.reload()">Tap to reload 3D</a>
+    </div>
     <div class="stage">
       <div class="atmosphere" aria-hidden="true"></div>
       <canvas id="avatar-canvas" aria-label="Amoji companion — drag to orbit"></canvas>
-      <div class="orbit-hint" id="orbit-hint">Drag to orbit · Scroll to zoom</div>
+      <div class="orbit-hint" id="orbit-hint">Drag to orbit · Tap character · Scroll to zoom</div>
+      <button
+        type="button"
+        class="start-talking"
+        id="start-talking"
+        onclick="return window.__amojiStartTap && window.__amojiStartTap(event)"
+      >
+        <span class="start-cta">👆 Tap to start · 點一下開始</span>
+        <span class="start-tagline" id="start-tagline"></span>
+      </button>
 
       <header class="topbar">
         <div class="brand">Amoji <span>Live</span></div>
         <div class="meta">
+          <div class="pill" id="status-pill">state · <strong>idle</strong></div>
+          <div class="pill avatar-load-pill" id="avatar-load-pill" hidden>
+            avatar · <strong>loading…</strong>
+          </div>
           <div class="pill" id="mode-pill">LLM · <strong>local</strong></div>
           <div class="pill" id="emotion-pill">feel · <strong>neutral</strong></div>
-          <div class="pill" id="voice-pill">voice · <strong>…</strong></div>
-          <a class="lab-link" href="/prototypes/realtime-voice-lab.html">Lab</a>
-          <button type="button" class="gear" id="btn-settings" title="LLM settings">⚙</button>
+          <button
+            type="button"
+            class="pill pill-btn"
+            id="voice-pill"
+            title="Tap to switch voice"
+          >
+            voice · <strong>…</strong>
+          </button>
+          <a
+            class="lab-link pill-btn"
+            id="lang-pill"
+            href="?lang=yue"
+            title="Switch language"
+          >粵</a>
+          <a class="lab-link" id="lite-link" href="/companion" title="Text-only chat (no 3D)">Lite</a>
+          <a class="lab-link" id="lab-link" href="/prototypes/realtime-voice-lab.html">Lab</a>
+          <button type="button" class="key-btn" id="btn-cloud-key" hidden title="Paste API key">🔑 Key</button>
+          <button type="button" class="gear" id="btn-settings" title="LLM settings" hidden>⚙</button>
         </div>
       </header>
 
       <div class="settings" id="settings">
-        <label>
-          Online API base (OpenAI-compatible)
-          <input id="api-url" placeholder="https://api.openai.com/v1 or leave blank for local" />
-        </label>
-        <label>
-          API key (stored only in this browser)
-          <input id="api-key" type="password" placeholder="sk-… optional" autocomplete="off" />
-        </label>
-        <label>
-          Model
-          <input id="api-model" placeholder="gpt-4o-mini" />
-        </label>
-        <button type="button" id="btn-save-llm">Save LLM</button>
+        <div id="settings-local">
+          <label>
+            LLM base URL (OpenAI-compatible)
+            <input id="api-url" placeholder="http://127.0.0.1:11434/v1 or leave blank for lab proxy" />
+          </label>
+          <label>
+            Model
+            <input id="api-model" placeholder="qwen3:4b" />
+          </label>
+          <label>
+            API key (optional — Ollama needs none)
+            <input id="api-key" type="password" placeholder="sk-… only for OpenAI/Groq" autocomplete="off" />
+          </label>
+          <p class="settings-hint">
+            <strong>Ollama:</strong> <code>ollama serve</code> on your PC (e.g. D:\Ollama). Tap
+            <strong>Qwen4</strong> / <strong>Qwen8</strong> below. URL:
+            <code>http://localhost:11434/v1</code> · key: <code>ollama</code> · model:
+            <code>qwen3:4b</code>
+          </p>
+          <button type="button" class="btn-secondary" id="btn-list-ollama">List Ollama models</button>
+          <p class="settings-hint" id="ollama-model-list"></p>
+          <button type="button" id="btn-save-llm">Save LLM</button>
+        </div>
+        <div id="settings-cloud" hidden>
+          <p class="settings-hint">
+            <strong>Smart brain</strong> — get a free key on your phone, paste here. Stays in
+            this browser only.
+          </p>
+          <label>
+            Free API key
+            <input id="cloud-api-key" type="password" placeholder="sk-or-… (OpenRouter — recommended)" autocomplete="off" />
+          </label>
+          <p class="settings-hint">
+            <strong>Recommended:</strong>
+            <a href="https://openrouter.ai/keys" target="_blank" rel="noopener">OpenRouter</a>
+            (free Gemma/Llama, email signup) ·
+            <a href="https://console.groq.com/keys" target="_blank" rel="noopener">Groq</a>
+            (if site is up)
+          </p>
+          <button type="button" id="btn-save-cloud-key">Save key &amp; connect</button>
+        </div>
       </div>
 
-      <div class="chat-layer">
-        <div class="transcript" id="transcript" aria-live="polite"></div>
-        <form class="composer" id="composer">
-          <button
-            type="button"
-            class="icon-btn on"
-            id="btn-speaker"
-            title="Speaker on/off"
-            aria-pressed="true"
-          >
-            🔊
-          </button>
-          <button
-            type="button"
-            class="icon-btn"
-            id="btn-mic"
-            title="Mic on/off — continuous listen; replies when you pause"
-            aria-pressed="false"
-          >
-            🎤
-          </button>
-          <textarea
-            id="input"
-            rows="1"
-            placeholder="同 Amoji 傾偈… or tap 🎤 to speak"
-            enterkeyhint="send"
-          ></textarea>
-          <button class="send" id="send" type="submit" aria-label="Send">↑</button>
-        </form>
+      <div class="chat-shell">
+        <div class="chat-column">
+          <div class="transcript" id="transcript" aria-live="polite"></div>
+        </div>
+        <div class="composer-wrap">
+          <div class="cloud-key-banner" id="cloud-key-banner">
+            <span>🔑 Paste OpenRouter key for smart chat</span>
+            <input id="cloud-key-inline" type="password" placeholder="sk-or-v1-…" autocomplete="off" />
+            <button type="button" id="btn-save-cloud-key-inline">Save</button>
+          </div>
+          <div class="llm-switcher-wrap" id="llm-switcher-wrap"></div>
+          <form class="composer" id="composer">
+            <button
+              type="button"
+              class="icon-btn on"
+              id="btn-speaker"
+              title="Speaker on/off"
+              aria-pressed="true"
+            >
+              🔊
+            </button>
+            <button
+              type="button"
+              class="icon-btn"
+              id="btn-mic"
+              title="Mic on/off — continuous listen; replies when you pause"
+              aria-pressed="false"
+            >
+              🎤
+            </button>
+            <button
+              type="button"
+              class="icon-btn lang-switch"
+              id="btn-voice-switch"
+              title="Switch voice"
+            >
+              女聲
+            </button>
+            <button
+              type="button"
+              class="icon-btn lang-switch"
+              id="btn-lang-switch"
+              title="Switch language"
+            >
+              粵
+            </button>
+            <textarea
+              id="input"
+              rows="1"
+              placeholder="同 Amoji 傾偈…"
+              enterkeyhint="send"
+            ></textarea>
+            <button class="send" id="send" type="submit" aria-label="Send">↑</button>
+          </form>
+        </div>
       </div>
     </div>
 
     <script type="module">
-      import { createCompanionAvatar } from "../amoji-engine/engine/companion/createAvatar.js";
-      import { createCompanionChat } from "../amoji-engine/engine/companion/chatLlm.js";
-      import { createCompanionVoice } from "../amoji-engine/engine/companion/companionVoice.js";
+      (async () => {
+      try {
+      const [
+        { createCompanionAvatar, createStubAvatar },
+        { createCompanionChat },
+        voiceMod,
+        bodyMod,
+        { resolveDialectPref },
+        uiMod,
+        { createCompanionLlmSwitcher },
+        { isHostedCompanion },
+        keysMod,
+        { saveProviderApiKey },
+        voiceCatalogMod,
+        contentMotionMod,
+        streamSpeakMod,
+        bargeMod,
+        voiceGateMod,
+        platformMod,
+      ] = await Promise.all([
+        import("../amoji-engine/engine/companion/createAvatar.js"),
+        import("../amoji-engine/engine/companion/chatLlm.js"),
+        import("../amoji-engine/engine/companion/companionVoice.js"),
+        import("../amoji-engine/engine/companion/companionBodyMotion.js"),
+        import("../amoji-engine/engine/lab/dialectPref.js"),
+        import("../amoji-engine/engine/companion/companionUi.js"),
+        import("../amoji-engine/engine/companion/companionLlmUi.js"),
+        import("../amoji-engine/engine/companion/companionLlmConnect.js"),
+        import("../amoji-engine/engine/companion/companionClientKeys.js"),
+        import("../amoji-engine/engine/companion/companionLlmProviders.js"),
+        import("../amoji-engine/engine/companion/companionVoiceCatalog.js"),
+        import("../amoji-engine/engine/companion/companionContentMotion.js"),
+        import("../amoji-engine/engine/companion/companionStreamSpeak.js"),
+        import("../amoji-engine/engine/companion/companionBargeMonitor.js"),
+        import("../amoji-engine/engine/companion/companionVoiceGate.js"),
+        import("../amoji-engine/engine/companion/companionPlatform.js"),
+      ]);
+      window.__amojiModuleBooted = true;
+      const {
+        createCompanionVoice,
+        formatMicError,
+        unlockAudioSync,
+      } = voiceMod;
+      const { CANTONESE_COMPANION_PROMPT, ENGLISH_COMPANION_PROMPT } = bodyMod;
+      const { createCompanionStatus, createInterimBubble } = uiMod;
+      const { hasAnyClientCloudKey, inferKeyProvider } = keysMod;
+      const {
+        buildCompanionHref,
+        cloudVoiceLabel,
+        companionLangCode,
+        defaultVoiceForLang,
+        nextVoiceId,
+        persistVoiceId,
+        resolveVoiceId,
+        syncVoiceToUrl,
+        voicePresetById,
+        voiceGenderLabel,
+        voiceShortLabel,
+      } = voiceCatalogMod;
+      const {
+        analyzeCompanionReply,
+        analyzeStreamingReply,
+        analyzeUserInput,
+        isUserStopCommand,
+      } = contentMotionMod;
+      const { createStreamSpeakPlanner } = streamSpeakMod;
+      const { createCompanionBargeMonitor } = bargeMod;
+      const { createCompanionVoiceGate } = voiceGateMod;
+      const { isIosLike, shouldPauseMicDuringTts } = platformMod;
 
-      const canvas = document.getElementById("avatar-canvas");
+      const hostedOnline = isHostedCompanion();
+
+      const stripReplyTags = (text) =>
+        String(text || "")
+          .replace(/\s*\[action:\w+\]\s*/gi, "")
+          .replace(/\s*\[mood:\w+\]\s*$/i, "")
+          .trim();
+
+      /** @type {ReturnType<typeof analyzeCompanionReply> | null} */
+      let lastAvatarPerformance = null;
+
+      const applyPerformanceFromContent = (content) => {
+        if (!content) return;
+        lastAvatarPerformance = content;
+        currentEmotion = content.emotion || "neutral";
+        avatar.setEmotion?.(content.emotion || "neutral");
+        setEmotionPill(content.emotion || "neutral", content.action || null);
+        avatar.setTalkStyle?.(content.talkStyle);
+        avatar.setTalkEnergy?.(content.speechEnergy);
+        if (content.action === "stop") {
+          avatar.stopAction?.();
+          avatar.setTalking?.(false);
+        } else if (content.action) {
+          avatar.playAction?.(content.action, { emotion: content.emotion });
+          const liveEmotion = avatar.emotion;
+          if (liveEmotion && liveEmotion !== "neutral") {
+            currentEmotion = liveEmotion;
+            setEmotionPill(liveEmotion);
+          }
+        } else if (content.gesture) {
+          avatar.playGesture?.(content.gesture);
+        }
+      };
+
+      const syncAvatarPerformance = () => {
+        if (!lastAvatarPerformance) return;
+        applyPerformanceFromContent(lastAvatarPerformance);
+      };
+
+      const applyReplyPerformance = (replyText, moodHint) => {
+        const content = analyzeCompanionReply(replyText, moodHint);
+        applyPerformanceFromContent(content);
+        if (!content.action && !content.gesture) {
+          avatar.playGestureForText?.(replyText, { emotion: content.emotion });
+        }
+        return content;
+      };
+
+      const handleUserStopCommand = (text) => {
+        if (!isUserStopCommand(text)) return false;
+        voice.stopThinkingLoop?.();
+        voice.cancelStreamSpeak?.();
+        voice.stopSpeak();
+        avatar.stopAction?.();
+        avatar.setTalking?.(false);
+        avatar.setThinking?.(false);
+        avatar.setMouthOpen?.(0);
+        if (busy && activeTurn && !activeTurn.aborted) {
+          abortActiveTurn("user-stop");
+        }
+        status.listening();
+        setEmotionPill("neutral");
+        return true;
+      };
+
+      const stage = document.querySelector(".stage");
+      let canvas = document.getElementById("avatar-canvas");
+      const startTalkingEl = document.getElementById("start-talking");
+      const dismissLoading = () => {
+        window.__amojiHideLoading?.();
+      };
+      dismissLoading();
+
+      const showToast = (msg, kind = "error") => {
+        const t = document.createElement("div");
+        t.className = `companion-toast ${kind === "info" ? "info" : ""}`;
+        t.setAttribute("role", "alert");
+        t.textContent = String(msg || "Something went wrong");
+        document.body.appendChild(t);
+        requestAnimationFrame(() => t.classList.add("show"));
+        setTimeout(() => {
+          t.classList.remove("show");
+          setTimeout(() => t.remove(), 320);
+        }, 5200);
+      };
+
       const transcript = document.getElementById("transcript");
       const form = document.getElementById("composer");
       const input = document.getElementById("input");
       const sendBtn = document.getElementById("send");
       const modePill = document.getElementById("mode-pill");
       const emotionPill = document.getElementById("emotion-pill");
+      const statusPill = document.getElementById("status-pill");
       const voicePill = document.getElementById("voice-pill");
       const settings = document.getElementById("settings");
       const btnSettings = document.getElementById("btn-settings");
       const btnSpeaker = document.getElementById("btn-speaker");
       const btnMic = document.getElementById("btn-mic");
+      const btnVoiceSwitch = document.getElementById("btn-voice-switch");
+      const btnLangSwitch = document.getElementById("btn-lang-switch");
 
       const params = new URLSearchParams(location.search);
+      const dialect = resolveDialectPref();
+      const langCode = companionLangCode(
+        params.get("lang") || dialect.forceLanguage || "yue",
+      );
+      const isEnglish = langCode === "en";
+      let voiceId = resolveVoiceId({
+        lang: langCode,
+        voiceParam: params.get("voice"),
+      });
+      persistVoiceId(voiceId);
+      const liteMode = params.get("lite") === "1";
+      const autoMic = params.get("automic") !== "0";
+      dismissLoading();
       const avatarModelUrl =
         params.get("vrm") ||
         params.get("model3d") ||
         localStorage.getItem("amoji.companion.vrmUrl") ||
         "";
-      const avatarPrefer = params.get("avatar") === "gltf" ? "gltf" : "auto";
+      const avatarPrefer =
+        params.get("avatar") === "gltf"
+          ? "gltf"
+          : "vrm";
       const stored = {
-        url: localStorage.getItem("amoji.companion.apiUrl") || params.get("llm") || "",
+        url:
+          localStorage.getItem("amoji.companion.apiUrl") ||
+          params.get("llm") ||
+          "",
         key: localStorage.getItem("amoji.companion.apiKey") || "",
         model:
           localStorage.getItem("amoji.companion.model") ||
           params.get("model") ||
-          "gpt-4o-mini",
+          "qwen3:4b",
       };
 
-      document.getElementById("api-url").value = stored.url;
-      document.getElementById("api-key").value = stored.key;
-      document.getElementById("api-model").value = stored.model;
+      if (hostedOnline) {
+        document.getElementById("lab-link")?.remove();
+        const liteLink = document.getElementById("lite-link");
+        if (liteLink) liteLink.textContent = isEnglish ? "Text" : "文字版";
+        document.querySelector(".brand span").textContent = "Cloud";
+        document.getElementById("settings-local").hidden = true;
+        document.getElementById("settings-cloud").hidden = false;
+        document.getElementById("btn-settings").hidden = false;
+        document.getElementById("btn-settings").title = "Paste API key (smart brain)";
+        document.getElementById("btn-cloud-key").hidden = false;
+        if (!hasAnyClientCloudKey()) {
+          fetch("/api/llm/status")
+            .then((r) => (r.ok ? r.json() : null))
+            .then((status) => {
+              if (status?.cloudReady || status?.openrouter?.ok) return;
+              document.getElementById("cloud-key-banner")?.classList.add("show");
+            })
+            .catch(() => {
+              document.getElementById("cloud-key-banner")?.classList.add("show");
+            });
+        }
+      } else {
+        document.getElementById("btn-settings").hidden = false;
+        document.getElementById("api-url").value = stored.url;
+        document.getElementById("api-key").value = stored.key;
+        document.getElementById("api-model").value = stored.model;
+      }
 
-      const { avatar, kind: avatarKind } = await createCompanionAvatar({
-        canvas,
-        modelUrl: avatarModelUrl || undefined,
-        prefer: avatarPrefer,
-      });
+      const tapLines = isEnglish
+        ? [
+            "Hey! You poked me — I'm so happy!",
+            "Hehe, you found me! What's on your mind?",
+            "Aww, don't tease me — I'll blush!",
+            "You tapped me? I'm listening~",
+          ]
+        : [
+            "喂～你戳我呀？好開心㗎！",
+            "嘿嘿，見到我啦？有咩想傾？",
+            "哎呀～唔好撩我啦，會面紅㗎！",
+            "你點我？我喺度聽緊你㗎～",
+          ];
+      let lastTapAt = 0;
+      /** @type {(() => void) | null} */
+      let handleCharacterTap = null;
+
+      let avatar = createStubAvatar();
+      let avatarKind = "loading";
+      let avatarLoadStarted = false;
+      let currentEmotion = "neutral";
+      /** @type {HTMLElement | null} */
+      /** @type {HTMLElement | null} */
+      let greetingBubble = null;
+      /** @type {Promise<{ avatar: ReturnType<typeof createStubAvatar>, kind: string }>} */
+      let avatarLoadPromise = Promise.resolve({ avatar, kind: avatarKind });
+
+      const resolveAvatarLabel = (kind = avatarKind) =>
+        kind === "vrm3d"
+          ? "VRM anime girl"
+          : kind === "gltf3d"
+            ? "HD female 3D"
+            : kind === "webgl3d"
+              ? "3D female"
+              : liteMode
+                ? "text chat"
+                : "3D loading…";
+
+      const theaterLine = () =>
+        hostedOnline
+          ? isEnglish
+            ? `☁️ Cloud · ${resolveAvatarLabel()} · English · tap 🎤 to talk`
+            : `☁️ 全網上運行 · ${resolveAvatarLabel()} · 粵語傾偈 · 按 🎤 講嘢`
+          : isEnglish
+            ? `Anime companion · ${resolveAvatarLabel()} · English · free Edge TTS · Brain button switches LLM · 🎤`
+            : `動漫同伴 · ${resolveAvatarLabel()} · 粵語傾偈 · 免費 Edge TTS · Brain 按鈕切 LLM · 🎤 連續對話`;
+
+      const beginAvatarLoad = () => {
+        if (avatarLoadStarted) return avatarLoadPromise;
+        avatarLoadStarted = true;
+        showAvatarLoadPill();
+        avatarLoadPromise = createCompanionAvatar({
+          canvas,
+          modelUrl: avatarModelUrl || undefined,
+          prefer: avatarPrefer,
+          onCharacterTap: () => handleCharacterTap?.(),
+        })
+          .then((loaded) => {
+            avatar = loaded.avatar;
+            avatarKind = loaded.kind;
+            if (loaded.canvas) canvas = loaded.canvas;
+            window.__amojiAvatarKind = avatarKind;
+            window.__amojiAvatar = avatar;
+            avatar.setEmotion?.(currentEmotion);
+            syncAvatarPerformance();
+            const label =
+              avatarKind === "vrm3d"
+                ? isEnglish
+                  ? "VRM anime girl loaded"
+                  : "VRM 動漫女孩已載入"
+                : avatarKind === "gltf3d"
+                  ? isEnglish
+                    ? "3D avatar loaded"
+                    : "3D 同伴已載入"
+                  : avatarKind === "webgl3d"
+                    ? isEnglish
+                      ? "3D avatar ready"
+                      : "3D 已就緒"
+                    : isEnglish
+                      ? "2D fallback (3D failed)"
+                      : "2D 後備（3D 載入失敗）";
+            addBubble("system", label);
+            return loaded;
+          })
+          .catch((err) => {
+            console.warn("[companion] avatar load failed", err);
+            showToast(
+              isEnglish
+                ? "3D avatar failed — chat and mic still work. Try reload or ?lite=1"
+                : "3D 載入失敗 — 仍可打字同用麥克風。可重新載入或加 ?lite=1",
+              "info",
+            );
+            return { avatar, kind: avatarKind };
+          })
+          .finally(() => hideAvatarLoadPill());
+        return avatarLoadPromise;
+      };
+
+      const scheduleAvatarLoad = () => {
+        if (liteMode) return;
+        const run = () => beginAvatarLoad();
+        if (typeof requestIdleCallback === "function") {
+          requestIdleCallback(run, { timeout: 1200 });
+        } else {
+          setTimeout(run, 200);
+        }
+      };
+
+      if (!liteMode) scheduleAvatarLoad();
+
       const chat = createCompanionChat({
         apiUrl: stored.url || null,
         apiKey: stored.key || null,
         model: stored.model,
+        systemPrompt: isEnglish ? ENGLISH_COMPANION_PROMPT : CANTONESE_COMPANION_PROMPT,
       });
+
+      const langPill = document.getElementById("lang-pill");
+      const languageSwitchHref = () => {
+        const targetLang = isEnglish ? "yue" : "en";
+        const targetVoice = defaultVoiceForLang(targetLang, voiceId);
+        return buildCompanionHref({
+          basePath: location.pathname,
+          lang: targetLang,
+          voiceId: targetVoice,
+          extra: liteMode ? { lite: "1" } : undefined,
+        });
+      };
+
+      const updateLangPill = () => {
+        const href = languageSwitchHref();
+        const switchTitle = isEnglish
+          ? "Switch to Cantonese (粵語)"
+          : "Switch to English";
+        if (langPill) {
+          langPill.textContent = isEnglish ? "EN" : "粵";
+          langPill.href = href;
+          langPill.title = switchTitle;
+        }
+        if (btnLangSwitch) {
+          btnLangSwitch.textContent = isEnglish ? "EN" : "粵";
+          btnLangSwitch.title = switchTitle;
+        }
+      };
+
+      const liteLink = document.getElementById("lite-link");
+      if (liteLink) {
+        liteLink.href = buildCompanionHref({
+          basePath: "/companion",
+          lang: langCode,
+          voiceId,
+        });
+      }
+      if (isEnglish) {
+        document.documentElement.lang = "en";
+        input.placeholder = "Chat with Amoji…";
+      }
 
       const orbitHint = document.getElementById("orbit-hint");
       canvas.addEventListener(
@@ -534,26 +1813,90 @@
       );
 
       const setModePill = (mode) => {
+        if (hostedOnline) {
+          modePill.innerHTML = `☁️ <strong>Cloud LLM</strong>`;
+          return;
+        }
         modePill.innerHTML = `LLM · <strong>${mode}</strong>`;
       };
-      const setEmotionPill = (emotion) => {
-        emotionPill.innerHTML = `feel · <strong>${emotion}</strong>`;
+      const setEmotionPill = (emotion, action = null) => {
+        currentEmotion = emotion;
+        const actionLabel =
+          action || avatar.currentAction || lastAvatarPerformance?.action;
+        const suffix =
+          actionLabel && actionLabel !== "none" ? ` · ${actionLabel}` : "";
+        emotionPill.innerHTML = `feel · <strong>${emotion}${suffix}</strong>`;
       };
       const setVoicePill = (label) => {
         voicePill.innerHTML = `voice · <strong>${label}</strong>`;
+        voicePill.title = isEnglish
+          ? "Tap to switch voice"
+          : "按一下切換語音";
       };
+      /** @type {(nextVoiceId: string) => void} */
+      let applyVoiceSelection = (nextVoiceId) => {
+        voiceId = nextVoiceId;
+        persistVoiceId(voiceId);
+        syncVoiceToUrl(voiceId);
+      };
+
+      const status = createCompanionStatus({
+        onState: (s) => {
+          statusPill.className = `pill status-${s}`;
+          const labels = {
+            idle: "idle",
+            loading: "loading",
+            listening: "listening",
+            thinking: "thinking",
+            speaking: "speaking",
+          };
+          statusPill.innerHTML = `state · <strong>${labels[s] || s}</strong>`;
+        },
+      });
+      status.idle();
       setModePill(chat.mode);
 
+      const interim = createInterimBubble(transcript);
+
+      const isNearBottom = () =>
+        transcript.scrollHeight - transcript.scrollTop - transcript.clientHeight < 80;
+
+      const scrollTranscript = (force = false) => {
+        if (force || isNearBottom()) {
+          transcript.scrollTop = transcript.scrollHeight;
+        }
+      };
+
+      const trimTranscriptHistory = () => {
+        const rows = transcript.querySelectorAll(".msg-row:not(.interim)");
+        if (rows.length > 8) {
+          for (let i = 0; i < rows.length - 8; i += 1) {
+            rows[i].remove();
+          }
+        }
+      };
+
       const addBubble = (role, text) => {
+        const row = document.createElement("div");
+        row.className = `msg-row ${role}`;
         const el = document.createElement("div");
         el.className = `bubble ${role}`;
         el.textContent = text;
-        transcript.appendChild(el);
-        transcript.scrollTop = transcript.scrollHeight;
+        row.appendChild(el);
+        transcript.appendChild(row);
+        trimTranscriptHistory();
+        scrollTranscript(true);
         return el;
       };
 
+      const showThinking = (bubble) => {
+        bubble.classList.add("thinking");
+        bubble.innerHTML =
+          '<span class="thinking-dots" aria-label="Thinking"><span></span><span></span><span></span></span>';
+      };
+
       let busy = false;
+      const shownMicErrors = new Set();
 
       const autosize = () => {
         input.style.height = "auto";
@@ -566,6 +1909,15 @@
         btnMic.classList.toggle("on", voice.micOn);
         btnMic.setAttribute("aria-pressed", voice.micOn ? "true" : "false");
         btnMic.textContent = voice.micOn ? "⏺" : "🎤";
+        stage.classList.toggle("mic-mode", voice.micOn);
+        voice.setKeepMicDuringSpeak?.(
+          phaseAEnabled && voice.micOn && !shouldPauseMicDuringTts(),
+        );
+      };
+
+      const syncListenPose = () => {
+        const listen = voice.micOn && !busy && !voice.speaking;
+        avatar.setListening?.(listen);
       };
 
       const syncSpeakerBtn = () => {
@@ -574,82 +1926,428 @@
         btnSpeaker.textContent = voice.speakerOn ? "🔊" : "🔇";
       };
 
+      let speakEmotion = "neutral";
+      /** @type {{ emotion?: string, nuance?: string }} */
+      let speakContent = { emotion: "neutral", nuance: "none" };
+
+      const phaseAEnabled = new URLSearchParams(location.search).get("phaseA") !== "0";
+      /** @type {string[]} */
+      const micQueue = [];
+      let turnSeq = 0;
+      /** @type {{ id: number, aborted: boolean, assistantRow: HTMLElement | null } | null} */
+      let activeTurn = null;
+      /** @type {ReturnType<typeof createCompanionBargeMonitor>} */
+      let bargeMonitor;
+      let stopBargeWatch = () => {};
+      let startBargeWatch = () => {};
+      /** @type {(reason?: string) => void} */
+      let abortActiveTurn = () => {};
+      let shouldAutoStopOnUserSpeech = () => false;
+      /** @type {(reason?: string) => boolean} */
+      let handleUserSpeechBarge = () => false;
+      const voiceGate = createCompanionVoiceGate();
+      let bargeArmed = false;
+
+      const armBargeIn = () => {
+        if (bargeArmed) return;
+        bargeArmed = true;
+        if (voice.micOn || autoMic) voice.setKeepMicDuringSpeak?.(true);
+        startBargeWatch();
+      };
+
+      const disarmBargeIn = () => {
+        if (voice.assistantOutputActive || busy) return;
+        bargeArmed = false;
+        stopBargeWatch();
+      };
+
       const voice = createCompanionVoice({
-        lang: "zh-HK",
-        onMouth: (open) => avatar.setMouthOpen(open),
+        lang: isEnglish ? "en-US" : "zh-HK",
+        cloudVoice: voicePresetById(voiceId),
+        cloudTtsUrl: hostedOnline ? "/api/tts" : null,
+        cloudSttUrl: hostedOnline ? "/api/stt" : null,
+        preferCloudTts: hostedOnline,
+        onAssistantOutputChange: (active) => {
+          if (active) armBargeIn();
+          else disarmBargeIn();
+        },
+        onMouth: (open, shape) => {
+          if (shape && avatar.setMouthShape) avatar.setMouthShape(shape);
+          else if (!shape && avatar.setMouthShape) avatar.setMouthShape(null);
+          avatar.setMouthOpen(open);
+          avatar.setTalkEnergy?.(open);
+        },
         onTalking: (on) => avatar.setTalking(on),
+        onSpeakChunk: (chunk) => {
+          const analysis = avatar.reactToSpeechChunk?.(chunk, {
+            emotion: speakContent.emotion || speakEmotion,
+            nuance: speakContent.nuance || "none",
+          });
+          if (analysis?.emotion) {
+            speakEmotion = analysis.emotion;
+            setEmotionPill(analysis.emotion);
+          }
+        },
+        onSpeechDetected: (info = {}) => {
+          if (!shouldAutoStopOnUserSpeech()) return;
+          handleUserSpeechBarge(info.source || "user-speech");
+        },
         onMicText: (text, isFinal) => {
-          input.value = text;
-          autosize();
+          const trimmed = String(text || "").trim();
+          if (trimmed && handleUserStopCommand(trimmed)) {
+            interim.clear();
+            return;
+          }
+          if (!isFinal && trimmed && shouldAutoStopOnUserSpeech()) {
+            handleUserSpeechBarge("interim-speech");
+          }
+          if (isFinal && trimmed && shouldAutoStopOnUserSpeech()) {
+            handleUserSpeechBarge("final-speech");
+          }
+          if (!isFinal && trimmed) {
+            interim.set(trimmed);
+            if (!voice.micOn) {
+              input.value = trimmed;
+              autosize();
+            }
+            return;
+          }
           if (isFinal) {
-            input.value = "";
+            interim.clear();
+            if (!voice.micOn) {
+              input.value = "";
+              autosize();
+            }
+            void runTurn(trimmed, { fromMic: true });
+            return;
+          }
+          if (!voice.micOn) {
+            interim.set(text);
+            input.value = text;
             autosize();
-            void runTurn(text, { fromMic: true });
           }
         },
         onMicState: () => {
           syncMicBtn();
+          if (voice.micOn && !busy) status.listening();
+          else if (!busy && !voice.speaking) status.idle();
           if (voice.micOn) {
-            input.placeholder = "Listening… speak, pause → she replies, then listens again";
+            input.placeholder = phaseAEnabled
+              ? "Listening… speak anytime to interrupt her"
+              : "Listening… speak, pause → she replies, then listens again";
           } else if (!busy) {
             input.placeholder = "同 Amoji 傾偈… or tap 🎤 for continuous talk";
           }
         },
         onError: (msg) => {
-          if (msg && msg !== "aborted" && msg !== "no-speech" && msg !== "network") {
-            addBubble("system", `Mic/TTS: ${msg}`);
+          const code = String(msg || "");
+          if (
+            code === "not-allowed" ||
+            code === "service-not-allowed" ||
+            code === "audio-capture" ||
+            code === "unsupported" ||
+            code === "no-mic"
+          ) {
+            if (shownMicErrors.has(code)) return;
+            shownMicErrors.add(code);
+            addBubble("system", formatMicError(code));
+          } else {
+            const soft = new Set([
+              "aborted",
+              "no-speech",
+              "network",
+              "interrupted",
+              "canceled",
+              "tts-timeout",
+            ]);
+            if (code && !soft.has(code)) {
+              const isVoice =
+                /tts|cloud|audio|speech|synthesis|notallowed|play/i.test(code);
+              const friendly = isVoice
+                ? code.includes("play-blocked") || /notallowed/i.test(code)
+                  ? "Voice blocked — tap 🔊 then tap Start again (browser needs a tap to play sound)."
+                  : `Voice error: ${code}`
+                : `Mic/TTS: ${code}`;
+              addBubble("system", friendly);
+              if (isVoice) showToast(friendly, "error");
+            }
           }
           syncMicBtn();
         },
       });
 
-      /** @type {string[]} */
-      const micQueue = [];
+      applyVoiceSelection = (nextVoiceId) => {
+        voiceId = nextVoiceId;
+        persistVoiceId(voiceId);
+        syncVoiceToUrl(voiceId);
+        const preset = voicePresetById(voiceId);
+        voice.setCloudVoice(preset);
+        const label = voiceGenderLabel(voiceId, langCode, isEnglish);
+        setVoicePill(label);
+        if (btnVoiceSwitch) {
+          btnVoiceSwitch.textContent = label;
+          btnVoiceSwitch.title = isEnglish
+            ? "Tap to switch voice"
+            : "按一下切換語音";
+        }
+      };
+      applyVoiceSelection(voiceId);
+      updateLangPill();
+      window.__amojiSupportsMic = voice.supportsMic;
+
+      bargeMonitor = createCompanionBargeMonitor({
+        energyThreshold: 0.012,
+        minSpeechMs: 45,
+        onBargeIn: () => {
+          if (shouldAutoStopOnUserSpeech()) handleUserSpeechBarge("energy-barge");
+        },
+      });
+
+      stopBargeWatch = () => {
+        bargeMonitor.stop();
+        if (!voice.micOn) voice.setKeepMicDuringSpeak?.(false);
+      };
+
+      startBargeWatch = () => {
+        voice.setKeepMicDuringSpeak?.(true);
+        void bargeMonitor.start();
+      };
+
+      shouldAutoStopOnUserSpeech = () =>
+        voice.assistantOutputActive || busy || voice.speaking || voice.thinkingLoopOn;
+
+      abortActiveTurn = (reason = "barge-in") => {
+        if (!activeTurn || activeTurn.aborted) return;
+        activeTurn.aborted = true;
+        chat.abort?.();
+        voice.stopThinkingLoop?.();
+        voice.cancelStreamSpeak?.();
+        voice.stopSpeak();
+        avatar.setThinking?.(false);
+        avatar.setTalking?.(false);
+        stopBargeWatch();
+        if (activeTurn.assistantRow) {
+          const bubble = activeTurn.assistantRow.querySelector(".bubble");
+          if (bubble && !bubble.textContent?.trim()) {
+            activeTurn.assistantRow.remove();
+          }
+        }
+        window.__amojiLastBarge = reason;
+      };
+
+      handleUserSpeechBarge = (reason = "user-speech") => {
+        if (!shouldAutoStopOnUserSpeech()) return false;
+        voice.interruptAssistantOutput?.();
+        if (busy && activeTurn && !activeTurn.aborted) {
+          abortActiveTurn(reason);
+        }
+        avatar.setTalking?.(false);
+        avatar.setThinking?.(false);
+        avatar.setMouthOpen?.(0);
+        avatar.setListening?.(voice.micOn);
+        if (voice.micOn) status.listening();
+        else status.idle();
+        setEmotionPill("neutral");
+        return true;
+      };
+
+      handleCharacterTap = () => {
+        const now = Date.now();
+        if (now - lastTapAt < 1400 || busy) return;
+        lastTapAt = now;
+        avatar.reactToTap?.();
+        const line = tapLines[Math.floor(Math.random() * tapLines.length)];
+        addBubble("assistant", line);
+        avatar.setEmotion("happy");
+        setEmotionPill("happy");
+        avatar.setTalkStyle?.("soft");
+        speakEmotion = "happy";
+        status.speaking();
+        armBargeIn();
+        void voice.speak(line, "happy").finally(() => {
+          disarmBargeIn();
+          if (!busy && !voice.micOn) status.idle();
+        });
+      };
 
       const runTurn = async (text, { fromMic = false } = {}) => {
         const cleaned = String(text || "").trim();
         if (!cleaned) return;
+        if (handleUserStopCommand(cleaned)) return;
         if (busy) {
-          // Hold the next uttered line until the current reply finishes
+          if (phaseAEnabled && fromMic) {
+            abortActiveTurn("mic-barge");
+            await new Promise((r) => setTimeout(r, 60));
+            void runTurn(cleaned, { fromMic: true });
+            return;
+          }
           if (fromMic) micQueue.push(cleaned);
           return;
         }
         busy = true;
         sendBtn.disabled = true;
-        // Keep mic button enabled so the user can end continuous listen
-        voice.pauseCapture();
+        const keepMicForBarge = voice.micOn || autoMic;
+        voice.setKeepMicDuringSpeak?.(keepMicForBarge);
+        if (!keepMicForBarge) voice.pauseCapture();
+        armBargeIn();
+        interim.clear();
         addBubble("user", cleaned);
-        avatar.setEmotion("thinking");
-        setEmotionPill("thinking");
+        avatar.setListening?.(false);
         avatar.setTalking(false);
         avatar.setMouthOpen(0);
+        const userMotion = analyzeUserInput?.(cleaned, isEnglish);
+        if (userMotion?.action) {
+          avatar.setThinking?.(false);
+          applyPerformanceFromContent(userMotion);
+          setEmotionPill(userMotion.emotion || "happy");
+          status.speaking();
+        } else {
+          avatar.setThinking?.(true);
+          avatar.prepareThinkingFromUser?.(cleaned, isEnglish);
+          setEmotionPill(avatar.emotion || "thinking");
+          status.thinking();
+          voice.startThinkingLoop?.({ isEnglish, intervalMs: 1800 });
+        }
+
+        const assistantBubble = addBubble("assistant", "");
+        const assistantRow = assistantBubble.closest(".msg-row");
+        const turnId = ++turnSeq;
+        activeTurn = { id: turnId, aborted: false, assistantRow };
+        showThinking(assistantBubble);
+
+        const streamPlanner = createStreamSpeakPlanner();
+        let gotToken = false;
+        let streamSpeakStarted = false;
+        let streamEmotion = "neutral";
+
+        const enqueueStreamSegments = (segments, fullText) => {
+          if (!phaseAEnabled || !segments.length) return;
+          const analysis = analyzeStreamingReply(fullText);
+          streamEmotion = analysis.emotion || streamEmotion;
+          if (!streamSpeakStarted) {
+            streamSpeakStarted = true;
+            voice.stopThinkingLoop?.();
+            voice.beginStreamSpeak?.(streamEmotion, {
+              pauseCapture: !keepMicForBarge,
+            });
+            avatar.setThinking?.(false);
+            avatar.setTalking?.(true);
+            status.speaking();
+          }
+          for (const seg of segments) {
+            void voice.pushStreamSpeak?.(seg, streamEmotion);
+          }
+        };
 
         try {
-          const result = await chat.reply(cleaned);
-          setModePill(result.mode || chat.mode);
+          const result = await chat.reply(cleaned, {
+            onToken: (_chunk, full) => {
+              if (activeTurn?.aborted) return;
+              if (!gotToken) {
+                gotToken = true;
+                voice.stopThinkingLoop?.();
+                voice.stopSpeak();
+                avatar.setThinking?.(false);
+                assistantBubble.classList.remove("thinking");
+                assistantBubble.classList.add("typing");
+              }
+              const visible = stripReplyTags(full);
+              assistantBubble.textContent = visible;
+              const stream = avatar.applyStreamingContent?.(full);
+              if (stream?.emotion) {
+                const downgrade =
+                  stream.emotion === "neutral" || stream.emotion === "thinking";
+                if (!avatar.currentAction || !downgrade) {
+                  avatar.setEmotion?.(stream.emotion);
+                  setEmotionPill(stream.emotion);
+                  streamEmotion = stream.emotion;
+                }
+              }
+              if (stream?.action) {
+                applyPerformanceFromContent(stream);
+              }
+              enqueueStreamSegments(streamPlanner.feed(full), full);
+              scrollTranscript();
+            },
+          });
+
+          if (activeTurn?.aborted || result.aborted) {
+            return;
+          }
+
+          setModePill(
+            result.web?.searched
+              ? `${result.mode || chat.mode || "online"}+web`
+              : result.mode || chat.mode,
+          );
           const reply = result.reply || "……";
-          const emotion = result.emotion || "happy";
-          addBubble("assistant", reply);
-          avatar.setEmotion(emotion);
-          setEmotionPill(emotion);
-          await voice.speak(reply, emotion);
+          voice.stopThinkingLoop?.();
+          avatar.setThinking?.(false);
+          let content = applyReplyPerformance(
+            result.raw || reply,
+            result.emotion || "happy",
+          );
+          if (
+            !content.action &&
+            userMotion?.action &&
+            userMotion.action !== "stop"
+          ) {
+            content = {
+              ...content,
+              action: userMotion.action,
+              emotion: userMotion.emotion || content.emotion || "happy",
+            };
+            applyPerformanceFromContent(content);
+          }
+          const emotion = content.emotion || "happy";
+          speakContent = content;
+          speakEmotion = emotion;
+          assistantBubble.classList.remove("thinking", "typing");
+          assistantBubble.textContent = stripReplyTags(reply);
+
+          if (phaseAEnabled) {
+            enqueueStreamSegments(streamPlanner.flush(reply), reply);
+            await voice.finishStreamSpeak?.();
+          } else {
+            status.speaking();
+            await voice.speak(reply, emotion);
+          }
         } catch (err) {
+          if (activeTurn?.aborted || err?.name === "AbortError") {
+            voice.cancelStreamSpeak?.();
+            return;
+          }
+          voice.cancelStreamSpeak?.();
+          assistantBubble.classList.remove("thinking", "typing");
+          assistantBubble.closest(".msg-row")?.remove();
           addBubble("system", `Chat failed: ${err?.message || err}`);
           avatar.setEmotion("sad");
           setEmotionPill("sad");
         } finally {
+          disarmBargeIn();
+          if (activeTurn?.id === turnId) activeTurn = null;
           busy = false;
           sendBtn.disabled = false;
-          voice.resumeCapture();
+          if (!keepMicForBarge) voice.resumeCapture();
           syncMicBtn();
+          avatar.setTalking?.(false);
           if (voice.micOn) {
-            input.placeholder = "Listening… speak, pause → she replies, then listens again";
-            avatar.setEmotion("thinking");
-            setEmotionPill("thinking");
+            input.placeholder = phaseAEnabled
+              ? "Listening… speak anytime to barge in"
+              : "Listening… speak, pause → she replies, then listens again";
+            if (!avatar.currentAction) {
+              avatar.setEmotion("neutral");
+              setEmotionPill("neutral");
+            } else {
+              setEmotionPill(avatar.emotion || speakEmotion || "happy");
+            }
+            status.listening();
           } else {
+            avatar.setListening?.(false);
+            status.idle();
             input.focus();
           }
-          // Drain one queued utterance from continuous mic (if any)
+          syncListenPose();
           if (micQueue.length && voice.micOn) {
             const next = micQueue.shift();
             void runTurn(next, { fromMic: true });
@@ -659,94 +2357,387 @@
         }
       };
 
-      void voice.ensureVoices().then((v) => {
-        setVoicePill(v?.name?.split(" ")[0] || (voice.supportsSpeak ? "female" : "off"));
-      });
+      const GREETING_SHORT = isEnglish ? "Hello!" : "嗨！";
+      const START_PAGE_TAGLINE = GREETING_SHORT;
+      const startTaglineEl = document.getElementById("start-tagline");
+      if (startTaglineEl) startTaglineEl.textContent = START_PAGE_TAGLINE;
 
-      btnMic.disabled = !voice.supportsMic;
+      let sessionStarted = false;
+      let sessionStarting = false;
+      /** @type {ReturnType<typeof setTimeout> | null} */
+      let startTimeoutId = null;
+      const START_TIMEOUT_MS = 2000;
+      const avatarLoadPill = document.getElementById("avatar-load-pill");
+
+      const showAvatarLoadPill = () => {
+        if (!avatarLoadPill) return;
+        avatarLoadPill.hidden = false;
+        avatarLoadPill.classList.remove("hide");
+      };
+
+      const hideAvatarLoadPill = () => {
+        if (!avatarLoadPill) return;
+        avatarLoadPill.classList.add("hide");
+        setTimeout(() => {
+          avatarLoadPill.hidden = true;
+        }, 450);
+      };
+
+      const resetStartButton = () => {
+        if (!startTalkingEl) return;
+        startTalkingEl.classList.remove("hide", "starting");
+        startTalkingEl.removeAttribute("aria-hidden");
+        startTalkingEl.removeAttribute("aria-busy");
+        startTalkingEl.removeAttribute("disabled");
+        const cta = voice.supportsMic
+          ? isEnglish
+            ? "👆 Tap to start"
+            : "👆 Tap to start · 點一下開始"
+          : isEnglish
+            ? "👆 Tap to start (type to chat)"
+            : "👆 Tap to start (type to chat)";
+        startTalkingEl.innerHTML =
+          `<span class="start-cta">${cta}</span>` +
+          `<span class="start-tagline" id="start-tagline">${START_PAGE_TAGLINE}</span>`;
+      };
+
+      const markSessionReady = ({ fromTimeout = false } = {}) => {
+        if (sessionStarted) return;
+        sessionStarted = true;
+        sessionStarting = false;
+        window.__amojiStart.sessionStarted = true;
+        window.__amojiStart.starting = false;
+        if (startTimeoutId) {
+          clearTimeout(startTimeoutId);
+          startTimeoutId = null;
+        }
+
+        if (typeof window.__amojiDismissStartButton === "function") {
+          window.__amojiDismissStartButton();
+        } else {
+          const startBtn = document.getElementById("start-talking");
+          startBtn?.classList.remove("starting");
+          startBtn?.removeAttribute("aria-busy");
+          startBtn?.classList.add("hide");
+          startBtn?.setAttribute("aria-hidden", "true");
+          startBtn?.setAttribute("disabled", "true");
+          startBtn?.remove();
+        }
+
+        if (!busy && !voice.micOn && !voice.speaking) status.idle();
+        input.focus();
+        if (!liteMode && !avatarLoadStarted) scheduleAvatarLoad();
+
+        if (fromTimeout) {
+          showToast("Session ready — avatar or voice may still be loading", "info");
+        }
+      };
+
+      const speakGreetingAsync = () => {
+        avatar.setEmotion("happy");
+        setEmotionPill("happy");
+        avatar.playGesture?.("nod");
+        speakEmotion = "happy";
+        status.speaking();
+        armBargeIn();
+        if (!greetingBubble) {
+          greetingBubble = addBubble("assistant", GREETING_SHORT);
+        }
+        return voice.speak(GREETING_SHORT, "happy").then((spoke) => {
+          if (spoke?.ok === false && spoke?.reason) {
+            const reason = String(spoke.reason);
+            const hint =
+              /play-blocked|notallowed/i.test(reason)
+                ? "Tap 🔊 then tap Start again — your browser blocked audio."
+                : reason.includes("cloud-tts")
+                  ? "Cloud voice failed — trying browser voice or check connection."
+                  : reason;
+            addBubble("system", `Voice: ${hint} — you can still type to chat.`);
+            showToast(hint, "error");
+          } else if (spoke?.muted) {
+            addBubble("system", "Speaker is muted — tap 🔊 to hear Amoji.");
+          }
+          if (!busy && !voice.micOn) status.idle();
+          syncListenPose();
+          disarmBargeIn();
+          return spoke;
+        });
+      };
+
+      const requestMicAsync = () => {
+        if (!autoMic || !voice.supportsMic) {
+          if (!voice.supportsMic) {
+            addBubble(
+              "system",
+              isEnglish
+                ? formatMicError("unsupported")
+                : "此瀏覽器唔支援麥克風 — 請用 Chrome/Edge，或打字傾偈。",
+            );
+          }
+          return;
+        }
+        void voice.primeMicPermission().then(() =>
+          voice.startMic().then((micOk) => {
+            syncMicBtn();
+            if (micOk) {
+              status.listening();
+              avatar.setEmotion("neutral");
+              setEmotionPill("neutral");
+              syncListenPose();
+              input.placeholder =
+                "Listening… speak, pause → she replies, then listens again";
+              addBubble(
+                "system",
+                isEnglish
+                  ? "Mic on — speak, pause to send."
+                  : "Mic on — speak Cantonese or English, pause to send.",
+              );
+            } else if (!busy) {
+              status.idle();
+              addBubble(
+                "system",
+                isEnglish
+                  ? "Mic blocked — tap 🎤 and allow microphone, or type below."
+                  : "麥克風被封鎖 — 按 🎤 允許麥克風，或直接打字。",
+              );
+              input.placeholder = isEnglish
+                ? "Type to chat… or tap 🎤 after allowing microphone"
+                : "打字傾偈… 或按 🎤 允許麥克風";
+            }
+          }),
+        );
+      };
+
+      const startSession = ({ fromTimeout = false } = {}) => {
+        if (sessionStarted) return;
+        if (sessionStarting) {
+          markSessionReady({ fromTimeout });
+          return;
+        }
+        sessionStarting = true;
+        window.__amojiStart.starting = true;
+        const startBtn = document.getElementById("start-talking");
+        startBtn?.classList.add("starting");
+        startBtn?.setAttribute("aria-busy", "true");
+        if (startBtn?.textContent?.includes("Starting") === false) {
+          startBtn.textContent = "⏳ Starting…";
+        }
+
+        startTimeoutId = setTimeout(() => {
+          if (!sessionStarted) markSessionReady({ fromTimeout: true });
+        }, START_TIMEOUT_MS);
+
+        try {
+          unlockAudioSync();
+          void voice.primeMicPermission();
+          markSessionReady({ fromTimeout });
+        } catch (err) {
+          console.error("[companion] startSession failed", err);
+          markSessionReady({ fromTimeout: true });
+        }
+
+        void voice.ensureVoices().then(() => {
+          setVoicePill(voiceGenderLabel(voiceId, langCode, isEnglish));
+        });
+        void voice
+          .primeAudio?.()
+          .catch(() => {})
+          .then(() => speakGreetingAsync());
+        if (!greetingBubble) {
+          greetingBubble = addBubble("assistant", GREETING_SHORT);
+        }
+        requestMicAsync();
+        addBubble("system", isEnglish ? "Ready." : "已開始。");
+      };
+
+      window.__amojiStart.run = () => void startSession();
+
       syncSpeakerBtn();
       syncMicBtn();
 
-      const avatarLabel =
-        avatarKind === "vrm3d"
-          ? "VRM anime girl"
-          : avatarKind === "gltf3d"
-            ? "HD female 3D"
-            : avatarKind === "webgl3d"
-              ? "3D female"
-              : "2D female";
-      addBubble(
-        "system",
-        `Grok-style companion · ${avatarLabel} · drag to orbit · 🎤 continuous talk (reply on each pause) · 🔊 speaker · real LLM via ⚙ or /api/chat`,
-      );
-      addBubble(
-        "assistant",
-        "嗨～我係 Amoji。撳麥克風保持開啟，你講完停低就會答你，再繼續聽。",
-      );
-      avatar.setEmotion("happy");
-      setEmotionPill("happy");
-      // Speak only after a user gesture (browser autoplay policy)
-      const greetOnce = () => {
-        void voice.speak(
-          "嗨～我係 Amoji。撳麥克風保持開啟，你講完停低就會答你，再繼續聽。",
-          "happy",
-        );
-        form.removeEventListener("pointerdown", greetOnce);
-        input.removeEventListener("focus", greetOnce);
+      if (!voice.supportsMic && startTalkingEl) {
+        startTalkingEl.textContent = "👆 Tap to start (type to chat)";
+      }
+
+      const llmSwitcher = createCompanionLlmSwitcher({
+        container: document.getElementById("llm-switcher-wrap"),
+        chat,
+        onMode: (label) => setModePill(label),
+        onSystem: (msg) => addBubble("system", msg),
+      });
+
+      const saveCloudKey = (key) => {
+        const trimmed = String(key || "").trim();
+        const provider = inferKeyProvider(trimmed);
+        if (!provider) return false;
+        saveProviderApiKey(provider, trimmed);
+        chat.setProvider(provider);
+        void llmSwitcher.refreshAvailability();
+        document.getElementById("cloud-key-banner")?.classList.remove("show");
+        return true;
       };
-      form.addEventListener("pointerdown", greetOnce, { once: true });
-      input.addEventListener("focus", greetOnce, { once: true });
+
+      const openKeyPanel = () => {
+        settings.classList.add("open");
+        document.getElementById("cloud-api-key")?.focus();
+      };
+
+      if (hostedOnline) {
+        document.getElementById("btn-cloud-key")?.addEventListener("click", openKeyPanel);
+        document.getElementById("btn-save-cloud-key-inline")?.addEventListener("click", () => {
+          const key = document.getElementById("cloud-key-inline")?.value?.trim();
+          if (!key) {
+            addBubble("system", "Paste your sk-or-… key first");
+            return;
+          }
+          if (!saveCloudKey(key)) {
+            addBubble("system", "Key should start with sk-or- (OpenRouter)");
+            return;
+          }
+          addBubble("system", "Smart brain connected — try chatting!");
+        });
+      }
+
+      avatar.setEmotion("neutral");
+      setEmotionPill("neutral");
 
       btnSettings.addEventListener("click", () => {
         settings.classList.toggle("open");
       });
 
+      if (hostedOnline) {
+        document.getElementById("btn-save-cloud-key").addEventListener("click", () => {
+          const key = document.getElementById("cloud-api-key").value.trim();
+          if (!key) {
+            addBubble("system", "Paste your sk-or-… OpenRouter key first");
+            return;
+          }
+          if (!saveCloudKey(key)) {
+            addBubble("system", "Key should start with sk-or- (OpenRouter)");
+            return;
+          }
+          settings.classList.remove("open");
+          addBubble("system", "Smart brain connected — try chatting!");
+        });
+      }
+
+      if (!hostedOnline) {
       document.getElementById("btn-save-llm").addEventListener("click", () => {
         const url = document.getElementById("api-url").value.trim();
         const key = document.getElementById("api-key").value.trim();
-        const model = document.getElementById("api-model").value.trim() || "gpt-4o-mini";
+        const model = document.getElementById("api-model").value.trim() || "qwen3:4b";
         localStorage.setItem("amoji.companion.apiUrl", url);
         localStorage.setItem("amoji.companion.apiKey", key);
         localStorage.setItem("amoji.companion.model", model);
+        if (key.includes("gsk_")) saveProviderApiKey("groq", key);
+        if (key.startsWith("sk-or-")) saveProviderApiKey("openrouter-gemma", key);
         const info = chat.setApi({ url, key, model });
         setModePill(info.mode);
         settings.classList.remove("open");
-        addBubble(
-          "system",
-          info.mode === "online"
-            ? `Online LLM ready · ${model}`
-            : "Using local / proxy companion brain",
-        );
+        addBubble("system", `Custom LLM saved · ${model || info.mode}`);
       });
 
+      document.getElementById("btn-list-ollama").addEventListener("click", async () => {
+        const el = document.getElementById("ollama-model-list");
+        el.textContent = "Checking Ollama…";
+        try {
+          const r = await fetch("/api/ollama/tags");
+          const data = await r.json();
+          if (data?.models?.length) {
+            el.textContent = `Found: ${data.models.join(", ")}`;
+            return;
+          }
+          const direct = await fetch("http://127.0.0.1:11434/api/tags");
+          if (direct.ok) {
+            const tags = await direct.json();
+            const names = (tags.models || []).map((m) => m.name).join(", ");
+            el.textContent = names || "No models — run: ollama pull qwen3:4b";
+            return;
+          }
+          el.textContent = "Ollama not running — start ollama serve on your PC";
+        } catch {
+          el.textContent = "Cannot reach Ollama — run ollama serve (e.g. D:\\Ollama)";
+        }
+      });
+      }
+
+      const cycleVoice = () => {
+        const nextId = nextVoiceId(voiceId, langCode);
+        applyVoiceSelection(nextId);
+        updateLangPill();
+        addBubble(
+          "system",
+          isEnglish
+            ? `Voice: ${voiceGenderLabel(nextId, langCode, true)}`
+            : `語音：${voiceGenderLabel(nextId, langCode, false)}`,
+        );
+      };
+
+      voicePill.addEventListener("click", cycleVoice);
+      btnVoiceSwitch?.addEventListener("click", cycleVoice);
+
+      const switchLanguage = () => {
+        location.href = languageSwitchHref();
+      };
+      langPill?.addEventListener("click", (ev) => {
+        ev.preventDefault();
+        switchLanguage();
+      });
+      btnLangSwitch?.addEventListener("click", switchLanguage);
+
       btnSpeaker.addEventListener("click", () => {
+        unlockAudioSync();
         voice.setSpeakerOn(!voice.speakerOn);
         syncSpeakerBtn();
         addBubble("system", voice.speakerOn ? "Speaker on" : "Speaker muted");
       });
 
-      btnMic.addEventListener("click", () => {
+      btnMic.addEventListener("click", async () => {
+        unlockAudioSync();
         if (!voice.supportsMic) {
-          addBubble("system", "This browser has no speech recognition — type instead.");
+          addBubble(
+            "system",
+            isEnglish
+              ? formatMicError("unsupported")
+              : "此瀏覽器唔支援麥克風 — 請用 Chrome/Edge，或打字傾偈。",
+          );
           return;
         }
         const turningOn = !voice.micOn;
         if (turningOn) {
+          if (!sessionStarted) startSession();
           micQueue.length = 0;
-          voice.startMic();
-          addBubble("system", "Mic on · continuous — speak, pause, she replies, listens again. Tap 🎤 to stop.");
+          await voice.primeMicPermission();
+          const micOk = await voice.startMic();
+          syncMicBtn();
+          if (!micOk) {
+            addBubble(
+              "system",
+              isEnglish
+                ? "Mic blocked — allow microphone in browser settings, then tap 🎤 again."
+                : "麥克風被封鎖 — 請在瀏覽器設定允許麥克風，再按 🎤。",
+            );
+            return;
+          }
+          addBubble(
+            "system",
+            "Mic on · speak, pause, she replies. Tap 🎤 to stop.",
+          );
           input.placeholder = "Listening… speak, pause → she replies, then listens again";
           if (!busy) {
-            avatar.setEmotion("thinking");
-            setEmotionPill("thinking");
+            avatar.setEmotion("neutral");
+            setEmotionPill("neutral");
+            syncListenPose();
+            status.listening();
           }
         } else {
           micQueue.length = 0;
           voice.stopMic();
+          avatar.setListening?.(false);
           addBubble("system", "Mic off");
           input.placeholder = "同 Amoji 傾偈… or tap 🎤 for continuous talk";
+          syncMicBtn();
         }
-        syncMicBtn();
       });
 
       form.addEventListener("submit", async (ev) => {
@@ -754,6 +2745,9 @@
         const text = input.value.trim();
         input.value = "";
         autosize();
+        if (!sessionStarted && !sessionStarting) {
+          startSession();
+        }
         await runTurn(text);
       });
 
@@ -764,7 +2758,43 @@
         }
       });
 
+      window.addEventListener("keydown", (ev) => {
+        if (ev.key !== "Escape" || !phaseAEnabled || !busy) return;
+        abortActiveTurn("hotkey-barge");
+      });
+
       input.focus();
+
+      window.__amojiStart.ready = true;
+      dismissLoading();
+      if (window.__amojiStart.tapped && !window.__amojiStart.sessionStarted) {
+        void startSession();
+      }
+      } catch (err) {
+        console.error("[companion] module boot failed", err);
+        window.__amojiModuleBooted = false;
+        window.__amojiHideLoading?.();
+        window.__amojiShowBootFallback?.(
+          "App modules failed to load — tap reload or use text-only /companion (" +
+            (err?.message || err) +
+            ")",
+        );
+        window.__amojiStaticFallback?.(
+          "App modules failed to load — refresh or use /companion for text-only chat. (" +
+            (err?.message || err) +
+            ")",
+        );
+        window.__amojiStart.ready = true;
+        window.__amojiStart.run = function () {
+          window.__amojiShowBootFallback?.(
+            "App modules failed — tap reload below or open /companion for text chat.",
+          );
+        };
+        if (window.__amojiStart.tapped && !window.__amojiStart.sessionStarted) {
+          window.__amojiStart.run();
+        }
+      }
+      })();
     </script>
   </body>
 </html>

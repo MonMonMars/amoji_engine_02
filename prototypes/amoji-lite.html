@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Amoji</title>
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+        min-height: 100dvh;
+        background: #070a10;
+        color: #f7f1e8;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      }
+      .app {
+        display: flex;
+        flex-direction: column;
+        min-height: 100dvh;
+        max-width: 42rem;
+        margin: 0 auto;
+        padding: max(1rem, env(safe-area-inset-top)) 1rem max(1rem, env(safe-area-inset-bottom));
+      }
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        margin-bottom: 0.75rem;
+      }
+      h1 {
+        margin: 0;
+        font-size: 1.75rem;
+        font-weight: 800;
+        letter-spacing: -0.03em;
+      }
+      h1 span {
+        color: #7fd4cf;
+      }
+      .tag {
+        font-size: 0.65rem;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: rgba(247, 241, 232, 0.45);
+        padding: 0.2rem 0.45rem;
+        border: 1px solid rgba(247, 241, 232, 0.12);
+        border-radius: 0.35rem;
+      }
+      .tag.cloud {
+        text-transform: none;
+        letter-spacing: 0;
+        color: #9ed4ff;
+        border-color: rgba(126, 196, 255, 0.35);
+        background: rgba(80, 150, 220, 0.12);
+      }
+      .status {
+        font-size: 0.8rem;
+        color: rgba(247, 241, 232, 0.55);
+        margin-bottom: 0.5rem;
+        min-height: 1.1rem;
+      }
+      .messages {
+        flex: 1;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 0.55rem;
+        padding: 0.5rem 0 1rem;
+        min-height: 8rem;
+      }
+      .bubble {
+        max-width: 92%;
+        padding: 0.65rem 0.85rem;
+        border-radius: 1rem;
+        font-size: 0.95rem;
+        line-height: 1.45;
+        word-break: break-word;
+      }
+      .bubble.user {
+        align-self: flex-end;
+        background: rgba(127, 212, 207, 0.18);
+        border: 1px solid rgba(127, 212, 207, 0.35);
+      }
+      .bubble.bot {
+        align-self: flex-start;
+        background: rgba(247, 241, 232, 0.06);
+        border: 1px solid rgba(247, 241, 232, 0.12);
+      }
+      .bubble.thinking {
+        opacity: 0.65;
+        font-style: italic;
+      }
+      .error-box {
+        display: none;
+        margin-bottom: 0.75rem;
+        padding: 0.75rem 0.9rem;
+        border-radius: 0.65rem;
+        background: rgba(220, 60, 60, 0.15);
+        border: 1px solid rgba(255, 100, 100, 0.45);
+        color: #ffb4b4;
+        font-size: 0.85rem;
+        line-height: 1.4;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+      .error-box.show {
+        display: block;
+      }
+      .composer {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.45rem;
+        align-items: flex-end;
+        padding: 0.5rem;
+        border-radius: 1.1rem;
+        background: rgba(10, 14, 22, 0.9);
+        border: 1px solid rgba(247, 241, 232, 0.14);
+      }
+      .composer textarea {
+        flex: 1 1 100%;
+        min-height: 2.6rem;
+        max-height: 7rem;
+        resize: none;
+        border: none;
+        background: transparent;
+        color: #f7f1e8;
+        font: inherit;
+        font-size: 1rem;
+        outline: none;
+        padding: 0.35rem 0.25rem;
+      }
+      .row {
+        display: flex;
+        gap: 0.4rem;
+        width: 100%;
+        align-items: center;
+      }
+      button {
+        border: none;
+        cursor: pointer;
+        font: inherit;
+        -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
+      }
+      .btn {
+        height: 2.5rem;
+        min-width: 2.5rem;
+        border-radius: 999px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.85rem;
+        font-weight: 650;
+        padding: 0 0.85rem;
+        background: rgba(247, 241, 232, 0.08);
+        color: #f7f1e8;
+        border: 1px solid rgba(247, 241, 232, 0.14);
+      }
+      .btn:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+      }
+      .btn.send {
+        background: linear-gradient(135deg, #7fd4cf, #5bb8d6);
+        color: #061018;
+        border: none;
+        font-weight: 700;
+      }
+      .btn.mic.active {
+        background: rgba(255, 100, 100, 0.25);
+        border-color: rgba(255, 120, 120, 0.5);
+      }
+      .btn.speaker.off {
+        opacity: 0.5;
+      }
+      .start-btn {
+        margin: 1rem auto 0;
+        padding: 0.85rem 1.5rem;
+        border-radius: 999px;
+        background: rgba(124, 156, 255, 0.28);
+        border: 1px solid rgba(124, 156, 255, 0.55);
+        color: #e8eeff;
+        font-size: 0.95rem;
+        font-weight: 650;
+      }
+      .hidden {
+        display: none !important;
+      }
+      .header-actions {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        flex-shrink: 0;
+      }
+      .btn-3d {
+        font-size: 0.72rem;
+        font-weight: 650;
+        letter-spacing: 0.02em;
+        padding: 0.28rem 0.55rem;
+        border-radius: 0.45rem;
+        background: rgba(127, 212, 207, 0.14);
+        border: 1px solid rgba(127, 212, 207, 0.42);
+        color: #9ee8e3;
+        text-decoration: none;
+        white-space: nowrap;
+      }
+      .btn-3d:hover {
+        background: rgba(127, 212, 207, 0.22);
+      }
+      .btn-lang,
+      .btn-voice {
+        font-size: 0.72rem;
+        font-weight: 600;
+        padding: 0.28rem 0.5rem;
+        border-radius: 0.45rem;
+        background: rgba(247, 241, 232, 0.06);
+        border: 1px solid rgba(247, 241, 232, 0.14);
+        color: rgba(247, 241, 232, 0.72);
+        text-decoration: none;
+        cursor: pointer;
+        font-family: inherit;
+      }
+      .btn-voice {
+        background: rgba(180, 140, 255, 0.12);
+        border-color: rgba(180, 140, 255, 0.35);
+        color: #d4c4ff;
+      }
+      .btn-lang:hover,
+      .btn-voice:hover {
+        filter: brightness(1.08);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app" id="app">
+      <header>
+        <h1>A<span>moji</span></h1>
+        <div class="header-actions">
+          <a class="btn-3d" id="btn-3d" href="/companion-full">3D avatar</a>
+          <button type="button" class="btn-voice" id="btn-voice" title="Switch voice">女聲</button>
+          <a class="btn-lang" id="btn-lang" href="?lang=en" title="Switch language">粵</a>
+          <span class="tag" id="build-tag">lite-v2</span>
+          <span class="tag cloud hidden" id="cloud-tag">☁️ Cloud LLM</span>
+        </div>
+      </header>
+      <div class="status" id="status" aria-live="polite"></div>
+      <div class="error-box" id="error-box" role="alert"></div>
+      <div class="messages" id="messages" aria-live="polite"></div>
+      <button type="button" class="start-btn" id="start-btn">開始傾計 · Start</button>
+      <form class="composer hidden" id="composer" autocomplete="off">
+        <textarea id="input" rows="1" placeholder="輸入訊息…" enterkeyhint="send"></textarea>
+        <div class="row">
+          <button type="button" class="btn speaker" id="speaker-btn" title="Speaker" aria-pressed="true">🔊</button>
+          <button type="button" class="btn mic" id="mic-btn" title="Mic">🎤</button>
+          <button type="submit" class="btn send" id="send-btn">Send</button>
+        </div>
+      </form>
+    </div>
+    <script type="module">
+      import {
+        buildCompanionHref,
+        companionLangCode,
+        defaultVoiceForLang,
+        nextVoiceId,
+        persistVoiceId,
+        resolveVoiceId,
+        syncVoiceToUrl,
+        voiceGenderLabel,
+        voiceShortLabel,
+      } from "/amoji-engine/engine/companion/companionVoiceCatalog.js";
+
+      (function () {
+        window.__amojiBuild = "lite-v6";
+        window.__amojiLite = { ready: true, ttsCalls: 0, chatCalls: 0 };
+
+        var params = new URLSearchParams(location.search);
+        var langCode = companionLangCode(params.get("lang"));
+        var isEn = langCode === "en";
+        var voiceId = resolveVoiceId({
+          lang: langCode,
+          voiceParam: params.get("voice"),
+        });
+        persistVoiceId(voiceId);
+        var hosted =
+          location.hostname &&
+          location.hostname !== "localhost" &&
+          location.hostname !== "127.0.0.1" &&
+          !location.hostname.startsWith("192.168.") &&
+          !location.hostname.endsWith(".local");
+
+        var els = {
+          status: document.getElementById("status"),
+          error: document.getElementById("error-box"),
+          messages: document.getElementById("messages"),
+          start: document.getElementById("start-btn"),
+          composer: document.getElementById("composer"),
+          input: document.getElementById("input"),
+          send: document.getElementById("send-btn"),
+          mic: document.getElementById("mic-btn"),
+          speaker: document.getElementById("speaker-btn"),
+        };
+
+        var speakerOn = true;
+        var micOn = false;
+        var busy = false;
+        var micCapture = null;
+        var audioEl = new Audio();
+        audioEl.preload = "auto";
+
+        var strings = isEn
+          ? {
+              placeholder: "Type a message…",
+              start: "Start chatting",
+              statusReady: "Ready — tap Send or mic",
+              statusLoading: "Connecting to cloud chat…",
+              statusThinking: "Thinking…",
+              statusSpeaking: "Speaking…",
+              statusMic: "Listening…",
+              welcome: "Hello!",
+              errModule: "Cloud chat unavailable. Check your network.",
+              errChat: "Chat failed",
+              errTts: "TTS failed (reply still shown)",
+              errMic: "Mic not available — allow microphone when prompted",
+              errMicBlocked: "Microphone blocked — allow mic in browser settings",
+            }
+          : {
+              placeholder: "輸入訊息…",
+              start: "開始傾計",
+              statusReady: "準備好 — 按發送或麥克風",
+              statusLoading: "連接雲端聊天…",
+              statusThinking: "諗緊…",
+              statusSpeaking: "講緊…",
+              statusMic: "聽緊…",
+              welcome: "嗨！",
+              errModule: "雲端聊天不可用，請檢查網絡。",
+              errChat: "聊天失敗",
+              errTts: "語音失敗（文字回覆已顯示）",
+              errMic: "麥克風不可用 — 請允許使用麥克風",
+              errMicBlocked: "麥克風被封鎖 — 請在瀏覽器設定中允許",
+            };
+
+        els.input.placeholder = strings.placeholder;
+        els.start.textContent = strings.start;
+        document.documentElement.lang = isEn ? "en" : "zh-Hant";
+
+        var btn3d = document.getElementById("btn-3d");
+        var btnLang = document.getElementById("btn-lang");
+        var btnVoice = document.getElementById("btn-voice");
+
+        function updateSwitcherUi() {
+          if (btn3d) {
+            btn3d.textContent = isEn ? "3D avatar" : "3D 同伴";
+            btn3d.href = buildCompanionHref({
+              basePath: "/companion-full",
+              lang: langCode,
+              voiceId,
+            });
+          }
+          if (btnLang) {
+            var targetLang = isEn ? "yue" : "en";
+            var targetVoice = defaultVoiceForLang(targetLang, voiceId);
+            btnLang.textContent = isEn ? "EN" : "粵";
+            btnLang.href = buildCompanionHref({
+              basePath: "/companion",
+              lang: targetLang,
+              voiceId: targetVoice,
+            });
+            btnLang.title = isEn
+              ? "Switch to Cantonese (粵語)"
+              : "Switch to English";
+          }
+          if (btnVoice) {
+            btnVoice.textContent = voiceGenderLabel(voiceId, langCode, isEn);
+            btnVoice.title = isEn ? "Tap to switch voice" : "按一下切換語音";
+          }
+        }
+        updateSwitcherUi();
+
+        if (btnVoice) {
+          btnVoice.addEventListener("click", function () {
+            voiceId = nextVoiceId(voiceId, langCode);
+            persistVoiceId(voiceId);
+            syncVoiceToUrl(voiceId);
+            updateSwitcherUi();
+            setStatus(
+              isEn
+                ? "Voice: " + voiceGenderLabel(voiceId, langCode, true)
+                : "語音：" + voiceGenderLabel(voiceId, langCode, false),
+            );
+          });
+        }
+
+        function setStatus(t) {
+          els.status.textContent = t || "";
+        }
+
+        function showError(msg) {
+          if (!msg) {
+            els.error.classList.remove("show");
+            els.error.textContent = "";
+            return;
+          }
+          els.error.textContent = String(msg);
+          els.error.classList.add("show");
+        }
+
+        function addBubble(text, who, extra) {
+          var div = document.createElement("div");
+          div.className = "bubble " + who + (extra || "");
+          div.textContent = text;
+          els.messages.appendChild(div);
+          els.messages.scrollTop = els.messages.scrollHeight;
+          return div;
+        }
+
+        function setSpeakerUi() {
+          els.speaker.classList.toggle("off", !speakerOn);
+          els.speaker.setAttribute("aria-pressed", speakerOn ? "true" : "false");
+        }
+
+        var systemPrompt = isEn
+          ? "You are Amoji, a warm English-speaking anime companion. Reply in English. End with [mood:happy] or similar."
+          : "你係 Amoji，一個粵語動漫同伴。用粵語口語回覆。結尾加 [mood:happy] 等情緒標籤。";
+
+        async function cloudReply(message) {
+          var res = await fetch("/api/chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ message: message, system: systemPrompt }),
+          });
+          var data = await res.json().catch(function () { return {}; });
+          if (!res.ok || !data.ok) {
+            throw new Error(data.error || "HTTP " + res.status);
+          }
+          var reply = String(data.reply || "").replace(/\s*\[mood:\w+\]\s*$/i, "").trim();
+          var mood = (String(data.reply || "").match(/\[mood:(\w+)\]/i) || [])[1] || "happy";
+          return { ok: true, reply: reply, emotion: mood };
+        }
+
+        async function speakCloud(text, emotion) {
+          if (!speakerOn || !text) return;
+          setStatus(strings.statusSpeaking);
+          try {
+            window.__amojiLite.ttsCalls += 1;
+            var res = await fetch("/api/tts", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                text: text,
+                emotion: emotion || "neutral",
+                lang: isEn ? "en" : "yue",
+                voice: voiceId,
+              }),
+            });
+            if (!res.ok) throw new Error("HTTP " + res.status);
+            var blob = await res.blob();
+            if (!blob.size) throw new Error("empty audio");
+            var url = URL.createObjectURL(blob);
+            audioEl.src = url;
+            await audioEl.play();
+            await new Promise(function (resolve) {
+              audioEl.onended = resolve;
+              audioEl.onerror = resolve;
+              setTimeout(resolve, 30000);
+            });
+            URL.revokeObjectURL(url);
+          } catch (err) {
+            console.warn("[lite] tts", err);
+            showError(strings.errTts + ": " + (err.message || err));
+          }
+          setStatus(strings.statusReady);
+        }
+
+        async function sendMessage(text) {
+          var msg = String(text || "").trim();
+          if (!msg || busy) return;
+          busy = true;
+          els.send.disabled = true;
+          showError("");
+          addBubble(msg, "user");
+          els.input.value = "";
+
+          var thinking = addBubble("…", "bot", " thinking");
+
+          try {
+            setStatus(strings.statusThinking);
+            window.__amojiLite.chatCalls += 1;
+            var result = await cloudReply(msg);
+            thinking.remove();
+            addBubble(result.reply, "bot");
+            await speakCloud(result.reply, result.emotion);
+          } catch (err) {
+            thinking.remove();
+            if (!els.error.classList.contains("show")) {
+              showError(strings.errChat + ": " + (err.message || err));
+            }
+          } finally {
+            busy = false;
+            els.send.disabled = false;
+          }
+        }
+
+        function ensureMicCapture() {
+          if (micCapture) return Promise.resolve(micCapture);
+          return import("/amoji-engine/engine/companion/companionMicCapture.js")
+            .then(function (mod) {
+            micCapture = mod.createMicCapture({
+              lang: isEn ? "en-US" : "zh-HK",
+              cloudSttUrl: hosted ? "/api/stt" : null,
+              onText: function (text, isFinal) {
+                if (isFinal && text) sendMessage(text);
+              },
+              onState: function (on) {
+                micOn = on;
+                els.mic.classList.toggle("active", on);
+                if (!busy) setStatus(on ? strings.statusMic : strings.statusReady);
+              },
+              onError: function (code) {
+                var msg = mod.formatMicError(code);
+                showError(code === "not-allowed" ? strings.errMicBlocked : msg);
+                if (micOn) {
+                  micOn = false;
+                  els.mic.classList.remove("active");
+                }
+              },
+            });
+            return micCapture;
+          })
+            .catch(function (err) {
+              console.error("[lite] mic module", err);
+              showError(strings.errMic + ": " + (err.message || err));
+              return null;
+            });
+        }
+
+        function activate() {
+          els.start.classList.add("hidden");
+          els.composer.classList.remove("hidden");
+          addBubble(strings.welcome, "bot");
+          setStatus(strings.statusReady);
+          els.input.focus();
+          void ensureMicCapture().then(function (mic) {
+            if (mic && mic.supportsMic) void mic.primePermission();
+          });
+          addBubble(
+            isEn
+              ? "Tap 🎤 and allow microphone to talk"
+              : "按 🎤 並允許麥克風就可以講嘢",
+            "bot",
+          );
+        }
+
+        els.start.addEventListener("click", activate);
+        els.composer.addEventListener("submit", function (e) {
+          e.preventDefault();
+          sendMessage(els.input.value);
+        });
+        els.speaker.addEventListener("click", function () {
+          speakerOn = !speakerOn;
+          setSpeakerUi();
+          if (!speakerOn) {
+            audioEl.pause();
+            audioEl.src = "";
+          }
+        });
+        els.mic.addEventListener("click", function () {
+          showError("");
+          void ensureMicCapture().then(function (mic) {
+            if (!mic || !mic.supportsMic) {
+              showError(strings.errMic);
+              return;
+            }
+            if (micOn) {
+              mic.stop();
+              return;
+            }
+            void mic.start().then(function (ok) {
+              if (!ok && !micOn) showError(strings.errMicBlocked);
+            });
+          });
+        });
+
+        if (hosted) {
+          document.getElementById("build-tag").classList.add("hidden");
+          document.getElementById("cloud-tag").classList.remove("hidden");
+        }
+
+        setSpeakerUi();
+        setStatus(
+          hosted
+            ? isEn
+              ? "☁️ Cloud LLM — tap Start to chat"
+              : "☁️ 雲端 LLM — 按「開始傾計」"
+            : isEn
+              ? "Tap Start to chat in English"
+              : "按「開始傾計」開始",
+        );
+      })();
+    </script>
+  </body>
+</html>

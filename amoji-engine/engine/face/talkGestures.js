@@ -135,8 +135,22 @@ export function inferTalkGestureFromText(text, opts = {}) {
   if (/[?？]|點解|點呀|係咪|嗎|咩事|why|how|what|really/.test(lower)) {
     return "question";
   }
+  if (/害羞|面紅| blush|embarrass/.test(lower)) {
+    return "soft";
+  }
+  if (/愛你|鍾意你|想你|miss you|love you|💕|❤/.test(lower)) {
+    return "soft";
+  }
+  if (/好奇|想知道|curious|interesting|原來/.test(lower)) {
+    return "question";
+  }
+  if (/緊張|擔心|stress|anxious|worried/.test(lower)) {
+    return "soft";
+  }
   if (
-    /哈哈|開心|萬歲|得咗|掂|鍾意|great|yay|woo|love|thanks|多謝/.test(lower) ||
+    /哈哈|開心|萬歲|得咗|掂|鍾意|great|yay|woo|thanks|多謝|超正|awesome/.test(
+      lower,
+    ) ||
     emotion === "happy"
   ) {
     return "celebrate";
