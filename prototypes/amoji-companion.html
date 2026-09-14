@@ -1157,7 +1157,7 @@
     </script>
     <script>
       (function () {
-        window.__amojiBuild = "2026-09-14-v32-action-library";
+        window.__amojiBuild = "2026-09-14-v33-llm-actions-web";
         window.__amojiModuleBooted = false;
         window.__amojiStart = {
           tapped: false,
@@ -1346,7 +1346,7 @@
     </script>
   </head>
   <body>
-    <!-- amoji-build: 2026-09-14-v32-action-library — full action catalog (dance, bow, clap, etc.) -->
+    <!-- amoji-build: 2026-09-14-v33-llm-actions-web — LLM action pick/decline + web search -->
     <noscript>
       <div
         style="
@@ -2325,18 +2325,15 @@
         avatar.setTalking(false);
         avatar.setMouthOpen(0);
         const userMotion = analyzeUserInput?.(cleaned, isEnglish);
-        if (userMotion?.action) {
-          avatar.setThinking?.(false);
+        if (userMotion?.action === "stop") {
           applyPerformanceFromContent(userMotion);
-          setEmotionPill(userMotion.emotion || "happy");
-          status.speaking();
-        } else {
-          avatar.setThinking?.(true);
-          avatar.prepareThinkingFromUser?.(cleaned, isEnglish);
-          setEmotionPill(avatar.emotion || "thinking");
-          status.thinking();
-          voice.startThinkingLoop?.({ isEnglish, intervalMs: 1800 });
+          setEmotionPill(userMotion.emotion || "neutral");
         }
+        avatar.setThinking?.(true);
+        avatar.prepareThinkingFromUser?.(cleaned, isEnglish);
+        setEmotionPill(avatar.emotion || "thinking");
+        status.thinking();
+        voice.startThinkingLoop?.({ isEnglish, intervalMs: 1800 });
 
         const assistantBubble = addBubble("assistant", "");
         const assistantRow = assistantBubble.closest(".msg-row");
@@ -2416,17 +2413,8 @@
             result.raw || reply,
             result.emotion || "happy",
           );
-          if (
-            !content.action &&
-            userMotion?.action &&
-            userMotion.action !== "stop"
-          ) {
-            content = {
-              ...content,
-              action: userMotion.action,
-              emotion: userMotion.emotion || content.emotion || "happy",
-            };
-            applyPerformanceFromContent(content);
+          if (content.action === "none") {
+            content = { ...content, action: null };
           }
           const emotion = content.emotion || "happy";
           speakContent = content;

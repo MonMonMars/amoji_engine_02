@@ -75,12 +75,12 @@ export function inferActionFromUserText(text) {
  */
 export function inferActionFromReply(text, taggedAction = null) {
   const resolvedTag = resolveAction(taggedAction);
-  if (resolvedTag) return resolvedTag === "none" ? null : resolvedTag;
+  if (resolvedTag === "none") return null;
+  if (resolvedTag) return resolvedTag;
 
   const parsed = parseReplyTags(text);
-  if (parsed.action && parsed.action !== "none") return parsed.action;
-
-  return inferActionFromCatalogText(parsed.reply);
+  if (!parsed.action || parsed.action === "none") return null;
+  return parsed.action;
 }
 
 /**

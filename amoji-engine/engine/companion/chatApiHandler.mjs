@@ -12,6 +12,7 @@ import {
 import { getLlmProvider } from "./companionLlmProviders.js";
 import { isOllamaLocalModel } from "./companionModelIds.js";
 import { localCompanionReply } from "./companionLocalReply.mjs";
+import { buildActionLlmContext } from "./companionActionIntent.js";
 import {
   fetchWebContextForChat,
   needsWebSearch,
@@ -198,19 +199,39 @@ export async function processChatRequest(body) {
   let webContext = "";
   let webSearched = false;
   let webSource = null;
-  const basicMode = providerId === "basic" || !cloud;
-  if (shouldTryWebSearch(message, { basicMode: true })) {
+  const webSearchEnabled = body.webSearch !== false;
+  const tryWeb =
+    webSearchEnabled &&
+    shouldTryWebSearch(message, { basicMode: true, force: body.forceWeb === true });
+  if (tryWeb) {
     const web = await fetchWebContextForChat(message, fetch, {
       basicMode: true,
+      force: body.forceWeb === true,
     });
     webSearched = web.searched;
     webContext = web.context || "";
     webSource = web.source;
   }
 
-  const systemWithWeb = webContext
-    ? `${system}\n\n${webContext}\nUse this web snapshot when helpful. If it is empty or uncertain, say you could not verify online and answer from general knowledge.`
-    : system;
+  const actionHint = buildActionLlmContext(
+    message,
+    /[a-z]/i.test(message) && !/[\u4e00-\u9fff]/.test(message),
+  );
+
+  const webInstruction = webContext
+    ? "Use the web snapshot below when answering. If it is empty or uncertain, say you could not verify online and answer from general knowledge."
+    : webSearched
+      ? "A web search was attempted but returned no useful snapshot. Say you could not verify online if the user asked for current/live facts."
+      : "";
+
+  const systemWithWeb = [
+    system,
+    actionHint,
+    webContext,
+    webInstruction,
+  ]
+    .filter(Boolean)
+    .join("\n\n");
 
   const messages = [
     { role: "system", content: systemWithWeb },
@@ -263,7 +284,7 @@ export async function processChatRequest(body) {
       apiKey: openRouterApiKey,
       model: orModel,
       messages,
-      plugins: needsWebSearch(message) ? [{ id: "web" }] : null,
+      plugins: tryWeb ? [{ id: "web" }] : null,
       extraHeaders: {
         "HTTP-Referer": process.env.OPENROUTER_REFERER || "https://amoji.app",
         "X-Title": "Amoji Companion",
@@ -291,7 +312,13 @@ export async function processChatRequest(body) {
       messages,
     });
     if (groq.ok) {
-      return { ok: true, reply: groq.reply, mode: "online", model: groq.model };
+      return {
+        ok: true,
+        reply: groq.reply,
+        mode: webSearched ? "online+web" : "online",
+        model: groq.model,
+        web: webSearched ? { searched: true, source: webSource } : undefined,
+      };
     }
     console.warn("[chat-api] Groq failed", groq.error);
   }
@@ -304,7 +331,13 @@ export async function processChatRequest(body) {
       messages,
     });
     if (together.ok) {
-      return { ok: true, reply: together.reply, mode: "online", model: together.model };
+      return {
+        ok: true,
+        reply: together.reply,
+        mode: webSearched ? "online+web" : "online",
+        model: together.model,
+        web: webSearched ? { searched: true, source: webSource } : undefined,
+      };
     }
   }
 
@@ -325,8 +358,9 @@ export async function processChatRequest(body) {
       return {
         ok: true,
         reply: ollama.reply,
-        mode: "ollama",
+        mode: webSearched ? "ollama+web" : "ollama",
         model: ollama.model,
+        web: webSearched ? { searched: true, source: webSource } : undefined,
       };
     }
     console.warn("[chat-api] Ollama failed", ollama.error);
@@ -349,7 +383,13 @@ export async function processChatRequest(body) {
   if (apiKey) {
     const openai = await callCloudChat({ base, apiKey, model, messages });
     if (openai.ok) {
-      return { ok: true, reply: openai.reply, mode: "online", model: openai.model };
+      return {
+        ok: true,
+        reply: openai.reply,
+        mode: webSearched ? "online+web" : "online",
+        model: openai.model,
+        web: webSearched ? { searched: true, source: webSource } : undefined,
+      };
     }
     console.warn("[chat-api] OpenAI failed", openai.error);
   }

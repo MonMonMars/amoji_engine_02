@@ -24,6 +24,8 @@ import {
 } from "./companionLlmConnect.js";
 import { isOllamaLocalModel } from "./companionModelIds.js";
 import { getLlmProvider, readProviderApiKey } from "./companionLlmProviders.js";
+import { buildActionLlmContext } from "./companionActionIntent.js";
+import { fetchWebContextForChat } from "./companionWebSearch.mjs";
 
 export const COMPANION_CHAT_SCHEMA = "amoji.companionChat.v1";
 
@@ -161,6 +163,31 @@ export function createCompanionChat(opts = {}) {
 
     history.push({ role: "user", content: text });
     const onToken = opts.onToken;
+    const isEnglish =
+      /[a-z]/i.test(text) && !/[\u4e00-\u9fff]/.test(text);
+    const actionHint = buildActionLlmContext(text, isEnglish);
+    let webMeta = { searched: false, source: null };
+    let effectiveSystem = systemPrompt;
+    if (fetchImpl && opts.webSearch !== false) {
+      try {
+        const web = await fetchWebContextForChat(text, fetchImpl, {
+          basicMode: true,
+        });
+        webMeta = { searched: web.searched, source: web.source || null };
+        const webBlock = web.context
+          ? `${web.context}\nUse this web snapshot when helpful. If empty or uncertain, say you could not verify online.`
+          : web.searched
+            ? "Web search returned no useful snapshot. Say you could not verify online for live/current facts."
+            : "";
+        effectiveSystem = [systemPrompt, actionHint, webBlock]
+          .filter(Boolean)
+          .join("\n\n");
+      } catch {
+        effectiveSystem = [systemPrompt, actionHint].filter(Boolean).join("\n\n");
+      }
+    } else if (actionHint) {
+      effectiveSystem = `${systemPrompt}\n\n${actionHint}`;
+    }
 
     const throwIfAborted = () => {
       if (signal.aborted) {
@@ -179,10 +206,11 @@ export function createCompanionChat(opts = {}) {
           fetchImpl,
           text,
           history,
-          systemPrompt,
+          systemPrompt: effectiveSystem,
           model,
           providerId,
           signal,
+          webSearch: opts.webSearch !== false,
         });
         if (proxied.ok && isSmartProxyMode(proxied.mode)) {
           const finalized = finalizeReply(proxied.reply);
@@ -197,6 +225,7 @@ export function createCompanionChat(opts = {}) {
             action: finalized.action,
             mode: proxied.mode || "proxy",
             model: proxied.model || model,
+            web: proxied.web || webMeta,
           };
         }
       } catch (err) {
@@ -221,7 +250,7 @@ export function createCompanionChat(opts = {}) {
           apiUrl,
           apiKey,
           model,
-          systemPrompt,
+          systemPrompt: effectiveSystem,
           history,
           onToken,
           stream: Boolean(onToken),
@@ -246,8 +275,9 @@ export function createCompanionChat(opts = {}) {
             raw: finalized.raw,
             emotion: finalized.emotion,
             action: finalized.action,
-            mode: "online",
+            mode: webMeta.searched ? "online+web" : "online",
             model: online.model || model,
+            web: webMeta,
           };
         }
         console.warn("[companion] hosted direct llm failed", online.error);
@@ -265,7 +295,7 @@ export function createCompanionChat(opts = {}) {
           apiUrl,
           apiKey,
           model,
-          systemPrompt,
+          systemPrompt: effectiveSystem,
           history,
           onToken,
           stream: Boolean(onToken) && !isOllamaUrl(apiUrl),
@@ -282,8 +312,9 @@ export function createCompanionChat(opts = {}) {
             raw: finalized.raw,
             emotion: finalized.emotion,
             action: finalized.action,
-            mode: clientMode,
+            mode: webMeta.searched ? `${clientMode}+web` : clientMode,
             model: online.model || model,
+            web: webMeta,
           };
         }
         online.error && console.warn("[companion] online llm failed", online.error);
@@ -303,7 +334,7 @@ export function createCompanionChat(opts = {}) {
         const direct = await tryDirectOllama({
           fetchImpl,
           model,
-          systemPrompt,
+          systemPrompt: effectiveSystem,
           history,
           onToken,
         });
@@ -336,9 +367,10 @@ export function createCompanionChat(opts = {}) {
           fetchImpl,
           text,
           history,
-          systemPrompt,
+          systemPrompt: effectiveSystem,
           model,
           providerId,
+          webSearch: opts.webSearch !== false,
         });
         if (
           proxied.ok &&
@@ -356,6 +388,7 @@ export function createCompanionChat(opts = {}) {
             action: finalized.action,
             mode: proxied.mode || "proxy",
             model: proxied.model || null,
+            web: proxied.web || webMeta,
           };
         }
       } catch (err) {
@@ -521,6 +554,7 @@ async function callLocalProxy({
   model,
   providerId,
   signal = null,
+  webSearch = true,
 }) {
   const hosted = isHostedCompanion();
   const proxyModel =
@@ -540,6 +574,7 @@ async function callLocalProxy({
           model: proxyModel,
           providerId: providerId && providerId !== "custom" ? providerId : undefined,
           apiKey: resolveClientApiKey(providerId) || undefined,
+          webSearch,
         }),
       },
       CHAT_FETCH_TIMEOUT_MS,
@@ -557,6 +592,7 @@ async function callLocalProxy({
     reply: String(data.reply),
     mode: data.mode || "proxy",
     model: data.model || null,
+    web: data.web || null,
   };
 }
 
