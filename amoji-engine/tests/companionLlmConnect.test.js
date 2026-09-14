@@ -15,6 +15,12 @@ describe("companionLlmConnect", () => {
     expect(pickBestProviderId(ranked).id).toBe("ollama-qwen4");
   });
 
+  it("ranks auto on hosted even without server keys", () => {
+    const ranked = rankAvailableProviders({ hosted: true }, null);
+    expect(ranked.some((r) => r.id === "auto")).toBe(true);
+    expect(pickBestProviderId(ranked).id).toBe("auto");
+  });
+
   it("marks cloud chips unavailable without server keys", () => {
     const avail = probeProviderAvailability(
       { ollama: { ok: true, models: ["qwen3:4b"] }, groq: { ok: false } },
