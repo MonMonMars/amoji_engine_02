@@ -11,6 +11,10 @@ import {
 } from "./companionOllama.js";
 import { getLlmProvider } from "./companionLlmProviders.js";
 import { isOllamaLocalModel } from "./companionModelIds.js";
+import {
+  fetchWebContextForChat,
+  needsWebSearch,
+} from "./companionWebSearch.mjs";
 
 export const CHAT_API_HANDLER_SCHEMA = "amoji.chatApiHandler.v1";
 
@@ -88,11 +92,28 @@ export async function getLlmStatusPayload() {
     openrouter: { ok: openrouter },
     together: { ok: together },
     cloudReady: groq || openrouter || together || openai,
+    webSearch: true,
   };
 }
 
-async function callCloudChat({ base, apiKey, model, messages, extraHeaders = {} }) {
+async function callCloudChat({
+  base,
+  apiKey,
+  model,
+  messages,
+  extraHeaders = {},
+  plugins = null,
+}) {
   const endpoint = `${base.replace(/\/$/, "")}/chat/completions`;
+  /** @type {Record<string, unknown>} */
+  const payload = {
+    model,
+    temperature: 0.75,
+    messages,
+  };
+  if (Array.isArray(plugins) && plugins.length) {
+    payload.plugins = plugins;
+  }
   const upstream = await fetch(endpoint, {
     method: "POST",
     headers: {
@@ -100,11 +121,7 @@ async function callCloudChat({ base, apiKey, model, messages, extraHeaders = {} 
       Authorization: `Bearer ${apiKey}`,
       ...extraHeaders,
     },
-    body: JSON.stringify({
-      model,
-      temperature: 0.75,
-      messages,
-    }),
+    body: JSON.stringify(payload),
   });
   const data = await upstream.json().catch(() => ({}));
   const reply = data?.choices?.[0]?.message?.content;
@@ -212,8 +229,22 @@ export async function processChatRequest(body) {
     };
   }
 
+  let webContext = "";
+  let webSearched = false;
+  let webSource = null;
+  if (needsWebSearch(message)) {
+    const web = await fetchWebContextForChat(message, fetch);
+    webSearched = web.searched;
+    webContext = web.context || "";
+    webSource = web.source;
+  }
+
+  const systemWithWeb = webContext
+    ? `${system}\n\n${webContext}\nUse this web snapshot when helpful. If it is empty or uncertain, say you could not verify online and answer from general knowledge.`
+    : system;
+
   const messages = [
-    { role: "system", content: system },
+    { role: "system", content: systemWithWeb },
     ...history.slice(-12),
   ];
   const last = messages[messages.length - 1];
@@ -262,6 +293,7 @@ export async function processChatRequest(body) {
       apiKey: openRouterApiKey,
       model: orModel,
       messages,
+      plugins: needsWebSearch(message) ? [{ id: "web" }] : null,
       extraHeaders: {
         "HTTP-Referer": process.env.OPENROUTER_REFERER || "https://amoji.app",
         "X-Title": "Amoji Companion",
@@ -271,8 +303,9 @@ export async function processChatRequest(body) {
       return {
         ok: true,
         reply: openrouter.reply,
-        mode: "online",
+        mode: webSearched ? "online+web" : "online",
         model: openrouter.model,
+        web: webSearched ? { searched: true, source: webSource } : undefined,
       };
     }
     console.warn("[chat-api] OpenRouter failed", openrouter.error);
@@ -351,11 +384,20 @@ export async function processChatRequest(body) {
     console.warn("[chat-api] OpenAI failed", openai.error);
   }
 
+  const fallbackReply = webContext
+    ? [
+        localCompanionReply(message, history).replace(/\s*\[mood:\w+\]\s*$/i, ""),
+        webContext.slice(0, 280),
+        "[mood:thinking]",
+      ].join(" ")
+    : localCompanionReply(message, history);
+
   return {
     ok: true,
-    reply: localCompanionReply(message, history),
+    reply: fallbackReply,
     mode: process.env.GROQ_API_KEY || apiKey ? "local-fallback" : "local",
     model: null,
+    web: webSearched ? { searched: true, source: webSource } : undefined,
   };
 }
 

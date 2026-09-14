@@ -102,10 +102,11 @@ export function isTalkGestureStyle(style) {
  * @param {number} timeSec
  * @param {{ emotion?: string, speechEnergy?: number, intensity?: number }} [opts]
  */
-/** VRM-safe: no celebrate/wave/thinking arm poses — use soft/explain instead. */
+/** VRM-safe: celebrate/wave remap; thinking allowed with clamped arms. */
 export function companionGestureStyle(style) {
   const key = String(style || "explain").toLowerCase();
   if (key === "nod") return "nod";
+  if (key === "thinking") return "thinking";
   if (key === "soft" || key === "explain") return key;
   if (key === "point" || key === "question") return key;
   return "soft";

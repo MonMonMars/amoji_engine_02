@@ -255,6 +255,8 @@ export function createMicCapture(opts = {}) {
     const buf = new Uint8Array(analyser.fftSize);
     let silentSince = Date.now();
     let heardSpeech = false;
+    let speechSince = 0;
+    let speechMs = 0;
 
     silenceTimer = setInterval(() => {
       if (!shouldListen() || !mediaRecorder) return;
@@ -268,17 +270,29 @@ export function createMicCapture(opts = {}) {
       if (rms > 0.011) {
         heardSpeech = true;
         silentSince = Date.now();
+        if (!speechSince) speechSince = Date.now();
+        speechMs = Date.now() - speechSince;
         const bargeMode = opts.shouldDetectBarge?.() === true;
         const now = Date.now();
         if (bargeMode && now - lastBargeEmitAt > 180) {
           lastBargeEmitAt = now;
-          opts.onSpeechDetected?.({ source: "cloud-energy", rms });
+          opts.onSpeechDetected?.({
+            source: "cloud-energy",
+            rms,
+            speechMs,
+          });
         } else if (!cloudSpeechSignalFired) {
           cloudSpeechSignalFired = true;
-          opts.onSpeechDetected?.({ source: "cloud-energy", rms });
+          opts.onSpeechDetected?.({
+            source: "cloud-energy",
+            rms,
+            speechMs,
+          });
         }
         return;
       }
+      speechSince = 0;
+      speechMs = 0;
       if (heardSpeech && Date.now() - silentSince >= silenceMs) {
         void finishCloudUtterance().then(() => {
           if (shouldListen()) void beginCloudUtterance();
