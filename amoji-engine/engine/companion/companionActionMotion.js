@@ -24,17 +24,20 @@ export function parseReplyTags(text) {
   let emotion = null;
   let action = null;
 
-  const moodMatch = reply.match(/\s*\[mood:(\w+)\]\s*$/i);
+  const moodMatch = reply.match(/\[mood:(\w+)\]/i);
   if (moodMatch) {
     emotion = moodMatch[1].toLowerCase();
-    reply = reply.replace(/\s*\[mood:\w+\]\s*$/i, "").trim();
   }
 
-  const actionMatch = reply.match(/\s*\[action:(\w+)\]\s*$/i);
+  const actionMatch = reply.match(/\[action:(\w+)\]/i);
   if (actionMatch) {
     action = actionMatch[1].toLowerCase();
-    reply = reply.replace(/\s*\[action:\w+\]\s*$/i, "").trim();
   }
+
+  reply = reply
+    .replace(/\s*\[mood:\w+\]\s*/gi, " ")
+    .replace(/\s*\[action:\w+\]\s*/gi, " ")
+    .trim();
 
   return { reply, emotion, action };
 }
@@ -130,14 +133,14 @@ export function sampleActionBodyPose(action, phase, elapsedSec = 0) {
   switch (key) {
     case "jump": {
       const hop = Math.sin(p * Math.PI);
-      pose.hipZ = hop * 0.08;
-      pose.spineX = -hop * 0.14;
-      pose.headX = -hop * 0.08;
-      pose.armLiftL = hop * 0.12;
-      pose.armLiftR = hop * 0.12;
-      pose.forearmL = hop * 0.08;
-      pose.forearmR = hop * 0.08;
-      pose.leanY = hop * 0.04;
+      pose.hipZ = hop * 0.12;
+      pose.spineX = -hop * 0.2;
+      pose.headX = -hop * 0.1;
+      pose.armLiftL = hop * 0.22;
+      pose.armLiftR = hop * 0.22;
+      pose.forearmL = hop * 0.14;
+      pose.forearmR = hop * 0.14;
+      pose.leanY = hop * 0.06;
       break;
     }
     case "laugh": {
@@ -154,20 +157,20 @@ export function sampleActionBodyPose(action, phase, elapsedSec = 0) {
       const combo = Math.floor(t * 1.6) % 4;
       const beat = Math.sin(t * 8.4 + combo);
       if (combo === 0 || combo === 2) {
-        pose.armLiftL = 0.11 + beat * 0.05;
-        pose.armLiftR = 0.04;
-        pose.forearmL = 0.1 + Math.max(0, beat) * 0.06;
-        pose.leanY = beat * 0.05;
-        pose.headZ = -0.06;
+        pose.armLiftL = 0.2 + beat * 0.08;
+        pose.armLiftR = 0.06;
+        pose.forearmL = 0.16 + Math.max(0, beat) * 0.1;
+        pose.leanY = beat * 0.08;
+        pose.headZ = -0.08;
       } else {
-        pose.armLiftR = 0.11 + beat * 0.05;
-        pose.armLiftL = 0.04;
-        pose.forearmR = 0.1 + Math.max(0, beat) * 0.06;
-        pose.leanY = -beat * 0.05;
-        pose.headZ = 0.06;
+        pose.armLiftR = 0.2 + beat * 0.08;
+        pose.armLiftL = 0.06;
+        pose.forearmR = 0.16 + Math.max(0, beat) * 0.1;
+        pose.leanY = -beat * 0.08;
+        pose.headZ = 0.08;
       }
-      pose.spineX = 0.03 + Math.sin(t * 6.2) * 0.02;
-      pose.hipZ = Math.sin(t * 5.5) * 0.04;
+      pose.spineX = 0.04 + Math.sin(t * 6.2) * 0.03;
+      pose.hipZ = Math.sin(t * 5.5) * 0.06;
       break;
     }
     case "wave": {
