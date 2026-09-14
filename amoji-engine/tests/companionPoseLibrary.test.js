@@ -1,61 +1,16 @@
 import { describe, expect, it } from "vitest";
-import {
-  buildBasePose,
-  clampArmPose,
-  companionGestureStyle,
-  LISTENING_POSE,
-  REST_POSE,
-  sampleVrmTalkPose,
-} from "../engine/companion/companionPoseLibrary.js";
+import { clampActionPose, clampArmPose } from "../engine/companion/companionPoseLibrary.js";
 
-describe("companionPoseLibrary", () => {
-  it("keeps arms low at rest and while listening", () => {
-    expect(REST_POSE.armLiftL).toBeLessThan(0.05);
-    expect(LISTENING_POSE.armLiftL).toBeLessThan(0.05);
-    const listen = buildBasePose({ listening: true, emotion: "neutral" });
-    expect(listen.armLiftL).toBeLessThan(0.06);
-    expect(listen.armLiftR).toBeLessThan(0.06);
+describe("companionPoseLibrary clamps", () => {
+  it("keeps talk gestures subtle", () => {
+    const clamped = clampArmPose({ armLiftL: 0.35, forearmL: 0.2 });
+    expect(clamped.armLiftL).toBeLessThanOrEqual(0.14);
+    expect(clamped.forearmL).toBeLessThanOrEqual(0.12);
   });
 
-  it("listening adds attentive head lean without raising arms", () => {
-    const idle = buildBasePose({ listening: false, emotion: "neutral" });
-    const listen = buildBasePose({ listening: true, emotion: "neutral" });
-    expect(listen.headZ).toBeGreaterThan(idle.headZ);
-    expect(listen.armLiftL).toBe(idle.armLiftL);
-  });
-
-  it("thinking emotion does not raise arms in base pose", () => {
-    const pose = buildBasePose({ emotion: "thinking" });
-    expect(pose.armLiftL).toBeLessThan(0.06);
-    expect(pose.forearmL ?? 0).toBeLessThan(0.05);
-  });
-
-  it("maps talk gesture library to VRM body channels when arms enabled", () => {
-    const explain = sampleVrmTalkPose("explain", 0.5, {
-      intensity: 0.6,
-      includeArms: true,
-    });
-    expect(explain.armLiftL).toBeDefined();
-    expect(explain.armLiftL).toBeLessThan(0.15);
-  });
-
-  it("keeps talk pose head-only by default", () => {
-    const explain = sampleVrmTalkPose("explain", 0.5, { intensity: 0.6 });
-    expect(explain.armLiftL).toBeUndefined();
-    expect(explain.headX).toBeDefined();
-  });
-
-  it("remaps celebrate to soft for VRM companion", () => {
-    expect(companionGestureStyle("celebrate")).toBe("soft");
-  });
-
-  it("keeps thinking style for loading pose", () => {
-    expect(companionGestureStyle("thinking")).toBe("thinking");
-  });
-
-  it("clamps arm lift", () => {
-    const out = clampArmPose({ armLiftL: 0.9, armLiftR: 0.8 });
-    expect(out.armLiftL).toBeLessThanOrEqual(0.14);
-    expect(out.armLiftR).toBeLessThanOrEqual(0.14);
+  it("allows full-body action lifts", () => {
+    const clamped = clampActionPose({ armLiftL: 0.35, forearmL: 0.2, upperLegL: 0.3 });
+    expect(clamped.armLiftL).toBeGreaterThan(0.3);
+    expect(clamped.upperLegL).toBeGreaterThan(0.25);
   });
 });

@@ -72,7 +72,7 @@ describe("createCompanionBodyMotion", () => {
     motion.update(1 / 30);
     const rot = humanoid.bones.get("leftUpperArm").rotation;
     const rest = VRM_ARM_REST_ROTATIONS.leftUpperArm;
-    expect(Math.abs(rot.z - rest.z)).toBeGreaterThan(0.08);
+    expect(Math.abs(rot.z - rest.z)).toBeGreaterThan(0.14);
     expect(motion.currentAction).toBe("kungfu");
   });
 

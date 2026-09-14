@@ -214,6 +214,7 @@ export function createCompanionWaitAct(opts = {}) {
       voiceRef?.stopLearnLoop?.();
       if (kind === "thinking") voiceRef?.stopThinkingLoop?.();
       avatarRef?.setThinking?.(false);
+      avatarRef?.stopAction?.();
       opts.progress?.hide?.();
       kind = "";
       phase = "learning";
