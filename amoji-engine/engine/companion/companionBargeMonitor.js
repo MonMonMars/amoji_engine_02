@@ -12,8 +12,8 @@ export const COMPANION_BARGE_SCHEMA = "amoji.companionBarge.v1";
  * }} [opts]
  */
 export function createCompanionBargeMonitor(opts = {}) {
-  const threshold = opts.energyThreshold ?? 0.028;
-  const minSpeechMs = opts.minSpeechMs ?? 110;
+  const threshold = opts.energyThreshold ?? 0.022;
+  const minSpeechMs = opts.minSpeechMs ?? 80;
 
   let active = false;
   let fired = false;
