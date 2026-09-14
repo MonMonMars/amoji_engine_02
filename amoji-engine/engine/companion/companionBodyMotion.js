@@ -312,10 +312,10 @@ export function createCompanionBodyMotion(humanoid) {
     const restR = VRM_ARM_REST_ROTATIONS.rightUpperArm;
     const restLl = VRM_ARM_REST_ROTATIONS.leftLowerArm;
     const restRl = VRM_ARM_REST_ROTATIONS.rightLowerArm;
-    const liftL = Math.min(0.38, (safe.armLiftL ?? 0) * k);
-    const liftR = Math.min(0.38, (safe.armLiftR ?? 0) * k);
-    const foreL = Math.min(0.28, (safe.forearmL ?? 0) * k);
-    const foreR = Math.min(0.28, (safe.forearmR ?? 0) * k);
+    const liftL = Math.min(0.55, (safe.armLiftL ?? 0) * k);
+    const liftR = Math.min(0.55, (safe.armLiftR ?? 0) * k);
+    const foreL = Math.min(0.42, (safe.forearmL ?? 0) * k);
+    const foreR = Math.min(0.42, (safe.forearmR ?? 0) * k);
     applyBoneRotation("leftUpperArm", {
       x: restL.x + Math.sin(actionPhase * Math.PI * 2) * 0.03 * k,
       y: restL.y,

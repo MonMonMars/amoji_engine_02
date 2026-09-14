@@ -43,7 +43,7 @@ function frameFaceCamera({ vrm, model, camera, controls, fitted }) {
     anchor.set(0, upperBodyY, 0);
   }
 
-  const portraitDist = Math.max(1.35, fittedSize.y * 1.05);
+  const portraitDist = Math.max(1.48, fittedSize.y * 1.14);
   controls.target.copy(anchor);
   camera.position.set(anchor.x, anchor.y + 0.04, anchor.z + portraitDist);
   controls.minDistance = portraitDist * 0.72;
@@ -176,7 +176,7 @@ export async function createVrmAvatar(opts) {
 
   const syncHumanoidPose = () => {
     try {
-      vrm.humanoid?.update?.(0);
+      vrm.humanoid?.update?.();
     } catch (err) {
       console.warn("[vrm] humanoid.update failed", err);
     }
@@ -196,6 +196,15 @@ export async function createVrmAvatar(opts) {
     controls,
     fitted,
   });
+  const portraitCamera = {
+    position: camera.position.clone(),
+    target: controls.target.clone(),
+    fov: camera.fov,
+    distance: portraitDist,
+  };
+  let actionCamBlend = 0;
+  const actionCamDir = new THREE.Vector3();
+  const actionCamTarget = new THREE.Vector3();
   const raycaster = new THREE.Raycaster();
   const pointer = new THREE.Vector2();
   /** @type {{ x: number, y: number } | null} */
@@ -420,6 +429,30 @@ export async function createVrmAvatar(opts) {
       const root = bodyMotion.getRootMotion?.() || { y: 0, rotY: 0 };
       model.position.y = baseModelY + (root.y || 0);
       model.rotation.y = baseModelRotY + (root.rotY || 0);
+
+      const wantsActionCam = Boolean(bodyMotion.currentAction);
+      const targetBlend = wantsActionCam ? 1 : 0;
+      actionCamBlend += (targetBlend - actionCamBlend) * Math.min(1, dt * 4.5);
+      if (actionCamBlend > 0.01) {
+        actionCamTarget.copy(portraitCamera.target);
+        actionCamTarget.y -= actionCamBlend * 0.34;
+        actionCamDir
+          .subVectors(portraitCamera.position, portraitCamera.target)
+          .normalize();
+        const pullDist =
+          portraitCamera.distance * (1 + actionCamBlend * 0.62);
+        camera.position.copy(actionCamTarget).addScaledVector(actionCamDir, pullDist);
+        controls.target.copy(actionCamTarget);
+        camera.fov = portraitCamera.fov + actionCamBlend * 14;
+        camera.updateProjectionMatrix();
+      } else if (actionCamBlend < 0.02 && !wantsActionCam) {
+        camera.position.copy(portraitCamera.position);
+        controls.target.copy(portraitCamera.target);
+        camera.fov = portraitCamera.fov;
+        camera.updateProjectionMatrix();
+        actionCamBlend = 0;
+      }
+
       vrm.update(dt);
       controls.update();
     } catch (err) {

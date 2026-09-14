@@ -127,65 +127,66 @@ export function sampleActionBodyPose(action, phase, elapsedSec = 0) {
   const key = String(action || "").toLowerCase();
   const p = Math.max(0, Math.min(1, phase));
   const t = elapsedSec;
+  const amp = 1.75;
   /** @type {Record<string, number>} */
   const pose = {};
 
   switch (key) {
     case "jump": {
       const hop = Math.sin(p * Math.PI);
-      pose.hipZ = hop * 0.12;
-      pose.spineX = -hop * 0.2;
-      pose.headX = -hop * 0.1;
-      pose.armLiftL = hop * 0.22;
-      pose.armLiftR = hop * 0.22;
-      pose.forearmL = hop * 0.14;
-      pose.forearmR = hop * 0.14;
-      pose.leanY = hop * 0.06;
+      pose.hipZ = hop * 0.12 * amp;
+      pose.spineX = -hop * 0.2 * amp;
+      pose.headX = -hop * 0.1 * amp;
+      pose.armLiftL = hop * 0.22 * amp;
+      pose.armLiftR = hop * 0.22 * amp;
+      pose.forearmL = hop * 0.14 * amp;
+      pose.forearmR = hop * 0.14 * amp;
+      pose.leanY = hop * 0.06 * amp;
       break;
     }
     case "laugh": {
-      const shake = Math.sin(t * 11.5) * 0.035;
-      pose.headX = -0.04 + shake;
-      pose.headZ = Math.sin(t * 8.2) * 0.04;
-      pose.spineX = 0.02 + Math.abs(Math.sin(t * 10)) * 0.03;
-      pose.armLiftL = 0.06 + Math.sin(t * 9) * 0.04;
-      pose.armLiftR = 0.06 + Math.sin(t * 9 + 1) * 0.04;
-      pose.leanY = Math.sin(t * 7.5) * 0.02;
+      const shake = Math.sin(t * 11.5) * 0.035 * amp;
+      pose.headX = -0.04 * amp + shake;
+      pose.headZ = Math.sin(t * 8.2) * 0.04 * amp;
+      pose.spineX = 0.02 * amp + Math.abs(Math.sin(t * 10)) * 0.03 * amp;
+      pose.armLiftL = 0.06 * amp + Math.sin(t * 9) * 0.04 * amp;
+      pose.armLiftR = 0.06 * amp + Math.sin(t * 9 + 1) * 0.04 * amp;
+      pose.leanY = Math.sin(t * 7.5) * 0.02 * amp;
       break;
     }
     case "kungfu": {
       const combo = Math.floor(t * 1.6) % 4;
       const beat = Math.sin(t * 8.4 + combo);
       if (combo === 0 || combo === 2) {
-        pose.armLiftL = 0.2 + beat * 0.08;
-        pose.armLiftR = 0.06;
-        pose.forearmL = 0.16 + Math.max(0, beat) * 0.1;
-        pose.leanY = beat * 0.08;
-        pose.headZ = -0.08;
+        pose.armLiftL = 0.2 * amp + beat * 0.08 * amp;
+        pose.armLiftR = 0.06 * amp;
+        pose.forearmL = 0.16 * amp + Math.max(0, beat) * 0.1 * amp;
+        pose.leanY = beat * 0.08 * amp;
+        pose.headZ = -0.08 * amp;
       } else {
-        pose.armLiftR = 0.2 + beat * 0.08;
-        pose.armLiftL = 0.06;
-        pose.forearmR = 0.16 + Math.max(0, beat) * 0.1;
-        pose.leanY = -beat * 0.08;
-        pose.headZ = 0.08;
+        pose.armLiftR = 0.2 * amp + beat * 0.08 * amp;
+        pose.armLiftL = 0.06 * amp;
+        pose.forearmR = 0.16 * amp + Math.max(0, beat) * 0.1 * amp;
+        pose.leanY = -beat * 0.08 * amp;
+        pose.headZ = 0.08 * amp;
       }
-      pose.spineX = 0.04 + Math.sin(t * 6.2) * 0.03;
-      pose.hipZ = Math.sin(t * 5.5) * 0.06;
+      pose.spineX = 0.04 * amp + Math.sin(t * 6.2) * 0.03 * amp;
+      pose.hipZ = Math.sin(t * 5.5) * 0.06 * amp;
       break;
     }
     case "wave": {
       const w = Math.sin(t * 5.8);
-      pose.armLiftR = 0.1 + w * 0.04;
-      pose.forearmR = 0.08 + Math.max(0, w) * 0.06;
-      pose.headZ = w * 0.03;
+      pose.armLiftR = 0.1 * amp + w * 0.04 * amp;
+      pose.forearmR = 0.08 * amp + Math.max(0, w) * 0.06 * amp;
+      pose.headZ = w * 0.03 * amp;
       break;
     }
     case "celebrate": {
       const c = Math.sin(t * 6.8);
-      pose.armLiftL = 0.1 + c * 0.05;
-      pose.armLiftR = 0.1 - c * 0.05;
-      pose.headX = -0.05;
-      pose.leanY = Math.sin(t * 5.2) * 0.03;
+      pose.armLiftL = 0.1 * amp + c * 0.05 * amp;
+      pose.armLiftR = 0.1 * amp - c * 0.05 * amp;
+      pose.headX = -0.05 * amp;
+      pose.leanY = Math.sin(t * 5.2) * 0.03 * amp;
       break;
     }
     default:
@@ -207,24 +208,31 @@ export function sampleActionRootMotion(action, phase, elapsedSec = 0) {
   const p = Math.max(0, Math.min(1, phase));
   const t = elapsedSec;
 
+  const amp = 1.85;
   switch (key) {
     case "jump": {
       const hop = Math.sin(p * Math.PI);
-      return { y: hop * 0.14, rotY: 0 };
+      return { y: hop * 0.14 * amp, rotY: 0 };
     }
     case "kungfu": {
       const combo = Math.floor(t * 1.6) % 4;
       const beat = Math.sin(t * 8.4 + combo);
-      return { y: Math.abs(beat) * 0.02, rotY: beat * 0.18 };
+      return { y: Math.abs(beat) * 0.02 * amp, rotY: beat * 0.18 * amp };
     }
     case "laugh": {
-      return { y: Math.sin(t * 10) * 0.015, rotY: Math.sin(t * 7.5) * 0.06 };
+      return {
+        y: Math.sin(t * 10) * 0.015 * amp,
+        rotY: Math.sin(t * 7.5) * 0.06 * amp,
+      };
     }
     case "celebrate": {
-      return { y: Math.sin(t * 6.8) * 0.03, rotY: Math.sin(t * 5.2) * 0.1 };
+      return {
+        y: Math.sin(t * 6.8) * 0.03 * amp,
+        rotY: Math.sin(t * 5.2) * 0.1 * amp,
+      };
     }
     case "wave": {
-      return { y: 0, rotY: Math.sin(t * 5.8) * 0.05 };
+      return { y: 0, rotY: Math.sin(t * 5.8) * 0.05 * amp };
     }
     default:
       return { y: 0, rotY: 0 };

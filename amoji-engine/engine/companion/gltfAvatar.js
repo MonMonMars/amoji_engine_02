@@ -6,6 +6,11 @@ import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { inferTalkGestureFromText } from "../face/talkGestures.js";
+import {
+  actionDurationSec,
+  actionLoops,
+  sampleActionRootMotion,
+} from "./companionActionMotion.js";
 
 export const GLTF_AVATAR_SCHEMA = "amoji.gltfAvatar.v1";
 
@@ -140,6 +145,8 @@ export async function createGltfAvatar(opts) {
   model.position.x = -center.x * scale;
   model.position.z = -center.z * scale;
   model.position.y = -box.min.y * scale;
+  const baseModelY = model.position.y;
+  const baseModelRotY = model.rotation.y;
   scene.add(model);
 
   const fitted = new THREE.Box3().setFromObject(model);
@@ -208,6 +215,9 @@ export async function createGltfAvatar(opts) {
   let talkEnergy = 0;
   /** @type {string | null} */
   let activeGesture = null;
+  /** @type {string | null} */
+  let activeAction = null;
+  let actionElapsed = 0;
   let gesturePhase = 0;
   let t0 = performance.now();
   const clock = new THREE.Clock();
@@ -262,6 +272,33 @@ export async function createGltfAvatar(opts) {
     return playGesture(style);
   };
 
+  const stopAction = () => {
+    activeAction = null;
+    actionElapsed = 0;
+    model.position.y = baseModelY;
+    model.rotation.y = baseModelRotY;
+    return true;
+  };
+
+  const playAction = (action, opts = {}) => {
+    const key = String(action || "").toLowerCase();
+    if (!key || key === "none" || key === "stop") {
+      stopAction();
+      return false;
+    }
+    activeAction = key;
+    actionElapsed = 0;
+    if (opts.emotion) setEmotion(opts.emotion);
+    else if (key === "kungfu" || key === "jump" || key === "laugh") {
+      setEmotion("happy");
+    }
+    if (key === "wave") playGesture("wave");
+    else if (key === "kungfu" || key === "celebrate" || key === "jump") {
+      playGesture("celebrate");
+    } else if (key === "laugh") playGesture("emphasize");
+    return true;
+  };
+
   const setMouthOpen = (v) => {
     mouthOpen = Math.max(0, Math.min(1, Number(v) || 0));
     if (mouthMorph) {
@@ -298,6 +335,22 @@ export async function createGltfAvatar(opts) {
     let leanX = body.leanX;
     let leanZ = body.leanZ;
     let leanY = body.leanY;
+
+    let actionRotY = 0;
+    if (activeAction) {
+      actionElapsed += dt;
+      const duration = actionDurationSec(activeAction);
+      const phase = (actionElapsed % duration) / duration;
+      const root = sampleActionRootMotion(activeAction, phase, actionElapsed);
+      model.position.y = baseModelY + (root.y || 0) * 2.2;
+      actionRotY = (root.rotY || 0) * 2.2;
+      if (!actionLoops(activeAction) && actionElapsed >= duration) {
+        stopAction();
+        actionRotY = 0;
+      }
+    } else {
+      model.position.y = baseModelY;
+    }
 
     if (gesturePhase < 1 && activeGesture) {
       gesturePhase += dt * 0.85;
@@ -338,7 +391,8 @@ export async function createGltfAvatar(opts) {
     model.rotation.x =
       leanX + (talking ? Math.sin((now - t0) * 0.006) * 0.02 * energy : 0);
     model.rotation.z = leanZ + sway;
-    model.rotation.y = leanY + Math.sin((now - t0) * 0.0005) * 0.02;
+    model.rotation.y =
+      baseModelRotY + actionRotY + leanY + Math.sin((now - t0) * 0.0005) * 0.02;
 
     if (!mixer) {
       const breath = Math.sin((now - t0) * 0.0018) * body.bounce;
@@ -375,8 +429,13 @@ export async function createGltfAvatar(opts) {
     setTalkEnergy,
     playGesture,
     playGestureForText,
+    playAction,
+    stopAction,
     get emotion() {
       return emotion;
+    },
+    get currentAction() {
+      return activeAction;
     },
     get mouthOpen() {
       return mouthOpen;
