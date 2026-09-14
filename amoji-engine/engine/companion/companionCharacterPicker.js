@@ -178,6 +178,9 @@ export function createCompanionSwitchOverlay(opts = {}) {
       <div class="companion-switch-ring" style="--pct:0">
         <span class="companion-switch-pct">0%</span>
       </div>
+      <div class="companion-switch-bar" aria-hidden="true">
+        <div class="companion-switch-bar-fill"></div>
+      </div>
       <p class="companion-switch-label">Loading…</p>
     </div>
   `;
@@ -186,6 +189,7 @@ export function createCompanionSwitchOverlay(opts = {}) {
   const ring = el.querySelector(".companion-switch-ring");
   const pctEl = el.querySelector(".companion-switch-pct");
   const labelEl = el.querySelector(".companion-switch-label");
+  const barFill = el.querySelector(".companion-switch-bar-fill");
 
   return {
     show(label = "Loading…") {
@@ -193,11 +197,13 @@ export function createCompanionSwitchOverlay(opts = {}) {
       if (labelEl) labelEl.textContent = label;
       if (ring) ring.style.setProperty("--pct", "0");
       if (pctEl) pctEl.textContent = "0%";
+      if (barFill) barFill.style.width = "0%";
     },
     update(pct, label) {
       const clamped = Math.max(0, Math.min(100, Math.round(pct)));
       if (ring) ring.style.setProperty("--pct", String(clamped));
       if (pctEl) pctEl.textContent = `${clamped}%`;
+      if (barFill) barFill.style.width = `${clamped}%`;
       if (label && labelEl) labelEl.textContent = label;
     },
     hide() {

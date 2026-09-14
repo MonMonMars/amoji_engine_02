@@ -37,6 +37,7 @@ const EMOTION_BODY = {
  * @param {{
  *   canvas: HTMLCanvasElement,
  *   modelUrl?: string,
+ *   onProgress?: (ratio: number, label?: string) => void,
  * }} opts
  */
 export async function createGltfAvatar(opts) {
@@ -120,7 +121,12 @@ export async function createGltfAvatar(opts) {
   };
 
   const loader = new GLTFLoader();
-  const gltf = await loader.loadAsync(modelUrl);
+  const gltf = await loader.loadAsync(modelUrl, (event) => {
+    if (event.lengthComputable && event.total > 0) {
+      opts.onProgress?.(event.loaded / event.total, "model");
+    }
+  });
+  opts.onProgress?.(1, "model");
   const model = gltf.scene;
   model.traverse((obj) => {
     if (obj.isMesh) {

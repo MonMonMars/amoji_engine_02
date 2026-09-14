@@ -39,7 +39,7 @@ export function createMotionDownloadClient(opts = {}) {
     opts.onProgress?.({ phase, progress, action });
   };
 
-  const fetchJson = async (url) => {
+  const fetchJson = async (url, onByteProgress) => {
     if (!fetchImpl) throw new Error("fetch unavailable");
     const res = await fetchImpl(url, {
       method: "GET",
@@ -48,7 +48,37 @@ export function createMotionDownloadClient(opts = {}) {
     if (!res.ok) {
       throw new Error(`Motion server HTTP ${res.status}`);
     }
+
+    const total = Number(res.headers?.get?.("content-length") || 0);
+    const body = res.body;
+    if (body && total > 0 && typeof body.getReader === "function") {
+      const reader = body.getReader();
+      const chunks = [];
+      let received = 0;
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        chunks.push(value);
+        received += value.byteLength;
+        onByteProgress?.(Math.min(1, received / total));
+      }
+      const merged = new Uint8Array(received);
+      let offset = 0;
+      for (const chunk of chunks) {
+        merged.set(chunk, offset);
+        offset += chunk.byteLength;
+      }
+      const text = new TextDecoder().decode(merged);
+      const data = JSON.parse(text);
+      if (!data || data.ok === false) {
+        throw new Error(data?.error || "motion server error");
+      }
+      onByteProgress?.(1);
+      return data;
+    }
+
     const data = await res.json();
+    onByteProgress?.(1);
     if (!data || data.ok === false) {
       throw new Error(data?.error || "motion server error");
     }
@@ -95,7 +125,10 @@ export function createMotionDownloadClient(opts = {}) {
           { phase: "downloading", delta: 0.35, delayMs: 180 },
         ]);
 
-        const data = await fetchJson(`${motionsUrl}?pack=basic`);
+        const data = await fetchJson(`${motionsUrl}?pack=basic`, (bytePct) => {
+          const mapped = 0.35 + bytePct * 0.28;
+          emit("downloading", mapped);
+        });
         const pack = data.pack;
         if (!pack || pack.schema !== MOTION_PACK_SCHEMA) {
           throw new Error("invalid basic motion pack");
@@ -155,16 +188,23 @@ export function createMotionDownloadClient(opts = {}) {
         let packTier = "catalog";
 
         if (cloudDef) {
-          const data = await fetchJson(`${motionsUrl}?action=${encodeURIComponent(id)}`);
+          const data = await fetchJson(
+            `${motionsUrl}?action=${encodeURIComponent(id)}`,
+            (bytePct) => {
+              const mapped = 0.32 + bytePct * 0.3;
+              emit("downloading", mapped, id);
+            },
+          );
           const motion = data.motion;
           if (!motion || motion.id !== id) {
             throw new Error(`motion not found: ${id}`);
           }
           packTier = "extension";
         } else {
-          const data = await fetchJson(
-            `${motionsUrl}?pack=basic`,
-          );
+          const data = await fetchJson(`${motionsUrl}?pack=basic`, (bytePct) => {
+            const mapped = 0.32 + bytePct * 0.28;
+            emit("downloading", mapped, id);
+          });
           const pack = data.pack || getMotionPack("basic");
           const found = (pack.motions || []).some(
             (m) => (m.id || m) === id,

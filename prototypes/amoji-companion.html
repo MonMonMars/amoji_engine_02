@@ -1439,6 +1439,106 @@
         font-size: 0.82rem;
         text-align: center;
       }
+
+      .companion-switch-bar {
+        width: min(72vw, 220px);
+        height: 0.38rem;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.08);
+        overflow: hidden;
+      }
+
+      .companion-switch-bar-fill {
+        height: 100%;
+        width: 0%;
+        border-radius: inherit;
+        background: linear-gradient(90deg, var(--accent), #5bb8d6);
+        transition: width 0.25s ease;
+      }
+
+      .companion-progress-dock {
+        position: fixed;
+        left: 50%;
+        bottom: calc(5.6rem + env(safe-area-inset-bottom, 0px));
+        transform: translateX(-50%) translateY(12px);
+        z-index: 9000;
+        width: min(92vw, 420px);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.28s ease, transform 0.28s ease;
+      }
+
+      .companion-progress-dock.is-visible {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+      }
+
+      .companion-progress-dock-inner {
+        padding: 0.65rem 0.85rem 0.72rem;
+        border-radius: 1rem;
+        background: rgba(10, 14, 22, 0.92);
+        border: 1px solid rgba(127, 212, 207, 0.22);
+        box-shadow: var(--shadow);
+        backdrop-filter: blur(10px);
+      }
+
+      .companion-progress-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.5rem;
+        margin-bottom: 0.42rem;
+        font-size: 0.72rem;
+        color: var(--muted);
+      }
+
+      .companion-progress-phase {
+        font-weight: 700;
+        color: var(--accent);
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+      }
+
+      .companion-progress-pct {
+        font-weight: 800;
+        color: var(--ink);
+        font-variant-numeric: tabular-nums;
+      }
+
+      .companion-progress-track {
+        height: 0.42rem;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.08);
+        overflow: hidden;
+      }
+
+      .companion-progress-fill {
+        height: 100%;
+        width: 0%;
+        border-radius: inherit;
+        background: linear-gradient(90deg, var(--accent), #5bb8d6);
+        transition: width 0.22s ease;
+      }
+
+      .companion-progress-track.is-indeterminate .companion-progress-fill {
+        animation: progress-indeterminate 1.35s ease-in-out infinite;
+      }
+
+      @keyframes progress-indeterminate {
+        0% {
+          transform: translateX(-120%);
+        }
+        100% {
+          transform: translateX(320%);
+        }
+      }
+
+      .companion-progress-label {
+        margin: 0.42rem 0 0;
+        font-size: 0.74rem;
+        line-height: 1.35;
+        color: var(--muted);
+      }
     </style>
     <script type="importmap">
       {
@@ -1451,7 +1551,7 @@
     </script>
     <script>
       (function () {
-        window.__amojiBuild = "2026-09-14-v37-companion-picker";
+        window.__amojiBuild = "2026-09-14-v38-loading-progress";
         window.__amojiModuleBooted = false;
         window.__amojiStart = {
           tapped: false,
@@ -1854,6 +1954,8 @@
         motionDownloadMod,
         characterPickerMod,
         characterSwitchMod,
+        progressOverlayMod,
+        waitActMod,
       ] = await Promise.all([
         import("../amoji-engine/engine/companion/createAvatar.js"),
         import("../amoji-engine/engine/companion/chatLlm.js"),
@@ -1875,6 +1977,8 @@
         import("../amoji-engine/engine/companion/companionMotionDownload.js"),
         import("../amoji-engine/engine/companion/companionCharacterPicker.js"),
         import("../amoji-engine/engine/companion/companionCharacterSwitch.js"),
+        import("../amoji-engine/engine/companion/companionProgressOverlay.js"),
+        import("../amoji-engine/engine/companion/companionWaitAct.js"),
       ]);
       window.__amojiModuleBooted = true;
       const {
@@ -1923,6 +2027,11 @@
 
       const hostedOnline = isHostedCompanion();
       const { createMotionDownloadClient } = motionDownloadMod;
+      const { createCompanionProgressDock } = progressOverlayMod;
+      const { createCompanionWaitAct } = waitActMod;
+      const progressDock = createCompanionProgressDock({ root: document.body });
+      /** @type {ReturnType<typeof createCompanionWaitAct> | null} */
+      let waitAct = null;
       /** @type {Map<string, Promise<unknown>>} */
       const pendingMotionJobs = new Map();
       let basicMotionPackReady = false;
@@ -1932,12 +2041,32 @@
       const prefetchBasicMotionPack = async () => {
         if (!motionClient) return { ok: false, reason: "motion-client-not-ready" };
         if (basicMotionPackReady) return { ok: true, cached: true };
+        const showPackUi = !avatarLoadStarted;
+        if (showPackUi) {
+          waitAct?.start({
+            kind: "motion-pack",
+            phase: "connecting",
+            progress: 0,
+            label: isEnglish
+              ? "Syncing basic motion library…"
+              : "同步基本動作庫…",
+          });
+        }
         try {
           const result = await motionClient.ensureBasicPack();
           basicMotionPackReady = Boolean(result?.ok);
+          if (showPackUi) {
+            waitAct?.update({
+              phase: "ready",
+              progress: 1,
+              label: isEnglish ? "Motion library ready" : "動作庫已就緒",
+            });
+            waitAct?.stop();
+          }
           return result;
         } catch (err) {
           basicMotionPackReady = true;
+          if (showPackUi) waitAct?.stop();
           return { ok: false, error: err?.message || String(err) };
         }
       };
@@ -1956,13 +2085,17 @@
         }
         const job = (async () => {
           voice.stopThinkingLoop?.();
-          voice.startLearnLoop?.({ isEnglish, phase: "learning", progress: 0 });
-          avatar.setThinking?.(true);
-          avatar.playAction?.("learning", { emotion: "thinking", loop: true });
+          waitAct?.start({
+            kind: "motion",
+            phase: "learning",
+            progress: 0,
+            label: isEnglish
+              ? `Learning "${id}" — downloading motion…`
+              : `學習「${id}」動作 — 下載中…`,
+          });
           setEmotionPill("thinking", id);
           const result = await motionClient.ensureMotion(id);
-          voice.stopLearnLoop?.();
-          avatar.setThinking?.(false);
+          waitAct?.stop();
           if (!result.ok) {
             showToast(
               isEnglish
@@ -2059,6 +2192,7 @@
       const handleUserStopCommand = (text) => {
         if (!isUserStopCommand(text)) return false;
         voice.stopThinkingLoop?.();
+        waitAct?.stop();
         voice.cancelStreamSpeak?.();
         voice.stopSpeak();
         avatar.stopAction?.();
@@ -2221,16 +2355,37 @@
         if (avatarLoadStarted) return avatarLoadPromise;
         avatarLoadStarted = true;
         showAvatarLoadPill();
+        waitAct?.start({
+          kind: "avatar-load",
+          phase: "avatar-load",
+          progress: 0,
+          label: isEnglish
+            ? "Loading 3D companion model…"
+            : "載入 3D 同伴模型…",
+        });
         avatarLoadPromise = createCompanionAvatar({
           canvas,
           modelUrl: avatarModelUrl || undefined,
           prefer: avatarPrefer,
           onCharacterTap: () => handleCharacterTap?.(),
+          onProgress: (pct, _label) => {
+            waitAct?.update({
+              phase: "avatar-load",
+              progress: pct / 100,
+              label: isEnglish
+                ? `Loading 3D model… ${Math.round(pct)}%`
+                : `載入 3D 模型… ${Math.round(pct)}%`,
+            });
+            if (avatarLoadPill) {
+              avatarLoadPill.innerHTML = `avatar · <strong>${Math.round(pct)}%</strong>`;
+            }
+          },
         })
           .then((loaded) => {
             avatar = loaded.avatar;
             avatarKind = loaded.kind;
             if (loaded.canvas) canvas = loaded.canvas;
+            waitAct?.setAvatar?.(avatar);
             window.__amojiAvatarKind = avatarKind;
             window.__amojiAvatar = avatar;
             avatar.setEmotion?.(currentEmotion);
@@ -2264,7 +2419,10 @@
             );
             return { avatar, kind: avatarKind };
           })
-          .finally(() => hideAvatarLoadPill());
+          .finally(() => {
+            hideAvatarLoadPill();
+            waitAct?.stop();
+          });
         return avatarLoadPromise;
       };
 
@@ -2632,16 +2790,26 @@
       motionClient = createMotionDownloadClient({
         motionsUrl: "/api/motions",
         onProgress: ({ phase, progress, action }) => {
-          voice.updateLearnLoop?.({ phase, progress });
-          const learnPose =
-            phase === "downloading" || phase === "connecting"
-              ? "downloading"
-              : "learning";
-          avatar.playAction?.(learnPose, { emotion: "thinking", loop: true });
-          avatar.setEmotion?.("thinking");
-          setEmotionPill("thinking", action || learnPose);
+          if (waitAct?.isActive()) {
+            waitAct.update({
+              phase,
+              progress,
+              label: isEnglish
+                ? `Motion ${action || "pack"} — ${Math.round(progress * 100)}%`
+                : `動作 ${action || "pack"} — ${Math.round(progress * 100)}%`,
+            });
+          }
+          setEmotionPill("thinking", action || phase);
         },
       });
+
+      waitAct = createCompanionWaitAct({
+        avatar,
+        voice,
+        progress: progressDock,
+        isEnglish,
+      });
+
       void prefetchBasicMotionPack();
 
       applyVoiceSelection = (nextVoiceId) => {
@@ -2716,6 +2884,7 @@
           avatar = result.avatar;
           avatarKind = result.kind;
           if (result.canvas) canvas = result.canvas;
+          waitAct?.setAvatar?.(avatar);
           window.__amojiAvatarKind = avatarKind;
           window.__amojiAvatar = avatar;
           avatar.setEmotion?.(currentEmotion);
@@ -2791,6 +2960,7 @@
         activeTurn.aborted = true;
         chat.abort?.();
         voice.stopThinkingLoop?.();
+        waitAct?.stop();
         voice.cancelStreamSpeak?.();
         voice.stopSpeak();
         avatar.setThinking?.(false);
@@ -2874,7 +3044,13 @@
         avatar.prepareThinkingFromUser?.(cleaned, isEnglish);
         setEmotionPill(avatar.emotion || "thinking");
         status.thinking();
-        voice.startThinkingLoop?.({ isEnglish, intervalMs: 1800 });
+        waitAct?.start({
+          kind: "thinking",
+          phase: "thinking",
+          progress: 0,
+          indeterminate: true,
+          label: isEnglish ? "Thinking…" : "思考中…",
+        });
 
         const assistantBubble = addBubble("assistant", "");
         const assistantRow = assistantBubble.closest(".msg-row");
@@ -2893,7 +3069,7 @@
           streamEmotion = analysis.emotion || streamEmotion;
           if (!streamSpeakStarted) {
             streamSpeakStarted = true;
-            voice.stopThinkingLoop?.();
+            waitAct?.stop();
             voice.beginStreamSpeak?.(streamEmotion, {
               pauseCapture: !keepMicForBarge,
             });
@@ -2913,6 +3089,7 @@
               if (!gotToken) {
                 gotToken = true;
                 voice.stopThinkingLoop?.();
+                waitAct?.stop();
                 voice.stopSpeak();
                 avatar.setThinking?.(false);
                 assistantBubble.classList.remove("thinking");
@@ -2949,6 +3126,7 @@
           );
           const reply = result.reply || "……";
           voice.stopThinkingLoop?.();
+          waitAct?.stop();
           avatar.setThinking?.(false);
           let content = applyReplyPerformance(
             result.raw || reply,
@@ -2973,9 +3151,11 @@
         } catch (err) {
           if (activeTurn?.aborted || err?.name === "AbortError") {
             voice.cancelStreamSpeak?.();
+            waitAct?.stop();
             return;
           }
           voice.cancelStreamSpeak?.();
+          waitAct?.stop();
           assistantBubble.classList.remove("thinking", "typing");
           assistantBubble.closest(".msg-row")?.remove();
           addBubble("system", `Chat failed: ${err?.message || err}`);

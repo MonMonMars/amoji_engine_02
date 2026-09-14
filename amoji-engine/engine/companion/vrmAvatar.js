@@ -60,6 +60,7 @@ function frameFaceCamera({ vrm, model, camera, controls, fitted }) {
  *   canvas: HTMLCanvasElement,
  *   modelUrl?: string,
  *   onCharacterTap?: (info: { point: import('three').Vector3 }) => void,
+ *   onProgress?: (ratio: number, label?: string) => void,
  * }} opts
  */
 export async function createVrmAvatar(opts) {
@@ -144,7 +145,12 @@ export async function createVrmAvatar(opts) {
 
   const loader = new GLTFLoader();
   loader.register((parser) => new VRMLoaderPlugin(parser));
-  const gltf = await loader.loadAsync(modelUrl);
+  const gltf = await loader.loadAsync(modelUrl, (event) => {
+    if (event.lengthComputable && event.total > 0) {
+      opts.onProgress?.(event.loaded / event.total, "model");
+    }
+  });
+  opts.onProgress?.(1, "model");
   const vrm = gltf.userData.vrm;
   if (!vrm) throw new Error("VRM data missing from model");
 
