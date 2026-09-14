@@ -9,6 +9,7 @@ describe("sttHandler", () => {
   afterEach(() => {
     delete process.env.GROQ_API_KEY;
     delete process.env.OPENAI_API_KEY;
+    delete process.env.OPENROUTER_API_KEY;
   });
 
   it("maps language codes for Whisper", () => {
@@ -22,6 +23,13 @@ describe("sttHandler", () => {
     const provider = resolveSttProvider();
     expect(provider?.url).toContain("groq.com");
     expect(provider?.model).toBeTruthy();
+  });
+
+  it("uses OpenRouter when OPENROUTER_API_KEY is set", () => {
+    process.env.OPENROUTER_API_KEY = "sk-or-test";
+    const provider = resolveSttProvider();
+    expect(provider?.kind).toBe("openrouter");
+    expect(provider?.url).toContain("openrouter.ai");
   });
 
   it("returns 503 when no STT provider configured", async () => {
