@@ -1157,7 +1157,7 @@
     </script>
     <script>
       (function () {
-        window.__amojiBuild = "2026-09-14-v35-motion-library";
+        window.__amojiBuild = "2026-09-14-v36-kizuna-vrm";
         window.__amojiModuleBooted = false;
         window.__amojiStart = {
           tapped: false,
@@ -1346,7 +1346,7 @@
     </script>
   </head>
   <body>
-    <!-- amoji-build: 2026-09-14-v35-motion-library — cloud motion download + learn dialogue -->
+    <!-- amoji-build: 2026-09-14-v36-kizuna-vrm — official Kizuna AI KAMATTE VRM -->
     <noscript>
       <div
         style="
@@ -1811,13 +1811,6 @@
         params.get("lang") || dialect.forceLanguage || "yue",
       );
       const isEnglish = langCode === "en";
-      let voiceId = params.get("voice")
-        ? resolveVoiceId({ lang: langCode, voiceParam: params.get("voice") })
-        : charConfig.voiceId;
-      persistVoiceId(voiceId);
-      const liteMode = params.get("lite") === "1";
-      const autoMic = params.get("automic") !== "0";
-      dismissLoading();
       let characterId = resolveCharacterId({
         characterParam: params.get("character"),
         modelUrl: params.get("vrm") || params.get("model3d"),
@@ -1825,6 +1818,13 @@
       });
       persistCharacterId(characterId);
       const charConfig = characterAvatarConfig(characterId, langCode);
+      let voiceId = params.get("voice")
+        ? resolveVoiceId({ lang: langCode, voiceParam: params.get("voice") })
+        : charConfig.voiceId;
+      persistVoiceId(voiceId);
+      const liteMode = params.get("lite") === "1";
+      const autoMic = params.get("automic") !== "0";
+      dismissLoading();
       const avatarModelUrl =
         params.get("vrm") ||
         params.get("model3d") ||
