@@ -15,6 +15,12 @@ export const CANTONESE_FEMALE_VOICE_ALT = "zh-HK-HiuGaaiNeural";
 /** English (US) female — Aria */
 export const ENGLISH_FEMALE_VOICE = "en-US-AriaNeural";
 
+/** Cantonese (Hong Kong) male — 雲龍 */
+export const CANTONESE_MALE_VOICE = "zh-HK-WanLungNeural";
+
+/** English (US) female — Jenny */
+export const ENGLISH_FEMALE_VOICE_ALT = "en-US-JennyNeural";
+
 const EMOTION_EDGE_PROSODY = Object.freeze({
   neutral: { rate: "+6%", pitch: "+10Hz" },
   happy: { rate: "+14%", pitch: "+16Hz" },

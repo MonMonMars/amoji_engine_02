@@ -132,13 +132,25 @@ export function pickFemaleVoice(voices) {
   return picked;
 }
 
-/** Human label for the voice pill — always female-presenting. */
+/** Human label for the voice pill. */
 export function femaleVoiceLabel(voice) {
+  if (voice?.cloud && /wanlung/i.test(String(voice.name || ""))) {
+    return "男聲·粵·雲龍";
+  }
+  if (voice?.cloud && /hiugaai/i.test(String(voice.name || ""))) {
+    return "女聲·粵·曉佳";
+  }
+  if (voice?.cloud && /hiumaan/i.test(String(voice.name || ""))) {
+    return "女聲·粵·曉曼";
+  }
+  if (voice?.cloud && /jenny/i.test(String(voice.name || ""))) {
+    return "Female·EN·Jenny";
+  }
   if (voice?.cloud && /aria|en-us/i.test(String(voice.name || ""))) {
     return "Female·EN·Aria";
   }
-  if (voice?.cloud && /hiumaan|hiugaai|zh-hk/i.test(String(voice.name || ""))) {
-    return "女聲·粵·曉曼";
+  if (voice?.cloud && /zh-hk|yue|cantonese/i.test(String(voice.lang || ""))) {
+    return "女聲·粵";
   }
   if (!voice?.name) return "女聲·粵";
   const n = voice.name.toLowerCase();
@@ -600,6 +612,14 @@ export function createCompanionVoice(opts = {}) {
 
   const toggleMic = () => (micCapture.on ? stopMic() : startMic());
 
+  const setCloudVoice = (preset) => {
+    if (!preset?.name) return voice;
+    opts.cloudVoice = preset;
+    voice = preset;
+    usingCloudTts = Boolean(opts.cloudTtsUrl);
+    return voice;
+  };
+
   return {
     schema: COMPANION_VOICE_SCHEMA,
     get speakerOn() {
@@ -641,6 +661,7 @@ export function createCompanionVoice(opts = {}) {
     startMic,
     stopMic,
     toggleMic,
+    setCloudVoice,
   };
 }
 
