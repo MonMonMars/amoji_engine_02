@@ -227,6 +227,8 @@ export function createCompanionVoice(opts = {}) {
   };
   /** Serialize TTS so greeting + replies do not overlap or cut each other off. */
   let speakChain = Promise.resolve();
+  /** @type {{ emotion: string, closed: boolean, capturePaused: boolean } | null} */
+  let streamSession = null;
   /** @type {ReturnType<typeof setInterval> | null} */
   let mouthTimer = null;
   /** @type {ReturnType<typeof setTimeout>[]} */
@@ -427,20 +429,22 @@ export function createCompanionVoice(opts = {}) {
     micCapture.resume();
   };
 
-  /**
-   * Speak reply with female voice + emotion tone. Resolves when finished.
-   * @param {string} text
-   * @param {string} [emotion]
-   */
-  const speakOnce = async (text, emotion = "neutral") => {
-    const clean = String(text || "")
+  const cleanSpeakText = (text) =>
+    String(text || "")
       .replace(/[*_`#>/\\]/g, " ")
       .replace(/\s+/g, " ")
       .trim();
+
+  /**
+   * Core TTS playback (no mic pause/resume — used by stream queue).
+   * @param {string} text
+   * @param {string} [emotion]
+   */
+  const speakOnceCore = async (text, emotion = "neutral") => {
+    const clean = cleanSpeakText(text);
     if (!clean) return { ok: false, reason: "empty" };
 
     stopThinkingAudio();
-    pauseCapture();
     try {
       if (!speakerOn) {
         startLipSync(clean);
@@ -533,6 +537,20 @@ export function createCompanionVoice(opts = {}) {
         }),
       ]);
       return spoken;
+    } catch (err) {
+      return { ok: false, reason: err?.message || "speak-failed" };
+    }
+  };
+
+  /**
+   * Speak reply with female voice + emotion tone. Resolves when finished.
+   * @param {string} text
+   * @param {string} [emotion]
+   */
+  const speakOnce = async (text, emotion = "neutral") => {
+    pauseCapture();
+    try {
+      return await speakOnceCore(text, emotion);
     } finally {
       resumeCapture();
     }
@@ -545,12 +563,77 @@ export function createCompanionVoice(opts = {}) {
   };
 
   const stopSpeak = () => {
+    if (streamSession) {
+      streamSession.closed = true;
+      streamSession = null;
+    }
     stopThinkingAudio();
     stopCloudAudio();
     synth?.cancel();
     speaking = false;
     stopMouth();
     speakChain = Promise.resolve();
+  };
+
+  /**
+   * Phase A — begin streaming TTS session (sentence chunks while LLM streams).
+   * @param {string} [defaultEmotion]
+   * @param {{ pauseCapture?: boolean }} [sessionOpts]
+   */
+  const beginStreamSpeak = (defaultEmotion = "neutral", sessionOpts = {}) => {
+    stopSpeak();
+    const pauseMic = sessionOpts.pauseCapture !== false;
+    streamSession = {
+      emotion: defaultEmotion,
+      closed: false,
+      capturePaused: pauseMic,
+    };
+    if (pauseMic) pauseCapture();
+    return streamSession;
+  };
+
+  /**
+   * Queue one speakable segment during a stream session.
+   * @param {string} text
+   * @param {string} [emotion]
+   */
+  const pushStreamSpeak = (text, emotion) => {
+    if (!streamSession || streamSession.closed) {
+      return Promise.resolve({ ok: false, reason: "no-stream-session" });
+    }
+    const clean = cleanSpeakText(text);
+    if (!clean) return Promise.resolve({ ok: false, reason: "empty" });
+    const em = emotion || streamSession.emotion || "neutral";
+    const next = speakChain.then(() => {
+      if (!streamSession || streamSession.closed) {
+        return { ok: false, reason: "stream-closed" };
+      }
+      return speakOnceCore(clean, em);
+    });
+    speakChain = next.catch(() => {});
+    return next;
+  };
+
+  /** Wait for queued stream segments to finish and end the session. */
+  const finishStreamSpeak = async () => {
+    const session = streamSession;
+    if (!session) return { ok: true };
+    session.closed = true;
+    streamSession = null;
+    try {
+      await speakChain;
+      return { ok: true };
+    } finally {
+      if (session.capturePaused) resumeCapture();
+    }
+  };
+
+  /** Barge-in: cancel stream session + flush TTS immediately. */
+  const cancelStreamSpeak = () => {
+    const session = streamSession;
+    stopSpeak();
+    if (session?.capturePaused) resumeCapture();
+    return true;
   };
 
   /** Soft thinking phrase while LLM loads — parallel to reply queue; cancel with stopSpeak(). */
@@ -759,6 +842,10 @@ export function createCompanionVoice(opts = {}) {
     primeMicPermission,
     speak,
     speakThinking,
+    beginStreamSpeak,
+    pushStreamSpeak,
+    finishStreamSpeak,
+    cancelStreamSpeak,
     stopSpeak,
     setSpeakerOn,
     pauseCapture,

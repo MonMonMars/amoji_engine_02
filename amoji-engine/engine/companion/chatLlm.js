@@ -65,6 +65,8 @@ export function createCompanionChat(opts = {}) {
   const robot = createVoiceRobotBridge({ language: "yue" });
   /** @type {{ role: string, content: string }[]} */
   const history = [];
+  /** @type {AbortController | null} */
+  let replyAbort = null;
 
   const mode = () => {
     if (forceLocal) return "local";
@@ -135,6 +137,11 @@ export function createCompanionChat(opts = {}) {
    * @param {string} userText
    * @param {{ onToken?: (chunk: string, full: string) => void }} [opts]
    */
+  function abort() {
+    replyAbort?.abort();
+    replyAbort = null;
+  }
+
   async function reply(userText, opts = {}) {
     const text = String(userText || "").trim();
     if (!text) {
@@ -146,12 +153,27 @@ export function createCompanionChat(opts = {}) {
         mode: mode(),
       };
     }
+    abort();
+    const turnAbort = new AbortController();
+    replyAbort = turnAbort;
+    const signal = turnAbort.signal;
+
     history.push({ role: "user", content: text });
     const onToken = opts.onToken;
 
+    const throwIfAborted = () => {
+      if (signal.aborted) {
+        const err = new Error("aborted");
+        err.name = "AbortError";
+        throw err;
+      }
+    };
+
+    try {
     // Prefer lab/cloud proxy — server-side keys when configured
     if (!forceLocal && fetchImpl) {
       try {
+        throwIfAborted();
         const proxied = await callLocalProxy({
           fetchImpl,
           text,
@@ -159,10 +181,12 @@ export function createCompanionChat(opts = {}) {
           systemPrompt,
           model,
           providerId,
+          signal,
         });
         if (proxied.ok && isSmartProxyMode(proxied.mode)) {
           const finalized = finalizeReply(proxied.reply);
-          if (onToken) await emitTypewriter(finalized.reply, onToken);
+          if (onToken) await emitTypewriter(finalized.reply, onToken, signal);
+          throwIfAborted();
           history.push({ role: "assistant", content: finalized.reply });
           return {
             ok: true,
@@ -172,7 +196,8 @@ export function createCompanionChat(opts = {}) {
             model: proxied.model || model,
           };
         }
-      } catch {
+      } catch (err) {
+        if (signal.aborted || err?.name === "AbortError") throw err;
         /* try client online or local stub */
       }
     }
@@ -187,6 +212,7 @@ export function createCompanionChat(opts = {}) {
       !isOllamaUrl(apiUrl)
     ) {
       try {
+        throwIfAborted();
         const online = await callOpenAiCompatible({
           fetchImpl,
           apiUrl,
@@ -196,6 +222,7 @@ export function createCompanionChat(opts = {}) {
           history,
           onToken,
           stream: Boolean(onToken),
+          signal,
           extraHeaders: apiUrl.includes("openrouter")
             ? {
                 "HTTP-Referer": globalThis.location?.origin || "https://amoji.app",
@@ -205,7 +232,10 @@ export function createCompanionChat(opts = {}) {
         });
         if (online.ok) {
           const finalized = finalizeReply(online.reply);
-          if (onToken && !online.streamed) await emitTypewriter(finalized.reply, onToken);
+          if (onToken && !online.streamed) {
+            await emitTypewriter(finalized.reply, onToken, signal);
+          }
+          throwIfAborted();
           history.push({ role: "assistant", content: finalized.reply });
           return {
             ok: true,
@@ -217,12 +247,14 @@ export function createCompanionChat(opts = {}) {
         }
         console.warn("[companion] hosted direct llm failed", online.error);
       } catch (err) {
+        if (signal.aborted || err?.name === "AbortError") throw err;
         console.warn("[companion] hosted direct llm error", err);
       }
     }
 
     if (!forceLocal && apiUrl && fetchImpl) {
       try {
+        throwIfAborted();
         const online = await callOpenAiCompatible({
           fetchImpl,
           apiUrl,
@@ -232,9 +264,11 @@ export function createCompanionChat(opts = {}) {
           history,
           onToken,
           stream: Boolean(onToken) && !isOllamaUrl(apiUrl),
+          signal,
         });
         if (online.ok) {
           const finalized = finalizeReply(online.reply);
+          throwIfAborted();
           history.push({ role: "assistant", content: finalized.reply });
           const clientMode = /11434|ollama/i.test(apiUrl) ? "ollama" : "online";
           return {
@@ -247,6 +281,7 @@ export function createCompanionChat(opts = {}) {
         }
         online.error && console.warn("[companion] online llm failed", online.error);
       } catch (err) {
+        if (signal.aborted || err?.name === "AbortError") throw err;
         console.warn("[companion] online llm error", err);
       }
     }
@@ -267,7 +302,10 @@ export function createCompanionChat(opts = {}) {
         });
         if (direct.ok) {
           const finalized = finalizeReply(direct.reply);
-          if (onToken && !direct.streamed) await emitTypewriter(finalized.reply, onToken);
+          if (onToken && !direct.streamed) {
+            await emitTypewriter(finalized.reply, onToken, signal);
+          }
+          throwIfAborted();
           history.push({ role: "assistant", content: finalized.reply });
           return {
             ok: true,
@@ -278,6 +316,7 @@ export function createCompanionChat(opts = {}) {
           };
         }
       } catch (err) {
+        if (signal.aborted || err?.name === "AbortError") throw err;
         console.warn("[companion] direct ollama error", err);
       }
     }
@@ -297,7 +336,8 @@ export function createCompanionChat(opts = {}) {
           (proxied.mode !== "local-fallback" || providerId === "basic")
         ) {
           const finalized = finalizeReply(proxied.reply);
-          if (onToken) await emitTypewriter(finalized.reply, onToken);
+          if (onToken) await emitTypewriter(finalized.reply, onToken, signal);
+          throwIfAborted();
           history.push({ role: "assistant", content: finalized.reply });
           return {
             ok: true,
@@ -307,14 +347,17 @@ export function createCompanionChat(opts = {}) {
             model: proxied.model || null,
           };
         }
-      } catch {
+      } catch (err) {
+        if (signal.aborted || err?.name === "AbortError") throw err;
         /* local stub */
       }
     }
 
+    throwIfAborted();
     const turn = await robot.runTurn(text, { speakMs: 0 });
     const finalized = finalizeReply(turn.reply || "嗯，我喺度呀！");
-    if (onToken) await emitTypewriter(finalized.reply, onToken);
+    if (onToken) await emitTypewriter(finalized.reply, onToken, signal);
+    throwIfAborted();
     history.push({ role: "assistant", content: finalized.reply });
     return {
       ok: true,
@@ -323,6 +366,21 @@ export function createCompanionChat(opts = {}) {
       mode: "local",
       annotatedReply: turn.annotatedReply || null,
     };
+    } catch (err) {
+      if (signal.aborted || err?.name === "AbortError") {
+        return {
+          ok: false,
+          aborted: true,
+          error: "aborted",
+          reply: "",
+          emotion: "neutral",
+          mode: mode(),
+        };
+      }
+      throw err;
+    } finally {
+      if (replyAbort === turnAbort) replyAbort = null;
+    }
   }
 
   return {
@@ -351,6 +409,7 @@ export function createCompanionChat(opts = {}) {
     clearHistory() {
       history.length = 0;
     },
+    abort,
     reply,
   };
 }
@@ -372,13 +431,22 @@ function isSmartProxyMode(mode) {
  * @param {RequestInit} init
  * @param {number} [ms]
  */
-async function fetchWithTimeout(fetchImpl, url, init, ms = CHAT_FETCH_TIMEOUT_MS) {
+async function fetchWithTimeout(
+  fetchImpl,
+  url,
+  init,
+  ms = CHAT_FETCH_TIMEOUT_MS,
+  externalSignal = null,
+) {
   const controller = new AbortController();
+  const onExternalAbort = () => controller.abort();
+  externalSignal?.addEventListener?.("abort", onExternalAbort);
   const timer = setTimeout(() => controller.abort(), ms);
   try {
     return await fetchImpl(url, { ...init, signal: controller.signal });
   } finally {
     clearTimeout(timer);
+    externalSignal?.removeEventListener?.("abort", onExternalAbort);
   }
 }
 
@@ -436,24 +504,31 @@ async function callLocalProxy({
   systemPrompt,
   model,
   providerId,
+  signal = null,
 }) {
   const hosted = isHostedCompanion();
   const proxyModel =
     hosted && isOllamaLocalModel(model) ? undefined : model || undefined;
   let res;
   try {
-    res = await fetchWithTimeout(fetchImpl, "/api/chat", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        message: text,
-        history: history.slice(-12),
-        system: systemPrompt,
-        model: proxyModel,
-        providerId: providerId && providerId !== "custom" ? providerId : undefined,
-        apiKey: resolveClientApiKey(providerId) || undefined,
-      }),
-    });
+    res = await fetchWithTimeout(
+      fetchImpl,
+      "/api/chat",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: text,
+          history: history.slice(-12),
+          system: systemPrompt,
+          model: proxyModel,
+          providerId: providerId && providerId !== "custom" ? providerId : undefined,
+          apiKey: resolveClientApiKey(providerId) || undefined,
+        }),
+      },
+      CHAT_FETCH_TIMEOUT_MS,
+      signal,
+    );
   } catch (err) {
     const aborted = err?.name === "AbortError";
     return { ok: false, error: aborted ? "chat-timeout" : err?.message || "fetch failed" };
@@ -469,10 +544,11 @@ async function callLocalProxy({
   };
 }
 
-async function emitTypewriter(text, onToken) {
+async function emitTypewriter(text, onToken, signal = null) {
   const full = String(text || "");
   let acc = "";
   for (const ch of full) {
+    if (signal?.aborted) return;
     acc += ch;
     onToken(ch, acc);
     await new Promise((r) => setTimeout(r, 18));
@@ -488,6 +564,7 @@ async function callOpenAiCompatible({
   history,
   onToken,
   stream,
+  signal = null,
   extraHeaders = {},
 }) {
   const endpoint = apiUrl.includes("/chat/completions")
@@ -506,6 +583,7 @@ async function callOpenAiCompatible({
     const res = await fetchImpl(endpoint, {
       method: "POST",
       headers,
+      signal: signal || undefined,
       body: JSON.stringify({
         model,
         temperature: 0.8,
@@ -520,7 +598,7 @@ async function callOpenAiCompatible({
         error: data?.error?.message || `HTTP ${res.status}`,
       };
     }
-    const streamed = await readOpenAiStream(res, onToken);
+    const streamed = await readOpenAiStream(res, onToken, signal);
     if (!streamed) return { ok: false, error: "empty stream" };
     return { ok: true, reply: streamed.trim(), model };
   }
@@ -528,6 +606,7 @@ async function callOpenAiCompatible({
   const res = await fetchImpl(endpoint, {
     method: "POST",
     headers,
+    signal: signal || undefined,
     body: JSON.stringify({
       model,
       temperature: 0.8,
@@ -546,13 +625,21 @@ async function callOpenAiCompatible({
   return { ok: true, reply: String(reply).trim(), model };
 }
 
-async function readOpenAiStream(res, onToken) {
+async function readOpenAiStream(res, onToken, signal = null) {
   const reader = res.body?.getReader?.();
   if (!reader) return "";
   const decoder = new TextDecoder();
   let buffer = "";
   let full = "";
   while (true) {
+    if (signal?.aborted) {
+      try {
+        await reader.cancel();
+      } catch {
+        /* ignore */
+      }
+      return full;
+    }
     const { done, value } = await reader.read();
     if (done) break;
     buffer += decoder.decode(value, { stream: true });
