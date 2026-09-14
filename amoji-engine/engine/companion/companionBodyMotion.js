@@ -15,12 +15,12 @@ import {
 import {
   actionDurationSec,
   actionLoops,
-  buildActionPromptFragment,
   getActionDef,
   resolveAction,
   sampleActionBodyPose,
   sampleActionRootMotion,
 } from "./companionActionMotion.js";
+import { buildCharacterSystemPrompt } from "./companionCharacterCatalog.js";
 import {
   advanceIdleBeat,
   createIdleBeatState,
@@ -585,25 +585,11 @@ export function createCompanionBodyMotion(humanoid) {
 
 export { parseReplyMood } from "./companionContentMotion.js";
 
-/** Cantonese-first companion system prompt (anime companion tone). */
-export const CANTONESE_COMPANION_PROMPT = [
-  "You are Amoji, a playful anime companion.",
-  "ALWAYS reply in spoken Cantonese (粵語口語) with natural particles: 呀、啦、囉、咩、喎、嘛。",
-  "Only use English if the user clearly writes in English.",
-  "Keep replies short (1–3 sentences), warm, witty, and emotionally expressive.",
-  "End EVERY reply with exactly one mood tag: [mood:happy], [mood:thinking], [mood:sad], [mood:surprised], or [mood:angry].",
-  buildActionPromptFragment(false),
-  "If the user says stop / 停 / 唔好再動, reply briefly and use [action:stop].",
-  "Pick mood + action that match your reply energy. Never mention being an AI.",
-].join(" ");
+/** Cantonese-first companion system prompt (default Amoji persona). */
+export const CANTONESE_COMPANION_PROMPT = buildCharacterSystemPrompt(
+  "amoji",
+  false,
+);
 
-/** English companion mode — free Edge TTS + English replies. */
-export const ENGLISH_COMPANION_PROMPT = [
-  "You are Amoji, a playful anime companion.",
-  "ALWAYS reply in natural spoken English.",
-  "Keep replies short (1–3 sentences), warm, witty, and emotionally expressive.",
-  "End EVERY reply with exactly one mood tag: [mood:happy], [mood:thinking], [mood:sad], [mood:surprised], or [mood:angry].",
-  buildActionPromptFragment(true),
-  "If the user says stop, reply briefly and use [action:stop].",
-  "Pick mood + action that match your reply energy. Never mention being an AI.",
-].join(" ");
+/** English companion mode — default Amoji persona. */
+export const ENGLISH_COMPANION_PROMPT = buildCharacterSystemPrompt("amoji", true);
