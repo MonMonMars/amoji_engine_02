@@ -69,6 +69,20 @@ export const ACTION_CATALOG = Object.freeze({
     keywords: [/諗|思考|thinking|hmm|let me think|等我諗/i],
     aliases: ["ponder", "hmm"],
   },
+  learning: {
+    duration: 2.8,
+    loops: true,
+    emotion: "thinking",
+    keywords: [/學動作|學緊|learning move|practice move/i],
+    aliases: ["studying", "practicing"],
+  },
+  downloading: {
+    duration: 2.6,
+    loops: true,
+    emotion: "thinking",
+    keywords: [/下載動作|下載中|downloading move/i],
+    aliases: ["fetching"],
+  },
   dance: {
     duration: 3.6,
     loops: true,
@@ -385,20 +399,23 @@ export function actionLoopsFromCatalog(actionId) {
  */
 export function buildActionPromptFragment(isEnglish = false) {
   const list = PLAYABLE_ACTIONS.join(", ");
+  const extensions = "breakdance, taiji, highfive, curtsy, tiktokdance";
   if (isEnglish) {
     return [
       `When the user asks you to move, pose, or perform a physical action, YOU choose the motion via an action tag before the mood tag. Supported actions only: ${list}.`,
+      `Cloud-learn moves (downloaded on first use — tell the user you need a moment to learn if new): ${extensions}.`,
       "If the request is close (e.g. backflip), perform the nearest supported move (e.g. spin) and say briefly you are approximating it.",
       "If the request is impossible (fly, teleport, swim underwater), reply honestly that you cannot do it and use [action:none] — do not play a random unrelated motion.",
-      "Examples: dance→[action:dance], bow→[action:bow], impossible fly→\"I can't fly\" [action:none] [mood:sad], backflip approx→\"I'll spin instead\" [action:spin].",
+      "Examples: dance→[action:dance], breakdance→\"Give me a sec to learn it\" [action:breakdance], impossible fly→\"I can't fly\" [action:none] [mood:sad].",
       "Stop commands: [action:stop].",
     ].join(" ");
   }
   return [
     `當用家叫你做動作、擺 pose、表演時，由你決定動作 tag（放喺 mood tag 前）。只可用：${list}。`,
+    `雲端學習動作（第一次會下載 — 未學過要講需要時間學）：${extensions}。`,
     "近似就得：例如後空翻做不到可以講「我轉一圈代替」再用 [action:spin]。",
     "真係做不到（飛行、潛水、瞬移等）要坦白講做不到，用 [action:none]，唔好亂做其他動作。",
-    "例子：跳舞→[action:dance]、做不到飛→「我飛唔到呀」[action:none] [mood:sad]。",
+    "例子：跳舞→[action:dance]、霹靂舞→「等我學吓先」[action:breakdance]、做不到飛→「我飛唔到呀」[action:none] [mood:sad]。",
     "停手：用家話停/唔好再動→[action:stop]。",
   ].join(" ");
 }

@@ -11,6 +11,7 @@
     { "source": "/api/llm/status", "destination": "/api/llm/status" },
     { "source": "/api/ollama/tags", "destination": "/api/ollama/tags" },
     { "source": "/api/health", "destination": "/api/health.mjs" },
+    { "source": "/api/motions", "destination": "/api/motions.mjs" },
     { "source": "/prototypes/realtime-voice-lab.html", "destination": "/prototypes/realtime-voice-lab.html" },
     { "source": "/amoji-engine/(.*)", "destination": "/amoji-engine/$1" },
     { "source": "/prototypes/(.*)", "destination": "/prototypes/$1" },

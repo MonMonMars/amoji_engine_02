@@ -1157,7 +1157,7 @@
     </script>
     <script>
       (function () {
-        window.__amojiBuild = "2026-09-14-v34-character-personas";
+        window.__amojiBuild = "2026-09-14-v35-motion-library";
         window.__amojiModuleBooted = false;
         window.__amojiStart = {
           tapped: false,
@@ -1346,7 +1346,7 @@
     </script>
   </head>
   <body>
-    <!-- amoji-build: 2026-09-14-v34-character-personas — per-character voice + personality -->
+    <!-- amoji-build: 2026-09-14-v35-motion-library — cloud motion download + learn dialogue -->
     <noscript>
       <div
         style="
@@ -1549,6 +1549,7 @@
         voiceGateMod,
         platformMod,
         characterMod,
+        motionDownloadMod,
       ] = await Promise.all([
         import("../amoji-engine/engine/companion/createAvatar.js"),
         import("../amoji-engine/engine/companion/chatLlm.js"),
@@ -1567,6 +1568,7 @@
         import("../amoji-engine/engine/companion/companionVoiceGate.js"),
         import("../amoji-engine/engine/companion/companionPlatform.js"),
         import("../amoji-engine/engine/companion/companionCharacterCatalog.js"),
+        import("../amoji-engine/engine/companion/companionMotionDownload.js"),
       ]);
       window.__amojiModuleBooted = true;
       const {
@@ -1614,6 +1616,64 @@
       const { isIosLike, shouldPauseMicDuringTts } = platformMod;
 
       const hostedOnline = isHostedCompanion();
+      const { createMotionDownloadClient } = motionDownloadMod;
+      /** @type {Map<string, Promise<unknown>>} */
+      const pendingMotionJobs = new Map();
+      let basicMotionPackReady = false;
+      /** @type {ReturnType<typeof createMotionDownloadClient> | null} */
+      let motionClient = null;
+
+      const prefetchBasicMotionPack = async () => {
+        if (!motionClient) return { ok: false, reason: "motion-client-not-ready" };
+        if (basicMotionPackReady) return { ok: true, cached: true };
+        try {
+          const result = await motionClient.ensureBasicPack();
+          basicMotionPackReady = Boolean(result?.ok);
+          return result;
+        } catch (err) {
+          basicMotionPackReady = true;
+          return { ok: false, error: err?.message || String(err) };
+        }
+      };
+
+      const ensureActionInstalled = async (actionId) => {
+        if (!motionClient) return { ok: false, reason: "motion-client-not-ready" };
+        const id = String(actionId || "").toLowerCase();
+        if (!id || id === "none" || id === "stop") {
+          return { ok: true, action: id, installed: true };
+        }
+        if (motionClient.isInstalled(id)) {
+          return { ok: true, action: id, installed: true, cached: true };
+        }
+        if (pendingMotionJobs.has(id)) {
+          return pendingMotionJobs.get(id);
+        }
+        const job = (async () => {
+          voice.stopThinkingLoop?.();
+          voice.startLearnLoop?.({ isEnglish, phase: "learning", progress: 0 });
+          avatar.setThinking?.(true);
+          avatar.playAction?.("learning", { emotion: "thinking", loop: true });
+          setEmotionPill("thinking", id);
+          const result = await motionClient.ensureMotion(id);
+          voice.stopLearnLoop?.();
+          avatar.setThinking?.(false);
+          if (!result.ok) {
+            showToast(
+              isEnglish
+                ? `Couldn't learn "${id}" — motion server unavailable.`
+                : `學唔到「${id}」呢個動作，動作伺服器連唔到。`,
+              "error",
+            );
+          }
+          return result;
+        })();
+        pendingMotionJobs.set(id, job);
+        try {
+          return await job;
+        } finally {
+          pendingMotionJobs.delete(id);
+        }
+      };
 
       const stripReplyTags = (text) =>
         String(text || "")
@@ -1624,6 +1684,18 @@
       /** @type {ReturnType<typeof analyzeCompanionReply> | null} */
       let lastAvatarPerformance = null;
 
+      const playActionWithMotionLibrary = async (content) => {
+        if (!content?.action || content.action === "stop") return;
+        const installed = await ensureActionInstalled(content.action);
+        if (!installed.ok) return;
+        avatar.playAction?.(content.action, { emotion: content.emotion });
+        const liveEmotion = avatar.emotion;
+        if (liveEmotion && liveEmotion !== "neutral") {
+          currentEmotion = liveEmotion;
+          setEmotionPill(liveEmotion, content.action);
+        }
+      };
+
       const applyPerformanceFromContent = (content) => {
         if (!content) return;
         lastAvatarPerformance = content;
@@ -1633,6 +1705,7 @@
         avatar.setTalkStyle?.(content.talkStyle);
         avatar.setTalkEnergy?.(content.speechEnergy);
         if (content.action === "stop") {
+          voice.stopLearnLoop?.();
           avatar.stopAction?.();
           avatar.setTalking?.(false);
         } else if (content.action) {
@@ -1648,11 +1721,15 @@
               );
             }
           }
-          avatar.playAction?.(content.action, { emotion: content.emotion });
-          const liveEmotion = avatar.emotion;
-          if (liveEmotion && liveEmotion !== "neutral") {
-            currentEmotion = liveEmotion;
-            setEmotionPill(liveEmotion);
+          if (motionClient?.isInstalled(content.action)) {
+            avatar.playAction?.(content.action, { emotion: content.emotion });
+            const liveEmotion = avatar.emotion;
+            if (liveEmotion && liveEmotion !== "neutral") {
+              currentEmotion = liveEmotion;
+              setEmotionPill(liveEmotion, content.action);
+            }
+          } else {
+            void playActionWithMotionLibrary(content);
           }
         } else if (content.gesture) {
           avatar.playGesture?.(content.gesture);
@@ -2239,6 +2316,21 @@
         },
       });
 
+      motionClient = createMotionDownloadClient({
+        motionsUrl: "/api/motions",
+        onProgress: ({ phase, progress, action }) => {
+          voice.updateLearnLoop?.({ phase, progress });
+          const learnPose =
+            phase === "downloading" || phase === "connecting"
+              ? "downloading"
+              : "learning";
+          avatar.playAction?.(learnPose, { emotion: "thinking", loop: true });
+          avatar.setEmotion?.("thinking");
+          setEmotionPill("thinking", action || learnPose);
+        },
+      });
+      void prefetchBasicMotionPack();
+
       applyVoiceSelection = (nextVoiceId) => {
         voiceId = nextVoiceId;
         persistVoiceId(voiceId);
@@ -2594,6 +2686,7 @@
 
         if (!busy && !voice.micOn && !voice.speaking) status.idle();
         input.focus();
+        void prefetchBasicMotionPack();
         if (!liteMode && !avatarLoadStarted) scheduleAvatarLoad();
 
         if (fromTimeout) {
