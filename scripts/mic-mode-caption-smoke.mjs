@@ -9,7 +9,7 @@ const url =
   "http://127.0.0.1:5173/companion-full?lang=yue&automic=0";
 
 const LONG_REPLY =
-  "第一行測試。\n第二行應該睇到。\n第三行都要清楚可見。";
+  "第一行測試。\n第二行應該睇到。\n第三行都要清楚可見。\n第四行仲要見到。\n第五行最底最清晰。";
 
 async function main() {
   const browser = await chromium.launch({ headless: true });
@@ -51,11 +51,12 @@ async function main() {
   console.log(JSON.stringify(metrics, null, 2));
   await browser.close();
 
+  const maxPx = Number.parseFloat(metrics.transcriptMaxHeight) || 0;
   const ok =
     metrics.micMode &&
     metrics.bubbleHeight >= 48 &&
     metrics.visibleLinesOk &&
-    metrics.transcriptMaxHeight !== "96px";
+    maxPx >= 260;
   if (!ok) process.exit(1);
 }
 

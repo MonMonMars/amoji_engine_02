@@ -710,36 +710,75 @@
         z-index: 7;
       }
 
-      /* Mic mode — hide text box, readable captions, max avatar visible */
+      /* Mic mode — tall caption strip: ~5 lines, fade up / clear down */
       .stage.mic-mode .chat-shell {
         background: linear-gradient(
           180deg,
           transparent 0%,
-          transparent 64%,
-          rgba(5, 7, 12, 0.18) 80%,
-          rgba(5, 7, 12, 0.42) 100%
+          transparent 52%,
+          rgba(5, 7, 12, 0.1) 68%,
+          rgba(5, 7, 12, 0.34) 100%
         );
       }
 
       .stage.mic-mode .chat-column {
-        max-height: min(26vh, 188px);
+        max-height: min(36vh, 272px);
         padding-bottom: 0;
       }
 
       .stage.mic-mode .transcript {
-        max-height: min(26vh, 188px);
-        padding-bottom: 0.35rem;
-        mask-image: linear-gradient(180deg, transparent 0%, #000 6%);
-        -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 6%);
+        max-height: min(36vh, 272px);
+        padding-bottom: 0.45rem;
+        gap: 0.42rem;
+        /* Top fades out; bottom rows stay crisp */
+        mask-image: linear-gradient(
+          180deg,
+          transparent 0%,
+          rgba(0, 0, 0, 0.12) 10%,
+          rgba(0, 0, 0, 0.42) 26%,
+          rgba(0, 0, 0, 0.72) 44%,
+          #000 62%,
+          #000 100%
+        );
+        -webkit-mask-image: linear-gradient(
+          180deg,
+          transparent 0%,
+          rgba(0, 0, 0, 0.12) 10%,
+          rgba(0, 0, 0, 0.42) 26%,
+          rgba(0, 0, 0, 0.72) 44%,
+          #000 62%,
+          #000 100%
+        );
       }
 
-      /* Mic captions: hide status chatter, keep the live user/assistant exchange */
+      /* Mic captions: hide status chatter, keep recent exchange */
       .stage.mic-mode .msg-row.system {
         display: none;
       }
 
-      .stage.mic-mode .msg-row:not(:nth-last-child(-n+4)) {
+      .stage.mic-mode .msg-row:not(:nth-last-child(-n+5)) {
         display: none;
+      }
+
+      /* Higher rows = more transparent; lowest = full strength */
+      .stage.mic-mode .msg-row:nth-last-child(5) {
+        opacity: 0.38;
+      }
+
+      .stage.mic-mode .msg-row:nth-last-child(4) {
+        opacity: 0.55;
+      }
+
+      .stage.mic-mode .msg-row:nth-last-child(3) {
+        opacity: 0.72;
+      }
+
+      .stage.mic-mode .msg-row:nth-last-child(2) {
+        opacity: 0.88;
+      }
+
+      .stage.mic-mode .msg-row:nth-last-child(1) {
+        opacity: 1;
       }
 
       .stage.mic-mode .composer textarea,
@@ -769,31 +808,24 @@
       }
 
       .stage.mic-mode .bubble.assistant {
-        font-size: 0.84rem;
-        line-height: 1.5;
-        opacity: 0.82;
+        font-size: 0.9rem;
+        line-height: 1.52;
       }
 
-      .stage.mic-mode .msg-row:last-child .bubble.assistant,
-      .stage.mic-mode .msg-row:nth-last-child(2) .bubble.assistant {
-        font-size: 0.94rem;
-        opacity: 1;
+      .stage.mic-mode .msg-row:last-child .bubble.assistant {
+        font-size: 0.96rem;
       }
 
       .stage.mic-mode .bubble.user {
-        font-size: 0.8rem;
-        line-height: 1.45;
+        font-size: 0.82rem;
+        line-height: 1.48;
         padding: 0.32rem 0.58rem;
-      }
-
-      .stage.mic-mode .bubble.user.interim {
-        opacity: 0.9;
       }
 
       @media (max-width: 640px) {
         .stage.mic-mode .chat-column,
         .stage.mic-mode .transcript {
-          max-height: min(32vh, 228px);
+          max-height: min(42vh, 300px);
         }
       }
 
@@ -1077,7 +1109,7 @@
     </script>
     <script>
       (function () {
-        window.__amojiBuild = "2026-09-14-v27-mic-captions";
+        window.__amojiBuild = "2026-09-14-v28-mic-caption-fade";
         window.__amojiModuleBooted = false;
         window.__amojiStart = {
           tapped: false,
@@ -1266,7 +1298,7 @@
     </script>
   </head>
   <body>
-    <!-- amoji-build: 2026-09-14-v27-mic-captions — mic mode readable multi-line captions -->
+    <!-- amoji-build: 2026-09-14-v28-mic-caption-fade — 5-line mic captions, fade up -->
     <noscript>
       <div
         style="
