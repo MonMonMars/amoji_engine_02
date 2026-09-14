@@ -422,6 +422,7 @@ function isSmartProxyMode(mode) {
     m === "ollama" ||
     m === "online" ||
     m.startsWith("online+") ||
+    m === "local+web" ||
     m === "proxy" ||
     m === "local-fallback"
   );

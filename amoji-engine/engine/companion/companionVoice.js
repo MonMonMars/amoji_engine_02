@@ -188,6 +188,7 @@ export const CLOUD_ENGLISH_VOICE = Object.freeze({
  *   onMicState?: (on: boolean) => void,
  *   onError?: (msg: string) => void,
  *   onSpeakChunk?: (chunk: string, charIndex: number) => void,
+ *   onAssistantOutputChange?: (active: boolean) => void,
  *   lang?: string,
  *   cloudTtsUrl?: string | null,
  *   cloudSttUrl?: string | null,
@@ -207,11 +208,21 @@ export function createCompanionVoice(opts = {}) {
   let speaking = false;
   let keepMicDuringSpeak = false;
 
+  const isAssistantOutputActive = () =>
+    speaking ||
+    thinkingLoopActive ||
+    thinkingActive ||
+    Boolean(streamSession);
+
+  const syncAssistantOutput = () => {
+    opts.onAssistantOutputChange?.(isAssistantOutputActive());
+  };
+
   const micCapture = createMicCapture({
     lang: opts.lang || "zh-HK",
     cloudSttUrl: opts.cloudSttUrl || null,
     bargeWhilePaused: true,
-    shouldDetectBarge: () => speaking || keepMicDuringSpeak,
+    shouldDetectBarge: () => isAssistantOutputActive() || keepMicDuringSpeak,
     onText: (text, isFinal) => opts.onMicText?.(text, isFinal),
     onSpeechDetected: (info) => opts.onSpeechDetected?.(info),
     onState: (on) => opts.onMicState?.(on),
@@ -339,6 +350,7 @@ export function createCompanionVoice(opts = {}) {
     const objectUrl = URL.createObjectURL(blob);
     startLipSync(clean);
     speaking = true;
+    syncAssistantOutput();
 
     return await new Promise((resolve) => {
       const audio = configureCompanionAudioElement(getSharedAudio());
@@ -350,6 +362,7 @@ export function createCompanionVoice(opts = {}) {
         URL.revokeObjectURL(objectUrl);
         speaking = false;
         stopMouth();
+        syncAssistantOutput();
         resolve(result);
       };
       audio.onended = () => {
@@ -501,6 +514,7 @@ export function createCompanionVoice(opts = {}) {
 
       synth.cancel();
       speaking = true;
+      syncAssistantOutput();
 
       const prosody = EMOTION_PROSODY[emotion] || EMOTION_PROSODY.neutral;
       const utter = new SpeechSynthesisUtterance(clean);
@@ -589,6 +603,7 @@ export function createCompanionVoice(opts = {}) {
     synth?.cancel();
     speaking = false;
     stopMouth();
+    syncAssistantOutput();
   };
 
   const stopSpeak = () => {
@@ -620,6 +635,7 @@ export function createCompanionVoice(opts = {}) {
       capturePaused: pauseMic,
     };
     if (pauseMic && !keepMicDuringSpeak) pauseCapture();
+    syncAssistantOutput();
     return streamSession;
   };
 
@@ -651,11 +667,13 @@ export function createCompanionVoice(opts = {}) {
     if (!session) return { ok: true };
     session.closed = true;
     streamSession = null;
+    syncAssistantOutput();
     try {
       await speakChain;
       return { ok: true };
     } finally {
       if (session.capturePaused && !keepMicDuringSpeak) resumeCapture();
+      syncAssistantOutput();
     }
   };
 
@@ -754,6 +772,7 @@ export function createCompanionVoice(opts = {}) {
     stopThinkingLoop();
     thinkingLoopActive = true;
     thinkingActive = true;
+    syncAssistantOutput();
 
     const tick = async () => {
       if (!thinkingLoopActive) return;
@@ -771,6 +790,12 @@ export function createCompanionVoice(opts = {}) {
   const stopThinkingLoop = () => {
     thinkingLoopActive = false;
     stopThinkingAudio();
+    syncAssistantOutput();
+  };
+
+  const interruptAssistantOutput = () => {
+    stopSpeak();
+    return true;
   };
 
   const setSpeakerOn = (on) => {
@@ -879,6 +904,13 @@ export function createCompanionVoice(opts = {}) {
     get thinkingLoopOn() {
       return thinkingLoopActive;
     },
+    get assistantOutputActive() {
+      return isAssistantOutputActive();
+    },
+    get keepMicDuringSpeak() {
+      return keepMicDuringSpeak;
+    },
+    interruptAssistantOutput,
     get listening() {
       return micCapture.listening;
     },

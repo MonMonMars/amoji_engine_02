@@ -11,9 +11,11 @@ import {
 } from "./companionOllama.js";
 import { getLlmProvider } from "./companionLlmProviders.js";
 import { isOllamaLocalModel } from "./companionModelIds.js";
+import { localCompanionReply } from "./companionLocalReply.mjs";
 import {
   fetchWebContextForChat,
   needsWebSearch,
+  shouldTryWebSearch,
 } from "./companionWebSearch.mjs";
 
 export const CHAT_API_HANDLER_SCHEMA = "amoji.chatApiHandler.v1";
@@ -134,43 +136,7 @@ async function callCloudChat({
   return { ok: true, reply: String(reply).trim(), model };
 }
 
-/** Tiny Cantonese/English fallback when no API key is configured. */
-export function localCompanionReply(message, history = []) {
-  const text = String(message || "").trim();
-  const lower = text.toLowerCase();
-  const lastUser = [...history].reverse().find((m) => m.role === "user");
-  const nameMatch = text.match(/我叫\s*([^\s，。！？,.!?]+)/);
-  if (nameMatch) {
-    return `你好呀${nameMatch[1]}！好開心認識你～今日想傾啲咩？ [mood:happy]`;
-  }
-  if (/哈哈|開心|happy|great|鍾意/.test(lower)) {
-    return "哈哈我都開心到跳起！再講多啲啦～ [mood:happy]";
-  }
-  if (/唉|傷心|sad|慘|唔開心/.test(lower)) {
-    return "抱抱你呀…慢慢講，我喺度聽住。 [mood:sad]";
-  }
-  if (/點解|why|諗|hmm/.test(lower)) {
-    return "嗯…等我諗一諗先。你覺得邊方面最關鍵？ [mood:thinking]";
-  }
-  if (/hello|hi|hey|你好|早晨|晚安/.test(lower)) {
-    return "嗨呀～我係 Amoji！同我傾偈啦，我會用粵語答你㗎。 [mood:happy]";
-  }
-  if (/你係邊個|who are you|你叫咩/.test(lower)) {
-    return "我係 Amoji 呀，你嘅動漫夥伴，會做表情同手勢㗎！ [mood:happy]";
-  }
-  if (/哇|嘩|唔信|真係/.test(text)) {
-    return "嘩！真係呀？講多啲俾我聽啦！ [mood:surprised]";
-  }
-  if (lastUser?.content && /再见|拜拜|bye/.test(lower)) {
-    return "拜拜啦～記得返嚟搵我呀！ [mood:happy]";
-  }
-  const snippets = [
-    `「${text.slice(0, 24)}」——我聽到啦，再講深啲？ [mood:thinking]`,
-    "有意思喎！我覺得幾好玩呀～ [mood:happy]",
-    "嗯嗯，繼續講，我跟住你情緒走。 [mood:neutral]",
-  ];
-  return snippets[Math.floor(Math.random() * snippets.length)];
-}
+export { localCompanionReply } from "./companionLocalReply.mjs";
 
 /**
  * @param {Record<string, unknown>} body
@@ -232,8 +198,11 @@ export async function processChatRequest(body) {
   let webContext = "";
   let webSearched = false;
   let webSource = null;
-  if (needsWebSearch(message)) {
-    const web = await fetchWebContextForChat(message, fetch);
+  const basicMode = providerId === "basic" || !cloud;
+  if (shouldTryWebSearch(message, { basicMode: true })) {
+    const web = await fetchWebContextForChat(message, fetch, {
+      basicMode: true,
+    });
     webSearched = web.searched;
     webContext = web.context || "";
     webSource = web.source;
@@ -255,9 +224,10 @@ export async function processChatRequest(body) {
   if (providerId === "basic") {
     return {
       ok: true,
-      reply: localCompanionReply(message, history),
-      mode: "local",
+      reply: localCompanionReply(message, history, webContext),
+      mode: webContext ? "local+web" : "local",
       model: null,
+      web: webSearched ? { searched: true, source: webSource } : undefined,
     };
   }
 
@@ -384,13 +354,7 @@ export async function processChatRequest(body) {
     console.warn("[chat-api] OpenAI failed", openai.error);
   }
 
-  const fallbackReply = webContext
-    ? [
-        localCompanionReply(message, history).replace(/\s*\[mood:\w+\]\s*$/i, ""),
-        webContext.slice(0, 280),
-        "[mood:thinking]",
-      ].join(" ")
-    : localCompanionReply(message, history);
+  const fallbackReply = localCompanionReply(message, history, webContext);
 
   return {
     ok: true,

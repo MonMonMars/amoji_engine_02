@@ -17,6 +17,24 @@ export function needsWebSearch(message) {
 }
 
 /**
+ * @param {string | null | undefined} message
+ * @param {{ basicMode?: boolean }} [opts]
+ */
+export function shouldTryWebSearch(message, opts = {}) {
+  const text = String(message || "").trim();
+  if (!text) return false;
+  if (needsWebSearch(text)) return true;
+  if (!opts.basicMode) return false;
+  return (
+    text.includes("?") ||
+    text.includes("？") ||
+    /什麼|什麼|咩|乜|幾|多少|邊度|邊個|點樣|為何|最新|幾時|what|who|when|where|why|how/i.test(
+      text,
+    )
+  );
+}
+
+/**
  * @param {unknown} topic
  */
 function readTopicText(topic) {
@@ -92,8 +110,8 @@ export async function searchWeb(query, fetchImpl = fetch) {
  * @param {string} message
  * @param {typeof fetch} [fetchImpl]
  */
-export async function fetchWebContextForChat(message, fetchImpl = fetch) {
-  if (!needsWebSearch(message)) {
+export async function fetchWebContextForChat(message, fetchImpl = fetch, opts = {}) {
+  if (!shouldTryWebSearch(message, opts)) {
     return { searched: false, context: "", source: null };
   }
   const result = await searchWeb(message, fetchImpl);
