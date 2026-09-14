@@ -2339,13 +2339,16 @@
         startTalkingEl.removeAttribute("aria-hidden");
         startTalkingEl.removeAttribute("aria-busy");
         startTalkingEl.removeAttribute("disabled");
-        startTalkingEl.textContent = voice.supportsMic
+        const cta = voice.supportsMic
           ? isEnglish
             ? "👆 Tap to start"
             : "👆 Tap to start · 點一下開始"
           : isEnglish
             ? "👆 Tap to start (type to chat)"
             : "👆 Tap to start (type to chat)";
+        startTalkingEl.innerHTML =
+          `<span class="start-cta">${cta}</span>` +
+          `<span class="start-tagline" id="start-tagline">${START_PAGE_TAGLINE}</span>`;
       };
 
       const markSessionReady = ({ fromTimeout = false } = {}) => {
