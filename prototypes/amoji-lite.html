@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Amoji Lite</title>
+    <!-- amoji-build: lite-v1 -->
+    <style>
+      * { box-sizing: border-box; }
+      html, body {
+        margin: 0;
+        min-height: 100dvh;
+        background: #070a10;
+        color: #f7f1e8;
+        font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+      }
+      .wrap {
+        display: flex;
+        flex-direction: column;
+        min-height: 100dvh;
+        max-width: 720px;
+        margin: 0 auto;
+        padding: 1rem 1rem calc(1rem + env(safe-area-inset-bottom));
+      }
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.5rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 1px solid rgba(255,255,255,0.12);
+      }
+      header h1 {
+        margin: 0;
+        font-size: 1.25rem;
+        font-weight: 800;
+        letter-spacing: 0.02em;
+      }
+      header h1 span { color: #7fd4cf; font-weight: 600; font-size: 0.85rem; }
+      .tools { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+      .tools button, .tools a {
+        border: 1px solid rgba(255,255,255,0.2);
+        background: rgba(255,255,255,0.08);
+        color: #f7f1e8;
+        border-radius: 999px;
+        padding: 0.35rem 0.7rem;
+        font-size: 0.8rem;
+        cursor: pointer;
+        text-decoration: none;
+      }
+      .tools button.on { background: rgba(127,212,207,0.25); border-color: #7fd4cf; }
+      #log {
+        flex: 1;
+        overflow-y: auto;
+        padding: 0.75rem 0;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+      .msg {
+        max-width: 92%;
+        padding: 0.65rem 0.85rem;
+        border-radius: 1rem;
+        line-height: 1.45;
+        font-size: 0.95rem;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+      .msg.user { align-self: flex-end; background: rgba(127,212,207,0.2); }
+      .msg.bot { align-self: flex-start; background: rgba(255,255,255,0.1); }
+      .msg.sys { align-self: center; font-size: 0.8rem; color: rgba(247,241,232,0.65); text-align: center; }
+      .msg.err { align-self: stretch; background: rgba(255,90,110,0.15); border: 1px solid rgba(255,90,110,0.4); color: #ffb4c0; }
+      .composer {
+        display: flex;
+        gap: 0.5rem;
+        align-items: flex-end;
+        padding-top: 0.5rem;
+        border-top: 1px solid rgba(255,255,255,0.12);
+      }
+      textarea {
+        flex: 1;
+        min-height: 2.6rem;
+        max-height: 8rem;
+        resize: none;
+        border-radius: 1rem;
+        border: 1px solid rgba(255,255,255,0.18);
+        background: rgba(0,0,0,0.35);
+        color: #f7f1e8;
+        padding: 0.65rem 0.85rem;
+        font: inherit;
+      }
+      .composer button {
+        width: 2.6rem;
+        height: 2.6rem;
+        border-radius: 50%;
+        border: none;
+        background: #7fd4cf;
+        color: #071018;
+        font-size: 1.1rem;
+        font-weight: 700;
+        cursor: pointer;
+      }
+      #status { font-size: 0.75rem; color: rgba(247,241,232,0.55); padding-top: 0.35rem; }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header>
+        <h1>Amoji <span id="mode-label">Lite · 粵</span></h1>
+        <div class="tools">
+          <button type="button" id="btn-speak" class="on" title="Voice on/off">🔊</button>
+          <button type="button" id="btn-mic" title="Mic">🎤</button>
+          <a id="lang-link" href="?lang=en">EN</a>
+        </div>
+      </header>
+      <div id="log" aria-live="polite"></div>
+      <form class="composer" id="form">
+        <textarea id="input" rows="1" placeholder="同 Amoji 傾偈…"></textarea>
+        <button type="submit" aria-label="Send">↑</button>
+      </form>
+      <div id="status">Ready — type and send</div>
+    </div>
+    <script>
+      (function () {
+        var BUILD = "lite-v1";
+        var params = new URLSearchParams(location.search);
+        var isEn = params.get("lang") === "en";
+        var speakOn = true;
+        var busy = false;
+        var audio = new Audio();
+        audio.setAttribute("playsinline", "");
+        audio.setAttribute("webkit-playsinline", "");
+        audio.playsInline = true;
+
+        var log = document.getElementById("log");
+        var input = document.getElementById("input");
+        var status = document.getElementById("status");
+        var langLink = document.getElementById("lang-link");
+        var modeLabel = document.getElementById("mode-label");
+
+        if (isEn) {
+          document.documentElement.lang = "en";
+          input.placeholder = "Chat with Amoji…";
+          modeLabel.textContent = "Lite · EN";
+          langLink.href = "?lang=yue";
+          langLink.textContent = "粵";
+        }
+
+        function addMsg(kind, text) {
+          var el = document.createElement("div");
+          el.className = "msg " + kind;
+          el.textContent = text;
+          log.appendChild(el);
+          log.scrollTop = log.scrollHeight;
+          return el;
+        }
+
+        function setStatus(t) { status.textContent = t; }
+
+        function unlockAudio() {
+          try {
+            var AC = window.AudioContext || window.webkitAudioContext;
+            if (AC) {
+              var ctx = window.__amojiCtx || new AC();
+              window.__amojiCtx = ctx;
+              if (ctx.state === "suspended") ctx.resume();
+            }
+            audio.volume = 0.001;
+            audio.src = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEAQB8AAEAfAAABAAgAZGF0YQQAAAAAAA==";
+            audio.play().catch(function () {});
+          } catch (e) {}
+        }
+
+        addMsg("sys", isEn
+          ? "Amoji Lite " + BUILD + " — chat + voice, no 3D. Works on slow networks."
+          : "Amoji Lite " + BUILD + " — 傾偈 + 語音，冇 3D，慢網都得。");
+        addMsg("bot", isEn
+          ? "Hi! I'm Amoji. Type below and tap send — I'll reply with voice."
+          : "嗨～我係 Amoji。喺下面打字㗎，我會用語音答你。");
+
+        async function speak(text) {
+          if (!speakOn || !text) return;
+          unlockAudio();
+          setStatus(isEn ? "Speaking…" : "播放中…");
+          try {
+            var res = await fetch("/api/tts", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                text: text.replace(/\s*\[mood:\w+\]\s*$/i, ""),
+                voice: isEn ? "en-US-AriaNeural" : "zh-HK-HiuMaanNeural",
+                lang: isEn ? "en-US" : "zh-HK",
+              }),
+            });
+            if (!res.ok) throw new Error("TTS " + res.status);
+            var blob = await res.blob();
+            var url = URL.createObjectURL(blob);
+            audio.src = url;
+            audio.volume = 1;
+            await audio.play();
+            await new Promise(function (r) {
+              audio.onended = r;
+              audio.onerror = r;
+            });
+            URL.revokeObjectURL(url);
+          } catch (e) {
+            addMsg("err", (isEn ? "Voice failed: " : "語音失敗：") + (e.message || e));
+          }
+          setStatus(isEn ? "Ready" : "準備好");
+        }
+
+        async function chat(message) {
+          var res = await fetch("/api/chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              message: message,
+              system: isEn
+                ? "You are Amoji, a warm English-speaking anime companion. Reply in English. End with [mood:happy] or similar."
+                : "你係 Amoji，一個粵語動漫同伴。用粵語口語回覆。結尾加 [mood:happy] 等情緒標籤。",
+            }),
+          });
+          var data = await res.json().catch(function () { return {}; });
+          if (!res.ok || !data.ok) throw new Error(data.error || "chat " + res.status);
+          return String(data.reply || "").replace(/\s*\[mood:\w+\]\s*$/i, "").trim();
+        }
+
+        async function send(text) {
+          var clean = String(text || "").trim();
+          if (!clean || busy) return;
+          busy = true;
+          unlockAudio();
+          addMsg("user", clean);
+          input.value = "";
+          setStatus(isEn ? "Thinking…" : "諗緊…");
+          try {
+            var reply = await chat(clean);
+            addMsg("bot", reply);
+            await speak(reply);
+          } catch (e) {
+            addMsg("err", (isEn ? "Chat failed: " : "傾偈失敗：") + (e.message || e));
+            setStatus(isEn ? "Error — try again" : "出錯 — 再試");
+          }
+          busy = false;
+          if (!busy) setStatus(isEn ? "Ready" : "準備好");
+        }
+
+        document.getElementById("form").addEventListener("submit", function (ev) {
+          ev.preventDefault();
+          send(input.value);
+        });
+
+        document.getElementById("btn-speak").addEventListener("click", function () {
+          speakOn = !speakOn;
+          this.classList.toggle("on", speakOn);
+          this.textContent = speakOn ? "🔊" : "🔇";
+        });
+
+        var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+        var rec = SR ? new SR() : null;
+        if (rec) {
+          rec.lang = isEn ? "en-US" : "zh-HK";
+          rec.continuous = false;
+          rec.interimResults = false;
+          rec.onresult = function (ev) {
+            var t = ev.results[0] && ev.results[0][0] && ev.results[0][0].transcript;
+            if (t) send(t);
+          };
+          rec.onerror = function () { setStatus(isEn ? "Mic error" : "咪高峰錯誤"); };
+          document.getElementById("btn-mic").addEventListener("click", function () {
+            unlockAudio();
+            try { rec.start(); setStatus(isEn ? "Listening…" : "聽緊…"); } catch (e) {}
+          });
+        } else {
+          document.getElementById("btn-mic").disabled = true;
+        }
+
+        input.addEventListener("focus", unlockAudio);
+      })();
+    </script>
+  </body>
+</html>
