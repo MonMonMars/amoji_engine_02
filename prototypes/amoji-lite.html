@@ -53,6 +53,13 @@
         border: 1px solid rgba(247, 241, 232, 0.12);
         border-radius: 0.35rem;
       }
+      .tag.cloud {
+        text-transform: none;
+        letter-spacing: 0;
+        color: #9ed4ff;
+        border-color: rgba(126, 196, 255, 0.35);
+        background: rgba(80, 150, 220, 0.12);
+      }
       .status {
         font-size: 0.8rem;
         color: rgba(247, 241, 232, 0.55);
@@ -192,7 +199,8 @@
     <div class="app" id="app">
       <header>
         <h1>A<span>moji</span></h1>
-        <span class="tag" id="build-tag">lite-v1</span>
+        <span class="tag" id="build-tag">lite-v2</span>
+        <span class="tag cloud hidden" id="cloud-tag">☁️ Cloud LLM</span>
       </header>
       <div class="status" id="status" aria-live="polite"></div>
       <div class="error-box" id="error-box" role="alert"></div>
@@ -209,12 +217,18 @@
     </div>
     <script>
       (function () {
-        window.__amojiBuild = "lite-v1";
+        window.__amojiBuild = "lite-v2";
         window.__amojiLite = { ready: true, ttsCalls: 0, chatCalls: 0 };
 
         var params = new URLSearchParams(location.search);
         var lang = (params.get("lang") || "yue").toLowerCase();
         var isEn = lang === "en" || lang === "en-us";
+        var hosted =
+          location.hostname &&
+          location.hostname !== "localhost" &&
+          location.hostname !== "127.0.0.1" &&
+          !location.hostname.startsWith("192.168.") &&
+          !location.hostname.endsWith(".local");
 
         var els = {
           status: document.getElementById("status"),
@@ -231,7 +245,6 @@
         var speakerOn = true;
         var micOn = false;
         var busy = false;
-        var chat = null;
         var recognition = null;
         var audioEl = new Audio();
         audioEl.preload = "auto";
@@ -241,12 +254,12 @@
               placeholder: "Type a message…",
               start: "Start chatting",
               statusReady: "Ready — tap Send or mic",
-              statusLoading: "Loading chat engine…",
+              statusLoading: "Connecting to cloud chat…",
               statusThinking: "Thinking…",
               statusSpeaking: "Speaking…",
               statusMic: "Listening…",
               welcome: "Hi! I'm Amoji. Say hello!",
-              errModule: "Failed to load chat engine. Check your network.",
+              errModule: "Cloud chat unavailable. Check your network.",
               errChat: "Chat failed",
               errTts: "TTS failed (reply still shown)",
               errMic: "Mic not supported in this browser",
@@ -255,12 +268,12 @@
               placeholder: "輸入訊息…",
               start: "開始傾計",
               statusReady: "準備好 — 按發送或麥克風",
-              statusLoading: "載入聊天引擎…",
+              statusLoading: "連接雲端聊天…",
               statusThinking: "諗緊…",
               statusSpeaking: "講緊…",
               statusMic: "聽緊…",
               welcome: "你好呀！我係 Amoji，傾下計啦！",
-              errModule: "載入聊天引擎失敗，請檢查網絡。",
+              errModule: "雲端聊天不可用，請檢查網絡。",
               errChat: "聊天失敗",
               errTts: "語音失敗（文字回覆已顯示）",
               errMic: "此瀏覽器唔支援麥克風",
@@ -298,23 +311,23 @@
           els.speaker.setAttribute("aria-pressed", speakerOn ? "true" : "false");
         }
 
-        async function loadChat() {
-          if (chat) return chat;
-          setStatus(strings.statusLoading);
-          try {
-            var mod = await import("../amoji-engine/engine/companion/chatLlm.js");
-            var promptMod = await import("../amoji-engine/engine/companion/companionBodyMotion.js");
-            var systemPrompt = isEn
-              ? promptMod.ENGLISH_COMPANION_PROMPT
-              : promptMod.CANTONESE_COMPANION_PROMPT;
-            chat = mod.createCompanionChat({ systemPrompt: systemPrompt });
-            setStatus(strings.statusReady);
-            return chat;
-          } catch (err) {
-            showError(strings.errModule + "\n" + (err && err.message ? err.message : String(err)));
-            setStatus("");
-            throw err;
+        var systemPrompt = isEn
+          ? "You are Amoji, a warm English-speaking anime companion. Reply in English. End with [mood:happy] or similar."
+          : "你係 Amoji，一個粵語動漫同伴。用粵語口語回覆。結尾加 [mood:happy] 等情緒標籤。";
+
+        async function cloudReply(message) {
+          var res = await fetch("/api/chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ message: message, system: systemPrompt }),
+          });
+          var data = await res.json().catch(function () { return {}; });
+          if (!res.ok || !data.ok) {
+            throw new Error(data.error || "HTTP " + res.status);
           }
+          var reply = String(data.reply || "").replace(/\s*\[mood:\w+\]\s*$/i, "").trim();
+          var mood = (String(data.reply || "").match(/\[mood:(\w+)\]/i) || [])[1] || "happy";
+          return { ok: true, reply: reply, emotion: mood };
         }
 
         async function speakCloud(text, emotion) {
@@ -362,14 +375,10 @@
           var thinking = addBubble("…", "bot", " thinking");
 
           try {
-            var engine = await loadChat();
+            setStatus(strings.statusThinking);
             window.__amojiLite.chatCalls += 1;
-            var result = await engine.reply(msg);
+            var result = await cloudReply(msg);
             thinking.remove();
-            if (!result.ok) {
-              showError(strings.errChat + ": " + (result.error || "unknown"));
-              return;
-            }
             addBubble(result.reply, "bot");
             await speakCloud(result.reply, result.emotion);
           } catch (err) {
@@ -427,17 +436,12 @@
           }
         }
 
-        async function activate() {
+        function activate() {
           els.start.classList.add("hidden");
           els.composer.classList.remove("hidden");
-          setStatus(strings.statusLoading);
-          try {
-            await loadChat();
-            addBubble(strings.welcome, "bot");
-            setStatus(strings.statusReady);
-          } catch (_) {
-            /* error already shown */
-          }
+          addBubble(strings.welcome, "bot");
+          setStatus(strings.statusReady);
+          els.input.focus();
         }
 
         els.start.addEventListener("click", activate);
@@ -455,15 +459,24 @@
         });
         els.mic.addEventListener("click", function () {
           if (micOn) stopMic();
-          else {
-            loadChat().then(function () {
-              startMic();
-            });
-          }
+          else startMic();
         });
 
+        if (hosted) {
+          document.getElementById("build-tag").classList.add("hidden");
+          document.getElementById("cloud-tag").classList.remove("hidden");
+        }
+
         setSpeakerUi();
-        setStatus(isEn ? "Tap Start to chat in English" : "按「開始傾計」開始");
+        setStatus(
+          hosted
+            ? isEn
+              ? "☁️ Cloud LLM — tap Start to chat"
+              : "☁️ 雲端 LLM — 按「開始傾計」"
+            : isEn
+              ? "Tap Start to chat in English"
+              : "按「開始傾計」開始",
+        );
       })();
     </script>
   </body>

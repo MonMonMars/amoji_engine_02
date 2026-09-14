@@ -187,17 +187,17 @@ export async function processChatRequest(body) {
       mode = "ollama";
       model = pickOllamaModel(ollamaResolved.models, model);
     } else if (
-      process.env.GROQ_API_KEY ||
-      String(body.apiKey || "").startsWith("gsk_")
-    ) {
-      mode = "online";
-      model = process.env.GROQ_MODEL || "llama-3.3-70b-versatile";
-    } else if (
       process.env.OPENROUTER_API_KEY ||
       String(body.apiKey || "").startsWith("sk-or-")
     ) {
       mode = "online";
       model = process.env.OPENROUTER_MODEL || "openrouter/auto";
+    } else if (
+      process.env.GROQ_API_KEY ||
+      String(body.apiKey || "").startsWith("gsk_")
+    ) {
+      mode = "online";
+      model = process.env.GROQ_MODEL || "llama-3.3-70b-versatile";
     } else if (process.env.OPENAI_API_KEY || process.env.AMOJI_LLM_KEY) {
       mode = "online";
       model = process.env.OPENAI_MODEL || "gpt-4o-mini";
@@ -250,7 +250,8 @@ export async function processChatRequest(body) {
   // OpenRouter first on cloud — Groq console/signup is often flaky
   const wantOpenRouter =
     providerId?.startsWith("openrouter") ||
-    (autoProvider && cloud && openRouterApiKey);
+    (autoProvider && cloud && openRouterApiKey) ||
+    (cloud && !providerId && openRouterApiKey);
   if (wantOpenRouter && openRouterApiKey) {
     const orModel = resolveOpenRouterModel(
       requestedModel,

@@ -86,7 +86,7 @@ export function createCompanionLlmSwitcher(opts) {
       opts.onSystem?.(
         hosted
           ? `${provider.label} not available — tap ⚙ and paste a free API key`
-          : `${provider.label} not available — start Ollama or add server API keys`,
+          : `${provider.label} not available — add server API keys or use Basic`,
       );
       return null;
     }
@@ -121,21 +121,26 @@ export function createCompanionLlmSwitcher(opts) {
     storage?.setItem(LLM_PROVIDER_STORAGE_KEY, activeId);
     setActiveUi(activeId);
     opts.onMode?.(
-      formatLlmModeLabel(connected.info?.mode || "ollama", connected.info?.model),
+      formatLlmModeLabel(
+        connected.info?.mode || (hosted ? "online" : "ollama"),
+        connected.info?.model,
+      ),
     );
     if (connected.ok) {
       opts.onSystem?.(
         `Auto-connected · ${getLlmProvider(activeId).label} (${connected.reason})`,
       );
-    } else if (connected.status?.hosted) {
+    } else if (connected.status?.hosted || hosted) {
       opts.onSystem?.(
         hasAnyClientCloudKey()
-          ? "Cloud mode · using your saved API key"
-          : "Cloud mode — tap ⚙ paste a free Groq/OpenRouter key from your phone, or use Basic",
+          ? "☁️ Cloud LLM · using your saved API key"
+          : connected.status?.cloudReady
+            ? "☁️ Cloud LLM · server keys ready"
+            : "☁️ Cloud LLM — tap ⚙ paste a free OpenRouter key, or use Basic",
       );
     } else {
       opts.onSystem?.(
-        "No LLM detected — deploy online (see DEPLOY.md) or start Ollama locally",
+        "No LLM detected — deploy online (see DEPLOY.md) or run locally with a lab server",
       );
     }
     return connected;

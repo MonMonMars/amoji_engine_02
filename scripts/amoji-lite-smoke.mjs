@@ -129,7 +129,7 @@ console.log(JSON.stringify(results, null, 2));
 const ok = results.every(
   (r) =>
     r.paintMs < 1000 &&
-    r.instant.build === "lite-v1" &&
+    r.instant.build === "lite-v2" &&
     r.instant.title?.includes("Amoji") &&
     r.instant.hasTextarea &&
     r.instant.hasSend &&

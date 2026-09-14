@@ -6,6 +6,7 @@ import {
   listOllamaModels,
   pickOllamaModel,
   OLLAMA_DEFAULT_HOST,
+  OLLAMA_PROBE_HOSTS,
 } from "./companionOllama.js";
 import {
   hasAnyClientCloudKey,
@@ -29,11 +30,7 @@ export function isHostedCompanion() {
   );
 }
 
-export const OLLAMA_PROBE_HOSTS = Object.freeze([
-  "http://localhost:11434",
-  "http://127.0.0.1:11434",
-  OLLAMA_DEFAULT_HOST,
-]);
+export { OLLAMA_PROBE_HOSTS };
 
 /**
  * @param {string[]} [hosts]
@@ -94,8 +91,12 @@ export function rankAvailableProviders(status, directOllama) {
   if (hosted && status?.openai?.ok) {
     ranked.push({ id: "auto", reason: "cloud OpenAI" });
   }
-  if (hosted && ranked.length) {
-    ranked.push({ id: "auto", reason: "cloud auto" });
+  if (hosted) {
+    ranked.push({
+      id: "auto",
+      reason: status?.cloudReady ? "cloud auto" : "cloud /api/chat",
+    });
+    ranked.push({ id: "basic", reason: "offline fallback" });
     return ranked;
   }
 
@@ -187,15 +188,16 @@ export function probeProviderAvailability(status, directOllama) {
   for (const p of LLM_PROVIDERS) {
     switch (p.id) {
       case "auto":
-        available[p.id] =
-          ollamaUp ||
-          Boolean(
-            status?.groq?.ok ||
-              status?.openai?.ok ||
-              status?.openrouter?.ok ||
-              status?.cloudReady ||
-              hasAnyClientCloudKey(),
-          );
+        available[p.id] = hosted
+          ? true
+          : ollamaUp ||
+            Boolean(
+              status?.groq?.ok ||
+                status?.openai?.ok ||
+                status?.openrouter?.ok ||
+                status?.cloudReady ||
+                hasAnyClientCloudKey(),
+            );
         break;
       case "ollama-qwen4":
         available[p.id] = ollamaModels.some(

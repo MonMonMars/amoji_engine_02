@@ -30,6 +30,17 @@ describe("chatApiHandler cloud", () => {
     expect(status.ollama.ok).toBe(false);
   });
 
+  it("auto provider selects online mode on cloud when openrouter key is set", async () => {
+    process.env.OPENROUTER_API_KEY = "test-key";
+    const result = await processChatRequest({
+      message: "__ping__",
+      providerId: "auto",
+    });
+    expect(result.mode).toBe("online");
+    expect(result.hosted).toBe(true);
+    expect(result.model).toBe("openrouter/auto");
+  });
+
   it("auto provider selects online mode on cloud when groq key is set", async () => {
     process.env.GROQ_API_KEY = "test-key";
     const result = await processChatRequest({

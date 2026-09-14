@@ -94,18 +94,18 @@ export function createCompanionChat(opts = {}) {
         readProviderApiKey("openrouter-gemma") ||
         readProviderApiKey("openrouter-llama");
       const groqKey = readProviderApiKey("groq");
-      if (hosted && orKey) {
-        useProvider = getLlmProvider("openrouter-gemma");
-        apiUrl = normalizeUrl(useProvider.url);
-        apiKey = orKey;
-        model = useProvider.model || "openrouter/auto";
-        providerId = useProvider.id;
-      } else if (hosted && groqKey) {
-        useProvider = getLlmProvider("groq");
-        apiUrl = normalizeUrl(useProvider.url);
-        apiKey = groqKey;
-        model = useProvider.model;
-        providerId = useProvider.id;
+      if (hosted) {
+        apiUrl = null;
+        apiKey = null;
+        if (orKey) {
+          useProvider = getLlmProvider("openrouter-gemma");
+          model = useProvider.model || "openrouter/auto";
+          providerId = useProvider.id;
+        } else if (groqKey) {
+          useProvider = getLlmProvider("groq");
+          model = useProvider.model;
+          providerId = useProvider.id;
+        }
       } else {
         apiUrl = null;
         apiKey = null;
@@ -149,6 +149,34 @@ export function createCompanionChat(opts = {}) {
     history.push({ role: "user", content: text });
     const onToken = opts.onToken;
 
+    // Prefer lab/cloud proxy — server-side keys when configured
+    if (!forceLocal && fetchImpl) {
+      try {
+        const proxied = await callLocalProxy({
+          fetchImpl,
+          text,
+          history,
+          systemPrompt,
+          model,
+          providerId,
+        });
+        if (proxied.ok && isSmartProxyMode(proxied.mode)) {
+          const finalized = finalizeReply(proxied.reply);
+          if (onToken) await emitTypewriter(finalized.reply, onToken);
+          history.push({ role: "assistant", content: finalized.reply });
+          return {
+            ok: true,
+            reply: finalized.reply,
+            emotion: finalized.emotion,
+            mode: proxied.mode || "proxy",
+            model: proxied.model || model,
+          };
+        }
+      } catch {
+        /* try client online or local stub */
+      }
+    }
+
     // Hosted + browser key → call OpenRouter/Groq directly (no Vercel env needed)
     if (
       !forceLocal &&
@@ -190,34 +218,6 @@ export function createCompanionChat(opts = {}) {
         console.warn("[companion] hosted direct llm failed", online.error);
       } catch (err) {
         console.warn("[companion] hosted direct llm error", err);
-      }
-    }
-
-    // Prefer lab proxy — server-side keys when configured
-    if (!forceLocal && fetchImpl) {
-      try {
-        const proxied = await callLocalProxy({
-          fetchImpl,
-          text,
-          history,
-          systemPrompt,
-          model,
-          providerId,
-        });
-        if (proxied.ok && isSmartProxyMode(proxied.mode)) {
-          const finalized = finalizeReply(proxied.reply);
-          if (onToken) await emitTypewriter(finalized.reply, onToken);
-          history.push({ role: "assistant", content: finalized.reply });
-          return {
-            ok: true,
-            reply: finalized.reply,
-            emotion: finalized.emotion,
-            mode: proxied.mode || "proxy",
-            model: proxied.model || model,
-          };
-        }
-      } catch {
-        /* try client online or local stub */
       }
     }
 
