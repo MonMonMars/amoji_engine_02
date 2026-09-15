@@ -7,6 +7,8 @@ export const COMPANION_STREAM_SPEAK_SCHEMA = "amoji.companionStreamSpeak.v1";
 
 const MOOD_TAG_RE = /\s*\[mood:\w+\]\s*$/i;
 const PARTIAL_MOOD_RE = /\s*\[mood:\w*$/i;
+const ACTION_TAG_RE = /\s*\[action:\w+\]\s*/gi;
+const PARTIAL_ACTION_RE = /\s*\[action:\w*$/i;
 const SENTENCE_END_RE = /[.!?。！？\n\uFF01\uFF1F]/;
 const SOFT_BREAK_RE = /[,，、;；:：]/;
 
@@ -17,6 +19,20 @@ export function stripMoodTagForSpeak(text) {
   return String(text || "")
     .replace(MOOD_TAG_RE, "")
     .replace(PARTIAL_MOOD_RE, "")
+    .trim();
+}
+
+/**
+ * Strip LLM performance tags so TTS offset tracking matches visible reply text.
+ * @param {string | null | undefined} text
+ */
+export function stripReplyTagsForSpeak(text) {
+  return stripMoodTagForSpeak(
+    String(text || "")
+      .replace(ACTION_TAG_RE, " ")
+      .replace(PARTIAL_ACTION_RE, ""),
+  )
+    .replace(/\s+/g, " ")
     .trim();
 }
 
@@ -46,7 +62,7 @@ export function createStreamSpeakPlanner(opts = {}) {
    * @returns {string[]}
    */
   const feed = (fullRaw) => {
-    const full = stripMoodTagForSpeak(fullRaw);
+    const full = stripReplyTagsForSpeak(fullRaw);
     if (full.length <= spokenOffset) return [];
 
     const slice = full.slice(spokenOffset);
@@ -76,7 +92,7 @@ export function createStreamSpeakPlanner(opts = {}) {
    * @returns {string[]}
    */
   const flush = (fullRaw) => {
-    const full = stripMoodTagForSpeak(fullRaw);
+    const full = stripReplyTagsForSpeak(fullRaw);
     const tail = full.slice(spokenOffset).trim();
     spokenOffset = full.length;
     if (!tail || !isSpeakableChunk(tail, 1)) return [];

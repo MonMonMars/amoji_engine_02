@@ -69,7 +69,7 @@ describe("createCompanionBodyMotion", () => {
     const humanoid = mockHumanoid();
     const motion = createCompanionBodyMotion(humanoid);
     motion.playAction("kungfu", { emotion: "happy" });
-    motion.update(1 / 30);
+    for (let i = 0; i < 12; i += 1) motion.update(1 / 30);
     const rot = humanoid.bones.get("leftUpperArm").rotation;
     const rest = VRM_ARM_REST_ROTATIONS.leftUpperArm;
     expect(Math.abs(rot.z - rest.z)).toBeGreaterThan(0.14);
@@ -86,16 +86,13 @@ describe("createCompanionBodyMotion", () => {
     expect(rot.z).toBe(VRM_ARM_REST_ROTATIONS.leftUpperArm.z);
   });
 
-  it("plays action combos as a sequence", () => {
+  it("plays explicit action sequences back-to-back", () => {
     const humanoid = mockHumanoid();
     const motion = createCompanionBodyMotion(humanoid);
-    const ok = motion.playAction("wave", { emotion: "happy" });
+    const ok = motion.playActionSequence(["wave", "nod"], { emotion: "happy" });
     expect(ok).toBe(true);
     expect(motion.currentAction).toBe("wave");
-    const duration = 3;
-    for (let i = 0; i < Math.ceil(duration * 30); i += 1) {
-      motion.update(1 / 30);
-    }
-    expect(motion.currentAction).not.toBe("wave");
+    for (let i = 0; i < 80; i += 1) motion.update(1 / 30);
+    expect(motion.currentAction).toBe("nod");
   });
 });

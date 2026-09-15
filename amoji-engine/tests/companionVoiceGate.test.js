@@ -2,14 +2,24 @@ import { describe, expect, it } from "vitest";
 import { createCompanionVoiceGate } from "../engine/companion/companionVoiceGate.js";
 
 describe("companionVoiceGate", () => {
-  it("allows barge on meaningful interim STT", () => {
+  it("ignores interim STT to avoid echo barge during TTS", () => {
     const gate = createCompanionVoiceGate();
     const result = gate.shouldBarge({
       source: "interim-speech",
       text: "喂你好",
     });
+    expect(result.allow).toBe(false);
+    expect(result.reason).toBe("ignore-interim");
+  });
+
+  it("allows barge on final STT", () => {
+    const gate = createCompanionVoiceGate();
+    const result = gate.shouldBarge({
+      source: "final-speech",
+      text: "stop please",
+    });
     expect(result.allow).toBe(true);
-    expect(result.reason).toBe("stt-interim");
+    expect(result.reason).toBe("stt-final");
   });
 
   it("rejects punctuation-only interim", () => {
@@ -43,8 +53,8 @@ describe("companionVoiceGate", () => {
 
   it("honors cooldown between barges", () => {
     const gate = createCompanionVoiceGate({ cooldownMs: 500 });
-    gate.shouldBarge({ source: "interim-speech", text: "stop now" });
-    const blocked = gate.shouldBarge({ source: "interim-speech", text: "again please" });
+    gate.shouldBarge({ source: "final-speech", text: "stop now" });
+    const blocked = gate.shouldBarge({ source: "final-speech", text: "again please" });
     expect(blocked.allow).toBe(false);
     expect(blocked.reason).toBe("cooldown");
   });

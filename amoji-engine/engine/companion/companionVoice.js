@@ -351,36 +351,9 @@ export function createCompanionVoice(opts = {}) {
    * @param {string} clean
    * @param {string} emotion
    */
-  const speakCloud = async (clean, emotion) => {
-    const url = opts.cloudTtsUrl;
-    if (!url) return { ok: false, reason: "no-cloud-tts-url" };
-
-    unlockAudioSync();
-    stopCloudAudio();
-    synth?.cancel();
-
-    const preset = cloudVoicePreset();
-    const res = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        text: clean,
-        emotion,
-        voice: preset.name,
-        lang: preset.lang,
-      }),
-    });
-    if (!res.ok) {
-      const errText = await res.text().catch(() => "");
-      return {
-        ok: false,
-        reason: `cloud-tts-${res.status}${errText ? `: ${errText.slice(0, 80)}` : ""}`,
-      };
-    }
-
-    const blob = await res.blob();
+  const playCloudAudioBlob = async (blob, clean, emotion) => {
     if (!blob.size) return { ok: false, reason: "cloud-tts-empty" };
-    const mime = blob.type || res.headers.get("content-type") || "";
+    const mime = blob.type || "";
     if (mime && !mime.includes("audio") && !mime.includes("mpeg")) {
       const preview = await blob.text().catch(() => "");
       return {
@@ -393,6 +366,7 @@ export function createCompanionVoice(opts = {}) {
     startLipSync(clean);
     speaking = true;
     syncAssistantOutput();
+    const preset = cloudVoicePreset();
 
     return await new Promise((resolve) => {
       const audio = configureCompanionAudioElement(getSharedAudio());
@@ -425,6 +399,45 @@ export function createCompanionVoice(opts = {}) {
         });
       });
     });
+  };
+
+  const speakCloud = async (clean, emotion) => {
+    const url = opts.cloudTtsUrl;
+    if (!url) return { ok: false, reason: "no-cloud-tts-url" };
+
+    unlockAudioSync();
+    stopCloudAudio();
+    synth?.cancel();
+
+    const preset = cloudVoicePreset();
+    const parts = chunkTextForCloudTts(clean);
+    if (!parts.length) return { ok: false, reason: "empty" };
+
+    /** @type {{ ok: boolean, reason?: string, voice?: string, emotion?: string, cloud?: boolean }} */
+    let last = { ok: false, reason: "empty" };
+    for (const part of parts) {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          text: part,
+          emotion,
+          voice: preset.name,
+          lang: preset.lang,
+        }),
+      });
+      if (!res.ok) {
+        const errText = await res.text().catch(() => "");
+        return {
+          ok: false,
+          reason: `cloud-tts-${res.status}${errText ? `: ${errText.slice(0, 80)}` : ""}`,
+        };
+      }
+      const blob = await res.blob();
+      last = await playCloudAudioBlob(blob, part, emotion);
+      if (!last.ok) return last;
+    }
+    return last;
   };
 
   const emitViseme = (ch) => {
@@ -503,9 +516,40 @@ export function createCompanionVoice(opts = {}) {
 
   const cleanSpeakText = (text) =>
     String(text || "")
+      .replace(/\s*\[action:\w+\]\s*/gi, " ")
+      .replace(/\s*\[mood:\w+\]\s*/gi, " ")
       .replace(/[*_`#>/\\]/g, " ")
       .replace(/\s+/g, " ")
       .trim();
+
+  const MAX_CLOUD_TTS_CHARS = 480;
+
+  /**
+   * @param {string} text
+   * @returns {string[]}
+   */
+  const chunkTextForCloudTts = (text) => {
+    const clean = String(text || "").trim();
+    if (!clean || clean.length <= MAX_CLOUD_TTS_CHARS) return clean ? [clean] : [];
+    /** @type {string[]} */
+    const chunks = [];
+    let buf = "";
+    for (const ch of clean) {
+      buf += ch;
+      const trimmed = buf.trim();
+      const boundary = /[.!?。！？\n]/.test(ch);
+      if (trimmed && boundary && trimmed.length >= 8) {
+        chunks.push(trimmed);
+        buf = "";
+      } else if (trimmed.length >= MAX_CLOUD_TTS_CHARS) {
+        chunks.push(trimmed);
+        buf = "";
+      }
+    }
+    const tail = buf.trim();
+    if (tail) chunks.push(tail);
+    return chunks.length ? chunks : [clean.slice(0, MAX_CLOUD_TTS_CHARS)];
+  };
 
   /**
    * Core TTS playback (no mic pause/resume — used by stream queue).
@@ -816,7 +860,7 @@ export function createCompanionVoice(opts = {}) {
     return { ok: true, phrase };
   };
 
-  const startThinkingLoop = ({ isEnglish = false, intervalMs = 2300 } = {}) => {
+  const startThinkingLoop = ({ isEnglish = false, intervalMs = 5200 } = {}) => {
     stopThinkingLoop();
     thinkingLoopActive = true;
     thinkingActive = true;

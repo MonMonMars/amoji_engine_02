@@ -60,11 +60,16 @@ export function createCompanionVoiceGate(opts = {}) {
     }
 
     if (source === "interim-speech" || source === "interim") {
-      if (isMeaningfulInterim(info.text)) {
+      return { allow: false, confidence: 0.08, reason: "ignore-interim" };
+    }
+
+    if (source === "final-speech" || source === "user-speech") {
+      const text = String(info.text || "").trim();
+      if (text.length >= 2) {
         lastBargeAt = now;
-        return { allow: true, confidence: 0.96, reason: "stt-interim" };
+        return { allow: true, confidence: 0.94, reason: "stt-final" };
       }
-      return { allow: false, confidence: 0.18, reason: "interim-too-short" };
+      return { allow: false, confidence: 0.1, reason: "final-too-short" };
     }
 
     const rms = Number(info.rms) || 0;
