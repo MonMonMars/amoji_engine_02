@@ -167,15 +167,23 @@
 
 .theme-grok-ani .topbar-actions {
   gap: 0.4rem;
+  flex-shrink: 0;
 }
 
 .theme-grok-ani .topbar-btn {
-  border-color: rgba(255, 255, 255, 0.12);
-  background: rgba(10, 8, 22, 0.55);
+  color: #f4f0ff;
+  border-color: rgba(255, 255, 255, 0.22);
+  background: rgba(18, 14, 36, 0.82);
   backdrop-filter: blur(18px);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.38);
   font-size: 0.7rem;
   font-weight: 700;
   letter-spacing: 0.01em;
+}
+
+.theme-grok-ani .topbar-btn:hover {
+  border-color: rgba(139, 124, 248, 0.55);
+  background: rgba(28, 22, 52, 0.92);
 }
 
 .theme-grok-ani .topbar-btn--primary {
