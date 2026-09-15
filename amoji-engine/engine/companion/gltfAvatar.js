@@ -11,6 +11,10 @@ import {
   actionLoops,
   sampleActionRootMotion,
 } from "./companionActionMotion.js";
+import {
+  applyOrbitFollowAnchor,
+  computeGltfFrameAnchor,
+} from "./companionCameraFollow.js";
 import { sampleIdleBodyMotion } from "./companionIdleMotion.js";
 
 export const GLTF_AVATAR_SCHEMA = "amoji.gltfAvatar.v1";
@@ -356,12 +360,12 @@ export async function createGltfAvatar(opts) {
     return talkEnergy;
   };
 
+  const frameAnchor = new THREE.Vector3();
   let raf = 0;
   const frame = () => {
     const dt = clock.getDelta();
     const now = performance.now();
     mixer?.update(dt);
-    controls.update();
 
     const body = EMOTION_BODY[emotion] || EMOTION_BODY.neutral;
     let leanX = body.leanX;
@@ -441,6 +445,10 @@ export async function createGltfAvatar(opts) {
       const s = scale * (1 + breath);
       model.scale.set(s, s, s);
     }
+
+    computeGltfFrameAnchor(model, headBone, frameAnchor);
+    applyOrbitFollowAnchor(controls, camera, frameAnchor);
+    controls.update();
 
     faceLight.intensity = 0.55 + (talking ? 0.2 : 0) + Math.sin((now - t0) * 0.002) * 0.05;
     renderer.render(scene, camera);

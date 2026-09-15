@@ -6,6 +6,10 @@ import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { VRMLoaderPlugin, VRMExpressionPresetName } from "@pixiv/three-vrm";
+import {
+  applyOrbitFollowAnchor,
+  computeVrmFrameAnchor,
+} from "./companionCameraFollow.js";
 import { createCompanionBodyMotion } from "./companionBodyMotion.js";
 import { sampleIdleExpressionBlend } from "./companionIdleMotion.js";
 
@@ -56,18 +60,7 @@ async function loadVrmGltf(loader, modelUrl, onProgress) {
 /** Grok Ani–style framing: upper body visible, not extreme face close-up. */
 function frameFaceCamera({ vrm, model, camera, controls, fitted }) {
   const fittedSize = fitted.getSize(new THREE.Vector3());
-  const head =
-    vrm.humanoid?.getNormalizedBoneNode?.("head") ||
-    vrm.humanoid?.getNormalizedBoneNode?.("neck");
-  const anchor = new THREE.Vector3();
-  const upperBodyY = fitted.min.y + fittedSize.y * 0.58;
-  if (head) {
-    model.updateWorldMatrix(true, true);
-    head.getWorldPosition(anchor);
-    anchor.y = anchor.y * 0.25 + upperBodyY * 0.75;
-  } else {
-    anchor.set(0, upperBodyY, 0);
-  }
+  const anchor = computeVrmFrameAnchor(vrm, model);
 
   const portraitDist = Math.max(1.48, fittedSize.y * 1.14);
   controls.target.copy(anchor);
@@ -253,6 +246,7 @@ export async function createVrmAvatar(opts) {
   let userOrbiting = false;
   const actionCamDir = new THREE.Vector3();
   const actionCamTarget = new THREE.Vector3();
+  const frameAnchor = new THREE.Vector3();
   const raycaster = new THREE.Raycaster();
   const pointer = new THREE.Vector2();
   /** @type {{ x: number, y: number } | null} */
@@ -498,6 +492,16 @@ export async function createVrmAvatar(opts) {
       model.position.y = baseModelY + (root.y || 0);
       model.rotation.y = baseModelRotY + (root.rotY || 0);
 
+      if (vrm.lookAt) {
+        vrm.lookAt.autoUpdate = !bodyMotion.currentAction;
+      }
+      vrm.update(dt);
+      syncHumanoidPose();
+
+      computeVrmFrameAnchor(vrm, model, frameAnchor);
+      applyOrbitFollowAnchor(controls, camera, frameAnchor);
+      faceAnchor.copy(frameAnchor);
+
       const wantsActionCam = Boolean(bodyMotion.currentAction);
       const targetBlend = wantsActionCam ? 1 : 0;
       actionCamBlend += (targetBlend - actionCamBlend) * Math.min(1, dt * 4.5);
@@ -513,19 +517,16 @@ export async function createVrmAvatar(opts) {
           actionCamDir.normalize();
         }
         const pullDist = baseDist * (1 + actionCamBlend * 0.62);
-        camera.position.copy(actionCamTarget).addScaledVector(actionCamDir, pullDist);
         controls.target.copy(actionCamTarget);
+        camera.position.copy(actionCamTarget).addScaledVector(actionCamDir, pullDist);
         camera.fov = portraitCamera.fov + actionCamBlend * 14;
         camera.updateProjectionMatrix();
       } else if (actionCamBlend < 0.02 && !wantsActionCam) {
         actionCamBlend = 0;
+        camera.fov += (portraitCamera.fov - camera.fov) * Math.min(1, dt * 6);
+        camera.updateProjectionMatrix();
       }
 
-      if (vrm.lookAt) {
-        vrm.lookAt.autoUpdate = !bodyMotion.currentAction;
-      }
-      vrm.update(dt);
-      syncHumanoidPose();
       controls.update();
     } catch (err) {
       console.warn("[vrm] frame update failed", err);
@@ -594,10 +595,18 @@ export async function createVrmAvatar(opts) {
   };
 
   const resetCameraView = () => {
-    camera.position.copy(defaultPortrait.position);
-    controls.target.copy(defaultPortrait.target);
-    camera.fov = defaultPortrait.fov;
-    camera.updateProjectionMatrix();
+    const fittedNow = new THREE.Box3().setFromObject(model);
+    frameFaceCamera({
+      vrm,
+      model,
+      camera,
+      controls,
+      fitted: fittedNow,
+    });
+    defaultPortrait.position.copy(camera.position);
+    defaultPortrait.target.copy(controls.target);
+    defaultPortrait.fov = camera.fov;
+    defaultPortrait.distance = camera.position.distanceTo(controls.target);
     syncPortraitFromControls();
     controls.update();
   };
