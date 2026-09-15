@@ -5,7 +5,7 @@
 
 export const LEARN_DIALOGUE_SCHEMA = "amoji.companionLearnDialogue.v1";
 
-/** @typedef {'connecting'|'searching'|'downloading'|'learning'|'installing'|'ready'|'failed'|'progress'} LearnPhase */
+/** @typedef {'connecting'|'searching'|'downloading'|'learning'|'installing'|'ready'|'failed'|'progress'|'avatar-load'|'idle'|'character-switch'|'thinking-wait'} LearnPhase */
 
 /** @type {Record<LearnPhase, { yue: readonly string[], en: readonly string[] }>} */
 export const LEARN_DIALOGUE = Object.freeze({
@@ -119,7 +119,86 @@ export const LEARN_DIALOGUE = Object.freeze({
       "Download failed — maybe try again later?",
     ],
   },
+  "avatar-load": {
+    yue: [
+      "等我醒起身先，載入緊我嘅身體…",
+      "我嘅 3D 模型下載中，好快見到你…",
+      "裝緊動漫造型，你等我一下…",
+      "骨骼同表情載入中，就快出現喇…",
+      "我喺度變身中，唔好急呀…",
+      "模型檔案好大，但我已經拎緊喇…",
+    ],
+    en: [
+      "Hold on — I'm waking up my 3D body…",
+      "Loading my anime model — almost there…",
+      "Pulling my avatar together — give me a sec…",
+      "Bones and expressions are loading…",
+      "I'm materializing — won't be long…",
+      "Big model file incoming — I'm on it…",
+    ],
+  },
+  idle: {
+    yue: [
+      "我喺度等緊你呀…",
+      "有咩想傾，隨時開口…",
+      "我喺度陪住你，唔使急…",
+      "等緊你講嘢呀…",
+      "我仲喺度呀，有咩想玩？",
+      "靜靜地陪住你等…",
+    ],
+    en: [
+      "I'm here whenever you're ready…",
+      "Just hanging out — say something anytime…",
+      "I'll keep you company while we wait…",
+      "Still here — tap the mic when you want to chat…",
+      "Take your time — I'm not going anywhere…",
+      "Quiet moment together…",
+    ],
+  },
+  "character-switch": {
+    yue: [
+      "等我換個造型先…",
+      "轉角色中，等陣呀…",
+      "我換緊同伴，好快就返嚟…",
+    ],
+    en: [
+      "Switching my look — one moment…",
+      "Changing character — hang on…",
+      "I'll be right back in a new outfit…",
+    ],
+  },
+  "thinking-wait": {
+    yue: [
+      "等我諗清楚先…",
+      "我諗緊點答你…",
+      "嗯…等我整理下思路…",
+      "諗一諗先，唔好急…",
+    ],
+    en: [
+      "Let me think that through…",
+      "I'm putting my thoughts together…",
+      "Hmm — give me a moment to answer…",
+      "Still thinking — almost got it…",
+    ],
+  },
 });
+
+/**
+ * Map wait UI kind + phase to a dialogue bucket.
+ * @param {string} [kind]
+ * @param {string} [phase]
+ * @param {number} [progress]
+ * @returns {LearnPhase}
+ */
+export function resolveWaitDialoguePhase(kind, phase, progress = 0) {
+  if (kind === "avatar-load" && progress < 0.42) return "avatar-load";
+  if (kind === "idle") return "idle";
+  if (kind === "character-switch") return "character-switch";
+  if (kind === "thinking") return "thinking-wait";
+  if (phase === "progress") return "progress";
+  if (phase && LEARN_DIALOGUE[phase]) return phase;
+  return learnPhaseForProgress(progress);
+}
 
 /**
  * @param {LearnPhase} phase

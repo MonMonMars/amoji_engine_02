@@ -3,6 +3,7 @@ import {
   learnPhaseForProgress,
   pickLearnPhrase,
   pickNextLearnPhrase,
+  resolveWaitDialoguePhase,
 } from "../engine/companion/companionLearnDialogue.js";
 
 describe("companionLearnDialogue", () => {
@@ -30,5 +31,16 @@ describe("companionLearnDialogue", () => {
   it("interpolates download progress", () => {
     const phrase = pickLearnPhrase("progress", false, { pct: 42 });
     expect(phrase).toContain("42");
+  });
+
+  it("resolves wait-specific dialogue phases", () => {
+    expect(resolveWaitDialoguePhase("avatar-load", "connecting", 0.1)).toBe(
+      "avatar-load",
+    );
+    expect(resolveWaitDialoguePhase("idle", "idle", 0)).toBe("idle");
+    expect(resolveWaitDialoguePhase("thinking", "thinking", 0)).toBe(
+      "thinking-wait",
+    );
+    expect(pickLearnPhrase("avatar-load", false).length).toBeGreaterThan(6);
   });
 });

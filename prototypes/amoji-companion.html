@@ -1584,7 +1584,7 @@
     <script type="module" src="/amoji-engine/engine/companion/companionPreload.js"></script>
     <script>
       (function () {
-        window.__amojiBuild = "2026-09-14-v44-preload";
+        window.__amojiBuild = "2026-09-14-v45-wait-assets";
         window.__amojiModuleBooted = false;
         window.__amojiStart = {
           tapped: false,
@@ -2070,6 +2070,7 @@
       const {
         buildActionSequence,
         buildShowcaseSequence,
+        IDLE_SHOWCASE_POOL,
         isShowcaseRequest,
         pickIdleShowcase,
       } = actionChoreographyMod;
@@ -2110,6 +2111,9 @@
         try {
           const result = await motionClient.ensureBasicPack();
           basicMotionPackReady = Boolean(result?.ok);
+          if (result?.ok) {
+            void motionClient.ensureWaitMotions?.();
+          }
           if (waitAct?.isActive() && (coupled || showPackUi)) {
             waitAct?.update({
               phase: "ready",
@@ -2730,9 +2734,12 @@
           if (waitAct?.state?.kind === "idle") waitAct?.stop();
           return;
         }
-        const bundled = ["wave", "nod", "thinking", "bow", "clap", "learning"];
-        const pool = bundled.filter((id) => motionClient?.isInstalled?.(id));
-        const move = pickIdleShowcase(lastIdleShowcase, pool.length ? pool : bundled);
+        const idlePool = IDLE_SHOWCASE_POOL.filter((id) =>
+          motionClient?.isInstalled?.(id),
+        );
+        const fallback = ["wave", "nod", "thinking", "bow", "clap", "learning"];
+        const pool = idlePool.length ? idlePool : fallback;
+        const move = pickIdleShowcase(lastIdleShowcase, pool);
         lastIdleShowcase = move;
         if (!waitAct?.isActive()) {
           waitAct?.start({
@@ -2985,6 +2992,22 @@
       });
 
       if (!liteMode) beginAvatarLoad();
+
+      const warmWaitDialogue = () => {
+        if (!hostedOnline) return;
+        void import("../amoji-engine/engine/companion/companionDialoguePreload.js")
+          .then(({ prefetchWaitDialogue }) => {
+            const preset = voicePresetById(voiceId);
+            return prefetchWaitDialogue({
+              cloudTtsUrl: "/api/tts",
+              isEnglish,
+              voiceName: isEnglish ? "en-US-JennyNeural" : preset?.name,
+              lang: isEnglish ? "en-US" : preset?.lang || "zh-HK",
+            });
+          })
+          .catch(() => null);
+      };
+      warmWaitDialogue();
 
       applyVoiceSelection = (nextVoiceId) => {
         voiceId = nextVoiceId;
