@@ -3,8 +3,9 @@
  * Server-side only — browsers cannot call Edge TTS WebSocket directly.
  */
 import { EdgeTTS } from "edge-tts-universal";
+import { resolveCompanionTtsProsody } from "./companionTtsProsody.js";
 
-export const TTS_HANDLER_SCHEMA = "amoji.ttsHandler.v1";
+export const TTS_HANDLER_SCHEMA = "amoji.ttsHandler.v2";
 
 /** Cantonese (Hong Kong) female — 曉曼 */
 export const CANTONESE_FEMALE_VOICE = "zh-HK-HiuMaanNeural";
@@ -21,19 +22,30 @@ export const CANTONESE_MALE_VOICE = "zh-HK-WanLungNeural";
 /** English (US) female — Jenny */
 export const ENGLISH_FEMALE_VOICE_ALT = "en-US-JennyNeural";
 
-const EMOTION_EDGE_PROSODY = Object.freeze({
-  neutral: { rate: "+6%", pitch: "+10Hz" },
-  happy: { rate: "+14%", pitch: "+16Hz" },
-  thinking: { rate: "-2%", pitch: "+4Hz" },
-  sad: { rate: "-8%", pitch: "-4Hz" },
-  surprised: { rate: "+18%", pitch: "+20Hz" },
-  angry: { rate: "+10%", pitch: "-2Hz" },
+/** @deprecated Use resolveCompanionTtsProsody — kept for tests that import the old table */
+export const EMOTION_EDGE_PROSODY = Object.freeze({
+  neutral: { rate: "+8%", pitch: "+12Hz", volume: "+4%" },
+  happy: { rate: "+20%", pitch: "+26Hz", volume: "+10%" },
+  thinking: { rate: "-4%", pitch: "+2Hz", volume: "-6%" },
+  sad: { rate: "-12%", pitch: "-8Hz", volume: "-10%" },
+  surprised: { rate: "+24%", pitch: "+30Hz", volume: "+12%" },
+  angry: { rate: "+14%", pitch: "-4Hz", volume: "+8%" },
 });
 
 /**
  * @param {string} text
- * @param {{ voice?: string, emotion?: string, rate?: string, pitch?: string, lang?: string }} [opts]
- * @returns {Promise<{ audio: Buffer, voice: string, contentType: string }>}
+ * @param {{
+ *   voice?: string,
+ *   emotion?: string,
+ *   nuance?: string,
+ *   talkStyle?: string,
+ *   speechEnergy?: number,
+ *   rate?: string,
+ *   pitch?: string,
+ *   volume?: string,
+ *   lang?: string,
+ * }} [opts]
+ * @returns {Promise<{ audio: Buffer, voice: string, contentType: string, prosody: object }>}
  */
 export async function synthesizeSpeech(text, opts = {}) {
   const clean = String(text || "")
@@ -45,17 +57,25 @@ export async function synthesizeSpeech(text, opts = {}) {
     throw new Error("empty text");
   }
 
-  const emotion = String(opts.emotion || "neutral").toLowerCase();
-  const prosody =
-    EMOTION_EDGE_PROSODY[emotion] || EMOTION_EDGE_PROSODY.neutral;
   const lang = String(opts.lang || "").toLowerCase();
+  const prosodyPack = resolveCompanionTtsProsody({
+    emotion: opts.emotion || "neutral",
+    nuance: opts.nuance || "none",
+    talkStyle: opts.talkStyle || "explain",
+    speechEnergy: opts.speechEnergy,
+    text: clean,
+    lang,
+  });
+  const edge = prosodyPack.edge;
+
   const defaultVoice =
     lang === "en" || lang === "en-us" ? ENGLISH_FEMALE_VOICE : CANTONESE_FEMALE_VOICE;
   const voice = opts.voice || defaultVoice;
 
   const tts = new EdgeTTS(clean, voice, {
-    rate: opts.rate || prosody.rate,
-    pitch: opts.pitch || prosody.pitch,
+    rate: opts.rate || edge.rate,
+    pitch: opts.pitch || edge.pitch,
+    volume: opts.volume || edge.volume,
   });
   const result = await tts.synthesize();
   const audio = Buffer.from(await result.audio.arrayBuffer());
@@ -64,6 +84,7 @@ export async function synthesizeSpeech(text, opts = {}) {
     audio,
     voice,
     contentType: "audio/mpeg",
+    prosody: prosodyPack,
   };
 }
 
@@ -105,6 +126,9 @@ export async function processTtsRequest(req) {
   try {
     const { audio, voice, contentType } = await synthesizeSpeech(text, {
       emotion,
+      nuance: raw.nuance,
+      talkStyle: raw.talkStyle,
+      speechEnergy: raw.speechEnergy,
       voice: raw.voice,
       lang,
     });

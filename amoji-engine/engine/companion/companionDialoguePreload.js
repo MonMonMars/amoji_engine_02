@@ -105,6 +105,9 @@ export async function prefetchWaitDialogue(opts = {}) {
           body: JSON.stringify({
             text: phrase,
             emotion: "thinking",
+            nuance: "curious",
+            talkStyle: "soft",
+            speechEnergy: 0.38,
             voice: voiceName,
             lang,
           }),
