@@ -48,38 +48,62 @@
       .brand span {
         color: #7fd4cf;
       }
-      .start-talking {
+      .start-character-picker {
         display: block !important;
         visibility: visible !important;
         opacity: 1 !important;
         position: fixed;
         left: 50%;
-        bottom: 28%;
+        bottom: max(1rem, env(safe-area-inset-bottom));
         transform: translateX(-50%);
         z-index: 9999;
         pointer-events: auto;
-        padding: 0.85rem 1.35rem;
-        border-radius: 1.1rem;
-        background: rgba(124, 156, 255, 0.28);
-        border: 1px solid rgba(124, 156, 255, 0.55);
-        color: #e8eeff;
-        font: inherit;
-        font-size: 0.95rem;
-        font-weight: 650;
-        cursor: pointer;
-        -webkit-tap-highlight-color: transparent;
-        touch-action: manipulation;
-        max-width: min(92vw, 420px);
+        width: min(92vw, 380px);
+        padding: 0.65rem 0.7rem 0.75rem;
+        border-radius: 1rem;
+        background: rgba(10, 14, 22, 0.82);
+        border: 1px solid rgba(124, 156, 255, 0.42);
+        backdrop-filter: blur(14px);
+        box-shadow: 0 10px 32px rgba(0, 0, 0, 0.38);
         text-align: center;
-        line-height: 1.35;
+        transition: opacity 0.45s ease, transform 0.45s ease;
       }
 
-      .start-talking .start-tagline {
-        display: block;
-        margin-top: 0.35rem;
-        font-size: 0.78rem;
-        font-weight: 500;
-        opacity: 0.82;
+      .start-character-picker.hide {
+        opacity: 0;
+        pointer-events: none;
+        transform: translateX(-50%) translateY(12px);
+      }
+
+      .start-character-picker.is-starting {
+        opacity: 0.92;
+      }
+
+      .start-picker-title {
+        margin: 0;
+        font-family: Syne, system-ui, sans-serif;
+        font-size: 0.92rem;
+        font-weight: 750;
+        letter-spacing: -0.02em;
+        color: #f7f1e8;
+      }
+
+      .start-picker-sub {
+        margin: 0.2rem 0 0.55rem;
+        font-size: 0.72rem;
+        color: rgba(247, 241, 232, 0.72);
+      }
+
+      .start-picker-hint {
+        margin: 0.5rem 0 0;
+        font-size: 0.64rem;
+        color: rgba(247, 241, 232, 0.55);
+      }
+
+      .start-picker-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 0.42rem;
       }
       .chat-shell {
         position: absolute;
@@ -302,50 +326,6 @@
         border-color: rgba(127, 212, 207, 0.45);
       }
 
-      .start-talking {
-        position: fixed;
-        left: 50%;
-        bottom: 28%;
-        transform: translateX(-50%);
-        z-index: 9999;
-        pointer-events: auto;
-        cursor: pointer;
-        -webkit-tap-highlight-color: transparent;
-        touch-action: manipulation;
-        padding: 0.75rem 1.4rem;
-        border-radius: 999px;
-        background: rgba(124, 156, 255, 0.22);
-        border: 1px solid rgba(124, 156, 255, 0.55);
-        backdrop-filter: blur(14px);
-        font-size: 0.95rem;
-        font-weight: 650;
-        color: #e8eeff;
-        opacity: 1;
-        box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
-        transition: opacity 0.5s ease, transform 0.5s ease, background 0.15s ease;
-      }
-
-      .start-talking:hover {
-        background: rgba(124, 156, 255, 0.32);
-        transform: translateX(-50%) translateY(-2px);
-      }
-
-      .start-talking.hide {
-        opacity: 0;
-        transform: translateX(-50%) translateY(8px);
-      }
-
-      .start-talking:disabled {
-        opacity: 0.55;
-        cursor: wait;
-        pointer-events: none;
-      }
-
-      .start-talking.starting {
-        background: rgba(124, 156, 255, 0.38);
-        border-color: rgba(124, 156, 255, 0.85);
-        transform: translateX(-50%) scale(0.98);
-      }
 
       .companion-toast {
         position: fixed;
@@ -1223,10 +1203,10 @@
 
       .companion-picker-sheet {
         position: relative;
-        width: min(100%, 520px);
-        max-height: min(86dvh, 720px);
+        width: min(100%, 440px);
+        max-height: min(78dvh, 620px);
         margin: 0 auto;
-        padding: 1rem 1rem calc(1.2rem + env(safe-area-inset-bottom));
+        padding: 0.85rem 0.85rem calc(1rem + env(safe-area-inset-bottom));
         border-radius: 1.35rem 1.35rem 0 0;
         background: linear-gradient(
           180deg,
@@ -1255,15 +1235,15 @@
       .companion-picker-title {
         margin: 0;
         font-family: Syne, system-ui, sans-serif;
-        font-size: 1.35rem;
+        font-size: 1.1rem;
         letter-spacing: -0.03em;
       }
 
       .companion-picker-sub {
-        margin: 0.25rem 0 0;
+        margin: 0.2rem 0 0;
         color: var(--muted);
-        font-size: 0.82rem;
-        line-height: 1.45;
+        font-size: 0.74rem;
+        line-height: 1.4;
       }
 
       .companion-picker-close {
@@ -1279,16 +1259,25 @@
 
       .companion-picker-grid {
         display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 0.7rem;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 0.48rem;
+      }
+
+      @media (max-width: 380px) {
+        .companion-picker-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .start-picker-grid {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
       }
 
       .companion-card {
         display: flex;
         flex-direction: column;
-        gap: 0.55rem;
-        padding: 0.55rem;
-        border-radius: 1rem;
+        gap: 0.38rem;
+        padding: 0.4rem;
+        border-radius: 0.8rem;
         border: 1px solid rgba(247, 241, 232, 0.1);
         background: rgba(255, 255, 255, 0.03);
         color: inherit;
@@ -1311,10 +1300,50 @@
           0 10px 28px rgba(0, 0, 0, 0.28);
       }
 
+      .companion-card--compact {
+        gap: 0.28rem;
+        padding: 0.32rem;
+        align-items: center;
+        text-align: center;
+      }
+
+      .companion-card--compact .companion-card-portrait {
+        aspect-ratio: 1 / 1;
+        width: 100%;
+        border-radius: 0.62rem;
+      }
+
+      .companion-card--compact .companion-card-name {
+        display: block;
+        margin: 0;
+        font-size: 0.64rem;
+        font-weight: 700;
+        line-height: 1.2;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        width: 100%;
+      }
+
+      .companion-card--compact .companion-card-check {
+        width: 1.1rem;
+        height: 1.1rem;
+        font-size: 0.62rem;
+        right: 0.28rem;
+        bottom: 0.28rem;
+      }
+
+      .companion-card-badge--mini {
+        top: 0.28rem;
+        left: 0.28rem;
+        padding: 0.1rem 0.28rem;
+        font-size: 0.5rem;
+      }
+
       .companion-card-portrait {
         position: relative;
-        aspect-ratio: 3 / 4;
-        border-radius: 0.8rem;
+        aspect-ratio: 4 / 5;
+        border-radius: 0.65rem;
         overflow: hidden;
         background: linear-gradient(
           160deg,
@@ -1369,15 +1398,19 @@
 
       .companion-card-name {
         margin: 0;
-        font-size: 0.95rem;
+        font-size: 0.78rem;
         font-weight: 750;
       }
 
       .companion-card-tagline {
-        margin: 0.15rem 0 0;
+        margin: 0.1rem 0 0;
         color: var(--muted);
-        font-size: 0.72rem;
-        line-height: 1.35;
+        font-size: 0.64rem;
+        line-height: 1.3;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
       }
 
       .companion-card-traits {
@@ -1388,8 +1421,8 @@
       }
 
       .companion-card-trait {
-        font-size: 0.62rem;
-        padding: 0.12rem 0.38rem;
+        font-size: 0.56rem;
+        padding: 0.08rem 0.3rem;
         border-radius: 999px;
         background: rgba(255, 255, 255, 0.06);
         color: rgba(247, 241, 232, 0.78);
@@ -1569,27 +1602,27 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-15-v49-performance-preload",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-15-v50-start-character-picker",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-15-v49-performance-preload"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-15-v50-start-character-picker"
         }
       }
     </script>
-    <link rel="modulepreload" href="/amoji-engine/vendor/three.module.js?v=2026-09-15-v49-performance-preload" />
-    <link rel="modulepreload" href="/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-15-v49-performance-preload" />
+    <link rel="modulepreload" href="/amoji-engine/vendor/three.module.js?v=2026-09-15-v50-start-character-picker" />
+    <link rel="modulepreload" href="/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-15-v50-start-character-picker" />
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-15-v49-performance-preload"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-15-v50-start-character-picker"
     />
-    <link rel="modulepreload" href="/amoji-engine/engine/companion/vrmAvatar.js?v=2026-09-15-v49-performance-preload" />
-    <link rel="modulepreload" href="/amoji-engine/engine/companion/createAvatar.js?v=2026-09-15-v49-performance-preload" />
+    <link rel="modulepreload" href="/amoji-engine/engine/companion/vrmAvatar.js?v=2026-09-15-v50-start-character-picker" />
+    <link rel="modulepreload" href="/amoji-engine/engine/companion/createAvatar.js?v=2026-09-15-v50-start-character-picker" />
     <link rel="prefetch" href="/api/motions?pack=basic" as="fetch" crossorigin />
     <link rel="prefetch" href="/api/motions?pack=extensions" as="fetch" crossorigin />
     <script>
-      window.__amojiBuild = "2026-09-15-v49-performance-preload";
+      window.__amojiBuild = "2026-09-15-v50-start-character-picker";
     </script>
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-15-v49-performance-preload"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-15-v49-performance-preload"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-15-v50-start-character-picker"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-15-v50-start-character-picker"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;
@@ -1599,6 +1632,7 @@
           run: null,
           sessionStarted: false,
           starting: false,
+          pendingCharacterId: null,
         };
         window.__amojiShowBootFallback = function (msg, opts) {
           var soft = opts && opts.soft;
@@ -1621,28 +1655,26 @@
           document.querySelectorAll(".avatar-loading").forEach(function (el) {
             el.remove();
           });
-          var start = document.getElementById("start-talking");
+          var picker = document.getElementById("start-character-picker");
           if (
-            start &&
+            picker &&
             !window.__amojiStart?.sessionStarted &&
             !window.__amojiStart?.starting
           ) {
-            start.classList.remove("hide", "starting");
-            start.removeAttribute("aria-hidden");
-            start.removeAttribute("disabled");
-            start.removeAttribute("aria-busy");
+            picker.classList.remove("hide", "is-starting");
+            picker.removeAttribute("aria-hidden");
+            picker.removeAttribute("aria-busy");
           }
         };
         window.__amojiDismissStartButton = function () {
-          var start = document.getElementById("start-talking");
-          if (!start) return;
+          var picker = document.getElementById("start-character-picker");
           window.__amojiStart.sessionStarted = true;
           window.__amojiStart.starting = false;
-          start.classList.add("hide");
-          start.setAttribute("aria-hidden", "true");
-          start.setAttribute("disabled", "true");
-          start.removeAttribute("aria-busy");
-          start.remove();
+          if (!picker) return;
+          picker.classList.add("hide");
+          picker.setAttribute("aria-hidden", "true");
+          picker.removeAttribute("aria-busy");
+          picker.remove();
         };
         window.__amojiHideLoading();
         window.__amojiStaticFallback = function (msg) {
@@ -1655,7 +1687,7 @@
           bubble.className = "bubble system";
           bubble.textContent =
             msg ||
-            "Modules still loading — tap Start above. Add ?lite=1 to skip 3D avatar on slow networks.";
+            "Modules still loading — pick a companion below or add ?lite=1 to skip 3D.";
           row.appendChild(bubble);
           transcript.appendChild(row);
         };
@@ -1666,7 +1698,7 @@
             );
           } else if (!window.__amojiStart?.ready && !window.__amojiStart?.sessionStarted) {
             window.__amojiStaticFallback(
-              "Still loading app modules — tap 👆 Start above or type below to chat while 3D loads.",
+              "Still loading — pick a companion below or type to chat while 3D loads.",
             );
           }
         }, 12000);
@@ -1734,24 +1766,24 @@
             window.__amojiAudioUnlocked = true;
           } catch (e) {}
         };
-        window.__amojiStartTap = function (ev) {
+        window.__amojiStartWithCharacter = function (characterId, ev) {
           ev?.preventDefault?.();
           ev?.stopPropagation?.();
           window.__amojiUnlockAudio();
           window.__amojiHideLoading();
-          const btn = document.getElementById("start-talking");
-          if (!btn || btn.disabled) return false;
           if (window.__amojiStart.sessionStarted) return false;
           window.__amojiStart.tapped = true;
           window.__amojiStart.starting = true;
-          btn.textContent = "⏳ Starting…";
-          btn.classList.add("starting");
-          btn.setAttribute("aria-busy", "true");
+          window.__amojiStart.pendingCharacterId = characterId || null;
+          var picker = document.getElementById("start-character-picker");
+          if (picker) {
+            picker.classList.add("is-starting");
+            picker.setAttribute("aria-busy", "true");
+          }
           if (window.__amojiStart.ready && typeof window.__amojiStart.run === "function") {
-            void window.__amojiStart.run();
+            void window.__amojiStart.run({ characterId: characterId || null });
             return false;
           }
-          btn.textContent = "⏳ Loading app…";
           var tries = 0;
           var poll = setInterval(function () {
             tries += 1;
@@ -1761,15 +1793,18 @@
             }
             if (window.__amojiStart.ready && typeof window.__amojiStart.run === "function") {
               clearInterval(poll);
-              btn.textContent = "⏳ Starting…";
-              void window.__amojiStart.run({ fromTimeout: true });
+              void window.__amojiStart.run({
+                characterId: window.__amojiStart.pendingCharacterId,
+                fromTimeout: true,
+              });
               return;
             }
             if (tries >= 40) {
               clearInterval(poll);
-              btn.textContent = "👆 Tap to retry · 點一下重試";
-              btn.classList.remove("starting");
-              btn.removeAttribute("aria-busy");
+              if (picker) {
+                picker.classList.remove("is-starting");
+                picker.removeAttribute("aria-busy");
+              }
               window.__amojiStart.tapped = false;
               window.__amojiStart.starting = false;
             }
@@ -1815,16 +1850,6 @@
       <button type="button" class="orbit-reset-btn" id="orbit-reset-btn" title="Reset camera view">
         ↺ View
       </button>
-      <button
-        type="button"
-        class="start-talking"
-        id="start-talking"
-        onclick="return window.__amojiStartTap && window.__amojiStartTap(event)"
-      >
-        <span class="start-cta">👆 Tap to start · 點一下開始</span>
-        <span class="start-tagline" id="start-tagline"></span>
-      </button>
-
       <header class="topbar">
         <div class="brand"><span id="brand-name">Amoji</span> <span>Live</span></div>
         <div class="meta">
@@ -2316,7 +2341,8 @@
 
       const stage = document.querySelector(".stage");
       let canvas = document.getElementById("avatar-canvas");
-      const startTalkingEl = document.getElementById("start-talking");
+      /** @type {ReturnType<typeof createCompanionStartPicker> | null} */
+      let startPicker = null;
       const dismissLoading = () => {
         window.__amojiHideLoading?.();
       };
@@ -2584,8 +2610,7 @@
         if (companionsBtnEl) {
           companionsBtnEl.textContent = isEnglish ? "Companions" : "同伴";
         }
-        const startTagline = document.getElementById("start-tagline");
-        if (startTagline) startTagline.textContent = tagline;
+        startPicker?.setSelected?.(characterId);
       };
       setCharacterUi();
 
@@ -3013,8 +3038,6 @@
         isEnglish,
       });
 
-      if (!liteMode) beginAvatarLoad();
-
       const warmWaitDialogue = () => {
         if (!hostedOnline) return;
         void ami("../amoji-engine/engine/companion/companionDialoguePreload.js")
@@ -3049,8 +3072,11 @@
       applyVoiceSelection(voiceId);
       updateLangPill();
 
-      const { createCompanionCharacterPicker, createCompanionSwitchOverlay } =
-        characterPickerMod;
+      const {
+        createCompanionCharacterPicker,
+        createCompanionStartPicker,
+        createCompanionSwitchOverlay,
+      } = characterPickerMod;
       const { switchCompanionCharacter } = characterSwitchMod;
       const companionsBtn = document.getElementById("companions-btn");
       const switchOverlay = createCompanionSwitchOverlay({ root: document.body });
@@ -3137,6 +3163,38 @@
           void hotSwapCharacter(nextId);
         },
       });
+
+      const beginStartWithCharacter = async (nextId) => {
+        if (sessionStarted || sessionStarting) return;
+        const picked = nextId || characterId;
+        const previousId = characterId;
+        startPicker?.setStarting?.(true);
+        if (picked && picked !== previousId) {
+          applyCharacterSession(picked, { announce: false });
+          startPicker?.setSelected?.(picked);
+          if (avatarLoadStarted && avatar && avatarKind !== "loading") {
+            await hotSwapCharacter(picked);
+          }
+        }
+        startSession({ characterId: picked });
+      };
+
+      startPicker = createCompanionStartPicker({
+        root: stage,
+        isEnglish,
+        selectedId: characterId,
+        onStart: (nextId) => {
+          window.__amojiUnlockAudio?.();
+          dismissLoading();
+          if (window.__amojiStart?.ready) {
+            void beginStartWithCharacter(nextId);
+            return;
+          }
+          window.__amojiStartWithCharacter?.(nextId);
+        },
+      });
+      startPicker.setSelected(characterId);
+      startPicker.show();
 
       const openCharacterPicker = () => {
         characterPicker.setSelected(characterId);
@@ -3449,33 +3507,12 @@
       };
 
       const GREETING_SHORT = isEnglish ? "Hello!" : "你好呀！";
-      const START_PAGE_TAGLINE = GREETING_SHORT;
-      const startTaglineEl = document.getElementById("start-tagline");
-      if (startTaglineEl) startTaglineEl.textContent = START_PAGE_TAGLINE;
 
       let sessionStarted = false;
       let sessionStarting = false;
       /** @type {ReturnType<typeof setTimeout> | null} */
       let startTimeoutId = null;
       const START_TIMEOUT_MS = 2000;
-
-      const resetStartButton = () => {
-        if (!startTalkingEl) return;
-        startTalkingEl.classList.remove("hide", "starting");
-        startTalkingEl.removeAttribute("aria-hidden");
-        startTalkingEl.removeAttribute("aria-busy");
-        startTalkingEl.removeAttribute("disabled");
-        const cta = voice.supportsMic
-          ? isEnglish
-            ? "👆 Tap to start"
-            : "👆 Tap to start · 點一下開始"
-          : isEnglish
-            ? "👆 Tap to start (type to chat)"
-            : "👆 Tap to start (type to chat)";
-        startTalkingEl.innerHTML =
-          `<span class="start-cta">${cta}</span>` +
-          `<span class="start-tagline" id="start-tagline">${START_PAGE_TAGLINE}</span>`;
-      };
 
       const markSessionReady = ({ fromTimeout = false } = {}) => {
         if (sessionStarted) return;
@@ -3488,16 +3525,11 @@
           startTimeoutId = null;
         }
 
+        startPicker?.setStarting?.(false);
         if (typeof window.__amojiDismissStartButton === "function") {
           window.__amojiDismissStartButton();
         } else {
-          const startBtn = document.getElementById("start-talking");
-          startBtn?.classList.remove("starting");
-          startBtn?.removeAttribute("aria-busy");
-          startBtn?.classList.add("hide");
-          startBtn?.setAttribute("aria-hidden", "true");
-          startBtn?.setAttribute("disabled", "true");
-          startBtn?.remove();
+          startPicker?.dismiss?.();
         }
 
         if (!busy && !voice.micOn && !voice.speaking) status.idle();
@@ -3586,20 +3618,19 @@
         );
       };
 
-      const startSession = ({ fromTimeout = false } = {}) => {
+      const startSession = ({ fromTimeout = false, characterId: startCharacterId } = {}) => {
         if (sessionStarted) return;
+        if (startCharacterId && startCharacterId !== characterId) {
+          applyCharacterSession(startCharacterId, { announce: false });
+          startPicker?.setSelected?.(startCharacterId);
+        }
         if (sessionStarting) {
           markSessionReady({ fromTimeout });
           return;
         }
         sessionStarting = true;
         window.__amojiStart.starting = true;
-        const startBtn = document.getElementById("start-talking");
-        startBtn?.classList.add("starting");
-        startBtn?.setAttribute("aria-busy", "true");
-        if (startBtn?.textContent?.includes("Starting") === false) {
-          startBtn.textContent = "⏳ Starting…";
-        }
+        startPicker?.setStarting?.(true);
 
         startTimeoutId = setTimeout(() => {
           if (!sessionStarted) markSessionReady({ fromTimeout: true });
@@ -3628,14 +3659,10 @@
         addBubble("system", isEnglish ? "Ready." : "已開始。");
       };
 
-      window.__amojiStart.run = () => void startSession();
+      window.__amojiStart.run = (opts = {}) => void startSession(opts);
 
       syncSpeakerBtn();
       syncMicBtn();
-
-      if (!voice.supportsMic && startTalkingEl) {
-        startTalkingEl.textContent = "👆 Tap to start (type to chat)";
-      }
 
       const llmSwitcher = createCompanionLlmSwitcher({
         container: document.getElementById("llm-switcher-wrap"),
@@ -3893,7 +3920,9 @@
       window.__amojiStart.ready = true;
       dismissLoading();
       if (window.__amojiStart.tapped && !window.__amojiStart.sessionStarted) {
-        void startSession();
+        void startSession({
+          characterId: window.__amojiStart.pendingCharacterId || characterId,
+        });
       }
       } catch (err) {
         console.error("[companion] module boot failed", err);

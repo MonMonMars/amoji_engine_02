@@ -32,7 +32,7 @@ async function main() {
   page.on("console", (msg) => logs.push(`[${msg.type()}] ${msg.text()}`));
 
   await page.goto(url, { waitUntil: "domcontentloaded", timeout: 45000 });
-  await page.waitForSelector("#start-talking", { timeout: 20000 });
+  await page.waitForSelector("#start-character-picker .companion-card", { timeout: 20000 });
 
   await page.evaluate(() => {
     window.__voiceProbe = {
@@ -64,11 +64,11 @@ async function main() {
     };
   });
 
-  await page.click("#start-talking");
+  await page.click("#start-character-picker .companion-card");
 
   await page.waitForFunction(
     () => {
-      const btn = document.getElementById("start-talking");
+      const btn = document.getElementById("start-character-picker");
       return (
         !btn ||
         btn.classList.contains("hide") ||

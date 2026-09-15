@@ -48,7 +48,7 @@ async function main() {
         return el.classList.contains("hide") ? "hidden" : "visible";
       })(),
       startBtn: (() => {
-        const btn = document.getElementById("start-talking");
+        const btn = document.getElementById("start-character-picker");
         if (!btn) return "removed";
         return {
           hidden: btn.classList.contains("hide"),
@@ -68,12 +68,12 @@ async function main() {
     overlay: document.querySelector(".avatar-loading")
       ? document.querySelector(".avatar-loading").className
       : "none",
-    startBtn: document.getElementById("start-talking")?.textContent,
+    startBtn: document.getElementById("start-character-picker")?.textContent,
     bubbles: document.querySelectorAll(".msg-row").length,
   }));
 
   // Try tap
-  const startBtn = await page.$("#start-talking:not(.hide)");
+  const startBtn = await page.$("#start-character-picker .companion-card:not(.hide)");
   if (startBtn) {
     await startBtn.click();
     await page.waitForTimeout(2500);
@@ -82,7 +82,7 @@ async function main() {
   const afterTap = await page.evaluate(() => ({
     sessionStarted: window.__amojiStart?.sessionStarted,
     startBtn: (() => {
-      const btn = document.getElementById("start-talking");
+      const btn = document.getElementById("start-character-picker");
       if (!btn) return "removed";
       return { hidden: btn.classList.contains("hide"), text: btn.textContent?.trim() };
     })(),

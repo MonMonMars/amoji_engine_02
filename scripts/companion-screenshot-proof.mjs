@@ -31,9 +31,9 @@ for (const [label, ctx, qs] of cases) {
   const snap = await page.evaluate(() => ({
     build: window.__amojiBuild,
     brand: document.querySelector(".brand")?.textContent?.trim(),
-    startText: document.getElementById("start-talking")?.textContent?.trim(),
+    startText: document.getElementById("start-character-picker")?.textContent?.trim(),
     startVisible: (() => {
-      const el = document.getElementById("start-talking");
+      const el = document.getElementById("start-character-picker");
       if (!el) return false;
       const s = getComputedStyle(el);
       return s.display !== "none" && s.visibility !== "hidden" && s.opacity !== "0";

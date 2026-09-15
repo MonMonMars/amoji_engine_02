@@ -28,7 +28,7 @@ async function diagnose(page, label) {
   const snap = async (when) => {
     return page.evaluate((tag) => {
       const overlayEls = [...document.querySelectorAll(".avatar-loading")];
-      const start = document.getElementById("start-talking");
+      const start = document.getElementById("start-character-picker");
       const startRect = start?.getBoundingClientRect();
       const overlayRects = overlayEls.map((el) => {
         const r = el.getBoundingClientRect();
@@ -82,7 +82,7 @@ async function diagnose(page, label) {
 
   let clickResult = null;
   try {
-    const start = page.locator("#start-talking");
+    const start = page.locator("#start-character-picker .companion-card");
     if (await start.isVisible({ timeout: 500 })) {
       await start.click({ timeout: 2000 });
       clickResult = "clicked";

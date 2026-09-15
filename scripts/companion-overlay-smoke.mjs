@@ -35,14 +35,14 @@ const page = await browser.newPage();
 await page.route("**/amoji-engine/**", (route) => route.abort("failed"));
 await page.goto(PAGE_URL, { waitUntil: "domcontentloaded", timeout: 30000 });
 const snap = await page.evaluate(() => {
-  const start = document.getElementById("start-talking");
+  const start = document.getElementById("start-character-picker");
   const r = start?.getBoundingClientRect();
   const top = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
   return {
     build: window.__amojiBuild,
     overlayCount: document.querySelectorAll(".avatar-loading").length,
     startVisible: start && getComputedStyle(start).visibility !== "hidden",
-    topIsStart: top?.id === "start-talking",
+    topIsStart: top?.id === "start-character-picker",
     startZ: start ? getComputedStyle(start).zIndex : null,
   };
 });

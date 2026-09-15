@@ -1,10 +1,82 @@
 /**
- * Grok Ani–style companion picker — grid sheet to browse and select characters.
+ * Grok Ani–style companion picker — grid sheet + compact start-screen grid.
  */
 import { listCompanionCharacters } from "./companionCharacterCatalog.js";
 
 export const COMPANION_CHARACTER_PICKER_SCHEMA =
-  "amoji.companionCharacterPicker.v1";
+  "amoji.companionCharacterPicker.v2";
+
+export const COMPANION_START_PICKER_SCHEMA = "amoji.companionStartPicker.v1";
+
+/**
+ * @param {ReturnType<typeof listCompanionCharacters>[number]} item
+ * @param {{ selectedId?: string, compact?: boolean }} [ctx]
+ */
+export function companionCardInnerHtml(item, ctx = {}) {
+  const compact = Boolean(ctx.compact);
+  const selected = item.id === ctx.selectedId;
+  const badge = item.badge
+    ? `<span class="companion-card-badge${compact ? " companion-card-badge--mini" : ""}">${item.badge}</span>`
+    : "";
+  const traits = compact
+    ? ""
+    : (item.traits || [])
+        .slice(0, 2)
+        .map((t) => `<span class="companion-card-trait">${t}</span>`)
+        .join("");
+
+  if (compact) {
+    return `
+      <div class="companion-card-portrait">
+        <img src="${item.previewImage}" alt="" loading="lazy" decoding="async" />
+        ${badge}
+        <span class="companion-card-check" aria-hidden="true">✓</span>
+      </div>
+      <span class="companion-card-name">${item.name}</span>
+    `;
+  }
+
+  return `
+    <div class="companion-card-portrait">
+      <img src="${item.previewImage}" alt="" loading="lazy" decoding="async" />
+      ${badge}
+      <span class="companion-card-check" aria-hidden="true">✓</span>
+    </div>
+    <div class="companion-card-body">
+      <h3 class="companion-card-name">${item.name}</h3>
+      <p class="companion-card-tagline">${item.tagline}</p>
+      <div class="companion-card-traits">${traits}</div>
+    </div>
+  `;
+}
+
+/**
+ * @param {ReturnType<typeof listCompanionCharacters>[number]} item
+ * @param {{
+ *   selectedId?: string,
+ *   compact?: boolean,
+ *   onClick?: (id: string) => void,
+ * }} ctx
+ */
+export function createCompanionCardButton(item, ctx = {}) {
+  const compact = Boolean(ctx.compact);
+  const card = document.createElement("button");
+  card.type = "button";
+  card.className = compact
+    ? "companion-card companion-card--compact"
+    : "companion-card";
+  card.dataset.characterId = item.id;
+  card.setAttribute("role", "option");
+  card.setAttribute(
+    "aria-selected",
+    item.id === ctx.selectedId ? "true" : "false",
+  );
+  if (item.id === ctx.selectedId) card.classList.add("is-selected");
+  card.style.setProperty("--card-accent", item.accent || "#7fd4cf");
+  card.innerHTML = companionCardInnerHtml(item, ctx);
+  card.addEventListener("click", () => ctx.onClick?.(item.id));
+  return card;
+}
 
 /**
  * @param {{
@@ -55,13 +127,13 @@ export function createCompanionCharacterPicker(opts = {}) {
     }
     if (subEl) {
       subEl.textContent = isEnglish
-        ? "Pick who you want to chat with — like Grok Ani."
-        : "揀你想同邊個傾偈 — 類似 Grok Ani 同伴列表。";
+        ? "Pick who you want to chat with."
+        : "揀你想同邊個傾偈。";
     }
     if (footEl) {
       footEl.textContent = isEnglish
-        ? "Tap a card to switch. Your companion keeps voice + personality per character."
-        : "點選角色即可切換。每個同伴有獨立語音同性格。";
+        ? "Tap a card to switch companion."
+        : "點選角色即可切換同伴。";
     }
   };
 
@@ -70,50 +142,21 @@ export function createCompanionCharacterPicker(opts = {}) {
     gridEl.innerHTML = "";
     const list = listCompanionCharacters(langCode);
     for (const item of list) {
-      const card = document.createElement("button");
-      card.type = "button";
-      card.className = "companion-card";
-      card.dataset.characterId = item.id;
-      card.setAttribute("role", "option");
-      card.setAttribute(
-        "aria-selected",
-        item.id === selectedId ? "true" : "false",
+      gridEl.appendChild(
+        createCompanionCardButton(item, {
+          selectedId,
+          compact: true,
+          onClick: (id) => {
+            if (id === selectedId) {
+              close();
+              return;
+            }
+            selectedId = id;
+            renderGrid();
+            opts.onSelect?.(id);
+          },
+        }),
       );
-      if (item.id === selectedId) card.classList.add("is-selected");
-      card.style.setProperty("--card-accent", item.accent || "#7fd4cf");
-
-      const badge = item.badge
-        ? `<span class="companion-card-badge">${item.badge}</span>`
-        : "";
-      const traits = (item.traits || [])
-        .slice(0, 3)
-        .map((t) => `<span class="companion-card-trait">${t}</span>`)
-        .join("");
-
-      card.innerHTML = `
-        <div class="companion-card-portrait">
-          <img src="${item.previewImage}" alt="" loading="lazy" decoding="async" />
-          ${badge}
-          <span class="companion-card-check" aria-hidden="true">✓</span>
-        </div>
-        <div class="companion-card-body">
-          <h3 class="companion-card-name">${item.name}</h3>
-          <p class="companion-card-tagline">${item.tagline}</p>
-          <div class="companion-card-traits">${traits}</div>
-        </div>
-      `;
-
-      card.addEventListener("click", () => {
-        if (item.id === selectedId) {
-          close();
-          return;
-        }
-        selectedId = item.id;
-        renderGrid();
-        opts.onSelect?.(item.id);
-      });
-
-      gridEl.appendChild(card);
     }
   };
 
@@ -157,6 +200,123 @@ export function createCompanionCharacterPicker(opts = {}) {
     },
     isOpen() {
       return open;
+    },
+    destroy() {
+      shell.remove();
+    },
+  };
+}
+
+/**
+ * Compact character grid shown before the first chat session starts.
+ * @param {{
+ *   root?: HTMLElement | null,
+ *   isEnglish?: boolean,
+ *   selectedId?: string,
+ *   onStart?: (id: string) => void,
+ * }} opts
+ */
+export function createCompanionStartPicker(opts = {}) {
+  const isEnglish = Boolean(opts.isEnglish);
+  const langCode = isEnglish ? "en" : "yue";
+  let selectedId = opts.selectedId || "amoji";
+  let starting = false;
+
+  const shell = document.createElement("div");
+  shell.className = "start-character-picker";
+  shell.id = "start-character-picker";
+  shell.setAttribute("role", "dialog");
+  shell.setAttribute("aria-label", isEnglish ? "Choose companion" : "揀同伴");
+  shell.innerHTML = `
+    <p class="start-picker-title"></p>
+    <p class="start-picker-sub"></p>
+    <div class="start-picker-grid" role="listbox"></div>
+    <p class="start-picker-hint"></p>
+  `;
+
+  const mount = opts.root || document.body;
+  mount.appendChild(shell);
+
+  const titleEl = shell.querySelector(".start-picker-title");
+  const subEl = shell.querySelector(".start-picker-sub");
+  const gridEl = shell.querySelector(".start-picker-grid");
+  const hintEl = shell.querySelector(".start-picker-hint");
+
+  const copy = () => {
+    if (titleEl) {
+      titleEl.textContent = isEnglish
+        ? "Pick your companion"
+        : "揀同伴開始";
+    }
+    if (subEl) {
+      subEl.textContent = isEnglish
+        ? "Tap a character to start chatting"
+        : "點選角色開始傾偈";
+    }
+    if (hintEl) {
+      hintEl.textContent = isEnglish
+        ? "Voice + mic unlock on first tap"
+        : "第一次點選會開啟語音同麥克風";
+    }
+  };
+
+  const renderGrid = () => {
+    if (!gridEl) return;
+    gridEl.innerHTML = "";
+    const list = listCompanionCharacters(langCode);
+    for (const item of list) {
+      gridEl.appendChild(
+        createCompanionCardButton(item, {
+          selectedId,
+          compact: true,
+          onClick: (id) => {
+            if (starting) return;
+            selectedId = id;
+            renderGrid();
+            opts.onStart?.(id);
+          },
+        }),
+      );
+    }
+  };
+
+  copy();
+  renderGrid();
+
+  return {
+    schema: COMPANION_START_PICKER_SCHEMA,
+    element: shell,
+    setSelected(id) {
+      selectedId = id;
+      renderGrid();
+    },
+    setStarting(on) {
+      starting = Boolean(on);
+      shell.classList.toggle("is-starting", starting);
+      shell.setAttribute("aria-busy", starting ? "true" : "false");
+      if (hintEl) {
+        hintEl.textContent = starting
+          ? isEnglish
+            ? "Starting…"
+            : "開始中…"
+          : isEnglish
+            ? "Voice + mic unlock on first tap"
+            : "第一次點選會開啟語音同麥克風";
+      }
+    },
+    show() {
+      shell.classList.remove("hide");
+      shell.removeAttribute("aria-hidden");
+      shell.removeAttribute("hidden");
+    },
+    hide() {
+      shell.classList.add("hide");
+      shell.setAttribute("aria-hidden", "true");
+    },
+    dismiss() {
+      starting = false;
+      shell.classList.remove("is-starting");
+      shell.remove();
     },
     destroy() {
       shell.remove();

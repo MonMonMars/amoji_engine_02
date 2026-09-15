@@ -21,7 +21,7 @@ async function main() {
   page.on("pageerror", (err) => errors.push(String(err)));
 
   await page.goto(url, { waitUntil: "networkidle", timeout: 60000 });
-  await page.waitForSelector("#start-talking", { timeout: 30000 });
+  await page.waitForSelector("#start-character-picker .companion-card", { timeout: 30000 });
 
   const preStart = await page.evaluate(() => ({
     build: window.__amojiBuild,
@@ -30,7 +30,7 @@ async function main() {
     avatarKind: window.__amojiAvatarKind,
   }));
 
-  await page.click("#start-talking");
+  await page.click("#start-character-picker .companion-card");
   await page.waitForTimeout(3500);
 
   const postStart = await page.evaluate(() => ({
@@ -38,7 +38,7 @@ async function main() {
     ready: window.__amojiStart?.ready,
     sessionStarted: window.__amojiStart?.sessionStarted,
     avatarKind: window.__amojiAvatarKind,
-    startGone: !document.getElementById("start-talking"),
+    startGone: !document.getElementById("start-character-picker"),
     canvas: (() => {
       const c = document.getElementById("avatar-canvas");
       if (!c) return null;
