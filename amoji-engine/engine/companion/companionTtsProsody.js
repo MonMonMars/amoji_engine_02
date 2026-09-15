@@ -7,6 +7,7 @@
  */
 import { analyzeSpeechChunk } from "./companionContentMotion.js";
 import { characterProsodyBias } from "./companionCharacterCatalog.js";
+import { voiceProfileProsodyBias } from "./companionVoiceProfiles.js";
 
 export const COMPANION_TTS_PROSODY_SCHEMA = "amoji.companionTtsProsody.v1";
 
@@ -164,6 +165,7 @@ export function buildTtsInstruct(opts = {}) {
  *   text?: string,
  *   lang?: string,
  *   characterId?: string,
+ *   voiceId?: string,
  * }} opts
  */
 function inferTalkStyleFromEmotion(emotion, nuance, text, talkStyle) {
@@ -195,6 +197,7 @@ export function resolveCompanionTtsProsody(opts = {}) {
   const styleDelta = STYLE_EDGE_DELTA[talkStyle] || STYLE_EDGE_DELTA.explain;
   const textCue = analyzeTextExpressiveness(text);
   const characterBias = characterProsodyBias(String(opts.characterId || ""));
+  const voiceBias = voiceProfileProsodyBias(String(opts.voiceId || ""));
 
   const energyRate = (speechEnergy - 0.5) * 18;
   const energyPitch = (speechEnergy - 0.5) * 16;
@@ -206,21 +209,24 @@ export function resolveCompanionTtsProsody(opts = {}) {
     styleDelta.rate +
     textCue.rateBoost +
     energyRate +
-    (characterBias.rate || 0);
+    (characterBias.rate || 0) +
+    (voiceBias.rate || 0);
   const edgePitch =
     base.pitch +
     nuanceDelta.pitch +
     styleDelta.pitch +
     textCue.pitchBoost +
     energyPitch +
-    (characterBias.pitch || 0);
+    (characterBias.pitch || 0) +
+    (voiceBias.pitch || 0);
   const edgeVolume =
     base.volume +
     nuanceDelta.volume +
     styleDelta.volume +
     textCue.volumeBoost +
     energyVolume +
-    (characterBias.volume || 0);
+    (characterBias.volume || 0) +
+    (voiceBias.volume || 0);
 
   const browserBase =
     EMOTION_BROWSER_BASE[emotion] || EMOTION_BROWSER_BASE.neutral;
