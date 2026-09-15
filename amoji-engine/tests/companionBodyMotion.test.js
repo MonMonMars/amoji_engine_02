@@ -85,4 +85,17 @@ describe("createCompanionBodyMotion", () => {
     const rot = humanoid.bones.get("leftUpperArm").rotation;
     expect(rot.z).toBe(VRM_ARM_REST_ROTATIONS.leftUpperArm.z);
   });
+
+  it("plays action combos as a sequence", () => {
+    const humanoid = mockHumanoid();
+    const motion = createCompanionBodyMotion(humanoid);
+    const ok = motion.playAction("wave", { emotion: "happy" });
+    expect(ok).toBe(true);
+    expect(motion.currentAction).toBe("wave");
+    const duration = 3;
+    for (let i = 0; i < Math.ceil(duration * 30); i += 1) {
+      motion.update(1 / 30);
+    }
+    expect(motion.currentAction).not.toBe("wave");
+  });
 });

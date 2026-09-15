@@ -9,7 +9,7 @@ describe("companionWaitAct", () => {
   it("rotates wait poses by phase", () => {
     expect(WAIT_POSES_BY_PHASE.downloading).toContain("downloading");
     expect(pickWaitPose("downloading", 0)).toBe("downloading");
-    expect(pickWaitPose("downloading", 1)).toBe("wave");
+    expect(pickWaitPose("downloading", 1)).toBe("learning");
   });
 
   it("starts and stops wait performance with progress updates", () => {

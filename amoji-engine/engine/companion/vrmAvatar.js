@@ -319,7 +319,22 @@ export async function createVrmAvatar(opts) {
 
   const playGesture = (style) => bodyMotion.playGesture(style);
   const playAction = (action, opts = {}) => {
-    const ok = bodyMotion.playAction(action, { emotion: opts.emotion || emotion });
+    const ok = bodyMotion.playAction(action, {
+      emotion: opts.emotion || emotion,
+      loop: opts.loop,
+      loopSequence: opts.loopSequence,
+      single: opts.single,
+      maxMoves: opts.maxMoves,
+    });
+    emotion = bodyMotion.emotion;
+    applyEmotionExpressions(emotion);
+    return ok;
+  };
+  const playActionSequence = (actions, opts = {}) => {
+    const ok = bodyMotion.playActionSequence(actions, {
+      emotion: opts.emotion || emotion,
+      loopSequence: opts.loopSequence,
+    });
     emotion = bodyMotion.emotion;
     applyEmotionExpressions(emotion);
     return ok;
@@ -580,6 +595,7 @@ export async function createVrmAvatar(opts) {
     reactToSpeechChunk,
     playGesture,
     playAction,
+    playActionSequence,
     stopAction,
     playGestureForText,
     applyContentFromReply,
