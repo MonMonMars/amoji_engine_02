@@ -6,7 +6,9 @@ import {
   nextVoiceId,
   resolveVoiceId,
   voiceGenderLabel,
+  voicePickerButtonLabel,
   voicePresetById,
+  voicesForLang,
 } from "../engine/companion/companionVoiceCatalog.js";
 
 describe("companionVoiceCatalog", () => {
@@ -62,5 +64,21 @@ describe("companionVoiceCatalog", () => {
       lang: "zh-HK",
       cloud: true,
     });
+  });
+
+  it("lists eleven Cantonese voice personas", () => {
+    expect(voicesForLang("yue").length).toBe(11);
+    expect(voicesForLang("yue").map((v) => v.id)).toContain(
+      "zh-HK-HiuMaanNeural-warm",
+    );
+  });
+
+  it("formats picker button labels with gender", () => {
+    expect(voicePickerButtonLabel("zh-HK-HiuMaanNeural-warm", "yue", false)).toBe(
+      "曉曼·溫柔·女聲",
+    );
+    expect(voicePickerButtonLabel("zh-HK-WanLungNeural-calm", "yue", true)).toBe(
+      "WanLung·calm (Male)",
+    );
   });
 });

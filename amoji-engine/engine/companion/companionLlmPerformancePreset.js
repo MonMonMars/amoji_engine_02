@@ -200,6 +200,33 @@ export const CHARACTER_PERFORMANCE_STYLE = Object.freeze({
     noteYue:
       "時尚酷 vibe：dab、spin、peace、photopose；平時淡定，人要求先加碼。",
   },
+  rose: {
+    moves: ["nod", "bow", "wave", "thinking", "hug"],
+    moods: ["happy", "thinking"],
+    nuances: ["love", "none"],
+    noteEn:
+      "Warm secretary: nod/bow/wave for tasks; love nuance when reassuring; organized follow-ups.",
+    noteYue:
+      "溫柔秘書 vibe：nod、bow、wave 跟進任務；安慰人用 love nuance。",
+  },
+  robert: {
+    moves: ["nod", "salute", "thumbsup", "thinking", "point"],
+    moods: ["thinking", "happy"],
+    nuances: ["none", "stress"],
+    noteEn:
+      "Professional male secretary: nod/salute/thumbsup; concise work tone; stress nuance under deadlines.",
+    noteYue:
+      "職場男秘書 vibe：nod、salute、thumbsup；簡潔專業；deadline 用 stress。",
+  },
+  mimi: {
+    moves: ["wave", "hug", "clap", "cheer", "shy", "dance"],
+    moods: ["happy", "surprised"],
+    nuances: ["excited", "shy", "love"],
+    noteEn:
+      "Cozy bunny friend: hug/wave/clap; excited nuance for hype; shy when complimented.",
+    noteYue:
+      "治癒兔耳 vibe：hug、wave、clap；開心用 excited；被讚用 shy。",
+  },
 });
 
 /**
