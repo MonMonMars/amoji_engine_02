@@ -6,6 +6,7 @@
  * the same performance intent into Edge TTS rate/pitch/volume and Web Speech API values.
  */
 import { analyzeSpeechChunk } from "./companionContentMotion.js";
+import { characterProsodyBias } from "./companionCharacterCatalog.js";
 
 export const COMPANION_TTS_PROSODY_SCHEMA = "amoji.companionTtsProsody.v1";
 
@@ -162,6 +163,7 @@ export function buildTtsInstruct(opts = {}) {
  *   speechEnergy?: number,
  *   text?: string,
  *   lang?: string,
+ *   characterId?: string,
  * }} opts
  */
 export function resolveCompanionTtsProsody(opts = {}) {
@@ -176,6 +178,7 @@ export function resolveCompanionTtsProsody(opts = {}) {
   const nuanceDelta = NUANCE_EDGE_DELTA[nuance] || NUANCE_EDGE_DELTA.none;
   const styleDelta = STYLE_EDGE_DELTA[talkStyle] || STYLE_EDGE_DELTA.explain;
   const textCue = analyzeTextExpressiveness(text);
+  const characterBias = characterProsodyBias(String(opts.characterId || ""));
 
   const energyRate = (speechEnergy - 0.5) * 18;
   const energyPitch = (speechEnergy - 0.5) * 16;
@@ -186,19 +189,22 @@ export function resolveCompanionTtsProsody(opts = {}) {
     nuanceDelta.rate +
     styleDelta.rate +
     textCue.rateBoost +
-    energyRate;
+    energyRate +
+    (characterBias.rate || 0);
   const edgePitch =
     base.pitch +
     nuanceDelta.pitch +
     styleDelta.pitch +
     textCue.pitchBoost +
-    energyPitch;
+    energyPitch +
+    (characterBias.pitch || 0);
   const edgeVolume =
     base.volume +
     nuanceDelta.volume +
     styleDelta.volume +
     textCue.volumeBoost +
-    energyVolume;
+    energyVolume +
+    (characterBias.volume || 0);
 
   const browserBase =
     EMOTION_BROWSER_BASE[emotion] || EMOTION_BROWSER_BASE.neutral;

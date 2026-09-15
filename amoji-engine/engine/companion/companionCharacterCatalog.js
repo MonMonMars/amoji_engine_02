@@ -10,6 +10,7 @@
  * - Guy: male English — relaxed, direct
  */
 import { buildActionPromptFragment } from "./companionActionMotion.js";
+import { voiceShortLabel } from "./companionVoiceCatalog.js";
 
 export const CHARACTER_STORAGE_KEY = "amoji.companion.characterId";
 
@@ -28,6 +29,9 @@ export const CHARACTER_STORAGE_KEY = "amoji.companion.characterId";
  *   personalityEn: string,
  *   tapLinesYue: string[],
  *   tapLinesEn: string[],
+ *   greetingYue: string,
+ *   greetingEn: string,
+ *   prosodyBias?: { rate?: number, pitch?: number, volume?: number },
  *   avatarLabel: { yue: string, en: string },
  * }} CharacterDef */
 
@@ -49,9 +53,12 @@ export const COMPANION_CHARACTERS = Object.freeze({
     previewImage: "/prototypes/assets/companion-girl-ref.png",
     accent: "#7fd4cf",
     voices: {
-      yue: "zh-HK-HiuMaanNeural",
+      yue: "zh-HK-HiuGaaiNeural",
       en: "en-US-AriaNeural",
     },
+    greetingYue: "你好呀！我係曖咪，有咩想傾？",
+    greetingEn: "Hey! Amoji here — what's up?",
+    prosodyBias: { rate: 10, pitch: 12, volume: 6 },
     personalityYue:
       "你係曖咪（Amoji），一個活潑搞怪、貼地嘅動漫同伴。你鍾意用語氣詞（呀、啦、囉、咩），會同用家像朋友咁傾偈，偶爾自嘲同玩梗，但唔會刻薄。",
     personalityEn:
@@ -86,9 +93,12 @@ export const COMPANION_CHARACTERS = Object.freeze({
     previewImage: "/prototypes/assets/companion-face-tex.png",
     accent: "#9ad7ff",
     voices: {
-      yue: "zh-HK-HiuGaaiNeural",
+      yue: "zh-HK-HiuMaanNeural",
       en: "en-US-JennyNeural",
     },
+    greetingYue: "你好，我係空。慢慢講，我喺度聽。",
+    greetingEn: "Hello, I'm Sora. Take your time — I'm listening.",
+    prosodyBias: { rate: -8, pitch: 2, volume: -6 },
     personalityYue:
       "你係空（Sora），溫柔淡定嘅知性同伴。你講嘢清晰有條理，會耐心解釋同安慰人，語氣柔和，唔會太嘈。",
     personalityEn:
@@ -127,6 +137,9 @@ export const COMPANION_CHARACTERS = Object.freeze({
       yue: "zh-HK-HiuGaaiNeural",
       en: "en-US-AriaNeural",
     },
+    greetingYue: "哈囉哈囉！絆喺度呀～今日想玩咩？",
+    greetingEn: "Hiya! Kizuna's here~ Ready to hang out?",
+    prosodyBias: { rate: 16, pitch: 18, volume: 10 },
     personalityYue:
       "你係絆愛（Kizuna AI），官方 KAMATTE AI 風格嘅虛擬偶像同伴。你正面、可愛、鍾意用感嘆詞同鼓勵人，偶爾會說「包你睇！」式嘅俏皮語，但保持友善。",
     personalityEn:
@@ -168,6 +181,9 @@ export const COMPANION_CHARACTERS = Object.freeze({
       yue: "zh-HK-WanLungNeural",
       en: "en-US-GuyNeural",
     },
+    greetingYue: "喂，我係烈。有事直講啦。",
+    greetingEn: "Yo, Rex here. Spit it out — I'm listening.",
+    prosodyBias: { rate: 4, pitch: -8, volume: 2 },
     personalityYue:
       "你係烈（Rex），爽朗直率嘅同伴（男聲）。你講嘢干脆，有少少毒舌但係為人著想，會保護同鼓勵用家，唔會娘。",
     personalityEn:
@@ -299,6 +315,33 @@ export function characterTapLines(characterId, isEnglish) {
 }
 
 /**
+ * @param {string} characterId
+ * @param {boolean} [isEnglish]
+ */
+export function characterGreeting(characterId, isEnglish = false) {
+  const def = getCharacter(characterId);
+  return isEnglish ? def.greetingEn : def.greetingYue;
+}
+
+/**
+ * @param {string} characterId
+ */
+export function characterProsodyBias(characterId) {
+  const def = getCharacter(characterId);
+  return def.prosodyBias || { rate: 0, pitch: 0, volume: 0 };
+}
+
+/**
+ * @param {string} characterId
+ * @param {"yue" | "en"} langCode
+ * @param {boolean} [englishUi]
+ */
+export function characterVoiceLabel(characterId, langCode, englishUi = false) {
+  const voiceId = defaultVoiceForCharacter(characterId, langCode);
+  return voiceShortLabel(voiceId, langCode, englishUi);
+}
+
+/**
  * @param {string} currentId
  */
 export function nextCharacterId(currentId) {
@@ -348,6 +391,7 @@ export function listCompanionCharacters(langCode = "yue") {
   const en = langCode === "en";
   return CHARACTER_IDS.map((id) => {
     const def = getCharacter(id);
+    const voiceId = en ? def.voices.en : def.voices.yue;
     return {
       id,
       name: en ? def.name.en : def.name.yue,
@@ -358,6 +402,9 @@ export function listCompanionCharacters(langCode = "yue") {
       badge: def.badge ? (en ? def.badge.en : def.badge.yue) : null,
       avatarPrefer: def.avatarPrefer,
       modelUrl: def.modelUrl,
+      voiceId,
+      voiceLabel: voiceShortLabel(voiceId, langCode, en),
+      greeting: en ? def.greetingEn : def.greetingYue,
     };
   });
 }
