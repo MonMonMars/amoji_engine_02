@@ -71,7 +71,8 @@ describe("companionCharacterCatalog", () => {
 
   it("cycles characters", () => {
     expect(nextCharacterId("amoji")).toBe("sora");
-    expect(nextCharacterId("rex")).toBe("amoji");
+    expect(nextCharacterId("rex")).toBe("sky");
+    expect(nextCharacterId("sky")).toBe("amoji");
   });
 
   it("exposes avatar config per character", () => {
