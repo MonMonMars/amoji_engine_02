@@ -303,27 +303,20 @@
         opacity: 0;
       }
 
-      .orbit-reset-btn {
-        position: absolute;
-        right: max(0.75rem, env(safe-area-inset-right));
-        top: 42%;
-        transform: translateY(-50%);
-        z-index: 4;
+      .brand-btn {
         pointer-events: auto;
-        padding: 0.4rem 0.65rem;
-        border-radius: 999px;
-        border: 1px solid rgba(247, 241, 232, 0.18);
-        background: rgba(10, 14, 22, 0.55);
-        color: var(--muted);
-        font: inherit;
-        font-size: 0.72rem;
+        border: 0;
+        background: transparent;
+        padding: 0;
         cursor: pointer;
-        backdrop-filter: blur(8px);
+        font: inherit;
+        color: inherit;
+        text-align: left;
       }
 
-      .orbit-reset-btn:hover {
-        color: #f7f1e8;
-        border-color: rgba(127, 212, 207, 0.45);
+      .brand-btn:hover .brand-live,
+      .brand-btn:focus-visible .brand-live {
+        color: #9ee8e3;
       }
 
 
@@ -1411,7 +1404,9 @@
         top: 4.2rem;
         right: 1rem;
         z-index: 7;
-        width: min(320px, calc(100% - 2rem));
+        width: min(360px, calc(100% - 2rem));
+        max-height: min(78dvh, 640px);
+        overflow-y: auto;
         padding: 0.9rem;
         border-radius: 1rem;
         background: var(--glass-strong);
@@ -1425,6 +1420,68 @@
 
       .settings.open {
         display: flex;
+      }
+
+      .settings-section-title {
+        margin: 0.15rem 0 0;
+        font-size: 0.68rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: rgba(247, 241, 232, 0.55);
+      }
+
+      .settings-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.45rem;
+      }
+
+      .settings-row .btn-secondary {
+        flex: 1 1 calc(50% - 0.25rem);
+        min-width: 7.5rem;
+      }
+
+      .settings-llm-panel {
+        margin: 0.15rem 0 0.35rem;
+        padding: 0.55rem 0.15rem 0.15rem;
+        border-top: 1px solid var(--line);
+      }
+
+      .settings-llm-panel .llm-switcher {
+        flex-wrap: wrap;
+      }
+
+      .settings-links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.45rem;
+        margin-top: 0.15rem;
+      }
+
+      .settings-links a {
+        font-size: 0.72rem;
+        color: var(--muted);
+        text-decoration: none;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        padding: 0.35rem 0.65rem;
+      }
+
+      .settings-links a:hover {
+        color: var(--ink);
+        border-color: rgba(127, 212, 207, 0.45);
+      }
+
+      .topbar .meta .pill,
+      .topbar .meta .companions-btn,
+      .topbar .meta .lab-link,
+      .topbar .meta .key-btn {
+        display: none !important;
+      }
+
+      .composer.composer-minimal .icon-btn:not(.mic-btn) {
+        display: none !important;
       }
 
       .settings label {
@@ -1547,9 +1604,6 @@
       @media (max-width: 640px) {
         .chat-column {
           padding-top: 4.8rem;
-        }
-        .topbar .meta .pill:not(#status-pill):not(#voice-pill):not(#lang-pill):not(#character-pill) {
-          display: none;
         }
       }
 
@@ -2026,27 +2080,27 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-15-v56-emotion-ball",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-15-v57-minimal-ui",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-15-v56-emotion-ball"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-15-v57-minimal-ui"
         }
       }
     </script>
-    <link rel="modulepreload" href="/amoji-engine/vendor/three.module.js?v=2026-09-15-v56-emotion-ball" />
-    <link rel="modulepreload" href="/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-15-v56-emotion-ball" />
+    <link rel="modulepreload" href="/amoji-engine/vendor/three.module.js?v=2026-09-15-v57-minimal-ui" />
+    <link rel="modulepreload" href="/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-15-v57-minimal-ui" />
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-15-v56-emotion-ball"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-15-v57-minimal-ui"
     />
-    <link rel="modulepreload" href="/amoji-engine/engine/companion/vrmAvatar.js?v=2026-09-15-v56-emotion-ball" />
-    <link rel="modulepreload" href="/amoji-engine/engine/companion/createAvatar.js?v=2026-09-15-v56-emotion-ball" />
+    <link rel="modulepreload" href="/amoji-engine/engine/companion/vrmAvatar.js?v=2026-09-15-v57-minimal-ui" />
+    <link rel="modulepreload" href="/amoji-engine/engine/companion/createAvatar.js?v=2026-09-15-v57-minimal-ui" />
     <link rel="prefetch" href="/api/motions?pack=basic" as="fetch" crossorigin />
     <link rel="prefetch" href="/api/motions?pack=extensions" as="fetch" crossorigin />
     <script>
-      window.__amojiBuild = "2026-09-15-v56-emotion-ball";
+      window.__amojiBuild = "2026-09-15-v57-minimal-ui";
     </script>
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-15-v56-emotion-ball"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-15-v56-emotion-ball"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-15-v57-minimal-ui"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-15-v57-minimal-ui"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;
@@ -2270,57 +2324,42 @@
     <div class="stage">
       <div class="atmosphere" aria-hidden="true"></div>
       <canvas id="avatar-canvas" aria-label="Amoji companion — drag to orbit"></canvas>
-      <div class="orbit-hint" id="orbit-hint">拖曳旋轉 · Drag to orbit · 滾轮缩放</div>
-      <button type="button" class="orbit-reset-btn" id="orbit-reset-btn" title="Reset camera view">
-        ↺ View
-      </button>
+      <div class="orbit-hint" id="orbit-hint">拖曳旋轉 · 雙擊重置視角 · Double-tap to reset view</div>
       <header class="topbar">
-        <div class="brand"><span id="brand-name">Amoji</span> <span>Live</span></div>
+        <button
+          type="button"
+          class="brand brand-btn"
+          id="brand-btn"
+          title="Tap to switch companion"
+        >
+          <span id="brand-name">Amoji</span> <span class="brand-live">Live</span>
+        </button>
         <div class="meta">
-          <button
-            type="button"
-            class="companions-btn"
-            id="companions-btn"
-            title="Choose companion"
-          >
-            Companions
-          </button>
-          <button
-            type="button"
-            class="pill pill-btn"
-            id="character-pill"
-            title="Switch character"
-          >
-            char · <strong>…</strong>
-          </button>
-          <div class="pill" id="status-pill">state · <strong>idle</strong></div>
+          <div class="pill" id="status-pill" hidden aria-hidden="true">state · <strong>idle</strong></div>
           <div class="pill avatar-load-pill" id="avatar-load-pill" hidden>
             avatar · <strong>loading…</strong>
           </div>
-          <div class="pill" id="mode-pill">LLM · <strong>local</strong></div>
-          <div class="pill" id="emotion-pill">feel · <strong>neutral</strong></div>
-          <button
-            type="button"
-            class="pill pill-btn"
-            id="voice-pill"
-            title="Tap to switch voice"
-          >
-            voice · <strong>…</strong>
-          </button>
-          <a
-            class="lab-link pill-btn"
-            id="lang-pill"
-            href="?lang=yue"
-            title="Switch language"
-          >粵</a>
-          <a class="lab-link" id="lite-link" href="/companion" title="Text-only chat (no 3D)">Lite</a>
-          <a class="lab-link" id="lab-link" href="/prototypes/realtime-voice-lab.html">Lab</a>
-          <button type="button" class="key-btn" id="btn-cloud-key" hidden title="Paste API key">🔑 Key</button>
-          <button type="button" class="gear" id="btn-settings" title="LLM settings" hidden>⚙</button>
+          <div class="pill" id="mode-pill" hidden aria-hidden="true">LLM · <strong>local</strong></div>
+          <div class="pill" id="emotion-pill" hidden aria-hidden="true">feel · <strong>neutral</strong></div>
+          <button type="button" class="gear" id="btn-settings" title="Chat settings">⚙</button>
         </div>
       </header>
 
       <div class="settings" id="settings">
+        <p class="settings-section-title" id="settings-chat-title">Chat</p>
+        <div class="settings-row">
+          <button type="button" class="btn-secondary" id="settings-btn-lang">Language</button>
+          <button type="button" class="btn-secondary" id="settings-btn-voice">Voice</button>
+        </div>
+        <button type="button" class="btn-secondary" id="settings-btn-speaker">Speaker: on</button>
+        <button type="button" class="btn-secondary" id="settings-btn-companions">Switch companion</button>
+        <button type="button" class="btn-secondary" id="settings-btn-camera">Reset camera view</button>
+        <div class="settings-links">
+          <a id="lite-link" href="/companion">Text-only</a>
+          <a id="lab-link" href="/prototypes/realtime-voice-lab.html">Voice lab</a>
+        </div>
+        <p class="settings-section-title" id="settings-brain-title">Brain</p>
+        <div class="llm-switcher-wrap settings-llm-panel" id="llm-switcher-wrap"></div>
         <div id="settings-local">
           <label>
             LLM base URL (OpenAI-compatible)
@@ -2369,26 +2408,11 @@
           <div class="transcript" id="transcript" aria-live="polite"></div>
         </div>
         <div class="composer-wrap">
-          <div class="cloud-key-banner" id="cloud-key-banner">
-            <span>🔑 Paste OpenRouter key for smart chat</span>
-            <input id="cloud-key-inline" type="password" placeholder="sk-or-v1-…" autocomplete="off" />
-            <button type="button" id="btn-save-cloud-key-inline">Save</button>
-          </div>
-          <div class="llm-switcher-wrap" id="llm-switcher-wrap"></div>
           <div class="emotion-ball-stack is-hidden" id="emotion-ball-stack" aria-hidden="true">
             <div class="emotion-ball" id="emotion-ball" data-ball-state="idle" hidden></div>
             <p class="emotion-ball__caption" id="emotion-ball-caption">Ready · neutral</p>
           </div>
-          <form class="composer" id="composer">
-            <button
-              type="button"
-              class="icon-btn on"
-              id="btn-speaker"
-              title="Speaker on/off"
-              aria-pressed="true"
-            >
-              🔊
-            </button>
+          <form class="composer composer-minimal" id="composer">
             <button
               type="button"
               class="icon-btn mic-btn"
@@ -2424,22 +2448,6 @@
                   />
                 </svg>
               </span>
-            </button>
-            <button
-              type="button"
-              class="icon-btn lang-switch"
-              id="btn-voice-switch"
-              title="Switch voice"
-            >
-              女聲
-            </button>
-            <button
-              type="button"
-              class="icon-btn lang-switch"
-              id="btn-lang-switch"
-              title="Switch language"
-            >
-              粵
             </button>
             <textarea
               id="input"
@@ -2831,16 +2839,17 @@
       const modePill = document.getElementById("mode-pill");
       const emotionPill = document.getElementById("emotion-pill");
       const statusPill = document.getElementById("status-pill");
-      const characterPill = document.getElementById("character-pill");
+      const brandBtn = document.getElementById("brand-btn");
       const brandName = document.getElementById("brand-name");
-      const voicePill = document.getElementById("voice-pill");
       const settings = document.getElementById("settings");
       const btnSettings = document.getElementById("btn-settings");
-      const btnSpeaker = document.getElementById("btn-speaker");
       const btnMic = document.getElementById("btn-mic");
       const emotionBallEl = document.getElementById("emotion-ball");
-      const btnVoiceSwitch = document.getElementById("btn-voice-switch");
-      const btnLangSwitch = document.getElementById("btn-lang-switch");
+      const settingsBtnLang = document.getElementById("settings-btn-lang");
+      const settingsBtnVoice = document.getElementById("settings-btn-voice");
+      const settingsBtnSpeaker = document.getElementById("settings-btn-speaker");
+      const settingsBtnCompanions = document.getElementById("settings-btn-companions");
+      const settingsBtnCamera = document.getElementById("settings-btn-camera");
 
       const params = new URLSearchParams(location.search);
       if (!params.get("lang")) {
@@ -2922,32 +2931,38 @@
           "qwen3:4b",
       };
 
+      const openSettings = () => settings.classList.add("open");
+      const closeSettings = () => settings.classList.remove("open");
+
       if (hostedOnline) {
         document.getElementById("lab-link")?.remove();
         const liteLink = document.getElementById("lite-link");
-        if (liteLink) liteLink.textContent = isEnglish ? "Text" : "文字版";
-        document.querySelector(".brand span").textContent = "Cloud";
+        if (liteLink) liteLink.textContent = isEnglish ? "Text-only" : "文字版";
         document.getElementById("settings-local").hidden = true;
         document.getElementById("settings-cloud").hidden = false;
-        document.getElementById("btn-settings").hidden = false;
-        document.getElementById("btn-settings").title = "Paste API key (smart brain)";
-        document.getElementById("btn-cloud-key").hidden = false;
+        btnSettings.title = isEnglish ? "Chat & brain settings" : "聊天同大腦設定";
         if (!hasAnyClientCloudKey()) {
           fetch("/api/llm/status")
             .then((r) => (r.ok ? r.json() : null))
             .then((status) => {
               if (status?.cloudReady || status?.openrouter?.ok) return;
-              document.getElementById("cloud-key-banner")?.classList.add("show");
+              openSettings();
+              showToast(
+                isEnglish
+                  ? "Paste a free OpenRouter key in settings for smarter chat."
+                  : "喺設定貼免費 OpenRouter key 就可以用更聰明嘅大腦。",
+                "info",
+              );
             })
             .catch(() => {
-              document.getElementById("cloud-key-banner")?.classList.add("show");
+              openSettings();
             });
         }
       } else {
-        document.getElementById("btn-settings").hidden = false;
         document.getElementById("api-url").value = stored.url;
         document.getElementById("api-key").value = stored.key;
         document.getElementById("api-model").value = stored.model;
+        btnSettings.title = isEnglish ? "Chat & brain settings" : "聊天同大腦設定";
       }
 
       const pickTapLine = () => {
@@ -3099,49 +3114,33 @@
         const tagline = characterTagline(characterId, langCode);
         const traits = characterTraitsLabel(characterId, langCode);
         if (brandName) brandName.textContent = name;
-        if (characterPill) {
-          const voiceName = characterVoiceLabel(characterId, langCode, isEnglish);
-          characterPill.innerHTML = `char · <strong>${name}</strong>`;
-          characterPill.title = isEnglish
-            ? `${tagline} — ${traits}. Voice: ${voiceName}. Tap to open Companions.`
-            : `${tagline} — ${traits}。語音：${voiceName}。按一下打開同伴列表。`;
+        if (brandBtn) {
+          brandBtn.title = isEnglish
+            ? `Tap to switch companion · ${tagline}`
+            : `按一下切換同伴 · ${tagline} — ${traits}`;
         }
-        const companionsBtnEl = document.getElementById("companions-btn");
-        if (companionsBtnEl) {
-          companionsBtnEl.textContent = isEnglish ? "Companions" : "同伴";
+        if (settingsBtnCompanions) {
+          settingsBtnCompanions.textContent = isEnglish
+            ? `Companion: ${name}`
+            : `同伴：${name}`;
         }
+        const chatTitle = document.getElementById("settings-chat-title");
+        const brainTitle = document.getElementById("settings-brain-title");
+        if (chatTitle) chatTitle.textContent = isEnglish ? "Chat" : "聊天";
+        if (brainTitle) brainTitle.textContent = isEnglish ? "Brain" : "大腦";
         startPicker?.setSelected?.(characterId);
       };
       setCharacterUi();
 
-      const langPill = document.getElementById("lang-pill");
-      const languageSwitchHref = () => {
-        const targetLang = isEnglish ? "yue" : "en";
-        const targetVoice = defaultVoiceForCharacter(characterId, targetLang);
-        return buildCompanionHref({
-          basePath: location.pathname,
-          lang: targetLang,
-          voiceId: targetVoice,
-          extra: {
-            character: characterId,
-            ...(liteMode ? { lite: "1" } : {}),
-          },
-        });
-      };
-
       const updateLangPill = () => {
-        const href = languageSwitchHref();
         const switchTitle = isEnglish
           ? "Switch to Cantonese (粵語)"
           : "Switch to English";
-        if (langPill) {
-          langPill.textContent = isEnglish ? "EN" : "粵";
-          langPill.href = href;
-          langPill.title = switchTitle;
-        }
-        if (btnLangSwitch) {
-          btnLangSwitch.textContent = isEnglish ? "EN" : "粵";
-          btnLangSwitch.title = switchTitle;
+        if (settingsBtnLang) {
+          settingsBtnLang.textContent = isEnglish
+            ? "Language: English"
+            : "語言：粵語";
+          settingsBtnLang.title = switchTitle;
         }
       };
 
@@ -3159,17 +3158,23 @@
       }
 
       const orbitHint = document.getElementById("orbit-hint");
-      const orbitResetBtn = document.getElementById("orbit-reset-btn");
-      if (orbitResetBtn) {
-        orbitResetBtn.textContent = isEnglish ? "↺ View" : "↺ 視角";
-        orbitResetBtn.title = isEnglish
-          ? "Reset camera to default view"
-          : "重置視角";
-        orbitResetBtn.addEventListener("click", () => {
+      if (orbitHint) {
+        orbitHint.textContent = isEnglish
+          ? "Drag to orbit · double-tap to reset view"
+          : "拖曳旋轉 · 雙擊重置視角";
+      }
+      let lastCanvasTapAt = 0;
+      canvas.addEventListener("pointerup", () => {
+        const now = Date.now();
+        if (now - lastCanvasTapAt < 360) {
           avatar.resetCameraView?.();
           orbitHint?.classList.remove("hide");
-        });
-      }
+          showToast(isEnglish ? "Camera reset" : "已重置視角", "info");
+          lastCanvasTapAt = 0;
+          return;
+        }
+        lastCanvasTapAt = now;
+      });
       canvas.addEventListener(
         "pointerdown",
         () => orbitHint?.classList.add("hide"),
@@ -3195,10 +3200,14 @@
         emotionPill.innerHTML = `feel · <strong>${emotion}${suffix}</strong>`;
       };
       const setVoicePill = (label) => {
-        voicePill.innerHTML = `voice · <strong>${label}</strong>`;
-        voicePill.title = isEnglish
-          ? "Tap to switch voice"
-          : "按一下切換語音";
+        if (settingsBtnVoice) {
+          settingsBtnVoice.textContent = isEnglish
+            ? `Voice: ${label}`
+            : `語音：${label}`;
+          settingsBtnVoice.title = isEnglish
+            ? "Tap to switch voice"
+            : "按一下切換語音";
+        }
       };
       /** @type {(nextVoiceId: string) => void} */
       let applyVoiceSelection = (nextVoiceId) => {
@@ -3367,9 +3376,18 @@
       };
 
       const syncSpeakerBtn = () => {
-        btnSpeaker.classList.toggle("on", voice.speakerOn);
-        btnSpeaker.setAttribute("aria-pressed", voice.speakerOn ? "true" : "false");
-        btnSpeaker.textContent = voice.speakerOn ? "🔊" : "🔇";
+        if (!settingsBtnSpeaker) return;
+        settingsBtnSpeaker.textContent = isEnglish
+          ? voice.speakerOn
+            ? "Speaker: on"
+            : "Speaker: muted"
+          : voice.speakerOn
+            ? "喇叭：開"
+            : "喇叭：關";
+        settingsBtnSpeaker.setAttribute(
+          "aria-pressed",
+          voice.speakerOn ? "true" : "false",
+        );
       };
 
       let speakEmotion = "neutral";
@@ -3591,12 +3609,6 @@
         voice.setCharacterId?.(characterId);
         const label = voiceShortLabel(voiceId, langCode, isEnglish);
         setVoicePill(label);
-        if (btnVoiceSwitch) {
-          btnVoiceSwitch.textContent = label;
-          btnVoiceSwitch.title = isEnglish
-            ? "Tap to switch voice"
-            : "按一下切換語音";
-        }
       };
       applyVoiceSelection(voiceId);
       updateLangPill();
@@ -3607,7 +3619,6 @@
         createCompanionSwitchOverlay,
       } = characterPickerMod;
       const { switchCompanionCharacter } = characterSwitchMod;
-      const companionsBtn = document.getElementById("companions-btn");
       const switchOverlay = createCompanionSwitchOverlay({ root: document.body });
       let characterSwitching = false;
 
@@ -3733,14 +3744,15 @@
         characterPicker.open();
       };
 
-      companionsBtn?.addEventListener("click", openCharacterPicker);
-      characterPill?.addEventListener("click", openCharacterPicker);
-      if (companionsBtn) {
-        companionsBtn.textContent = isEnglish ? "Companions" : "同伴";
-        companionsBtn.title = isEnglish
-          ? "Choose a companion (Grok Ani style)"
-          : "揀同伴（類似 Grok Ani）";
-      }
+      brandBtn?.addEventListener("click", openCharacterPicker);
+      settingsBtnCompanions?.addEventListener("click", () => {
+        closeSettings();
+        openCharacterPicker();
+      });
+      settingsBtnCamera?.addEventListener("click", () => {
+        avatar.resetCameraView?.();
+        showToast(isEnglish ? "Camera reset" : "已重置視角", "info");
+      });
       window.__amojiSupportsMic = voice.supportsMic;
 
       bargeMonitor = createCompanionBargeMonitor({
@@ -4229,36 +4241,30 @@
         saveProviderApiKey(provider, trimmed);
         chat.setProvider(provider);
         void llmSwitcher.refreshAvailability();
-        document.getElementById("cloud-key-banner")?.classList.remove("show");
         return true;
       };
 
       const openKeyPanel = () => {
-        settings.classList.add("open");
+        openSettings();
         document.getElementById("cloud-api-key")?.focus();
       };
-
-      if (hostedOnline) {
-        document.getElementById("btn-cloud-key")?.addEventListener("click", openKeyPanel);
-        document.getElementById("btn-save-cloud-key-inline")?.addEventListener("click", () => {
-          const key = document.getElementById("cloud-key-inline")?.value?.trim();
-          if (!key) {
-            addBubble("system", "Paste your sk-or-… key first");
-            return;
-          }
-          if (!saveCloudKey(key)) {
-            addBubble("system", "Key should start with sk-or- (OpenRouter)");
-            return;
-          }
-          addBubble("system", "Smart brain connected — try chatting!");
-        });
-      }
 
       avatar.setEmotion("neutral");
       setEmotionPill("neutral");
 
       btnSettings.addEventListener("click", () => {
         settings.classList.toggle("open");
+      });
+      document.addEventListener("click", (ev) => {
+        if (!settings.classList.contains("open")) return;
+        const target = ev.target;
+        if (
+          target instanceof Node &&
+          !settings.contains(target) &&
+          target !== btnSettings
+        ) {
+          closeSettings();
+        }
       });
 
       if (hostedOnline) {
@@ -4272,7 +4278,7 @@
             addBubble("system", "Key should start with sk-or- (OpenRouter)");
             return;
           }
-          settings.classList.remove("open");
+          closeSettings();
           addBubble("system", "Smart brain connected — try chatting!");
         });
       }
@@ -4289,7 +4295,7 @@
         if (key.startsWith("sk-or-")) saveProviderApiKey("openrouter-gemma", key);
         const info = chat.setApi({ url, key, model });
         setModePill(info.mode);
-        settings.classList.remove("open");
+        closeSettings();
         addBubble("system", `Custom LLM saved · ${model || info.mode}`);
       });
 
@@ -4329,8 +4335,7 @@
         );
       };
 
-      voicePill.addEventListener("click", cycleVoice);
-      btnVoiceSwitch?.addEventListener("click", cycleVoice);
+      settingsBtnVoice?.addEventListener("click", cycleVoice);
 
       const applyLanguage = (targetLang) => {
         const nextCode = companionLangCode(targetLang);
@@ -4348,11 +4353,10 @@
         setCharacterUi();
         updateLangPill();
         waitAct?.setLocale?.(nextEnglish);
-        if (orbitResetBtn) {
-          orbitResetBtn.textContent = nextEnglish ? "↺ View" : "↺ 視角";
-          orbitResetBtn.title = nextEnglish
-            ? "Reset camera to default view"
-            : "重置視角";
+        if (orbitHint) {
+          orbitHint.textContent = nextEnglish
+            ? "Drag to orbit · double-tap to reset view"
+            : "拖曳旋轉 · 雙擊重置視角";
         }
         if (liteLink) {
           liteLink.href = buildCompanionHref({
@@ -4387,17 +4391,22 @@
       const switchLanguage = () => {
         applyLanguage(isEnglish ? "yue" : "en");
       };
-      langPill?.addEventListener("click", (ev) => {
-        ev.preventDefault();
-        switchLanguage();
-      });
-      btnLangSwitch?.addEventListener("click", switchLanguage);
+      settingsBtnLang?.addEventListener("click", switchLanguage);
 
-      btnSpeaker.addEventListener("click", () => {
+      settingsBtnSpeaker?.addEventListener("click", () => {
         unlockAudioSync();
         voice.setSpeakerOn(!voice.speakerOn);
         syncSpeakerBtn();
-        addBubble("system", voice.speakerOn ? "Speaker on" : "Speaker muted");
+        addBubble(
+          "system",
+          voice.speakerOn
+            ? isEnglish
+              ? "Speaker on"
+              : "喇叭已開"
+            : isEnglish
+              ? "Speaker muted"
+              : "喇叭已關",
+        );
       });
 
       btnMic.addEventListener("click", async () => {
