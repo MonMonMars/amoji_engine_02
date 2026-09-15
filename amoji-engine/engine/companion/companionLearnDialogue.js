@@ -5,7 +5,7 @@
 
 export const LEARN_DIALOGUE_SCHEMA = "amoji.companionLearnDialogue.v1";
 
-/** @typedef {'connecting'|'searching'|'downloading'|'learning'|'installing'|'ready'|'failed'|'progress'|'avatar-load'|'idle'|'character-switch'|'thinking-wait'} LearnPhase */
+/** @typedef {'connecting'|'searching'|'downloading'|'learning'|'installing'|'ready'|'failed'|'progress'|'avatar-load'|'idle'|'character-switch'|'thinking-wait'|'motions-ready'} LearnPhase */
 
 /** @type {Record<LearnPhase, { yue: readonly string[], en: readonly string[] }>} */
 export const LEARN_DIALOGUE = Object.freeze({
@@ -137,6 +137,20 @@ export const LEARN_DIALOGUE = Object.freeze({
       "Big model file incoming — I'm on it…",
     ],
   },
+  "motions-ready": {
+    yue: [
+      "動作庫搞掂喇！我可以揮手、跳舞、鞠躬、太極、霹靂舞等等 — 話我知想做咩。",
+      "我學識咗十幾個身體動作，等緊你都可以叫我表演。",
+      "想睇我做動作？試下話「跳個舞」或者「揮手」。",
+      "我而家識 wave、dance、bow、clap、spin… 隨時可以叫我做。",
+    ],
+    en: [
+      "Motion library ready — I can wave, dance, bow, tai chi, breakdance, and more. Just ask!",
+      "I learned a dozen body moves — I can perform them while we wait too.",
+      "Want a demo? Try \"do a dance\" or \"wave at me\".",
+      "I know wave, dance, bow, clap, spin… ask anytime.",
+    ],
+  },
   idle: {
     yue: [
       "我喺度等緊你呀…",
@@ -155,7 +169,7 @@ export const LEARN_DIALOGUE = Object.freeze({
       "想打字或者開 mic 都得…",
       "我喺度扮靜，其實好期待你講嘢…",
       "慢慢諗，我會等…",
-      "今日想玩咩動作，話我知…",
+      "今日想玩咩動作，話我知 — 我識揮手、跳舞、鞠躬、太極呀…",
       "我伸個腰，等緊你…",
       "有咩新鮮事想分享？",
       "我喺度呀，隨時可以開口…",
@@ -185,7 +199,7 @@ export const LEARN_DIALOGUE = Object.freeze({
       "Type or use the mic — either works…",
       "I'm pretending to be calm but I'm excited to hear you…",
       "Think it over — I'll wait…",
-      "Want me to do a move? Just ask…",
+      "Want me to do a move? I can wave, dance, bow, tai chi — just ask…",
       "Stretching a little while I wait for you…",
       "Got something new to share?",
       "Still here — jump in anytime…",

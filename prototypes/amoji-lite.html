@@ -8,9 +8,10 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji</title>
     <script>
-      window.__amojiBuild = "2026-09-14-v47-camera-follow";
+      window.__amojiBuild = "2026-09-15-v69-demo-fresh";
     </script>
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-14-v47-camera-follow"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-15-v69-demo-fresh"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-15-v69-demo-fresh"></script>
     <style>
       *,
       *::before,
@@ -281,7 +282,7 @@
         syncVoiceToUrl,
         voiceGenderLabel,
         voiceShortLabel,
-      } from "/amoji-engine/engine/companion/companionVoiceCatalog.js?v=2026-09-14-v47-camera-follow";
+      } from "/amoji-engine/engine/companion/companionVoiceCatalog.js?v=2026-09-15-v69-demo-fresh";
 
       (function () {
         window.__amojiLiteTag = "lite-v7";
@@ -516,7 +517,7 @@
 
         function ensureMicCapture() {
           if (micCapture) return Promise.resolve(micCapture);
-          return import("/amoji-engine/engine/companion/companionMicCapture.js?v=2026-09-14-v47-camera-follow")
+          return import("/amoji-engine/engine/companion/companionMicCapture.js?v=2026-09-15-v69-demo-fresh")
             .then(function (mod) {
             micCapture = mod.createMicCapture({
               lang: isEn ? "en-US" : "zh-HK",

@@ -6,6 +6,8 @@ import {
   resolveWaitDialoguePhase,
 } from "./companionLearnDialogue.js";
 import { progressPhaseLabel } from "./companionProgressOverlay.js";
+import { actionLoopsFromCatalog } from "./companionActionCatalog.js";
+import { pickIdleShowcase } from "./companionActionChoreography.js";
 import {
   pickWaitEmotion,
   pickWaitExpressionProfile,
@@ -61,14 +63,21 @@ export function createCompanionWaitAct(opts = {}) {
   /** @type {ReturnType<typeof setInterval> | null} */
   let poseTimer = null;
   let lastAnnouncedPct = -1;
+  /** @type {string | null} */
+  let lastPoseId = null;
 
   const playPose = () => {
-    const pose = pickWaitPose(phase, poseTick);
+    const pose =
+      kind === "idle"
+        ? pickIdleShowcase(lastPoseId)
+        : pickWaitPose(phase, poseTick);
+    lastPoseId = pose;
     const expression = pickWaitExpressionProfile(phase, poseTick, kind);
     const emotion = expression.emotion || pickWaitEmotion(phase, poseTick, kind);
+    const shouldLoop = actionLoopsFromCatalog(pose);
     avatarRef?.playAction?.(pose, {
       emotion,
-      loop: true,
+      loop: shouldLoop,
       single: true,
     });
     avatarRef?.setEmotion?.(emotion);

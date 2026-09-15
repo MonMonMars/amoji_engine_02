@@ -17,6 +17,7 @@ import {
 import { createCompanionBodyMotion } from "./companionBodyMotion.js";
 import { buildVrmExpressionBlend } from "./companionContentMotion.js";
 import { sampleIdleExpressionBlend } from "./companionIdleMotion.js";
+import { configureVrmSpringStability } from "./vrmSpringStability.js";
 
 export const VRM_AVATAR_SCHEMA = "amoji.vrmAvatar.v1";
 
@@ -204,6 +205,7 @@ export async function createVrmAvatar(opts) {
   const baseModelRotY = model.rotation.y;
   scene.add(model);
   vrm.humanoid?.resetNormalizedPose?.();
+  configureVrmSpringStability(vrm);
   const bodyMotion = createCompanionBodyMotion(vrm.humanoid);
 
   const syncHumanoidPose = () => {
@@ -533,8 +535,8 @@ export async function createVrmAvatar(opts) {
       if (vrm.lookAt) {
         vrm.lookAt.autoUpdate = !bodyMotion.currentAction;
       }
-      vrm.update(dt);
       syncHumanoidPose();
+      vrm.update(dt);
 
       computeVrmFrameAnchor(vrm, model, frameAnchor);
       applyOrbitFollowAnchor(controls, camera, frameAnchor);
@@ -601,11 +603,8 @@ export async function createVrmAvatar(opts) {
       }
     }
 
-    const idleLife = !talking && !bodyMotion.currentAction;
-    const breathAmp = idleLife ? 0.007 : 0.004;
-    const breath = Math.sin((now - t0) * 0.0018) * breathAmp;
-    const s = scale * (1 + breath);
-    model.scale.set(s, s, s);
+    // Keep model scale fixed — uniform scale breathing disturbs spring-bone hair/skirt.
+    model.scale.setScalar(scale);
 
     faceLight.intensity = 0.55 + (talking ? 0.2 : 0) + Math.sin((now - t0) * 0.002) * 0.05;
     renderer.render(scene, camera);
@@ -616,7 +615,7 @@ export async function createVrmAvatar(opts) {
   clearExpressionTargets();
   setEmotion("neutral");
   bodyMotion.update(1 / 60);
-  vrm.humanoid?.update?.(0);
+  syncHumanoidPose();
   vrm.update(1 / 60);
   renderer.render(scene, camera);
   raf = requestAnimationFrame(frame);

@@ -1,6 +1,10 @@
 /**
  * Idle / waiting life — weight shifts, breathing, micro-gestures, soft expressions.
  */
+import {
+  easeInOutSine,
+  idleBeatEnvelope,
+} from "./companionPoseSmoothing.js";
 
 export const COMPANION_IDLE_MOTION_SCHEMA = "amoji.companionIdleMotion.v1";
 
@@ -12,22 +16,23 @@ export const COMPANION_IDLE_MOTION_SCHEMA = "amoji.companionIdleMotion.v1";
 export function sampleIdleBodyMotion(elapsedSec, opts = {}) {
   const t = elapsedSec;
   const listening = Boolean(opts.listening);
-  const breath = Math.sin(t * 1.05);
-  const sway = Math.sin(t * 0.58 + 0.6);
-  const weight = Math.sin(t * 0.39 + 1.4);
-  const energy = listening ? 1.12 : 1;
+  const breath = Math.sin(t * 0.92);
+  const sway = Math.sin(t * 0.48 + 0.6);
+  const weight = Math.sin(t * 0.34 + 1.4);
+  const energy = listening ? 1.08 : 1;
+  const amp = 0.88;
 
   return {
-    headX: (breath * 0.028 + Math.sin(t * 0.47) * 0.018) * energy,
-    headZ: (sway * 0.038 + weight * 0.032) * energy,
-    leanY: (weight * 0.062 + Math.sin(t * 0.82) * 0.024) * energy,
-    spineX: 0.014 + breath * 0.022 * energy,
-    chestX: -0.01 + breath * 0.014 * energy,
-    hipZ: weight * 0.048 * energy,
-    armLiftL: 0.06 + Math.sin(t * 0.71 + 0.4) * 0.078 * energy,
-    armLiftR: 0.06 + Math.sin(t * 0.66 + 1.1) * 0.074 * energy,
-    forearmL: Math.max(0, Math.sin(t * 0.88 + 0.2) * 0.058 * energy),
-    forearmR: Math.max(0, Math.sin(t * 0.84 + 0.9) * 0.055 * energy),
+    headX: (breath * 0.022 + Math.sin(t * 0.41) * 0.014) * energy * amp,
+    headZ: (sway * 0.03 + weight * 0.026) * energy * amp,
+    leanY: (weight * 0.048 + Math.sin(t * 0.72) * 0.018) * energy * amp,
+    spineX: 0.012 + breath * 0.018 * energy * amp,
+    chestX: -0.01 + breath * 0.011 * energy * amp,
+    hipZ: weight * 0.038 * energy * amp,
+    armLiftL: 0.05 + Math.sin(t * 0.62 + 0.4) * 0.062 * energy * amp,
+    armLiftR: 0.05 + Math.sin(t * 0.58 + 1.1) * 0.058 * energy * amp,
+    forearmL: Math.max(0, Math.sin(t * 0.76 + 0.2) * 0.044 * energy * amp),
+    forearmR: Math.max(0, Math.sin(t * 0.72 + 0.9) * 0.042 * energy * amp),
   };
 }
 
@@ -85,33 +90,34 @@ export function advanceIdleBeat(state, dt, nowMs) {
     else beat = "fidget";
     phase = 0;
     duration =
-      beat === "nod" ? 0.95 : beat === "look" ? 1.5 : beat === "shift" ? 1.8 : 1.35;
-    nextAt = nowMs + 4200 + Math.random() * 6800;
+      beat === "nod" ? 1.15 : beat === "look" ? 1.85 : beat === "shift" ? 2.1 : 1.55;
+    nextAt = nowMs + 5200 + Math.random() * 7600;
   }
 
   if (beat) {
     phase += dt / duration;
     const p = Math.min(1, phase);
-    const wave = Math.sin(p * Math.PI);
+    const env = idleBeatEnvelope(p);
+    const wave = easeInOutSine(p);
 
     switch (beat) {
       case "nod":
-        overlay.headX = -0.11 * Math.sin(p * Math.PI * 2);
-        overlay.leanY = wave * 0.022;
+        overlay.headX = -0.09 * Math.sin(p * Math.PI);
+        overlay.leanY = wave * 0.018 * env;
         break;
       case "look":
-        overlay.headZ = Math.sin(p * Math.PI * 2) * 0.11;
-        overlay.headX = Math.sin(p * Math.PI) * 0.04;
+        overlay.headZ = Math.sin(p * Math.PI) * 0.08 * env;
+        overlay.headX = wave * 0.028 * env;
         break;
       case "shift":
-        overlay.hipZ = Math.sin(p * Math.PI * 2) * 0.07;
-        overlay.leanY = Math.sin(p * Math.PI) * 0.05;
-        overlay.spineX = 0.02 * wave;
+        overlay.hipZ = Math.sin(p * Math.PI) * 0.055 * env;
+        overlay.leanY = wave * 0.038 * env;
+        overlay.spineX = 0.016 * wave * env;
         break;
       case "fidget":
-        overlay.armLiftL = wave * 0.09;
-        overlay.forearmL = wave * 0.06;
-        overlay.headZ = Math.sin(p * Math.PI * 3) * 0.04;
+        overlay.armLiftL = wave * 0.07 * env;
+        overlay.forearmL = wave * 0.048 * env;
+        overlay.headZ = Math.sin(p * Math.PI * 2) * 0.028 * env;
         break;
       default:
         break;
