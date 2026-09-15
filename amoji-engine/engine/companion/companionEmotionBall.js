@@ -1,13 +1,19 @@
 /**
- * ChatGPT-style emotion orb — large reactive glow tied to mood + voice state.
+ * ChatGPT-style emotion orb — canvas fluid blob + spectrum + emotion/volume HUD.
  */
 import { resolveMicButtonTheme } from "./companionMicButton.js";
+import {
+  buildSpectrumLevels,
+  clamp,
+  drawEmotionOrbFrame,
+  smoothStep,
+} from "./companionEmotionOrbCanvas.js";
 
-export const COMPANION_EMOTION_BALL_SCHEMA = "amoji.companionEmotionBall.v1";
+export const COMPANION_EMOTION_BALL_SCHEMA = "amoji.companionEmotionBall.v2";
 
 /** @typedef {"idle" | "listening" | "thinking" | "speaking" | "disabled"} EmotionBallState */
 
-const STATE_LABEL = Object.freeze({
+const STATE_LABEL_EN = Object.freeze({
   idle: "Ready",
   listening: "Listening",
   thinking: "Thinking",
@@ -15,27 +21,59 @@ const STATE_LABEL = Object.freeze({
   disabled: "Off",
 });
 
-/**
- * @param {number} value
- * @param {number} min
- * @param {number} max
- */
-function clamp(value, min, max) {
-  return Math.max(min, Math.min(max, value));
-}
+const STATE_LABEL_YUE = Object.freeze({
+  idle: "待命",
+  listening: "聽緊",
+  thinking: "諗緊",
+  speaking: "講緊",
+  disabled: "停用",
+});
+
+const EMOTION_LABEL = Object.freeze({
+  neutral: { en: "Neutral", yue: "平靜" },
+  happy: { en: "Happy", yue: "開心" },
+  thinking: { en: "Thinking", yue: "思考" },
+  sad: { en: "Sad", yue: "傷心" },
+  surprised: { en: "Surprised", yue: "驚訝" },
+  angry: { en: "Angry", yue: "生氣" },
+});
 
 /** ChatGPT-inspired layered orb markup. */
 export function companionEmotionBallInnerHtml() {
   return `
-    <div class="emotion-ball__halo" aria-hidden="true"></div>
-    <div class="emotion-ball__ring emotion-ball__ring--a" aria-hidden="true"></div>
-    <div class="emotion-ball__ring emotion-ball__ring--b" aria-hidden="true"></div>
-    <div class="emotion-ball__core" aria-hidden="true"></div>
-    <div class="emotion-ball__shine" aria-hidden="true"></div>
-    <div class="emotion-ball__wave" aria-hidden="true">
-      <i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+    <canvas class="emotion-ball__canvas" aria-hidden="true"></canvas>
+    <div class="emotion-ball__hud" aria-hidden="true">
+      <span class="emotion-ball__emotion-chip" data-emotion-chip>Neutral</span>
+      <span class="emotion-ball__volume-meter">
+        <span class="emotion-ball__volume-fill" data-volume-fill></span>
+      </span>
     </div>
+    <div class="emotion-ball__spectrum" data-spectrum aria-hidden="true"></div>
+    <div class="emotion-ball__halo" aria-hidden="true"></div>
   `;
+}
+
+/**
+ * @param {HTMLElement} root
+ * @param {number} count
+ */
+function ensureSpectrumBars(root, count = 16) {
+  const spectrum = root.querySelector("[data-spectrum]");
+  if (!spectrum) return [];
+  if (spectrum.childElementCount === count) {
+    return [...spectrum.querySelectorAll(".emotion-ball__bar")];
+  }
+  spectrum.innerHTML = "";
+  /** @type {HTMLElement[]} */
+  const bars = [];
+  for (let i = 0; i < count; i++) {
+    const bar = document.createElement("span");
+    bar.className = "emotion-ball__bar";
+    bar.style.setProperty("--bar-i", String(i));
+    spectrum.appendChild(bar);
+    bars.push(bar);
+  }
+  return bars;
 }
 
 /**
@@ -57,18 +95,42 @@ export function createCompanionEmotionBall(el, opts = {}) {
   }
 
   el.classList.add("emotion-ball");
-  if (!el.querySelector(".emotion-ball__core")) {
+  if (!el.querySelector(".emotion-ball__canvas")) {
     el.innerHTML = companionEmotionBallInnerHtml();
   }
 
+  const canvas = el.querySelector(".emotion-ball__canvas");
+  const ctx = canvas?.getContext?.("2d") || null;
   const labelEl =
     el.parentElement?.querySelector?.(".emotion-ball__caption") || null;
+  const emotionChip =
+    el.querySelector("[data-emotion-chip]") || null;
+  const volumeFill =
+    el.querySelector("[data-volume-fill]") || null;
+  const spectrumBars = ensureSpectrumBars(el, 16);
 
   /** @type {EmotionBallState} */
   let state = "idle";
   let theme = resolveMicButtonTheme({ emotion: "neutral", nuance: "none" });
   let emotion = "neutral";
   let nuance = "none";
+  let targetVolume = 0;
+  let displayVolume = 0;
+  /** @type {number[]} */
+  let spectrumLevels = new Array(16).fill(0.15);
+  let rafId = 0;
+  let startTime = 0;
+  let visible = false;
+
+  const emotionLabel = (key) => {
+    const row = EMOTION_LABEL[key] || EMOTION_LABEL.neutral;
+    return isEnglish ? row.en : row.yue;
+  };
+
+  const stateLabel = (key) =>
+    isEnglish
+      ? STATE_LABEL_EN[key] || key
+      : STATE_LABEL_YUE[key] || key;
 
   const applyTheme = () => {
     el.style.setProperty("--ball-hue", String(theme.hue));
@@ -80,30 +142,99 @@ export function createCompanionEmotionBall(el, opts = {}) {
     el.style.setProperty("--ball-surface", theme.surface);
     el.style.setProperty("--ball-border", theme.border);
     el.style.setProperty("--ball-ring-speed", `${theme.ringSpeed.toFixed(2)}s`);
+    el.dataset.emotion = emotion;
+    if (emotionChip) {
+      emotionChip.textContent = emotionLabel(emotion);
+    }
+  };
+
+  const resizeCanvas = () => {
+    if (!canvas || !ctx) return;
+    const dpr = Math.min(2, globalThis.devicePixelRatio || 1);
+    const rect = el.getBoundingClientRect();
+    const size = Math.max(48, Math.round(rect.width || 68));
+    canvas.width = Math.round(size * dpr);
+    canvas.height = Math.round(size * dpr);
+    canvas.style.width = `${size}px`;
+    canvas.style.height = `${size}px`;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  };
+
+  const updateSpectrumDom = (time) => {
+    spectrumLevels = buildSpectrumLevels(
+      spectrumLevels,
+      displayVolume,
+      time,
+      spectrumBars.length || 16,
+    );
+    for (let i = 0; i < spectrumBars.length; i++) {
+      const h = spectrumLevels[i] ?? 0.15;
+      spectrumBars[i].style.setProperty("--bar-level", h.toFixed(3));
+    }
+    if (volumeFill) {
+      volumeFill.style.width = `${Math.round(displayVolume * 100)}%`;
+    }
+    el.style.setProperty("--ball-level", displayVolume.toFixed(3));
+    el.style.setProperty(
+      "--ball-scale",
+      (1 + displayVolume * 0.24).toFixed(3),
+    );
   };
 
   const updateCaption = () => {
     if (!labelEl) return;
-    const stateLabel = isEnglish
-      ? STATE_LABEL[state] || state
-      : state === "listening"
-        ? "聽緊"
-        : state === "thinking"
-          ? "諗緊"
-          : state === "speaking"
-            ? "講緊"
-            : state === "disabled"
-              ? "停用"
-              : "待命";
-    labelEl.textContent = `${stateLabel} · ${emotion}`;
+    const volPct = Math.round(displayVolume * 100);
+    const volLabel = isEnglish ? `${volPct}% vol` : `音量 ${volPct}%`;
+    labelEl.textContent = `${stateLabel(state)} · ${emotionLabel(emotion)} · ${volLabel}`;
+  };
+
+  const renderFrame = (timestamp) => {
+    if (!visible) return;
+    if (!startTime) startTime = timestamp;
+    const time = (timestamp - startTime) / 1000;
+    displayVolume = smoothStep(displayVolume, targetVolume, 0.28);
+    updateSpectrumDom(time);
+    updateCaption();
+
+    if (ctx && canvas) {
+      const w = canvas.width / (globalThis.devicePixelRatio || 1);
+      const h = canvas.height / (globalThis.devicePixelRatio || 1);
+      drawEmotionOrbFrame(ctx, w, h, {
+        time,
+        volume: displayVolume,
+        hue: theme.hue,
+        sat: theme.sat,
+        light: theme.light,
+        state,
+      });
+    }
+    rafId = globalThis.requestAnimationFrame(renderFrame);
+  };
+
+  const startLoop = () => {
+    if (rafId || !visible) return;
+    resizeCanvas();
+    rafId = globalThis.requestAnimationFrame(renderFrame);
+  };
+
+  const stopLoop = () => {
+    if (rafId) {
+      globalThis.cancelAnimationFrame(rafId);
+      rafId = 0;
+    }
+    startTime = 0;
   };
 
   const setState = (next) => {
     const allowed = ["idle", "listening", "thinking", "speaking", "disabled"];
     state = allowed.includes(next) ? next : "idle";
     el.dataset.ballState = state;
-    el.classList.toggle("is-live", state === "listening" || state === "speaking");
+    el.classList.toggle(
+      "is-live",
+      state === "listening" || state === "speaking",
+    );
     el.classList.toggle("is-thinking", state === "thinking");
+    el.classList.toggle("is-idle", state === "idle");
     updateCaption();
   };
 
@@ -116,20 +247,25 @@ export function createCompanionEmotionBall(el, opts = {}) {
   };
 
   const setLevel = (level) => {
-    if (state !== "listening" && state !== "speaking") {
-      el.style.removeProperty("--ball-level");
-      el.style.removeProperty("--ball-scale");
+    if (state === "disabled") {
+      targetVolume = 0;
       return;
     }
-    const clamped = clamp(Number(level) || 0, 0, 1);
-    const scale = 1 + clamped * 0.22;
-    el.style.setProperty("--ball-level", clamped.toFixed(3));
-    el.style.setProperty("--ball-scale", scale.toFixed(3));
+    if (state === "idle") {
+      targetVolume = clamp(Number(level) || 0, 0, 1) * 0.35;
+      return;
+    }
+    targetVolume = clamp(Number(level) || 0, 0, 1);
   };
 
   const reset = () => {
+    targetVolume = 0;
+    displayVolume = 0;
+    spectrumLevels = new Array(spectrumBars.length || 16).fill(0.12);
     el.style.removeProperty("--ball-level");
     el.style.removeProperty("--ball-scale");
+    updateSpectrumDom(0);
+    updateCaption();
   };
 
   /**
@@ -141,6 +277,7 @@ export function createCompanionEmotionBall(el, opts = {}) {
    *   disabled?: boolean,
    *   emotion?: string,
    *   nuance?: string,
+   *   level?: number,
    * }} ctx
    */
   const sync = (ctx = {}) => {
@@ -153,18 +290,22 @@ export function createCompanionEmotionBall(el, opts = {}) {
     const sessionState = String(ctx.sessionState || "").toLowerCase();
     if (sessionState === "thinking" || sessionState === "loading") {
       setState("thinking");
+      if (ctx.level != null) setLevel(ctx.level);
       return;
     }
     if (sessionState === "speaking" || ctx.speaking || ctx.assistantActive) {
       setState("speaking");
+      if (ctx.level != null) setLevel(ctx.level);
       return;
     }
     if (ctx.micOn || sessionState === "listening") {
       setState("listening");
+      if (ctx.level != null) setLevel(ctx.level);
       return;
     }
     setState("idle");
-    reset();
+    if (ctx.level != null) setLevel(ctx.level);
+    else reset();
   };
 
   const stackEl = () =>
@@ -173,14 +314,18 @@ export function createCompanionEmotionBall(el, opts = {}) {
       : null;
 
   const show = () => {
+    visible = true;
     el.hidden = false;
     el.removeAttribute("aria-hidden");
     const stack = stackEl();
     stack?.classList?.remove?.("is-hidden");
     stack?.removeAttribute?.("aria-hidden");
+    startLoop();
   };
 
   const hide = () => {
+    visible = false;
+    stopLoop();
     el.hidden = true;
     el.setAttribute("aria-hidden", "true");
     const stack = stackEl();
@@ -188,9 +333,15 @@ export function createCompanionEmotionBall(el, opts = {}) {
     stack?.setAttribute?.("aria-hidden", "true");
   };
 
+  if (globalThis.ResizeObserver && canvas) {
+    const ro = new ResizeObserver(() => resizeCanvas());
+    ro.observe(el);
+  }
+
   setEmotion("neutral", "none");
   setState("idle");
   applyTheme();
+  updateSpectrumDom(0);
 
   return {
     schema: COMPANION_EMOTION_BALL_SCHEMA,
@@ -203,5 +354,6 @@ export function createCompanionEmotionBall(el, opts = {}) {
     reset,
     getState: () => state,
     getTheme: () => theme,
+    getVolume: () => displayVolume,
   };
 }
