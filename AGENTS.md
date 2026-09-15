@@ -8,6 +8,7 @@ After completing code changes (commit, push, or PR), **always** end your summary
 
 | App | Path |
 |-----|------|
+| Secretary MVP (Today tab, 粵) | `/companion?tab=today&lang=yue&build=<AMOJI_BUILD>` |
 | Full 3D companion (Cantonese) | `/companion-full?lang=yue&build=<AMOJI_BUILD>` |
 | Full 3D companion (English) | `/companion-full?lang=en&build=<AMOJI_BUILD>` |
 | Lite chat | `/companion` |
