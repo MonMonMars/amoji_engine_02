@@ -267,6 +267,7 @@
       media="print"
       onload="this.media='all'"
     />
+    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-15-v61-grok-ani-ui" />
     <noscript>
       <link
         href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap"
@@ -2137,28 +2138,28 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-15-v60-character-start",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-15-v61-grok-ani-ui",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-15-v60-character-start"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-15-v61-grok-ani-ui"
         }
       }
     </script>
-    <link rel="modulepreload" href="/amoji-engine/vendor/three.module.js?v=2026-09-15-v60-character-start" />
-    <link rel="modulepreload" href="/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-15-v60-character-start" />
+    <link rel="modulepreload" href="/amoji-engine/vendor/three.module.js?v=2026-09-15-v61-grok-ani-ui" />
+    <link rel="modulepreload" href="/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-15-v61-grok-ani-ui" />
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-15-v60-character-start"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-15-v61-grok-ani-ui"
     />
-    <link rel="modulepreload" href="/amoji-engine/engine/companion/vrmAvatar.js?v=2026-09-15-v60-character-start" />
-    <link rel="modulepreload" href="/amoji-engine/engine/companion/createAvatar.js?v=2026-09-15-v60-character-start" />
+    <link rel="modulepreload" href="/amoji-engine/engine/companion/vrmAvatar.js?v=2026-09-15-v61-grok-ani-ui" />
+    <link rel="modulepreload" href="/amoji-engine/engine/companion/createAvatar.js?v=2026-09-15-v61-grok-ani-ui" />
     <link rel="prefetch" href="/api/motions?pack=basic" as="fetch" crossorigin />
     <link rel="prefetch" href="/api/motions?pack=extensions" as="fetch" crossorigin />
     <link rel="prefetch" href="/api/motions?pack=premium" as="fetch" crossorigin />
     <script>
-      window.__amojiBuild = "2026-09-15-v60-character-start";
+      window.__amojiBuild = "2026-09-15-v61-grok-ani-ui";
     </script>
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-15-v60-character-start"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-15-v60-character-start"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-15-v61-grok-ani-ui"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-15-v61-grok-ani-ui"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;
@@ -2350,7 +2351,7 @@
       })();
     </script>
   </head>
-  <body>
+  <body class="theme-grok-ani">
     <!-- amoji-build: 2026-09-14-v37-companion-picker — Grok Ani–style character grid -->
     <noscript>
       <div
@@ -2386,11 +2387,24 @@
       <header class="topbar">
         <button
           type="button"
-          class="brand brand-btn"
+          class="companion-chip brand-btn"
           id="brand-btn"
           title="Tap to switch companion"
         >
-          <span id="brand-name">Amoji</span> <span class="brand-live">Live</span>
+          <img
+            class="companion-chip__avatar"
+            id="companion-chip-avatar"
+            src="/prototypes/assets/companion-girl-ref.png"
+            alt=""
+            width="38"
+            height="38"
+            decoding="async"
+          />
+          <span class="companion-chip__text">
+            <span class="companion-chip__name" id="brand-name">Amoji</span>
+            <span class="companion-chip__status" id="companion-status-line">Ready</span>
+          </span>
+          <span class="companion-chip__dot" id="status-dot" data-state="idle" aria-hidden="true"></span>
         </button>
         <div class="meta">
           <div class="pill" id="status-pill" hidden aria-hidden="true">state · <strong>idle</strong></div>
@@ -2399,7 +2413,7 @@
           </div>
           <div class="pill" id="mode-pill" hidden aria-hidden="true">LLM · <strong>local</strong></div>
           <div class="pill" id="emotion-pill" hidden aria-hidden="true">feel · <strong>neutral</strong></div>
-          <button type="button" class="gear" id="btn-settings" title="Chat settings">⚙</button>
+          <button type="button" class="gear" id="btn-settings" title="Chat settings" aria-label="Settings">⚙</button>
         </div>
       </header>
 
@@ -2925,6 +2939,9 @@
       const statusPill = document.getElementById("status-pill");
       const brandBtn = document.getElementById("brand-btn");
       const brandName = document.getElementById("brand-name");
+      const companionChipAvatar = document.getElementById("companion-chip-avatar");
+      const companionStatusLine = document.getElementById("companion-status-line");
+      const statusDot = document.getElementById("status-dot");
       const settings = document.getElementById("settings");
       const btnSettings = document.getElementById("btn-settings");
       const btnMic = document.getElementById("btn-mic");
@@ -3092,6 +3109,7 @@
         if (!avatarLoadPill) return;
         avatarLoadPill.hidden = false;
         avatarLoadPill.classList.remove("hide");
+        syncCompanionStatusUi("loading", currentEmotion);
       };
 
       const hideAvatarLoadPill = () => {
@@ -3193,11 +3211,46 @@
         systemPrompt,
       });
 
+      const statusLineLabels = () =>
+        isEnglish
+          ? {
+              idle: "Ready to chat",
+              loading: "Loading…",
+              listening: "Listening…",
+              thinking: "Thinking…",
+              speaking: "Speaking…",
+            }
+          : {
+              idle: "準備好傾偈",
+              loading: "載入中…",
+              listening: "聽緊你講…",
+              thinking: "思考中…",
+              speaking: "講緊嘢…",
+            };
+
+      const syncCompanionStatusUi = (state = sessionUiState, emotion = currentEmotion) => {
+        const labels = statusLineLabels();
+        if (companionStatusLine) {
+          const mood =
+            emotion && emotion !== "neutral" && emotion !== "thinking"
+              ? ` · ${emotion}`
+              : "";
+          companionStatusLine.textContent = `${labels[state] || labels.idle}${mood}`;
+        }
+        if (statusDot) statusDot.dataset.state = state || "idle";
+      };
+
       const setCharacterUi = () => {
+        const def = getCharacter(characterId);
         const name = characterDisplayName(characterId, langCode, isEnglish);
         const tagline = characterTagline(characterId, langCode);
         const traits = characterTraitsLabel(characterId, langCode);
         if (brandName) brandName.textContent = name;
+        if (companionChipAvatar && def?.previewImage) {
+          companionChipAvatar.src = def.previewImage;
+          companionChipAvatar.alt = name;
+        }
+        syncCompanionStatusUi(sessionUiState, currentEmotion);
         if (brandBtn) {
           brandBtn.title = isEnglish
             ? `Tap to switch companion · ${tagline}`
@@ -3282,6 +3335,7 @@
         const suffix =
           actionLabel && actionLabel !== "none" ? ` · ${actionLabel}` : "";
         emotionPill.innerHTML = `feel · <strong>${emotion}${suffix}</strong>`;
+        syncCompanionStatusUi(sessionUiState, emotion);
       };
       const setVoicePill = (label) => {
         if (settingsBtnVoice) {
@@ -3312,6 +3366,7 @@
             speaking: "speaking",
           };
           statusPill.innerHTML = `state · <strong>${labels[s] || s}</strong>`;
+          syncCompanionStatusUi(s, currentEmotion);
           syncEmotionBall();
           updateEmotionBallVisibility();
         },
