@@ -1569,26 +1569,27 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-15-v48-emotional-tts",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-15-v49-performance-preload",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-15-v48-emotional-tts"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-15-v49-performance-preload"
         }
       }
     </script>
-    <link rel="modulepreload" href="/amoji-engine/vendor/three.module.js?v=2026-09-15-v48-emotional-tts" />
-    <link rel="modulepreload" href="/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-15-v48-emotional-tts" />
+    <link rel="modulepreload" href="/amoji-engine/vendor/three.module.js?v=2026-09-15-v49-performance-preload" />
+    <link rel="modulepreload" href="/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-15-v49-performance-preload" />
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-15-v48-emotional-tts"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-15-v49-performance-preload"
     />
-    <link rel="modulepreload" href="/amoji-engine/engine/companion/vrmAvatar.js?v=2026-09-15-v48-emotional-tts" />
-    <link rel="modulepreload" href="/amoji-engine/engine/companion/createAvatar.js?v=2026-09-15-v48-emotional-tts" />
+    <link rel="modulepreload" href="/amoji-engine/engine/companion/vrmAvatar.js?v=2026-09-15-v49-performance-preload" />
+    <link rel="modulepreload" href="/amoji-engine/engine/companion/createAvatar.js?v=2026-09-15-v49-performance-preload" />
     <link rel="prefetch" href="/api/motions?pack=basic" as="fetch" crossorigin />
+    <link rel="prefetch" href="/api/motions?pack=extensions" as="fetch" crossorigin />
     <script>
-      window.__amojiBuild = "2026-09-15-v48-emotional-tts";
+      window.__amojiBuild = "2026-09-15-v49-performance-preload";
     </script>
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-15-v48-emotional-tts"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-15-v48-emotional-tts"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-15-v49-performance-preload"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-15-v49-performance-preload"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;
@@ -1990,6 +1991,7 @@
         voiceCatalogMod,
         contentMotionMod,
         ttsProsodyMod,
+        performancePreloadMod,
         streamSpeakMod,
         bargeMod,
         voiceGateMod,
@@ -2015,6 +2017,7 @@
         ami("../amoji-engine/engine/companion/companionVoiceCatalog.js"),
         ami("../amoji-engine/engine/companion/companionContentMotion.js"),
         ami("../amoji-engine/engine/companion/companionTtsProsody.js"),
+        ami("../amoji-engine/engine/companion/companionPerformancePreload.js"),
         ami("../amoji-engine/engine/companion/companionStreamSpeak.js"),
         ami("../amoji-engine/engine/companion/companionBargeMonitor.js"),
         ami("../amoji-engine/engine/companion/companionVoiceGate.js"),
@@ -2068,6 +2071,8 @@
         isUserStopCommand,
       } = contentMotionMod;
       const { resolveChunkTtsPerformance } = ttsProsodyMod;
+      const { startPerformancePreload, primeBodyMotionPoses } =
+        performancePreloadMod;
       const { createStreamSpeakPlanner } = streamSpeakMod;
       const { createCompanionBargeMonitor } = bargeMod;
       const { createCompanionVoiceGate } = voiceGateMod;
@@ -2123,6 +2128,8 @@
           basicMotionPackReady = Boolean(result?.ok);
           if (result?.ok) {
             void motionClient.ensureWaitMotions?.();
+            void motionClient.ensureExtensionsPack?.();
+            primeBodyMotionPoses?.();
           }
           if (waitAct?.isActive() && (coupled || showPackUi)) {
             waitAct?.update({
@@ -2512,6 +2519,11 @@
             window.__amojiAvatar = avatar;
             avatar.setEmotion?.(currentEmotion);
             syncAvatarPerformance();
+            void startPerformancePreload?.({
+              avatar,
+              motionClient,
+              maxExpressionProfiles: 24,
+            });
             const label =
               avatarKind === "vrm3d"
                 ? isEnglish

@@ -29,6 +29,15 @@ let waitAssetsModulePromise = null;
 /** @type {Promise<unknown> | null} */
 let dialoguePreloadModulePromise = null;
 
+/** @type {Promise<unknown> | null} */
+let performancePreloadModulePromise = null;
+
+/** @type {Promise<unknown> | null} */
+let bodyMotionModulePromise = null;
+
+/** @type {Promise<unknown> | null} */
+let contentMotionModulePromise = null;
+
 /**
  * @param {string} url
  * @returns {Promise<ArrayBuffer> | null}
@@ -108,6 +117,15 @@ export function startCompanionPreload(opts = {}) {
   if (!dialoguePreloadModulePromise) {
     dialoguePreloadModulePromise = import("./companionDialoguePreload.js");
   }
+  if (!performancePreloadModulePromise) {
+    performancePreloadModulePromise = import("./companionPerformancePreload.js");
+  }
+  if (!bodyMotionModulePromise) {
+    bodyMotionModulePromise = import("./companionBodyMotion.js");
+  }
+  if (!contentMotionModulePromise) {
+    contentMotionModulePromise = import("./companionContentMotion.js");
+  }
 
   return {
     schema: COMPANION_PRELOAD_SCHEMA,
@@ -118,6 +136,9 @@ export function startCompanionPreload(opts = {}) {
     threeModule: threeModulePromise,
     waitAssetsModule: waitAssetsModulePromise,
     dialoguePreloadModule: dialoguePreloadModulePromise,
+    performancePreloadModule: performancePreloadModulePromise,
+    bodyMotionModule: bodyMotionModulePromise,
+    contentMotionModule: contentMotionModulePromise,
   };
 }
 

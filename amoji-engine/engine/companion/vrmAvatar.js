@@ -11,6 +11,7 @@ import {
   computeVrmFrameAnchor,
 } from "./companionCameraFollow.js";
 import { createCompanionBodyMotion } from "./companionBodyMotion.js";
+import { buildVrmExpressionBlend } from "./companionContentMotion.js";
 import { sampleIdleExpressionBlend } from "./companionIdleMotion.js";
 
 export const VRM_AVATAR_SCHEMA = "amoji.vrmAvatar.v1";
@@ -326,6 +327,39 @@ export async function createVrmAvatar(opts) {
       }
     }
   };
+
+  const applyExpressionProfile = ({ emotion: em = "neutral", nuance = "none" } = {}) => {
+    const blend = buildVrmExpressionBlend(em, nuance);
+    setExpressionTargetFromBlend(blend);
+    return { emotion: em, nuance, blend };
+  };
+
+  const warmExpressionPresets = () => {
+    if (!expr) return false;
+    for (const preset of emotionPresetKeys()) {
+      expr.setValue(preset, 0.001);
+      expr.setValue(preset, 0);
+    }
+    for (const preset of mouthPresets) {
+      expr.setValue(preset, 0.001);
+      expr.setValue(preset, 0);
+    }
+    for (const em of Object.keys(EMOTION_EXPRESSIONS)) {
+      applyEmotionExpressions(em);
+      tickExpressionBlend(0.12);
+    }
+    for (const nuance of ["shy", "curious", "excited", "love", "stress"]) {
+      setExpressionTargetFromBlend(
+        buildVrmExpressionBlend("happy", nuance),
+      );
+      tickExpressionBlend(0.12);
+    }
+    applyEmotionExpressions("neutral");
+    tickExpressionBlend(0.12);
+    return true;
+  };
+
+  warmExpressionPresets();
 
   const tickExpressionBlend = (dt) => {
     if (!expr) return;
@@ -652,6 +686,8 @@ export async function createVrmAvatar(opts) {
     kind: "vrm",
     vrm,
     setEmotion,
+    applyExpressionProfile,
+    warmExpressionPresets,
     setListening,
     setMouthOpen,
     setMouthShape,
