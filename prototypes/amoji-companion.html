@@ -1569,26 +1569,26 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-14-v47-camera-follow",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-15-v48-emotional-tts",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-14-v47-camera-follow"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-15-v48-emotional-tts"
         }
       }
     </script>
-    <link rel="modulepreload" href="/amoji-engine/vendor/three.module.js?v=2026-09-14-v47-camera-follow" />
-    <link rel="modulepreload" href="/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-14-v47-camera-follow" />
+    <link rel="modulepreload" href="/amoji-engine/vendor/three.module.js?v=2026-09-15-v48-emotional-tts" />
+    <link rel="modulepreload" href="/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-15-v48-emotional-tts" />
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-14-v47-camera-follow"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-15-v48-emotional-tts"
     />
-    <link rel="modulepreload" href="/amoji-engine/engine/companion/vrmAvatar.js?v=2026-09-14-v47-camera-follow" />
-    <link rel="modulepreload" href="/amoji-engine/engine/companion/createAvatar.js?v=2026-09-14-v47-camera-follow" />
+    <link rel="modulepreload" href="/amoji-engine/engine/companion/vrmAvatar.js?v=2026-09-15-v48-emotional-tts" />
+    <link rel="modulepreload" href="/amoji-engine/engine/companion/createAvatar.js?v=2026-09-15-v48-emotional-tts" />
     <link rel="prefetch" href="/api/motions?pack=basic" as="fetch" crossorigin />
     <script>
-      window.__amojiBuild = "2026-09-14-v47-camera-follow";
+      window.__amojiBuild = "2026-09-15-v48-emotional-tts";
     </script>
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-14-v47-camera-follow"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-14-v47-camera-follow"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-15-v48-emotional-tts"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-15-v48-emotional-tts"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;
@@ -1989,6 +1989,7 @@
         { saveProviderApiKey },
         voiceCatalogMod,
         contentMotionMod,
+        ttsProsodyMod,
         streamSpeakMod,
         bargeMod,
         voiceGateMod,
@@ -2013,6 +2014,7 @@
         ami("../amoji-engine/engine/companion/companionLlmProviders.js"),
         ami("../amoji-engine/engine/companion/companionVoiceCatalog.js"),
         ami("../amoji-engine/engine/companion/companionContentMotion.js"),
+        ami("../amoji-engine/engine/companion/companionTtsProsody.js"),
         ami("../amoji-engine/engine/companion/companionStreamSpeak.js"),
         ami("../amoji-engine/engine/companion/companionBargeMonitor.js"),
         ami("../amoji-engine/engine/companion/companionVoiceGate.js"),
@@ -2065,6 +2067,7 @@
         analyzeUserInput,
         isUserStopCommand,
       } = contentMotionMod;
+      const { resolveChunkTtsPerformance } = ttsProsodyMod;
       const { createStreamSpeakPlanner } = streamSpeakMod;
       const { createCompanionBargeMonitor } = bargeMod;
       const { createCompanionVoiceGate } = voiceGateMod;
@@ -3301,7 +3304,16 @@
             status.speaking();
           }
           for (const seg of segments) {
-            void voice.pushStreamSpeak?.(seg, streamEmotion);
+            const chunkPerf = resolveChunkTtsPerformance(seg, {
+              emotion: streamEmotion,
+              nuance: speakContent.nuance || "none",
+            });
+            void voice.pushStreamSpeak?.(seg, {
+              emotion: chunkPerf.emotion || streamEmotion,
+              nuance: chunkPerf.nuance,
+              talkStyle: chunkPerf.talkStyle,
+              speechEnergy: chunkPerf.speechEnergy,
+            });
           }
         };
 
@@ -3369,7 +3381,12 @@
             await voice.finishStreamSpeak?.();
           } else {
             status.speaking();
-            await voice.speak(reply, emotion);
+            await voice.speak(reply, {
+              emotion,
+              nuance: content.nuance || "none",
+              talkStyle: content.talkStyle || "explain",
+              speechEnergy: content.speechEnergy ?? 0.5,
+            });
           }
         } catch (err) {
           if (activeTurn?.aborted || err?.name === "AbortError") {
