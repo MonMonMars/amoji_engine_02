@@ -79,7 +79,22 @@ describe("companionCharacterCatalog", () => {
   it("cycles characters", () => {
     expect(nextCharacterId("amoji")).toBe("sora");
     expect(nextCharacterId("rex")).toBe("sky");
-    expect(nextCharacterId("sky")).toBe("amoji");
+    expect(nextCharacterId("sky")).toBe("rose");
+    expect(nextCharacterId("mimi")).toBe("amoji");
+  });
+
+  it("resolves new 3D character models", () => {
+    expect(resolveCharacterId({ modelUrl: "/prototypes/assets/companion-rose.vrm" })).toBe(
+      "rose",
+    );
+    expect(resolveCharacterId({ modelUrl: "/prototypes/assets/companion-robert.vrm" })).toBe(
+      "robert",
+    );
+    expect(resolveCharacterId({ modelUrl: "/prototypes/assets/companion-rabbit.vrm" })).toBe(
+      "mimi",
+    );
+    expect(defaultVoiceForCharacter("rose", "yue")).toBe("zh-HK-HiuMaanNeural-warm");
+    expect(defaultVoiceForCharacter("mimi", "yue")).toBe("zh-HK-HiuGaaiNeural-sweet");
   });
 
   it("exposes avatar config per character", () => {

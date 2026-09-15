@@ -38,10 +38,10 @@ export function splitExpressiveClauses(text) {
  */
 export function clausePauseMs(clause) {
   const raw = String(clause || "");
-  if (/…|\.{3,}|⋯/.test(raw)) return 320;
-  if (/[。！？!?]/.test(raw)) return 220;
-  if (/[，,、;；]/.test(raw)) return 110;
-  return 80;
+  if (/…|\.{3,}|⋯/.test(raw)) return 260;
+  if (/[。！？!?]/.test(raw)) return 170;
+  if (/[，,、;；]/.test(raw)) return 85;
+  return 55;
 }
 
 /**
@@ -54,8 +54,14 @@ export function clausePauseMs(clause) {
  *   lang?: string,
  * }} [basePerf]
  * @param {string} [characterId]
+ * @param {string} [voiceId]
  */
-export function resolveClauseTtsPerformance(clause, basePerf = {}, characterId = "") {
+export function resolveClauseTtsPerformance(
+  clause,
+  basePerf = {},
+  characterId = "",
+  voiceId = "",
+) {
   const chunk = analyzeSpeechChunk(clause, {
     emotion: basePerf.emotion,
     nuance: basePerf.nuance,
@@ -63,7 +69,7 @@ export function resolveClauseTtsPerformance(clause, basePerf = {}, characterId =
   const speechEnergy =
     chunk.speechEnergy ??
     basePerf.speechEnergy ??
-    0.58;
+    0.64;
   const prosody = resolveCompanionTtsProsody({
     emotion: chunk.emotion || basePerf.emotion || "neutral",
     nuance: chunk.nuance || basePerf.nuance || "none",
@@ -72,6 +78,7 @@ export function resolveClauseTtsPerformance(clause, basePerf = {}, characterId =
     text: clause,
     lang: basePerf.lang,
     characterId,
+    voiceId: voiceId || basePerf.voiceId,
   });
   return {
     emotion: chunk.emotion || basePerf.emotion || "neutral",
@@ -89,14 +96,23 @@ export function resolveClauseTtsPerformance(clause, basePerf = {}, characterId =
  * @param {ReturnType<typeof import("./companionTtsProsody.js").normalizeTtsPerformance>} basePerf
  * @param {string} [characterId]
  * @param {string} [lang]
+ * @param {string} [voiceId]
  */
-export function buildExpressiveTtsPlan(text, basePerf, characterId = "", lang = "zh-HK") {
+export function buildExpressiveTtsPlan(
+  text,
+  basePerf,
+  characterId = "",
+  lang = "zh-HK",
+  voiceId = "",
+) {
   const clauses = [];
+  const resolvedVoice = voiceId || basePerf.voiceId || "";
   for (const part of splitExpressiveClauses(text)) {
     const perf = resolveClauseTtsPerformance(
       part,
-      { ...basePerf, lang },
+      { ...basePerf, lang, voiceId: resolvedVoice },
       characterId,
+      resolvedVoice,
     );
     clauses.push({
       text: part,

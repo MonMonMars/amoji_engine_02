@@ -5,12 +5,14 @@ import {
   buildCompanionHref,
   companionLangCode,
   defaultVoiceForLang,
-  nextVoiceId,
   persistVoiceId,
   resolveVoiceId,
   syncVoiceToUrl,
-  voiceGenderLabel,
+  voicePickerButtonLabel,
 } from "../companionVoiceCatalog.js";
+import { buildExpressiveTtsPlan } from "../companionExpressiveTts.js";
+import { createCompanionVoicePicker } from "../companionVoicePicker.js";
+import { normalizeTtsPerformance } from "../companionTtsProsody.js";
 import { buildTodayBriefing } from "./briefing.js";
 import {
   addMemoryFact,
@@ -229,28 +231,49 @@ export function initAmojiSecretaryLite(doc = document) {
     if (!speakerOn || !text) return;
     setStatus(strings.statusSpeaking);
     try {
-      const res = await fetch("/api/tts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          text,
-          emotion: emotion || "neutral",
-          lang: isEn ? "en" : "yue",
-          voice: voiceId,
-        }),
-      });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const blob = await res.blob();
-      if (!blob.size) throw new Error("empty audio");
-      const url = URL.createObjectURL(blob);
-      audioEl.src = url;
-      await audioEl.play();
-      await new Promise((resolve) => {
-        audioEl.onended = resolve;
-        audioEl.onerror = resolve;
-        setTimeout(resolve, 30000);
-      });
-      URL.revokeObjectURL(url);
+      const perf = normalizeTtsPerformance(emotion || "neutral");
+      perf.lang = isEn ? "en" : "yue";
+      const plan = buildExpressiveTtsPlan(
+        text,
+        { ...perf, voiceId },
+        "rose",
+        isEn ? "en-US" : "zh-HK",
+        voiceId,
+      );
+      const clauses = plan.clauses.length
+        ? plan.clauses
+        : [{ text, ...perf }];
+      for (const clause of clauses) {
+        const res = await fetch("/api/tts", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            text: clause.text,
+            emotion: clause.emotion || perf.emotion,
+            nuance: clause.nuance || perf.nuance,
+            talkStyle: clause.talkStyle || perf.talkStyle,
+            speechEnergy: clause.speechEnergy ?? perf.speechEnergy,
+            lang: isEn ? "en" : "yue",
+            voice: voiceId,
+            characterId: "rose",
+          }),
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const blob = await res.blob();
+        if (!blob.size) throw new Error("empty audio");
+        const url = URL.createObjectURL(blob);
+        audioEl.src = url;
+        await audioEl.play();
+        await new Promise((resolve) => {
+          audioEl.onended = resolve;
+          audioEl.onerror = resolve;
+          setTimeout(resolve, 30000);
+        });
+        URL.revokeObjectURL(url);
+        if (clause.pauseMs) {
+          await new Promise((resolve) => setTimeout(resolve, clause.pauseMs));
+        }
+      }
     } catch (err) {
       console.warn("[secretary-lite] tts", err);
       showError(`${strings.errTts}: ${err.message || err}`);
@@ -566,38 +589,54 @@ export function initAmojiSecretaryLite(doc = document) {
     return micCapture;
   }
 
-  function wireHeader() {
+  const voicePicker = createCompanionVoicePicker({
+    root: doc.body,
+    langCode,
+    selectedId: voiceId,
+    onSelect: (id) => {
+      voiceId = id;
+      persistVoiceId(voiceId);
+      syncVoiceToUrl(voiceId);
+      updateHeader();
+      setStatus(
+        isEn
+          ? `Voice: ${voicePickerButtonLabel(voiceId, langCode, true)}`
+          : `語音：${voicePickerButtonLabel(voiceId, langCode, false)}`,
+      );
+    },
+  });
+
+  function updateHeader() {
     const btn3d = doc.getElementById("btn-3d");
     const btnLang = doc.getElementById("btn-lang");
     const btnVoice = doc.getElementById("btn-voice");
-    const update = () => {
-      if (btn3d) {
-        btn3d.textContent = isEn ? "3D avatar" : "3D 同伴";
-        btn3d.href = buildCompanionHref({
-          basePath: "/companion-full",
-          lang: langCode,
-          voiceId,
-        });
-      }
-      if (btnLang) {
-        const targetLang = isEn ? "yue" : "en";
-        btnLang.textContent = isEn ? "EN" : "粵";
-        btnLang.href = buildCompanionHref({
-          basePath: "/companion",
-          lang: targetLang,
-          voiceId: defaultVoiceForLang(targetLang, voiceId),
-        });
-      }
-      if (btnVoice) {
-        btnVoice.textContent = voiceGenderLabel(voiceId, langCode, isEn);
-      }
-    };
-    update();
-    btnVoice?.addEventListener("click", () => {
-      voiceId = nextVoiceId(voiceId, langCode);
-      persistVoiceId(voiceId);
-      syncVoiceToUrl(voiceId);
-      update();
+    if (btn3d) {
+      btn3d.textContent = isEn ? "3D avatar" : "3D 同伴";
+      btn3d.href = buildCompanionHref({
+        basePath: "/companion-full",
+        lang: langCode,
+        voiceId,
+      });
+    }
+    if (btnLang) {
+      const targetLang = isEn ? "yue" : "en";
+      btnLang.textContent = isEn ? "EN" : "粵";
+      btnLang.href = buildCompanionHref({
+        basePath: "/companion",
+        lang: targetLang,
+        voiceId: defaultVoiceForLang(targetLang, voiceId),
+      });
+    }
+    if (btnVoice) {
+      btnVoice.textContent = voicePickerButtonLabel(voiceId, langCode, isEn);
+    }
+  }
+
+  function wireHeader() {
+    updateHeader();
+    doc.getElementById("btn-voice")?.addEventListener("click", () => {
+      voicePicker.setSelectedId(voiceId);
+      voicePicker.open();
     });
   }
 

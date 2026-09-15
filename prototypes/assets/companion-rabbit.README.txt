@@ -1,0 +1,8 @@
+Rabbit VRM avatar — ToxSam 100Avatars (CC0)
+
+Source:  https://github.com/ToxSam/open-source-avatars
+Model:   companion-rabbit.vrm (100Avatars #044 Rabbit)
+Preview: companion-char-rabbit.png
+
+License: CC0 1.0 — public domain, no attribution required.
+Used for: Mimi (米) — cozy bunny companion character.
