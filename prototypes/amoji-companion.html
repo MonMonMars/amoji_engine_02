@@ -1100,6 +1100,269 @@
         }
       }
 
+      /* ChatGPT-style emotion orb */
+      .emotion-ball-stack {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.28rem;
+        margin: 0 auto 0.45rem;
+        pointer-events: none;
+        width: min(720px, 100%);
+        transition: opacity 0.35s ease, transform 0.35s ease;
+      }
+
+      .emotion-ball-stack.is-hidden {
+        display: none;
+      }
+
+      .emotion-ball {
+        --ball-level: 0;
+        --ball-scale: 1;
+        --ball-hue: 175;
+        --ball-sat: 62%;
+        --ball-light: 58%;
+        --ball-accent: hsl(var(--ball-hue) var(--ball-sat) var(--ball-light));
+        --ball-glow-a: hsl(var(--ball-hue) 70% 62% / 0.72);
+        --ball-glow-b: hsl(calc(var(--ball-hue) + 42) 65% 68% / 0.48);
+        --ball-surface: hsl(var(--ball-hue) 44% 18% / 0.92);
+        --ball-border: hsl(var(--ball-hue) var(--ball-sat) 64% / 0.72);
+        --ball-ring-speed: 1.1s;
+        position: relative;
+        width: 4.25rem;
+        height: 4.25rem;
+        border-radius: 50%;
+        transform: scale(var(--ball-scale));
+        transition: transform 0.12s ease-out, width 0.35s ease, height 0.35s ease;
+        filter: drop-shadow(0 10px 36px var(--ball-glow-a));
+      }
+
+      .emotion-ball__halo,
+      .emotion-ball__ring,
+      .emotion-ball__core,
+      .emotion-ball__shine,
+      .emotion-ball__wave {
+        position: absolute;
+        inset: 0;
+        border-radius: 50%;
+        pointer-events: none;
+      }
+
+      .emotion-ball__halo {
+        inset: -18%;
+        background: radial-gradient(
+          circle,
+          var(--ball-glow-a) 0%,
+          var(--ball-glow-b) 42%,
+          transparent 72%
+        );
+        opacity: calc(0.35 + var(--ball-level) * 0.45);
+        animation: emotionBallHalo calc(var(--ball-ring-speed) * 2.2) ease-in-out infinite;
+      }
+
+      .emotion-ball__ring {
+        border: 1.5px solid var(--ball-border);
+        opacity: 0;
+      }
+
+      .emotion-ball.is-live .emotion-ball__ring,
+      .emotion-ball.is-thinking .emotion-ball__ring {
+        opacity: 1;
+        animation: emotionBallRing var(--ball-ring-speed) ease-out infinite;
+      }
+
+      .emotion-ball__ring--b {
+        animation-delay: calc(var(--ball-ring-speed) * 0.45);
+      }
+
+      .emotion-ball__core {
+        inset: 8%;
+        background: radial-gradient(
+          circle at 35% 28%,
+          hsl(calc(var(--ball-hue) + 18) 90% 78%) 0%,
+          var(--ball-accent) 38%,
+          var(--ball-surface) 100%
+        );
+        box-shadow:
+          inset 0 -10px 22px hsl(var(--ball-hue) 40% 12% / 0.55),
+          inset 0 8px 16px hsl(calc(var(--ball-hue) + 30) 80% 88% / 0.35);
+        animation: emotionBallIdle 4.2s ease-in-out infinite;
+      }
+
+      .emotion-ball.is-live .emotion-ball__core {
+        animation: none;
+      }
+
+      .emotion-ball__shine {
+        inset: 14% 22% auto 18%;
+        height: 38%;
+        background: radial-gradient(
+          ellipse at center,
+          rgba(255, 255, 255, 0.72) 0%,
+          rgba(255, 255, 255, 0.08) 68%,
+          transparent 100%
+        );
+        opacity: 0.85;
+        transform: rotate(-18deg);
+      }
+
+      .emotion-ball__wave {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 2px;
+        inset: auto 16% 18% 16%;
+        height: 34%;
+        opacity: 0;
+      }
+
+      .emotion-ball.is-live .emotion-ball__wave,
+      .emotion-ball.is-thinking .emotion-ball__wave {
+        opacity: calc(0.35 + var(--ball-level) * 0.65);
+      }
+
+      .emotion-ball__wave i {
+        display: block;
+        width: 3px;
+        height: 100%;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.88);
+        transform-origin: center bottom;
+        animation: emotionBallWave calc(var(--ball-ring-speed) * 0.85) ease-in-out infinite;
+      }
+
+      .emotion-ball__wave i:nth-child(1) { animation-delay: 0ms; }
+      .emotion-ball__wave i:nth-child(2) { animation-delay: 70ms; }
+      .emotion-ball__wave i:nth-child(3) { animation-delay: 140ms; }
+      .emotion-ball__wave i:nth-child(4) { animation-delay: 210ms; }
+      .emotion-ball__wave i:nth-child(5) { animation-delay: 280ms; }
+      .emotion-ball__wave i:nth-child(6) { animation-delay: 350ms; }
+      .emotion-ball__wave i:nth-child(7) { animation-delay: 420ms; }
+
+      .emotion-ball__caption {
+        margin: 0;
+        font-size: 0.62rem;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: rgba(247, 241, 232, 0.62);
+      }
+
+      .emotion-ball[data-ball-state="thinking"] .emotion-ball__core {
+        animation: emotionBallThink calc(var(--ball-ring-speed) * 2.8) ease-in-out infinite;
+      }
+
+      @keyframes emotionBallHalo {
+        0%,
+        100% {
+          transform: scale(0.94);
+          opacity: calc(0.28 + var(--ball-level) * 0.4);
+        }
+        50% {
+          transform: scale(1.06);
+          opacity: calc(0.42 + var(--ball-level) * 0.52);
+        }
+      }
+
+      @keyframes emotionBallRing {
+        0% {
+          transform: scale(0.78);
+          opacity: calc(0.35 + var(--ball-level) * 0.5);
+        }
+        100% {
+          transform: scale(1.22);
+          opacity: 0;
+        }
+      }
+
+      @keyframes emotionBallWave {
+        0%,
+        100% {
+          transform: scaleY(0.35);
+        }
+        50% {
+          transform: scaleY(1);
+        }
+      }
+
+      @keyframes emotionBallThink {
+        0%,
+        100% {
+          filter: hue-rotate(0deg) brightness(1);
+        }
+        50% {
+          filter: hue-rotate(12deg) brightness(1.08);
+        }
+      }
+
+      @keyframes emotionBallIdle {
+        0%,
+        100% {
+          transform: scale(0.96);
+          filter: brightness(1);
+        }
+        50% {
+          transform: scale(1.04);
+          filter: brightness(1.06);
+        }
+      }
+
+      .stage.mic-mode .emotion-ball {
+        width: 6.75rem;
+        height: 6.75rem;
+      }
+
+      .stage.mic-mode .emotion-ball-stack {
+        position: fixed;
+        left: 50%;
+        bottom: max(4.85rem, calc(env(safe-area-inset-bottom) + 3.65rem));
+        transform: translateX(-50%);
+        z-index: 9;
+        margin: 0;
+        width: auto;
+        pointer-events: none;
+      }
+
+      .stage.mic-mode .emotion-ball__caption {
+        font-size: 0.68rem;
+        color: rgba(247, 241, 232, 0.78);
+      }
+
+      .stage.mic-mode .composer {
+        position: relative;
+        padding-top: 0.15rem;
+      }
+
+      .stage.mic-mode #btn-mic {
+        position: fixed;
+        left: 50%;
+        bottom: max(5.95rem, calc(env(safe-area-inset-bottom) + 4.75rem));
+        top: auto;
+        transform: translateX(-50%);
+        width: 6.75rem;
+        height: 6.75rem;
+        background: transparent !important;
+        border-color: transparent !important;
+        box-shadow: none !important;
+        overflow: visible;
+        z-index: 10;
+      }
+
+      .stage.mic-mode #btn-mic .mic-btn__aura,
+      .stage.mic-mode #btn-mic .mic-btn__ring,
+      .stage.mic-mode #btn-mic .mic-btn__wave {
+        display: none !important;
+      }
+
+      .stage.mic-mode #btn-mic .mic-btn__icon {
+        opacity: 0;
+      }
+
+      .stage.mic-mode #btn-mic[data-mic-state="listening"],
+      .stage.mic-mode #btn-mic[data-mic-state="speaking"] {
+        transform: translateX(-50%) scale(calc(1 + var(--mic-level) * 0.04));
+        box-shadow: none !important;
+      }
+
       .composer textarea {
         flex: 1;
         resize: none;
@@ -1763,27 +2026,27 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-15-v55-expressive-tts",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-15-v56-emotion-ball",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-15-v55-expressive-tts"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-15-v56-emotion-ball"
         }
       }
     </script>
-    <link rel="modulepreload" href="/amoji-engine/vendor/three.module.js?v=2026-09-15-v55-expressive-tts" />
-    <link rel="modulepreload" href="/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-15-v55-expressive-tts" />
+    <link rel="modulepreload" href="/amoji-engine/vendor/three.module.js?v=2026-09-15-v56-emotion-ball" />
+    <link rel="modulepreload" href="/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-15-v56-emotion-ball" />
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-15-v55-expressive-tts"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-15-v56-emotion-ball"
     />
-    <link rel="modulepreload" href="/amoji-engine/engine/companion/vrmAvatar.js?v=2026-09-15-v55-expressive-tts" />
-    <link rel="modulepreload" href="/amoji-engine/engine/companion/createAvatar.js?v=2026-09-15-v55-expressive-tts" />
+    <link rel="modulepreload" href="/amoji-engine/engine/companion/vrmAvatar.js?v=2026-09-15-v56-emotion-ball" />
+    <link rel="modulepreload" href="/amoji-engine/engine/companion/createAvatar.js?v=2026-09-15-v56-emotion-ball" />
     <link rel="prefetch" href="/api/motions?pack=basic" as="fetch" crossorigin />
     <link rel="prefetch" href="/api/motions?pack=extensions" as="fetch" crossorigin />
     <script>
-      window.__amojiBuild = "2026-09-15-v55-expressive-tts";
+      window.__amojiBuild = "2026-09-15-v56-emotion-ball";
     </script>
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-15-v55-expressive-tts"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-15-v55-expressive-tts"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-15-v56-emotion-ball"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-15-v56-emotion-ball"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;
@@ -2112,6 +2375,10 @@
             <button type="button" id="btn-save-cloud-key-inline">Save</button>
           </div>
           <div class="llm-switcher-wrap" id="llm-switcher-wrap"></div>
+          <div class="emotion-ball-stack is-hidden" id="emotion-ball-stack" aria-hidden="true">
+            <div class="emotion-ball" id="emotion-ball" data-ball-state="idle" hidden></div>
+            <p class="emotion-ball__caption" id="emotion-ball-caption">Ready · neutral</p>
+          </div>
           <form class="composer" id="composer">
             <button
               type="button"
@@ -2213,6 +2480,7 @@
         motionDownloadMod,
         characterPickerMod,
         micButtonMod,
+        emotionBallMod,
         characterSwitchMod,
         progressOverlayMod,
         waitActMod,
@@ -2240,6 +2508,7 @@
         ami("../amoji-engine/engine/companion/companionMotionDownload.js"),
         ami("../amoji-engine/engine/companion/companionCharacterPicker.js"),
         ami("../amoji-engine/engine/companion/companionMicButton.js"),
+        ami("../amoji-engine/engine/companion/companionEmotionBall.js"),
         ami("../amoji-engine/engine/companion/companionCharacterSwitch.js"),
         ami("../amoji-engine/engine/companion/companionProgressOverlay.js"),
         ami("../amoji-engine/engine/companion/companionWaitAct.js"),
@@ -2297,6 +2566,7 @@
       const { createCompanionVoiceGate } = voiceGateMod;
       const { isIosLike, shouldPauseMicDuringTts } = platformMod;
       const { createCompanionMicButton } = micButtonMod;
+      const { createCompanionEmotionBall } = emotionBallMod;
 
       const hostedOnline = isHostedCompanion();
       const { createMotionDownloadClient } = motionDownloadMod;
@@ -2568,10 +2838,7 @@
       const btnSettings = document.getElementById("btn-settings");
       const btnSpeaker = document.getElementById("btn-speaker");
       const btnMic = document.getElementById("btn-mic");
-      const micUi = createCompanionMicButton(btnMic, {
-        emotion: "neutral",
-        nuance: "none",
-      });
+      const emotionBallEl = document.getElementById("emotion-ball");
       const btnVoiceSwitch = document.getElementById("btn-voice-switch");
       const btnLangSwitch = document.getElementById("btn-lang-switch");
 
@@ -2586,6 +2853,40 @@
       }
       let langCode = companionLangCode(params.get("lang") || "yue");
       let isEnglish = langCode === "en";
+
+      const micUi = createCompanionMicButton(btnMic, {
+        emotion: "neutral",
+        nuance: "none",
+      });
+      const emotionBall = createCompanionEmotionBall(emotionBallEl, {
+        isEnglish,
+      });
+      let sessionUiState = "idle";
+      let sessionStarted = false;
+      let sessionStarting = false;
+      /** @type {ReturnType<typeof createCompanionVoice> | undefined} */
+      let voice;
+
+      const syncEmotionBall = () => {
+        if (!voice) return;
+        emotionBall.sync({
+          sessionState: sessionUiState,
+          micOn: voice.micOn,
+          speaking: voice.speaking,
+          assistantActive: voice.assistantOutputActive,
+          disabled: btnMic.disabled,
+          emotion: currentEmotion,
+          nuance: speakContent?.nuance || "none",
+        });
+      };
+
+      const updateEmotionBallVisibility = () => {
+        if (!sessionStarted) {
+          emotionBall.hide();
+          return;
+        }
+        emotionBall.show();
+      };
       let characterId = resolveCharacterId({
         characterParam: params.get("character"),
         modelUrl: params.get("vrm") || params.get("model3d"),
@@ -2885,6 +3186,8 @@
       const setEmotionPill = (emotion, action = null) => {
         currentEmotion = emotion;
         micUi.setEmotion(emotion, speakContent?.nuance || "none");
+        emotionBall.setEmotion(emotion, speakContent?.nuance || "none");
+        syncEmotionBall();
         const actionLabel =
           action || avatar.currentAction || lastAvatarPerformance?.action;
         const suffix =
@@ -2906,6 +3209,7 @@
 
       const status = createCompanionStatus({
         onState: (s) => {
+          sessionUiState = s;
           statusPill.className = `pill status-${s}`;
           const labels = {
             idle: "idle",
@@ -2915,6 +3219,8 @@
             speaking: "speaking",
           };
           statusPill.innerHTML = `state · <strong>${labels[s] || s}</strong>`;
+          syncEmotionBall();
+          updateEmotionBallVisibility();
         },
       });
       status.idle();
@@ -3032,6 +3338,7 @@
 
       const applyMicMeterVisual = (level) => {
         micUi.setLevel(level);
+        emotionBall.setLevel(level);
       };
 
       const syncMicBtn = () => {
@@ -3042,7 +3349,12 @@
           disabled: btnMic.disabled,
         });
         stage.classList.toggle("mic-mode", voice.micOn);
-        if (!voice.micOn) micUi.reset();
+        if (!voice.micOn) {
+          micUi.reset();
+          emotionBall.reset();
+        }
+        syncEmotionBall();
+        updateEmotionBallVisibility();
         if (voice.micOn) scrollTranscript(true);
         voice.setKeepMicDuringSpeak?.(
           phaseAEnabled && voice.micOn && !shouldPauseMicDuringTts(),
@@ -3097,7 +3409,7 @@
         stopBargeWatch();
       };
 
-      const voice = createCompanionVoice({
+      voice = createCompanionVoice({
         lang: isEnglish ? "en-US" : "zh-HK",
         cloudVoice: voicePresetById(voiceId),
         cloudTtsUrl: hostedOnline ? "/api/tts" : null,
@@ -3730,8 +4042,6 @@
 
       const greetingLine = () => characterGreeting(characterId, isEnglish);
 
-      let sessionStarted = false;
-      let sessionStarting = false;
       /** @type {ReturnType<typeof setTimeout> | null} */
       let startTimeoutId = null;
       const START_TIMEOUT_MS = 2000;
@@ -3758,6 +4068,9 @@
         input.focus();
         void prefetchBasicMotionPack();
         if (!liteMode && !avatarLoadStarted) beginAvatarLoad();
+        emotionBall.show();
+        syncEmotionBall();
+        updateEmotionBallVisibility();
 
         if (fromTimeout) {
           showToast("Session ready — avatar or voice may still be loading", "info");
