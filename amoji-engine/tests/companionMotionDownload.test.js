@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { createMotionDownloadClient } from "../engine/companion/companionMotionDownload.js";
 import { BASIC_MOTION_PACK } from "../engine/companion/motionPackData.mjs";
 
@@ -38,6 +38,29 @@ describe("companionMotionDownload", () => {
     expect(result.ok).toBe(true);
     expect(client.isInstalled("dance")).toBe(true);
     expect(phases).toContain("ready");
+  });
+
+  it("uses prefetched basic pack without extra fetch", async () => {
+    const storage = mockStorage();
+    const fetchImpl = vi.fn(async () => ({
+      ok: false,
+      status: 500,
+      json: async () => ({ ok: false }),
+    }));
+    const client = createMotionDownloadClient({
+      storage,
+      fetchImpl,
+      getPrefetchedBasicPack: async () => ({
+        ok: true,
+        pack: BASIC_MOTION_PACK,
+      }),
+    });
+
+    const result = await client.ensureBasicPack();
+    expect(result.ok).toBe(true);
+    expect(result.cached).toBe(false);
+    expect(fetchImpl).not.toHaveBeenCalled();
+    expect(client.isInstalled("dance")).toBe(true);
   });
 
   it("downloads cloud extension motion on demand", async () => {

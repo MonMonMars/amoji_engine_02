@@ -28,6 +28,31 @@ const VRM_BLEND_PRESET_MAP = {
   Angry: VRMExpressionPresetName.Angry,
 };
 
+/**
+ * @param {GLTFLoader} loader
+ * @param {string} modelUrl
+ * @param {(ratio: number, label?: string) => void} [onProgress]
+ */
+async function loadVrmGltf(loader, modelUrl, onProgress) {
+  const preload =
+    globalThis.__amojiPreload?.getVrm?.(modelUrl) ??
+    globalThis.__amojiPreload?.ready?.vrm ??
+    null;
+  if (preload) {
+    try {
+      const buffer = await preload;
+      return await loader.parseAsync(buffer, modelUrl);
+    } catch (err) {
+      console.warn("[vrm] prefetched model parse failed, falling back to URL", err);
+    }
+  }
+  return loader.loadAsync(modelUrl, (event) => {
+    if (event.lengthComputable && event.total > 0) {
+      onProgress?.(event.loaded / event.total, "model");
+    }
+  });
+}
+
 /** Grok Ani–style framing: upper body visible, not extreme face close-up. */
 function frameFaceCamera({ vrm, model, camera, controls, fitted }) {
   const fittedSize = fitted.getSize(new THREE.Vector3());
@@ -151,11 +176,7 @@ export async function createVrmAvatar(opts) {
 
   const loader = new GLTFLoader();
   loader.register((parser) => new VRMLoaderPlugin(parser));
-  const gltf = await loader.loadAsync(modelUrl, (event) => {
-    if (event.lengthComputable && event.total > 0) {
-      opts.onProgress?.(event.loaded / event.total, "model");
-    }
-  });
+  const gltf = await loadVrmGltf(loader, modelUrl, opts.onProgress);
   opts.onProgress?.(1, "model");
   const vrm = gltf.userData.vrm;
   if (!vrm) throw new Error("VRM data missing from model");
