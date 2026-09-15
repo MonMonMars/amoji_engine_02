@@ -33,6 +33,15 @@ export function getCachedDialogueTts(key) {
 
 /**
  * @param {boolean} [isEnglish]
+ */
+export function collectIdleDialoguePhrases(isEnglish = false) {
+  const bucket = LEARN_DIALOGUE.idle;
+  const list = isEnglish ? bucket?.en : bucket?.yue;
+  return [...(list || [])];
+}
+
+/**
+ * @param {boolean} [isEnglish]
  * @param {number} [perPhase]
  */
 export function collectWaitDialoguePhrases(isEnglish = false, perPhase = 2) {
@@ -41,7 +50,6 @@ export function collectWaitDialoguePhrases(isEnglish = false, perPhase = 2) {
     "connecting",
     "downloading",
     "learning",
-    "idle",
     "thinking-wait",
   ];
   /** @type {string[]} */
@@ -54,6 +62,7 @@ export function collectWaitDialoguePhrases(isEnglish = false, perPhase = 2) {
       phrases.push(list[i]);
     }
   }
+  phrases.push(...collectIdleDialoguePhrases(isEnglish));
   const thinking = isEnglish ? THINKING_PHRASES_EN : THINKING_PHRASES_YUE;
   for (let i = 0; i < Math.min(3, thinking.length); i += 1) {
     phrases.push(thinking[i]);
@@ -87,7 +96,7 @@ export async function prefetchWaitDialogue(opts = {}) {
   const voiceName = opts.voiceName || (isEnglish ? "en-US-JennyNeural" : "zh-HK-HiuMaanNeural");
   const phrases = collectWaitDialoguePhrases(isEnglish, opts.perPhase ?? 2).slice(
     0,
-    opts.maxPhrases ?? 14,
+    opts.maxPhrases ?? 52,
   );
 
   inflight = (async () => {

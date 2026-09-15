@@ -41,7 +41,6 @@ async function main() {
       return (
         !btn ||
         btn.classList.contains("hide") ||
-        btn.disabled ||
         btn.getAttribute("aria-hidden") === "true"
       );
     },
@@ -67,11 +66,26 @@ async function main() {
   const canvas = await page.$("#avatar-canvas");
   const canvasBox = canvas ? await canvas.boundingBox() : null;
 
+  await page.waitForFunction(
+    () => {
+      const s = window.__amojiPerf?.getIdleState?.();
+      return s?.waitKind === "idle" && s?.waitActive && s?.canIdle;
+    },
+    undefined,
+    { timeout: 25000 },
+  );
+  const idle = await page.evaluate(() => window.__amojiPerf?.getIdleState?.() || null);
+
   const report = {
-    ok: readyMs <= 800 && Boolean(canvasBox?.width),
+    ok:
+      readyMs <= 800 &&
+      Boolean(canvasBox?.width) &&
+      idle?.waitKind === "idle" &&
+      idle?.waitActive,
     build,
     readyMs,
     canvasVisible: Boolean(canvasBox?.width && canvasBox?.height),
+    idle,
     url,
   };
   console.log(JSON.stringify(report, null, 2));
