@@ -1,2 +1,2 @@
 /** Single source of truth for deployed companion build id (keep HTML __amojiBuild in sync). */
-export const AMOJI_BUILD = "2026-09-15-v62-settings-buttons";
+export const AMOJI_BUILD = "2026-09-15-v63-sky-vrm";
