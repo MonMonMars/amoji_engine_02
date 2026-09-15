@@ -3,6 +3,7 @@
  */
 import { resolveAction } from "./companionActionMotion.js";
 import { actionLoopsFromCatalog, PLAYABLE_ACTIONS } from "./companionActionCatalog.js";
+import { getExtendedActionDef } from "./companionMotionLibrary.js";
 import { getCloudMotionDef } from "./motionPackData.mjs";
 
 export const COMPANION_ACTION_CHOREOGRAPHY_SCHEMA =
@@ -188,7 +189,9 @@ export function shouldChainAction(actionId) {
  * @param {string[]} [pool]
  */
 export function pickIdleShowcase(lastMove = null, pool = IDLE_SHOWCASE_POOL) {
-  const list = pool.filter((id) => PLAYABLE_ACTIONS.includes(id));
+  const list = pool.filter(
+    (id) => PLAYABLE_ACTIONS.includes(id) || Boolean(getExtendedActionDef(id)),
+  );
   if (!list.length) return "wave";
   const choices = lastMove ? list.filter((id) => id !== lastMove) : list;
   const bucket = choices.length ? choices : list;

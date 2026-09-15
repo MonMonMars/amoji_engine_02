@@ -2252,7 +2252,7 @@
     <link rel="prefetch" href="/api/motions?pack=extensions" as="fetch" crossorigin />
     <link rel="prefetch" href="/api/motions?pack=premium" as="fetch" crossorigin />
     <script>
-      window.__amojiBuild = "2026-09-15-v65-emotion-ball";
+      window.__amojiBuild = "2026-09-15-v66-body-motion-smooth";
     </script>
     <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-15-v65-emotion-ball"></script>
     <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-15-v65-emotion-ball"></script>
@@ -2680,6 +2680,7 @@
         waitActMod,
         actionChoreographyMod,
         actionResolveMod,
+        motionCapabilitiesMod,
       ] = await Promise.all([
         ami("../amoji-engine/engine/companion/createAvatar.js"),
         ami("../amoji-engine/engine/companion/chatLlm.js"),
@@ -2709,6 +2710,7 @@
         ami("../amoji-engine/engine/companion/companionWaitAct.js"),
         ami("../amoji-engine/engine/companion/companionActionChoreography.js"),
         ami("../amoji-engine/engine/companion/companionActionResolve.js"),
+        ami("../amoji-engine/engine/companion/companionMotionCapabilities.js"),
       ]);
       window.__amojiModuleBooted = true;
       const {
@@ -2757,6 +2759,10 @@
       const { resolveChunkTtsPerformance } = ttsProsodyMod;
       const { startPerformancePreload, primeBodyMotionPoses } =
         performancePreloadMod;
+      const {
+        buildMotionCapabilityPromptFragment,
+        formatMotionCapabilitySummary,
+      } = motionCapabilitiesMod;
       const { createStreamSpeakPlanner } = streamSpeakMod;
       const { createCompanionBargeMonitor } = bargeMod;
       const { createCompanionVoiceGate } = voiceGateMod;
@@ -2782,8 +2788,12 @@
       /** @type {Map<string, Promise<unknown>>} */
       const pendingMotionJobs = new Map();
       let basicMotionPackReady = false;
+      let motionCapabilityAnnounced = false;
+      let motionCapabilityExtra = "";
       /** @type {ReturnType<typeof createMotionDownloadClient> | null} */
       let motionClient = null;
+      /** @type {() => void} */
+      let announceMotionLibraryReady = () => {};
 
       const prefetchBasicMotionPack = async ({ coupled = false } = {}) => {
         if (!motionClient) return { ok: false, reason: "motion-client-not-ready" };
@@ -2814,7 +2824,11 @@
           const result = await motionClient.ensureBasicPack();
           basicMotionPackReady = Boolean(result?.ok);
           if (result?.ok) {
-            void motionClient.ensureFullMotionLibrary?.();
+            void motionClient.ensureFullMotionLibrary?.().then((full) => {
+              if (full?.ok || full?.extensions?.ok || full?.premium?.ok) {
+                announceMotionLibraryReady();
+              }
+            });
             primeBodyMotionPoses?.();
           }
           if (waitAct?.isActive() && (coupled || showPackUi)) {
@@ -3323,6 +3337,10 @@
               avatar,
               motionClient,
               maxExpressionProfiles: 24,
+            }).then((preload) => {
+              if (preload?.extensions?.ok || preload?.motion?.ok) {
+                announceMotionLibraryReady();
+              }
             });
             const label =
               avatarKind === "vrm3d"
@@ -3362,13 +3380,35 @@
         return avatarLoadPromise;
       };
 
-      const systemPrompt = buildCharacterSystemPrompt(characterId, isEnglish);
+      const buildSessionSystemPrompt = (charId, english) => {
+        const base = buildCharacterSystemPrompt(charId, english);
+        return motionCapabilityExtra ? `${base} ${motionCapabilityExtra}` : base;
+      };
+
       const chat = createCompanionChat({
         apiUrl: stored.url || null,
         apiKey: stored.key || null,
         model: stored.model,
-        systemPrompt,
+        systemPrompt: buildSessionSystemPrompt(characterId, isEnglish),
       });
+
+      announceMotionLibraryReady = () => {
+        if (!motionClient || motionCapabilityAnnounced) return;
+        motionCapabilityAnnounced = true;
+        const installed = Object.keys(motionClient.state?.installed || {});
+        const summary = formatMotionCapabilitySummary(isEnglish, installed);
+        motionCapabilityExtra = buildMotionCapabilityPromptFragment(
+          isEnglish,
+          installed,
+        );
+        chat.setSystemPrompt?.(buildSessionSystemPrompt(characterId, isEnglish));
+        showToast(`${summary.headline} ${summary.askHint}`, "info");
+        addBubble(
+          "system",
+          `${summary.headline}\n${summary.examples}\n${summary.askHint}`,
+        );
+        if (canIdleShowcase()) scheduleIdlePerformance();
+      };
 
       const statusLineLabels = () =>
         isEnglish
@@ -3879,7 +3919,11 @@
           setEmotionPill("thinking", action || phase);
         },
       });
-      void motionClient.ensureFullMotionLibrary?.();
+      void motionClient.ensureFullMotionLibrary?.().then((result) => {
+        if (result?.ok || result?.extensions?.ok || result?.premium?.ok) {
+          announceMotionLibraryReady();
+        }
+      });
 
       waitAct = createCompanionWaitAct({
         avatar,
@@ -3946,7 +3990,7 @@
         applyVoiceSelection(nextConfig.voiceId);
         voice.setCharacterId?.(characterId);
         chat.setSystemPrompt?.(
-          buildCharacterSystemPrompt(characterId, isEnglish),
+          buildSessionSystemPrompt(characterId, isEnglish),
         );
         setCharacterUi();
         characterPicker?.setSelected(characterId);
@@ -4712,8 +4756,15 @@
         const nextVoiceId = defaultVoiceForCharacter(characterId, nextCode);
         applyVoiceSelection(nextVoiceId);
         voice.setLang?.(nextEnglish ? "en-US" : "zh-HK");
+        if (motionCapabilityAnnounced && motionClient) {
+          const installed = Object.keys(motionClient.state?.installed || {});
+          motionCapabilityExtra = buildMotionCapabilityPromptFragment(
+            nextEnglish,
+            installed,
+          );
+        }
         chat.setSystemPrompt?.(
-          buildCharacterSystemPrompt(characterId, nextEnglish),
+          buildSessionSystemPrompt(characterId, nextEnglish),
         );
         charConfig = characterAvatarConfig(characterId, nextCode);
         setCharacterUi();
