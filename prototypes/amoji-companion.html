@@ -1747,27 +1747,27 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-15-v52-boot-and-mic-glow-fix",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-15-v53-idle-poses-preload",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-15-v52-boot-and-mic-glow-fix"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-15-v53-idle-poses-preload"
         }
       }
     </script>
-    <link rel="modulepreload" href="/amoji-engine/vendor/three.module.js?v=2026-09-15-v52-boot-and-mic-glow-fix" />
-    <link rel="modulepreload" href="/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-15-v52-boot-and-mic-glow-fix" />
+    <link rel="modulepreload" href="/amoji-engine/vendor/three.module.js?v=2026-09-15-v53-idle-poses-preload" />
+    <link rel="modulepreload" href="/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-15-v53-idle-poses-preload" />
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-15-v52-boot-and-mic-glow-fix"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-15-v53-idle-poses-preload"
     />
-    <link rel="modulepreload" href="/amoji-engine/engine/companion/vrmAvatar.js?v=2026-09-15-v52-boot-and-mic-glow-fix" />
-    <link rel="modulepreload" href="/amoji-engine/engine/companion/createAvatar.js?v=2026-09-15-v52-boot-and-mic-glow-fix" />
+    <link rel="modulepreload" href="/amoji-engine/engine/companion/vrmAvatar.js?v=2026-09-15-v53-idle-poses-preload" />
+    <link rel="modulepreload" href="/amoji-engine/engine/companion/createAvatar.js?v=2026-09-15-v53-idle-poses-preload" />
     <link rel="prefetch" href="/api/motions?pack=basic" as="fetch" crossorigin />
     <link rel="prefetch" href="/api/motions?pack=extensions" as="fetch" crossorigin />
     <script>
-      window.__amojiBuild = "2026-09-15-v52-boot-and-mic-glow-fix";
+      window.__amojiBuild = "2026-09-15-v53-idle-poses-preload";
     </script>
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-15-v52-boot-and-mic-glow-fix"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-15-v52-boot-and-mic-glow-fix"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-15-v53-idle-poses-preload"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-15-v53-idle-poses-preload"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;
@@ -2285,9 +2285,7 @@
       const {
         buildActionSequence,
         buildShowcaseSequence,
-        IDLE_SHOWCASE_POOL,
         isShowcaseRequest,
-        pickIdleShowcase,
       } = actionChoreographyMod;
       const progressDock = createCompanionProgressDock({ root: document.body });
       /** @type {ReturnType<typeof createCompanionWaitAct> | null} */
@@ -2761,7 +2759,8 @@
           .finally(() => {
             hideAvatarLoadPill();
             if (waitAct?.state?.kind === "avatar-load") waitAct?.stop();
-            startIdlePerformance();
+            stopIdlePerformance();
+            scheduleIdlePerformance();
           });
         return avatarLoadPromise;
       };
@@ -2938,22 +2937,43 @@
 
       let busy = false;
       const shownMicErrors = new Set();
-      let lastIdleShowcase = null;
       /** @type {ReturnType<typeof setInterval> | null} */
       let idleShowcaseTimer = null;
+      /** @type {ReturnType<typeof setTimeout> | null} */
+      let idleRetryTimer = null;
+
+      const isBlockingWaitAct = () =>
+        Boolean(
+          waitAct?.isActive() && waitAct?.state?.kind !== "idle",
+        );
 
       const canIdleShowcase = () =>
         sessionStarted &&
         !busy &&
         !voice?.speaking &&
-        !waitAct?.isActive() &&
+        !isBlockingWaitAct() &&
         !characterSwitching &&
-        (avatarKind === "vrm3d" || avatarKind === "gltf3d");
+        (avatarKind === "vrm3d" ||
+          avatarKind === "gltf3d" ||
+          avatarKind === "webgl3d");
 
       const stopIdlePerformance = () => {
         if (idleShowcaseTimer) clearInterval(idleShowcaseTimer);
         idleShowcaseTimer = null;
+        if (idleRetryTimer) clearTimeout(idleRetryTimer);
+        idleRetryTimer = null;
         if (waitAct?.state?.kind === "idle") waitAct?.stop();
+      };
+
+      const scheduleIdlePerformance = (attempts = 30) => {
+        if (idleRetryTimer) clearTimeout(idleRetryTimer);
+        idleRetryTimer = null;
+        if (canIdleShowcase()) {
+          startIdlePerformance();
+          return;
+        }
+        if (attempts <= 0) return;
+        idleRetryTimer = setTimeout(() => scheduleIdlePerformance(attempts - 1), 500);
       };
 
       const tickIdleShowcase = () => {
@@ -2961,30 +2981,23 @@
           if (waitAct?.state?.kind === "idle") waitAct?.stop();
           return;
         }
-        const idlePool = IDLE_SHOWCASE_POOL.filter((id) =>
-          motionClient?.isInstalled?.(id),
-        );
-        const fallback = ["wave", "nod", "thinking", "bow", "clap", "learning"];
-        const pool = idlePool.length ? idlePool : fallback;
-        const move = pickIdleShowcase(lastIdleShowcase, pool);
-        lastIdleShowcase = move;
-        if (!waitAct?.isActive()) {
+        if (!waitAct?.isActive() || waitAct?.state?.kind !== "idle") {
           waitAct?.start({
             kind: "idle",
             phase: "idle",
             speak: true,
             label: isEnglish ? "Just hanging out…" : "等緊你呀…",
           });
-        } else if (waitAct?.state?.kind === "idle") {
+        } else {
           waitAct?.update({ phase: "idle" });
         }
-        avatar.playAction?.(move, { emotion: "happy", loop: true, single: true });
       };
 
       const startIdlePerformance = () => {
-        if (idleShowcaseTimer) return;
+        if (!canIdleShowcase()) return;
         tickIdleShowcase();
-        idleShowcaseTimer = setInterval(tickIdleShowcase, 14000);
+        if (idleShowcaseTimer) return;
+        idleShowcaseTimer = setInterval(tickIdleShowcase, 12000);
       };
 
       const autosize = () => {
@@ -3210,6 +3223,7 @@
         voice,
         progress: progressDock,
         isEnglish,
+        poseIntervalMs: 6200,
       });
 
       const warmWaitDialogue = () => {
@@ -3222,6 +3236,8 @@
               isEnglish,
               voiceName: isEnglish ? "en-US-JennyNeural" : preset?.name,
               lang: isEnglish ? "en-US" : preset?.lang || "zh-HK",
+              perPhase: 3,
+              maxPhrases: 52,
             });
           })
           .catch(() => null);
@@ -3676,7 +3692,7 @@
           } else {
             micQueue.length = 0;
           }
-          if (!busy && !waitAct?.isActive()) startIdlePerformance();
+          scheduleIdlePerformance();
         }
       };
 
@@ -3709,7 +3725,6 @@
         if (!busy && !voice.micOn && !voice.speaking) status.idle();
         input.focus();
         void prefetchBasicMotionPack();
-        startIdlePerformance();
         if (!liteMode && !avatarLoadStarted) beginAvatarLoad();
 
         if (fromTimeout) {
@@ -3744,8 +3759,21 @@
           if (!busy && !voice.micOn) status.idle();
           syncListenPose();
           disarmBargeIn();
+          scheduleIdlePerformance();
           return spoke;
         });
+      };
+
+      window.__amojiPerf = {
+        getIdleState: () => ({
+          canIdle: canIdleShowcase(),
+          waitKind: waitAct?.state?.kind || null,
+          waitActive: Boolean(waitAct?.isActive()),
+          avatarKind,
+          busy,
+          speaking: Boolean(voice?.speaking),
+          idleTimer: Boolean(idleShowcaseTimer),
+        }),
       };
 
       const requestMicAsync = () => {

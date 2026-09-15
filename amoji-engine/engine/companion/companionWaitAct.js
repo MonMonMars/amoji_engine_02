@@ -97,7 +97,11 @@ export function createCompanionWaitAct(opts = {}) {
   const startPoseRotation = () => {
     clearInterval(poseTimer);
     const interval =
-      kind === "thinking" ? Math.max(poseIntervalMs, 4200) : poseIntervalMs;
+      kind === "idle"
+        ? Math.max(5500, Math.round(poseIntervalMs * 0.82))
+        : kind === "thinking"
+          ? Math.max(poseIntervalMs, 4200)
+          : poseIntervalMs;
     poseTimer = setInterval(() => {
       if (!active) return;
       poseTick += 1;

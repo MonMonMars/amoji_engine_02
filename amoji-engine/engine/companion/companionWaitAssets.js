@@ -9,7 +9,7 @@ import {
 import { buildVrmExpressionBlend } from "./companionContentMotion.js";
 import { BUNDLED_MOTION_IDS, CLOUD_EXTENSION_MOTIONS } from "./motionPackData.mjs";
 
-export const COMPANION_WAIT_ASSETS_SCHEMA = "amoji.companionWaitAssets.v2";
+export const COMPANION_WAIT_ASSETS_SCHEMA = "amoji.companionWaitAssets.v3";
 
 /** High-traffic reply / showcase motions to install early. */
 export const PRIORITY_REPLY_MOTION_IDS = Object.freeze([
@@ -69,22 +69,7 @@ export const WAIT_POSES_BY_PHASE = Object.freeze({
     "stretch",
     "nod",
   ],
-  idle: [
-    "wave",
-    "nod",
-    "stretch",
-    "bow",
-    "clap",
-    "peace",
-    "thumbsup",
-    "shy",
-    "dab",
-    "shrug",
-    "point",
-    "salute",
-    "cheer",
-    "spin",
-  ],
+  idle: IDLE_SHOWCASE_POOL,
   ready: ["wave", "celebrate", "nod", "cheer", "dab", "clap"],
 });
 
@@ -254,13 +239,18 @@ export function collectWaitPreloadExpressionProfiles() {
   return [...seen.values()];
 }
 
+/** Idle-only motion ids for targeted boot preload. */
+export function collectIdlePreloadMotionIds() {
+  return [...IDLE_SHOWCASE_POOL];
+}
+
 /** Unique motion ids used while waiting / idling — install at boot when possible. */
 export function collectWaitPreloadMotionIds() {
   const ids = new Set(BUNDLED_MOTION_IDS);
+  for (const id of IDLE_SHOWCASE_POOL) ids.add(id);
   for (const poses of Object.values(WAIT_POSES_BY_PHASE)) {
     for (const id of poses) ids.add(id);
   }
-  for (const id of IDLE_SHOWCASE_POOL) ids.add(id);
   for (const id of SHOWCASE_SEQUENCE_POOL) ids.add(id);
   for (const id of PRIORITY_REPLY_MOTION_IDS) ids.add(id);
   for (const combo of Object.values(ACTION_COMBOS)) {

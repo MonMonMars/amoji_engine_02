@@ -4,6 +4,7 @@
  */
 import { sampleActionBodyPose } from "./companionActionMotion.js";
 import {
+  collectIdlePreloadMotionIds,
   collectWaitPreloadExpressionProfiles,
   collectWaitPreloadMotionIds,
 } from "./companionWaitAssets.js";
@@ -94,7 +95,9 @@ export async function warmAvatarExpressionProfiles(avatar, opts = {}) {
  */
 export async function startPerformancePreload(opts = {}) {
   const motionIds = opts.motionIds || collectWaitPreloadMotionIds();
+  const idleMotionIds = collectIdlePreloadMotionIds();
   const poseWarm = primeBodyMotionPoses(motionIds);
+  primeBodyMotionPoses(idleMotionIds);
 
   const motionJob =
     opts.motionClient?.ensureWaitMotions?.(motionIds) ??
