@@ -913,7 +913,8 @@
         height: 3.15rem;
         position: relative;
         z-index: 2;
-        overflow: visible;
+        overflow: hidden;
+        contain: paint;
         padding: 0;
         color: #f7f1e8;
         background: rgba(16, 20, 28, 0.94);
@@ -941,18 +942,20 @@
         background: var(--mic-surface);
         border-color: var(--mic-border);
         transform: translateY(calc(var(--mic-bounce) * -1))
-          scale(calc(1 + var(--mic-level) * 0.14));
+          scale(calc(1 + var(--mic-level) * 0.1));
         box-shadow:
-          0 0 calc(6px + var(--mic-level) * 24px) var(--mic-glow-a),
-          0 0 calc(2px + var(--mic-level) * 12px) var(--mic-glow-b),
-          0 10px 28px rgba(0, 0, 0, 0.34);
+          0 0 0 1px rgba(255, 255, 255, 0.06) inset,
+          0 0 calc(10px + var(--mic-level) * 10px) var(--mic-glow-a) inset,
+          0 0 calc(4px + var(--mic-level) * 6px) var(--mic-glow-b) inset,
+          0 4px 14px rgba(0, 0, 0, 0.28);
       }
 
       .mic-btn[data-mic-state="speaking"] {
         box-shadow:
-          0 0 calc(10px + var(--mic-level) * 18px) var(--mic-glow-b),
-          0 0 calc(4px + var(--mic-level) * 10px) var(--mic-glow-a),
-          0 10px 28px rgba(0, 0, 0, 0.34);
+          0 0 0 1px rgba(255, 255, 255, 0.06) inset,
+          0 0 calc(8px + var(--mic-level) * 8px) var(--mic-glow-b) inset,
+          0 0 calc(3px + var(--mic-level) * 5px) var(--mic-glow-a) inset,
+          0 4px 14px rgba(0, 0, 0, 0.28);
       }
 
       .mic-btn[data-mic-state="disabled"] {
@@ -972,21 +975,20 @@
 
       .mic-btn[data-mic-state="listening"] .mic-btn__aura,
       .mic-btn[data-mic-state="speaking"] .mic-btn__aura {
-        inset: -10px;
-        opacity: calc(0.22 + var(--mic-level) * 0.55);
+        inset: 0;
+        opacity: calc(0.16 + var(--mic-level) * 0.42);
         background: radial-gradient(
-          circle,
+          circle at 50% 62%,
           var(--mic-glow-a) 0%,
-          var(--mic-glow-b) 42%,
-          transparent 72%
+          var(--mic-glow-b) 38%,
+          transparent 70%
         );
-        filter: blur(6px);
         animation: micAuraBreath calc(var(--mic-ring-speed) * 1.6) ease-in-out infinite;
       }
 
       .mic-btn__ring {
-        inset: -2px;
-        border: 2px solid var(--mic-accent);
+        inset: 6px;
+        border: 1.5px solid var(--mic-accent);
       }
 
       .mic-btn[data-mic-state="listening"] .mic-btn__ring,
@@ -1067,11 +1069,11 @@
 
       @keyframes micRingPulse {
         0% {
-          transform: scale(1);
-          opacity: calc(0.35 + var(--mic-level) * 0.65);
+          transform: scale(0.82);
+          opacity: calc(0.28 + var(--mic-level) * 0.55);
         }
         100% {
-          transform: scale(calc(1.5 + var(--mic-level) * 0.7));
+          transform: scale(1.08);
           opacity: 0;
         }
       }
@@ -1079,12 +1081,12 @@
       @keyframes micAuraBreath {
         0%,
         100% {
-          transform: scale(0.96);
-          opacity: calc(0.18 + var(--mic-level) * 0.45);
+          transform: scale(0.98);
+          opacity: calc(0.14 + var(--mic-level) * 0.36);
         }
         50% {
-          transform: scale(1.05);
-          opacity: calc(0.28 + var(--mic-level) * 0.62);
+          transform: scale(1.02);
+          opacity: calc(0.22 + var(--mic-level) * 0.48);
         }
       }
 
@@ -1745,27 +1747,27 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-15-v51-emotion-mic-button",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-15-v52-boot-and-mic-glow-fix",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-15-v51-emotion-mic-button"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-15-v52-boot-and-mic-glow-fix"
         }
       }
     </script>
-    <link rel="modulepreload" href="/amoji-engine/vendor/three.module.js?v=2026-09-15-v51-emotion-mic-button" />
-    <link rel="modulepreload" href="/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-15-v51-emotion-mic-button" />
+    <link rel="modulepreload" href="/amoji-engine/vendor/three.module.js?v=2026-09-15-v52-boot-and-mic-glow-fix" />
+    <link rel="modulepreload" href="/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-15-v52-boot-and-mic-glow-fix" />
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-15-v51-emotion-mic-button"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-15-v52-boot-and-mic-glow-fix"
     />
-    <link rel="modulepreload" href="/amoji-engine/engine/companion/vrmAvatar.js?v=2026-09-15-v51-emotion-mic-button" />
-    <link rel="modulepreload" href="/amoji-engine/engine/companion/createAvatar.js?v=2026-09-15-v51-emotion-mic-button" />
+    <link rel="modulepreload" href="/amoji-engine/engine/companion/vrmAvatar.js?v=2026-09-15-v52-boot-and-mic-glow-fix" />
+    <link rel="modulepreload" href="/amoji-engine/engine/companion/createAvatar.js?v=2026-09-15-v52-boot-and-mic-glow-fix" />
     <link rel="prefetch" href="/api/motions?pack=basic" as="fetch" crossorigin />
     <link rel="prefetch" href="/api/motions?pack=extensions" as="fetch" crossorigin />
     <script>
-      window.__amojiBuild = "2026-09-15-v51-emotion-mic-button";
+      window.__amojiBuild = "2026-09-15-v52-boot-and-mic-glow-fix";
     </script>
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-15-v51-emotion-mic-button"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-15-v51-emotion-mic-button"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-15-v52-boot-and-mic-glow-fix"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-15-v52-boot-and-mic-glow-fix"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;

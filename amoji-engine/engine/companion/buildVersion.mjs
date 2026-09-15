@@ -1,2 +1,2 @@
 /** Single source of truth for deployed companion build id (keep HTML __amojiBuild in sync). */
-export const AMOJI_BUILD = "2026-09-15-v51-emotion-mic-button";
+export const AMOJI_BUILD = "2026-09-15-v52-boot-and-mic-glow-fix";
