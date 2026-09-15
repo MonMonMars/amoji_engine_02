@@ -20,6 +20,9 @@ jobs:
       - name: Install amoji-engine deps
         run: cd amoji-engine && npm ci
 
+      - name: Sync HTML build version
+        run: node scripts/sync-build-version.mjs
+
       - name: Test
         run: cd amoji-engine && npm test
 
