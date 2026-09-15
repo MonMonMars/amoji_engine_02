@@ -16,6 +16,14 @@ describe("companionActionMotion", () => {
     expect(parsed.emotion).toBe("happy");
   });
 
+  it("parses nuance tag", () => {
+    const parsed = parseReplyTags(
+      "收到！[action:nod] [nuance:curious] [mood:thinking]",
+    );
+    expect(parsed.nuance).toBe("curious");
+    expect(parsed.emotion).toBe("thinking");
+  });
+
   it("parses tags anywhere in the reply", () => {
     const parsed = parseReplyTags(
       "[action:kungfu] 哈！睇招！ [mood:happy] 再來！",

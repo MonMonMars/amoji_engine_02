@@ -9,6 +9,14 @@ import {
   inferActionFromCatalogText,
   resolveAction as resolveCatalogAction,
 } from "./companionActionCatalog.js";
+const VALID_NUANCE_TAGS = new Set([
+  "none",
+  "shy",
+  "curious",
+  "excited",
+  "love",
+  "stress",
+]);
 import { resolveCloudAction } from "./motionPackData.mjs";
 import { getExtendedActionDef, resolveMotionSamplerKey } from "./companionMotionLibrary.js";
 
@@ -45,6 +53,7 @@ export function parseReplyTags(text) {
   let reply = String(text || "").trim();
   let emotion = null;
   let action = null;
+  let nuance = null;
 
   const moodMatch = reply.match(/\[mood:(\w+)\]/i);
   if (moodMatch) {
@@ -56,12 +65,19 @@ export function parseReplyTags(text) {
     action = resolveAction(actionMatch[1]);
   }
 
+  const nuanceMatch = reply.match(/\[nuance:(\w+)\]/i);
+  if (nuanceMatch) {
+    const key = nuanceMatch[1].toLowerCase();
+    nuance = VALID_NUANCE_TAGS.has(key) ? key : "none";
+  }
+
   reply = reply
     .replace(/\s*\[mood:\w+\]\s*/gi, " ")
     .replace(/\s*\[action:\w+\]\s*/gi, " ")
+    .replace(/\s*\[nuance:\w+\]\s*/gi, " ")
     .trim();
 
-  return { reply, emotion, action };
+  return { reply, emotion, action, nuance };
 }
 
 /**
