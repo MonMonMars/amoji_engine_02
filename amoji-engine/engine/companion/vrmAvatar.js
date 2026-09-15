@@ -142,6 +142,12 @@ export async function createVrmAvatar(opts) {
     MIDDLE: THREE.MOUSE.DOLLY,
     RIGHT: THREE.MOUSE.ROTATE,
   };
+  controls.touches = {
+    ONE: THREE.TOUCH.ROTATE,
+    TWO: THREE.TOUCH.DOLLY,
+  };
+  controls.enableRotate = true;
+  controls.enableZoom = true;
 
   const loader = new GLTFLoader();
   loader.register((parser) => new VRMLoaderPlugin(parser));
@@ -203,13 +209,27 @@ export async function createVrmAvatar(opts) {
     controls,
     fitted,
   });
+  /** @type {{ position: THREE.Vector3, target: THREE.Vector3, fov: number, distance: number }} */
   const portraitCamera = {
     position: camera.position.clone(),
     target: controls.target.clone(),
     fov: camera.fov,
     distance: portraitDist,
   };
+  const defaultPortrait = {
+    position: camera.position.clone(),
+    target: controls.target.clone(),
+    fov: camera.fov,
+    distance: portraitDist,
+  };
+  const syncPortraitFromControls = () => {
+    portraitCamera.position.copy(camera.position);
+    portraitCamera.target.copy(controls.target);
+    portraitCamera.fov = camera.fov;
+    portraitCamera.distance = camera.position.distanceTo(controls.target);
+  };
   let actionCamBlend = 0;
+  let userOrbiting = false;
   const actionCamDir = new THREE.Vector3();
   const actionCamTarget = new THREE.Vector3();
   const raycaster = new THREE.Raycaster();
@@ -227,6 +247,14 @@ export async function createVrmAvatar(opts) {
     syncLookTarget();
     controls.addEventListener?.("change", syncLookTarget);
   }
+
+  controls.addEventListener?.("start", () => {
+    userOrbiting = true;
+  });
+  controls.addEventListener?.("end", () => {
+    userOrbiting = false;
+    syncPortraitFromControls();
+  });
 
   const expr = vrm.expressionManager;
   const mouthPresets = [
@@ -452,23 +480,23 @@ export async function createVrmAvatar(opts) {
       const wantsActionCam = Boolean(bodyMotion.currentAction);
       const targetBlend = wantsActionCam ? 1 : 0;
       actionCamBlend += (targetBlend - actionCamBlend) * Math.min(1, dt * 4.5);
-      if (actionCamBlend > 0.01) {
-        actionCamTarget.copy(portraitCamera.target);
+      if (actionCamBlend > 0.01 && !userOrbiting) {
+        const baseTarget = controls.target;
+        const baseDist = camera.position.distanceTo(baseTarget);
+        actionCamTarget.copy(baseTarget);
         actionCamTarget.y -= actionCamBlend * 0.34;
-        actionCamDir
-          .subVectors(portraitCamera.position, portraitCamera.target)
-          .normalize();
-        const pullDist =
-          portraitCamera.distance * (1 + actionCamBlend * 0.62);
+        actionCamDir.subVectors(camera.position, baseTarget);
+        if (actionCamDir.lengthSq() < 1e-6) {
+          actionCamDir.set(0, 0, 1);
+        } else {
+          actionCamDir.normalize();
+        }
+        const pullDist = baseDist * (1 + actionCamBlend * 0.62);
         camera.position.copy(actionCamTarget).addScaledVector(actionCamDir, pullDist);
         controls.target.copy(actionCamTarget);
         camera.fov = portraitCamera.fov + actionCamBlend * 14;
         camera.updateProjectionMatrix();
       } else if (actionCamBlend < 0.02 && !wantsActionCam) {
-        camera.position.copy(portraitCamera.position);
-        controls.target.copy(portraitCamera.target);
-        camera.fov = portraitCamera.fov;
-        camera.updateProjectionMatrix();
         actionCamBlend = 0;
       }
 
@@ -544,9 +572,19 @@ export async function createVrmAvatar(opts) {
     return emotion;
   };
 
+  const resetCameraView = () => {
+    camera.position.copy(defaultPortrait.position);
+    controls.target.copy(defaultPortrait.target);
+    camera.fov = defaultPortrait.fov;
+    camera.updateProjectionMatrix();
+    syncPortraitFromControls();
+    controls.update();
+  };
+
   canvas.style.touchAction = "none";
   canvas.style.cursor = "grab";
   canvas.addEventListener("pointerdown", (e) => {
+    if (e.button !== 0 && e.pointerType === "mouse") return;
     pointerDown = { x: e.clientX, y: e.clientY };
     canvas.style.cursor = "grabbing";
   });
@@ -556,7 +594,7 @@ export async function createVrmAvatar(opts) {
     const dx = e.clientX - pointerDown.x;
     const dy = e.clientY - pointerDown.y;
     pointerDown = null;
-    if (dx * dx + dy * dy > 144) return;
+    if (dx * dx + dy * dy > 256) return;
 
     const rect = canvas.getBoundingClientRect();
     pointer.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
@@ -611,6 +649,7 @@ export async function createVrmAvatar(opts) {
       return mouthOpen;
     },
     resize,
+    resetCameraView,
     dispose() {
       cancelAnimationFrame(raf);
       globalThis.removeEventListener?.("resize", resize);

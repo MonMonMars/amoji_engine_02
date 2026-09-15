@@ -276,6 +276,29 @@
         opacity: 0;
       }
 
+      .orbit-reset-btn {
+        position: absolute;
+        right: max(0.75rem, env(safe-area-inset-right));
+        top: 42%;
+        transform: translateY(-50%);
+        z-index: 4;
+        pointer-events: auto;
+        padding: 0.4rem 0.65rem;
+        border-radius: 999px;
+        border: 1px solid rgba(247, 241, 232, 0.18);
+        background: rgba(10, 14, 22, 0.55);
+        color: var(--muted);
+        font: inherit;
+        font-size: 0.72rem;
+        cursor: pointer;
+        backdrop-filter: blur(8px);
+      }
+
+      .orbit-reset-btn:hover {
+        color: #f7f1e8;
+        border-color: rgba(127, 212, 207, 0.45);
+      }
+
       .start-talking {
         position: fixed;
         left: 50%;
@@ -1771,7 +1794,10 @@
     <div class="stage">
       <div class="atmosphere" aria-hidden="true"></div>
       <canvas id="avatar-canvas" aria-label="Amoji companion — drag to orbit"></canvas>
-      <div class="orbit-hint" id="orbit-hint">Drag to orbit · Tap character · Scroll to zoom</div>
+      <div class="orbit-hint" id="orbit-hint">拖曳旋轉 · Drag to orbit · 滾轮缩放</div>
+      <button type="button" class="orbit-reset-btn" id="orbit-reset-btn" title="Reset camera view">
+        ↺ View
+      </button>
       <button
         type="button"
         class="start-talking"
@@ -2553,6 +2579,17 @@
       }
 
       const orbitHint = document.getElementById("orbit-hint");
+      const orbitResetBtn = document.getElementById("orbit-reset-btn");
+      if (orbitResetBtn) {
+        orbitResetBtn.textContent = isEnglish ? "↺ View" : "↺ 視角";
+        orbitResetBtn.title = isEnglish
+          ? "Reset camera to default view"
+          : "重置視角";
+        orbitResetBtn.addEventListener("click", () => {
+          avatar.resetCameraView?.();
+          orbitHint?.classList.remove("hide");
+        });
+      }
       canvas.addEventListener(
         "pointerdown",
         () => orbitHint?.classList.add("hide"),
@@ -3658,6 +3695,12 @@
         setCharacterUi();
         updateLangPill();
         waitAct?.setLocale?.(nextEnglish);
+        if (orbitResetBtn) {
+          orbitResetBtn.textContent = nextEnglish ? "↺ View" : "↺ 視角";
+          orbitResetBtn.title = nextEnglish
+            ? "Reset camera to default view"
+            : "重置視角";
+        }
         if (liteLink) {
           liteLink.href = buildCompanionHref({
             basePath: "/companion",
