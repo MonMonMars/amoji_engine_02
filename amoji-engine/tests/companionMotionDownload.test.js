@@ -63,6 +63,24 @@ describe("companionMotionDownload", () => {
     expect(client.isInstalled("dance")).toBe(true);
   });
 
+  it("ensures wait motion pool after basic pack", async () => {
+    const storage = mockStorage();
+    const fetchImpl = async (url) => {
+      if (String(url).includes("pack=basic")) {
+        return {
+          ok: true,
+          json: async () => ({ ok: true, pack: BASIC_MOTION_PACK }),
+        };
+      }
+      return { ok: false, status: 404, json: async () => ({ ok: false }) };
+    };
+    const client = createMotionDownloadClient({ storage, fetchImpl });
+    const result = await client.ensureWaitMotions(["wave", "dab", "stretch"]);
+    expect(result.ok).toBe(true);
+    expect(client.isInstalled("wave")).toBe(true);
+    expect(client.isInstalled("dab")).toBe(true);
+  });
+
   it("downloads cloud extension motion on demand", async () => {
     const storage = mockStorage();
     const client = createMotionDownloadClient({

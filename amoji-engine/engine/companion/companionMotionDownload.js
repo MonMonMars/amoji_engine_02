@@ -15,6 +15,7 @@ import {
   saveMotionInstallState,
 } from "./companionMotionLibrary.js";
 import { learnPhaseForProgress } from "./companionLearnDialogue.js";
+import { collectWaitPreloadMotionIds } from "./companionWaitAssets.js";
 
 export const COMPANION_MOTION_DOWNLOAD_SCHEMA = "amoji.companionMotionDownload.v1";
 
@@ -265,6 +266,47 @@ export function createMotionDownloadClient(opts = {}) {
   const listBasicInstalled = () =>
     Object.keys(state.installed).filter((id) => state.installed[id]?.tier !== "extension");
 
+  const ensureWaitMotions = async (motionIds = collectWaitPreloadMotionIds()) => {
+    const key = "wait-motions";
+    if (inflight.has(key)) return inflight.get(key);
+
+    const job = (async () => {
+      await ensureBasicPack();
+      const missing = motionIds.filter(
+        (id) => id && !isMotionInstalled(id, state),
+      );
+      if (!missing.length) {
+        return { ok: true, cached: true, motions: motionIds };
+      }
+
+      emit("learning", 0.12);
+      const results = await Promise.all(
+        missing.map((id) =>
+          ensureMotion(id).catch((err) => ({
+            ok: false,
+            action: id,
+            error: err?.message || String(err),
+          })),
+        ),
+      );
+      const installed = results.filter((r) => r?.ok).map((r) => r.action);
+      emit("ready", 1);
+      return {
+        ok: installed.length > 0 || missing.length === 0,
+        motions: motionIds,
+        installed,
+        missing: missing.filter((id) => !installed.includes(id)),
+      };
+    })();
+
+    inflight.set(key, job);
+    try {
+      return await job;
+    } finally {
+      inflight.delete(key);
+    }
+  };
+
   return {
     schema: COMPANION_MOTION_DOWNLOAD_SCHEMA,
     get state() {
@@ -279,6 +321,7 @@ export function createMotionDownloadClient(opts = {}) {
     },
     ensureBasicPack,
     ensureMotion,
+    ensureWaitMotions,
     learnPhaseForProgress,
   };
 }

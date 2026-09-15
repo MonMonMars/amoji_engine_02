@@ -253,6 +253,10 @@ export const THINKING_PHRASES_YUE = Object.freeze([
   "嗯…",
   "等我諗諗…",
   "等陣…",
+  "我諗緊點答你…",
+  "等我整理下思路…",
+  "諗一諗先…",
+  "好問題呀，等我諗吓…",
 ]);
 
 /** @type {readonly string[]} */
@@ -260,6 +264,10 @@ export const THINKING_PHRASES_EN = Object.freeze([
   "Hmm…",
   "Let me think…",
   "One moment…",
+  "I'm working on an answer…",
+  "Give me a sec to think…",
+  "That's a good question — hold on…",
+  "Still thinking…",
 ]);
 
 /**

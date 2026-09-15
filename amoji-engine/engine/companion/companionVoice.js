@@ -9,6 +9,10 @@ import {
   pickThinkingPhrase,
 } from "./companionContentMotion.js";
 import {
+  dialogueTtsCacheKey,
+  getCachedDialogueTts,
+} from "./companionDialoguePreload.js";
+import {
   learnPhaseForProgress,
   pickLearnPhrase,
   pickNextLearnPhrase,
@@ -795,6 +799,31 @@ export function createCompanionVoice(opts = {}) {
     const lang = isEnglish ? "en-US" : preset.lang || "zh-HK";
     const voiceName = isEnglish ? CLOUD_ENGLISH_VOICE.name : preset.name;
 
+    const playCachedBlob = async (blob) => {
+      if (!blob?.size || !thinkingActive) return false;
+      const objectUrl = URL.createObjectURL(blob);
+      const audio = configureCompanionAudioElement(getSharedAudio());
+      thinkingCloudAudio = audio;
+      audio.volume = 0.58;
+      audio.src = objectUrl;
+      await new Promise((resolve) => {
+        const finish = () => {
+          if (thinkingCloudAudio === audio) thinkingCloudAudio = null;
+          URL.revokeObjectURL(objectUrl);
+          resolve();
+        };
+        audio.onended = finish;
+        audio.onerror = finish;
+        void audio.play().catch(finish);
+      });
+      return true;
+    };
+
+    const cachedThinking = getCachedDialogueTts(dialogueTtsCacheKey(lang, phrase));
+    if (cachedThinking && (await playCachedBlob(cachedThinking))) {
+      return { ok: true, cloud: true, phrase, cached: true };
+    }
+
     if (opts.cloudTtsUrl) {
       try {
         const res = await fetch(opts.cloudTtsUrl, {
@@ -810,22 +839,7 @@ export function createCompanionVoice(opts = {}) {
         if (!thinkingActive) return { ok: false, reason: "cancelled" };
         if (res.ok) {
           const blob = await res.blob();
-          if (blob.size > 0 && thinkingActive) {
-            const objectUrl = URL.createObjectURL(blob);
-            const audio = configureCompanionAudioElement(getSharedAudio());
-            thinkingCloudAudio = audio;
-            audio.volume = 0.58;
-            audio.src = objectUrl;
-            await new Promise((resolve) => {
-              const finish = () => {
-                if (thinkingCloudAudio === audio) thinkingCloudAudio = null;
-                URL.revokeObjectURL(objectUrl);
-                resolve();
-              };
-              audio.onended = finish;
-              audio.onerror = finish;
-              void audio.play().catch(finish);
-            });
+          if (blob.size > 0 && thinkingActive && (await playCachedBlob(blob))) {
             return { ok: true, cloud: true, phrase };
           }
         }
@@ -909,6 +923,31 @@ export function createCompanionVoice(opts = {}) {
     const lang = isEnglish ? "en-US" : preset.lang || "zh-HK";
     const voiceName = isEnglish ? CLOUD_ENGLISH_VOICE.name : preset.name;
 
+    const playLearnBlob = async (blob) => {
+      if (!blob?.size || !learnActive) return false;
+      const objectUrl = URL.createObjectURL(blob);
+      const audio = configureCompanionAudioElement(getSharedAudio());
+      thinkingCloudAudio = audio;
+      audio.volume = 0.62;
+      audio.src = objectUrl;
+      await new Promise((resolve) => {
+        const finish = () => {
+          if (thinkingCloudAudio === audio) thinkingCloudAudio = null;
+          URL.revokeObjectURL(objectUrl);
+          resolve();
+        };
+        audio.onended = finish;
+        audio.onerror = finish;
+        void audio.play().catch(finish);
+      });
+      return true;
+    };
+
+    const cachedLearn = getCachedDialogueTts(dialogueTtsCacheKey(lang, phrase));
+    if (cachedLearn && (await playLearnBlob(cachedLearn))) {
+      return { ok: true, cloud: true, phrase, phase, cached: true };
+    }
+
     if (opts.cloudTtsUrl) {
       try {
         const res = await fetch(opts.cloudTtsUrl, {
@@ -924,22 +963,7 @@ export function createCompanionVoice(opts = {}) {
         if (!learnActive) return { ok: false, reason: "cancelled" };
         if (res.ok) {
           const blob = await res.blob();
-          if (blob.size > 0 && learnActive) {
-            const objectUrl = URL.createObjectURL(blob);
-            const audio = configureCompanionAudioElement(getSharedAudio());
-            thinkingCloudAudio = audio;
-            audio.volume = 0.62;
-            audio.src = objectUrl;
-            await new Promise((resolve) => {
-              const finish = () => {
-                if (thinkingCloudAudio === audio) thinkingCloudAudio = null;
-                URL.revokeObjectURL(objectUrl);
-                resolve();
-              };
-              audio.onended = finish;
-              audio.onerror = finish;
-              void audio.play().catch(finish);
-            });
+          if (blob.size > 0 && learnActive && (await playLearnBlob(blob))) {
             return { ok: true, cloud: true, phrase, phase };
           }
         }

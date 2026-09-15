@@ -1,36 +1,22 @@
 /**
  * Companion wait performance — progress UI + rotating poses + learn dialogue.
  */
-import { learnPhaseForProgress } from "./companionLearnDialogue.js";
+import {
+  learnPhaseForProgress,
+  resolveWaitDialoguePhase,
+} from "./companionLearnDialogue.js";
 import { progressPhaseLabel } from "./companionProgressOverlay.js";
+import {
+  pickWaitEmotion,
+  pickWaitPose,
+  WAIT_POSES_BY_PHASE,
+} from "./companionWaitAssets.js";
 
 export const COMPANION_WAIT_ACT_SCHEMA = "amoji.companionWaitAct.v1";
 
 /** @typedef {'connecting'|'searching'|'downloading'|'learning'|'installing'|'ready'|'failed'|'thinking'|'avatar-load'|'character-switch'|'motion-pack'|'idle'} WaitPhase */
 
-/** @type {Record<string, readonly string[]>} */
-export const WAIT_POSES_BY_PHASE = Object.freeze({
-  connecting: ["wave", "nod", "thinking"],
-  searching: ["thinking", "nod", "wave"],
-  downloading: ["downloading", "learning", "wave"],
-  learning: ["learning", "thinking", "nod"],
-  installing: ["nod", "learning", "downloading"],
-  thinking: ["thinking", "nod", "wave"],
-  "avatar-load": ["wave", "learning", "downloading", "thinking"],
-  "character-switch": ["wave", "nod", "celebrate"],
-  "motion-pack": ["downloading", "learning", "wave", "thinking"],
-  idle: ["wave", "nod", "stretch", "bow", "clap"],
-  ready: ["wave", "celebrate", "nod"],
-});
-
-/**
- * @param {string} phase
- * @param {number} [tick]
- */
-export function pickWaitPose(phase, tick = 0) {
-  const list = WAIT_POSES_BY_PHASE[phase] || WAIT_POSES_BY_PHASE.learning;
-  return list[Math.abs(tick) % list.length];
-}
+export { WAIT_POSES_BY_PHASE, pickWaitPose };
 
 /**
  * @param {{
@@ -76,13 +62,14 @@ export function createCompanionWaitAct(opts = {}) {
 
   const playPose = () => {
     const pose = pickWaitPose(phase, poseTick);
+    const emotion = pickWaitEmotion(phase, poseTick, kind);
     avatarRef?.playAction?.(pose, {
-      emotion: kind === "idle" ? "happy" : "thinking",
+      emotion,
       loop: true,
       single: true,
     });
-    avatarRef?.setEmotion?.(kind === "idle" ? "happy" : "thinking");
-    avatarRef?.setThinking?.(kind !== "idle");
+    avatarRef?.setEmotion?.(emotion);
+    avatarRef?.setThinking?.(kind !== "idle" && emotion === "thinking");
     opts.onPose?.(pose, phase);
   };
 
@@ -134,7 +121,7 @@ export function createCompanionWaitAct(opts = {}) {
     ) {
       voiceRef?.startLearnLoop?.({
         isEnglish,
-        phase: learnPhaseForProgress(progress) || phase,
+        phase: resolveWaitDialoguePhase(kind, phase, progress),
         progress,
       });
     }
@@ -225,7 +212,7 @@ export function createCompanionWaitAct(opts = {}) {
       if (ctx.indeterminate != null) indeterminate = Boolean(ctx.indeterminate);
       syncProgressUi(ctx.label);
       voiceRef?.updateLearnLoop?.({
-        phase: learnPhaseForProgress(progress) || phase,
+        phase: resolveWaitDialoguePhase(kind, phase, progress),
         progress,
       });
       if (kind === "motion" || kind === "download" || kind === "motion-pack") {
