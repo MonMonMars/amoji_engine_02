@@ -14,21 +14,21 @@ export const COMPANION_TTS_PROSODY_SCHEMA = "amoji.companionTtsProsody.v1";
 /** @typedef {{ rate: number, pitch: number, volume: number }} BrowserProsody */
 
 const EMOTION_EDGE_BASE = Object.freeze({
-  neutral: { rate: 8, pitch: 12, volume: 4 },
-  happy: { rate: 20, pitch: 26, volume: 10 },
-  thinking: { rate: -4, pitch: 2, volume: -6 },
-  sad: { rate: -12, pitch: -8, volume: -10 },
-  surprised: { rate: 24, pitch: 30, volume: 12 },
-  angry: { rate: 14, pitch: -4, volume: 8 },
+  neutral: { rate: 10, pitch: 14, volume: 4 },
+  happy: { rate: 30, pitch: 36, volume: 16 },
+  thinking: { rate: -10, pitch: 0, volume: -8 },
+  sad: { rate: -18, pitch: -12, volume: -12 },
+  surprised: { rate: 36, pitch: 42, volume: 18 },
+  angry: { rate: 22, pitch: -6, volume: 12 },
 });
 
 const NUANCE_EDGE_DELTA = Object.freeze({
   none: { rate: 0, pitch: 0, volume: 0 },
-  shy: { rate: -6, pitch: 4, volume: -8 },
-  curious: { rate: 4, pitch: 8, volume: 2 },
-  excited: { rate: 12, pitch: 14, volume: 10 },
-  love: { rate: 6, pitch: 10, volume: 4 },
-  stress: { rate: -4, pitch: -6, volume: -4 },
+  shy: { rate: -8, pitch: 6, volume: -10 },
+  curious: { rate: 8, pitch: 12, volume: 4 },
+  excited: { rate: 18, pitch: 20, volume: 14 },
+  love: { rate: 10, pitch: 14, volume: 8 },
+  stress: { rate: -8, pitch: -8, volume: -6 },
 });
 
 const STYLE_EDGE_DELTA = Object.freeze({
@@ -45,12 +45,12 @@ const STYLE_EDGE_DELTA = Object.freeze({
 });
 
 const EMOTION_BROWSER_BASE = Object.freeze({
-  neutral: { rate: 1.04, pitch: 1.18, volume: 1 },
-  happy: { rate: 1.16, pitch: 1.38, volume: 1 },
-  thinking: { rate: 0.9, pitch: 1.04, volume: 0.92 },
-  sad: { rate: 0.84, pitch: 0.9, volume: 0.88 },
-  surprised: { rate: 1.22, pitch: 1.48, volume: 1 },
-  angry: { rate: 1.1, pitch: 0.94, volume: 1 },
+  neutral: { rate: 1.06, pitch: 1.2, volume: 1 },
+  happy: { rate: 1.22, pitch: 1.45, volume: 1 },
+  thinking: { rate: 0.86, pitch: 1.02, volume: 0.9 },
+  sad: { rate: 0.8, pitch: 0.88, volume: 0.86 },
+  surprised: { rate: 1.28, pitch: 1.55, volume: 1 },
+  angry: { rate: 1.14, pitch: 0.92, volume: 1 },
 });
 
 /**
@@ -80,13 +80,13 @@ function analyzeTextExpressiveness(text) {
   const cantoneseParticles = (raw.match(/[呀啊喇喎喔呢咩]/g) || []).length;
 
   if (exclamations) {
-    rateBoost += Math.min(10, exclamations * 4);
-    pitchBoost += Math.min(12, exclamations * 5);
-    volumeBoost += Math.min(8, exclamations * 3);
+    rateBoost += Math.min(16, exclamations * 6);
+    pitchBoost += Math.min(18, exclamations * 7);
+    volumeBoost += Math.min(12, exclamations * 4);
   }
   if (questions) {
-    pitchBoost += Math.min(14, questions * 7);
-    rateBoost += Math.min(6, questions * 3);
+    pitchBoost += Math.min(20, questions * 9);
+    rateBoost += Math.min(10, questions * 4);
   }
   if (ellipses) {
     rateBoost -= Math.min(10, ellipses * 5);
@@ -166,12 +166,28 @@ export function buildTtsInstruct(opts = {}) {
  *   characterId?: string,
  * }} opts
  */
+function inferTalkStyleFromEmotion(emotion, nuance, text, talkStyle) {
+  if (talkStyle && talkStyle !== "explain") return talkStyle;
+  if (/[?？]/.test(String(text || ""))) return "question";
+  if (nuance === "excited" || emotion === "surprised") return "celebrate";
+  if (nuance === "shy" || emotion === "sad") return "soft";
+  if (emotion === "thinking") return "thinking";
+  if (emotion === "happy") return "celebrate";
+  if (emotion === "angry") return "emphasize";
+  return talkStyle || "explain";
+}
+
 export function resolveCompanionTtsProsody(opts = {}) {
   const emotion = String(opts.emotion || "neutral").toLowerCase();
   const nuance = String(opts.nuance || "none").toLowerCase();
-  const talkStyle = String(opts.talkStyle || "explain").toLowerCase();
-  const speechEnergy = Math.max(0, Math.min(1, opts.speechEnergy ?? 0.5));
   const text = String(opts.text || "");
+  const talkStyle = inferTalkStyleFromEmotion(
+    emotion,
+    nuance,
+    text,
+    String(opts.talkStyle || "explain").toLowerCase(),
+  );
+  const speechEnergy = Math.max(0, Math.min(1, opts.speechEnergy ?? 0.58));
 
   const base =
     EMOTION_EDGE_BASE[emotion] || EMOTION_EDGE_BASE.neutral;
@@ -269,6 +285,8 @@ export function resolveChunkTtsPerformance(chunk, hints = {}) {
     talkStyle: analysis.talkStyle,
     speechEnergy: analysis.speechEnergy,
     text: chunk,
+    characterId: hints.characterId,
+    lang: hints.lang,
   });
   return {
     ...analysis,
@@ -287,7 +305,7 @@ export function normalizeTtsPerformance(performance, fallbackEmotion = "neutral"
       emotion: performance || fallbackEmotion,
       nuance: "none",
       talkStyle: "explain",
-      speechEnergy: 0.5,
+      speechEnergy: 0.58,
     };
   }
   const perf = performance || {};
@@ -295,7 +313,7 @@ export function normalizeTtsPerformance(performance, fallbackEmotion = "neutral"
     emotion: perf.emotion || fallbackEmotion,
     nuance: perf.nuance || "none",
     talkStyle: perf.talkStyle || "explain",
-    speechEnergy: perf.speechEnergy ?? 0.5,
+    speechEnergy: perf.speechEnergy ?? 0.58,
     lang: perf.lang,
     text: perf.text,
   };

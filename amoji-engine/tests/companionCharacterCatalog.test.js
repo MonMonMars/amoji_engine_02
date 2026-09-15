@@ -3,6 +3,7 @@ import {
   buildCharacterSystemPrompt,
   characterAvatarConfig,
   characterGreeting,
+  characterGreetingPerformance,
   characterVoiceLabel,
   defaultVoiceForCharacter,
   getCharacter,
@@ -48,6 +49,8 @@ describe("companionCharacterCatalog", () => {
     expect(characterGreeting("sora", true)).toMatch(/sora/i);
     expect(characterVoiceLabel("rex", "yue", false)).toBe("雲龍");
     expect(characterVoiceLabel("sora", "en", true)).toBe("Jenny");
+    expect(characterGreetingPerformance("kizuna").speechEnergy).toBeGreaterThan(0.8);
+    expect(characterGreetingPerformance("sora").talkStyle).toBe("soft");
   });
 
   it("lists voice metadata for picker cards", () => {
