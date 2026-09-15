@@ -16,8 +16,9 @@ After completing code changes (commit, push, or PR), **always** end your summary
 
 **Example (replace build id after each bump):**
 
-- https://temporary-rushing-oxygen-ok5jzhd.vercel.app/companion-full?lang=yue&build=2026-09-15-v69-demo-fresh
-- https://temporary-rushing-oxygen-ok5jzhd.vercel.app/companion-full?lang=en&build=2026-09-15-v69-demo-fresh
+- https://temporary-rushing-oxygen-ok5jzhd.vercel.app/companion?tab=today&lang=yue&build=2026-09-15-v70-secretary-phase1
+- https://temporary-rushing-oxygen-ok5jzhd.vercel.app/companion-full?lang=yue&build=2026-09-15-v70-secretary-phase1
+- https://temporary-rushing-oxygen-ok5jzhd.vercel.app/companion-full?lang=en&build=2026-09-15-v70-secretary-phase1
 - https://temporary-rushing-oxygen-ok5jzhd.vercel.app/companion
 
 Programmatic helper: `formatDemoLinkBlock()` in `amoji-engine/engine/companion/deployUrls.mjs`.
