@@ -24,7 +24,7 @@ describe("companionVoiceCatalog", () => {
     const second = nextVoiceId("zh-HK-HiuMaanNeural", "yue");
     expect(second).toBe("zh-HK-HiuGaaiNeural");
     const third = nextVoiceId(second, "yue");
-    expect(third).toBe("zh-HK-WanLungNeural");
+    expect(third).toBe("zh-HK-HiuGaaiNeural-idol");
   });
 
   it("builds href with lang and voice", () => {

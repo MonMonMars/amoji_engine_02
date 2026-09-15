@@ -33,12 +33,17 @@ describe("companionCharacterCatalog", () => {
       "zh-HK-HiuMaanNeural",
     );
     expect(defaultVoiceForCharacter("kizuna", "yue")).toBe(
-      "zh-HK-HiuGaaiNeural",
+      "zh-HK-HiuGaaiNeural-idol",
+    );
+    expect(defaultVoiceForCharacter("sky", "yue")).toBe(
+      "zh-HK-HiuMaanNeural-cool",
     );
     expect(defaultVoiceForCharacter("rex", "yue")).toBe(
       "zh-HK-WanLungNeural",
     );
-    expect(defaultVoiceForCharacter("rex", "en")).toBe("en-US-GuyNeural");
+    expect(defaultVoiceForCharacter("rex", "en")).toBe("en-HK-SamNeural");
+    expect(defaultVoiceForCharacter("kizuna", "en")).toBe("en-HK-YanNeural");
+    expect(defaultVoiceForCharacter("sky", "en")).toBe("en-US-AriaNeural-cool");
     expect(defaultVoiceForCharacter("sora", "en")).toBe("en-US-JennyNeural");
   });
 
@@ -57,6 +62,8 @@ describe("companionCharacterCatalog", () => {
     const list = listCompanionCharacters("yue");
     const rex = list.find((c) => c.id === "rex");
     expect(rex?.voiceLabel).toBe("雲龍");
+    expect(list.find((c) => c.id === "kizuna")?.voiceLabel).toBe("曉佳·元氣");
+    expect(list.find((c) => c.id === "sky")?.voiceLabel).toBe("曉曼·酷");
     expect(rex?.greeting).toContain("烈");
     expect(list.every((c) => c.voiceId && c.voiceLabel)).toBe(true);
   });
@@ -71,7 +78,8 @@ describe("companionCharacterCatalog", () => {
 
   it("cycles characters", () => {
     expect(nextCharacterId("amoji")).toBe("sora");
-    expect(nextCharacterId("rex")).toBe("amoji");
+    expect(nextCharacterId("rex")).toBe("sky");
+    expect(nextCharacterId("sky")).toBe("amoji");
   });
 
   it("exposes avatar config per character", () => {
@@ -81,6 +89,8 @@ describe("companionCharacterCatalog", () => {
     const kizuna = getCharacter("kizuna");
     expect(kizuna.traits.en).toContain("energetic");
     expect(kizuna.modelUrl).toContain("kizuna-kamatte.vrm");
+    const rex = characterAvatarConfig("rex", "yue");
+    expect(rex.modelUrl).toContain("companion-kai.vrm");
     expect(characterAvatarConfig("kizuna", "en").avatarPrefer).toBe("vrm");
   });
 });

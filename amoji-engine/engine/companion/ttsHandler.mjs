@@ -4,6 +4,7 @@
  */
 import { EdgeTTS } from "edge-tts-universal";
 import { resolveCompanionTtsProsody } from "./companionTtsProsody.js";
+import { resolveEdgeVoiceId } from "./companionVoiceProfiles.js";
 
 export const TTS_HANDLER_SCHEMA = "amoji.ttsHandler.v2";
 
@@ -67,12 +68,13 @@ export async function synthesizeSpeech(text, opts = {}) {
     text: clean,
     lang,
     characterId: opts.characterId,
+    voiceId: opts.voice,
   });
   const edge = prosodyPack.edge;
 
   const defaultVoice =
     lang === "en" || lang === "en-us" ? ENGLISH_FEMALE_VOICE : CANTONESE_FEMALE_VOICE;
-  const voice = opts.voice || defaultVoice;
+  const voice = resolveEdgeVoiceId(opts.voice || defaultVoice);
 
   const tts = new EdgeTTS(clean, voice, {
     rate: opts.rate || edge.rate,
