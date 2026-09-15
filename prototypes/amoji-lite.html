@@ -8,10 +8,10 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji Secretary</title>
     <script>
-      window.__amojiBuild = "2026-09-15-v71-voices-characters";
+      window.__amojiBuild = "2026-09-15-v72-secretary-phase2";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-15-v71-voices-characters"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-15-v71-voices-characters"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-15-v72-secretary-phase2"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-15-v72-secretary-phase2"></script>
     <style>
       *,
       *::before,
@@ -359,6 +359,118 @@
         color: #d6e2ff;
         text-align: left;
       }
+      .top3-card {
+        padding: 0.85rem;
+        border-radius: 0.9rem;
+        background: rgba(124, 156, 255, 0.1);
+        border: 1px solid rgba(124, 156, 255, 0.28);
+        margin-bottom: 0.65rem;
+      }
+      .top3-card h2 {
+        font-size: 0.88rem;
+        margin-bottom: 0.45rem;
+        color: #c8d8ff;
+      }
+      .top3-row {
+        display: flex;
+        align-items: center;
+        gap: 0.45rem;
+        padding: 0.4rem 0;
+        font-size: 0.86rem;
+        border-bottom: 1px solid rgba(247, 241, 232, 0.08);
+      }
+      .top3-row:last-child {
+        border-bottom: none;
+      }
+      .top3-num {
+        width: 1.35rem;
+        height: 1.35rem;
+        border-radius: 999px;
+        display: grid;
+        place-items: center;
+        font-size: 0.68rem;
+        font-weight: 800;
+        background: rgba(124, 156, 255, 0.35);
+        color: #e8eeff;
+        flex-shrink: 0;
+      }
+      .filter-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.35rem;
+        margin-bottom: 0.55rem;
+      }
+      .filter-chip {
+        border-radius: 999px;
+        padding: 0.3rem 0.65rem;
+        font-size: 0.72rem;
+        font-weight: 600;
+        background: rgba(247, 241, 232, 0.06);
+        border: 1px solid rgba(247, 241, 232, 0.12);
+        color: rgba(247, 241, 232, 0.75);
+        cursor: pointer;
+        font-family: inherit;
+      }
+      .filter-chip.active {
+        background: rgba(127, 212, 207, 0.16);
+        border-color: rgba(127, 212, 207, 0.45);
+        color: #b8f0ec;
+      }
+      .task-card,
+      .draft-card,
+      .memory-card {
+        margin: 0.45rem 0;
+        padding: 0.75rem;
+        border-radius: 0.85rem;
+        background: rgba(247, 241, 232, 0.06);
+        border: 1px solid rgba(247, 241, 232, 0.14);
+      }
+      .draft-card pre,
+      .draft-card .draft-body {
+        margin: 0.45rem 0 0;
+        padding: 0.65rem;
+        border-radius: 0.55rem;
+        background: rgba(10, 14, 22, 0.75);
+        border: 1px solid rgba(247, 241, 232, 0.1);
+        font-size: 0.84rem;
+        line-height: 1.45;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+      .task-card-title,
+      .draft-card-title,
+      .memory-card-title {
+        font-size: 0.86rem;
+        font-weight: 650;
+        margin-bottom: 0.35rem;
+      }
+      .task-card-actions,
+      .draft-card-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.35rem;
+        margin-top: 0.45rem;
+      }
+      .priority-btn {
+        font-size: 0.68rem;
+        padding: 0.2rem 0.45rem;
+        border-radius: 999px;
+        background: rgba(124, 156, 255, 0.15);
+        border: 1px solid rgba(124, 156, 255, 0.35);
+        color: #c8d8ff;
+        cursor: pointer;
+        font-family: inherit;
+      }
+      .priority-btn.active {
+        background: rgba(124, 156, 255, 0.35);
+        color: #fff;
+      }
+      .bubble.receipt {
+        font-size: 0.82rem;
+        color: #9ee8e3;
+        background: rgba(127, 212, 207, 0.1);
+        border: 1px solid rgba(127, 212, 207, 0.25);
+      }
       .me-section {
         margin-bottom: 1rem;
       }
@@ -529,6 +641,10 @@
 
       <section class="panel" id="panel-today">
         <div class="brief-card" id="brief-card"></div>
+        <div class="top3-card hidden" id="top3-card">
+          <h2 id="top3-title">今日 Top 3</h2>
+          <div id="top3-list"></div>
+        </div>
         <div class="task-stack" id="today-tasks"></div>
         <form class="inline-form" id="quick-task-form">
           <input id="quick-task-input" type="text" placeholder="想我跟進咩？" />
@@ -554,12 +670,16 @@
 
       <section class="panel hidden" id="panel-tasks">
         <h2>任務清單</h2>
+        <div class="filter-row" id="task-filters"></div>
         <div class="task-stack" id="tasks-list"></div>
       </section>
 
       <section class="panel hidden" id="panel-me">
         <div class="me-section">
           <label><input type="checkbox" id="pref-morning-brief" checked /> 早晨簡報</label>
+        </div>
+        <div class="me-section">
+          <label><input type="checkbox" id="pref-reminders" /> 到期任務提醒（瀏覽器通知）</label>
         </div>
         <div class="me-section">
           <label for="pref-help-with">幫手範圍</label>
@@ -597,7 +717,7 @@
     </div>
 
     <script type="module">
-      import { initAmojiSecretaryLite } from "/amoji-engine/engine/companion/secretary/secretaryLiteShell.js?v=2026-09-15-v71-voices-characters";
+      import { initAmojiSecretaryLite } from "/amoji-engine/engine/companion/secretary/secretaryLiteShell.js?v=2026-09-15-v72-secretary-phase2";
       window.__amojiLiteTag = "secretary-v1";
       window.__amojiLite = { ready: true, ttsCalls: 0, chatCalls: 0 };
       initAmojiSecretaryLite(document);
