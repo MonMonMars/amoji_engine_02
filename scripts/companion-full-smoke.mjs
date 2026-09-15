@@ -29,15 +29,15 @@ async function main() {
   const page = await browser.newPage({ viewport: { width: 900, height: 1200 } });
 
   await page.goto(url, { waitUntil: "domcontentloaded", timeout: 45000 });
-  await page.waitForSelector("#start-talking", { timeout: 20000 });
+  await page.waitForSelector("#start-character-picker .companion-card", { timeout: 20000 });
 
   const build = await page.evaluate(() => window.__amojiBuild);
   const t0 = Date.now();
-  await page.click("#start-talking");
+  await page.click("#start-character-picker .companion-card");
 
   await page.waitForFunction(
     () => {
-      const btn = document.getElementById("start-talking");
+      const btn = document.getElementById("start-character-picker");
       return (
         !btn ||
         btn.classList.contains("hide") ||

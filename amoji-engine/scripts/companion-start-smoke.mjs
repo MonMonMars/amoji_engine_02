@@ -43,19 +43,21 @@ async function main() {
   });
 
   await page.goto(url, { waitUntil: "domcontentloaded", timeout: 30000 });
-  await page.waitForSelector("#start-talking", { timeout: 15000 });
+  await page.waitForSelector(
+    "#start-character-picker .companion-card",
+    { timeout: 15000 },
+  );
 
   const t0 = Date.now();
-  await page.click("#start-talking");
+  await page.click("#start-character-picker .companion-card");
 
   await page.waitForFunction(
     () => {
-      const btn = document.getElementById("start-talking");
+      const picker = document.getElementById("start-character-picker");
       return (
-        !btn ||
-        btn.classList.contains("hide") ||
-        btn.disabled ||
-        btn.getAttribute("aria-hidden") === "true"
+        !picker ||
+        picker.classList.contains("hide") ||
+        picker.getAttribute("aria-hidden") === "true"
       );
     },
     undefined,
@@ -68,8 +70,8 @@ async function main() {
   await page.waitForSelector(".msg-row.user .bubble", { timeout: 5000 });
 
   const stillStarting = await page.evaluate(() => {
-    const btn = document.getElementById("start-talking");
-    return Boolean(btn && btn.textContent?.includes("Starting"));
+    const picker = document.getElementById("start-character-picker");
+    return Boolean(picker?.classList.contains("is-starting"));
   });
 
   console.log(

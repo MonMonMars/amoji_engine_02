@@ -36,7 +36,7 @@ async function main() {
 
   const ready = await page.evaluate(() => window.__amojiStart?.ready === true);
 
-  await page.click("#start-talking");
+  await page.click("#start-character-picker .companion-card");
   await page.waitForTimeout(500);
   await page.fill("#input", "test");
   await page.click("#send");

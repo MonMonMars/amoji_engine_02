@@ -15,7 +15,7 @@ async function main() {
   const browser = await chromium.launch({ headless: true });
   const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
   await page.goto(url, { waitUntil: "domcontentloaded", timeout: 45000 });
-  await page.click("#start-talking");
+  await page.click("#start-character-picker .companion-card");
   await page.waitForTimeout(400);
 
   await page.evaluate((text) => {
