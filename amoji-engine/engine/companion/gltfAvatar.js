@@ -119,6 +119,12 @@ export async function createGltfAvatar(opts) {
     MIDDLE: THREE.MOUSE.DOLLY,
     RIGHT: THREE.MOUSE.ROTATE,
   };
+  controls.touches = {
+    ONE: THREE.TOUCH.ROTATE,
+    TWO: THREE.TOUCH.DOLLY,
+  };
+  controls.enableRotate = true;
+  controls.enableZoom = true;
 
   const loader = new GLTFLoader();
   const gltf = await loader.loadAsync(modelUrl, (event) => {

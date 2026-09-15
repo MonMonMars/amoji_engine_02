@@ -4,7 +4,7 @@ export default function handler(_req, res) {
   res.status(200).json({
     ok: true,
     service: "amoji-companion",
-    build: "2026-09-14-v42-idle-wait-yue",
+    build: "2026-09-14-v43-orbit-camera",
     time: new Date().toISOString(),
     routes: {
       lite: "/companion?lang=yue",
