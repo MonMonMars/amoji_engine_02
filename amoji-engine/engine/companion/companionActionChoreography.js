@@ -38,6 +38,20 @@ export const ACTION_COMBOS = Object.freeze({
   downloading: ["downloading", "learning", "wave"],
   highfive: ["highfive", "clap", "cheer"],
   curtsy: ["curtsy", "bow", "wave"],
+  ballet: ["ballet", "spin", "bow"],
+  hiphop: ["hiphop", "dab", "dance"],
+  macarena: ["macarena", "clap", "dance"],
+  floss: ["floss", "wiggle", "dance"],
+  wiggle: ["wiggle", "dance", "dab"],
+  superhero: ["superhero", "cheer", "jump"],
+  handshake: ["handshake", "wave", "nod"],
+  fingerheart: ["fingerheart", "peace", "shy"],
+  photopose: ["photopose", "dab", "peace"],
+  pushup: ["pushup", "squat", "stretch"],
+  plank: ["plank", "yoga", "stretch"],
+  zombie: ["zombie", "walk", "shrug"],
+  sneak: ["sneak", "walk", "thinking"],
+  jumpjack: ["jumpjack", "jump", "cheer"],
 });
 
 /** Large idle rotation pool — quiet companion moments between turns. */
@@ -82,6 +96,20 @@ export const IDLE_SHOWCASE_POOL = Object.freeze([
   "breakdance",
   "tiktokdance",
   "learning",
+  "ballet",
+  "hiphop",
+  "macarena",
+  "floss",
+  "wiggle",
+  "superhero",
+  "handshake",
+  "fingerheart",
+  "photopose",
+  "pushup",
+  "plank",
+  "zombie",
+  "sneak",
+  "jumpjack",
 ]);
 
 /** Longer performance when user asks for multiple moves. */

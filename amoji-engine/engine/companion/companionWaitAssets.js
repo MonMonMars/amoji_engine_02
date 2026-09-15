@@ -7,7 +7,11 @@ import {
   SHOWCASE_SEQUENCE_POOL,
 } from "./companionActionChoreography.js";
 import { buildVrmExpressionBlend } from "./companionContentMotion.js";
-import { BUNDLED_MOTION_IDS, CLOUD_EXTENSION_MOTIONS } from "./motionPackData.mjs";
+import {
+  BUNDLED_MOTION_IDS,
+  CLOUD_EXTENSION_MOTIONS,
+  PREMIUM_EXTENSION_MOTIONS,
+} from "./motionPackData.mjs";
 
 export const COMPANION_WAIT_ASSETS_SCHEMA = "amoji.companionWaitAssets.v3";
 
@@ -257,6 +261,7 @@ export function collectWaitPreloadMotionIds() {
     for (const id of combo) ids.add(id);
   }
   for (const id of Object.keys(CLOUD_EXTENSION_MOTIONS)) ids.add(id);
+  for (const id of Object.keys(PREMIUM_EXTENSION_MOTIONS)) ids.add(id);
   ids.delete("stop");
   ids.delete("none");
   return [...ids];

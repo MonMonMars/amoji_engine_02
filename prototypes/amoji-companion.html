@@ -2080,27 +2080,28 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-15-v57-minimal-ui",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-15-v58-action-moves",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-15-v57-minimal-ui"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-15-v58-action-moves"
         }
       }
     </script>
-    <link rel="modulepreload" href="/amoji-engine/vendor/three.module.js?v=2026-09-15-v57-minimal-ui" />
-    <link rel="modulepreload" href="/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-15-v57-minimal-ui" />
+    <link rel="modulepreload" href="/amoji-engine/vendor/three.module.js?v=2026-09-15-v58-action-moves" />
+    <link rel="modulepreload" href="/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-15-v58-action-moves" />
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-15-v57-minimal-ui"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-15-v58-action-moves"
     />
-    <link rel="modulepreload" href="/amoji-engine/engine/companion/vrmAvatar.js?v=2026-09-15-v57-minimal-ui" />
-    <link rel="modulepreload" href="/amoji-engine/engine/companion/createAvatar.js?v=2026-09-15-v57-minimal-ui" />
+    <link rel="modulepreload" href="/amoji-engine/engine/companion/vrmAvatar.js?v=2026-09-15-v58-action-moves" />
+    <link rel="modulepreload" href="/amoji-engine/engine/companion/createAvatar.js?v=2026-09-15-v58-action-moves" />
     <link rel="prefetch" href="/api/motions?pack=basic" as="fetch" crossorigin />
     <link rel="prefetch" href="/api/motions?pack=extensions" as="fetch" crossorigin />
+    <link rel="prefetch" href="/api/motions?pack=premium" as="fetch" crossorigin />
     <script>
-      window.__amojiBuild = "2026-09-15-v57-minimal-ui";
+      window.__amojiBuild = "2026-09-15-v58-action-moves";
     </script>
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-15-v57-minimal-ui"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-15-v57-minimal-ui"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-15-v58-action-moves"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-15-v58-action-moves"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;
@@ -2493,6 +2494,7 @@
         progressOverlayMod,
         waitActMod,
         actionChoreographyMod,
+        actionResolveMod,
       ] = await Promise.all([
         ami("../amoji-engine/engine/companion/createAvatar.js"),
         ami("../amoji-engine/engine/companion/chatLlm.js"),
@@ -2521,6 +2523,7 @@
         ami("../amoji-engine/engine/companion/companionProgressOverlay.js"),
         ami("../amoji-engine/engine/companion/companionWaitAct.js"),
         ami("../amoji-engine/engine/companion/companionActionChoreography.js"),
+        ami("../amoji-engine/engine/companion/companionActionResolve.js"),
       ]);
       window.__amojiModuleBooted = true;
       const {
@@ -2584,7 +2587,10 @@
         buildActionSequence,
         buildShowcaseSequence,
         isShowcaseRequest,
+        shouldChainAction,
       } = actionChoreographyMod;
+      const { resolveTurnPerformance, resolveStreamingAction } =
+        actionResolveMod;
       const progressDock = createCompanionProgressDock({ root: document.body });
       /** @type {ReturnType<typeof createCompanionWaitAct> | null} */
       let waitAct = null;
@@ -2623,8 +2629,7 @@
           const result = await motionClient.ensureBasicPack();
           basicMotionPackReady = Boolean(result?.ok);
           if (result?.ok) {
-            void motionClient.ensureWaitMotions?.();
-            void motionClient.ensureExtensionsPack?.();
+            void motionClient.ensureFullMotionLibrary?.();
             primeBodyMotionPoses?.();
           }
           if (waitAct?.isActive() && (coupled || showPackUi)) {
@@ -2697,9 +2702,14 @@
 
       const playCompanionPerformance = (actionId, emotion, opts = {}) => {
         if (!actionId || actionId === "stop") return false;
-        const sequence = opts.sequence || buildActionSequence(actionId, { maxMoves: opts.maxMoves ?? 4 });
+        const sequence =
+          opts.sequence ||
+          buildActionSequence(actionId, { maxMoves: opts.maxMoves ?? 5 });
+        const chain =
+          opts.forceSequence === true ||
+          (opts.forceSequence !== false && shouldChainAction(actionId));
         const useSequence =
-          opts.forceSequence === true &&
+          chain &&
           Array.isArray(sequence) &&
           sequence.length > 1 &&
           avatar.playActionSequence;
@@ -2718,9 +2728,16 @@
 
       const playActionWithMotionLibrary = async (content) => {
         if (!content?.action || content.action === "stop") return;
-        const installed = await ensureActionInstalled(content.action);
-        if (!installed.ok) return;
-        playCompanionPerformance(content.action, content.emotion, { single: true });
+        const sequence = buildActionSequence(content.action, { maxMoves: 5 });
+        for (const id of sequence) {
+          const installed = await ensureActionInstalled(id);
+          if (!installed.ok) return;
+        }
+        const chain = shouldChainAction(content.action) && sequence.length > 1;
+        playCompanionPerformance(content.action, content.emotion, {
+          forceSequence: chain,
+          maxMoves: 5,
+        });
         const liveEmotion = avatar.emotion;
         if (liveEmotion && liveEmotion !== "neutral") {
           currentEmotion = liveEmotion;
@@ -2764,7 +2781,15 @@
             }
           }
           if (motionClient?.isInstalled(content.action)) {
-            playCompanionPerformance(content.action, content.emotion, { single: true });
+            const sequence = buildActionSequence(content.action, { maxMoves: 5 });
+            const chain =
+              shouldChainAction(content.action) &&
+              sequence.length > 1 &&
+              sequence.every((id) => motionClient.isInstalled(id));
+            playCompanionPerformance(content.action, content.emotion, {
+              forceSequence: chain,
+              maxMoves: 5,
+            });
             const liveEmotion = avatar.emotion;
             if (liveEmotion && liveEmotion !== "neutral") {
               currentEmotion = liveEmotion;
@@ -2783,8 +2808,10 @@
         applyPerformanceFromContent(lastAvatarPerformance);
       };
 
-      const applyReplyPerformance = (replyText, moodHint) => {
-        const content = analyzeCompanionReply(replyText, moodHint);
+      let lastUserMessage = "";
+
+      const applyReplyPerformance = (replyText, moodHint, userText = lastUserMessage) => {
+        const content = resolveTurnPerformance(userText, replyText, moodHint);
         applyPerformanceFromContent(content);
         if (!content.action && !content.gesture) {
           avatar.playGestureForText?.(replyText, { emotion: content.emotion });
@@ -3572,6 +3599,7 @@
           setEmotionPill("thinking", action || phase);
         },
       });
+      void motionClient.ensureFullMotionLibrary?.();
 
       waitAct = createCompanionWaitAct({
         avatar,
@@ -3870,6 +3898,7 @@
         armBargeIn();
         interim.clear();
         addBubble("user", cleaned);
+        lastUserMessage = cleaned;
         avatar.setListening?.(false);
         avatar.setTalking(false);
         avatar.setMouthOpen(0);
@@ -3879,6 +3908,11 @@
           setEmotionPill(userMotion.emotion || "neutral");
         } else if (isShowcaseRequest(cleaned)) {
           void playShowcaseSequence(userMotion?.action, userMotion?.emotion || "happy");
+        } else if (userMotion?.action) {
+          void playActionWithMotionLibrary({
+            action: userMotion.action,
+            emotion: userMotion.emotion || "happy",
+          });
         }
         avatar.setThinking?.(true);
         avatar.prepareThinkingFromUser?.(cleaned, isEnglish);
@@ -3902,6 +3936,7 @@
         let gotToken = false;
         let streamSpeakStarted = false;
         let streamEmotion = "neutral";
+        let streamActionPlayed = false;
 
         const enqueueStreamSegments = (segments, fullText) => {
           if (!phaseAEnabled || !segments.length) return;
@@ -3957,6 +3992,19 @@
                   streamEmotion = stream.emotion;
                 }
               }
+              const streamAction =
+                stream?.action || resolveStreamingAction(full);
+              if (
+                streamAction &&
+                !streamActionPlayed &&
+                streamAction !== "stop"
+              ) {
+                streamActionPlayed = true;
+                void playActionWithMotionLibrary({
+                  action: streamAction,
+                  emotion: stream.emotion || streamEmotion,
+                });
+              }
               enqueueStreamSegments(
                 streamPlanner.feed(stripReplyTags(full)),
                 stripReplyTags(full),
@@ -3981,6 +4029,7 @@
           let content = applyReplyPerformance(
             result.raw || reply,
             result.emotion || "happy",
+            cleaned,
           );
           if (content.action === "none") {
             content = { ...content, action: null };

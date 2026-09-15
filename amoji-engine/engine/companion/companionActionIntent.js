@@ -105,6 +105,24 @@ export function suggestClosestActions(text, limit = 3) {
  * @param {string | null | undefined} text
  * @param {boolean} [isEnglish]
  */
+/**
+ * Short reminder appended to every chat turn so the model tags motion when asked.
+ * @param {boolean} [isEnglish]
+ */
+export function buildAlwaysActionReminder(isEnglish = false) {
+  if (isEnglish) {
+    return [
+      "Motion rule: when the user asks you to move, dance, pose, fight, sit, wave, stretch, etc.,",
+      "you MUST include the closest supported [action:…] tag before [mood:…].",
+      "Do not reply with motion-only prose and skip the action tag.",
+    ].join(" ");
+  }
+  return [
+    "動作規則：用家叫你做動作、跳舞、擺 pose、功夫、坐低、揮手、伸展等，",
+    "必須加最接近嘅 [action:…]（放喺 [mood:…] 前），唔好只講口語唔做 tag。",
+  ].join("");
+}
+
 export function buildActionLlmContext(text, isEnglish = false) {
   if (!isActionRequest(text)) return "";
 

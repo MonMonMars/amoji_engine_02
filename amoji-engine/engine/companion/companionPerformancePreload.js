@@ -87,6 +87,8 @@ export async function warmAvatarExpressionProfiles(avatar, opts = {}) {
  *   motionClient?: {
  *     ensureWaitMotions?: (ids?: string[]) => Promise<unknown>,
  *     ensureExtensionsPack?: () => Promise<unknown>,
+ *     ensurePremiumPack?: () => Promise<unknown>,
+ *     ensureFullMotionLibrary?: () => Promise<unknown>,
  *   } | null,
  *   motionIds?: string[],
  *   expressionProfiles?: Array<{ emotion: string, nuance: string }>,
@@ -103,6 +105,8 @@ export async function startPerformancePreload(opts = {}) {
     opts.motionClient?.ensureWaitMotions?.(motionIds) ??
     Promise.resolve({ ok: false, reason: "no-motion-client" });
   const extensionsJob =
+    opts.motionClient?.ensureFullMotionLibrary?.() ??
+    opts.motionClient?.ensurePremiumPack?.() ??
     opts.motionClient?.ensureExtensionsPack?.() ??
     Promise.resolve({ ok: false, reason: "no-extensions-api" });
   const expressionJob = opts.avatar

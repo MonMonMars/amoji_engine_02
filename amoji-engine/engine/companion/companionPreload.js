@@ -7,6 +7,7 @@ export const COMPANION_PRELOAD_SCHEMA = "amoji.companionPreload.v1";
 export const DEFAULT_VRM_URL = "/prototypes/assets/companion-girl.vrm";
 export const DEFAULT_MOTIONS_BASIC_URL = "/api/motions?pack=basic";
 export const DEFAULT_MOTIONS_EXTENSIONS_URL = "/api/motions?pack=extensions";
+export const DEFAULT_MOTIONS_PREMIUM_URL = "/api/motions?pack=premium";
 
 /** @type {Map<string, Promise<ArrayBuffer>>} */
 const vrmBuffers = new Map();
@@ -22,6 +23,9 @@ let threeModulePromise = null;
 
 /** @type {Promise<unknown> | null} */
 let motionExtensionsPromise = null;
+
+/** @type {Promise<unknown> | null} */
+let motionPremiumPromise = null;
 
 /** @type {Promise<unknown> | null} */
 let waitAssetsModulePromise = null;
@@ -105,6 +109,15 @@ export function startCompanionPreload(opts = {}) {
       .catch(() => null);
   }
 
+  if (fetchImpl && !motionPremiumPromise) {
+    motionPremiumPromise = fetchImpl(DEFAULT_MOTIONS_PREMIUM_URL, {
+      method: "GET",
+      headers: { Accept: "application/json" },
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .catch(() => null);
+  }
+
   if (!vrmModulePromise) {
     vrmModulePromise = import("./vrmAvatar.js");
   }
@@ -132,6 +145,7 @@ export function startCompanionPreload(opts = {}) {
     vrm: vrmBuffers.get(modelUrl) ?? null,
     motionBasic: motionBasicPromise,
     motionExtensions: motionExtensionsPromise,
+    motionPremium: motionPremiumPromise,
     vrmModule: vrmModulePromise,
     threeModule: threeModulePromise,
     waitAssetsModule: waitAssetsModulePromise,
