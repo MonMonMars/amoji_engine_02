@@ -23,6 +23,8 @@ export const COMPANION_MOTION_DOWNLOAD_SCHEMA = "amoji.companionMotionDownload.v
  *   motionsUrl?: string,
  *   fetchImpl?: typeof fetch,
  *   storage?: Storage | null,
+ *   fastProgress?: boolean,
+ *   getPrefetchedBasicPack?: () => Promise<unknown> | unknown,
  *   onProgress?: (ev: { phase: string, progress: number, action?: string }) => void,
  * }} [opts]
  */
@@ -85,12 +87,14 @@ export function createMotionDownloadClient(opts = {}) {
     return data;
   };
 
+  const fastProgress = opts.fastProgress !== false;
+
   const simulateProgress = async (actionId, steps) => {
     let p = 0;
     for (const step of steps) {
       p = Math.min(1, p + step.delta);
       emit(step.phase, p, actionId);
-      if (step.delayMs > 0) {
+      if (!fastProgress && step.delayMs > 0) {
         await sleep(step.delayMs);
       }
     }
@@ -119,16 +123,32 @@ export function createMotionDownloadClient(opts = {}) {
 
       emit("connecting", 0.05);
       try {
-        await simulateProgress(null, [
-          { phase: "connecting", delta: 0.12, delayMs: 120 },
-          { phase: "searching", delta: 0.18, delayMs: 140 },
-          { phase: "downloading", delta: 0.35, delayMs: 180 },
-        ]);
+        let prefetched = null;
+        if (opts.getPrefetchedBasicPack) {
+          try {
+            prefetched = await opts.getPrefetchedBasicPack();
+          } catch {
+            prefetched = null;
+          }
+        }
 
-        const data = await fetchJson(`${motionsUrl}?pack=basic`, (bytePct) => {
-          const mapped = 0.35 + bytePct * 0.28;
-          emit("downloading", mapped);
-        });
+        if (!prefetched?.pack) {
+          await simulateProgress(null, [
+            { phase: "connecting", delta: 0.12, delayMs: 120 },
+            { phase: "searching", delta: 0.18, delayMs: 140 },
+            { phase: "downloading", delta: 0.35, delayMs: 180 },
+          ]);
+        } else {
+          emit("downloading", 0.62);
+        }
+
+        const data =
+          prefetched?.pack && prefetched?.ok !== false
+            ? prefetched
+            : await fetchJson(`${motionsUrl}?pack=basic`, (bytePct) => {
+                const mapped = 0.35 + bytePct * 0.28;
+                emit("downloading", mapped);
+              });
         const pack = data.pack;
         if (!pack || pack.schema !== MOTION_PACK_SCHEMA) {
           throw new Error("invalid basic motion pack");

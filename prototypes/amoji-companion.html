@@ -1572,9 +1572,19 @@
         }
       }
     </script>
+    <link rel="modulepreload" href="/amoji-engine/vendor/three.module.js" />
+    <link rel="modulepreload" href="/amoji-engine/vendor/three-vrm/three-vrm.module.min.js" />
+    <link
+      rel="modulepreload"
+      href="/amoji-engine/engine/companion/companionPreload.js"
+    />
+    <link rel="modulepreload" href="/amoji-engine/engine/companion/vrmAvatar.js" />
+    <link rel="modulepreload" href="/amoji-engine/engine/companion/createAvatar.js" />
+    <link rel="prefetch" href="/api/motions?pack=basic" as="fetch" crossorigin />
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js"></script>
     <script>
       (function () {
-        window.__amojiBuild = "2026-09-14-v39-body-rig-actions";
+        window.__amojiBuild = "2026-09-14-v44-preload";
         window.__amojiModuleBooted = false;
         window.__amojiStart = {
           tapped: false,
@@ -2432,6 +2442,22 @@
             ? `Anime companion · ${resolveAvatarLabel()} · English · free Edge TTS · Brain button switches LLM · 🎤`
             : `動漫同伴 · ${resolveAvatarLabel()} · 粵語傾偈 · 免費 Edge TTS · Brain 按鈕切 LLM · 🎤 連續對話`;
 
+      const avatarLoadPill = document.getElementById("avatar-load-pill");
+
+      const showAvatarLoadPill = () => {
+        if (!avatarLoadPill) return;
+        avatarLoadPill.hidden = false;
+        avatarLoadPill.classList.remove("hide");
+      };
+
+      const hideAvatarLoadPill = () => {
+        if (!avatarLoadPill) return;
+        avatarLoadPill.classList.add("hide");
+        setTimeout(() => {
+          avatarLoadPill.hidden = true;
+        }, 450);
+      };
+
       const beginAvatarLoad = () => {
         if (avatarLoadStarted) return avatarLoadPromise;
         avatarLoadStarted = true;
@@ -2932,6 +2958,11 @@
 
       motionClient = createMotionDownloadClient({
         motionsUrl: "/api/motions",
+        fastProgress: true,
+        getPrefetchedBasicPack: () =>
+          globalThis.__amojiPreload?.getMotionBasic?.() ??
+          globalThis.__amojiPreload?.ready?.motionBasic ??
+          null,
         onProgress: ({ phase, progress, action }) => {
           if (waitAct?.isActive()) {
             waitAct.update({
@@ -2952,6 +2983,8 @@
         progress: progressDock,
         isEnglish,
       });
+
+      if (!liteMode) beginAvatarLoad();
 
       applyVoiceSelection = (nextVoiceId) => {
         voiceId = nextVoiceId;
@@ -3366,23 +3399,6 @@
       /** @type {ReturnType<typeof setTimeout> | null} */
       let startTimeoutId = null;
       const START_TIMEOUT_MS = 2000;
-      const avatarLoadPill = document.getElementById("avatar-load-pill");
-
-      const showAvatarLoadPill = () => {
-        if (!avatarLoadPill) return;
-        avatarLoadPill.hidden = false;
-        avatarLoadPill.classList.remove("hide");
-      };
-
-      const hideAvatarLoadPill = () => {
-        if (!avatarLoadPill) return;
-        avatarLoadPill.classList.add("hide");
-        setTimeout(() => {
-          avatarLoadPill.hidden = true;
-        }, 450);
-      };
-
-      if (!liteMode) beginAvatarLoad();
 
       const resetStartButton = () => {
         if (!startTalkingEl) return;
@@ -3429,7 +3445,7 @@
         input.focus();
         void prefetchBasicMotionPack();
         startIdlePerformance();
-        if (!liteMode && !avatarLoadStarted) scheduleAvatarLoad();
+        if (!liteMode && !avatarLoadStarted) beginAvatarLoad();
 
         if (fromTimeout) {
           showToast("Session ready — avatar or voice may still be loading", "info");

@@ -105,7 +105,9 @@ export async function createCompanionAvatar(opts) {
 
   if (wantsVrm && !wantsGltf) {
     try {
-      const { createVrmAvatar } = await import("./vrmAvatar.js");
+      const vrmModule =
+        globalThis.__amojiPreload?.getVrmModule?.() ?? import("./vrmAvatar.js");
+      const { createVrmAvatar } = await vrmModule;
       emit(8, "vrm");
       const avatar = await withLoadTimeout(
         createVrmAvatar({
