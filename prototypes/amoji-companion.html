@@ -3,6 +3,9 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
     <title>Amoji · Companion</title>
     <link
       rel="preload"
@@ -1566,25 +1569,28 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-14-v46-fresh-boot",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-14-v46-fresh-boot"
         }
       }
     </script>
-    <link rel="modulepreload" href="/amoji-engine/vendor/three.module.js" />
-    <link rel="modulepreload" href="/amoji-engine/vendor/three-vrm/three-vrm.module.min.js" />
+    <link rel="modulepreload" href="/amoji-engine/vendor/three.module.js?v=2026-09-14-v46-fresh-boot" />
+    <link rel="modulepreload" href="/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-14-v46-fresh-boot" />
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-14-v46-fresh-boot"
     />
-    <link rel="modulepreload" href="/amoji-engine/engine/companion/vrmAvatar.js" />
-    <link rel="modulepreload" href="/amoji-engine/engine/companion/createAvatar.js" />
+    <link rel="modulepreload" href="/amoji-engine/engine/companion/vrmAvatar.js?v=2026-09-14-v46-fresh-boot" />
+    <link rel="modulepreload" href="/amoji-engine/engine/companion/createAvatar.js?v=2026-09-14-v46-fresh-boot" />
     <link rel="prefetch" href="/api/motions?pack=basic" as="fetch" crossorigin />
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js"></script>
+    <script>
+      window.__amojiBuild = "2026-09-14-v46-fresh-boot";
+    </script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-14-v46-fresh-boot"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-14-v46-fresh-boot"></script>
     <script>
       (function () {
-        window.__amojiBuild = "2026-09-14-v45-wait-assets";
         window.__amojiModuleBooted = false;
         window.__amojiStart = {
           tapped: false,
@@ -1969,6 +1975,7 @@
     <script type="module">
       (async () => {
       try {
+      const ami = globalThis.__amojiImport || ((path) => import(path));
       const [
         { createCompanionAvatar, createStubAvatar },
         { createCompanionChat },
@@ -1994,29 +2001,29 @@
         waitActMod,
         actionChoreographyMod,
       ] = await Promise.all([
-        import("../amoji-engine/engine/companion/createAvatar.js"),
-        import("../amoji-engine/engine/companion/chatLlm.js"),
-        import("../amoji-engine/engine/companion/companionVoice.js"),
-        import("../amoji-engine/engine/companion/companionBodyMotion.js"),
-        import("../amoji-engine/engine/lab/dialectPref.js"),
-        import("../amoji-engine/engine/companion/companionUi.js"),
-        import("../amoji-engine/engine/companion/companionLlmUi.js"),
-        import("../amoji-engine/engine/companion/companionLlmConnect.js"),
-        import("../amoji-engine/engine/companion/companionClientKeys.js"),
-        import("../amoji-engine/engine/companion/companionLlmProviders.js"),
-        import("../amoji-engine/engine/companion/companionVoiceCatalog.js"),
-        import("../amoji-engine/engine/companion/companionContentMotion.js"),
-        import("../amoji-engine/engine/companion/companionStreamSpeak.js"),
-        import("../amoji-engine/engine/companion/companionBargeMonitor.js"),
-        import("../amoji-engine/engine/companion/companionVoiceGate.js"),
-        import("../amoji-engine/engine/companion/companionPlatform.js"),
-        import("../amoji-engine/engine/companion/companionCharacterCatalog.js"),
-        import("../amoji-engine/engine/companion/companionMotionDownload.js"),
-        import("../amoji-engine/engine/companion/companionCharacterPicker.js"),
-        import("../amoji-engine/engine/companion/companionCharacterSwitch.js"),
-        import("../amoji-engine/engine/companion/companionProgressOverlay.js"),
-        import("../amoji-engine/engine/companion/companionWaitAct.js"),
-        import("../amoji-engine/engine/companion/companionActionChoreography.js"),
+        ami("../amoji-engine/engine/companion/createAvatar.js"),
+        ami("../amoji-engine/engine/companion/chatLlm.js"),
+        ami("../amoji-engine/engine/companion/companionVoice.js"),
+        ami("../amoji-engine/engine/companion/companionBodyMotion.js"),
+        ami("../amoji-engine/engine/lab/dialectPref.js"),
+        ami("../amoji-engine/engine/companion/companionUi.js"),
+        ami("../amoji-engine/engine/companion/companionLlmUi.js"),
+        ami("../amoji-engine/engine/companion/companionLlmConnect.js"),
+        ami("../amoji-engine/engine/companion/companionClientKeys.js"),
+        ami("../amoji-engine/engine/companion/companionLlmProviders.js"),
+        ami("../amoji-engine/engine/companion/companionVoiceCatalog.js"),
+        ami("../amoji-engine/engine/companion/companionContentMotion.js"),
+        ami("../amoji-engine/engine/companion/companionStreamSpeak.js"),
+        ami("../amoji-engine/engine/companion/companionBargeMonitor.js"),
+        ami("../amoji-engine/engine/companion/companionVoiceGate.js"),
+        ami("../amoji-engine/engine/companion/companionPlatform.js"),
+        ami("../amoji-engine/engine/companion/companionCharacterCatalog.js"),
+        ami("../amoji-engine/engine/companion/companionMotionDownload.js"),
+        ami("../amoji-engine/engine/companion/companionCharacterPicker.js"),
+        ami("../amoji-engine/engine/companion/companionCharacterSwitch.js"),
+        ami("../amoji-engine/engine/companion/companionProgressOverlay.js"),
+        ami("../amoji-engine/engine/companion/companionWaitAct.js"),
+        ami("../amoji-engine/engine/companion/companionActionChoreography.js"),
       ]);
       window.__amojiModuleBooted = true;
       const {
@@ -2995,7 +3002,7 @@
 
       const warmWaitDialogue = () => {
         if (!hostedOnline) return;
-        void import("../amoji-engine/engine/companion/companionDialoguePreload.js")
+        void ami("../amoji-engine/engine/companion/companionDialoguePreload.js")
           .then(({ prefetchWaitDialogue }) => {
             const preset = voicePresetById(voiceId);
             return prefetchWaitDialogue({
