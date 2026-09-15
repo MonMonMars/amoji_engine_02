@@ -267,7 +267,7 @@
       media="print"
       onload="this.media='all'"
     />
-    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-15-v61-grok-ani-ui" />
+    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-15-v62-settings-buttons" />
     <noscript>
       <link
         href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap"
@@ -1457,27 +1457,140 @@
         transform: none;
       }
 
+      .topbar-actions {
+        display: flex;
+        align-items: center;
+        gap: 0.45rem;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+      }
+
+      .topbar-btn {
+        pointer-events: auto;
+        border: 1px solid var(--line);
+        background: var(--glass);
+        color: var(--ink);
+        border-radius: 999px;
+        padding: 0.42rem 0.78rem;
+        font: inherit;
+        font-size: 0.72rem;
+        font-weight: 650;
+        cursor: pointer;
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+        white-space: nowrap;
+        transition:
+          border-color 0.15s ease,
+          background 0.15s ease,
+          transform 0.15s ease;
+      }
+
+      .topbar-btn:hover {
+        transform: translateY(-1px);
+        border-color: rgba(127, 212, 207, 0.45);
+        background: rgba(255, 255, 255, 0.1);
+      }
+
+      .topbar-btn--primary {
+        border-color: rgba(127, 212, 207, 0.35);
+        background: rgba(127, 212, 207, 0.14);
+        color: #dff8f6;
+      }
+
+      .settings-backdrop {
+        position: fixed;
+        inset: 0;
+        z-index: 11000;
+        background: rgba(4, 6, 12, 0.62);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.28s ease;
+      }
+
+      .settings-backdrop.is-open {
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      body.settings-open {
+        overflow: hidden;
+      }
+
       .settings {
-        position: absolute;
-        top: 4.2rem;
-        right: 1rem;
-        z-index: 7;
-        width: min(360px, calc(100% - 2rem));
-        max-height: min(78dvh, 640px);
+        position: fixed;
+        z-index: 11001;
+        left: 50%;
+        bottom: 0;
+        transform: translate(-50%, 110%);
+        width: min(100%, 440px);
+        max-height: min(88dvh, 720px);
         overflow-y: auto;
-        padding: 0.9rem;
-        border-radius: 1rem;
+        padding: 0.85rem 0.95rem calc(1rem + env(safe-area-inset-bottom));
+        border-radius: 1.25rem 1.25rem 0 0;
         background: var(--glass-strong);
         border: 1px solid var(--line);
-        backdrop-filter: blur(18px);
-        display: none;
+        border-bottom: none;
+        backdrop-filter: blur(22px);
+        -webkit-backdrop-filter: blur(22px);
+        display: flex;
         gap: 0.55rem;
         flex-direction: column;
         box-shadow: var(--shadow);
+        transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
       }
 
       .settings.open {
+        transform: translate(-50%, 0);
+      }
+
+      .settings-head {
         display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        margin-bottom: 0.15rem;
+        padding-bottom: 0.35rem;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .settings-page-title {
+        margin: 0;
+        font-family: var(--font-display);
+        font-size: 1.05rem;
+        font-weight: 800;
+        letter-spacing: -0.03em;
+      }
+
+      .settings-close {
+        width: 2rem;
+        height: 2rem;
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.05);
+        color: var(--ink);
+        cursor: pointer;
+        font-size: 0.9rem;
+        line-height: 1;
+      }
+
+      @media (min-width: 720px) {
+        .settings {
+          top: 50%;
+          bottom: auto;
+          transform: translate(-50%, -46%) scale(0.96);
+          border-radius: 1.15rem;
+          border-bottom: 1px solid var(--line);
+          opacity: 0;
+          pointer-events: none;
+        }
+
+        .settings.open {
+          transform: translate(-50%, -50%) scale(1);
+          opacity: 1;
+          pointer-events: auto;
+        }
       }
 
       .settings-section-title {
@@ -2138,28 +2251,28 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-15-v61-grok-ani-ui",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-15-v62-settings-buttons",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-15-v61-grok-ani-ui"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-15-v62-settings-buttons"
         }
       }
     </script>
-    <link rel="modulepreload" href="/amoji-engine/vendor/three.module.js?v=2026-09-15-v61-grok-ani-ui" />
-    <link rel="modulepreload" href="/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-15-v61-grok-ani-ui" />
+    <link rel="modulepreload" href="/amoji-engine/vendor/three.module.js?v=2026-09-15-v62-settings-buttons" />
+    <link rel="modulepreload" href="/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-15-v62-settings-buttons" />
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-15-v61-grok-ani-ui"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-15-v62-settings-buttons"
     />
-    <link rel="modulepreload" href="/amoji-engine/engine/companion/vrmAvatar.js?v=2026-09-15-v61-grok-ani-ui" />
-    <link rel="modulepreload" href="/amoji-engine/engine/companion/createAvatar.js?v=2026-09-15-v61-grok-ani-ui" />
+    <link rel="modulepreload" href="/amoji-engine/engine/companion/vrmAvatar.js?v=2026-09-15-v62-settings-buttons" />
+    <link rel="modulepreload" href="/amoji-engine/engine/companion/createAvatar.js?v=2026-09-15-v62-settings-buttons" />
     <link rel="prefetch" href="/api/motions?pack=basic" as="fetch" crossorigin />
     <link rel="prefetch" href="/api/motions?pack=extensions" as="fetch" crossorigin />
     <link rel="prefetch" href="/api/motions?pack=premium" as="fetch" crossorigin />
     <script>
-      window.__amojiBuild = "2026-09-15-v61-grok-ani-ui";
+      window.__amojiBuild = "2026-09-15-v62-settings-buttons";
     </script>
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-15-v61-grok-ani-ui"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-15-v61-grok-ani-ui"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-15-v62-settings-buttons"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-15-v62-settings-buttons"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;
@@ -2406,18 +2519,36 @@
           </span>
           <span class="companion-chip__dot" id="status-dot" data-state="idle" aria-hidden="true"></span>
         </button>
-        <div class="meta">
+        <div class="meta topbar-actions">
           <div class="pill" id="status-pill" hidden aria-hidden="true">state · <strong>idle</strong></div>
           <div class="pill avatar-load-pill" id="avatar-load-pill" hidden>
             avatar · <strong>loading…</strong>
           </div>
           <div class="pill" id="mode-pill" hidden aria-hidden="true">LLM · <strong>local</strong></div>
           <div class="pill" id="emotion-pill" hidden aria-hidden="true">feel · <strong>neutral</strong></div>
-          <button type="button" class="gear" id="btn-settings" title="Chat settings" aria-label="Settings">⚙</button>
+          <button type="button" class="topbar-btn" id="btn-change-character">
+            Change character
+          </button>
+          <button type="button" class="topbar-btn topbar-btn--primary" id="btn-open-settings">
+            Settings
+          </button>
+          <button type="button" class="gear" id="btn-settings" title="Chat settings" aria-label="Settings" hidden>⚙</button>
         </div>
       </header>
 
-      <div class="settings" id="settings">
+      <div class="settings-backdrop" id="settings-backdrop" hidden></div>
+      <div
+        class="settings"
+        id="settings"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="settings-page-title"
+        hidden
+      >
+        <header class="settings-head">
+          <h2 class="settings-page-title" id="settings-page-title">Settings</h2>
+          <button type="button" class="settings-close" id="settings-close" aria-label="Close settings">✕</button>
+        </header>
         <p class="settings-section-title" id="settings-chat-title">Chat</p>
         <div class="settings-row">
           <button type="button" class="btn-secondary" id="settings-btn-lang">Language</button>
@@ -2943,7 +3074,12 @@
       const companionStatusLine = document.getElementById("companion-status-line");
       const statusDot = document.getElementById("status-dot");
       const settings = document.getElementById("settings");
+      const settingsBackdrop = document.getElementById("settings-backdrop");
+      const settingsClose = document.getElementById("settings-close");
+      const settingsPageTitle = document.getElementById("settings-page-title");
       const btnSettings = document.getElementById("btn-settings");
+      const btnOpenSettings = document.getElementById("btn-open-settings");
+      const btnChangeCharacter = document.getElementById("btn-change-character");
       const btnMic = document.getElementById("btn-mic");
       const emotionBallEl = document.getElementById("emotion-ball");
       const settingsBtnLang = document.getElementById("settings-btn-lang");
@@ -3032,8 +3168,46 @@
           "qwen3:4b",
       };
 
-      const openSettings = () => settings.classList.add("open");
-      const closeSettings = () => settings.classList.remove("open");
+      const openSettings = () => {
+        settings.removeAttribute("hidden");
+        settings.classList.add("open");
+        settingsBackdrop?.classList.add("is-open");
+        settingsBackdrop?.removeAttribute("hidden");
+        document.body.classList.add("settings-open");
+      };
+      const closeSettings = () => {
+        settings.classList.remove("open");
+        settingsBackdrop?.classList.remove("is-open");
+        settingsBackdrop?.setAttribute("hidden", "");
+        document.body.classList.remove("settings-open");
+        window.setTimeout(() => {
+          if (!settings.classList.contains("open")) {
+            settings.setAttribute("hidden", "");
+          }
+        }, 320);
+      };
+
+      const syncTopbarActionLabels = () => {
+        if (btnChangeCharacter) {
+          btnChangeCharacter.textContent = isEnglish ? "Change character" : "換角色";
+          btnChangeCharacter.title = isEnglish
+            ? "Pick a different companion"
+            : "揀另一個同伴";
+        }
+        if (btnOpenSettings) {
+          btnOpenSettings.textContent = isEnglish ? "Settings" : "設定";
+          btnOpenSettings.title = isEnglish ? "Open settings" : "打開設定";
+        }
+        if (settingsPageTitle) {
+          settingsPageTitle.textContent = isEnglish ? "Settings" : "設定";
+        }
+        if (settingsClose) {
+          settingsClose.setAttribute(
+            "aria-label",
+            isEnglish ? "Close settings" : "關閉設定",
+          );
+        }
+      };
 
       if (hostedOnline) {
         document.getElementById("lab-link")?.remove();
@@ -3253,8 +3427,8 @@
         syncCompanionStatusUi(sessionUiState, currentEmotion);
         if (brandBtn) {
           brandBtn.title = isEnglish
-            ? `Tap to switch companion · ${tagline}`
-            : `按一下切換同伴 · ${tagline} — ${traits}`;
+            ? `${tagline} — ${traits}`
+            : `${tagline} — ${traits}`;
         }
         if (settingsBtnCompanions) {
           settingsBtnCompanions.textContent = isEnglish
@@ -3265,9 +3439,11 @@
         const brainTitle = document.getElementById("settings-brain-title");
         if (chatTitle) chatTitle.textContent = isEnglish ? "Chat" : "聊天";
         if (brainTitle) brainTitle.textContent = isEnglish ? "Brain" : "大腦";
+        syncTopbarActionLabels();
         startPicker?.setSelected?.(characterId);
       };
       setCharacterUi();
+      syncTopbarActionLabels();
 
       const updateLangPill = () => {
         const switchTitle = isEnglish
@@ -3923,7 +4099,13 @@
         characterPicker.open();
       };
 
-      brandBtn?.addEventListener("click", openCharacterPicker);
+      btnChangeCharacter?.addEventListener("click", () => {
+        closeSettings();
+        openCharacterPicker();
+      });
+      btnOpenSettings?.addEventListener("click", openSettings);
+      settingsClose?.addEventListener("click", closeSettings);
+      settingsBackdrop?.addEventListener("click", closeSettings);
       settingsBtnCompanions?.addEventListener("click", () => {
         closeSettings();
         openCharacterPicker();
@@ -4452,17 +4634,9 @@
       avatar.setEmotion("neutral");
       setEmotionPill("neutral");
 
-      btnSettings.addEventListener("click", () => {
-        settings.classList.toggle("open");
-      });
-      document.addEventListener("click", (ev) => {
-        if (!settings.classList.contains("open")) return;
-        const target = ev.target;
-        if (
-          target instanceof Node &&
-          !settings.contains(target) &&
-          target !== btnSettings
-        ) {
+      btnSettings?.addEventListener("click", openSettings);
+      window.addEventListener("keydown", (ev) => {
+        if (ev.key === "Escape" && settings.classList.contains("open")) {
           closeSettings();
         }
       });
@@ -4551,6 +4725,7 @@
         );
         charConfig = characterAvatarConfig(characterId, nextCode);
         setCharacterUi();
+        syncTopbarActionLabels();
         updateLangPill();
         waitAct?.setLocale?.(nextEnglish);
         if (orbitHint) {

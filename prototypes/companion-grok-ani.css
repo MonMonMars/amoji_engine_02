@@ -165,13 +165,46 @@
   display: none !important;
 }
 
-.theme-grok-ani .gear {
-  width: 2.45rem;
-  height: 2.45rem;
+.theme-grok-ani .topbar-actions {
+  gap: 0.4rem;
+}
+
+.theme-grok-ani .topbar-btn {
   border-color: rgba(255, 255, 255, 0.12);
   background: rgba(10, 8, 22, 0.55);
   backdrop-filter: blur(18px);
-  font-size: 1rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.theme-grok-ani .topbar-btn--primary {
+  border-color: rgba(139, 124, 248, 0.42);
+  background: linear-gradient(
+    135deg,
+    rgba(139, 124, 248, 0.28),
+    rgba(94, 234, 212, 0.14)
+  );
+  color: #f4f0ff;
+}
+
+.theme-grok-ani .settings-backdrop.is-open {
+  background: rgba(3, 3, 10, 0.72);
+}
+
+.theme-grok-ani .settings {
+  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(8, 6, 18, 0.94);
+  box-shadow:
+    0 0 0 1px rgba(139, 124, 248, 0.1) inset,
+    0 28px 80px rgba(0, 0, 0, 0.55);
+}
+
+.theme-grok-ani .settings-page-title {
+  background: linear-gradient(135deg, #f4f0ff 20%, #c4b5fd 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
 /* —— Chat stage —— */
