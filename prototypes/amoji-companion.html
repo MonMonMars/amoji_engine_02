@@ -2046,30 +2046,41 @@
       /** @type {ReturnType<typeof createMotionDownloadClient> | null} */
       let motionClient = null;
 
-      const prefetchBasicMotionPack = async () => {
+      const prefetchBasicMotionPack = async ({ coupled = false } = {}) => {
         if (!motionClient) return { ok: false, reason: "motion-client-not-ready" };
         if (basicMotionPackReady) return { ok: true, cached: true };
-        const showPackUi = !avatarLoadStarted;
-        if (showPackUi) {
+        const waitKind = waitAct?.state?.kind;
+        const showPackUi =
+          coupled ||
+          (!avatarLoadStarted && waitKind !== "avatar-load" && !waitAct?.isActive());
+        if (showPackUi && !waitAct?.isActive()) {
           waitAct?.start({
-            kind: "motion-pack",
+            kind: coupled ? "avatar-load" : "motion-pack",
             phase: "connecting",
             progress: 0,
             label: isEnglish
-              ? "Syncing basic motion library…"
-              : "同步基本動作庫…",
+              ? "Syncing motion library…"
+              : "同步動作庫…",
+          });
+        } else if (coupled && waitAct?.isActive()) {
+          waitAct?.update({
+            phase: "connecting",
+            progress: 0.08,
+            label: isEnglish
+              ? "Loading model & motion library…"
+              : "載入模型同動作庫…",
           });
         }
         try {
           const result = await motionClient.ensureBasicPack();
           basicMotionPackReady = Boolean(result?.ok);
-          if (showPackUi && waitAct?.state?.kind === "motion-pack") {
+          if (waitAct?.isActive() && (coupled || showPackUi)) {
             waitAct?.update({
               phase: "ready",
               progress: 1,
               label: isEnglish ? "Motion library ready" : "動作庫已就緒",
             });
-            waitAct?.stop();
+            if (!coupled) waitAct?.stop();
           }
           return result;
         } catch (err) {
@@ -2285,11 +2296,16 @@
       const btnLangSwitch = document.getElementById("btn-lang-switch");
 
       const params = new URLSearchParams(location.search);
-      const dialect = resolveDialectPref();
-      const langCode = companionLangCode(
-        params.get("lang") || dialect.forceLanguage || "yue",
-      );
-      const isEnglish = langCode === "en";
+      if (!params.get("lang")) {
+        const yueHref = buildCompanionHref({
+          basePath: location.pathname,
+          lang: "yue",
+        });
+        history.replaceState(null, "", yueHref);
+        params.set("lang", "yue");
+      }
+      let langCode = companionLangCode(params.get("lang") || "yue");
+      let isEnglish = langCode === "en";
       let characterId = resolveCharacterId({
         characterParam: params.get("character"),
         modelUrl: params.get("vrm") || params.get("model3d"),
@@ -2402,6 +2418,7 @@
             ? "Loading 3D companion model…"
             : "載入 3D 同伴模型…",
         });
+        void prefetchBasicMotionPack({ coupled: true });
         avatarLoadPromise = createCompanionAvatar({
           canvas,
           modelUrl: avatarModelUrl || undefined,
@@ -2460,10 +2477,8 @@
           })
           .finally(() => {
             hideAvatarLoadPill();
-            waitAct?.stop();
-            if (!idleShowcaseTimer && (avatarKind === "vrm3d" || avatarKind === "gltf3d")) {
-              idleShowcaseTimer = setInterval(tickIdleShowcase, 15000);
-            }
+            if (waitAct?.state?.kind === "avatar-load") waitAct?.stop();
+            startIdlePerformance();
           });
         return avatarLoadPromise;
       };
@@ -2634,20 +2649,45 @@
       let idleShowcaseTimer = null;
 
       const canIdleShowcase = () =>
+        sessionStarted &&
         !busy &&
         !voice?.speaking &&
         !waitAct?.isActive() &&
-        !avatar?.currentAction &&
         !characterSwitching &&
         (avatarKind === "vrm3d" || avatarKind === "gltf3d");
 
+      const stopIdlePerformance = () => {
+        if (idleShowcaseTimer) clearInterval(idleShowcaseTimer);
+        idleShowcaseTimer = null;
+        if (waitAct?.state?.kind === "idle") waitAct?.stop();
+      };
+
       const tickIdleShowcase = () => {
-        if (!canIdleShowcase()) return;
+        if (!canIdleShowcase()) {
+          if (waitAct?.state?.kind === "idle") waitAct?.stop();
+          return;
+        }
         const bundled = ["wave", "nod", "thinking", "bow", "clap", "learning"];
-        const pool = bundled.filter((id) => motionClient?.isInstalled(id));
+        const pool = bundled.filter((id) => motionClient?.isInstalled?.(id));
         const move = pickIdleShowcase(lastIdleShowcase, pool.length ? pool : bundled);
         lastIdleShowcase = move;
-        playCompanionPerformance(move, "happy", { single: true });
+        if (!waitAct?.isActive()) {
+          waitAct?.start({
+            kind: "idle",
+            phase: "idle",
+            speak: true,
+            label: isEnglish ? "Just hanging out…" : "等緊你呀…",
+          });
+        } else if (waitAct?.state?.kind === "idle") {
+          waitAct?.update({ phase: "idle" });
+        }
+        avatar.playAction?.(move, { emotion: "happy", loop: true, single: true });
+      };
+
+      const startIdlePerformance = () => {
+        if (idleShowcaseTimer) return;
+        tickIdleShowcase();
+        idleShowcaseTimer = setInterval(tickIdleShowcase, 14000);
       };
 
       const autosize = () => {
@@ -2875,8 +2915,6 @@
         progress: progressDock,
         isEnglish,
       });
-
-      void prefetchBasicMotionPack();
 
       applyVoiceSelection = (nextVoiceId) => {
         voiceId = nextVoiceId;
@@ -3107,6 +3145,7 @@
           return;
         }
         busy = true;
+        stopIdlePerformance();
         sendBtn.disabled = true;
         const keepMicForBarge = voice.micOn || autoMic;
         voice.setKeepMicDuringSpeak?.(keepMicForBarge);
@@ -3276,10 +3315,11 @@
           } else {
             micQueue.length = 0;
           }
+          if (!busy && !waitAct?.isActive()) startIdlePerformance();
         }
       };
 
-      const GREETING_SHORT = isEnglish ? "Hello!" : "嗨！";
+      const GREETING_SHORT = isEnglish ? "Hello!" : "你好呀！";
       const START_PAGE_TAGLINE = GREETING_SHORT;
       const startTaglineEl = document.getElementById("start-tagline");
       if (startTaglineEl) startTaglineEl.textContent = START_PAGE_TAGLINE;
@@ -3351,6 +3391,7 @@
         if (!busy && !voice.micOn && !voice.speaking) status.idle();
         input.focus();
         void prefetchBasicMotionPack();
+        startIdlePerformance();
         if (!liteMode && !avatarLoadStarted) scheduleAvatarLoad();
 
         if (fromTimeout) {
@@ -3601,8 +3642,49 @@
       voicePill.addEventListener("click", cycleVoice);
       btnVoiceSwitch?.addEventListener("click", cycleVoice);
 
+      const applyLanguage = (targetLang) => {
+        const nextCode = companionLangCode(targetLang);
+        const nextEnglish = nextCode === "en";
+        isEnglish = nextEnglish;
+        document.documentElement.lang = nextEnglish ? "en" : "zh-Hant";
+        langCode = nextCode;
+        const nextVoiceId = defaultVoiceForLang(nextCode, voiceId);
+        applyVoiceSelection(nextVoiceId);
+        voice.setLang?.(nextEnglish ? "en-US" : "zh-HK");
+        chat.setSystemPrompt?.(
+          buildCharacterSystemPrompt(characterId, nextEnglish),
+        );
+        charConfig = characterAvatarConfig(characterId, nextCode);
+        setCharacterUi();
+        updateLangPill();
+        waitAct?.setLocale?.(nextEnglish);
+        if (liteLink) {
+          liteLink.href = buildCompanionHref({
+            basePath: "/companion",
+            lang: nextCode,
+            voiceId: nextVoiceId,
+          });
+        }
+        if (nextEnglish) {
+          input.placeholder = "Chat with Amoji…";
+        } else {
+          input.placeholder = "同 Amoji 傾偈…";
+        }
+        history.replaceState(
+          null,
+          "",
+          buildCompanionHref({ basePath: location.pathname, lang: nextCode }),
+        );
+        addBubble(
+          "system",
+          nextEnglish
+            ? "Switched to English — say something or type below."
+            : "已切換粵語 — 講嘢或者打字就得。",
+        );
+      };
+
       const switchLanguage = () => {
-        location.href = languageSwitchHref();
+        applyLanguage(isEnglish ? "yue" : "en");
       };
       langPill?.addEventListener("click", (ev) => {
         ev.preventDefault();
