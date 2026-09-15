@@ -44,6 +44,7 @@ export const EMOTION_EDGE_PROSODY = Object.freeze({
  *   pitch?: string,
  *   volume?: string,
  *   lang?: string,
+ *   characterId?: string,
  * }} [opts]
  * @returns {Promise<{ audio: Buffer, voice: string, contentType: string, prosody: object }>}
  */
@@ -65,6 +66,7 @@ export async function synthesizeSpeech(text, opts = {}) {
     speechEnergy: opts.speechEnergy,
     text: clean,
     lang,
+    characterId: opts.characterId,
   });
   const edge = prosodyPack.edge;
 
@@ -131,6 +133,7 @@ export async function processTtsRequest(req) {
       speechEnergy: raw.speechEnergy,
       voice: raw.voice,
       lang,
+      characterId: raw.characterId,
     });
     return {
       status: 200,

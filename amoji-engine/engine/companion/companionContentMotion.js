@@ -85,15 +85,18 @@ export function inferOneShotGesture(text, emotion, nuance) {
  */
 export function inferSpeechEnergy(text, emotion, nuance) {
   const raw = String(text || "");
-  let energy = 0.42;
-  if (emotion === "happy" || emotion === "surprised") energy += 0.18;
-  if (emotion === "angry") energy += 0.12;
-  if (emotion === "sad" || emotion === "thinking") energy -= 0.12;
-  if (nuance === "excited") energy += 0.22;
-  if (nuance === "shy" || nuance === "stress") energy -= 0.1;
-  if (/!{1,}|！{1,}/.test(raw)) energy += 0.08;
-  if (raw.length > 80) energy += 0.05;
-  return Math.max(0.15, Math.min(1, energy));
+  let energy = 0.55;
+  if (emotion === "happy" || emotion === "surprised") energy += 0.22;
+  if (emotion === "angry") energy += 0.14;
+  if (emotion === "sad" || emotion === "thinking") energy -= 0.14;
+  if (nuance === "excited") energy += 0.24;
+  if (nuance === "love") energy += 0.1;
+  if (nuance === "shy" || nuance === "stress") energy -= 0.12;
+  if (/!{1,}|！{1,}/.test(raw)) energy += 0.12;
+  if (/[?？]/.test(raw)) energy += 0.06;
+  if (/[呀啊喇喎喔呢咩~～]/.test(raw)) energy += 0.08;
+  if (raw.length > 80) energy += 0.04;
+  return Math.max(0.2, Math.min(1, energy));
 }
 
 /**

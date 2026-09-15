@@ -19,6 +19,10 @@ import {
 } from "./companionLearnDialogue.js";
 import { isIosLike, shouldPauseMicDuringTts } from "./companionPlatform.js";
 import {
+  buildExpressiveTtsPlan,
+  clausePauseMs,
+} from "./companionExpressiveTts.js";
+import {
   normalizeTtsPerformance,
   resolveCompanionTtsProsody,
 } from "./companionTtsProsody.js";
@@ -441,30 +445,47 @@ export function createCompanionVoice(opts = {}) {
     /** @type {{ ok: boolean, reason?: string, voice?: string, emotion?: string, cloud?: boolean }} */
     let last = { ok: false, reason: "empty" };
     for (const part of parts) {
-      const partProsody = resolveSpeakProsody(part, perf, preset.lang);
-      const res = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          text: part,
-          emotion: perf.emotion,
-          nuance: perf.nuance,
-          talkStyle: perf.talkStyle,
-          speechEnergy: partProsody.speechEnergy ?? perf.speechEnergy,
-          voice: preset.name,
-          lang: preset.lang,
-        }),
-      });
-      if (!res.ok) {
-        const errText = await res.text().catch(() => "");
-        return {
-          ok: false,
-          reason: `cloud-tts-${res.status}${errText ? `: ${errText.slice(0, 80)}` : ""}`,
-        };
+      const plan = buildExpressiveTtsPlan(
+        part,
+        { ...perf, lang: preset.lang },
+        activeCharacterId,
+        preset.lang,
+      );
+      const clauses = plan.clauses.length ? plan.clauses : [{ text: part, ...perf }];
+      for (let i = 0; i < clauses.length; i += 1) {
+        const clause = clauses[i];
+        const res = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            text: clause.text,
+            emotion: clause.emotion || perf.emotion,
+            nuance: clause.nuance || perf.nuance,
+            talkStyle: clause.talkStyle || perf.talkStyle,
+            speechEnergy: clause.speechEnergy ?? perf.speechEnergy,
+            voice: preset.name,
+            lang: preset.lang,
+            characterId: activeCharacterId,
+          }),
+        });
+        if (!res.ok) {
+          const errText = await res.text().catch(() => "");
+          return {
+            ok: false,
+            reason: `cloud-tts-${res.status}${errText ? `: ${errText.slice(0, 80)}` : ""}`,
+          };
+        }
+        const blob = await res.blob();
+        last = await playCloudAudioBlob(
+          blob,
+          clause.text,
+          clause.emotion || perf.emotion,
+        );
+        if (!last.ok) return last;
+        if (i < clauses.length - 1) {
+          await sleep(clause.pauseMs ?? clausePauseMs(clause.text));
+        }
       }
-      const blob = await res.blob();
-      last = await playCloudAudioBlob(blob, part, perf.emotion);
-      if (!last.ok) return last;
     }
     return last;
   };
