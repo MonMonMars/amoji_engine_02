@@ -2,8 +2,11 @@ import { describe, expect, it } from "vitest";
 import {
   buildCharacterSystemPrompt,
   characterAvatarConfig,
+  characterGreeting,
+  characterVoiceLabel,
   defaultVoiceForCharacter,
   getCharacter,
+  listCompanionCharacters,
   nextCharacterId,
   resolveCharacterId,
 } from "../engine/companion/companionCharacterCatalog.js";
@@ -23,6 +26,9 @@ describe("companionCharacterCatalog", () => {
 
   it("assigns distinct voices per character", () => {
     expect(defaultVoiceForCharacter("amoji", "yue")).toBe(
+      "zh-HK-HiuGaaiNeural",
+    );
+    expect(defaultVoiceForCharacter("sora", "yue")).toBe(
       "zh-HK-HiuMaanNeural",
     );
     expect(defaultVoiceForCharacter("kizuna", "yue")).toBe(
@@ -32,6 +38,24 @@ describe("companionCharacterCatalog", () => {
       "zh-HK-WanLungNeural",
     );
     expect(defaultVoiceForCharacter("rex", "en")).toBe("en-US-GuyNeural");
+    expect(defaultVoiceForCharacter("sora", "en")).toBe("en-US-JennyNeural");
+  });
+
+  it("exposes character-specific greetings and voice labels", () => {
+    expect(characterGreeting("amoji", false)).toContain("曖咪");
+    expect(characterGreeting("rex", true)).toMatch(/rex/i);
+    expect(characterGreeting("kizuna", false)).toContain("絆");
+    expect(characterGreeting("sora", true)).toMatch(/sora/i);
+    expect(characterVoiceLabel("rex", "yue", false)).toBe("雲龍");
+    expect(characterVoiceLabel("sora", "en", true)).toBe("Jenny");
+  });
+
+  it("lists voice metadata for picker cards", () => {
+    const list = listCompanionCharacters("yue");
+    const rex = list.find((c) => c.id === "rex");
+    expect(rex?.voiceLabel).toBe("雲龍");
+    expect(rex?.greeting).toContain("烈");
+    expect(list.every((c) => c.voiceId && c.voiceLabel)).toBe(true);
   });
 
   it("builds character-specific system prompts", () => {

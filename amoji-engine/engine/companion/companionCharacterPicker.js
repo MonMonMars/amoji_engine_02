@@ -24,6 +24,9 @@ export function companionCardInnerHtml(item, ctx = {}) {
         .slice(0, 2)
         .map((t) => `<span class="companion-card-trait">${t}</span>`)
         .join("");
+  const voiceChip = item.voiceLabel
+    ? `<span class="companion-card-voice">${item.voiceLabel}</span>`
+    : "";
 
   if (compact) {
     return `
@@ -33,6 +36,7 @@ export function companionCardInnerHtml(item, ctx = {}) {
         <span class="companion-card-check" aria-hidden="true">✓</span>
       </div>
       <span class="companion-card-name">${item.name}</span>
+      ${voiceChip}
     `;
   }
 
@@ -45,7 +49,7 @@ export function companionCardInnerHtml(item, ctx = {}) {
     <div class="companion-card-body">
       <h3 class="companion-card-name">${item.name}</h3>
       <p class="companion-card-tagline">${item.tagline}</p>
-      <div class="companion-card-traits">${traits}</div>
+      <div class="companion-card-traits">${traits}${voiceChip}</div>
     </div>
   `;
 }

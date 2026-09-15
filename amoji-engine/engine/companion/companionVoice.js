@@ -102,11 +102,14 @@ const EMOTION_PROSODY = {
  * @param {ReturnType<typeof normalizeTtsPerformance>} performance
  * @param {string} [lang]
  */
+let activeCharacterId = "amoji";
+
 const resolveSpeakProsody = (text, performance, lang) =>
   resolveCompanionTtsProsody({
     ...performance,
     text,
     lang: lang || performance.lang,
+    characterId: activeCharacterId,
   });
 
 /**
@@ -834,7 +837,7 @@ export function createCompanionVoice(opts = {}) {
 
     const preset = cloudVoicePreset();
     const lang = isEnglish ? "en-US" : preset.lang || "zh-HK";
-    const voiceName = isEnglish ? CLOUD_ENGLISH_VOICE.name : preset.name;
+    const voiceName = preset.name;
 
     const playCachedBlob = async (blob) => {
       if (!blob?.size || !thinkingActive) return false;
@@ -972,7 +975,7 @@ export function createCompanionVoice(opts = {}) {
 
     const preset = cloudVoicePreset();
     const lang = isEnglish ? "en-US" : preset.lang || "zh-HK";
-    const voiceName = isEnglish ? CLOUD_ENGLISH_VOICE.name : preset.name;
+    const voiceName = preset.name;
 
     const playLearnBlob = async (blob) => {
       if (!blob?.size || !learnActive) return false;
@@ -1228,6 +1231,11 @@ export function createCompanionVoice(opts = {}) {
     return voice;
   };
 
+  const setCharacterId = (nextId) => {
+    activeCharacterId = String(nextId || "amoji").toLowerCase();
+    return activeCharacterId;
+  };
+
   return {
     schema: COMPANION_VOICE_SCHEMA,
     get speakerOn() {
@@ -1295,6 +1303,7 @@ export function createCompanionVoice(opts = {}) {
     stopMic,
     toggleMic,
     setCloudVoice,
+    setCharacterId,
     setLang,
   };
 }

@@ -26,6 +26,22 @@ describe("companionTtsProsody", () => {
     expect(happy.browser.rate).toBeGreaterThan(neutral.browser.rate);
   });
 
+  it("applies character-specific prosody bias", () => {
+    const calm = resolveCompanionTtsProsody({
+      emotion: "happy",
+      text: "你好呀。",
+      characterId: "sora",
+    });
+    const hype = resolveCompanionTtsProsody({
+      emotion: "happy",
+      text: "你好呀。",
+      characterId: "kizuna",
+    });
+    const calmRate = Number(calm.edge.rate.replace(/[^0-9-]/g, ""));
+    const hypeRate = Number(hype.edge.rate.replace(/[^0-9-]/g, ""));
+    expect(hypeRate).toBeGreaterThan(calmRate);
+  });
+
   it("slows thinking delivery", () => {
     const thinking = resolveCompanionTtsProsody({
       emotion: "thinking",

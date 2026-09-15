@@ -18,4 +18,11 @@ describe("companion character picker data", () => {
     expect(kizuna?.badge).toMatch(/official/i);
     expect(kizuna?.previewImage).toContain("kizuna");
   });
+
+  it("includes per-character voice labels for picker cards", () => {
+    const amoji = listCompanionCharacters("yue").find((c) => c.id === "amoji");
+    const sora = listCompanionCharacters("yue").find((c) => c.id === "sora");
+    expect(amoji?.voiceLabel).toBe("曉佳");
+    expect(sora?.voiceLabel).toBe("曉曼");
+  });
 });
