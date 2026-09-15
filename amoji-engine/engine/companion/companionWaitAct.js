@@ -6,20 +6,21 @@ import { progressPhaseLabel } from "./companionProgressOverlay.js";
 
 export const COMPANION_WAIT_ACT_SCHEMA = "amoji.companionWaitAct.v1";
 
-/** @typedef {'connecting'|'searching'|'downloading'|'learning'|'installing'|'ready'|'failed'|'thinking'|'avatar-load'|'character-switch'|'motion-pack'} WaitPhase */
+/** @typedef {'connecting'|'searching'|'downloading'|'learning'|'installing'|'ready'|'failed'|'thinking'|'avatar-load'|'character-switch'|'motion-pack'|'idle'} WaitPhase */
 
 /** @type {Record<string, readonly string[]>} */
 export const WAIT_POSES_BY_PHASE = Object.freeze({
-  connecting: ["wave", "nod"],
-  searching: ["thinking", "nod"],
-  downloading: ["downloading", "learning"],
-  learning: ["learning", "thinking"],
-  installing: ["nod", "learning"],
-  thinking: ["thinking"],
-  "avatar-load": ["wave", "learning"],
-  "character-switch": ["wave", "nod"],
-  "motion-pack": ["downloading", "learning"],
-  ready: ["wave", "nod"],
+  connecting: ["wave", "nod", "thinking"],
+  searching: ["thinking", "nod", "wave"],
+  downloading: ["downloading", "learning", "wave"],
+  learning: ["learning", "thinking", "nod"],
+  installing: ["nod", "learning", "downloading"],
+  thinking: ["thinking", "nod", "wave"],
+  "avatar-load": ["wave", "learning", "downloading", "thinking"],
+  "character-switch": ["wave", "nod", "celebrate"],
+  "motion-pack": ["downloading", "learning", "wave", "thinking"],
+  idle: ["wave", "nod", "stretch", "bow", "clap"],
+  ready: ["wave", "celebrate", "nod"],
 });
 
 /**
@@ -58,8 +59,8 @@ export function pickWaitPose(phase, tick = 0) {
  * }} opts
  */
 export function createCompanionWaitAct(opts = {}) {
-  const isEnglish = Boolean(opts.isEnglish);
-  const poseIntervalMs = opts.poseIntervalMs ?? 4200;
+  let isEnglish = Boolean(opts.isEnglish);
+  let poseIntervalMs = opts.poseIntervalMs ?? 3600;
   let avatarRef = opts.avatar || null;
   let voiceRef = opts.voice || null;
   let active = false;
@@ -76,18 +77,20 @@ export function createCompanionWaitAct(opts = {}) {
   const playPose = () => {
     const pose = pickWaitPose(phase, poseTick);
     avatarRef?.playAction?.(pose, {
-      emotion: "thinking",
+      emotion: kind === "idle" ? "happy" : "thinking",
       loop: true,
       single: true,
     });
-    avatarRef?.setEmotion?.("thinking");
-    avatarRef?.setThinking?.(true);
+    avatarRef?.setEmotion?.(kind === "idle" ? "happy" : "thinking");
+    avatarRef?.setThinking?.(kind !== "idle");
     opts.onPose?.(pose, phase);
   };
 
   const syncProgressUi = (label) => {
     const resolvedPhase =
       phase || (progress > 0 ? learnPhaseForProgress(progress) : "learning");
+    const showProgress = kind !== "idle";
+    if (!showProgress) return;
     opts.progress?.update?.({
       progress,
       phase: progressPhaseLabel(resolvedPhase, isEnglish),
@@ -102,12 +105,13 @@ export function createCompanionWaitAct(opts = {}) {
 
   const startPoseRotation = () => {
     clearInterval(poseTimer);
-    if (kind === "thinking") return;
+    const interval =
+      kind === "thinking" ? Math.max(poseIntervalMs, 4200) : poseIntervalMs;
     poseTimer = setInterval(() => {
       if (!active) return;
       poseTick += 1;
       playPose();
-    }, poseIntervalMs);
+    }, interval);
   };
 
   const stopPoseRotation = () => {
@@ -115,11 +119,37 @@ export function createCompanionWaitAct(opts = {}) {
     poseTimer = null;
   };
 
+  const startWaitVoice = (speak) => {
+    if (!speak) return;
+    if (kind === "thinking") {
+      voiceRef?.startThinkingLoop?.({ isEnglish, intervalMs: 5200 });
+      return;
+    }
+    if (
+      kind === "motion" ||
+      kind === "download" ||
+      kind === "motion-pack" ||
+      kind === "avatar-load" ||
+      kind === "idle"
+    ) {
+      voiceRef?.startLearnLoop?.({
+        isEnglish,
+        phase: learnPhaseForProgress(progress) || phase,
+        progress,
+      });
+    }
+  };
+
+  const stopWaitVoice = () => {
+    voiceRef?.stopLearnLoop?.();
+    if (kind === "thinking") voiceRef?.stopThinkingLoop?.();
+  };
+
   const maybeAnnounceProgress = () => {
     const pct = Math.round(progress * 100);
     if (pct - lastAnnouncedPct < 12) return;
     lastAnnouncedPct = pct;
-    opts.voice?.updateLearnLoop?.({ phase: "progress", progress });
+    voiceRef?.updateLearnLoop?.({ phase: "progress", progress });
   };
 
   return {
@@ -150,24 +180,19 @@ export function createCompanionWaitAct(opts = {}) {
       poseTick = 0;
       lastAnnouncedPct = -1;
 
-      opts.progress?.show?.({
-        progress,
-        phase: progressPhaseLabel(phase, isEnglish),
-        label: ctx.label,
-        indeterminate,
-      });
-
       const speak = ctx.speak !== false;
-      if (speak && kind === "thinking") {
-        /* Pose only while LLM thinks — spoken fillers feel noisy and cut off reply TTS. */
-      } else if (speak && (kind === "motion" || kind === "download" || kind === "motion-pack")) {
-        voiceRef?.startLearnLoop?.({
-          isEnglish,
-          phase: learnPhaseForProgress(progress) || phase,
+      const showProgress = kind !== "idle";
+
+      if (showProgress) {
+        opts.progress?.show?.({
           progress,
+          phase: progressPhaseLabel(phase, isEnglish),
+          label: ctx.label,
+          indeterminate,
         });
       }
 
+      startWaitVoice(speak);
       playPose();
       startPoseRotation();
       syncProgressUi(ctx.label);
@@ -209,19 +234,22 @@ export function createCompanionWaitAct(opts = {}) {
     },
     setAvatar(next) {
       avatarRef = next || null;
+      if (active && avatarRef) playPose();
     },
     setVoice(next) {
       voiceRef = next || null;
+    },
+    setLocale(nextEnglish) {
+      isEnglish = Boolean(nextEnglish);
     },
     stop() {
       if (!active) return;
       active = false;
       stopPoseRotation();
-      voiceRef?.stopLearnLoop?.();
-      if (kind === "thinking") voiceRef?.stopThinkingLoop?.();
+      stopWaitVoice();
       avatarRef?.setThinking?.(false);
-      avatarRef?.stopAction?.();
-      opts.progress?.hide?.();
+      if (kind !== "idle") avatarRef?.stopAction?.();
+      if (kind !== "idle") opts.progress?.hide?.();
       kind = "";
       phase = "learning";
       progress = 0;

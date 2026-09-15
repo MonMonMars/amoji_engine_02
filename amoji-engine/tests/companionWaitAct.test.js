@@ -55,4 +55,17 @@ describe("companionWaitAct", () => {
     expect(voice.stopLearnLoop).toHaveBeenCalled();
     expect(wait.isActive()).toBe(false);
   });
+
+  it("replays pose when avatar becomes available mid-wait", () => {
+    const avatar = {
+      playAction: vi.fn(),
+      setEmotion: vi.fn(),
+      setThinking: vi.fn(),
+    };
+    const wait = createCompanionWaitAct({ avatar: null, isEnglish: false });
+    wait.start({ kind: "avatar-load", phase: "wave", speak: false });
+    expect(avatar.playAction).not.toHaveBeenCalled();
+    wait.setAvatar(avatar);
+    expect(avatar.playAction).toHaveBeenCalled();
+  });
 });
