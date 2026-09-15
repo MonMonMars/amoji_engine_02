@@ -27,6 +27,11 @@ import {
   sampleIdleBodyMotion,
 } from "./companionIdleMotion.js";
 import {
+  dampPose,
+  dampRootMotion,
+  poseDampingRate,
+} from "./companionPoseSmoothing.js";
+import {
   buildBasePose,
   clampActionPose,
   clampArmPose,
@@ -35,6 +40,7 @@ import {
   GESTURE_DURATION_SEC,
   HEAD_GESTURE_NOD,
   mergePoses,
+  REST_POSE,
   sampleVrmTalkPose,
   VRM_ARM_REST_ROTATIONS,
 } from "./companionPoseLibrary.js";
@@ -68,6 +74,10 @@ export function createCompanionBodyMotion(humanoid) {
   let actionLoop = false;
   /** @type {{ y: number, rotY: number }} */
   let rootMotion = { y: 0, rotY: 0 };
+  /** @type {{ y: number, rotY: number }} */
+  let smoothedRootMotion = { y: 0, rotY: 0 };
+  /** @type {Record<string, number>} */
+  let smoothedPose = { ...REST_POSE };
   let idleBeatState = createIdleBeatState();
   /** @type {string[]} */
   let actionQueue = [];
@@ -556,8 +566,8 @@ export function createCompanionBodyMotion(humanoid) {
       );
       const actionBlend =
         activeAction === "kungfu" || activeAction === "laugh" ? 0.94 : 0.86;
-      const fadeInSec = 0.28;
-      const fadeOutSec = 0.34;
+      const fadeInSec = 0.38;
+      const fadeOutSec = 0.44;
       const fadeIn = Math.min(1, actionElapsed / fadeInSec);
       const fadeOut = actionLoop
         ? 1
@@ -593,7 +603,7 @@ export function createCompanionBodyMotion(humanoid) {
         const beat = advanceIdleBeat(idleBeatState, dt, now);
         idleBeatState = beat.state;
         if (beat.overlay && Object.keys(beat.overlay).length) {
-          pose = mergePoses(pose, beat.overlay, 0.92);
+          pose = mergePoses(pose, beat.overlay, 0.78);
         }
       } else {
         talkTime += dt;
@@ -661,8 +671,16 @@ export function createCompanionBodyMotion(humanoid) {
       }
     }
 
-    applyPose(pose, 1, { allowArms, actionArms, talkArmBlend });
-    return pose;
+    const dampRate = poseDampingRate(Boolean(activeAction), talking);
+    smoothedPose = dampPose(smoothedPose, pose, dt, dampRate);
+    smoothedRootMotion = dampRootMotion(
+      smoothedRootMotion,
+      rootMotion,
+      dt,
+      activeAction ? 11 : 8.5,
+    );
+    applyPose(smoothedPose, 1, { allowArms, actionArms, talkArmBlend });
+    return smoothedPose;
   };
 
   return {
@@ -708,7 +726,7 @@ export function createCompanionBodyMotion(humanoid) {
       return sequenceLoop;
     },
     getRootMotion() {
-      return rootMotion;
+      return smoothedRootMotion;
     },
   };
 }
