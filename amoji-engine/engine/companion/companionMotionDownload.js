@@ -7,6 +7,7 @@ import {
   getCloudMotionDef,
   getMotionPack,
   MOTION_PACK_SCHEMA,
+  PREMIUM_EXTENSION_MOTIONS,
 } from "./motionPackData.mjs";
 import {
   isMotionInstalled,
@@ -309,6 +310,73 @@ export function createMotionDownloadClient(opts = {}) {
     }
   };
 
+  const ensurePremiumPack = async () => {
+    const key = "premium-pack";
+    if (inflight.has(key)) return inflight.get(key);
+
+    const job = (async () => {
+      await ensureExtensionsPack();
+      const premiumIds = Object.keys(PREMIUM_EXTENSION_MOTIONS);
+      const missing = premiumIds.filter(
+        (id) => id && !isMotionInstalled(id, state),
+      );
+      if (!missing.length) {
+        return { ok: true, cached: true, motions: premiumIds };
+      }
+
+      emit("learning", 0.15);
+      const results = await Promise.all(
+        missing.map((id) =>
+          ensureMotion(id).catch((err) => ({
+            ok: false,
+            action: id,
+            error: err?.message || String(err),
+          })),
+        ),
+      );
+      const installed = results.filter((r) => r?.ok).map((r) => r.action);
+      emit("ready", 1);
+      return {
+        ok: installed.length > 0 || missing.length === 0,
+        motions: premiumIds,
+        installed,
+        missing: missing.filter((id) => !installed.includes(id)),
+      };
+    })();
+
+    inflight.set(key, job);
+    try {
+      return await job;
+    } finally {
+      inflight.delete(key);
+    }
+  };
+
+  const ensureFullMotionLibrary = async () => {
+    const key = "full-library";
+    if (inflight.has(key)) return inflight.get(key);
+
+    const job = (async () => {
+      await ensureBasicPack();
+      const wait = await ensureWaitMotions();
+      const extensions = await ensureExtensionsPack();
+      const premium = await ensurePremiumPack();
+      return {
+        ok: Boolean(wait?.ok || extensions?.ok || premium?.ok),
+        wait,
+        extensions,
+        premium,
+      };
+    })();
+
+    inflight.set(key, job);
+    try {
+      return await job;
+    } finally {
+      inflight.delete(key);
+    }
+  };
+
   const ensureWaitMotions = async (motionIds = collectWaitPreloadMotionIds()) => {
     const key = "wait-motions";
     if (inflight.has(key)) return inflight.get(key);
@@ -365,7 +433,9 @@ export function createMotionDownloadClient(opts = {}) {
     ensureBasicPack,
     ensureMotion,
     ensureExtensionsPack,
+    ensurePremiumPack,
     ensureWaitMotions,
+    ensureFullMotionLibrary,
     learnPhaseForProgress,
   };
 }

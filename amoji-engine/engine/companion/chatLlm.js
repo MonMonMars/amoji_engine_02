@@ -24,7 +24,10 @@ import {
 } from "./companionLlmConnect.js";
 import { isOllamaLocalModel } from "./companionModelIds.js";
 import { getLlmProvider, readProviderApiKey } from "./companionLlmProviders.js";
-import { buildActionLlmContext } from "./companionActionIntent.js";
+import {
+  buildActionLlmContext,
+  buildAlwaysActionReminder,
+} from "./companionActionIntent.js";
 import { fetchWebContextForChat } from "./companionWebSearch.mjs";
 
 export const COMPANION_CHAT_SCHEMA = "amoji.companionChat.v1";
@@ -165,7 +168,12 @@ export function createCompanionChat(opts = {}) {
     const onToken = opts.onToken;
     const isEnglish =
       /[a-z]/i.test(text) && !/[\u4e00-\u9fff]/.test(text);
-    const actionHint = buildActionLlmContext(text, isEnglish);
+    const actionHint = [
+      buildAlwaysActionReminder(isEnglish),
+      buildActionLlmContext(text, isEnglish),
+    ]
+      .filter(Boolean)
+      .join("\n");
     let webMeta = { searched: false, source: null };
     let effectiveSystem = systemPrompt;
     if (fetchImpl && opts.webSearch !== false) {

@@ -399,7 +399,8 @@ export function actionLoopsFromCatalog(actionId) {
  */
 export function buildActionPromptFragment(isEnglish = false) {
   const list = PLAYABLE_ACTIONS.join(", ");
-  const extensions = "breakdance, taiji, highfive, curtsy, tiktokdance";
+  const extensions =
+    "breakdance, taiji, highfive, curtsy, tiktokdance, ballet, hiphop, macarena, floss, wiggle, superhero, handshake, fingerheart, photopose, pushup, plank, zombie, sneak, jumpjack";
   if (isEnglish) {
     return [
       `When the user asks you to move, pose, or perform a physical action, YOU choose the motion via an action tag before the mood tag. Supported actions only: ${list}.`,
