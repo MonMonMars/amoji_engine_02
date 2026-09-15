@@ -13,6 +13,9 @@ export const DEFAULT_MOTIONS_PREMIUM_URL = "/api/motions?pack=premium";
 const vrmBuffers = new Map();
 
 /** @type {Promise<unknown> | null} */
+let rosterPreloadPromise = null;
+
+/** @type {Promise<unknown> | null} */
 let motionBasicPromise = null;
 
 /** @type {Promise<unknown> | null} */
@@ -51,6 +54,53 @@ export function getPreloadedVrmPromise(url = DEFAULT_VRM_URL) {
 }
 
 /**
+ * @param {string} url
+ * @param {typeof fetch} [fetchImpl]
+ */
+export function preloadVrmBuffer(url, fetchImpl) {
+  const modelUrl = String(url || "").trim();
+  if (!modelUrl) return Promise.resolve(null);
+  const existing = vrmBuffers.get(modelUrl);
+  if (existing) return existing;
+
+  const fetchFn =
+    fetchImpl ||
+    (typeof globalThis.fetch === "function"
+      ? globalThis.fetch.bind(globalThis)
+      : null);
+  if (!fetchFn) return Promise.resolve(null);
+
+  const job = fetchFn(modelUrl, { credentials: "same-origin" })
+    .then((res) => {
+      if (!res.ok) throw new Error(`VRM preload HTTP ${res.status}`);
+      return res.arrayBuffer();
+    })
+    .catch((err) => {
+      vrmBuffers.delete(modelUrl);
+      throw err;
+    });
+  vrmBuffers.set(modelUrl, job);
+  return job;
+}
+
+/**
+ * @param {string | null | undefined} keepUrl
+ */
+export function releaseVrmPreloadExcept(keepUrl) {
+  const keep = String(keepUrl || "").trim();
+  for (const key of [...vrmBuffers.keys()]) {
+    if (!keep || key !== keep) vrmBuffers.delete(key);
+  }
+}
+
+/**
+ * @param {string} url
+ */
+export function releaseVrmPreload(url) {
+  vrmBuffers.delete(String(url || "").trim());
+}
+
+/**
  * @returns {Promise<unknown> | null}
  */
 export function getPreloadedMotionBasicPromise() {
@@ -78,17 +128,8 @@ export function startCompanionPreload(opts = {}) {
   const modelUrl = opts.modelUrl || DEFAULT_VRM_URL;
   const motionsUrl = opts.motionsUrl || DEFAULT_MOTIONS_BASIC_URL;
 
-  if (fetchImpl && !vrmBuffers.has(modelUrl)) {
-    const job = fetchImpl(modelUrl, { credentials: "same-origin" })
-      .then((res) => {
-        if (!res.ok) throw new Error(`VRM preload HTTP ${res.status}`);
-        return res.arrayBuffer();
-      })
-      .catch((err) => {
-        vrmBuffers.delete(modelUrl);
-        throw err;
-      });
-    vrmBuffers.set(modelUrl, job);
+  if (fetchImpl) {
+    preloadVrmBuffer(modelUrl, fetchImpl);
   }
 
   if (fetchImpl && !motionBasicPromise) {
@@ -161,6 +202,18 @@ const shouldAutoBoot =
 
 const boot = shouldAutoBoot ? startCompanionPreload() : null;
 
+if (shouldAutoBoot && !rosterPreloadPromise) {
+  rosterPreloadPromise = import("./companionCharacterPreload.js")
+    .then((mod) =>
+      mod.startCharacterRosterPreload({
+        onProgress: (ratio) => {
+          globalThis.__amojiRosterPreloadPct = ratio;
+        },
+      }),
+    )
+    .catch(() => null);
+}
+
 if (typeof globalThis !== "undefined") {
   globalThis.__amojiPreload = {
     schema: COMPANION_PRELOAD_SCHEMA,
@@ -168,6 +221,8 @@ if (typeof globalThis !== "undefined") {
     getVrm: getPreloadedVrmPromise,
     getMotionBasic: getPreloadedMotionBasicPromise,
     getVrmModule: getPreloadedVrmModulePromise,
+    releaseExcept: releaseVrmPreloadExcept,
+    rosterReady: rosterPreloadPromise,
     ready: boot,
   };
 }
