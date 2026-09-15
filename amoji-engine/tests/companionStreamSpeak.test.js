@@ -2,12 +2,19 @@ import { describe, expect, it } from "vitest";
 import {
   createStreamSpeakPlanner,
   stripMoodTagForSpeak,
+  stripReplyTagsForSpeak,
 } from "../engine/companion/companionStreamSpeak.js";
 
 describe("companionStreamSpeak", () => {
   it("strips mood tags for TTS", () => {
     expect(stripMoodTagForSpeak("你好呀！[mood:happy]")).toBe("你好呀！");
     expect(stripMoodTagForSpeak("嗯[mood:thi")).toBe("嗯");
+  });
+
+  it("strips action and mood tags for stream speak offsets", () => {
+    expect(stripReplyTagsForSpeak("你好！[action:wave] 我係 Amoji。[mood:happy]")).toBe(
+      "你好！ 我係 Amoji。",
+    );
   });
 
   it("emits sentence chunks as text grows", () => {

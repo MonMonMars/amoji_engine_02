@@ -2036,7 +2036,6 @@
         buildShowcaseSequence,
         isShowcaseRequest,
         pickIdleShowcase,
-        shouldChainAction,
       } = actionChoreographyMod;
       const progressDock = createCompanionProgressDock({ root: document.body });
       /** @type {ReturnType<typeof createCompanionWaitAct> | null} */
@@ -2136,36 +2135,28 @@
         if (!actionId || actionId === "stop") return false;
         const sequence = opts.sequence || buildActionSequence(actionId, { maxMoves: opts.maxMoves ?? 4 });
         const useSequence =
+          opts.forceSequence === true &&
           Array.isArray(sequence) &&
           sequence.length > 1 &&
-          (opts.forceSequence || shouldChainAction(actionId));
-        if (useSequence && avatar.playActionSequence) {
+          avatar.playActionSequence;
+        if (useSequence) {
           return avatar.playActionSequence(sequence, {
             emotion,
-            loopSequence: opts.loopSequence ?? opts.loop ?? false,
+            loopSequence: Boolean(opts.loopSequence),
           });
         }
         return avatar.playAction?.(actionId, {
           emotion,
           loop: opts.loop,
-          loopSequence: opts.loopSequence,
-          single: opts.single,
+          single: true,
         });
       };
 
       const playActionWithMotionLibrary = async (content) => {
         if (!content?.action || content.action === "stop") return;
-        const sequence = buildActionSequence(content.action, { maxMoves: 4 });
-        const toEnsure = sequence.length > 1 ? sequence : [content.action];
-        for (const id of toEnsure) {
-          const installed = await ensureActionInstalled(id);
-          if (!installed.ok) return;
-        }
-        playCompanionPerformance(content.action, content.emotion, {
-          sequence,
-          forceSequence: sequence.length > 1,
-          loopSequence: shouldChainAction(content.action),
-        });
+        const installed = await ensureActionInstalled(content.action);
+        if (!installed.ok) return;
+        playCompanionPerformance(content.action, content.emotion, { single: true });
         const liveEmotion = avatar.emotion;
         if (liveEmotion && liveEmotion !== "neutral") {
           currentEmotion = liveEmotion;
@@ -2209,9 +2200,7 @@
             }
           }
           if (motionClient?.isInstalled(content.action)) {
-            playCompanionPerformance(content.action, content.emotion, {
-              loopSequence: shouldChainAction(content.action),
-            });
+            playCompanionPerformance(content.action, content.emotion, { single: true });
             const liveEmotion = avatar.emotion;
             if (liveEmotion && liveEmotion !== "neutral") {
               currentEmotion = liveEmotion;
@@ -2658,7 +2647,7 @@
         const pool = bundled.filter((id) => motionClient?.isInstalled(id));
         const move = pickIdleShowcase(lastIdleShowcase, pool.length ? pool : bundled);
         lastIdleShowcase = move;
-        playCompanionPerformance(move, "happy", { loopSequence: false });
+        playCompanionPerformance(move, "happy", { single: true });
       };
 
       const autosize = () => {
@@ -2732,8 +2721,10 @@
       const armBargeIn = () => {
         if (bargeArmed) return;
         bargeArmed = true;
-        if (voice.micOn || autoMic) voice.setKeepMicDuringSpeak?.(true);
-        startBargeWatch();
+        if (voice.micOn) {
+          voice.setKeepMicDuringSpeak?.(true);
+          startBargeWatch();
+        }
       };
 
       const disarmBargeIn = () => {
@@ -2769,12 +2760,17 @@
             setEmotionPill(analysis.emotion);
           }
         },
-        onMicLevel: ({ level } = {}) => {
+        onMicLevel: ({ level, rms } = {}) => {
           applyMicMeterVisual(level);
+          if (rms != null) voiceGate.observeEnergy(rms);
         },
         onSpeechDetected: (info = {}) => {
           if (!shouldAutoStopOnUserSpeech()) return;
-          handleUserSpeechBarge(info.source || "user-speech");
+          handleUserSpeechBarge(info.source || "user-speech", {
+            rms: info.rms,
+            speechMs: info.speechMs,
+            text: info.text,
+          });
         },
         onMicText: (text, isFinal) => {
           const trimmed = String(text || "").trim();
@@ -2782,11 +2778,8 @@
             interim.clear();
             return;
           }
-          if (!isFinal && trimmed && shouldAutoStopOnUserSpeech()) {
-            handleUserSpeechBarge("interim-speech");
-          }
           if (isFinal && trimmed && shouldAutoStopOnUserSpeech()) {
-            handleUserSpeechBarge("final-speech");
+            handleUserSpeechBarge("final-speech", { text: trimmed });
           }
           if (!isFinal && trimmed) {
             interim.set(trimmed);
@@ -3008,10 +3001,14 @@
       window.__amojiSupportsMic = voice.supportsMic;
 
       bargeMonitor = createCompanionBargeMonitor({
-        energyThreshold: 0.012,
-        minSpeechMs: 45,
-        onBargeIn: () => {
-          if (shouldAutoStopOnUserSpeech()) handleUserSpeechBarge("energy-barge");
+        energyThreshold: 0.028,
+        minSpeechMs: 180,
+        onBargeIn: (info = {}) => {
+          if (!shouldAutoStopOnUserSpeech()) return;
+          handleUserSpeechBarge("energy-barge", {
+            rms: info.energy,
+            speechMs: info.speechMs,
+          });
         },
       });
 
@@ -3048,10 +3045,22 @@
         window.__amojiLastBarge = reason;
       };
 
-      handleUserSpeechBarge = (reason = "user-speech") => {
+      handleUserSpeechBarge = (reason = "user-speech", extra = {}) => {
         if (!shouldAutoStopOnUserSpeech()) return false;
+        const gate = voiceGate.shouldBarge({
+          source: reason,
+          text: extra.text,
+          rms: extra.rms,
+          speechMs: extra.speechMs,
+        });
+        if (!gate.allow) return false;
         voice.interruptAssistantOutput?.();
-        if (busy && activeTurn && !activeTurn.aborted) {
+        if (
+          busy &&
+          activeTurn &&
+          !activeTurn.aborted &&
+          (reason === "final-speech" || reason === "energy-barge")
+        ) {
           abortActiveTurn(reason);
         }
         avatar.setTalking?.(false);
@@ -3146,7 +3155,7 @@
             streamSpeakStarted = true;
             waitAct?.stop();
             voice.beginStreamSpeak?.(streamEmotion, {
-              pauseCapture: !keepMicForBarge,
+              pauseCapture: true,
             });
             avatar.setThinking?.(false);
             avatar.setTalking?.(true);
@@ -3165,7 +3174,6 @@
                 gotToken = true;
                 voice.stopThinkingLoop?.();
                 waitAct?.stop();
-                voice.stopSpeak();
                 avatar.setThinking?.(false);
                 assistantBubble.classList.remove("thinking");
                 assistantBubble.classList.add("typing");
@@ -3182,10 +3190,10 @@
                   streamEmotion = stream.emotion;
                 }
               }
-              if (stream?.action) {
-                applyPerformanceFromContent(stream);
-              }
-              enqueueStreamSegments(streamPlanner.feed(full), full);
+              enqueueStreamSegments(
+                streamPlanner.feed(stripReplyTags(full)),
+                stripReplyTags(full),
+              );
               scrollTranscript();
             },
           });
@@ -3217,7 +3225,8 @@
           assistantBubble.textContent = stripReplyTags(reply);
 
           if (phaseAEnabled) {
-            enqueueStreamSegments(streamPlanner.flush(reply), reply);
+            const spokenReply = stripReplyTags(result.raw || reply);
+            enqueueStreamSegments(streamPlanner.flush(spokenReply), spokenReply);
             await voice.finishStreamSpeak?.();
           } else {
             status.speaking();

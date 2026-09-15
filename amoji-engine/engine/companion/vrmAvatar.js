@@ -371,8 +371,6 @@ export async function createVrmAvatar(opts) {
     setExpressionTargetFromBlend(analysis.expressionBlend);
     if (analysis.action === "stop") {
       stopAction();
-    } else if (analysis.action) {
-      playAction(analysis.action, { emotion: analysis.emotion });
     }
     return analysis;
   };

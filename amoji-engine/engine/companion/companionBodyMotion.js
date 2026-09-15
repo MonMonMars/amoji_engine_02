@@ -20,9 +20,6 @@ import {
   sampleActionBodyPose,
   sampleActionRootMotion,
 } from "./companionActionMotion.js";
-import {
-  buildActionSequence,
-} from "./companionActionChoreography.js";
 import { buildCharacterSystemPrompt } from "./companionCharacterCatalog.js";
 import {
   advanceIdleBeat,
@@ -207,18 +204,6 @@ export function createCompanionBodyMotion(humanoid) {
       }
       return false;
     }
-    if (!opts.fromQueue && !opts.single) {
-      const combo = buildActionSequence(key, { maxMoves: opts.maxMoves ?? 4 });
-      if (combo.length > 1) {
-        const loopSeq =
-          opts.loopSequence ??
-          (opts.loop !== undefined ? Boolean(opts.loop) : combo.some((id) => actionLoops(id)));
-        return playActionSequence(combo, {
-          loopSequence: loopSeq,
-          emotion: opts.emotion,
-        });
-      }
-    }
     if (!opts.fromQueue) {
       actionQueue = [];
       savedSequence = [];
@@ -285,7 +270,7 @@ export function createCompanionBodyMotion(humanoid) {
     talkTime = 0;
     setTalkEnergy(analysis.speechEnergy);
     if (analysis.action) {
-      playAction(analysis.action, { emotion: analysis.emotion });
+      playAction(analysis.action, { emotion: analysis.emotion, single: true });
     } else if (analysis.gesture) {
       playGesture(analysis.gesture);
     }
@@ -336,8 +321,6 @@ export function createCompanionBodyMotion(humanoid) {
     setTalkEnergy(analysis.speechEnergy);
     if (analysis.action === "stop") {
       stopAction();
-    } else if (analysis.action && analysis.action !== activeAction) {
-      playAction(analysis.action, { emotion: analysis.emotion });
     }
     return analysis;
   };
@@ -573,7 +556,14 @@ export function createCompanionBodyMotion(humanoid) {
       );
       const actionBlend =
         activeAction === "kungfu" || activeAction === "laugh" ? 0.94 : 0.86;
-      pose = mergePoses(pose, actionPose, actionBlend);
+      const fadeInSec = 0.28;
+      const fadeOutSec = 0.34;
+      const fadeIn = Math.min(1, actionElapsed / fadeInSec);
+      const fadeOut = actionLoop
+        ? 1
+        : Math.min(1, Math.max(0, actionDuration - actionElapsed) / fadeOutSec);
+      const actionEnvelope = Math.min(fadeIn, fadeOut);
+      pose = mergePoses(pose, actionPose, actionBlend * actionEnvelope);
       rootMotion = sampleActionRootMotion(
         activeAction,
         actionPhase,
@@ -591,12 +581,12 @@ export function createCompanionBodyMotion(humanoid) {
         const thinkMotion = sampleBodyTalkMotion(elapsed, {
           style: companionGestureStyle("thinking"),
           emotion: "thinking",
-          speechEnergy: 0.28,
+          speechEnergy: 0.18,
           includeArms: true,
         });
-        pose = mergePoses(pose, thinkMotion.body, 0.64);
-        pose.headX = (pose.headX || 0) + Math.sin(elapsed * 0.72) * 0.042;
-        pose.headZ = (pose.headZ || 0) + Math.sin(elapsed * 0.55 + 0.8) * 0.034;
+        pose = mergePoses(pose, thinkMotion.body, 0.42);
+        pose.headX = (pose.headX || 0) + Math.sin(elapsed * 0.55) * 0.024;
+        pose.headZ = (pose.headZ || 0) + Math.sin(elapsed * 0.42 + 0.8) * 0.018;
       } else if (!talking) {
         const idleMotion = sampleIdleBodyMotion(elapsed, { listening, emotion });
         pose = mergePoses(pose, idleMotion, listening ? 0.88 : 0.82);

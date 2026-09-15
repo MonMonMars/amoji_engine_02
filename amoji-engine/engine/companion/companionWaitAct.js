@@ -10,16 +10,16 @@ export const COMPANION_WAIT_ACT_SCHEMA = "amoji.companionWaitAct.v1";
 
 /** @type {Record<string, readonly string[]>} */
 export const WAIT_POSES_BY_PHASE = Object.freeze({
-  connecting: ["wave", "thinking", "nod", "bow"],
-  searching: ["thinking", "nod", "learning", "wave"],
-  downloading: ["downloading", "learning", "wave", "thinking"],
-  learning: ["learning", "thinking", "nod", "wave", "bow"],
-  installing: ["nod", "learning", "thinking", "wave"],
-  thinking: ["thinking", "nod", "wave", "learning", "bow"],
-  "avatar-load": ["wave", "learning", "downloading", "thinking", "nod"],
-  "character-switch": ["wave", "celebrate", "nod", "clap", "bow"],
-  "motion-pack": ["downloading", "learning", "wave", "thinking", "nod"],
-  ready: ["celebrate", "wave", "clap", "nod"],
+  connecting: ["wave", "nod"],
+  searching: ["thinking", "nod"],
+  downloading: ["downloading", "learning"],
+  learning: ["learning", "thinking"],
+  installing: ["nod", "learning"],
+  thinking: ["thinking"],
+  "avatar-load": ["wave", "learning"],
+  "character-switch": ["wave", "nod"],
+  "motion-pack": ["downloading", "learning"],
+  ready: ["wave", "nod"],
 });
 
 /**
@@ -59,7 +59,7 @@ export function pickWaitPose(phase, tick = 0) {
  */
 export function createCompanionWaitAct(opts = {}) {
   const isEnglish = Boolean(opts.isEnglish);
-  const poseIntervalMs = opts.poseIntervalMs ?? 2800;
+  const poseIntervalMs = opts.poseIntervalMs ?? 4200;
   let avatarRef = opts.avatar || null;
   let voiceRef = opts.voice || null;
   let active = false;
@@ -75,7 +75,11 @@ export function createCompanionWaitAct(opts = {}) {
 
   const playPose = () => {
     const pose = pickWaitPose(phase, poseTick);
-    avatarRef?.playAction?.(pose, { emotion: "thinking", loop: true, loopSequence: true });
+    avatarRef?.playAction?.(pose, {
+      emotion: "thinking",
+      loop: true,
+      single: true,
+    });
     avatarRef?.setEmotion?.("thinking");
     avatarRef?.setThinking?.(true);
     opts.onPose?.(pose, phase);
@@ -98,6 +102,7 @@ export function createCompanionWaitAct(opts = {}) {
 
   const startPoseRotation = () => {
     clearInterval(poseTimer);
+    if (kind === "thinking") return;
     poseTimer = setInterval(() => {
       if (!active) return;
       poseTick += 1;
@@ -154,7 +159,7 @@ export function createCompanionWaitAct(opts = {}) {
 
       const speak = ctx.speak !== false;
       if (speak && kind === "thinking") {
-        voiceRef?.startThinkingLoop?.({ isEnglish, intervalMs: 2000 });
+        /* Pose only while LLM thinks — spoken fillers feel noisy and cut off reply TTS. */
       } else if (speak && (kind === "motion" || kind === "download" || kind === "motion-pack")) {
         voiceRef?.startLearnLoop?.({
           isEnglish,

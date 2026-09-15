@@ -251,24 +251,15 @@ export function analyzeSpeechChunk(chunk, opts = {}) {
 /** @type {readonly string[]} */
 export const THINKING_PHRASES_YUE = Object.freeze([
   "嗯…",
-  "嗯嗯…",
-  "呃…",
-  "咁呀…",
   "等我諗諗…",
-  "讓我想想…",
-  "等陣先…",
-  "thing 呀…",
+  "等陣…",
 ]);
 
 /** @type {readonly string[]} */
 export const THINKING_PHRASES_EN = Object.freeze([
   "Hmm…",
-  "Um…",
-  "Uh…",
   "Let me think…",
   "One moment…",
-  "Okay…",
-  "Thing is…",
 ]);
 
 /**
