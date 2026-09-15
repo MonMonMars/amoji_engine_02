@@ -8,6 +8,7 @@ import {
 import { progressPhaseLabel } from "./companionProgressOverlay.js";
 import {
   pickWaitEmotion,
+  pickWaitExpressionProfile,
   pickWaitPose,
   WAIT_POSES_BY_PHASE,
 } from "./companionWaitAssets.js";
@@ -23,7 +24,8 @@ export { WAIT_POSES_BY_PHASE, pickWaitPose };
  *   avatar?: {
  *     playAction?: (id: string, opts?: object) => void,
  *     playActionSequence?: (ids: string[], opts?: object) => void,
- *     setEmotion?: (e: string) => void,
+   *     setEmotion?: (e: string) => void,
+   *     applyExpressionProfile?: (profile: object) => void,
  *     setThinking?: (on: boolean) => void,
  *     stopAction?: () => void,
  *   } | null,
@@ -62,13 +64,15 @@ export function createCompanionWaitAct(opts = {}) {
 
   const playPose = () => {
     const pose = pickWaitPose(phase, poseTick);
-    const emotion = pickWaitEmotion(phase, poseTick, kind);
+    const expression = pickWaitExpressionProfile(phase, poseTick, kind);
+    const emotion = expression.emotion || pickWaitEmotion(phase, poseTick, kind);
     avatarRef?.playAction?.(pose, {
       emotion,
       loop: true,
       single: true,
     });
     avatarRef?.setEmotion?.(emotion);
+    avatarRef?.applyExpressionProfile?.(expression);
     avatarRef?.setThinking?.(kind !== "idle" && emotion === "thinking");
     opts.onPose?.(pose, phase);
   };

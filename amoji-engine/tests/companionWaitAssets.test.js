@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
+  collectWaitPreloadExpressionProfiles,
   collectWaitPreloadMotionIds,
   pickWaitEmotion,
+  pickWaitExpressionProfile,
   pickWaitPose,
   WAIT_POSES_BY_PHASE,
 } from "../engine/companion/companionWaitAssets.js";
@@ -12,13 +14,26 @@ describe("companionWaitAssets", () => {
     expect(ids).toContain("wave");
     expect(ids).toContain("dab");
     expect(ids).toContain("stretch");
-    expect(ids.length).toBeGreaterThan(12);
+    expect(ids.length).toBeGreaterThan(35);
+    expect(ids).toContain("dance");
+    expect(ids).toContain("breakdance");
   });
 
-  it("rotates wait poses and emotions", () => {
+  it("rotates wait poses, emotions, and expression profiles", () => {
     expect(WAIT_POSES_BY_PHASE.idle).toContain("peace");
+    expect(WAIT_POSES_BY_PHASE.idle).toContain("spin");
     expect(pickWaitPose("idle", 0)).toBeTruthy();
     expect(pickWaitEmotion("idle", 0, "idle")).toBe("happy");
     expect(pickWaitEmotion("avatar-load", 1, "avatar-load")).toBeTruthy();
+    const profile = pickWaitExpressionProfile("avatar-load", 0, "avatar-load");
+    expect(profile.emotion).toBeTruthy();
+    expect(profile.nuance).toBeTruthy();
+    expect(profile.blend).toBeTruthy();
+  });
+
+  it("collects expression profiles for boot warm-up", () => {
+    const profiles = collectWaitPreloadExpressionProfiles();
+    expect(profiles.length).toBeGreaterThan(24);
+    expect(profiles.some((p) => p.nuance === "excited")).toBe(true);
   });
 });

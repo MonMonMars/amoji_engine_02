@@ -3,6 +3,7 @@
  */
 import {
   BASIC_MOTION_PACK,
+  CLOUD_EXTENSION_MOTIONS,
   getCloudMotionDef,
   getMotionPack,
   MOTION_PACK_SCHEMA,
@@ -266,6 +267,48 @@ export function createMotionDownloadClient(opts = {}) {
   const listBasicInstalled = () =>
     Object.keys(state.installed).filter((id) => state.installed[id]?.tier !== "extension");
 
+  const ensureExtensionsPack = async () => {
+    const key = "extensions-pack";
+    if (inflight.has(key)) return inflight.get(key);
+
+    const job = (async () => {
+      await ensureBasicPack();
+      const extensionIds = Object.keys(CLOUD_EXTENSION_MOTIONS);
+      const missing = extensionIds.filter(
+        (id) => id && !isMotionInstalled(id, state),
+      );
+      if (!missing.length) {
+        return { ok: true, cached: true, motions: extensionIds };
+      }
+
+      emit("learning", 0.1);
+      const results = await Promise.all(
+        missing.map((id) =>
+          ensureMotion(id).catch((err) => ({
+            ok: false,
+            action: id,
+            error: err?.message || String(err),
+          })),
+        ),
+      );
+      const installed = results.filter((r) => r?.ok).map((r) => r.action);
+      emit("ready", 1);
+      return {
+        ok: installed.length > 0 || missing.length === 0,
+        motions: extensionIds,
+        installed,
+        missing: missing.filter((id) => !installed.includes(id)),
+      };
+    })();
+
+    inflight.set(key, job);
+    try {
+      return await job;
+    } finally {
+      inflight.delete(key);
+    }
+  };
+
   const ensureWaitMotions = async (motionIds = collectWaitPreloadMotionIds()) => {
     const key = "wait-motions";
     if (inflight.has(key)) return inflight.get(key);
@@ -321,6 +364,7 @@ export function createMotionDownloadClient(opts = {}) {
     },
     ensureBasicPack,
     ensureMotion,
+    ensureExtensionsPack,
     ensureWaitMotions,
     learnPhaseForProgress,
   };
