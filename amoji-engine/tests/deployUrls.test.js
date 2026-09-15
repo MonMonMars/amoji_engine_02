@@ -4,6 +4,7 @@ import {
   companionLiteDemoUrl,
   DEMO_BASE_URL,
   formatDemoLinkBlock,
+  secretaryDemoUrl,
 } from "../engine/companion/deployUrls.mjs";
 
 describe("deployUrls", () => {
@@ -19,5 +20,12 @@ describe("deployUrls", () => {
     expect(block).toContain("test-build");
     expect(block).toContain("companion-full");
     expect(block).toContain("companion");
+    expect(block).toContain("Secretary");
+  });
+
+  it("builds secretary demo URL with today tab", () => {
+    const url = secretaryDemoUrl({ build: "test-build", lang: "yue" });
+    expect(url).toContain("tab=today");
+    expect(url).toContain("build=test-build");
   });
 });
