@@ -677,8 +677,14 @@ export function createCompanionBodyMotion(humanoid) {
       smoothedRootMotion,
       rootMotion,
       dt,
-      activeAction ? 11 : 8.5,
+      activeAction ? 11 : 12,
     );
+    if (!activeAction) {
+      if (Math.abs(smoothedRootMotion.y) < 0.002) smoothedRootMotion.y = 0;
+      if (Math.abs(smoothedRootMotion.rotY) < 0.002) {
+        smoothedRootMotion.rotY = 0;
+      }
+    }
     applyPose(smoothedPose, 1, { allowArms, actionArms, talkArmBlend });
     return smoothedPose;
   };
