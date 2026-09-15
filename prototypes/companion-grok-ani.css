@@ -334,15 +334,22 @@
 }
 
 .theme-grok-ani .emotion-ball {
-  width: 4.75rem;
-  height: 4.75rem;
+  width: 5.75rem;
+  height: 5.75rem;
+  filter: drop-shadow(0 14px 48px var(--ball-glow-a));
+}
+
+.theme-grok-ani .emotion-ball__emotion-chip {
+  background: rgba(12, 10, 24, 0.78);
+  border-color: rgba(139, 124, 248, 0.42);
+  color: #f4f0ff;
 }
 
 .theme-grok-ani .emotion-ball__caption {
   font-size: 0.68rem;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: rgba(228, 220, 255, 0.62);
+  color: rgba(228, 220, 255, 0.72);
 }
 
 .theme-grok-ani .stage.mic-mode .emotion-ball-stack {
@@ -350,8 +357,8 @@
 }
 
 .theme-grok-ani .stage.mic-mode .emotion-ball {
-  width: 5.5rem;
-  height: 5.5rem;
+  width: 7.5rem;
+  height: 7.5rem;
 }
 
 /* —— Start picker: cinematic —— */
