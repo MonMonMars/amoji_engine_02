@@ -8,9 +8,9 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji</title>
     <script>
-      window.__amojiBuild = "2026-09-14-v46-fresh-boot";
+      window.__amojiBuild = "2026-09-14-v47-camera-follow";
     </script>
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-14-v46-fresh-boot"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-14-v47-camera-follow"></script>
     <style>
       *,
       *::before,
@@ -281,7 +281,7 @@
         syncVoiceToUrl,
         voiceGenderLabel,
         voiceShortLabel,
-      } from "/amoji-engine/engine/companion/companionVoiceCatalog.js?v=2026-09-14-v46-fresh-boot";
+      } from "/amoji-engine/engine/companion/companionVoiceCatalog.js?v=2026-09-14-v47-camera-follow";
 
       (function () {
         window.__amojiLiteTag = "lite-v7";
@@ -516,7 +516,7 @@
 
         function ensureMicCapture() {
           if (micCapture) return Promise.resolve(micCapture);
-          return import("/amoji-engine/engine/companion/companionMicCapture.js?v=2026-09-14-v46-fresh-boot")
+          return import("/amoji-engine/engine/companion/companionMicCapture.js?v=2026-09-14-v47-camera-follow")
             .then(function (mod) {
             micCapture = mod.createMicCapture({
               lang: isEn ? "en-US" : "zh-HK",
