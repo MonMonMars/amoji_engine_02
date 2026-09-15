@@ -4,6 +4,7 @@
 import { listActiveTasks, listOverdueTasks, listTasksDueToday } from "./taskStore.js";
 import { getPreferences, readLastChatSummary } from "./memoryStore.js";
 import { modeLabel, readSecretaryMode } from "./modePresets.js";
+import { listTodayPriorities } from "./prioritiesStore.js";
 
 /**
  * @param {number} [now]
@@ -47,6 +48,10 @@ export function buildTodayBriefing(opts = {}) {
   const dueToday = listTasksDueToday({ storage, now });
   const overdue = listOverdueTasks({ storage, now });
   const active = listActiveTasks({ storage, now });
+  const priorityIds = listTodayPriorities({ storage, now });
+  const priorityTasks = priorityIds
+    .map((id) => active.find((t) => t.id === id))
+    .filter(Boolean);
   const lastSummary = readLastChatSummary(storage);
 
   const greet = greetingLine(isEn, now);
@@ -55,6 +60,15 @@ export function buildTodayBriefing(opts = {}) {
     : `${greet} — 我係你嘅 Amoji 秘書（${modeLabel(mode, false)}模式）。`;
 
   const lines = [headline];
+
+  if (priorityTasks.length) {
+    const titles = priorityTasks.map((t) => t.title).join(isEn ? "; " : "；");
+    lines.push(
+      isEn
+        ? `Today's top ${priorityTasks.length}: ${titles}`
+        : `今日 Top ${priorityTasks.length}：${titles}`,
+    );
+  }
 
   if (prefs.morningBrief) {
     if (overdue.length) {
@@ -105,6 +119,7 @@ export function buildTodayBriefing(opts = {}) {
     dueToday,
     overdue,
     activeCount: active.length,
+    priorityTasks,
     mode,
   };
 }

@@ -1,5 +1,6 @@
 import { describe, expect, it, beforeEach } from "vitest";
 import { buildTodayBriefing, greetingLine } from "../engine/companion/secretary/briefing.js";
+import { togglePriority } from "../engine/companion/secretary/prioritiesStore.js";
 import { createTask } from "../engine/companion/secretary/taskStore.js";
 import { saveLastChatSummary } from "../engine/companion/secretary/memoryStore.js";
 
@@ -36,5 +37,15 @@ describe("secretary briefing", () => {
     expect(briefing.dueToday).toHaveLength(1);
     expect(briefing.lines.join(" ")).toMatch(/due today/i);
     expect(briefing.lines.join(" ")).toMatch(/Last chat/i);
+  });
+
+  it("includes pinned top priorities in briefing", () => {
+    const now = new Date("2026-09-15T10:00:00Z").getTime();
+    const task = createTask({ title: "Ship deck" }, { storage, now });
+    togglePriority(task.id, { storage, now });
+    const briefing = buildTodayBriefing({ isEn: true, storage, now });
+    expect(briefing.priorityTasks).toHaveLength(1);
+    expect(briefing.lines.join(" ")).toMatch(/Top 1/i);
+    expect(briefing.lines.join(" ")).toMatch(/Ship deck/);
   });
 });

@@ -1,5 +1,6 @@
 /**
- * Phase 1 secretary UI shell for amoji-lite (Today / Chat / Tasks / Me).
+ * Secretary UI shell for amoji-lite (Today / Chat / Tasks / Me).
+ * Phase 2: Top 3 priorities, draft cards, memory capture, due reminders.
  */
 import {
   buildCompanionHref,
@@ -14,6 +15,19 @@ import { buildExpressiveTtsPlan } from "../companionExpressiveTts.js";
 import { createCompanionVoicePicker } from "../companionVoicePicker.js";
 import { normalizeTtsPerformance } from "../companionTtsProsody.js";
 import { buildTodayBriefing } from "./briefing.js";
+import { extractMemoryFromMessage } from "./memoryExtract.js";
+import {
+  isPriorityTask,
+  removePriorityIfPresent,
+  togglePriority,
+} from "./prioritiesStore.js";
+import { parseSecretaryReply } from "./replyParser.js";
+import {
+  readReminderPrefs,
+  requestReminderPermission,
+  saveReminderPrefs,
+  startReminderLoop,
+} from "./reminders.js";
 import {
   addMemoryFact,
   getPreferences,
@@ -62,6 +76,7 @@ export function initAmojiSecretaryLite(doc = document) {
 
   const storage = globalThis.localStorage ?? null;
   let mode = readSecretaryMode(storage);
+  let taskFilter = "all";
   let speakerOn = true;
   let micOn = false;
   let busy = false;
@@ -104,6 +119,22 @@ export function initAmojiSecretaryLite(doc = document) {
         accept: "Add",
         dismiss: "Not now",
         openChat: "Open chat",
+        top3Title: "Today's Top 3",
+        top3Empty: "Pin up to 3 priorities from Tasks.",
+        pinPriority: "Pin",
+        unpinPriority: "Unpin",
+        priorityFull: "Top 3 is full — unpin one first.",
+        memoryConfirm: "Save to memory?",
+        memorySaved: "Saved to memory",
+        draftTitle: "Draft",
+        copyDraft: "Copy",
+        copied: "Copied!",
+        filterAll: "All",
+        filterWork: "Work",
+        filterLife: "Life",
+        filterPersonal: "Personal",
+        remindersOn: "Reminders on",
+        remindersBlocked: "Notifications blocked in browser settings",
       }
     : {
         appTitle: "Amoji 秘書",
@@ -138,6 +169,22 @@ export function initAmojiSecretaryLite(doc = document) {
         accept: "加入",
         dismiss: "唔使",
         openChat: "去傾計",
+        top3Title: "今日 Top 3",
+        top3Empty: "喺「任務」度 pin 最多 3 項重點。",
+        pinPriority: "Pin",
+        unpinPriority: "取消 Pin",
+        priorityFull: "Top 3 已满 — 先取消一項。",
+        memoryConfirm: "加入記憶？",
+        memorySaved: "已加入記憶",
+        draftTitle: "草稿",
+        copyDraft: "複製",
+        copied: "已複製！",
+        filterAll: "全部",
+        filterWork: "工作",
+        filterLife: "生活",
+        filterPersonal: "個人",
+        remindersOn: "已開啟到期提醒",
+        remindersBlocked: "瀏覽器封鎖咗通知",
       };
 
   const els = {
@@ -151,7 +198,11 @@ export function initAmojiSecretaryLite(doc = document) {
     mic: doc.getElementById("mic-btn"),
     speaker: doc.getElementById("speaker-btn"),
     briefCard: doc.getElementById("brief-card"),
+    top3Card: doc.getElementById("top3-card"),
+    top3Title: doc.getElementById("top3-title"),
+    top3List: doc.getElementById("top3-list"),
     todayTasks: doc.getElementById("today-tasks"),
+    taskFilters: doc.getElementById("task-filters"),
     quickTaskInput: doc.getElementById("quick-task-input"),
     quickTaskForm: doc.getElementById("quick-task-form"),
     tasksList: doc.getElementById("tasks-list"),
@@ -170,6 +221,7 @@ export function initAmojiSecretaryLite(doc = document) {
     prefMorningBrief: doc.getElementById("pref-morning-brief"),
     prefHelpWith: doc.getElementById("pref-help-with"),
     prefTone: doc.getElementById("pref-tone"),
+    prefReminders: doc.getElementById("pref-reminders"),
   };
 
   function setStatus(text) {
@@ -199,16 +251,33 @@ export function initAmojiSecretaryLite(doc = document) {
 
   function buildSystemPrompt() {
     const memory = memoryFactsForPrompt({ storage });
+    const prefs = getPreferences({ storage });
+    const toneLine = isEn
+      ? `Tone: ${prefs.tone}. Help scope: ${prefs.helpWith}.`
+      : `語氣：${prefs.tone}。幫手範圍：${prefs.helpWith}。`;
     const base = isEn
-      ? "You are Amoji, a warm personal AI secretary with an anime companion personality. Reply in English. Help with work, life admin, and friendly chat. When the user asks to track something, confirm briefly. End with [mood:happy] or similar."
-      : "你係 Amoji，一個有動漫同伴氣質嘅個人 AI 秘書。用粵語口語回覆。幫手處理工作、生活同傾計。當用戶想記低任務時，簡短確認。結尾加 [mood:happy] 等情緒標籤。";
+      ? "You are Amoji, a warm personal AI secretary with an anime companion personality. Reply in English. Help with work, life admin, and friendly chat. Keep replies short (1–3 sentences)."
+      : "你係 Amoji，一個有動漫同伴氣質嘅個人 AI 秘書。用粵語口語回覆。幫手處理工作、生活同傾計。回覆要短（1–3句）。";
+    const tagRules = isEn
+      ? [
+          "End every reply with [mood:happy|thinking|sad|surprised|angry].",
+          "When suggesting a task, add [task:Title|due:tonight] (optional due hint).",
+          "When the user shares a preference worth remembering, add [memory:short fact].",
+          "When drafting email/message text, add [draft:copyable text on one line].",
+        ].join(" ")
+      : [
+          "每句回覆結尾加 [mood:happy|thinking|sad|surprised|angry]。",
+          "建議任務時加 [task:標題|due:今晚]（due 可選）。",
+          "用戶分享值得記住嘅偏好時加 [memory:短句]。",
+          "起草電郵/訊息時加 [draft:可複製文字，一行]。",
+        ].join(" ");
     const modeLine = modePromptFragment(mode, isEn);
     const memoryLine = memory
       ? isEn
         ? `User memory:\n${memory}`
         : `用戶記憶：\n${memory}`
       : "";
-    return [base, modeLine, memoryLine].filter(Boolean).join("\n\n");
+    return [base, toneLine, modeLine, tagRules, memoryLine].filter(Boolean).join("\n\n");
   }
 
   async function cloudReply(message) {
@@ -222,9 +291,7 @@ export function initAmojiSecretaryLite(doc = document) {
       throw new Error(data.error || `HTTP ${res.status}`);
     }
     const raw = String(data.reply || "");
-    const reply = raw.replace(/\s*\[mood:\w+\]\s*$/i, "").trim();
-    const mood = (raw.match(/\[mood:(\w+)\]/i) || [])[1] || "happy";
-    return { reply, mood };
+    return parseSecretaryReply(raw, { isEn });
   }
 
   async function speakCloud(text, emotion) {
@@ -279,6 +346,73 @@ export function initAmojiSecretaryLite(doc = document) {
       showError(`${strings.errTts}: ${err.message || err}`);
     }
     setStatus(strings.statusReady);
+  }
+
+  function showMemoryConfirmCard(draft) {
+    if (!els.messages) return;
+    const card = doc.createElement("div");
+    card.className = "memory-card";
+    const title = doc.createElement("div");
+    title.className = "memory-card-title";
+    title.textContent = `${strings.memoryConfirm} “${draft.text}”`;
+    const actions = doc.createElement("div");
+    actions.className = "task-card-actions";
+    const accept = doc.createElement("button");
+    accept.type = "button";
+    accept.className = "btn mini primary";
+    accept.textContent = strings.accept;
+    const dismiss = doc.createElement("button");
+    dismiss.type = "button";
+    dismiss.className = "btn mini";
+    dismiss.textContent = strings.dismiss;
+    accept.addEventListener("click", () => {
+      addMemoryFact(draft.text, { storage, category: draft.category });
+      card.replaceWith(
+        Object.assign(doc.createElement("div"), {
+          className: "bubble bot receipt",
+          textContent: `✓ ${strings.memorySaved}`,
+        }),
+      );
+      renderMemory();
+    });
+    dismiss.addEventListener("click", () => card.remove());
+    actions.append(accept, dismiss);
+    card.append(title, actions);
+    els.messages.appendChild(card);
+    els.messages.scrollTop = els.messages.scrollHeight;
+  }
+
+  function showDraftCard(text) {
+    if (!els.messages) return;
+    const card = doc.createElement("div");
+    card.className = "draft-card";
+    const title = doc.createElement("div");
+    title.className = "draft-card-title";
+    title.textContent = strings.draftTitle;
+    const body = doc.createElement("div");
+    body.className = "draft-body";
+    body.textContent = text;
+    const actions = doc.createElement("div");
+    actions.className = "draft-card-actions";
+    const copy = doc.createElement("button");
+    copy.type = "button";
+    copy.className = "btn mini primary";
+    copy.textContent = strings.copyDraft;
+    copy.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(text);
+        copy.textContent = strings.copied;
+        setTimeout(() => {
+          copy.textContent = strings.copyDraft;
+        }, 1500);
+      } catch {
+        showError(isEn ? "Copy failed" : "複製失敗");
+      }
+    });
+    actions.append(copy);
+    card.append(title, body, actions);
+    els.messages.appendChild(card);
+    els.messages.scrollTop = els.messages.scrollHeight;
   }
 
   function showTaskConfirmCard(draft) {
@@ -337,6 +471,10 @@ export function initAmojiSecretaryLite(doc = document) {
     if (extraction.confidence >= 0.75 && extraction.task) {
       showTaskConfirmCard(extraction.task);
     }
+    const memExtract = extractMemoryFromMessage(msg, { isEn });
+    if (memExtract.confidence >= 0.75 && memExtract.memory) {
+      showMemoryConfirmCard(memExtract.memory);
+    }
 
     const thinking = addBubble("…", "bot", "thinking");
     try {
@@ -345,6 +483,15 @@ export function initAmojiSecretaryLite(doc = document) {
       thinking?.remove();
       addBubble(result.reply, "bot");
       saveLastChatSummary(result.reply, storage);
+      for (const taskDraft of result.tasks || []) {
+        if (taskDraft.title) showTaskConfirmCard(taskDraft);
+      }
+      for (const mem of result.memories || []) {
+        if (mem) showMemoryConfirmCard({ text: mem, category: "general" });
+      }
+      for (const draft of result.drafts || []) {
+        if (draft) showDraftCard(draft);
+      }
       renderToday();
       await speakCloud(result.reply, result.mood);
     } catch (err) {
@@ -356,8 +503,31 @@ export function initAmojiSecretaryLite(doc = document) {
     }
   }
 
+  function renderTop3(priorityTasks) {
+    if (!els.top3Card || !els.top3List) return;
+    if (els.top3Title) els.top3Title.textContent = strings.top3Title;
+    els.top3List.innerHTML = "";
+    if (!priorityTasks?.length) {
+      els.top3Card.classList.add("hidden");
+      return;
+    }
+    els.top3Card.classList.remove("hidden");
+    priorityTasks.forEach((task, index) => {
+      const row = doc.createElement("div");
+      row.className = "top3-row";
+      const num = doc.createElement("span");
+      num.className = "top3-num";
+      num.textContent = String(index + 1);
+      const title = doc.createElement("span");
+      title.textContent = task.title;
+      row.append(num, title);
+      els.top3List.appendChild(row);
+    });
+  }
+
   function renderToday() {
     const briefing = buildTodayBriefing({ isEn, storage });
+    renderTop3(briefing.priorityTasks);
     if (els.briefCard) {
       els.briefCard.innerHTML = "";
       const h = doc.createElement("h2");
@@ -392,10 +562,36 @@ export function initAmojiSecretaryLite(doc = document) {
     }
   }
 
+  function renderTaskFilters() {
+    if (!els.taskFilters) return;
+    els.taskFilters.innerHTML = "";
+    const filters = [
+      { id: "all", label: strings.filterAll },
+      { id: "work", label: strings.filterWork },
+      { id: "life", label: strings.filterLife },
+      { id: "personal", label: strings.filterPersonal },
+    ];
+    for (const f of filters) {
+      const btn = doc.createElement("button");
+      btn.type = "button";
+      btn.className = `filter-chip${taskFilter === f.id ? " active" : ""}`;
+      btn.textContent = f.label;
+      btn.addEventListener("click", () => {
+        taskFilter = f.id;
+        renderTaskFilters();
+        renderTasks();
+      });
+      els.taskFilters.appendChild(btn);
+    }
+  }
+
   function renderTasks() {
     if (!els.tasksList) return;
     els.tasksList.innerHTML = "";
-    const tasks = listActiveTasks({ storage });
+    let tasks = listActiveTasks({ storage });
+    if (taskFilter !== "all") {
+      tasks = tasks.filter((t) => t.category === taskFilter);
+    }
     if (!tasks.length) {
       const empty = doc.createElement("p");
       empty.className = "muted";
@@ -424,6 +620,22 @@ export function initAmojiSecretaryLite(doc = document) {
       row.appendChild(due);
     }
     if (!opts.compact) {
+      const pin = doc.createElement("button");
+      pin.type = "button";
+      pin.className = `priority-btn${isPriorityTask(task.id, { storage }) ? " active" : ""}`;
+      pin.textContent = isPriorityTask(task.id, { storage })
+        ? strings.unpinPriority
+        : strings.pinPriority;
+      pin.addEventListener("click", () => {
+        const result = togglePriority(task.id, { storage });
+        if (!result.ok && result.reason === "full") {
+          showError(strings.priorityFull);
+          return;
+        }
+        renderToday();
+        renderTasks();
+      });
+      row.appendChild(pin);
       const actions = doc.createElement("div");
       actions.className = "task-row-actions";
       const done = doc.createElement("button");
@@ -432,6 +644,7 @@ export function initAmojiSecretaryLite(doc = document) {
       done.textContent = strings.complete;
       done.addEventListener("click", () => {
         completeTask(task.id, { storage });
+        removePriorityIfPresent(task.id, { storage });
         renderToday();
         renderTasks();
       });
@@ -497,6 +710,9 @@ export function initAmojiSecretaryLite(doc = document) {
     }
     if (els.prefHelpWith) els.prefHelpWith.value = prefs.helpWith;
     if (els.prefTone) els.prefTone.value = prefs.tone;
+    if (els.prefReminders) {
+      els.prefReminders.checked = readReminderPrefs(storage).enabled;
+    }
   }
 
   function renderModeButtons() {
@@ -541,7 +757,10 @@ export function initAmojiSecretaryLite(doc = document) {
       tab.classList.toggle("active", tab.dataset.tab === tabId);
     }
     if (tabId === "today") renderToday();
-    if (tabId === "tasks") renderTasks();
+    if (tabId === "tasks") {
+      renderTaskFilters();
+      renderTasks();
+    }
     if (tabId === "me") {
       renderMemory();
       renderPrefs();
@@ -703,6 +922,22 @@ export function initAmojiSecretaryLite(doc = document) {
     els.prefTone?.addEventListener("change", () => {
       savePreferences({ tone: els.prefTone.value }, { storage });
     });
+    els.prefReminders?.addEventListener("change", async () => {
+      const want = els.prefReminders.checked;
+      if (!want) {
+        saveReminderPrefs(false, storage);
+        return;
+      }
+      const perm = await requestReminderPermission();
+      if (perm === "granted") {
+        saveReminderPrefs(true, storage);
+        setStatus(strings.remindersOn);
+      } else {
+        els.prefReminders.checked = false;
+        saveReminderPrefs(false, storage);
+        showError(strings.remindersBlocked);
+      }
+    });
     doc.getElementById("open-chat-btn")?.addEventListener("click", () => {
       switchTab("chat");
       activateChat();
@@ -737,6 +972,7 @@ export function initAmojiSecretaryLite(doc = document) {
   localizeChrome();
   renderModeButtons();
   renderDiscover();
+  renderTaskFilters();
   renderToday();
   renderTasks();
   renderMemory();
@@ -763,6 +999,16 @@ export function initAmojiSecretaryLite(doc = document) {
   );
 
   savePreferences({ onboarded: true }, { storage });
+
+  if (hosted) {
+    startReminderLoop({
+      storage,
+      isEn,
+      onFire: (count) => {
+        if (count > 0) renderToday();
+      },
+    });
+  }
 
   return {
     sendMessage,
