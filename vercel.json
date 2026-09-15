@@ -29,6 +29,34 @@
       ]
     },
     {
+      "source": "/prototypes/(.*)\\.html",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-store, no-cache, must-revalidate" },
+        { "key": "Pragma", "value": "no-cache" }
+      ]
+    },
+    {
+      "source": "/companion-full",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-store, no-cache, must-revalidate" },
+        { "key": "Pragma", "value": "no-cache" }
+      ]
+    },
+    {
+      "source": "/companion",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-store, no-cache, must-revalidate" },
+        { "key": "Pragma", "value": "no-cache" }
+      ]
+    },
+    {
+      "source": "/",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-store, no-cache, must-revalidate" },
+        { "key": "Pragma", "value": "no-cache" }
+      ]
+    },
+    {
       "source": "/prototypes/(.*)",
       "headers": [
         { "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }
@@ -66,7 +94,8 @@
     {
       "source": "/amoji-engine/(.*)",
       "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=3600, must-revalidate" }
+        { "key": "Cache-Control", "value": "no-store, no-cache, must-revalidate" },
+        { "key": "Pragma", "value": "no-cache" }
       ]
     }
   ]
