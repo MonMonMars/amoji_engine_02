@@ -27,6 +27,23 @@ export function versionedModuleUrl(path, build = AMOJI_BUILD) {
 }
 
 /**
+ * Resolve a module path the same way the companion HTML expects:
+ * `../amoji-engine/...` is relative to the page URL, not this file.
+ * @param {string} path
+ */
+export function resolveCompanionModuleUrl(path, build = AMOJI_BUILD) {
+  const versioned = versionedModuleUrl(path, build);
+  if (/^(?:[a-z]+:)?\/\//i.test(versioned) || versioned.startsWith("/")) {
+    return versioned;
+  }
+  const base =
+    globalThis.document?.baseURI ||
+    globalThis.location?.href ||
+    "http://localhost/";
+  return new URL(versioned, base).href;
+}
+
+/**
  * @param {string} path
  */
 export function ami(path) {
@@ -34,7 +51,7 @@ export function ami(path) {
     globalThis.__amojiBuild ||
     globalThis.__amojiActiveBuild ||
     AMOJI_BUILD;
-  return import(versionedModuleUrl(path, build));
+  return import(resolveCompanionModuleUrl(path, build));
 }
 
 /**
