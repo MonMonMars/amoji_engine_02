@@ -21,7 +21,9 @@ After completing code changes (commit, push, or PR), **always** end your summary
 
 Programmatic helper: `formatDemoLinkBlock()` in `amoji-engine/engine/companion/deployUrls.mjs`.
 
-**Deploy caveat:** Links point at production Vercel. They reflect your changes only after the branch is merged to the deploy branch and Vercel finishes redeploying (~1 min). Until then, say so and link the open PR.
+**Deploy caveat:** Links point at production Vercel. They reflect your changes only after the branch is merged to the deploy branch (`cursor/companion-improvements-6647` or `main`) and Vercel finishes redeploying (~1 min). Until then, say so and link the open PR.
+
+**Cache bust:** Demo pages auto-redirect to the latest server build via `/api/health` + `?build=` query. Before deploy, run `node scripts/sync-build-version.mjs` so HTML `?v=` tags match `AMOJI_BUILD`.
 
 ## Testing
 
