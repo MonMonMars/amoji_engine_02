@@ -1,0 +1,212 @@
+/**
+ * ChatGPT-style companion mic button — emotion-linked glow, rings, and waveform.
+ */
+export const COMPANION_MIC_BUTTON_SCHEMA = "amoji.companionMicButton.v1";
+
+/** @typedef {"idle" | "listening" | "speaking" | "disabled"} MicButtonState */
+
+export const EMOTION_MIC_THEME = Object.freeze({
+  neutral: { hue: 175, sat: 62, light: 58, ringSpeed: 1 },
+  happy: { hue: 38, sat: 88, light: 58, ringSpeed: 1.15 },
+  thinking: { hue: 258, sat: 58, light: 62, ringSpeed: 0.88 },
+  sad: { hue: 215, sat: 42, light: 50, ringSpeed: 0.75 },
+  surprised: { hue: 192, sat: 90, light: 55, ringSpeed: 1.35 },
+  angry: { hue: 12, sat: 82, light: 52, ringSpeed: 1.2 },
+});
+
+export const NUANCE_MIC_DELTA = Object.freeze({
+  none: { hue: 0, sat: 0, ringSpeed: 1 },
+  shy: { hue: 14, sat: -10, ringSpeed: 0.85 },
+  curious: { hue: 10, sat: 8, ringSpeed: 1.08 },
+  excited: { hue: -6, sat: 12, ringSpeed: 1.28 },
+  love: { hue: -18, sat: 10, ringSpeed: 0.95 },
+  stress: { hue: 6, sat: -8, ringSpeed: 1.18 },
+});
+
+/**
+ * @param {number} value
+ * @param {number} min
+ * @param {number} max
+ */
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
+
+/**
+ * @param {{ emotion?: string, nuance?: string }} [opts]
+ */
+export function resolveMicButtonTheme(opts = {}) {
+  const emotion = String(opts.emotion || "neutral").toLowerCase();
+  const nuance = String(opts.nuance || "none").toLowerCase();
+  const base = EMOTION_MIC_THEME[emotion] || EMOTION_MIC_THEME.neutral;
+  const delta = NUANCE_MIC_DELTA[nuance] || NUANCE_MIC_DELTA.none;
+
+  const hue = clamp(base.hue + delta.hue, 0, 360);
+  const sat = clamp(base.sat + delta.sat, 28, 100);
+  const light = base.light;
+  const ringSpeed = clamp(base.ringSpeed * delta.ringSpeed, 0.6, 1.6);
+
+  const accent = `hsl(${hue} ${sat}% ${light}%)`;
+  const glowA = `hsl(${hue} ${Math.min(96, sat + 8)}% ${Math.min(72, light + 8)}% / 0.62)`;
+  const glowB = `hsl(${clamp(hue + 42, 0, 360)} ${Math.max(48, sat - 6)}% ${Math.min(78, light + 12)}% / 0.38)`;
+  const surface = `hsl(${hue} ${Math.max(32, sat - 18)}% 18% / 0.92)`;
+  const border = `hsl(${hue} ${sat}% ${Math.min(70, light + 6)}% / 0.72)`;
+
+  return {
+    hue,
+    sat,
+    light,
+    ringSpeed,
+    accent,
+    glowA,
+    glowB,
+    surface,
+    border,
+  };
+}
+
+/** Mic icon + waveform layers (ChatGPT-inspired). */
+export function companionMicButtonInnerHtml() {
+  return `
+    <span class="mic-btn__aura" aria-hidden="true"></span>
+    <span class="mic-btn__ring mic-btn__ring--a" aria-hidden="true"></span>
+    <span class="mic-btn__ring mic-btn__ring--b" aria-hidden="true"></span>
+    <span class="mic-btn__wave" aria-hidden="true">
+      <i></i><i></i><i></i><i></i><i></i>
+    </span>
+    <span class="mic-btn__icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path
+          d="M12 14.2a3.2 3.2 0 0 0 3.2-3.2V7.8a3.2 3.2 0 1 0-6.4 0v3.2a3.2 3.2 0 0 0 3.2 3.2Z"
+          fill="currentColor"
+        />
+        <path
+          d="M6.4 11.2a5.6 5.6 0 0 0 11.2 0"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+        />
+        <path
+          d="M12 16.8V19.2M9.6 19.2h4.8"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+        />
+      </svg>
+    </span>
+  `;
+}
+
+/**
+ * @param {HTMLElement} el
+ * @param {{ emotion?: string, nuance?: string }} [opts]
+ */
+export function createCompanionMicButton(el, opts = {}) {
+  if (!el) {
+    return {
+      setState() {},
+      setEmotion() {},
+      setLevel() {},
+      sync() {},
+      reset() {},
+    };
+  }
+
+  el.classList.add("mic-btn");
+  if (!el.querySelector(".mic-btn__icon")) {
+    el.innerHTML = companionMicButtonInnerHtml();
+  }
+
+  /** @type {MicButtonState} */
+  let state = "idle";
+  let theme = resolveMicButtonTheme(opts);
+
+  const applyTheme = () => {
+    el.style.setProperty("--mic-hue", String(theme.hue));
+    el.style.setProperty("--mic-sat", `${theme.sat}%`);
+    el.style.setProperty("--mic-light", `${theme.light}%`);
+    el.style.setProperty("--mic-accent", theme.accent);
+    el.style.setProperty("--mic-glow-a", theme.glowA);
+    el.style.setProperty("--mic-glow-b", theme.glowB);
+    el.style.setProperty("--mic-surface", theme.surface);
+    el.style.setProperty("--mic-border", theme.border);
+    el.style.setProperty("--mic-ring-speed", `${theme.ringSpeed.toFixed(2)}s`);
+  };
+
+  const setState = (next) => {
+    const allowed = ["idle", "listening", "speaking", "disabled"];
+    state = allowed.includes(next) ? next : "idle";
+    el.dataset.micState = state;
+    el.classList.toggle("mic-live", state === "listening" || state === "speaking");
+    el.classList.toggle("on", state === "listening" || state === "speaking");
+    el.setAttribute("aria-pressed", state === "listening" || state === "speaking" ? "true" : "false");
+    const titles = {
+      idle: "Mic on/off — continuous listen; replies when you pause",
+      listening: "Listening — speak naturally",
+      speaking: "Companion speaking — talk to interrupt",
+      disabled: "Mic unavailable",
+    };
+    el.title = titles[state] || titles.idle;
+  };
+
+  const setEmotion = (emotion, nuance = "none") => {
+    theme = resolveMicButtonTheme({ emotion, nuance });
+    applyTheme();
+  };
+
+  const setLevel = (level) => {
+    if (state !== "listening" && state !== "speaking") {
+      el.style.removeProperty("--mic-level");
+      el.style.removeProperty("--mic-bounce");
+      return;
+    }
+    const clamped = clamp(Number(level) || 0, 0, 1);
+    const bouncePx = 3 + clamped * 12;
+    el.style.setProperty("--mic-level", clamped.toFixed(3));
+    el.style.setProperty("--mic-bounce", `${bouncePx.toFixed(2)}px`);
+  };
+
+  const reset = () => {
+    el.style.removeProperty("--mic-level");
+    el.style.removeProperty("--mic-bounce");
+  };
+
+  /**
+   * @param {{
+   *   micOn?: boolean,
+   *   speaking?: boolean,
+   *   assistantActive?: boolean,
+   *   disabled?: boolean,
+   * }} ctx
+   */
+  const sync = (ctx = {}) => {
+    if (ctx.disabled) {
+      setState("disabled");
+      reset();
+      return;
+    }
+    if (!ctx.micOn) {
+      setState("idle");
+      reset();
+      return;
+    }
+    if (ctx.speaking || ctx.assistantActive) {
+      setState("speaking");
+      return;
+    }
+    setState("listening");
+  };
+
+  setEmotion(opts.emotion || "neutral", opts.nuance || "none");
+  setState("idle");
+
+  return {
+    setState,
+    setEmotion,
+    setLevel,
+    sync,
+    reset,
+    getState: () => state,
+    getTheme: () => theme,
+  };
+}
