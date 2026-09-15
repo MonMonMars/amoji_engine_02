@@ -1956,6 +1956,7 @@
         characterSwitchMod,
         progressOverlayMod,
         waitActMod,
+        actionChoreographyMod,
       ] = await Promise.all([
         import("../amoji-engine/engine/companion/createAvatar.js"),
         import("../amoji-engine/engine/companion/chatLlm.js"),
@@ -1979,6 +1980,7 @@
         import("../amoji-engine/engine/companion/companionCharacterSwitch.js"),
         import("../amoji-engine/engine/companion/companionProgressOverlay.js"),
         import("../amoji-engine/engine/companion/companionWaitAct.js"),
+        import("../amoji-engine/engine/companion/companionActionChoreography.js"),
       ]);
       window.__amojiModuleBooted = true;
       const {
@@ -2029,6 +2031,13 @@
       const { createMotionDownloadClient } = motionDownloadMod;
       const { createCompanionProgressDock } = progressOverlayMod;
       const { createCompanionWaitAct } = waitActMod;
+      const {
+        buildActionSequence,
+        buildShowcaseSequence,
+        isShowcaseRequest,
+        pickIdleShowcase,
+        shouldChainAction,
+      } = actionChoreographyMod;
       const progressDock = createCompanionProgressDock({ root: document.body });
       /** @type {ReturnType<typeof createCompanionWaitAct> | null} */
       let waitAct = null;
@@ -2123,16 +2132,55 @@
       /** @type {ReturnType<typeof analyzeCompanionReply> | null} */
       let lastAvatarPerformance = null;
 
+      const playCompanionPerformance = (actionId, emotion, opts = {}) => {
+        if (!actionId || actionId === "stop") return false;
+        const sequence = opts.sequence || buildActionSequence(actionId, { maxMoves: opts.maxMoves ?? 4 });
+        const useSequence =
+          Array.isArray(sequence) &&
+          sequence.length > 1 &&
+          (opts.forceSequence || shouldChainAction(actionId));
+        if (useSequence && avatar.playActionSequence) {
+          return avatar.playActionSequence(sequence, {
+            emotion,
+            loopSequence: opts.loopSequence ?? opts.loop ?? false,
+          });
+        }
+        return avatar.playAction?.(actionId, {
+          emotion,
+          loop: opts.loop,
+          loopSequence: opts.loopSequence,
+          single: opts.single,
+        });
+      };
+
       const playActionWithMotionLibrary = async (content) => {
         if (!content?.action || content.action === "stop") return;
-        const installed = await ensureActionInstalled(content.action);
-        if (!installed.ok) return;
-        avatar.playAction?.(content.action, { emotion: content.emotion });
+        const sequence = buildActionSequence(content.action, { maxMoves: 4 });
+        const toEnsure = sequence.length > 1 ? sequence : [content.action];
+        for (const id of toEnsure) {
+          const installed = await ensureActionInstalled(id);
+          if (!installed.ok) return;
+        }
+        playCompanionPerformance(content.action, content.emotion, {
+          sequence,
+          forceSequence: sequence.length > 1,
+          loopSequence: shouldChainAction(content.action),
+        });
         const liveEmotion = avatar.emotion;
         if (liveEmotion && liveEmotion !== "neutral") {
           currentEmotion = liveEmotion;
           setEmotionPill(liveEmotion, content.action);
         }
+      };
+
+      const playShowcaseSequence = async (seedAction, emotion = "happy") => {
+        const sequence = buildShowcaseSequence({ seedAction, count: 5 });
+        for (const id of sequence) {
+          const installed = await ensureActionInstalled(id);
+          if (!installed.ok) continue;
+        }
+        avatar.playActionSequence?.(sequence, { emotion, loopSequence: false });
+        setEmotionPill(emotion, seedAction || sequence[0]);
       };
 
       const applyPerformanceFromContent = (content) => {
@@ -2161,7 +2209,9 @@
             }
           }
           if (motionClient?.isInstalled(content.action)) {
-            avatar.playAction?.(content.action, { emotion: content.emotion });
+            playCompanionPerformance(content.action, content.emotion, {
+              loopSequence: shouldChainAction(content.action),
+            });
             const liveEmotion = avatar.emotion;
             if (liveEmotion && liveEmotion !== "neutral") {
               currentEmotion = liveEmotion;
@@ -2422,6 +2472,9 @@
           .finally(() => {
             hideAvatarLoadPill();
             waitAct?.stop();
+            if (!idleShowcaseTimer && (avatarKind === "vrm3d" || avatarKind === "gltf3d")) {
+              idleShowcaseTimer = setInterval(tickIdleShowcase, 15000);
+            }
           });
         return avatarLoadPromise;
       };
@@ -2587,6 +2640,26 @@
 
       let busy = false;
       const shownMicErrors = new Set();
+      let lastIdleShowcase = null;
+      /** @type {ReturnType<typeof setInterval> | null} */
+      let idleShowcaseTimer = null;
+
+      const canIdleShowcase = () =>
+        !busy &&
+        !voice?.speaking &&
+        !waitAct?.isActive() &&
+        !avatar?.currentAction &&
+        !characterSwitching &&
+        (avatarKind === "vrm3d" || avatarKind === "gltf3d");
+
+      const tickIdleShowcase = () => {
+        if (!canIdleShowcase()) return;
+        const bundled = ["wave", "nod", "thinking", "bow", "clap", "learning"];
+        const pool = bundled.filter((id) => motionClient?.isInstalled(id));
+        const move = pickIdleShowcase(lastIdleShowcase, pool.length ? pool : bundled);
+        lastIdleShowcase = move;
+        playCompanionPerformance(move, "happy", { loopSequence: false });
+      };
 
       const autosize = () => {
         input.style.height = "auto";
@@ -3039,6 +3112,8 @@
         if (userMotion?.action === "stop") {
           applyPerformanceFromContent(userMotion);
           setEmotionPill(userMotion.emotion || "neutral");
+        } else if (isShowcaseRequest(cleaned)) {
+          void playShowcaseSequence(userMotion?.action, userMotion?.emotion || "happy");
         }
         avatar.setThinking?.(true);
         avatar.prepareThinkingFromUser?.(cleaned, isEnglish);

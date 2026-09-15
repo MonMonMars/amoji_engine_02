@@ -10,16 +10,16 @@ export const COMPANION_WAIT_ACT_SCHEMA = "amoji.companionWaitAct.v1";
 
 /** @type {Record<string, readonly string[]>} */
 export const WAIT_POSES_BY_PHASE = Object.freeze({
-  connecting: ["wave", "thinking"],
-  searching: ["thinking", "nod"],
-  downloading: ["downloading", "wave"],
-  learning: ["learning", "thinking", "nod"],
-  installing: ["nod", "learning"],
-  thinking: ["thinking", "nod", "wave"],
-  "avatar-load": ["wave", "learning", "downloading"],
-  "character-switch": ["wave", "celebrate", "nod"],
-  "motion-pack": ["downloading", "learning", "wave"],
-  ready: ["celebrate", "wave"],
+  connecting: ["wave", "thinking", "nod", "bow"],
+  searching: ["thinking", "nod", "learning", "wave"],
+  downloading: ["downloading", "learning", "wave", "thinking"],
+  learning: ["learning", "thinking", "nod", "wave", "bow"],
+  installing: ["nod", "learning", "thinking", "wave"],
+  thinking: ["thinking", "nod", "wave", "learning", "bow"],
+  "avatar-load": ["wave", "learning", "downloading", "thinking", "nod"],
+  "character-switch": ["wave", "celebrate", "nod", "clap", "bow"],
+  "motion-pack": ["downloading", "learning", "wave", "thinking", "nod"],
+  ready: ["celebrate", "wave", "clap", "nod"],
 });
 
 /**
@@ -35,6 +35,7 @@ export function pickWaitPose(phase, tick = 0) {
  * @param {{
  *   avatar?: {
  *     playAction?: (id: string, opts?: object) => void,
+ *     playActionSequence?: (ids: string[], opts?: object) => void,
  *     setEmotion?: (e: string) => void,
  *     setThinking?: (on: boolean) => void,
  *     stopAction?: () => void,
@@ -58,7 +59,7 @@ export function pickWaitPose(phase, tick = 0) {
  */
 export function createCompanionWaitAct(opts = {}) {
   const isEnglish = Boolean(opts.isEnglish);
-  const poseIntervalMs = opts.poseIntervalMs ?? 3200;
+  const poseIntervalMs = opts.poseIntervalMs ?? 2800;
   let avatarRef = opts.avatar || null;
   let voiceRef = opts.voice || null;
   let active = false;
@@ -74,7 +75,7 @@ export function createCompanionWaitAct(opts = {}) {
 
   const playPose = () => {
     const pose = pickWaitPose(phase, poseTick);
-    avatarRef?.playAction?.(pose, { emotion: "thinking", loop: true });
+    avatarRef?.playAction?.(pose, { emotion: "thinking", loop: true, loopSequence: true });
     avatarRef?.setEmotion?.("thinking");
     avatarRef?.setThinking?.(true);
     opts.onPose?.(pose, phase);

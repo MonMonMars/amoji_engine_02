@@ -20,6 +20,9 @@ import {
   sampleActionBodyPose,
   sampleActionRootMotion,
 } from "./companionActionMotion.js";
+import {
+  buildActionSequence,
+} from "./companionActionChoreography.js";
 import { buildCharacterSystemPrompt } from "./companionCharacterCatalog.js";
 import {
   advanceIdleBeat,
@@ -69,6 +72,13 @@ export function createCompanionBodyMotion(humanoid) {
   /** @type {{ y: number, rotY: number }} */
   let rootMotion = { y: 0, rotY: 0 };
   let idleBeatState = createIdleBeatState();
+  /** @type {string[]} */
+  let actionQueue = [];
+  /** @type {string[]} */
+  let savedSequence = [];
+  let sequenceLoop = false;
+  /** @type {((info: { completed: string | null, next: string | null, sequenceDone?: boolean }) => void) | null} */
+  let onActionComplete = null;
 
   const bone = (name) => humanoid?.getNormalizedBoneNode?.(name) || null;
   const rawBone = (name) => humanoid?.getRawBoneNode?.(name) || null;
@@ -135,13 +145,56 @@ export function createCompanionBodyMotion(humanoid) {
     return true;
   };
 
-  const stopAction = () => {
+  const resetActiveAction = () => {
     activeAction = null;
     actionPhase = 0;
     actionElapsed = 0;
     actionLoop = false;
     rootMotion = { y: 0, rotY: 0 };
     return true;
+  };
+
+  const stopAction = () => {
+    resetActiveAction();
+    actionQueue = [];
+    savedSequence = [];
+    sequenceLoop = false;
+    return true;
+  };
+
+  const clearActionQueue = () => {
+    actionQueue = [];
+    savedSequence = [];
+    sequenceLoop = false;
+    return true;
+  };
+
+  const shiftQueuedAction = () => {
+    if (!actionQueue.length) {
+      if (sequenceLoop && savedSequence.length) {
+        actionQueue = [...savedSequence];
+      } else {
+        return false;
+      }
+    }
+    const next = actionQueue.shift();
+    if (!next) return false;
+    return playAction(next, { loop: false, fromQueue: true });
+  };
+
+  const finishActionStep = () => {
+    const completed = activeAction;
+    resetActiveAction();
+    if (!actionQueue.length && sequenceLoop && savedSequence.length) {
+      actionQueue = [...savedSequence];
+    }
+    if (actionQueue.length) {
+      const next = actionQueue[0] || null;
+      shiftQueuedAction();
+      onActionComplete?.({ completed, next, sequenceDone: false });
+      return;
+    }
+    onActionComplete?.({ completed, next: null, sequenceDone: true });
   };
 
   const playAction = (action, opts = {}) => {
@@ -153,6 +206,23 @@ export function createCompanionBodyMotion(humanoid) {
         thinking = false;
       }
       return false;
+    }
+    if (!opts.fromQueue && !opts.single) {
+      const combo = buildActionSequence(key, { maxMoves: opts.maxMoves ?? 4 });
+      if (combo.length > 1) {
+        const loopSeq =
+          opts.loopSequence ??
+          (opts.loop !== undefined ? Boolean(opts.loop) : combo.some((id) => actionLoops(id)));
+        return playActionSequence(combo, {
+          loopSequence: loopSeq,
+          emotion: opts.emotion,
+        });
+      }
+    }
+    if (!opts.fromQueue) {
+      actionQueue = [];
+      savedSequence = [];
+      sequenceLoop = false;
     }
     if (!getActionDefExtended(key)) return false;
     activeAction = key;
@@ -182,6 +252,29 @@ export function createCompanionBodyMotion(humanoid) {
     }
     talkTime = 0;
     return true;
+  };
+
+  /**
+   * Play several actions back-to-back (combos / showcases).
+   * @param {string[]} actions
+   * @param {{ loopSequence?: boolean, emotion?: string }} [opts]
+   */
+  const playActionSequence = (actions, opts = {}) => {
+    const list = (Array.isArray(actions) ? actions : [])
+      .map((id) => resolveAction(id) || String(id || "").toLowerCase())
+      .filter((id) => id && id !== "none" && id !== "stop" && getActionDefExtended(id));
+    if (!list.length) return false;
+    clearActionQueue();
+    savedSequence = [...list];
+    actionQueue = [...list];
+    sequenceLoop = Boolean(opts.loopSequence);
+    if (opts.emotion) emotion = opts.emotion;
+    return shiftQueuedAction();
+  };
+
+  const setActionCompleteHandler = (fn) => {
+    onActionComplete = typeof fn === "function" ? fn : null;
+    return onActionComplete;
   };
 
   const applyContentFromReply = (text, moodHint = null) => {
@@ -487,7 +580,7 @@ export function createCompanionBodyMotion(humanoid) {
         actionElapsed,
       );
       if (!actionLoop && actionElapsed >= actionDuration) {
-        stopAction();
+        finishActionStep();
       }
     } else {
       rootMotion = { y: 0, rotY: 0 };
@@ -590,7 +683,10 @@ export function createCompanionBodyMotion(humanoid) {
     setListening,
     playGesture,
     playAction,
+    playActionSequence,
     stopAction,
+    clearActionQueue,
+    setActionCompleteHandler,
     playGestureForText,
     applyContentFromReply,
     applyStreamingContent,
@@ -614,6 +710,12 @@ export function createCompanionBodyMotion(humanoid) {
     },
     get currentAction() {
       return activeAction;
+    },
+    get queuedActions() {
+      return [...actionQueue];
+    },
+    get sequenceLoop() {
+      return sequenceLoop;
     },
     getRootMotion() {
       return rootMotion;
