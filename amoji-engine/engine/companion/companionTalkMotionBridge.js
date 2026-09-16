@@ -33,10 +33,10 @@ export function talkGesturePoseToBody(pose, opts = {}) {
   };
 
   if (includeArms) {
-    body.armLiftL = 0.03 + armL * 0.34 + shoulderL * 0.1;
-    body.armLiftR = 0.03 + armR * 0.34 + shoulderR * 0.1;
-    body.forearmL = Number(p.armLB ?? 0.05) + Number(p.handLY ?? 0.1) * 0.35;
-    body.forearmR = Number(p.armRB ?? 0.05) + Number(p.handRY ?? 0.1) * 0.35;
+    body.armLiftL = 0.08 + armL * 0.55 + shoulderL * 0.16;
+    body.armLiftR = 0.08 + armR * 0.55 + shoulderR * 0.16;
+    body.forearmL = Number(p.armLB ?? 0.05) + Number(p.handLY ?? 0.1) * 0.55;
+    body.forearmR = Number(p.armRB ?? 0.05) + Number(p.handRY ?? 0.1) * 0.55;
     body.handWaveR = Number(p.handRX ?? 0) * 0.4;
     body.handWaveL = Number(p.handLX ?? 0) * 0.4;
   }
@@ -75,7 +75,7 @@ export function sampleBodyTalkMotion(timeSec, opts = {}) {
     style,
     emotion: opts.emotion || "neutral",
     speechEnergy: opts.speechEnergy ?? 0.5,
-    intensity: 0.58 + (opts.speechEnergy ?? 0.5) * 0.32,
+    intensity: 0.78 + (opts.speechEnergy ?? 0.5) * 0.28,
   });
   return {
     style: sample.style,

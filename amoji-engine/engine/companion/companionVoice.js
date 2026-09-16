@@ -141,6 +141,41 @@ export function charToViseme(ch) {
 }
 
 /**
+ * Match mouth-walk speed to real audio (or CJK vs Latin speech rate).
+ * Cantonese/Chinese is ~4–6 chars/sec; a fixed 48ms/char races ahead of TTS.
+ * @param {string} text
+ * @param {number} [durationMs]
+ */
+export function estimateLipSyncMsPerChar(text, durationMs) {
+  const clean = String(text || "");
+  const len = Math.max(1, clean.length);
+  const ms = Number(durationMs);
+  if (Number.isFinite(ms) && ms > 0) {
+    return Math.max(24, Math.min(280, ms / len));
+  }
+  const cjk = (clean.match(/[\u4e00-\u9fff\u3400-\u4dbf]/g) || []).length;
+  return cjk / len > 0.3 ? 160 : 52;
+}
+
+/**
+ * Time-domain RMS 0..1 from a Web Audio analyser (not used on iOS).
+ * @param {AnalyserNode | null | undefined} analyser
+ */
+export function readAnalyserMouthLevel(analyser) {
+  if (!analyser || typeof analyser.getByteTimeDomainData !== "function") {
+    return 0;
+  }
+  const buf = new Uint8Array(analyser.fftSize || 256);
+  analyser.getByteTimeDomainData(buf);
+  let sum = 0;
+  for (let i = 0; i < buf.length; i += 1) {
+    const n = (buf[i] - 128) / 128;
+    sum += n * n;
+  }
+  return Math.min(1, Math.sqrt(sum / Math.max(1, buf.length)) * 3.4);
+}
+
+/**
  * Prefer a female / higher-pitch voice, Cantonese/Chinese when available.
  * @param {SpeechSynthesisVoice[]} voices
  */
@@ -315,6 +350,37 @@ export function createCompanionVoice(opts = {}) {
     return globalThis.window.__amojiTtsAudio;
   };
 
+  /**
+   * Route cloud TTS through an analyser for RMS mouth drive.
+   * Skip on iOS — Web Audio + mic sends TTS to the earpiece.
+   * @param {HTMLAudioElement} audio
+   */
+  const bindCloudTtsAnalyser = (audio) => {
+    if (!audio || typeof globalThis.window === "undefined") return null;
+    if (isIosLike()) return null;
+    if (audio.__amojiAnalyser) return audio.__amojiAnalyser;
+    const AC = globalThis.AudioContext || globalThis.webkitAudioContext;
+    if (!AC) return null;
+    try {
+      const ctx =
+        globalThis.window.__amojiAudioCtx ||
+        new AC({ latencyHint: "interactive" });
+      globalThis.window.__amojiAudioCtx = ctx;
+      if (ctx.state === "suspended") void ctx.resume();
+      const source =
+        audio.__amojiMediaSource || ctx.createMediaElementSource(audio);
+      audio.__amojiMediaSource = source;
+      const analyser = ctx.createAnalyser();
+      analyser.fftSize = 256;
+      source.connect(analyser);
+      analyser.connect(ctx.destination);
+      audio.__amojiAnalyser = analyser;
+      return analyser;
+    } catch {
+      return null;
+    }
+  };
+
   const ttsPlaybackVolume = () => {
     if (shouldPauseMicDuringTts()) return 1;
     return keepMicDuringSpeak ? 0.38 : 1;
@@ -410,7 +476,6 @@ export function createCompanionVoice(opts = {}) {
     }
 
     const objectUrl = URL.createObjectURL(blob);
-    startLipSync(clean);
     if (!holdSpeaking) {
       speaking = true;
       syncAssistantOutput();
@@ -422,6 +487,22 @@ export function createCompanionVoice(opts = {}) {
       currentCloudAudio = audio;
       audio.volume = ttsPlaybackVolume();
       audio.src = objectUrl;
+      let mouthStarted = false;
+      const beginMouth = () => {
+        if (mouthStarted) return;
+        mouthStarted = true;
+        const durationMs =
+          Number.isFinite(audio.duration) && audio.duration > 0
+            ? audio.duration * 1000
+            : undefined;
+        const analyser = bindCloudTtsAnalyser(audio);
+        startLipSync(clean, null, {
+          durationMs,
+          audioLevel: analyser
+            ? () => readAnalyserMouthLevel(analyser)
+            : undefined,
+        });
+      };
       const finish = (result) => {
         if (currentCloudAudio === audio) currentCloudAudio = null;
         URL.revokeObjectURL(objectUrl);
@@ -432,6 +513,8 @@ export function createCompanionVoice(opts = {}) {
         stopMouth();
         resolve(result);
       };
+      audio.onloadedmetadata = () => beginMouth();
+      audio.onplaying = () => beginMouth();
       audio.onended = () => {
         finish({
           ok: true,
@@ -546,11 +629,13 @@ export function createCompanionVoice(opts = {}) {
   };
 
   /**
-   * Drive mouth shapes from text — boundary events when available, else timed walk.
+   * Drive mouth shapes from text — boundary events when available, else timed walk
+   * scaled to real audio duration (cloud TTS) or CJK/Latin speech rate.
    * @param {string} text
    * @param {SpeechSynthesisUtterance} [utter]
+   * @param {{ durationMs?: number, audioLevel?: () => number }} [timing]
    */
-  const startLipSync = (text, utter) => {
+  const startLipSync = (text, utter, timing = {}) => {
     stopMouth();
     opts.onTalking?.(true);
     const clean = String(text || "");
@@ -569,17 +654,31 @@ export function createCompanionVoice(opts = {}) {
       };
     }
 
-    // Timed fallback — also backs muted speaker / browsers without boundary
-    const msPerChar = 48;
+    const rate = Number(utter?.rate);
+    const durationMs =
+      Number(timing.durationMs) > 0
+        ? Number(timing.durationMs)
+        : Number.isFinite(rate) && rate > 0
+          ? (clean.length * estimateLipSyncMsPerChar(clean)) / rate
+          : undefined;
+    const msPerChar = estimateLipSyncMsPerChar(clean, durationMs);
+    const audioLevel = timing.audioLevel;
     let i = 0;
     mouthTimer = setInterval(() => {
       if (boundaryWorks) return;
       if (i >= clean.length) {
-        opts.onMouth?.(0.06, "ee");
+        const level = audioLevel?.() ?? 0;
+        opts.onMouth?.(Math.max(0.05, level * 0.85), "ee");
         return;
       }
       const ch = clean[i];
-      emitViseme(ch);
+      const viseme = charToViseme(ch);
+      const level = audioLevel?.() ?? 0;
+      const open = Math.min(
+        1,
+        viseme.open * 0.58 + Math.max(viseme.open * 0.38, level * 0.92),
+      );
+      opts.onMouth?.(open, viseme.shape);
       if (i % 2 === 0 && ch.trim()) {
         const chunk = clean.slice(Math.max(0, i - 2), i + 6);
         opts.onSpeakChunk?.(chunk, i);
@@ -587,7 +686,12 @@ export function createCompanionVoice(opts = {}) {
       i += 1;
     }, msPerChar);
 
-    const totalMs = Math.min(12000, clean.length * msPerChar + 400);
+    const totalMs = Math.min(
+      20000,
+      (Number.isFinite(durationMs) && durationMs > 0
+        ? durationMs
+        : clean.length * msPerChar) + 500,
+    );
     mouthTimeouts.push(
       setTimeout(() => {
         if (!boundaryWorks) opts.onMouth?.(0, null);
@@ -660,7 +764,7 @@ export function createCompanionVoice(opts = {}) {
     try {
       if (!speakerOn) {
         startLipSync(clean);
-        await sleep(Math.min(2200, 400 + clean.length * 28));
+        await sleep(Math.min(4200, 400 + clean.length * estimateLipSyncMsPerChar(clean)));
         stopMouth();
         return { ok: true, muted: true };
       }
@@ -689,7 +793,7 @@ export function createCompanionVoice(opts = {}) {
 
       if (!synth) {
         startLipSync(clean);
-        await sleep(Math.min(2800, 450 + clean.length * 36));
+        await sleep(Math.min(4800, 450 + clean.length * estimateLipSyncMsPerChar(clean)));
         stopMouth();
         return {
           ok: false,
