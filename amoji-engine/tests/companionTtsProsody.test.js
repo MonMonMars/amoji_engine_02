@@ -97,11 +97,16 @@ describe("companionTtsProsody", () => {
     expect(chunk.speechEnergy).toBeGreaterThan(0.4);
   });
 
-  it("passes singleUtterance flag for one-shot cloud TTS", () => {
+  it("defaults to singleUtterance for full-sentence cloud TTS", () => {
+    const perf = normalizeTtsPerformance({ emotion: "happy" });
+    expect(perf.singleUtterance).toBe(true);
+  });
+
+  it("allows expressive multi-clause mode when requested", () => {
     const perf = normalizeTtsPerformance({
       emotion: "happy",
-      singleUtterance: true,
+      expressiveClauses: true,
     });
-    expect(perf.singleUtterance).toBe(true);
+    expect(perf.singleUtterance).toBe(false);
   });
 });
