@@ -644,7 +644,8 @@ export function createCompanionBodyMotion(humanoid) {
     if (talking && !activeGesture && !activeAction) {
       talkArmBlend = 0.28 + energy * 0.32;
     } else if (!talking && !thinking && !activeGesture && !activeAction) {
-      talkArmBlend = listening ? 0.58 : 0.52;
+      allowArms = true;
+      talkArmBlend = listening ? 0.42 : 0.36;
     }
     if (activeGesture) {
       gesturePhase += dt / gestureDuration;
