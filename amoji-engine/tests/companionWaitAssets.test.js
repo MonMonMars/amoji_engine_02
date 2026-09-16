@@ -29,7 +29,7 @@ describe("companionWaitAssets", () => {
     expect(profile.emotion).toBe("happy");
     expect(profile.nuance).toBe("none");
     expect(profile.blend).toBeTruthy();
-    expect(pickWaitPose("avatar-load", 0)).toBe("nod");
+    expect(pickWaitPose("avatar-load", 0)).toBe("wave");
   });
 
   it("collects expression profiles for boot warm-up", () => {

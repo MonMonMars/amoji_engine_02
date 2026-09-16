@@ -735,11 +735,16 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
     },
     snapToRestPose() {
       smoothedPose = buildBasePose({ listening, emotion, nuance });
+      smoothedPose = mergePoses(
+        smoothedPose,
+        sampleIdleBodyMotion(0.35, { listening, emotion }),
+        0.55,
+      );
       smoothedRootMotion = { y: 0, rotY: 0 };
       applyPose(smoothedPose, 1, {
         allowArms: false,
         actionArms: false,
-        talkArmBlend: 0,
+        talkArmBlend: 0.38,
       });
       return smoothedPose;
     },
