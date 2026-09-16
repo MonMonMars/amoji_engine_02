@@ -327,8 +327,8 @@ export function createCompanionStartPicker(opts = {}) {
             ? "Almost ready — pick a companion in a moment"
             : "快好喇 — 等陣就可以揀同伴"
           : isEnglish
-            ? "Tap a card to start chatting — 3D loads in the background"
-            : "點選角色就可以傾偈 — 3D 會喺背景載入";
+            ? "★ picks are gallery pretty-girl models — tap to start, 3D loads in background"
+            : "★ 推介係你揀嘅靚女模型 — 點選就可以傾偈，3D 背景載入";
     }
   };
 
