@@ -30,10 +30,18 @@ async function main() {
 
   await page.goto(url, { waitUntil: "domcontentloaded", timeout: 45000 });
   await page.waitForSelector("#start-character-picker .companion-card", { timeout: 20000 });
+  await page.waitForFunction(
+    () => {
+      const picker = document.getElementById("start-character-picker");
+      return picker && !picker.classList.contains("is-preloading");
+    },
+    undefined,
+    { timeout: 90000 },
+  );
 
   const build = await page.evaluate(() => window.__amojiBuild);
   const t0 = Date.now();
-  await page.click("#start-character-picker .companion-card");
+  await page.click("#start-character-picker .companion-card:not([disabled])");
 
   await page.waitForFunction(
     () => {
