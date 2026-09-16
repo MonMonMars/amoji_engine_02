@@ -66,8 +66,8 @@ describe("companionVoiceCatalog", () => {
     });
   });
 
-  it("lists fourteen Cantonese voice personas", () => {
-    expect(voicesForLang("yue").length).toBe(14);
+  it("lists eighteen Cantonese voice personas", () => {
+    expect(voicesForLang("yue").length).toBe(18);
     expect(voicesForLang("yue").map((v) => v.id)).toContain(
       "zh-HK-HiuMaanNeural-warm",
     );

@@ -23,7 +23,7 @@ describe("companion start picker", () => {
 
   it("lists enough characters for the start grid", () => {
     const list = listCompanionCharacters("en");
-    expect(list.length).toBeGreaterThanOrEqual(4);
+    expect(list.length).toBeGreaterThanOrEqual(12);
     const html = companionCardInnerHtml(list[0], {
       compact: true,
       selectedId: list[0].id,

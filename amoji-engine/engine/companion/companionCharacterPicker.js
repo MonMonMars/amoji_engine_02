@@ -271,7 +271,10 @@ export function createCompanionStartPicker(opts = {}) {
         </div>
         <p class="start-picker-preload-label"></p>
       </div>
-      <div class="companion-picker-grid" role="listbox"></div>
+      <div class="start-picker-grid-wrap">
+        <div class="companion-picker-grid companion-picker-grid--start" role="listbox"></div>
+        <p class="start-picker-scroll-hint" hidden></p>
+      </div>
       <p class="companion-picker-foot"></p>
     </div>
   `;
@@ -287,6 +290,8 @@ export function createCompanionStartPicker(opts = {}) {
   const preloadEl = shell.querySelector(".start-picker-preload");
   const preloadFill = shell.querySelector(".start-picker-preload-fill");
   const preloadLabel = shell.querySelector(".start-picker-preload-label");
+  const gridWrapEl = shell.querySelector(".start-picker-grid-wrap");
+  const scrollHintEl = shell.querySelector(".start-picker-scroll-hint");
 
   const copy = () => {
     if (titleEl) {
@@ -326,6 +331,19 @@ export function createCompanionStartPicker(opts = {}) {
     }
   };
 
+  const renderScrollHint = () => {
+    if (!gridWrapEl || !scrollHintEl || !gridEl) return;
+    const overflow = gridEl.scrollHeight > gridEl.clientHeight + 8;
+    const atBottom =
+      gridEl.scrollTop + gridEl.clientHeight >= gridEl.scrollHeight - 8;
+    scrollHintEl.hidden = !overflow || atBottom;
+    scrollHintEl.textContent = isEnglish
+      ? `Scroll for more companions (${listCompanionCharacters(langCode).length} total)`
+      : `向下滑查看更多同伴（共 ${listCompanionCharacters(langCode).length} 位）`;
+    gridWrapEl.classList.toggle("has-overflow", overflow);
+    gridWrapEl.classList.toggle("at-bottom", atBottom);
+  };
+
   const renderGrid = () => {
     renderCompanionPickerGrid(gridEl, langCode, {
       selectedId,
@@ -337,11 +355,14 @@ export function createCompanionStartPicker(opts = {}) {
         opts.onStart?.(id);
       },
     });
+    requestAnimationFrame(renderScrollHint);
   };
 
   copy();
   renderGrid();
   renderPreload();
+  gridEl?.addEventListener("scroll", renderScrollHint, { passive: true });
+  globalThis.addEventListener?.("resize", renderScrollHint);
 
   return {
     schema: COMPANION_START_PICKER_SCHEMA,

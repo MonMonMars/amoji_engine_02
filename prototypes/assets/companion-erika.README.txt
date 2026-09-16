@@ -1,0 +1,8 @@
+Erika VRM avatar — ToxSam 100Avatars (CC0)
+
+Source:  https://github.com/ToxSam/open-source-avatars
+Model:   companion-erika.vrm (100Avatars Erika)
+Preview: companion-char-erika.png
+
+License: CC0 1.0 — public domain, no attribution required.
+Used for: Erika (艾莉) — bold sporty companion character.
