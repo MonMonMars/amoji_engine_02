@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import * as THREE from "three";
 import {
+  PORTRAIT_CAMERA_Z_SIGN,
   PORTRAIT_FOV,
+  applyUpperBodyPortraitFrame,
   computeUpperBodyAnchor,
   portraitDistanceForHeight,
 } from "../engine/companion/companionPortraitFraming.js";
@@ -27,5 +29,19 @@ describe("companionPortraitFraming", () => {
   it("uses a portrait fov that keeps shoulders in frame", () => {
     expect(PORTRAIT_FOV).toBeGreaterThanOrEqual(29);
     expect(PORTRAIT_FOV).toBeLessThanOrEqual(32);
+  });
+
+  it("places the camera on -Z so +Z-facing avatars show their front", () => {
+    expect(PORTRAIT_CAMERA_Z_SIGN).toBe(-1);
+    const camera = new THREE.PerspectiveCamera();
+    const controls = { target: new THREE.Vector3(), update: () => {} };
+    const anchor = new THREE.Vector3(0, 1.1, 0);
+    applyUpperBodyPortraitFrame({
+      camera,
+      controls,
+      anchor,
+      fittedHeight: 0.92,
+    });
+    expect(camera.position.z).toBeLessThan(anchor.z);
   });
 });
