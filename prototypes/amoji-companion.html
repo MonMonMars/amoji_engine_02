@@ -8,9 +8,9 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji · Companion</title>
     <script>
-      window.__amojiBuild = "2026-09-15-v78-idle-motion";
+      window.__amojiBuild = "2026-09-15-v79-conversation-ui";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-15-v78-idle-motion"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-15-v79-conversation-ui"></script>
     <link
       rel="preload"
       href="/prototypes/assets/companion-girl.vrm"
@@ -220,7 +220,7 @@
       media="print"
       onload="this.media='all'"
     />
-    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-15-v78-idle-motion" />
+    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-15-v79-conversation-ui" />
     <noscript>
       <link
         href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap"
@@ -1393,6 +1393,23 @@
         transform: none;
       }
 
+      body.conversation-ui .topbar-actions .topbar-btn,
+      body.conversation-ui .topbar-actions #btn-settings {
+        display: none !important;
+      }
+
+      .ui-context-pill {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.22rem 0.55rem;
+        border-radius: 999px;
+        font-size: 0.68rem;
+        font-weight: 650;
+        color: rgba(247, 241, 232, 0.88);
+        background: rgba(127, 212, 207, 0.14);
+        border: 1px solid rgba(127, 212, 207, 0.28);
+      }
+
       .topbar-actions {
         display: flex;
         align-items: center;
@@ -2223,25 +2240,25 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-15-v78-idle-motion",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-15-v79-conversation-ui",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-15-v78-idle-motion"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-15-v79-conversation-ui"
         }
       }
     </script>
-    <link rel="modulepreload" href="/amoji-engine/vendor/three.module.js?v=2026-09-15-v78-idle-motion" />
-    <link rel="modulepreload" href="/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-15-v78-idle-motion" />
+    <link rel="modulepreload" href="/amoji-engine/vendor/three.module.js?v=2026-09-15-v79-conversation-ui" />
+    <link rel="modulepreload" href="/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-15-v79-conversation-ui" />
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-15-v78-idle-motion"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-15-v79-conversation-ui"
     />
-    <link rel="modulepreload" href="/amoji-engine/engine/companion/vrmAvatar.js?v=2026-09-15-v78-idle-motion" />
-    <link rel="modulepreload" href="/amoji-engine/engine/companion/createAvatar.js?v=2026-09-15-v78-idle-motion" />
+    <link rel="modulepreload" href="/amoji-engine/engine/companion/vrmAvatar.js?v=2026-09-15-v79-conversation-ui" />
+    <link rel="modulepreload" href="/amoji-engine/engine/companion/createAvatar.js?v=2026-09-15-v79-conversation-ui" />
     <link rel="prefetch" href="/api/motions?pack=basic" as="fetch" crossorigin />
     <link rel="prefetch" href="/api/motions?pack=extensions" as="fetch" crossorigin />
     <link rel="prefetch" href="/api/motions?pack=premium" as="fetch" crossorigin />
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-15-v78-idle-motion"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-15-v78-idle-motion"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-15-v79-conversation-ui"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-15-v79-conversation-ui"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;
@@ -2433,7 +2450,7 @@
       })();
     </script>
   </head>
-  <body class="theme-grok-ani">
+  <body class="theme-grok-ani conversation-ui">
     <!-- amoji-build: 2026-09-14-v37-companion-picker — Grok Ani–style character grid -->
     <noscript>
       <div
@@ -2495,6 +2512,7 @@
           </div>
           <div class="pill" id="mode-pill" hidden aria-hidden="true">LLM · <strong>local</strong></div>
           <div class="pill" id="emotion-pill" hidden aria-hidden="true">feel · <strong>neutral</strong></div>
+          <span class="ui-context-pill" id="ui-context-pill" hidden></span>
           <button type="button" class="topbar-btn" id="btn-change-character">
             Change character
           </button>
@@ -2668,6 +2686,7 @@
         actionResolveMod,
         motionCapabilitiesMod,
         voicePickerMod,
+        uiIntentMod,
       ] = await Promise.all([
         ami("../amoji-engine/engine/companion/createAvatar.js"),
         ami("../amoji-engine/engine/companion/chatLlm.js"),
@@ -2699,6 +2718,7 @@
         ami("../amoji-engine/engine/companion/companionActionResolve.js"),
         ami("../amoji-engine/engine/companion/companionMotionCapabilities.js"),
         ami("../amoji-engine/engine/companion/companionVoicePicker.js"),
+        ami("../amoji-engine/engine/companion/companionUiIntent.js"),
       ]);
       window.__amojiModuleBooted = true;
       const {
@@ -2740,6 +2760,15 @@
         voicePickerButtonLabel,
       } = voiceCatalogMod;
       const { createCompanionVoicePicker } = voicePickerMod;
+      const {
+        applyUiIntents,
+        buildUiIntentPromptFragment,
+        inferUiIntentFromUserText,
+        mergeUiIntents,
+        parseUiIntentTags,
+        stripUiIntentTags,
+        uiIntentLabel,
+      } = uiIntentMod;
       const {
         analyzeCompanionReply,
         analyzeStreamingReply,
@@ -2881,11 +2910,12 @@
       };
 
       const stripReplyTags = (text) =>
-        String(text || "")
-          .replace(/\s*\[action:\w+\]\s*/gi, "")
-          .replace(/\s*\[nuance:\w+\]\s*/gi, "")
-          .replace(/\s*\[mood:\w+\]\s*$/i, "")
-          .trim();
+        stripUiIntentTags(
+          String(text || "")
+            .replace(/\s*\[action:\w+\]\s*/gi, "")
+            .replace(/\s*\[nuance:\w+\]\s*/gi, "")
+            .replace(/\s*\[mood:\w+\]\s*$/i, ""),
+        );
 
       /** @type {ReturnType<typeof analyzeCompanionReply> | null} */
       let lastAvatarPerformance = null;
@@ -3397,7 +3427,11 @@
 
       const buildSessionSystemPrompt = (charId, english) => {
         const base = buildCharacterSystemPrompt(charId, english);
-        return motionCapabilityExtra ? `${base} ${motionCapabilityExtra}` : base;
+        const uiRules = buildUiIntentPromptFragment(english, {
+          surface: "companion",
+        });
+        const parts = [base, uiRules, motionCapabilityExtra].filter(Boolean);
+        return parts.join(" ");
       };
 
       const chat = createCompanionChat({
@@ -4273,10 +4307,63 @@
         });
       };
 
+      const uiContextPill = document.getElementById("ui-context-pill");
+
+      const updateUiContextPill = (applied = []) => {
+        if (!uiContextPill) return;
+        const labels = applied.map((i) => uiIntentLabel(i, isEnglish)).filter(Boolean);
+        if (!labels.length) return;
+        uiContextPill.hidden = false;
+        uiContextPill.textContent = labels.join(" · ");
+      };
+
+      const companionUiHandlers = {
+        switchCharacter: async (id) => {
+          if (id === characterId) return;
+          if (!sessionStarted) {
+            await beginStartWithCharacter(id);
+            return;
+          }
+          await hotSwapCharacter(id);
+        },
+        openCharacterPicker: () => openCharacterPicker(),
+        openSettings: () => openSettings(),
+        openVoicePicker: () => {
+          voicePicker.setSelectedId(voiceId);
+          voicePicker.open();
+        },
+        switchLanguage: async (lang) => {
+          applyLanguage(lang === "en" ? "en" : "yue");
+        },
+        setMic: async (on) => {
+          if (on && !voice.micOn) btnMic?.click();
+          if (!on && voice.micOn) btnMic?.click();
+        },
+        closeOverlays: () => {
+          characterPicker?.close?.();
+          voicePicker?.close?.();
+          closeSettings();
+        },
+        onContextChange: (ctx) => {
+          const applied = [];
+          if (ctx.character) applied.push({ type: "character", value: ctx.character });
+          updateUiContextPill(applied);
+        },
+      };
+
+      const applyConversationUi = async (userMsg, rawReply) => {
+        const fromUser = inferUiIntentFromUserText(userMsg, isEnglish);
+        const fromTags = rawReply ? parseUiIntentTags(rawReply).intents : [];
+        const intents = mergeUiIntents(fromUser, fromTags);
+        const { applied } = await applyUiIntents(intents, companionUiHandlers);
+        updateUiContextPill(applied);
+      };
+
       const runTurn = async (text, { fromMic = false } = {}) => {
         const cleaned = String(text || "").trim();
         if (!cleaned) return;
         if (handleUserStopCommand(cleaned)) return;
+        void applyConversationUi(cleaned, null);
         if (busy) {
           if (phaseAEnabled && fromMic) {
             abortActiveTurn("mic-barge");
@@ -4424,6 +4511,7 @@
           voice.stopThinkingLoop?.();
           waitAct?.stop();
           avatar.setThinking?.(false);
+          await applyConversationUi(cleaned, result.raw || reply);
           let content = applyReplyPerformance(
             result.raw || reply,
             result.emotion || "happy",

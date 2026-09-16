@@ -7,6 +7,7 @@
  *   [memory:Fact to remember]
  *   [draft:Copyable draft text]
  */
+import { parseUiIntentTags } from "../companionUiIntent.js";
 import { parseDueHint } from "./taskExtract.js";
 
 export const SECRETARY_REPLY_PARSER_SCHEMA = "amoji.secretary.replyParser.v1";
@@ -21,7 +22,8 @@ const TAG_PATTERN =
 export function parseSecretaryReply(raw, opts = {}) {
   const isEn = Boolean(opts.isEn);
   const now = opts.now ?? Date.now();
-  const text = String(raw || "");
+  const uiParsed = parseUiIntentTags(raw);
+  const text = uiParsed.stripped;
   const tasks = [];
   const memories = [];
   const drafts = [];
@@ -74,5 +76,6 @@ export function parseSecretaryReply(raw, opts = {}) {
     tasks,
     memories,
     drafts,
+    uiIntents: uiParsed.intents,
   };
 }
