@@ -750,7 +750,7 @@ export async function createVrmAvatar(opts) {
       }
     }
 
-    mouthOpen += (mouthTarget - mouthOpen) * Math.min(1, dt * 22);
+    mouthOpen += (mouthTarget - mouthOpen) * Math.min(1, dt * (talking ? 36 : 18));
     tickExpressionBlend(dt);
     applyMouth(mouthOpen);
 
