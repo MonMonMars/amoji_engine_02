@@ -4256,6 +4256,11 @@
             avatar.setEmotion?.(currentEmotion);
             applyOutfitToAvatar(activeSceneOutfitId);
             syncAvatarPerformance();
+            void globalThis.__amojiPreload?.getIdleMotionPreload?.()?.then(() => {
+              for (const id of globalThis.__amojiPreload?.bootIdleMotionIds || []) {
+                avatar.warmMotionClip?.(id);
+              }
+            });
             void startPerformancePreload?.({
               avatar,
               motionClient,

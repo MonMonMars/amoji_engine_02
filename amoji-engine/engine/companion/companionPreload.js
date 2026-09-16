@@ -1,6 +1,12 @@
 /**
  * Companion preload — minimal boot (chat-first), heavy 3D assets in background.
  */
+import {
+  BOOT_IDLE_BODY_MOTION_IDS,
+  getBootIdleMotionPreloadPromise,
+  startBootIdleMotionPreload,
+} from "./companionIdleMotionPreload.js";
+
 export const COMPANION_PRELOAD_SCHEMA = "amoji.companionPreload.v2";
 
 export const DEFAULT_VRM_URL = "/prototypes/assets/companion-girl.vrm";
@@ -272,6 +278,7 @@ const shouldAutoBoot =
 const boot = shouldAutoBoot ? startMinimalCompanionPreload() : null;
 
 if (shouldAutoBoot) {
+  startBootIdleMotionPreload();
   scheduleCompanionBackgroundWork(ensureRosterPreloadStarted);
 }
 
@@ -292,6 +299,9 @@ if (typeof globalThis !== "undefined") {
     rosterReady: rosterPreloadPromise,
     ensureRoster: ensureRosterPreloadStarted,
     getRosterProgress: () => globalThis.__amojiRosterPreloadPct ?? 0,
+    bootIdleMotionIds: BOOT_IDLE_BODY_MOTION_IDS,
+    ensureIdleMotions: startBootIdleMotionPreload,
+    getIdleMotionPreload: getBootIdleMotionPreloadPromise,
     ready: boot,
   };
 }
