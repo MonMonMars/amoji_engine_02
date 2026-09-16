@@ -5,6 +5,7 @@
 export const COMPANION_SCENE_PRESETS_SCHEMA = "amoji.companionScenePresets.v1";
 
 export const SCENE_STORAGE_KEY = "amoji.companion.scenePreset";
+export const CHAT_PANEL_STORAGE_KEY = "amoji.companion.chatPanelVisible";
 
 /** @type {ReadonlyArray<{ id: string, labelEn: string, labelYue: string }>} */
 export const SCENE_BACKGROUND_PRESETS = Object.freeze([
@@ -76,4 +77,30 @@ export function applySceneBackground(atmosphereEl, backgroundId) {
  */
 export function scenePresetLabel(preset, isEnglish = false) {
   return isEnglish ? preset.labelEn : preset.labelYue;
+}
+
+/**
+ * @param {boolean} [defaultVisible]
+ */
+export function loadChatPanelVisible(defaultVisible = true) {
+  try {
+    const raw = localStorage.getItem(CHAT_PANEL_STORAGE_KEY);
+    if (raw === "false") return false;
+    if (raw === "true") return true;
+    return defaultVisible;
+  } catch {
+    return defaultVisible;
+  }
+}
+
+/**
+ * @param {boolean} visible
+ */
+export function persistChatPanelVisible(visible) {
+  try {
+    localStorage.setItem(CHAT_PANEL_STORAGE_KEY, String(visible));
+  } catch {
+    /* ignore quota / private mode */
+  }
+  return visible;
 }

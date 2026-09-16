@@ -8,9 +8,9 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji · Companion</title>
     <script>
-      window.__amojiBuild = "2026-09-16-v102-scene-shortcuts";
+      window.__amojiBuild = "2026-09-16-v103-scene-shortcuts-polish";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-16-v102-scene-shortcuts"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-16-v103-scene-shortcuts-polish"></script>
     <link
       rel="prefetch"
       href="/prototypes/assets/companion-char-nova.png"
@@ -281,7 +281,7 @@
       media="print"
       onload="this.media='all'"
     />
-    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-16-v102-scene-shortcuts" />
+    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-16-v103-scene-shortcuts-polish" />
     <noscript>
       <link
         href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap"
@@ -1695,8 +1695,34 @@
       }
 
       .scene-preset:disabled {
-        opacity: 0.45;
+        opacity: 0.62;
         cursor: not-allowed;
+      }
+
+      .scene-preset__label {
+        line-height: 1.2;
+      }
+
+      .scene-preset__soon {
+        display: inline-block;
+        margin-top: 0.05rem;
+        padding: 0.08rem 0.35rem;
+        border-radius: 999px;
+        font-size: 0.58rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: rgba(247, 241, 232, 0.72);
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      body.scene-sheet-open {
+        overflow: hidden;
+      }
+
+      .settings .settings-section-title:not(:first-of-type) {
+        margin-top: 0.65rem;
       }
 
       .scene-preset__swatch {
@@ -2697,19 +2723,19 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-16-v102-scene-shortcuts",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-16-v103-scene-shortcuts-polish",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-16-v102-scene-shortcuts",
-          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-16-v102-scene-shortcuts"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-16-v103-scene-shortcuts-polish",
+          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-16-v103-scene-shortcuts-polish"
         }
       }
     </script>
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-16-v102-scene-shortcuts"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-16-v103-scene-shortcuts-polish"
     />
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-16-v102-scene-shortcuts"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-16-v102-scene-shortcuts"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-16-v103-scene-shortcuts-polish"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-16-v103-scene-shortcuts-polish"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;
@@ -3264,6 +3290,8 @@
         persistSceneBackground,
         applySceneBackground,
         scenePresetLabel,
+        loadChatPanelVisible,
+        persistChatPanelVisible,
       } = scenePresetsMod;
       const { hasAnyClientCloudKey, inferKeyProvider } = keysMod;
       const {
@@ -3748,24 +3776,6 @@
         }, 320);
       };
 
-      const CHAT_PANEL_STORAGE_KEY = "amoji.companion.chatPanelVisible";
-
-      const loadChatPanelVisible = () => {
-        try {
-          return localStorage.getItem(CHAT_PANEL_STORAGE_KEY) !== "false";
-        } catch {
-          return true;
-        }
-      };
-
-      const persistChatPanelVisible = (visible) => {
-        try {
-          localStorage.setItem(CHAT_PANEL_STORAGE_KEY, String(visible));
-        } catch {
-          /* ignore */
-        }
-      };
-
       let activeSceneBgId = loadStoredSceneBackground(isEnglish).id;
 
       const syncChatPanelUi = () => {
@@ -3826,7 +3836,8 @@
             btn.className = "scene-preset";
             btn.disabled = true;
             btn.title = isEnglish ? "Coming soon" : "即將推出";
-            btn.innerHTML = `<span class="scene-preset__swatch scene-preset__swatch--outfit" aria-hidden="true"></span>${scenePresetLabel(preset, isEnglish)}`;
+            const soonLabel = isEnglish ? "Soon" : "即將";
+            btn.innerHTML = `<span class="scene-preset__swatch scene-preset__swatch--outfit" aria-hidden="true"></span><span class="scene-preset__label">${scenePresetLabel(preset, isEnglish)}</span><span class="scene-preset__soon">${soonLabel}</span>`;
             sceneOutfitGrid.appendChild(btn);
           }
         }
@@ -3876,6 +3887,7 @@
         sceneSheetBackdrop?.classList.add("is-open");
         sceneSheetBackdrop?.removeAttribute("hidden");
         document.body.classList.add("scene-sheet-open");
+        sceneSheetClose?.focus();
       };
 
       const closeSceneSheet = () => {
