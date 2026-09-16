@@ -261,14 +261,16 @@ export function createCompanionStartPicker(opts = {}) {
   const langCode = isEnglish ? "en" : "yue";
   let selectedId = opts.selectedId || "amoji";
   let starting = false;
+  let pickable = true;
   let preloadPct = 0;
   let preloadReady = false;
 
   const shell = document.createElement("div");
-  shell.className = "companion-picker companion-picker--start is-open";
+  shell.className = "companion-picker companion-picker--start hide";
   shell.id = "start-character-picker";
   shell.setAttribute("role", "dialog");
   shell.setAttribute("aria-modal", "true");
+  shell.setAttribute("aria-hidden", "true");
   shell.setAttribute("aria-label", isEnglish ? "Choose companion" : "揀同伴");
   shell.innerHTML = `
     <div class="companion-picker-backdrop" aria-hidden="true"></div>
@@ -295,7 +297,6 @@ export function createCompanionStartPicker(opts = {}) {
 
   const mount = opts.root || document.body;
   mount.appendChild(shell);
-  document.body.classList.add("companion-start-pending", "companion-picker-open");
 
   const titleEl = shell.querySelector(".companion-picker-title");
   const subEl = shell.querySelector(".companion-picker-sub");
@@ -321,13 +322,13 @@ export function createCompanionStartPicker(opts = {}) {
         ? isEnglish
           ? "Starting…"
           : "開始中…"
-        : !preloadReady
+        : !pickable
           ? isEnglish
-            ? "Preloading companions — pick someone when the bar is full"
-            : "正在預載同伴 — 進度條滿咗就可以揀"
+            ? "Almost ready — pick a companion in a moment"
+            : "快好喇 — 等陣就可以揀同伴"
           : isEnglish
-            ? "Tap a card to start — voice and mic unlock when you pick someone"
-            : "點選角色開始 — 揀好就會開啟語音同麥克風";
+            ? "★ picks are gallery pretty-girl models — tap to start, 3D loads in background"
+            : "★ 推介係你揀嘅靚女模型 — 點選就可以傾偈，3D 背景載入";
     }
   };
 
@@ -338,11 +339,11 @@ export function createCompanionStartPicker(opts = {}) {
       preloadLabel.textContent =
         clamped >= 100
           ? isEnglish
-            ? "Companions ready — pick one"
-            : "同伴已準備好 — 請揀一位"
+            ? "All companions cached"
+            : "全部同伴已快取"
           : isEnglish
-            ? `Loading companions… ${clamped}%`
-            : `載入同伴中… ${clamped}%`;
+            ? `Background loading… ${clamped}%`
+            : `背景載入中… ${clamped}%`;
     }
     if (preloadEl) {
       preloadEl.classList.toggle("is-ready", clamped >= 100);
@@ -367,15 +368,15 @@ export function createCompanionStartPicker(opts = {}) {
       selectedId,
       compact: true,
       eagerPreview: true,
-      disabled: starting || !preloadReady,
+      disabled: starting || !pickable,
       onCardClick: (id) => {
-        if (!preloadReady || starting) return;
+        if (!pickable || starting) return;
         selectedId = id;
         renderGrid();
         opts.onStart?.(id);
       },
     });
-    shell.classList.toggle("is-preloading", !preloadReady && !starting);
+    shell.classList.toggle("is-preloading", preloadPct < 100 && !starting);
     requestAnimationFrame(renderScrollHint);
   };
 
@@ -398,10 +399,14 @@ export function createCompanionStartPicker(opts = {}) {
       const ready = preloadPct >= 100;
       if (ready !== preloadReady) {
         preloadReady = ready;
-        renderGrid();
         copy();
       }
       renderPreload();
+    },
+    enablePicking(on = true) {
+      pickable = Boolean(on);
+      renderGrid();
+      copy();
     },
     setStarting(on) {
       starting = Boolean(on);

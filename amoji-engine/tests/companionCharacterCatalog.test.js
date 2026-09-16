@@ -1,20 +1,40 @@
 import { describe, expect, it } from "vitest";
 import {
   buildCharacterSystemPrompt,
+  CHARACTER_IDS,
   characterAvatarConfig,
   characterGreeting,
   characterGreetingPerformance,
   characterVoiceLabel,
+  COMPANION_CHARACTERS,
   defaultVoiceForCharacter,
   getCharacter,
+  GALLERY_PRIORITY_IDS,
   listCompanionCharacters,
   nextCharacterId,
   resolveCharacterId,
 } from "../engine/companion/companionCharacterCatalog.js";
 
 describe("companionCharacterCatalog", () => {
-  it("resolves default amoji character", () => {
-    expect(resolveCharacterId({})).toBe("amoji");
+  it("resolves default gallery-priority nova character", () => {
+    expect(resolveCharacterId({})).toBe("nova");
+  });
+
+  it("lists gallery pretty-girl picks first", () => {
+    expect(CHARACTER_IDS.slice(0, 5)).toEqual([
+      "nova",
+      "alicia",
+      "ember",
+      "chibi",
+      "sky",
+    ]);
+    expect(GALLERY_PRIORITY_IDS.has("nova")).toBe(true);
+    expect(CHARACTER_IDS.indexOf("mikel")).toBeGreaterThan(
+      CHARACTER_IDS.indexOf("kate"),
+    );
+    expect(Object.keys(COMPANION_CHARACTERS).sort()).toEqual(
+      [...CHARACTER_IDS].sort(),
+    );
   });
 
   it("maps glb model to sora", () => {
@@ -77,11 +97,11 @@ describe("companionCharacterCatalog", () => {
   });
 
   it("cycles characters", () => {
+    expect(nextCharacterId("nova")).toBe("alicia");
+    expect(nextCharacterId("sky")).toBe("kizuna");
+    expect(nextCharacterId("mimi")).toBe("olivia");
     expect(nextCharacterId("amoji")).toBe("sora");
-    expect(nextCharacterId("rex")).toBe("sky");
-    expect(nextCharacterId("sky")).toBe("rose");
-    expect(nextCharacterId("mimi")).toBe("alicia");
-    expect(nextCharacterId("quinn")).toBe("amoji");
+    expect(nextCharacterId("mikel")).toBe("nova");
   });
 
   it("resolves new 3D character models", () => {

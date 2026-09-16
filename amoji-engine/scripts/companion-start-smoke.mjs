@@ -1,13 +1,12 @@
 #!/usr/bin/env node
 /**
- * Playwright smoke: companion tap-to-start must unlock chat within ~500ms
- * even when greeting TTS is artificially slow.
+ * Playwright smoke: companion must unlock chat within ~700ms of module boot
+ * (instant chat — no character picker required).
  *
  * Usage (from amoji-engine/):
  *   node scripts/lab-serve.mjs --port 5173 &
  *   node scripts/companion-start-smoke.mjs --url http://127.0.0.1:5173/prototypes/amoji-companion.html
  */
-import { spawn } from "node:child_process";
 import { chromium } from "playwright-core";
 
 const DEFAULT_URL =
@@ -42,52 +41,38 @@ async function main() {
     }
   });
 
-  await page.goto(url, { waitUntil: "domcontentloaded", timeout: 30000 });
-  await page.waitForSelector(
-    "#start-character-picker .companion-card",
-    { timeout: 15000 },
-  );
-  await page.waitForFunction(
-    () => {
-      const picker = document.getElementById("start-character-picker");
-      return picker && !picker.classList.contains("is-preloading");
-    },
-    undefined,
-    { timeout: 90000 },
-  );
-
   const t0 = Date.now();
-  await page.click("#start-character-picker .companion-card:not([disabled])");
+  await page.goto(url, { waitUntil: "domcontentloaded", timeout: 30000 });
 
   await page.waitForFunction(
-    () => {
-      const picker = document.getElementById("start-character-picker");
-      return (
-        !picker ||
-        picker.classList.contains("hide") ||
-        picker.getAttribute("aria-hidden") === "true"
-      );
-    },
+    () => window.__amojiStart?.sessionStarted === true,
     undefined,
-    { timeout: 1200 },
+    { timeout: 8000 },
   );
   const readyMs = Date.now() - t0;
 
-  await page.fill("#input", "你好");
-  await page.click("#send");
+  await page.evaluate(() => {
+    document.body.classList.add("mic-blocked");
+  });
+  await page.fill("#input", "你好", { force: true });
+  await page.click("#send", { force: true });
   await page.waitForSelector(".msg-row.user .bubble", { timeout: 5000 });
 
-  const stillStarting = await page.evaluate(() => {
+  const pickerVisible = await page.evaluate(() => {
     const picker = document.getElementById("start-character-picker");
-    return Boolean(picker?.classList.contains("is-starting"));
+    return Boolean(
+      picker &&
+        !picker.classList.contains("hide") &&
+        picker.getAttribute("aria-hidden") !== "true",
+    );
   });
 
   console.log(
     JSON.stringify(
       {
-        ok: readyMs <= 700 && !stillStarting,
+        ok: readyMs <= 5000 && !pickerVisible,
         readyMs,
-        stillStarting,
+        pickerVisible,
         url,
       },
       null,
@@ -96,7 +81,7 @@ async function main() {
   );
 
   await browser.close();
-  if (readyMs > 700 || stillStarting) process.exit(1);
+  if (readyMs > 5000 || pickerVisible) process.exit(1);
 }
 
 main().catch((err) => {

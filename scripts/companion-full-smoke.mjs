@@ -19,7 +19,7 @@ function parseArg(name, fallback) {
 async function main() {
   const url = parseArg(
     "--url",
-    "http://127.0.0.1:5173/prototypes/amoji-companion.html?automic=0",
+    "http://127.0.0.1:5173/prototypes/amoji-companion.html?automic=0&pick=1",
   );
 
   const browser = await chromium.launch({
@@ -30,12 +30,8 @@ async function main() {
 
   await page.goto(url, { waitUntil: "domcontentloaded", timeout: 45000 });
   await page.waitForSelector("#start-character-picker .companion-card", { timeout: 20000 });
-  await page.waitForFunction(
-    () => {
-      const picker = document.getElementById("start-character-picker");
-      return picker && !picker.classList.contains("is-preloading");
-    },
-    undefined,
+  await page.waitForSelector(
+    "#start-character-picker .companion-card:not([disabled])",
     { timeout: 90000 },
   );
 

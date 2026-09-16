@@ -65,7 +65,9 @@ describe("companionCameraApply", () => {
       talkCloseBlend: 0,
       fullBodyBlend: 1,
     });
-    expect(blended.position.z).toBeGreaterThan(portrait.position.z);
+    expect(
+      blended.position.distanceTo(anchor),
+    ).toBeGreaterThan(portrait.position.distanceTo(anchor));
     expect(blended.fov).toBeGreaterThan(portrait.fov);
   });
 });

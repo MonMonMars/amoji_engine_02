@@ -14,10 +14,14 @@ import {
 import {
   applyOrbitFollowAnchor,
   computeGltfFrameAnchor,
+  smoothFrameAnchor,
 } from "./companionCameraFollow.js";
 import {
   PORTRAIT_FOV,
   applyUpperBodyPortraitFrame,
+  detectPortraitCameraZSign,
+  isHeadFacingCamera,
+  portraitDistanceForHeight,
 } from "./companionPortraitFraming.js";
 import { sampleIdleBodyMotion } from "./companionIdleMotion.js";
 
@@ -199,12 +203,36 @@ export async function createGltfAvatar(opts) {
     if (/head|face|neck/i.test(obj.name) && obj.isBone) headBone = obj;
   });
   const anchor = computeGltfFrameAnchor(model, headBone);
+  let portraitCameraZSign = detectPortraitCameraZSign(
+    headBone,
+    anchor,
+    portraitDistanceForHeight(fittedSize.y),
+  );
   applyUpperBodyPortraitFrame({
     camera,
     controls,
     anchor,
     fittedHeight: fittedSize.y,
+    cameraZSign: portraitCameraZSign,
   });
+  if (!isHeadFacingCamera(headBone, camera)) {
+    model.rotation.y += Math.PI;
+    const refitted = new THREE.Box3().setFromObject(model);
+    const refAnchor = computeGltfFrameAnchor(model, headBone);
+    portraitCameraZSign = detectPortraitCameraZSign(
+      headBone,
+      refAnchor,
+      portraitDistanceForHeight(refitted.getSize(new THREE.Vector3()).y),
+    );
+    applyUpperBodyPortraitFrame({
+      camera,
+      controls,
+      anchor: refAnchor,
+      fittedHeight: refitted.getSize(new THREE.Vector3()).y,
+      cameraZSign: portraitCameraZSign,
+    });
+  }
+  faceLight.position.set(0.2, 1.55, portraitCameraZSign * 1.4);
 
   /** @type {THREE.AnimationMixer | null} */
   let mixer = null;
@@ -377,6 +405,7 @@ export async function createGltfAvatar(opts) {
   };
 
   const frameAnchor = new THREE.Vector3();
+  const smoothedFrameAnchor = new THREE.Vector3();
   let raf = 0;
   const frame = () => {
     const dt = clock.getDelta();
@@ -463,7 +492,12 @@ export async function createGltfAvatar(opts) {
     }
 
     computeGltfFrameAnchor(model, headBone, frameAnchor);
-    applyOrbitFollowAnchor(controls, camera, frameAnchor);
+    if (smoothedFrameAnchor.lengthSq() < 1e-6) {
+      smoothedFrameAnchor.copy(frameAnchor);
+    } else {
+      smoothFrameAnchor(smoothedFrameAnchor, frameAnchor, dt);
+    }
+    applyOrbitFollowAnchor(controls, camera, smoothedFrameAnchor);
     controls.update();
 
     faceLight.intensity = 0.55 + (talking ? 0.2 : 0) + Math.sin((now - t0) * 0.002) * 0.05;
