@@ -4236,11 +4236,9 @@
 
       const syncTopbarActionLabels = () => {
         if (btnToggleChat) {
-          btnToggleChat.textContent = "💬";
           syncChatPanelUi();
         }
         if (btnOpenScene) {
-          btnOpenScene.textContent = "🎨";
           btnOpenScene.title = isEnglish ? "Look & scene" : "造型同場景";
           btnOpenScene.setAttribute(
             "aria-label",
@@ -4248,7 +4246,6 @@
           );
         }
         if (btnOpenSetup) {
-          btnOpenSetup.textContent = "⋯";
           btnOpenSetup.title = isEnglish
             ? "Menu — language, voice, companion, brain"
             : "選單 — 語言、語音、同伴、大腦";
