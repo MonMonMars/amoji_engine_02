@@ -76,6 +76,8 @@ export const UPPER_BODY_ACTIONS = new Set([
 
 export const LONG_DIALOGUE_SEC = 3;
 export const LONG_DIALOGUE_CHARS = 72;
+/** Keep the default portrait framing during boot greeting — no talk-close zoom yet. */
+export const BOOT_TALK_CLOSE_GRACE_SEC = 10;
 
 /**
  * @param {string | null | undefined} actionId
@@ -114,9 +116,12 @@ export function createCompanionCameraDirector(opts = {}) {
   let userOrbiting = false;
   let talkCloseBlend = 0;
   let fullBodyBlend = 0;
+  let bootTalkCloseGraceSec = 0;
 
   const longDialogueSec = opts.longDialogueSec ?? LONG_DIALOGUE_SEC;
   const longDialogueChars = opts.longDialogueChars ?? LONG_DIALOGUE_CHARS;
+  const bootTalkCloseGraceDefault =
+    opts.bootTalkCloseGraceSec ?? BOOT_TALK_CLOSE_GRACE_SEC;
 
   const setMode = (next) => {
     mode = next === CAMERA_MODE_AUTO ? CAMERA_MODE_AUTO : CAMERA_MODE_AUTO;
@@ -143,6 +148,12 @@ export function createCompanionCameraDirector(opts = {}) {
     talkCloseBlend = 0;
   };
 
+  const resetBootGrace = (seconds = bootTalkCloseGraceDefault) => {
+    bootTalkCloseGraceSec = Math.max(0, seconds);
+    talkCloseBlend = 0;
+    return bootTalkCloseGraceSec;
+  };
+
   const setCurrentAction = (actionId) => {
     currentAction = actionId ? String(actionId).toLowerCase() : null;
     return currentAction;
@@ -154,9 +165,15 @@ export function createCompanionCameraDirector(opts = {}) {
   };
 
   const update = (dt) => {
-    if (talking) talkSeconds += Math.max(0, dt);
+    const inBootGrace = bootTalkCloseGraceSec > 0;
+    if (inBootGrace) {
+      bootTalkCloseGraceSec = Math.max(0, bootTalkCloseGraceSec - Math.max(0, dt));
+    } else if (talking) {
+      talkSeconds += Math.max(0, dt);
+    }
 
     const wantsTalkClose =
+      !inBootGrace &&
       talking &&
       !isFullBodyAction(currentAction) &&
       (talkSeconds >= longDialogueSec || dialogueChars >= longDialogueChars);
@@ -164,7 +181,11 @@ export function createCompanionCameraDirector(opts = {}) {
 
     const talkTarget = wantsTalkClose ? 1 : 0;
     const bodyTarget = wantsFullBody ? 1 : 0;
-    const talkRate = talkTarget > talkCloseBlend ? 2.4 : 3.2;
+    const talkRate = inBootGrace
+      ? 8
+      : talkTarget > talkCloseBlend
+        ? 2.4
+        : 3.2;
     const bodyRate = bodyTarget > fullBodyBlend ? 5.5 : 2.8;
 
     talkCloseBlend += (talkTarget - talkCloseBlend) * Math.min(1, dt * talkRate);
@@ -188,6 +209,7 @@ export function createCompanionCameraDirector(opts = {}) {
     setTalking,
     notifySpeech,
     resetDialogue,
+    resetBootGrace,
     setCurrentAction,
     setUserOrbiting,
     update,
