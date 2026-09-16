@@ -11,11 +11,11 @@ export const UPPER_BODY_ANCHOR_RATIO = 0.5;
 export const HEAD_ANCHOR_BLEND = 0.12;
 
 /** Portrait FOV — head + shoulders + torso, legs cropped below waist. */
-export const PORTRAIT_FOV = 30;
+export const PORTRAIT_FOV = 32;
 
-/** Camera distance ≈ 1.3× character height — relaxed first view, not face close-up. */
-export const PORTRAIT_DIST_FACTOR = 1.3;
-export const PORTRAIT_DIST_MIN = 1.12;
+/** Camera distance ≈ 1.52× character height — relaxed first view, not face close-up. */
+export const PORTRAIT_DIST_FACTOR = 1.52;
+export const PORTRAIT_DIST_MIN = 1.28;
 
 /**
  * Default camera Z offset sign (matches @pixiv/three-vrm examples: camera on +Z).
@@ -94,7 +94,7 @@ export function facingAlignmentScore(headBone, cameraPosition, humanoid) {
  * @param {import('@pixiv/three-vrm').VRMHumanoid | null | undefined} [humanoid]
  */
 export function detectPortraitCameraZSign(headBone, anchor, portraitDist, humanoid) {
-  const dist = Math.max(portraitDist, PORTRAIT_DIST_MIN) * 1.04;
+  const dist = Math.max(portraitDist, PORTRAIT_DIST_MIN) * 1.08;
 
   const scoreForSign = (sign) => {
     _camPosScratch.set(anchor.x, anchor.y + 0.08, anchor.z + sign * dist);
@@ -171,7 +171,7 @@ export function applyUpperBodyPortraitFrame(opts) {
   opts.camera.position.set(
     opts.anchor.x,
     opts.anchor.y + 0.08,
-    opts.anchor.z + cameraZSign * portraitDist * 1.04,
+    opts.anchor.z + cameraZSign * portraitDist * 1.08,
   );
   opts.camera.fov = PORTRAIT_FOV;
   opts.camera.updateProjectionMatrix();

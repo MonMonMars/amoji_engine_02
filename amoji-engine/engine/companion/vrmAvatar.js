@@ -317,6 +317,7 @@ export async function createVrmAvatar(opts) {
     portraitCamera.distance = camera.position.distanceTo(controls.target);
   };
   const cameraDirector = createCompanionCameraDirector();
+  cameraDirector.resetBootGrace();
   const raycaster = new THREE.Raycaster();
   const pointer = new THREE.Vector2();
   /** @type {{ x: number, y: number } | null} */

@@ -16,8 +16,15 @@ import {
 describe("companionPortraitFraming", () => {
   it("frames standard VRM height at upper-body distance", () => {
     const dist = portraitDistanceForHeight(0.92);
-    expect(dist).toBeGreaterThanOrEqual(1.12);
-    expect(dist).toBeCloseTo(1.196, 2);
+    expect(dist).toBeGreaterThanOrEqual(1.28);
+    expect(dist).toBeCloseTo(1.398, 2);
+  });
+
+  it("pulls the default portrait camera back vs legacy close framing", () => {
+    const height = 1.6;
+    const newCameraZ = portraitDistanceForHeight(height) * 1.08;
+    const legacyCameraZ = Math.max(1.12, height * 1.3) * 1.04;
+    expect(newCameraZ / legacyCameraZ).toBeGreaterThan(1.15);
   });
 
   it("anchors on chest, not face", () => {
@@ -32,8 +39,8 @@ describe("companionPortraitFraming", () => {
   });
 
   it("uses a portrait fov that keeps shoulders in frame", () => {
-    expect(PORTRAIT_FOV).toBeGreaterThanOrEqual(29);
-    expect(PORTRAIT_FOV).toBeLessThanOrEqual(32);
+    expect(PORTRAIT_FOV).toBeGreaterThanOrEqual(30);
+    expect(PORTRAIT_FOV).toBeLessThanOrEqual(34);
   });
 
   it("defaults camera Z sign to match three-vrm examples (+Z)", () => {

@@ -47,6 +47,25 @@ describe("companionCameraDirector", () => {
     expect(director.talkCloseBlend).toBeLessThan(0.3);
   });
 
+  it("suppresses talk-close zoom during boot grace", () => {
+    const director = createCompanionCameraDirector({
+      longDialogueSec: 0.5,
+      longDialogueChars: 8,
+      bootTalkCloseGraceSec: 2,
+    });
+    director.resetBootGrace(2);
+    director.setTalking(true);
+    director.notifySpeech("This greeting should stay in the default portrait framing.");
+    for (let i = 0; i < 20; i += 1) {
+      director.update(0.1);
+    }
+    expect(director.talkCloseBlend).toBeLessThan(0.05);
+    for (let i = 0; i < 25; i += 1) {
+      director.update(0.1);
+    }
+    expect(director.talkCloseBlend).toBeGreaterThan(0.4);
+  });
+
   it("pauses auto framing while the user orbits", () => {
     const director = createCompanionCameraDirector();
     director.setUserOrbiting(true);
