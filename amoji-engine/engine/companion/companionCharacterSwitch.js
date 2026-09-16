@@ -70,15 +70,9 @@ export async function switchCompanionCharacter(opts) {
   const url = new URL(globalThis.location?.href || "/");
   url.searchParams.set("character", characterId);
   url.searchParams.set("lang", langCode === "en" ? "en" : "yue");
-  if (config.avatarPrefer === "gltf") {
-    url.searchParams.set("avatar", "gltf");
-    url.searchParams.set("model3d", config.modelUrl);
-    url.searchParams.delete("vrm");
-  } else {
-    url.searchParams.set("vrm", config.modelUrl);
-    url.searchParams.delete("avatar");
-    url.searchParams.delete("model3d");
-  }
+  url.searchParams.delete("vrm");
+  url.searchParams.delete("model3d");
+  url.searchParams.delete("avatar");
   globalThis.history?.replaceState?.({}, "", `${url.pathname}${url.search}`);
 
   emit(100, isEnglish ? "Ready!" : "完成！");
