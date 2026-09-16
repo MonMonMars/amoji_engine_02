@@ -393,7 +393,12 @@ export function createCompanionVoice(opts = {}) {
    * @param {string} clean
    * @param {string} emotion
    */
-  const playCloudAudioBlob = async (blob, clean, emotion) => {
+  const playCloudAudioBlob = async (
+    blob,
+    clean,
+    emotion,
+    { holdSpeaking = false } = {},
+  ) => {
     if (!blob.size) return { ok: false, reason: "cloud-tts-empty" };
     const mime = blob.type || "";
     if (mime && !mime.includes("audio") && !mime.includes("mpeg")) {
@@ -406,8 +411,10 @@ export function createCompanionVoice(opts = {}) {
 
     const objectUrl = URL.createObjectURL(blob);
     startLipSync(clean);
-    speaking = true;
-    syncAssistantOutput();
+    if (!holdSpeaking) {
+      speaking = true;
+      syncAssistantOutput();
+    }
     const preset = cloudVoicePreset();
 
     return await new Promise((resolve) => {
@@ -418,9 +425,11 @@ export function createCompanionVoice(opts = {}) {
       const finish = (result) => {
         if (currentCloudAudio === audio) currentCloudAudio = null;
         URL.revokeObjectURL(objectUrl);
-        speaking = false;
+        if (!holdSpeaking) {
+          speaking = false;
+          syncAssistantOutput();
+        }
         stopMouth();
-        syncAssistantOutput();
         resolve(result);
       };
       audio.onended = () => {
@@ -448,6 +457,7 @@ export function createCompanionVoice(opts = {}) {
     if (!url) return { ok: false, reason: "no-cloud-tts-url" };
 
     unlockAudioSync();
+    stopThinkingAudio();
     stopCloudAudio();
     synth?.cancel();
 
@@ -456,53 +466,67 @@ export function createCompanionVoice(opts = {}) {
     const parts = chunkTextForCloudTts(clean);
     if (!parts.length) return { ok: false, reason: "empty" };
 
+    speaking = true;
+    syncAssistantOutput();
+
     /** @type {{ ok: boolean, reason?: string, voice?: string, emotion?: string, cloud?: boolean }} */
     let last = { ok: false, reason: "empty" };
-    for (const part of parts) {
-      const plan = buildExpressiveTtsPlan(
-        part,
-        { ...perf, lang: preset.lang, voiceId: preset.name },
-        activeCharacterId,
-        preset.lang,
-        preset.name,
-      );
-      const clauses = plan.clauses.length ? plan.clauses : [{ text: part, ...perf }];
-      for (let i = 0; i < clauses.length; i += 1) {
-        const clause = clauses[i];
-        const res = await fetch(url, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            text: clause.text,
-            emotion: clause.emotion || perf.emotion,
-            nuance: clause.nuance || perf.nuance,
-            talkStyle: clause.talkStyle || perf.talkStyle,
-            speechEnergy: clause.speechEnergy ?? perf.speechEnergy,
-            voice: preset.name,
-            lang: preset.lang,
-            characterId: activeCharacterId,
-          }),
-        });
-        if (!res.ok) {
-          const errText = await res.text().catch(() => "");
-          return {
-            ok: false,
-            reason: `cloud-tts-${res.status}${errText ? `: ${errText.slice(0, 80)}` : ""}`,
-          };
-        }
-        const blob = await res.blob();
-        last = await playCloudAudioBlob(
-          blob,
-          clause.text,
-          clause.emotion || perf.emotion,
+    try {
+      for (const part of parts) {
+        const plan = buildExpressiveTtsPlan(
+          part,
+          { ...perf, lang: preset.lang, voiceId: preset.name },
+          activeCharacterId,
+          preset.lang,
+          preset.name,
         );
-        if (!last.ok) return last;
-        if (i < clauses.length - 1) {
-          await sleep(clause.pauseMs ?? clausePauseMs(clause.text));
+        const clauses = perf.singleUtterance
+          ? [{ text: part, ...perf }]
+          : plan.clauses.length
+            ? plan.clauses
+            : [{ text: part, ...perf }];
+        for (let i = 0; i < clauses.length; i += 1) {
+          const clause = clauses[i];
+          const res = await fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              text: clause.text,
+              emotion: clause.emotion || perf.emotion,
+              nuance: clause.nuance || perf.nuance,
+              talkStyle: clause.talkStyle || perf.talkStyle,
+              speechEnergy: clause.speechEnergy ?? perf.speechEnergy,
+              voice: preset.name,
+              lang: preset.lang,
+              characterId: activeCharacterId,
+            }),
+          });
+          if (!res.ok) {
+            const errText = await res.text().catch(() => "");
+            return {
+              ok: false,
+              reason: `cloud-tts-${res.status}${errText ? `: ${errText.slice(0, 80)}` : ""}`,
+            };
+          }
+          const blob = await res.blob();
+          last = await playCloudAudioBlob(
+            blob,
+            clause.text,
+            clause.emotion || perf.emotion,
+            { holdSpeaking: true },
+          );
+          if (!last.ok) return last;
+          if (i < clauses.length - 1) {
+            await sleep(clause.pauseMs ?? clausePauseMs(clause.text));
+          }
         }
       }
+      return last;
+    } finally {
+      speaking = false;
+      stopMouth();
+      syncAssistantOutput();
     }
-    return last;
   };
 
   const emitViseme = (ch) => {

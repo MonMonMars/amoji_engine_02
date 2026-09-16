@@ -8,9 +8,9 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji · Companion</title>
     <script>
-      window.__amojiBuild = "2026-09-16-v114-boot-chitchat-tts";
+      window.__amojiBuild = "2026-09-16-v115-boot-tts-full";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-16-v114-boot-chitchat-tts"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-16-v115-boot-tts-full"></script>
     <link
       rel="prefetch"
       href="/prototypes/assets/companion-char-nova.png"
@@ -285,7 +285,7 @@
       media="print"
       onload="this.media='all'"
     />
-    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-16-v114-boot-chitchat-tts" />
+    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-16-v115-boot-tts-full" />
     <noscript>
       <link
         href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap"
@@ -2833,19 +2833,19 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-16-v114-boot-chitchat-tts",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-16-v115-boot-tts-full",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-16-v114-boot-chitchat-tts",
-          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-16-v114-boot-chitchat-tts"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-16-v115-boot-tts-full",
+          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-16-v115-boot-tts-full"
         }
       }
     </script>
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-16-v114-boot-chitchat-tts"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-16-v115-boot-tts-full"
     />
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-16-v114-boot-chitchat-tts"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-16-v114-boot-chitchat-tts"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-16-v115-boot-tts-full"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-16-v115-boot-tts-full"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;
@@ -5562,10 +5562,15 @@
         busy = true;
         stopIdlePerformance();
         sendBtn.disabled = true;
-        const keepMicForBarge = voice.micOn || autoMic;
+        const bootChitchat = isBootChitchatPhase({ avatarKind, liteMode });
+        let keepMicForBarge = voice.micOn || autoMic;
+        if (bootChitchat) {
+          if (waitAct?.state?.kind === "avatar-load") waitAct?.stop();
+          keepMicForBarge = false;
+        }
         voice.setKeepMicDuringSpeak?.(keepMicForBarge);
         if (!keepMicForBarge) voice.pauseCapture();
-        armBargeIn();
+        if (!bootChitchat) armBargeIn();
         interim.clear();
         if (!skipUserBubble) {
           addBubble("user", cleaned, { persist: true, withActions: true });
@@ -5574,7 +5579,6 @@
         avatar.setListening?.(false);
         avatar.setTalking(false);
         avatar.setMouthOpen(0);
-        const bootChitchat = isBootChitchatPhase({ avatarKind, liteMode });
         if (!bootChitchat) {
           const userMotion = analyzeUserInput?.(cleaned, isEnglish);
           if (userMotion?.action === "stop") {
@@ -5668,6 +5672,7 @@
               nuance: content.nuance || "none",
               talkStyle: content.talkStyle || "chat",
               speechEnergy: content.speechEnergy ?? 0.45,
+              singleUtterance: true,
             });
             return;
           }

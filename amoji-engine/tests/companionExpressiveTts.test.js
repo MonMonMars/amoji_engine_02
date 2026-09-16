@@ -40,4 +40,14 @@ describe("companionExpressiveTts", () => {
   it("adds longer pauses after sentence endings", () => {
     expect(clausePauseMs("好呀！")).toBeGreaterThan(clausePauseMs("好呀，"));
   });
+
+  it("splits English boot greetings into multiple clauses", () => {
+    const parts = splitExpressiveClauses(
+      "Hi! I'm still loading my 3D body — you can chat while I get ready.",
+    );
+    expect(parts).toEqual([
+      "Hi!",
+      "I'm still loading my 3D body — you can chat while I get ready.",
+    ]);
+  });
 });
