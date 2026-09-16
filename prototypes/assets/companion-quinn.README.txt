@@ -1,0 +1,10 @@
+Quinn GLB avatar — Quaternius Universal Base Characters (gallery pick I1)
+
+Source:  https://quaternius.itch.io/universal-base-characters
+Model:   Superhero_Female_FullBody.gltf → companion-quinn.glb (packed)
+Preview: Preview.png from Standard pack → companion-char-quinn.png
+
+License: CC0 1.0 — public domain, commercial use OK.
+Gallery: section [I] CC0 commercial packs, I1 Quaternius Universal Base Characters.
+
+Attribution: Universal Base Characters by Quaternius (https://quaternius.com) — CC0

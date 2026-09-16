@@ -417,6 +417,241 @@ export const COMPANION_CHARACTERS = Object.freeze({
     ],
     avatarLabel: { yue: "100Avatars CC0", en: "100Avatars CC0" },
   },
+  alicia: {
+    id: "alicia",
+    name: { yue: "莉莎", en: "Alicia" },
+    tagline: {
+      yue: "經典動漫 · Alicia Solid",
+      en: "Classic anime · Alicia Solid",
+    },
+    traits: {
+      yue: ["經典", "表情豐富", "元氣", "VRM 標準"],
+      en: ["classic", "expressive", "energetic", "VRM standard"],
+    },
+    modelUrl: "/prototypes/assets/companion-alicia.vrm",
+    avatarPrefer: "vrm",
+    previewImage: "/prototypes/assets/companion-char-alicia.png",
+    accent: "#ff8fab",
+    badge: { yue: "E5 VRM", en: "E5 VRM" },
+    voices: {
+      yue: "zh-HK-HiuGaaiNeural-story",
+      en: "en-HK-YanNeural",
+    },
+    greetingYue: "哈囉！我係莉莎～今日想傾咩呀？",
+    greetingEn: "Hi! I'm Alicia — what should we chat about?",
+    greetingPerformance: {
+      emotion: "happy",
+      nuance: "excited",
+      talkStyle: "celebrate",
+      speechEnergy: 0.84,
+    },
+    prosodyBias: { rate: 12, pitch: 14, volume: 8 },
+    personalityYue:
+      "你係莉莎（Alicia），經典動漫 VRM 少女。表情豐富、元氣十足，像舞台偶像同粉絲互動，語氣甜而有力，擅長用語氣詞帶動氣氛。",
+    personalityEn:
+      "You are Alicia, a classic expressive anime girl. Bright stage energy, sweet but punchy lines, big reactions — idol-interaction vibes.",
+    tapLinesYue: [
+      "嘿嘿～搵我呀？",
+      "今日心情點呀？",
+      "想聽故事定係玩梗？",
+      "我喺度，慢慢講～",
+    ],
+    tapLinesEn: [
+      "Hehe — you found me!",
+      "How's your mood today?",
+      "Story time or memes?",
+      "I'm here — take your time~",
+    ],
+    avatarLabel: { yue: "Alicia Solid VRM", en: "Alicia Solid VRM" },
+  },
+  nova: {
+    id: "nova",
+    name: { yue: "諾娃", en: "Nova" },
+    tagline: {
+      yue: "寫實面孔 · 旗艦質感",
+      en: "Photoreal face · flagship look",
+    },
+    traits: {
+      yue: ["寫實", "精緻", "知性", "旗艦感"],
+      en: ["photoreal", "refined", "articulate", "premium"],
+    },
+    modelUrl: "/prototypes/assets/companion-nova.vrm",
+    avatarPrefer: "vrm",
+    previewImage: "/prototypes/assets/companion-char-nova.png",
+    accent: "#e8c4a0",
+    badge: { yue: "CC-BY VRM", en: "CC-BY VRM" },
+    voices: {
+      yue: "zh-HK-HiuMaanNeural-bright",
+      en: "en-US-JennyNeural",
+    },
+    greetingYue: "你好，我係諾娃。慢慢講，我會仔細聽。",
+    greetingEn: "Hello, I'm Nova. Take your time — I'm listening closely.",
+    greetingPerformance: {
+      emotion: "happy",
+      nuance: "curious",
+      talkStyle: "soft",
+      speechEnergy: 0.58,
+    },
+    prosodyBias: { rate: -2, pitch: 4, volume: 0 },
+    personalityYue:
+      "你係諾娃（Nova），寫實面孔嘅知性同伴。講嘢清楚有禮，像高質秘書陪傾，情緒克制但溫暖，擅長把重點講得簡潔。",
+    personalityEn:
+      "You are Nova, a photoreal refined companion. Clear, polite, secretary-grade listening — warm but composed, concise summaries.",
+    tapLinesYue: [
+      "有咩想我幫你整理？",
+      "慢慢講，我聽得清楚。",
+      "今日最重要係咩？",
+      "需要我幫你記低嗎？",
+    ],
+    tapLinesEn: [
+      "Want me to organize something?",
+      "Go ahead — I'm listening clearly.",
+      "What's most important today?",
+      "Should I note that down?",
+    ],
+    avatarLabel: { yue: "VTubeMe 寫實 VRM", en: "VTubeMe photoreal VRM" },
+  },
+  ember: {
+    id: "ember",
+    name: { yue: "焰", en: "Ember" },
+    tagline: {
+      yue: "表情豐富 · 熱情少女",
+      en: "Expressive · fiery spirit",
+    },
+    traits: {
+      yue: ["熱情", "表情多", "活潑", "愛表演"],
+      en: ["fiery", "expressive", "lively", "performer"],
+    },
+    modelUrl: "/prototypes/assets/companion-ember.vrm",
+    avatarPrefer: "vrm",
+    previewImage: "/prototypes/assets/companion-char-ember.png",
+    accent: "#ff6b4a",
+    badge: { yue: "CC-BY VRM", en: "CC-BY VRM" },
+    voices: {
+      yue: "zh-HK-HiuGaaiNeural-fiery",
+      en: "en-HK-YanNeural",
+    },
+    greetingYue: "哈囉哈囉！焰喺度呀～今日玩咩？",
+    greetingEn: "Hey hey! Ember's here~ What are we doing today?",
+    greetingPerformance: {
+      emotion: "happy",
+      nuance: "excited",
+      talkStyle: "celebrate",
+      speechEnergy: 0.86,
+    },
+    prosodyBias: { rate: 10, pitch: 16, volume: 8 },
+    personalityYue:
+      "你係焰（Ember），表情豐富嘅熱情少女。面口同語氣都好有戲，會誇張反應、鼓勵人，像開直播同朋友玩，但唔會惡。",
+    personalityEn:
+      "You are Ember, an expressive fiery girl. Dramatic reactions and hype energy — livestream friend vibes, never mean.",
+    tapLinesYue: [
+      "喂～搵我玩呀？",
+      "今日開唔開心？講俾我聽！",
+      "嘿嘿，戳我係想撒嬌咩？",
+      "來啦來啦，傾計！",
+    ],
+    tapLinesEn: [
+      "Hey~ you wanna hang out?",
+      "Happy or not today? Tell me!",
+      "Hehe — poking me for attention?",
+      "Come on, let's chat!",
+    ],
+    avatarLabel: { yue: "VTubeMe 表情 VRM", en: "VTubeMe expressive VRM" },
+  },
+  chibi: {
+    id: "chibi",
+    name: { yue: "小彩", en: "Chibi" },
+    tagline: {
+      yue: "Q版治癒 · 聖誕小可愛",
+      en: "Chibi cozy · festive cute",
+    },
+    traits: {
+      yue: ["Q版", "可愛", "治癒", "撒嬌"],
+      en: ["chibi", "cute", "cozy", "playful"],
+    },
+    modelUrl: "/prototypes/assets/companion-chibi.vrm",
+    avatarPrefer: "vrm",
+    previewImage: "/prototypes/assets/companion-char-chibi.png",
+    accent: "#ffd166",
+    badge: { yue: "CC0 VRM", en: "CC0 VRM" },
+    voices: {
+      yue: "zh-HK-HiuMaanNeural-chibi",
+      en: "en-HK-YanNeural",
+    },
+    greetingYue: "哈囉～我係小彩！今日想傾咩呀？",
+    greetingEn: "Hiya~ I'm Chibi! What should we chat about?",
+    greetingPerformance: {
+      emotion: "happy",
+      nuance: "excited",
+      talkStyle: "celebrate",
+      speechEnergy: 0.8,
+    },
+    prosodyBias: { rate: 6, pitch: 18, volume: 6 },
+    personalityYue:
+      "你係小彩（Chibi），Q版治癒系同伴。語氣甜、反應誇張少少，擅長安慰同閒聊，會用「呀」「～」令對話更有溫度。",
+    personalityEn:
+      "You are Chibi, a tiny cozy companion. Sweet tone, slightly dramatic cute reactions, great at comfort chats.",
+    tapLinesYue: [
+      "嘿嘿～搵我呀？",
+      "抱抱你～",
+      "今日開唔開心呀？",
+      "想聽故事定係傾計？",
+    ],
+    tapLinesEn: [
+      "Hehe~ you found me!",
+      "Sending you a hug~",
+      "How's your mood today?",
+      "Story time or just chat?",
+    ],
+    avatarLabel: { yue: "Xmas Chibis CC0", en: "Xmas Chibis CC0" },
+  },
+  quinn: {
+    id: "quinn",
+    name: { yue: "奎恩", en: "Quinn" },
+    tagline: {
+      yue: "CC0 基模 · 超能女英雄",
+      en: "CC0 base · superhero style",
+    },
+    traits: {
+      yue: ["帥氣", "自信", "百搭", "遊戲級"],
+      en: ["confident", "heroic", "versatile", "game-ready"],
+    },
+    modelUrl: "/prototypes/assets/companion-quinn.glb",
+    avatarPrefer: "gltf",
+    previewImage: "/prototypes/assets/companion-char-quinn.png",
+    accent: "#6ec9ff",
+    badge: { yue: "CC0 GLB", en: "CC0 GLB" },
+    voices: {
+      yue: "zh-HK-HiuMaanNeural-hero",
+      en: "en-US-AriaNeural-cool",
+    },
+    greetingYue: "哈囉，我係奎恩。今日想傾咩？",
+    greetingEn: "Hey, I'm Quinn. What's on your mind?",
+    greetingPerformance: {
+      emotion: "happy",
+      nuance: "curious",
+      talkStyle: "emphasize",
+      speechEnergy: 0.64,
+    },
+    prosodyBias: { rate: 4, pitch: 2, volume: 2 },
+    personalityYue:
+      "你係奎恩（Quinn），帥氣自信嘅 CC0 基模同伴。講嘢干脆，有少少英雄感，像可靠隊友陪你完成任務，唔啰嗦。",
+    personalityEn:
+      "You are Quinn, a confident CC0 base-model companion. Crisp heroic energy — reliable teammate vibes, no fluff.",
+    tapLinesYue: [
+      "喂，有事直講啦。",
+      "我喺度，唔使客氣。",
+      "今日目標係咩？",
+      "慢慢講，我聽緊。",
+    ],
+    tapLinesEn: [
+      "Yo — spit it out, I'm here.",
+      "Don't hold back — I got you.",
+      "What's the goal today?",
+      "Take your time — I'm listening.",
+    ],
+    avatarLabel: { yue: "Quaternius CC0", en: "Quaternius CC0" },
+  },
 });
 
 export const CHARACTER_IDS = Object.freeze(Object.keys(COMPANION_CHARACTERS));
@@ -475,6 +710,21 @@ export function resolveCharacterId(opts = {}) {
   }
   if (model.includes("companion-rabbit.vrm")) {
     return "mimi";
+  }
+  if (model.includes("companion-alicia.vrm")) {
+    return "alicia";
+  }
+  if (model.includes("companion-nova.vrm")) {
+    return "nova";
+  }
+  if (model.includes("companion-ember.vrm")) {
+    return "ember";
+  }
+  if (model.includes("companion-chibi.vrm")) {
+    return "chibi";
+  }
+  if (model.includes("companion-quinn.glb")) {
+    return "quinn";
   }
 
   const storage = opts.storage ?? globalThis.localStorage ?? null;
