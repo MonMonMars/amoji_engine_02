@@ -7,10 +7,10 @@ import {
 } from "../engine/companion/companionPortraitFraming.js";
 
 describe("companionPortraitFraming", () => {
-  it("pulls camera back for standard VRM height", () => {
+  it("frames standard VRM height at upper-body distance", () => {
     const dist = portraitDistanceForHeight(0.92);
-    expect(dist).toBeGreaterThanOrEqual(1.68);
-    expect(dist).toBeCloseTo(0.92 * 1.95, 2);
+    expect(dist).toBeGreaterThanOrEqual(1.02);
+    expect(dist).toBeCloseTo(1.02, 1);
   });
 
   it("anchors on chest, not face", () => {
@@ -24,7 +24,8 @@ describe("companionPortraitFraming", () => {
     expect(anchor.y).toBeGreaterThan(0.7);
   });
 
-  it("uses a slightly wide portrait fov", () => {
-    expect(PORTRAIT_FOV).toBeGreaterThanOrEqual(36);
+  it("uses a portrait fov that keeps shoulders in frame", () => {
+    expect(PORTRAIT_FOV).toBeGreaterThanOrEqual(28);
+    expect(PORTRAIT_FOV).toBeLessThanOrEqual(31);
   });
 });
