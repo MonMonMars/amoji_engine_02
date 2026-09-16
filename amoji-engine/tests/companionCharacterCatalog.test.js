@@ -115,6 +115,24 @@ describe("companionCharacterCatalog", () => {
     expect(defaultVoiceForCharacter("quinn", "yue")).toBe("zh-HK-HiuMaanNeural-hero");
     expect(defaultVoiceForCharacter("ember", "yue")).toBe("zh-HK-HiuGaaiNeural-fiery");
     expect(defaultVoiceForCharacter("chibi", "yue")).toBe("zh-HK-HiuMaanNeural-chibi");
+    expect(resolveCharacterId({ modelUrl: "/prototypes/assets/companion-olivia.vrm" })).toBe(
+      "olivia",
+    );
+    expect(resolveCharacterId({ modelUrl: "/prototypes/assets/companion-erika.vrm" })).toBe(
+      "erika",
+    );
+    expect(resolveCharacterId({ modelUrl: "/prototypes/assets/companion-lydia.vrm" })).toBe(
+      "lydia",
+    );
+    expect(resolveCharacterId({ modelUrl: "/prototypes/assets/companion-kate.vrm" })).toBe(
+      "kate",
+    );
+    expect(resolveCharacterId({ modelUrl: "/prototypes/assets/companion-mikel.vrm" })).toBe(
+      "mikel",
+    );
+    expect(defaultVoiceForCharacter("mikel", "yue")).toBe("zh-HK-WanLungNeural-bold");
+    expect(defaultVoiceForCharacter("kate", "yue")).toBe("zh-HK-HiuMaanNeural-sharp");
+    expect(defaultVoiceForCharacter("olivia", "yue")).toBe("zh-HK-HiuGaaiNeural-sunny");
   });
 
   it("exposes avatar config per character", () => {
