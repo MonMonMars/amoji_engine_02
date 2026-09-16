@@ -96,4 +96,12 @@ describe("companionTtsProsody", () => {
     expect(chunk.prosody.edge.rate).toMatch(/^[+-]\d+%$/);
     expect(chunk.speechEnergy).toBeGreaterThan(0.4);
   });
+
+  it("passes singleUtterance flag for one-shot cloud TTS", () => {
+    const perf = normalizeTtsPerformance({
+      emotion: "happy",
+      singleUtterance: true,
+    });
+    expect(perf.singleUtterance).toBe(true);
+  });
 });
