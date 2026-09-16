@@ -37,7 +37,7 @@ describe("companionCharacterPreload", () => {
       onProgress: (ratio) => progress.push(ratio),
     });
     expect(result.ok).toBe(true);
-    expect(result.phase).toBe("previews");
+    expect(result.phase).toBe("background");
     expect(uniqueCharacterPreviewUrls("en").length).toBeGreaterThanOrEqual(18);
     expect(progress.length).toBeGreaterThan(0);
     const modelResult = await result.modelsLoading;
