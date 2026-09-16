@@ -19,6 +19,9 @@ import {
 import {
   PORTRAIT_FOV,
   applyUpperBodyPortraitFrame,
+  detectPortraitCameraZSign,
+  isHeadFacingCamera,
+  portraitDistanceForHeight,
 } from "./companionPortraitFraming.js";
 import { sampleIdleBodyMotion } from "./companionIdleMotion.js";
 
@@ -79,7 +82,7 @@ export async function createGltfAvatar(opts) {
 
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(PORTRAIT_FOV, 1, 0.05, 100);
-  camera.position.set(0, 1.35, -2.35);
+  camera.position.set(0, 1.35, 2.35);
 
   scene.add(new THREE.HemisphereLight(0xffe8dc, 0x1a2030, 1.05));
   const key = new THREE.DirectionalLight(0xfff6ee, 1.55);
@@ -94,7 +97,7 @@ export async function createGltfAvatar(opts) {
   fill.position.set(-1.2, 1.6, 3.2);
   scene.add(fill);
   const faceLight = new THREE.PointLight(0xffe6d4, 0.65, 6);
-  faceLight.position.set(0.2, 1.55, -1.4);
+  faceLight.position.set(0.2, 1.55, 1.4);
   scene.add(faceLight);
 
   const ground = new THREE.Mesh(
@@ -200,12 +203,36 @@ export async function createGltfAvatar(opts) {
     if (/head|face|neck/i.test(obj.name) && obj.isBone) headBone = obj;
   });
   const anchor = computeGltfFrameAnchor(model, headBone);
+  let portraitCameraZSign = detectPortraitCameraZSign(
+    headBone,
+    anchor,
+    portraitDistanceForHeight(fittedSize.y),
+  );
   applyUpperBodyPortraitFrame({
     camera,
     controls,
     anchor,
     fittedHeight: fittedSize.y,
+    cameraZSign: portraitCameraZSign,
   });
+  if (!isHeadFacingCamera(headBone, camera)) {
+    model.rotation.y += Math.PI;
+    const refitted = new THREE.Box3().setFromObject(model);
+    const refAnchor = computeGltfFrameAnchor(model, headBone);
+    portraitCameraZSign = detectPortraitCameraZSign(
+      headBone,
+      refAnchor,
+      portraitDistanceForHeight(refitted.getSize(new THREE.Vector3()).y),
+    );
+    applyUpperBodyPortraitFrame({
+      camera,
+      controls,
+      anchor: refAnchor,
+      fittedHeight: refitted.getSize(new THREE.Vector3()).y,
+      cameraZSign: portraitCameraZSign,
+    });
+  }
+  faceLight.position.set(0.2, 1.55, portraitCameraZSign * 1.4);
 
   /** @type {THREE.AnimationMixer | null} */
   let mixer = null;

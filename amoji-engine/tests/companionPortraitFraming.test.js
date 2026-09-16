@@ -5,6 +5,7 @@ import {
   PORTRAIT_FOV,
   applyUpperBodyPortraitFrame,
   computeUpperBodyAnchor,
+  detectPortraitCameraZSign,
   portraitDistanceForHeight,
 } from "../engine/companion/companionPortraitFraming.js";
 
@@ -31,8 +32,8 @@ describe("companionPortraitFraming", () => {
     expect(PORTRAIT_FOV).toBeLessThanOrEqual(32);
   });
 
-  it("places the camera on -Z so +Z-facing avatars show their front", () => {
-    expect(PORTRAIT_CAMERA_Z_SIGN).toBe(-1);
+  it("defaults camera Z sign to match three-vrm examples (+Z)", () => {
+    expect(PORTRAIT_CAMERA_Z_SIGN).toBe(1);
     const camera = new THREE.PerspectiveCamera();
     const controls = { target: new THREE.Vector3(), update: () => {} };
     const anchor = new THREE.Vector3(0, 1.1, 0);
@@ -42,6 +43,20 @@ describe("companionPortraitFraming", () => {
       anchor,
       fittedHeight: 0.92,
     });
-    expect(camera.position.z).toBeLessThan(anchor.z);
+    expect(camera.position.z).toBeGreaterThan(anchor.z);
+  });
+
+  it("detectPortraitCameraZSign picks the side in front of the face", () => {
+    const head = new THREE.Object3D();
+    head.position.set(0, 1.1, 0);
+    head.rotation.y = 0;
+    head.updateMatrixWorld(true);
+    const anchor = new THREE.Vector3(0, 1.1, 0);
+    const dist = portraitDistanceForHeight(0.92);
+    expect(detectPortraitCameraZSign(head, anchor, dist)).toBe(-1);
+
+    head.rotation.y = Math.PI;
+    head.updateMatrixWorld(true);
+    expect(detectPortraitCameraZSign(head, anchor, dist)).toBe(1);
   });
 });
