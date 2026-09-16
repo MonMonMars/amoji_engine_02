@@ -182,6 +182,6 @@ export function createIdleBeatState(nowMs = performance.now()) {
     beat: null,
     phase: 0,
     duration: 0,
-    nextAt: nowMs + 900 + Math.random() * 1400,
+    nextAt: nowMs + 320 + Math.random() * 680,
   };
 }
