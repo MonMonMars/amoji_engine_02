@@ -6,7 +6,11 @@ import {
   applyUpperBodyPortraitFrame,
   computeUpperBodyAnchor,
   detectPortraitCameraZSign,
+  facingAlignmentScore,
+  isHeadFacingCamera,
+  portraitModelYawOffset,
   portraitDistanceForHeight,
+  resolveFaceForwardHorizontal,
 } from "../engine/companion/companionPortraitFraming.js";
 
 describe("companionPortraitFraming", () => {
@@ -53,10 +57,57 @@ describe("companionPortraitFraming", () => {
     head.updateMatrixWorld(true);
     const anchor = new THREE.Vector3(0, 1.1, 0);
     const dist = portraitDistanceForHeight(0.92);
-    expect(detectPortraitCameraZSign(head, anchor, dist)).toBe(-1);
+    expect(detectPortraitCameraZSign(head, anchor, dist)).toBe(1);
 
     head.rotation.y = Math.PI;
     head.updateMatrixWorld(true);
-    expect(detectPortraitCameraZSign(head, anchor, dist)).toBe(1);
+    expect(detectPortraitCameraZSign(head, anchor, dist)).toBe(-1);
+  });
+
+  it("facingAlignmentScore is positive when the camera is in front of +Z heads", () => {
+    const head = new THREE.Object3D();
+    head.position.set(0, 1.1, 0);
+    head.rotation.y = 0;
+    head.updateMatrixWorld(true);
+    const camera = new THREE.PerspectiveCamera();
+    camera.position.set(0, 1.18, 1.3);
+    expect(facingAlignmentScore(head, camera.position)).toBeGreaterThan(0.5);
+  });
+
+  it("resolveFaceForwardHorizontal prefers eye midpoint over head +Z", () => {
+    const head = new THREE.Object3D();
+    head.position.set(0, 1.1, 0);
+    head.rotation.y = 0;
+    head.updateMatrixWorld(true);
+    const leftEye = new THREE.Object3D();
+    leftEye.position.set(-0.03, 1.12, 0.08);
+    const rightEye = new THREE.Object3D();
+    rightEye.position.set(0.03, 1.12, 0.08);
+    leftEye.updateMatrixWorld(true);
+    rightEye.updateMatrixWorld(true);
+    const humanoid = {
+      getNormalizedBoneNode: (name) => {
+        if (name === "leftEye") return leftEye;
+        if (name === "rightEye") return rightEye;
+        return null;
+      },
+    };
+    const forward = resolveFaceForwardHorizontal(head, humanoid, new THREE.Vector3());
+    expect(forward?.z).toBeGreaterThan(0.9);
+  });
+
+  it("isHeadFacingCamera and portraitModelYawOffset agree on front vs back", () => {
+    const head = new THREE.Object3D();
+    head.position.set(0, 1.1, 0);
+    head.rotation.y = 0;
+    head.updateMatrixWorld(true);
+    const camera = new THREE.PerspectiveCamera();
+    camera.position.set(0, 1.18, 1.3);
+    expect(isHeadFacingCamera(head, camera)).toBe(true);
+    expect(portraitModelYawOffset(head, camera)).toBe(0);
+
+    camera.position.set(0, 1.18, -1.3);
+    expect(isHeadFacingCamera(head, camera)).toBe(false);
+    expect(portraitModelYawOffset(head, camera)).toBe(Math.PI);
   });
 });
