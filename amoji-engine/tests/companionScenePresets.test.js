@@ -76,7 +76,8 @@ describe("companionScenePresets", () => {
     );
     persistSceneOutfit("nova", "casual");
     expect(loadStoredSceneOutfit("nova")).toBe("casual");
-    expect(loadStoredSceneOutfit("amoji")).toBe("default");
+    persistSceneOutfit("amoji", "formal");
+    expect(loadStoredSceneOutfit("amoji")).toBe("formal");
     expect(localStorage.getItem(SCENE_OUTFIT_STORAGE_KEY)).toContain("casual");
     const stage = { dataset: {} };
     expect(applySceneOutfit(stage, "formal")).toBe("formal");
