@@ -328,5 +328,6 @@ export function normalizeTtsPerformance(performance, fallbackEmotion = "neutral"
     speechEnergy: perf.speechEnergy ?? 0.64,
     lang: perf.lang,
     text: perf.text,
+    singleUtterance: perf.singleUtterance === true,
   };
 }
