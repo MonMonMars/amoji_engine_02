@@ -7,6 +7,23 @@ import { resolveMotionSamplerKey } from "./companionMotionLibrary.js";
 export const COMPANION_ONLINE_MOTION_CLIPS_SCHEMA =
   "amoji.companionOnlineMotionClips.v1";
 
+/** Subtle social gestures — procedural body motion returns to arms-down rest. */
+export const PROCEDURAL_PREFERRED_ACTIONS = Object.freeze(
+  new Set([
+    "wave",
+    "nod",
+    "bow",
+    "thinking",
+    "shrug",
+    "point",
+    "peace",
+    "thumbsup",
+    "highfive",
+    "salute",
+    "handshake",
+  ]),
+);
+
 const VRMA_BASE =
   "https://raw.githubusercontent.com/tk256ailab/vrm-viewer/main/VRMA";
 
@@ -93,7 +110,9 @@ export function resolveOnlineMotionClipFile(actionId) {
  * @param {string | null | undefined} actionId
  */
 export function resolveOnlineMotionClipUrl(actionId) {
-  const file = resolveOnlineMotionClipFile(actionId);
+  const id = String(actionId || "").toLowerCase();
+  if (PROCEDURAL_PREFERRED_ACTIONS.has(id)) return null;
+  const file = resolveOnlineMotionClipFile(id);
   if (!file) return null;
   return `${VRMA_BASE}/${file}.vrma`;
 }

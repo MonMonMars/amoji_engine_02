@@ -38,13 +38,25 @@ export function createVrmMotionPlayer(opts) {
   /** @type {Map<string, Promise<THREE.AnimationClip | null>>} */
   const inflight = new Map();
 
+  const releasePose = () => {
+    if (clipAction) {
+      clipAction.stop();
+      clipAction.reset();
+      clipAction = null;
+    }
+    if (mixer) {
+      mixer.stopAllAction();
+    }
+    activeActionId = null;
+    vrm.humanoid?.resetNormalizedPose?.();
+  };
+
   const ensureMixer = () => {
     if (!mixer) {
       mixer = new THREE.AnimationMixer(vrm.scene);
       mixer.addEventListener("finished", () => {
         const completed = activeActionId;
-        activeActionId = null;
-        clipAction = null;
+        releasePose();
         opts.onComplete?.(completed);
       });
     }
@@ -77,9 +89,7 @@ export function createVrmMotionPlayer(opts) {
   };
 
   const stop = () => {
-    clipAction?.stop();
-    clipAction = null;
-    activeActionId = null;
+    releasePose();
   };
 
   /**
@@ -102,7 +112,8 @@ export function createVrmMotionPlayer(opts) {
       playOpts.loop ? THREE.LoopRepeat : THREE.LoopOnce,
       playOpts.loop ? Infinity : 1,
     );
-    clipAction.clampWhenFinished = true;
+    clipAction.clampWhenFinished = false;
+    clipAction.fadeIn(0.12);
     clipAction.play();
     activeActionId = id;
     return true;
@@ -125,8 +136,13 @@ export function createVrmMotionPlayer(opts) {
     update,
     warmClip,
     isPlaying() {
-      return Boolean(activeActionId && clipAction?.isRunning());
+      return Boolean(
+        activeActionId &&
+          clipAction &&
+          (clipAction.isRunning() || clipAction.getEffectiveWeight() > 0.01),
+      );
     },
+    releasePose,
     get activeActionId() {
       return activeActionId;
     },
