@@ -294,7 +294,6 @@ export async function createVrmAvatar(opts) {
     vrm.update(1 / 60);
   }
   bodyMotion.resetMotionClock?.();
-  t0 = performance.now();
   faceLight.position.set(0.2, 1.55, portraitCameraZSign * 1.4);
   smoothedFrameAnchor.copy(faceAnchor);
   /** @type {{ position: THREE.Vector3, target: THREE.Vector3, fov: number, distance: number }} */
@@ -895,6 +894,7 @@ export async function createVrmAvatar(opts) {
       controls.dispose();
       vrm.dispose?.();
       renderer.dispose();
+      renderer.forceContextLoss?.();
     },
   };
 }
