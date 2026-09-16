@@ -30,4 +30,12 @@ describe("companion start picker", () => {
     });
     expect(html).toContain(list[0].name);
   });
+
+  it("start picker uses the same compact card layout as in-session picker", () => {
+    const item = listCompanionCharacters("en")[0];
+    const startCard = companionCardInnerHtml(item, { compact: true });
+    const sessionCard = companionCardInnerHtml(item, { compact: true });
+    expect(startCard).toBe(sessionCard);
+    expect(startCard).not.toContain("companion-card-tagline");
+  });
 });
