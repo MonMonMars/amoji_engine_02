@@ -8,9 +8,9 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji · Companion</title>
     <script>
-      window.__amojiBuild = "2026-09-15-v80-voice-only-ui";
+      window.__amojiBuild = "2026-09-15-v81-activity-icons";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-15-v80-voice-only-ui"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-15-v81-activity-icons"></script>
     <link
       rel="preload"
       href="/prototypes/assets/companion-girl.vrm"
@@ -220,7 +220,7 @@
       media="print"
       onload="this.media='all'"
     />
-    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-15-v80-voice-only-ui" />
+    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-15-v81-activity-icons" />
     <noscript>
       <link
         href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap"
@@ -1419,6 +1419,105 @@
         border: 1px solid rgba(127, 212, 207, 0.28);
       }
 
+      .activity-rail {
+        display: flex;
+        flex-direction: column;
+        gap: 0.4rem;
+        padding: 0.25rem 0.85rem 0.45rem;
+        pointer-events: none;
+      }
+
+      .activity-rail__functions,
+      .activity-rail__feed {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.35rem;
+        align-items: center;
+      }
+
+      .activity-rail__process {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.15rem;
+        padding: 0.4rem 0.5rem;
+        border-radius: 0.85rem;
+        background: rgba(127, 212, 207, 0.08);
+        border: 1px solid rgba(127, 212, 207, 0.18);
+      }
+
+      .activity-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.28rem;
+        padding: 0.2rem 0.48rem;
+        border-radius: 999px;
+        font-size: 0.66rem;
+        font-weight: 650;
+        color: rgba(247, 241, 232, 0.9);
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .activity-chip--function {
+        background: rgba(127, 212, 207, 0.12);
+        border-color: rgba(127, 212, 207, 0.28);
+      }
+
+      .activity-chip__icon {
+        font-size: 0.8rem;
+        line-height: 1;
+      }
+
+      .activity-step-wrap {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.1rem;
+      }
+
+      .activity-step {
+        display: inline-flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.1rem;
+        min-width: 2.5rem;
+        opacity: 0.45;
+      }
+
+      .activity-step--active {
+        opacity: 1;
+        transform: scale(1.05);
+      }
+
+      .activity-step--done {
+        opacity: 0.85;
+      }
+
+      .activity-step__icon {
+        font-size: 0.95rem;
+        line-height: 1;
+      }
+
+      .activity-step__label {
+        font-size: 0.56rem;
+        font-weight: 650;
+        color: rgba(247, 241, 232, 0.72);
+        max-width: 4.2rem;
+        text-align: center;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .activity-step--active .activity-step__label {
+        color: rgba(127, 212, 207, 0.95);
+      }
+
+      .activity-step__arrow {
+        font-size: 0.6rem;
+        color: rgba(247, 241, 232, 0.35);
+      }
+
       .topbar-actions {
         display: flex;
         align-items: center;
@@ -2249,25 +2348,25 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-15-v80-voice-only-ui",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-15-v81-activity-icons",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-15-v80-voice-only-ui"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-15-v81-activity-icons"
         }
       }
     </script>
-    <link rel="modulepreload" href="/amoji-engine/vendor/three.module.js?v=2026-09-15-v80-voice-only-ui" />
-    <link rel="modulepreload" href="/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-15-v80-voice-only-ui" />
+    <link rel="modulepreload" href="/amoji-engine/vendor/three.module.js?v=2026-09-15-v81-activity-icons" />
+    <link rel="modulepreload" href="/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-15-v81-activity-icons" />
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-15-v80-voice-only-ui"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-15-v81-activity-icons"
     />
-    <link rel="modulepreload" href="/amoji-engine/engine/companion/vrmAvatar.js?v=2026-09-15-v80-voice-only-ui" />
-    <link rel="modulepreload" href="/amoji-engine/engine/companion/createAvatar.js?v=2026-09-15-v80-voice-only-ui" />
+    <link rel="modulepreload" href="/amoji-engine/engine/companion/vrmAvatar.js?v=2026-09-15-v81-activity-icons" />
+    <link rel="modulepreload" href="/amoji-engine/engine/companion/createAvatar.js?v=2026-09-15-v81-activity-icons" />
     <link rel="prefetch" href="/api/motions?pack=basic" as="fetch" crossorigin />
     <link rel="prefetch" href="/api/motions?pack=extensions" as="fetch" crossorigin />
     <link rel="prefetch" href="/api/motions?pack=premium" as="fetch" crossorigin />
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-15-v80-voice-only-ui"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-15-v80-voice-only-ui"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-15-v81-activity-icons"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-15-v81-activity-icons"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;
@@ -2696,6 +2795,7 @@
         motionCapabilitiesMod,
         voicePickerMod,
         uiIntentMod,
+        activityRailMod,
       ] = await Promise.all([
         ami("../amoji-engine/engine/companion/createAvatar.js"),
         ami("../amoji-engine/engine/companion/chatLlm.js"),
@@ -2728,6 +2828,7 @@
         ami("../amoji-engine/engine/companion/companionMotionCapabilities.js"),
         ami("../amoji-engine/engine/companion/companionVoicePicker.js"),
         ami("../amoji-engine/engine/companion/companionUiIntent.js"),
+        ami("../amoji-engine/engine/companion/companionActivityRail.js"),
       ]);
       window.__amojiModuleBooted = true;
       const {
@@ -4319,6 +4420,12 @@
         });
       };
 
+      const { createCompanionActivityRail } = activityRailMod;
+      const activityRail = createCompanionActivityRail(document, {
+        isEnglish,
+        mount: document.querySelector(".topbar"),
+      });
+
       const uiContextPill = document.getElementById("ui-context-pill");
 
       const updateUiContextPill = (applied = []) => {
@@ -4327,6 +4434,7 @@
         if (!labels.length) return;
         uiContextPill.hidden = false;
         uiContextPill.textContent = labels.join(" · ");
+        activityRail.showFunctions(applied);
       };
 
       const companionUiHandlers = {
@@ -4376,6 +4484,7 @@
         if (!cleaned) return;
         if (handleUserStopCommand(cleaned)) return;
         void applyConversationUi(cleaned, null);
+        activityRail.pulse("🎤", isEnglish ? "Heard" : "聽到");
         if (busy) {
           if (phaseAEnabled && fromMic) {
             abortActiveTurn("mic-barge");
@@ -4415,6 +4524,7 @@
         avatar.prepareThinkingFromUser?.(cleaned, isEnglish);
         setEmotionPill(avatar.emotion || "thinking");
         status.thinking();
+        activityRail.pulse("💭", isEnglish ? "Thinking" : "諗緊");
         waitAct?.start({
           kind: "thinking",
           phase: "thinking",

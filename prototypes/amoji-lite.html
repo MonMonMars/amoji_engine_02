@@ -8,10 +8,10 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji Secretary</title>
     <script>
-      window.__amojiBuild = "2026-09-15-v80-voice-only-ui";
+      window.__amojiBuild = "2026-09-15-v81-activity-icons";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-15-v80-voice-only-ui"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-15-v80-voice-only-ui"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-15-v81-activity-icons"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-15-v81-activity-icons"></script>
     <style>
       *,
       *::before,
@@ -706,6 +706,121 @@
         background: rgba(127, 212, 207, 0.14);
         border: 1px solid rgba(127, 212, 207, 0.28);
       }
+
+      .activity-rail {
+        display: flex;
+        flex-direction: column;
+        gap: 0.45rem;
+        padding: 0.35rem 0.85rem 0.55rem;
+      }
+
+      .activity-rail__functions,
+      .activity-rail__feed {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.35rem;
+        align-items: center;
+      }
+
+      .activity-rail__process {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.15rem;
+        padding: 0.45rem 0.55rem;
+        border-radius: 0.85rem;
+        background: rgba(127, 212, 207, 0.08);
+        border: 1px solid rgba(127, 212, 207, 0.18);
+      }
+
+      .activity-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.28rem;
+        padding: 0.22rem 0.5rem;
+        border-radius: 999px;
+        font-size: 0.68rem;
+        font-weight: 650;
+        color: rgba(247, 241, 232, 0.9);
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .activity-chip--function {
+        background: rgba(127, 212, 207, 0.12);
+        border-color: rgba(127, 212, 207, 0.28);
+      }
+
+      .activity-chip--feed {
+        animation: activity-feed-in 0.35s ease;
+      }
+
+      @keyframes activity-feed-in {
+        from {
+          opacity: 0;
+          transform: translateY(4px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .activity-chip__icon {
+        font-size: 0.82rem;
+        line-height: 1;
+      }
+
+      .activity-step-wrap {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.1rem;
+      }
+
+      .activity-step {
+        display: inline-flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.12rem;
+        min-width: 2.6rem;
+        opacity: 0.45;
+        transition: opacity 0.2s ease, transform 0.2s ease;
+      }
+
+      .activity-step--active {
+        opacity: 1;
+        transform: scale(1.05);
+      }
+
+      .activity-step--done {
+        opacity: 0.85;
+      }
+
+      .activity-step__icon {
+        font-size: 1rem;
+        line-height: 1;
+      }
+
+      .activity-step__label {
+        font-size: 0.58rem;
+        font-weight: 650;
+        color: rgba(247, 241, 232, 0.72);
+        max-width: 4.5rem;
+        text-align: center;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .activity-step--active .activity-step__label {
+        color: rgba(127, 212, 207, 0.95);
+      }
+
+      .activity-step__arrow {
+        font-size: 0.62rem;
+        color: rgba(247, 241, 232, 0.35);
+        margin: 0 0.05rem;
+      }
     </style>
   </head>
   <body>
@@ -804,7 +919,7 @@
     </div>
 
     <script type="module">
-      import { initAmojiSecretaryLite } from "/amoji-engine/engine/companion/secretary/secretaryLiteShell.js?v=2026-09-15-v80-voice-only-ui";
+      import { initAmojiSecretaryLite } from "/amoji-engine/engine/companion/secretary/secretaryLiteShell.js?v=2026-09-15-v81-activity-icons";
       window.__amojiLiteTag = "secretary-v1";
       window.__amojiLite = { ready: true, ttsCalls: 0, chatCalls: 0 };
       initAmojiSecretaryLite(document);

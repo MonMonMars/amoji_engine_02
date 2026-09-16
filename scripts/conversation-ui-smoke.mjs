@@ -31,6 +31,7 @@ const chromeHidden = await page.evaluate(() => {
     conversationUi: document.body.classList.contains("conversation-ui"),
     tabbarHidden: style?.display === "none",
     modeRowHidden: modeStyle?.display === "none",
+    hasActivityRail: !!document.getElementById("activity-rail"),
     build: window.__amojiBuild,
   };
 });
@@ -56,13 +57,17 @@ await page.waitForFunction(
     const tasks = document.getElementById("panel-tasks");
     const today = document.getElementById("panel-today");
     const pill = document.getElementById("ui-context-pill");
+    const fnChip = document.querySelector(
+      '.activity-chip--function[data-kind="tab"][data-value="tasks"]',
+    );
     return (
       tasks &&
       !tasks.classList.contains("hidden") &&
       today?.classList.contains("hidden") &&
       pill &&
       !pill.hidden &&
-      pill.textContent?.length > 0
+      pill.textContent?.length > 0 &&
+      fnChip
     );
   },
   { timeout: 15000 },
