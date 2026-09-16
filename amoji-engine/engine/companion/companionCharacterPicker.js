@@ -10,11 +10,15 @@ export const COMPANION_START_PICKER_SCHEMA = "amoji.companionStartPicker.v1";
 
 /**
  * @param {ReturnType<typeof listCompanionCharacters>[number]} item
- * @param {{ selectedId?: string, compact?: boolean }} [ctx]
+ * @param {{ selectedId?: string, compact?: boolean, eagerPreview?: boolean }} [ctx]
  */
 export function companionCardInnerHtml(item, ctx = {}) {
   const compact = Boolean(ctx.compact);
+  const eagerPreview = Boolean(ctx.eagerPreview);
   const selected = item.id === ctx.selectedId;
+  const imgAttrs = eagerPreview
+    ? 'loading="eager" fetchpriority="high" decoding="async"'
+    : 'loading="lazy" decoding="async"';
   const badge = item.badge
     ? `<span class="companion-card-badge${compact ? " companion-card-badge--mini" : ""}">${item.badge}</span>`
     : "";
@@ -31,7 +35,7 @@ export function companionCardInnerHtml(item, ctx = {}) {
   if (compact) {
     return `
       <div class="companion-card-portrait">
-        <img src="${item.previewImage}" alt="" loading="lazy" decoding="async" />
+        <img src="${item.previewImage}" alt="" ${imgAttrs} />
         ${badge}
         <span class="companion-card-check" aria-hidden="true">✓</span>
       </div>
@@ -42,7 +46,7 @@ export function companionCardInnerHtml(item, ctx = {}) {
 
   return `
     <div class="companion-card-portrait">
-      <img src="${item.previewImage}" alt="" loading="lazy" decoding="async" />
+      <img src="${item.previewImage}" alt="" ${imgAttrs} />
       ${badge}
       <span class="companion-card-check" aria-hidden="true">✓</span>
     </div>
@@ -61,6 +65,7 @@ export function companionCardInnerHtml(item, ctx = {}) {
  *   selectedId?: string,
  *   compact?: boolean,
  *   disabled?: boolean,
+ *   eagerPreview?: boolean,
  *   onCardClick?: (id: string) => void,
  * }} ctx
  */
@@ -74,6 +79,8 @@ export function renderCompanionPickerGrid(gridEl, langCode, ctx = {}) {
       createCompanionCardButton(item, {
         selectedId: ctx.selectedId,
         compact,
+        eagerPreview: ctx.eagerPreview,
+        disabled: ctx.disabled,
         onClick: (id) => {
           if (ctx.disabled) return;
           ctx.onCardClick?.(id);
@@ -88,6 +95,8 @@ export function renderCompanionPickerGrid(gridEl, langCode, ctx = {}) {
  * @param {{
  *   selectedId?: string,
  *   compact?: boolean,
+ *   eagerPreview?: boolean,
+ *   disabled?: boolean,
  *   onClick?: (id: string) => void,
  * }} ctx
  */
@@ -95,6 +104,10 @@ export function createCompanionCardButton(item, ctx = {}) {
   const compact = Boolean(ctx.compact);
   const card = document.createElement("button");
   card.type = "button";
+  if (ctx.disabled) {
+    card.disabled = true;
+    card.setAttribute("aria-disabled", "true");
+  }
   card.className = compact
     ? "companion-card companion-card--compact"
     : "companion-card";
@@ -249,6 +262,7 @@ export function createCompanionStartPicker(opts = {}) {
   let selectedId = opts.selectedId || "amoji";
   let starting = false;
   let preloadPct = 0;
+  let preloadReady = false;
 
   const shell = document.createElement("div");
   shell.className = "companion-picker companion-picker--start is-open";
@@ -307,9 +321,13 @@ export function createCompanionStartPicker(opts = {}) {
         ? isEnglish
           ? "Starting…"
           : "開始中…"
-        : isEnglish
-          ? "Tap a card to start — voice and mic unlock when you pick someone"
-          : "點選角色開始 — 揀好就會開啟語音同麥克風";
+        : !preloadReady
+          ? isEnglish
+            ? "Preloading companions — pick someone when the bar is full"
+            : "正在預載同伴 — 進度條滿咗就可以揀"
+          : isEnglish
+            ? "Tap a card to start — voice and mic unlock when you pick someone"
+            : "點選角色開始 — 揀好就會開啟語音同麥克風";
     }
   };
 
@@ -348,13 +366,16 @@ export function createCompanionStartPicker(opts = {}) {
     renderCompanionPickerGrid(gridEl, langCode, {
       selectedId,
       compact: true,
-      disabled: starting,
+      eagerPreview: true,
+      disabled: starting || !preloadReady,
       onCardClick: (id) => {
+        if (!preloadReady || starting) return;
         selectedId = id;
         renderGrid();
         opts.onStart?.(id);
       },
     });
+    shell.classList.toggle("is-preloading", !preloadReady && !starting);
     requestAnimationFrame(renderScrollHint);
   };
 
@@ -374,12 +395,19 @@ export function createCompanionStartPicker(opts = {}) {
     setPreloadProgress(pct, label) {
       preloadPct = Number(pct) || 0;
       if (label && preloadLabel) preloadLabel.textContent = label;
+      const ready = preloadPct >= 100;
+      if (ready !== preloadReady) {
+        preloadReady = ready;
+        renderGrid();
+        copy();
+      }
       renderPreload();
     },
     setStarting(on) {
       starting = Boolean(on);
       shell.classList.toggle("is-starting", starting);
       shell.setAttribute("aria-busy", starting ? "true" : "false");
+      renderGrid();
       copy();
     },
     show() {

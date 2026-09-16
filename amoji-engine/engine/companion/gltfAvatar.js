@@ -135,11 +135,31 @@ export async function createGltfAvatar(opts) {
   controls.enableZoom = true;
 
   const loader = new GLTFLoader();
-  const gltf = await loader.loadAsync(modelUrl, (event) => {
-    if (event.lengthComputable && event.total > 0) {
-      opts.onProgress?.(event.loaded / event.total, "model");
+  const preload =
+    globalThis.__amojiPreload?.getModel?.(modelUrl) ??
+    globalThis.__amojiPreload?.getVrm?.(modelUrl) ??
+    null;
+  let gltf;
+  if (preload) {
+    try {
+      const buffer = await preload;
+      gltf = await loader.parseAsync(buffer, modelUrl);
+      opts.onProgress?.(1, "model");
+    } catch (err) {
+      console.warn("[gltf] prefetched model parse failed, falling back to URL", err);
+      gltf = await loader.loadAsync(modelUrl, (event) => {
+        if (event.lengthComputable && event.total > 0) {
+          opts.onProgress?.(event.loaded / event.total, "model");
+        }
+      });
     }
-  });
+  } else {
+    gltf = await loader.loadAsync(modelUrl, (event) => {
+      if (event.lengthComputable && event.total > 0) {
+        opts.onProgress?.(event.loaded / event.total, "model");
+      }
+    });
+  }
   opts.onProgress?.(1, "model");
   const model = gltf.scene;
   model.traverse((obj) => {

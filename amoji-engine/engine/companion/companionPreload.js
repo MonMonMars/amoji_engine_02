@@ -45,6 +45,9 @@ let bodyMotionModulePromise = null;
 /** @type {Promise<unknown> | null} */
 let contentMotionModulePromise = null;
 
+/** @type {Promise<unknown> | null} */
+let gltfModulePromise = null;
+
 /**
  * @param {string} url
  * @returns {Promise<ArrayBuffer> | null}
@@ -180,6 +183,9 @@ export function startCompanionPreload(opts = {}) {
   if (!contentMotionModulePromise) {
     contentMotionModulePromise = import("./companionContentMotion.js");
   }
+  if (!gltfModulePromise) {
+    gltfModulePromise = import("./gltfAvatar.js");
+  }
 
   return {
     schema: COMPANION_PRELOAD_SCHEMA,
@@ -194,6 +200,7 @@ export function startCompanionPreload(opts = {}) {
     performancePreloadModule: performancePreloadModulePromise,
     bodyMotionModule: bodyMotionModulePromise,
     contentMotionModule: contentMotionModulePromise,
+    gltfModule: gltfModulePromise,
   };
 }
 
@@ -204,13 +211,14 @@ const boot = shouldAutoBoot ? startCompanionPreload() : null;
 
 if (shouldAutoBoot && !rosterPreloadPromise) {
   rosterPreloadPromise = import("./companionCharacterPreload.js")
-    .then((mod) =>
-      mod.startCharacterRosterPreload({
+    .then((mod) => {
+      mod.injectRosterAssetHints?.("yue");
+      return mod.startCharacterRosterPreload({
         onProgress: (ratio) => {
           globalThis.__amojiRosterPreloadPct = ratio;
         },
-      }),
-    )
+      });
+    })
     .catch(() => null);
 }
 
@@ -219,10 +227,12 @@ if (typeof globalThis !== "undefined") {
     schema: COMPANION_PRELOAD_SCHEMA,
     start: startCompanionPreload,
     getVrm: getPreloadedVrmPromise,
+    getModel: getPreloadedVrmPromise,
     getMotionBasic: getPreloadedMotionBasicPromise,
     getVrmModule: getPreloadedVrmModulePromise,
     releaseExcept: releaseVrmPreloadExcept,
     rosterReady: rosterPreloadPromise,
+    getRosterProgress: () => globalThis.__amojiRosterPreloadPct ?? 0,
     ready: boot,
   };
 }
