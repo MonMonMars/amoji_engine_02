@@ -672,11 +672,13 @@ export async function createVrmAvatar(opts) {
   const frame = () => {
     const dt = clock.getDelta();
     const now = performance.now();
-    const vrmaPlaying = Boolean(vrmaAction && motionPlayer.isPlaying?.());
+      const vrmaPlaying = Boolean(vrmaAction && motionPlayer.isPlaying?.());
     if (vrmaAction && !vrmaPlaying) {
       restoreAfterVrma();
     }
-    const activeMotion = vrmaAction || bodyMotion.currentAction;
+    const activeMotion = vrmaAction && motionPlayer.isPlaying?.()
+      ? vrmaAction
+      : bodyMotion.currentAction;
     try {
       if (!vrmaPlaying) {
         bodyMotion.update(dt, { talking, now });

@@ -49,7 +49,7 @@ export function sampleIdleBodyMotion(elapsedSec, opts = {}) {
   const weight = Math.sin(t * 0.42 + 1.4);
   const bob = Math.sin(t * 0.88 + 0.3);
   const energy = listening ? 1.12 : 1;
-  const amp = 1.85;
+  const amp = 2.35;
 
   return {
     headX: (breath * 0.07 + Math.sin(t * 0.52) * 0.04) * energy * amp,
