@@ -54,7 +54,7 @@ export const WAIT_POSES_BY_PHASE = Object.freeze({
   learning: ["learning", "thinking", "nod", "stretch", "wave"],
   installing: ["nod", "learning", "downloading", "clap", "thumbsup"],
   thinking: ["thinking", "nod", "wave", "shrug", "point"],
-  "avatar-load": ["nod", "stretch", "peace", "shrug", "nod"],
+  "avatar-load": ["wave", "nod", "peace", "shrug", "wave"],
   "character-switch": ["wave", "nod", "celebrate", "cheer", "dab"],
   "motion-pack": [
     "downloading",
@@ -85,7 +85,7 @@ export const WAIT_EMOTIONS_BY_PHASE = Object.freeze({
   learning: ["thinking", "happy", "neutral"],
   installing: ["happy", "thinking", "surprised"],
   thinking: ["thinking", "neutral", "happy"],
-  "avatar-load": ["thinking", "happy", "neutral", "surprised", "sad"],
+  "avatar-load": ["happy", "neutral", "surprised", "happy", "neutral"],
   "character-switch": ["happy", "thinking", "surprised"],
   "motion-pack": ["thinking", "happy", "neutral", "surprised"],
   idle: ["happy", "neutral", "thinking", "surprised", "sad", "angry"],
@@ -128,11 +128,11 @@ export const WAIT_EXPRESSION_BY_PHASE = Object.freeze({
     { emotion: "happy", nuance: "shy" },
   ],
   "avatar-load": [
-    { emotion: "thinking", nuance: "curious" },
-    { emotion: "happy", nuance: "excited" },
+    { emotion: "happy", nuance: "none" },
     { emotion: "neutral", nuance: "none" },
+    { emotion: "happy", nuance: "excited" },
     { emotion: "surprised", nuance: "excited" },
-    { emotion: "happy", nuance: "love" },
+    { emotion: "neutral", nuance: "none" },
   ],
   "character-switch": [
     { emotion: "happy", nuance: "excited" },

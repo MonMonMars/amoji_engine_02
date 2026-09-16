@@ -15,12 +15,12 @@ export const COMPANION_TTS_PROSODY_SCHEMA = "amoji.companionTtsProsody.v1";
 /** @typedef {{ rate: number, pitch: number, volume: number }} BrowserProsody */
 
 const EMOTION_EDGE_BASE = Object.freeze({
-  neutral: { rate: 14, pitch: 18, volume: 6 },
-  happy: { rate: 34, pitch: 40, volume: 18 },
-  thinking: { rate: -8, pitch: 4, volume: -6 },
-  sad: { rate: -16, pitch: -10, volume: -10 },
-  surprised: { rate: 40, pitch: 46, volume: 20 },
-  angry: { rate: 26, pitch: -4, volume: 14 },
+  neutral: { rate: 18, pitch: 22, volume: 8 },
+  happy: { rate: 42, pitch: 48, volume: 22 },
+  thinking: { rate: -10, pitch: 6, volume: -4 },
+  sad: { rate: -20, pitch: -12, volume: -8 },
+  surprised: { rate: 48, pitch: 52, volume: 24 },
+  angry: { rate: 32, pitch: -2, volume: 18 },
 });
 
 const NUANCE_EDGE_DELTA = Object.freeze({
@@ -124,42 +124,84 @@ function analyzeTextExpressiveness(text) {
  */
 export function buildTtsInstruct(opts = {}) {
   const emotion = String(opts.emotion || "neutral").toLowerCase();
-  const nuance = String(opts.nuance || "none").toLowerCase();
+  let nuance = String(opts.nuance || "none").toLowerCase();
   const talkStyle = String(opts.talkStyle || "explain").toLowerCase();
-  const energy = opts.speechEnergy ?? 0.5;
+  const text = String(opts.text || "");
+  const energy = opts.speechEnergy ?? 0.68;
   const lang = String(opts.lang || "yue").toLowerCase();
   const isEnglish = lang === "en" || lang.startsWith("en-");
 
-  const moodBits = [];
-  if (emotion === "happy") moodBits.push("warm", "cheerful");
-  else if (emotion === "sad") moodBits.push("gentle", "soft", "empathetic");
-  else if (emotion === "thinking") moodBits.push("thoughtful", "unhurried");
-  else if (emotion === "surprised") moodBits.push("bright", "animated");
-  else if (emotion === "angry") moodBits.push("firm", "intense");
-  else moodBits.push("natural", "conversational");
+  if (nuance === "none" && emotion === "happy") nuance = "excited";
+  if (nuance === "none" && emotion === "surprised") nuance = "excited";
+  if (nuance === "none" && emotion === "thinking") nuance = "curious";
 
-  if (nuance === "excited") moodBits.push("energetic", "enthusiastic");
-  if (nuance === "shy") moodBits.push("shy", "a little hesitant");
-  if (nuance === "love") moodBits.push("affectionate", "caring");
-  if (nuance === "curious") moodBits.push("curious", "engaged");
-  if (nuance === "stress") moodBits.push("concerned", "reassuring");
+  const affect =
+    emotion === "happy"
+      ? "Bright, warm, and playful — like a close anime friend who's glad to see you."
+      : emotion === "sad"
+        ? "Soft, gentle, and empathetic — caring without sounding flat or robotic."
+        : emotion === "thinking"
+          ? "Thoughtful and unhurried, with quiet curiosity."
+          : emotion === "surprised"
+            ? "Animated and bright, with lifted energy on key words."
+            : emotion === "angry"
+              ? "Firm and intense, but still human and controlled."
+              : "Natural, relaxed, and conversational — never monotone.";
 
-  if (talkStyle === "question") moodBits.push("inquisitive rising intonation");
-  if (talkStyle === "celebrate") moodBits.push("celebratory");
-  if (talkStyle === "soft") moodBits.push("softer delivery");
-  if (talkStyle === "emphasize") moodBits.push("emphatic");
+  const toneBits = [];
+  if (nuance === "excited") toneBits.push("enthusiastic", "smiling voice");
+  if (nuance === "shy") toneBits.push("a little shy", "soft edges");
+  if (nuance === "love") toneBits.push("affectionate", "caring");
+  if (nuance === "curious") toneBits.push("curious", "engaged");
+  if (nuance === "stress") toneBits.push("reassuring", "steady");
+  if (talkStyle === "celebrate") toneBits.push("celebratory");
+  if (talkStyle === "question") toneBits.push("inquisitive");
+  if (talkStyle === "soft") toneBits.push("tender");
+  const tone =
+    toneBits.length > 0
+      ? toneBits.join(", ")
+      : isEnglish
+        ? "Friendly and emotionally present"
+        : "親切、有感情";
 
-  const energyHint =
-    energy > 0.72
-      ? "lively pacing with expressive intonation"
-      : energy < 0.35
-        ? "calm, measured pacing"
-        : "natural conversational pacing";
+  const pacing =
+    energy > 0.75
+      ? "Lively and expressive; speed up slightly on exclamations."
+      : energy < 0.38
+        ? "Slow, calm, and measured."
+        : "Natural conversational pacing with light variation.";
 
-  if (isEnglish) {
-    return `Speak like a close anime friend in ${emotion} mood. Sound ${moodBits.join(", ")}. Use ${energyHint} — vary pitch on questions and exclamations, never monotone.`;
-  }
-  return `用親切嘅粵語同朋友傾偈，情緒係${emotion}。語氣要${moodBits.join("、")}，${energyHint}，問句尾音上揚，感嘆要有活力，唔好平平淡淡。`;
+  const emotionLine =
+    emotion === "happy"
+      ? "Genuine warmth and delight — let happiness show in pitch lifts and brighter vowels."
+      : emotion === "sad"
+        ? "Quiet empathy; slightly slower with softer volume on sympathetic phrases."
+        : emotion === "thinking"
+          ? "Curious pondering; brief pauses where the character is considering."
+          : emotion === "surprised"
+            ? "Delighted surprise; quick lift on reactions."
+            : emotion === "angry"
+              ? "Controlled frustration; sharper consonants, not shouting."
+              : "Neutral but engaged — still sound human, not a GPS voice.";
+
+  const pronunciation = isEnglish
+    ? "Clear and expressive. Lift pitch on questions and exclamations; emphasize emotional words."
+    : "咬字清楚，問句尾音上揚，感嘆詞要有活力，唔好平平淡淡。";
+
+  const pauses = /[…\.]{3,}/.test(text)
+    ? "Use meaningful pauses around ellipses; let suspense breathe."
+    : /[!！?？]/.test(text)
+      ? "Brief pause after exclamations or questions before continuing."
+      : "Light pauses at commas; don't rush through the line.";
+
+  return [
+    `Voice Affect: ${affect}`,
+    `Tone: ${tone}`,
+    `Pacing: ${pacing}`,
+    `Emotion: ${emotionLine}`,
+    `Pronunciation: ${pronunciation}`,
+    `Pauses: ${pauses}`,
+  ].join("\n\n");
 }
 
 /**
@@ -187,15 +229,20 @@ function inferTalkStyleFromEmotion(emotion, nuance, text, talkStyle) {
 
 export function resolveCompanionTtsProsody(opts = {}) {
   const emotion = String(opts.emotion || "neutral").toLowerCase();
-  const nuance = String(opts.nuance || "none").toLowerCase();
+  let nuance = String(opts.nuance || "none").toLowerCase();
   const text = String(opts.text || "");
+  if (nuance === "none" && emotion === "happy") nuance = "excited";
+  if (nuance === "none" && emotion === "surprised") nuance = "excited";
   const talkStyle = inferTalkStyleFromEmotion(
     emotion,
     nuance,
     text,
     String(opts.talkStyle || "explain").toLowerCase(),
   );
-  const speechEnergy = Math.max(0, Math.min(1, opts.speechEnergy ?? 0.64));
+  const speechEnergy = Math.max(
+    0,
+    Math.min(1, opts.speechEnergy ?? (emotion === "happy" ? 0.78 : 0.68)),
+  );
 
   const base =
     EMOTION_EDGE_BASE[emotion] || EMOTION_EDGE_BASE.neutral;
@@ -280,7 +327,14 @@ export function resolveCompanionTtsProsody(opts = {}) {
       pitch: Number(browserPitch.toFixed(3)),
       volume: Number(browserVolume.toFixed(3)),
     },
-    instruct: buildTtsInstruct(opts),
+    instruct: buildTtsInstruct({
+      ...opts,
+      emotion,
+      nuance,
+      talkStyle,
+      speechEnergy,
+      text,
+    }),
   };
 }
 
@@ -328,5 +382,10 @@ export function normalizeTtsPerformance(performance, fallbackEmotion = "neutral"
     speechEnergy: perf.speechEnergy ?? 0.64,
     lang: perf.lang,
     text: perf.text,
+    /** Multi-clause Edge TTS by default (holdSpeaking keeps playback continuous). */
+    expressiveClauses: perf.expressiveClauses === true,
+    singleUtterance:
+      perf.singleUtterance === true ||
+      (perf.expressiveClauses !== true && perf.singleUtterance !== false),
   };
 }

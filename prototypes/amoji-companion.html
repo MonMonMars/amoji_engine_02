@@ -8,9 +8,9 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji · Companion</title>
     <script>
-      window.__amojiBuild = "2026-09-16-v104-topbar-click-fix";
+      window.__amojiBuild = "2026-09-16-v117-expressive-tts";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-16-v104-topbar-click-fix"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-16-v117-expressive-tts"></script>
     <link
       rel="prefetch"
       href="/prototypes/assets/companion-char-nova.png"
@@ -55,6 +55,10 @@
       body.companion-start-pending .orbit-hint {
         opacity: 1;
         pointer-events: auto;
+      }
+
+      body.companion-start-pending .composer-wrap {
+        z-index: 13001;
       }
 
       .companion-picker--start {
@@ -281,7 +285,7 @@
       media="print"
       onload="this.media='all'"
     />
-    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-16-v104-topbar-click-fix" />
+    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-16-v117-expressive-tts" />
     <noscript>
       <link
         href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap"
@@ -719,6 +723,78 @@
         text-align: center;
         width: 100%;
         max-width: 100%;
+      }
+
+      .msg-row.has-actions {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.2rem;
+      }
+
+      .msg-row.user.has-actions {
+        align-items: flex-end;
+      }
+
+      .msg-row.assistant.has-actions,
+      .msg-row.system.has-actions {
+        align-items: flex-start;
+      }
+
+      .msg-actions {
+        display: flex;
+        gap: 0.25rem;
+        opacity: 0;
+        transition: opacity 0.15s ease;
+      }
+
+      .msg-row:hover .msg-actions,
+      .msg-row:focus-within .msg-actions {
+        opacity: 1;
+      }
+
+      .msg-action-btn {
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(10, 14, 22, 0.55);
+        color: var(--muted);
+        border-radius: 999px;
+        padding: 0.12rem 0.45rem;
+        font-size: 0.68rem;
+        line-height: 1.2;
+        cursor: pointer;
+      }
+
+      .msg-action-btn:hover {
+        color: var(--ink);
+        border-color: rgba(127, 212, 207, 0.35);
+      }
+
+      .starter-prompts {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.4rem;
+        padding: 0 0.15rem 0.45rem;
+        width: min(720px, 100%);
+        margin: 0 auto;
+      }
+
+      .starter-prompts[hidden] {
+        display: none !important;
+      }
+
+      .starter-chip {
+        border: 1px solid rgba(127, 212, 207, 0.22);
+        background: rgba(127, 212, 207, 0.08);
+        color: var(--ink);
+        border-radius: 999px;
+        padding: 0.35rem 0.7rem;
+        font-size: 0.78rem;
+        cursor: pointer;
+        white-space: nowrap;
+      }
+
+      .starter-chip:hover {
+        border-color: rgba(127, 212, 207, 0.45);
+        background: rgba(127, 212, 207, 0.14);
       }
 
       .llm-switcher-wrap {
@@ -1776,8 +1852,24 @@
           #060810;
       }
 
-      .scene-preset__swatch--outfit {
-        background: linear-gradient(135deg, rgba(127, 212, 207, 0.2), rgba(139, 124, 248, 0.18));
+      .scene-preset__swatch--outfit-default {
+        background: linear-gradient(135deg, #d8c8bc, #9f8f84);
+      }
+
+      .scene-preset__swatch--outfit-casual {
+        background: linear-gradient(135deg, #f2ddd0, #c9a995);
+      }
+
+      .scene-preset__swatch--outfit-formal {
+        background: linear-gradient(135deg, #d8e2ef, #6b7f9d);
+      }
+
+      .stage[data-scene-outfit="casual"] #avatar-canvas {
+        filter: saturate(1.04) brightness(1.02) contrast(0.98);
+      }
+
+      .stage[data-scene-outfit="formal"] #avatar-canvas {
+        filter: saturate(0.95) brightness(1.05) contrast(1.06);
       }
 
       .ui-context-pill {
@@ -2741,19 +2833,19 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-16-v104-topbar-click-fix",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-16-v117-expressive-tts",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-16-v104-topbar-click-fix",
-          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-16-v104-topbar-click-fix"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-16-v117-expressive-tts",
+          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-16-v117-expressive-tts"
         }
       }
     </script>
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-16-v104-topbar-click-fix"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-16-v117-expressive-tts"
     />
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-16-v104-topbar-click-fix"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-16-v104-topbar-click-fix"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-16-v117-expressive-tts"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-16-v117-expressive-tts"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;
@@ -3003,7 +3095,7 @@
         <div class="meta topbar-actions">
           <div class="pill" id="status-pill" hidden aria-hidden="true">state · <strong>idle</strong></div>
           <div class="pill avatar-load-pill" id="avatar-load-pill" hidden>
-            avatar · <strong>loading…</strong>
+            3D · <strong>loading…</strong> · type to chat
           </div>
           <div class="pill" id="mode-pill" hidden aria-hidden="true">LLM · <strong>local</strong></div>
           <div class="pill" id="emotion-pill" hidden aria-hidden="true">feel · <strong>neutral</strong></div>
@@ -3131,7 +3223,7 @@
         <p class="settings-section-title" id="scene-bg-section-title">Background</p>
         <div class="scene-preset-grid" id="scene-bg-grid"></div>
         <p class="settings-section-title" id="scene-outfit-section-title">Outfit</p>
-        <p class="settings-hint" id="scene-outfit-hint">Coming soon — per-character wardrobe.</p>
+        <p class="settings-hint" id="scene-outfit-hint">Pick a look — default, casual, or formal.</p>
         <div class="scene-preset-grid" id="scene-outfit-grid"></div>
       </div>
 
@@ -3140,6 +3232,7 @@
           <div class="transcript" id="transcript" aria-live="polite"></div>
         </div>
         <div class="composer-wrap">
+          <div class="starter-prompts" id="starter-prompts" hidden aria-label="Suggested prompts"></div>
           <div class="listen-hint" id="listen-hint" aria-live="polite" hidden></div>
           <div class="emotion-ball-stack is-hidden" id="emotion-ball-stack" aria-hidden="true">
             <div class="emotion-ball" id="emotion-ball" data-ball-state="idle" hidden></div>
@@ -3242,6 +3335,8 @@
         uiIntentMod,
         activityRailMod,
         scenePresetsMod,
+        chatPersistenceMod,
+        bootChitchatMod,
       ] = await Promise.all([
         ami("../amoji-engine/engine/companion/createAvatar.js"),
         ami("../amoji-engine/engine/companion/chatLlm.js"),
@@ -3276,7 +3371,10 @@
         ami("../amoji-engine/engine/companion/companionUiIntent.js"),
         ami("../amoji-engine/engine/companion/companionActivityRail.js"),
         ami("../amoji-engine/engine/companion/companionScenePresets.js"),
+        ami("../amoji-engine/engine/companion/companionChatPersistence.js"),
+        ami("../amoji-engine/engine/companion/companionBootChitchat.mjs"),
       ]);
+      const { buildBootChitchatReply, isBootChitchatPhase } = bootChitchatMod;
       window.__amojiModuleBooted = true;
       const {
         createCompanionVoice,
@@ -3310,7 +3408,19 @@
         scenePresetLabel,
         loadChatPanelVisible,
         persistChatPanelVisible,
+        loadStoredSceneOutfit,
+        persistSceneOutfit,
+        applySceneOutfit,
+        outfitPresetAvailableForCharacter,
       } = scenePresetsMod;
+      const {
+        appendChatHistory,
+        CHAT_DOM_MAX,
+        hasUserMessages,
+        loadChatHistory,
+        saveChatHistory,
+        starterPromptsForCharacter,
+      } = chatPersistenceMod;
       const { hasAnyClientCloudKey, inferKeyProvider } = keysMod;
       const {
         buildCompanionHref,
@@ -3374,6 +3484,7 @@
       /** @type {Map<string, Promise<unknown>>} */
       const pendingMotionJobs = new Map();
       let basicMotionPackReady = false;
+      let basicMotionPackUiActive = false;
       let motionCapabilityAnnounced = false;
       let motionCapabilityExtra = "";
       /** @type {ReturnType<typeof createMotionDownloadClient> | null} */
@@ -3386,28 +3497,39 @@
         if (basicMotionPackReady) return { ok: true, cached: true };
         const waitKind = waitAct?.state?.kind;
         const showPackUi =
-          coupled ||
-          (!avatarLoadStarted && waitKind !== "avatar-load" && !waitAct?.isActive());
-        if (showPackUi && !waitAct?.isActive()) {
+          !coupled &&
+          !avatarLoadStarted &&
+          waitKind !== "avatar-load" &&
+          !waitAct?.isActive();
+        basicMotionPackUiActive = showPackUi;
+        if (showPackUi) {
           waitAct?.start({
-            kind: coupled ? "avatar-load" : "motion-pack",
+            kind: "motion-pack",
             phase: "connecting",
             progress: 0,
             label: isEnglish
               ? "Syncing motion library…"
               : "同步動作庫…",
           });
-        } else if (coupled && waitAct?.isActive()) {
+        } else if (coupled && waitAct?.isActive() && waitKind === "avatar-load") {
           waitAct?.update({
-            phase: "connecting",
-            progress: 0.08,
+            phase: "avatar-load",
+            progress: Math.max(0.05, waitAct?.state?.progress ?? 0.05),
             label: isEnglish
-              ? "Loading model & motion library…"
-              : "載入模型同動作庫…",
+              ? "Loading 3D companion model…"
+              : "載入 3D 同伴模型…",
           });
         }
         try {
-          const result = await motionClient.ensureBasicPack();
+          const result = await Promise.race([
+            motionClient.ensureBasicPack(),
+            new Promise((_, reject) => {
+              setTimeout(
+                () => reject(new Error("basic motion pack timeout")),
+                12000,
+              );
+            }),
+          ]);
           basicMotionPackReady = Boolean(result?.ok);
           if (result?.ok) {
             void motionClient.ensureFullMotionLibrary?.().then((full) => {
@@ -3417,19 +3539,20 @@
             });
             primeBodyMotionPoses?.();
           }
-          if (waitAct?.isActive() && (coupled || showPackUi)) {
+          if (showPackUi && waitAct?.state?.kind === "motion-pack") {
             waitAct?.update({
               phase: "ready",
               progress: 1,
               label: isEnglish ? "Motion library ready" : "動作庫已就緒",
             });
-            if (!coupled) waitAct?.stop();
           }
           return result;
         } catch (err) {
           basicMotionPackReady = true;
-          if (showPackUi && waitAct?.state?.kind === "motion-pack") waitAct?.stop();
           return { ok: false, error: err?.message || String(err) };
+        } finally {
+          basicMotionPackUiActive = false;
+          if (waitAct?.state?.kind === "motion-pack") waitAct?.stop();
         }
       };
 
@@ -3515,6 +3638,7 @@
 
       const playActionWithMotionLibrary = async (content) => {
         if (!content?.action || content.action === "stop") return;
+        if (isBootChitchatPhase({ avatarKind, liteMode })) return;
         const sequence = buildActionSequence(content.action, { maxMoves: 5 });
         for (const id of sequence) {
           const installed = await ensureActionInstalled(id);
@@ -3589,6 +3713,16 @@
         return content;
       };
 
+      const applyBootChitchatPerformance = (replyText, userText = lastUserMessage) => {
+        const content = resolveTurnPerformance(userText, replyText, null);
+        lastAvatarPerformance = content;
+        const emotion = content.emotion || "happy";
+        currentEmotion = emotion;
+        avatar.setEmotion?.(emotion);
+        setEmotionPill(emotion);
+        return content;
+      };
+
       const handleUserStopCommand = (text) => {
         if (!isUserStopCommand(text)) return false;
         voice.stopThinkingLoop?.();
@@ -3635,6 +3769,7 @@
       };
 
       const transcript = document.getElementById("transcript");
+      const starterPromptsEl = document.getElementById("starter-prompts");
       const form = document.getElementById("composer");
       const input = document.getElementById("input");
       const sendBtn = document.getElementById("send");
@@ -3795,6 +3930,14 @@
       };
 
       let activeSceneBgId = loadStoredSceneBackground(isEnglish).id;
+      let activeSceneOutfitId = loadStoredSceneOutfit(characterId);
+      /** @type {(outfitId: string) => void} */
+      let applyOutfitToAvatar = () => {};
+
+      const applyActiveSceneOutfit = () => {
+        activeSceneOutfitId = applySceneOutfit(stage, activeSceneOutfitId);
+        applyOutfitToAvatar(activeSceneOutfitId);
+      };
 
       const syncChatPanelUi = () => {
         const visible = !document.body.classList.contains("chat-panel-hidden");
@@ -3849,13 +3992,22 @@
         if (sceneOutfitGrid) {
           sceneOutfitGrid.replaceChildren();
           for (const preset of SCENE_OUTFIT_PRESETS) {
+            const available = outfitPresetAvailableForCharacter(preset, characterId);
             const btn = document.createElement("button");
             btn.type = "button";
-            btn.className = "scene-preset";
-            btn.disabled = true;
-            btn.title = isEnglish ? "Coming soon" : "即將推出";
-            const soonLabel = isEnglish ? "Soon" : "即將";
-            btn.innerHTML = `<span class="scene-preset__swatch scene-preset__swatch--outfit" aria-hidden="true"></span><span class="scene-preset__label">${scenePresetLabel(preset, isEnglish)}</span><span class="scene-preset__soon">${soonLabel}</span>`;
+            btn.className =
+              "scene-preset" +
+              (preset.id === activeSceneOutfitId ? " is-active" : "");
+            const swatchSuffix = preset.swatch || preset.id;
+            if (!available) {
+              btn.disabled = true;
+              btn.title = isEnglish ? "Coming soon for this companion" : "此同伴即將推出";
+              const soonLabel = isEnglish ? "Soon" : "即將";
+              btn.innerHTML = `<span class="scene-preset__swatch scene-preset__swatch--outfit-default" aria-hidden="true"></span><span class="scene-preset__label">${scenePresetLabel(preset, isEnglish)}</span><span class="scene-preset__soon">${soonLabel}</span>`;
+            } else {
+              btn.innerHTML = `<span class="scene-preset__swatch scene-preset__swatch--outfit-${swatchSuffix}" aria-hidden="true"></span><span class="scene-preset__label">${scenePresetLabel(preset, isEnglish)}</span>`;
+              btn.addEventListener("click", () => selectSceneOutfit(preset.id));
+            }
             sceneOutfitGrid.appendChild(btn);
           }
         }
@@ -3875,13 +4027,13 @@
         }
         if (sceneOutfitHint) {
           sceneOutfitHint.textContent = isEnglish
-            ? "Coming soon — per-character wardrobe."
-            : "即將推出 — 每個同伴獨立衣櫃。";
+            ? "Soft casual or crisp formal tones — saved per companion."
+            : "休閒柔和或正式利落色調 — 每個同伴獨立保存。";
         }
         if (settingsOutfitHint) {
           settingsOutfitHint.textContent = isEnglish
-            ? "Outfit presets coming soon."
-            : "造型預設即將推出。";
+            ? "Outfits: default, casual, formal."
+            : "造型：原本、休閒、正式。";
         }
         if (sceneSheetClose) {
           sceneSheetClose.setAttribute(
@@ -3896,6 +4048,21 @@
         activeSceneBgId = applySceneBackground(atmosphereEl, backgroundId);
         persistSceneBackground(activeSceneBgId);
         renderScenePresets();
+      };
+
+      const selectSceneOutfit = (outfitId) => {
+        activeSceneOutfitId = persistSceneOutfit(characterId, outfitId);
+        applyActiveSceneOutfit();
+        renderScenePresets();
+        const preset =
+          SCENE_OUTFIT_PRESETS.find((p) => p.id === activeSceneOutfitId) ||
+          SCENE_OUTFIT_PRESETS[0];
+        showToast(
+          isEnglish
+            ? `Outfit: ${scenePresetLabel(preset, true)}`
+            : `造型：${scenePresetLabel(preset, false)}`,
+          "info",
+        );
       };
 
       const openSceneSheet = () => {
@@ -3957,6 +4124,10 @@
           atmosphereEl,
           loadStoredSceneBackground(isEnglish).id,
         );
+        activeSceneOutfitId = applySceneOutfit(
+          stage,
+          loadStoredSceneOutfit(characterId),
+        );
         renderScenePresets();
       }
 
@@ -4002,6 +4173,9 @@
       let avatar = createStubAvatar();
       let avatarKind = "loading";
       let avatarLoadStarted = false;
+      applyOutfitToAvatar = (outfitId) => {
+        avatar?.setOutfitPreset?.(outfitId);
+      };
       let currentEmotion = "neutral";
       /** @type {HTMLElement | null} */
       /** @type {HTMLElement | null} */
@@ -4087,7 +4261,9 @@
                 : `載入 3D 模型… ${Math.round(pct)}%`,
             });
             if (avatarLoadPill) {
-              avatarLoadPill.innerHTML = `avatar · <strong>${Math.round(pct)}%</strong>`;
+              avatarLoadPill.innerHTML = isEnglish
+                ? `3D loading · <strong>${Math.round(pct)}%</strong> · type to chat`
+                : `3D 載入 · <strong>${Math.round(pct)}%</strong> · 可打字傾偈`;
             }
           },
         })
@@ -4111,7 +4287,13 @@
             window.__amojiAvatarKind = avatarKind;
             window.__amojiAvatar = avatar;
             avatar.setEmotion?.(currentEmotion);
+            applyOutfitToAvatar(activeSceneOutfitId);
             syncAvatarPerformance();
+            void globalThis.__amojiPreload?.getIdleMotionPreload?.()?.then(() => {
+              for (const id of globalThis.__amojiPreload?.bootIdleMotionIds || []) {
+                avatar.warmMotionClip?.(id);
+              }
+            });
             void startPerformancePreload?.({
               avatar,
               motionClient,
@@ -4202,6 +4384,8 @@
               listening: "Listening…",
               thinking: "Thinking…",
               speaking: "Speaking…",
+              typing: "Type to chat",
+              "mic-blocked": "Mic unavailable — type here",
             }
           : {
               idle: "準備好傾偈",
@@ -4209,18 +4393,34 @@
               listening: "聽緊你講…",
               thinking: "思考中…",
               speaking: "講緊嘢…",
+              typing: "打字傾偈",
+              "mic-blocked": "麥克風不可用 — 請打字",
             };
 
+      const resolveCompanionVoiceState = (state = sessionUiState) => {
+        if (!conversationUi) return state || "idle";
+        if (document.body.classList.contains("mic-blocked")) return "mic-blocked";
+        if (state === "thinking" || state === "speaking" || state === "loading") {
+          return state;
+        }
+        if (voice?.micOn) return "listening";
+        if (state === "idle" && document.body.classList.contains("composer-text-mode")) {
+          return "typing";
+        }
+        return state || "idle";
+      };
+
       const syncCompanionStatusUi = (state = sessionUiState, emotion = currentEmotion) => {
+        const effective = resolveCompanionVoiceState(state);
         const labels = statusLineLabels();
         if (companionStatusLine) {
           const mood =
             emotion && emotion !== "neutral" && emotion !== "thinking"
               ? ` · ${emotion}`
               : "";
-          companionStatusLine.textContent = `${labels[state] || labels.idle}${mood}`;
+          companionStatusLine.textContent = `${labels[effective] || labels.idle}${mood}`;
         }
-        if (statusDot) statusDot.dataset.state = state || "idle";
+        if (statusDot) statusDot.dataset.state = effective || "idle";
       };
 
       const setCharacterUi = () => {
@@ -4381,23 +4581,149 @@
 
       const trimTranscriptHistory = () => {
         const rows = transcript.querySelectorAll(".msg-row:not(.interim)");
-        if (rows.length > 8) {
-          for (let i = 0; i < rows.length - 8; i += 1) {
+        if (rows.length > CHAT_DOM_MAX) {
+          for (let i = 0; i < rows.length - CHAT_DOM_MAX; i += 1) {
             rows[i].remove();
           }
         }
       };
 
-      const addBubble = (role, text) => {
+      const popLastAssistantFromHistory = () => {
+        const hist = loadChatHistory(characterId);
+        for (let i = hist.length - 1; i >= 0; i -= 1) {
+          if (hist[i].role === "assistant") {
+            hist.splice(i, 1);
+            saveChatHistory(characterId, hist);
+            return;
+          }
+        }
+      };
+
+      const attachMessageActions = (row, bubbleEl, role, text) => {
+        if (!row || !bubbleEl || !text?.trim()) return;
+        row.classList.add("has-actions");
+        row.querySelector(".msg-actions")?.remove();
+        const actions = document.createElement("div");
+        actions.className = "msg-actions";
+
+        const copyBtn = document.createElement("button");
+        copyBtn.type = "button";
+        copyBtn.className = "msg-action-btn";
+        copyBtn.textContent = isEnglish ? "Copy" : "複製";
+        copyBtn.addEventListener("click", async () => {
+          try {
+            await navigator.clipboard.writeText(bubbleEl.textContent || "");
+            showToast(isEnglish ? "Copied" : "已複製", "info");
+          } catch {
+            showToast(isEnglish ? "Copy failed" : "複製失敗", "error");
+          }
+        });
+        actions.appendChild(copyBtn);
+
+        if (role === "assistant") {
+          const retryBtn = document.createElement("button");
+          retryBtn.type = "button";
+          retryBtn.className = "msg-action-btn";
+          retryBtn.textContent = isEnglish ? "Retry" : "重試";
+          retryBtn.addEventListener("click", () => {
+            const rows = [...transcript.querySelectorAll(".msg-row")];
+            const idx = rows.indexOf(row);
+            let userText = "";
+            for (let i = idx - 1; i >= 0; i -= 1) {
+              if (rows[i].classList.contains("user")) {
+                userText =
+                  rows[i].querySelector(".bubble")?.textContent?.trim() || "";
+                break;
+              }
+            }
+            if (!userText || busy) return;
+            popLastAssistantFromHistory();
+            row.remove();
+            void runTurn(userText, { skipUserBubble: true });
+          });
+          actions.appendChild(retryBtn);
+
+          const upBtn = document.createElement("button");
+          upBtn.type = "button";
+          upBtn.className = "msg-action-btn";
+          upBtn.textContent = "👍";
+          upBtn.title = isEnglish ? "Good reply" : "回覆唔錯";
+          upBtn.addEventListener("click", () => {
+            showToast(isEnglish ? "Thanks for the feedback" : "多謝你嘅意見", "info");
+          });
+          actions.appendChild(upBtn);
+        }
+
+        row.appendChild(actions);
+      };
+
+      const syncStarterPrompts = () => {
+        if (!starterPromptsEl || !conversationUi) return;
+        const hist = loadChatHistory(characterId);
+        const show = sessionStarted && !hasUserMessages(hist) && !busy;
+        if (!show) {
+          starterPromptsEl.hidden = true;
+          starterPromptsEl.replaceChildren();
+          return;
+        }
+        starterPromptsEl.hidden = false;
+        starterPromptsEl.replaceChildren();
+        for (const prompt of starterPromptsForCharacter(characterId, isEnglish)) {
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "starter-chip";
+          btn.textContent = prompt;
+          btn.addEventListener("click", () => {
+            input.value = "";
+            autosize();
+            void runTurn(prompt);
+          });
+          starterPromptsEl.appendChild(btn);
+        }
+      };
+
+      const restoreCharacterTranscript = (charId) => {
+        transcript.replaceChildren();
+        greetingBubble = null;
+        const hist = loadChatHistory(charId).slice(-CHAT_DOM_MAX);
+        for (const msg of hist) {
+          const el = addBubble(msg.role, msg.text, {
+            persist: false,
+            withActions: true,
+          });
+          if (!greetingBubble && msg.role === "assistant") {
+            greetingBubble = el;
+          }
+        }
+        scrollTranscript(true);
+        syncStarterPrompts();
+      };
+
+      const addBubble = (
+        role,
+        text,
+        { persist = true, withActions = true } = {},
+      ) => {
         const row = document.createElement("div");
         row.className = `msg-row ${role}`;
         const el = document.createElement("div");
         el.className = `bubble ${role}`;
         el.textContent = text;
         row.appendChild(el);
+        if (withActions && (role === "user" || role === "assistant") && text?.trim()) {
+          attachMessageActions(row, el, role, text);
+        }
         transcript.appendChild(row);
         trimTranscriptHistory();
         scrollTranscript(true);
+        if (
+          persist &&
+          (role === "user" || role === "assistant") &&
+          String(text || "").trim()
+        ) {
+          appendChatHistory(characterId, { role, text: String(text).trim() });
+        }
+        syncStarterPrompts();
         return el;
       };
 
@@ -4540,6 +4866,14 @@
         voice.setKeepMicDuringSpeak?.(
           phaseAEnabled && voice.micOn && !shouldPauseMicDuringTts(),
         );
+        if (conversationUi) {
+          if (voice.micOn && !busy && !voice.speaking && !document.body.classList.contains("mic-blocked")) {
+            sessionUiState = "listening";
+          } else if (!busy && !voice.speaking && sessionUiState === "listening") {
+            sessionUiState = "idle";
+          }
+          syncCompanionStatusUi(sessionUiState, currentEmotion);
+        }
       };
 
       const syncListenPose = () => {
@@ -4755,7 +5089,12 @@
         getPrefetchedPremiumPack: () =>
           globalThis.__amojiPreload?.getMotionPremium?.() ?? null,
         onProgress: ({ phase, progress, action }) => {
-          if (waitAct?.isActive()) {
+          const waitKind = waitAct?.state?.kind;
+          const showMotionProgress =
+            basicMotionPackUiActive ||
+            waitKind === "motion" ||
+            waitKind === "motion-pack";
+          if (waitAct?.isActive() && showMotionProgress) {
             waitAct.update({
               phase,
               progress,
@@ -4764,7 +5103,9 @@
                 : `動作 ${action || "pack"} — ${Math.round(progress * 100)}%`,
             });
           }
-          setEmotionPill("thinking", action || phase);
+          if (showMotionProgress) {
+            setEmotionPill("thinking", action || phase);
+          }
         },
       });
       const warmMotionLibraryBackground = () => {
@@ -4861,7 +5202,13 @@
         setCharacterUi();
         characterPicker?.setSelected(characterId);
         startPicker?.setSelected?.(characterId);
-        if (sessionStarted) warmWaitDialogueBackground();
+        activeSceneOutfitId = loadStoredSceneOutfit(characterId);
+        applyActiveSceneOutfit();
+        if (sessionStarted) {
+          restoreCharacterTranscript(characterId);
+          warmWaitDialogueBackground();
+        }
+        renderScenePresets();
         if (announce) {
           const name = characterDisplayName(characterId, langCode, isEnglish);
           showToast(
@@ -4894,6 +5241,7 @@
           window.__amojiAvatarKind = avatarKind;
           window.__amojiAvatar = avatar;
           avatar.setEmotion?.(currentEmotion);
+          applyOutfitToAvatar(activeSceneOutfitId);
           syncAvatarPerformance();
           applyCharacterSession(nextId, { announce: false });
           addBubble(
@@ -5195,7 +5543,7 @@
         updateUiContextPill(applied);
       };
 
-      const runTurn = async (text, { fromMic = false } = {}) => {
+      const runTurn = async (text, { fromMic = false, skipUserBubble = false } = {}) => {
         const cleaned = String(text || "").trim();
         if (!cleaned) return;
         if (handleUserStopCommand(cleaned)) return;
@@ -5214,46 +5562,60 @@
         busy = true;
         stopIdlePerformance();
         sendBtn.disabled = true;
-        const keepMicForBarge = voice.micOn || autoMic;
+        const bootChitchat = isBootChitchatPhase({ avatarKind, liteMode });
+        let keepMicForBarge = (voice.micOn || autoMic) && fromMic;
+        if (bootChitchat) {
+          if (waitAct?.state?.kind === "avatar-load") waitAct?.stop();
+          keepMicForBarge = false;
+        }
         voice.setKeepMicDuringSpeak?.(keepMicForBarge);
         if (!keepMicForBarge) voice.pauseCapture();
-        armBargeIn();
+        if (keepMicForBarge) armBargeIn();
         interim.clear();
-        addBubble("user", cleaned);
+        if (!skipUserBubble) {
+          addBubble("user", cleaned, { persist: true, withActions: true });
+        }
         lastUserMessage = cleaned;
         avatar.setListening?.(false);
         avatar.setTalking(false);
         avatar.setMouthOpen(0);
-        const userMotion = analyzeUserInput?.(cleaned, isEnglish);
-        if (userMotion?.action === "stop") {
-          applyPerformanceFromContent(userMotion);
-          setEmotionPill(userMotion.emotion || "neutral");
-        } else if (isShowcaseRequest(cleaned)) {
-          void playShowcaseSequence(userMotion?.action, userMotion?.emotion || "happy");
-        } else if (userMotion?.action) {
-          void playActionWithMotionLibrary({
-            action: userMotion.action,
-            emotion: userMotion.emotion || "happy",
+        if (!bootChitchat) {
+          const userMotion = analyzeUserInput?.(cleaned, isEnglish);
+          if (userMotion?.action === "stop") {
+            applyPerformanceFromContent(userMotion);
+            setEmotionPill(userMotion.emotion || "neutral");
+          } else if (isShowcaseRequest(cleaned)) {
+            void playShowcaseSequence(userMotion?.action, userMotion?.emotion || "happy");
+          } else if (userMotion?.action) {
+            void playActionWithMotionLibrary({
+              action: userMotion.action,
+              emotion: userMotion.emotion || "happy",
+            });
+          }
+          avatar.setThinking?.(true);
+          avatar.prepareThinkingFromUser?.(cleaned, isEnglish);
+          setEmotionPill(avatar.emotion || "thinking");
+          status.thinking();
+          activityRail.pulse("💭", isEnglish ? "Thinking" : "諗緊");
+          waitAct?.start({
+            kind: "thinking",
+            phase: "thinking",
+            progress: 0,
+            indeterminate: true,
+            label: isEnglish ? "Thinking…" : "思考中…",
           });
+        } else {
+          activityRail.pulse("💬", isEnglish ? "Boot chat" : "載入中傾偈");
         }
-        avatar.setThinking?.(true);
-        avatar.prepareThinkingFromUser?.(cleaned, isEnglish);
-        setEmotionPill(avatar.emotion || "thinking");
-        status.thinking();
-        activityRail.pulse("💭", isEnglish ? "Thinking" : "諗緊");
-        waitAct?.start({
-          kind: "thinking",
-          phase: "thinking",
-          progress: 0,
-          indeterminate: true,
-          label: isEnglish ? "Thinking…" : "思考中…",
-        });
 
-        const assistantBubble = addBubble("assistant", "");
+        const assistantBubble = addBubble("assistant", "", {
+          persist: false,
+          withActions: false,
+        });
         const assistantRow = assistantBubble.closest(".msg-row");
         const turnId = ++turnSeq;
         activeTurn = { id: turnId, aborted: false, assistantRow };
-        showThinking(assistantBubble);
+        if (!bootChitchat) showThinking(assistantBubble);
 
         const streamPlanner = createStreamSpeakPlanner();
         let gotToken = false;
@@ -5292,6 +5654,29 @@
         };
 
         try {
+          if (bootChitchat) {
+            const rawReply = buildBootChitchatReply(cleaned, { isEnglish });
+            const content = applyBootChitchatPerformance(rawReply, cleaned);
+            await applyConversationUi(cleaned, rawReply);
+            const emotion = content.emotion || "happy";
+            const finalReply = stripReplyTags(rawReply);
+            assistantBubble.textContent = finalReply;
+            attachMessageActions(assistantRow, assistantBubble, "assistant", finalReply);
+            appendChatHistory(characterId, { role: "assistant", text: finalReply });
+            syncStarterPrompts();
+            speakContent = content;
+            speakEmotion = emotion;
+            status.speaking();
+            await voice.speak(finalReply, {
+              emotion,
+              nuance: content.nuance || "excited",
+              talkStyle: content.talkStyle || "celebrate",
+              speechEnergy: content.speechEnergy ?? 0.78,
+              expressiveClauses: true,
+            });
+            return;
+          }
+
           const result = await chat.reply(cleaned, {
             onToken: (_chunk, full) => {
               if (activeTurn?.aborted) return;
@@ -5362,7 +5747,11 @@
           speakContent = content;
           speakEmotion = emotion;
           assistantBubble.classList.remove("thinking", "typing");
-          assistantBubble.textContent = stripReplyTags(reply);
+          const finalReply = stripReplyTags(reply);
+          assistantBubble.textContent = finalReply;
+          attachMessageActions(assistantRow, assistantBubble, "assistant", finalReply);
+          appendChatHistory(characterId, { role: "assistant", text: finalReply });
+          syncStarterPrompts();
 
           if (phaseAEnabled) {
             const spokenReply = stripReplyTags(result.raw || reply);
@@ -5370,11 +5759,12 @@
             await voice.finishStreamSpeak?.();
           } else {
             status.speaking();
-            await voice.speak(reply, {
+            await voice.speak(finalReply, {
               emotion,
               nuance: content.nuance || "none",
               talkStyle: content.talkStyle || "explain",
-              speechEnergy: content.speechEnergy ?? 0.5,
+              speechEnergy: content.speechEnergy ?? 0.68,
+              expressiveClauses: true,
             });
           }
         } catch (err) {
@@ -5470,6 +5860,9 @@
       };
 
       const speakGreetingAsync = () => {
+        if (busy || voice.speaking || hasUserMessages(loadChatHistory(characterId))) {
+          return Promise.resolve({ ok: false, reason: "skipped-user-active" });
+        }
         avatar.setEmotion("happy");
         setEmotionPill("happy");
         avatar.playGesture?.("nod");
@@ -5478,7 +5871,10 @@
         armBargeIn();
         const greetText = greetingLine();
         if (!greetingBubble) {
-          greetingBubble = addBubble("assistant", greetText);
+          greetingBubble = addBubble("assistant", greetText, {
+            persist: false,
+            withActions: false,
+          });
         } else {
           greetingBubble.textContent = greetText;
         }
@@ -5613,15 +6009,36 @@
         void voice.ensureVoices().then(() => {
           setVoicePill(voiceGenderLabel(voiceId, langCode, isEnglish));
         });
-        void voice
-          .primeAudio?.()
-          .catch(() => {})
-          .then(() => speakGreetingAsync());
-        if (!greetingBubble) {
-          greetingBubble = addBubble("assistant", greetingLine());
+        const returning = loadChatHistory(characterId).length > 0;
+        if (returning) {
+          restoreCharacterTranscript(characterId);
+          addBubble("system", isEnglish ? "Welcome back." : "歡迎返嚟。", {
+            persist: false,
+            withActions: false,
+          });
+          requestMicAsync();
+          syncStarterPrompts();
+        } else {
+          void voice
+            .primeAudio?.()
+            .catch(() => {})
+            .then(() => {
+              if (busy || voice.speaking) return;
+              void speakGreetingAsync();
+            });
+          if (!greetingBubble) {
+            greetingBubble = addBubble("assistant", greetingLine(), {
+              persist: false,
+              withActions: false,
+            });
+          }
+          requestMicAsync();
+          addBubble("system", isEnglish ? "Ready." : "已開始。", {
+            persist: false,
+            withActions: false,
+          });
+          syncStarterPrompts();
         }
-        requestMicAsync();
-        addBubble("system", isEnglish ? "Ready." : "已開始。");
       };
 
       window.__amojiStart.run = (opts = {}) => {
@@ -5878,6 +6295,7 @@
         ev.preventDefault();
         const text = input.value.trim();
         if (!text) return;
+        unlockAudioSync();
         input.value = "";
         autosize();
         if (!sessionStarted) {

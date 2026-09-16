@@ -81,6 +81,33 @@ describe("companionMotionDownload", () => {
     expect(client.isInstalled("dab")).toBe(true);
   });
 
+  it("falls back when prefetched basic pack never resolves", async () => {
+    vi.useFakeTimers();
+    const storage = mockStorage();
+    let fetchCalls = 0;
+    const client = createMotionDownloadClient({
+      storage,
+      fetchImpl: async (url) => {
+        fetchCalls += 1;
+        if (String(url).includes("pack=basic")) {
+          return {
+            ok: true,
+            json: async () => ({ ok: true, pack: BASIC_MOTION_PACK }),
+          };
+        }
+        return { ok: false, status: 404, json: async () => ({ ok: false }) };
+      },
+      getPrefetchedBasicPack: () => new Promise(() => {}),
+    });
+
+    const resultPromise = client.ensureBasicPack();
+    await vi.advanceTimersByTimeAsync(8100);
+    const result = await resultPromise;
+    expect(result.ok).toBe(true);
+    expect(fetchCalls).toBeGreaterThan(0);
+    vi.useRealTimers();
+  });
+
   it("downloads cloud extension motion on demand", async () => {
     const storage = mockStorage();
     const client = createMotionDownloadClient({
