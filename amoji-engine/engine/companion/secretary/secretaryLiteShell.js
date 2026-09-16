@@ -121,8 +121,8 @@ export function initAmojiSecretaryLite(doc = document) {
         openChat: "Open chat",
         top3Title: "Today's Top 3",
         top3Empty: "Pin up to 3 priorities from Tasks.",
-        pinPriority: "Pin",
-        unpinPriority: "Unpin",
+        pinPriority: "📌 Pin to Top 3",
+        unpinPriority: "★ In Top 3",
         priorityFull: "Top 3 is full — unpin one first.",
         memoryConfirm: "Save to memory?",
         memorySaved: "Saved to memory",
@@ -171,8 +171,8 @@ export function initAmojiSecretaryLite(doc = document) {
         openChat: "去傾計",
         top3Title: "今日 Top 3",
         top3Empty: "喺「任務」度 pin 最多 3 項重點。",
-        pinPriority: "Pin",
-        unpinPriority: "取消 Pin",
+        pinPriority: "📌 加入今日 Top 3",
+        unpinPriority: "★ 已 Pin",
         priorityFull: "Top 3 已满 — 先取消一項。",
         memoryConfirm: "加入記憶？",
         memorySaved: "已加入記憶",
@@ -280,6 +280,13 @@ export function initAmojiSecretaryLite(doc = document) {
     return [base, toneLine, modeLine, tagRules, memoryLine].filter(Boolean).join("\n\n");
   }
 
+  function bumpProbe(key) {
+    const probe = globalThis.__amojiLite;
+    if (probe && typeof probe[key] === "number") {
+      probe[key] += 1;
+    }
+  }
+
   async function cloudReply(message) {
     const res = await fetch("/api/chat", {
       method: "POST",
@@ -290,6 +297,7 @@ export function initAmojiSecretaryLite(doc = document) {
     if (!res.ok || !data.ok) {
       throw new Error(data.error || `HTTP ${res.status}`);
     }
+    bumpProbe("chatCalls");
     const raw = String(data.reply || "");
     return parseSecretaryReply(raw, { isEn });
   }
@@ -326,6 +334,7 @@ export function initAmojiSecretaryLite(doc = document) {
           }),
         });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        bumpProbe("ttsCalls");
         const blob = await res.blob();
         if (!blob.size) throw new Error("empty audio");
         const url = URL.createObjectURL(blob);
@@ -620,9 +629,12 @@ export function initAmojiSecretaryLite(doc = document) {
       row.appendChild(due);
     }
     if (!opts.compact) {
+      const toolbar = doc.createElement("div");
+      toolbar.className = "task-row-toolbar";
       const pin = doc.createElement("button");
       pin.type = "button";
       pin.className = `priority-btn${isPriorityTask(task.id, { storage }) ? " active" : ""}`;
+      pin.setAttribute("data-testid", "pin-priority-btn");
       pin.textContent = isPriorityTask(task.id, { storage })
         ? strings.unpinPriority
         : strings.pinPriority;
@@ -635,7 +647,7 @@ export function initAmojiSecretaryLite(doc = document) {
         renderToday();
         renderTasks();
       });
-      row.appendChild(pin);
+      toolbar.appendChild(pin);
       const actions = doc.createElement("div");
       actions.className = "task-row-actions";
       const done = doc.createElement("button");
@@ -667,7 +679,8 @@ export function initAmojiSecretaryLite(doc = document) {
         renderTasks();
       });
       actions.append(done, snooze, del);
-      row.appendChild(actions);
+      toolbar.appendChild(actions);
+      row.appendChild(toolbar);
     }
     return row;
   }
