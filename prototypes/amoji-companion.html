@@ -8,9 +8,9 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji · Companion</title>
     <script>
-      window.__amojiBuild = "2026-09-16-v121-loading-ring";
+      window.__amojiBuild = "2026-09-16-v122-character-chip";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-16-v121-loading-ring"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-16-v122-character-chip"></script>
     <link
       rel="prefetch"
       href="/prototypes/assets/companion-char-nova.png"
@@ -285,7 +285,7 @@
       media="print"
       onload="this.media='all'"
     />
-    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-16-v121-loading-ring" />
+    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-16-v122-character-chip" />
     <noscript>
       <link
         href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap"
@@ -1578,8 +1578,13 @@
       }
 
       body.conversation-ui .brand-btn {
-        pointer-events: none;
-        cursor: default;
+        pointer-events: auto;
+        cursor: pointer;
+      }
+
+      body.conversation-ui .brand-btn:hover,
+      body.conversation-ui .brand-btn:focus-visible {
+        filter: brightness(1.08);
       }
 
       /* Minimal UI: text bar + mic always visible; functions live in menu. */
@@ -2835,19 +2840,19 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-16-v121-loading-ring",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-16-v122-character-chip",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-16-v121-loading-ring",
-          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-16-v121-loading-ring"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-16-v122-character-chip",
+          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-16-v122-character-chip"
         }
       }
     </script>
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-16-v121-loading-ring"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-16-v122-character-chip"
     />
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-16-v121-loading-ring"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-16-v121-loading-ring"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-16-v122-character-chip"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-16-v122-character-chip"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;
@@ -3077,7 +3082,10 @@
           type="button"
           class="companion-chip brand-btn"
           id="brand-btn"
-          title="Tap to switch companion"
+          title="Switch companion"
+          aria-label="Switch companion"
+          aria-haspopup="dialog"
+          aria-expanded="false"
         >
           <img
             class="companion-chip__avatar"
@@ -3093,6 +3101,7 @@
             <span class="companion-chip__status" id="companion-status-line">Ready</span>
           </span>
           <span class="companion-chip__dot" id="status-dot" data-state="idle" aria-hidden="true"></span>
+          <span class="companion-chip__caret" aria-hidden="true"></span>
         </button>
         <div class="meta topbar-actions">
           <div class="pill" id="status-pill" hidden aria-hidden="true">state · <strong>idle</strong></div>
@@ -3389,9 +3398,7 @@
         characterDisplayName,
         characterGreeting,
         characterGreetingPerformance,
-        characterTagline,
         characterTapLines,
-        characterTraitsLabel,
         characterVoiceLabel,
         defaultVoiceForCharacter,
         getCharacter,
@@ -4420,8 +4427,6 @@
       const setCharacterUi = () => {
         const def = getCharacter(characterId);
         const name = characterDisplayName(characterId, langCode, isEnglish);
-        const tagline = characterTagline(characterId, langCode);
-        const traits = characterTraitsLabel(characterId, langCode);
         if (brandName) brandName.textContent = name;
         if (companionChipAvatar && def?.previewImage) {
           companionChipAvatar.src = def.previewImage;
@@ -4429,9 +4434,11 @@
         }
         syncCompanionStatusUi(sessionUiState, currentEmotion);
         if (brandBtn) {
-          brandBtn.title = isEnglish
-            ? `${tagline} — ${traits}`
-            : `${tagline} — ${traits}`;
+          brandBtn.title = isEnglish ? "Switch companion" : "換同伴";
+          brandBtn.setAttribute(
+            "aria-label",
+            isEnglish ? `Switch companion — ${name}` : `換同伴 — ${name}`,
+          );
         }
         if (settingsBtnCompanions) {
           settingsBtnCompanions.textContent = isEnglish
@@ -5265,6 +5272,9 @@
           characterPicker.close();
           void hotSwapCharacter(nextId);
         },
+        onClose: () => {
+          brandBtn?.setAttribute("aria-expanded", "false");
+        },
       });
 
       const releaseUnselectedCharacterCache = (pickedId) => {
@@ -5358,7 +5368,16 @@
       const openCharacterPicker = () => {
         characterPicker.setSelected(characterId);
         characterPicker.open();
+        brandBtn?.setAttribute("aria-expanded", "true");
       };
+
+      brandBtn?.addEventListener("click", () => {
+        if (characterPicker.isOpen()) {
+          characterPicker.close();
+          return;
+        }
+        openCharacterPicker();
+      });
 
       btnOpenSetup?.addEventListener("click", () => {
         closeSceneSheet();

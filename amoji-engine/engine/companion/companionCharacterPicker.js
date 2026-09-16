@@ -141,9 +141,11 @@ export function createCompanionCharacterPicker(opts = {}) {
 
   const shell = document.createElement("div");
   shell.className = "companion-picker";
+  shell.id = "companion-character-picker";
   shell.hidden = true;
   shell.setAttribute("role", "dialog");
   shell.setAttribute("aria-modal", "true");
+  shell.setAttribute("aria-label", isEnglish ? "Choose companion" : "揀同伴");
   shell.innerHTML = `
     <div class="companion-picker-backdrop" data-picker-close></div>
     <div class="companion-picker-sheet">
