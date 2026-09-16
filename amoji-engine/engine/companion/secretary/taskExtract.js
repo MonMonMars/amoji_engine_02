@@ -41,6 +41,11 @@ const YUE_PATTERNS = [
     dueGroup: 2,
   },
   {
+    re: /^(?:今晚|明天|聽日)?提醒(?:我|一下)?(.+)$/i,
+    group: 1,
+    dueGroup: 0,
+  },
+  {
     re: /^記得(.+)$/i,
     group: 1,
   },
@@ -118,7 +123,7 @@ export function extractTaskFromMessage(message, opts = {}) {
     const title = String(match[pattern.group] || "").trim();
     if (!title || title.length < 2) continue;
     const dueChunk = pattern.dueGroup ? match[pattern.dueGroup] : "";
-    const dueAt = parseDueHint(dueChunk || title, isEn, now);
+    const dueAt = parseDueHint(dueChunk || text, isEn, now);
     const category =
       opts.mode === "life" || /mom|grocery|buy|食|買/.test(title)
         ? "life"

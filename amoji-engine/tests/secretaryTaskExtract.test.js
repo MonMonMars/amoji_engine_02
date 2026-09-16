@@ -23,6 +23,13 @@ describe("secretary taskExtract", () => {
     expect(result.task?.title).toContain("打電話");
   });
 
+  it("extracts leading-time reminder phrasing", () => {
+    const result = extractTaskFromMessage("今晚提醒我打電話", { isEn: false });
+    expect(result.confidence).toBeGreaterThan(0.7);
+    expect(result.task?.title).toMatch(/打電話/);
+    expect(result.task?.dueAt).toBeTruthy();
+  });
+
   it("parses tonight due hints", () => {
     const now = new Date("2026-09-15T14:00:00Z").getTime();
     const due = parseDueHint("tonight", true, now);
