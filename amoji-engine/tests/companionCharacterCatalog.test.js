@@ -92,6 +92,7 @@ describe("companionCharacterCatalog", () => {
     const amoji = buildCharacterSystemPrompt("amoji", false);
     const rex = buildCharacterSystemPrompt("rex", false);
     expect(amoji).toContain("曖咪");
+    expect(amoji).toContain("ChatGPT Advanced Voice");
     expect(rex).toContain("烈");
     expect(rex).not.toContain("曖咪");
   });

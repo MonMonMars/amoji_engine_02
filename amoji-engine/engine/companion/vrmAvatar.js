@@ -35,12 +35,18 @@ import { applyVrmOutfitTint } from "./companionOutfitApply.js";
 export const VRM_AVATAR_SCHEMA = "amoji.vrmAvatar.v1";
 
 const EMOTION_EXPRESSIONS = {
-  neutral: {},
-  happy: { [VRMExpressionPresetName.Happy]: 0.85, [VRMExpressionPresetName.Relaxed]: 0.25 },
-  thinking: { [VRMExpressionPresetName.Relaxed]: 0.45 },
-  sad: { [VRMExpressionPresetName.Sad]: 0.75 },
-  surprised: { [VRMExpressionPresetName.Surprised]: 0.9 },
-  angry: { [VRMExpressionPresetName.Angry]: 0.8 },
+  neutral: { [VRMExpressionPresetName.Happy]: 0.18 },
+  happy: { [VRMExpressionPresetName.Happy]: 0.98 },
+  thinking: {
+    [VRMExpressionPresetName.Relaxed]: 0.28,
+    [VRMExpressionPresetName.Surprised]: 0.12,
+  },
+  sad: { [VRMExpressionPresetName.Sad]: 0.92 },
+  surprised: {
+    [VRMExpressionPresetName.Surprised]: 0.98,
+    [VRMExpressionPresetName.Happy]: 0.32,
+  },
+  angry: { [VRMExpressionPresetName.Angry]: 0.94 },
 };
 
 const VRM_BLEND_PRESET_MAP = {
@@ -389,13 +395,14 @@ export async function createVrmAvatar(opts) {
   };
 
   const applyEmotionExpressions = (next) => {
-    const blend = EMOTION_EXPRESSIONS[next] || EMOTION_EXPRESSIONS.neutral;
-    clearExpressionTargets();
-    for (const [preset, weight] of Object.entries(blend)) {
-      if (expr?.getExpression?.(preset)) {
-        expressionTarget[preset] = weight;
-      }
-    }
+    const nuance =
+      next === "happy" || next === "surprised"
+        ? bodyMotion.nuance && bodyMotion.nuance !== "none"
+          ? bodyMotion.nuance
+          : "excited"
+        : bodyMotion.nuance || "none";
+    setExpressionTargetFromBlend(buildVrmExpressionBlend(next, nuance));
+    return nuance;
   };
 
   const applyExpressionProfile = ({ emotion: em = "neutral", nuance = "none" } = {}) => {
@@ -406,7 +413,7 @@ export async function createVrmAvatar(opts) {
 
   const tickExpressionBlend = (dt) => {
     if (!expr) return;
-    const rate = Math.min(1, dt * 16);
+    const rate = Math.min(1, dt * (talking ? 28 : 16));
     for (const preset of emotionPresetKeys()) {
       const target = expressionTarget[preset] ?? 0;
       const current = expressionCurrent[preset] ?? 0;

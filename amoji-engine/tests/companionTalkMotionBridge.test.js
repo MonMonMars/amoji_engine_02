@@ -22,8 +22,8 @@ describe("companionTalkMotionBridge", () => {
       },
       { includeArms: true },
     );
-    expect(body.armLiftL).toBeGreaterThan(0.15);
-    expect(body.armLiftR).toBeGreaterThan(0.12);
+    expect(body.armLiftL).toBeGreaterThan(0.2);
+    expect(body.armLiftR).toBeGreaterThan(0.18);
     expect(body.leanY).toBeLessThan(0);
   });
 
