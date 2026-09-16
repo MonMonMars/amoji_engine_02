@@ -1,0 +1,179 @@
+#!/usr/bin/env node
+/**
+ * Measure round-button glyph centers vs button centers.
+ * Fails if any icon is offset by more than 2px.
+ */
+import { chromium } from "playwright";
+import { createServer } from "http";
+import { mkdirSync, readFileSync, writeFileSync, statSync } from "fs";
+import { extname, join } from "path";
+import { AMOJI_BUILD } from "../amoji-engine/engine/companion/buildVersion.mjs";
+
+const root = join(import.meta.dirname, "..");
+const outDir = process.env.ARTIFACT_DIR || "/opt/cursor/artifacts";
+mkdirSync(outDir, { recursive: true });
+
+const mime = {
+  ".html": "text/html",
+  ".js": "text/javascript",
+  ".mjs": "text/javascript",
+  ".css": "text/css",
+  ".png": "image/png",
+  ".svg": "image/svg+xml",
+  ".json": "application/json",
+};
+
+const server = createServer((req, res) => {
+  const url = new URL(req.url || "/", "http://localhost");
+  let path = url.pathname === "/" ? "/prototypes/amoji-companion.html" : url.pathname;
+  if (path === "/companion-full") path = "/prototypes/amoji-companion.html";
+  const file = join(root, path.replace(/^\//, ""));
+  try {
+    if (statSync(file).isDirectory()) {
+      res.writeHead(404);
+      res.end("dir");
+      return;
+    }
+    const data = readFileSync(file);
+    res.writeHead(200, { "Content-Type": mime[extname(file)] || "application/octet-stream" });
+    res.end(data);
+  } catch {
+    res.writeHead(404);
+    res.end("not found");
+  }
+});
+
+await new Promise((r) => server.listen(8768, r));
+
+const browser = await chromium.launch({ headless: true });
+const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+await page.goto(
+  "http://127.0.0.1:8768/prototypes/amoji-companion.html?lang=en&automic=0",
+  { waitUntil: "domcontentloaded", timeout: 30000 },
+);
+await page.waitForSelector("#send", { timeout: 15000 });
+await page.waitForFunction(
+  () => document.getElementById("btn-toggle-chat")?.querySelector("svg.btn-icon"),
+  { timeout: 15000 },
+);
+await page.evaluate(() => {
+  const picker = document.getElementById("start-character-picker");
+  if (picker) {
+    picker.classList.add("hide");
+    picker.style.display = "none";
+  }
+  document.body.classList.add("conversation-ui", "composer-always-visible");
+});
+
+const MAX_OFFSET = 2.2;
+const selectors = [
+  "#btn-toggle-chat",
+  "#btn-open-scene",
+  "#btn-open-setup",
+  "#btn-speaker",
+  "#btn-mic",
+  "#send",
+];
+
+const report = await page.evaluate((sels) => {
+  const glyphBox = (btn) => {
+    const el =
+      btn.querySelector(".mic-btn__icon") ||
+      btn.querySelector("svg.btn-icon") ||
+      btn.querySelector("svg") ||
+      btn.querySelector(".btn-glyph");
+    if (el) return el.getBoundingClientRect();
+    const range = document.createRange();
+    range.selectNodeContents(btn);
+    return range.getBoundingClientRect();
+  };
+  const rows = [];
+  for (const sel of sels) {
+    const btn = document.querySelector(sel);
+    if (!btn) {
+      rows.push({ sel, present: false });
+      continue;
+    }
+    const br = btn.getBoundingClientRect();
+    const gr = glyphBox(btn);
+    const dx = (gr.left + gr.width / 2) - (br.left + br.width / 2);
+    const dy = (gr.top + gr.height / 2) - (br.top + br.height / 2);
+    const cs = getComputedStyle(btn);
+    rows.push({
+      sel,
+      present: true,
+      width: Math.round(br.width * 10) / 10,
+      height: Math.round(br.height * 10) / 10,
+      glyphW: Math.round(gr.width * 10) / 10,
+      glyphH: Math.round(gr.height * 10) / 10,
+      dx: Number.isFinite(dx) ? Math.round(dx * 10) / 10 : null,
+      dy: Number.isFinite(dy) ? Math.round(dy * 10) / 10 : null,
+      display: cs.display,
+      alignItems: cs.alignItems,
+      justifyContent: cs.justifyContent,
+    });
+  }
+  return {
+    build: window.__amojiBuild,
+    rows,
+  };
+}, selectors);
+
+const shotPath = join(outDir, "icon_center_buttons.png");
+await page.screenshot({ path: shotPath, fullPage: false });
+
+await page.click("#btn-open-setup");
+await page.waitForSelector("#settings.open", { timeout: 8000 });
+const closeRow = await page.evaluate(() => {
+  const btn = document.getElementById("settings-close");
+  if (!btn) return { sel: "#settings-close", present: false };
+  const el = btn.querySelector("svg") || btn;
+  const br = btn.getBoundingClientRect();
+  const gr = el.getBoundingClientRect();
+  const dx = (gr.left + gr.width / 2) - (br.left + br.width / 2);
+  const dy = (gr.top + gr.height / 2) - (br.top + br.height / 2);
+  const cs = getComputedStyle(btn);
+  return {
+    sel: "#settings-close",
+    present: true,
+    width: Math.round(br.width * 10) / 10,
+    height: Math.round(br.height * 10) / 10,
+    glyphW: Math.round(gr.width * 10) / 10,
+    glyphH: Math.round(gr.height * 10) / 10,
+    dx: Number.isFinite(dx) ? Math.round(dx * 10) / 10 : null,
+    dy: Number.isFinite(dy) ? Math.round(dy * 10) / 10 : null,
+    display: cs.display,
+    alignItems: cs.alignItems,
+    justifyContent: cs.justifyContent,
+  };
+});
+report.rows.push(closeRow);
+const settingsShotPath = join(outDir, "icon_center_settings_close.png");
+await page.locator("#settings-close").screenshot({ path: settingsShotPath });
+await page.screenshot({ path: join(outDir, "icon_center_settings.png"), fullPage: false });
+
+const failures = report.rows.filter((row) => {
+  if (!row.present) return true;
+  if (row.dx == null || row.dy == null) return true;
+  return Math.abs(row.dx) > MAX_OFFSET || Math.abs(row.dy) > MAX_OFFSET;
+});
+
+const ok =
+  report.build === AMOJI_BUILD &&
+  failures.length === 0 &&
+  report.rows.length === selectors.length + 1;
+
+const summary = {
+  ok,
+  build: report.build,
+  maxOffset: MAX_OFFSET,
+  rows: report.rows,
+  shotPath,
+  settingsShotPath,
+};
+console.log(JSON.stringify(summary, null, 2));
+writeFileSync(join(outDir, "icon_center_smoke.json"), JSON.stringify(summary, null, 2));
+
+await browser.close();
+server.close();
+if (!ok) process.exit(1);

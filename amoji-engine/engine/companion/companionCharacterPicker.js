@@ -154,7 +154,9 @@ export function createCompanionCharacterPicker(opts = {}) {
           <h2 class="companion-picker-title"></h2>
           <p class="companion-picker-sub"></p>
         </div>
-        <button type="button" class="companion-picker-close" data-picker-close aria-label="Close">✕</button>
+        <button type="button" class="companion-picker-close" data-picker-close aria-label="Close">
+          <svg class="btn-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" aria-hidden="true"><path d="M6.2 6.2 17.8 17.8M17.8 6.2 6.2 17.8" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"/></svg>
+        </button>
       </header>
       <div class="companion-picker-grid" role="listbox"></div>
       <p class="companion-picker-foot"></p>

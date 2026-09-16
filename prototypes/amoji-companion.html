@@ -8,9 +8,9 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji · Companion</title>
     <script>
-      window.__amojiBuild = "2026-09-16-v123-character-model";
+      window.__amojiBuild = "2026-09-16-v124-icon-center";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-16-v123-character-model"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-16-v124-icon-center"></script>
     <link
       rel="prefetch"
       href="/prototypes/assets/companion-char-nova.png"
@@ -240,6 +240,11 @@
         color: #061018;
         font-weight: 700;
         cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        line-height: 0;
       }
       #amoji-boot-fallback {
         display: none;
@@ -285,7 +290,7 @@
       media="print"
       onload="this.media='all'"
     />
-    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-16-v123-character-model" />
+    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-16-v124-icon-center" />
     <noscript>
       <link
         href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap"
@@ -1044,8 +1049,53 @@
         cursor: pointer;
         flex-shrink: 0;
         font-size: 1.05rem;
-        line-height: 1;
+        line-height: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        text-align: center;
         transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+      }
+
+      .icon-btn,
+      .send,
+      .topbar-btn--icon,
+      .settings-close,
+      .companion-picker-close,
+      .gear {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        line-height: 0;
+        text-align: center;
+      }
+
+      .btn-icon {
+        display: block;
+        flex-shrink: 0;
+        pointer-events: none;
+      }
+
+      .btn-glyph {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        line-height: 1;
+        font-style: normal;
+      }
+
+      .speaker-btn .btn-icon--speaker-off {
+        display: none;
+      }
+
+      .speaker-btn[aria-pressed="false"] .btn-icon--speaker-on {
+        display: none;
+      }
+
+      .speaker-btn[aria-pressed="false"] .btn-icon--speaker-off {
+        display: block;
       }
 
       .icon-btn:hover {
@@ -1083,6 +1133,9 @@
         overflow: hidden;
         contain: paint;
         padding: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
         color: #f7f1e8;
         background: rgba(16, 20, 28, 0.94);
         border-color: rgba(255, 255, 255, 0.14);
@@ -1542,6 +1595,11 @@
         font-weight: 700;
         cursor: pointer;
         flex-shrink: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        line-height: 0;
         transition: transform 0.15s ease, filter 0.15s ease;
       }
 
@@ -1570,7 +1628,7 @@
         height: 2.65rem;
         padding: 0;
         font-size: 1.45rem;
-        line-height: 1;
+        line-height: 0;
         border-radius: 999px;
         display: inline-flex;
         align-items: center;
@@ -1593,17 +1651,18 @@
         display: none !important;
       }
 
-      body.conversation-ui.composer-always-visible .composer textarea,
-      body.conversation-ui.composer-always-visible .composer .send,
-      body.conversation-ui.composer-always-visible .composer #btn-mic,
-      body.conversation-ui.composer-always-visible .composer #btn-speaker {
-        display: flex !important;
-      }
-
       body.conversation-ui.composer-always-visible .composer textarea {
         display: block !important;
         flex: 1;
         min-height: 2.5rem;
+      }
+
+      body.conversation-ui.composer-always-visible .composer .send,
+      body.conversation-ui.composer-always-visible .composer #btn-mic,
+      body.conversation-ui.composer-always-visible .composer #btn-speaker {
+        display: inline-flex !important;
+        align-items: center;
+        justify-content: center;
       }
 
       body.conversation-ui.composer-always-visible .stage.mic-mode .composer {
@@ -1614,9 +1673,14 @@
         padding: 0.5rem 0.55rem;
       }
 
-      body.conversation-ui.composer-always-visible .stage.mic-mode .composer textarea,
-      body.conversation-ui.composer-always-visible .stage.mic-mode .composer .send {
+      body.conversation-ui.composer-always-visible .stage.mic-mode .composer textarea {
         display: block !important;
+      }
+
+      body.conversation-ui.composer-always-visible .stage.mic-mode .composer .send {
+        display: inline-flex !important;
+        align-items: center;
+        justify-content: center;
       }
 
       body.conversation-ui.composer-always-visible .stage.mic-mode #btn-mic {
@@ -1697,7 +1761,11 @@
         height: 2.55rem;
         flex-shrink: 0;
         font-size: 1.05rem;
-        line-height: 1;
+        line-height: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
       }
 
       body.conversation-ui .composer .speaker-btn[aria-pressed="true"] {
@@ -2022,6 +2090,14 @@
         background: rgba(255, 255, 255, 0.1);
       }
 
+      .topbar-btn.topbar-btn--icon {
+        padding: 0;
+        line-height: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+
       .topbar-btn--primary {
         border-color: rgba(127, 212, 207, 0.35);
         background: rgba(127, 212, 207, 0.14);
@@ -2103,7 +2179,11 @@
         color: var(--ink);
         cursor: pointer;
         font-size: 0.9rem;
-        line-height: 1;
+        line-height: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
       }
 
       @media (min-width: 720px) {
@@ -2419,6 +2499,11 @@
         border-radius: 999px;
         cursor: pointer;
         font-size: 0.9rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        line-height: 0;
       }
 
       .companion-picker-grid {
@@ -2563,6 +2648,7 @@
         place-items: center;
         font-size: 0.82rem;
         font-weight: 800;
+        line-height: 0;
         background: var(--card-accent, var(--accent));
         color: #061018;
         opacity: 0;
@@ -2840,19 +2926,19 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-16-v123-character-model",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-16-v124-icon-center",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-16-v123-character-model",
-          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-16-v123-character-model"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-16-v124-icon-center",
+          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-16-v124-icon-center"
         }
       }
     </script>
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-16-v123-character-model"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-16-v124-icon-center"
     />
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-16-v123-character-model"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-16-v123-character-model"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-16-v124-icon-center"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-16-v124-icon-center"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;
@@ -3119,7 +3205,14 @@
             title="Chat"
             aria-pressed="true"
           >
-            💬
+            <svg class="btn-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" aria-hidden="true">
+              <path
+                d="M6.2 5.6h11.6A2.2 2.2 0 0 1 20 7.8v6.2a2.2 2.2 0 0 1-2.2 2.2h-4.05L8.55 19.4c-.6.38-1.35-.12-1.35-.82v-2.38H6.2A2.2 2.2 0 0 1 4 14V7.8A2.2 2.2 0 0 1 6.2 5.6Z"
+                stroke="currentColor"
+                stroke-width="1.75"
+                stroke-linejoin="round"
+              />
+            </svg>
           </button>
           <button
             type="button"
@@ -3128,7 +3221,18 @@
             aria-label="Look and scene"
             title="Look & scene"
           >
-            🎨
+            <svg class="btn-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" aria-hidden="true">
+              <path
+                d="M12.15 4.5a7.6 7.6 0 1 0 .05 15.2c.88 0 1.4-.7 1.4-1.46 0-.38-.14-.72-.38-.98-.24-.27-.38-.62-.38-1 0-.8.64-1.44 1.44-1.44h2.05a3.72 3.72 0 0 0 0-7.44H15"
+                stroke="currentColor"
+                stroke-width="1.75"
+                stroke-linecap="round"
+              />
+              <circle cx="8.25" cy="10.2" r="1.05" fill="currentColor" />
+              <circle cx="10.7" cy="7.65" r="1.05" fill="currentColor" />
+              <circle cx="14.15" cy="7.85" r="1.05" fill="currentColor" />
+              <circle cx="8.7" cy="13.55" r="1.05" fill="currentColor" />
+            </svg>
           </button>
           <button
             type="button"
@@ -3137,7 +3241,11 @@
             aria-label="Menu"
             title="Menu"
           >
-            ⋯
+            <svg class="btn-icon" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+              <circle cx="6.2" cy="12" r="1.55" fill="currentColor" />
+              <circle cx="12" cy="12" r="1.55" fill="currentColor" />
+              <circle cx="17.8" cy="12" r="1.55" fill="currentColor" />
+            </svg>
           </button>
           <button type="button" class="gear" id="btn-settings" title="Chat settings" aria-label="Settings" hidden>⚙</button>
         </div>
@@ -3154,7 +3262,11 @@
       >
         <header class="settings-head">
           <h2 class="settings-page-title" id="settings-page-title">Setup</h2>
-          <button type="button" class="settings-close" id="settings-close" aria-label="Close setup">✕</button>
+          <button type="button" class="settings-close" id="settings-close" aria-label="Close setup">
+            <svg class="btn-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" aria-hidden="true">
+              <path d="M6.2 6.2 17.8 17.8M17.8 6.2 6.2 17.8" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" />
+            </svg>
+          </button>
         </header>
         <p class="settings-section-title" id="settings-session-title">Session</p>
         <button type="button" class="btn-secondary" id="settings-btn-lang">Language</button>
@@ -3229,7 +3341,11 @@
       >
         <header class="scene-sheet-head">
           <h2 class="scene-sheet-title" id="scene-sheet-title">Look &amp; scene</h2>
-          <button type="button" class="settings-close" id="scene-sheet-close" aria-label="Close">✕</button>
+          <button type="button" class="settings-close" id="scene-sheet-close" aria-label="Close">
+            <svg class="btn-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" aria-hidden="true">
+              <path d="M6.2 6.2 17.8 17.8M17.8 6.2 6.2 17.8" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" />
+            </svg>
+          </button>
         </header>
         <p class="settings-section-title" id="scene-bg-section-title">Background</p>
         <div class="scene-preset-grid" id="scene-bg-grid"></div>
@@ -3258,7 +3374,24 @@
               aria-label="Speaker"
               title="Speaker on"
             >
-              🔊
+              <svg class="btn-icon btn-icon--speaker-on" viewBox="0 0 24 24" width="18" height="18" fill="none" aria-hidden="true">
+                <path d="M4.7 9.15v5.7h2.95L12.3 19V5L7.65 9.15H4.7Z" fill="currentColor" />
+                <path
+                  d="M16.05 9.05a3.35 3.35 0 0 1 0 5.9M18.5 6.75a6.1 6.1 0 0 1 0 10.5"
+                  stroke="currentColor"
+                  stroke-width="1.7"
+                  stroke-linecap="round"
+                />
+              </svg>
+              <svg class="btn-icon btn-icon--speaker-off" viewBox="0 0 24 24" width="18" height="18" fill="none" aria-hidden="true">
+                <path d="M4.7 9.15v5.7h2.95L12.3 19V5L7.65 9.15H4.7Z" fill="currentColor" />
+                <path
+                  d="M16.15 9.15 21 16.1M21 9.15l-4.85 6.95"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                />
+              </svg>
             </button>
             <button
               type="button"
@@ -3302,7 +3435,17 @@
               placeholder="同 Amoji 傾偈…"
               enterkeyhint="send"
             ></textarea>
-            <button class="send" id="send" type="submit" aria-label="Send">↑</button>
+            <button class="send" id="send" type="submit" aria-label="Send">
+              <svg class="btn-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" aria-hidden="true">
+                <path
+                  d="M12 18.5V5.5M6.7 11 12 5.5 17.3 11"
+                  stroke="currentColor"
+                  stroke-width="2.15"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </button>
           </form>
         </div>
       </div>
@@ -4093,11 +4236,9 @@
 
       const syncTopbarActionLabels = () => {
         if (btnToggleChat) {
-          btnToggleChat.textContent = "💬";
           syncChatPanelUi();
         }
         if (btnOpenScene) {
-          btnOpenScene.textContent = "🎨";
           btnOpenScene.title = isEnglish ? "Look & scene" : "造型同場景";
           btnOpenScene.setAttribute(
             "aria-label",
@@ -4105,7 +4246,6 @@
           );
         }
         if (btnOpenSetup) {
-          btnOpenSetup.textContent = "⋯";
           btnOpenSetup.title = isEnglish
             ? "Menu — language, voice, companion, brain"
             : "選單 — 語言、語音、同伴、大腦";
@@ -4895,7 +5035,6 @@
           settingsBtnSpeaker.setAttribute("aria-pressed", on ? "true" : "false");
         }
         if (btnSpeaker) {
-          btnSpeaker.textContent = on ? "🔊" : "🔇";
           btnSpeaker.setAttribute("aria-pressed", on ? "true" : "false");
           btnSpeaker.title = isEnglish
             ? on
