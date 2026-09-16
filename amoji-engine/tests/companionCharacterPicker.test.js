@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { listCompanionCharacters } from "../engine/companion/companionCharacterCatalog.js";
+import { COMPANION_CHARACTER_PICKER_SCHEMA } from "../engine/companion/companionCharacterPicker.js";
 
 describe("companion character picker data", () => {
   it("lists all companions with preview metadata", () => {
@@ -24,5 +25,9 @@ describe("companion character picker data", () => {
     const sora = listCompanionCharacters("yue").find((c) => c.id === "sora");
     expect(amoji?.voiceLabel).toBe("曉佳");
     expect(sora?.voiceLabel).toBe("曉曼");
+  });
+
+  it("keeps the in-session picker schema for the top-left chip", () => {
+    expect(COMPANION_CHARACTER_PICKER_SCHEMA).toBe("amoji.companionCharacterPicker.v2");
   });
 });
