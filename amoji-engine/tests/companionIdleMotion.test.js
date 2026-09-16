@@ -42,9 +42,16 @@ describe("companionIdleMotion", () => {
   it("samples simple boot idle with relaxed forearms", () => {
     const boot = sampleSimpleBootIdleMotion(1.2);
     expect(BOOT_SIMPLE_IDLE_SEC).toBeGreaterThan(3);
-    expect(boot.forearmL).toBeGreaterThan(0.12);
-    expect(boot.forearmR).toBeGreaterThan(0.12);
-    expect(boot.armLiftL).toBeGreaterThan(0.05);
+    expect(boot.forearmL).toBeGreaterThan(0.24);
+    expect(boot.forearmR).toBeGreaterThan(0.24);
+    expect(boot.armLiftL).toBeGreaterThan(0.1);
+  });
+
+  it("keeps standing idle large enough to read in a portrait crop", () => {
+    const idle = sampleIdleBodyMotion(1.4);
+    expect(Math.abs(idle.leanY) + Math.abs(idle.headZ)).toBeGreaterThan(0.08);
+    expect(idle.armLiftL).toBeGreaterThan(0.06);
+    expect(idle.forearmL).toBeGreaterThan(0.08);
   });
 });
 

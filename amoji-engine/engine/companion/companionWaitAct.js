@@ -70,11 +70,24 @@ export function createCompanionWaitAct(opts = {}) {
     avatarRef?.setEmotion?.(emotion);
     avatarRef?.applyExpressionProfile?.(expression);
 
-    if (kind === "idle" || kind === "avatar-load") {
-      // Procedural sway only while loading / waiting — no VRMA arm poses at boot.
+    if (kind === "avatar-load") {
+      // Procedural sway only while the model is still loading.
       avatarRef?.setThinking?.(false);
       avatarRef?.stopAction?.();
       opts.onPose?.("idle-procedural", phase);
+      return;
+    }
+
+    if (kind === "idle") {
+      const pose = pickWaitPose("idle", poseTick);
+      lastPoseId = pose;
+      avatarRef?.setThinking?.(false);
+      avatarRef?.playAction?.(pose, {
+        emotion,
+        loop: false,
+        single: true,
+      });
+      opts.onPose?.(pose, phase);
       return;
     }
 

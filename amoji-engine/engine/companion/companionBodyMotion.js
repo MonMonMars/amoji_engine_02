@@ -408,8 +408,8 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
     const baseLiftR = REST_POSE.armLiftR ?? 0;
     const baseForeL = REST_POSE.forearmL ?? 0;
     const baseForeR = REST_POSE.forearmR ?? 0;
-    const liftCap = opts.boot ? 0.18 : 0.12;
-    const foreCap = opts.boot ? 0.34 : 0.28;
+    const liftCap = opts.boot ? 0.38 : 0.3;
+    const foreCap = opts.boot ? 0.58 : 0.46;
     const liftL = Math.min(liftCap, baseLiftL + (safe.armLiftL ?? 0) * k);
     const liftR = Math.min(liftCap, baseLiftR + (safe.armLiftR ?? 0) * k);
     const foreL = Math.min(foreCap, baseForeL + (safe.forearmL ?? 0) * k);
@@ -417,12 +417,12 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
     applyBoneRotation("leftUpperArm", {
       x: restL.x,
       y: restL.y,
-      z: restL.z + liftL * 0.42,
+      z: restL.z + liftL * 0.92,
     });
     applyBoneRotation("rightUpperArm", {
       x: restR.x,
       y: restR.y,
-      z: restR.z - liftR * 0.42,
+      z: restR.z - liftR * 0.92,
     });
     applyBoneRotation("leftLowerArm", {
       x: restLl.x + foreL,
