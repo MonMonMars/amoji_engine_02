@@ -16,9 +16,9 @@ export const COMPANION_POSE_LIBRARY_SCHEMA = "amoji.companionPoseLibrary.v1";
 export const VRM_ARM_REST_ROTATIONS = Object.freeze({
   leftUpperArm: { x: 0.12, y: 0, z: -1.42 },
   rightUpperArm: { x: 0.12, y: 0, z: 1.42 },
-  // Slight elbow bend so hands do not read board-straight at rest.
-  leftLowerArm: { x: 0.28, y: 0, z: 0.05 },
-  rightLowerArm: { x: 0.28, y: 0, z: -0.05 },
+  // Elbow bend baked into rest so hands hang naturally (not T-pose straight).
+  leftLowerArm: { x: 0.36, y: 0, z: 0.06 },
+  rightLowerArm: { x: 0.36, y: 0, z: -0.06 },
 });
 
 /** Standing leg rest — slight knee bend reads natural on most VRM rigs. */
@@ -31,10 +31,10 @@ export const VRM_LEG_REST_ROTATIONS = Object.freeze({
 
 /** Natural standing — arms relaxed at sides (A-pose VRM). */
 export const REST_POSE = Object.freeze({
-  armLiftL: 0.04,
-  armLiftR: 0.04,
-  forearmL: 0.06,
-  forearmR: 0.06,
+  armLiftL: 0.06,
+  armLiftR: 0.06,
+  forearmL: 0.14,
+  forearmR: 0.14,
   headX: 0,
   headZ: 0,
   spineX: 0.01,

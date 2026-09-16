@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
   advanceIdleBeat,
+  BOOT_SIMPLE_IDLE_SEC,
   createIdleBeatState,
   sampleIdleBodyMotion,
   sampleIdleExpressionBlend,
+  sampleSimpleBootIdleMotion,
 } from "../engine/companion/companionIdleMotion.js";
 import { createCompanionBodyMotion } from "../engine/companion/companionBodyMotion.js";
 import { VRM_ARM_REST_ROTATIONS } from "../engine/companion/companionPoseLibrary.js";
@@ -35,6 +37,14 @@ describe("companionIdleMotion", () => {
     const settled = sampleIdleExpressionBlend(2, "neutral");
     expect(atStart.Relaxed).toBe(0);
     expect(settled.Relaxed).toBeGreaterThan(0.15);
+  });
+
+  it("samples simple boot idle with relaxed forearms", () => {
+    const boot = sampleSimpleBootIdleMotion(0.4);
+    expect(BOOT_SIMPLE_IDLE_SEC).toBeGreaterThan(3);
+    expect(boot.forearmL).toBeGreaterThan(0.12);
+    expect(boot.forearmR).toBeGreaterThan(0.12);
+    expect(boot.armLiftL).toBeGreaterThan(0.04);
   });
 });
 

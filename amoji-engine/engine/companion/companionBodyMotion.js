@@ -23,8 +23,10 @@ import {
 import { buildCharacterSystemPrompt } from "./companionCharacterCatalog.js";
 import {
   advanceIdleBeat,
+  BOOT_SIMPLE_IDLE_SEC,
   createIdleBeatState,
   sampleIdleBodyMotion,
+  sampleSimpleBootIdleMotion,
 } from "./companionIdleMotion.js";
 import {
   dampPose,
@@ -377,10 +379,59 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
     b.rotation.z = rot.z ?? 0;
   };
 
-  const applyArmRest = () => {
-    for (const name of ARM_BONE_NAMES) {
-      applyBoneRotation(name, armRestRotations[name]);
-    }
+  const applyArmRest = (pose = REST_POSE) => {
+    const restL = armRestRotations.leftUpperArm;
+    const restR = armRestRotations.rightUpperArm;
+    const restLl = armRestRotations.leftLowerArm;
+    const restRl = armRestRotations.rightLowerArm;
+    applyBoneRotation("leftUpperArm", restL);
+    applyBoneRotation("rightUpperArm", restR);
+    applyBoneRotation("leftLowerArm", {
+      x: restLl.x + (pose.forearmL ?? REST_POSE.forearmL ?? 0),
+      y: restLl.y,
+      z: restLl.z,
+    });
+    applyBoneRotation("rightLowerArm", {
+      x: restRl.x + (pose.forearmR ?? REST_POSE.forearmR ?? 0),
+      y: restRl.y,
+      z: restRl.z,
+    });
+  };
+
+  const applyIdleArms = (pose, k) => {
+    const safe = clampArmPose(pose);
+    const restL = armRestRotations.leftUpperArm;
+    const restR = armRestRotations.rightUpperArm;
+    const restLl = armRestRotations.leftLowerArm;
+    const restRl = armRestRotations.rightLowerArm;
+    const baseLiftL = REST_POSE.armLiftL ?? 0;
+    const baseLiftR = REST_POSE.armLiftR ?? 0;
+    const baseForeL = REST_POSE.forearmL ?? 0;
+    const baseForeR = REST_POSE.forearmR ?? 0;
+    const liftL = Math.min(0.12, baseLiftL + (safe.armLiftL ?? 0) * k);
+    const liftR = Math.min(0.12, baseLiftR + (safe.armLiftR ?? 0) * k);
+    const foreL = Math.min(0.28, baseForeL + (safe.forearmL ?? 0) * k);
+    const foreR = Math.min(0.28, baseForeR + (safe.forearmR ?? 0) * k);
+    applyBoneRotation("leftUpperArm", {
+      x: restL.x,
+      y: restL.y,
+      z: restL.z + liftL * 0.42,
+    });
+    applyBoneRotation("rightUpperArm", {
+      x: restR.x,
+      y: restR.y,
+      z: restR.z - liftR * 0.42,
+    });
+    applyBoneRotation("leftLowerArm", {
+      x: restLl.x + foreL,
+      y: restLl.y,
+      z: restLl.z,
+    });
+    applyBoneRotation("rightLowerArm", {
+      x: restRl.x + foreR,
+      y: restRl.y,
+      z: restRl.z,
+    });
   };
 
   const applyPointArms = (pose, k) => {
@@ -516,16 +567,19 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
     const k = Math.max(0, Math.min(1, intensity));
     const allowArms = opts.allowArms === true;
     const actionArms = opts.actionArms === true;
+    const idleArms = opts.idleArms === true;
     const talkArmBlend = Number(opts.talkArmBlend) || 0;
 
     if (actionArms) {
       applyActionArms(pose, k);
     } else if (allowArms) {
       applyPointArms(pose, k);
+    } else if (idleArms) {
+      applyIdleArms(pose, k);
     } else if (talkArmBlend > 0.01) {
       applyTalkArms(pose, talkArmBlend);
     } else {
-      applyArmRest();
+      applyArmRest(pose);
     }
 
     const head = bone("head");
@@ -597,12 +651,20 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
         pose.headX = (pose.headX || 0) + Math.sin(elapsed * 0.55) * 0.024;
         pose.headZ = (pose.headZ || 0) + Math.sin(elapsed * 0.42 + 0.8) * 0.018;
       } else if (!talking) {
-        const idleMotion = sampleIdleBodyMotion(elapsed, { listening, emotion });
-        pose = mergePoses(pose, idleMotion, listening ? 0.96 : 0.92);
-        const beat = advanceIdleBeat(idleBeatState, dt, now);
-        idleBeatState = beat.state;
-        if (beat.overlay && Object.keys(beat.overlay).length) {
-          pose = mergePoses(pose, beat.overlay, 0.9);
+        if (elapsed < BOOT_SIMPLE_IDLE_SEC) {
+          pose = mergePoses(
+            pose,
+            sampleSimpleBootIdleMotion(elapsed),
+            0.96,
+          );
+        } else {
+          const idleMotion = sampleIdleBodyMotion(elapsed, { listening, emotion });
+          pose = mergePoses(pose, idleMotion, listening ? 0.96 : 0.92);
+          const beat = advanceIdleBeat(idleBeatState, dt, now);
+          idleBeatState = beat.state;
+          if (beat.overlay && Object.keys(beat.overlay).length) {
+            pose = mergePoses(pose, beat.overlay, 0.9);
+          }
         }
       } else {
         talkTime += dt;
@@ -636,6 +698,7 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
 
     let allowArms = false;
     let actionArms = false;
+    let idleArms = false;
     let talkArmBlend = 0;
     if (activeAction) {
       actionArms = true;
@@ -643,7 +706,7 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
     if (talking && !activeGesture && !activeAction) {
       talkArmBlend = 0.28 + energy * 0.32;
     } else if (!talking && !thinking && !activeGesture && !activeAction) {
-      talkArmBlend = listening ? 0.42 : 0.36;
+      idleArms = true;
     }
     if (activeGesture) {
       gesturePhase += dt / gestureDuration;
@@ -684,7 +747,12 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
         smoothedRootMotion.rotY = 0;
       }
     }
-    applyPose(smoothedPose, 1, { allowArms, actionArms, talkArmBlend });
+    applyPose(smoothedPose, 1, {
+      allowArms,
+      actionArms,
+      idleArms,
+      talkArmBlend,
+    });
     return smoothedPose;
   };
 
@@ -737,14 +805,15 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
       smoothedPose = buildBasePose({ listening, emotion, nuance });
       smoothedPose = mergePoses(
         smoothedPose,
-        sampleIdleBodyMotion(0.35, { listening, emotion }),
-        0.55,
+        sampleSimpleBootIdleMotion(0.2),
+        0.98,
       );
       smoothedRootMotion = { y: 0, rotY: 0 };
       applyPose(smoothedPose, 1, {
         allowArms: false,
         actionArms: false,
-        talkArmBlend: 0.38,
+        idleArms: true,
+        talkArmBlend: 0,
       });
       return smoothedPose;
     },

@@ -56,16 +56,18 @@ describe("companionWaitAct", () => {
     expect(wait.isActive()).toBe(false);
   });
 
-  it("replays pose when avatar becomes available mid-wait", () => {
+  it("uses procedural idle when avatar becomes available during load", () => {
     const avatar = {
       playAction: vi.fn(),
       setEmotion: vi.fn(),
       setThinking: vi.fn(),
+      stopAction: vi.fn(),
     };
     const wait = createCompanionWaitAct({ avatar: null, isEnglish: false });
     wait.start({ kind: "avatar-load", phase: "wave", speak: false });
     expect(avatar.playAction).not.toHaveBeenCalled();
     wait.setAvatar(avatar);
-    expect(avatar.playAction).toHaveBeenCalled();
+    expect(avatar.playAction).not.toHaveBeenCalled();
+    expect(avatar.stopAction).toHaveBeenCalled();
   });
 });
