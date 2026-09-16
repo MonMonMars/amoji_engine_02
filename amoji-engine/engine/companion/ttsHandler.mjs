@@ -1,10 +1,11 @@
 /**
- * Cloud Cantonese TTS via Microsoft Edge neural voices (no API key).
- * Server-side only — browsers cannot call Edge TTS WebSocket directly.
+ * Companion cloud TTS — OpenAI gpt-4o-mini-tts (ChatGPT-style instructions) with Edge fallback.
+ * Server-side only — browsers cannot call these hosts directly.
  */
 import { EdgeTTS } from "edge-tts-universal";
 import { resolveCompanionTtsProsody } from "./companionTtsProsody.js";
 import { resolveEdgeVoiceId } from "./companionVoiceProfiles.js";
+import { resolveOpenAiApiKey, synthesizeOpenAiSpeech } from "./openaiTts.mjs";
 
 export const TTS_HANDLER_SCHEMA = "amoji.ttsHandler.v2";
 
@@ -70,8 +71,41 @@ export async function synthesizeSpeech(text, opts = {}) {
     characterId: opts.characterId,
     voiceId: opts.voice,
   });
-  const edge = prosodyPack.edge;
 
+  const provider = String(process.env.AMOJI_TTS_PROVIDER || "auto").toLowerCase();
+  const tryOpenAi =
+    provider === "openai" ||
+    (provider === "auto" && Boolean(resolveOpenAiApiKey()));
+
+  if (tryOpenAi) {
+    try {
+      const oai = await synthesizeOpenAiSpeech(clean, {
+        voice: opts.voice,
+        lang,
+        emotion: opts.emotion,
+        nuance: opts.nuance,
+        talkStyle: opts.talkStyle,
+        speechEnergy: opts.speechEnergy,
+        instructions: prosodyPack.instruct,
+        fetchImpl: opts.fetchImpl,
+      });
+      if (oai) {
+        return {
+          audio: oai.audio,
+          voice: oai.voice,
+          contentType: oai.contentType,
+          prosody: prosodyPack,
+          engine: "openai",
+          model: oai.model,
+        };
+      }
+    } catch (err) {
+      if (provider === "openai") throw err;
+      console.warn("[tts] OpenAI TTS failed, using Edge fallback:", err?.message || err);
+    }
+  }
+
+  const edge = prosodyPack.edge;
   const defaultVoice =
     lang === "en" || lang === "en-us" ? ENGLISH_FEMALE_VOICE : CANTONESE_FEMALE_VOICE;
   const voice = resolveEdgeVoiceId(opts.voice || defaultVoice);
@@ -89,6 +123,7 @@ export async function synthesizeSpeech(text, opts = {}) {
     voice,
     contentType: "audio/mpeg",
     prosody: prosodyPack,
+    engine: "edge",
   };
 }
 
