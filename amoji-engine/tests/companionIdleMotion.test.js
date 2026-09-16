@@ -29,6 +29,13 @@ describe("companionIdleMotion", () => {
     expect(blend.Relaxed).toBeGreaterThan(0.15);
     expect(blend.Happy).toBeGreaterThan(0.05);
   });
+
+  it("ramps Relaxed in so first frame keeps eyes open", () => {
+    const atStart = sampleIdleExpressionBlend(0, "neutral");
+    const settled = sampleIdleExpressionBlend(2, "neutral");
+    expect(atStart.Relaxed).toBe(0);
+    expect(settled.Relaxed).toBeGreaterThan(0.15);
+  });
 });
 
 describe("idle body motion integration", () => {
