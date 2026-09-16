@@ -21,6 +21,13 @@ import {
   removePriorityIfPresent,
   togglePriority,
 } from "./prioritiesStore.js";
+import {
+  applyUiIntents,
+  buildUiIntentPromptFragment,
+  inferUiIntentFromUserText,
+  mergeUiIntents,
+  uiIntentLabel,
+} from "../companionUiIntent.js";
 import { parseSecretaryReply } from "./replyParser.js";
 import {
   readReminderPrefs,
@@ -264,12 +271,14 @@ export function initAmojiSecretaryLite(doc = document) {
           "When suggesting a task, add [task:Title|due:tonight] (optional due hint).",
           "When the user shares a preference worth remembering, add [memory:short fact].",
           "When drafting email/message text, add [draft:copyable text on one line].",
+          buildUiIntentPromptFragment(true, { surface: "secretary" }),
         ].join(" ")
       : [
           "每句回覆結尾加 [mood:happy|thinking|sad|surprised|angry]。",
           "建議任務時加 [task:標題|due:今晚]（due 可選）。",
           "用戶分享值得記住嘅偏好時加 [memory:短句]。",
           "起草電郵/訊息時加 [draft:可複製文字，一行]。",
+          buildUiIntentPromptFragment(false, { surface: "secretary" }),
         ].join(" ");
     const modeLine = modePromptFragment(mode, isEn);
     const memoryLine = memory
@@ -467,6 +476,65 @@ export function initAmojiSecretaryLite(doc = document) {
     els.messages.scrollTop = els.messages.scrollHeight;
   }
 
+  const uiContextPill =
+    doc.getElementById("ui-context-pill") ||
+    (() => {
+      const pill = doc.createElement("span");
+      pill.id = "ui-context-pill";
+      pill.className = "ui-context-pill";
+      pill.hidden = true;
+      doc.querySelector("header .header-actions")?.prepend(pill);
+      return pill;
+    })();
+
+  const updateUiContextPill = (applied = []) => {
+    if (!uiContextPill) return;
+    const labels = applied.map((i) => uiIntentLabel(i, isEn)).filter(Boolean);
+    if (!labels.length) return;
+    uiContextPill.hidden = false;
+    uiContextPill.textContent = labels.join(" · ");
+  };
+
+  const secretaryUiHandlers = {
+    switchTab: (tabId) => {
+      switchTab(tabId);
+      if (tabId === "chat") activateChat();
+    },
+    setMode: (nextMode) => {
+      if (!["work", "life", "chill"].includes(nextMode)) return;
+      mode = nextMode;
+      persistSecretaryMode(mode, storage);
+      renderModeButtons();
+    },
+    openVoicePicker: () => {
+      voicePicker.setSelectedId(voiceId);
+      voicePicker.open();
+    },
+    switchLanguage: async (lang) => {
+      const targetLang = lang === "en" ? "en" : "yue";
+      window.location.href = buildCompanionHref({
+        basePath: "/companion",
+        lang: targetLang,
+        voiceId: defaultVoiceForLang(targetLang, voiceId),
+      });
+    },
+    onContextChange: (ctx) => {
+      /** @type {import("../companionUiIntent.js").UiIntent[]} */
+      const applied = [];
+      if (ctx.tab) applied.push({ type: "tab", value: ctx.tab });
+      if (ctx.mode) applied.push({ type: "mode", value: ctx.mode });
+      updateUiContextPill(applied);
+    },
+  };
+
+  async function applyConversationUi(userMsg, parsedReply = null) {
+    const fromUser = inferUiIntentFromUserText(userMsg, isEn);
+    const fromTags = parsedReply?.uiIntents || [];
+    const intents = mergeUiIntents(fromUser, fromTags);
+    const { applied } = await applyUiIntents(intents, secretaryUiHandlers);
+    updateUiContextPill(applied);
+  }
+
   async function sendMessage(text) {
     const msg = String(text || "").trim();
     if (!msg || busy) return;
@@ -475,6 +543,8 @@ export function initAmojiSecretaryLite(doc = document) {
     showError("");
     addBubble(msg, "user");
     if (els.input) els.input.value = "";
+
+    await applyConversationUi(msg, null);
 
     const extraction = extractTaskFromMessage(msg, { isEn, mode });
     if (extraction.confidence >= 0.75 && extraction.task) {
@@ -490,6 +560,7 @@ export function initAmojiSecretaryLite(doc = document) {
       setStatus(strings.statusThinking);
       const result = await cloudReply(msg);
       thinking?.remove();
+      await applyConversationUi(msg, result);
       addBubble(result.reply, "bot");
       saveLastChatSummary(result.reply, storage);
       for (const taskDraft of result.tasks || []) {
@@ -734,6 +805,7 @@ export function initAmojiSecretaryLite(doc = document) {
     for (const m of ["work", "life", "chill"]) {
       const btn = doc.createElement("button");
       btn.type = "button";
+      btn.dataset.mode = m;
       btn.className = `mode-chip${mode === m ? " active" : ""}`;
       btn.textContent = modeLabel(m, isEn);
       btn.addEventListener("click", () => {
@@ -787,8 +859,8 @@ export function initAmojiSecretaryLite(doc = document) {
       addBubble(strings.welcome, "bot");
       addBubble(
         isEn
-          ? "Switch Work / Life / Chill above. Tell me a task or just chat."
-          : "上面可以切換工作 / 生活 / 閒聊模式。同我講任務或者隨意傾計啦。",
+          ? "Just tell me what you need — I'll switch views and tone for you. Try “show my tasks” or “let's chill”."
+          : "直接同我講就得 — 我會幫你轉頁同轉語氣。試下「睇下任務」或者「閒聊模式」。",
         "bot",
       );
     }
@@ -980,6 +1052,8 @@ export function initAmojiSecretaryLite(doc = document) {
     if (memSave) memSave.textContent = strings.save;
   }
 
+  doc.body.classList.add("conversation-ui");
+
   wireHeader();
   wireEvents();
   localizeChrome();
@@ -991,10 +1065,15 @@ export function initAmojiSecretaryLite(doc = document) {
   renderMemory();
   renderPrefs();
 
-  const initialTab = params.get("tab") || "today";
+  const conversationUi = doc.body.classList.contains("conversation-ui");
+  const initialTab =
+    params.get("tab") || (conversationUi ? "chat" : "today");
   switchTab(
     ["today", "chat", "tasks", "me"].includes(initialTab) ? initialTab : "today",
   );
+  if (conversationUi && initialTab === "chat") {
+    activateChat();
+  }
 
   if (hosted) {
     doc.getElementById("build-tag")?.classList.add("hidden");

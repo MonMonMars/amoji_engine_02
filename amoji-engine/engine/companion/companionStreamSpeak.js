@@ -3,6 +3,8 @@
  * as LLM tokens arrive (Grok / ChatGPT-style low latency).
  */
 
+import { stripUiIntentTags } from "./companionUiIntentTags.js";
+
 export const COMPANION_STREAM_SPEAK_SCHEMA = "amoji.companionStreamSpeak.v1";
 
 const MOOD_TAG_RE = /\s*\[mood:\w+\]\s*$/i;
@@ -28,7 +30,7 @@ export function stripMoodTagForSpeak(text) {
  */
 export function stripReplyTagsForSpeak(text) {
   return stripMoodTagForSpeak(
-    String(text || "")
+    stripUiIntentTags(String(text || ""))
       .replace(ACTION_TAG_RE, " ")
       .replace(PARTIAL_ACTION_RE, ""),
   )

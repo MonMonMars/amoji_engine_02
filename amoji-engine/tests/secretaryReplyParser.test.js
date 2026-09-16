@@ -21,4 +21,16 @@ describe("secretary replyParser", () => {
     expect(parsed.drafts[0]).toMatch(/Hi team/);
     expect(parsed.reply).not.toMatch(/\[draft:/);
   });
+
+  it("parses ui navigation tags", () => {
+    const parsed = parseSecretaryReply(
+      "好，我幫你睇。[ui:tab:tasks][ui:mode:work][mood:happy]",
+      { isEn: false },
+    );
+    expect(parsed.uiIntents).toEqual([
+      { type: "tab", value: "tasks" },
+      { type: "mode", value: "work" },
+    ]);
+    expect(parsed.reply).not.toMatch(/\[ui:/);
+  });
 });

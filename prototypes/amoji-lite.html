@@ -8,10 +8,10 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji Secretary</title>
     <script>
-      window.__amojiBuild = "2026-09-15-v78-idle-motion";
+      window.__amojiBuild = "2026-09-15-v79-conversation-ui";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-15-v78-idle-motion"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-15-v78-idle-motion"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-15-v79-conversation-ui"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-15-v79-conversation-ui"></script>
     <style>
       *,
       *::before,
@@ -629,6 +629,44 @@
         font-size: 0.72rem;
         color: rgba(247, 241, 232, 0.55);
       }
+
+      body.conversation-ui .tabbar,
+      body.conversation-ui .mode-row,
+      body.conversation-ui #discover-chips,
+      body.conversation-ui #open-chat-btn,
+      body.conversation-ui #start-btn,
+      body.conversation-ui .header-actions .btn-voice,
+      body.conversation-ui .header-actions .btn-lang {
+        display: none !important;
+      }
+
+      body.conversation-ui .app {
+        padding-bottom: 5.75rem;
+      }
+
+      body.conversation-ui .composer {
+        display: flex !important;
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 40;
+        margin: 0;
+        border-radius: 1rem 1rem 0 0;
+        box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.35);
+      }
+
+      .ui-context-pill {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.2rem 0.5rem;
+        border-radius: 999px;
+        font-size: 0.65rem;
+        font-weight: 650;
+        color: rgba(247, 241, 232, 0.88);
+        background: rgba(127, 212, 207, 0.14);
+        border: 1px solid rgba(127, 212, 207, 0.28);
+      }
     </style>
   </head>
   <body>
@@ -665,15 +703,6 @@
         <div class="mode-row" id="mode-row"></div>
         <div class="discover" id="discover-chips"></div>
         <div class="messages" id="messages" aria-live="polite"></div>
-        <button type="button" class="start-btn" id="start-btn">開始傾計</button>
-        <form class="composer hidden" id="composer" autocomplete="off">
-          <textarea id="input" rows="1" placeholder="輸入訊息…" enterkeyhint="send"></textarea>
-          <div class="row">
-            <button type="button" class="btn speaker" id="speaker-btn" title="Speaker" aria-pressed="true">🔊</button>
-            <button type="button" class="btn mic" id="mic-btn" title="Mic">🎤</button>
-            <button type="submit" class="btn send" id="send-btn">Send</button>
-          </div>
-        </form>
       </section>
 
       <section class="panel hidden" id="panel-tasks">
@@ -722,10 +751,20 @@
         <button type="button" data-tab="tasks">任務</button>
         <button type="button" data-tab="me">我</button>
       </nav>
+
+      <button type="button" class="start-btn" id="start-btn">開始傾計</button>
+      <form class="composer hidden" id="composer" autocomplete="off">
+        <textarea id="input" rows="1" placeholder="輸入訊息…" enterkeyhint="send"></textarea>
+        <div class="row">
+          <button type="button" class="btn speaker" id="speaker-btn" title="Speaker" aria-pressed="true">🔊</button>
+          <button type="button" class="btn mic" id="mic-btn" title="Mic">🎤</button>
+          <button type="submit" class="btn send" id="send-btn">Send</button>
+        </div>
+      </form>
     </div>
 
     <script type="module">
-      import { initAmojiSecretaryLite } from "/amoji-engine/engine/companion/secretary/secretaryLiteShell.js?v=2026-09-15-v78-idle-motion";
+      import { initAmojiSecretaryLite } from "/amoji-engine/engine/companion/secretary/secretaryLiteShell.js?v=2026-09-15-v79-conversation-ui";
       window.__amojiLiteTag = "secretary-v1";
       window.__amojiLite = { ready: true, ttsCalls: 0, chatCalls: 0 };
       initAmojiSecretaryLite(document);
