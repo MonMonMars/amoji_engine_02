@@ -599,11 +599,11 @@ export function createCompanionBodyMotion(humanoid) {
         pose.headZ = (pose.headZ || 0) + Math.sin(elapsed * 0.42 + 0.8) * 0.018;
       } else if (!talking) {
         const idleMotion = sampleIdleBodyMotion(elapsed, { listening, emotion });
-        pose = mergePoses(pose, idleMotion, listening ? 0.88 : 0.82);
+        pose = mergePoses(pose, idleMotion, listening ? 0.96 : 0.92);
         const beat = advanceIdleBeat(idleBeatState, dt, now);
         idleBeatState = beat.state;
         if (beat.overlay && Object.keys(beat.overlay).length) {
-          pose = mergePoses(pose, beat.overlay, 0.78);
+          pose = mergePoses(pose, beat.overlay, 0.9);
         }
       } else {
         talkTime += dt;
@@ -644,7 +644,7 @@ export function createCompanionBodyMotion(humanoid) {
     if (talking && !activeGesture && !activeAction) {
       talkArmBlend = 0.28 + energy * 0.32;
     } else if (!talking && !thinking && !activeGesture && !activeAction) {
-      talkArmBlend = listening ? 0.42 : 0.36;
+      talkArmBlend = listening ? 0.58 : 0.52;
     }
     if (activeGesture) {
       gesturePhase += dt / gestureDuration;
