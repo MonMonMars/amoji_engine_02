@@ -19,8 +19,11 @@ import {
   PORTRAIT_FOV,
   applyUpperBodyPortraitFrame,
 } from "./companionPortraitFraming.js";
+import { actionLoops } from "./companionActionMotion.js";
 import { createCompanionBodyMotion } from "./companionBodyMotion.js";
 import { buildVrmExpressionBlend } from "./companionContentMotion.js";
+import { resolveOnlineMotionClipUrl } from "./companionOnlineMotionClips.mjs";
+import { createVrmMotionPlayer } from "./companionVrmMotionPlayer.js";
 import { sampleIdleExpressionBlend } from "./companionIdleMotion.js";
 import { configureVrmSpringStability } from "./vrmSpringStability.js";
 
@@ -208,6 +211,14 @@ export async function createVrmAvatar(opts) {
   vrm.humanoid?.resetNormalizedPose?.();
   configureVrmSpringStability(vrm);
   const bodyMotion = createCompanionBodyMotion(vrm.humanoid);
+  /** @type {string | null} */
+  let vrmaAction = null;
+  const motionPlayer = createVrmMotionPlayer({
+    vrm,
+    onComplete: () => {
+      vrmaAction = null;
+    },
+  });
 
   const syncHumanoidPose = () => {
     try {
@@ -401,7 +412,62 @@ export async function createVrmAvatar(opts) {
   const setListening = (on) => bodyMotion.setListening(on);
 
   const playGesture = (style) => bodyMotion.playGesture(style);
+
+  const tryPlayVrmaAction = async (action, opts = {}) => {
+    const key = String(action || "").toLowerCase();
+    if (!key || key === "none" || key === "stop") return false;
+    if (!resolveOnlineMotionClipUrl(key)) return false;
+
+    bodyMotion.stopAction();
+    const loop = opts.loop ?? actionLoops(key);
+    const ok = await motionPlayer.play(key, { loop });
+    if (!ok) return false;
+
+    vrmaAction = key;
+    if (opts.emotion && opts.emotion !== "neutral") {
+      emotion = opts.emotion;
+      bodyMotion.setEmotion?.(emotion);
+    } else {
+      emotion = bodyMotion.emotion;
+    }
+    applyEmotionExpressions(emotion);
+    return true;
+  };
+
   const playAction = (action, opts = {}) => {
+    const key = String(action || "").toLowerCase();
+    if (!key || key === "stop") {
+      motionPlayer.stop();
+      vrmaAction = null;
+      const ok = bodyMotion.playAction(action, {
+        emotion: opts.emotion || emotion,
+        loop: opts.loop,
+        loopSequence: opts.loopSequence,
+        single: opts.single,
+        maxMoves: opts.maxMoves,
+      });
+      emotion = bodyMotion.emotion;
+      applyEmotionExpressions(emotion);
+      return ok;
+    }
+
+    if (resolveOnlineMotionClipUrl(key)) {
+      void tryPlayVrmaAction(key, opts).then((ok) => {
+        if (!ok) {
+          bodyMotion.playAction(action, {
+            emotion: opts.emotion || emotion,
+            loop: opts.loop,
+            loopSequence: opts.loopSequence,
+            single: opts.single,
+            maxMoves: opts.maxMoves,
+          });
+          emotion = bodyMotion.emotion;
+          applyEmotionExpressions(emotion);
+        }
+      });
+      return true;
+    }
+
     const ok = bodyMotion.playAction(action, {
       emotion: opts.emotion || emotion,
       loop: opts.loop,
@@ -413,7 +479,22 @@ export async function createVrmAvatar(opts) {
     applyEmotionExpressions(emotion);
     return ok;
   };
+
   const playActionSequence = (actions, opts = {}) => {
+    const sequence = Array.isArray(actions)
+      ? actions.map((id) => String(id || "").toLowerCase()).filter(Boolean)
+      : [];
+    if (
+      sequence.length === 1 &&
+      resolveOnlineMotionClipUrl(sequence[0])
+    ) {
+      void tryPlayVrmaAction(sequence[0], {
+        emotion: opts.emotion || emotion,
+        loop: opts.loopSequence,
+      });
+      return true;
+    }
+
     const ok = bodyMotion.playActionSequence(actions, {
       emotion: opts.emotion || emotion,
       loopSequence: opts.loopSequence,
@@ -422,7 +503,10 @@ export async function createVrmAvatar(opts) {
     applyEmotionExpressions(emotion);
     return ok;
   };
+
   const stopAction = () => {
+    motionPlayer.stop();
+    vrmaAction = null;
     const ok = bodyMotion.stopAction();
     applyEmotionExpressions(emotion);
     return ok;
@@ -529,14 +613,20 @@ export async function createVrmAvatar(opts) {
   const frame = () => {
     const dt = clock.getDelta();
     const now = performance.now();
+    const activeMotion = vrmaAction || bodyMotion.currentAction;
     try {
       bodyMotion.update(dt, { talking, now });
-      const root = bodyMotion.getRootMotion?.() || { y: 0, rotY: 0 };
-      model.position.y = baseModelY + (root.y || 0);
-      model.rotation.y = baseModelRotY + (root.rotY || 0);
-
+      motionPlayer.update(dt);
+      if (!vrmaAction) {
+        const root = bodyMotion.getRootMotion?.() || { y: 0, rotY: 0 };
+        model.position.y = baseModelY + (root.y || 0);
+        model.rotation.y = baseModelRotY + (root.rotY || 0);
+      } else {
+        model.position.y = baseModelY;
+        model.rotation.y = baseModelRotY;
+      }
       if (vrm.lookAt) {
-        vrm.lookAt.autoUpdate = !bodyMotion.currentAction;
+        vrm.lookAt.autoUpdate = !activeMotion;
       }
       syncHumanoidPose();
       vrm.update(dt);
@@ -549,7 +639,7 @@ export async function createVrmAvatar(opts) {
       }
       faceAnchor.copy(smoothedFrameAnchor);
 
-      cameraDirector.setCurrentAction(bodyMotion.currentAction);
+      cameraDirector.setCurrentAction(activeMotion);
       const camState = cameraDirector.update(dt);
       if (!camState.autoActive) {
         applyOrbitFollowAnchor(controls, camera, smoothedFrameAnchor);
@@ -578,7 +668,7 @@ export async function createVrmAvatar(opts) {
       console.warn("[vrm] frame update failed", err);
     }
 
-    if (!talking && !bodyMotion.currentAction && !bodyMotion.thinking) {
+    if (!talking && !activeMotion && !bodyMotion.thinking) {
       const idleBlend = sampleIdleExpressionBlend(
         (now - t0) * 0.001,
         emotion,
@@ -720,7 +810,10 @@ export async function createVrmAvatar(opts) {
       return emotion;
     },
     get currentAction() {
-      return bodyMotion.currentAction;
+      return vrmaAction || bodyMotion.currentAction;
+    },
+    warmMotionClip(actionId) {
+      return motionPlayer.warmClip(actionId);
     },
     get mouthOpen() {
       return mouthOpen;
