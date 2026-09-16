@@ -8,9 +8,9 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji · Companion</title>
     <script>
-      window.__amojiBuild = "2026-09-16-v104-topbar-click-fix";
+      window.__amojiBuild = "2026-09-16-v105-chat-persistence";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-16-v104-topbar-click-fix"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-16-v105-chat-persistence"></script>
     <link
       rel="prefetch"
       href="/prototypes/assets/companion-char-nova.png"
@@ -281,7 +281,7 @@
       media="print"
       onload="this.media='all'"
     />
-    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-16-v104-topbar-click-fix" />
+    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-16-v105-chat-persistence" />
     <noscript>
       <link
         href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap"
@@ -719,6 +719,78 @@
         text-align: center;
         width: 100%;
         max-width: 100%;
+      }
+
+      .msg-row.has-actions {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.2rem;
+      }
+
+      .msg-row.user.has-actions {
+        align-items: flex-end;
+      }
+
+      .msg-row.assistant.has-actions,
+      .msg-row.system.has-actions {
+        align-items: flex-start;
+      }
+
+      .msg-actions {
+        display: flex;
+        gap: 0.25rem;
+        opacity: 0;
+        transition: opacity 0.15s ease;
+      }
+
+      .msg-row:hover .msg-actions,
+      .msg-row:focus-within .msg-actions {
+        opacity: 1;
+      }
+
+      .msg-action-btn {
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(10, 14, 22, 0.55);
+        color: var(--muted);
+        border-radius: 999px;
+        padding: 0.12rem 0.45rem;
+        font-size: 0.68rem;
+        line-height: 1.2;
+        cursor: pointer;
+      }
+
+      .msg-action-btn:hover {
+        color: var(--ink);
+        border-color: rgba(127, 212, 207, 0.35);
+      }
+
+      .starter-prompts {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.4rem;
+        padding: 0 0.15rem 0.45rem;
+        width: min(720px, 100%);
+        margin: 0 auto;
+      }
+
+      .starter-prompts[hidden] {
+        display: none !important;
+      }
+
+      .starter-chip {
+        border: 1px solid rgba(127, 212, 207, 0.22);
+        background: rgba(127, 212, 207, 0.08);
+        color: var(--ink);
+        border-radius: 999px;
+        padding: 0.35rem 0.7rem;
+        font-size: 0.78rem;
+        cursor: pointer;
+        white-space: nowrap;
+      }
+
+      .starter-chip:hover {
+        border-color: rgba(127, 212, 207, 0.45);
+        background: rgba(127, 212, 207, 0.14);
       }
 
       .llm-switcher-wrap {
@@ -2741,19 +2813,19 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-16-v104-topbar-click-fix",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-16-v105-chat-persistence",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-16-v104-topbar-click-fix",
-          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-16-v104-topbar-click-fix"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-16-v105-chat-persistence",
+          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-16-v105-chat-persistence"
         }
       }
     </script>
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-16-v104-topbar-click-fix"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-16-v105-chat-persistence"
     />
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-16-v104-topbar-click-fix"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-16-v104-topbar-click-fix"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-16-v105-chat-persistence"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-16-v105-chat-persistence"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;
@@ -3140,6 +3212,7 @@
           <div class="transcript" id="transcript" aria-live="polite"></div>
         </div>
         <div class="composer-wrap">
+          <div class="starter-prompts" id="starter-prompts" hidden aria-label="Suggested prompts"></div>
           <div class="listen-hint" id="listen-hint" aria-live="polite" hidden></div>
           <div class="emotion-ball-stack is-hidden" id="emotion-ball-stack" aria-hidden="true">
             <div class="emotion-ball" id="emotion-ball" data-ball-state="idle" hidden></div>
@@ -3242,6 +3315,7 @@
         uiIntentMod,
         activityRailMod,
         scenePresetsMod,
+        chatPersistenceMod,
       ] = await Promise.all([
         ami("../amoji-engine/engine/companion/createAvatar.js"),
         ami("../amoji-engine/engine/companion/chatLlm.js"),
@@ -3276,6 +3350,7 @@
         ami("../amoji-engine/engine/companion/companionUiIntent.js"),
         ami("../amoji-engine/engine/companion/companionActivityRail.js"),
         ami("../amoji-engine/engine/companion/companionScenePresets.js"),
+        ami("../amoji-engine/engine/companion/companionChatPersistence.js"),
       ]);
       window.__amojiModuleBooted = true;
       const {
@@ -3311,6 +3386,14 @@
         loadChatPanelVisible,
         persistChatPanelVisible,
       } = scenePresetsMod;
+      const {
+        appendChatHistory,
+        CHAT_DOM_MAX,
+        hasUserMessages,
+        loadChatHistory,
+        saveChatHistory,
+        starterPromptsForCharacter,
+      } = chatPersistenceMod;
       const { hasAnyClientCloudKey, inferKeyProvider } = keysMod;
       const {
         buildCompanionHref,
@@ -3635,6 +3718,7 @@
       };
 
       const transcript = document.getElementById("transcript");
+      const starterPromptsEl = document.getElementById("starter-prompts");
       const form = document.getElementById("composer");
       const input = document.getElementById("input");
       const sendBtn = document.getElementById("send");
@@ -4381,23 +4465,149 @@
 
       const trimTranscriptHistory = () => {
         const rows = transcript.querySelectorAll(".msg-row:not(.interim)");
-        if (rows.length > 8) {
-          for (let i = 0; i < rows.length - 8; i += 1) {
+        if (rows.length > CHAT_DOM_MAX) {
+          for (let i = 0; i < rows.length - CHAT_DOM_MAX; i += 1) {
             rows[i].remove();
           }
         }
       };
 
-      const addBubble = (role, text) => {
+      const popLastAssistantFromHistory = () => {
+        const hist = loadChatHistory(characterId);
+        for (let i = hist.length - 1; i >= 0; i -= 1) {
+          if (hist[i].role === "assistant") {
+            hist.splice(i, 1);
+            saveChatHistory(characterId, hist);
+            return;
+          }
+        }
+      };
+
+      const attachMessageActions = (row, bubbleEl, role, text) => {
+        if (!row || !bubbleEl || !text?.trim()) return;
+        row.classList.add("has-actions");
+        row.querySelector(".msg-actions")?.remove();
+        const actions = document.createElement("div");
+        actions.className = "msg-actions";
+
+        const copyBtn = document.createElement("button");
+        copyBtn.type = "button";
+        copyBtn.className = "msg-action-btn";
+        copyBtn.textContent = isEnglish ? "Copy" : "複製";
+        copyBtn.addEventListener("click", async () => {
+          try {
+            await navigator.clipboard.writeText(bubbleEl.textContent || "");
+            showToast(isEnglish ? "Copied" : "已複製", "info");
+          } catch {
+            showToast(isEnglish ? "Copy failed" : "複製失敗", "error");
+          }
+        });
+        actions.appendChild(copyBtn);
+
+        if (role === "assistant") {
+          const retryBtn = document.createElement("button");
+          retryBtn.type = "button";
+          retryBtn.className = "msg-action-btn";
+          retryBtn.textContent = isEnglish ? "Retry" : "重試";
+          retryBtn.addEventListener("click", () => {
+            const rows = [...transcript.querySelectorAll(".msg-row")];
+            const idx = rows.indexOf(row);
+            let userText = "";
+            for (let i = idx - 1; i >= 0; i -= 1) {
+              if (rows[i].classList.contains("user")) {
+                userText =
+                  rows[i].querySelector(".bubble")?.textContent?.trim() || "";
+                break;
+              }
+            }
+            if (!userText || busy) return;
+            popLastAssistantFromHistory();
+            row.remove();
+            void runTurn(userText, { skipUserBubble: true });
+          });
+          actions.appendChild(retryBtn);
+
+          const upBtn = document.createElement("button");
+          upBtn.type = "button";
+          upBtn.className = "msg-action-btn";
+          upBtn.textContent = "👍";
+          upBtn.title = isEnglish ? "Good reply" : "回覆唔錯";
+          upBtn.addEventListener("click", () => {
+            showToast(isEnglish ? "Thanks for the feedback" : "多謝你嘅意見", "info");
+          });
+          actions.appendChild(upBtn);
+        }
+
+        row.appendChild(actions);
+      };
+
+      const syncStarterPrompts = () => {
+        if (!starterPromptsEl || !conversationUi) return;
+        const hist = loadChatHistory(characterId);
+        const show = sessionStarted && !hasUserMessages(hist) && !busy;
+        if (!show) {
+          starterPromptsEl.hidden = true;
+          starterPromptsEl.replaceChildren();
+          return;
+        }
+        starterPromptsEl.hidden = false;
+        starterPromptsEl.replaceChildren();
+        for (const prompt of starterPromptsForCharacter(characterId, isEnglish)) {
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "starter-chip";
+          btn.textContent = prompt;
+          btn.addEventListener("click", () => {
+            input.value = "";
+            autosize();
+            void runTurn(prompt);
+          });
+          starterPromptsEl.appendChild(btn);
+        }
+      };
+
+      const restoreCharacterTranscript = (charId) => {
+        transcript.replaceChildren();
+        greetingBubble = null;
+        const hist = loadChatHistory(charId).slice(-CHAT_DOM_MAX);
+        for (const msg of hist) {
+          const el = addBubble(msg.role, msg.text, {
+            persist: false,
+            withActions: true,
+          });
+          if (!greetingBubble && msg.role === "assistant") {
+            greetingBubble = el;
+          }
+        }
+        scrollTranscript(true);
+        syncStarterPrompts();
+      };
+
+      const addBubble = (
+        role,
+        text,
+        { persist = true, withActions = true } = {},
+      ) => {
         const row = document.createElement("div");
         row.className = `msg-row ${role}`;
         const el = document.createElement("div");
         el.className = `bubble ${role}`;
         el.textContent = text;
         row.appendChild(el);
+        if (withActions && (role === "user" || role === "assistant") && text?.trim()) {
+          attachMessageActions(row, el, role, text);
+        }
         transcript.appendChild(row);
         trimTranscriptHistory();
         scrollTranscript(true);
+        if (
+          persist &&
+          (role === "user" || role === "assistant") &&
+          String(text || "").trim()
+        ) {
+          appendChatHistory(characterId, { role, text: String(text).trim() });
+        }
+        syncStarterPrompts();
         return el;
       };
 
@@ -4861,7 +5071,10 @@
         setCharacterUi();
         characterPicker?.setSelected(characterId);
         startPicker?.setSelected?.(characterId);
-        if (sessionStarted) warmWaitDialogueBackground();
+        if (sessionStarted) {
+          restoreCharacterTranscript(characterId);
+          warmWaitDialogueBackground();
+        }
         if (announce) {
           const name = characterDisplayName(characterId, langCode, isEnglish);
           showToast(
@@ -5195,7 +5408,7 @@
         updateUiContextPill(applied);
       };
 
-      const runTurn = async (text, { fromMic = false } = {}) => {
+      const runTurn = async (text, { fromMic = false, skipUserBubble = false } = {}) => {
         const cleaned = String(text || "").trim();
         if (!cleaned) return;
         if (handleUserStopCommand(cleaned)) return;
@@ -5219,7 +5432,9 @@
         if (!keepMicForBarge) voice.pauseCapture();
         armBargeIn();
         interim.clear();
-        addBubble("user", cleaned);
+        if (!skipUserBubble) {
+          addBubble("user", cleaned, { persist: true, withActions: true });
+        }
         lastUserMessage = cleaned;
         avatar.setListening?.(false);
         avatar.setTalking(false);
@@ -5249,7 +5464,10 @@
           label: isEnglish ? "Thinking…" : "思考中…",
         });
 
-        const assistantBubble = addBubble("assistant", "");
+        const assistantBubble = addBubble("assistant", "", {
+          persist: false,
+          withActions: false,
+        });
         const assistantRow = assistantBubble.closest(".msg-row");
         const turnId = ++turnSeq;
         activeTurn = { id: turnId, aborted: false, assistantRow };
@@ -5362,7 +5580,11 @@
           speakContent = content;
           speakEmotion = emotion;
           assistantBubble.classList.remove("thinking", "typing");
-          assistantBubble.textContent = stripReplyTags(reply);
+          const finalReply = stripReplyTags(reply);
+          assistantBubble.textContent = finalReply;
+          attachMessageActions(assistantRow, assistantBubble, "assistant", finalReply);
+          appendChatHistory(characterId, { role: "assistant", text: finalReply });
+          syncStarterPrompts();
 
           if (phaseAEnabled) {
             const spokenReply = stripReplyTags(result.raw || reply);
@@ -5478,7 +5700,10 @@
         armBargeIn();
         const greetText = greetingLine();
         if (!greetingBubble) {
-          greetingBubble = addBubble("assistant", greetText);
+          greetingBubble = addBubble("assistant", greetText, {
+            persist: false,
+            withActions: false,
+          });
         } else {
           greetingBubble.textContent = greetText;
         }
@@ -5613,15 +5838,33 @@
         void voice.ensureVoices().then(() => {
           setVoicePill(voiceGenderLabel(voiceId, langCode, isEnglish));
         });
-        void voice
-          .primeAudio?.()
-          .catch(() => {})
-          .then(() => speakGreetingAsync());
-        if (!greetingBubble) {
-          greetingBubble = addBubble("assistant", greetingLine());
+        const returning = loadChatHistory(characterId).length > 0;
+        if (returning) {
+          restoreCharacterTranscript(characterId);
+          addBubble("system", isEnglish ? "Welcome back." : "歡迎返嚟。", {
+            persist: false,
+            withActions: false,
+          });
+          requestMicAsync();
+          syncStarterPrompts();
+        } else {
+          void voice
+            .primeAudio?.()
+            .catch(() => {})
+            .then(() => speakGreetingAsync());
+          if (!greetingBubble) {
+            greetingBubble = addBubble("assistant", greetingLine(), {
+              persist: false,
+              withActions: false,
+            });
+          }
+          requestMicAsync();
+          addBubble("system", isEnglish ? "Ready." : "已開始。", {
+            persist: false,
+            withActions: false,
+          });
+          syncStarterPrompts();
         }
-        requestMicAsync();
-        addBubble("system", isEnglish ? "Ready." : "已開始。");
       };
 
       window.__amojiStart.run = (opts = {}) => {
