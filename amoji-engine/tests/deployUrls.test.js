@@ -13,6 +13,8 @@ describe("deployUrls", () => {
     expect(url).toContain(DEMO_BASE_URL);
     expect(url).toContain("lang=yue");
     expect(url).toContain("build=test-build");
+    expect(url).toContain("pick=1");
+    expect(url).toContain("automic=0");
   });
 
   it("formats demo link block for agents", () => {
