@@ -24,6 +24,9 @@ describe("companionUiIntent", () => {
     expect(inferUiIntentFromUserText("睇下任務", false)).toEqual([
       { type: "tab", value: "tasks" },
     ]);
+    expect(inferUiIntentFromUserText("let's chill", true)).toEqual([
+      { type: "mode", value: "chill" },
+    ]);
   });
 
   it("merges LLM tags over inferred intents of same type", () => {
