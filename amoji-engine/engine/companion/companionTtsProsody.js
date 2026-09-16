@@ -16,11 +16,11 @@ export const COMPANION_TTS_PROSODY_SCHEMA = "amoji.companionTtsProsody.v1";
 
 const EMOTION_EDGE_BASE = Object.freeze({
   neutral: { rate: 18, pitch: 22, volume: 8 },
-  happy: { rate: 42, pitch: 48, volume: 22 },
+  happy: { rate: 52, pitch: 58, volume: 26 },
   thinking: { rate: -10, pitch: 6, volume: -4 },
-  sad: { rate: -20, pitch: -12, volume: -8 },
-  surprised: { rate: 48, pitch: 52, volume: 24 },
-  angry: { rate: 32, pitch: -2, volume: 18 },
+  sad: { rate: -24, pitch: -16, volume: -10 },
+  surprised: { rate: 58, pitch: 62, volume: 28 },
+  angry: { rate: 36, pitch: -2, volume: 20 },
 });
 
 const NUANCE_EDGE_DELTA = Object.freeze({
@@ -47,11 +47,11 @@ const STYLE_EDGE_DELTA = Object.freeze({
 
 const EMOTION_BROWSER_BASE = Object.freeze({
   neutral: { rate: 1.06, pitch: 1.2, volume: 1 },
-  happy: { rate: 1.22, pitch: 1.45, volume: 1 },
+  happy: { rate: 1.28, pitch: 1.55, volume: 1 },
   thinking: { rate: 0.86, pitch: 1.02, volume: 0.9 },
-  sad: { rate: 0.8, pitch: 0.88, volume: 0.86 },
-  surprised: { rate: 1.28, pitch: 1.55, volume: 1 },
-  angry: { rate: 1.14, pitch: 0.92, volume: 1 },
+  sad: { rate: 0.78, pitch: 0.86, volume: 0.86 },
+  surprised: { rate: 1.34, pitch: 1.62, volume: 1 },
+  angry: { rate: 1.16, pitch: 0.92, volume: 1 },
 });
 
 /**
@@ -137,13 +137,13 @@ export function buildTtsInstruct(opts = {}) {
 
   const affect =
     emotion === "happy"
-      ? "Bright, warm, and playful — like a close anime friend who's glad to see you."
+      ? "Bright, warm, and very playful — like ChatGPT Advanced Voice: a close friend who is genuinely delighted."
       : emotion === "sad"
         ? "Soft, gentle, and empathetic — caring without sounding flat or robotic."
         : emotion === "thinking"
           ? "Thoughtful and unhurried, with quiet curiosity."
           : emotion === "surprised"
-            ? "Animated and bright, with lifted energy on key words."
+            ? "Animated and bright, with lifted energy on key words — almost a gasp of delight."
             : emotion === "angry"
               ? "Firm and intense, but still human and controlled."
               : "Natural, relaxed, and conversational — never monotone.";

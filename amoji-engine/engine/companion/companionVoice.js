@@ -141,6 +141,121 @@ export function charToViseme(ch) {
 }
 
 /**
+ * Match mouth-walk speed to real audio (or CJK vs Latin speech rate).
+ * Cantonese/Chinese is ~4–6 chars/sec; a fixed 48ms/char races ahead of TTS.
+ * @param {string} text
+ * @param {number} [durationMs]
+ */
+export function estimateLipSyncMsPerChar(text, durationMs) {
+  const clean = String(text || "");
+  const len = Math.max(1, clean.length);
+  const ms = Number(durationMs);
+  if (Number.isFinite(ms) && ms > 0) {
+    return Math.max(24, Math.min(280, ms / len));
+  }
+  const cjk = (clean.match(/[\u4e00-\u9fff\u3400-\u4dbf]/g) || []).length;
+  return cjk / len > 0.3 ? 160 : 52;
+}
+
+/**
+ * Spoken duration weight for one character. Punctuation is short; CJK is a full beat.
+ * @param {string} ch
+ */
+export function lipSyncCharWeight(ch) {
+  const c = String(ch || "");
+  if (!c || /[\s.,!?;:'"()\-—…，。！？、；：～~]/.test(c)) return 0.22;
+  if (/[\u4e00-\u9fff\u3400-\u4dbf]/.test(c)) return 1;
+  return 0.48;
+}
+
+/**
+ * @param {string} text
+ * @returns {{ chars: string[], starts: number[], total: number }}
+ */
+export function buildLipSyncTimeline(text) {
+  const chars = Array.from(String(text || ""));
+  const weights = chars.map((ch) => lipSyncCharWeight(ch));
+  const total = weights.reduce((sum, w) => sum + w, 0) || 1;
+  let acc = 0;
+  const starts = weights.map((w) => {
+    const start = acc / total;
+    acc += w;
+    return start;
+  });
+  return { chars, starts, total };
+}
+
+/**
+ * Map 0..1 playback progress to a viseme. Used so mouth speed follows audio, not a timer.
+ * @param {string} text
+ * @param {number} progress
+ * @param {number} [audioLevel]
+ */
+export function visemeAtAudioProgress(text, progress, audioLevel = 0) {
+  const clean = String(text || "");
+  const p = Math.max(0, Math.min(1, Number(progress) || 0));
+  const level = Math.max(0, Math.min(1, Number(audioLevel) || 0));
+  if (!clean.length || p >= 0.995) {
+    return {
+      shape: "ee",
+      open: Math.min(0.08, level * 0.25),
+      index: clean.length,
+      char: "",
+    };
+  }
+  const { chars, starts } = buildLipSyncTimeline(clean);
+  let idx = 0;
+  for (let i = 0; i < starts.length; i += 1) {
+    if (starts[i] <= p) idx = i;
+    else break;
+  }
+  const ch = chars[idx] || " ";
+  const viseme = charToViseme(ch);
+  const open = Math.min(
+    1,
+    viseme.open * 0.62 + Math.max(viseme.open * 0.28, level * 0.9),
+  );
+  return { shape: viseme.shape, open, index: idx, char: ch };
+}
+
+/**
+ * 0..1 playback fraction from an HTMLAudioElement, with elapsed fallback.
+ * @param {{ duration?: number, currentTime?: number } | null | undefined} audio
+ * @param {number} [elapsedMs]
+ * @param {number} [fallbackDurationMs]
+ */
+export function audioPlaybackProgress(audio, elapsedMs = 0, fallbackDurationMs = 0) {
+  const duration = Number(audio?.duration);
+  const current = Number(audio?.currentTime);
+  if (Number.isFinite(duration) && duration > 0.05 && Number.isFinite(current)) {
+    return Math.max(0, Math.min(1, current / duration));
+  }
+  const fb = Number(fallbackDurationMs);
+  if (Number.isFinite(fb) && fb > 0) {
+    return Math.max(0, Math.min(1, (Number(elapsedMs) || 0) / fb));
+  }
+  return 0;
+}
+
+/**
+ * Time-domain RMS 0..1 from a Web Audio analyser (not used on iOS).
+ * @param {AnalyserNode | null | undefined} analyser
+ */
+export function readAnalyserMouthLevel(analyser) {
+  if (!analyser || typeof analyser.getByteTimeDomainData !== "function") {
+    return 0;
+  }
+  const buf = new Uint8Array(analyser.fftSize || 256);
+  analyser.getByteTimeDomainData(buf);
+  let sum = 0;
+  for (let i = 0; i < buf.length; i += 1) {
+    const n = (buf[i] - 128) / 128;
+    sum += n * n;
+  }
+  return Math.min(1, Math.sqrt(sum / Math.max(1, buf.length)) * 3.4);
+}
+
+/**
  * Prefer a female / higher-pitch voice, Cantonese/Chinese when available.
  * @param {SpeechSynthesisVoice[]} voices
  */
@@ -315,6 +430,37 @@ export function createCompanionVoice(opts = {}) {
     return globalThis.window.__amojiTtsAudio;
   };
 
+  /**
+   * Route cloud TTS through an analyser for RMS mouth drive.
+   * Skip on iOS — Web Audio + mic sends TTS to the earpiece.
+   * @param {HTMLAudioElement} audio
+   */
+  const bindCloudTtsAnalyser = (audio) => {
+    if (!audio || typeof globalThis.window === "undefined") return null;
+    if (isIosLike()) return null;
+    if (audio.__amojiAnalyser) return audio.__amojiAnalyser;
+    const AC = globalThis.AudioContext || globalThis.webkitAudioContext;
+    if (!AC) return null;
+    try {
+      const ctx =
+        globalThis.window.__amojiAudioCtx ||
+        new AC({ latencyHint: "interactive" });
+      globalThis.window.__amojiAudioCtx = ctx;
+      if (ctx.state === "suspended") void ctx.resume();
+      const source =
+        audio.__amojiMediaSource || ctx.createMediaElementSource(audio);
+      audio.__amojiMediaSource = source;
+      const analyser = ctx.createAnalyser();
+      analyser.fftSize = 256;
+      source.connect(analyser);
+      analyser.connect(ctx.destination);
+      audio.__amojiAnalyser = analyser;
+      return analyser;
+    } catch {
+      return null;
+    }
+  };
+
   const ttsPlaybackVolume = () => {
     if (shouldPauseMicDuringTts()) return 1;
     return keepMicDuringSpeak ? 0.38 : 1;
@@ -410,7 +556,6 @@ export function createCompanionVoice(opts = {}) {
     }
 
     const objectUrl = URL.createObjectURL(blob);
-    startLipSync(clean);
     if (!holdSpeaking) {
       speaking = true;
       syncAssistantOutput();
@@ -422,6 +567,34 @@ export function createCompanionVoice(opts = {}) {
       currentCloudAudio = audio;
       audio.volume = ttsPlaybackVolume();
       audio.src = objectUrl;
+      let mouthStarted = false;
+      const beginMouth = () => {
+        if (mouthStarted) return;
+        mouthStarted = true;
+        const startedAt = performance.now();
+        const fallbackMs =
+          Number.isFinite(audio.duration) && audio.duration > 0
+            ? audio.duration * 1000
+            : clean.length * estimateLipSyncMsPerChar(clean);
+        const analyser = bindCloudTtsAnalyser(audio);
+        startLipSync(clean, null, {
+          durationMs: fallbackMs,
+          audioLevel: analyser
+            ? () => readAnalyserMouthLevel(analyser)
+            : undefined,
+          getProgress: () => {
+            const liveMs =
+              Number.isFinite(audio.duration) && audio.duration > 0
+                ? audio.duration * 1000
+                : fallbackMs;
+            return audioPlaybackProgress(
+              audio,
+              performance.now() - startedAt,
+              liveMs,
+            );
+          },
+        });
+      };
       const finish = (result) => {
         if (currentCloudAudio === audio) currentCloudAudio = null;
         URL.revokeObjectURL(objectUrl);
@@ -431,6 +604,10 @@ export function createCompanionVoice(opts = {}) {
         }
         stopMouth();
         resolve(result);
+      };
+      audio.onplaying = () => beginMouth();
+      audio.ontimeupdate = () => {
+        if (!mouthStarted && audio.currentTime > 0) beginMouth();
       };
       audio.onended = () => {
         finish({
@@ -443,12 +620,14 @@ export function createCompanionVoice(opts = {}) {
       audio.onerror = () => {
         finish({ ok: false, reason: "cloud-audio-play-failed" });
       };
-      void audio.play().catch((err) => {
-        finish({
-          ok: false,
-          reason: err?.message || "cloud-audio-play-blocked",
+      void audio.play()
+        .then(() => beginMouth())
+        .catch((err) => {
+          finish({
+            ok: false,
+            reason: err?.message || "cloud-audio-play-blocked",
+          });
         });
-      });
     });
   };
 
@@ -546,11 +725,12 @@ export function createCompanionVoice(opts = {}) {
   };
 
   /**
-   * Drive mouth shapes from text — boundary events when available, else timed walk.
+   * Drive mouth shapes locked to audio progress (cloud TTS) or elapsed estimate.
    * @param {string} text
    * @param {SpeechSynthesisUtterance} [utter]
+   * @param {{ durationMs?: number, audioLevel?: () => number, getProgress?: () => number }} [timing]
    */
-  const startLipSync = (text, utter) => {
+  const startLipSync = (text, utter, timing = {}) => {
     stopMouth();
     opts.onTalking?.(true);
     const clean = String(text || "");
@@ -569,30 +749,50 @@ export function createCompanionVoice(opts = {}) {
       };
     }
 
-    // Timed fallback — also backs muted speaker / browsers without boundary
-    const msPerChar = 48;
-    let i = 0;
+    const rate = Number(utter?.rate);
+    const durationMs =
+      Number(timing.durationMs) > 0
+        ? Number(timing.durationMs)
+        : Number.isFinite(rate) && rate > 0
+          ? (clean.length * estimateLipSyncMsPerChar(clean)) / rate
+          : clean.length * estimateLipSyncMsPerChar(clean);
+    const audioLevel = timing.audioLevel;
+    const startedAt = performance.now();
+    const getProgress =
+      typeof timing.getProgress === "function"
+        ? timing.getProgress
+        : () =>
+            audioPlaybackProgress(
+              null,
+              performance.now() - startedAt,
+              durationMs,
+            );
+    let lastIndex = -1;
     mouthTimer = setInterval(() => {
       if (boundaryWorks) return;
-      if (i >= clean.length) {
-        opts.onMouth?.(0.06, "ee");
-        return;
+      const sample = visemeAtAudioProgress(
+        clean,
+        getProgress(),
+        audioLevel?.() ?? 0,
+      );
+      opts.onMouth?.(sample.open, sample.shape);
+      if (sample.index !== lastIndex && sample.char?.trim()) {
+        const chunk = clean.slice(
+          Math.max(0, sample.index - 1),
+          sample.index + 6,
+        );
+        opts.onSpeakChunk?.(chunk, sample.index);
+        lastIndex = sample.index;
       }
-      const ch = clean[i];
-      emitViseme(ch);
-      if (i % 2 === 0 && ch.trim()) {
-        const chunk = clean.slice(Math.max(0, i - 2), i + 6);
-        opts.onSpeakChunk?.(chunk, i);
-      }
-      i += 1;
-    }, msPerChar);
+    }, 33);
 
-    const totalMs = Math.min(12000, clean.length * msPerChar + 400);
-    mouthTimeouts.push(
-      setTimeout(() => {
-        if (!boundaryWorks) opts.onMouth?.(0, null);
-      }, totalMs),
-    );
+    if (!timing.getProgress) {
+      mouthTimeouts.push(
+        setTimeout(() => {
+          if (!boundaryWorks) opts.onMouth?.(0, null);
+        }, Math.min(20000, durationMs + 400)),
+      );
+    }
   };
 
   const pauseCapture = () => {
@@ -660,7 +860,7 @@ export function createCompanionVoice(opts = {}) {
     try {
       if (!speakerOn) {
         startLipSync(clean);
-        await sleep(Math.min(2200, 400 + clean.length * 28));
+        await sleep(Math.min(4200, 400 + clean.length * estimateLipSyncMsPerChar(clean)));
         stopMouth();
         return { ok: true, muted: true };
       }
@@ -689,7 +889,7 @@ export function createCompanionVoice(opts = {}) {
 
       if (!synth) {
         startLipSync(clean);
-        await sleep(Math.min(2800, 450 + clean.length * 36));
+        await sleep(Math.min(4800, 450 + clean.length * estimateLipSyncMsPerChar(clean)));
         stopMouth();
         return {
           ok: false,

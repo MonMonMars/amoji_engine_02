@@ -8,9 +8,9 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji · Companion</title>
     <script>
-      window.__amojiBuild = "2026-09-16-v124-icon-center";
+      window.__amojiBuild = "2026-09-16-v128-idle-preload";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-16-v124-icon-center"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-16-v128-idle-preload"></script>
     <link
       rel="prefetch"
       href="/prototypes/assets/companion-char-nova.png"
@@ -290,7 +290,7 @@
       media="print"
       onload="this.media='all'"
     />
-    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-16-v124-icon-center" />
+    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-16-v128-idle-preload" />
     <noscript>
       <link
         href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap"
@@ -390,6 +390,7 @@
         display: block;
         cursor: grab;
         touch-action: none;
+        pointer-events: auto;
       }
 
       .orbit-hint {
@@ -669,6 +670,10 @@
         -webkit-overflow-scrolling: touch;
         mask-image: linear-gradient(180deg, transparent 0%, #000 18%);
         -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 18%);
+      }
+
+      .transcript:empty {
+        pointer-events: none;
       }
 
       .msg-row {
@@ -2926,19 +2931,19 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-16-v124-icon-center",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-16-v128-idle-preload",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-16-v124-icon-center",
-          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-16-v124-icon-center"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-16-v128-idle-preload",
+          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-16-v128-idle-preload"
         }
       }
     </script>
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-16-v124-icon-center"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-16-v128-idle-preload"
     />
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-16-v124-icon-center"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-16-v124-icon-center"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-16-v128-idle-preload"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-16-v128-idle-preload"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;
@@ -4475,8 +4480,34 @@
           })
           .finally(() => {
             hideAvatarLoadPill();
-            avatar?.stopAction?.();
             if (waitAct?.state?.kind === "avatar-load") waitAct?.stop();
+            if (
+              avatarKind === "vrm3d" ||
+              avatarKind === "gltf3d" ||
+              avatarKind === "webgl3d"
+            ) {
+              const idleIds =
+                globalThis.__amojiPreload?.bootIdleMotionIds || [
+                  "wave",
+                  "nod",
+                  "thinking",
+                  "bow",
+                  "shrug",
+                  "peace",
+                ];
+              if (avatar.playActionSequence && idleIds.length > 1) {
+                avatar.playActionSequence(idleIds, {
+                  emotion: currentEmotion || "happy",
+                  loopSequence: true,
+                });
+              } else {
+                avatar?.playAction?.("wave", {
+                  emotion: currentEmotion || "happy",
+                  loop: false,
+                  single: true,
+                });
+              }
+            }
             stopIdlePerformance();
             scheduleIdlePerformance();
           });
@@ -4886,15 +4917,19 @@
           waitAct?.isActive() && waitAct?.state?.kind !== "idle",
         );
 
+      const hasPlayableAvatar = () =>
+        avatarKind === "vrm3d" ||
+        avatarKind === "gltf3d" ||
+        avatarKind === "webgl3d";
+
       const canIdleShowcase = () =>
         sessionStarted &&
         !busy &&
-        !voice?.speaking &&
         !isBlockingWaitAct() &&
         !characterSwitching &&
-        (avatarKind === "vrm3d" ||
-          avatarKind === "gltf3d" ||
-          avatarKind === "webgl3d");
+        hasPlayableAvatar();
+
+      const canStartIdleShowcase = () => canIdleShowcase();
 
       const stopIdlePerformance = () => {
         if (idleShowcaseTimer) clearInterval(idleShowcaseTimer);
@@ -4907,7 +4942,7 @@
       const scheduleIdlePerformance = (attempts = 30) => {
         if (idleRetryTimer) clearTimeout(idleRetryTimer);
         idleRetryTimer = null;
-        if (canIdleShowcase()) {
+        if (canStartIdleShowcase()) {
           startIdlePerformance();
           return;
         }
@@ -4921,10 +4956,11 @@
           return;
         }
         if (!waitAct?.isActive() || waitAct?.state?.kind !== "idle") {
+          if (!canStartIdleShowcase()) return;
           waitAct?.start({
             kind: "idle",
             phase: "idle",
-            speak: true,
+            speak: false,
             label: isEnglish ? "Just hanging out…" : "等緊你呀…",
           });
         } else {

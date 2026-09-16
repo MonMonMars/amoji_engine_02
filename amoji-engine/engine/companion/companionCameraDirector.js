@@ -114,6 +114,7 @@ export function createCompanionCameraDirector(opts = {}) {
   let dialogueChars = 0;
   let currentAction = null;
   let userOrbiting = false;
+  let userFramingHeld = false;
   let talkCloseBlend = 0;
   let fullBodyBlend = 0;
   let bootTalkCloseGraceSec = 0;
@@ -161,7 +162,14 @@ export function createCompanionCameraDirector(opts = {}) {
 
   const setUserOrbiting = (on) => {
     userOrbiting = Boolean(on);
+    if (userOrbiting) userFramingHeld = true;
     return userOrbiting;
+  };
+
+  const holdUserFraming = (on) => {
+    userFramingHeld = Boolean(on);
+    if (!userFramingHeld) userOrbiting = false;
+    return userFramingHeld;
   };
 
   const update = (dt) => {
@@ -198,9 +206,11 @@ export function createCompanionCameraDirector(opts = {}) {
       dialogueChars,
       currentAction,
       userOrbiting,
+      userFramingHeld,
       talkCloseBlend: Math.max(0, Math.min(1, talkCloseBlend)),
       fullBodyBlend: Math.max(0, Math.min(1, fullBodyBlend)),
-      autoActive: mode === CAMERA_MODE_AUTO && !userOrbiting,
+      autoActive:
+        mode === CAMERA_MODE_AUTO && !userOrbiting && !userFramingHeld,
     };
   };
 
@@ -212,6 +222,7 @@ export function createCompanionCameraDirector(opts = {}) {
     resetBootGrace,
     setCurrentAction,
     setUserOrbiting,
+    holdUserFraming,
     update,
     get mode() {
       return mode;
@@ -221,6 +232,9 @@ export function createCompanionCameraDirector(opts = {}) {
     },
     get fullBodyBlend() {
       return fullBodyBlend;
+    },
+    get userFramingHeld() {
+      return userFramingHeld;
     },
   };
 }

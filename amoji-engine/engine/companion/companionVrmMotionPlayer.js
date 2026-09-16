@@ -140,11 +140,7 @@ export function createVrmMotionPlayer(opts) {
     update,
     warmClip,
     isPlaying() {
-      return Boolean(
-        activeActionId &&
-          clipAction &&
-          (clipAction.isRunning() || clipAction.getEffectiveWeight() > 0.01),
-      );
+      return Boolean(activeActionId && clipAction?.isRunning?.());
     },
     releasePose,
     get activeActionId() {
