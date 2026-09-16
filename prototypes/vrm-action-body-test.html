@@ -9,7 +9,8 @@
         "imports": {
           "three": "/amoji-engine/vendor/three.module.js",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js",
+          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js"
         }
       }
     </script>
@@ -46,24 +47,27 @@
         const baselineArm = readArmDelta();
         const baselineRoot = readRootY();
 
-        avatar.playAction("kungfu", { emotion: "happy", loop: true });
+        avatar.playAction("wave", { emotion: "happy", loop: false });
 
         let maxArm = baselineArm;
         let maxRoot = baselineRoot;
-        for (let i = 0; i < 90; i += 1) {
+        let sawWaveAction = false;
+        for (let i = 0; i < 180; i += 1) {
           await new Promise((r) => requestAnimationFrame(r));
+          if (avatar.currentAction === "wave") sawWaveAction = true;
           maxArm = Math.max(maxArm, readArmDelta());
           maxRoot = Math.max(maxRoot, Math.abs(readRootY() - baselineRoot));
         }
 
         window.__bodyActionTest = {
           ready: true,
-          ok: Boolean(leftArm) && maxArm > 0.06,
+          ok: Boolean(leftArm) && maxArm > 0.06 && sawWaveAction,
           hasLeftArm: Boolean(leftArm),
           baselineArm,
           maxArmDelta: maxArm,
           maxRootDelta: maxRoot,
           currentAction: avatar.currentAction,
+          sawWaveAction,
           armMoves: maxArm > 0.06,
           rootMoves: maxRoot > 0.008,
         };

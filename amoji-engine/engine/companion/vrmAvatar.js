@@ -234,6 +234,8 @@ export async function createVrmAvatar(opts) {
     vrm.update(1 / 60);
   }
 
+  const frameAnchor = new THREE.Vector3();
+  const smoothedFrameAnchor = new THREE.Vector3();
   const fitted = new THREE.Box3().setFromObject(model);
   const { face: faceAnchor, portraitDist } = frameFaceCamera({
     vrm,
@@ -263,8 +265,6 @@ export async function createVrmAvatar(opts) {
     portraitCamera.distance = camera.position.distanceTo(controls.target);
   };
   const cameraDirector = createCompanionCameraDirector();
-  const frameAnchor = new THREE.Vector3();
-  const smoothedFrameAnchor = new THREE.Vector3();
   const raycaster = new THREE.Raycaster();
   const pointer = new THREE.Vector2();
   /** @type {{ x: number, y: number } | null} */
