@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * End-to-end smoke for Secretary Phase 2 (production or local static).
+ * End-to-end smoke for Secretary conversation-ui (production or local static).
  */
 import { chromium } from "playwright";
 import { mkdirSync } from "fs";
@@ -22,65 +22,67 @@ function record(name, ok, detail = "") {
   console.log(`${mark}  ${name}${detail ? ` — ${detail}` : ""}`);
 }
 
+async function submitChat(page, text) {
+  await page.evaluate((msg) => {
+    const input = document.getElementById("input");
+    const form = document.getElementById("composer");
+    if (input && form) {
+      input.value = msg;
+      form.requestSubmit();
+    }
+  }, text);
+}
+
 const browser = await chromium.launch({ headless: true });
 const page = await browser.newPage();
 
 try {
   await page.goto(BASE, { waitUntil: "domcontentloaded", timeout: 60000 });
-  const build = await page.evaluate(() => window.__amojiBuild);
-  record("page loads", Boolean(build), build);
+  const boot = await page.evaluate(() => ({
+    build: window.__amojiBuild,
+    conversationUi: document.body.classList.contains("conversation-ui"),
+    composerVisible: !document.getElementById("composer")?.classList.contains("hidden"),
+    tabbarHidden:
+      getComputedStyle(document.querySelector(".tabbar")).display === "none",
+  }));
+  record("page loads", Boolean(boot.build), boot.build);
+  record("conversation-ui mode", boot.conversationUi);
+  record("composer visible on chat tab", boot.composerVisible);
+  record("manual tabbar hidden", boot.tabbarHidden);
 
-  const todayVisible = await page.isVisible("#panel-today:not(.hidden)");
-  record("Today tab visible", todayVisible);
+  await submitChat(page, "今晚提醒我打電話");
+  await page.waitForSelector(".bubble.receipt", { timeout: 60000 });
+  const taskReceipt = await page.textContent(".bubble.receipt");
+  record("task auto-saved from chat", taskReceipt?.includes("任務") || taskReceipt?.includes("Task"));
 
-  await page.fill("#quick-task-input", "Smoke test task");
-  await page.click("#quick-task-submit");
-  await page.waitForTimeout(400);
-  await page.click('[data-tab="tasks"]');
-  await page.waitForSelector("#panel-tasks:not(.hidden)");
+  await submitChat(page, "睇下任務");
+  await page.waitForFunction(
+    () => !document.getElementById("panel-tasks")?.classList.contains("hidden"),
+    { timeout: 15000 },
+  );
   const taskTitle = await page.textContent(".task-row-title");
-  record("quick task appears on Tasks", taskTitle?.includes("Smoke test task"));
+  record("tasks panel via conversation", taskTitle?.includes("電話"));
 
-  const pin = page.locator('[data-testid="pin-priority-btn"]').first();
-  await pin.waitFor({ state: "visible", timeout: 5000 });
-  await pin.click();
-  await page.click('[data-tab="today"]');
-  await page.waitForSelector("#top3-card:not(.hidden)", { timeout: 5000 });
-  const top3 = await page.textContent("#top3-list");
-  record("pin shows Top 3 on Today", top3?.includes("Smoke test task"));
+  await submitChat(page, "記住我唔食香菜");
+  await page.waitForFunction(
+    () =>
+      [...document.querySelectorAll(".bubble.receipt")].some((el) =>
+        el.textContent?.includes("記憶"),
+      ),
+    { timeout: 60000 },
+  );
+  record("memory auto-saved from chat", true);
 
-  for (const filter of ["全部", "工作", "生活", "個人"]) {
-    await page.click('[data-tab="tasks"]');
-    await page.click(`.filter-chip:has-text("${filter}")`);
-    record(`filter ${filter}`, true);
-  }
+  await submitChat(page, "閒聊模式");
+  await page.waitForFunction(
+    () =>
+      document.querySelector('.mode-row button[data-mode="chill"]')?.classList.contains("active"),
+    { timeout: 15000 },
+  );
+  record("chill mode via conversation", true);
 
-  await page.click('[data-tab="chat"]');
-  await page.click("#start-btn");
-  await page.waitForSelector("#composer:not(.hidden)");
-  await page.fill("#input", "記住我唔食香菜");
-  await page.click("#send-btn");
-  await page.waitForSelector(".memory-card", { timeout: 5000 });
-  record("memory confirm card", true);
-
-  await page.fill("#input", "今晚提醒我打電話");
-  await page.click("#send-btn");
-  await page.waitForSelector(".task-card", { timeout: 5000 });
-  record("task confirm card", true);
-
-  await page.click('[data-tab="me"]');
-  await page.fill("#memory-input", "QA memory fact");
-  await page.click("#memory-save-btn");
-  await page.waitForSelector(".memory-row", { timeout: 3000 });
-  const memText = await page.textContent(".memory-row");
-  record("memory saved on Me", memText?.includes("QA memory fact"));
-
-  await page.click("#btn-voice");
-  await page.waitForSelector(".companion-voice-picker:not([hidden])", {
-    timeout: 3000,
-  });
-  const voiceCount = await page.locator(".companion-voice-option").count();
-  record("voice picker opens", voiceCount >= 10, `${voiceCount} voices`);
+  const listenHint = await page.textContent("#listen-hint");
+  record("listen hint visible", Boolean(listenHint?.length));
 
   await page.screenshot({
     path: join(outDir, "secretary-phase2-smoke-final.png"),

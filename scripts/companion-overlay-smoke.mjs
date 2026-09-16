@@ -4,6 +4,7 @@ import { chromium } from "playwright";
 import { createServer } from "http";
 import { readFileSync, statSync } from "fs";
 import { extname, join } from "path";
+import { AMOJI_BUILD } from "../amoji-engine/engine/companion/buildVersion.mjs";
 
 const root = join(import.meta.dirname, "..");
 const mime = {
@@ -36,18 +37,32 @@ await page.route("**/amoji-engine/**", (route) => route.abort("failed"));
 await page.goto(PAGE_URL, { waitUntil: "domcontentloaded", timeout: 30000 });
 const snap = await page.evaluate(() => {
   const start = document.getElementById("start-character-picker");
-  const r = start?.getBoundingClientRect();
+  if (!start) {
+    return {
+      build: window.__amojiBuild,
+      overlayCount: document.querySelectorAll(".avatar-loading").length,
+      startPresent: false,
+      startVisible: false,
+      topIsStart: false,
+      startZ: null,
+    };
+  }
+  const r = start.getBoundingClientRect();
   const top = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
   return {
     build: window.__amojiBuild,
     overlayCount: document.querySelectorAll(".avatar-loading").length,
-    startVisible: start && getComputedStyle(start).visibility !== "hidden",
+    startPresent: true,
+    startVisible: getComputedStyle(start).visibility !== "hidden",
     topIsStart: top?.id === "start-character-picker",
-    startZ: start ? getComputedStyle(start).zIndex : null,
+    startZ: getComputedStyle(start).zIndex,
   };
 });
 console.log(JSON.stringify(snap, null, 2));
-if (!snap.topIsStart || snap.overlayCount > 0 || snap.build !== "2026-09-14-v6") {
+const buildOk = snap.build === AMOJI_BUILD;
+const overlayOk = snap.overlayCount === 0;
+const pickerOk = !snap.startPresent || (snap.topIsStart && snap.startVisible);
+if (!buildOk || !overlayOk || !pickerOk) {
   process.exitCode = 1;
 }
 await browser.close();

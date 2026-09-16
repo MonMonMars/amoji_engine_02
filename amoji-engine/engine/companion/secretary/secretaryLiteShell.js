@@ -31,6 +31,10 @@ import {
 } from "../companionUiIntent.js";
 import { parseSecretaryReply } from "./replyParser.js";
 import {
+  applyPreferenceActions,
+  applyTaskActions,
+} from "./secretaryTagActions.js";
+import {
   readReminderPrefs,
   requestReminderPermission,
   saveReminderPrefs,
@@ -147,6 +151,15 @@ export function initAmojiSecretaryLite(doc = document) {
         filterPersonal: "Personal",
         remindersOn: "Reminders on",
         remindersBlocked: "Notifications blocked in browser settings",
+        send: "Send",
+        tasksPanelTitle: "Task list",
+        memorySection: "Memory",
+        taskDone: "Task completed",
+        taskSnoozed: "Task snoozed",
+        taskRemoved: "Task removed",
+        prefsUpdated: "Preferences updated",
+        draftCopied: "Draft copied",
+        typeFallback: "Type here if mic is unavailable",
       }
     : {
         appTitle: "Amoji 秘書",
@@ -186,7 +199,7 @@ export function initAmojiSecretaryLite(doc = document) {
         top3Empty: "喺「任務」度 pin 最多 3 項重點。",
         pinPriority: "📌 加入今日 Top 3",
         unpinPriority: "★ 已 Pin",
-        priorityFull: "Top 3 已满 — 先取消一項。",
+        priorityFull: "Top 3 已滿 — 先取消一項。",
         memoryConfirm: "加入記憶？",
         memorySaved: "已加入記憶",
         draftTitle: "草稿",
@@ -198,6 +211,15 @@ export function initAmojiSecretaryLite(doc = document) {
         filterPersonal: "個人",
         remindersOn: "已開啟到期提醒",
         remindersBlocked: "瀏覽器封鎖咗通知",
+        send: "發送",
+        tasksPanelTitle: "任務清單",
+        memorySection: "記憶",
+        taskDone: "任務完成",
+        taskSnoozed: "任務延後",
+        taskRemoved: "任務已刪除",
+        prefsUpdated: "已更新偏好",
+        draftCopied: "草稿已複製",
+        typeFallback: "麥克風不可用 — 可以打字",
       };
 
   const els = {
@@ -277,6 +299,8 @@ export function initAmojiSecretaryLite(doc = document) {
           "You decide navigation, mode, tasks, and memory via hidden tags; the app applies them automatically.",
           "End every reply with [mood:happy|thinking|sad|surprised|angry].",
           "When the user wants a task (or you suggest one), add [task:Title|due:tonight] — it saves immediately.",
+          "When they complete a task, add [task:done:Title]. Snooze: [task:snooze:Title|for:1h]. Delete: [task:delete:Title].",
+          "For tone/help scope/briefing/reminders use [pref:tone:friendly], [pref:helpWith:work], [pref:morningBrief:on], [pref:reminders:off].",
           "When the user shares a preference worth remembering, add [memory:short fact] — it saves immediately.",
           "When drafting email/message text, add [draft:copyable text on one line].",
           buildUiIntentPromptFragment(true, { surface: "secretary" }),
@@ -286,6 +310,8 @@ export function initAmojiSecretaryLite(doc = document) {
           "導航、模式、任務、記憶都由你用隱藏 tag 決定，app 會自動執行。",
           "每句回覆結尾加 [mood:happy|thinking|sad|surprised|angry]。",
           "用戶要任務（或者你建議任務）時加 [task:標題|due:今晚] — 會即刻儲存。",
+          "完成任務加 [task:done:標題]；延後加 [task:snooze:標題|for:1h]；刪除加 [task:delete:標題]。",
+          "語氣/範圍/簡報/提醒用 [pref:tone:friendly]、[pref:helpWith:work]、[pref:morningBrief:on]、[pref:reminders:off]。",
           "用戶分享值得記住嘅偏好時加 [memory:短句] — 會即刻儲存。",
           "起草電郵/訊息時加 [draft:可複製文字，一行]。",
           buildUiIntentPromptFragment(false, { surface: "secretary" }),
@@ -373,7 +399,38 @@ export function initAmojiSecretaryLite(doc = document) {
       console.warn("[secretary-lite] tts", err);
       showError(`${strings.errTts}: ${err.message || err}`);
     }
-    setStatus(strings.statusReady);
+    setStatus(conversationUi ? strings.statusListenHint : strings.statusReady);
+  }
+
+  function applySecretaryTagEffects(result) {
+    if (!result) return;
+    if (result.taskActions?.length) {
+      const { results, label } = applyTaskActions(result.taskActions, {
+        storage,
+        isEn,
+      });
+      for (const r of results) {
+        activityRail.pulse(r.ok ? "✅" : "⚠️", label(r));
+        if (els.messages) addBubble(label(r), "bot", "receipt");
+      }
+      renderToday();
+      renderTasks();
+    }
+    if (result.preferences?.length) {
+      const patch = applyPreferenceActions(result.preferences, {
+        storage,
+        onRemindersChange: (on) => {
+          if (els.prefReminders) els.prefReminders.checked = on;
+        },
+      });
+      if (Object.keys(patch).length) {
+        renderPrefs();
+        activityRail.pulse("⚙️", strings.prefsUpdated);
+        if (els.messages) {
+          addBubble(`✓ ${strings.prefsUpdated}`, "bot", "receipt");
+        }
+      }
+    }
   }
 
   const activityRail = createCompanionActivityRail(doc, {
@@ -458,7 +515,11 @@ export function initAmojiSecretaryLite(doc = document) {
     body.className = "draft-body";
     body.textContent = text;
     card.append(title, body);
-    if (!conversationUi) {
+    if (conversationUi) {
+      void navigator.clipboard?.writeText(text).then(() => {
+        activityRail.pulse("📝", strings.draftCopied);
+      }).catch(() => {});
+    } else {
       const actions = doc.createElement("div");
       actions.className = "draft-card-actions";
       const copy = doc.createElement("button");
@@ -561,6 +622,12 @@ export function initAmojiSecretaryLite(doc = document) {
       persistSecretaryMode(mode, storage);
       renderModeButtons();
     },
+    setTaskFilter: (filterId) => {
+      if (!["all", "work", "life", "personal"].includes(filterId)) return;
+      taskFilter = filterId;
+      renderTaskFilters();
+      renderTasks();
+    },
     openVoicePicker: () => {
       voicePicker.setSelectedId(voiceId);
       voicePicker.open();
@@ -629,6 +696,7 @@ export function initAmojiSecretaryLite(doc = document) {
       const result = await cloudReply(msg);
       thinking?.remove();
       await applyConversationUi(msg, result);
+      applySecretaryTagEffects(result);
       addBubble(result.reply, "bot");
       saveLastChatSummary(result.reply, storage);
       for (const taskDraft of result.tasks || []) {
@@ -721,7 +789,7 @@ export function initAmojiSecretaryLite(doc = document) {
   }
 
   function renderTaskFilters() {
-    if (!els.taskFilters) return;
+    if (!els.taskFilters || conversationUi) return;
     els.taskFilters.innerHTML = "";
     const filters = [
       { id: "all", label: strings.filterAll },
@@ -936,16 +1004,17 @@ export function initAmojiSecretaryLite(doc = document) {
   async function startConversationMic() {
     const mic = await ensureMicCapture();
     if (!mic?.supportsMic) {
-      setStatus(
-        isEn
-          ? "Mic unavailable — type in the box if needed"
-          : "麥克風不可用 — 可以打字",
-      );
+      doc.body.classList.add("mic-blocked");
+      setStatus(strings.typeFallback);
       return;
     }
     const ok = await mic.start();
     if (ok) {
+      doc.body.classList.remove("mic-blocked");
       setStatus(strings.statusListenHint);
+    } else {
+      doc.body.classList.add("mic-blocked");
+      setStatus(strings.typeFallback);
     }
   }
 
@@ -1163,6 +1232,30 @@ export function initAmojiSecretaryLite(doc = document) {
     if (quickAdd) quickAdd.textContent = strings.addTask;
     const memSave = doc.getElementById("memory-save-btn");
     if (memSave) memSave.textContent = strings.save;
+    const sendBtn = doc.getElementById("send-btn");
+    if (sendBtn) sendBtn.textContent = strings.send;
+    const tasksTitle = doc.getElementById("tasks-panel-title");
+    if (tasksTitle) tasksTitle.textContent = strings.tasksPanelTitle;
+    const memHeading = doc.getElementById("memory-section-title");
+    if (memHeading) memHeading.textContent = strings.memorySection;
+    const listenHint = doc.getElementById("listen-hint");
+    if (listenHint) listenHint.textContent = strings.statusListenHint;
+    const prefMorning = doc.querySelector('label[for="pref-morning-brief"]');
+    if (prefMorning) {
+      prefMorning.lastChild.textContent = isEn
+        ? " Morning brief"
+        : " 早晨簡報";
+    }
+    const prefRem = doc.querySelector('label[for="pref-reminders"]');
+    if (prefRem) {
+      prefRem.lastChild.textContent = isEn
+        ? " Due-task reminders (browser notifications)"
+        : " 到期任務提醒（瀏覽器通知）";
+    }
+    const prefHelp = doc.querySelector('label[for="pref-help-with"]');
+    if (prefHelp) prefHelp.firstChild.textContent = strings.helpWith;
+    const prefTone = doc.querySelector('label[for="pref-tone"]');
+    if (prefTone) prefTone.firstChild.textContent = strings.tone;
   }
 
   wireHeader();

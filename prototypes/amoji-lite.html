@@ -8,10 +8,10 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji Secretary</title>
     <script>
-      window.__amojiBuild = "2026-09-15-v81-activity-icons";
+      window.__amojiBuild = "2026-09-15-v82-complete-details";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-15-v81-activity-icons"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-15-v81-activity-icons"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-15-v82-complete-details"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-15-v82-complete-details"></script>
     <style>
       *,
       *::before,
@@ -695,6 +695,24 @@
         color: rgba(127, 212, 207, 0.95);
       }
 
+      body.conversation-ui.mic-blocked .composer.voice-only .row {
+        display: flex !important;
+      }
+
+      body.conversation-ui.mic-blocked .composer.voice-only textarea {
+        position: static;
+        width: 100%;
+        height: auto;
+        min-height: 2.5rem;
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      body.conversation-ui.mic-blocked .listen-hint {
+        font-size: 0.72rem;
+        color: rgba(247, 241, 232, 0.65);
+      }
+
       .ui-context-pill {
         display: inline-flex;
         align-items: center;
@@ -860,7 +878,7 @@
       </section>
 
       <section class="panel hidden" id="panel-tasks">
-        <h2>任務清單</h2>
+        <h2 id="tasks-panel-title">任務清單</h2>
         <div class="filter-row" id="task-filters"></div>
         <div class="task-stack" id="tasks-list"></div>
       </section>
@@ -890,7 +908,7 @@
           </select>
         </div>
         <div class="me-section">
-          <h2>記憶</h2>
+          <h2 id="memory-section-title">記憶</h2>
           <div id="memory-list"></div>
           <form class="inline-form" id="memory-form">
             <input id="memory-input" type="text" placeholder="加一條我應該記住嘅資料…" />
@@ -919,7 +937,7 @@
     </div>
 
     <script type="module">
-      import { initAmojiSecretaryLite } from "/amoji-engine/engine/companion/secretary/secretaryLiteShell.js?v=2026-09-15-v81-activity-icons";
+      import { initAmojiSecretaryLite } from "/amoji-engine/engine/companion/secretary/secretaryLiteShell.js?v=2026-09-15-v82-complete-details";
       window.__amojiLiteTag = "secretary-v1";
       window.__amojiLite = { ready: true, ttsCalls: 0, chatCalls: 0 };
       initAmojiSecretaryLite(document);

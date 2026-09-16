@@ -5,13 +5,14 @@ import { COMPANION_CHARACTERS } from "./companionCharacterCatalog.js";
 import {
   parseUiIntentTags,
   stripUiIntentTags,
+  UI_FILTERS,
   UI_MODES,
   UI_TABS,
 } from "./companionUiIntentTags.js";
 
 export const COMPANION_UI_INTENT_SCHEMA = "amoji.companionUiIntent.v1";
 
-export { UI_TABS, UI_MODES, parseUiIntentTags, stripUiIntentTags };
+export { UI_TABS, UI_MODES, UI_FILTERS, parseUiIntentTags, stripUiIntentTags };
 
 /**
  * @typedef {import("./companionUiIntentTags.js").UiIntent} UiIntent
@@ -41,6 +42,15 @@ export function inferUiIntentFromUserText(text, isEnglish = false) {
     }
     if (/\b(tasks?|to-?do|task list|my tasks)\b/i.test(lower)) {
       push({ type: "tab", value: "tasks" });
+    }
+    if (/\b(work tasks?|life tasks?|personal tasks?)\b/i.test(lower)) {
+      push({ type: "tab", value: "tasks" });
+      if (/work tasks?/i.test(lower)) push({ type: "filter", value: "work" });
+      if (/life tasks?/i.test(lower)) push({ type: "filter", value: "life" });
+      if (/personal tasks?/i.test(lower)) push({ type: "filter", value: "personal" });
+    }
+    if (/\b(mark|complete|finish|done with)\b/i.test(lower) && /\btask/i.test(lower)) {
+      push({ type: "taskdone", value: "infer" });
     }
     if (/\b(settings|preferences|my profile|memory)\b/i.test(lower)) {
       push({ type: "tab", value: "me" });
@@ -83,6 +93,17 @@ export function inferUiIntentFromUserText(text, isEnglish = false) {
     if (/今日|今日概覽|早晨簡報|今日有咩/.test(raw)) push({ type: "tab", value: "today" });
     if (/任務|待辦|to.?do|task/i.test(raw) && !/加任務/.test(raw)) {
       push({ type: "tab", value: "tasks" });
+    }
+    if (/工作任務/.test(raw)) {
+      push({ type: "tab", value: "tasks" });
+      push({ type: "filter", value: "work" });
+    }
+    if (/生活任務/.test(raw)) {
+      push({ type: "tab", value: "tasks" });
+      push({ type: "filter", value: "life" });
+    }
+    if (/完成.*任務|搞掂.*任務|做完/.test(raw)) {
+      push({ type: "taskdone", value: "infer" });
     }
     if (/設定|偏好|記憶|我嘅資料/.test(raw)) push({ type: "tab", value: "me" });
     if (/傾計|聊天|講嘢|同你講/.test(raw) && !/任務/.test(raw)) {
@@ -149,14 +170,16 @@ export function buildUiIntentPromptFragment(isEnglish = false, opts = {}) {
   return isEnglish
     ? [
         "UI control (hidden — never ask user to tap tabs or mode chips):",
-        "When navigation or tone mode should change, add [ui:tab:today|chat|tasks|me] and/or [ui:mode:work|life|chill] before [mood:…].",
-        "Examples: show tasks → [ui:tab:tasks]; work tone → [ui:mode:work]; profile → [ui:tab:me].",
+        "When navigation or tone mode should change, add [ui:tab:today|chat|tasks|me], [ui:mode:work|life|chill], and/or [ui:filter:all|work|life|personal] before [mood:…].",
+        "Complete tasks with [task:done:Title]; snooze with [task:snooze:Title|for:1h]; prefs with [pref:tone:friendly].",
+        "Examples: show tasks → [ui:tab:tasks]; work tasks → [ui:tab:tasks][ui:filter:work]; mark done → [task:done:Call mom].",
         "Reply naturally; the app switches panels from your tags.",
       ].join(" ")
     : [
         "UI 控制（用戶睇唔到 — 唔好叫佢撳 tab 或模式掣）：",
-        "需要轉頁或語氣模式時，喺 [mood:…] 前加 [ui:tab:today|chat|tasks|me] 同/或 [ui:mode:work|life|chill]。",
-        "例：睇任務 → [ui:tab:tasks]；工作語氣 → [ui:mode:work]；我嘅資料 → [ui:tab:me]。",
+        "需要轉頁或語氣模式時，喺 [mood:…] 前加 [ui:tab:…]、[ui:mode:…]、[ui:filter:all|work|life|personal]。",
+        "完成任務用 [task:done:標題]；延後用 [task:snooze:標題|for:1h]；偏好用 [pref:tone:friendly]。",
+        "例：睇任務 → [ui:tab:tasks]；工作任務 → [ui:filter:work]；完成 → [task:done:打電話]。",
         "口語照答，界面會跟 tag 自動切。",
       ].join(" ");
 }
@@ -166,6 +189,7 @@ export function buildUiIntentPromptFragment(isEnglish = false, opts = {}) {
  * @param {{
  *   switchTab?: (tab: string) => void,
  *   setMode?: (mode: string) => void,
+ *   setTaskFilter?: (filter: string) => void,
  *   switchCharacter?: (id: string) => void | Promise<void>,
  *   openCharacterPicker?: () => void,
  *   openSettings?: () => void,
@@ -196,6 +220,12 @@ export async function applyUiIntents(intents, handlers = {}) {
         if (intent.value && handlers.setMode) {
           handlers.setMode(intent.value);
           ctx.mode = intent.value;
+          applied.push(intent);
+        }
+        break;
+      case "filter":
+        if (intent.value && handlers.setTaskFilter) {
+          handlers.setTaskFilter(intent.value);
           applied.push(intent);
         }
         break;
@@ -271,6 +301,12 @@ export function uiIntentLabel(intent, isEnglish = false) {
     const map = isEnglish
       ? { work: "Work", life: "Life", chill: "Chill" }
       : { work: "工作", life: "生活", chill: "閒聊" };
+    return map[intent.value || ""] || intent.value || "";
+  }
+  if (intent.type === "filter") {
+    const map = isEnglish
+      ? { all: "All tasks", work: "Work", life: "Life", personal: "Personal" }
+      : { all: "全部任務", work: "工作", life: "生活", personal: "個人" };
     return map[intent.value || ""] || intent.value || "";
   }
   if (intent.type === "character" && intent.value && intent.value !== "pick") {
