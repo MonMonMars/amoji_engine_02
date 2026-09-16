@@ -13,6 +13,7 @@ import {
 import {
   applyOrbitFollowAnchor,
   computeVrmFrameAnchor,
+  smoothFrameAnchor,
 } from "./companionCameraFollow.js";
 import {
   PORTRAIT_FOV,
@@ -230,6 +231,7 @@ export async function createVrmAvatar(opts) {
     controls,
     fitted,
   });
+  smoothedFrameAnchor.copy(faceAnchor);
   /** @type {{ position: THREE.Vector3, target: THREE.Vector3, fov: number, distance: number }} */
   const portraitCamera = {
     position: camera.position.clone(),
@@ -251,6 +253,7 @@ export async function createVrmAvatar(opts) {
   };
   const cameraDirector = createCompanionCameraDirector();
   const frameAnchor = new THREE.Vector3();
+  const smoothedFrameAnchor = new THREE.Vector3();
   const raycaster = new THREE.Raycaster();
   const pointer = new THREE.Vector2();
   /** @type {{ x: number, y: number } | null} */
@@ -539,16 +542,23 @@ export async function createVrmAvatar(opts) {
       vrm.update(dt);
 
       computeVrmFrameAnchor(vrm, model, frameAnchor);
-      applyOrbitFollowAnchor(controls, camera, frameAnchor);
-      faceAnchor.copy(frameAnchor);
+      if (smoothedFrameAnchor.lengthSq() < 1e-6) {
+        smoothedFrameAnchor.copy(frameAnchor);
+      } else {
+        smoothFrameAnchor(smoothedFrameAnchor, frameAnchor, dt);
+      }
+      faceAnchor.copy(smoothedFrameAnchor);
 
       cameraDirector.setCurrentAction(bodyMotion.currentAction);
       const camState = cameraDirector.update(dt);
+      if (!camState.autoActive) {
+        applyOrbitFollowAnchor(controls, camera, smoothedFrameAnchor);
+      }
       if (camState.autoActive) {
         const desired = applyAutoCameraFrame(
           controls,
           camera,
-          frameAnchor,
+          smoothedFrameAnchor,
           portraitDist,
           {
             talkCloseBlend: camState.talkCloseBlend,

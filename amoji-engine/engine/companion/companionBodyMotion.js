@@ -88,7 +88,6 @@ export function createCompanionBodyMotion(humanoid) {
   let onActionComplete = null;
 
   const bone = (name) => humanoid?.getNormalizedBoneNode?.(name) || null;
-  const rawBone = (name) => humanoid?.getRawBoneNode?.(name) || null;
 
   const setEmotion = (next) => {
     emotion = String(next || "neutral").toLowerCase();
@@ -369,13 +368,11 @@ export function createCompanionBodyMotion(humanoid) {
   ];
 
   const applyBoneRotation = (name, rot) => {
-    if (!rot) return;
-    for (const b of [bone(name), rawBone(name)]) {
-      if (!b) continue;
-      b.rotation.x = rot.x ?? 0;
-      b.rotation.y = rot.y ?? 0;
-      b.rotation.z = rot.z ?? 0;
-    }
+    const b = bone(name);
+    if (!b || !rot) return;
+    b.rotation.x = rot.x ?? 0;
+    b.rotation.y = rot.y ?? 0;
+    b.rotation.z = rot.z ?? 0;
   };
 
   const applyArmRest = () => {
@@ -427,12 +424,12 @@ export function createCompanionBodyMotion(humanoid) {
     const foreL = Math.min(0.62, (safe.forearmL ?? 0) * k);
     const foreR = Math.min(0.62, (safe.forearmR ?? 0) * k);
     applyBoneRotation("leftUpperArm", {
-      x: restL.x + Math.sin(actionPhase * Math.PI * 2) * 0.03 * k,
+      x: restL.x,
       y: restL.y,
       z: restL.z + liftL * 0.75,
     });
     applyBoneRotation("rightUpperArm", {
-      x: restR.x + Math.sin(actionPhase * Math.PI * 2 + 1.2) * 0.03 * k,
+      x: restR.x,
       y: restR.y,
       z: restR.z - liftR * 0.75,
     });
@@ -644,7 +641,6 @@ export function createCompanionBodyMotion(humanoid) {
     if (talking && !activeGesture && !activeAction) {
       talkArmBlend = 0.28 + energy * 0.32;
     } else if (!talking && !thinking && !activeGesture && !activeAction) {
-      allowArms = true;
       talkArmBlend = listening ? 0.42 : 0.36;
     }
     if (activeGesture) {

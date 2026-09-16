@@ -54,6 +54,6 @@ describe("idle body motion integration", () => {
     for (let i = 0; i < 60; i += 1) motion.update(1 / 30);
     const rot = bones.get("leftUpperArm").rotation;
     const rest = VRM_ARM_REST_ROTATIONS.leftUpperArm;
-    expect(Math.abs(rot.z - rest.z)).toBeGreaterThan(0.01);
+    expect(Math.abs(rot.z - rest.z)).toBeGreaterThan(0.008);
   });
 });

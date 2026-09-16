@@ -14,6 +14,7 @@ import {
 import {
   applyOrbitFollowAnchor,
   computeGltfFrameAnchor,
+  smoothFrameAnchor,
 } from "./companionCameraFollow.js";
 import {
   PORTRAIT_FOV,
@@ -377,6 +378,7 @@ export async function createGltfAvatar(opts) {
   };
 
   const frameAnchor = new THREE.Vector3();
+  const smoothedFrameAnchor = new THREE.Vector3();
   let raf = 0;
   const frame = () => {
     const dt = clock.getDelta();
@@ -463,7 +465,12 @@ export async function createGltfAvatar(opts) {
     }
 
     computeGltfFrameAnchor(model, headBone, frameAnchor);
-    applyOrbitFollowAnchor(controls, camera, frameAnchor);
+    if (smoothedFrameAnchor.lengthSq() < 1e-6) {
+      smoothedFrameAnchor.copy(frameAnchor);
+    } else {
+      smoothFrameAnchor(smoothedFrameAnchor, frameAnchor, dt);
+    }
+    applyOrbitFollowAnchor(controls, camera, smoothedFrameAnchor);
     controls.update();
 
     faceLight.intensity = 0.55 + (talking ? 0.2 : 0) + Math.sin((now - t0) * 0.002) * 0.05;
