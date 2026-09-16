@@ -18,6 +18,9 @@ import {
 import {
   PORTRAIT_FOV,
   applyUpperBodyPortraitFrame,
+  detectPortraitCameraZSign,
+  isHeadFacingCamera,
+  portraitDistanceForHeight,
 } from "./companionPortraitFraming.js";
 import { actionLoops } from "./companionActionMotion.js";
 import { createCompanionBodyMotion } from "./companionBodyMotion.js";
@@ -74,13 +77,17 @@ async function loadVrmGltf(loader, modelUrl, onProgress) {
 function frameFaceCamera({ vrm, model, camera, controls, fitted }) {
   const fittedSize = fitted.getSize(new THREE.Vector3());
   const anchor = computeVrmFrameAnchor(vrm, model);
+  const head = vrm.humanoid?.getNormalizedBoneNode?.("head");
+  const distGuess = portraitDistanceForHeight(fittedSize.y);
+  const cameraZSign = detectPortraitCameraZSign(head, anchor, distGuess);
   const portraitDist = applyUpperBodyPortraitFrame({
     camera,
     controls,
     anchor,
     fittedHeight: fittedSize.y,
+    cameraZSign,
   });
-  return { face: anchor, portraitDist };
+  return { face: anchor, portraitDist, cameraZSign };
 }
 
 /**
@@ -122,7 +129,7 @@ export async function createVrmAvatar(opts) {
 
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(PORTRAIT_FOV, 1, 0.05, 100);
-  camera.position.set(0, 1.28, -2.85);
+  camera.position.set(0, 1.28, 2.85);
 
   scene.add(new THREE.HemisphereLight(0xffe8dc, 0x1a2030, 1.05));
   const key = new THREE.DirectionalLight(0xfff6ee, 1.55);
@@ -137,7 +144,7 @@ export async function createVrmAvatar(opts) {
   fill.position.set(-1.2, 1.6, 3.2);
   scene.add(fill);
   const faceLight = new THREE.PointLight(0xffe6d4, 0.65, 6);
-  faceLight.position.set(0.2, 1.55, -1.4);
+  faceLight.position.set(0.2, 1.55, 1.4);
   scene.add(faceLight);
 
   const ground = new THREE.Mesh(
@@ -206,7 +213,7 @@ export async function createVrmAvatar(opts) {
   model.position.z = -center.z * scale;
   model.position.y = -box.min.y * scale;
   const baseModelY = model.position.y;
-  const baseModelRotY = model.rotation.y;
+  let baseModelRotY = model.rotation.y;
   scene.add(model);
   vrm.humanoid?.resetNormalizedPose?.();
   configureVrmSpringStability(vrm);
@@ -237,13 +244,35 @@ export async function createVrmAvatar(opts) {
   const frameAnchor = new THREE.Vector3();
   const smoothedFrameAnchor = new THREE.Vector3();
   const fitted = new THREE.Box3().setFromObject(model);
-  const { face: faceAnchor, portraitDist } = frameFaceCamera({
+  let {
+    face: faceAnchor,
+    portraitDist,
+    cameraZSign: portraitCameraZSign,
+  } = frameFaceCamera({
     vrm,
     model,
     camera,
     controls,
     fitted,
   });
+  const headBone = vrm.humanoid?.getNormalizedBoneNode?.("head");
+  if (!isHeadFacingCamera(headBone, camera)) {
+    model.rotation.y += Math.PI;
+    vrm.humanoid?.resetNormalizedPose?.();
+    const refitted = new THREE.Box3().setFromObject(model);
+    const reframed = frameFaceCamera({
+      vrm,
+      model,
+      camera,
+      controls,
+      fitted: refitted,
+    });
+    faceAnchor = reframed.face;
+    portraitDist = reframed.portraitDist;
+    portraitCameraZSign = reframed.cameraZSign;
+    baseModelRotY = model.rotation.y;
+  }
+  faceLight.position.set(0.2, 1.55, portraitCameraZSign * 1.4);
   smoothedFrameAnchor.copy(faceAnchor);
   /** @type {{ position: THREE.Vector3, target: THREE.Vector3, fov: number, distance: number }} */
   const portraitCamera = {
@@ -656,6 +685,7 @@ export async function createVrmAvatar(opts) {
           },
           dt,
           PORTRAIT_FOV,
+          portraitCameraZSign,
         );
         portraitCamera.position.copy(desired.position);
         portraitCamera.target.copy(desired.target);
