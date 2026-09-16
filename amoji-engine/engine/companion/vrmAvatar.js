@@ -557,10 +557,13 @@ export async function createVrmAvatar(opts) {
   };
 
   const stopAction = () => {
+    const hadVrma = Boolean(vrmaAction || motionPlayer.isPlaying?.());
     motionPlayer.stop();
     vrmaAction = null;
     const ok = bodyMotion.stopAction();
-    vrm.humanoid?.resetNormalizedPose?.();
+    if (hadVrma) {
+      vrm.humanoid?.resetNormalizedPose?.();
+    }
     bodyMotion.snapToRestPose?.();
     syncHumanoidPose();
     applyEmotionExpressions(emotion);
