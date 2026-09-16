@@ -21,7 +21,9 @@ describe("companionWaitAssets", () => {
 
   it("rotates wait poses, emotions, and expression profiles", () => {
     expect(WAIT_POSES_BY_PHASE.idle).toContain("peace");
-    expect(WAIT_POSES_BY_PHASE.idle).toContain("spin");
+    expect(WAIT_POSES_BY_PHASE.idle).toContain("wave");
+    expect(WAIT_POSES_BY_PHASE.idle).toContain("nod");
+    expect(WAIT_POSES_BY_PHASE.idle).not.toContain("spin");
     expect(pickWaitPose("idle", 0)).toBeTruthy();
     expect(pickWaitEmotion("idle", 0, "idle")).toBe("happy");
     expect(pickWaitEmotion("avatar-load", 1, "avatar-load")).toBeTruthy();

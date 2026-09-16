@@ -26,7 +26,9 @@ describe("idle showcase wiring", () => {
   });
 
   it("plays a wave after avatar load instead of stopping all motion", () => {
-    expect(html).toMatch(/playAction\?\.\("wave"/);
+    expect(html).toMatch(/playActionSequence/);
+    expect(html).toMatch(/bootIdleMotionIds/);
+    expect(html).toMatch(/loopSequence:\s*true/);
     expect(html).not.toMatch(
       /\.finally\(\(\) => \{\s*hideAvatarLoadPill\(\);\s*avatar\?\.stopAction/,
     );

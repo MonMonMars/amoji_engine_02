@@ -56,7 +56,7 @@ describe("companionWaitAct", () => {
     expect(wait.isActive()).toBe(false);
   });
 
-  it("uses procedural idle when avatar becomes available during load", () => {
+  it("plays preloaded poses when avatar becomes available during load", () => {
     const avatar = {
       playAction: vi.fn(),
       setEmotion: vi.fn(),
@@ -64,11 +64,14 @@ describe("companionWaitAct", () => {
       stopAction: vi.fn(),
     };
     const wait = createCompanionWaitAct({ avatar: null, isEnglish: false });
-    wait.start({ kind: "avatar-load", phase: "wave", speak: false });
+    wait.start({ kind: "avatar-load", phase: "avatar-load", speak: false });
     expect(avatar.playAction).not.toHaveBeenCalled();
     wait.setAvatar(avatar);
-    expect(avatar.playAction).not.toHaveBeenCalled();
-    expect(avatar.stopAction).toHaveBeenCalled();
+    expect(avatar.playAction).toHaveBeenCalled();
+    expect(WAIT_POSES_BY_PHASE["avatar-load"]).toContain(
+      avatar.playAction.mock.calls[0][0],
+    );
+    expect(avatar.stopAction).not.toHaveBeenCalled();
   });
 
   it("plays idle showcase poses instead of freezing the model", () => {
