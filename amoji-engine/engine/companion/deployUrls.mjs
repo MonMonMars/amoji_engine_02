@@ -24,7 +24,8 @@ export function companionFullDemoUrl(opts = {}) {
   const params = new URLSearchParams({ lang });
   const build = opts.build ?? AMOJI_BUILD;
   if (build) params.set("build", build);
-  if (opts.automic === "0") params.set("automic", "0");
+  if (opts.pick !== "0") params.set("pick", "1");
+  if (opts.automic === "0" || opts.automic === undefined) params.set("automic", "0");
   return `${DEMO_BASE_URL}/companion-full?${params.toString()}`;
 }
 

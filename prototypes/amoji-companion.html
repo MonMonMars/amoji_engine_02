@@ -8,9 +8,9 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji · Companion</title>
     <script>
-      window.__amojiBuild = "2026-09-16-v106-outfit-voice-status";
+      window.__amojiBuild = "2026-09-16-v107-demo-polish";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-16-v106-outfit-voice-status"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-16-v107-demo-polish"></script>
     <link
       rel="prefetch"
       href="/prototypes/assets/companion-char-nova.png"
@@ -281,7 +281,7 @@
       media="print"
       onload="this.media='all'"
     />
-    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-16-v106-outfit-voice-status" />
+    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-16-v107-demo-polish" />
     <noscript>
       <link
         href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap"
@@ -2829,19 +2829,19 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-16-v106-outfit-voice-status",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-16-v107-demo-polish",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-16-v106-outfit-voice-status",
-          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-16-v106-outfit-voice-status"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-16-v107-demo-polish",
+          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-16-v107-demo-polish"
         }
       }
     </script>
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-16-v106-outfit-voice-status"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-16-v107-demo-polish"
     />
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-16-v106-outfit-voice-status"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-16-v106-outfit-voice-status"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-16-v107-demo-polish"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-16-v107-demo-polish"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;
@@ -3219,7 +3219,7 @@
         <p class="settings-section-title" id="scene-bg-section-title">Background</p>
         <div class="scene-preset-grid" id="scene-bg-grid"></div>
         <p class="settings-section-title" id="scene-outfit-section-title">Outfit</p>
-        <p class="settings-hint" id="scene-outfit-hint">Coming soon — per-character wardrobe.</p>
+        <p class="settings-hint" id="scene-outfit-hint">Pick a look — default, casual, or formal.</p>
         <div class="scene-preset-grid" id="scene-outfit-grid"></div>
       </div>
 
@@ -3996,21 +3996,13 @@
         }
         if (sceneOutfitHint) {
           sceneOutfitHint.textContent = isEnglish
-            ? characterId === "nova"
-              ? "Nova wardrobe — soft casual or crisp formal tones."
-              : "Default look available — more outfits coming per companion."
-            : characterId === "nova"
-              ? "諾娃衣櫃 — 休閒柔和或正式利落色調。"
-              : "目前只有原本造型 — 更多同伴衣櫃即將推出。";
+            ? "Soft casual or crisp formal tones — saved per companion."
+            : "休閒柔和或正式利落色調 — 每個同伴獨立保存。";
         }
         if (settingsOutfitHint) {
           settingsOutfitHint.textContent = isEnglish
-            ? characterId === "nova"
-              ? "Nova outfits: default, casual, formal."
-              : "Outfit presets expand per companion."
-            : characterId === "nova"
-              ? "諾娃造型：原本、休閒、正式。"
-              : "造型預設會按同伴逐步推出。";
+            ? "Outfits: default, casual, formal."
+            : "造型：原本、休閒、正式。";
         }
         if (sceneSheetClose) {
           sceneSheetClose.setAttribute(
