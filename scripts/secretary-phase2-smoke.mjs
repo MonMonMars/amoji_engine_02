@@ -23,6 +23,7 @@ function record(name, ok, detail = "") {
 }
 
 async function submitChat(page, text) {
+  await waitChatReady(page);
   await page.evaluate((msg) => {
     const input = document.getElementById("input");
     const form = document.getElementById("composer");
@@ -31,6 +32,14 @@ async function submitChat(page, text) {
       form.requestSubmit();
     }
   }, text);
+}
+
+async function waitChatReady(page) {
+  await page.waitForFunction(
+    () => !document.querySelector(".bubble.thinking"),
+    { timeout: 90000 },
+  );
+  await page.waitForTimeout(400);
 }
 
 const browser = await chromium.launch({ headless: true });
@@ -49,6 +58,13 @@ try {
   record("conversation-ui mode", boot.conversationUi);
   record("composer visible on chat tab", boot.composerVisible);
   record("manual tabbar hidden", boot.tabbarHidden);
+
+  await page.evaluate(() => {
+    const speaker = document.getElementById("speaker-btn");
+    if (speaker && !speaker.classList.contains("off")) {
+      speaker.click();
+    }
+  });
 
   await submitChat(page, "今晚提醒我打電話");
   await page.waitForSelector(".bubble.receipt", { timeout: 60000 });

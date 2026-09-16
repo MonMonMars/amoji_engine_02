@@ -49,8 +49,15 @@ async function main() {
   );
   const readyMs = Date.now() - t0;
 
-  await page.fill("#input", "Hello Amoji");
-  await page.click("#send");
+  await page.evaluate(() => {
+    document.body.classList.add("mic-blocked");
+    const input = document.getElementById("input");
+    const form = document.getElementById("composer");
+    if (input && form) {
+      input.value = "Hello Amoji";
+      form.requestSubmit();
+    }
+  });
   await page.waitForSelector(".msg-row.user .bubble", { timeout: 8000 });
 
   await page.waitForFunction(
