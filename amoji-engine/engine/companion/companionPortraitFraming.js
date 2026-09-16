@@ -17,6 +17,9 @@ export const PORTRAIT_FOV = 30;
 export const PORTRAIT_DIST_FACTOR = 1.3;
 export const PORTRAIT_DIST_MIN = 1.12;
 
+/** VRM/GLTF companions face +Z; camera sits on -Z to see the front. */
+export const PORTRAIT_CAMERA_Z_SIGN = -1;
+
 /**
  * @param {number} fittedHeight
  */
@@ -58,7 +61,7 @@ export function applyUpperBodyPortraitFrame(opts) {
   opts.camera.position.set(
     opts.anchor.x,
     opts.anchor.y + 0.08,
-    opts.anchor.z + portraitDist * 1.04,
+    opts.anchor.z + PORTRAIT_CAMERA_Z_SIGN * portraitDist * 1.04,
   );
   opts.camera.fov = PORTRAIT_FOV;
   opts.camera.updateProjectionMatrix();

@@ -118,7 +118,7 @@ export async function createVrmAvatar(opts) {
 
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(PORTRAIT_FOV, 1, 0.05, 100);
-  camera.position.set(0, 1.28, 2.85);
+  camera.position.set(0, 1.28, -2.85);
 
   scene.add(new THREE.HemisphereLight(0xffe8dc, 0x1a2030, 1.05));
   const key = new THREE.DirectionalLight(0xfff6ee, 1.55);
@@ -133,7 +133,7 @@ export async function createVrmAvatar(opts) {
   fill.position.set(-1.2, 1.6, 3.2);
   scene.add(fill);
   const faceLight = new THREE.PointLight(0xffe6d4, 0.65, 6);
-  faceLight.position.set(0.2, 1.55, 1.4);
+  faceLight.position.set(0.2, 1.55, -1.4);
   scene.add(faceLight);
 
   const ground = new THREE.Mesh(
