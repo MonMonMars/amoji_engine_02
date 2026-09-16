@@ -48,9 +48,13 @@ export function inferUiIntentFromUserText(text, isEnglish = false) {
     if (/\b(chat|talk|let.?s talk)\b/i.test(lower) && !/task/i.test(lower)) {
       push({ type: "tab", value: "chat" });
     }
-    if (/\bwork mode\b/i.test(lower)) push({ type: "mode", value: "work" });
-    if (/\blife mode\b/i.test(lower)) push({ type: "mode", value: "life" });
-    if (/\b(let.?s chill|chill mode|just chill)\b/i.test(lower)) {
+    if (/\b(work mode|focus mode|i.?m working)\b/i.test(lower)) {
+      push({ type: "mode", value: "work" });
+    }
+    if (/\b(life mode|personal mode)\b/i.test(lower)) {
+      push({ type: "mode", value: "life" });
+    }
+    if (/\b(let.?s chill|chill mode|just chill|relax|take it easy)\b/i.test(lower)) {
       push({ type: "mode", value: "chill" });
     }
     if (/\b(change character|switch character|another companion|pick someone else)\b/i.test(lower)) {

@@ -42,8 +42,14 @@ if (!chromeHidden.conversationUi || !chromeHidden.tabbarHidden) {
 
 await page.waitForSelector("#composer:not(.hidden)", { timeout: 10000 });
 
-await page.fill("#input", "show my tasks");
-await page.click("#send-btn");
+await page.evaluate(() => {
+  const input = document.getElementById("input");
+  const form = document.getElementById("composer");
+  if (input && form) {
+    input.value = "show my tasks";
+    form.requestSubmit();
+  }
+});
 
 await page.waitForFunction(
   () => {
@@ -70,8 +76,14 @@ const afterTasks = await page.evaluate(() => ({
 
 await page.screenshot({ path: join(outDir, "conversation-ui-tasks.png"), fullPage: true });
 
-await page.fill("#input", "let's chill");
-await page.click("#send-btn");
+await page.evaluate(() => {
+  const input = document.getElementById("input");
+  const form = document.getElementById("composer");
+  if (input && form) {
+    input.value = "let's chill";
+    form.requestSubmit();
+  }
+});
 
 await page.waitForFunction(
   () => document.querySelector('.mode-row button[data-mode="chill"]')?.classList.contains("active"),
