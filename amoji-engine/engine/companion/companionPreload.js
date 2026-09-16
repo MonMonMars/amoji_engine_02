@@ -1,8 +1,7 @@
 /**
- * Early companion boot preload — fetch VRM + motion pack and warm Three/VRM modules
- * before the main companion script finishes importing.
+ * Companion preload — minimal boot (chat-first), heavy 3D assets in background.
  */
-export const COMPANION_PRELOAD_SCHEMA = "amoji.companionPreload.v1";
+export const COMPANION_PRELOAD_SCHEMA = "amoji.companionPreload.v2";
 
 export const DEFAULT_VRM_URL = "/prototypes/assets/companion-girl.vrm";
 export const DEFAULT_MOTIONS_BASIC_URL = "/api/motions?pack=basic";
@@ -118,13 +117,34 @@ export function getPreloadedVrmModulePromise() {
 }
 
 /**
+ * Schedule work after first paint / idle so chat can boot first.
+ * @param {() => void} fn
+ */
+export function scheduleCompanionBackgroundWork(fn) {
+  if (typeof fn !== "function") return;
+  if (typeof globalThis.requestIdleCallback === "function") {
+    globalThis.requestIdleCallback(() => fn(), { timeout: 2500 });
+    return;
+  }
+  globalThis.setTimeout?.(fn, 48);
+}
+
+/**
+ * Chat-first boot — no VRM/motion/module warming on page load.
+ */
+export function startMinimalCompanionPreload() {
+  return { schema: COMPANION_PRELOAD_SCHEMA, mode: "minimal" };
+}
+
+/**
+ * Warm 3D path: selected model buffer, motion packs, Three/VRM modules.
  * @param {{
  *   modelUrl?: string,
  *   motionsUrl?: string,
  *   fetchImpl?: typeof fetch,
  * }} [opts]
  */
-export function startCompanionPreload(opts = {}) {
+export function startHeavyCompanionPreload(opts = {}) {
   const fetchImpl =
     opts.fetchImpl ||
     (typeof globalThis.fetch === "function" ? globalThis.fetch.bind(globalThis) : null);
@@ -189,6 +209,7 @@ export function startCompanionPreload(opts = {}) {
 
   return {
     schema: COMPANION_PRELOAD_SCHEMA,
+    mode: "heavy",
     vrm: vrmBuffers.get(modelUrl) ?? null,
     motionBasic: motionBasicPromise,
     motionExtensions: motionExtensionsPromise,
@@ -204,16 +225,16 @@ export function startCompanionPreload(opts = {}) {
   };
 }
 
-const shouldAutoBoot =
-  typeof document !== "undefined" && typeof globalThis.fetch === "function";
+/** @deprecated Use startHeavyCompanionPreload */
+export function startCompanionPreload(opts = {}) {
+  return startHeavyCompanionPreload(opts);
+}
 
-const boot = shouldAutoBoot ? startCompanionPreload() : null;
-
-if (shouldAutoBoot && !rosterPreloadPromise) {
+export function ensureRosterPreloadStarted() {
+  if (rosterPreloadPromise) return rosterPreloadPromise;
   rosterPreloadPromise = import("./companionCharacterPreload.js")
-    .then((mod) => {
-      mod.injectRosterAssetHints?.("yue");
-      return mod.startCharacterRosterPreload({
+    .then((mod) =>
+      mod.startCharacterRosterPreload({
         onProgress: (ratio) => {
           globalThis.__amojiRosterPreloadPct = ratio;
         },
@@ -225,21 +246,35 @@ if (shouldAutoBoot && !rosterPreloadPromise) {
           globalThis.__amojiRosterModelsReady = result.modelsLoading;
         }
         return result;
-      });
-    })
+      }),
+    )
     .catch(() => null);
+  return rosterPreloadPromise;
+}
+
+const shouldAutoBoot =
+  typeof document !== "undefined" && typeof globalThis.fetch === "function";
+
+const boot = shouldAutoBoot ? startMinimalCompanionPreload() : null;
+
+if (shouldAutoBoot) {
+  scheduleCompanionBackgroundWork(ensureRosterPreloadStarted);
 }
 
 if (typeof globalThis !== "undefined") {
   globalThis.__amojiPreload = {
     schema: COMPANION_PRELOAD_SCHEMA,
-    start: startCompanionPreload,
+    start: startHeavyCompanionPreload,
+    startMinimal: startMinimalCompanionPreload,
+    startHeavy: startHeavyCompanionPreload,
+    scheduleBackground: scheduleCompanionBackgroundWork,
     getVrm: getPreloadedVrmPromise,
     getModel: getPreloadedVrmPromise,
     getMotionBasic: getPreloadedMotionBasicPromise,
     getVrmModule: getPreloadedVrmModulePromise,
     releaseExcept: releaseVrmPreloadExcept,
     rosterReady: rosterPreloadPromise,
+    ensureRoster: ensureRosterPreloadStarted,
     getRosterProgress: () => globalThis.__amojiRosterPreloadPct ?? 0,
     ready: boot,
   };

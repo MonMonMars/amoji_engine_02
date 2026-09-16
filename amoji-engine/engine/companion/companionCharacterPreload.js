@@ -9,7 +9,10 @@ import {
 } from "./companionPreload.js";
 
 export const COMPANION_CHARACTER_PRELOAD_SCHEMA =
-  "amoji.companionCharacterPreload.v2";
+  "amoji.companionCharacterPreload.v3";
+
+/** Gallery-priority preview count warmed before the rest of the roster. */
+export const PRIORITY_PREVIEW_COUNT = 6;
 
 const PREVIEW_PROGRESS_WEIGHT = 0.22;
 const MODEL_PROGRESS_WEIGHT = 0.78;
@@ -138,9 +141,10 @@ function reportCombinedProgress(
 
 export async function startCharacterRosterPreload(opts = {}) {
   const langCode = opts.langCode === "en" ? "en" : "yue";
-  injectRosterAssetHints(langCode);
   const modelUrls = uniqueCharacterModelUrls(langCode);
   const previewUrls = uniqueCharacterPreviewUrls(langCode);
+  const priorityPreviewUrls = previewUrls.slice(0, PRIORITY_PREVIEW_COUNT);
+  const deferredPreviewUrls = previewUrls.slice(PRIORITY_PREVIEW_COUNT);
   const fetchImpl =
     opts.fetchImpl ||
     (typeof globalThis.fetch === "function"
@@ -152,73 +156,89 @@ export async function startCharacterRosterPreload(opts = {}) {
   rosterPreloadProgress = 0;
   opts.onProgress?.(0, "");
 
-  const previewJob = preloadPreviewImages(previewUrls, (done) => {
-    previewDone = done;
-    reportCombinedProgress(
-      previewDone,
-      previewUrls.length,
-      modelDone,
-      modelUrls.length,
-      opts.onProgress,
-      "",
-    );
-  });
+  if (typeof document !== "undefined") {
+    scheduleCompanionAssetHints(langCode);
+  }
 
-  const modelJob = (async () => {
-    if (!fetchImpl || !modelUrls.length) {
-      return { ok: true, results: [] };
-    }
-    const results = await Promise.all(
-      modelUrls.map(async (url) => {
-        try {
-          await preloadVrmBuffer(url, fetchImpl);
-          return { url, ok: true };
-        } catch (err) {
-          return { url, ok: false, error: err?.message || String(err) };
-        } finally {
-          modelDone += 1;
-          reportCombinedProgress(
-            previewDone,
-            previewUrls.length,
-            modelDone,
-            modelUrls.length,
-            opts.onProgress,
-            url,
-          );
-        }
-      }),
+  rosterModelsPreloadPromise = (async () => {
+    const priorityPreviewResult = await preloadPreviewImages(
+      priorityPreviewUrls,
+      (done) => {
+        previewDone = done;
+        reportCombinedProgress(
+          previewDone,
+          previewUrls.length,
+          modelDone,
+          modelUrls.length,
+          opts.onProgress,
+          "",
+        );
+      },
     );
+    opts.onPreviewsReady?.();
+
+    void preloadPreviewImages(deferredPreviewUrls, (done) => {
+      previewDone = priorityPreviewUrls.length + done;
+      reportCombinedProgress(
+        previewDone,
+        previewUrls.length,
+        modelDone,
+        modelUrls.length,
+        opts.onProgress,
+        "",
+      );
+    });
+
+    if (!fetchImpl || !modelUrls.length) {
+      rosterPreloadProgress = 1;
+      opts.onProgress?.(1, "");
+      return { ok: Boolean(priorityPreviewResult.ok), results: [] };
+    }
+
+    const results = [];
+    for (const url of modelUrls) {
+      try {
+        await preloadVrmBuffer(url, fetchImpl);
+        results.push({ url, ok: true });
+      } catch (err) {
+        results.push({ url, ok: false, error: err?.message || String(err) });
+      } finally {
+        modelDone += 1;
+        reportCombinedProgress(
+          previewDone,
+          previewUrls.length,
+          modelDone,
+          modelUrls.length,
+          opts.onProgress,
+          url,
+        );
+      }
+    }
+    rosterPreloadProgress = 1;
+    opts.onProgress?.(1, "");
     return { ok: results.some((r) => r.ok), results };
   })();
 
-  const previewResult = await previewJob;
-  reportCombinedProgress(
-    previewDone,
-    previewUrls.length,
-    0,
-    modelUrls.length,
-    opts.onProgress,
-    "",
-  );
-  opts.onPreviewsReady?.();
-
-  rosterModelsPreloadPromise = modelJob.then((modelResult) => {
-    rosterPreloadProgress = 1;
-    opts.onProgress?.(1, "");
-    return modelResult;
-  });
-
   return {
-    ok: Boolean(previewResult.ok),
-    phase: "previews",
+    ok: true,
+    phase: "background",
     models: modelUrls,
-    previews: previewResult.count ?? previewUrls.length,
+    previews: previewUrls.length,
     modelsLoading: rosterModelsPreloadPromise,
   };
 }
 
-if (typeof document !== "undefined") {
-  injectRosterAssetHints("yue");
+/**
+ * Defer full roster prefetch hints so they do not compete with chat boot.
+ * @param {"yue" | "en"} langCode
+ */
+export function scheduleCompanionAssetHints(langCode = "yue") {
+  const run = () => injectRosterAssetHints(langCode);
+  if (typeof globalThis.requestIdleCallback === "function") {
+    globalThis.requestIdleCallback(run, { timeout: 4000 });
+    return;
+  }
+  globalThis.setTimeout?.(run, 120);
 }
 
 /**
