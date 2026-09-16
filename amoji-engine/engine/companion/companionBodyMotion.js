@@ -37,6 +37,7 @@ import {
   buildBasePose,
   clampActionPose,
   clampArmPose,
+  clampTalkArmPose,
   companionGestureStyle,
   VRM_LEG_REST_ROTATIONS,
   GESTURE_DURATION_SEC,
@@ -501,24 +502,24 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
   };
 
   const applyTalkArms = (pose, k) => {
-    const safe = clampArmPose(pose);
+    const safe = clampTalkArmPose(pose);
     const restL = armRestRotations.leftUpperArm;
     const restR = armRestRotations.rightUpperArm;
     const restLl = armRestRotations.leftLowerArm;
     const restRl = armRestRotations.rightLowerArm;
-    const liftL = Math.min(0.14, (safe.armLiftL ?? 0) * k);
-    const liftR = Math.min(0.14, (safe.armLiftR ?? 0) * k);
-    const foreL = Math.min(0.12, (safe.forearmL ?? 0) * k);
-    const foreR = Math.min(0.12, (safe.forearmR ?? 0) * k);
+    const liftL = Math.min(0.4, (safe.armLiftL ?? 0) * k);
+    const liftR = Math.min(0.4, (safe.armLiftR ?? 0) * k);
+    const foreL = Math.min(0.34, (safe.forearmL ?? 0) * k);
+    const foreR = Math.min(0.34, (safe.forearmR ?? 0) * k);
     applyBoneRotation("leftUpperArm", {
-      x: restL.x + Math.sin(talkTime * 3.2) * 0.02 * k,
+      x: restL.x + Math.sin(talkTime * 3.2) * 0.05 * k,
       y: restL.y,
-      z: restL.z + liftL * 0.55,
+      z: restL.z + liftL * 0.92,
     });
     applyBoneRotation("rightUpperArm", {
-      x: restR.x + Math.sin(talkTime * 3.2 + 1.1) * 0.02 * k,
+      x: restR.x + Math.sin(talkTime * 3.2 + 1.1) * 0.05 * k,
       y: restR.y,
-      z: restR.z - liftR * 0.55,
+      z: restR.z - liftR * 0.92,
     });
     applyBoneRotation("leftLowerArm", {
       x: restLl.x + foreL,
@@ -687,15 +688,15 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
           speechEnergy: energy,
           includeArms: true,
         });
-        const talkBlend = 0.74 + energy * 0.24;
+        const talkBlend = 0.88 + energy * 0.12;
         pose = mergePoses(pose, motion.body, talkBlend);
 
         const beat = Math.sin(elapsed * 7.4);
         const sway = Math.sin(elapsed * 3.6 + talkTime * 2.1);
-        pose.headX = (pose.headX || 0) + beat * 0.055 * energy + sway * 0.02;
-        pose.leanY = (pose.leanY || 0) + Math.sin(elapsed * 5.8) * 0.048 * energy;
-        pose.headZ = (pose.headZ || 0) + Math.sin(elapsed * 4.6) * 0.036 * energy;
-        pose.spineX = (pose.spineX || 0) + Math.sin(elapsed * 4.2) * 0.028 * energy;
+        pose.headX = (pose.headX || 0) + beat * 0.09 * energy + sway * 0.035;
+        pose.leanY = (pose.leanY || 0) + Math.sin(elapsed * 5.8) * 0.07 * energy;
+        pose.headZ = (pose.headZ || 0) + Math.sin(elapsed * 4.6) * 0.055 * energy;
+        pose.spineX = (pose.spineX || 0) + Math.sin(elapsed * 4.2) * 0.042 * energy;
       }
     }
 
@@ -707,7 +708,7 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
       actionArms = true;
     }
     if (talking && !activeGesture && !activeAction) {
-      talkArmBlend = 0.52 + energy * 0.4;
+      talkArmBlend = 0.72 + energy * 0.28;
     } else if (!talking && !thinking && !activeGesture && !activeAction) {
       idleArms = true;
     }
@@ -804,6 +805,9 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
     update,
     get emotion() {
       return emotion;
+    },
+    get nuance() {
+      return nuance;
     },
     get listening() {
       return listening;

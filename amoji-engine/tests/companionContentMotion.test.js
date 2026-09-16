@@ -39,10 +39,18 @@ describe("companionContentMotion", () => {
     expect(content.talkStyle).toBe("question");
   });
 
-  it("builds excited expression blend", () => {
+  it("builds excited expression blend without sleepy Relaxed lids", () => {
     const blend = buildVrmExpressionBlend("happy", "excited");
     expect(blend.Happy).toBeGreaterThan(0.85);
     expect(blend.Surprised).toBeGreaterThan(0.1);
+    expect(blend.Relaxed ?? 0).toBeLessThan(0.2);
+  });
+
+  it("defaults untagged spoken replies to a warm happy performance", () => {
+    const content = analyzeCompanionReply("你好呀！一齊傾偈啦");
+    expect(content.emotion).toBe("happy");
+    expect(content.nuance).toBe("excited");
+    expect(content.speechEnergy).toBeGreaterThan(0.75);
   });
 
   it("infers user worry as stress nuance for thinking pose", () => {

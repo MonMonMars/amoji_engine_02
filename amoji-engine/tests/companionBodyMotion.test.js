@@ -27,16 +27,17 @@ function mockHumanoid() {
 }
 
 describe("createCompanionBodyMotion", () => {
-  it("applies subtle arm sway while talking", () => {
+  it("applies visible arm sway while talking", () => {
     const humanoid = mockHumanoid();
     const motion = createCompanionBodyMotion(humanoid);
     motion.setEmotion("happy");
     motion.setTalking(true);
-    motion.setTalkEnergy(0.7);
-    motion.update(1 / 60);
+    motion.setTalkEnergy(0.85);
+    motion.setTalkStyle("celebrate");
+    for (let i = 0; i < 20; i += 1) motion.update(1 / 30);
     const rot = humanoid.bones.get("leftUpperArm").rotation;
     const rest = VRM_ARM_REST_ROTATIONS.leftUpperArm;
-    expect(rot.z).not.toBe(rest.z);
+    expect(Math.abs(rot.z - rest.z)).toBeGreaterThan(0.04);
   });
 
   it("applies gentle idle sway when not talking", () => {

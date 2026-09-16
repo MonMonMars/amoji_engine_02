@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { clampActionPose, clampArmPose } from "../engine/companion/companionPoseLibrary.js";
+import { clampActionPose, clampArmPose, clampTalkArmPose } from "../engine/companion/companionPoseLibrary.js";
 
 describe("companionPoseLibrary clamps", () => {
   it("keeps talk gestures subtle", () => {
@@ -12,5 +12,11 @@ describe("companionPoseLibrary clamps", () => {
     const clamped = clampActionPose({ armLiftL: 0.35, forearmL: 0.2, upperLegL: 0.3 });
     expect(clamped.armLiftL).toBeGreaterThan(0.3);
     expect(clamped.upperLegL).toBeGreaterThan(0.25);
+  });
+
+  it("allows visible talk-arm lifts", () => {
+    const clamped = clampTalkArmPose({ armLiftL: 0.35, forearmL: 0.2 });
+    expect(clamped.armLiftL).toBeGreaterThan(0.3);
+    expect(clamped.forearmL).toBeGreaterThan(0.18);
   });
 });

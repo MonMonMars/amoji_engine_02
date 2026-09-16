@@ -137,6 +137,21 @@ export function clampArmPose(pose) {
 }
 
 /**
+ * Looser limits while speaking so ChatGPT-style talk gestures read on camera.
+ * @param {Record<string, number>} pose
+ */
+export function clampTalkArmPose(pose) {
+  const out = { ...pose };
+  const maxLift = 0.42;
+  const maxFore = 0.36;
+  if ("armLiftL" in out) out.armLiftL = Math.min(maxLift, Math.max(0, out.armLiftL));
+  if ("armLiftR" in out) out.armLiftR = Math.min(maxLift, Math.max(0, out.armLiftR));
+  if ("forearmL" in out) out.forearmL = Math.min(maxFore, Math.max(0, out.forearmL ?? 0));
+  if ("forearmR" in out) out.forearmR = Math.min(maxFore, Math.max(0, out.forearmR ?? 0));
+  return out;
+}
+
+/**
  * Looser limits for scripted full-body actions (kungfu, dance, jump).
  * Talk-gesture clampArmPose must not be used here — it flattens visible motion.
  * @param {Record<string, number>} pose

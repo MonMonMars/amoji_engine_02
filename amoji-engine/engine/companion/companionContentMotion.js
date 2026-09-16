@@ -85,18 +85,19 @@ export function inferOneShotGesture(text, emotion, nuance) {
  */
 export function inferSpeechEnergy(text, emotion, nuance) {
   const raw = String(text || "");
-  let energy = 0.72;
-  if (emotion === "happy" || emotion === "surprised") energy += 0.18;
-  if (emotion === "angry") energy += 0.14;
-  if (emotion === "sad" || emotion === "thinking") energy -= 0.14;
-  if (nuance === "excited") energy += 0.2;
+  let energy = 0.78;
+  if (emotion === "happy" || emotion === "surprised") energy += 0.14;
+  if (emotion === "angry") energy += 0.12;
+  if (emotion === "sad") energy -= 0.16;
+  if (emotion === "thinking") energy -= 0.08;
+  if (nuance === "excited") energy += 0.16;
   if (nuance === "love") energy += 0.1;
-  if (nuance === "shy" || nuance === "stress") energy -= 0.12;
+  if (nuance === "shy" || nuance === "stress") energy -= 0.1;
   if (/!{1,}|！{1,}/.test(raw)) energy += 0.12;
-  if (/[?？]/.test(raw)) energy += 0.06;
-  if (/[呀啊喇喎喔呢咩~～]/.test(raw)) energy += 0.08;
+  if (/[?？]/.test(raw)) energy += 0.08;
+  if (/[呀啊喇喎喔呢咩~～哈哈呵]/.test(raw)) energy += 0.1;
   if (raw.length > 80) energy += 0.04;
-  return Math.max(0.28, Math.min(1, energy));
+  return Math.max(0.32, Math.min(1, energy));
 }
 
 /**
@@ -114,23 +115,24 @@ export function buildVrmExpressionBlend(emotion, nuance) {
 
   switch (e) {
     case "happy":
-      blend.Happy = 0.96;
-      blend.Relaxed = 0.18;
+      blend.Happy = 0.98;
       break;
     case "thinking":
-      blend.Relaxed = 0.42;
+      blend.Relaxed = 0.28;
+      blend.Surprised = 0.12;
       break;
     case "sad":
       blend.Sad = 0.92;
-      blend.Relaxed = 0.1;
       break;
     case "surprised":
       blend.Surprised = 0.98;
+      blend.Happy = 0.35;
       break;
     case "angry":
       blend.Angry = 0.94;
       break;
     default:
+      blend.Happy = 0.22;
       break;
   }
 
@@ -148,7 +150,7 @@ export function buildVrmExpressionBlend(emotion, nuance) {
       break;
     case "excited":
       blend.Happy = Math.max(blend.Happy ?? 0.75, 0.98);
-      blend.Surprised = Math.max(blend.Surprised ?? 0, 0.42);
+      blend.Surprised = Math.max(blend.Surprised ?? 0, 0.48);
       break;
     case "stress":
       blend.Sad = Math.max(blend.Sad ?? 0, 0.22);
@@ -302,9 +304,17 @@ export function pickNextThinkingPhrase(isEnglish = false, lastIndex = -1) {
 export function analyzeCompanionReply(text, moodHint = null) {
   const tagged = parseReplyTags(String(text || ""));
   const reply = tagged.reply;
+  const inferred = inferExpressionFromText(reply);
   const emotion =
-    tagged.emotion || moodHint || inferExpressionFromText(reply) || "neutral";
-  const nuance = tagged.nuance || inferContentNuance(reply);
+    tagged.emotion || moodHint || inferred || "happy";
+  let nuance = tagged.nuance || inferContentNuance(reply);
+  if (
+    nuance === "none" &&
+    (emotion === "happy" || emotion === "surprised") &&
+    /[!！呀啊喇喎哈哈]/.test(reply)
+  ) {
+    nuance = "excited";
+  }
   const talkStyle = inferTalkGestureFromText(reply, { emotion });
   const gesture = inferOneShotGesture(reply, emotion, nuance);
   const action = inferActionFromReply(String(text || ""), tagged.action);
