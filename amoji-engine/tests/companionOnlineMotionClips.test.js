@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   enrichMotionWithClip,
   ONLINE_MOTION_CLIP_FILES,
+  PROCEDURAL_PREFERRED_ACTIONS,
   resolveOnlineMotionClipFile,
   resolveOnlineMotionClipUrl,
 } from "../engine/companion/companionOnlineMotionClips.mjs";
@@ -18,10 +19,10 @@ describe("companionOnlineMotionClips", () => {
     expect(resolveOnlineMotionClipFile("highfive")).toBe("Goodbye");
   });
 
-  it("builds raw GitHub VRMA URLs", () => {
-    const url = resolveOnlineMotionClipUrl("wave");
+  it("builds raw GitHub VRMA URLs for full-body clips", () => {
+    const url = resolveOnlineMotionClipUrl("dance");
     expect(url).toContain("tk256ailab/vrm-viewer");
-    expect(url).toMatch(/Goodbye\.vrma$/);
+    expect(url).toMatch(/Jump\.vrma$/);
   });
 
   it("enriches motion metadata for /api/motions", () => {
@@ -36,5 +37,11 @@ describe("companionOnlineMotionClips", () => {
   it("returns null clip for stop/none", () => {
     expect(resolveOnlineMotionClipUrl("stop")).toBeNull();
     expect(resolveOnlineMotionClipUrl("none")).toBeNull();
+  });
+
+  it("keeps subtle social gestures on procedural motion (arms return to rest)", () => {
+    expect(PROCEDURAL_PREFERRED_ACTIONS.has("wave")).toBe(true);
+    expect(resolveOnlineMotionClipUrl("wave")).toBeNull();
+    expect(resolveOnlineMotionClipUrl("dance")).toContain("Jump.vrma");
   });
 });

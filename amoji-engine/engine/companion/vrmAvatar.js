@@ -23,6 +23,7 @@ import {
   portraitDistanceForHeight,
 } from "./companionPortraitFraming.js";
 import { actionLoops } from "./companionActionMotion.js";
+import { detectVrmArmRestRotations } from "./companionArmRestCalibration.js";
 import { createCompanionBodyMotion } from "./companionBodyMotion.js";
 import { buildVrmExpressionBlend } from "./companionContentMotion.js";
 import { resolveOnlineMotionClipUrl } from "./companionOnlineMotionClips.mjs";
@@ -220,10 +221,18 @@ export async function createVrmAvatar(opts) {
   const bodyMotion = createCompanionBodyMotion(vrm.humanoid);
   /** @type {string | null} */
   let vrmaAction = null;
+  const restoreAfterVrma = () => {
+    vrmaAction = null;
+    motionPlayer.releasePose?.();
+    vrm.humanoid?.resetNormalizedPose?.();
+    bodyMotion.snapToRestPose?.();
+    syncHumanoidPose();
+  };
+
   const motionPlayer = createVrmMotionPlayer({
     vrm,
     onComplete: () => {
-      vrmaAction = null;
+      restoreAfterVrma();
     },
   });
 
@@ -234,12 +243,6 @@ export async function createVrmAvatar(opts) {
       console.warn("[vrm] humanoid.update failed", err);
     }
   };
-
-  for (let i = 0; i < 4; i += 1) {
-    bodyMotion.update(1 / 60);
-    syncHumanoidPose();
-    vrm.update(1 / 60);
-  }
 
   const frameAnchor = new THREE.Vector3();
   const smoothedFrameAnchor = new THREE.Vector3();
@@ -271,6 +274,14 @@ export async function createVrmAvatar(opts) {
     portraitDist = reframed.portraitDist;
     portraitCameraZSign = reframed.cameraZSign;
     baseModelRotY = model.rotation.y;
+  }
+
+  bodyMotion.setArmRestRotations?.(detectVrmArmRestRotations(vrm));
+  bodyMotion.snapToRestPose?.();
+  for (let i = 0; i < 4; i += 1) {
+    bodyMotion.update(1 / 60);
+    syncHumanoidPose();
+    vrm.update(1 / 60);
   }
   faceLight.position.set(0.2, 1.55, portraitCameraZSign * 1.4);
   smoothedFrameAnchor.copy(faceAnchor);
@@ -537,6 +548,9 @@ export async function createVrmAvatar(opts) {
     motionPlayer.stop();
     vrmaAction = null;
     const ok = bodyMotion.stopAction();
+    vrm.humanoid?.resetNormalizedPose?.();
+    bodyMotion.snapToRestPose?.();
+    syncHumanoidPose();
     applyEmotionExpressions(emotion);
     return ok;
   };
@@ -642,9 +656,15 @@ export async function createVrmAvatar(opts) {
   const frame = () => {
     const dt = clock.getDelta();
     const now = performance.now();
+    const vrmaPlaying = Boolean(vrmaAction && motionPlayer.isPlaying?.());
+    if (vrmaAction && !vrmaPlaying) {
+      restoreAfterVrma();
+    }
     const activeMotion = vrmaAction || bodyMotion.currentAction;
     try {
-      bodyMotion.update(dt, { talking, now });
+      if (!vrmaPlaying) {
+        bodyMotion.update(dt, { talking, now });
+      }
       motionPlayer.update(dt);
       if (!vrmaAction) {
         const root = bodyMotion.getRootMotion?.() || { y: 0, rotY: 0 };
