@@ -18,6 +18,7 @@ import {
 import {
   PORTRAIT_FOV,
   applyUpperBodyPortraitFrame,
+  applyUserOrbitLimits,
   detectPortraitCameraZSign,
   isHeadFacingCamera,
   portraitDistanceForHeight,
@@ -182,11 +183,9 @@ export async function createVrmAvatar(opts) {
   const controls = new OrbitControls(camera, canvas);
   controls.enableDamping = true;
   controls.dampingFactor = 0.08;
-  controls.enablePan = false;
   controls.minDistance = 1.1;
   controls.maxDistance = 4.2;
-  controls.minPolarAngle = 0.65;
-  controls.maxPolarAngle = 1.55;
+  applyUserOrbitLimits(controls);
   controls.target.set(0, 1.15, 0);
   controls.update();
   controls.mouseButtons = {
@@ -194,9 +193,8 @@ export async function createVrmAvatar(opts) {
     MIDDLE: THREE.MOUSE.DOLLY,
     RIGHT: THREE.MOUSE.ROTATE,
   };
-  controls.enableRotate = true;
-  controls.enableZoom = true;
-  controls.rotateSpeed = 1.15;
+  controls.rotateSpeed = 1.35;
+  controls.zoomSpeed = 1.15;
   controls.touches = {
     ONE: THREE.TOUCH.ROTATE,
     TWO: THREE.TOUCH.DOLLY,
@@ -715,7 +713,9 @@ export async function createVrmAvatar(opts) {
 
       cameraDirector.setCurrentAction(activeMotion);
       const camState = cameraDirector.update(dt);
-      if (camState.autoActive) {
+      const userOwnsCamera =
+        camState.userOrbiting || camState.userFramingHeld;
+      if (!userOwnsCamera && camState.autoActive) {
         const desired = applyAutoCameraFrame(
           controls,
           camera,
@@ -734,7 +734,7 @@ export async function createVrmAvatar(opts) {
         portraitCamera.fov = desired.fov;
         portraitCamera.distance = desired.distance;
       } else {
-        if (!camState.userOrbiting && !camState.userFramingHeld) {
+        if (!userOwnsCamera) {
           applyOrbitFollowAnchor(controls, camera, smoothedFrameAnchor);
         }
         controls.update();
@@ -824,11 +824,19 @@ export async function createVrmAvatar(opts) {
   };
 
   canvas.style.touchAction = "none";
+  canvas.style.userSelect = "none";
+  canvas.style.webkitUserSelect = "none";
   canvas.style.cursor = "grab";
   canvas.addEventListener("pointerdown", (e) => {
     if (e.button !== 0 && e.pointerType === "mouse") return;
     pointerDown = { x: e.clientX, y: e.clientY };
+    cameraDirector.setUserOrbiting(true);
     canvas.style.cursor = "grabbing";
+  });
+  canvas.addEventListener("pointercancel", () => {
+    canvas.style.cursor = "grab";
+    cameraDirector.setUserOrbiting(false);
+    pointerDown = null;
   });
   canvas.addEventListener("pointerup", (e) => {
     canvas.style.cursor = "grab";

@@ -1,9 +1,12 @@
 import { describe, expect, it } from "vitest";
 import * as THREE from "three";
 import {
+  ORBIT_MAX_POLAR,
+  ORBIT_MIN_POLAR,
   PORTRAIT_CAMERA_Z_SIGN,
   PORTRAIT_FOV,
   applyUpperBodyPortraitFrame,
+  applyUserOrbitLimits,
   computeUpperBodyAnchor,
   detectPortraitCameraZSign,
   facingAlignmentScore,
@@ -55,6 +58,23 @@ describe("companionPortraitFraming", () => {
       fittedHeight: 0.92,
     });
     expect(camera.position.z).toBeGreaterThan(anchor.z);
+    expect(controls.minPolarAngle).toBe(ORBIT_MIN_POLAR);
+    expect(controls.maxPolarAngle).toBe(ORBIT_MAX_POLAR);
+    expect(controls.maxPolarAngle - controls.minPolarAngle).toBeGreaterThan(2);
+    expect(controls.enableRotate).toBe(true);
+  });
+
+  it("opens user orbit so pitch is not locked to a portrait sliver", () => {
+    expect(ORBIT_MAX_POLAR - ORBIT_MIN_POLAR).toBeGreaterThan(2);
+    const controls = applyUserOrbitLimits({
+      target: new THREE.Vector3(),
+      update: () => {},
+    });
+    expect(controls.minPolarAngle).toBeLessThan(0.3);
+    expect(controls.maxPolarAngle).toBeGreaterThan(Math.PI * 0.8);
+    expect(controls.enableRotate).toBe(true);
+    expect(controls.enableZoom).toBe(true);
+    expect(controls.enablePan).toBe(false);
   });
 
   it("detectPortraitCameraZSign picks the side in front of the face", () => {
