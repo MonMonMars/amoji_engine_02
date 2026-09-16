@@ -249,6 +249,14 @@
   background: rgba(28, 22, 52, 0.92);
 }
 
+.theme-grok-ani .topbar-btn--icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  line-height: 0;
+}
+
 .theme-grok-ani .topbar-btn--primary {
   border-color: rgba(139, 124, 248, 0.42);
   background: linear-gradient(
@@ -375,7 +383,11 @@
   height: 2.65rem;
   background: linear-gradient(135deg, #8b7cf8, #5eead4);
   color: #0a0814;
-  font-size: 1.1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  line-height: 0;
   box-shadow: 0 8px 20px rgba(139, 124, 248, 0.35);
 }
 
@@ -408,6 +420,11 @@ body.conversation-ui.composer-always-visible.theme-grok-ani .composer .speaker-b
   border: 1px solid rgba(255, 255, 255, 0.12);
   background: rgba(255, 255, 255, 0.04);
   color: #f4f0ff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  line-height: 0;
 }
 
 .theme-grok-ani .composer .speaker-btn[aria-pressed="true"] {
