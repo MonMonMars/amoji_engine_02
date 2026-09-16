@@ -1,9 +1,12 @@
 import { describe, expect, it, beforeEach } from "vitest";
 import {
   applySceneBackground,
+  loadChatPanelVisible,
   loadStoredSceneBackground,
+  persistChatPanelVisible,
   persistSceneBackground,
   resolveSceneBackgroundId,
+  CHAT_PANEL_STORAGE_KEY,
   SCENE_STORAGE_KEY,
 } from "../engine/companion/companionScenePresets.js";
 
@@ -46,5 +49,14 @@ describe("companionScenePresets", () => {
     const el = { dataset: {} };
     expect(applySceneBackground(el, "aurora")).toBe("aurora");
     expect(el.dataset.sceneBg).toBe("aurora");
+  });
+
+  it("persists chat panel visibility preference", () => {
+    expect(loadChatPanelVisible()).toBe(true);
+    persistChatPanelVisible(false);
+    expect(loadChatPanelVisible()).toBe(false);
+    expect(localStorage.getItem(CHAT_PANEL_STORAGE_KEY)).toBe("false");
+    persistChatPanelVisible(true);
+    expect(loadChatPanelVisible()).toBe(true);
   });
 });

@@ -41,17 +41,27 @@ await page.goto(
   { waitUntil: "domcontentloaded", timeout: 120000 },
 );
 await page.waitForTimeout(5000);
+await page.evaluate(() => {
+  const boot = document.getElementById("amoji-boot-fallback");
+  if (boot) {
+    boot.hidden = true;
+    boot.classList.remove("show");
+  }
+});
 
 const readUi = () =>
   page.evaluate(() => {
     const style = (el) => el && getComputedStyle(el).display;
     const atmosphere = document.querySelector(".atmosphere");
+    const atmosphereBg = atmosphere ? getComputedStyle(atmosphere).backgroundImage : "";
     return {
       chatBtn: document.getElementById("btn-toggle-chat")?.getAttribute("aria-pressed"),
       sceneBtn: style(document.getElementById("btn-open-scene")),
       speakerBtn: document.getElementById("btn-speaker")?.getAttribute("aria-pressed"),
       chatHidden: document.body.classList.contains("chat-panel-hidden"),
       sceneBg: atmosphere?.dataset?.sceneBg || null,
+      atmosphereUsesSunset: atmosphereBg.includes("ff8a5c") || atmosphereBg.includes("255, 138, 92"),
+      outfitSoonBadges: [...document.querySelectorAll(".scene-preset__soon")].length,
       menuScene: document.getElementById("settings-btn-scene")?.textContent?.trim(),
     };
   });

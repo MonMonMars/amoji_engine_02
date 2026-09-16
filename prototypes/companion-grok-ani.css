@@ -37,6 +37,41 @@
   pointer-events: none;
 }
 
+.theme-grok-ani .atmosphere[data-scene-bg="night-city"] {
+  background:
+    radial-gradient(ellipse 90% 70% at 50% 18%, rgba(139, 124, 248, 0.18), transparent 58%),
+    radial-gradient(ellipse 60% 50% at 82% 72%, rgba(94, 234, 212, 0.1), transparent 55%),
+    radial-gradient(ellipse 50% 40% at 12% 68%, rgba(244, 114, 182, 0.08), transparent 50%),
+    linear-gradient(180deg, rgba(3, 3, 10, 0.15) 0%, rgba(3, 3, 10, 0.42) 48%, rgba(2, 2, 8, 0.88) 100%),
+    url("/prototypes/assets/companion-bg-anime.png") center 20% / cover no-repeat;
+}
+
+.theme-grok-ani .atmosphere[data-scene-bg="studio"] {
+  background:
+    linear-gradient(180deg, rgba(18, 20, 28, 0.2) 0%, rgba(8, 10, 16, 0.78) 100%),
+    radial-gradient(ellipse 90% 70% at 50% 35%, #4a5568 0%, #1a1f2b 55%, #0a0c12 100%);
+}
+
+.theme-grok-ani .atmosphere[data-scene-bg="sunset"] {
+  background:
+    linear-gradient(180deg, rgba(40, 18, 28, 0.12) 0%, rgba(10, 8, 18, 0.82) 100%),
+    radial-gradient(ellipse 100% 80% at 50% 20%, #ff8a5c 0%, #7b3f72 42%, #1a1024 100%);
+}
+
+.theme-grok-ani .atmosphere[data-scene-bg="minimal"] {
+  background:
+    linear-gradient(180deg, rgba(3, 3, 10, 0.35) 0%, rgba(2, 2, 8, 0.92) 100%),
+    #030308;
+}
+
+.theme-grok-ani .atmosphere[data-scene-bg="aurora"] {
+  background:
+    linear-gradient(180deg, rgba(3, 3, 10, 0.2) 0%, rgba(2, 2, 8, 0.88) 100%),
+    radial-gradient(ellipse 80% 60% at 30% 25%, rgba(139, 124, 248, 0.42) 0%, transparent 55%),
+    radial-gradient(ellipse 70% 55% at 72% 30%, rgba(94, 234, 212, 0.34) 0%, transparent 52%),
+    #030308;
+}
+
 .theme-grok-ani .stage::after {
   content: "";
   position: absolute;
@@ -196,6 +231,14 @@
   color: #f4f0ff;
 }
 
+.theme-grok-ani .topbar-btn--icon.is-active {
+  border-color: rgba(139, 124, 248, 0.55);
+  background: rgba(139, 124, 248, 0.2);
+  box-shadow:
+    0 0 0 1px rgba(139, 124, 248, 0.18) inset,
+    0 4px 18px rgba(0, 0, 0, 0.38);
+}
+
 .theme-grok-ani .settings-backdrop.is-open {
   background: rgba(3, 3, 10, 0.72);
 }
@@ -324,6 +367,55 @@
 
 body.conversation-ui.composer-always-visible.theme-grok-ani .stage.mic-mode .composer {
   max-width: min(720px, 100%);
+}
+
+body.conversation-ui.composer-always-visible.theme-grok-ani .stage.mic-mode #btn-mic,
+body.conversation-ui.composer-always-visible.theme-grok-ani .composer .speaker-btn {
+  width: 2.65rem;
+  height: 2.65rem;
+}
+
+.theme-grok-ani .composer .speaker-btn {
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  color: #f4f0ff;
+}
+
+.theme-grok-ani .composer .speaker-btn[aria-pressed="true"] {
+  border-color: rgba(139, 124, 248, 0.42);
+  background: rgba(139, 124, 248, 0.16);
+}
+
+.theme-grok-ani .scene-sheet {
+  border-color: rgba(255, 255, 255, 0.1);
+  background: linear-gradient(180deg, rgba(14, 10, 28, 0.98), rgba(6, 4, 14, 0.98));
+  box-shadow: 0 -18px 48px rgba(0, 0, 0, 0.55);
+}
+
+.theme-grok-ani .scene-sheet-backdrop.is-open {
+  background:
+    radial-gradient(ellipse 100% 80% at 50% 0%, rgba(139, 124, 248, 0.12), transparent 55%),
+    rgba(3, 3, 10, 0.68);
+}
+
+.theme-grok-ani .scene-preset.is-active {
+  border-color: rgba(139, 124, 248, 0.55);
+  box-shadow: 0 0 0 1px rgba(139, 124, 248, 0.2) inset;
+}
+
+.theme-grok-ani .scene-preset__soon {
+  color: rgba(228, 220, 255, 0.78);
+  background: rgba(139, 124, 248, 0.14);
+  border-color: rgba(139, 124, 248, 0.28);
+}
+
+.theme-grok-ani .settings .settings-section-title {
+  color: rgba(228, 220, 255, 0.5);
+}
+
+.theme-grok-ani .settings .settings-hint {
+  color: rgba(228, 220, 255, 0.58);
 }
 
 /* —— Emotion orb —— */
