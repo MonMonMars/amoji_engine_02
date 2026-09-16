@@ -328,6 +328,9 @@ export function normalizeTtsPerformance(performance, fallbackEmotion = "neutral"
     speechEnergy: perf.speechEnergy ?? 0.64,
     lang: perf.lang,
     text: perf.text,
-    singleUtterance: perf.singleUtterance === true,
+    /** Speak the full line in one cloud TTS job unless expressive clause mode is on. */
+    singleUtterance:
+      perf.singleUtterance === true ||
+      (perf.expressiveClauses !== true && perf.singleUtterance !== false),
   };
 }
