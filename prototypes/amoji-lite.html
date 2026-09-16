@@ -8,10 +8,10 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji Secretary</title>
     <script>
-      window.__amojiBuild = "2026-09-15-v79-conversation-ui";
+      window.__amojiBuild = "2026-09-15-v80-voice-only-ui";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-15-v79-conversation-ui"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-15-v79-conversation-ui"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-15-v80-voice-only-ui"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-15-v80-voice-only-ui"></script>
     <style>
       *,
       *::before,
@@ -635,8 +635,19 @@
       body.conversation-ui #discover-chips,
       body.conversation-ui #open-chat-btn,
       body.conversation-ui #start-btn,
+      body.conversation-ui #quick-task-form,
+      body.conversation-ui .filter-row,
+      body.conversation-ui .task-row-toolbar,
+      body.conversation-ui .task-card-actions,
+      body.conversation-ui .draft-card-actions,
+      body.conversation-ui #memory-form,
+      body.conversation-ui .me-section:has(select),
+      body.conversation-ui .me-section:has(input[type="checkbox"]),
+      body.conversation-ui .btn-3d,
       body.conversation-ui .header-actions .btn-voice,
-      body.conversation-ui .header-actions .btn-lang {
+      body.conversation-ui .header-actions .btn-lang,
+      body.conversation-ui .header-actions .tag,
+      body.conversation-ui .composer.voice-only .row {
         display: none !important;
       }
 
@@ -654,6 +665,34 @@
         margin: 0;
         border-radius: 1rem 1rem 0 0;
         box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.35);
+      }
+
+      body.conversation-ui .composer.voice-only {
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0.35rem;
+        padding: 0.85rem 1rem calc(0.85rem + env(safe-area-inset-bottom));
+        min-height: 4.25rem;
+      }
+
+      body.conversation-ui .composer.voice-only textarea {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      body.conversation-ui .listen-hint {
+        font-size: 0.82rem;
+        font-weight: 650;
+        color: rgba(247, 241, 232, 0.92);
+        text-align: center;
+      }
+
+      body.conversation-ui .listen-hint.mic-active {
+        color: rgba(127, 212, 207, 0.95);
       }
 
       .ui-context-pill {
@@ -754,7 +793,8 @@
 
       <button type="button" class="start-btn" id="start-btn">開始傾計</button>
       <form class="composer hidden" id="composer" autocomplete="off">
-        <textarea id="input" rows="1" placeholder="輸入訊息…" enterkeyhint="send"></textarea>
+        <div class="listen-hint" id="listen-hint" aria-live="polite">聽緊 — 直接講</div>
+        <textarea id="input" rows="1" placeholder="輸入訊息…" enterkeyhint="send" aria-hidden="true" tabindex="-1"></textarea>
         <div class="row">
           <button type="button" class="btn speaker" id="speaker-btn" title="Speaker" aria-pressed="true">🔊</button>
           <button type="button" class="btn mic" id="mic-btn" title="Mic">🎤</button>
@@ -764,7 +804,7 @@
     </div>
 
     <script type="module">
-      import { initAmojiSecretaryLite } from "/amoji-engine/engine/companion/secretary/secretaryLiteShell.js?v=2026-09-15-v79-conversation-ui";
+      import { initAmojiSecretaryLite } from "/amoji-engine/engine/companion/secretary/secretaryLiteShell.js?v=2026-09-15-v80-voice-only-ui";
       window.__amojiLiteTag = "secretary-v1";
       window.__amojiLite = { ready: true, ttsCalls: 0, chatCalls: 0 };
       initAmojiSecretaryLite(document);
