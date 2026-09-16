@@ -8,9 +8,9 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji · Companion</title>
     <script>
-      window.__amojiBuild = "2026-09-16-v103-scene-shortcuts-polish";
+      window.__amojiBuild = "2026-09-16-v104-topbar-click-fix";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-16-v103-scene-shortcuts-polish"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-16-v104-topbar-click-fix"></script>
     <link
       rel="prefetch"
       href="/prototypes/assets/companion-char-nova.png"
@@ -281,7 +281,7 @@
       media="print"
       onload="this.media='all'"
     />
-    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-16-v103-scene-shortcuts-polish" />
+    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-16-v104-topbar-click-fix" />
     <noscript>
       <link
         href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap"
@@ -1562,6 +1562,16 @@
         opacity: 1;
       }
 
+      body.conversation-ui .topbar {
+        z-index: 9;
+        pointer-events: none;
+      }
+
+      body.conversation-ui .topbar .companion-chip,
+      body.conversation-ui .topbar-actions {
+        pointer-events: auto;
+      }
+
       body.conversation-ui .topbar-actions {
         display: flex;
         align-items: center;
@@ -1587,10 +1597,18 @@
       }
 
       body.conversation-ui:not(.chat-panel-hidden) .chat-column {
+        flex: 0 1 auto;
+        max-height: min(38vh, 300px);
+        margin-top: auto;
+        padding-top: 0.25rem;
         transition:
           opacity 0.28s ease,
           transform 0.28s ease,
           max-height 0.28s ease;
+      }
+
+      body.conversation-ui:not(.chat-panel-hidden) .transcript {
+        max-height: min(38vh, 300px);
       }
 
       body.conversation-ui .composer .speaker-btn {
@@ -2723,19 +2741,19 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-16-v103-scene-shortcuts-polish",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-16-v104-topbar-click-fix",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-16-v103-scene-shortcuts-polish",
-          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-16-v103-scene-shortcuts-polish"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-16-v104-topbar-click-fix",
+          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-16-v104-topbar-click-fix"
         }
       }
     </script>
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-16-v103-scene-shortcuts-polish"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-16-v104-topbar-click-fix"
     />
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-16-v103-scene-shortcuts-polish"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-16-v103-scene-shortcuts-polish"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-16-v104-topbar-click-fix"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-16-v104-topbar-click-fix"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;
