@@ -24,14 +24,12 @@ export const SCENE_OUTFIT_PRESETS = Object.freeze([
     labelEn: "Casual soft",
     labelYue: "休閒柔和",
     swatch: "casual",
-    characters: ["nova"],
   },
   {
     id: "formal",
     labelEn: "Formal crisp",
     labelYue: "正式利落",
     swatch: "formal",
-    characters: ["nova"],
   },
 ]);
 
