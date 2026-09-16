@@ -1,20 +1,40 @@
 import { describe, expect, it } from "vitest";
 import {
   buildCharacterSystemPrompt,
+  CHARACTER_IDS,
   characterAvatarConfig,
   characterGreeting,
   characterGreetingPerformance,
   characterVoiceLabel,
+  COMPANION_CHARACTERS,
   defaultVoiceForCharacter,
   getCharacter,
+  GALLERY_PRIORITY_IDS,
   listCompanionCharacters,
   nextCharacterId,
   resolveCharacterId,
 } from "../engine/companion/companionCharacterCatalog.js";
 
 describe("companionCharacterCatalog", () => {
-  it("resolves default amoji character", () => {
-    expect(resolveCharacterId({})).toBe("amoji");
+  it("resolves default gallery-priority nova character", () => {
+    expect(resolveCharacterId({})).toBe("nova");
+  });
+
+  it("lists gallery pretty-girl picks first", () => {
+    expect(CHARACTER_IDS.slice(0, 5)).toEqual([
+      "nova",
+      "alicia",
+      "ember",
+      "chibi",
+      "sky",
+    ]);
+    expect(GALLERY_PRIORITY_IDS.has("nova")).toBe(true);
+    expect(CHARACTER_IDS.indexOf("mikel")).toBeGreaterThan(
+      CHARACTER_IDS.indexOf("kate"),
+    );
+    expect(Object.keys(COMPANION_CHARACTERS).sort()).toEqual(
+      [...CHARACTER_IDS].sort(),
+    );
   });
 
   it("maps glb model to sora", () => {
@@ -77,9 +97,62 @@ describe("companionCharacterCatalog", () => {
   });
 
   it("cycles characters", () => {
+    expect(nextCharacterId("nova")).toBe("alicia");
+    expect(nextCharacterId("sky")).toBe("kizuna");
+    expect(nextCharacterId("mimi")).toBe("olivia");
     expect(nextCharacterId("amoji")).toBe("sora");
-    expect(nextCharacterId("rex")).toBe("sky");
-    expect(nextCharacterId("sky")).toBe("amoji");
+    expect(nextCharacterId("mikel")).toBe("nova");
+  });
+
+  it("resolves new 3D character models", () => {
+    expect(resolveCharacterId({ modelUrl: "/prototypes/assets/companion-rose.vrm" })).toBe(
+      "rose",
+    );
+    expect(resolveCharacterId({ modelUrl: "/prototypes/assets/companion-robert.vrm" })).toBe(
+      "robert",
+    );
+    expect(resolveCharacterId({ modelUrl: "/prototypes/assets/companion-rabbit.vrm" })).toBe(
+      "mimi",
+    );
+    expect(defaultVoiceForCharacter("rose", "yue")).toBe("zh-HK-HiuMaanNeural-warm");
+    expect(defaultVoiceForCharacter("mimi", "yue")).toBe("zh-HK-HiuGaaiNeural-sweet");
+    expect(resolveCharacterId({ modelUrl: "/prototypes/assets/companion-alicia.vrm" })).toBe(
+      "alicia",
+    );
+    expect(resolveCharacterId({ modelUrl: "/prototypes/assets/companion-nova.vrm" })).toBe(
+      "nova",
+    );
+    expect(resolveCharacterId({ modelUrl: "/prototypes/assets/companion-ember.vrm" })).toBe(
+      "ember",
+    );
+    expect(resolveCharacterId({ modelUrl: "/prototypes/assets/companion-chibi.vrm" })).toBe(
+      "chibi",
+    );
+    expect(resolveCharacterId({ modelUrl: "/prototypes/assets/companion-quinn.glb" })).toBe(
+      "quinn",
+    );
+    expect(defaultVoiceForCharacter("nova", "yue")).toBe("zh-HK-HiuMaanNeural-bright");
+    expect(defaultVoiceForCharacter("quinn", "yue")).toBe("zh-HK-HiuMaanNeural-hero");
+    expect(defaultVoiceForCharacter("ember", "yue")).toBe("zh-HK-HiuGaaiNeural-fiery");
+    expect(defaultVoiceForCharacter("chibi", "yue")).toBe("zh-HK-HiuMaanNeural-chibi");
+    expect(resolveCharacterId({ modelUrl: "/prototypes/assets/companion-olivia.vrm" })).toBe(
+      "olivia",
+    );
+    expect(resolveCharacterId({ modelUrl: "/prototypes/assets/companion-erika.vrm" })).toBe(
+      "erika",
+    );
+    expect(resolveCharacterId({ modelUrl: "/prototypes/assets/companion-lydia.vrm" })).toBe(
+      "lydia",
+    );
+    expect(resolveCharacterId({ modelUrl: "/prototypes/assets/companion-kate.vrm" })).toBe(
+      "kate",
+    );
+    expect(resolveCharacterId({ modelUrl: "/prototypes/assets/companion-mikel.vrm" })).toBe(
+      "mikel",
+    );
+    expect(defaultVoiceForCharacter("mikel", "yue")).toBe("zh-HK-WanLungNeural-bold");
+    expect(defaultVoiceForCharacter("kate", "yue")).toBe("zh-HK-HiuMaanNeural-sharp");
+    expect(defaultVoiceForCharacter("olivia", "yue")).toBe("zh-HK-HiuGaaiNeural-sunny");
   });
 
   it("exposes avatar config per character", () => {

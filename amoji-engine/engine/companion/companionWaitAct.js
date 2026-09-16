@@ -6,8 +6,6 @@ import {
   resolveWaitDialoguePhase,
 } from "./companionLearnDialogue.js";
 import { progressPhaseLabel } from "./companionProgressOverlay.js";
-import { actionLoopsFromCatalog } from "./companionActionCatalog.js";
-import { pickIdleShowcase } from "./companionActionChoreography.js";
 import {
   pickWaitEmotion,
   pickWaitExpressionProfile,
@@ -67,22 +65,27 @@ export function createCompanionWaitAct(opts = {}) {
   let lastPoseId = null;
 
   const playPose = () => {
-    const pose =
-      kind === "idle"
-        ? pickIdleShowcase(lastPoseId)
-        : pickWaitPose(phase, poseTick);
-    lastPoseId = pose;
     const expression = pickWaitExpressionProfile(phase, poseTick, kind);
     const emotion = expression.emotion || pickWaitEmotion(phase, poseTick, kind);
-    const shouldLoop = actionLoopsFromCatalog(pose);
-    avatarRef?.playAction?.(pose, {
-      emotion,
-      loop: shouldLoop,
-      single: true,
-    });
     avatarRef?.setEmotion?.(emotion);
     avatarRef?.applyExpressionProfile?.(expression);
-    avatarRef?.setThinking?.(kind !== "idle" && emotion === "thinking");
+
+    if (kind === "idle") {
+      // Idle = procedural sway only — never scripted arm-raise actions.
+      avatarRef?.setThinking?.(false);
+      avatarRef?.stopAction?.();
+      opts.onPose?.("idle-procedural", phase);
+      return;
+    }
+
+    const pose = pickWaitPose(phase, poseTick);
+    lastPoseId = pose;
+    avatarRef?.playAction?.(pose, {
+      emotion,
+      loop: false,
+      single: true,
+    });
+    avatarRef?.setThinking?.(emotion === "thinking");
     opts.onPose?.(pose, phase);
   };
 
@@ -107,7 +110,7 @@ export function createCompanionWaitAct(opts = {}) {
     clearInterval(poseTimer);
     const interval =
       kind === "idle"
-        ? Math.max(5500, Math.round(poseIntervalMs * 0.82))
+        ? Math.max(3600, Math.round(poseIntervalMs * 0.58))
         : kind === "thinking"
           ? Math.max(poseIntervalMs, 4200)
           : poseIntervalMs;
@@ -252,7 +255,7 @@ export function createCompanionWaitAct(opts = {}) {
       stopPoseRotation();
       stopWaitVoice();
       avatarRef?.setThinking?.(false);
-      if (kind !== "idle") avatarRef?.stopAction?.();
+      avatarRef?.stopAction?.();
       if (kind !== "idle") opts.progress?.hide?.();
       kind = "";
       phase = "learning";

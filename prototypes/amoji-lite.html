@@ -6,12 +6,12 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
     <meta http-equiv="Pragma" content="no-cache" />
     <meta http-equiv="Expires" content="0" />
-    <title>Amoji</title>
+    <title>Amoji Secretary</title>
     <script>
-      window.__amojiBuild = "2026-09-15-v69-demo-fresh";
+      window.__amojiBuild = "2026-09-16-v104-topbar-click-fix";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-15-v69-demo-fresh"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-15-v69-demo-fresh"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-16-v104-topbar-click-fix"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-16-v104-topbar-click-fix"></script>
     <style>
       *,
       *::before,
@@ -33,23 +33,29 @@
         min-height: 100dvh;
         max-width: 42rem;
         margin: 0 auto;
-        padding: max(1rem, env(safe-area-inset-top)) 1rem max(1rem, env(safe-area-inset-bottom));
+        padding: max(0.75rem, env(safe-area-inset-top)) 1rem
+          calc(4.5rem + env(safe-area-inset-bottom));
       }
       header {
         display: flex;
         align-items: center;
         justify-content: space-between;
         gap: 0.75rem;
-        margin-bottom: 0.75rem;
+        margin-bottom: 0.5rem;
       }
       h1 {
         margin: 0;
-        font-size: 1.75rem;
+        font-size: 1.35rem;
         font-weight: 800;
         letter-spacing: -0.03em;
       }
       h1 span {
         color: #7fd4cf;
+      }
+      h2 {
+        margin: 0 0 0.35rem;
+        font-size: 1.05rem;
+        font-weight: 700;
       }
       .tag {
         font-size: 0.65rem;
@@ -71,8 +77,80 @@
       .status {
         font-size: 0.8rem;
         color: rgba(247, 241, 232, 0.55);
-        margin-bottom: 0.5rem;
+        margin-bottom: 0.45rem;
         min-height: 1.1rem;
+      }
+      .panel {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+      }
+      .panel.hidden {
+        display: none !important;
+      }
+      .brief-card {
+        padding: 1rem;
+        border-radius: 1rem;
+        background: linear-gradient(145deg, rgba(127, 212, 207, 0.12), rgba(91, 184, 214, 0.08));
+        border: 1px solid rgba(127, 212, 207, 0.25);
+        margin-bottom: 0.75rem;
+      }
+      .brief-card p {
+        margin: 0.35rem 0 0;
+        line-height: 1.45;
+        font-size: 0.92rem;
+      }
+      .muted {
+        color: rgba(247, 241, 232, 0.55);
+        font-size: 0.85rem;
+      }
+      .task-stack {
+        display: flex;
+        flex-direction: column;
+        gap: 0.45rem;
+        margin-bottom: 0.75rem;
+      }
+      .task-row {
+        padding: 0.65rem 0.75rem;
+        border-radius: 0.75rem;
+        background: rgba(247, 241, 232, 0.05);
+        border: 1px solid rgba(247, 241, 232, 0.1);
+      }
+      .task-row-title {
+        font-size: 0.92rem;
+        font-weight: 600;
+      }
+      .task-row-due {
+        font-size: 0.75rem;
+        color: rgba(247, 241, 232, 0.5);
+        margin-top: 0.2rem;
+      }
+      .task-row-toolbar {
+        display: flex;
+        flex-direction: column;
+        gap: 0.4rem;
+        margin-top: 0.45rem;
+      }
+      .task-row-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.35rem;
+      }
+      .inline-form {
+        display: flex;
+        gap: 0.4rem;
+        margin-top: 0.35rem;
+      }
+      .inline-form input {
+        flex: 1;
+        min-width: 0;
+        border-radius: 0.65rem;
+        border: 1px solid rgba(247, 241, 232, 0.14);
+        background: rgba(10, 14, 22, 0.85);
+        color: #f7f1e8;
+        padding: 0.55rem 0.7rem;
+        font: inherit;
       }
       .messages {
         flex: 1;
@@ -80,8 +158,8 @@
         display: flex;
         flex-direction: column;
         gap: 0.55rem;
-        padding: 0.5rem 0 1rem;
-        min-height: 8rem;
+        padding: 0.35rem 0 0.75rem;
+        min-height: 10rem;
       }
       .bubble {
         max-width: 92%;
@@ -105,18 +183,36 @@
         opacity: 0.65;
         font-style: italic;
       }
+      .bubble.receipt {
+        background: rgba(127, 212, 207, 0.1);
+        border-color: rgba(127, 212, 207, 0.35);
+        font-size: 0.85rem;
+      }
+      .task-card {
+        align-self: flex-start;
+        max-width: 92%;
+        padding: 0.7rem 0.85rem;
+        border-radius: 0.85rem;
+        background: rgba(124, 156, 255, 0.12);
+        border: 1px solid rgba(124, 156, 255, 0.35);
+      }
+      .task-card-title {
+        font-size: 0.9rem;
+        margin-bottom: 0.45rem;
+      }
+      .task-card-actions {
+        display: flex;
+        gap: 0.35rem;
+      }
       .error-box {
         display: none;
-        margin-bottom: 0.75rem;
+        margin-bottom: 0.5rem;
         padding: 0.75rem 0.9rem;
         border-radius: 0.65rem;
         background: rgba(220, 60, 60, 0.15);
         border: 1px solid rgba(255, 100, 100, 0.45);
         color: #ffb4b4;
         font-size: 0.85rem;
-        line-height: 1.4;
-        white-space: pre-wrap;
-        word-break: break-word;
       }
       .error-box.show {
         display: block;
@@ -171,15 +267,23 @@
         color: #f7f1e8;
         border: 1px solid rgba(247, 241, 232, 0.14);
       }
-      .btn:disabled {
-        opacity: 0.45;
-        cursor: not-allowed;
+      .btn.mini {
+        height: 2rem;
+        min-width: 0;
+        font-size: 0.75rem;
+        padding: 0 0.65rem;
+        border-radius: 0.55rem;
       }
+      .btn.primary,
       .btn.send {
         background: linear-gradient(135deg, #7fd4cf, #5bb8d6);
         color: #061018;
         border: none;
-        font-weight: 700;
+      }
+      .btn.danger {
+        background: rgba(255, 100, 100, 0.15);
+        border-color: rgba(255, 120, 120, 0.35);
+        color: #ffb4b4;
       }
       .btn.mic.active {
         background: rgba(255, 100, 100, 0.25);
@@ -188,14 +292,15 @@
       .btn.speaker.off {
         opacity: 0.5;
       }
-      .start-btn {
-        margin: 1rem auto 0;
-        padding: 0.85rem 1.5rem;
+      .start-btn,
+      .cta-btn {
+        margin: 0.5rem 0 0;
+        padding: 0.75rem 1.2rem;
         border-radius: 999px;
         background: rgba(124, 156, 255, 0.28);
         border: 1px solid rgba(124, 156, 255, 0.55);
         color: #e8eeff;
-        font-size: 0.95rem;
+        font-size: 0.92rem;
         font-weight: 650;
       }
       .hidden {
@@ -207,63 +312,715 @@
         gap: 0.4rem;
         flex-shrink: 0;
       }
-      .btn-3d {
+      .btn-setup {
         font-size: 0.72rem;
         font-weight: 650;
-        letter-spacing: 0.02em;
-        padding: 0.28rem 0.55rem;
-        border-radius: 0.45rem;
+        padding: 0.32rem 0.62rem;
+        border-radius: 999px;
         background: rgba(127, 212, 207, 0.14);
         border: 1px solid rgba(127, 212, 207, 0.42);
-        color: #9ee8e3;
-        text-decoration: none;
-        white-space: nowrap;
-      }
-      .btn-3d:hover {
-        background: rgba(127, 212, 207, 0.22);
-      }
-      .btn-lang,
-      .btn-voice {
-        font-size: 0.72rem;
-        font-weight: 600;
-        padding: 0.28rem 0.5rem;
-        border-radius: 0.45rem;
-        background: rgba(247, 241, 232, 0.06);
-        border: 1px solid rgba(247, 241, 232, 0.14);
-        color: rgba(247, 241, 232, 0.72);
-        text-decoration: none;
+        color: #dff8f6;
         cursor: pointer;
         font-family: inherit;
       }
-      .btn-voice {
-        background: rgba(180, 140, 255, 0.12);
-        border-color: rgba(180, 140, 255, 0.35);
-        color: #d4c4ff;
+      .setup-backdrop {
+        position: fixed;
+        inset: 0;
+        z-index: 11000;
+        background: rgba(4, 6, 12, 0.62);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.28s ease;
       }
-      .btn-lang:hover,
-      .btn-voice:hover {
-        filter: brightness(1.08);
+      .setup-backdrop.is-open {
+        opacity: 1;
+        pointer-events: auto;
+      }
+      body.setup-open {
+        overflow: hidden;
+      }
+      .setup {
+        position: fixed;
+        z-index: 11001;
+        left: 50%;
+        bottom: 0;
+        transform: translate(-50%, 110%);
+        width: min(100%, 440px);
+        max-height: min(92dvh, 720px);
+        overflow-y: auto;
+        padding: 1rem 1.1rem calc(1.25rem + env(safe-area-inset-bottom));
+        border-radius: 1.1rem 1.1rem 0 0;
+        background: rgba(14, 18, 28, 0.98);
+        border: 1px solid rgba(247, 241, 232, 0.12);
+        border-bottom: none;
+        box-shadow: 0 -12px 48px rgba(0, 0, 0, 0.45);
+        transition: transform 0.32s ease;
+      }
+      .setup.open {
+        transform: translate(-50%, 0);
+      }
+      .setup-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        margin-bottom: 0.85rem;
+      }
+      .setup-title {
+        margin: 0;
+        font-size: 1.15rem;
+        font-weight: 800;
+      }
+      .setup-close {
+        border: 0;
+        background: rgba(247, 241, 232, 0.08);
+        color: rgba(247, 241, 232, 0.85);
+        width: 2rem;
+        height: 2rem;
+        border-radius: 999px;
+        cursor: pointer;
+        font-size: 1rem;
+      }
+      .setup-section-title {
+        margin: 0.85rem 0 0.45rem;
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: rgba(247, 241, 232, 0.45);
+      }
+      .setup-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.4rem;
+        margin-bottom: 0.45rem;
+      }
+      .setup .btn-secondary {
+        width: 100%;
+        margin-bottom: 0.45rem;
+        padding: 0.62rem 0.75rem;
+        border-radius: 0.7rem;
+        border: 1px solid rgba(247, 241, 232, 0.14);
+        background: rgba(247, 241, 232, 0.06);
+        color: #f7f1e8;
+        font: inherit;
+        font-size: 0.88rem;
+        font-weight: 600;
+        text-align: left;
+        cursor: pointer;
+        text-decoration: none;
+        display: block;
+      }
+      .setup .btn-secondary:hover {
+        border-color: rgba(127, 212, 207, 0.35);
+      }
+      .setup .me-section {
+        margin-bottom: 0.85rem;
+      }
+      .mode-row,
+      .discover {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.35rem;
+        margin-bottom: 0.5rem;
+      }
+      .mode-chip,
+      .discover-chip {
+        border-radius: 999px;
+        padding: 0.35rem 0.7rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        background: rgba(247, 241, 232, 0.06);
+        border: 1px solid rgba(247, 241, 232, 0.12);
+        color: rgba(247, 241, 232, 0.8);
+      }
+      .mode-chip.active {
+        background: rgba(127, 212, 207, 0.18);
+        border-color: rgba(127, 212, 207, 0.45);
+        color: #b8f0ec;
+      }
+      .discover-chip {
+        background: rgba(124, 156, 255, 0.12);
+        border-color: rgba(124, 156, 255, 0.3);
+        color: #d6e2ff;
+        text-align: left;
+      }
+      .top3-card {
+        padding: 0.85rem;
+        border-radius: 0.9rem;
+        background: rgba(124, 156, 255, 0.1);
+        border: 1px solid rgba(124, 156, 255, 0.28);
+        margin-bottom: 0.65rem;
+      }
+      .top3-card h2 {
+        font-size: 0.88rem;
+        margin-bottom: 0.45rem;
+        color: #c8d8ff;
+      }
+      .top3-row {
+        display: flex;
+        align-items: center;
+        gap: 0.45rem;
+        padding: 0.4rem 0;
+        font-size: 0.86rem;
+        border-bottom: 1px solid rgba(247, 241, 232, 0.08);
+      }
+      .top3-row:last-child {
+        border-bottom: none;
+      }
+      .top3-num {
+        width: 1.35rem;
+        height: 1.35rem;
+        border-radius: 999px;
+        display: grid;
+        place-items: center;
+        font-size: 0.68rem;
+        font-weight: 800;
+        background: rgba(124, 156, 255, 0.35);
+        color: #e8eeff;
+        flex-shrink: 0;
+      }
+      .filter-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.35rem;
+        margin-bottom: 0.55rem;
+      }
+      .filter-chip {
+        border-radius: 999px;
+        padding: 0.3rem 0.65rem;
+        font-size: 0.72rem;
+        font-weight: 600;
+        background: rgba(247, 241, 232, 0.06);
+        border: 1px solid rgba(247, 241, 232, 0.12);
+        color: rgba(247, 241, 232, 0.75);
+        cursor: pointer;
+        font-family: inherit;
+      }
+      .filter-chip.active {
+        background: rgba(127, 212, 207, 0.16);
+        border-color: rgba(127, 212, 207, 0.45);
+        color: #b8f0ec;
+      }
+      .task-card,
+      .draft-card,
+      .memory-card {
+        margin: 0.45rem 0;
+        padding: 0.75rem;
+        border-radius: 0.85rem;
+        background: rgba(247, 241, 232, 0.06);
+        border: 1px solid rgba(247, 241, 232, 0.14);
+      }
+      .draft-card pre,
+      .draft-card .draft-body {
+        margin: 0.45rem 0 0;
+        padding: 0.65rem;
+        border-radius: 0.55rem;
+        background: rgba(10, 14, 22, 0.75);
+        border: 1px solid rgba(247, 241, 232, 0.1);
+        font-size: 0.84rem;
+        line-height: 1.45;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+      .task-card-title,
+      .draft-card-title,
+      .memory-card-title {
+        font-size: 0.86rem;
+        font-weight: 650;
+        margin-bottom: 0.35rem;
+      }
+      .task-card-actions,
+      .draft-card-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.35rem;
+        margin-top: 0.45rem;
+      }
+      .priority-btn {
+        align-self: flex-start;
+        font-size: 0.74rem;
+        font-weight: 650;
+        padding: 0.35rem 0.65rem;
+        border-radius: 999px;
+        background: rgba(124, 156, 255, 0.2);
+        border: 1px solid rgba(124, 156, 255, 0.45);
+        color: #dce8ff;
+        cursor: pointer;
+        font-family: inherit;
+      }
+      .priority-btn.active {
+        background: rgba(124, 156, 255, 0.42);
+        border-color: rgba(180, 200, 255, 0.7);
+        color: #fff;
+      }
+      .bubble.receipt {
+        font-size: 0.82rem;
+        color: #9ee8e3;
+        background: rgba(127, 212, 207, 0.1);
+        border: 1px solid rgba(127, 212, 207, 0.25);
+      }
+      .me-section {
+        margin-bottom: 1rem;
+      }
+      .me-section label {
+        display: block;
+        font-size: 0.8rem;
+        color: rgba(247, 241, 232, 0.65);
+        margin-bottom: 0.35rem;
+      }
+      .me-section select {
+        width: 100%;
+        border-radius: 0.65rem;
+        border: 1px solid rgba(247, 241, 232, 0.14);
+        background: rgba(10, 14, 22, 0.85);
+        color: #f7f1e8;
+        padding: 0.55rem 0.7rem;
+        font: inherit;
+      }
+      .memory-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.5rem;
+        padding: 0.55rem 0.65rem;
+        border-radius: 0.65rem;
+        background: rgba(247, 241, 232, 0.05);
+        border: 1px solid rgba(247, 241, 232, 0.1);
+        margin-bottom: 0.35rem;
+        font-size: 0.88rem;
+      }
+      .tabbar {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        max-width: 42rem;
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0.25rem;
+        padding: 0.45rem 0.75rem calc(0.55rem + env(safe-area-inset-bottom));
+        background: rgba(7, 10, 16, 0.94);
+        border-top: 1px solid rgba(247, 241, 232, 0.1);
+        backdrop-filter: blur(12px);
+      }
+      .tabbar button {
+        border-radius: 0.75rem;
+        padding: 0.45rem 0.25rem;
+        font-size: 0.72rem;
+        font-weight: 650;
+        color: rgba(247, 241, 232, 0.55);
+        background: transparent;
+      }
+      .tabbar button.active {
+        color: #9ee8e3;
+        background: rgba(127, 212, 207, 0.12);
+      }
+      .companion-picker {
+        position: fixed;
+        inset: 0;
+        z-index: 12000;
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+      }
+      .companion-picker[hidden] {
+        display: none !important;
+      }
+      .companion-picker-backdrop {
+        position: absolute;
+        inset: 0;
+        background: rgba(4, 6, 12, 0.62);
+        backdrop-filter: blur(6px);
+      }
+      .companion-picker-sheet {
+        position: relative;
+        width: min(100%, 440px);
+        max-height: min(78dvh, 620px);
+        margin: 0 auto;
+        padding: 0.85rem 0.85rem calc(1rem + env(safe-area-inset-bottom));
+        border-radius: 1.35rem 1.35rem 0 0;
+        background: linear-gradient(180deg, rgba(18, 22, 34, 0.98), rgba(10, 12, 20, 0.98));
+        border: 1px solid rgba(247, 241, 232, 0.12);
+        box-shadow: 0 -18px 48px rgba(0, 0, 0, 0.45);
+        overflow: auto;
+      }
+      .companion-picker-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 0.75rem;
+        margin-bottom: 0.85rem;
+      }
+      .companion-picker-title {
+        margin: 0;
+        font-size: 1.1rem;
+        font-weight: 800;
+        letter-spacing: -0.03em;
+      }
+      .companion-picker-sub {
+        margin: 0.2rem 0 0;
+        color: rgba(247, 241, 232, 0.55);
+        font-size: 0.74rem;
+        line-height: 1.4;
+      }
+      .companion-picker-close {
+        border: 1px solid rgba(247, 241, 232, 0.14);
+        background: rgba(255, 255, 255, 0.04);
+        color: #f7f1e8;
+        width: 2rem;
+        height: 2rem;
+        border-radius: 999px;
+        cursor: pointer;
+        font-size: 0.9rem;
+      }
+      .companion-voice-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.45rem;
+        max-height: min(52vh, 420px);
+        overflow-y: auto;
+        padding: 0.15rem 0 0.25rem;
+      }
+      .companion-voice-option {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.15rem;
+        width: 100%;
+        padding: 0.7rem 0.85rem;
+        border-radius: 0.85rem;
+        border: 1px solid rgba(247, 241, 232, 0.12);
+        background: rgba(247, 241, 232, 0.04);
+        color: #f7f1e8;
+        text-align: left;
+        cursor: pointer;
+        font-family: inherit;
+      }
+      .companion-voice-option.is-selected {
+        border-color: rgba(127, 212, 207, 0.55);
+        background: rgba(127, 212, 207, 0.12);
+      }
+      .companion-voice-option-name {
+        font-size: 0.92rem;
+        font-weight: 700;
+      }
+      .companion-voice-option-meta {
+        font-size: 0.72rem;
+        color: rgba(247, 241, 232, 0.55);
+      }
+
+      body.conversation-ui .tabbar,
+      body.conversation-ui .mode-row,
+      body.conversation-ui #discover-chips,
+      body.conversation-ui #open-chat-btn,
+      body.conversation-ui #start-btn,
+      body.conversation-ui #quick-task-form,
+      body.conversation-ui .filter-row,
+      body.conversation-ui .task-row-toolbar,
+      body.conversation-ui .task-card-actions,
+      body.conversation-ui .draft-card-actions,
+      body.conversation-ui #memory-form,
+      body.conversation-ui .me-section:has(select),
+      body.conversation-ui .me-section:has(input[type="checkbox"]),
+      body.conversation-ui .header-actions .tag,
+      body.conversation-ui .composer.voice-only .row {
+        display: none !important;
+      }
+
+      body.conversation-ui .app {
+        padding-bottom: 5.75rem;
+      }
+
+      body.conversation-ui .composer {
+        display: flex !important;
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 40;
+        margin: 0;
+        border-radius: 1rem 1rem 0 0;
+        box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.35);
+      }
+
+      body.conversation-ui .composer.voice-only {
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0.35rem;
+        padding: 0.85rem 1rem calc(0.85rem + env(safe-area-inset-bottom));
+        min-height: 4.25rem;
+      }
+
+      body.conversation-ui .composer.voice-only textarea {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      body.conversation-ui .listen-hint {
+        font-size: 0.82rem;
+        font-weight: 650;
+        color: rgba(247, 241, 232, 0.92);
+        text-align: center;
+      }
+
+      body.conversation-ui .listen-hint.mic-active {
+        color: rgba(127, 212, 207, 0.95);
+      }
+
+      body.conversation-ui.mic-blocked .composer.voice-only .row {
+        display: flex !important;
+      }
+
+      body.conversation-ui.mic-blocked .composer.voice-only textarea {
+        position: static;
+        width: 100%;
+        height: auto;
+        min-height: 2.5rem;
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      body.conversation-ui.mic-blocked .listen-hint {
+        font-size: 0.72rem;
+        color: rgba(247, 241, 232, 0.65);
+      }
+
+      .ui-context-pill {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.2rem 0.5rem;
+        border-radius: 999px;
+        font-size: 0.65rem;
+        font-weight: 650;
+        color: rgba(247, 241, 232, 0.88);
+        background: rgba(127, 212, 207, 0.14);
+        border: 1px solid rgba(127, 212, 207, 0.28);
+      }
+
+      .activity-rail {
+        display: flex;
+        flex-direction: column;
+        gap: 0.45rem;
+        padding: 0.35rem 0.85rem 0.55rem;
+      }
+
+      .activity-rail__functions,
+      .activity-rail__feed {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.35rem;
+        align-items: center;
+      }
+
+      .activity-rail__process {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.15rem;
+        padding: 0.45rem 0.55rem;
+        border-radius: 0.85rem;
+        background: rgba(127, 212, 207, 0.08);
+        border: 1px solid rgba(127, 212, 207, 0.18);
+      }
+
+      .activity-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.28rem;
+        padding: 0.22rem 0.5rem;
+        border-radius: 999px;
+        font-size: 0.68rem;
+        font-weight: 650;
+        color: rgba(247, 241, 232, 0.9);
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .activity-chip--function {
+        background: rgba(127, 212, 207, 0.12);
+        border-color: rgba(127, 212, 207, 0.28);
+      }
+
+      .activity-chip--feed {
+        animation: activity-feed-in 0.35s ease;
+      }
+
+      @keyframes activity-feed-in {
+        from {
+          opacity: 0;
+          transform: translateY(4px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .activity-chip__icon {
+        font-size: 0.82rem;
+        line-height: 1;
+      }
+
+      .activity-step-wrap {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.1rem;
+      }
+
+      .activity-step {
+        display: inline-flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.12rem;
+        min-width: 2.6rem;
+        opacity: 0.45;
+        transition: opacity 0.2s ease, transform 0.2s ease;
+      }
+
+      .activity-step--active {
+        opacity: 1;
+        transform: scale(1.05);
+      }
+
+      .activity-step--done {
+        opacity: 0.85;
+      }
+
+      .activity-step__icon {
+        font-size: 1rem;
+        line-height: 1;
+      }
+
+      .activity-step__label {
+        font-size: 0.58rem;
+        font-weight: 650;
+        color: rgba(247, 241, 232, 0.72);
+        max-width: 4.5rem;
+        text-align: center;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .activity-step--active .activity-step__label {
+        color: rgba(127, 212, 207, 0.95);
+      }
+
+      .activity-step__arrow {
+        font-size: 0.62rem;
+        color: rgba(247, 241, 232, 0.35);
+        margin: 0 0.05rem;
       }
     </style>
   </head>
   <body>
     <div class="app" id="app">
       <header>
-        <h1>A<span>moji</span></h1>
+        <h1 id="app-title">Amoji <span>秘書</span></h1>
         <div class="header-actions">
-          <a class="btn-3d" id="btn-3d" href="/companion-full">3D avatar</a>
-          <button type="button" class="btn-voice" id="btn-voice" title="Switch voice">女聲</button>
-          <a class="btn-lang" id="btn-lang" href="?lang=en" title="Switch language">粵</a>
-          <span class="tag" id="build-tag">lite-v2</span>
-          <span class="tag cloud hidden" id="cloud-tag">☁️ Cloud LLM</span>
+          <button type="button" class="btn-setup" id="btn-open-setup">設定</button>
+          <span class="tag" id="build-tag">secretary-v1</span>
+          <span class="tag cloud hidden" id="cloud-tag">☁️ Cloud</span>
         </div>
       </header>
+
+      <div class="setup-backdrop" id="setup-backdrop" hidden></div>
+      <div class="setup" id="setup" role="dialog" aria-modal="true" aria-labelledby="setup-title" hidden>
+        <header class="setup-head">
+          <h2 class="setup-title" id="setup-title">設定</h2>
+          <button type="button" class="setup-close" id="setup-close" aria-label="Close setup">✕</button>
+        </header>
+        <p class="setup-section-title" id="setup-app-title">App</p>
+        <div class="setup-row">
+          <button type="button" class="btn-secondary" id="setup-btn-lang">Language</button>
+          <button type="button" class="btn-secondary" id="setup-btn-voice">Voice</button>
+        </div>
+        <a class="btn-secondary" id="setup-link-3d" href="/companion-full">3D companion</a>
+        <button type="button" class="btn-secondary" id="setup-btn-speaker">Speaker: on</button>
+        <p class="setup-section-title" id="setup-prefs-title">Preferences</p>
+        <div class="me-section">
+          <label><input type="checkbox" id="pref-morning-brief" checked /> 早晨簡報</label>
+        </div>
+        <div class="me-section">
+          <label><input type="checkbox" id="pref-reminders" /> 到期任務提醒（瀏覽器通知）</label>
+        </div>
+        <div class="me-section">
+          <label for="pref-help-with">幫手範圍</label>
+          <select id="pref-help-with">
+            <option value="work">工作</option>
+            <option value="life">生活</option>
+            <option value="both" selected>工作 + 生活</option>
+            <option value="chat">主要傾計</option>
+          </select>
+        </div>
+        <div class="me-section">
+          <label for="pref-tone">語氣</label>
+          <select id="pref-tone">
+            <option value="professional">專業</option>
+            <option value="friendly" selected>友善</option>
+            <option value="playful">俏皮</option>
+          </select>
+        </div>
+        <p class="setup-section-title" id="setup-memory-title">Memory</p>
+        <div id="memory-list"></div>
+        <form class="inline-form" id="memory-form">
+          <input id="memory-input" type="text" placeholder="加一條我應該記住嘅資料…" />
+          <button type="submit" class="btn mini primary" id="memory-save-btn">儲存</button>
+        </form>
+      </div>
+
       <div class="status" id="status" aria-live="polite"></div>
       <div class="error-box" id="error-box" role="alert"></div>
-      <div class="messages" id="messages" aria-live="polite"></div>
-      <button type="button" class="start-btn" id="start-btn">開始傾計 · Start</button>
+
+      <section class="panel" id="panel-today">
+        <div class="brief-card" id="brief-card"></div>
+        <div class="top3-card hidden" id="top3-card">
+          <h2 id="top3-title">今日 Top 3</h2>
+          <div id="top3-list"></div>
+        </div>
+        <div class="task-stack" id="today-tasks"></div>
+        <form class="inline-form" id="quick-task-form">
+          <input id="quick-task-input" type="text" placeholder="想我跟進咩？" />
+          <button type="submit" class="btn mini primary" id="quick-task-submit">加任務</button>
+        </form>
+        <button type="button" class="cta-btn" id="open-chat-btn">去傾計</button>
+      </section>
+
+      <section class="panel hidden" id="panel-chat">
+        <div class="mode-row" id="mode-row"></div>
+        <div class="discover" id="discover-chips"></div>
+        <div class="messages" id="messages" aria-live="polite"></div>
+      </section>
+
+      <section class="panel hidden" id="panel-tasks">
+        <h2 id="tasks-panel-title">任務清單</h2>
+        <div class="filter-row" id="task-filters"></div>
+        <div class="task-stack" id="tasks-list"></div>
+      </section>
+
+      <section class="panel hidden" id="panel-me">
+        <p class="muted" id="panel-me-hint">Open Setup from the header for language, voice, and preferences.</p>
+      </section>
+
+      <nav class="tabbar" aria-label="Main">
+        <button type="button" data-tab="today" class="active">今日</button>
+        <button type="button" data-tab="chat">傾計</button>
+        <button type="button" data-tab="tasks">任務</button>
+        <button type="button" data-tab="me">我</button>
+      </nav>
+
+      <button type="button" class="start-btn" id="start-btn">開始傾計</button>
       <form class="composer hidden" id="composer" autocomplete="off">
-        <textarea id="input" rows="1" placeholder="輸入訊息…" enterkeyhint="send"></textarea>
+        <div class="listen-hint" id="listen-hint" aria-live="polite">聽緊 — 直接講</div>
+        <textarea id="input" rows="1" placeholder="輸入訊息…" enterkeyhint="send" aria-hidden="true" tabindex="-1"></textarea>
         <div class="row">
           <button type="button" class="btn speaker" id="speaker-btn" title="Speaker" aria-pressed="true">🔊</button>
           <button type="button" class="btn mic" id="mic-btn" title="Mic">🎤</button>
@@ -271,346 +1028,12 @@
         </div>
       </form>
     </div>
+
     <script type="module">
-      import {
-        buildCompanionHref,
-        companionLangCode,
-        defaultVoiceForLang,
-        nextVoiceId,
-        persistVoiceId,
-        resolveVoiceId,
-        syncVoiceToUrl,
-        voiceGenderLabel,
-        voiceShortLabel,
-      } from "/amoji-engine/engine/companion/companionVoiceCatalog.js?v=2026-09-15-v69-demo-fresh";
-
-      (function () {
-        window.__amojiLiteTag = "lite-v7";
-        window.__amojiLite = { ready: true, ttsCalls: 0, chatCalls: 0 };
-
-        var params = new URLSearchParams(location.search);
-        var langCode = companionLangCode(params.get("lang"));
-        var isEn = langCode === "en";
-        var voiceId = resolveVoiceId({
-          lang: langCode,
-          voiceParam: params.get("voice"),
-        });
-        persistVoiceId(voiceId);
-        var hosted =
-          location.hostname &&
-          location.hostname !== "localhost" &&
-          location.hostname !== "127.0.0.1" &&
-          !location.hostname.startsWith("192.168.") &&
-          !location.hostname.endsWith(".local");
-
-        var els = {
-          status: document.getElementById("status"),
-          error: document.getElementById("error-box"),
-          messages: document.getElementById("messages"),
-          start: document.getElementById("start-btn"),
-          composer: document.getElementById("composer"),
-          input: document.getElementById("input"),
-          send: document.getElementById("send-btn"),
-          mic: document.getElementById("mic-btn"),
-          speaker: document.getElementById("speaker-btn"),
-        };
-
-        var speakerOn = true;
-        var micOn = false;
-        var busy = false;
-        var micCapture = null;
-        var audioEl = new Audio();
-        audioEl.preload = "auto";
-
-        var strings = isEn
-          ? {
-              placeholder: "Type a message…",
-              start: "Start chatting",
-              statusReady: "Ready — tap Send or mic",
-              statusLoading: "Connecting to cloud chat…",
-              statusThinking: "Thinking…",
-              statusSpeaking: "Speaking…",
-              statusMic: "Listening…",
-              welcome: "Hello!",
-              errModule: "Cloud chat unavailable. Check your network.",
-              errChat: "Chat failed",
-              errTts: "TTS failed (reply still shown)",
-              errMic: "Mic not available — allow microphone when prompted",
-              errMicBlocked: "Microphone blocked — allow mic in browser settings",
-            }
-          : {
-              placeholder: "輸入訊息…",
-              start: "開始傾計",
-              statusReady: "準備好 — 按發送或麥克風",
-              statusLoading: "連接雲端聊天…",
-              statusThinking: "諗緊…",
-              statusSpeaking: "講緊…",
-              statusMic: "聽緊…",
-              welcome: "嗨！",
-              errModule: "雲端聊天不可用，請檢查網絡。",
-              errChat: "聊天失敗",
-              errTts: "語音失敗（文字回覆已顯示）",
-              errMic: "麥克風不可用 — 請允許使用麥克風",
-              errMicBlocked: "麥克風被封鎖 — 請在瀏覽器設定中允許",
-            };
-
-        els.input.placeholder = strings.placeholder;
-        els.start.textContent = strings.start;
-        document.documentElement.lang = isEn ? "en" : "zh-Hant";
-
-        var btn3d = document.getElementById("btn-3d");
-        var btnLang = document.getElementById("btn-lang");
-        var btnVoice = document.getElementById("btn-voice");
-
-        function updateSwitcherUi() {
-          if (btn3d) {
-            btn3d.textContent = isEn ? "3D avatar" : "3D 同伴";
-            btn3d.href = buildCompanionHref({
-              basePath: "/companion-full",
-              lang: langCode,
-              voiceId,
-            });
-          }
-          if (btnLang) {
-            var targetLang = isEn ? "yue" : "en";
-            var targetVoice = defaultVoiceForLang(targetLang, voiceId);
-            btnLang.textContent = isEn ? "EN" : "粵";
-            btnLang.href = buildCompanionHref({
-              basePath: "/companion",
-              lang: targetLang,
-              voiceId: targetVoice,
-            });
-            btnLang.title = isEn
-              ? "Switch to Cantonese (粵語)"
-              : "Switch to English";
-          }
-          if (btnVoice) {
-            btnVoice.textContent = voiceGenderLabel(voiceId, langCode, isEn);
-            btnVoice.title = isEn ? "Tap to switch voice" : "按一下切換語音";
-          }
-        }
-        updateSwitcherUi();
-
-        if (btnVoice) {
-          btnVoice.addEventListener("click", function () {
-            voiceId = nextVoiceId(voiceId, langCode);
-            persistVoiceId(voiceId);
-            syncVoiceToUrl(voiceId);
-            updateSwitcherUi();
-            setStatus(
-              isEn
-                ? "Voice: " + voiceGenderLabel(voiceId, langCode, true)
-                : "語音：" + voiceGenderLabel(voiceId, langCode, false),
-            );
-          });
-        }
-
-        function setStatus(t) {
-          els.status.textContent = t || "";
-        }
-
-        function showError(msg) {
-          if (!msg) {
-            els.error.classList.remove("show");
-            els.error.textContent = "";
-            return;
-          }
-          els.error.textContent = String(msg);
-          els.error.classList.add("show");
-        }
-
-        function addBubble(text, who, extra) {
-          var div = document.createElement("div");
-          div.className = "bubble " + who + (extra || "");
-          div.textContent = text;
-          els.messages.appendChild(div);
-          els.messages.scrollTop = els.messages.scrollHeight;
-          return div;
-        }
-
-        function setSpeakerUi() {
-          els.speaker.classList.toggle("off", !speakerOn);
-          els.speaker.setAttribute("aria-pressed", speakerOn ? "true" : "false");
-        }
-
-        var systemPrompt = isEn
-          ? "You are Amoji, a warm English-speaking anime companion. Reply in English. End with [mood:happy] or similar."
-          : "你係 Amoji，一個粵語動漫同伴。用粵語口語回覆。結尾加 [mood:happy] 等情緒標籤。";
-
-        async function cloudReply(message) {
-          var res = await fetch("/api/chat", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ message: message, system: systemPrompt }),
-          });
-          var data = await res.json().catch(function () { return {}; });
-          if (!res.ok || !data.ok) {
-            throw new Error(data.error || "HTTP " + res.status);
-          }
-          var reply = String(data.reply || "").replace(/\s*\[mood:\w+\]\s*$/i, "").trim();
-          var mood = (String(data.reply || "").match(/\[mood:(\w+)\]/i) || [])[1] || "happy";
-          return { ok: true, reply: reply, emotion: mood };
-        }
-
-        async function speakCloud(text, emotion) {
-          if (!speakerOn || !text) return;
-          setStatus(strings.statusSpeaking);
-          try {
-            window.__amojiLite.ttsCalls += 1;
-            var res = await fetch("/api/tts", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                text: text,
-                emotion: emotion || "neutral",
-                lang: isEn ? "en" : "yue",
-                voice: voiceId,
-              }),
-            });
-            if (!res.ok) throw new Error("HTTP " + res.status);
-            var blob = await res.blob();
-            if (!blob.size) throw new Error("empty audio");
-            var url = URL.createObjectURL(blob);
-            audioEl.src = url;
-            await audioEl.play();
-            await new Promise(function (resolve) {
-              audioEl.onended = resolve;
-              audioEl.onerror = resolve;
-              setTimeout(resolve, 30000);
-            });
-            URL.revokeObjectURL(url);
-          } catch (err) {
-            console.warn("[lite] tts", err);
-            showError(strings.errTts + ": " + (err.message || err));
-          }
-          setStatus(strings.statusReady);
-        }
-
-        async function sendMessage(text) {
-          var msg = String(text || "").trim();
-          if (!msg || busy) return;
-          busy = true;
-          els.send.disabled = true;
-          showError("");
-          addBubble(msg, "user");
-          els.input.value = "";
-
-          var thinking = addBubble("…", "bot", " thinking");
-
-          try {
-            setStatus(strings.statusThinking);
-            window.__amojiLite.chatCalls += 1;
-            var result = await cloudReply(msg);
-            thinking.remove();
-            addBubble(result.reply, "bot");
-            await speakCloud(result.reply, result.emotion);
-          } catch (err) {
-            thinking.remove();
-            if (!els.error.classList.contains("show")) {
-              showError(strings.errChat + ": " + (err.message || err));
-            }
-          } finally {
-            busy = false;
-            els.send.disabled = false;
-          }
-        }
-
-        function ensureMicCapture() {
-          if (micCapture) return Promise.resolve(micCapture);
-          return import("/amoji-engine/engine/companion/companionMicCapture.js?v=2026-09-15-v69-demo-fresh")
-            .then(function (mod) {
-            micCapture = mod.createMicCapture({
-              lang: isEn ? "en-US" : "zh-HK",
-              cloudSttUrl: hosted ? "/api/stt" : null,
-              onText: function (text, isFinal) {
-                if (isFinal && text) sendMessage(text);
-              },
-              onState: function (on) {
-                micOn = on;
-                els.mic.classList.toggle("active", on);
-                if (!busy) setStatus(on ? strings.statusMic : strings.statusReady);
-              },
-              onError: function (code) {
-                var msg = mod.formatMicError(code);
-                showError(code === "not-allowed" ? strings.errMicBlocked : msg);
-                if (micOn) {
-                  micOn = false;
-                  els.mic.classList.remove("active");
-                }
-              },
-            });
-            return micCapture;
-          })
-            .catch(function (err) {
-              console.error("[lite] mic module", err);
-              showError(strings.errMic + ": " + (err.message || err));
-              return null;
-            });
-        }
-
-        function activate() {
-          els.start.classList.add("hidden");
-          els.composer.classList.remove("hidden");
-          addBubble(strings.welcome, "bot");
-          setStatus(strings.statusReady);
-          els.input.focus();
-          void ensureMicCapture().then(function (mic) {
-            if (mic && mic.supportsMic) void mic.primePermission();
-          });
-          addBubble(
-            isEn
-              ? "Tap 🎤 and allow microphone to talk"
-              : "按 🎤 並允許麥克風就可以講嘢",
-            "bot",
-          );
-        }
-
-        els.start.addEventListener("click", activate);
-        els.composer.addEventListener("submit", function (e) {
-          e.preventDefault();
-          sendMessage(els.input.value);
-        });
-        els.speaker.addEventListener("click", function () {
-          speakerOn = !speakerOn;
-          setSpeakerUi();
-          if (!speakerOn) {
-            audioEl.pause();
-            audioEl.src = "";
-          }
-        });
-        els.mic.addEventListener("click", function () {
-          showError("");
-          void ensureMicCapture().then(function (mic) {
-            if (!mic || !mic.supportsMic) {
-              showError(strings.errMic);
-              return;
-            }
-            if (micOn) {
-              mic.stop();
-              return;
-            }
-            void mic.start().then(function (ok) {
-              if (!ok && !micOn) showError(strings.errMicBlocked);
-            });
-          });
-        });
-
-        if (hosted) {
-          document.getElementById("build-tag").classList.add("hidden");
-          document.getElementById("cloud-tag").classList.remove("hidden");
-        }
-
-        setSpeakerUi();
-        setStatus(
-          hosted
-            ? isEn
-              ? "☁️ Cloud LLM — tap Start to chat"
-              : "☁️ 雲端 LLM — 按「開始傾計」"
-            : isEn
-              ? "Tap Start to chat in English"
-              : "按「開始傾計」開始",
-        );
-      })();
+      import { initAmojiSecretaryLite } from "/amoji-engine/engine/companion/secretary/secretaryLiteShell.js?v=2026-09-16-v104-topbar-click-fix";
+      window.__amojiLiteTag = "secretary-v1";
+      window.__amojiLite = { ready: true, ttsCalls: 0, chatCalls: 0 };
+      initAmojiSecretaryLite(document);
     </script>
   </body>
 </html>

@@ -15,12 +15,12 @@ export const COMPANION_TTS_PROSODY_SCHEMA = "amoji.companionTtsProsody.v1";
 /** @typedef {{ rate: number, pitch: number, volume: number }} BrowserProsody */
 
 const EMOTION_EDGE_BASE = Object.freeze({
-  neutral: { rate: 10, pitch: 14, volume: 4 },
-  happy: { rate: 30, pitch: 36, volume: 16 },
-  thinking: { rate: -10, pitch: 0, volume: -8 },
-  sad: { rate: -18, pitch: -12, volume: -12 },
-  surprised: { rate: 36, pitch: 42, volume: 18 },
-  angry: { rate: 22, pitch: -6, volume: 12 },
+  neutral: { rate: 14, pitch: 18, volume: 6 },
+  happy: { rate: 34, pitch: 40, volume: 18 },
+  thinking: { rate: -8, pitch: 4, volume: -6 },
+  sad: { rate: -16, pitch: -10, volume: -10 },
+  surprised: { rate: 40, pitch: 46, volume: 20 },
+  angry: { rate: 26, pitch: -4, volume: 14 },
 });
 
 const NUANCE_EDGE_DELTA = Object.freeze({
@@ -95,12 +95,18 @@ function analyzeTextExpressiveness(text) {
     volumeBoost -= Math.min(6, ellipses * 2);
   }
   if (cantoneseParticles) {
-    pitchBoost += Math.min(10, cantoneseParticles * 2);
-    rateBoost += Math.min(6, cantoneseParticles * 1.5);
+    pitchBoost += Math.min(14, cantoneseParticles * 3);
+    rateBoost += Math.min(10, cantoneseParticles * 2);
+    volumeBoost += Math.min(6, cantoneseParticles * 1.5);
   }
   if (raw.length <= 12) {
-    rateBoost += 4;
-    pitchBoost += 6;
+    rateBoost += 6;
+    pitchBoost += 10;
+    volumeBoost += 2;
+  }
+  if (/[～~]/.test(raw)) {
+    pitchBoost += 4;
+    rateBoost -= 2;
   }
 
   return { rateBoost, pitchBoost, volumeBoost };
@@ -189,7 +195,7 @@ export function resolveCompanionTtsProsody(opts = {}) {
     text,
     String(opts.talkStyle || "explain").toLowerCase(),
   );
-  const speechEnergy = Math.max(0, Math.min(1, opts.speechEnergy ?? 0.58));
+  const speechEnergy = Math.max(0, Math.min(1, opts.speechEnergy ?? 0.64));
 
   const base =
     EMOTION_EDGE_BASE[emotion] || EMOTION_EDGE_BASE.neutral;
@@ -311,7 +317,7 @@ export function normalizeTtsPerformance(performance, fallbackEmotion = "neutral"
       emotion: performance || fallbackEmotion,
       nuance: "none",
       talkStyle: "explain",
-      speechEnergy: 0.58,
+      speechEnergy: 0.64,
     };
   }
   const perf = performance || {};
@@ -319,7 +325,7 @@ export function normalizeTtsPerformance(performance, fallbackEmotion = "neutral"
     emotion: perf.emotion || fallbackEmotion,
     nuance: perf.nuance || "none",
     talkStyle: perf.talkStyle || "explain",
-    speechEnergy: perf.speechEnergy ?? 0.58,
+    speechEnergy: perf.speechEnergy ?? 0.64,
     lang: perf.lang,
     text: perf.text,
   };

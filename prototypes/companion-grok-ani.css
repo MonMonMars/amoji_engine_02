@@ -37,6 +37,41 @@
   pointer-events: none;
 }
 
+.theme-grok-ani .atmosphere[data-scene-bg="night-city"] {
+  background:
+    radial-gradient(ellipse 90% 70% at 50% 18%, rgba(139, 124, 248, 0.18), transparent 58%),
+    radial-gradient(ellipse 60% 50% at 82% 72%, rgba(94, 234, 212, 0.1), transparent 55%),
+    radial-gradient(ellipse 50% 40% at 12% 68%, rgba(244, 114, 182, 0.08), transparent 50%),
+    linear-gradient(180deg, rgba(3, 3, 10, 0.15) 0%, rgba(3, 3, 10, 0.42) 48%, rgba(2, 2, 8, 0.88) 100%),
+    url("/prototypes/assets/companion-bg-anime.png") center 20% / cover no-repeat;
+}
+
+.theme-grok-ani .atmosphere[data-scene-bg="studio"] {
+  background:
+    linear-gradient(180deg, rgba(18, 20, 28, 0.2) 0%, rgba(8, 10, 16, 0.78) 100%),
+    radial-gradient(ellipse 90% 70% at 50% 35%, #4a5568 0%, #1a1f2b 55%, #0a0c12 100%);
+}
+
+.theme-grok-ani .atmosphere[data-scene-bg="sunset"] {
+  background:
+    linear-gradient(180deg, rgba(40, 18, 28, 0.12) 0%, rgba(10, 8, 18, 0.82) 100%),
+    radial-gradient(ellipse 100% 80% at 50% 20%, #ff8a5c 0%, #7b3f72 42%, #1a1024 100%);
+}
+
+.theme-grok-ani .atmosphere[data-scene-bg="minimal"] {
+  background:
+    linear-gradient(180deg, rgba(3, 3, 10, 0.35) 0%, rgba(2, 2, 8, 0.92) 100%),
+    #030308;
+}
+
+.theme-grok-ani .atmosphere[data-scene-bg="aurora"] {
+  background:
+    linear-gradient(180deg, rgba(3, 3, 10, 0.2) 0%, rgba(2, 2, 8, 0.88) 100%),
+    radial-gradient(ellipse 80% 60% at 30% 25%, rgba(139, 124, 248, 0.42) 0%, transparent 55%),
+    radial-gradient(ellipse 70% 55% at 72% 30%, rgba(94, 234, 212, 0.34) 0%, transparent 52%),
+    #030308;
+}
+
 .theme-grok-ani .stage::after {
   content: "";
   position: absolute;
@@ -196,6 +231,14 @@
   color: #f4f0ff;
 }
 
+.theme-grok-ani .topbar-btn--icon.is-active {
+  border-color: rgba(139, 124, 248, 0.55);
+  background: rgba(139, 124, 248, 0.2);
+  box-shadow:
+    0 0 0 1px rgba(139, 124, 248, 0.18) inset,
+    0 4px 18px rgba(0, 0, 0, 0.38);
+}
+
 .theme-grok-ani .settings-backdrop.is-open {
   background: rgba(3, 3, 10, 0.72);
 }
@@ -322,6 +365,59 @@
     0 0 48px rgba(139, 124, 248, 0.14);
 }
 
+body.conversation-ui.composer-always-visible.theme-grok-ani .stage.mic-mode .composer {
+  max-width: min(720px, 100%);
+}
+
+body.conversation-ui.composer-always-visible.theme-grok-ani .stage.mic-mode #btn-mic,
+body.conversation-ui.composer-always-visible.theme-grok-ani .composer .speaker-btn {
+  width: 2.65rem;
+  height: 2.65rem;
+}
+
+.theme-grok-ani .composer .speaker-btn {
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  color: #f4f0ff;
+}
+
+.theme-grok-ani .composer .speaker-btn[aria-pressed="true"] {
+  border-color: rgba(139, 124, 248, 0.42);
+  background: rgba(139, 124, 248, 0.16);
+}
+
+.theme-grok-ani .scene-sheet {
+  border-color: rgba(255, 255, 255, 0.1);
+  background: linear-gradient(180deg, rgba(14, 10, 28, 0.98), rgba(6, 4, 14, 0.98));
+  box-shadow: 0 -18px 48px rgba(0, 0, 0, 0.55);
+}
+
+.theme-grok-ani .scene-sheet-backdrop.is-open {
+  background:
+    radial-gradient(ellipse 100% 80% at 50% 0%, rgba(139, 124, 248, 0.12), transparent 55%),
+    rgba(3, 3, 10, 0.68);
+}
+
+.theme-grok-ani .scene-preset.is-active {
+  border-color: rgba(139, 124, 248, 0.55);
+  box-shadow: 0 0 0 1px rgba(139, 124, 248, 0.2) inset;
+}
+
+.theme-grok-ani .scene-preset__soon {
+  color: rgba(228, 220, 255, 0.78);
+  background: rgba(139, 124, 248, 0.14);
+  border-color: rgba(139, 124, 248, 0.28);
+}
+
+.theme-grok-ani .settings .settings-section-title {
+  color: rgba(228, 220, 255, 0.5);
+}
+
+.theme-grok-ani .settings .settings-hint {
+  color: rgba(228, 220, 255, 0.58);
+}
+
 /* —— Emotion orb —— */
 .theme-grok-ani .emotion-ball-stack {
   position: fixed;
@@ -361,94 +457,14 @@
   height: 7.5rem;
 }
 
-/* —— Start picker: cinematic —— */
-.theme-grok-ani .start-character-picker {
+/* —— Start picker uses same sheet/cards as in-session picker —— */
+.theme-grok-ani .companion-picker--start .companion-picker-backdrop {
   background:
-    radial-gradient(ellipse 100% 80% at 50% 0%, rgba(139, 124, 248, 0.2), transparent 55%),
-    radial-gradient(ellipse 80% 60% at 50% 100%, rgba(94, 234, 212, 0.08), transparent 50%),
-    rgba(3, 3, 10, 0.94);
+    radial-gradient(ellipse 100% 80% at 50% 0%, rgba(139, 124, 248, 0.16), transparent 55%),
+    rgba(3, 3, 10, 0.72);
 }
 
-.theme-grok-ani .start-picker-panel {
-  width: min(94vw, 860px);
-  padding: 1.35rem 1.1rem 1.5rem;
-  border-radius: 1.5rem;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(8, 6, 18, 0.68);
-  box-shadow:
-    0 0 0 1px rgba(139, 124, 248, 0.1) inset,
-    0 28px 80px rgba(0, 0, 0, 0.55);
-}
-
-.theme-grok-ani .start-picker-title {
-  font-size: clamp(1.5rem, 4.5vw, 2rem);
-  background: linear-gradient(135deg, #f4f0ff 20%, #c4b5fd 55%, #5eead4 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-
-.theme-grok-ani .start-picker-grid {
-  display: flex;
-  gap: 0.85rem;
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
-  padding: 0.25rem 0.15rem 0.5rem;
-  scrollbar-width: none;
-}
-
-.theme-grok-ani .start-picker-grid::-webkit-scrollbar {
-  display: none;
-}
-
-.theme-grok-ani .start-picker-grid .companion-card {
-  flex: 0 0 min(42vw, 168px);
-  scroll-snap-align: center;
-  min-height: 13.5rem;
-  border-radius: 1rem;
-  padding: 0.55rem;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.theme-grok-ani .start-picker-grid .companion-card:hover {
-  transform: translateY(-4px) scale(1.02);
-  border-color: color-mix(in srgb, var(--card-accent) 65%, white);
-  box-shadow:
-    0 0 0 1px color-mix(in srgb, var(--card-accent) 35%, transparent),
-    0 16px 40px rgba(0, 0, 0, 0.38),
-    0 0 32px color-mix(in srgb, var(--card-accent) 25%, transparent);
-}
-
-.theme-grok-ani .start-picker-grid .companion-card.is-selected {
-  border-color: var(--card-accent, var(--accent));
-  box-shadow:
-    0 0 0 2px color-mix(in srgb, var(--card-accent) 50%, transparent),
-    0 18px 44px rgba(0, 0, 0, 0.42),
-    0 0 40px color-mix(in srgb, var(--card-accent) 30%, transparent);
-}
-
-.theme-grok-ani .start-picker-grid .companion-card-portrait {
-  aspect-ratio: 3 / 4;
-  border-radius: 0.75rem;
-}
-
-.theme-grok-ani .start-picker-grid .companion-card-body {
-  text-align: center;
-}
-
-.theme-grok-ani .start-picker-grid .companion-card-name {
-  font-family: var(--font-display);
-  font-size: 0.92rem;
-}
-
-.theme-grok-ani .start-picker-grid .companion-card-tagline {
-  font-size: 0.68rem;
-  line-height: 1.35;
-  color: var(--muted);
-}
-
-.theme-grok-ani .start-picker-preload-fill {
+.theme-grok-ani .companion-picker--start .start-picker-preload-fill {
   background: linear-gradient(90deg, #8b7cf8, #5eead4, #f472b6);
 }
 
@@ -486,15 +502,3 @@
   backdrop-filter: blur(16px);
 }
 
-@media (min-width: 768px) {
-  .theme-grok-ani .start-picker-grid {
-    justify-content: center;
-    flex-wrap: wrap;
-    overflow: visible;
-  }
-
-  .theme-grok-ani .start-picker-grid .companion-card {
-    flex: 0 0 calc(25% - 0.65rem);
-    min-width: 150px;
-  }
-}

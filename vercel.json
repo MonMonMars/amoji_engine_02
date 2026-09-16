@@ -85,6 +85,22 @@
       ]
     },
     {
+      "source": "/prototypes/assets/companion-:name.vrm",
+      "headers": [
+        { "key": "Content-Type", "value": "model/gltf-binary" },
+        { "key": "Access-Control-Allow-Origin", "value": "*" },
+        { "key": "Cache-Control", "value": "public, max-age=86400, immutable" }
+      ]
+    },
+    {
+      "source": "/prototypes/assets/companion-quinn.glb",
+      "headers": [
+        { "key": "Content-Type", "value": "model/gltf-binary" },
+        { "key": "Access-Control-Allow-Origin", "value": "*" },
+        { "key": "Cache-Control", "value": "public, max-age=86400, immutable" }
+      ]
+    },
+    {
       "source": "/api/health",
       "headers": [
         { "key": "Cache-Control", "value": "no-store, no-cache, must-revalidate" },

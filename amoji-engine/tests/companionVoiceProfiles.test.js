@@ -18,16 +18,17 @@ describe("companionVoiceProfiles", () => {
   });
 
   it("lists expanded Cantonese and Hong Kong English voices", () => {
-    expect(voiceProfilesForLang("yue").length).toBe(5);
+    expect(voiceProfilesForLang("yue").length).toBe(18);
     expect(voiceProfilesForLang("en").length).toBe(6);
     expect(findVoiceProfile("en-HK-YanNeural")?.gender).toBe("female");
     expect(findVoiceProfile("en-HK-SamNeural")?.gender).toBe("male");
   });
 
-  it("assigns a unique voice profile per character per language", () => {
+  it("assigns a unique Cantonese voice profile per character", () => {
     const yue = CHARACTER_IDS.map((id) => getCharacter(id).voices.yue);
-    const en = CHARACTER_IDS.map((id) => getCharacter(id).voices.en);
     expect(new Set(yue).size).toBe(CHARACTER_IDS.length);
-    expect(new Set(en).size).toBe(CHARACTER_IDS.length);
+    for (const id of yue) {
+      expect(findVoiceProfile(id)).toBeTruthy();
+    }
   });
 });

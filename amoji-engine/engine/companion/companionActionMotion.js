@@ -17,6 +17,7 @@ const VALID_NUANCE_TAGS = new Set([
   "love",
   "stress",
 ]);
+import { stripUiIntentTags } from "./companionUiIntentTags.js";
 import { resolveCloudAction } from "./motionPackData.mjs";
 import { getExtendedActionDef, resolveMotionSamplerKey } from "./companionMotionLibrary.js";
 
@@ -50,7 +51,7 @@ export const COMPANION_ACTION_MOTION_SCHEMA = "amoji.companionActionMotion.v1";
  * @param {string | null | undefined} text
  */
 export function parseReplyTags(text) {
-  let reply = String(text || "").trim();
+  let reply = stripUiIntentTags(String(text || "").trim());
   let emotion = null;
   let action = null;
   let nuance = null;

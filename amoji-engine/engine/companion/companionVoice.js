@@ -461,9 +461,10 @@ export function createCompanionVoice(opts = {}) {
     for (const part of parts) {
       const plan = buildExpressiveTtsPlan(
         part,
-        { ...perf, lang: preset.lang },
+        { ...perf, lang: preset.lang, voiceId: preset.name },
         activeCharacterId,
         preset.lang,
+        preset.name,
       );
       const clauses = plan.clauses.length ? plan.clauses : [{ text: part, ...perf }];
       for (let i = 0; i < clauses.length; i += 1) {

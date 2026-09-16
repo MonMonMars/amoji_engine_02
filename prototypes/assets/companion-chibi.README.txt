@@ -1,0 +1,13 @@
+Chibi VRM avatar — ToxSam Xmas Chibis / Polygonal-Mind (gallery pick E18 substitute)
+
+Original gallery target: E18 Chibi schoolgirl (paid CGTrader listings).
+Substitute: Clara Nutcracker from Xmas Chibis collection (CC0, 80 avatars).
+
+Source:  https://github.com/ToxSam/open-source-avatars (data/avatars/xmas-chibis.json)
+Model:   Avatar10_Neutral.vrm (IPFS via gateway.pinata.cloud)
+Preview: companion-char-chibi.png
+
+License: CC0 1.0 — public domain, commercial use OK.
+Gallery: section [E] chibi / schoolgirl style (E18 substitute).
+
+Attribution: Xmas Chibis by Polygonal-Mind / VIPE (CC0 via open-source-avatars)
