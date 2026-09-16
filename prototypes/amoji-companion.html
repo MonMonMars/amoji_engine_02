@@ -8,9 +8,9 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji · Companion</title>
     <script>
-      window.__amojiBuild = "2026-09-16-v93-minimal-boot";
+      window.__amojiBuild = "2026-09-16-v94-composer-input";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-16-v93-minimal-boot"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-16-v94-composer-input"></script>
     <link
       rel="prefetch"
       href="/prototypes/assets/companion-char-nova.png"
@@ -281,7 +281,7 @@
       media="print"
       onload="this.media='all'"
     />
-    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-16-v93-minimal-boot" />
+    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-16-v94-composer-input" />
     <noscript>
       <link
         href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap"
@@ -1458,14 +1458,49 @@
       body.conversation-ui .topbar-actions #btn-settings,
       body.conversation-ui .llm-switcher-wrap,
       body.conversation-ui #btn-mic,
-      body.conversation-ui .composer .send,
-      body.conversation-ui .composer textarea,
       body.conversation-ui .cloud-key-banner button {
         display: none !important;
       }
 
-      body.conversation-ui .stage.mic-mode .emotion-ball-stack {
+      /* Voice mode: emotion orb. Text mode / mic-blocked: composer input. */
+      body.conversation-ui:not(.composer-text-mode):not(.mic-blocked)
+        .composer
+        textarea,
+      body.conversation-ui:not(.composer-text-mode):not(.mic-blocked)
+        .composer
+        .send {
+        display: none !important;
+      }
+
+      body.conversation-ui:not(.composer-text-mode):not(.mic-blocked)
+        .emotion-ball-stack:not(.is-hidden) {
         display: flex !important;
+      }
+
+      body.conversation-ui.composer-text-mode .emotion-ball-stack,
+      body.conversation-ui.mic-blocked .emotion-ball-stack {
+        display: none !important;
+      }
+
+      body.conversation-ui.composer-text-mode .stage.mic-mode .composer textarea,
+      body.conversation-ui.composer-text-mode .stage.mic-mode .composer .send,
+      body.conversation-ui.mic-blocked .stage.mic-mode .composer textarea,
+      body.conversation-ui.mic-blocked .stage.mic-mode .composer .send {
+        display: block !important;
+      }
+
+      body.conversation-ui.composer-text-mode .stage.mic-mode .composer,
+      body.conversation-ui.mic-blocked .stage.mic-mode .composer {
+        max-width: min(720px, 100%);
+        width: 100%;
+        padding: 0.5rem 0.55rem;
+      }
+
+      body.conversation-ui.composer-text-mode .composer textarea,
+      body.conversation-ui.mic-blocked .composer textarea {
+        display: block !important;
+        flex: 1;
+        min-height: 2.5rem;
       }
 
       body.conversation-ui .listen-hint {
@@ -1475,20 +1510,16 @@
         font-weight: 650;
         color: rgba(247, 241, 232, 0.9);
         padding: 0.35rem 0.5rem 0;
+        cursor: pointer;
+        pointer-events: auto;
+      }
+
+      body.conversation-ui.composer-text-mode .listen-hint {
+        cursor: default;
       }
 
       body.conversation-ui .listen-hint.mic-active {
         color: rgba(127, 212, 207, 0.95);
-      }
-
-      body.conversation-ui.mic-blocked .composer textarea,
-      body.conversation-ui.mic-blocked .composer .send {
-        display: block !important;
-      }
-
-      body.conversation-ui.mic-blocked .composer textarea {
-        flex: 1;
-        min-height: 2.5rem;
       }
 
       .ui-context-pill {
@@ -2452,18 +2483,18 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-16-v93-minimal-boot",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-16-v94-composer-input",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-16-v93-minimal-boot"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-16-v94-composer-input"
         }
       }
     </script>
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-16-v93-minimal-boot"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-16-v94-composer-input"
     />
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-16-v93-minimal-boot"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-16-v93-minimal-boot"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-16-v94-composer-input"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-16-v94-composer-input"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;
@@ -3327,11 +3358,14 @@
       let langCode = companionLangCode(params.get("lang") || "yue");
       let isEnglish = langCode === "en";
 
-      if (conversationUi && listenHintEl) {
-        listenHintEl.hidden = false;
-        listenHintEl.textContent = isEnglish
-          ? "Speak, pause — I'll reply and switch views for you"
-          : "講完停一停 — 我會答同幫你轉頁";
+      if (conversationUi) {
+        document.body.classList.add("composer-text-mode");
+        if (listenHintEl) {
+          listenHintEl.hidden = false;
+          listenHintEl.textContent = isEnglish
+            ? "Type below to chat — voice orb appears after start"
+            : "喺下面打字傾偈 — 開始後會顯示語音圓球";
+        }
       }
 
       const micUi = createCompanionMicButton(btnMic, {
@@ -3362,8 +3396,22 @@
         });
       };
 
+      const composerTextMode = () =>
+        conversationUi &&
+        (document.body.classList.contains("composer-text-mode") ||
+          document.body.classList.contains("mic-blocked"));
+
+      const setComposerInputMode = (mode) => {
+        if (!conversationUi) return;
+        const textMode = mode === "text";
+        document.body.classList.toggle("composer-text-mode", textMode);
+        updateEmotionBallVisibility();
+        syncListenHint();
+        if (textMode) input.focus();
+      };
+
       const updateEmotionBallVisibility = () => {
-        if (!sessionStarted) {
+        if (!sessionStarted || composerTextMode()) {
           emotionBall.hide();
           return;
         }
@@ -3967,6 +4015,16 @@
             : "麥克風不可用 — 可以打字";
           return;
         }
+        if (document.body.classList.contains("composer-text-mode")) {
+          listenHintEl.textContent = isEnglish
+            ? sessionStarted
+              ? "Typing mode — tap here for voice orb"
+              : "Type below to start chatting"
+            : sessionStarted
+              ? "打字模式 — 點這裡切換語音圓球"
+              : "喺下面打字開始傾偈";
+          return;
+        }
         listenHintEl.textContent = voice.micOn
           ? isEnglish
             ? "Listening…"
@@ -3980,9 +4038,19 @@
                 ? "Speaking…"
                 : "講緊…"
               : isEnglish
-                ? "Speak, pause — I'll reply and switch views for you"
-                : "講完停一停 — 我會答同幫你轉頁";
+                ? "Speak, pause — tap here to type instead"
+                : "講完停一停 — 點這裡可以打字";
       };
+
+      listenHintEl?.addEventListener("click", () => {
+        if (!conversationUi || !sessionStarted) return;
+        if (document.body.classList.contains("mic-blocked")) return;
+        setComposerInputMode(
+          document.body.classList.contains("composer-text-mode")
+            ? "voice"
+            : "text",
+        );
+      });
 
       const syncMicBtn = () => {
         micUi.sync({
@@ -4882,14 +4950,19 @@
         }
 
         if (!busy && !voice.micOn && !voice.speaking) status.idle();
-        input.focus();
+        if (conversationUi) {
+          setComposerInputMode(
+            document.body.classList.contains("mic-blocked") ? "text" : "voice",
+          );
+        } else {
+          input.focus();
+        }
         globalThis.__amojiPreload?.scheduleBackground?.(() => {
           void prefetchBasicMotionPack();
           warmMotionLibraryBackground();
           warmWaitDialogueBackground();
         });
         if (!liteMode && !avatarLoadStarted) beginAvatarLoad();
-        emotionBall.show();
         syncEmotionBall();
         updateEmotionBallVisibility();
 
@@ -4949,7 +5022,10 @@
       const requestMicAsync = () => {
         if (!autoMic || !voice.supportsMic) {
           if (!voice.supportsMic) {
-            if (conversationUi) document.body.classList.add("mic-blocked");
+            if (conversationUi) {
+              document.body.classList.add("mic-blocked");
+              setComposerInputMode("text");
+            }
             addBubble(
               "system",
               isEnglish
@@ -4964,8 +5040,10 @@
           voice.startMic().then((micOk) => {
             if (micOk) {
               document.body.classList.remove("mic-blocked");
+              if (conversationUi) setComposerInputMode("voice");
             } else if (conversationUi) {
               document.body.classList.add("mic-blocked");
+              setComposerInputMode("text");
             }
             syncMicBtn();
             if (micOk) {
