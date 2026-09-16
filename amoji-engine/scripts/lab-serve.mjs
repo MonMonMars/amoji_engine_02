@@ -123,6 +123,14 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  if (req.method === "POST" && url.pathname === "/api/tts") {
+    send(res, 200, Buffer.alloc(44), {
+      ...corsHeaders(),
+      "Content-Type": "audio/wav",
+    });
+    return;
+  }
+
   if (req.method === "GET" && url.pathname === "/api/ollama/tags") {
     const payload = await getOllamaTagsPayload();
     send(res, 200, payload, {

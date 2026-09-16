@@ -15,6 +15,10 @@ import {
   applyOrbitFollowAnchor,
   computeGltfFrameAnchor,
 } from "./companionCameraFollow.js";
+import {
+  PORTRAIT_FOV,
+  applyUpperBodyPortraitFrame,
+} from "./companionPortraitFraming.js";
 import { sampleIdleBodyMotion } from "./companionIdleMotion.js";
 
 export const GLTF_AVATAR_SCHEMA = "amoji.gltfAvatar.v1";
@@ -73,7 +77,7 @@ export async function createGltfAvatar(opts) {
   }
 
   const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(28, 1, 0.05, 100);
+  const camera = new THREE.PerspectiveCamera(PORTRAIT_FOV, 1, 0.05, 100);
   camera.position.set(0, 1.35, 2.35);
 
   scene.add(new THREE.HemisphereLight(0xffe8dc, 0x1a2030, 1.05));
@@ -131,11 +135,31 @@ export async function createGltfAvatar(opts) {
   controls.enableZoom = true;
 
   const loader = new GLTFLoader();
-  const gltf = await loader.loadAsync(modelUrl, (event) => {
-    if (event.lengthComputable && event.total > 0) {
-      opts.onProgress?.(event.loaded / event.total, "model");
+  const preload =
+    globalThis.__amojiPreload?.getModel?.(modelUrl) ??
+    globalThis.__amojiPreload?.getVrm?.(modelUrl) ??
+    null;
+  let gltf;
+  if (preload) {
+    try {
+      const buffer = await preload;
+      gltf = await loader.parseAsync(buffer, modelUrl);
+      opts.onProgress?.(1, "model");
+    } catch (err) {
+      console.warn("[gltf] prefetched model parse failed, falling back to URL", err);
+      gltf = await loader.loadAsync(modelUrl, (event) => {
+        if (event.lengthComputable && event.total > 0) {
+          opts.onProgress?.(event.loaded / event.total, "model");
+        }
+      });
     }
-  });
+  } else {
+    gltf = await loader.loadAsync(modelUrl, (event) => {
+      if (event.lengthComputable && event.total > 0) {
+        opts.onProgress?.(event.loaded / event.total, "model");
+      }
+    });
+  }
   opts.onProgress?.(1, "model");
   const model = gltf.scene;
   model.traverse((obj) => {
@@ -174,21 +198,13 @@ export async function createGltfAvatar(opts) {
     if (headBone) return;
     if (/head|face|neck/i.test(obj.name) && obj.isBone) headBone = obj;
   });
-  const face = new THREE.Vector3();
-  if (headBone) {
-    model.updateWorldMatrix(true, true);
-    headBone.getWorldPosition(face);
-  } else {
-    face.set(0, fitted.min.y + fittedSize.y * 0.88, 0);
-  }
-  const portraitDist = Math.max(0.42, fittedSize.y * 0.34);
-  controls.target.copy(face);
-  camera.position.set(face.x, face.y + 0.02, face.z + portraitDist);
-  controls.minDistance = portraitDist * 0.72;
-  controls.maxDistance = portraitDist * 2.8;
-  controls.minPolarAngle = Math.PI * 0.44;
-  controls.maxPolarAngle = Math.PI * 0.56;
-  controls.update();
+  const anchor = computeGltfFrameAnchor(model, headBone);
+  applyUpperBodyPortraitFrame({
+    camera,
+    controls,
+    anchor,
+    fittedHeight: fittedSize.y,
+  });
 
   /** @type {THREE.AnimationMixer | null} */
   let mixer = null;
@@ -427,10 +443,10 @@ export async function createGltfAvatar(opts) {
       : 0;
     if (!talking && !activeAction) {
       const idle = sampleIdleBodyMotion(elapsed, { emotion });
-      leanX += idle.headX * 0.55;
-      leanZ += idle.headZ * 0.85 + idle.hipZ * 0.65;
-      leanY += idle.leanY * 0.75;
-      sway += idle.leanY * 0.4;
+      leanX += idle.headX * 0.72;
+      leanZ += idle.headZ * 1.05 + idle.hipZ * 0.82;
+      leanY += idle.leanY * 0.92;
+      sway += idle.leanY * 0.55;
     } else if (!talking) {
       sway = Math.sin((now - t0) * 0.0009) * 0.025;
     }

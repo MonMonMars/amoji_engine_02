@@ -361,94 +361,14 @@
   height: 7.5rem;
 }
 
-/* —— Start picker: cinematic —— */
-.theme-grok-ani .start-character-picker {
+/* —— Start picker uses same sheet/cards as in-session picker —— */
+.theme-grok-ani .companion-picker--start .companion-picker-backdrop {
   background:
-    radial-gradient(ellipse 100% 80% at 50% 0%, rgba(139, 124, 248, 0.2), transparent 55%),
-    radial-gradient(ellipse 80% 60% at 50% 100%, rgba(94, 234, 212, 0.08), transparent 50%),
-    rgba(3, 3, 10, 0.94);
+    radial-gradient(ellipse 100% 80% at 50% 0%, rgba(139, 124, 248, 0.16), transparent 55%),
+    rgba(3, 3, 10, 0.72);
 }
 
-.theme-grok-ani .start-picker-panel {
-  width: min(94vw, 860px);
-  padding: 1.35rem 1.1rem 1.5rem;
-  border-radius: 1.5rem;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(8, 6, 18, 0.68);
-  box-shadow:
-    0 0 0 1px rgba(139, 124, 248, 0.1) inset,
-    0 28px 80px rgba(0, 0, 0, 0.55);
-}
-
-.theme-grok-ani .start-picker-title {
-  font-size: clamp(1.5rem, 4.5vw, 2rem);
-  background: linear-gradient(135deg, #f4f0ff 20%, #c4b5fd 55%, #5eead4 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-
-.theme-grok-ani .start-picker-grid {
-  display: flex;
-  gap: 0.85rem;
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
-  padding: 0.25rem 0.15rem 0.5rem;
-  scrollbar-width: none;
-}
-
-.theme-grok-ani .start-picker-grid::-webkit-scrollbar {
-  display: none;
-}
-
-.theme-grok-ani .start-picker-grid .companion-card {
-  flex: 0 0 min(42vw, 168px);
-  scroll-snap-align: center;
-  min-height: 13.5rem;
-  border-radius: 1rem;
-  padding: 0.55rem;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.theme-grok-ani .start-picker-grid .companion-card:hover {
-  transform: translateY(-4px) scale(1.02);
-  border-color: color-mix(in srgb, var(--card-accent) 65%, white);
-  box-shadow:
-    0 0 0 1px color-mix(in srgb, var(--card-accent) 35%, transparent),
-    0 16px 40px rgba(0, 0, 0, 0.38),
-    0 0 32px color-mix(in srgb, var(--card-accent) 25%, transparent);
-}
-
-.theme-grok-ani .start-picker-grid .companion-card.is-selected {
-  border-color: var(--card-accent, var(--accent));
-  box-shadow:
-    0 0 0 2px color-mix(in srgb, var(--card-accent) 50%, transparent),
-    0 18px 44px rgba(0, 0, 0, 0.42),
-    0 0 40px color-mix(in srgb, var(--card-accent) 30%, transparent);
-}
-
-.theme-grok-ani .start-picker-grid .companion-card-portrait {
-  aspect-ratio: 3 / 4;
-  border-radius: 0.75rem;
-}
-
-.theme-grok-ani .start-picker-grid .companion-card-body {
-  text-align: center;
-}
-
-.theme-grok-ani .start-picker-grid .companion-card-name {
-  font-family: var(--font-display);
-  font-size: 0.92rem;
-}
-
-.theme-grok-ani .start-picker-grid .companion-card-tagline {
-  font-size: 0.68rem;
-  line-height: 1.35;
-  color: var(--muted);
-}
-
-.theme-grok-ani .start-picker-preload-fill {
+.theme-grok-ani .companion-picker--start .start-picker-preload-fill {
   background: linear-gradient(90deg, #8b7cf8, #5eead4, #f472b6);
 }
 
@@ -486,15 +406,3 @@
   backdrop-filter: blur(16px);
 }
 
-@media (min-width: 768px) {
-  .theme-grok-ani .start-picker-grid {
-    justify-content: center;
-    flex-wrap: wrap;
-    overflow: visible;
-  }
-
-  .theme-grok-ani .start-picker-grid .companion-card {
-    flex: 0 0 calc(25% - 0.65rem);
-    min-width: 150px;
-  }
-}

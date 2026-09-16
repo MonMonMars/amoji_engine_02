@@ -12,6 +12,7 @@ import {
 import { getLlmProvider } from "./companionLlmProviders.js";
 import { isOllamaLocalModel } from "./companionModelIds.js";
 import { localCompanionReply } from "./companionLocalReply.mjs";
+import { pickLocalChatReply } from "./secretary/secretaryLocalReply.mjs";
 import { buildActionLlmContext } from "./companionActionIntent.js";
 import {
   fetchWebContextForChat,
@@ -245,7 +246,13 @@ export async function processChatRequest(body) {
   if (providerId === "basic") {
     return {
       ok: true,
-      reply: localCompanionReply(message, history, webContext),
+      reply: pickLocalChatReply(
+        message,
+        history,
+        webContext,
+        system,
+        localCompanionReply,
+      ),
       mode: webContext ? "local+web" : "local",
       model: null,
       web: webSearched ? { searched: true, source: webSource } : undefined,
@@ -394,7 +401,13 @@ export async function processChatRequest(body) {
     console.warn("[chat-api] OpenAI failed", openai.error);
   }
 
-  const fallbackReply = localCompanionReply(message, history, webContext);
+  const fallbackReply = pickLocalChatReply(
+    message,
+    history,
+    webContext,
+    system,
+    localCompanionReply,
+  );
 
   return {
     ok: true,

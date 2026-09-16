@@ -107,7 +107,7 @@ export function createCompanionWaitAct(opts = {}) {
     clearInterval(poseTimer);
     const interval =
       kind === "idle"
-        ? Math.max(5500, Math.round(poseIntervalMs * 0.82))
+        ? Math.max(3600, Math.round(poseIntervalMs * 0.58))
         : kind === "thinking"
           ? Math.max(poseIntervalMs, 4200)
           : poseIntervalMs;

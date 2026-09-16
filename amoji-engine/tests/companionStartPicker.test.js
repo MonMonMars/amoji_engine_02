@@ -23,11 +23,19 @@ describe("companion start picker", () => {
 
   it("lists enough characters for the start grid", () => {
     const list = listCompanionCharacters("en");
-    expect(list.length).toBeGreaterThanOrEqual(4);
+    expect(list.length).toBeGreaterThanOrEqual(12);
     const html = companionCardInnerHtml(list[0], {
       compact: true,
       selectedId: list[0].id,
     });
     expect(html).toContain(list[0].name);
+  });
+
+  it("start picker uses the same compact card layout as in-session picker", () => {
+    const item = listCompanionCharacters("en")[0];
+    const startCard = companionCardInnerHtml(item, { compact: true });
+    const sessionCard = companionCardInnerHtml(item, { compact: true });
+    expect(startCard).toBe(sessionCard);
+    expect(startCard).not.toContain("companion-card-tagline");
   });
 });

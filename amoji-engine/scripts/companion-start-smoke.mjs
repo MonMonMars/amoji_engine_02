@@ -47,9 +47,17 @@ async function main() {
     "#start-character-picker .companion-card",
     { timeout: 15000 },
   );
+  await page.waitForFunction(
+    () => {
+      const picker = document.getElementById("start-character-picker");
+      return picker && !picker.classList.contains("is-preloading");
+    },
+    undefined,
+    { timeout: 90000 },
+  );
 
   const t0 = Date.now();
-  await page.click("#start-character-picker .companion-card");
+  await page.click("#start-character-picker .companion-card:not([disabled])");
 
   await page.waitForFunction(
     () => {

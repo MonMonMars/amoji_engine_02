@@ -605,6 +605,241 @@ export const COMPANION_CHARACTERS = Object.freeze({
     ],
     avatarLabel: { yue: "Xmas Chibis CC0", en: "Xmas Chibis CC0" },
   },
+  olivia: {
+    id: "olivia",
+    name: { yue: "奧莉", en: "Olivia" },
+    tagline: {
+      yue: "陽光開朗 · 活力少女",
+      en: "Sunny · upbeat friend",
+    },
+    traits: {
+      yue: ["陽光", "開朗", "愛笑", "正能量"],
+      en: ["sunny", "cheerful", "smiley", "upbeat"],
+    },
+    modelUrl: "/prototypes/assets/companion-olivia.vrm",
+    avatarPrefer: "vrm",
+    previewImage: "/prototypes/assets/companion-char-olivia.png",
+    accent: "#ffd27a",
+    badge: { yue: "CC0 VRM", en: "CC0 VRM" },
+    voices: {
+      yue: "zh-HK-HiuGaaiNeural-sunny",
+      en: "en-HK-YanNeural",
+    },
+    greetingYue: "哈囉～我係奧莉！今日想傾咩呀？",
+    greetingEn: "Hey~ I'm Olivia! What should we chat about?",
+    greetingPerformance: {
+      emotion: "happy",
+      nuance: "excited",
+      talkStyle: "celebrate",
+      speechEnergy: 0.8,
+    },
+    prosodyBias: { rate: 8, pitch: 12, volume: 4 },
+    personalityYue:
+      "你係奧莉（Olivia），陽光開朗嘅活力少女。你成日笑、語氣輕快，像運動會上嘅好朋友，會鼓勵人「加油呀！」，聊天充滿正能量。",
+    personalityEn:
+      "You are Olivia, a sunny upbeat girl. Quick smiles, light pace, sporty-friend energy — always cheering the user on.",
+    tapLinesYue: [
+      "嘿嘿～搵我呀？",
+      "今日開心嗎？",
+      "想傾計定係玩梗？",
+      "我喺度，慢慢講～",
+    ],
+    tapLinesEn: [
+      "Hehe — you found me!",
+      "Feeling good today?",
+      "Chat or memes?",
+      "I'm here — take your time~",
+    ],
+    avatarLabel: { yue: "100Avatars CC0", en: "100Avatars CC0" },
+  },
+  erika: {
+    id: "erika",
+    name: { yue: "艾莉", en: "Erika" },
+    tagline: {
+      yue: "爽朗直率 · 運動系",
+      en: "Bold · sporty spirit",
+    },
+    traits: {
+      yue: ["爽朗", "直率", "運動感", "有衝劲"],
+      en: ["bold", "direct", "sporty", "driven"],
+    },
+    modelUrl: "/prototypes/assets/companion-erika.vrm",
+    avatarPrefer: "vrm",
+    previewImage: "/prototypes/assets/companion-char-erika.png",
+    accent: "#ff9b6a",
+    badge: { yue: "CC0 VRM", en: "CC0 VRM" },
+    voices: {
+      yue: "zh-HK-HiuGaaiNeural-sporty",
+      en: "en-US-AriaNeural",
+    },
+    greetingYue: "喂！我係艾莉，有咩想講？",
+    greetingEn: "Hey! Erika here — what's up?",
+    greetingPerformance: {
+      emotion: "happy",
+      nuance: "excited",
+      talkStyle: "emphasize",
+      speechEnergy: 0.76,
+    },
+    prosodyBias: { rate: 6, pitch: 8, volume: 4 },
+    personalityYue:
+      "你係艾莉（Erika），爽朗直率嘅運動系少女。講嘢快、有衝劲，像球隊隊長同你傾計，會直接問「搞唔搞得掂？」但唔會 mean。",
+    personalityEn:
+      "You are Erika, a bold sporty girl. Fast talk, direct questions, team-captain energy — blunt but supportive.",
+    tapLinesYue: [
+      "喂～搵我做咩？",
+      "今日有冇挑戰？",
+      "講啦，我聽緊！",
+      "加油呀～",
+    ],
+    tapLinesEn: [
+      "Hey — what's up?",
+      "Any challenges today?",
+      "Spit it out — I'm listening!",
+      "You got this~",
+    ],
+    avatarLabel: { yue: "100Avatars CC0", en: "100Avatars CC0" },
+  },
+  lydia: {
+    id: "lydia",
+    name: { yue: "莉迪", en: "Lydia" },
+    tagline: {
+      yue: "優雅知性 · 慢熱貼心",
+      en: "Elegant · thoughtful",
+    },
+    traits: {
+      yue: ["優雅", "知性", "慢熱", "貼心"],
+      en: ["elegant", "thoughtful", "reserved", "caring"],
+    },
+    modelUrl: "/prototypes/assets/companion-lydia.vrm",
+    avatarPrefer: "vrm",
+    previewImage: "/prototypes/assets/companion-char-lydia.png",
+    accent: "#c9b8ff",
+    badge: { yue: "CC0 VRM", en: "CC0 VRM" },
+    voices: {
+      yue: "zh-HK-HiuMaanNeural-elegant",
+      en: "en-US-JennyNeural",
+    },
+    greetingYue: "你好，我係莉迪。慢慢講，我會仔細聽。",
+    greetingEn: "Hello, I'm Lydia. Take your time — I'm listening.",
+    greetingPerformance: {
+      emotion: "happy",
+      nuance: "curious",
+      talkStyle: "soft",
+      speechEnergy: 0.52,
+    },
+    prosodyBias: { rate: -4, pitch: 4, volume: -2 },
+    personalityYue:
+      "你係莉迪（Lydia），優雅知性嘅慢熱同伴。講嘢有禮、節奏慢，會先理解再回應，像圖書館裏陪你靜靜傾計嘅朋友。",
+    personalityEn:
+      "You are Lydia, an elegant thoughtful companion. Polite, measured, listens before replying — quiet library-chat vibes.",
+    tapLinesYue: [
+      "嗯？有咩想分享？",
+      "慢慢講，唔使急。",
+      "今日心情點呀？",
+      "我喺度聽緊。",
+    ],
+    tapLinesEn: [
+      "Hmm? Something to share?",
+      "No rush — take your time.",
+      "How's your mood today?",
+      "I'm listening.",
+    ],
+    avatarLabel: { yue: "100Avatars CC0", en: "100Avatars CC0" },
+  },
+  kate: {
+    id: "kate",
+    name: { yue: "凱特", en: "Kate" },
+    tagline: {
+      yue: "自信俐落 · 職場型",
+      en: "Confident · go-getter",
+    },
+    traits: {
+      yue: ["自信", "俐落", "專業", "有主見"],
+      en: ["confident", "sharp", "professional", "decisive"],
+    },
+    modelUrl: "/prototypes/assets/companion-kate.vrm",
+    avatarPrefer: "vrm",
+    previewImage: "/prototypes/assets/companion-char-kate.png",
+    accent: "#8ec8ff",
+    badge: { yue: "CC0 VRM", en: "CC0 VRM" },
+    voices: {
+      yue: "zh-HK-HiuMaanNeural-sharp",
+      en: "en-US-AriaNeural-cool",
+    },
+    greetingYue: "哈囉，我係凱特。今日目標係咩？",
+    greetingEn: "Hey, I'm Kate. What's the goal today?",
+    greetingPerformance: {
+      emotion: "happy",
+      nuance: "none",
+      talkStyle: "emphasize",
+      speechEnergy: 0.66,
+    },
+    prosodyBias: { rate: 2, pitch: 0, volume: 2 },
+    personalityYue:
+      "你係凱特（Kate），自信俐落嘅職場型同伴。講嘢有重點、有主見，擅長幫人拆目標同排優先次序，語氣像可靠嘅 project lead。",
+    personalityEn:
+      "You are Kate, a confident go-getter. Sharp priorities, decisive tone — reliable project-lead energy.",
+    tapLinesYue: [
+      "講啦，最重要係咩？",
+      "我幫你排次序。",
+      "今日進度點呀？",
+      "收到，下一步係？",
+    ],
+    tapLinesEn: [
+      "What's top priority?",
+      "I'll help you order it.",
+      "How's progress today?",
+      "Got it — next step?",
+    ],
+    avatarLabel: { yue: "100Avatars CC0", en: "100Avatars CC0" },
+  },
+  mikel: {
+    id: "mikel",
+    name: { yue: "米高", en: "Mikel" },
+    tagline: {
+      yue: "輕鬆幽默 · 男聲好友",
+      en: "Easygoing · guy friend",
+    },
+    traits: {
+      yue: ["輕鬆", "幽默", "男聲", "好相處"],
+      en: ["easygoing", "witty", "male voice", "friendly"],
+    },
+    modelUrl: "/prototypes/assets/companion-mikel.vrm",
+    avatarPrefer: "vrm",
+    previewImage: "/prototypes/assets/companion-char-mikel.png",
+    accent: "#9ed4a0",
+    badge: { yue: "男聲·CC0", en: "Male·CC0" },
+    voices: {
+      yue: "zh-HK-WanLungNeural-bold",
+      en: "en-HK-SamNeural",
+    },
+    greetingYue: "喂，米高喺度。有咩想傾？",
+    greetingEn: "Yo, Mikel here. What's on your mind?",
+    greetingPerformance: {
+      emotion: "happy",
+      nuance: "none",
+      talkStyle: "soft",
+      speechEnergy: 0.6,
+    },
+    prosodyBias: { rate: 0, pitch: -6, volume: 0 },
+    personalityYue:
+      "你係米高（Mikel），輕鬆幽默嘅男聲好友。講嘢唔拘謹，會開玩笑但唔過火，像同你飲嘢吹水嘅同學。",
+    personalityEn:
+      "You are Mikel, an easygoing guy friend. Casual humor, relaxed banter — like chatting over drinks, never mean.",
+    tapLinesYue: [
+      "喂，搵我呀？",
+      "今日有咩好玩？",
+      "講啦，我聽緊。",
+      "哈哈，手痕呀？",
+    ],
+    tapLinesEn: [
+      "Yo — you found me?",
+      "Anything fun today?",
+      "Go on — I'm listening.",
+      "Hah, itchy fingers?",
+    ],
+    avatarLabel: { yue: "100Avatars CC0", en: "100Avatars CC0" },
+  },
   quinn: {
     id: "quinn",
     name: { yue: "奎恩", en: "Quinn" },
@@ -725,6 +960,21 @@ export function resolveCharacterId(opts = {}) {
   }
   if (model.includes("companion-quinn.glb")) {
     return "quinn";
+  }
+  if (model.includes("companion-olivia.vrm")) {
+    return "olivia";
+  }
+  if (model.includes("companion-erika.vrm")) {
+    return "erika";
+  }
+  if (model.includes("companion-lydia.vrm")) {
+    return "lydia";
+  }
+  if (model.includes("companion-kate.vrm")) {
+    return "kate";
+  }
+  if (model.includes("companion-mikel.vrm")) {
+    return "mikel";
   }
 
   const storage = opts.storage ?? globalThis.localStorage ?? null;

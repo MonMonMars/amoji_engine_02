@@ -14,6 +14,10 @@ import {
   applyOrbitFollowAnchor,
   computeVrmFrameAnchor,
 } from "./companionCameraFollow.js";
+import {
+  PORTRAIT_FOV,
+  applyUpperBodyPortraitFrame,
+} from "./companionPortraitFraming.js";
 import { createCompanionBodyMotion } from "./companionBodyMotion.js";
 import { buildVrmExpressionBlend } from "./companionContentMotion.js";
 import { sampleIdleExpressionBlend } from "./companionIdleMotion.js";
@@ -44,10 +48,9 @@ const VRM_BLEND_PRESET_MAP = {
  * @param {(ratio: number, label?: string) => void} [onProgress]
  */
 async function loadVrmGltf(loader, modelUrl, onProgress) {
-  const preload =
-    globalThis.__amojiPreload?.getVrm?.(modelUrl) ??
-    globalThis.__amojiPreload?.ready?.vrm ??
-    null;
+  // Only use a prefetch buffer for the exact model URL — never fall back to the
+  // default boot preload (companion-girl.vrm) or the wrong character appears.
+  const preload = globalThis.__amojiPreload?.getVrm?.(modelUrl) ?? null;
   if (preload) {
     try {
       const buffer = await preload;
@@ -67,15 +70,12 @@ async function loadVrmGltf(loader, modelUrl, onProgress) {
 function frameFaceCamera({ vrm, model, camera, controls, fitted }) {
   const fittedSize = fitted.getSize(new THREE.Vector3());
   const anchor = computeVrmFrameAnchor(vrm, model);
-
-  const portraitDist = Math.max(1.48, fittedSize.y * 1.14);
-  controls.target.copy(anchor);
-  camera.position.set(anchor.x, anchor.y + 0.04, anchor.z + portraitDist);
-  controls.minDistance = portraitDist * 0.72;
-  controls.maxDistance = portraitDist * 3.4;
-  controls.minPolarAngle = Math.PI * 0.32;
-  controls.maxPolarAngle = Math.PI * 0.68;
-  controls.update();
+  const portraitDist = applyUpperBodyPortraitFrame({
+    camera,
+    controls,
+    anchor,
+    fittedHeight: fittedSize.y,
+  });
   return { face: anchor, portraitDist };
 }
 
@@ -117,7 +117,7 @@ export async function createVrmAvatar(opts) {
   }
 
   const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(34, 1, 0.05, 100);
+  const camera = new THREE.PerspectiveCamera(PORTRAIT_FOV, 1, 0.05, 100);
   camera.position.set(0, 1.28, 2.85);
 
   scene.add(new THREE.HemisphereLight(0xffe8dc, 0x1a2030, 1.05));
@@ -337,6 +337,23 @@ export async function createVrmAvatar(opts) {
     return { emotion: em, nuance, blend };
   };
 
+  const tickExpressionBlend = (dt) => {
+    if (!expr) return;
+    const rate = Math.min(1, dt * 9);
+    for (const preset of emotionPresetKeys()) {
+      const target = expressionTarget[preset] ?? 0;
+      const current = expressionCurrent[preset] ?? 0;
+      const next = current + (target - current) * rate;
+      expressionCurrent[preset] = next;
+      if (next > 0.001) {
+        expr.setValue(preset, next);
+      } else {
+        expr.setValue(preset, 0);
+        expressionCurrent[preset] = 0;
+      }
+    }
+  };
+
   const warmExpressionPresets = () => {
     if (!expr) return false;
     for (const preset of emotionPresetKeys()) {
@@ -363,23 +380,6 @@ export async function createVrmAvatar(opts) {
   };
 
   warmExpressionPresets();
-
-  const tickExpressionBlend = (dt) => {
-    if (!expr) return;
-    const rate = Math.min(1, dt * 9);
-    for (const preset of emotionPresetKeys()) {
-      const target = expressionTarget[preset] ?? 0;
-      const current = expressionCurrent[preset] ?? 0;
-      const next = current + (target - current) * rate;
-      expressionCurrent[preset] = next;
-      if (next > 0.001) {
-        expr.setValue(preset, next);
-      } else {
-        expr.setValue(preset, 0);
-        expressionCurrent[preset] = 0;
-      }
-    }
-  };
 
   const resize = () => {
     const w = canvas.clientWidth || canvas.parentElement?.clientWidth || 1;
@@ -555,7 +555,7 @@ export async function createVrmAvatar(opts) {
             fullBodyBlend: camState.fullBodyBlend,
           },
           dt,
-          defaultPortrait.fov,
+          PORTRAIT_FOV,
         );
         portraitCamera.position.copy(desired.position);
         portraitCamera.target.copy(desired.target);

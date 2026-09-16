@@ -1,0 +1,8 @@
+Mikel VRM avatar — ToxSam 100Avatars (CC0)
+
+Source:  https://github.com/ToxSam/open-source-avatars
+Model:   companion-mikel.vrm (100Avatars Mikel)
+Preview: companion-char-mikel.png
+
+License: CC0 1.0 — public domain, no attribution required.
+Used for: Mikel (米高) — easygoing male companion character.

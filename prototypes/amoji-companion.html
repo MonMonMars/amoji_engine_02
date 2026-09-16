@@ -8,9 +8,9 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji · Companion</title>
     <script>
-      window.__amojiBuild = "2026-09-15-v75-gallery-deploy";
+      window.__amojiBuild = "2026-09-16-v86-roster-auto-preload";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-15-v75-gallery-deploy"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-16-v86-roster-auto-preload"></script>
     <link
       rel="preload"
       href="/prototypes/assets/companion-girl.vrm"
@@ -59,65 +59,98 @@
         pointer-events: none;
       }
 
-      .start-character-picker {
+      .companion-picker--start {
         display: flex !important;
         visibility: visible !important;
         opacity: 1 !important;
         position: fixed;
         inset: 0;
-        z-index: 9999;
+        z-index: 12000;
         pointer-events: auto;
-        align-items: center;
+        align-items: flex-end;
         justify-content: center;
-        padding: max(1rem, env(safe-area-inset-top)) 1rem max(1rem, env(safe-area-inset-bottom));
-        background: radial-gradient(
-          ellipse 120% 80% at 50% 20%,
-          rgba(18, 28, 48, 0.94),
-          rgba(6, 8, 14, 0.98)
-        );
-        backdrop-filter: blur(18px);
-        transition: opacity 0.45s ease, transform 0.45s ease;
+        transition: opacity 0.45s ease;
       }
 
-      .start-character-picker.hide {
+      .companion-picker--start.hide {
         opacity: 0;
         pointer-events: none;
-        transform: translateY(12px);
       }
 
-      .start-character-picker.is-starting {
+      .companion-picker--start.is-starting {
         opacity: 0.92;
       }
 
-      .start-picker-panel {
-        width: min(92vw, 720px);
-        max-height: min(92dvh, 820px);
-        overflow: auto;
-        padding: 1.1rem 1rem 1.25rem;
-        border-radius: 1.25rem;
-        border: 1px solid rgba(124, 156, 255, 0.35);
-        background: rgba(10, 14, 22, 0.72);
-        box-shadow: 0 18px 48px rgba(0, 0, 0, 0.42);
+      .companion-picker--start.is-preloading .companion-card {
+        opacity: 0.72;
+        pointer-events: none;
+      }
+
+      .companion-picker--start.is-preloading .companion-card:disabled {
+        cursor: wait;
+      }
+
+      .companion-picker--start .companion-picker-sheet {
+        transform: translateY(0);
+        max-height: min(94dvh, 760px);
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+      }
+
+      .companion-picker--start .companion-picker-head,
+      .companion-picker--start .start-picker-preload,
+      .companion-picker--start .companion-picker-foot {
+        flex-shrink: 0;
+      }
+
+      .start-picker-grid-wrap {
+        position: relative;
+        flex: 1 1 auto;
+        min-height: 0;
+        margin: 0 -0.15rem;
+      }
+
+      .start-picker-grid-wrap.has-overflow::after {
+        content: "";
+        position: sticky;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        display: block;
+        height: 2.2rem;
+        margin-top: -2.2rem;
+        pointer-events: none;
+        background: linear-gradient(
+          180deg,
+          rgba(10, 12, 20, 0),
+          rgba(10, 12, 20, 0.92)
+        );
+      }
+
+      .start-picker-grid-wrap.at-bottom::after {
+        opacity: 0;
+      }
+
+      .companion-picker-grid--start {
+        max-height: min(58dvh, 520px);
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        -webkit-overflow-scrolling: touch;
+        padding: 0 0.15rem 0.35rem;
+        scrollbar-width: thin;
+      }
+
+      .start-picker-scroll-hint {
+        margin: 0.35rem 0 0;
         text-align: center;
+        font-size: 0.66rem;
+        color: rgba(247, 241, 232, 0.58);
+        line-height: 1.35;
       }
 
-      .start-picker-title {
-        margin: 0;
-        font-family: Syne, system-ui, sans-serif;
-        font-size: clamp(1.35rem, 4vw, 1.85rem);
-        font-weight: 800;
-        letter-spacing: -0.03em;
-        color: #f7f1e8;
-      }
-
-      .start-picker-sub {
-        margin: 0.35rem 0 0.85rem;
-        font-size: 0.92rem;
-        color: rgba(247, 241, 232, 0.72);
-      }
-
-      .start-picker-preload {
-        margin: 0 0 1rem;
+      .companion-picker--start .start-picker-preload {
+        margin: 0 0 0.75rem;
       }
 
       .start-picker-preload-track {
@@ -145,27 +178,6 @@
         opacity: 0.45;
       }
 
-      .start-picker-hint {
-        margin: 0.85rem 0 0;
-        font-size: 0.72rem;
-        color: rgba(247, 241, 232, 0.55);
-      }
-
-      .start-picker-grid {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 0.75rem;
-      }
-
-      @media (min-width: 640px) {
-        .start-picker-grid {
-          grid-template-columns: repeat(4, minmax(0, 1fr));
-        }
-      }
-
-      .start-character-picker--full .companion-card {
-        min-height: 11.5rem;
-      }
       .chat-shell {
         position: absolute;
         inset: 0;
@@ -271,7 +283,7 @@
       media="print"
       onload="this.media='all'"
     />
-    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-15-v75-gallery-deploy" />
+    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-16-v86-roster-auto-preload" />
     <noscript>
       <link
         href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap"
@@ -1444,6 +1456,154 @@
         transform: none;
       }
 
+      body.conversation-ui .topbar-actions .topbar-btn,
+      body.conversation-ui .topbar-actions #btn-settings,
+      body.conversation-ui .llm-switcher-wrap,
+      body.conversation-ui #btn-mic,
+      body.conversation-ui .composer .send,
+      body.conversation-ui .composer textarea,
+      body.conversation-ui .cloud-key-banner button {
+        display: none !important;
+      }
+
+      body.conversation-ui .stage.mic-mode .emotion-ball-stack {
+        display: flex !important;
+      }
+
+      body.conversation-ui .listen-hint {
+        width: 100%;
+        text-align: center;
+        font-size: 0.82rem;
+        font-weight: 650;
+        color: rgba(247, 241, 232, 0.9);
+        padding: 0.35rem 0.5rem 0;
+      }
+
+      body.conversation-ui .listen-hint.mic-active {
+        color: rgba(127, 212, 207, 0.95);
+      }
+
+      body.conversation-ui.mic-blocked .composer textarea,
+      body.conversation-ui.mic-blocked .composer .send {
+        display: block !important;
+      }
+
+      body.conversation-ui.mic-blocked .composer textarea {
+        flex: 1;
+        min-height: 2.5rem;
+      }
+
+      .ui-context-pill {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.22rem 0.55rem;
+        border-radius: 999px;
+        font-size: 0.68rem;
+        font-weight: 650;
+        color: rgba(247, 241, 232, 0.88);
+        background: rgba(127, 212, 207, 0.14);
+        border: 1px solid rgba(127, 212, 207, 0.28);
+      }
+
+      .activity-rail {
+        display: flex;
+        flex-direction: column;
+        gap: 0.4rem;
+        padding: 0.25rem 0.85rem 0.45rem;
+        pointer-events: none;
+      }
+
+      .activity-rail__functions,
+      .activity-rail__feed {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.35rem;
+        align-items: center;
+      }
+
+      .activity-rail__process {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.15rem;
+        padding: 0.4rem 0.5rem;
+        border-radius: 0.85rem;
+        background: rgba(127, 212, 207, 0.08);
+        border: 1px solid rgba(127, 212, 207, 0.18);
+      }
+
+      .activity-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.28rem;
+        padding: 0.2rem 0.48rem;
+        border-radius: 999px;
+        font-size: 0.66rem;
+        font-weight: 650;
+        color: rgba(247, 241, 232, 0.9);
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .activity-chip--function {
+        background: rgba(127, 212, 207, 0.12);
+        border-color: rgba(127, 212, 207, 0.28);
+      }
+
+      .activity-chip__icon {
+        font-size: 0.8rem;
+        line-height: 1;
+      }
+
+      .activity-step-wrap {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.1rem;
+      }
+
+      .activity-step {
+        display: inline-flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.1rem;
+        min-width: 2.5rem;
+        opacity: 0.45;
+      }
+
+      .activity-step--active {
+        opacity: 1;
+        transform: scale(1.05);
+      }
+
+      .activity-step--done {
+        opacity: 0.85;
+      }
+
+      .activity-step__icon {
+        font-size: 0.95rem;
+        line-height: 1;
+      }
+
+      .activity-step__label {
+        font-size: 0.56rem;
+        font-weight: 650;
+        color: rgba(247, 241, 232, 0.72);
+        max-width: 4.2rem;
+        text-align: center;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .activity-step--active .activity-step__label {
+        color: rgba(127, 212, 207, 0.95);
+      }
+
+      .activity-step__arrow {
+        font-size: 0.6rem;
+        color: rgba(247, 241, 232, 0.35);
+      }
+
       .topbar-actions {
         display: flex;
         align-items: center;
@@ -1879,16 +2039,28 @@
 
       .companion-picker-grid {
         display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 0.48rem;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 0.38rem;
+      }
+
+      .companion-picker-grid--start {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 0.34rem;
+      }
+
+      @media (min-width: 520px) {
+        .companion-picker-grid--start {
+          grid-template-columns: repeat(5, minmax(0, 1fr));
+        }
       }
 
       @media (max-width: 380px) {
         .companion-picker-grid {
-          grid-template-columns: repeat(2, minmax(0, 1fr));
-        }
-        .start-picker-grid {
           grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .companion-picker-grid--start {
+          grid-template-columns: repeat(4, minmax(0, 1fr));
         }
       }
 
@@ -1921,10 +2093,15 @@
       }
 
       .companion-card--compact {
-        gap: 0.28rem;
-        padding: 0.32rem;
+        gap: 0.22rem;
+        padding: 0.26rem;
         align-items: center;
         text-align: center;
+      }
+
+      .companion-picker-grid--start .companion-card--compact {
+        gap: 0.18rem;
+        padding: 0.22rem;
       }
 
       .companion-card--compact .companion-card-portrait {
@@ -2277,25 +2454,28 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-15-v75-gallery-deploy",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-16-v86-roster-auto-preload",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-15-v75-gallery-deploy"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-16-v86-roster-auto-preload"
         }
       }
     </script>
-    <link rel="modulepreload" href="/amoji-engine/vendor/three.module.js?v=2026-09-15-v75-gallery-deploy" />
-    <link rel="modulepreload" href="/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-15-v75-gallery-deploy" />
+    <link rel="modulepreload" href="/amoji-engine/vendor/three.module.js?v=2026-09-16-v86-roster-auto-preload" />
+    <link rel="modulepreload" href="/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-16-v86-roster-auto-preload" />
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-15-v75-gallery-deploy"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-16-v86-roster-auto-preload"
     />
-    <link rel="modulepreload" href="/amoji-engine/engine/companion/vrmAvatar.js?v=2026-09-15-v75-gallery-deploy" />
-    <link rel="modulepreload" href="/amoji-engine/engine/companion/createAvatar.js?v=2026-09-15-v75-gallery-deploy" />
-    <link rel="prefetch" href="/api/motions?pack=basic" as="fetch" crossorigin />
+    <link rel="modulepreload" href="/amoji-engine/engine/companion/vrmAvatar.js?v=2026-09-16-v86-roster-auto-preload" />
+    <link rel="modulepreload" href="/amoji-engine/engine/companion/gltfAvatar.js?v=2026-09-16-v86-roster-auto-preload" />
+    <link rel="modulepreload" href="/amoji-engine/engine/companion/companionCharacterPreload.js?v=2026-09-16-v86-roster-auto-preload" />
+    <link rel="modulepreload" href="/amoji-engine/engine/companion/companionCharacterCatalog.js?v=2026-09-16-v86-roster-auto-preload" />
+    <link rel="modulepreload" href="/amoji-engine/engine/companion/createAvatar.js?v=2026-09-16-v86-roster-auto-preload" />
+    <link rel="preload" href="/api/motions?pack=basic" as="fetch" crossorigin />
     <link rel="prefetch" href="/api/motions?pack=extensions" as="fetch" crossorigin />
     <link rel="prefetch" href="/api/motions?pack=premium" as="fetch" crossorigin />
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-15-v75-gallery-deploy"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-15-v75-gallery-deploy"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-16-v86-roster-auto-preload"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-16-v86-roster-auto-preload"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;
@@ -2487,7 +2667,7 @@
       })();
     </script>
   </head>
-  <body class="theme-grok-ani">
+  <body class="theme-grok-ani conversation-ui">
     <!-- amoji-build: 2026-09-14-v37-companion-picker — Grok Ani–style character grid -->
     <noscript>
       <div
@@ -2549,6 +2729,7 @@
           </div>
           <div class="pill" id="mode-pill" hidden aria-hidden="true">LLM · <strong>local</strong></div>
           <div class="pill" id="emotion-pill" hidden aria-hidden="true">feel · <strong>neutral</strong></div>
+          <span class="ui-context-pill" id="ui-context-pill" hidden></span>
           <button type="button" class="topbar-btn" id="btn-change-character">
             Change character
           </button>
@@ -2634,6 +2815,7 @@
           <div class="transcript" id="transcript" aria-live="polite"></div>
         </div>
         <div class="composer-wrap">
+          <div class="listen-hint" id="listen-hint" aria-live="polite" hidden></div>
           <div class="emotion-ball-stack is-hidden" id="emotion-ball-stack" aria-hidden="true">
             <div class="emotion-ball" id="emotion-ball" data-ball-state="idle" hidden></div>
             <p class="emotion-ball__caption" id="emotion-ball-caption">Ready · neutral</p>
@@ -2722,6 +2904,8 @@
         actionResolveMod,
         motionCapabilitiesMod,
         voicePickerMod,
+        uiIntentMod,
+        activityRailMod,
       ] = await Promise.all([
         ami("../amoji-engine/engine/companion/createAvatar.js"),
         ami("../amoji-engine/engine/companion/chatLlm.js"),
@@ -2753,6 +2937,8 @@
         ami("../amoji-engine/engine/companion/companionActionResolve.js"),
         ami("../amoji-engine/engine/companion/companionMotionCapabilities.js"),
         ami("../amoji-engine/engine/companion/companionVoicePicker.js"),
+        ami("../amoji-engine/engine/companion/companionUiIntent.js"),
+        ami("../amoji-engine/engine/companion/companionActivityRail.js"),
       ]);
       window.__amojiModuleBooted = true;
       const {
@@ -2794,6 +2980,15 @@
         voicePickerButtonLabel,
       } = voiceCatalogMod;
       const { createCompanionVoicePicker } = voicePickerMod;
+      const {
+        applyUiIntents,
+        buildUiIntentPromptFragment,
+        inferUiIntentFromUserText,
+        mergeUiIntents,
+        parseUiIntentTags,
+        stripUiIntentTags,
+        uiIntentLabel,
+      } = uiIntentMod;
       const {
         analyzeCompanionReply,
         analyzeStreamingReply,
@@ -2935,11 +3130,12 @@
       };
 
       const stripReplyTags = (text) =>
-        String(text || "")
-          .replace(/\s*\[action:\w+\]\s*/gi, "")
-          .replace(/\s*\[nuance:\w+\]\s*/gi, "")
-          .replace(/\s*\[mood:\w+\]\s*$/i, "")
-          .trim();
+        stripUiIntentTags(
+          String(text || "")
+            .replace(/\s*\[action:\w+\]\s*/gi, "")
+            .replace(/\s*\[nuance:\w+\]\s*/gi, "")
+            .replace(/\s*\[mood:\w+\]\s*$/i, ""),
+        );
 
       /** @type {ReturnType<typeof analyzeCompanionReply> | null} */
       let lastAvatarPerformance = null;
@@ -3082,6 +3278,11 @@
       };
 
       const stage = document.querySelector(".stage");
+      const conversationUi = document.body.classList.contains("conversation-ui");
+      const listenHintEl = document.getElementById("listen-hint");
+      if (conversationUi) {
+        stage?.classList.add("mic-mode");
+      }
       let canvas = document.getElementById("avatar-canvas");
       /** @type {ReturnType<typeof createCompanionStartPicker> | null} */
       let startPicker = null;
@@ -3141,6 +3342,13 @@
       }
       let langCode = companionLangCode(params.get("lang") || "yue");
       let isEnglish = langCode === "en";
+
+      if (conversationUi && listenHintEl) {
+        listenHintEl.hidden = false;
+        listenHintEl.textContent = isEnglish
+          ? "Speak, pause — I'll reply and switch views for you"
+          : "講完停一停 — 我會答同幫你轉頁";
+      }
 
       const micUi = createCompanionMicButton(btnMic, {
         emotion: "neutral",
@@ -3341,6 +3549,18 @@
       const beginAvatarLoad = () => {
         if (avatarLoadStarted) return avatarLoadPromise;
         avatarLoadStarted = true;
+        const loadForCharacterId = characterId;
+        const loadConfig = characterAvatarConfig(loadForCharacterId, langCode);
+        const modelUrlForLoad =
+          params.get("vrm") ||
+          params.get("model3d") ||
+          loadConfig.modelUrl;
+        const preferForLoad =
+          params.get("avatar") === "gltf" || loadConfig.avatarPrefer === "gltf"
+            ? "gltf"
+            : "vrm";
+        avatarModelUrl = modelUrlForLoad;
+        avatarPrefer = preferForLoad;
         showAvatarLoadPill();
         waitAct?.start({
           kind: "avatar-load",
@@ -3353,8 +3573,8 @@
         void prefetchBasicMotionPack({ coupled: true });
         avatarLoadPromise = createCompanionAvatar({
           canvas,
-          modelUrl: avatarModelUrl || undefined,
-          prefer: avatarPrefer,
+          modelUrl: modelUrlForLoad || undefined,
+          prefer: preferForLoad,
           onCharacterTap: () => handleCharacterTap?.(),
           onProgress: (pct, _label) => {
             waitAct?.update({
@@ -3370,6 +3590,18 @@
           },
         })
           .then((loaded) => {
+            if (loadForCharacterId !== characterId) {
+              console.warn(
+                "[companion] avatar load finished for stale character",
+                loadForCharacterId,
+                "current",
+                characterId,
+              );
+              if (avatarKind === "loading") {
+                void hotSwapCharacter(characterId);
+              }
+              return loaded;
+            }
             avatar = loaded.avatar;
             avatarKind = loaded.kind;
             if (loaded.canvas) canvas = loaded.canvas;
@@ -3427,7 +3659,11 @@
 
       const buildSessionSystemPrompt = (charId, english) => {
         const base = buildCharacterSystemPrompt(charId, english);
-        return motionCapabilityExtra ? `${base} ${motionCapabilityExtra}` : base;
+        const uiRules = buildUiIntentPromptFragment(english, {
+          surface: "companion",
+        });
+        const parts = [base, uiRules, motionCapabilityExtra].filter(Boolean);
+        return parts.join(" ");
       };
 
       const chat = createCompanionChat({
@@ -3721,7 +3957,7 @@
         if (!canIdleShowcase()) return;
         tickIdleShowcase();
         if (idleShowcaseTimer) return;
-        idleShowcaseTimer = setInterval(tickIdleShowcase, 12000);
+        idleShowcaseTimer = setInterval(tickIdleShowcase, 7000);
       };
 
       const autosize = () => {
@@ -3737,6 +3973,32 @@
         syncEmotionBall();
       };
 
+      const syncListenHint = () => {
+        if (!conversationUi || !listenHintEl) return;
+        listenHintEl.classList.toggle("mic-active", voice.micOn);
+        if (document.body.classList.contains("mic-blocked")) {
+          listenHintEl.textContent = isEnglish
+            ? "Microphone blocked — type here instead"
+            : "麥克風不可用 — 可以打字";
+          return;
+        }
+        listenHintEl.textContent = voice.micOn
+          ? isEnglish
+            ? "Listening…"
+            : "聽緊…"
+          : busy
+            ? isEnglish
+              ? "Thinking…"
+              : "諗緊…"
+            : voice.speaking
+              ? isEnglish
+                ? "Speaking…"
+                : "講緊…"
+              : isEnglish
+                ? "Speak, pause — I'll reply and switch views for you"
+                : "講完停一停 — 我會答同幫你轉頁";
+      };
+
       const syncMicBtn = () => {
         micUi.sync({
           micOn: voice.micOn,
@@ -3744,13 +4006,14 @@
           assistantActive: voice.assistantOutputActive,
           disabled: btnMic.disabled,
         });
-        stage.classList.toggle("mic-mode", voice.micOn);
-        if (!voice.micOn) {
+        stage.classList.toggle("mic-mode", conversationUi || voice.micOn);
+        if (!voice.micOn && !conversationUi) {
           micUi.reset();
           emotionBall.reset();
         }
         syncEmotionBall();
         updateEmotionBallVisibility();
+        syncListenHint();
         if (voice.micOn) scrollTranscript(true);
         voice.setKeepMicDuringSpeak?.(
           phaseAEnabled && voice.micOn && !shouldPauseMicDuringTts(),
@@ -3975,7 +4238,7 @@
         voice,
         progress: progressDock,
         isEnglish,
-        poseIntervalMs: 6200,
+        poseIntervalMs: 4500,
       });
 
       const warmWaitDialogue = () => {
@@ -4127,23 +4390,24 @@
       };
 
       const beginStartWithCharacter = async (nextId) => {
-        if (sessionStarted || sessionStarting) return;
         const picked = nextId || characterId;
         const previousId = characterId;
+        if (sessionStarted || sessionStarting) {
+          if (picked !== characterId) {
+            await hotSwapCharacter(picked);
+          }
+          return;
+        }
         startPicker?.setStarting?.(true);
         applyCharacterSession(picked, { announce: false });
         startPicker?.setSelected?.(picked);
         releaseUnselectedCharacterCache(picked);
-        if (!liteMode && !avatarLoadStarted) {
-          beginAvatarLoad();
-        } else if (
-          picked &&
-          picked !== previousId &&
-          avatarLoadStarted &&
-          avatar &&
-          avatarKind !== "loading"
-        ) {
-          await hotSwapCharacter(picked);
+        if (!liteMode) {
+          if (!avatarLoadStarted) {
+            beginAvatarLoad();
+          } else if (picked !== previousId) {
+            await hotSwapCharacter(picked);
+          }
         }
         startSession({ characterId: picked });
       };
@@ -4152,7 +4416,6 @@
         root: document.body,
         isEnglish,
         selectedId: characterId,
-        fullPage: true,
         onStart: (nextId) => {
           window.__amojiUnlockAudio?.();
           dismissLoading();
@@ -4169,14 +4432,15 @@
       const syncRosterPreloadUi = () => {
         const roster = globalThis.__amojiPreload?.rosterReady;
         if (!roster) return;
+        const applyPct = (ratio) => {
+          if (typeof ratio !== "number" || Number.isNaN(ratio)) return;
+          startPicker?.setPreloadProgress?.(
+            Math.max(0, Math.min(100, Math.round(ratio * 100))),
+          );
+        };
+        applyPct(globalThis.__amojiRosterPreloadPct ?? 0);
         const poll = setInterval(() => {
-          const modPct =
-            typeof globalThis.__amojiRosterPreloadPct === "number"
-              ? globalThis.__amojiRosterPreloadPct
-              : null;
-          if (modPct != null) {
-            startPicker?.setPreloadProgress?.(modPct * 100);
-          }
+          applyPct(globalThis.__amojiRosterPreloadPct);
         }, 180);
         roster
           .then(() => {
@@ -4303,10 +4567,71 @@
         });
       };
 
+      const { createCompanionActivityRail } = activityRailMod;
+      const activityRail = createCompanionActivityRail(document, {
+        isEnglish,
+        mount: document.querySelector(".topbar"),
+      });
+
+      const uiContextPill = document.getElementById("ui-context-pill");
+
+      const updateUiContextPill = (applied = []) => {
+        if (!uiContextPill) return;
+        const labels = applied.map((i) => uiIntentLabel(i, isEnglish)).filter(Boolean);
+        if (!labels.length) return;
+        uiContextPill.hidden = false;
+        uiContextPill.textContent = labels.join(" · ");
+        activityRail.showFunctions(applied);
+      };
+
+      const companionUiHandlers = {
+        switchCharacter: async (id) => {
+          if (id === characterId) return;
+          if (!sessionStarted) {
+            await beginStartWithCharacter(id);
+            return;
+          }
+          await hotSwapCharacter(id);
+        },
+        openCharacterPicker: () => openCharacterPicker(),
+        openSettings: () => openSettings(),
+        openVoicePicker: () => {
+          voicePicker.setSelectedId(voiceId);
+          voicePicker.open();
+        },
+        switchLanguage: async (lang) => {
+          applyLanguage(lang === "en" ? "en" : "yue");
+        },
+        setMic: async (on) => {
+          if (on && !voice.micOn) btnMic?.click();
+          if (!on && voice.micOn) btnMic?.click();
+        },
+        closeOverlays: () => {
+          characterPicker?.close?.();
+          voicePicker?.close?.();
+          closeSettings();
+        },
+        onContextChange: (ctx) => {
+          const applied = [];
+          if (ctx.character) applied.push({ type: "character", value: ctx.character });
+          updateUiContextPill(applied);
+        },
+      };
+
+      const applyConversationUi = async (userMsg, rawReply) => {
+        const fromUser = inferUiIntentFromUserText(userMsg, isEnglish);
+        const fromTags = rawReply ? parseUiIntentTags(rawReply).intents : [];
+        const intents = mergeUiIntents(fromUser, fromTags);
+        const { applied } = await applyUiIntents(intents, companionUiHandlers);
+        updateUiContextPill(applied);
+      };
+
       const runTurn = async (text, { fromMic = false } = {}) => {
         const cleaned = String(text || "").trim();
         if (!cleaned) return;
         if (handleUserStopCommand(cleaned)) return;
+        void applyConversationUi(cleaned, null);
+        activityRail.pulse("🎤", isEnglish ? "Heard" : "聽到");
         if (busy) {
           if (phaseAEnabled && fromMic) {
             abortActiveTurn("mic-barge");
@@ -4346,6 +4671,7 @@
         avatar.prepareThinkingFromUser?.(cleaned, isEnglish);
         setEmotionPill(avatar.emotion || "thinking");
         status.thinking();
+        activityRail.pulse("💭", isEnglish ? "Thinking" : "諗緊");
         waitAct?.start({
           kind: "thinking",
           phase: "thinking",
@@ -4454,6 +4780,7 @@
           voice.stopThinkingLoop?.();
           waitAct?.stop();
           avatar.setThinking?.(false);
+          await applyConversationUi(cleaned, result.raw || reply);
           let content = applyReplyPerformance(
             result.raw || reply,
             result.emotion || "happy",
@@ -4617,6 +4944,7 @@
       const requestMicAsync = () => {
         if (!autoMic || !voice.supportsMic) {
           if (!voice.supportsMic) {
+            if (conversationUi) document.body.classList.add("mic-blocked");
             addBubble(
               "system",
               isEnglish
@@ -4624,35 +4952,49 @@
                 : "此瀏覽器唔支援麥克風 — 請用 Chrome/Edge，或打字傾偈。",
             );
           }
+          syncListenHint();
           return;
         }
         void voice.primeMicPermission().then(() =>
           voice.startMic().then((micOk) => {
+            if (micOk) {
+              document.body.classList.remove("mic-blocked");
+            } else if (conversationUi) {
+              document.body.classList.add("mic-blocked");
+            }
             syncMicBtn();
             if (micOk) {
               status.listening();
               avatar.setEmotion("neutral");
               setEmotionPill("neutral");
               syncListenPose();
-              input.placeholder =
-                "Listening… speak, pause → she replies, then listens again";
-              addBubble(
-                "system",
-                isEnglish
-                  ? "Mic on — speak, pause to send."
-                  : "Mic on — speak Cantonese or English, pause to send.",
-              );
+              if (!conversationUi) {
+                input.placeholder =
+                  "Listening… speak, pause → she replies, then listens again";
+                addBubble(
+                  "system",
+                  isEnglish
+                    ? "Mic on — speak, pause to send."
+                    : "Mic on — speak Cantonese or English, pause to send.",
+                );
+              }
             } else if (!busy) {
               status.idle();
-              addBubble(
-                "system",
-                isEnglish
-                  ? "Mic blocked — tap 🎤 and allow microphone, or type below."
-                  : "麥克風被封鎖 — 按 🎤 允許麥克風，或直接打字。",
-              );
+              if (!conversationUi) {
+                addBubble(
+                  "system",
+                  isEnglish
+                    ? "Mic blocked — allow microphone in browser settings, then refresh."
+                    : "麥克風被封鎖 — 請喺瀏覽器設定允許麥克風，然後重新載入。",
+                );
+              }
               input.placeholder = isEnglish
-                ? "Type to chat… or tap 🎤 after allowing microphone"
-                : "打字傾偈… 或按 🎤 允許麥克風";
+                ? conversationUi
+                  ? "Type here if mic is unavailable…"
+                  : "Allow microphone to talk…"
+                : conversationUi
+                  ? "麥克風不可用 — 可以打字"
+                  : "允許麥克風就可以講嘢…";
             }
           }),
         );
@@ -4699,7 +5041,14 @@
         addBubble("system", isEnglish ? "Ready." : "已開始。");
       };
 
-      window.__amojiStart.run = (opts = {}) => void startSession(opts);
+      window.__amojiStart.run = (opts = {}) => {
+        const id = opts.characterId || characterId;
+        if (id && id !== characterId) {
+          void beginStartWithCharacter(id);
+          return;
+        }
+        void startSession(opts);
+      };
 
       syncSpeakerBtn();
       syncMicBtn();

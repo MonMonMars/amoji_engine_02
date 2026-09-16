@@ -1,0 +1,8 @@
+Kate VRM avatar — ToxSam 100Avatars (CC0)
+
+Source:  https://github.com/ToxSam/open-source-avatars
+Model:   companion-kate.vrm (100Avatars Kate)
+Preview: companion-char-kate.png
+
+License: CC0 1.0 — public domain, no attribution required.
+Used for: Kate (凱特) — confident go-getter companion character.
