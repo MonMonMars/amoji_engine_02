@@ -15,6 +15,10 @@ import {
   applyOrbitFollowAnchor,
   computeGltfFrameAnchor,
 } from "./companionCameraFollow.js";
+import {
+  PORTRAIT_FOV,
+  applyUpperBodyPortraitFrame,
+} from "./companionPortraitFraming.js";
 import { sampleIdleBodyMotion } from "./companionIdleMotion.js";
 
 export const GLTF_AVATAR_SCHEMA = "amoji.gltfAvatar.v1";
@@ -73,7 +77,7 @@ export async function createGltfAvatar(opts) {
   }
 
   const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(28, 1, 0.05, 100);
+  const camera = new THREE.PerspectiveCamera(PORTRAIT_FOV, 1, 0.05, 100);
   camera.position.set(0, 1.35, 2.35);
 
   scene.add(new THREE.HemisphereLight(0xffe8dc, 0x1a2030, 1.05));
@@ -174,21 +178,13 @@ export async function createGltfAvatar(opts) {
     if (headBone) return;
     if (/head|face|neck/i.test(obj.name) && obj.isBone) headBone = obj;
   });
-  const face = new THREE.Vector3();
-  if (headBone) {
-    model.updateWorldMatrix(true, true);
-    headBone.getWorldPosition(face);
-  } else {
-    face.set(0, fitted.min.y + fittedSize.y * 0.88, 0);
-  }
-  const portraitDist = Math.max(0.42, fittedSize.y * 0.34);
-  controls.target.copy(face);
-  camera.position.set(face.x, face.y + 0.02, face.z + portraitDist);
-  controls.minDistance = portraitDist * 0.72;
-  controls.maxDistance = portraitDist * 2.8;
-  controls.minPolarAngle = Math.PI * 0.44;
-  controls.maxPolarAngle = Math.PI * 0.56;
-  controls.update();
+  const anchor = computeGltfFrameAnchor(model, headBone);
+  applyUpperBodyPortraitFrame({
+    camera,
+    controls,
+    anchor,
+    fittedHeight: fittedSize.y,
+  });
 
   /** @type {THREE.AnimationMixer | null} */
   let mixer = null;
