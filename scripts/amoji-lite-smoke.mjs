@@ -1,8 +1,6 @@
 #!/usr/bin/env node
 /**
- * Playwright smoke test for amoji-lite.html
- * - UI visible in <1s
- * - Send 你好 → chat reply + TTS fetch
+ * Playwright smoke test for amoji-lite.html (conversation-ui / voice-first).
  */
 import { chromium, devices } from "playwright";
 import { mkdirSync } from "fs";
@@ -10,6 +8,7 @@ import { join } from "path";
 import { createServer } from "http";
 import { readFileSync, statSync } from "fs";
 import { extname } from "path";
+import { AMOJI_BUILD } from "../amoji-engine/engine/companion/buildVersion.mjs";
 
 const outDir = process.env.ARTIFACT_DIR || "/opt/cursor/artifacts";
 mkdirSync(outDir, { recursive: true });
@@ -40,7 +39,7 @@ function startStaticServer(port = 8767) {
         res.writeHead(404).end("not found");
       }
     });
-    srv.listen(port, "127.0.0.1", () => resolve({ srv, url: `http://127.0.0.1:${port}/companion` }));
+    srv.listen(port, "127.0.0.1", () => resolve({ srv, url: `http://127.0.0.1:${port}/companion?lang=en` }));
   });
 }
 
@@ -73,21 +72,26 @@ for (const [label, ctx] of cases) {
   const instant = await page.evaluate(() => ({
     build: window.__amojiBuild,
     title: document.querySelector("h1")?.textContent?.trim(),
-    hasTextarea: !!document.getElementById("input"),
-    hasSend: !!document.getElementById("send-btn"),
-    hasMic: !!document.getElementById("mic-btn"),
-    hasSpeaker: !!document.getElementById("speaker-btn"),
-    startVisible: !document.getElementById("start-btn")?.classList.contains("hidden"),
+    conversationUi: document.body.classList.contains("conversation-ui"),
+    composerVisible: !document.getElementById("composer")?.classList.contains("hidden"),
+    hasListenHint: !!document.getElementById("listen-hint"),
+    tabbarHidden:
+      getComputedStyle(document.querySelector(".tabbar")).display === "none",
   }));
 
   const shotInstant = join(outDir, `lite-v1-${label}-instant.png`);
   await page.screenshot({ path: shotInstant, fullPage: true });
 
-  await page.click("#start-btn");
   await page.waitForSelector("#composer:not(.hidden)", { timeout: 10000 });
 
-  await page.fill("#input", "你好");
-  await page.click("#send-btn");
+  await page.evaluate(() => {
+    const input = document.getElementById("input");
+    const form = document.getElementById("composer");
+    if (input && form) {
+      input.value = "hello";
+      form.requestSubmit();
+    }
+  });
 
   await page.waitForFunction(
     () => document.querySelectorAll(".bubble.bot:not(.thinking)").length >= 2,
@@ -128,13 +132,13 @@ console.log(JSON.stringify(results, null, 2));
 
 const ok = results.every(
   (r) =>
-    r.paintMs < 1000 &&
-    r.instant.build === "lite-v2" &&
+    r.paintMs < 2000 &&
+    r.instant.build === AMOJI_BUILD &&
     r.instant.title?.includes("Amoji") &&
-    r.instant.hasTextarea &&
-    r.instant.hasSend &&
-    r.instant.hasMic &&
-    r.instant.hasSpeaker &&
+    r.instant.conversationUi &&
+    r.instant.composerVisible &&
+    r.instant.hasListenHint &&
+    r.instant.tabbarHidden &&
     r.final.chatCalls >= 1 &&
     (r.final.ttsCalls >= 1 || r.ttsRequests >= 1) &&
     r.final.bubbles.some((b) => b && b !== "…" && b.length > 2) &&

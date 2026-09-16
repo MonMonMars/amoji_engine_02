@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import * as THREE from "three";
-import { applyOrbitFollowAnchor } from "../engine/companion/companionCameraFollow.js";
+import {
+  applyOrbitFollowAnchor,
+  smoothFrameAnchor,
+} from "../engine/companion/companionCameraFollow.js";
 
 describe("companionCameraFollow", () => {
   it("moves camera with orbit target to preserve framing", () => {
@@ -17,6 +20,16 @@ describe("companionCameraFollow", () => {
     expect(camera.position.x).toBeCloseTo(0.4);
     expect(camera.position.y).toBeCloseTo(1.6);
     expect(camera.position.z).toBeCloseTo(2.8);
+  });
+
+  it("smooths anchor jitter over time", () => {
+    const smoothed = new THREE.Vector3(0, 1, 0);
+    const next = new THREE.Vector3(0.2, 1.1, 0.05);
+    smoothFrameAnchor(smoothed, next, 1 / 60, 0.2);
+    expect(smoothed.x).toBeGreaterThan(0);
+    expect(smoothed.x).toBeLessThan(next.x);
+    expect(smoothed.y).toBeGreaterThan(1);
+    expect(smoothed.y).toBeLessThan(next.y);
   });
 
   it("skips when anchor already matches target", () => {

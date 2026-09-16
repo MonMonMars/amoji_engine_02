@@ -16,23 +16,28 @@ export const COMPANION_IDLE_MOTION_SCHEMA = "amoji.companionIdleMotion.v1";
 export function sampleIdleBodyMotion(elapsedSec, opts = {}) {
   const t = elapsedSec;
   const listening = Boolean(opts.listening);
-  const breath = Math.sin(t * 0.92);
-  const sway = Math.sin(t * 0.48 + 0.6);
-  const weight = Math.sin(t * 0.34 + 1.4);
+  const breath = Math.sin(t * 1.05);
+  const sway = Math.sin(t * 0.58 + 0.6);
+  const weight = Math.sin(t * 0.42 + 1.4);
+  const bob = Math.sin(t * 0.88 + 0.3);
   const energy = listening ? 1.08 : 1;
-  const amp = 0.88;
+  const amp = 1.05;
 
   return {
-    headX: (breath * 0.022 + Math.sin(t * 0.41) * 0.014) * energy * amp,
-    headZ: (sway * 0.03 + weight * 0.026) * energy * amp,
-    leanY: (weight * 0.048 + Math.sin(t * 0.72) * 0.018) * energy * amp,
-    spineX: 0.012 + breath * 0.018 * energy * amp,
-    chestX: -0.01 + breath * 0.011 * energy * amp,
-    hipZ: weight * 0.038 * energy * amp,
-    armLiftL: 0.05 + Math.sin(t * 0.62 + 0.4) * 0.062 * energy * amp,
-    armLiftR: 0.05 + Math.sin(t * 0.58 + 1.1) * 0.058 * energy * amp,
-    forearmL: Math.max(0, Math.sin(t * 0.76 + 0.2) * 0.044 * energy * amp),
-    forearmR: Math.max(0, Math.sin(t * 0.72 + 0.9) * 0.042 * energy * amp),
+    headX: (breath * 0.034 + Math.sin(t * 0.52) * 0.022) * energy * amp,
+    headZ: (sway * 0.048 + weight * 0.038) * energy * amp,
+    leanY: (weight * 0.072 + bob * 0.028) * energy * amp,
+    spineX: 0.016 + breath * 0.028 * energy * amp,
+    chestX: -0.008 + breath * 0.018 * energy * amp,
+    hipZ: weight * 0.058 * energy * amp,
+    armLiftL: 0.03 + Math.sin(t * 0.78 + 0.4) * 0.055 * energy * amp,
+    armLiftR: 0.03 + Math.sin(t * 0.72 + 1.1) * 0.052 * energy * amp,
+    forearmL: Math.max(0, Math.sin(t * 0.94 + 0.2) * 0.04 * energy * amp),
+    forearmR: Math.max(0, Math.sin(t * 0.88 + 0.9) * 0.038 * energy * amp),
+    upperLegL: Math.sin(t * 0.44 + 0.5) * 0.028 * energy * amp,
+    upperLegR: Math.sin(t * 0.44 + 2.0) * 0.028 * energy * amp,
+    lowerLegL: Math.max(0, Math.sin(t * 0.62) * 0.02 * energy * amp),
+    lowerLegR: Math.max(0, Math.sin(t * 0.62 + 1.2) * 0.02 * energy * amp),
   };
 }
 
@@ -49,11 +54,11 @@ export function sampleIdleExpressionBlend(elapsedSec, emotion = "neutral") {
 
   /** @type {Record<string, number>} */
   const blend = {
-    Relaxed: 0.2 + breath * 0.28,
+    Relaxed: 0.24 + breath * 0.34,
   };
 
   if (e === "happy" || e === "neutral") {
-    blend.Happy = 0.1 + flutter * 0.22;
+    blend.Happy = 0.12 + flutter * 0.28;
   } else if (e === "thinking") {
     blend.Relaxed = 0.34 + breath * 0.2;
   } else if (e === "sad") {
@@ -84,14 +89,26 @@ export function advanceIdleBeat(state, dt, nowMs) {
 
   if (!beat && nowMs >= nextAt) {
     const roll = Math.random();
-    if (roll < 0.34) beat = "nod";
-    else if (roll < 0.58) beat = "look";
-    else if (roll < 0.8) beat = "shift";
-    else beat = "fidget";
+    if (roll < 0.24) beat = "nod";
+    else if (roll < 0.44) beat = "look";
+    else if (roll < 0.62) beat = "shift";
+    else if (roll < 0.8) beat = "fidget";
+    else if (roll < 0.9) beat = "breathe";
+    else beat = "sway";
     phase = 0;
     duration =
-      beat === "nod" ? 1.15 : beat === "look" ? 1.85 : beat === "shift" ? 2.1 : 1.55;
-    nextAt = nowMs + 5200 + Math.random() * 7600;
+      beat === "nod"
+        ? 0.95
+        : beat === "look"
+          ? 1.45
+          : beat === "shift"
+            ? 1.75
+            : beat === "fidget"
+              ? 1.35
+              : beat === "breathe"
+                ? 2.2
+                : 1.65;
+    nextAt = nowMs + 1600 + Math.random() * 2800;
   }
 
   if (beat) {
@@ -102,22 +119,40 @@ export function advanceIdleBeat(state, dt, nowMs) {
 
     switch (beat) {
       case "nod":
-        overlay.headX = -0.09 * Math.sin(p * Math.PI);
-        overlay.leanY = wave * 0.018 * env;
+        overlay.headX = -0.12 * Math.sin(p * Math.PI);
+        overlay.leanY = wave * 0.028 * env;
         break;
       case "look":
-        overlay.headZ = Math.sin(p * Math.PI) * 0.08 * env;
-        overlay.headX = wave * 0.028 * env;
+        overlay.headZ = Math.sin(p * Math.PI) * 0.11 * env;
+        overlay.headX = wave * 0.038 * env;
         break;
       case "shift":
-        overlay.hipZ = Math.sin(p * Math.PI) * 0.055 * env;
-        overlay.leanY = wave * 0.038 * env;
-        overlay.spineX = 0.016 * wave * env;
+        overlay.hipZ = Math.sin(p * Math.PI) * 0.075 * env;
+        overlay.leanY = wave * 0.052 * env;
+        overlay.spineX = 0.024 * wave * env;
+        overlay.upperLegL = wave * 0.04 * env;
+        overlay.upperLegR = -wave * 0.035 * env;
         break;
       case "fidget":
-        overlay.armLiftL = wave * 0.07 * env;
-        overlay.forearmL = wave * 0.048 * env;
-        overlay.headZ = Math.sin(p * Math.PI * 2) * 0.028 * env;
+        overlay.armLiftL = wave * 0.1 * env;
+        overlay.armLiftR = wave * 0.06 * env;
+        overlay.forearmL = wave * 0.068 * env;
+        overlay.forearmR = wave * 0.045 * env;
+        overlay.headZ = Math.sin(p * Math.PI * 2) * 0.038 * env;
+        break;
+      case "breathe":
+        overlay.spineX = 0.03 * wave * env;
+        overlay.chestX = 0.022 * wave * env;
+        overlay.leanY = Math.sin(p * Math.PI) * 0.024 * env;
+        overlay.armLiftL = wave * 0.045 * env;
+        overlay.armLiftR = wave * 0.045 * env;
+        break;
+      case "sway":
+        overlay.headZ = Math.sin(p * Math.PI * 2) * 0.06 * env;
+        overlay.hipZ = Math.sin(p * Math.PI) * 0.05 * env;
+        overlay.leanY = wave * 0.044 * env;
+        overlay.armLiftL = 0.04 + wave * 0.05 * env;
+        overlay.armLiftR = 0.04 + wave * 0.05 * env;
         break;
       default:
         break;
@@ -145,6 +180,6 @@ export function createIdleBeatState(nowMs = performance.now()) {
     beat: null,
     phase: 0,
     duration: 0,
-    nextAt: nowMs + 2500 + Math.random() * 3500,
+    nextAt: nowMs + 900 + Math.random() * 1400,
   };
 }

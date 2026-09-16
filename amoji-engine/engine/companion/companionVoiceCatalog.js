@@ -96,6 +96,18 @@ export function voiceGenderLabel(voiceId, langCode, englishUi = false) {
 }
 
 /**
+ * Full voice name for picker buttons (not gender-only).
+ * @param {string} voiceId
+ * @param {"yue" | "en"} langCode
+ * @param {boolean} [englishUi]
+ */
+export function voicePickerButtonLabel(voiceId, langCode, englishUi = false) {
+  const label = voiceShortLabel(voiceId, langCode, englishUi);
+  const gender = voiceGenderLabel(voiceId, langCode, englishUi);
+  return englishUi ? `${label} (${gender})` : `${label}·${gender}`;
+}
+
+/**
  * @param {string} voiceId
  */
 export function cloudVoiceLabel(voiceId) {

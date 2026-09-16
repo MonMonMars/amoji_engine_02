@@ -1,6 +1,6 @@
 /**
  * Preload all companion character models + preview images at boot;
- * release unused VRM buffers after the user picks one.
+ * release unused model buffers after the user picks one.
  */
 import { listCompanionCharacters } from "./companionCharacterCatalog.js";
 import {
@@ -9,13 +9,26 @@ import {
 } from "./companionPreload.js";
 
 export const COMPANION_CHARACTER_PRELOAD_SCHEMA =
-  "amoji.companionCharacterPreload.v1";
+  "amoji.companionCharacterPreload.v3";
+
+/** Gallery-priority preview count warmed before the rest of the roster. */
+export const PRIORITY_PREVIEW_COUNT = 6;
+
+const PREVIEW_PROGRESS_WEIGHT = 0.22;
+const MODEL_PROGRESS_WEIGHT = 0.78;
 
 let rosterPreloadProgress = 0;
+/** @type {Promise<{ ok: boolean, results?: unknown[] }> | null} */
+let rosterModelsPreloadPromise = null;
 
 /** @returns {number} 0..1 */
 export function getRosterPreloadProgress() {
   return rosterPreloadProgress;
+}
+
+/** @returns {Promise<{ ok: boolean, results?: unknown[] }> | null} */
+export function getRosterModelsPreloadPromise() {
+  return rosterModelsPreloadPromise;
 }
 
 /**
@@ -24,7 +37,12 @@ export function getRosterPreloadProgress() {
 export function uniqueCharacterModelUrls(langCode = "yue") {
   const urls = new Set();
   for (const item of listCompanionCharacters(langCode)) {
-    if (item.modelUrl) urls.add(item.modelUrl);
+    if (
+      item.modelUrl &&
+      /\.(vrm|glb)($|\?)/i.test(item.modelUrl)
+    ) {
+      urls.add(item.modelUrl);
+    }
   }
   return [...urls];
 }
@@ -41,17 +59,55 @@ export function uniqueCharacterPreviewUrls(langCode = "yue") {
 }
 
 /**
- * @param {string[]} urls
+ * Inject `<link rel="prefetch">` hints for roster previews + models.
+ * @param {"yue" | "en"} [langCode]
  */
-export function preloadPreviewImages(urls) {
+export function injectRosterAssetHints(langCode = "yue") {
+  if (typeof document === "undefined") return;
+  const urls = [
+    ...uniqueCharacterPreviewUrls(langCode),
+    ...uniqueCharacterModelUrls(langCode),
+  ];
+  for (const url of urls) {
+    if (document.querySelector(`link[data-amoji-roster-hint="${url}"]`)) continue;
+    const link = document.createElement("link");
+    link.rel = "prefetch";
+    link.dataset.amojiRosterHint = url;
+    if (/\.(png|jpe?g|webp|gif)($|\?)/i.test(url)) {
+      link.as = "image";
+    } else {
+      link.as = "fetch";
+      link.crossOrigin = "anonymous";
+    }
+    link.href = url;
+    document.head.appendChild(link);
+  }
+}
+
+/**
+ * @param {string[]} urls
+ * @param {(done: number, total: number) => void} [onProgress]
+ */
+export function preloadPreviewImages(urls, onProgress) {
   if (typeof Image === "undefined") return Promise.resolve({ ok: true, count: 0 });
+  const total = urls.length;
+  if (!total) {
+    onProgress?.(0, 0);
+    return Promise.resolve({ ok: true, count: 0 });
+  }
+  let done = 0;
   const jobs = urls.map(
     (url) =>
       new Promise((resolve) => {
         const img = new Image();
         img.decoding = "async";
-        img.onload = () => resolve(true);
-        img.onerror = () => resolve(false);
+        const finish = (ok) => {
+          done += 1;
+          onProgress?.(done, total);
+          resolve(ok);
+        };
+        img.onload = () => finish(true);
+        img.onerror = () => finish(false);
         img.src = url;
       }),
   );
@@ -68,46 +124,121 @@ export function preloadPreviewImages(urls) {
  *   onProgress?: (ratio: number, url: string) => void,
  * }} [opts]
  */
+function reportCombinedProgress(
+  previewDone,
+  previewTotal,
+  modelDone,
+  modelTotal,
+  onProgress,
+  lastUrl,
+) {
+  const previewRatio = previewTotal ? previewDone / previewTotal : 1;
+  const modelRatio = modelTotal ? modelDone / modelTotal : 1;
+  rosterPreloadProgress =
+    previewRatio * PREVIEW_PROGRESS_WEIGHT + modelRatio * MODEL_PROGRESS_WEIGHT;
+  onProgress?.(rosterPreloadProgress, lastUrl);
+}
+
 export async function startCharacterRosterPreload(opts = {}) {
   const langCode = opts.langCode === "en" ? "en" : "yue";
   const modelUrls = uniqueCharacterModelUrls(langCode);
   const previewUrls = uniqueCharacterPreviewUrls(langCode);
+  const priorityPreviewUrls = previewUrls.slice(0, PRIORITY_PREVIEW_COUNT);
+  const deferredPreviewUrls = previewUrls.slice(PRIORITY_PREVIEW_COUNT);
   const fetchImpl =
     opts.fetchImpl ||
     (typeof globalThis.fetch === "function"
       ? globalThis.fetch.bind(globalThis)
       : null);
 
-  void preloadPreviewImages(previewUrls);
+  let previewDone = 0;
+  let modelDone = 0;
+  rosterPreloadProgress = 0;
+  opts.onProgress?.(0, "");
 
-  if (!fetchImpl || !modelUrls.length) {
-    return { ok: true, models: [], previews: previewUrls.length };
+  if (typeof document !== "undefined") {
+    scheduleCompanionAssetHints(langCode);
   }
 
-  let done = 0;
-  rosterPreloadProgress = 0;
-  const results = await Promise.all(
-    modelUrls.map(async (url) => {
+  rosterModelsPreloadPromise = (async () => {
+    const priorityPreviewResult = await preloadPreviewImages(
+      priorityPreviewUrls,
+      (done) => {
+        previewDone = done;
+        reportCombinedProgress(
+          previewDone,
+          previewUrls.length,
+          modelDone,
+          modelUrls.length,
+          opts.onProgress,
+          "",
+        );
+      },
+    );
+    opts.onPreviewsReady?.();
+
+    void preloadPreviewImages(deferredPreviewUrls, (done) => {
+      previewDone = priorityPreviewUrls.length + done;
+      reportCombinedProgress(
+        previewDone,
+        previewUrls.length,
+        modelDone,
+        modelUrls.length,
+        opts.onProgress,
+        "",
+      );
+    });
+
+    if (!fetchImpl || !modelUrls.length) {
+      rosterPreloadProgress = 1;
+      opts.onProgress?.(1, "");
+      return { ok: Boolean(priorityPreviewResult.ok), results: [] };
+    }
+
+    const results = [];
+    for (const url of modelUrls) {
       try {
         await preloadVrmBuffer(url, fetchImpl);
-        return { url, ok: true };
+        results.push({ url, ok: true });
       } catch (err) {
-        return { url, ok: false, error: err?.message || String(err) };
+        results.push({ url, ok: false, error: err?.message || String(err) });
       } finally {
-        done += 1;
-        rosterPreloadProgress = done / modelUrls.length;
-        opts.onProgress?.(rosterPreloadProgress, url);
+        modelDone += 1;
+        reportCombinedProgress(
+          previewDone,
+          previewUrls.length,
+          modelDone,
+          modelUrls.length,
+          opts.onProgress,
+          url,
+        );
       }
-    }),
-  );
-  rosterPreloadProgress = 1;
+    }
+    rosterPreloadProgress = 1;
+    opts.onProgress?.(1, "");
+    return { ok: results.some((r) => r.ok), results };
+  })();
 
   return {
-    ok: results.some((r) => r.ok),
+    ok: true,
+    phase: "background",
     models: modelUrls,
-    results,
     previews: previewUrls.length,
+    modelsLoading: rosterModelsPreloadPromise,
   };
+}
+
+/**
+ * Defer full roster prefetch hints so they do not compete with chat boot.
+ * @param {"yue" | "en"} langCode
+ */
+export function scheduleCompanionAssetHints(langCode = "yue") {
+  const run = () => injectRosterAssetHints(langCode);
+  if (typeof globalThis.requestIdleCallback === "function") {
+    globalThis.requestIdleCallback(run, { timeout: 4000 });
+    return;
+  }
+  globalThis.setTimeout?.(run, 120);
 }
 
 /**

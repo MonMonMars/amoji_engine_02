@@ -49,8 +49,10 @@ export const COMPANION_BODY_SCHEMA = "amoji.companionBody.v1";
 
 /**
  * @param {import('@pixiv/three-vrm').VRMHumanoid | null | undefined} humanoid
+ * @param {{ armRestRotations?: typeof VRM_ARM_REST_ROTATIONS }} [opts]
  */
-export function createCompanionBodyMotion(humanoid) {
+export function createCompanionBodyMotion(humanoid, opts = {}) {
+  let armRestRotations = opts.armRestRotations || VRM_ARM_REST_ROTATIONS;
   let emotion = "neutral";
   let nuance = "none";
   let thinking = false;
@@ -88,7 +90,6 @@ export function createCompanionBodyMotion(humanoid) {
   let onActionComplete = null;
 
   const bone = (name) => humanoid?.getNormalizedBoneNode?.(name) || null;
-  const rawBone = (name) => humanoid?.getRawBoneNode?.(name) || null;
 
   const setEmotion = (next) => {
     emotion = String(next || "neutral").toLowerCase();
@@ -369,27 +370,25 @@ export function createCompanionBodyMotion(humanoid) {
   ];
 
   const applyBoneRotation = (name, rot) => {
-    if (!rot) return;
-    for (const b of [bone(name), rawBone(name)]) {
-      if (!b) continue;
-      b.rotation.x = rot.x ?? 0;
-      b.rotation.y = rot.y ?? 0;
-      b.rotation.z = rot.z ?? 0;
-    }
+    const b = bone(name);
+    if (!b || !rot) return;
+    b.rotation.x = rot.x ?? 0;
+    b.rotation.y = rot.y ?? 0;
+    b.rotation.z = rot.z ?? 0;
   };
 
   const applyArmRest = () => {
     for (const name of ARM_BONE_NAMES) {
-      applyBoneRotation(name, VRM_ARM_REST_ROTATIONS[name]);
+      applyBoneRotation(name, armRestRotations[name]);
     }
   };
 
   const applyPointArms = (pose, k) => {
     const safe = clampArmPose(pose);
-    const restL = VRM_ARM_REST_ROTATIONS.leftUpperArm;
-    const restR = VRM_ARM_REST_ROTATIONS.rightUpperArm;
-    const restLl = VRM_ARM_REST_ROTATIONS.leftLowerArm;
-    const restRl = VRM_ARM_REST_ROTATIONS.rightLowerArm;
+    const restL = armRestRotations.leftUpperArm;
+    const restR = armRestRotations.rightUpperArm;
+    const restLl = armRestRotations.leftLowerArm;
+    const restRl = armRestRotations.rightLowerArm;
     const liftL = Math.min(0.22, (safe.armLiftL ?? 0) * k);
     const liftR = Math.min(0.22, (safe.armLiftR ?? 0) * k);
     const foreL = Math.min(0.18, (safe.forearmL ?? 0) * k);
@@ -418,21 +417,21 @@ export function createCompanionBodyMotion(humanoid) {
 
   const applyActionArms = (pose, k) => {
     const safe = clampActionPose(pose);
-    const restL = VRM_ARM_REST_ROTATIONS.leftUpperArm;
-    const restR = VRM_ARM_REST_ROTATIONS.rightUpperArm;
-    const restLl = VRM_ARM_REST_ROTATIONS.leftLowerArm;
-    const restRl = VRM_ARM_REST_ROTATIONS.rightLowerArm;
+    const restL = armRestRotations.leftUpperArm;
+    const restR = armRestRotations.rightUpperArm;
+    const restLl = armRestRotations.leftLowerArm;
+    const restRl = armRestRotations.rightLowerArm;
     const liftL = Math.min(0.82, (safe.armLiftL ?? 0) * k);
     const liftR = Math.min(0.82, (safe.armLiftR ?? 0) * k);
     const foreL = Math.min(0.62, (safe.forearmL ?? 0) * k);
     const foreR = Math.min(0.62, (safe.forearmR ?? 0) * k);
     applyBoneRotation("leftUpperArm", {
-      x: restL.x + Math.sin(actionPhase * Math.PI * 2) * 0.03 * k,
+      x: restL.x,
       y: restL.y,
       z: restL.z + liftL * 0.75,
     });
     applyBoneRotation("rightUpperArm", {
-      x: restR.x + Math.sin(actionPhase * Math.PI * 2 + 1.2) * 0.03 * k,
+      x: restR.x,
       y: restR.y,
       z: restR.z - liftR * 0.75,
     });
@@ -450,10 +449,10 @@ export function createCompanionBodyMotion(humanoid) {
 
   const applyTalkArms = (pose, k) => {
     const safe = clampArmPose(pose);
-    const restL = VRM_ARM_REST_ROTATIONS.leftUpperArm;
-    const restR = VRM_ARM_REST_ROTATIONS.rightUpperArm;
-    const restLl = VRM_ARM_REST_ROTATIONS.leftLowerArm;
-    const restRl = VRM_ARM_REST_ROTATIONS.rightLowerArm;
+    const restL = armRestRotations.leftUpperArm;
+    const restR = armRestRotations.rightUpperArm;
+    const restLl = armRestRotations.leftLowerArm;
+    const restRl = armRestRotations.rightLowerArm;
     const liftL = Math.min(0.14, (safe.armLiftL ?? 0) * k);
     const liftR = Math.min(0.14, (safe.armLiftR ?? 0) * k);
     const foreL = Math.min(0.12, (safe.forearmL ?? 0) * k);
@@ -599,11 +598,11 @@ export function createCompanionBodyMotion(humanoid) {
         pose.headZ = (pose.headZ || 0) + Math.sin(elapsed * 0.42 + 0.8) * 0.018;
       } else if (!talking) {
         const idleMotion = sampleIdleBodyMotion(elapsed, { listening, emotion });
-        pose = mergePoses(pose, idleMotion, listening ? 0.88 : 0.82);
+        pose = mergePoses(pose, idleMotion, listening ? 0.96 : 0.92);
         const beat = advanceIdleBeat(idleBeatState, dt, now);
         idleBeatState = beat.state;
         if (beat.overlay && Object.keys(beat.overlay).length) {
-          pose = mergePoses(pose, beat.overlay, 0.78);
+          pose = mergePoses(pose, beat.overlay, 0.9);
         }
       } else {
         talkTime += dt;
@@ -733,6 +732,24 @@ export function createCompanionBodyMotion(humanoid) {
     },
     getRootMotion() {
       return smoothedRootMotion;
+    },
+    snapToRestPose() {
+      smoothedPose = buildBasePose({ listening, emotion, nuance });
+      smoothedRootMotion = { y: 0, rotY: 0 };
+      applyPose(smoothedPose, 1, {
+        allowArms: false,
+        actionArms: false,
+        talkArmBlend: 0,
+      });
+      return smoothedPose;
+    },
+    setArmRestRotations(next) {
+      if (!next) return armRestRotations;
+      armRestRotations = next;
+      return armRestRotations;
+    },
+    get armRestRotations() {
+      return armRestRotations;
     },
   };
 }

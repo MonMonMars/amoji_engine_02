@@ -28,18 +28,21 @@ describe("companionTtsProsody", () => {
 
   it("applies character-specific prosody bias", () => {
     const calm = resolveCompanionTtsProsody({
-      emotion: "happy",
-      text: "你好呀。",
+      emotion: "thinking",
+      talkStyle: "thinking",
+      speechEnergy: 0.45,
+      text: "嗯，我明白你的意思，讓我慢慢整理一下。",
       characterId: "sora",
     });
     const hype = resolveCompanionTtsProsody({
-      emotion: "happy",
-      text: "你好呀。",
+      emotion: "thinking",
+      talkStyle: "thinking",
+      speechEnergy: 0.45,
+      text: "嗯，我明白你的意思，讓我慢慢整理一下。",
       characterId: "kizuna",
     });
-    const calmRate = Number(calm.edge.rate.replace(/[^0-9-]/g, ""));
-    const hypeRate = Number(hype.edge.rate.replace(/[^0-9-]/g, ""));
-    expect(hypeRate).toBeGreaterThan(calmRate);
+    expect(hype.browser.rate).toBeGreaterThan(calm.browser.rate);
+    expect(hype.browser.pitch).toBeGreaterThan(calm.browser.pitch);
   });
 
   it("slows thinking delivery", () => {
@@ -65,9 +68,8 @@ describe("companionTtsProsody", () => {
       talkStyle: "question",
       text: "你係咪想知呀？",
     });
-    const stmtPitch = Number(statement.edge.pitch.replace(/[^0-9-]/g, ""));
-    const qPitch = Number(question.edge.pitch.replace(/[^0-9-]/g, ""));
-    expect(qPitch).toBeGreaterThan(stmtPitch);
+    expect(question.browser.pitch).toBeGreaterThan(statement.browser.pitch);
+    expect(question.browser.rate).toBeGreaterThanOrEqual(statement.browser.rate);
   });
 
   it("builds Cantonese instruct lines", () => {

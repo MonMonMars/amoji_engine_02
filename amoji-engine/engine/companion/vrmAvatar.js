@@ -13,9 +13,21 @@ import {
 import {
   applyOrbitFollowAnchor,
   computeVrmFrameAnchor,
+  smoothFrameAnchor,
 } from "./companionCameraFollow.js";
+import {
+  PORTRAIT_FOV,
+  applyUpperBodyPortraitFrame,
+  detectPortraitCameraZSign,
+  isHeadFacingCamera,
+  portraitDistanceForHeight,
+} from "./companionPortraitFraming.js";
+import { actionLoops } from "./companionActionMotion.js";
+import { detectVrmArmRestRotations } from "./companionArmRestCalibration.js";
 import { createCompanionBodyMotion } from "./companionBodyMotion.js";
 import { buildVrmExpressionBlend } from "./companionContentMotion.js";
+import { resolveOnlineMotionClipUrl } from "./companionOnlineMotionClips.mjs";
+import { createVrmMotionPlayer } from "./companionVrmMotionPlayer.js";
 import { sampleIdleExpressionBlend } from "./companionIdleMotion.js";
 import { configureVrmSpringStability } from "./vrmSpringStability.js";
 
@@ -44,10 +56,9 @@ const VRM_BLEND_PRESET_MAP = {
  * @param {(ratio: number, label?: string) => void} [onProgress]
  */
 async function loadVrmGltf(loader, modelUrl, onProgress) {
-  const preload =
-    globalThis.__amojiPreload?.getVrm?.(modelUrl) ??
-    globalThis.__amojiPreload?.ready?.vrm ??
-    null;
+  // Only use a prefetch buffer for the exact model URL — never fall back to the
+  // default boot preload (companion-girl.vrm) or the wrong character appears.
+  const preload = globalThis.__amojiPreload?.getVrm?.(modelUrl) ?? null;
   if (preload) {
     try {
       const buffer = await preload;
@@ -67,16 +78,17 @@ async function loadVrmGltf(loader, modelUrl, onProgress) {
 function frameFaceCamera({ vrm, model, camera, controls, fitted }) {
   const fittedSize = fitted.getSize(new THREE.Vector3());
   const anchor = computeVrmFrameAnchor(vrm, model);
-
-  const portraitDist = Math.max(1.48, fittedSize.y * 1.14);
-  controls.target.copy(anchor);
-  camera.position.set(anchor.x, anchor.y + 0.04, anchor.z + portraitDist);
-  controls.minDistance = portraitDist * 0.72;
-  controls.maxDistance = portraitDist * 3.4;
-  controls.minPolarAngle = Math.PI * 0.32;
-  controls.maxPolarAngle = Math.PI * 0.68;
-  controls.update();
-  return { face: anchor, portraitDist };
+  const head = vrm.humanoid?.getNormalizedBoneNode?.("head");
+  const distGuess = portraitDistanceForHeight(fittedSize.y);
+  const cameraZSign = detectPortraitCameraZSign(head, anchor, distGuess);
+  const portraitDist = applyUpperBodyPortraitFrame({
+    camera,
+    controls,
+    anchor,
+    fittedHeight: fittedSize.y,
+    cameraZSign,
+  });
+  return { face: anchor, portraitDist, cameraZSign };
 }
 
 /**
@@ -117,7 +129,7 @@ export async function createVrmAvatar(opts) {
   }
 
   const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(34, 1, 0.05, 100);
+  const camera = new THREE.PerspectiveCamera(PORTRAIT_FOV, 1, 0.05, 100);
   camera.position.set(0, 1.28, 2.85);
 
   scene.add(new THREE.HemisphereLight(0xffe8dc, 0x1a2030, 1.05));
@@ -202,11 +214,27 @@ export async function createVrmAvatar(opts) {
   model.position.z = -center.z * scale;
   model.position.y = -box.min.y * scale;
   const baseModelY = model.position.y;
-  const baseModelRotY = model.rotation.y;
+  let baseModelRotY = model.rotation.y;
   scene.add(model);
   vrm.humanoid?.resetNormalizedPose?.();
   configureVrmSpringStability(vrm);
   const bodyMotion = createCompanionBodyMotion(vrm.humanoid);
+  /** @type {string | null} */
+  let vrmaAction = null;
+  const restoreAfterVrma = () => {
+    vrmaAction = null;
+    motionPlayer.releasePose?.();
+    vrm.humanoid?.resetNormalizedPose?.();
+    bodyMotion.snapToRestPose?.();
+    syncHumanoidPose();
+  };
+
+  const motionPlayer = createVrmMotionPlayer({
+    vrm,
+    onComplete: () => {
+      restoreAfterVrma();
+    },
+  });
 
   const syncHumanoidPose = () => {
     try {
@@ -216,20 +244,47 @@ export async function createVrmAvatar(opts) {
     }
   };
 
-  for (let i = 0; i < 4; i += 1) {
-    bodyMotion.update(1 / 60);
-    syncHumanoidPose();
-    vrm.update(1 / 60);
-  }
-
+  const frameAnchor = new THREE.Vector3();
+  const smoothedFrameAnchor = new THREE.Vector3();
   const fitted = new THREE.Box3().setFromObject(model);
-  const { face: faceAnchor, portraitDist } = frameFaceCamera({
+  let {
+    face: faceAnchor,
+    portraitDist,
+    cameraZSign: portraitCameraZSign,
+  } = frameFaceCamera({
     vrm,
     model,
     camera,
     controls,
     fitted,
   });
+  const headBone = vrm.humanoid?.getNormalizedBoneNode?.("head");
+  if (!isHeadFacingCamera(headBone, camera)) {
+    model.rotation.y += Math.PI;
+    vrm.humanoid?.resetNormalizedPose?.();
+    const refitted = new THREE.Box3().setFromObject(model);
+    const reframed = frameFaceCamera({
+      vrm,
+      model,
+      camera,
+      controls,
+      fitted: refitted,
+    });
+    faceAnchor = reframed.face;
+    portraitDist = reframed.portraitDist;
+    portraitCameraZSign = reframed.cameraZSign;
+    baseModelRotY = model.rotation.y;
+  }
+
+  bodyMotion.setArmRestRotations?.(detectVrmArmRestRotations(vrm));
+  bodyMotion.snapToRestPose?.();
+  for (let i = 0; i < 4; i += 1) {
+    bodyMotion.update(1 / 60);
+    syncHumanoidPose();
+    vrm.update(1 / 60);
+  }
+  faceLight.position.set(0.2, 1.55, portraitCameraZSign * 1.4);
+  smoothedFrameAnchor.copy(faceAnchor);
   /** @type {{ position: THREE.Vector3, target: THREE.Vector3, fov: number, distance: number }} */
   const portraitCamera = {
     position: camera.position.clone(),
@@ -250,7 +305,6 @@ export async function createVrmAvatar(opts) {
     portraitCamera.distance = camera.position.distanceTo(controls.target);
   };
   const cameraDirector = createCompanionCameraDirector();
-  const frameAnchor = new THREE.Vector3();
   const raycaster = new THREE.Raycaster();
   const pointer = new THREE.Vector2();
   /** @type {{ x: number, y: number } | null} */
@@ -337,6 +391,23 @@ export async function createVrmAvatar(opts) {
     return { emotion: em, nuance, blend };
   };
 
+  const tickExpressionBlend = (dt) => {
+    if (!expr) return;
+    const rate = Math.min(1, dt * 9);
+    for (const preset of emotionPresetKeys()) {
+      const target = expressionTarget[preset] ?? 0;
+      const current = expressionCurrent[preset] ?? 0;
+      const next = current + (target - current) * rate;
+      expressionCurrent[preset] = next;
+      if (next > 0.001) {
+        expr.setValue(preset, next);
+      } else {
+        expr.setValue(preset, 0);
+        expressionCurrent[preset] = 0;
+      }
+    }
+  };
+
   const warmExpressionPresets = () => {
     if (!expr) return false;
     for (const preset of emotionPresetKeys()) {
@@ -364,23 +435,6 @@ export async function createVrmAvatar(opts) {
 
   warmExpressionPresets();
 
-  const tickExpressionBlend = (dt) => {
-    if (!expr) return;
-    const rate = Math.min(1, dt * 9);
-    for (const preset of emotionPresetKeys()) {
-      const target = expressionTarget[preset] ?? 0;
-      const current = expressionCurrent[preset] ?? 0;
-      const next = current + (target - current) * rate;
-      expressionCurrent[preset] = next;
-      if (next > 0.001) {
-        expr.setValue(preset, next);
-      } else {
-        expr.setValue(preset, 0);
-        expressionCurrent[preset] = 0;
-      }
-    }
-  };
-
   const resize = () => {
     const w = canvas.clientWidth || canvas.parentElement?.clientWidth || 1;
     const h = canvas.clientHeight || canvas.parentElement?.clientHeight || 1;
@@ -398,7 +452,62 @@ export async function createVrmAvatar(opts) {
   const setListening = (on) => bodyMotion.setListening(on);
 
   const playGesture = (style) => bodyMotion.playGesture(style);
+
+  const tryPlayVrmaAction = async (action, opts = {}) => {
+    const key = String(action || "").toLowerCase();
+    if (!key || key === "none" || key === "stop") return false;
+    if (!resolveOnlineMotionClipUrl(key)) return false;
+
+    bodyMotion.stopAction();
+    const loop = opts.loop ?? actionLoops(key);
+    const ok = await motionPlayer.play(key, { loop });
+    if (!ok) return false;
+
+    vrmaAction = key;
+    if (opts.emotion && opts.emotion !== "neutral") {
+      emotion = opts.emotion;
+      bodyMotion.setEmotion?.(emotion);
+    } else {
+      emotion = bodyMotion.emotion;
+    }
+    applyEmotionExpressions(emotion);
+    return true;
+  };
+
   const playAction = (action, opts = {}) => {
+    const key = String(action || "").toLowerCase();
+    if (!key || key === "stop") {
+      motionPlayer.stop();
+      vrmaAction = null;
+      const ok = bodyMotion.playAction(action, {
+        emotion: opts.emotion || emotion,
+        loop: opts.loop,
+        loopSequence: opts.loopSequence,
+        single: opts.single,
+        maxMoves: opts.maxMoves,
+      });
+      emotion = bodyMotion.emotion;
+      applyEmotionExpressions(emotion);
+      return ok;
+    }
+
+    if (resolveOnlineMotionClipUrl(key)) {
+      void tryPlayVrmaAction(key, opts).then((ok) => {
+        if (!ok) {
+          bodyMotion.playAction(action, {
+            emotion: opts.emotion || emotion,
+            loop: opts.loop,
+            loopSequence: opts.loopSequence,
+            single: opts.single,
+            maxMoves: opts.maxMoves,
+          });
+          emotion = bodyMotion.emotion;
+          applyEmotionExpressions(emotion);
+        }
+      });
+      return true;
+    }
+
     const ok = bodyMotion.playAction(action, {
       emotion: opts.emotion || emotion,
       loop: opts.loop,
@@ -410,7 +519,22 @@ export async function createVrmAvatar(opts) {
     applyEmotionExpressions(emotion);
     return ok;
   };
+
   const playActionSequence = (actions, opts = {}) => {
+    const sequence = Array.isArray(actions)
+      ? actions.map((id) => String(id || "").toLowerCase()).filter(Boolean)
+      : [];
+    if (
+      sequence.length === 1 &&
+      resolveOnlineMotionClipUrl(sequence[0])
+    ) {
+      void tryPlayVrmaAction(sequence[0], {
+        emotion: opts.emotion || emotion,
+        loop: opts.loopSequence,
+      });
+      return true;
+    }
+
     const ok = bodyMotion.playActionSequence(actions, {
       emotion: opts.emotion || emotion,
       loopSequence: opts.loopSequence,
@@ -419,8 +543,14 @@ export async function createVrmAvatar(opts) {
     applyEmotionExpressions(emotion);
     return ok;
   };
+
   const stopAction = () => {
+    motionPlayer.stop();
+    vrmaAction = null;
     const ok = bodyMotion.stopAction();
+    vrm.humanoid?.resetNormalizedPose?.();
+    bodyMotion.snapToRestPose?.();
+    syncHumanoidPose();
     applyEmotionExpressions(emotion);
     return ok;
   };
@@ -526,36 +656,56 @@ export async function createVrmAvatar(opts) {
   const frame = () => {
     const dt = clock.getDelta();
     const now = performance.now();
+    const vrmaPlaying = Boolean(vrmaAction && motionPlayer.isPlaying?.());
+    if (vrmaAction && !vrmaPlaying) {
+      restoreAfterVrma();
+    }
+    const activeMotion = vrmaAction || bodyMotion.currentAction;
     try {
-      bodyMotion.update(dt, { talking, now });
-      const root = bodyMotion.getRootMotion?.() || { y: 0, rotY: 0 };
-      model.position.y = baseModelY + (root.y || 0);
-      model.rotation.y = baseModelRotY + (root.rotY || 0);
-
+      if (!vrmaPlaying) {
+        bodyMotion.update(dt, { talking, now });
+      }
+      motionPlayer.update(dt);
+      if (!vrmaAction) {
+        const root = bodyMotion.getRootMotion?.() || { y: 0, rotY: 0 };
+        model.position.y = baseModelY + (root.y || 0);
+        model.rotation.y = baseModelRotY + (root.rotY || 0);
+      } else {
+        model.position.y = baseModelY;
+        model.rotation.y = baseModelRotY;
+      }
       if (vrm.lookAt) {
-        vrm.lookAt.autoUpdate = !bodyMotion.currentAction;
+        vrm.lookAt.autoUpdate = !activeMotion;
       }
       syncHumanoidPose();
       vrm.update(dt);
 
       computeVrmFrameAnchor(vrm, model, frameAnchor);
-      applyOrbitFollowAnchor(controls, camera, frameAnchor);
-      faceAnchor.copy(frameAnchor);
+      if (smoothedFrameAnchor.lengthSq() < 1e-6) {
+        smoothedFrameAnchor.copy(frameAnchor);
+      } else {
+        smoothFrameAnchor(smoothedFrameAnchor, frameAnchor, dt);
+      }
+      faceAnchor.copy(smoothedFrameAnchor);
 
-      cameraDirector.setCurrentAction(bodyMotion.currentAction);
+      cameraDirector.setCurrentAction(activeMotion);
       const camState = cameraDirector.update(dt);
+      if (!camState.autoActive) {
+        applyOrbitFollowAnchor(controls, camera, smoothedFrameAnchor);
+      }
       if (camState.autoActive) {
         const desired = applyAutoCameraFrame(
           controls,
           camera,
-          frameAnchor,
+          smoothedFrameAnchor,
           portraitDist,
           {
             talkCloseBlend: camState.talkCloseBlend,
             fullBodyBlend: camState.fullBodyBlend,
           },
           dt,
-          defaultPortrait.fov,
+          PORTRAIT_FOV,
+          portraitCameraZSign,
         );
         portraitCamera.position.copy(desired.position);
         portraitCamera.target.copy(desired.target);
@@ -568,7 +718,7 @@ export async function createVrmAvatar(opts) {
       console.warn("[vrm] frame update failed", err);
     }
 
-    if (!talking && !bodyMotion.currentAction && !bodyMotion.thinking) {
+    if (!talking && !activeMotion && !bodyMotion.thinking) {
       const idleBlend = sampleIdleExpressionBlend(
         (now - t0) * 0.001,
         emotion,
@@ -710,7 +860,10 @@ export async function createVrmAvatar(opts) {
       return emotion;
     },
     get currentAction() {
-      return bodyMotion.currentAction;
+      return vrmaAction || bodyMotion.currentAction;
+    },
+    warmMotionClip(actionId) {
+      return motionPlayer.warmClip(actionId);
     },
     get mouthOpen() {
       return mouthOpen;

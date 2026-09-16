@@ -1,0 +1,8 @@
+Lydia VRM avatar — ToxSam 100Avatars (CC0)
+
+Source:  https://github.com/ToxSam/open-source-avatars
+Model:   companion-lydia.vrm (100Avatars Lydia)
+Preview: companion-char-lydia.png
+
+License: CC0 1.0 — public domain, no attribution required.
+Used for: Lydia (莉迪) — elegant thoughtful companion character.

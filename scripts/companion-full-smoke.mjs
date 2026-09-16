@@ -19,7 +19,7 @@ function parseArg(name, fallback) {
 async function main() {
   const url = parseArg(
     "--url",
-    "http://127.0.0.1:5173/prototypes/amoji-companion.html?automic=0",
+    "http://127.0.0.1:5173/prototypes/amoji-companion.html?automic=0&pick=1",
   );
 
   const browser = await chromium.launch({
@@ -30,10 +30,14 @@ async function main() {
 
   await page.goto(url, { waitUntil: "domcontentloaded", timeout: 45000 });
   await page.waitForSelector("#start-character-picker .companion-card", { timeout: 20000 });
+  await page.waitForSelector(
+    "#start-character-picker .companion-card:not([disabled])",
+    { timeout: 90000 },
+  );
 
   const build = await page.evaluate(() => window.__amojiBuild);
   const t0 = Date.now();
-  await page.click("#start-character-picker .companion-card");
+  await page.click("#start-character-picker .companion-card:not([disabled])");
 
   await page.waitForFunction(
     () => {
@@ -49,8 +53,15 @@ async function main() {
   );
   const readyMs = Date.now() - t0;
 
-  await page.fill("#input", "Hello Amoji");
-  await page.click("#send");
+  await page.evaluate(() => {
+    document.body.classList.add("mic-blocked");
+    const input = document.getElementById("input");
+    const form = document.getElementById("composer");
+    if (input && form) {
+      input.value = "Hello Amoji";
+      form.requestSubmit();
+    }
+  });
   await page.waitForSelector(".msg-row.user .bubble", { timeout: 8000 });
 
   await page.waitForFunction(
