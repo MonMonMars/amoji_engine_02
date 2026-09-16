@@ -15,10 +15,17 @@ const PREVIEW_PROGRESS_WEIGHT = 0.22;
 const MODEL_PROGRESS_WEIGHT = 0.78;
 
 let rosterPreloadProgress = 0;
+/** @type {Promise<{ ok: boolean, results?: unknown[] }> | null} */
+let rosterModelsPreloadPromise = null;
 
 /** @returns {number} 0..1 */
 export function getRosterPreloadProgress() {
   return rosterPreloadProgress;
+}
+
+/** @returns {Promise<{ ok: boolean, results?: unknown[] }> | null} */
+export function getRosterModelsPreloadPromise() {
+  return rosterModelsPreloadPromise;
 }
 
 /**
@@ -184,15 +191,29 @@ export async function startCharacterRosterPreload(opts = {}) {
     return { ok: results.some((r) => r.ok), results };
   })();
 
-  const [previewResult, modelResult] = await Promise.all([previewJob, modelJob]);
-  rosterPreloadProgress = 1;
-  opts.onProgress?.(1, "");
+  const previewResult = await previewJob;
+  reportCombinedProgress(
+    previewDone,
+    previewUrls.length,
+    0,
+    modelUrls.length,
+    opts.onProgress,
+    "",
+  );
+  opts.onPreviewsReady?.();
+
+  rosterModelsPreloadPromise = modelJob.then((modelResult) => {
+    rosterPreloadProgress = 1;
+    opts.onProgress?.(1, "");
+    return modelResult;
+  });
 
   return {
-    ok: Boolean(previewResult.ok || modelResult.ok),
+    ok: Boolean(previewResult.ok),
+    phase: "previews",
     models: modelUrls,
-    results: modelResult.results,
     previews: previewResult.count ?? previewUrls.length,
+    modelsLoading: rosterModelsPreloadPromise,
   };
 }
 

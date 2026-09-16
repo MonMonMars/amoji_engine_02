@@ -217,6 +217,14 @@ if (shouldAutoBoot && !rosterPreloadPromise) {
         onProgress: (ratio) => {
           globalThis.__amojiRosterPreloadPct = ratio;
         },
+        onPreviewsReady: () => {
+          globalThis.__amojiRosterPreviewsReady = true;
+        },
+      }).then((result) => {
+        if (result?.modelsLoading) {
+          globalThis.__amojiRosterModelsReady = result.modelsLoading;
+        }
+        return result;
       });
     })
     .catch(() => null);
