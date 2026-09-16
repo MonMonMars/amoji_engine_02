@@ -20,8 +20,8 @@ export function sampleIdleBodyMotion(elapsedSec, opts = {}) {
   const sway = Math.sin(t * 0.58 + 0.6);
   const weight = Math.sin(t * 0.42 + 1.4);
   const bob = Math.sin(t * 0.88 + 0.3);
-  const energy = listening ? 1.12 : 1;
-  const amp = 1.42;
+  const energy = listening ? 1.08 : 1;
+  const amp = 1.05;
 
   return {
     headX: (breath * 0.034 + Math.sin(t * 0.52) * 0.022) * energy * amp,
@@ -30,10 +30,10 @@ export function sampleIdleBodyMotion(elapsedSec, opts = {}) {
     spineX: 0.016 + breath * 0.028 * energy * amp,
     chestX: -0.008 + breath * 0.018 * energy * amp,
     hipZ: weight * 0.058 * energy * amp,
-    armLiftL: 0.07 + Math.sin(t * 0.78 + 0.4) * 0.095 * energy * amp,
-    armLiftR: 0.07 + Math.sin(t * 0.72 + 1.1) * 0.09 * energy * amp,
-    forearmL: Math.max(0, Math.sin(t * 0.94 + 0.2) * 0.068 * energy * amp),
-    forearmR: Math.max(0, Math.sin(t * 0.88 + 0.9) * 0.064 * energy * amp),
+    armLiftL: 0.03 + Math.sin(t * 0.78 + 0.4) * 0.055 * energy * amp,
+    armLiftR: 0.03 + Math.sin(t * 0.72 + 1.1) * 0.052 * energy * amp,
+    forearmL: Math.max(0, Math.sin(t * 0.94 + 0.2) * 0.04 * energy * amp),
+    forearmR: Math.max(0, Math.sin(t * 0.88 + 0.9) * 0.038 * energy * amp),
     upperLegL: Math.sin(t * 0.44 + 0.5) * 0.028 * energy * amp,
     upperLegR: Math.sin(t * 0.44 + 2.0) * 0.028 * energy * amp,
     lowerLegL: Math.max(0, Math.sin(t * 0.62) * 0.02 * energy * amp),
