@@ -17,6 +17,7 @@ import {
   smoothFrameAnchor,
 } from "./companionCameraFollow.js";
 import {
+  PORTRAIT_CAMERA_Z_SIGN,
   PORTRAIT_FOV,
   applyUpperBodyPortraitFrame,
   detectPortraitCameraZSign,
@@ -191,7 +192,7 @@ export async function createGltfAvatar(opts) {
   model.position.z = -center.z * scale;
   model.position.y = -box.min.y * scale;
   const baseModelY = model.position.y;
-  const baseModelRotY = model.rotation.y;
+  let baseModelRotY = model.rotation.y;
   scene.add(model);
 
   const fitted = new THREE.Box3().setFromObject(model);
@@ -217,6 +218,7 @@ export async function createGltfAvatar(opts) {
   });
   if (!isHeadFacingCamera(headBone, camera)) {
     model.rotation.y += Math.PI;
+    baseModelRotY = model.rotation.y;
     const refitted = new THREE.Box3().setFromObject(model);
     const refAnchor = computeGltfFrameAnchor(model, headBone);
     portraitCameraZSign = detectPortraitCameraZSign(
