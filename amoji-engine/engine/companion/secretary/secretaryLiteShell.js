@@ -160,6 +160,14 @@ export function initAmojiSecretaryLite(doc = document) {
         prefsUpdated: "Preferences updated",
         draftCopied: "Draft copied",
         typeFallback: "Type here if mic is unavailable",
+        setup: "Setup",
+        setupApp: "App",
+        setupPrefs: "Preferences",
+        closeSetup: "Close setup",
+        setupSpeakerOn: "Speaker: on",
+        setupSpeakerOff: "Speaker: off",
+        setup3d: "3D companion",
+        panelMeHint: "Open Setup from the header for language, voice, and preferences.",
       }
     : {
         appTitle: "Amoji 秘書",
@@ -220,6 +228,14 @@ export function initAmojiSecretaryLite(doc = document) {
         prefsUpdated: "已更新偏好",
         draftCopied: "草稿已複製",
         typeFallback: "麥克風不可用 — 可以打字",
+        setup: "設定",
+        setupApp: "應用",
+        setupPrefs: "偏好",
+        closeSetup: "關閉設定",
+        setupSpeakerOn: "喇叭：開",
+        setupSpeakerOff: "喇叭：關",
+        setup3d: "3D 同伴",
+        panelMeHint: "喺頂部按「設定」可以改語言、語音同偏好。",
       };
 
   const els = {
@@ -257,6 +273,14 @@ export function initAmojiSecretaryLite(doc = document) {
     prefHelpWith: doc.getElementById("pref-help-with"),
     prefTone: doc.getElementById("pref-tone"),
     prefReminders: doc.getElementById("pref-reminders"),
+    setup: doc.getElementById("setup"),
+    setupBackdrop: doc.getElementById("setup-backdrop"),
+    setupClose: doc.getElementById("setup-close"),
+    btnOpenSetup: doc.getElementById("btn-open-setup"),
+    setupBtnLang: doc.getElementById("setup-btn-lang"),
+    setupBtnVoice: doc.getElementById("setup-btn-voice"),
+    setupLink3d: doc.getElementById("setup-link-3d"),
+    setupBtnSpeaker: doc.getElementById("setup-btn-speaker"),
   };
 
   function setStatus(text) {
@@ -640,6 +664,9 @@ export function initAmojiSecretaryLite(doc = document) {
         voiceId: defaultVoiceForLang(targetLang, voiceId),
       });
     },
+    openSettings: () => {
+      openSetup();
+    },
     onContextChange: (ctx) => {
       /** @type {import("../companionUiIntent.js").UiIntent[]} */
       const applied = [];
@@ -984,6 +1011,10 @@ export function initAmojiSecretaryLite(doc = document) {
   }
 
   function switchTab(tabId) {
+    if (conversationUi && tabId === "me") {
+      openSetup();
+      return;
+    }
     for (const [id, panel] of Object.entries(els.panels)) {
       panel?.classList.toggle("hidden", id !== tabId);
     }
@@ -999,6 +1030,39 @@ export function initAmojiSecretaryLite(doc = document) {
       renderMemory();
       renderPrefs();
     }
+  }
+
+  function openSetup() {
+    if (!els.setup) return;
+    renderPrefs();
+    renderMemory();
+    syncSetupChrome();
+    els.setup.removeAttribute("hidden");
+    els.setup.classList.add("open");
+    els.setupBackdrop?.classList.add("is-open");
+    els.setupBackdrop?.removeAttribute("hidden");
+    doc.body.classList.add("setup-open");
+  }
+
+  function closeSetup() {
+    if (!els.setup) return;
+    els.setup.classList.remove("open");
+    els.setupBackdrop?.classList.remove("is-open");
+    els.setupBackdrop?.setAttribute("hidden", "");
+    doc.body.classList.remove("setup-open");
+    window.setTimeout(() => {
+      if (!els.setup?.classList.contains("open")) {
+        els.setup?.setAttribute("hidden", "");
+      }
+    }, 320);
+  }
+
+  function syncSetupSpeakerBtn() {
+    if (!els.setupBtnSpeaker) return;
+    els.setupBtnSpeaker.textContent = speakerOn
+      ? strings.setupSpeakerOn
+      : strings.setupSpeakerOff;
+    els.setupBtnSpeaker.setAttribute("aria-pressed", speakerOn ? "true" : "false");
   }
 
   async function startConversationMic() {
@@ -1083,7 +1147,7 @@ export function initAmojiSecretaryLite(doc = document) {
       voiceId = id;
       persistVoiceId(voiceId);
       syncVoiceToUrl(voiceId);
-      updateHeader();
+      syncSetupChrome();
       setStatus(
         isEn
           ? `Voice: ${voicePickerButtonLabel(voiceId, langCode, true)}`
@@ -1092,37 +1156,77 @@ export function initAmojiSecretaryLite(doc = document) {
     },
   });
 
-  function updateHeader() {
-    const btn3d = doc.getElementById("btn-3d");
-    const btnLang = doc.getElementById("btn-lang");
-    const btnVoice = doc.getElementById("btn-voice");
-    if (btn3d) {
-      btn3d.textContent = isEn ? "3D avatar" : "3D 同伴";
-      btn3d.href = buildCompanionHref({
+  function syncSetupChrome() {
+    if (els.btnOpenSetup) {
+      els.btnOpenSetup.textContent = strings.setup;
+      els.btnOpenSetup.title = isEn
+        ? "Language, voice, preferences"
+        : "語言、語音、偏好";
+    }
+    const setupTitle = doc.getElementById("setup-title");
+    if (setupTitle) setupTitle.textContent = strings.setup;
+    if (els.setupClose) {
+      els.setupClose.setAttribute("aria-label", strings.closeSetup);
+    }
+    const appTitle = doc.getElementById("setup-app-title");
+    if (appTitle) appTitle.textContent = strings.setupApp;
+    const prefsTitle = doc.getElementById("setup-prefs-title");
+    if (prefsTitle) prefsTitle.textContent = strings.setupPrefs;
+    const memTitle = doc.getElementById("setup-memory-title");
+    if (memTitle) memTitle.textContent = strings.memorySection;
+    if (els.setupBtnLang) {
+      els.setupBtnLang.textContent = isEn ? "Language: English" : "語言：粵語";
+      els.setupBtnLang.title = isEn
+        ? "Switch to Cantonese (粵語)"
+        : "Switch to English";
+    }
+    if (els.setupBtnVoice) {
+      els.setupBtnVoice.textContent = isEn
+        ? `Voice: ${voicePickerButtonLabel(voiceId, langCode, true)}`
+        : `語音：${voicePickerButtonLabel(voiceId, langCode, false)}`;
+      els.setupBtnVoice.title = isEn ? "Tap to switch voice" : "按一下切換語音";
+    }
+    if (els.setupLink3d) {
+      els.setupLink3d.textContent = strings.setup3d;
+      els.setupLink3d.href = buildCompanionHref({
         basePath: "/companion-full",
         lang: langCode,
         voiceId,
       });
     }
-    if (btnLang) {
+    syncSetupSpeakerBtn();
+  }
+
+  function wireSetup() {
+    syncSetupChrome();
+    els.btnOpenSetup?.addEventListener("click", openSetup);
+    els.setupClose?.addEventListener("click", closeSetup);
+    els.setupBackdrop?.addEventListener("click", closeSetup);
+    els.setupBtnVoice?.addEventListener("click", () => {
+      voicePicker.setSelectedId(voiceId);
+      voicePicker.open();
+    });
+    els.setupBtnLang?.addEventListener("click", () => {
       const targetLang = isEn ? "yue" : "en";
-      btnLang.textContent = isEn ? "EN" : "粵";
-      btnLang.href = buildCompanionHref({
+      window.location.href = buildCompanionHref({
         basePath: "/companion",
         lang: targetLang,
         voiceId: defaultVoiceForLang(targetLang, voiceId),
       });
-    }
-    if (btnVoice) {
-      btnVoice.textContent = voicePickerButtonLabel(voiceId, langCode, isEn);
-    }
-  }
-
-  function wireHeader() {
-    updateHeader();
-    doc.getElementById("btn-voice")?.addEventListener("click", () => {
-      voicePicker.setSelectedId(voiceId);
-      voicePicker.open();
+    });
+    els.setupBtnSpeaker?.addEventListener("click", () => {
+      speakerOn = !speakerOn;
+      els.speaker?.classList.toggle("off", !speakerOn);
+      syncSetupSpeakerBtn();
+      if (!speakerOn) {
+        audioEl.pause();
+        audioEl.src = "";
+      }
+    });
+    doc.addEventListener("keydown", (ev) => {
+      if (ev.key === "Escape" && els.setup?.classList.contains("open")) {
+        closeSetup();
+      }
     });
   }
 
@@ -1141,6 +1245,7 @@ export function initAmojiSecretaryLite(doc = document) {
     els.speaker?.addEventListener("click", () => {
       speakerOn = !speakerOn;
       els.speaker.classList.toggle("off", !speakerOn);
+      syncSetupSpeakerBtn();
       if (!speakerOn) {
         audioEl.pause();
         audioEl.src = "";
@@ -1236,8 +1341,11 @@ export function initAmojiSecretaryLite(doc = document) {
     if (sendBtn) sendBtn.textContent = strings.send;
     const tasksTitle = doc.getElementById("tasks-panel-title");
     if (tasksTitle) tasksTitle.textContent = strings.tasksPanelTitle;
-    const memHeading = doc.getElementById("memory-section-title");
+    const memHeading = doc.getElementById("setup-memory-title");
     if (memHeading) memHeading.textContent = strings.memorySection;
+    const panelMeHint = doc.getElementById("panel-me-hint");
+    if (panelMeHint) panelMeHint.textContent = strings.panelMeHint;
+    syncSetupChrome();
     const listenHint = doc.getElementById("listen-hint");
     if (listenHint) listenHint.textContent = strings.statusListenHint;
     const prefMorning = doc.querySelector('label[for="pref-morning-brief"]');
@@ -1258,7 +1366,7 @@ export function initAmojiSecretaryLite(doc = document) {
     if (prefTone) prefTone.firstChild.textContent = strings.tone;
   }
 
-  wireHeader();
+  wireSetup();
   wireEvents();
   localizeChrome();
   renderModeButtons();
