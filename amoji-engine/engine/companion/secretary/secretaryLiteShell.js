@@ -21,6 +21,7 @@ import {
   removePriorityIfPresent,
   togglePriority,
 } from "./prioritiesStore.js";
+import { createCompanionActivityRail } from "../companionActivityRail.js";
 import {
   applyUiIntents,
   buildUiIntentPromptFragment,
@@ -375,8 +376,15 @@ export function initAmojiSecretaryLite(doc = document) {
     setStatus(strings.statusReady);
   }
 
+  const activityRail = createCompanionActivityRail(doc, {
+    isEnglish: isEn,
+    mount: doc.querySelector("header"),
+  });
+
   function applyMemoryDraft(draft) {
     addMemoryFact(draft.text, { storage, category: draft.category || "general" });
+    activityRail.pulse("🧠", draft.text);
+    activityRail.showFunctions([{ type: "memory", value: "saved" }]);
     if (els.messages) {
       addBubble(`✓ ${strings.memorySaved}: ${draft.text}`, "bot", "receipt");
     }
@@ -384,6 +392,7 @@ export function initAmojiSecretaryLite(doc = document) {
   }
 
   function applyTaskDraft(draft) {
+    activityRail.completeTaskFlow(draft.title);
     createTask(
       {
         title: draft.title,
@@ -538,6 +547,7 @@ export function initAmojiSecretaryLite(doc = document) {
     if (!labels.length) return;
     uiContextPill.hidden = false;
     uiContextPill.textContent = labels.join(" · ");
+    activityRail.showFunctions(applied);
   };
 
   const secretaryUiHandlers = {
@@ -589,6 +599,16 @@ export function initAmojiSecretaryLite(doc = document) {
     addBubble(msg, "user");
     if (els.input) els.input.value = "";
 
+    const mayTask = /\b(task|tasks|remind|todo|to-?do|follow up|任務|提醒|跟進|待辦)/i.test(
+      msg,
+    );
+    if (mayTask) {
+      activityRail.startTaskProcess();
+      activityRail.advanceProcess("hear");
+    } else {
+      activityRail.pulse("🎤", isEn ? "Heard" : "聽到");
+    }
+
     await applyConversationUi(msg, null);
 
     if (!conversationUi) {
@@ -605,19 +625,30 @@ export function initAmojiSecretaryLite(doc = document) {
     const thinking = addBubble("…", "bot", "thinking");
     try {
       setStatus(strings.statusThinking);
+      if (mayTask) activityRail.advanceProcess("think");
       const result = await cloudReply(msg);
       thinking?.remove();
       await applyConversationUi(msg, result);
       addBubble(result.reply, "bot");
       saveLastChatSummary(result.reply, storage);
       for (const taskDraft of result.tasks || []) {
-        if (taskDraft.title) showTaskConfirmCard(taskDraft);
+        if (taskDraft.title) {
+          if (!mayTask) activityRail.showTaskFlow(taskDraft.title);
+          else activityRail.advanceProcess("task", { detail: taskDraft.title });
+          showTaskConfirmCard(taskDraft);
+        }
       }
       for (const mem of result.memories || []) {
         if (mem) showMemoryConfirmCard({ text: mem, category: "general" });
       }
       for (const draft of result.drafts || []) {
-        if (draft) showDraftCard(draft);
+        if (draft) {
+          activityRail.pulse("📝", isEn ? "Draft ready" : "草稿完成");
+          showDraftCard(draft);
+        }
+      }
+      if (!result.tasks?.length && mayTask) {
+        activityRail.clearProcess();
       }
       renderToday();
       await speakCloud(result.reply, result.mood);
