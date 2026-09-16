@@ -1,2 +1,2 @@
 /** Single source of truth for deployed companion build id (keep HTML __amojiBuild in sync). */
-export const AMOJI_BUILD = "2026-09-15-v81-activity-icons";
+export const AMOJI_BUILD = "2026-09-15-v82-complete-details";

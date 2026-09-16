@@ -5,13 +5,14 @@ export const COMPANION_UI_INTENT_TAGS_SCHEMA = "amoji.companionUiIntentTags.v1";
 
 export const UI_TABS = Object.freeze(["today", "chat", "tasks", "me"]);
 export const UI_MODES = Object.freeze(["work", "life", "chill"]);
+export const UI_FILTERS = Object.freeze(["all", "work", "life", "personal"]);
 
 const UI_TAG_RE = /\[ui:([^\]]+)\]/gi;
 const CHARACTER_ID_RE = /^[a-z][a-z0-9_-]{0,31}$/;
 
 /**
  * @typedef {{
- *   type: "tab" | "mode" | "character" | "settings" | "voice" | "lang" | "mic" | "close",
+ *   type: "tab" | "mode" | "filter" | "character" | "settings" | "voice" | "lang" | "mic" | "close",
  *   value?: string | null,
  * }} UiIntent
  */
@@ -31,6 +32,9 @@ export function parseUiPayload(payload) {
   }
   if (head === "mode" && parts[1] && UI_MODES.includes(parts[1])) {
     return { type: "mode", value: parts[1] };
+  }
+  if (head === "filter" && parts[1] && UI_FILTERS.includes(parts[1])) {
+    return { type: "filter", value: parts[1] };
   }
   if (head === "character") {
     const id = parts[1] || "pick";
