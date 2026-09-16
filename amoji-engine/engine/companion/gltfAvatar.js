@@ -427,10 +427,10 @@ export async function createGltfAvatar(opts) {
       : 0;
     if (!talking && !activeAction) {
       const idle = sampleIdleBodyMotion(elapsed, { emotion });
-      leanX += idle.headX * 0.55;
-      leanZ += idle.headZ * 0.85 + idle.hipZ * 0.65;
-      leanY += idle.leanY * 0.75;
-      sway += idle.leanY * 0.4;
+      leanX += idle.headX * 0.72;
+      leanZ += idle.headZ * 1.05 + idle.hipZ * 0.82;
+      leanY += idle.leanY * 0.92;
+      sway += idle.leanY * 0.55;
     } else if (!talking) {
       sway = Math.sin((now - t0) * 0.0009) * 0.025;
     }
