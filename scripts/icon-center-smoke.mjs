@@ -52,6 +52,10 @@ await page.goto(
   { waitUntil: "domcontentloaded", timeout: 30000 },
 );
 await page.waitForSelector("#send", { timeout: 15000 });
+await page.waitForFunction(
+  () => document.getElementById("btn-toggle-chat")?.querySelector("svg.btn-icon"),
+  { timeout: 15000 },
+);
 await page.evaluate(() => {
   const picker = document.getElementById("start-character-picker");
   if (picker) {
@@ -72,6 +76,17 @@ const selectors = [
 ];
 
 const report = await page.evaluate((sels) => {
+  const glyphBox = (btn) => {
+    const el =
+      btn.querySelector(".mic-btn__icon") ||
+      btn.querySelector("svg.btn-icon") ||
+      btn.querySelector("svg") ||
+      btn.querySelector(".btn-glyph");
+    if (el) return el.getBoundingClientRect();
+    const range = document.createRange();
+    range.selectNodeContents(btn);
+    return range.getBoundingClientRect();
+  };
   const rows = [];
   for (const sel of sels) {
     const btn = document.querySelector(sel);
@@ -80,22 +95,19 @@ const report = await page.evaluate((sels) => {
       continue;
     }
     const br = btn.getBoundingClientRect();
-    const glyph =
-      btn.querySelector(".btn-icon:not([style*='display: none'])") ||
-      btn.querySelector(".mic-btn__icon") ||
-      btn.querySelector("svg") ||
-      btn.firstElementChild;
-    const gr = glyph?.getBoundingClientRect?.();
-    const dx = gr ? (gr.left + gr.width / 2) - (br.left + br.width / 2) : null;
-    const dy = gr ? (gr.top + gr.height / 2) - (br.top + br.height / 2) : null;
+    const gr = glyphBox(btn);
+    const dx = (gr.left + gr.width / 2) - (br.left + br.width / 2);
+    const dy = (gr.top + gr.height / 2) - (br.top + br.height / 2);
     const cs = getComputedStyle(btn);
     rows.push({
       sel,
       present: true,
       width: Math.round(br.width * 10) / 10,
       height: Math.round(br.height * 10) / 10,
-      dx: dx == null ? null : Math.round(dx * 10) / 10,
-      dy: dy == null ? null : Math.round(dy * 10) / 10,
+      glyphW: Math.round(gr.width * 10) / 10,
+      glyphH: Math.round(gr.height * 10) / 10,
+      dx: Number.isFinite(dx) ? Math.round(dx * 10) / 10 : null,
+      dy: Number.isFinite(dy) ? Math.round(dy * 10) / 10 : null,
       display: cs.display,
       alignItems: cs.alignItems,
       justifyContent: cs.justifyContent,
@@ -107,8 +119,38 @@ const report = await page.evaluate((sels) => {
   };
 }, selectors);
 
-const shotPath = join(outDir, "icon_center_composer.png");
+const shotPath = join(outDir, "icon_center_buttons.png");
 await page.screenshot({ path: shotPath, fullPage: false });
+
+await page.click("#btn-open-setup");
+await page.waitForSelector("#settings.open", { timeout: 8000 });
+const closeRow = await page.evaluate(() => {
+  const btn = document.getElementById("settings-close");
+  if (!btn) return { sel: "#settings-close", present: false };
+  const el = btn.querySelector("svg") || btn;
+  const br = btn.getBoundingClientRect();
+  const gr = el.getBoundingClientRect();
+  const dx = (gr.left + gr.width / 2) - (br.left + br.width / 2);
+  const dy = (gr.top + gr.height / 2) - (br.top + br.height / 2);
+  const cs = getComputedStyle(btn);
+  return {
+    sel: "#settings-close",
+    present: true,
+    width: Math.round(br.width * 10) / 10,
+    height: Math.round(br.height * 10) / 10,
+    glyphW: Math.round(gr.width * 10) / 10,
+    glyphH: Math.round(gr.height * 10) / 10,
+    dx: Number.isFinite(dx) ? Math.round(dx * 10) / 10 : null,
+    dy: Number.isFinite(dy) ? Math.round(dy * 10) / 10 : null,
+    display: cs.display,
+    alignItems: cs.alignItems,
+    justifyContent: cs.justifyContent,
+  };
+});
+report.rows.push(closeRow);
+const settingsShotPath = join(outDir, "icon_center_settings_close.png");
+await page.locator("#settings-close").screenshot({ path: settingsShotPath });
+await page.screenshot({ path: join(outDir, "icon_center_settings.png"), fullPage: false });
 
 const failures = report.rows.filter((row) => {
   if (!row.present) return true;
@@ -119,9 +161,16 @@ const failures = report.rows.filter((row) => {
 const ok =
   report.build === AMOJI_BUILD &&
   failures.length === 0 &&
-  report.rows.length === selectors.length;
+  report.rows.length === selectors.length + 1;
 
-const summary = { ok, build: report.build, maxOffset: MAX_OFFSET, rows: report.rows, shotPath };
+const summary = {
+  ok,
+  build: report.build,
+  maxOffset: MAX_OFFSET,
+  rows: report.rows,
+  shotPath,
+  settingsShotPath,
+};
 console.log(JSON.stringify(summary, null, 2));
 writeFileSync(join(outDir, "icon_center_smoke.json"), JSON.stringify(summary, null, 2));
 

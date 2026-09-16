@@ -58,6 +58,9 @@ describe("circular icon centering", () => {
     expect(html).toContain("btn-icon--speaker-on");
     expect(html).toContain("btn-icon--speaker-off");
     expect(html).not.toContain('btnSpeaker.textContent = on ? "🔊"');
+    expect(html).not.toContain('btnToggleChat.textContent = "💬"');
+    expect(html).not.toContain('btnOpenScene.textContent = "🎨"');
+    expect(html).not.toContain('btnOpenSetup.textContent = "⋯"');
     expect(html).not.toMatch(/id="btn-toggle-chat"[\s\S]{0,400}💬/);
     expect(html).not.toMatch(/id="send"[^>]*>↑</);
   });
