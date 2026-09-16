@@ -266,10 +266,11 @@ export function createCompanionStartPicker(opts = {}) {
   let preloadReady = false;
 
   const shell = document.createElement("div");
-  shell.className = "companion-picker companion-picker--start is-open";
+  shell.className = "companion-picker companion-picker--start hide";
   shell.id = "start-character-picker";
   shell.setAttribute("role", "dialog");
   shell.setAttribute("aria-modal", "true");
+  shell.setAttribute("aria-hidden", "true");
   shell.setAttribute("aria-label", isEnglish ? "Choose companion" : "揀同伴");
   shell.innerHTML = `
     <div class="companion-picker-backdrop" aria-hidden="true"></div>
@@ -296,7 +297,6 @@ export function createCompanionStartPicker(opts = {}) {
 
   const mount = opts.root || document.body;
   mount.appendChild(shell);
-  document.body.classList.add("companion-start-pending", "companion-picker-open");
 
   const titleEl = shell.querySelector(".companion-picker-title");
   const subEl = shell.querySelector(".companion-picker-sub");
