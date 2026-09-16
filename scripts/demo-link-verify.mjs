@@ -35,7 +35,7 @@ const checks = [];
 
 function record(name, ok, detail = "", warn = false) {
   checks.push({ name, ok, detail, warn });
-  const mark = ok ? (warn ? "WARN" : "PASS") : "FAIL";
+  const mark = warn ? "WARN" : ok ? "PASS" : "FAIL";
   console.log(`${mark}  ${name}${detail ? ` — ${detail}` : ""}`);
 }
 
