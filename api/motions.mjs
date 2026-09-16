@@ -1,9 +1,24 @@
+import { enrichMotionWithClip } from "../amoji-engine/engine/companion/companionOnlineMotionClips.mjs";
 import {
   getCloudMotionDef,
   getMotionPack,
   listMotionPacks,
   MOTION_PACK_SCHEMA,
 } from "../amoji-engine/engine/companion/motionPackData.mjs";
+
+function enrichPackMotions(pack) {
+  if (!pack?.motions) return pack;
+  return {
+    ...pack,
+    motions: pack.motions.map((motion) => {
+      const id = motion.id || motion;
+      const clip = enrichMotionWithClip(id);
+      return typeof motion === "string"
+        ? { id: motion, ...clip }
+        : { ...motion, ...clip };
+    }),
+  };
+}
 
 function corsHeaders() {
   return {
@@ -40,7 +55,7 @@ export default async function handler(req, res) {
       res.status(200).json({
         ok: true,
         schema: MOTION_PACK_SCHEMA,
-        motion,
+        motion: { ...motion, ...enrichMotionWithClip(motion.id) },
       });
       return;
     }
@@ -54,7 +69,7 @@ export default async function handler(req, res) {
       res.status(200).json({
         ok: true,
         schema: MOTION_PACK_SCHEMA,
-        pack,
+        pack: enrichPackMotions(pack),
       });
       return;
     }

@@ -110,6 +110,20 @@ export function getPreloadedMotionBasicPromise() {
 }
 
 /**
+ * @returns {Promise<unknown> | null}
+ */
+export function getPreloadedMotionExtensionsPromise() {
+  return motionExtensionsPromise;
+}
+
+/**
+ * @returns {Promise<unknown> | null}
+ */
+export function getPreloadedMotionPremiumPromise() {
+  return motionPremiumPromise;
+}
+
+/**
  * @returns {Promise<typeof import("./vrmAvatar.js")> | null}
  */
 export function getPreloadedVrmModulePromise() {
@@ -271,6 +285,8 @@ if (typeof globalThis !== "undefined") {
     getVrm: getPreloadedVrmPromise,
     getModel: getPreloadedVrmPromise,
     getMotionBasic: getPreloadedMotionBasicPromise,
+    getMotionExtensions: getPreloadedMotionExtensionsPromise,
+    getMotionPremium: getPreloadedMotionPremiumPromise,
     getVrmModule: getPreloadedVrmModulePromise,
     releaseExcept: releaseVrmPreloadExcept,
     rosterReady: rosterPreloadPromise,
