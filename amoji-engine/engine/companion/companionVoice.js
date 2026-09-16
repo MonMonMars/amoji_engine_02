@@ -1187,6 +1187,7 @@ export function createCompanionVoice(opts = {}) {
   const primeAudio = async () => {
     unlockAudioSync();
     await ensureVoices();
+    if (speaking) return true;
     if (opts.cloudTtsUrl) {
       try {
         const preset = cloudVoicePreset();
@@ -1204,8 +1205,13 @@ export function createCompanionVoice(opts = {}) {
         if (res.ok) {
           const blob = await res.blob();
           if (blob.size > 0) {
+            if (speaking) {
+              usingCloudTts = true;
+              voice = cloudVoicePreset();
+              return true;
+            }
             const objectUrl = URL.createObjectURL(blob);
-            const audio = configureCompanionAudioElement(getSharedAudio());
+            const audio = configureCompanionAudioElement(new Audio());
             audio.volume = 0.12;
             audio.src = objectUrl;
             const played = await audio
@@ -1225,6 +1231,7 @@ export function createCompanionVoice(opts = {}) {
       }
     }
     if (!synth) return false;
+    if (speaking) return true;
     try {
       if (synth.paused) synth.resume();
       synth.cancel();
@@ -1238,7 +1245,7 @@ export function createCompanionVoice(opts = {}) {
         synth.speak(utter);
         setTimeout(resolve, 400);
       });
-      synth.cancel();
+      if (!speaking) synth.cancel();
       return true;
     } catch {
       return false;
