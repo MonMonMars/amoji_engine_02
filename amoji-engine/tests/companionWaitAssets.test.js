@@ -26,9 +26,10 @@ describe("companionWaitAssets", () => {
     expect(pickWaitEmotion("idle", 0, "idle")).toBe("happy");
     expect(pickWaitEmotion("avatar-load", 1, "avatar-load")).toBeTruthy();
     const profile = pickWaitExpressionProfile("avatar-load", 0, "avatar-load");
-    expect(profile.emotion).toBeTruthy();
-    expect(profile.nuance).toBeTruthy();
+    expect(profile.emotion).toBe("happy");
+    expect(profile.nuance).toBe("none");
     expect(profile.blend).toBeTruthy();
+    expect(pickWaitPose("avatar-load", 0)).toBe("nod");
   });
 
   it("collects expression profiles for boot warm-up", () => {
