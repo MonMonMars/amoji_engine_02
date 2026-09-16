@@ -279,7 +279,7 @@ export async function createVrmAvatar(opts) {
 
   bodyMotion.setArmRestRotations?.(detectVrmArmRestRotations(vrm));
   bodyMotion.snapToRestPose?.();
-  for (let i = 0; i < 4; i += 1) {
+  for (let i = 0; i < 18; i += 1) {
     bodyMotion.update(1 / 60);
     syncHumanoidPose();
     vrm.update(1 / 60);
