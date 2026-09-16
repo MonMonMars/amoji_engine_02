@@ -132,7 +132,9 @@ export async function createCompanionAvatar(opts) {
 
   if (wantsGltf || prefer === "auto") {
     try {
-      const { createGltfAvatar } = await import("./gltfAvatar.js");
+      const gltfModule =
+        globalThis.__amojiPreload?.ready?.gltfModule ?? import("./gltfAvatar.js");
+      const { createGltfAvatar } = await gltfModule;
       emit(8, "gltf");
       const avatar = await withLoadTimeout(
         createGltfAvatar({

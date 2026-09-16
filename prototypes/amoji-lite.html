@@ -8,10 +8,10 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji Secretary</title>
     <script>
-      window.__amojiBuild = "2026-09-15-v75-gallery-deploy";
+      window.__amojiBuild = "2026-09-16-v86-roster-auto-preload";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-15-v75-gallery-deploy"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-15-v75-gallery-deploy"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-16-v86-roster-auto-preload"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-16-v86-roster-auto-preload"></script>
     <style>
       *,
       *::before,
@@ -629,6 +629,216 @@
         font-size: 0.72rem;
         color: rgba(247, 241, 232, 0.55);
       }
+
+      body.conversation-ui .tabbar,
+      body.conversation-ui .mode-row,
+      body.conversation-ui #discover-chips,
+      body.conversation-ui #open-chat-btn,
+      body.conversation-ui #start-btn,
+      body.conversation-ui #quick-task-form,
+      body.conversation-ui .filter-row,
+      body.conversation-ui .task-row-toolbar,
+      body.conversation-ui .task-card-actions,
+      body.conversation-ui .draft-card-actions,
+      body.conversation-ui #memory-form,
+      body.conversation-ui .me-section:has(select),
+      body.conversation-ui .me-section:has(input[type="checkbox"]),
+      body.conversation-ui .btn-3d,
+      body.conversation-ui .header-actions .btn-voice,
+      body.conversation-ui .header-actions .btn-lang,
+      body.conversation-ui .header-actions .tag,
+      body.conversation-ui .composer.voice-only .row {
+        display: none !important;
+      }
+
+      body.conversation-ui .app {
+        padding-bottom: 5.75rem;
+      }
+
+      body.conversation-ui .composer {
+        display: flex !important;
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 40;
+        margin: 0;
+        border-radius: 1rem 1rem 0 0;
+        box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.35);
+      }
+
+      body.conversation-ui .composer.voice-only {
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0.35rem;
+        padding: 0.85rem 1rem calc(0.85rem + env(safe-area-inset-bottom));
+        min-height: 4.25rem;
+      }
+
+      body.conversation-ui .composer.voice-only textarea {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      body.conversation-ui .listen-hint {
+        font-size: 0.82rem;
+        font-weight: 650;
+        color: rgba(247, 241, 232, 0.92);
+        text-align: center;
+      }
+
+      body.conversation-ui .listen-hint.mic-active {
+        color: rgba(127, 212, 207, 0.95);
+      }
+
+      body.conversation-ui.mic-blocked .composer.voice-only .row {
+        display: flex !important;
+      }
+
+      body.conversation-ui.mic-blocked .composer.voice-only textarea {
+        position: static;
+        width: 100%;
+        height: auto;
+        min-height: 2.5rem;
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      body.conversation-ui.mic-blocked .listen-hint {
+        font-size: 0.72rem;
+        color: rgba(247, 241, 232, 0.65);
+      }
+
+      .ui-context-pill {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.2rem 0.5rem;
+        border-radius: 999px;
+        font-size: 0.65rem;
+        font-weight: 650;
+        color: rgba(247, 241, 232, 0.88);
+        background: rgba(127, 212, 207, 0.14);
+        border: 1px solid rgba(127, 212, 207, 0.28);
+      }
+
+      .activity-rail {
+        display: flex;
+        flex-direction: column;
+        gap: 0.45rem;
+        padding: 0.35rem 0.85rem 0.55rem;
+      }
+
+      .activity-rail__functions,
+      .activity-rail__feed {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.35rem;
+        align-items: center;
+      }
+
+      .activity-rail__process {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.15rem;
+        padding: 0.45rem 0.55rem;
+        border-radius: 0.85rem;
+        background: rgba(127, 212, 207, 0.08);
+        border: 1px solid rgba(127, 212, 207, 0.18);
+      }
+
+      .activity-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.28rem;
+        padding: 0.22rem 0.5rem;
+        border-radius: 999px;
+        font-size: 0.68rem;
+        font-weight: 650;
+        color: rgba(247, 241, 232, 0.9);
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .activity-chip--function {
+        background: rgba(127, 212, 207, 0.12);
+        border-color: rgba(127, 212, 207, 0.28);
+      }
+
+      .activity-chip--feed {
+        animation: activity-feed-in 0.35s ease;
+      }
+
+      @keyframes activity-feed-in {
+        from {
+          opacity: 0;
+          transform: translateY(4px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .activity-chip__icon {
+        font-size: 0.82rem;
+        line-height: 1;
+      }
+
+      .activity-step-wrap {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.1rem;
+      }
+
+      .activity-step {
+        display: inline-flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.12rem;
+        min-width: 2.6rem;
+        opacity: 0.45;
+        transition: opacity 0.2s ease, transform 0.2s ease;
+      }
+
+      .activity-step--active {
+        opacity: 1;
+        transform: scale(1.05);
+      }
+
+      .activity-step--done {
+        opacity: 0.85;
+      }
+
+      .activity-step__icon {
+        font-size: 1rem;
+        line-height: 1;
+      }
+
+      .activity-step__label {
+        font-size: 0.58rem;
+        font-weight: 650;
+        color: rgba(247, 241, 232, 0.72);
+        max-width: 4.5rem;
+        text-align: center;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .activity-step--active .activity-step__label {
+        color: rgba(127, 212, 207, 0.95);
+      }
+
+      .activity-step__arrow {
+        font-size: 0.62rem;
+        color: rgba(247, 241, 232, 0.35);
+        margin: 0 0.05rem;
+      }
     </style>
   </head>
   <body>
@@ -665,19 +875,10 @@
         <div class="mode-row" id="mode-row"></div>
         <div class="discover" id="discover-chips"></div>
         <div class="messages" id="messages" aria-live="polite"></div>
-        <button type="button" class="start-btn" id="start-btn">開始傾計</button>
-        <form class="composer hidden" id="composer" autocomplete="off">
-          <textarea id="input" rows="1" placeholder="輸入訊息…" enterkeyhint="send"></textarea>
-          <div class="row">
-            <button type="button" class="btn speaker" id="speaker-btn" title="Speaker" aria-pressed="true">🔊</button>
-            <button type="button" class="btn mic" id="mic-btn" title="Mic">🎤</button>
-            <button type="submit" class="btn send" id="send-btn">Send</button>
-          </div>
-        </form>
       </section>
 
       <section class="panel hidden" id="panel-tasks">
-        <h2>任務清單</h2>
+        <h2 id="tasks-panel-title">任務清單</h2>
         <div class="filter-row" id="task-filters"></div>
         <div class="task-stack" id="tasks-list"></div>
       </section>
@@ -707,7 +908,7 @@
           </select>
         </div>
         <div class="me-section">
-          <h2>記憶</h2>
+          <h2 id="memory-section-title">記憶</h2>
           <div id="memory-list"></div>
           <form class="inline-form" id="memory-form">
             <input id="memory-input" type="text" placeholder="加一條我應該記住嘅資料…" />
@@ -722,10 +923,21 @@
         <button type="button" data-tab="tasks">任務</button>
         <button type="button" data-tab="me">我</button>
       </nav>
+
+      <button type="button" class="start-btn" id="start-btn">開始傾計</button>
+      <form class="composer hidden" id="composer" autocomplete="off">
+        <div class="listen-hint" id="listen-hint" aria-live="polite">聽緊 — 直接講</div>
+        <textarea id="input" rows="1" placeholder="輸入訊息…" enterkeyhint="send" aria-hidden="true" tabindex="-1"></textarea>
+        <div class="row">
+          <button type="button" class="btn speaker" id="speaker-btn" title="Speaker" aria-pressed="true">🔊</button>
+          <button type="button" class="btn mic" id="mic-btn" title="Mic">🎤</button>
+          <button type="submit" class="btn send" id="send-btn">Send</button>
+        </div>
+      </form>
     </div>
 
     <script type="module">
-      import { initAmojiSecretaryLite } from "/amoji-engine/engine/companion/secretary/secretaryLiteShell.js?v=2026-09-15-v75-gallery-deploy";
+      import { initAmojiSecretaryLite } from "/amoji-engine/engine/companion/secretary/secretaryLiteShell.js?v=2026-09-16-v86-roster-auto-preload";
       window.__amojiLiteTag = "secretary-v1";
       window.__amojiLite = { ready: true, ttsCalls: 0, chatCalls: 0 };
       initAmojiSecretaryLite(document);

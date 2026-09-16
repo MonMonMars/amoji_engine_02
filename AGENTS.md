@@ -4,6 +4,26 @@
 
 After completing code changes (commit, push, or PR), **always** end your summary with a **Demo** section containing the live links below. Use the current `AMOJI_BUILD` from `amoji-engine/engine/companion/buildVersion.mjs`.
 
+### Debug before you share (mandatory)
+
+**Never paste demo links without running the verifier first:**
+
+```bash
+# 1. Local — must pass before every delivery
+LOCAL=1 node scripts/demo-link-verify.mjs
+
+# 2. Production — run after merge/deploy; must pass before calling links "live"
+node scripts/demo-link-verify.mjs
+```
+
+| Exit | Meaning | What to tell the user |
+|------|---------|------------------------|
+| `0` | All checks passed | Share production links confidently |
+| `2` | Production build behind repo (warnings only) | Say **deploy pending** — give PR link; optional local proof |
+| `1` | Hard failure | Fix before sharing any demo link |
+
+The script checks `/api/health` build id, page load, conversation-ui, activity rail, and voice-nav → tasks. Screenshots land in `/opt/cursor/artifacts/demo-verify-*.png`.
+
 **Base URL:** https://temporary-rushing-oxygen-ok5jzhd.vercel.app
 
 | App | Path |
@@ -16,14 +36,14 @@ After completing code changes (commit, push, or PR), **always** end your summary
 
 **Example (replace build id after each bump):**
 
-- https://temporary-rushing-oxygen-ok5jzhd.vercel.app/companion?tab=today&lang=yue&build=2026-09-15-v75-gallery-deploy
-- https://temporary-rushing-oxygen-ok5jzhd.vercel.app/companion-full?lang=yue&build=2026-09-15-v75-gallery-deploy
-- https://temporary-rushing-oxygen-ok5jzhd.vercel.app/companion-full?lang=en&build=2026-09-15-v75-gallery-deploy
+- https://temporary-rushing-oxygen-ok5jzhd.vercel.app/companion?tab=today&lang=yue&build=2026-09-15-v76-character-model-fix
+- https://temporary-rushing-oxygen-ok5jzhd.vercel.app/companion-full?lang=yue&build=2026-09-15-v76-character-model-fix
+- https://temporary-rushing-oxygen-ok5jzhd.vercel.app/companion-full?lang=en&build=2026-09-15-v76-character-model-fix
 - https://temporary-rushing-oxygen-ok5jzhd.vercel.app/companion
 
 Programmatic helper: `formatDemoLinkBlock()` in `amoji-engine/engine/companion/deployUrls.mjs`.
 
-**Deploy caveat:** Links point at production Vercel. They reflect your changes only after the branch is merged to the deploy branch (`cursor/companion-improvements-6647` or `main`) and Vercel finishes redeploying (~1 min). Until then, say so and link the open PR.
+**Deploy caveat:** Links point at production Vercel. They reflect your changes only after the branch is merged to the deploy branch (`cursor/companion-improvements-6647` or `main`) and Vercel finishes redeploying (~1 min). Until `node scripts/demo-link-verify.mjs` exits `0`, do **not** claim production is updated — run `LOCAL=1` verifier and report deploy pending.
 
 **Cache bust:** Demo pages auto-redirect to the latest server build via `/api/health` + `?build=` query. Before deploy, run `node scripts/sync-build-version.mjs` so HTML `?v=` tags match `AMOJI_BUILD`.
 

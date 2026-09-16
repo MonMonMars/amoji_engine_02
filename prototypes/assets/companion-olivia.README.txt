@@ -1,0 +1,8 @@
+Olivia VRM avatar — ToxSam 100Avatars (CC0)
+
+Source:  https://github.com/ToxSam/open-source-avatars
+Model:   companion-olivia.vrm (100Avatars Olivia)
+Preview: companion-char-olivia.png
+
+License: CC0 1.0 — public domain, no attribution required.
+Used for: Olivia (奧莉) — sunny upbeat companion character.
