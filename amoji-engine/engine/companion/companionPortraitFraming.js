@@ -6,16 +6,16 @@ import * as THREE from "three";
 export const COMPANION_PORTRAIT_FRAMING_SCHEMA = "amoji.companionPortraitFraming.v1";
 
 /** Chest-level orbit target (ratio from feet to head). */
-export const UPPER_BODY_ANCHOR_RATIO = 0.5;
+export const UPPER_BODY_ANCHOR_RATIO = 0.52;
 /** How much head height influences anchor (lower = more chest framing). */
-export const HEAD_ANCHOR_BLEND = 0.16;
+export const HEAD_ANCHOR_BLEND = 0.18;
 
-/** Default portrait field of view — slightly wide for shoulders in frame. */
-export const PORTRAIT_FOV = 36;
+/** Portrait FOV — head + shoulders + torso, legs cropped below waist. */
+export const PORTRAIT_FOV = 28;
 
-/** Camera distance ≈ 2× character height keeps head-to-waist in view. */
-export const PORTRAIT_DIST_FACTOR = 1.95;
-export const PORTRAIT_DIST_MIN = 1.68;
+/** Camera distance ≈ 1.08× character height for balanced upper-body framing. */
+export const PORTRAIT_DIST_FACTOR = 1.08;
+export const PORTRAIT_DIST_MIN = 1.02;
 
 /**
  * @param {number} fittedHeight
@@ -54,17 +54,18 @@ export function computeUpperBodyAnchor(fitted, headWorld, out = new THREE.Vector
 export function applyUpperBodyPortraitFrame(opts) {
   const portraitDist = portraitDistanceForHeight(opts.fittedHeight);
   opts.controls.target.copy(opts.anchor);
+  opts.controls.target.y += 0.02;
   opts.camera.position.set(
     opts.anchor.x,
-    opts.anchor.y + 0.02,
-    opts.anchor.z + portraitDist,
+    opts.anchor.y + 0.1,
+    opts.anchor.z + portraitDist * 0.94,
   );
   opts.camera.fov = PORTRAIT_FOV;
   opts.camera.updateProjectionMatrix();
-  opts.controls.minDistance = portraitDist * 0.78;
-  opts.controls.maxDistance = portraitDist * 3.2;
-  opts.controls.minPolarAngle = Math.PI * 0.34;
-  opts.controls.maxPolarAngle = Math.PI * 0.62;
+  opts.controls.minDistance = portraitDist * 0.82;
+  opts.controls.maxDistance = portraitDist * 2.8;
+  opts.controls.minPolarAngle = Math.PI * 0.42;
+  opts.controls.maxPolarAngle = Math.PI * 0.52;
   opts.controls.update();
   return portraitDist;
 }

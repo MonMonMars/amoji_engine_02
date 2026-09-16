@@ -11,11 +11,11 @@ export const COMPANION_CAMERA_APPLY_SCHEMA = "amoji.companionCameraApply.v1";
  * @param {number} baseFov
  */
 export function buildPortraitShot(anchor, portraitDist, baseFov) {
-  const target = new THREE.Vector3(anchor.x, anchor.y + 0.04, anchor.z);
+  const target = new THREE.Vector3(anchor.x, anchor.y + 0.02, anchor.z);
   const position = new THREE.Vector3(
     anchor.x,
-    anchor.y + 0.04,
-    anchor.z + portraitDist,
+    anchor.y + 0.1,
+    anchor.z + portraitDist * 0.94,
   );
   return {
     target,
