@@ -21,6 +21,29 @@ import { collectWaitPreloadMotionIds } from "./companionWaitAssets.js";
 
 export const COMPANION_MOTION_DOWNLOAD_SCHEMA = "amoji.companionMotionDownload.v1";
 
+const BASIC_PACK_PREFETCH_TIMEOUT_MS = 8000;
+const MOTION_FETCH_TIMEOUT_MS = 15000;
+
+/**
+ * @template T
+ * @param {Promise<T> | T} value
+ * @param {number} ms
+ * @param {T} fallback
+ */
+async function awaitWithTimeout(value, ms, fallback) {
+  let timer;
+  try {
+    return await Promise.race([
+      Promise.resolve(value),
+      new Promise((resolve) => {
+        timer = setTimeout(() => resolve(fallback), ms);
+      }),
+    ]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
+
 /**
  * @param {{
  *   motionsUrl?: string,
@@ -46,10 +69,21 @@ export function createMotionDownloadClient(opts = {}) {
 
   const fetchJson = async (url, onByteProgress) => {
     if (!fetchImpl) throw new Error("fetch unavailable");
-    const res = await fetchImpl(url, {
-      method: "GET",
-      headers: { Accept: "application/json" },
-    });
+    const controller =
+      typeof AbortController !== "undefined" ? new AbortController() : null;
+    const timeoutId = controller
+      ? setTimeout(() => controller.abort(), MOTION_FETCH_TIMEOUT_MS)
+      : null;
+    let res;
+    try {
+      res = await fetchImpl(url, {
+        method: "GET",
+        headers: { Accept: "application/json" },
+        signal: controller?.signal,
+      });
+    } finally {
+      if (timeoutId) clearTimeout(timeoutId);
+    }
     if (!res.ok) {
       throw new Error(`Motion server HTTP ${res.status}`);
     }
@@ -129,7 +163,11 @@ export function createMotionDownloadClient(opts = {}) {
         let prefetched = null;
         if (opts.getPrefetchedBasicPack) {
           try {
-            prefetched = await opts.getPrefetchedBasicPack();
+            prefetched = await awaitWithTimeout(
+              opts.getPrefetchedBasicPack(),
+              BASIC_PACK_PREFETCH_TIMEOUT_MS,
+              null,
+            );
           } catch {
             prefetched = null;
           }

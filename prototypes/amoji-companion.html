@@ -8,9 +8,9 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji · Companion</title>
     <script>
-      window.__amojiBuild = "2026-09-16-v111-simple-boot-idle";
+      window.__amojiBuild = "2026-09-16-v112-motion-load-fix";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-16-v111-simple-boot-idle"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-16-v112-motion-load-fix"></script>
     <link
       rel="prefetch"
       href="/prototypes/assets/companion-char-nova.png"
@@ -281,7 +281,7 @@
       media="print"
       onload="this.media='all'"
     />
-    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-16-v111-simple-boot-idle" />
+    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-16-v112-motion-load-fix" />
     <noscript>
       <link
         href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap"
@@ -2829,19 +2829,19 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-16-v111-simple-boot-idle",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-16-v112-motion-load-fix",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-16-v111-simple-boot-idle",
-          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-16-v111-simple-boot-idle"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-16-v112-motion-load-fix",
+          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-16-v112-motion-load-fix"
         }
       }
     </script>
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-16-v111-simple-boot-idle"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-16-v112-motion-load-fix"
     />
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-16-v111-simple-boot-idle"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-16-v111-simple-boot-idle"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-16-v112-motion-load-fix"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-16-v112-motion-load-fix"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;
@@ -3477,6 +3477,7 @@
       /** @type {Map<string, Promise<unknown>>} */
       const pendingMotionJobs = new Map();
       let basicMotionPackReady = false;
+      let basicMotionPackUiActive = false;
       let motionCapabilityAnnounced = false;
       let motionCapabilityExtra = "";
       /** @type {ReturnType<typeof createMotionDownloadClient> | null} */
@@ -3489,28 +3490,39 @@
         if (basicMotionPackReady) return { ok: true, cached: true };
         const waitKind = waitAct?.state?.kind;
         const showPackUi =
-          coupled ||
-          (!avatarLoadStarted && waitKind !== "avatar-load" && !waitAct?.isActive());
-        if (showPackUi && !waitAct?.isActive()) {
+          !coupled &&
+          !avatarLoadStarted &&
+          waitKind !== "avatar-load" &&
+          !waitAct?.isActive();
+        basicMotionPackUiActive = showPackUi;
+        if (showPackUi) {
           waitAct?.start({
-            kind: coupled ? "avatar-load" : "motion-pack",
+            kind: "motion-pack",
             phase: "connecting",
             progress: 0,
             label: isEnglish
               ? "Syncing motion library…"
               : "同步動作庫…",
           });
-        } else if (coupled && waitAct?.isActive()) {
+        } else if (coupled && waitAct?.isActive() && waitKind === "avatar-load") {
           waitAct?.update({
-            phase: "connecting",
-            progress: 0.08,
+            phase: "avatar-load",
+            progress: Math.max(0.05, waitAct?.state?.progress ?? 0.05),
             label: isEnglish
-              ? "Loading model & motion library…"
-              : "載入模型同動作庫…",
+              ? "Loading 3D companion model…"
+              : "載入 3D 同伴模型…",
           });
         }
         try {
-          const result = await motionClient.ensureBasicPack();
+          const result = await Promise.race([
+            motionClient.ensureBasicPack(),
+            new Promise((_, reject) => {
+              setTimeout(
+                () => reject(new Error("basic motion pack timeout")),
+                12000,
+              );
+            }),
+          ]);
           basicMotionPackReady = Boolean(result?.ok);
           if (result?.ok) {
             void motionClient.ensureFullMotionLibrary?.().then((full) => {
@@ -3520,19 +3532,20 @@
             });
             primeBodyMotionPoses?.();
           }
-          if (waitAct?.isActive() && (coupled || showPackUi)) {
+          if (showPackUi && waitAct?.state?.kind === "motion-pack") {
             waitAct?.update({
               phase: "ready",
               progress: 1,
               label: isEnglish ? "Motion library ready" : "動作庫已就緒",
             });
-            if (!coupled) waitAct?.stop();
           }
           return result;
         } catch (err) {
           basicMotionPackReady = true;
-          if (showPackUi && waitAct?.state?.kind === "motion-pack") waitAct?.stop();
           return { ok: false, error: err?.message || String(err) };
+        } finally {
+          basicMotionPackUiActive = false;
+          if (waitAct?.state?.kind === "motion-pack") waitAct?.stop();
         }
       };
 
@@ -5056,7 +5069,12 @@
         getPrefetchedPremiumPack: () =>
           globalThis.__amojiPreload?.getMotionPremium?.() ?? null,
         onProgress: ({ phase, progress, action }) => {
-          if (waitAct?.isActive()) {
+          const waitKind = waitAct?.state?.kind;
+          const showMotionProgress =
+            basicMotionPackUiActive ||
+            waitKind === "motion" ||
+            waitKind === "motion-pack";
+          if (waitAct?.isActive() && showMotionProgress) {
             waitAct.update({
               phase,
               progress,
@@ -5065,7 +5083,9 @@
                 : `動作 ${action || "pack"} — ${Math.round(progress * 100)}%`,
             });
           }
-          setEmotionPill("thinking", action || phase);
+          if (showMotionProgress) {
+            setEmotionPill("thinking", action || phase);
+          }
         },
       });
       const warmMotionLibraryBackground = () => {
