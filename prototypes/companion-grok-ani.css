@@ -322,6 +322,10 @@
     0 0 48px rgba(139, 124, 248, 0.14);
 }
 
+body.conversation-ui.composer-always-visible.theme-grok-ani .stage.mic-mode .composer {
+  max-width: min(720px, 100%);
+}
+
 /* —— Emotion orb —— */
 .theme-grok-ani .emotion-ball-stack {
   position: fixed;
