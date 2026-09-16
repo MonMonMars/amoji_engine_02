@@ -76,16 +76,19 @@ export function inferExpressionFromText(text) {
   const lower = raw.toLowerCase();
   // Order matters: check sad/thinking before generic punctuation surprises.
   if (/唉|唔開心|傷心|sorry|sad|慘|好難過/.test(lower)) return "sad";
+  if (/嬲|生氣|angry|mad|憎|烦|好烦/.test(lower)) return "angry";
   if (/諗|思考|點解|why|hmm|唔知|好奇|原來/.test(lower)) return "thinking";
   if (
-    /哈哈|開心|好呀|正|掂|thank|thanks|great|鍾意|愛你|心動|超正/.test(lower)
+    /哈哈|開心|好呀|正|掂|thank|thanks|great|鍾意|愛你|心動|超正|嘻嘻|呵呵/.test(
+      lower,
+    )
   ) {
     return "happy";
   }
-  if (/嬲|生氣|angry|mad|憎|烦|好烦/.test(lower)) return "angry";
   if (/哇|嘩|唔信|真係|嚇死/.test(raw) || /!{2,}|！{2,}/.test(raw)) {
     return "surprised";
   }
+  if (/[!！]/.test(raw) || /[呀啊喇喎喔呢咩~～]/.test(raw)) return "happy";
   return "neutral";
 }
 

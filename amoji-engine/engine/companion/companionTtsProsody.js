@@ -286,7 +286,7 @@ export function resolveCompanionTtsProsody(opts = {}) {
   const browserRate = Math.max(
     0.72,
     Math.min(
-      1.35,
+      1.48,
       browserBase.rate +
         (edgeRate / 100) * 0.35 +
         (speechEnergy - 0.5) * 0.12,
@@ -295,7 +295,7 @@ export function resolveCompanionTtsProsody(opts = {}) {
   const browserPitch = Math.max(
     0.82,
     Math.min(
-      1.55,
+      1.85,
       browserBase.pitch +
         (edgePitch / 40) * 0.22 +
         (speechEnergy - 0.5) * 0.1,
@@ -318,9 +318,9 @@ export function resolveCompanionTtsProsody(opts = {}) {
     talkStyle,
     speechEnergy,
     edge: {
-      rate: formatEdgeDelta(edgeRate, "%", -30, 45),
-      pitch: formatEdgeDelta(edgePitch, "Hz", -20, 45),
-      volume: formatEdgeDelta(edgeVolume, "%", -25, 25),
+      rate: formatEdgeDelta(edgeRate, "%", -40, 72),
+      pitch: formatEdgeDelta(edgePitch, "Hz", -28, 72),
+      volume: formatEdgeDelta(edgeVolume, "%", -22, 35),
     },
     browser: {
       rate: Number(browserRate.toFixed(3)),
@@ -367,25 +367,38 @@ export function resolveChunkTtsPerformance(chunk, hints = {}) {
  */
 export function normalizeTtsPerformance(performance, fallbackEmotion = "neutral") {
   if (typeof performance === "string") {
+    const emotion = performance || fallbackEmotion;
     return {
-      emotion: performance || fallbackEmotion,
-      nuance: "none",
-      talkStyle: "explain",
-      speechEnergy: 0.64,
+      emotion,
+      nuance:
+        emotion === "happy" || emotion === "surprised" ? "excited" : "none",
+      talkStyle:
+        emotion === "happy" || emotion === "surprised" ? "celebrate" : "explain",
+      speechEnergy:
+        emotion === "happy" || emotion === "surprised" ? 0.82 : 0.7,
     };
   }
   const perf = performance || {};
+  const emotion = perf.emotion || fallbackEmotion;
+  let nuance = perf.nuance || "none";
+  if (nuance === "none" && (emotion === "happy" || emotion === "surprised")) {
+    nuance = "excited";
+  }
+  if (nuance === "none" && emotion === "thinking") nuance = "curious";
+  const talkStyle =
+    perf.talkStyle ||
+    (emotion === "happy" || emotion === "surprised" ? "celebrate" : "explain");
   return {
-    emotion: perf.emotion || fallbackEmotion,
-    nuance: perf.nuance || "none",
-    talkStyle: perf.talkStyle || "explain",
-    speechEnergy: perf.speechEnergy ?? 0.64,
+    emotion,
+    nuance,
+    talkStyle,
+    speechEnergy:
+      perf.speechEnergy ??
+      (emotion === "happy" || emotion === "surprised" ? 0.82 : 0.7),
     lang: perf.lang,
     text: perf.text,
-    /** Multi-clause Edge TTS by default (holdSpeaking keeps playback continuous). */
-    expressiveClauses: perf.expressiveClauses === true,
-    singleUtterance:
-      perf.singleUtterance === true ||
-      (perf.expressiveClauses !== true && perf.singleUtterance !== false),
+    /** Clause-level TTS so pitch/energy can shift mid-reply like ChatGPT Voice. */
+    expressiveClauses: perf.expressiveClauses !== false,
+    singleUtterance: perf.singleUtterance === true,
   };
 }

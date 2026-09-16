@@ -22,6 +22,7 @@ describe("companionTtsProsody", () => {
     const neutralRate = Number(neutral.edge.rate.replace(/[^0-9-]/g, ""));
     const happyRate = Number(happy.edge.rate.replace(/[^0-9-]/g, ""));
     expect(happyRate).toBeGreaterThan(neutralRate);
+    expect(happyRate).toBeGreaterThan(45);
     expect(happy.browser.pitch).toBeGreaterThan(neutral.browser.pitch);
     expect(happy.browser.rate).toBeGreaterThan(neutral.browser.rate);
   });
@@ -86,7 +87,9 @@ describe("companionTtsProsody", () => {
   it("normalizes legacy emotion string", () => {
     const perf = normalizeTtsPerformance("happy");
     expect(perf.emotion).toBe("happy");
-    expect(perf.nuance).toBe("none");
+    expect(perf.nuance).toBe("excited");
+    expect(perf.talkStyle).toBe("celebrate");
+    expect(perf.speechEnergy).toBeGreaterThan(0.75);
   });
 
   it("resolves per-chunk performance from text", () => {
@@ -98,16 +101,20 @@ describe("companionTtsProsody", () => {
     expect(chunk.speechEnergy).toBeGreaterThan(0.4);
   });
 
-  it("defaults to singleUtterance for full-sentence cloud TTS", () => {
+  it("defaults to clause-level expressive TTS", () => {
     const perf = normalizeTtsPerformance({ emotion: "happy" });
-    expect(perf.singleUtterance).toBe(true);
+    expect(perf.expressiveClauses).toBe(true);
+    expect(perf.singleUtterance).toBe(false);
+    expect(perf.nuance).toBe("excited");
   });
 
-  it("allows expressive multi-clause mode when requested", () => {
+  it("allows a single utterance when requested", () => {
     const perf = normalizeTtsPerformance({
       emotion: "happy",
-      expressiveClauses: true,
+      singleUtterance: true,
+      expressiveClauses: false,
     });
-    expect(perf.singleUtterance).toBe(false);
+    expect(perf.singleUtterance).toBe(true);
+    expect(perf.expressiveClauses).toBe(false);
   });
 });
