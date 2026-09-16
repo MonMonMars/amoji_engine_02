@@ -108,7 +108,27 @@ const aurora = await page.evaluate(
   () => document.querySelector(".atmosphere")?.dataset?.sceneBg === "aurora",
 );
 record("aurora background applies", aurora);
+const casualOutfit = page.locator(
+  '#scene-outfit-grid .scene-preset:not([disabled]):has(.scene-preset__swatch--outfit-casual)',
+);
+if (await casualOutfit.count()) {
+  await casualOutfit.first().click();
+  await page.waitForTimeout(300);
+  const casualApplied = await page.evaluate(
+    () => document.querySelector(".stage")?.dataset?.sceneOutfit === "casual",
+  );
+  record("casual outfit applies", casualApplied);
+} else {
+  record("casual outfit applies", false, "no outfit button");
+}
+
 await page.click("#scene-sheet-close");
+
+const statusDotListening = await page.evaluate(() => {
+  const dot = document.getElementById("status-dot");
+  return dot?.dataset?.state === "typing" || dot?.dataset?.state === "listening";
+});
+record("voice status dot active", statusDotListening);
 
 await page.click("#btn-toggle-chat");
 await page.waitForTimeout(300);
