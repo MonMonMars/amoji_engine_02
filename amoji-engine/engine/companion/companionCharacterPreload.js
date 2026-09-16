@@ -24,7 +24,9 @@ export function getRosterPreloadProgress() {
 export function uniqueCharacterModelUrls(langCode = "yue") {
   const urls = new Set();
   for (const item of listCompanionCharacters(langCode)) {
-    if (item.modelUrl) urls.add(item.modelUrl);
+    if (item.modelUrl && /\.vrm($|\?)/i.test(item.modelUrl)) {
+      urls.add(item.modelUrl);
+    }
   }
   return [...urls];
 }
