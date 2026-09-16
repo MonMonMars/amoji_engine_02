@@ -80,7 +80,8 @@ describe("companionCharacterCatalog", () => {
     expect(nextCharacterId("amoji")).toBe("sora");
     expect(nextCharacterId("rex")).toBe("sky");
     expect(nextCharacterId("sky")).toBe("rose");
-    expect(nextCharacterId("mimi")).toBe("amoji");
+    expect(nextCharacterId("mimi")).toBe("alicia");
+    expect(nextCharacterId("quinn")).toBe("amoji");
   });
 
   it("resolves new 3D character models", () => {
@@ -95,6 +96,25 @@ describe("companionCharacterCatalog", () => {
     );
     expect(defaultVoiceForCharacter("rose", "yue")).toBe("zh-HK-HiuMaanNeural-warm");
     expect(defaultVoiceForCharacter("mimi", "yue")).toBe("zh-HK-HiuGaaiNeural-sweet");
+    expect(resolveCharacterId({ modelUrl: "/prototypes/assets/companion-alicia.vrm" })).toBe(
+      "alicia",
+    );
+    expect(resolveCharacterId({ modelUrl: "/prototypes/assets/companion-nova.vrm" })).toBe(
+      "nova",
+    );
+    expect(resolveCharacterId({ modelUrl: "/prototypes/assets/companion-ember.vrm" })).toBe(
+      "ember",
+    );
+    expect(resolveCharacterId({ modelUrl: "/prototypes/assets/companion-chibi.vrm" })).toBe(
+      "chibi",
+    );
+    expect(resolveCharacterId({ modelUrl: "/prototypes/assets/companion-quinn.glb" })).toBe(
+      "quinn",
+    );
+    expect(defaultVoiceForCharacter("nova", "yue")).toBe("zh-HK-HiuMaanNeural-bright");
+    expect(defaultVoiceForCharacter("quinn", "yue")).toBe("zh-HK-HiuMaanNeural-hero");
+    expect(defaultVoiceForCharacter("ember", "yue")).toBe("zh-HK-HiuGaaiNeural-fiery");
+    expect(defaultVoiceForCharacter("chibi", "yue")).toBe("zh-HK-HiuMaanNeural-chibi");
   });
 
   it("exposes avatar config per character", () => {

@@ -1,0 +1,10 @@
+Alicia Solid VRM — UniVRM sample (gallery pick E5)
+
+Source:  https://github.com/vrm-c/UniVRM
+Model:   AliciaSolid_vrm-0.51.vrm (Tests/Models/Alicia_vrm-0.51/)
+Preview: companion-char-alicia.png (embedded VRM thumbnail)
+
+License: DWANGO / UniVRM sample — widely used for VRM testing; check upstream terms for commercial use.
+Gallery: Free Rigged 3D Character Gallery, section [E] Anime girls, E5 Alicia.
+
+Attribution: Alicia Solid © DWANGO Co., Ltd. (UniVRM sample model)

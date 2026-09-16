@@ -227,6 +227,51 @@ export const CHARACTER_PERFORMANCE_STYLE = Object.freeze({
     noteYue:
       "治癒兔耳 vibe：hug、wave、clap；開心用 excited；被讚用 shy。",
   },
+  alicia: {
+    moves: ["wave", "dance", "clap", "cheer", "spin", "shy", "laugh"],
+    moods: ["happy", "surprised"],
+    nuances: ["excited", "love"],
+    noteEn:
+      "Classic Alicia idol energy: wave/dance/clap; excited on hype; love when bonding.",
+    noteYue:
+      "莉莎經典偶像 vibe：wave、dance、clap；興奮用 excited；親近用 love。",
+  },
+  nova: {
+    moves: ["nod", "thinking", "bow", "wave", "peace"],
+    moods: ["thinking", "happy"],
+    nuances: ["curious", "none"],
+    noteEn:
+      "Photoreal guide: nod/thinking/bow; curious when clarifying; calm premium tone.",
+    noteYue:
+      "諾娃寫實知性 vibe：nod、thinking、bow；追問用 curious；保持淡定。",
+  },
+  ember: {
+    moves: ["dance", "cheer", "clap", "celebrate", "wave", "spin", "laugh"],
+    moods: ["happy", "surprised"],
+    nuances: ["excited", "love"],
+    noteEn:
+      "Fiery performer: dance/cheer/celebrate; excited default; love when hyping user.",
+    noteYue:
+      "焰熱情表演 vibe：dance、cheer、celebrate；默認 excited；鼓勵用 love。",
+  },
+  chibi: {
+    moves: ["wave", "hug", "clap", "shy", "cheer", "dance"],
+    moods: ["happy", "surprised"],
+    nuances: ["excited", "shy", "love"],
+    noteEn:
+      "Chibi cozy: hug/wave/clap; shy when teased; excited for fun topics.",
+    noteYue:
+      "小彩 Q 版治癒 vibe：hug、wave、clap；被撩用 shy；好玩用 excited。",
+  },
+  quinn: {
+    moves: ["salute", "nod", "thumbsup", "wave", "punch", "peace"],
+    moods: ["happy", "thinking"],
+    nuances: ["none", "curious"],
+    noteEn:
+      "Hero teammate: salute/nod/thumbsup; curious when planning; confident concise.",
+    noteYue:
+      "奎恩英雄隊友 vibe：salute、nod、thumbsup；規劃用 curious；自信簡潔。",
+  },
 });
 
 /**
