@@ -18,6 +18,13 @@ export const PORTRAIT_DIST_FACTOR = 1.52;
 export const PORTRAIT_DIST_MIN = 1.28;
 
 /**
+ * User orbit polar range (radians from +Y). Tight clamps (~18°) made the
+ * model feel locked; keep a floor so the camera cannot pass through the ground.
+ */
+export const ORBIT_MIN_POLAR = 0.18;
+export const ORBIT_MAX_POLAR = Math.PI * 0.85;
+
+/**
  * Default camera Z offset sign (matches @pixiv/three-vrm examples: camera on +Z).
  * Per-avatar {@link detectPortraitCameraZSign} overrides when exports differ.
  */
@@ -156,11 +163,26 @@ export function computeUpperBodyAnchor(fitted, headWorld, out = new THREE.Vector
 }
 
 /**
+ * Allow drag-orbit around the companion (yaw + pitch + pinch zoom).
+ * @param {import('three').OrbitControls} controls
+ */
+export function applyUserOrbitLimits(controls) {
+  if (!controls) return controls;
+  controls.minPolarAngle = ORBIT_MIN_POLAR;
+  controls.maxPolarAngle = ORBIT_MAX_POLAR;
+  controls.enableRotate = true;
+  controls.enableZoom = true;
+  controls.enablePan = false;
+  return controls;
+}
+
+/**
  * @param {{
  *   camera: import('three').PerspectiveCamera,
  *   controls: import('three').OrbitControls,
  *   anchor: import('three').Vector3,
  *   fittedHeight: number,
+ *   cameraZSign?: number,
  * }} opts
  */
 export function applyUpperBodyPortraitFrame(opts) {
@@ -175,10 +197,9 @@ export function applyUpperBodyPortraitFrame(opts) {
   );
   opts.camera.fov = PORTRAIT_FOV;
   opts.camera.updateProjectionMatrix();
-  opts.controls.minDistance = portraitDist * 0.82;
-  opts.controls.maxDistance = portraitDist * 2.8;
-  opts.controls.minPolarAngle = Math.PI * 0.42;
-  opts.controls.maxPolarAngle = Math.PI * 0.52;
+  opts.controls.minDistance = portraitDist * 0.55;
+  opts.controls.maxDistance = portraitDist * 3.4;
+  applyUserOrbitLimits(opts.controls);
   opts.controls.update();
   return portraitDist;
 }
