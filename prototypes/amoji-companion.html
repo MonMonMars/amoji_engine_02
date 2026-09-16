@@ -1457,69 +1457,82 @@
       body.conversation-ui .topbar-actions .topbar-btn:not(#btn-open-setup),
       body.conversation-ui .topbar-actions #btn-settings,
       body.conversation-ui .llm-switcher-wrap,
-      body.conversation-ui #btn-mic,
-      body.conversation-ui .cloud-key-banner button {
+      body.conversation-ui .cloud-key-banner button,
+      body.conversation-ui .ui-context-pill,
+      body.conversation-ui .activity-rail {
         display: none !important;
       }
 
-      /* Voice mode: emotion orb. Text mode / mic-blocked: composer input. */
-      body.conversation-ui:not(.composer-text-mode):not(.mic-blocked)
-        .composer
-        textarea,
-      body.conversation-ui:not(.composer-text-mode):not(.mic-blocked)
-        .composer
-        .send {
+      body.conversation-ui .topbar-btn--icon {
+        width: 2.65rem;
+        height: 2.65rem;
+        padding: 0;
+        font-size: 1.45rem;
+        line-height: 1;
+        border-radius: 999px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      body.conversation-ui .brand-btn {
+        pointer-events: none;
+        cursor: default;
+      }
+
+      /* Minimal UI: text bar + mic always visible; functions live in menu. */
+      body.conversation-ui.composer-always-visible .emotion-ball-stack,
+      body.conversation-ui.composer-always-visible .listen-hint {
         display: none !important;
       }
 
-      body.conversation-ui:not(.composer-text-mode):not(.mic-blocked)
-        .emotion-ball-stack:not(.is-hidden) {
+      body.conversation-ui.composer-always-visible .composer textarea,
+      body.conversation-ui.composer-always-visible .composer .send,
+      body.conversation-ui.composer-always-visible .composer #btn-mic {
         display: flex !important;
       }
 
-      body.conversation-ui.composer-text-mode .emotion-ball-stack,
-      body.conversation-ui.mic-blocked .emotion-ball-stack {
-        display: none !important;
-      }
-
-      body.conversation-ui.composer-text-mode .stage.mic-mode .composer textarea,
-      body.conversation-ui.composer-text-mode .stage.mic-mode .composer .send,
-      body.conversation-ui.mic-blocked .stage.mic-mode .composer textarea,
-      body.conversation-ui.mic-blocked .stage.mic-mode .composer .send {
-        display: block !important;
-      }
-
-      body.conversation-ui.composer-text-mode .stage.mic-mode .composer,
-      body.conversation-ui.mic-blocked .stage.mic-mode .composer {
-        max-width: min(720px, 100%);
-        width: 100%;
-        padding: 0.5rem 0.55rem;
-      }
-
-      body.conversation-ui.composer-text-mode .composer textarea,
-      body.conversation-ui.mic-blocked .composer textarea {
+      body.conversation-ui.composer-always-visible .composer textarea {
         display: block !important;
         flex: 1;
         min-height: 2.5rem;
       }
 
-      body.conversation-ui .listen-hint {
+      body.conversation-ui.composer-always-visible .stage.mic-mode .composer {
+        max-width: min(720px, 100%);
         width: 100%;
-        text-align: center;
-        font-size: 0.82rem;
-        font-weight: 650;
-        color: rgba(247, 241, 232, 0.9);
-        padding: 0.35rem 0.5rem 0;
-        cursor: pointer;
-        pointer-events: auto;
+        justify-content: stretch;
+        gap: 0.45rem;
+        padding: 0.5rem 0.55rem;
       }
 
-      body.conversation-ui.composer-text-mode .listen-hint {
-        cursor: default;
+      body.conversation-ui.composer-always-visible .stage.mic-mode .composer textarea,
+      body.conversation-ui.composer-always-visible .stage.mic-mode .composer .send {
+        display: block !important;
       }
 
-      body.conversation-ui .listen-hint.mic-active {
-        color: rgba(127, 212, 207, 0.95);
+      body.conversation-ui.composer-always-visible .stage.mic-mode #btn-mic {
+        position: relative;
+        left: auto;
+        bottom: auto;
+        transform: none;
+        width: 2.75rem;
+        height: 2.75rem;
+        flex-shrink: 0;
+        background: rgba(255, 255, 255, 0.06) !important;
+        border: 1px solid rgba(247, 241, 232, 0.14) !important;
+        box-shadow: none !important;
+        z-index: 1;
+      }
+
+      body.conversation-ui.composer-always-visible .stage.mic-mode #btn-mic .mic-btn__aura,
+      body.conversation-ui.composer-always-visible .stage.mic-mode #btn-mic .mic-btn__ring,
+      body.conversation-ui.composer-always-visible .stage.mic-mode #btn-mic .mic-btn__wave {
+        display: block !important;
+      }
+
+      body.conversation-ui.composer-always-visible .stage.mic-mode #btn-mic .mic-btn__icon {
+        opacity: 1;
       }
 
       .ui-context-pill {
@@ -2687,7 +2700,7 @@
       })();
     </script>
   </head>
-  <body class="theme-grok-ani conversation-ui">
+  <body class="theme-grok-ani conversation-ui composer-text-mode composer-always-visible">
     <!-- amoji-build: 2026-09-14-v37-companion-picker — Grok Ani–style character grid -->
     <noscript>
       <div
@@ -2750,8 +2763,14 @@
           <div class="pill" id="mode-pill" hidden aria-hidden="true">LLM · <strong>local</strong></div>
           <div class="pill" id="emotion-pill" hidden aria-hidden="true">feel · <strong>neutral</strong></div>
           <span class="ui-context-pill" id="ui-context-pill" hidden></span>
-          <button type="button" class="topbar-btn topbar-btn--primary" id="btn-open-setup">
-            Setup
+          <button
+            type="button"
+            class="topbar-btn topbar-btn--icon"
+            id="btn-open-setup"
+            aria-label="Menu"
+            title="Menu"
+          >
+            ⋯
           </button>
           <button type="button" class="gear" id="btn-settings" title="Chat settings" aria-label="Settings" hidden>⚙</button>
         </div>
@@ -3343,13 +3362,7 @@
       let isEnglish = langCode === "en";
 
       if (conversationUi) {
-        document.body.classList.add("composer-text-mode");
-        if (listenHintEl) {
-          listenHintEl.hidden = false;
-          listenHintEl.textContent = isEnglish
-            ? "Type below to chat — voice orb appears after start"
-            : "喺下面打字傾偈 — 開始後會顯示語音圓球";
-        }
+        document.body.classList.add("composer-text-mode", "composer-always-visible");
       }
 
       const micUi = createCompanionMicButton(btnMic, {
@@ -3395,7 +3408,11 @@
       };
 
       const updateEmotionBallVisibility = () => {
-        if (!sessionStarted || composerTextMode()) {
+        if (
+          !sessionStarted ||
+          composerTextMode() ||
+          document.body.classList.contains("composer-always-visible")
+        ) {
           emotionBall.hide();
           return;
         }
@@ -3458,10 +3475,14 @@
 
       const syncTopbarActionLabels = () => {
         if (btnOpenSetup) {
-          btnOpenSetup.textContent = isEnglish ? "Setup" : "設定";
+          btnOpenSetup.textContent = "⋯";
           btnOpenSetup.title = isEnglish
-            ? "Language, voice, companion, brain"
-            : "語言、語音、同伴、大腦";
+            ? "Menu — language, voice, companion, brain"
+            : "選單 — 語言、語音、同伴、大腦";
+          btnOpenSetup.setAttribute(
+            "aria-label",
+            isEnglish ? "Menu" : "選單",
+          );
         }
         if (settingsPageTitle) {
           settingsPageTitle.textContent = isEnglish ? "Setup" : "設定";
@@ -4025,16 +4046,6 @@
                 ? "Speak, pause — tap here to type instead"
                 : "講完停一停 — 點這裡可以打字";
       };
-
-      listenHintEl?.addEventListener("click", () => {
-        if (!conversationUi || !sessionStarted) return;
-        if (document.body.classList.contains("mic-blocked")) return;
-        setComposerInputMode(
-          document.body.classList.contains("composer-text-mode")
-            ? "voice"
-            : "text",
-        );
-      });
 
       const syncMicBtn = () => {
         micUi.sync({
@@ -4939,9 +4950,7 @@
 
         if (!busy && !voice.micOn && !voice.speaking) status.idle();
         if (conversationUi) {
-          setComposerInputMode(
-            document.body.classList.contains("mic-blocked") ? "text" : "voice",
-          );
+          setComposerInputMode("text");
         } else {
           input.focus();
         }
@@ -5013,6 +5022,7 @@
             if (conversationUi) {
               document.body.classList.add("mic-blocked");
               setComposerInputMode("text");
+              input.focus();
             }
             addBubble(
               "system",
@@ -5028,10 +5038,11 @@
           voice.startMic().then((micOk) => {
             if (micOk) {
               document.body.classList.remove("mic-blocked");
-              if (conversationUi) setComposerInputMode("voice");
+              if (conversationUi) setComposerInputMode("text");
             } else if (conversationUi) {
               document.body.classList.add("mic-blocked");
               setComposerInputMode("text");
+              input.focus();
             }
             syncMicBtn();
             if (micOk) {
@@ -5326,9 +5337,17 @@
           }
           addBubble(
             "system",
-            "Mic on · speak, pause, she replies. Tap 🎤 to stop.",
+            conversationUi
+              ? isEnglish
+                ? "Mic on — speak and pause, or keep typing below."
+                : "Mic on — 講完停一停，或者繼續打字。"
+              : "Mic on · speak, pause, she replies. Tap 🎤 to stop.",
           );
-          input.placeholder = "Listening… speak, pause → she replies, then listens again";
+          input.placeholder = conversationUi
+            ? isEnglish
+              ? "Type here anytime — or speak, pause to send"
+              : "隨時打字 — 或者講完停一停"
+            : "Listening… speak, pause → she replies, then listens again";
           if (!busy) {
             avatar.setEmotion("neutral");
             setEmotionPill("neutral");
@@ -5340,7 +5359,9 @@
           voice.stopMic();
           avatar.setListening?.(false);
           addBubble("system", "Mic off");
-          input.placeholder = "同 Amoji 傾偈… or tap 🎤 for continuous talk";
+          input.placeholder = isEnglish
+            ? "Type to chat… or tap 🎤 for voice"
+            : "打字傾偈… 或者按 🎤 用語音";
           syncMicBtn();
         }
       });
