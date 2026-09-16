@@ -14,8 +14,8 @@ export function buildPortraitShot(anchor, portraitDist, baseFov) {
   const target = new THREE.Vector3(anchor.x, anchor.y + 0.02, anchor.z);
   const position = new THREE.Vector3(
     anchor.x,
-    anchor.y + 0.1,
-    anchor.z + portraitDist * 0.94,
+    anchor.y + 0.08,
+    anchor.z + portraitDist * 1.04,
   );
   return {
     target,
@@ -31,7 +31,7 @@ export function buildPortraitShot(anchor, portraitDist, baseFov) {
  * @param {number} baseFov
  */
 export function buildTalkCloseShot(anchor, portraitDist, baseFov) {
-  const dist = portraitDist * 0.9;
+  const dist = portraitDist * 0.96;
   const target = new THREE.Vector3(anchor.x, anchor.y + 0.06, anchor.z);
   const position = new THREE.Vector3(anchor.x, anchor.y + 0.05, anchor.z + dist);
   return {

@@ -9,8 +9,8 @@ import {
 describe("companionPortraitFraming", () => {
   it("frames standard VRM height at upper-body distance", () => {
     const dist = portraitDistanceForHeight(0.92);
-    expect(dist).toBeGreaterThanOrEqual(1.02);
-    expect(dist).toBeCloseTo(1.02, 1);
+    expect(dist).toBeGreaterThanOrEqual(1.12);
+    expect(dist).toBeCloseTo(1.196, 2);
   });
 
   it("anchors on chest, not face", () => {
@@ -25,7 +25,7 @@ describe("companionPortraitFraming", () => {
   });
 
   it("uses a portrait fov that keeps shoulders in frame", () => {
-    expect(PORTRAIT_FOV).toBeGreaterThanOrEqual(28);
-    expect(PORTRAIT_FOV).toBeLessThanOrEqual(31);
+    expect(PORTRAIT_FOV).toBeGreaterThanOrEqual(29);
+    expect(PORTRAIT_FOV).toBeLessThanOrEqual(32);
   });
 });
