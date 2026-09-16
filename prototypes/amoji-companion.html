@@ -8,9 +8,9 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji · Companion</title>
     <script>
-      window.__amojiBuild = "2026-09-16-v112-motion-load-fix";
+      window.__amojiBuild = "2026-09-16-v113-boot-chitchat";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-16-v112-motion-load-fix"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-16-v113-boot-chitchat"></script>
     <link
       rel="prefetch"
       href="/prototypes/assets/companion-char-nova.png"
@@ -55,6 +55,10 @@
       body.companion-start-pending .orbit-hint {
         opacity: 1;
         pointer-events: auto;
+      }
+
+      body.companion-start-pending .composer-wrap {
+        z-index: 13001;
       }
 
       .companion-picker--start {
@@ -281,7 +285,7 @@
       media="print"
       onload="this.media='all'"
     />
-    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-16-v112-motion-load-fix" />
+    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-16-v113-boot-chitchat" />
     <noscript>
       <link
         href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap"
@@ -2829,19 +2833,19 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-16-v112-motion-load-fix",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-16-v113-boot-chitchat",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-16-v112-motion-load-fix",
-          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-16-v112-motion-load-fix"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-16-v113-boot-chitchat",
+          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-16-v113-boot-chitchat"
         }
       }
     </script>
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-16-v112-motion-load-fix"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-16-v113-boot-chitchat"
     />
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-16-v112-motion-load-fix"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-16-v112-motion-load-fix"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-16-v113-boot-chitchat"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-16-v113-boot-chitchat"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;
@@ -3091,7 +3095,7 @@
         <div class="meta topbar-actions">
           <div class="pill" id="status-pill" hidden aria-hidden="true">state · <strong>idle</strong></div>
           <div class="pill avatar-load-pill" id="avatar-load-pill" hidden>
-            avatar · <strong>loading…</strong>
+            3D · <strong>loading…</strong> · type to chat
           </div>
           <div class="pill" id="mode-pill" hidden aria-hidden="true">LLM · <strong>local</strong></div>
           <div class="pill" id="emotion-pill" hidden aria-hidden="true">feel · <strong>neutral</strong></div>
@@ -3332,6 +3336,7 @@
         activityRailMod,
         scenePresetsMod,
         chatPersistenceMod,
+        bootChitchatMod,
       ] = await Promise.all([
         ami("../amoji-engine/engine/companion/createAvatar.js"),
         ami("../amoji-engine/engine/companion/chatLlm.js"),
@@ -3367,7 +3372,9 @@
         ami("../amoji-engine/engine/companion/companionActivityRail.js"),
         ami("../amoji-engine/engine/companion/companionScenePresets.js"),
         ami("../amoji-engine/engine/companion/companionChatPersistence.js"),
+        ami("../amoji-engine/engine/companion/companionBootChitchat.mjs"),
       ]);
+      const { buildBootChitchatReply, isBootChitchatPhase } = bootChitchatMod;
       window.__amojiModuleBooted = true;
       const {
         createCompanionVoice,
@@ -3631,6 +3638,7 @@
 
       const playActionWithMotionLibrary = async (content) => {
         if (!content?.action || content.action === "stop") return;
+        if (isBootChitchatPhase({ avatarKind, liteMode })) return;
         const sequence = buildActionSequence(content.action, { maxMoves: 5 });
         for (const id of sequence) {
           const installed = await ensureActionInstalled(id);
@@ -3702,6 +3710,16 @@
         if (!content.action && !content.gesture) {
           avatar.playGestureForText?.(replyText, { emotion: content.emotion });
         }
+        return content;
+      };
+
+      const applyBootChitchatPerformance = (replyText, userText = lastUserMessage) => {
+        const content = resolveTurnPerformance(userText, replyText, null);
+        lastAvatarPerformance = content;
+        const emotion = content.emotion || "happy";
+        currentEmotion = emotion;
+        avatar.setEmotion?.(emotion);
+        setEmotionPill(emotion);
         return content;
       };
 
@@ -4243,7 +4261,9 @@
                 : `載入 3D 模型… ${Math.round(pct)}%`,
             });
             if (avatarLoadPill) {
-              avatarLoadPill.innerHTML = `avatar · <strong>${Math.round(pct)}%</strong>`;
+              avatarLoadPill.innerHTML = isEnglish
+                ? `3D loading · <strong>${Math.round(pct)}%</strong> · type to chat`
+                : `3D 載入 · <strong>${Math.round(pct)}%</strong> · 可打字傾偈`;
             }
           },
         })
@@ -5554,30 +5574,35 @@
         avatar.setListening?.(false);
         avatar.setTalking(false);
         avatar.setMouthOpen(0);
-        const userMotion = analyzeUserInput?.(cleaned, isEnglish);
-        if (userMotion?.action === "stop") {
-          applyPerformanceFromContent(userMotion);
-          setEmotionPill(userMotion.emotion || "neutral");
-        } else if (isShowcaseRequest(cleaned)) {
-          void playShowcaseSequence(userMotion?.action, userMotion?.emotion || "happy");
-        } else if (userMotion?.action) {
-          void playActionWithMotionLibrary({
-            action: userMotion.action,
-            emotion: userMotion.emotion || "happy",
+        const bootChitchat = isBootChitchatPhase({ avatarKind, liteMode });
+        if (!bootChitchat) {
+          const userMotion = analyzeUserInput?.(cleaned, isEnglish);
+          if (userMotion?.action === "stop") {
+            applyPerformanceFromContent(userMotion);
+            setEmotionPill(userMotion.emotion || "neutral");
+          } else if (isShowcaseRequest(cleaned)) {
+            void playShowcaseSequence(userMotion?.action, userMotion?.emotion || "happy");
+          } else if (userMotion?.action) {
+            void playActionWithMotionLibrary({
+              action: userMotion.action,
+              emotion: userMotion.emotion || "happy",
+            });
+          }
+          avatar.setThinking?.(true);
+          avatar.prepareThinkingFromUser?.(cleaned, isEnglish);
+          setEmotionPill(avatar.emotion || "thinking");
+          status.thinking();
+          activityRail.pulse("💭", isEnglish ? "Thinking" : "諗緊");
+          waitAct?.start({
+            kind: "thinking",
+            phase: "thinking",
+            progress: 0,
+            indeterminate: true,
+            label: isEnglish ? "Thinking…" : "思考中…",
           });
+        } else {
+          activityRail.pulse("💬", isEnglish ? "Boot chat" : "載入中傾偈");
         }
-        avatar.setThinking?.(true);
-        avatar.prepareThinkingFromUser?.(cleaned, isEnglish);
-        setEmotionPill(avatar.emotion || "thinking");
-        status.thinking();
-        activityRail.pulse("💭", isEnglish ? "Thinking" : "諗緊");
-        waitAct?.start({
-          kind: "thinking",
-          phase: "thinking",
-          progress: 0,
-          indeterminate: true,
-          label: isEnglish ? "Thinking…" : "思考中…",
-        });
 
         const assistantBubble = addBubble("assistant", "", {
           persist: false,
@@ -5586,7 +5611,7 @@
         const assistantRow = assistantBubble.closest(".msg-row");
         const turnId = ++turnSeq;
         activeTurn = { id: turnId, aborted: false, assistantRow };
-        showThinking(assistantBubble);
+        if (!bootChitchat) showThinking(assistantBubble);
 
         const streamPlanner = createStreamSpeakPlanner();
         let gotToken = false;
@@ -5625,6 +5650,28 @@
         };
 
         try {
+          if (bootChitchat) {
+            const rawReply = buildBootChitchatReply(cleaned, { isEnglish });
+            const content = applyBootChitchatPerformance(rawReply, cleaned);
+            await applyConversationUi(cleaned, rawReply);
+            const emotion = content.emotion || "happy";
+            const finalReply = stripReplyTags(rawReply);
+            assistantBubble.textContent = finalReply;
+            attachMessageActions(assistantRow, assistantBubble, "assistant", finalReply);
+            appendChatHistory(characterId, { role: "assistant", text: finalReply });
+            syncStarterPrompts();
+            speakContent = content;
+            speakEmotion = emotion;
+            status.speaking();
+            await voice.speak(finalReply, {
+              emotion,
+              nuance: content.nuance || "none",
+              talkStyle: content.talkStyle || "chat",
+              speechEnergy: content.speechEnergy ?? 0.45,
+            });
+            return;
+          }
+
           const result = await chat.reply(cleaned, {
             onToken: (_chunk, full) => {
               if (activeTurn?.aborted) return;
