@@ -188,12 +188,13 @@ export async function createVrmAvatar(opts) {
     MIDDLE: THREE.MOUSE.DOLLY,
     RIGHT: THREE.MOUSE.ROTATE,
   };
+  controls.enableRotate = true;
+  controls.enableZoom = true;
+  controls.rotateSpeed = 1.15;
   controls.touches = {
     ONE: THREE.TOUCH.ROTATE,
     TWO: THREE.TOUCH.DOLLY,
   };
-  controls.enableRotate = true;
-  controls.enableZoom = true;
 
   const loader = new GLTFLoader();
   loader.register((parser) => new VRMLoaderPlugin(parser));
@@ -405,7 +406,7 @@ export async function createVrmAvatar(opts) {
 
   const tickExpressionBlend = (dt) => {
     if (!expr) return;
-    const rate = Math.min(1, dt * 9);
+    const rate = Math.min(1, dt * 16);
     for (const preset of emotionPresetKeys()) {
       const target = expressionTarget[preset] ?? 0;
       const current = expressionCurrent[preset] ?? 0;
@@ -470,11 +471,11 @@ export async function createVrmAvatar(opts) {
     if (!key || key === "none" || key === "stop") return false;
     if (!resolveOnlineMotionClipUrl(key)) return false;
 
-    bodyMotion.stopAction();
     const loop = opts.loop ?? actionLoops(key);
     const ok = await motionPlayer.play(key, { loop });
     if (!ok) return false;
 
+    bodyMotion.stopAction();
     vrmaAction = key;
     if (opts.emotion && opts.emotion !== "neutral") {
       emotion = opts.emotion;
@@ -705,9 +706,6 @@ export async function createVrmAvatar(opts) {
 
       cameraDirector.setCurrentAction(activeMotion);
       const camState = cameraDirector.update(dt);
-      if (!camState.autoActive) {
-        applyOrbitFollowAnchor(controls, camera, smoothedFrameAnchor);
-      }
       if (camState.autoActive) {
         const desired = applyAutoCameraFrame(
           controls,
@@ -727,6 +725,9 @@ export async function createVrmAvatar(opts) {
         portraitCamera.fov = desired.fov;
         portraitCamera.distance = desired.distance;
       } else {
+        if (!camState.userOrbiting && !camState.userFramingHeld) {
+          applyOrbitFollowAnchor(controls, camera, smoothedFrameAnchor);
+        }
         controls.update();
       }
     } catch (err) {
@@ -749,7 +750,7 @@ export async function createVrmAvatar(opts) {
       }
     }
 
-    mouthOpen += (mouthTarget - mouthOpen) * Math.min(1, dt * 14);
+    mouthOpen += (mouthTarget - mouthOpen) * Math.min(1, dt * 22);
     tickExpressionBlend(dt);
     applyMouth(mouthOpen);
 
@@ -807,6 +808,7 @@ export async function createVrmAvatar(opts) {
     defaultPortrait.fov = camera.fov;
     defaultPortrait.distance = camera.position.distanceTo(controls.target);
     cameraDirector.resetDialogue();
+    cameraDirector.holdUserFraming(false);
     cameraDirector.setUserOrbiting(false);
     syncPortraitFromControls();
     controls.update();

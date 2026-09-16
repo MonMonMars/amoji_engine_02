@@ -2,9 +2,11 @@ import { describe, expect, it } from "vitest";
 import {
   charToViseme,
   configureCompanionAudioElement,
+  estimateLipSyncMsPerChar,
   femaleVoiceLabel,
   formatMicError,
   pickFemaleVoice,
+  readAnalyserMouthLevel,
   unlockAudioSync,
 } from "../engine/companion/companionVoice.js";
 
@@ -50,5 +52,19 @@ describe("companionVoice", () => {
 
   it("unlockAudioSync is safe without window", () => {
     expect(unlockAudioSync()).toBe(false);
+  });
+
+  it("slows CJK lip-sync to spoken Cantonese pace", () => {
+    expect(estimateLipSyncMsPerChar("你好呀，今日開心嗎？")).toBeGreaterThan(120);
+    expect(estimateLipSyncMsPerChar("hello there friend")).toBeLessThan(80);
+  });
+
+  it("scales lip-sync to real audio duration", () => {
+    const ms = estimateLipSyncMsPerChar("你好呀", 600);
+    expect(ms).toBeCloseTo(200, 0);
+  });
+
+  it("readAnalyserMouthLevel is 0 without an analyser", () => {
+    expect(readAnalyserMouthLevel(null)).toBe(0);
   });
 });

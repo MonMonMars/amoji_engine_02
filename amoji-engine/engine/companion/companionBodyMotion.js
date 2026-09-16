@@ -687,15 +687,15 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
           speechEnergy: energy,
           includeArms: true,
         });
-        const talkBlend = 0.5 + energy * 0.38;
+        const talkBlend = 0.74 + energy * 0.24;
         pose = mergePoses(pose, motion.body, talkBlend);
 
         const beat = Math.sin(elapsed * 7.4);
         const sway = Math.sin(elapsed * 3.6 + talkTime * 2.1);
-        pose.headX = (pose.headX || 0) + beat * 0.032 * energy + sway * 0.012;
-        pose.leanY = (pose.leanY || 0) + Math.sin(elapsed * 5.8) * 0.026 * energy;
-        pose.headZ = (pose.headZ || 0) + Math.sin(elapsed * 4.6) * 0.02 * energy;
-        pose.spineX = (pose.spineX || 0) + Math.sin(elapsed * 4.2) * 0.015 * energy;
+        pose.headX = (pose.headX || 0) + beat * 0.055 * energy + sway * 0.02;
+        pose.leanY = (pose.leanY || 0) + Math.sin(elapsed * 5.8) * 0.048 * energy;
+        pose.headZ = (pose.headZ || 0) + Math.sin(elapsed * 4.6) * 0.036 * energy;
+        pose.spineX = (pose.spineX || 0) + Math.sin(elapsed * 4.2) * 0.028 * energy;
       }
     }
 
@@ -707,7 +707,7 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
       actionArms = true;
     }
     if (talking && !activeGesture && !activeAction) {
-      talkArmBlend = 0.28 + energy * 0.32;
+      talkArmBlend = 0.52 + energy * 0.4;
     } else if (!talking && !thinking && !activeGesture && !activeAction) {
       idleArms = true;
     }

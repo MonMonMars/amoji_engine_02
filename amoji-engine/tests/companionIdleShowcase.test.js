@@ -19,9 +19,16 @@ describe("idle showcase wiring", () => {
     );
   });
 
-  it("does not require voice.speaking to be false while already idling", () => {
+  it("does not wait for voice.speaking to drop before starting idle motion", () => {
     expect(html).toMatch(
-      /canStartIdleShowcase = \(\) =>\s*canIdleShowcase\(\) &&\s*\(!voice\?\.speaking \|\| waitAct\?\.state\?\.kind === "idle"\)/,
+      /const canStartIdleShowcase = \(\) => canIdleShowcase\(\);/,
+    );
+  });
+
+  it("plays a wave after avatar load instead of stopping all motion", () => {
+    expect(html).toMatch(/playAction\?\.\("wave"/);
+    expect(html).not.toMatch(
+      /\.finally\(\(\) => \{\s*hideAvatarLoadPill\(\);\s*avatar\?\.stopAction/,
     );
   });
 });
