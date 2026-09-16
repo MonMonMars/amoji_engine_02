@@ -37,9 +37,12 @@ describe("companionCharacterPreload", () => {
       onProgress: (ratio) => progress.push(ratio),
     });
     expect(result.ok).toBe(true);
+    expect(result.phase).toBe("previews");
     expect(uniqueCharacterPreviewUrls("en").length).toBeGreaterThanOrEqual(18);
-    expect(getRosterPreloadProgress()).toBe(1);
     expect(progress.length).toBeGreaterThan(0);
+    const modelResult = await result.modelsLoading;
+    expect(modelResult.ok).toBe(true);
+    expect(getRosterPreloadProgress()).toBe(1);
     expect(progress[progress.length - 1]).toBe(1);
   });
 

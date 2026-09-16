@@ -261,6 +261,7 @@ export function createCompanionStartPicker(opts = {}) {
   const langCode = isEnglish ? "en" : "yue";
   let selectedId = opts.selectedId || "amoji";
   let starting = false;
+  let pickable = true;
   let preloadPct = 0;
   let preloadReady = false;
 
@@ -321,13 +322,13 @@ export function createCompanionStartPicker(opts = {}) {
         ? isEnglish
           ? "Starting…"
           : "開始中…"
-        : !preloadReady
+        : !pickable
           ? isEnglish
-            ? "Preloading companions — pick someone when the bar is full"
-            : "正在預載同伴 — 進度條滿咗就可以揀"
+            ? "Almost ready — pick a companion in a moment"
+            : "快好喇 — 等陣就可以揀同伴"
           : isEnglish
-            ? "Tap a card to start — voice and mic unlock when you pick someone"
-            : "點選角色開始 — 揀好就會開啟語音同麥克風";
+            ? "Tap a card to start chatting — 3D loads in the background"
+            : "點選角色就可以傾偈 — 3D 會喺背景載入";
     }
   };
 
@@ -338,11 +339,11 @@ export function createCompanionStartPicker(opts = {}) {
       preloadLabel.textContent =
         clamped >= 100
           ? isEnglish
-            ? "Companions ready — pick one"
-            : "同伴已準備好 — 請揀一位"
+            ? "All companions cached"
+            : "全部同伴已快取"
           : isEnglish
-            ? `Loading companions… ${clamped}%`
-            : `載入同伴中… ${clamped}%`;
+            ? `Background loading… ${clamped}%`
+            : `背景載入中… ${clamped}%`;
     }
     if (preloadEl) {
       preloadEl.classList.toggle("is-ready", clamped >= 100);
@@ -367,15 +368,15 @@ export function createCompanionStartPicker(opts = {}) {
       selectedId,
       compact: true,
       eagerPreview: true,
-      disabled: starting || !preloadReady,
+      disabled: starting || !pickable,
       onCardClick: (id) => {
-        if (!preloadReady || starting) return;
+        if (!pickable || starting) return;
         selectedId = id;
         renderGrid();
         opts.onStart?.(id);
       },
     });
-    shell.classList.toggle("is-preloading", !preloadReady && !starting);
+    shell.classList.toggle("is-preloading", preloadPct < 100 && !starting);
     requestAnimationFrame(renderScrollHint);
   };
 
@@ -398,10 +399,14 @@ export function createCompanionStartPicker(opts = {}) {
       const ready = preloadPct >= 100;
       if (ready !== preloadReady) {
         preloadReady = ready;
-        renderGrid();
         copy();
       }
       renderPreload();
+    },
+    enablePicking(on = true) {
+      pickable = Boolean(on);
+      renderGrid();
+      copy();
     },
     setStarting(on) {
       starting = Boolean(on);

@@ -49,32 +49,30 @@ async function main() {
   );
   await page.waitForFunction(
     () => {
-      const picker = document.getElementById("start-character-picker");
-      return picker && !picker.classList.contains("is-preloading");
+      const card = document.querySelector(
+        "#start-character-picker .companion-card:not([disabled])",
+      );
+      return Boolean(card);
     },
     undefined,
-    { timeout: 90000 },
+    { timeout: 15000 },
   );
 
   const t0 = Date.now();
   await page.click("#start-character-picker .companion-card:not([disabled])");
 
   await page.waitForFunction(
-    () => {
-      const picker = document.getElementById("start-character-picker");
-      return (
-        !picker ||
-        picker.classList.contains("hide") ||
-        picker.getAttribute("aria-hidden") === "true"
-      );
-    },
+    () => window.__amojiStart?.sessionStarted === true,
     undefined,
-    { timeout: 1200 },
+    { timeout: 3000 },
   );
   const readyMs = Date.now() - t0;
 
-  await page.fill("#input", "你好");
-  await page.click("#send");
+  await page.evaluate(() => {
+    document.body.classList.add("mic-blocked");
+  });
+  await page.fill("#input", "你好", { force: true });
+  await page.click("#send", { force: true });
   await page.waitForSelector(".msg-row.user .bubble", { timeout: 5000 });
 
   const stillStarting = await page.evaluate(() => {
