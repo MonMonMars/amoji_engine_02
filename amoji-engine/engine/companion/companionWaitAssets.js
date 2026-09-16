@@ -54,16 +54,7 @@ export const WAIT_POSES_BY_PHASE = Object.freeze({
   learning: ["learning", "thinking", "nod", "stretch", "wave"],
   installing: ["nod", "learning", "downloading", "clap", "thumbsup"],
   thinking: ["thinking", "nod", "wave", "shrug", "point"],
-  "avatar-load": [
-    "wave",
-    "learning",
-    "downloading",
-    "thinking",
-    "stretch",
-    "nod",
-    "peace",
-    "clap",
-  ],
+  "avatar-load": ["nod", "stretch", "peace", "shrug", "nod"],
   "character-switch": ["wave", "nod", "celebrate", "cheer", "dab"],
   "motion-pack": [
     "downloading",

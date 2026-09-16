@@ -244,7 +244,7 @@ export const COMPANION_CHARACTERS = Object.freeze({
     avatarPrefer: "vrm",
     previewImage: "/prototypes/assets/companion-char-sky.png",
     accent: "#b794f6",
-    badge: { yue: "CC-BY VRM", en: "CC-BY VRM" },
+    badge: { yue: "★ E13 推介", en: "★ E13 Pick" },
     voices: {
       yue: "zh-HK-HiuMaanNeural-cool",
       en: "en-US-AriaNeural-cool",
@@ -432,7 +432,7 @@ export const COMPANION_CHARACTERS = Object.freeze({
     avatarPrefer: "vrm",
     previewImage: "/prototypes/assets/companion-char-alicia.png",
     accent: "#ff8fab",
-    badge: { yue: "E5 VRM", en: "E5 VRM" },
+    badge: { yue: "★ E5 推介", en: "★ E5 Pick" },
     voices: {
       yue: "zh-HK-HiuGaaiNeural-story",
       en: "en-HK-YanNeural",
@@ -479,7 +479,7 @@ export const COMPANION_CHARACTERS = Object.freeze({
     avatarPrefer: "vrm",
     previewImage: "/prototypes/assets/companion-char-nova.png",
     accent: "#e8c4a0",
-    badge: { yue: "CC-BY VRM", en: "CC-BY VRM" },
+    badge: { yue: "★ P1 推介", en: "★ P1 Pick" },
     voices: {
       yue: "zh-HK-HiuMaanNeural-bright",
       en: "en-US-JennyNeural",
@@ -526,7 +526,7 @@ export const COMPANION_CHARACTERS = Object.freeze({
     avatarPrefer: "vrm",
     previewImage: "/prototypes/assets/companion-char-ember.png",
     accent: "#ff6b4a",
-    badge: { yue: "CC-BY VRM", en: "CC-BY VRM" },
+    badge: { yue: "★ E17 推介", en: "★ E17 Pick" },
     voices: {
       yue: "zh-HK-HiuGaaiNeural-fiery",
       en: "en-HK-YanNeural",
@@ -573,7 +573,7 @@ export const COMPANION_CHARACTERS = Object.freeze({
     avatarPrefer: "vrm",
     previewImage: "/prototypes/assets/companion-char-chibi.png",
     accent: "#ffd166",
-    badge: { yue: "CC0 VRM", en: "CC0 VRM" },
+    badge: { yue: "★ E18 推介", en: "★ E18 Pick" },
     voices: {
       yue: "zh-HK-HiuMaanNeural-chibi",
       en: "en-HK-YanNeural",
@@ -889,7 +889,40 @@ export const COMPANION_CHARACTERS = Object.freeze({
   },
 });
 
-export const CHARACTER_IDS = Object.freeze(Object.keys(COMPANION_CHARACTERS));
+/**
+ * Roster display + preload order. Gallery pretty-girl picks first (user list:
+ * P1/A4 Nova, E5 Alicia, E17 Ember, E18 Chibi, E13 Sky), then other girls,
+ * then legacy defaults, then male avatars last.
+ */
+export const CHARACTER_IDS = Object.freeze([
+  "nova",
+  "alicia",
+  "ember",
+  "chibi",
+  "sky",
+  "kizuna",
+  "rose",
+  "mimi",
+  "olivia",
+  "erika",
+  "lydia",
+  "kate",
+  "quinn",
+  "amoji",
+  "sora",
+  "rex",
+  "robert",
+  "mikel",
+]);
+
+/** @type {ReadonlySet<string>} */
+export const GALLERY_PRIORITY_IDS = new Set([
+  "nova",
+  "alicia",
+  "ember",
+  "chibi",
+  "sky",
+]);
 
 const CANTONESE_RULES = [
   "ALWAYS reply in spoken Cantonese (粵語口語) with natural particles unless the user clearly writes in English.",
@@ -981,7 +1014,7 @@ export function resolveCharacterId(opts = {}) {
   const stored = storage?.getItem(CHARACTER_STORAGE_KEY) || "";
   if (stored && COMPANION_CHARACTERS[stored]) return stored;
 
-  return "amoji";
+  return "nova";
 }
 
 /**

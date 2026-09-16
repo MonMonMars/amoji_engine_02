@@ -45,6 +45,19 @@ export function computeGltfFrameAnchor(model, headBone, out = new THREE.Vector3(
 }
 
 /**
+ * Low-pass filter for orbit anchors — tames spring-bone / bbox jitter.
+ * @param {import('three').Vector3} smoothed
+ * @param {import('three').Vector3} next
+ * @param {number} dt
+ * @param {number} [tauSec]
+ */
+export function smoothFrameAnchor(smoothed, next, dt, tauSec = 0.2) {
+  const k = tauSec <= 0 ? 1 : Math.min(1, dt / tauSec);
+  smoothed.lerp(next, k);
+  return smoothed;
+}
+
+/**
  * Shift orbit target to anchor and move camera by the same delta so framing stays locked.
  * @param {import('three').OrbitControls} controls
  * @param {import('three').PerspectiveCamera} camera
@@ -54,7 +67,7 @@ export function applyOrbitFollowAnchor(controls, camera, anchor) {
   const dx = anchor.x - controls.target.x;
   const dy = anchor.y - controls.target.y;
   const dz = anchor.z - controls.target.z;
-  if (dx * dx + dy * dy + dz * dz < 1e-12) {
+  if (dx * dx + dy * dy + dz * dz < 2.5e-5) {
     return false;
   }
   controls.target.copy(anchor);
