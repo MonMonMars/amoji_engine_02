@@ -1,11 +1,11 @@
 /**
- * Scene presets — background swatches for the companion stage.
- * Outfit presets are placeholders until per-character wardrobe ships.
+ * Scene presets — background swatches and per-character outfit wardrobe (v1).
  */
 export const COMPANION_SCENE_PRESETS_SCHEMA = "amoji.companionScenePresets.v1";
 
 export const SCENE_STORAGE_KEY = "amoji.companion.scenePreset";
 export const CHAT_PANEL_STORAGE_KEY = "amoji.companion.chatPanelVisible";
+export const SCENE_OUTFIT_STORAGE_KEY = "amoji.companion.sceneOutfit";
 
 /** @type {ReadonlyArray<{ id: string, labelEn: string, labelYue: string }>} */
 export const SCENE_BACKGROUND_PRESETS = Object.freeze([
@@ -16,11 +16,23 @@ export const SCENE_BACKGROUND_PRESETS = Object.freeze([
   { id: "aurora", labelEn: "Aurora", labelYue: "極光" },
 ]);
 
-/** @type {ReadonlyArray<{ id: string, labelEn: string, labelYue: string, soon?: boolean }>} */
+/** @type {ReadonlyArray<{ id: string, labelEn: string, labelYue: string, swatch?: string, characters?: string[] }>} */
 export const SCENE_OUTFIT_PRESETS = Object.freeze([
-  { id: "default", labelEn: "Default look", labelYue: "原本造型", soon: true },
-  { id: "casual", labelEn: "Casual", labelYue: "休閒", soon: true },
-  { id: "formal", labelEn: "Formal", labelYue: "正式", soon: true },
+  { id: "default", labelEn: "Default look", labelYue: "原本造型", swatch: "default" },
+  {
+    id: "casual",
+    labelEn: "Casual soft",
+    labelYue: "休閒柔和",
+    swatch: "casual",
+    characters: ["nova"],
+  },
+  {
+    id: "formal",
+    labelEn: "Formal crisp",
+    labelYue: "正式利落",
+    swatch: "formal",
+    characters: ["nova"],
+  },
 ]);
 
 /**
@@ -103,4 +115,82 @@ export function persistChatPanelVisible(visible) {
     /* ignore quota / private mode */
   }
   return visible;
+}
+
+/**
+ * @param {string | null | undefined} id
+ */
+export function resolveSceneOutfitId(id) {
+  const key = String(id || "default").toLowerCase();
+  if (SCENE_OUTFIT_PRESETS.some((p) => p.id === key)) return key;
+  return "default";
+}
+
+/**
+ * @param {{ characters?: string[] }} preset
+ * @param {string} characterId
+ */
+export function outfitPresetAvailableForCharacter(preset, characterId) {
+  const chars = preset?.characters;
+  if (!chars?.length) return true;
+  return chars.includes(String(characterId || "").toLowerCase());
+}
+
+/**
+ * @param {string} characterId
+ */
+export function loadStoredSceneOutfit(characterId) {
+  try {
+    const raw = localStorage.getItem(SCENE_OUTFIT_STORAGE_KEY);
+    if (!raw) return "default";
+    const parsed = JSON.parse(raw);
+    const byCharacter = parsed?.byCharacter || {};
+    const id = resolveSceneOutfitId(byCharacter[String(characterId || "").toLowerCase()]);
+    const preset = SCENE_OUTFIT_PRESETS.find((p) => p.id === id);
+    if (!preset || !outfitPresetAvailableForCharacter(preset, characterId)) {
+      return "default";
+    }
+    return id;
+  } catch {
+    return "default";
+  }
+}
+
+/**
+ * @param {string} characterId
+ * @param {string} outfitId
+ */
+export function persistSceneOutfit(characterId, outfitId) {
+  const charKey = String(characterId || "amoji").toLowerCase();
+  const id = resolveSceneOutfitId(outfitId);
+  const preset = SCENE_OUTFIT_PRESETS.find((p) => p.id === id);
+  const resolved =
+    preset && outfitPresetAvailableForCharacter(preset, charKey) ? id : "default";
+  try {
+    const raw = localStorage.getItem(SCENE_OUTFIT_STORAGE_KEY);
+    const parsed = raw ? JSON.parse(raw) : {};
+    const byCharacter = { ...(parsed?.byCharacter || {}), [charKey]: resolved };
+    localStorage.setItem(
+      SCENE_OUTFIT_STORAGE_KEY,
+      JSON.stringify({
+        schema: COMPANION_SCENE_PRESETS_SCHEMA,
+        byCharacter,
+        updatedAt: Date.now(),
+      }),
+    );
+  } catch {
+    /* ignore quota / private mode */
+  }
+  return resolved;
+}
+
+/**
+ * @param {HTMLElement | null | undefined} stageEl
+ * @param {string} outfitId
+ */
+export function applySceneOutfit(stageEl, outfitId) {
+  if (!stageEl) return resolveSceneOutfitId(outfitId);
+  const id = resolveSceneOutfitId(outfitId);
+  stageEl.dataset.sceneOutfit = id;
+  return id;
 }

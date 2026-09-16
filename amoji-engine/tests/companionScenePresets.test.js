@@ -1,12 +1,18 @@
 import { describe, expect, it, beforeEach } from "vitest";
 import {
   applySceneBackground,
+  applySceneOutfit,
   loadChatPanelVisible,
   loadStoredSceneBackground,
+  loadStoredSceneOutfit,
+  outfitPresetAvailableForCharacter,
   persistChatPanelVisible,
   persistSceneBackground,
+  persistSceneOutfit,
   resolveSceneBackgroundId,
+  resolveSceneOutfitId,
   CHAT_PANEL_STORAGE_KEY,
+  SCENE_OUTFIT_STORAGE_KEY,
   SCENE_STORAGE_KEY,
 } from "../engine/companion/companionScenePresets.js";
 
@@ -58,5 +64,22 @@ describe("companionScenePresets", () => {
     expect(localStorage.getItem(CHAT_PANEL_STORAGE_KEY)).toBe("false");
     persistChatPanelVisible(true);
     expect(loadChatPanelVisible()).toBe(true);
+  });
+
+  it("resolves outfit presets per character", () => {
+    expect(resolveSceneOutfitId("formal")).toBe("formal");
+    expect(outfitPresetAvailableForCharacter({ characters: ["nova"] }, "nova")).toBe(
+      true,
+    );
+    expect(outfitPresetAvailableForCharacter({ characters: ["nova"] }, "amoji")).toBe(
+      false,
+    );
+    persistSceneOutfit("nova", "casual");
+    expect(loadStoredSceneOutfit("nova")).toBe("casual");
+    expect(loadStoredSceneOutfit("amoji")).toBe("default");
+    expect(localStorage.getItem(SCENE_OUTFIT_STORAGE_KEY)).toContain("casual");
+    const stage = { dataset: {} };
+    expect(applySceneOutfit(stage, "formal")).toBe("formal");
+    expect(stage.dataset.sceneOutfit).toBe("formal");
   });
 });
