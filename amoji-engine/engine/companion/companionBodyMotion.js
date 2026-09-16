@@ -398,7 +398,7 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
     });
   };
 
-  const applyIdleArms = (pose, k) => {
+  const applyIdleArms = (pose, k, opts = {}) => {
     const safe = clampArmPose(pose);
     const restL = armRestRotations.leftUpperArm;
     const restR = armRestRotations.rightUpperArm;
@@ -408,10 +408,12 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
     const baseLiftR = REST_POSE.armLiftR ?? 0;
     const baseForeL = REST_POSE.forearmL ?? 0;
     const baseForeR = REST_POSE.forearmR ?? 0;
-    const liftL = Math.min(0.12, baseLiftL + (safe.armLiftL ?? 0) * k);
-    const liftR = Math.min(0.12, baseLiftR + (safe.armLiftR ?? 0) * k);
-    const foreL = Math.min(0.28, baseForeL + (safe.forearmL ?? 0) * k);
-    const foreR = Math.min(0.28, baseForeR + (safe.forearmR ?? 0) * k);
+    const liftCap = opts.boot ? 0.18 : 0.12;
+    const foreCap = opts.boot ? 0.34 : 0.28;
+    const liftL = Math.min(liftCap, baseLiftL + (safe.armLiftL ?? 0) * k);
+    const liftR = Math.min(liftCap, baseLiftR + (safe.armLiftR ?? 0) * k);
+    const foreL = Math.min(foreCap, baseForeL + (safe.forearmL ?? 0) * k);
+    const foreR = Math.min(foreCap, baseForeR + (safe.forearmR ?? 0) * k);
     applyBoneRotation("leftUpperArm", {
       x: restL.x,
       y: restL.y,
@@ -575,7 +577,7 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
     } else if (allowArms) {
       applyPointArms(pose, k);
     } else if (idleArms) {
-      applyIdleArms(pose, k);
+      applyIdleArms(pose, k, { boot: opts.bootPhase === true });
     } else if (talkArmBlend > 0.01) {
       applyTalkArms(pose, talkArmBlend);
     } else {
@@ -651,20 +653,21 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
         pose.headX = (pose.headX || 0) + Math.sin(elapsed * 0.55) * 0.024;
         pose.headZ = (pose.headZ || 0) + Math.sin(elapsed * 0.42 + 0.8) * 0.018;
       } else if (!talking) {
-        if (elapsed < BOOT_SIMPLE_IDLE_SEC) {
+        const bootPhase = elapsed < BOOT_SIMPLE_IDLE_SEC;
+        if (bootPhase) {
           pose = mergePoses(
             pose,
             sampleSimpleBootIdleMotion(elapsed),
-            0.96,
+            0.98,
           );
         } else {
           const idleMotion = sampleIdleBodyMotion(elapsed, { listening, emotion });
           pose = mergePoses(pose, idleMotion, listening ? 0.96 : 0.92);
-          const beat = advanceIdleBeat(idleBeatState, dt, now);
-          idleBeatState = beat.state;
-          if (beat.overlay && Object.keys(beat.overlay).length) {
-            pose = mergePoses(pose, beat.overlay, 0.9);
-          }
+        }
+        const beat = advanceIdleBeat(idleBeatState, dt, now);
+        idleBeatState = beat.state;
+        if (beat.overlay && Object.keys(beat.overlay).length) {
+          pose = mergePoses(pose, beat.overlay, bootPhase ? 0.62 : 0.9);
         }
       } else {
         talkTime += dt;
@@ -752,6 +755,28 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
       actionArms,
       idleArms,
       talkArmBlend,
+      bootPhase: !activeAction && !talking && elapsed < BOOT_SIMPLE_IDLE_SEC,
+    });
+    return smoothedPose;
+  };
+
+  const resetMotionClock = (now = performance.now()) => {
+    t0 = now;
+    idleBeatState = createIdleBeatState(now);
+    idleBeatState.nextAt = now + 420;
+    smoothedPose = buildBasePose({ listening, emotion, nuance });
+    smoothedPose = mergePoses(
+      smoothedPose,
+      sampleSimpleBootIdleMotion(0),
+      0.98,
+    );
+    smoothedRootMotion = { y: 0, rotY: 0 };
+    applyPose(smoothedPose, 1, {
+      allowArms: false,
+      actionArms: false,
+      idleArms: true,
+      talkArmBlend: 0,
+      bootPhase: true,
     });
     return smoothedPose;
   };
@@ -814,9 +839,11 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
         actionArms: false,
         idleArms: true,
         talkArmBlend: 0,
+        bootPhase: true,
       });
       return smoothedPose;
     },
+    resetMotionClock,
     setArmRestRotations(next) {
       if (!next) return armRestRotations;
       armRestRotations = next;
