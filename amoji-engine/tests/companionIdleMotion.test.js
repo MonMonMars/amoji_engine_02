@@ -40,15 +40,33 @@ describe("companionIdleMotion", () => {
   });
 
   it("samples simple boot idle with relaxed forearms", () => {
-    const boot = sampleSimpleBootIdleMotion(0.4);
+    const boot = sampleSimpleBootIdleMotion(1.2);
     expect(BOOT_SIMPLE_IDLE_SEC).toBeGreaterThan(3);
     expect(boot.forearmL).toBeGreaterThan(0.12);
     expect(boot.forearmR).toBeGreaterThan(0.12);
-    expect(boot.armLiftL).toBeGreaterThan(0.04);
+    expect(boot.armLiftL).toBeGreaterThan(0.05);
   });
 });
 
 describe("idle body motion integration", () => {
+  it("resetMotionClock restarts boot idle from visible frame", () => {
+    const bones = new Map();
+    for (const name of ["leftUpperArm", "rightUpperArm", "leftLowerArm", "rightLowerArm"]) {
+      bones.set(name, { rotation: { x: 0, y: 0, z: 0 } });
+    }
+    const humanoid = {
+      getNormalizedBoneNode: (name) => bones.get(name) || null,
+    };
+    const motion = createCompanionBodyMotion(humanoid);
+    motion.setTalking(false);
+    for (let i = 0; i < 240; i += 1) motion.update(1 / 30);
+    const before = bones.get("leftLowerArm").rotation.x;
+    motion.resetMotionClock(performance.now() - 1200);
+    for (let i = 0; i < 30; i += 1) motion.update(1 / 30, { now: performance.now() });
+    const after = bones.get("leftLowerArm").rotation.x;
+    expect(Math.abs(after - before)).toBeGreaterThan(0.004);
+  });
+
   it("moves arms while idle without talking", () => {
     const bones = new Map();
     for (const name of [
