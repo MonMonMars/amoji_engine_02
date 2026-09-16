@@ -72,14 +72,15 @@ describe("companionTtsProsody", () => {
     expect(question.browser.rate).toBeGreaterThanOrEqual(statement.browser.rate);
   });
 
-  it("builds Cantonese instruct lines", () => {
+  it("builds structured instruct lines for Cantonese", () => {
     const instruct = buildTtsInstruct({
       emotion: "happy",
       nuance: "excited",
       lang: "yue",
+      text: "你好呀！",
     });
-    expect(instruct).toMatch(/粵語/);
-    expect(instruct).toMatch(/happy|活力| cheerful/i);
+    expect(instruct).toContain("Voice Affect:");
+    expect(instruct).toMatch(/咬字清楚|唔好平平淡淡/);
   });
 
   it("normalizes legacy emotion string", () => {

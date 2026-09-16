@@ -13,12 +13,12 @@ export function isBootChitchatPhase({ avatarKind = "loading", liteMode = false }
 
 /** @type {Record<string, string>} */
 const EN_BOOT_SNIPPETS = {
-  hello: "Hi! I'm still loading my 3D body — you can chat while I get ready. [action:wave] [mood:happy]",
+  hello: "Hi! I'm still loading my 3D body — you can chat while I get ready. [action:wave] [mood:happy] [nuance:excited]",
   howareyou:
-    "Doing great! My 3D model is still loading, but I'm here to chat. [mood:happy]",
-  who: "I'm Amoji — your anime companion. Still booting my 3D avatar. [action:wave] [mood:happy]",
-  bye: "Bye for now! [action:wave] [mood:happy]",
-  thanks: "You're welcome! [mood:happy]",
+    "Doing great! My 3D model is still loading, but I'm here to chat. [mood:happy] [nuance:excited]",
+  who: "I'm Amoji — your anime companion. Still booting my 3D avatar. [action:wave] [mood:happy] [nuance:excited]",
+  bye: "Bye for now! [action:wave] [mood:happy] [nuance:excited]",
+  thanks: "You're welcome! [mood:happy] [nuance:love]",
   default:
     "Got it — I'm still loading my 3D body, but I'm listening. [mood:thinking]",
 };
