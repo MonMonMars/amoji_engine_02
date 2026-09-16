@@ -44,10 +44,9 @@ const VRM_BLEND_PRESET_MAP = {
  * @param {(ratio: number, label?: string) => void} [onProgress]
  */
 async function loadVrmGltf(loader, modelUrl, onProgress) {
-  const preload =
-    globalThis.__amojiPreload?.getVrm?.(modelUrl) ??
-    globalThis.__amojiPreload?.ready?.vrm ??
-    null;
+  // Only use a prefetch buffer for the exact model URL — never fall back to the
+  // default boot preload (companion-girl.vrm) or the wrong character appears.
+  const preload = globalThis.__amojiPreload?.getVrm?.(modelUrl) ?? null;
   if (preload) {
     try {
       const buffer = await preload;
@@ -337,6 +336,23 @@ export async function createVrmAvatar(opts) {
     return { emotion: em, nuance, blend };
   };
 
+  const tickExpressionBlend = (dt) => {
+    if (!expr) return;
+    const rate = Math.min(1, dt * 9);
+    for (const preset of emotionPresetKeys()) {
+      const target = expressionTarget[preset] ?? 0;
+      const current = expressionCurrent[preset] ?? 0;
+      const next = current + (target - current) * rate;
+      expressionCurrent[preset] = next;
+      if (next > 0.001) {
+        expr.setValue(preset, next);
+      } else {
+        expr.setValue(preset, 0);
+        expressionCurrent[preset] = 0;
+      }
+    }
+  };
+
   const warmExpressionPresets = () => {
     if (!expr) return false;
     for (const preset of emotionPresetKeys()) {
@@ -363,23 +379,6 @@ export async function createVrmAvatar(opts) {
   };
 
   warmExpressionPresets();
-
-  const tickExpressionBlend = (dt) => {
-    if (!expr) return;
-    const rate = Math.min(1, dt * 9);
-    for (const preset of emotionPresetKeys()) {
-      const target = expressionTarget[preset] ?? 0;
-      const current = expressionCurrent[preset] ?? 0;
-      const next = current + (target - current) * rate;
-      expressionCurrent[preset] = next;
-      if (next > 0.001) {
-        expr.setValue(preset, next);
-      } else {
-        expr.setValue(preset, 0);
-        expressionCurrent[preset] = 0;
-      }
-    }
-  };
 
   const resize = () => {
     const w = canvas.clientWidth || canvas.parentElement?.clientWidth || 1;

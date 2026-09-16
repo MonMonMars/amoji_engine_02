@@ -12,10 +12,12 @@ import {
 } from "../engine/companion/companionPreload.js";
 
 describe("companionCharacterPreload", () => {
-  it("lists unique model urls for the roster", () => {
+  it("lists unique VRM model urls for the roster (skips GLB)", () => {
     const urls = uniqueCharacterModelUrls("en");
-    expect(urls.length).toBeGreaterThanOrEqual(2);
+    expect(urls.length).toBeGreaterThanOrEqual(11);
     expect(new Set(urls).size).toBe(urls.length);
+    expect(urls.every((u) => /\.vrm($|\?)/i.test(u))).toBe(true);
+    expect(urls.some((u) => u.includes("companion-quinn"))).toBe(false);
   });
 
   it("preloads all roster models and reports progress", async () => {
