@@ -1,6 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
+import { IDLE_LIFE_CLIP_POOL } from "../engine/companion/companionActionChoreography.js";
 import {
+  AVATAR_LOAD_IDLE_INTERVAL_MS,
   createCompanionWaitAct,
+  IDLE_LIFE_INTERVAL_MS,
   pickWaitPose,
   WAIT_POSES_BY_PHASE,
 } from "../engine/companion/companionWaitAct.js";
@@ -78,9 +81,10 @@ describe("companionWaitAct", () => {
     expect(avatar.stopAction).not.toHaveBeenCalled();
   });
 
-  it("keeps the living rest pose while idle instead of one-shot actions", () => {
+  it("plants rest on idle start instead of one-shot actions", () => {
     const avatar = {
       playAction: vi.fn(),
+      playActionSequence: vi.fn(),
       setEmotion: vi.fn(),
       setThinking: vi.fn(),
       stopAction: vi.fn(),
@@ -91,15 +95,18 @@ describe("companionWaitAct", () => {
     wait.start({ kind: "idle", phase: "idle", speak: false });
     expect(avatar.stopAction).not.toHaveBeenCalled();
     expect(avatar.playAction).not.toHaveBeenCalled();
+    expect(avatar.playActionSequence).not.toHaveBeenCalled();
     expect(avatar.resetIdleLife).toHaveBeenCalled();
     expect(avatar.setEmotion).toHaveBeenCalledWith("neutral");
+    expect(avatar.setThinking).toHaveBeenCalledWith(false);
     wait.stop();
   });
 
-  it("pulses look/comb idle life on later idle ticks without playing VRMA", () => {
+  it("pulses look/comb/breathe between one-shot library idle clips", () => {
     vi.useFakeTimers();
     const avatar = {
       playAction: vi.fn(),
+      playActionSequence: vi.fn(),
       setEmotion: vi.fn(),
       setThinking: vi.fn(),
       stopAction: vi.fn(),
@@ -114,11 +121,52 @@ describe("companionWaitAct", () => {
     });
     wait.start({ kind: "idle", phase: "idle", speak: false });
     expect(avatar.pulseIdleBeat).not.toHaveBeenCalled();
-    vi.advanceTimersByTime(1099);
+    expect(avatar.playAction).not.toHaveBeenCalled();
+
+    vi.advanceTimersByTime(IDLE_LIFE_INTERVAL_MS - 1);
     expect(avatar.pulseIdleBeat).not.toHaveBeenCalled();
+    expect(avatar.playAction).not.toHaveBeenCalled();
+
     vi.advanceTimersByTime(2);
     expect(avatar.playAction).not.toHaveBeenCalled();
-    expect(avatar.pulseIdleBeat).toHaveBeenCalledWith("comb");
+    expect(avatar.pulseIdleBeat).toHaveBeenCalledWith("look");
+
+    vi.advanceTimersByTime(IDLE_LIFE_INTERVAL_MS);
+    expect(avatar.playActionSequence).not.toHaveBeenCalled();
+    expect(avatar.playAction).toHaveBeenCalledTimes(1);
+    const [pose, opts] = avatar.playAction.mock.calls[0];
+    expect(IDLE_LIFE_CLIP_POOL).toContain(pose);
+    expect(opts).toEqual({
+      emotion: "neutral",
+      loop: false,
+      single: true,
+    });
+    expect(avatar.setThinking.mock.calls.every(([on]) => on === false)).toBe(
+      true,
+    );
+
+    wait.stop();
+    vi.useRealTimers();
+  });
+
+  it("keeps avatar-load on a faster planted idle without library clips", () => {
+    vi.useFakeTimers();
+    const avatar = {
+      playAction: vi.fn(),
+      setEmotion: vi.fn(),
+      setThinking: vi.fn(),
+      stopAction: vi.fn(),
+      applyExpressionProfile: vi.fn(),
+      resetIdleLife: vi.fn(),
+      pulseIdleBeat: vi.fn(),
+    };
+    const wait = createCompanionWaitAct({ avatar, isEnglish: false });
+    wait.start({ kind: "avatar-load", phase: "avatar-load", speak: false });
+    expect(avatar.resetIdleLife).toHaveBeenCalled();
+    expect(avatar.playAction).not.toHaveBeenCalled();
+    vi.advanceTimersByTime(AVATAR_LOAD_IDLE_INTERVAL_MS + 1);
+    expect(avatar.playAction).not.toHaveBeenCalled();
+    expect(avatar.pulseIdleBeat).toHaveBeenCalled();
     wait.stop();
     vi.useRealTimers();
   });

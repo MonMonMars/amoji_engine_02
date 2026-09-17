@@ -56,6 +56,17 @@ describe("companionOnlineMotionClips", () => {
     expect(resolveOnlineMotionClipUrl("none")).toBeNull();
   });
 
+  it("maps idle-life clips onto hosted VRMA without looping rest", () => {
+    expect(resolveOnlineMotionClipUrl("wave")).toMatch(/Goodbye\.vrma$/);
+    expect(resolveOnlineMotionClipUrl("thinking")).toMatch(/Thinking\.vrma$/);
+    expect(resolveOnlineMotionClipUrl("stretch")).toMatch(/Relax\.vrma$/);
+    expect(resolveOnlineMotionClipUrl("nod")).toBeNull();
+    expect(resolveOnlineMotionClipUrl("bow")).toBeNull();
+    expect(resolveOnlineMotionClipUrl("shrug")).toBeNull();
+    expect(resolveOnlineMotionClipUrl("peace")).toBeNull();
+    expect(resolveOnlineMotionClipUrl("idle")).toBeNull();
+  });
+
   it("keeps standing idle off Relax.vrma so rest is not an arms-up stretch", () => {
     expect(resolveOnlineMotionClipUrl("idle")).toBeNull();
     expect(resolveOnlineMotionClipUrl("relax")).toMatch(/Relax\.vrma$/);
