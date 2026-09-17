@@ -41,6 +41,36 @@ export function sampleSimpleBootIdleMotion(elapsedSec) {
 }
 
 /**
+ * Fallback idle when the hosted VRMA library is unavailable.
+ * Bent limbs, planted feet, tiny breath — no root sway or fidget beats.
+ * @param {number} elapsedSec
+ * @param {{ listening?: boolean, emotion?: string }} [opts]
+ */
+export function sampleCalmBreathIdle(elapsedSec, opts = {}) {
+  const t = elapsedSec;
+  const listening = Boolean(opts.listening);
+  const breath = Math.sin(t * 0.85);
+  const amp = listening ? 1.05 : 1;
+
+  return {
+    headX: breath * 0.01 * amp,
+    headZ: 0,
+    leanY: 0,
+    spineX: 0.018 + breath * 0.01 * amp,
+    chestX: -0.01 + breath * 0.008 * amp,
+    hipZ: 0.008,
+    armLiftL: 0.16,
+    armLiftR: 0.12,
+    forearmL: 0.4,
+    forearmR: 0.34,
+    upperLegL: 0.06,
+    upperLegR: 0.14,
+    lowerLegL: 0.16,
+    lowerLegR: 0.28,
+  };
+}
+
+/**
  * Continuous idle body sway (not talking, not in scripted action).
  * @param {number} elapsedSec
  * @param {{ listening?: boolean, emotion?: string }} [opts]

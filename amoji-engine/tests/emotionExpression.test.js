@@ -32,6 +32,8 @@ describe("emotionExpression", () => {
     expect(inferExpressionFromText("你好呀！")).toBe("happy");
     expect(inferExpressionFromText("哈哈！！")).toBe("happy");
     expect(inferExpressionFromText("我好嬲呀")).toBe("angry");
+    expect(inferExpressionFromText("係呀，得喇")).toBe("neutral");
+    expect(inferExpressionFromText("嗯，好嘅。")).toBe("neutral");
   });
 
   it("resolveExpressionFromTurn prefers emotion then text", () => {
