@@ -43,7 +43,12 @@ describe("companionContentMotion", () => {
     const blend = buildVrmExpressionBlend("happy", "excited");
     expect(blend.Happy).toBeGreaterThan(0.85);
     expect(blend.Surprised).toBeGreaterThan(0.1);
-    expect(blend.Relaxed ?? 0).toBeLessThan(0.2);
+    expect(blend.Relaxed ?? 0).toBe(0);
+  });
+
+  it("does not use Relaxed for thinking", () => {
+    const blend = buildVrmExpressionBlend("thinking", "curious");
+    expect(blend.Relaxed ?? 0).toBe(0);
   });
 
   it("defaults untagged spoken replies to a warm happy performance", () => {
