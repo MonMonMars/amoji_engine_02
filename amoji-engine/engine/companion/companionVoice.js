@@ -127,13 +127,21 @@ const resolveSpeakProsody = (text, performance, lang) =>
     characterId: activeCharacterId,
   });
 
-export {
+import {
   buildLipSyncTimeline,
   charToViseme,
   estimateLipSyncMsPerChar,
   lipSyncCharWeight,
   visemeAtAudioProgress,
 } from "./companionViseme.js";
+
+export {
+  buildLipSyncTimeline,
+  charToViseme,
+  estimateLipSyncMsPerChar,
+  lipSyncCharWeight,
+  visemeAtAudioProgress,
+};
 
 /**
  * 0..1 playback fraction from an HTMLAudioElement, with elapsed fallback.
@@ -152,6 +160,36 @@ export function audioPlaybackProgress(audio, elapsedMs = 0, fallbackDurationMs =
     return Math.max(0, Math.min(1, (Number(elapsedMs) || 0) / fb));
   }
   return 0;
+}
+
+/**
+ * Generous playback budget for cloud TTS — neural voices run slower than char estimates.
+ * @param {string} text
+ * @param {number} [durationSec]
+ */
+export function cloudTtsSafetyBudgetMs(text, durationSec) {
+  const clean = String(text || "");
+  const charMs = estimateLipSyncMsPerChar(clean);
+  const dur = Number(durationSec);
+  if (Number.isFinite(dur) && dur > 0.05) {
+    return Math.min(120000, dur * 1000 + 5000);
+  }
+  return Math.min(
+    120000,
+    Math.max(15000, clean.length * charMs * 3.2 + 8000),
+  );
+}
+
+/**
+ * Browser speechSynthesis timeout — long Cantonese replies need more than 15s.
+ * @param {string} text
+ */
+export function browserTtsTimeoutMs(text) {
+  const clean = String(text || "");
+  return Math.min(
+    120000,
+    Math.max(20000, 800 + clean.length * estimateLipSyncMsPerChar(clean) * 2.8),
+  );
 }
 
 /**
@@ -491,11 +529,10 @@ export function createCompanionVoice(opts = {}) {
       audio.src = objectUrl;
       let settled = false;
       let mouthStarted = false;
-      const fallbackMs =
-        Number.isFinite(audio.duration) && audio.duration > 0
-          ? audio.duration * 1000
-          : clean.length * estimateLipSyncMsPerChar(clean);
-      const maxMs = Math.min(120000, Math.max(2500, fallbackMs + 1200));
+      let safetyTimer = null;
+      let lastPlaybackSec = 0;
+      let lastProgressAt = performance.now();
+      let safetyBudgetMs = cloudTtsSafetyBudgetMs(clean, audio.duration);
       const beginMouth = () => {
         if (mouthStarted) return;
         mouthStarted = true;
@@ -523,15 +560,18 @@ export function createCompanionVoice(opts = {}) {
           },
         });
       };
-      const finish = (result) => {
+      const finish = (result, { pauseAudio = true } = {}) => {
         if (settled) return;
         settled = true;
-        clearTimeout(safetyTimer);
+        if (safetyTimer) clearTimeout(safetyTimer);
+        safetyTimer = null;
         if (currentCloudAudio === audio) currentCloudAudio = null;
-        try {
-          audio.pause();
-        } catch {
-          /* ignore */
+        if (pauseAudio) {
+          try {
+            audio.pause();
+          } catch {
+            /* ignore */
+          }
         }
         URL.revokeObjectURL(objectUrl);
         if (!holdSpeaking) {
@@ -541,12 +581,51 @@ export function createCompanionVoice(opts = {}) {
         stopMouth();
         resolve(result);
       };
-      const safetyTimer = setTimeout(() => {
-        finish({ ok: true, voice: preset.name, emotion, cloud: true, timedOut: true });
-      }, maxMs);
+      const scheduleSafety = (budgetMs = safetyBudgetMs) => {
+        if (safetyTimer) clearTimeout(safetyTimer);
+        safetyBudgetMs = Math.min(120000, Math.max(15000, budgetMs));
+        safetyTimer = setTimeout(onSafety, safetyBudgetMs);
+      };
+      const bumpSafetyFromMetadata = () => {
+        const dur = Number(audio.duration);
+        if (!Number.isFinite(dur) || dur <= 0.05) return;
+        scheduleSafety(cloudTtsSafetyBudgetMs(clean, dur));
+      };
+      const onSafety = () => {
+        if (settled) return;
+        const dur = Number(audio.duration);
+        const stalledMs = performance.now() - lastProgressAt;
+        const nearEnd =
+          Number.isFinite(dur) && dur > 0 && audio.currentTime >= dur - 0.35;
+        if (audio.ended || nearEnd) {
+          finish({
+            ok: true,
+            voice: preset.name,
+            emotion,
+            cloud: true,
+          });
+          return;
+        }
+        // Playback still advancing — extend instead of cutting mid-sentence.
+        if (!audio.paused && stalledMs < 5000) {
+          scheduleSafety(Math.max(8000, stalledMs + 8000));
+          return;
+        }
+        finish(
+          { ok: true, voice: preset.name, emotion, cloud: true, timedOut: true },
+          { pauseAudio: true },
+        );
+      };
+      scheduleSafety();
+      audio.onloadedmetadata = bumpSafetyFromMetadata;
+      audio.ondurationchange = bumpSafetyFromMetadata;
       audio.onplaying = () => beginMouth();
       audio.ontimeupdate = () => {
         if (!mouthStarted && audio.currentTime > 0) beginMouth();
+        if (audio.currentTime > lastPlaybackSec + 0.02) {
+          lastPlaybackSec = audio.currentTime;
+          lastProgressAt = performance.now();
+        }
       };
       audio.onended = () => {
         finish({
@@ -863,7 +942,7 @@ export function createCompanionVoice(opts = {}) {
 
       startLipSync(clean, utter);
 
-      const maxMs = Math.min(15000, 700 + clean.length * 55);
+      const maxMs = browserTtsTimeoutMs(clean);
       let settled = false;
       const finishSpeak = (result) => {
         if (settled) return result;
