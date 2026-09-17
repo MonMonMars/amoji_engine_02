@@ -22,11 +22,14 @@ describe("companionOnlineMotionClips", () => {
     expect(ONLINE_MOTION_CLIP_FILES.dance).toBe("LookAround");
   });
 
-  it("does not force social gestures onto procedural bone sway", () => {
+  it("maps social gestures to hosted VRMA instead of procedural bone sway", () => {
     expect(PROCEDURAL_PREFERRED_ACTIONS.size).toBe(0);
     expect(resolveOnlineMotionClipUrl("wave")).toMatch(/Goodbye\.vrma$/);
     expect(resolveOnlineMotionClipUrl("thinking")).toMatch(/Thinking\.vrma$/);
-    expect(resolveOnlineMotionClipUrl("nod")).toBeNull();
+    expect(resolveOnlineMotionClipUrl("nod")).toMatch(/Goodbye\.vrma$/);
+    expect(resolveOnlineMotionClipUrl("bow")).toMatch(/Goodbye\.vrma$/);
+    expect(resolveOnlineMotionClipUrl("shrug")).toMatch(/Thinking\.vrma$/);
+    expect(resolveOnlineMotionClipUrl("peace")).toMatch(/Blush\.vrma$/);
   });
 
   it("resolves sampler inheritance for cloud extensions", () => {
@@ -60,11 +63,18 @@ describe("companionOnlineMotionClips", () => {
     expect(resolveOnlineMotionClipUrl("wave")).toMatch(/Goodbye\.vrma$/);
     expect(resolveOnlineMotionClipUrl("thinking")).toMatch(/Thinking\.vrma$/);
     expect(resolveOnlineMotionClipUrl("stretch")).toMatch(/Relax\.vrma$/);
-    expect(resolveOnlineMotionClipUrl("nod")).toBeNull();
-    expect(resolveOnlineMotionClipUrl("bow")).toBeNull();
-    expect(resolveOnlineMotionClipUrl("shrug")).toBeNull();
-    expect(resolveOnlineMotionClipUrl("peace")).toBeNull();
+    expect(resolveOnlineMotionClipUrl("nod")).toMatch(/Goodbye\.vrma$/);
+    expect(resolveOnlineMotionClipUrl("bow")).toMatch(/Goodbye\.vrma$/);
+    expect(resolveOnlineMotionClipUrl("shrug")).toMatch(/Thinking\.vrma$/);
+    expect(resolveOnlineMotionClipUrl("peace")).toMatch(/Blush\.vrma$/);
     expect(resolveOnlineMotionClipUrl("idle")).toBeNull();
+  });
+
+  it("resolves every playable catalog action to a hosted clip", async () => {
+    const { PLAYABLE_ACTIONS } = await import("../engine/companion/companionActionCatalog.js");
+    for (const id of PLAYABLE_ACTIONS) {
+      expect(resolveOnlineMotionClipUrl(id), id).toMatch(/\.vrma$/);
+    }
   });
 
   it("keeps standing idle off Relax.vrma so rest is not an arms-up stretch", () => {

@@ -8,6 +8,7 @@
 import { buildActionPromptFragment } from "./companionActionMotion.js";
 import { buildPerformancePresetPromptFragment } from "./companionLlmPerformancePreset.js";
 import { voiceShortLabel } from "./companionVoiceCatalog.js";
+import { findVoiceProfile } from "./companionVoiceProfiles.js";
 
 export const CHARACTER_STORAGE_KEY = "amoji.companion.characterId";
 
@@ -21,6 +22,11 @@ export const CHARACTER_STORAGE_KEY = "amoji.companion.characterId";
  *   previewImage: string,
  *   accent: string,
  *   badge?: { yue?: string, en?: string } | null,
+ *   faceDetail?: {
+ *     triangles: number,
+ *     tier: "high" | "standard",
+ *     note?: { yue?: string, en?: string },
+ *   } | null,
  *   voices: { yue: string, en: string },
  *   personalityYue: string,
  *   personalityEn: string,
@@ -147,7 +153,15 @@ export const COMPANION_CHARACTERS = Object.freeze({
     avatarPrefer: "vrm",
     previewImage: "/prototypes/assets/companion-char-kizuna.png",
     accent: "#ff9e7a",
-    badge: { yue: "官方 VRM", en: "Official VRM" },
+    badge: { yue: "73k · 官方 VRM", en: "73k · Official VRM" },
+    faceDetail: {
+      triangles: 72691,
+      tier: "high",
+      note: {
+        yue: "18 款表情 · VRM 1.0 口型",
+        en: "18 expressions · VRM 1.0 visemes",
+      },
+    },
     voices: {
       yue: "zh-HK-HiuGaaiNeural-idol",
       en: "en-HK-YanNeural",
@@ -198,6 +212,14 @@ export const COMPANION_CHARACTERS = Object.freeze({
     previewImage: "/prototypes/assets/companion-char-kai.png",
     accent: "#c8a8ff",
     badge: { yue: "男聲", en: "Male voice" },
+    faceDetail: {
+      triangles: 49799,
+      tier: "high",
+      note: {
+        yue: "ARKit 面型 · 5 口型",
+        en: "ARKit morphs · 5 visemes",
+      },
+    },
     voices: {
       yue: "zh-HK-WanLungNeural",
       en: "en-HK-SamNeural",
@@ -433,6 +455,14 @@ export const COMPANION_CHARACTERS = Object.freeze({
     previewImage: "/prototypes/assets/companion-char-alicia.png",
     accent: "#ff8fab",
     badge: { yue: "★ E5 推介", en: "★ E5 Pick" },
+    faceDetail: {
+      triangles: 31798,
+      tier: "high",
+      note: {
+        yue: "158 morph · Alicia Solid",
+        en: "158 morphs · Alicia Solid",
+      },
+    },
     voices: {
       yue: "zh-HK-HiuGaaiNeural-story",
       en: "en-HK-YanNeural",
@@ -527,6 +557,14 @@ export const COMPANION_CHARACTERS = Object.freeze({
     previewImage: "/prototypes/assets/companion-char-ember.png",
     accent: "#ff6b4a",
     badge: { yue: "★ E17 推介", en: "★ E17 Pick" },
+    faceDetail: {
+      triangles: 23039,
+      tier: "high",
+      note: {
+        yue: "ARKit 面型 · 表情豐富",
+        en: "ARKit morphs · expressive",
+      },
+    },
     voices: {
       yue: "zh-HK-HiuGaaiNeural-fiery",
       en: "en-HK-YanNeural",
@@ -896,11 +934,11 @@ export const COMPANION_CHARACTERS = Object.freeze({
  */
 export const CHARACTER_IDS = Object.freeze([
   "nova",
+  "kizuna",
   "alicia",
   "ember",
   "chibi",
   "sky",
-  "kizuna",
   "rose",
   "mimi",
   "olivia",
@@ -927,15 +965,78 @@ export function characterNumber(id) {
 /** @type {ReadonlySet<string>} */
 export const GALLERY_PRIORITY_IDS = new Set([
   "nova",
+  "kizuna",
   "alicia",
   "ember",
   "chibi",
   "sky",
 ]);
 
+/** Minimum mesh triangles to treat as high-poly face roster picks. */
+export const HIGH_POLY_FACE_MIN_TRIANGLES = 20000;
+
+/** @type {ReadonlySet<string>} */
+export const HIGH_POLY_FACE_CHARACTER_IDS = new Set([
+  "kizuna",
+  "rex",
+  "alicia",
+  "ember",
+]);
+
+/**
+ * @param {number} triangles
+ * @param {boolean} [en]
+ */
+export function formatFaceTriangleLabel(triangles, en = false) {
+  const count = Math.max(0, Math.round(Number(triangles) || 0));
+  if (count >= 10000) {
+    const k = Math.round(count / 1000);
+    return en ? `${k}k tris` : `${k}k 面`;
+  }
+  return en ? `${count} tris` : `${count} 面`;
+}
+
+/**
+ * @param {string | null | undefined} id
+ */
+export function isHighPolyFaceCharacter(id) {
+  const def = getCharacter(id);
+  return (
+    def.faceDetail?.tier === "high" &&
+    (def.faceDetail.triangles || 0) >= HIGH_POLY_FACE_MIN_TRIANGLES
+  );
+}
+
+/**
+ * @param {"yue" | "en"} [langCode]
+ */
+export function listHighPolyFaceCharacters(langCode = "yue") {
+  return listCompanionCharacters(langCode)
+    .filter((item) => item.faceTier === "high")
+    .sort((a, b) => (b.faceTriangles || 0) - (a.faceTriangles || 0));
+}
+
+/**
+ * @param {"yue" | "en"} [langCode]
+ */
+export function highPolyFacePickerHint(langCode = "yue") {
+  const en = langCode === "en";
+  const names = listHighPolyFaceCharacters(langCode).map((item) => item.name);
+  if (!names.length) {
+    return en
+      ? "HD face picks load richer expressions."
+      : "HD 面角色載入更細緻表情。";
+  }
+  return en
+    ? `Best for detailed expressions: ${names.join(", ")}.`
+    : `最適合細緻表情：${names.join("、")}。`;
+}
+
 const CANTONESE_RULES = [
   "ALWAYS reply in spoken Cantonese (粵語口語) with natural particles unless the user clearly writes in English.",
   "Keep replies short (1–3 sentences). Sound like ChatGPT Advanced Voice: warm, reactive, laugh or gasp when it fits, never a flat assistant. Write the spoken line with feeling (呀/喇/！ when delighted) even if the face mood stays calmer.",
+  "NEVER use emoji or emoticons in reply text — no 😊❤️✨ etc. Show feelings through [mood:…] [nuance:…] [action:…] tags; the 3D avatar renders face, body, and voice.",
+  "Voice delivery must match [mood] and [nuance]: happy=bright/warm, sad=soft/slow, thinking=curious/unhurried, surprised=animated lift, angry=firm — like ChatGPT Advanced Voice, never flat GPS tone.",
   "Tag order: optional [action:id] → optional [nuance:shy|curious|excited|love|stress|none] → required [mood:happy|thinking|sad|surprised|angry] at the end.",
   "Match face (mood+nuance) to the true feeling of the reply. Default to a calm rest face. Use happy only for real delight, surprised only for genuine shock, excited nuance only for hype (wow / 超正 / multiple !!!). Everyday 呀/喇/喎 is not happy.",
   "If the user says stop / 停 / 唔好再動, reply briefly and use [action:stop].",
@@ -946,6 +1047,8 @@ const CANTONESE_RULES = [
 const ENGLISH_RULES = [
   "ALWAYS reply in natural spoken English.",
   "Keep replies short (1–3 sentences). Sound like ChatGPT Advanced Voice: warm, reactive, laugh or gasp when it fits, never a flat assistant. Write the spoken line with feeling even if the face mood stays calmer.",
+  "NEVER use emoji or emoticons in reply text — no 😊❤️✨ etc. Show feelings through [mood:…] [nuance:…] [action:…] tags; the 3D avatar renders face, body, and voice.",
+  "Voice delivery must match [mood] and [nuance]: happy=bright/warm, sad=soft/slow, thinking=curious/unhurried, surprised=animated lift, angry=firm — like ChatGPT Advanced Voice, never flat GPS tone.",
   "Tag order: optional [action:id] → optional [nuance:shy|curious|excited|love|stress|none] → required [mood:happy|thinking|sad|surprised|angry] at the end.",
   "Match face (mood+nuance) to the true feeling of the reply. Default to a calm rest face. Use happy only for real delight, surprised only for genuine shock, excited nuance only for hype (wow / amazing / multiple !!!). Everyday punctuation is not happy.",
   "If the user says stop, reply briefly and use [action:stop].",
@@ -1022,6 +1125,9 @@ export function resolveCharacterId(opts = {}) {
   if (model.includes("companion-mikel.vrm")) {
     return "mikel";
   }
+  if (model.includes("kizuna-kamatte.vrm")) {
+    return "kizuna";
+  }
 
   const storage = opts.storage ?? globalThis.localStorage ?? null;
   const stored = storage?.getItem(CHARACTER_STORAGE_KEY) || "";
@@ -1037,6 +1143,16 @@ export function resolveCharacterId(opts = {}) {
 export function defaultVoiceForCharacter(characterId, langCode) {
   const def = getCharacter(characterId);
   return langCode === "en" ? def.voices.en : def.voices.yue;
+}
+
+/**
+ * @param {string} characterId
+ * @param {"yue" | "en"} [langCode]
+ * @returns {"female" | "male"}
+ */
+export function characterGender(characterId, langCode = "yue") {
+  const voiceId = defaultVoiceForCharacter(characterId, langCode);
+  return findVoiceProfile(voiceId)?.gender ?? "female";
 }
 
 /**
@@ -1186,6 +1302,25 @@ export function listCompanionCharacters(langCode = "yue") {
   return CHARACTER_IDS.map((id) => {
     const def = getCharacter(id);
     const voiceId = en ? def.voices.en : def.voices.yue;
+    const faceDetail = def.faceDetail || null;
+    const faceTriangles = faceDetail?.triangles || 0;
+    const faceTier = faceDetail?.tier || "standard";
+    const badge = def.badge ? (en ? def.badge.en : def.badge.yue) : null;
+    const faceNote = faceDetail?.note
+      ? en
+        ? faceDetail.note.en
+        : faceDetail.note.yue
+      : null;
+    const faceLabel =
+      faceTier === "high" && faceTriangles > 0
+        ? en
+          ? `HD · ${formatFaceTriangleLabel(faceTriangles, true)}`
+          : `HD · ${formatFaceTriangleLabel(faceTriangles, false)}`
+        : null;
+    const showFaceChip =
+      faceTier === "high" &&
+      faceTriangles >= HIGH_POLY_FACE_MIN_TRIANGLES &&
+      !(badge && /\d\s*k/i.test(badge));
     return {
       id,
       number: characterNumber(id),
@@ -1194,7 +1329,12 @@ export function listCompanionCharacters(langCode = "yue") {
       traits: en ? def.traits.en : def.traits.yue,
       previewImage: def.previewImage,
       accent: def.accent,
-      badge: def.badge ? (en ? def.badge.en : def.badge.yue) : null,
+      badge,
+      faceTier,
+      faceTriangles,
+      faceLabel,
+      faceNote,
+      showFaceChip,
       avatarPrefer: def.avatarPrefer,
       modelUrl: def.modelUrl,
       voiceId,
@@ -1210,8 +1350,6 @@ export function buildCharacterCompanionHref(opts = {}) {
   const q = new URLSearchParams();
   q.set("lang", langCode === "en" ? "en" : "yue");
   q.set("character", def.id);
-  if (opts.voiceId) q.set("voice", opts.voiceId);
-  else q.set("voice", langCode === "en" ? def.voices.en : def.voices.yue);
   if (def.avatarPrefer === "gltf") {
     q.set("avatar", "gltf");
     q.set("model3d", def.modelUrl);

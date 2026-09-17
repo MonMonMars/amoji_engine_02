@@ -7,6 +7,7 @@ import {
   preloadVrmBuffer,
   releaseVrmPreloadExcept,
 } from "./companionPreload.js";
+import { sortModelUrlsForPreload } from "./companionVrmInspect.js";
 
 export const COMPANION_CHARACTER_PRELOAD_SCHEMA =
   "amoji.companionCharacterPreload.v3";
@@ -141,7 +142,7 @@ function reportCombinedProgress(
 
 export async function startCharacterRosterPreload(opts = {}) {
   const langCode = opts.langCode === "en" ? "en" : "yue";
-  const modelUrls = uniqueCharacterModelUrls(langCode);
+  const modelUrls = sortModelUrlsForPreload(uniqueCharacterModelUrls(langCode));
   const previewUrls = uniqueCharacterPreviewUrls(langCode);
   const priorityPreviewUrls = previewUrls.slice(0, PRIORITY_PREVIEW_COUNT);
   const deferredPreviewUrls = previewUrls.slice(PRIORITY_PREVIEW_COUNT);

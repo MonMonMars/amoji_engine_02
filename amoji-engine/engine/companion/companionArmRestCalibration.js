@@ -31,10 +31,12 @@ const LEG_BONES = [
   "rightLowerLeg",
 ];
 
-const ELBOW_BEND = 0.92;
-const KNEE_BEND_PLANT = 0.26;
+const ELBOW_BEND_TPOSE = 0.92;
+const ELBOW_BEND_APOSE = 0.22;
+const KNEE_BEND_TPOSE = 0.26;
+const KNEE_BEND_APOSE = 0.12;
 /** Hand already dropped this far from shoulder→hip means authored A-pose. */
-const APOSE_DROP_RATIO = 0.42;
+const APOSE_DROP_RATIO = 0.36;
 
 const scratchA = new THREE.Vector3();
 const scratchB = new THREE.Vector3();
@@ -127,17 +129,21 @@ function hingeOnAxis(axis, signedBend, flexAxis) {
   };
 }
 
+/** VRM humanoid elbows/knees hinge on X or Z — never Y (that twists the limb). */
+const LIMB_HINGE_AXES = Object.freeze(["x", "z"]);
+
 /**
  * @param {import('@pixiv/three-vrm').VRM} vrm
  * @param {(lower: { x: number, y: number, z: number }) => number} metric
  * @param {number} delta
+ * @param {readonly string[]} [allowedAxes]
  */
-function pickHingeAxis(metric, delta = 0.02) {
+function pickHingeAxis(metric, delta = 0.02, allowedAxes = LIMB_HINGE_AXES) {
   const restMetric = metric({ x: 0, y: 0, z: 0 });
-  let bestAxis = "x";
+  let bestAxis = allowedAxes[0] || "x";
   let bestSign = 1;
   let bestMetric = restMetric;
-  for (const axis of ["x", "y", "z"]) {
+  for (const axis of allowedAxes) {
     for (const sign of [1, -1]) {
       const value = metric({ x: 0, y: 0, z: 0, [axis]: 0.9 * sign });
       if (value < bestMetric - delta) {
@@ -151,23 +157,49 @@ function pickHingeAxis(metric, delta = 0.02) {
 }
 
 /**
+ * @param {{ x?: number, y?: number, z?: number, flexAxis?: string }} rest
+ * @param {{ x?: number, y?: number, z?: number, flexAxis?: string }} fallback
+ */
+function sanitizeLimbHinge(rest, fallback) {
+  const axis = rest?.flexAxis;
+  if (axis === "y" || Math.abs(Number(rest?.y) || 0) > 0.35) {
+    return { ...fallback, flexAxis: fallback.flexAxis || "x" };
+  }
+  if (axis !== "x" && axis !== "z") {
+    return { ...fallback, flexAxis: fallback.flexAxis || "x" };
+  }
+  return rest;
+}
+
+/**
  * Authored bind: T-pose (hands near shoulders) vs A-pose (hands already down).
  * @param {import('@pixiv/three-vrm').VRM} vrm
  * @returns {"tpose" | "apose"}
  */
+function measureArmDrop(humanoid, side) {
+  const handName = side === "left" ? "leftHand" : "rightHand";
+  const upperName = side === "left" ? "leftUpperArm" : "rightUpperArm";
+  const hand = worldPos(measureBone(humanoid, handName), scratchA);
+  const shoulder = worldPos(measureBone(humanoid, upperName), scratchB);
+  const hipNode =
+    measureBone(humanoid, "hips") ||
+    measureBone(humanoid, side === "left" ? "leftUpperLeg" : "rightUpperLeg");
+  const hip = worldPos(hipNode, new THREE.Vector3());
+  if (!hand || !shoulder || !hip) return null;
+  const span = Math.max(0.08, shoulder.y - hip.y);
+  return (shoulder.y - hand.y) / span;
+}
+
 export function detectVrmArmBind(vrm) {
   const humanoid = vrm?.humanoid;
   if (!humanoid) return "tpose";
   humanoid.resetNormalizedPose?.();
   flushPose(vrm);
-  const hand = worldPos(measureBone(humanoid, "leftHand"), scratchA);
-  const shoulder = worldPos(measureBone(humanoid, "leftUpperArm"), scratchB);
-  const hipNode =
-    measureBone(humanoid, "hips") || measureBone(humanoid, "leftUpperLeg");
-  const hip = worldPos(hipNode, new THREE.Vector3());
-  if (!hand || !shoulder || !hip) return "tpose";
-  const span = Math.max(0.08, shoulder.y - hip.y);
-  const drop = (shoulder.y - hand.y) / span;
+  const leftDrop = measureArmDrop(humanoid, "left");
+  const rightDrop = measureArmDrop(humanoid, "right");
+  const drops = [leftDrop, rightDrop].filter((v) => v != null);
+  if (!drops.length) return "tpose";
+  const drop = drops.reduce((sum, v) => sum + v, 0) / drops.length;
   return drop > APOSE_DROP_RATIO ? "apose" : "tpose";
 }
 
@@ -176,8 +208,10 @@ export function detectVrmArmBind(vrm) {
  * @param {import('@pixiv/three-vrm').VRM} vrm
  * @param {typeof VRM_ARM_REST_ROTATIONS} upperRest
  * @param {"left" | "right"} side
+ * @param {number} bend
+ * @param {{ x?: number, y?: number, z?: number, flexAxis?: string }} fallback
  */
-function detectElbowFlex(vrm, upperRest, side) {
+function detectElbowFlex(vrm, upperRest, side, bend, fallback) {
   const humanoid = vrm.humanoid;
   const handName = side === "left" ? "leftHand" : "rightHand";
   const upperName = side === "left" ? "leftUpperArm" : "rightUpperArm";
@@ -185,7 +219,7 @@ function detectElbowFlex(vrm, upperRest, side) {
   const hand = measureBone(humanoid, handName);
   const upper = measureBone(humanoid, upperName);
   if (!hand?.getWorldPosition || !upper?.getWorldPosition) {
-    return upperRest[lowerName];
+    return fallback;
   }
 
   const metric = (lower) => {
@@ -200,8 +234,9 @@ function detectElbowFlex(vrm, upperRest, side) {
     return scratchA.distanceTo(scratchB);
   };
 
-  const picked = pickHingeAxis(metric, 0.02);
-  return hingeOnAxis(picked.axis, ELBOW_BEND * picked.sign, picked.axis);
+  const picked = pickHingeAxis(metric, 0.02, LIMB_HINGE_AXES);
+  const hinge = hingeOnAxis(picked.axis, bend * picked.sign, picked.axis);
+  return sanitizeLimbHinge(hinge, fallback);
 }
 
 /**
@@ -236,8 +271,20 @@ function detectKneeFlex(vrm, side, bend) {
     return scratchA.distanceTo(scratchB);
   };
 
-  const picked = pickHingeAxis(metric, 0.015);
-  return hingeOnAxis(picked.axis, bend * picked.sign, picked.axis);
+  const picked = pickHingeAxis(metric, 0.015, LIMB_HINGE_AXES);
+  const hinge = hingeOnAxis(picked.axis, bend * picked.sign, picked.axis);
+  const fallback =
+    side === "left"
+      ? VRM_LEG_REST_ROTATIONS.leftLowerLeg
+      : VRM_LEG_REST_ROTATIONS.rightLowerLeg;
+  const sane = sanitizeLimbHinge(hinge, fallback);
+  if (sane.flexAxis === "x" && sane.x < 0) {
+    return { ...sane, x: Math.abs(sane.x) };
+  }
+  if (sane.flexAxis === "z" && sane.z < 0) {
+    return { ...sane, z: Math.abs(sane.z) };
+  }
+  return sane;
 }
 
 /**
@@ -253,6 +300,7 @@ export function detectVrmArmRestRotations(vrm) {
   if (!leftHand || !rightHand) return VRM_ARM_REST_ROTATIONS;
 
   const bind = detectVrmArmBind(vrm);
+  const elbowBend = bind === "apose" ? ELBOW_BEND_APOSE : ELBOW_BEND_TPOSE;
   /** @type {typeof VRM_ARM_REST_ROTATIONS} */
   let upperRest = VRM_APOSE_ARM_REST_ROTATIONS;
   if (bind === "tpose") {
@@ -269,24 +317,39 @@ export function detectVrmArmRestRotations(vrm) {
       rightLowerArm: { ...VRM_ARM_REST_ROTATIONS.rightLowerArm },
     };
 
-    const handHeight = (rest) => {
+    const armDropScore = (rest) => {
       humanoid.resetNormalizedPose?.();
       applyNamedRest(humanoid, ARM_BONES, rest);
       flushPose(vrm);
-      const left = worldPos(measureBone(humanoid, "leftHand"), scratchA);
-      const right = worldPos(measureBone(humanoid, "rightHand"), scratchB);
-      if (!left || !right) return 0;
-      return (left.y + right.y) * 0.5;
+      const leftDrop = measureArmDrop(humanoid, "left");
+      const rightDrop = measureArmDrop(humanoid, "right");
+      const drops = [leftDrop, rightDrop].filter((v) => v != null);
+      if (!drops.length) return 0;
+      return drops.reduce((sum, v) => sum + v, 0) / drops.length;
     };
 
-    const standardY = handHeight(VRM_ARM_REST_ROTATIONS);
-    const flippedY = handHeight(flippedZ);
+    const standardDrop = armDropScore(VRM_ARM_REST_ROTATIONS);
+    const flippedDrop = armDropScore(flippedZ);
     upperRest =
-      flippedY < standardY - 0.04 ? flippedZ : VRM_ARM_REST_ROTATIONS;
+      flippedDrop > standardDrop + 0.04 ? flippedZ : VRM_ARM_REST_ROTATIONS;
   }
 
-  const leftLowerArm = detectElbowFlex(vrm, upperRest, "left");
-  const rightLowerArm = detectElbowFlex(vrm, upperRest, "right");
+  const leftFallback =
+    bind === "apose"
+      ? VRM_APOSE_ARM_REST_ROTATIONS.leftLowerArm
+      : VRM_ARM_REST_ROTATIONS.leftLowerArm;
+  const rightFallback =
+    bind === "apose"
+      ? VRM_APOSE_ARM_REST_ROTATIONS.rightLowerArm
+      : VRM_ARM_REST_ROTATIONS.rightLowerArm;
+  const leftLowerArm = detectElbowFlex(vrm, upperRest, "left", elbowBend, leftFallback);
+  const rightLowerArm = detectElbowFlex(
+    vrm,
+    upperRest,
+    "right",
+    elbowBend,
+    rightFallback,
+  );
 
   humanoid.resetNormalizedPose?.();
   return Object.freeze({
@@ -303,8 +366,10 @@ export function detectVrmLegRestRotations(vrm) {
   const humanoid = vrm?.humanoid;
   if (!humanoid) return VRM_LEG_REST_ROTATIONS;
 
-  const leftLowerLeg = detectKneeFlex(vrm, "left", KNEE_BEND_PLANT);
-  const rightLowerLeg = detectKneeFlex(vrm, "right", KNEE_BEND_PLANT);
+  const bind = detectVrmArmBind(vrm);
+  const kneeBend = bind === "apose" ? KNEE_BEND_APOSE : KNEE_BEND_TPOSE;
+  const leftLowerLeg = detectKneeFlex(vrm, "left", kneeBend);
+  const rightLowerLeg = detectKneeFlex(vrm, "right", kneeBend);
 
   humanoid.resetNormalizedPose?.();
   return Object.freeze({

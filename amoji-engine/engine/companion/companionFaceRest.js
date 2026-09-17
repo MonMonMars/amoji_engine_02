@@ -10,13 +10,13 @@
 export const COMPANION_FACE_REST_SCHEMA = "amoji.companionFaceRest.v7";
 
 export const MOUTH_CLOSE_EPS = 0.035;
-/** No smile morph at rest — visemes own the jaw while talking. */
-export const IDLE_HAPPY_MAX = 0;
+/** Subtle performance smile at rest — hazard filter still blocks jaw-baking presets. */
+export const IDLE_HAPPY_MAX = 0.36;
 /** Talk smile is visible; visemes still write last so the jaw can move. */
-export const TALK_HAPPY_MAX = 0.48;
+export const TALK_HAPPY_MAX = 0.62;
 /** Surprised at rest often drops the jaw. */
-export const REST_SURPRISED_MAX = 0;
-export const TALK_SURPRISED_MAX = 0.22;
+export const REST_SURPRISED_MAX = 0.12;
+export const TALK_SURPRISED_MAX = 0.32;
 /** Max jaw-bone X rotation (radians) at full open. */
 export const TALK_JAW_OPEN_RAD = 0.42;
 /** Fallback viseme walk when TTS has not yet named a shape. */
@@ -177,10 +177,12 @@ export function capTalkingEmotionWeight(name, weight, opts = {}) {
   const v = Math.max(0, Math.min(1, Number(weight) || 0));
   const key = String(name || "");
   const isMouthEmotion = /^(happy|surprised)$/i.test(key);
+  const talkHappy = opts.caps?.talkHappy ?? TALK_HAPPY_MAX;
+  const talkSurprised = opts.caps?.talkSurprised ?? TALK_SURPRISED_MAX;
   if (opts.eating && isMouthEmotion) return 0;
   if (!opts.talking) return v;
-  if (/^happy$/i.test(key)) return Math.min(v, TALK_HAPPY_MAX);
-  if (/^surprised$/i.test(key)) return Math.min(v, TALK_SURPRISED_MAX);
+  if (/^happy$/i.test(key)) return Math.min(v, talkHappy);
+  if (/^surprised$/i.test(key)) return Math.min(v, talkSurprised);
   return v;
 }
 
@@ -511,27 +513,70 @@ export function applyMorphMouthOpen(root, shape, open) {
  * @param {string} [emotion]
  * @param {boolean} [talking]
  */
-export function applyTalkEmotionMorphs(root, emotion = "neutral", talking = false) {
+export function applyTalkEmotionMorphs(
+  root,
+  emotion = "neutral",
+  talking = false,
+  morphOpts = null,
+) {
   if (!root || typeof root.traverse !== "function") return 0;
   const e = String(emotion || "neutral").toLowerCase();
-  const smile = talking
-    ? e === "happy"
-      ? 0.42
-      : e === "surprised"
-        ? 0.12
-        : e === "sad" || e === "angry"
-          ? 0
-          : 0.18
-    : 0;
-  const frown = talking ? (e === "sad" ? 0.38 : e === "angry" ? 0.22 : 0) : 0;
-  const browUp = talking
-    ? e === "surprised"
-      ? 0.46
+  const weights =
+    morphOpts && typeof morphOpts === "object" && "smile" in morphOpts
+      ? morphOpts
+      : null;
+  const smile = weights
+    ? Number(weights.smile) || 0
+    : talking
+      ? e === "happy"
+        ? 0.54
+        : e === "surprised"
+          ? 0.18
+          : e === "sad" || e === "angry"
+            ? 0
+            : e === "thinking"
+              ? 0.08
+              : 0.24
       : e === "happy"
         ? 0.22
-        : 0.08
-    : 0;
-  const browDown = talking ? (e === "angry" ? 0.48 : e === "sad" ? 0.28 : 0) : 0;
+        : 0;
+  const frown = weights
+    ? Number(weights.frown) || 0
+    : talking
+      ? e === "sad"
+        ? 0.46
+        : e === "angry"
+          ? 0.28
+          : e === "thinking"
+            ? 0.14
+            : 0
+      : e === "thinking"
+        ? 0.1
+        : 0;
+  const browUp = weights
+    ? Number(weights.browUp) || 0
+    : talking
+      ? e === "surprised"
+        ? 0.56
+        : e === "happy"
+          ? 0.3
+          : e === "thinking"
+            ? 0.16
+            : 0.12
+      : 0;
+  const browDown = weights
+    ? Number(weights.browDown) || 0
+    : talking
+      ? e === "angry"
+        ? 0.56
+        : e === "sad"
+          ? 0.34
+          : e === "thinking"
+            ? 0.18
+            : 0
+      : e === "thinking"
+        ? 0.12
+        : 0;
   let applied = 0;
   root.traverse((obj) => {
     const influences = obj?.morphTargetInfluences;
@@ -665,6 +710,10 @@ export function zeroHazardMorphInfluences(root) {
 export function clampRestFaceBlend(blend, opts = {}) {
   const talking = Boolean(opts.talking);
   const hazards = opts.hazards;
+  const idleHappy = opts.caps?.idleHappy ?? IDLE_HAPPY_MAX;
+  const talkHappy = opts.caps?.talkHappy ?? TALK_HAPPY_MAX;
+  const restSurprised = opts.caps?.restSurprised ?? REST_SURPRISED_MAX;
+  const talkSurprised = opts.caps?.talkSurprised ?? TALK_SURPRISED_MAX;
   /** @type {Record<string, number>} */
   const next = {};
   for (const [key, raw] of Object.entries(blend || {})) {
@@ -683,13 +732,13 @@ export function clampRestFaceBlend(blend, opts = {}) {
     if (talking && closesEyes) continue;
 
     if (key === "Happy") {
-      const cap = talking ? TALK_HAPPY_MAX : IDLE_HAPPY_MAX;
+      const cap = talking ? talkHappy : idleHappy;
       const capped = Math.min(value, cap);
       if (capped > 0) next.Happy = capped;
       continue;
     }
     if (key === "Surprised") {
-      const cap = talking ? TALK_SURPRISED_MAX : REST_SURPRISED_MAX;
+      const cap = talking ? talkSurprised : restSurprised;
       const capped = Math.min(value, cap);
       if (capped > 0) next.Surprised = capped;
       continue;

@@ -141,7 +141,7 @@ export function getExtendedActionDef(actionId) {
 }
 
 /**
- * Resolve sampler key — cloud extensions inherit procedural motion from `extends`.
+ * Resolve clip inheritance — cloud extensions reuse hosted VRMA from `extends`.
  * @param {string | null | undefined} actionId
  */
 export function resolveMotionSamplerKey(actionId) {

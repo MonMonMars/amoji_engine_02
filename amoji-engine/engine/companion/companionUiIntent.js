@@ -73,9 +73,6 @@ export function inferUiIntentFromUserText(text, isEnglish = false) {
     if (/\b(open settings|show settings)\b/i.test(lower)) {
       push({ type: "settings" });
     }
-    if (/\b(change voice|switch voice|different voice)\b/i.test(lower)) {
-      push({ type: "voice" });
-    }
     if (/\b(speak english|english please|in english)\b/i.test(lower)) {
       push({ type: "lang", value: "en" });
     }
@@ -116,7 +113,6 @@ export function inferUiIntentFromUserText(text, isEnglish = false) {
       push({ type: "character", value: "pick" });
     }
     if (/開設定|打開設定|設定頁/.test(raw)) push({ type: "settings" });
-    if (/換語音|轉語音|另一把聲/.test(raw)) push({ type: "voice" });
     if (/講英文|用英文|english/i.test(raw)) push({ type: "lang", value: "en" });
     if (/講粵語|用粵語|廣東話/.test(raw)) push({ type: "lang", value: "yue" });
     for (const id of Object.keys(COMPANION_CHARACTERS)) {
@@ -154,16 +150,16 @@ export function buildUiIntentPromptFragment(isEnglish = false, opts = {}) {
     return isEnglish
       ? [
           "UI control (hidden from user — do NOT tell them to press buttons):",
-          "When the user wants to change companion, voice, language, or settings, add ONE [ui:…] tag before [mood:…].",
+          "When the user wants to change companion, language, or settings, add ONE [ui:…] tag before [mood:…].",
           "Examples: switch character → [ui:character:nova] or [ui:character] to open picker;",
-          "settings → [ui:settings]; voice → [ui:voice]; English → [ui:lang:en]; Cantonese → [ui:lang:yue].",
+          "settings → [ui:settings]; English → [ui:lang:en]; Cantonese → [ui:lang:yue]. Voice is fixed per character.",
           "Still answer naturally in speech — the app changes UI from your tag.",
         ].join(" ")
       : [
           "UI 控制（用戶睇唔到 — 唔好叫佢撳掣）：",
-          "用戶想換角色、語音、語言或設定時，喺 [mood:…] 前加一個 [ui:…] tag。",
+          "用戶想換角色、語言或設定時，喺 [mood:…] 前加一個 [ui:…] tag。",
           "例：換角色 → [ui:character:nova] 或 [ui:character] 開選人；",
-          "設定 → [ui:settings]；語音 → [ui:voice]；英文 → [ui:lang:en]；粵語 → [ui:lang:yue]。",
+          "設定 → [ui:settings]；英文 → [ui:lang:en]；粵語 → [ui:lang:yue]。語音跟角色固定，唔可以換。",
           "口語照答，界面會跟 tag 自動切換。",
         ].join(" ");
   }
@@ -255,10 +251,6 @@ export async function applyUiIntents(intents, handlers = {}) {
         }
         break;
       case "voice":
-        if (handlers.openVoicePicker) {
-          handlers.openVoicePicker();
-          applied.push(intent);
-        }
         break;
       case "lang":
         if (intent.value && handlers.switchLanguage) {

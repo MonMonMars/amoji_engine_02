@@ -194,7 +194,7 @@ export function advanceIdleBeat(state, dt, nowMs) {
                 : beat === "breathe"
                   ? 2.2
                   : 1.65;
-    nextAt = nowMs + 380 + Math.random() * 900;
+    nextAt = nowMs + 220 + Math.random() * 520;
   }
 
   if (beat) {

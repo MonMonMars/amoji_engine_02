@@ -23,8 +23,10 @@ import {
 export const COMPANION_WAIT_ACT_SCHEMA = "amoji.companionWaitAct.v1";
 
 /** One-shot library clips need room to finish (wave ~1.8s, thinking ~2.4s). */
-export const IDLE_LIFE_INTERVAL_MS = 3000;
-export const AVATAR_LOAD_IDLE_INTERVAL_MS = 1100;
+export const IDLE_LIFE_INTERVAL_MS = 2400;
+export const AVATAR_LOAD_IDLE_INTERVAL_MS = 900;
+/** Play a visible clip every N idle ticks (1 = every rotation). */
+export const IDLE_LIFE_CLIP_EVERY_N_TICKS = 1;
 const IDLE_LIFE_BEATS = Object.freeze(["look", "comb", "breathe"]);
 
 /** @typedef {'connecting'|'waking'|'searching'|'assembling'|'downloading'|'warming'|'learning'|'installing'|'settling'|'almost'|'ready'|'failed'|'thinking'|'avatar-load'|'character-switch'|'motion-pack'|'idle'} WaitPhase */
@@ -97,8 +99,7 @@ export function createCompanionWaitAct(opts = {}) {
   };
 
   const playIdleLife = () => {
-    // Planted breath as rest, then one-shot hosted clips (never loop
-    // Relax/Thinking, never setThinking — that would loop Thinking.vrma).
+    // Planted breath + rotating one-shot clips (never loop Relax/Thinking).
     avatarRef?.setThinking?.(false);
     avatarRef?.setEmotion?.("neutral");
     if (poseTick === 0) {
@@ -111,9 +112,10 @@ export function createCompanionWaitAct(opts = {}) {
       return;
     }
 
-    if (poseTick % 2 === 1) {
-      const beat = IDLE_LIFE_BEATS[Math.floor(poseTick / 2) % IDLE_LIFE_BEATS.length];
-      avatarRef?.pulseIdleBeat?.(beat);
+    const beat = IDLE_LIFE_BEATS[(poseTick - 1) % IDLE_LIFE_BEATS.length];
+    avatarRef?.pulseIdleBeat?.(beat);
+
+    if (poseTick % IDLE_LIFE_CLIP_EVERY_N_TICKS !== 0) {
       opts.onPose?.("idle-stand", phase);
       return;
     }
@@ -339,6 +341,13 @@ export function createCompanionWaitAct(opts = {}) {
       phase = "learning";
       progress = 0;
       indeterminate = false;
+    },
+    /** Force the next idle pose/clip (used by the companion idle ticker). */
+    nudgePose() {
+      if (!active || kind !== "idle") return false;
+      poseTick += 1;
+      playPose();
+      return true;
     },
   };
 }

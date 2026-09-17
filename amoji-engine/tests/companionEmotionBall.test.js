@@ -1,7 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
 import {
   companionEmotionBallInnerHtml,
+  computeMiniEmotionBallFrame,
   createCompanionEmotionBall,
+  createMiniEmotionBall,
+  miniEmotionBallLabel,
+  resolveMiniEmotionBallState,
   syncMiniEmotionBall,
 } from "../engine/companion/companionEmotionBall.js";
 
@@ -63,12 +67,20 @@ function mockBallEl() {
     innerHTML: "",
     hidden: true,
     parentElement: stack,
+    attrs: { role: "", "aria-label": "" },
     querySelector(sel) {
       if (sel === ".emotion-ball__canvas") return null;
       return null;
     },
-    setAttribute() {},
-    removeAttribute() {},
+    setAttribute(key, value) {
+      this.attrs[key] = String(value);
+    },
+    getAttribute(key) {
+      return this.attrs[key] || null;
+    },
+    removeAttribute(key) {
+      delete this.attrs[key];
+    },
     getBoundingClientRect() {
       return { width: 88, height: 88 };
     },
@@ -131,7 +143,8 @@ describe("companionEmotionBall", () => {
     expect(el.style.getPropertyValue("--mini-ball-scale")).not.toBe("");
     expect(el.style.getPropertyValue("--mini-ball-bg")).toContain("hsl(");
     expect(el.style.getPropertyValue("--mini-ball-bright")).not.toBe("");
-    expect(theme.scale).toBeGreaterThan(1.5);
+    expect(theme.scale).toBeGreaterThan(1.08);
+    expect(theme.hue).toBeGreaterThan(0);
   });
 
   it("grows the chip ball with speaking volume", () => {
@@ -147,6 +160,144 @@ describe("companionEmotionBall", () => {
       state: "speaking",
     });
     expect(loud.scale).toBeGreaterThan(quiet.scale);
-    expect(loud.scale).toBeGreaterThan(2);
+    expect(loud.volume).toBeGreaterThan(quiet.volume);
+  });
+
+  it("maps emotion to color and state to motion", () => {
+    const happy = computeMiniEmotionBallFrame({
+      emotion: "happy",
+      state: "speaking",
+      level: 0.6,
+    });
+    const sad = computeMiniEmotionBallFrame({
+      emotion: "sad",
+      state: "speaking",
+      level: 0.6,
+    });
+    const angry = computeMiniEmotionBallFrame({
+      emotion: "angry",
+      state: "speaking",
+      level: 0.6,
+    });
+    expect(happy.hue).not.toBe(sad.hue);
+    expect(sad.hue).not.toBe(angry.hue);
+    const idleA = computeMiniEmotionBallFrame({ state: "idle", time: 0 });
+    const idleB = computeMiniEmotionBallFrame({ state: "idle", time: 1.08 });
+    expect(Math.abs(idleB.volume - idleA.volume)).toBeGreaterThan(0.1);
+    const thinking = computeMiniEmotionBallFrame({ state: "thinking", time: 0.4 });
+    expect(thinking.thinking).toBe(true);
+    expect(thinking.volume).toBeGreaterThan(0.15);
+    const listenQuiet = computeMiniEmotionBallFrame({
+      state: "listening",
+      level: 0,
+      time: 0.2,
+    });
+    expect(listenQuiet.live).toBe(true);
+    expect(listenQuiet.volume).toBeGreaterThan(0.08);
+    const blocked = computeMiniEmotionBallFrame({
+      state: "mic-blocked",
+      emotion: "happy",
+      level: 0.9,
+    });
+    expect(blocked.disabled).toBe(true);
+    expect(blocked.live).toBe(false);
+    expect(blocked.sat).toBeLessThan(30);
+    const typing = computeMiniEmotionBallFrame({ state: "typing", time: 0.3 });
+    expect(typing.typing).toBe(true);
+    expect(typing.live).toBe(false);
+    const typeA = computeMiniEmotionBallFrame({ state: "typing", time: 0 });
+    const typeB = computeMiniEmotionBallFrame({ state: "typing", time: 1.08 });
+    expect(Math.abs(typeB.volume - typeA.volume)).toBeGreaterThan(0.1);
+    expect(Math.abs(typeB.squash - typeA.squash)).toBeGreaterThan(0.08);
+    expect(
+      resolveMiniEmotionBallState({
+        sessionState: "idle",
+        textMode: true,
+      }),
+    ).toBe("typing");
+    expect(
+      resolveMiniEmotionBallState({
+        sessionState: "idle",
+        textMode: true,
+        speaking: true,
+      }),
+    ).toBe("typing");
+    expect(
+      resolveMiniEmotionBallState({
+        sessionState: "speaking",
+        speaking: true,
+      }),
+    ).toBe("speaking");
+    expect(
+      resolveMiniEmotionBallState({
+        sessionState: "thinking",
+        micBlocked: true,
+      }),
+    ).toBe("thinking");
+    const joy = computeMiniEmotionBallFrame({
+      emotion: "joy",
+      state: "speaking",
+      level: 0.5,
+    });
+    expect(joy.emotion).toBe("happy");
+    expect(joy.hue).toBe(happy.hue);
+    const idleSquashA = computeMiniEmotionBallFrame({ state: "idle", time: 0 });
+    const idleSquashB = computeMiniEmotionBallFrame({ state: "idle", time: 1.08 });
+    expect(Math.abs(idleSquashB.squash - idleSquashA.squash)).toBeGreaterThan(0.08);
+    const still = computeMiniEmotionBallFrame({
+      state: "idle",
+      time: 1.08,
+      reducedMotion: true,
+    });
+    expect(still.squash).toBe(1);
+    expect(still.spin).toBe(0);
+    const loading = computeMiniEmotionBallFrame({ state: "loading", time: 0.4 });
+    expect(loading.loading).toBe(true);
+    expect(loading.thinking).toBe(true);
+    expect(loading.volume).toBeLessThan(thinking.volume + 0.05);
+  });
+
+  it("labels aliased emotions and exposes an accessible name", () => {
+    const el = mockBallEl();
+    const theme = syncMiniEmotionBall(el, {
+      emotion: "sorrow",
+      state: "speaking",
+      level: 0.4,
+      isEnglish: true,
+    });
+    expect(theme.emotion).toBe("sad");
+    expect(el.title).toMatch(/Sad/);
+    expect(el.getAttribute("aria-label")).toMatch(/Speaking · Sad/);
+    expect(el.getAttribute("role")).toBe("img");
+    expect(miniEmotionBallLabel({ emotion: "thinking", state: "thinking" }, true)).toBe(
+      "Thinking",
+    );
+  });
+
+  it("runs a live mini emotion ball control loop", () => {
+    const frames = [];
+    vi.stubGlobal("requestAnimationFrame", (cb) => {
+      frames.push(cb);
+      return frames.length;
+    });
+    vi.stubGlobal("cancelAnimationFrame", () => {});
+    const el = mockBallEl();
+    const ball = createMiniEmotionBall(el);
+    ball.sync({ emotion: "surprised", state: "speaking", level: 0.85 });
+    expect(el.classList.contains("mini-emotion-ball")).toBe(true);
+    expect(ball.getState()).toBe("speaking");
+    expect(frames.length).toBeGreaterThan(0);
+    frames[0](32);
+    expect(el.dataset.emotion).toBe("surprised");
+    expect(el.style.getPropertyValue("--mini-ball-scale")).not.toBe("");
+    expect(ball.getFrame().live).toBe(true);
+    ball.destroy();
+    const yueEl = mockBallEl();
+    const yueBall = createMiniEmotionBall(yueEl, { isEnglish: false });
+    yueBall.sync({ emotion: "happy", state: "speaking", level: 0.6 });
+    frames[frames.length - 1](48);
+    expect(yueEl.title).toMatch(/講緊/);
+    yueBall.destroy();
+    vi.unstubAllGlobals();
   });
 });

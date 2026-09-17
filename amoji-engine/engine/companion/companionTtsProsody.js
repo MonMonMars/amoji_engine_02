@@ -6,22 +6,32 @@
  * ChatGPT Advanced Voice: pitch variation, pace changes, never a GPS narrator.
  */
 import { analyzeSpeechChunk, inferContentNuance } from "./companionContentMotion.js";
+import { resolveTurnPerformance } from "./companionActionResolve.js";
 import { characterProsodyBias } from "./companionCharacterCatalog.js";
 import { voiceProfileProsodyBias } from "./companionVoiceProfiles.js";
 import { inferExpressionFromText } from "../face/emotionExpression.js";
 
-export const COMPANION_TTS_PROSODY_SCHEMA = "amoji.companionTtsProsody.v2";
+export const COMPANION_TTS_PROSODY_SCHEMA = "amoji.companionTtsProsody.v3";
+
+/** ChatGPT Advanced Voice — clause-level prosody within one reply. */
+export const CHATGPT_STYLE_TTS = Object.freeze({
+  singleUtterance: false,
+  expressiveClauses: true,
+});
+
+/** Must match client chunkTextForCloudTts — server rejects/truncates above this. */
+export const MAX_CLOUD_TTS_CHARS = 480;
 
 /** @typedef {{ rate: string, pitch: string, volume: string }} EdgeProsody */
 /** @typedef {{ rate: number, pitch: number, volume: number }} BrowserProsody */
 
 const EMOTION_EDGE_BASE = Object.freeze({
-  neutral: { rate: 24, pitch: 30, volume: 12 },
-  happy: { rate: 56, pitch: 64, volume: 28 },
-  thinking: { rate: -10, pitch: 6, volume: -4 },
-  sad: { rate: -24, pitch: -16, volume: -10 },
-  surprised: { rate: 60, pitch: 66, volume: 30 },
-  angry: { rate: 36, pitch: -2, volume: 20 },
+  neutral: { rate: 32, pitch: 38, volume: 16 },
+  happy: { rate: 62, pitch: 72, volume: 32 },
+  thinking: { rate: -4, pitch: 12, volume: 0 },
+  sad: { rate: -18, pitch: -10, volume: -6 },
+  surprised: { rate: 66, pitch: 74, volume: 34 },
+  angry: { rate: 42, pitch: 4, volume: 24 },
 });
 
 const NUANCE_EDGE_DELTA = Object.freeze({
@@ -47,12 +57,12 @@ const STYLE_EDGE_DELTA = Object.freeze({
 });
 
 const EMOTION_BROWSER_BASE = Object.freeze({
-  neutral: { rate: 1.1, pitch: 1.28, volume: 1 },
-  happy: { rate: 1.3, pitch: 1.58, volume: 1 },
-  thinking: { rate: 0.86, pitch: 1.02, volume: 0.9 },
-  sad: { rate: 0.78, pitch: 0.86, volume: 0.86 },
-  surprised: { rate: 1.36, pitch: 1.66, volume: 1 },
-  angry: { rate: 1.16, pitch: 0.92, volume: 1 },
+  neutral: { rate: 1.14, pitch: 1.34, volume: 1 },
+  happy: { rate: 1.34, pitch: 1.64, volume: 1 },
+  thinking: { rate: 0.9, pitch: 1.08, volume: 0.94 },
+  sad: { rate: 0.82, pitch: 0.9, volume: 0.9 },
+  surprised: { rate: 1.4, pitch: 1.72, volume: 1 },
+  angry: { rate: 1.2, pitch: 0.96, volume: 1 },
 });
 
 /**
@@ -318,7 +328,13 @@ export function enrichTtsPerformance(performance, text = "") {
     Math.min(
       1,
       perf.speechEnergy ??
-        (emotion === "happy" || emotion === "surprised" ? 0.82 : 0.7),
+        (emotion === "happy" || emotion === "surprised"
+          ? 0.86
+          : emotion === "thinking"
+            ? 0.58
+            : emotion === "sad"
+              ? 0.52
+              : 0.76),
     ),
   );
   return {
@@ -448,6 +464,65 @@ export function resolveCompanionTtsProsody(opts = {}) {
  * @param {string | null | undefined} chunk
  * @param {{ emotion?: string, nuance?: string }} [hints]
  */
+/**
+ * Full voice performance from raw LLM reply (mood/nuance tags + text cues).
+ * Use for TTS — never rely on emoji; tags drive pitch, pace, and cloud instruct.
+ * @param {string | null | undefined} rawReply
+ * @param {{
+ *   userText?: string,
+ *   moodHint?: string | null,
+ *   lang?: string,
+ *   isEnglish?: boolean,
+ *   characterId?: string,
+ * }} [opts]
+ */
+export function resolveVoicePerformanceFromReply(rawReply, opts = {}) {
+  const turn = resolveTurnPerformance(
+    opts.userText || "",
+    rawReply,
+    opts.moodHint ?? null,
+  );
+  const lang =
+    opts.lang ||
+    (opts.isEnglish ? "en" : "yue");
+  return enrichTtsPerformance(
+    {
+      emotion: turn.emotion || "neutral",
+      nuance: turn.nuance || "none",
+      talkStyle: turn.talkStyle || "explain",
+      speechEnergy: turn.speechEnergy ?? 0.68,
+      lang,
+      characterId: opts.characterId,
+      singleUtterance: false,
+      expressiveClauses: true,
+    },
+    turn.reply,
+  );
+}
+
+/**
+ * @param {ReturnType<typeof analyzeSpeechChunk>} analysis
+ * @param {{ lang?: string, characterId?: string, isEnglish?: boolean }} [opts]
+ */
+export function voicePerformanceFromAnalysis(analysis, opts = {}) {
+  const lang =
+    opts.lang ||
+    (opts.isEnglish ? "en" : "yue");
+  return enrichTtsPerformance(
+    {
+      emotion: analysis?.emotion || "neutral",
+      nuance: analysis?.nuance || "none",
+      talkStyle: analysis?.talkStyle || "explain",
+      speechEnergy: analysis?.speechEnergy ?? 0.68,
+      lang,
+      characterId: opts.characterId,
+      singleUtterance: false,
+      expressiveClauses: true,
+    },
+    "",
+  );
+}
+
 export function resolveChunkTtsPerformance(chunk, hints = {}) {
   const analysis = analyzeSpeechChunk(chunk, hints);
   const prosody = resolveCompanionTtsProsody({
@@ -480,7 +555,11 @@ export function normalizeTtsPerformance(performance, fallbackEmotion = "neutral"
       talkStyle:
         emotion === "happy" || emotion === "surprised" ? "celebrate" : "explain",
       speechEnergy:
-        emotion === "happy" || emotion === "surprised" ? 0.82 : 0.7,
+        emotion === "happy" || emotion === "surprised"
+          ? 0.86
+          : emotion === "thinking"
+            ? 0.58
+            : 0.76,
     };
   }
   const perf = performance || {};

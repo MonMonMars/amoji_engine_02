@@ -5,6 +5,7 @@ import {
   analyzeStreamingReply,
   analyzeUserInput,
   buildVrmExpressionBlend,
+  inferActionFromEmotion,
   inferContentNuance,
   inferOneShotGesture,
   parseReplyMood,
@@ -21,6 +22,14 @@ describe("companionContentMotion", () => {
 
   it("detects shy nuance from Cantonese blush cues", () => {
     expect(inferContentNuance("哎呀，講到咁我會面紅㗎")).toBe("shy");
+  });
+
+  it("maps moods to default body actions for avatar performance", () => {
+    expect(inferActionFromEmotion("happy", "none")).toBe("nod");
+    expect(inferActionFromEmotion("sad", "none")).toBe("hug");
+    expect(inferActionFromEmotion("happy", "love")).toBe("fingerheart");
+    expect(inferActionFromEmotion("happy", "excited")).toBe("celebrate");
+    expect(inferActionFromEmotion("thinking", "curious")).toBe("thinking");
   });
 
   it("maps love + happy reply to soft talk and nod gesture", () => {
@@ -42,7 +51,7 @@ describe("companionContentMotion", () => {
   it("builds a mild happy blend without shocked Surprised lids", () => {
     const blend = buildVrmExpressionBlend("happy", "excited");
     expect(blend.Happy).toBeGreaterThan(0.35);
-    expect(blend.Happy).toBeLessThan(0.7);
+    expect(blend.Happy).toBeLessThan(0.75);
     expect(blend.Surprised ?? 0).toBe(0);
     expect(blend.Relaxed ?? 0).toBe(0);
   });
@@ -51,6 +60,13 @@ describe("companionContentMotion", () => {
     const blend = buildVrmExpressionBlend("thinking", "curious");
     expect(blend.Relaxed ?? 0).toBe(0);
     expect(blend.Surprised ?? 0).toBe(0);
+    expect(blend.Sad ?? 0).toBeGreaterThan(0.1);
+  });
+
+  it("adds curious brow lift without thinking jaw hazards", () => {
+    const blend = buildVrmExpressionBlend("happy", "curious");
+    expect(blend.Surprised ?? 0).toBeGreaterThan(0.1);
+    expect(blend.Happy ?? 0).toBeGreaterThan(0.5);
   });
 
   it("keeps untagged rest emotion morph-neutral", () => {

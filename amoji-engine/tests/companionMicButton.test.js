@@ -20,6 +20,15 @@ describe("companionMicButton", () => {
     expect(excited.ringSpeed).toBeGreaterThan(base.ringSpeed);
   });
 
+  it("maps emotion aliases onto the same orb hues", () => {
+    const happy = resolveMicButtonTheme({ emotion: "happy" });
+    const joy = resolveMicButtonTheme({ emotion: "joy" });
+    const sorrow = resolveMicButtonTheme({ emotion: "sorrow" });
+    const sad = resolveMicButtonTheme({ emotion: "sad" });
+    expect(joy.hue).toBe(happy.hue);
+    expect(sorrow.hue).toBe(sad.hue);
+  });
+
   it("falls back to neutral for unknown emotions", () => {
     const theme = resolveMicButtonTheme({ emotion: "mystery" });
     expect(theme.hue).toBe(EMOTION_MIC_THEME.neutral.hue);

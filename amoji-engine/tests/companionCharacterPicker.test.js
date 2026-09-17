@@ -14,10 +14,22 @@ describe("companion character picker data", () => {
     }
   });
 
-  it("includes official badge for kizuna", () => {
+  it("includes high-poly official badge for kizuna", () => {
     const kizuna = listCompanionCharacters("en").find((c) => c.id === "kizuna");
+    expect(kizuna?.badge).toMatch(/73k/i);
     expect(kizuna?.badge).toMatch(/official/i);
+    expect(kizuna?.faceTier).toBe("high");
+    expect(kizuna?.faceTriangles).toBeGreaterThan(70000);
     expect(kizuna?.previewImage).toContain("kizuna");
+  });
+
+  it("exposes HD face chips for high-poly picks without triangle badges", () => {
+    const rex = listCompanionCharacters("en").find((c) => c.id === "rex");
+    const alicia = listCompanionCharacters("en").find((c) => c.id === "alicia");
+    expect(rex?.showFaceChip).toBe(true);
+    expect(rex?.faceLabel).toMatch(/HD · 50k/i);
+    expect(alicia?.showFaceChip).toBe(true);
+    expect(alicia?.faceLabel).toMatch(/HD · 32k/i);
   });
 
   it("includes per-character voice labels for picker cards", () => {
@@ -30,7 +42,7 @@ describe("companion character picker data", () => {
   it("numbers picker cards in roster order", () => {
     const list = listCompanionCharacters("en");
     expect(list[0]).toMatchObject({ id: "nova", number: 1 });
-    expect(list[1]).toMatchObject({ id: "alicia", number: 2 });
+    expect(list[1]).toMatchObject({ id: "kizuna", number: 2 });
     expect(list.map((c) => c.number)).toEqual(
       list.map((_, i) => i + 1),
     );

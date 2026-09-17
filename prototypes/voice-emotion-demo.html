@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Amoji — Voice Emotion Demo (English)</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #0b0f14;
+        --panel: #141b24;
+        --line: #243041;
+        --text: #e8eef7;
+        --muted: #8fa3bc;
+        --accent: #7fd4cf;
+        --happy: #ffd166;
+        --sad: #6ea8fe;
+        --surprised: #ff8fab;
+        --thinking: #b8a9ff;
+        --good: #6ee7a8;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+        background: radial-gradient(circle at top, #152033, var(--bg) 55%);
+        color: var(--text);
+        min-height: 100vh;
+      }
+      .wrap {
+        max-width: 960px;
+        margin: 0 auto;
+        padding: 24px 16px 48px;
+      }
+      h1 {
+        margin: 0 0 8px;
+        font-size: clamp(1.5rem, 4vw, 2rem);
+      }
+      .lead {
+        color: var(--muted);
+        line-height: 1.55;
+        margin: 0 0 20px;
+      }
+      .callout {
+        background: linear-gradient(135deg, #1a2838, #12202c);
+        border: 1px solid var(--line);
+        border-left: 4px solid var(--good);
+        border-radius: 14px;
+        padding: 16px 18px;
+        margin-bottom: 24px;
+      }
+      .callout strong {
+        color: var(--good);
+      }
+      .panel {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        padding: 18px;
+        margin-bottom: 18px;
+      }
+      .panel h2 {
+        margin: 0 0 12px;
+        font-size: 1.05rem;
+      }
+      .row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        align-items: center;
+      }
+      label {
+        font-size: 0.85rem;
+        color: var(--muted);
+      }
+      select,
+      button {
+        font: inherit;
+      }
+      select {
+        background: #0f1520;
+        color: var(--text);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 8px 12px;
+      }
+      .mood-btn,
+      .voice-btn,
+      .play-btn {
+        border: 1px solid var(--line);
+        background: #101722;
+        color: var(--text);
+        border-radius: 999px;
+        padding: 8px 14px;
+        cursor: pointer;
+      }
+      .mood-btn.is-active,
+      .voice-btn.is-active {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 1px var(--accent);
+      }
+      .mood-btn[data-mood="happy"].is-active {
+        background: color-mix(in srgb, var(--happy) 18%, #101722);
+      }
+      .mood-btn[data-mood="sad"].is-active {
+        background: color-mix(in srgb, var(--sad) 18%, #101722);
+      }
+      .mood-btn[data-mood="surprised"].is-active {
+        background: color-mix(in srgb, var(--surprised) 18%, #101722);
+      }
+      .mood-btn[data-mood="thinking"].is-active {
+        background: color-mix(in srgb, var(--thinking) 18%, #101722);
+      }
+      .voice-btn.openai {
+        border-color: color-mix(in srgb, var(--good) 50%, var(--line));
+      }
+      .voice-btn .tag {
+        font-size: 0.72rem;
+        color: var(--good);
+        margin-left: 6px;
+      }
+      .line-preview {
+        margin-top: 12px;
+        padding: 12px 14px;
+        border-radius: 12px;
+        background: #0d121b;
+        border: 1px dashed var(--line);
+        font-size: 1.05rem;
+        line-height: 1.45;
+      }
+      .status {
+        margin-top: 10px;
+        font-size: 0.85rem;
+        color: var(--muted);
+        min-height: 1.2em;
+      }
+      .cta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 8px;
+      }
+      .cta a,
+      .cta button.primary {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        text-decoration: none;
+        background: linear-gradient(135deg, #3d8f89, #2f6f6a);
+        color: #fff;
+        border: none;
+        border-radius: 999px;
+        padding: 12px 18px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      .cta a.secondary {
+        background: transparent;
+        border: 1px solid var(--line);
+        color: var(--text);
+      }
+      .compare-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 12px;
+      }
+      .compare-card {
+        background: #0d121b;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 12px;
+      }
+      .compare-card h3 {
+        margin: 0 0 8px;
+        font-size: 0.95rem;
+      }
+      .compare-card p {
+        margin: 0 0 10px;
+        color: var(--muted);
+        font-size: 0.82rem;
+      }
+      .rank-list {
+        margin: 0;
+        padding-left: 1.1rem;
+        color: var(--muted);
+        line-height: 1.55;
+      }
+      .rank-list li strong {
+        color: var(--text);
+      }
+      footer {
+        margin-top: 28px;
+        color: var(--muted);
+        font-size: 0.82rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <h1>Voice Emotion Demo</h1>
+      <p class="lead">
+        Compare how different voices perform happy, sad, surprised, and thinking lines.
+        English with cloud OpenAI TTS (when deployed) reacts like ChatGPT Advanced Voice.
+        Cantonese Edge TTS has only 3 speakers and weaker prosody.
+      </p>
+
+      <div class="callout" id="finding">
+        <strong>Finding:</strong>
+        <span id="finding-text">Loading voice comparison…</span>
+      </div>
+
+      <section class="panel">
+        <h2>1 — Pick a mood, hear the line</h2>
+        <div class="row" id="mood-row"></div>
+        <div class="row" style="margin-top: 12px">
+          <label for="voice-select">Voice</label>
+          <select id="voice-select"></select>
+          <button type="button" class="play-btn" id="play-selected">▶ Play live</button>
+          <button type="button" class="play-btn" id="play-cached">▶ Cached sample</button>
+        </div>
+        <div class="line-preview" id="line-preview"></div>
+        <div class="status" id="status"></div>
+      </section>
+
+      <section class="panel">
+        <h2>2 — Same happy line, every English voice</h2>
+        <div class="row" id="voice-row"></div>
+      </section>
+
+      <section class="panel">
+        <h2>3 — English vs Cantonese (same mood)</h2>
+        <div class="compare-grid" id="compare-grid"></div>
+      </section>
+
+      <section class="panel">
+        <h2>Recommended voices for emotion</h2>
+        <ol class="rank-list" id="rank-list"></ol>
+        <div class="cta">
+          <a class="primary" id="try-companion-en" href="#">
+            Try full companion in English (best voice)
+          </a>
+          <a class="secondary" id="try-companion-yue" href="#">
+            Compare Cantonese companion
+          </a>
+        </div>
+      </section>
+
+      <footer>
+        Cached clips live under <code>prototypes/assets/voice-samples/emotion/</code>.
+        Live play uses <code>POST /api/tts</code> — OpenAI voices need a deployed server with
+        <code>OPENAI_API_KEY</code>.
+      </footer>
+    </div>
+
+    <script type="module">
+      import { AMOJI_BUILD } from "/amoji-engine/engine/companion/buildVersion.mjs";
+      import { buildCloudTtsRequestBody } from "/amoji-engine/engine/companion/companionTtsProsody.js";
+      import {
+        rankedEnglishVoicesForEmotion,
+        voiceProfilesForLang,
+      } from "/amoji-engine/engine/companion/companionVoiceProfiles.js";
+      import { EMOTION_DEMO_LINES } from "/amoji-engine/engine/companion/companionVoiceEmotionDemo.js";
+
+      const MOODS = ["happy", "sad", "surprised", "thinking"];
+      let selectedMood = "happy";
+      let selectedVoice = "openai-coral";
+      let manifest = [];
+      let openAiLikely = false;
+
+      const moodRow = document.getElementById("mood-row");
+      const voiceSelect = document.getElementById("voice-select");
+      const voiceRow = document.getElementById("voice-row");
+      const compareGrid = document.getElementById("compare-grid");
+      const linePreview = document.getElementById("line-preview");
+      const statusEl = document.getElementById("status");
+      const findingText = document.getElementById("finding-text");
+      const rankList = document.getElementById("rank-list");
+
+      function samplePath(lang, voiceId, mood) {
+        return `/prototypes/assets/voice-samples/emotion/${lang}/${voiceId}-${mood}.mp3`;
+      }
+
+      function hasCached(lang, voiceId, mood) {
+        return manifest.some(
+          (m) => m.lang === lang && m.voiceId === voiceId && m.mood === mood,
+        );
+      }
+
+      function lineFor(lang, mood) {
+        return EMOTION_DEMO_LINES[lang][mood];
+      }
+
+      function setStatus(msg) {
+        statusEl.textContent = msg || "";
+      }
+
+      let currentAudio = null;
+      function stopAudio() {
+        if (currentAudio) {
+          currentAudio.pause();
+          currentAudio = null;
+        }
+      }
+
+      async function playUrl(url) {
+        stopAudio();
+        const audio = new Audio(url);
+        currentAudio = audio;
+        setStatus(`Playing ${url.split("/").pop()}…`);
+        audio.onended = () => setStatus("");
+        audio.onerror = () => setStatus("Playback failed — tap again or check speaker.");
+        await audio.play();
+      }
+
+      async function playLive(voiceId, lang, mood) {
+        const line = lineFor(lang, mood);
+        const body = buildCloudTtsRequestBody({
+          text: line.text,
+          performance: {
+            emotion: line.emotion,
+            nuance: line.nuance,
+            talkStyle: line.talkStyle,
+            speechEnergy: line.speechEnergy,
+            lang: lang === "en" ? "en" : "yue",
+            singleUtterance: true,
+          },
+          voice: voiceId,
+          lang: lang === "en" ? "en" : "yue",
+        });
+        setStatus(`Synthesizing ${voiceId} (${mood})…`);
+        const res = await fetch("/api/tts", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+        if (!res.ok) {
+          const err = await res.text().catch(() => "");
+          throw new Error(err || `TTS ${res.status}`);
+        }
+        const engine = res.headers.get("X-Tts-Engine") || "?";
+        const oaiVoice = res.headers.get("X-Tts-Voice") || voiceId;
+        if (engine === "openai") openAiLikely = true;
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        await playUrl(url);
+        setStatus(`Played ${voiceId} via ${engine} (${oaiVoice})`);
+        setTimeout(() => URL.revokeObjectURL(url), 60000);
+      }
+
+      async function playCached(voiceId, lang, mood) {
+        const url = samplePath(lang, voiceId, mood);
+        if (!hasCached(lang, voiceId, mood)) {
+          setStatus("No cached clip — try Play live (needs server).");
+          return;
+        }
+        await playUrl(url);
+      }
+
+      function renderMoods() {
+        moodRow.innerHTML = "";
+        for (const mood of MOODS) {
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = `mood-btn${mood === selectedMood ? " is-active" : ""}`;
+          btn.dataset.mood = mood;
+          btn.textContent = mood.charAt(0).toUpperCase() + mood.slice(1);
+          btn.addEventListener("click", () => {
+            selectedMood = mood;
+            renderMoods();
+            updatePreview();
+            renderCompare();
+          });
+          moodRow.appendChild(btn);
+        }
+      }
+
+      function renderVoiceSelect() {
+        const voices = rankedEnglishVoicesForEmotion(true);
+        voiceSelect.innerHTML = "";
+        for (const v of voices) {
+          const opt = document.createElement("option");
+          opt.value = v.id;
+          opt.textContent =
+            v.source === "OpenAI TTS"
+              ? `${v.shortLabelEn} ★ best emotion`
+              : v.shortLabelEn;
+          if (v.id === selectedVoice) opt.selected = true;
+          voiceSelect.appendChild(opt);
+        }
+        voiceSelect.onchange = () => {
+          selectedVoice = voiceSelect.value;
+          updatePreview();
+        };
+      }
+
+      function renderVoiceRow() {
+        voiceRow.innerHTML = "";
+        const voices = rankedEnglishVoicesForEmotion(true).filter((v) =>
+          hasCached("en", v.id, "happy"),
+        );
+        const fallback = voiceProfilesForLang("en").filter((v) =>
+          hasCached("en", v.id, "happy"),
+        );
+        const list = voices.length ? voices : fallback;
+        for (const v of list) {
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = `voice-btn${v.source === "OpenAI TTS" ? " openai" : ""}`;
+          btn.innerHTML =
+            v.shortLabelEn +
+            (v.source === "OpenAI TTS"
+              ? '<span class="tag">OpenAI</span>'
+              : '<span class="tag">Edge</span>');
+          btn.addEventListener("click", () => {
+            void playCached(v.id, "en", "happy").catch((err) =>
+              setStatus(err?.message || String(err)),
+            );
+          });
+          voiceRow.appendChild(btn);
+        }
+      }
+
+      function renderCompare() {
+        compareGrid.innerHTML = "";
+        const pairs = [
+          {
+            title: "English · Aria (Edge)",
+            lang: "en",
+            voice: "en-US-AriaNeural",
+            note: "US English neural — clearer mood shifts than Cantonese Edge.",
+          },
+          {
+            title: "Cantonese · 曉曼 (Edge)",
+            lang: "yue",
+            voice: "zh-HK-HiuMaanNeural",
+            note: "Only 3 zh-HK speakers; prosody range is limited.",
+          },
+        ];
+        for (const p of pairs) {
+          const card = document.createElement("div");
+          card.className = "compare-card";
+          card.innerHTML = `<h3>${p.title}</h3><p>${p.note}</p>`;
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "play-btn";
+          btn.textContent = `▶ ${selectedMood}`;
+          btn.addEventListener("click", () => {
+            void playCached(p.voice, p.lang, selectedMood).catch(() =>
+              playLive(p.voice, p.lang, selectedMood).catch((err) =>
+                setStatus(err?.message || String(err)),
+              ),
+            );
+          });
+          card.appendChild(btn);
+          const q = document.createElement("p");
+          q.style.marginTop = "8px";
+          q.textContent = `"${lineFor(p.lang, selectedMood).text}"`;
+          card.appendChild(q);
+          compareGrid.appendChild(card);
+        }
+      }
+
+      function renderRank() {
+        rankList.innerHTML = "";
+        const items = [
+          ["openai-coral", "Warm, smile-in-voice — best for happy & love lines"],
+          ["openai-shimmer", "Bright and playful — great for surprised / excited"],
+          ["openai-marin", "Default ChatGPT-style female — balanced emotion"],
+          ["en-US-AriaNeural", "Best Edge English female when OpenAI unavailable"],
+          ["en-HK-YanNeural", "HK English — closer to Cantonese rhythm"],
+          ["zh-HK-HiuGaaiNeural", "Most expressive of 3 Cantonese Edge speakers"],
+        ];
+        for (const [id, note] of items) {
+          const li = document.createElement("li");
+          li.innerHTML = `<strong>${id}</strong> — ${note}`;
+          rankList.appendChild(li);
+        }
+      }
+
+      function updatePreview() {
+        const line = lineFor("en", selectedMood);
+        linePreview.textContent = line.text;
+      }
+
+      function updateFinding() {
+        const enCached = manifest.filter((m) => m.lang === "en").length;
+        const yueCached = manifest.filter((m) => m.lang === "yue").length;
+        findingText.innerHTML =
+          `English has more speakers and longer lines that lift pitch & pace. ` +
+          `With <strong>OpenAI gpt-4o-mini-tts</strong> on the deployed server, ` +
+          `English follows natural-language emotion instructions (ChatGPT Advanced Voice style). ` +
+          `Cantonese is limited to <strong>3 Edge speakers</strong> with SSML prosody only ` +
+          `(${yueCached} cached clips vs ${enCached} English). ` +
+          `<strong>Try the English companion below</strong> — it should feel noticeably more alive.`;
+      }
+
+      function wireCta() {
+        const build = AMOJI_BUILD;
+        const enHref =
+          `/prototypes/amoji-companion.html?lang=en&pick=1&voice=openai-coral&build=${encodeURIComponent(build)}`;
+        const yueHref =
+          `/prototypes/amoji-companion.html?lang=yue&pick=1&build=${encodeURIComponent(build)}`;
+        document.getElementById("try-companion-en").href = enHref;
+        document.getElementById("try-companion-yue").href = yueHref;
+      }
+
+      document.getElementById("play-selected").addEventListener("click", () => {
+        void playLive(selectedVoice, "en", selectedMood).catch((err) =>
+          setStatus(`Live TTS failed: ${err?.message || err}. Try cached or deploy with OpenAI key.`),
+        );
+      });
+      document.getElementById("play-cached").addEventListener("click", () => {
+        void playCached(selectedVoice, "en", selectedMood);
+      });
+
+      try {
+        const res = await fetch("/prototypes/assets/voice-samples/emotion/manifest.json");
+        if (res.ok) manifest = await res.json();
+      } catch {
+        manifest = [];
+      }
+
+      renderMoods();
+      renderVoiceSelect();
+      renderVoiceRow();
+      renderCompare();
+      renderRank();
+      updatePreview();
+      updateFinding();
+      wireCta();
+
+      void fetch("/api/tts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(
+          buildCloudTtsRequestBody({
+            text: "Hi",
+            voice: "openai-coral",
+            lang: "en",
+            performance: { emotion: "happy", singleUtterance: true },
+          }),
+        ),
+      })
+        .then((res) => {
+          if (res.ok && res.headers.get("X-Tts-Engine") === "openai") {
+            findingText.innerHTML +=
+              " <strong>OpenAI TTS is live on this server — pick Coral or Shimmer for the richest emotion.</strong>";
+          }
+        })
+        .catch(() => {});
+    </script>
+  </body>
+</html>

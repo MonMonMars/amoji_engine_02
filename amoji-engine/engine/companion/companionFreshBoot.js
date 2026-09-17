@@ -183,6 +183,62 @@ export function buildPlayRedirectLocation(search, opts = {}) {
 }
 
 /**
+ * Stable /companion-full (or /companion) entry when /play or /n/ routes are missing.
+ * @param {string | null | undefined} search
+ * @param {{ build?: string, stamp?: number | string }} [opts]
+ */
+export function buildPlayFallbackLocation(search, opts = {}) {
+  const params = new URLSearchParams(String(search || "").replace(/^\?/, ""));
+  const kind =
+    params.get("kind") === "lite" || params.get("lite") === "1" ? "lite" : "full";
+  params.delete("kind");
+  params.delete("lite");
+  const stamp =
+    opts.stamp ??
+    `${Date.now()}${String(Math.floor(Math.random() * 1000)).padStart(3, "0")}`;
+  const build = opts.build ?? AMOJI_BUILD;
+  if (build) params.set("build", build);
+  params.set("_cb", String(stamp));
+  const path = companionFallbackPath(kind);
+  const qs = params.toString();
+  return qs ? `${path}?${qs}` : path;
+}
+
+/**
+ * HEAD-probe /play then /n/ open path; fall back to /companion-full when host is stale.
+ * @param {string | null | undefined} search
+ * @param {{ build?: string, fetchImpl?: typeof fetch, origin?: string }} [opts]
+ */
+export async function resolvePlayEntryLocation(search, opts = {}) {
+  const origin = String(opts.origin || "").replace(/\/$/, "");
+  const fetchImpl =
+    opts.fetchImpl ||
+    (typeof globalThis.fetch === "function" ? globalThis.fetch.bind(globalThis) : null);
+  const open = buildPlayRedirectLocation(search, { build: opts.build });
+  const fallback = buildPlayFallbackLocation(search, { build: opts.build });
+  if (!fetchImpl || !origin) return open;
+  try {
+    const playRes = await fetchImpl(`${origin}/play`, {
+      method: "HEAD",
+      redirect: "manual",
+      cache: "no-store",
+    });
+    if (!playRes || (playRes.status !== 200 && playRes.status !== 303 && playRes.status !== 307)) {
+      return fallback.startsWith("/") ? `${origin}${fallback}` : fallback;
+    }
+    const openPath = open.split("?")[0];
+    const openRes = await fetchImpl(`${origin}${openPath}`, {
+      method: "HEAD",
+      cache: "no-store",
+    });
+    if (openRes?.ok) return open.startsWith("/") ? `${origin}${open}` : open;
+  } catch {
+    /* fall through */
+  }
+  return fallback.startsWith("/") ? `${origin}${fallback}` : fallback;
+}
+
+/**
  * Stable path used when unique /c/<build>/ is not rewritten on the host.
  * @param {"full" | "lite"} [kind]
  */
@@ -269,6 +325,9 @@ export function rewriteCompanionServePath(pathname) {
     return "/prototypes/amoji-lite.html";
   }
   if (path === "/setup") return "/prototypes/amoji-setup.html";
+  if (path === "/voice-emotion-demo" || path === "/voice-demo") {
+    return "/prototypes/voice-emotion-demo.html";
+  }
   return path;
 }
 

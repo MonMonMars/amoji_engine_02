@@ -1,13 +1,16 @@
 import { describe, expect, it } from "vitest";
 import {
   audioPlaybackProgress,
+  browserTtsTimeoutMs,
   charToViseme,
+  cloudTtsSafetyBudgetMs,
   configureCompanionAudioElement,
   estimateLipSyncMsPerChar,
   femaleVoiceLabel,
   formatMicError,
   lipSyncCharWeight,
   pickFemaleVoice,
+  pickVoiceForGender,
   readAnalyserMouthLevel,
   unlockAudioSync,
   visemeAtAudioProgress,
@@ -31,6 +34,15 @@ describe("companionVoice", () => {
       { name: "Sin-Ji", lang: "zh-HK", localService: true },
     ];
     expect(pickFemaleVoice(voices)?.name).toBe("Sin-Ji");
+  });
+
+  it("picks browser voice by gender for offline fallback", () => {
+    const voices = [
+      { name: "Daniel", lang: "en-US", gender: "male", localService: true },
+      { name: "Sin-Ji", lang: "zh-HK", gender: "female", localService: true },
+    ];
+    expect(pickVoiceForGender("male", voices)?.name).toBe("Daniel");
+    expect(pickVoiceForGender("female", voices)?.name).toBe("Sin-Ji");
   });
 
   it("labels cloud Cantonese neural voice", () => {
@@ -74,6 +86,19 @@ describe("companionVoice", () => {
   it("weights CJK beats longer than punctuation", () => {
     expect(lipSyncCharWeight("你")).toBeGreaterThan(lipSyncCharWeight("！"));
     expect(lipSyncCharWeight("a")).toBeGreaterThan(lipSyncCharWeight(" "));
+  });
+
+  it("allows long cloud TTS playback budgets from real audio duration", () => {
+    const greeting =
+      "Hello, I'm Nova. Take your time — I'm listening closely.";
+    expect(cloudTtsSafetyBudgetMs(greeting)).toBeGreaterThan(12000);
+    expect(cloudTtsSafetyBudgetMs(greeting, 8.4)).toBe(13400);
+  });
+
+  it("allows long browser TTS for Cantonese replies", () => {
+    const reply = "我".repeat(120);
+    expect(browserTtsTimeoutMs(reply)).toBeGreaterThan(40000);
+    expect(browserTtsTimeoutMs(reply)).toBeLessThanOrEqual(120000);
   });
 
   it("maps mouth visemes to audio progress instead of a char timer", () => {

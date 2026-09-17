@@ -28,6 +28,13 @@ describe("vrmAvatar boot clock", () => {
     expect(emotionAt).toBeGreaterThan(morphAt);
     expect(fn).toContain("softenTalkMouthOverrides");
   });
+
+  it("exposes getFaceReport and getFaceDebug for high-poly diagnostics", () => {
+    expect(vrmSource).toContain("getFaceReport()");
+    expect(vrmSource).toContain("getFaceDebug()");
+    expect(vrmSource).toContain("companionMeshStats.js");
+    expect(vrmSource).toContain("activeVisemePreset");
+  });
 });
 
 describe("replaceAvatarCanvas", () => {

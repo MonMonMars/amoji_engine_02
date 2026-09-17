@@ -8,9 +8,9 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji · Companion</title>
     <script>
-      window.__amojiBuild = "2026-09-17-v163-caption-layer";
+      window.__amojiBuild = "2026-09-17-v196-voice-emotion-demo";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-17-v163-caption-layer"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-17-v196-voice-emotion-demo"></script>
     <link
       rel="prefetch"
       href="/prototypes/assets/companion-char-nova.png"
@@ -67,6 +67,11 @@
       body.companion-start-pending .treat-drop-halo,
       body.companion-start-pending .treat-drag-ghost,
       body.companion-start-pending .pet-hud,
+      body.companion-start-pending .raising-activity-bar,
+      body.companion-start-pending .raising-advice,
+      body.companion-start-pending .raising-memories,
+      body.companion-start-pending .raising-bond-badge,
+      body.companion-start-pending .companion-chip__goal,
       body.companion-start-pending .pet-wallet,
       body.companion-start-pending .pet-thought {
         display: none !important;
@@ -217,13 +222,14 @@
         right: 0;
         bottom: 0;
         top: auto;
+        z-index: 10050;
         display: flex;
         flex-direction: column;
         pointer-events: none;
       }
       .chat-column {
         position: relative;
-        z-index: 10050;
+        z-index: 1;
         flex: 1;
         min-height: 0;
         display: flex;
@@ -233,7 +239,7 @@
       }
       .transcript {
         position: relative;
-        z-index: 10050;
+        z-index: 2;
         flex: 1;
         min-height: 0;
         overflow-y: auto;
@@ -243,7 +249,7 @@
       .composer-wrap {
         position: relative;
         flex-shrink: 0;
-        z-index: 12;
+        z-index: 3;
         padding: 0 1rem max(1rem, env(safe-area-inset-bottom));
         pointer-events: auto;
         touch-action: manipulation;
@@ -323,7 +329,8 @@
       media="print"
       onload="this.media='all'"
     />
-    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-17-v163-caption-layer" />
+    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-17-v196-voice-emotion-demo" />
+    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-17-v196-voice-emotion-demo" />
     <noscript>
       <link
         href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap"
@@ -532,6 +539,29 @@
       .meta {
         pointer-events: auto;
       }
+      .companion-chip__dot {
+        position: relative;
+        width: 1.72rem;
+        height: 1.72rem;
+        border-radius: 50%;
+        flex-shrink: 0;
+        overflow: hidden;
+        background: radial-gradient(
+          circle at 32% 28%,
+          rgba(255, 255, 255, 0.9),
+          hsl(175 62% 58%) 55%,
+          #123 100%
+        );
+        box-shadow: 0 0 12px rgba(94, 234, 212, 0.45);
+      }
+      .companion-chip__dot-canvas {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        pointer-events: none;
+      }
 
       .brand {
         pointer-events: auto;
@@ -690,6 +720,7 @@
         right: 0;
         bottom: 0;
         top: auto;
+        z-index: 10050;
         display: flex;
         flex-direction: column;
         justify-content: flex-end;
@@ -707,7 +738,7 @@
 
       .chat-column {
         position: relative;
-        z-index: 10050;
+        z-index: 1;
         flex: 0 0 auto;
         display: flex;
         flex-direction: column;
@@ -721,7 +752,7 @@
 
       .transcript {
         position: relative;
-        z-index: 10050;
+        z-index: 2;
         pointer-events: auto;
         flex: 0 1 auto;
         max-height: min(36vh, 300px);
@@ -975,7 +1006,7 @@
         pointer-events: auto;
         padding: 0 1rem max(0.75rem, env(safe-area-inset-bottom));
         background: linear-gradient(180deg, transparent, rgba(5, 7, 12, 0.94) 35%);
-        z-index: 12;
+        z-index: 3;
         touch-action: manipulation;
       }
 
@@ -1611,6 +1642,9 @@
           animation: none;
         }
         .emotion-ball__bar {
+          transition: none;
+        }
+        .companion-chip__dot {
           transition: none;
         }
       }
@@ -2437,6 +2471,189 @@
         50% {
           transform: scale(1.06);
         }
+      }
+
+      .companion-chip__goal {
+        display: block;
+        font-size: 0.58rem;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        color: rgba(255, 214, 170, 0.92);
+        line-height: 1.15;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 100%;
+      }
+
+      .companion-chip__goal.is-complete {
+        color: rgba(134, 239, 172, 0.95);
+      }
+
+      .raising-bond-badge {
+        display: flex;
+        align-items: center;
+        gap: 0.32rem;
+        margin-top: 0.18rem;
+        padding-top: 0.28rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        font-size: 0.62rem;
+        font-weight: 800;
+        letter-spacing: 0.03em;
+        opacity: 0.92;
+      }
+
+      .raising-bond-badge__icon {
+        font-size: 0.82rem;
+        line-height: 1;
+      }
+
+      .raising-bond-badge[data-tier="4"] .raising-bond-badge__label {
+        color: #fde68a;
+      }
+
+      .raising-activity-bar {
+        position: fixed;
+        z-index: 39;
+        left: 50%;
+        transform: translateX(-50%);
+        bottom: calc(7.05rem + env(safe-area-inset-bottom));
+        display: flex;
+        align-items: center;
+        gap: 0.38rem;
+        padding: 0.28rem 0.42rem;
+        border-radius: 999px;
+        background: rgba(12, 8, 20, 0.78);
+        border: 1px solid rgba(255, 214, 170, 0.22);
+        box-shadow: 0 10px 28px rgba(0, 0, 0, 0.32);
+        backdrop-filter: blur(14px);
+        pointer-events: auto;
+      }
+
+      .raising-activity-btn {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.08rem;
+        min-width: 2.85rem;
+        padding: 0.28rem 0.38rem 0.32rem;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        border-radius: 0.85rem;
+        background: rgba(255, 255, 255, 0.06);
+        color: inherit;
+        font: inherit;
+        cursor: pointer;
+        transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+      }
+
+      .raising-activity-btn:hover,
+      .raising-activity-btn:focus-visible {
+        transform: translateY(-1px);
+        border-color: rgba(127, 212, 207, 0.45);
+        background: rgba(127, 212, 207, 0.12);
+      }
+
+      .raising-activity-btn__icon {
+        font-size: 1.05rem;
+        line-height: 1;
+      }
+
+      .raising-activity-btn__label {
+        font-size: 0.56rem;
+        font-weight: 800;
+        opacity: 0.88;
+      }
+
+      .raising-advice {
+        position: fixed;
+        z-index: 35;
+        left: 50%;
+        top: calc(4.85rem + env(safe-area-inset-top));
+        transform: translateX(-50%);
+        max-width: min(18rem, 88vw);
+        padding: 0.45rem 0.82rem 0.52rem;
+        border-radius: 1rem;
+        background: rgba(255, 247, 237, 0.94);
+        color: #3b1d12;
+        font-size: 0.78rem;
+        font-weight: 800;
+        text-align: center;
+        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
+        pointer-events: none;
+        animation: raising-advice-in 0.28s ease;
+      }
+
+      @keyframes raising-advice-in {
+        from {
+          opacity: 0;
+          transform: translateX(-50%) translateY(-6px);
+        }
+        to {
+          opacity: 1;
+          transform: translateX(-50%) translateY(0);
+        }
+      }
+
+      .raising-memories {
+        position: fixed;
+        z-index: 34;
+        left: max(0.55rem, env(safe-area-inset-left));
+        bottom: calc(10.5rem + env(safe-area-inset-bottom));
+        max-width: min(11rem, 42vw);
+        display: flex;
+        flex-direction: column;
+        gap: 0.22rem;
+        pointer-events: none;
+      }
+
+      .raising-memories__label {
+        font-size: 0.58rem;
+        font-weight: 800;
+        letter-spacing: 0.04em;
+        opacity: 0.72;
+      }
+
+      .raising-memories__list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.18rem;
+      }
+
+      .raising-memory-chip {
+        display: block;
+        padding: 0.22rem 0.48rem;
+        border-radius: 999px;
+        background: rgba(12, 8, 20, 0.72);
+        border: 1px solid rgba(255, 214, 170, 0.2);
+        font-size: 0.62rem;
+        font-weight: 700;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .raising-delta-layer {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        overflow: visible;
+        z-index: 33;
+      }
+
+      .raising-delta-pop {
+        position: absolute;
+        transform: translate(-50%, 0);
+        font-size: 0.82rem;
+        font-weight: 900;
+        color: #fecdd3;
+        text-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
+        opacity: 0;
+        transition: transform 0.85s ease, opacity 0.85s ease;
+      }
+
+      .raising-delta-pop.is-visible {
+        opacity: 1;
+        transform: translate(-50%, -1.6rem);
       }
 
       .scene-sheet-head {
@@ -3290,6 +3507,27 @@
         border: 1px solid rgba(255, 255, 255, 0.18);
       }
 
+      .companion-card-face {
+        position: absolute;
+        right: 0.45rem;
+        top: 0.45rem;
+        padding: 0.18rem 0.45rem;
+        border-radius: 999px;
+        font-size: 0.58rem;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        background: rgba(127, 212, 207, 0.22);
+        border: 1px solid rgba(127, 212, 207, 0.45);
+        color: #d8fff9;
+      }
+
+      .companion-card-face--mini {
+        top: 0.28rem;
+        right: 0.28rem;
+        padding: 0.1rem 0.28rem;
+        font-size: 0.48rem;
+      }
+
       .companion-card-check {
         position: absolute;
         right: 0.45rem;
@@ -3568,19 +3806,19 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-17-v163-caption-layer",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-17-v196-voice-emotion-demo",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-17-v163-caption-layer",
-          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-17-v163-caption-layer"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-17-v196-voice-emotion-demo",
+          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-17-v196-voice-emotion-demo"
         }
       }
     </script>
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v163-caption-layer"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v196-voice-emotion-demo"
     />
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-17-v163-caption-layer"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v163-caption-layer"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-17-v196-voice-emotion-demo"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v196-voice-emotion-demo"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;
@@ -3834,8 +4072,9 @@
           <span class="companion-chip__text">
             <span class="companion-chip__name" id="brand-name">Amoji</span>
             <span class="companion-chip__status" id="companion-status-line">Ready</span>
+            <span class="companion-chip__goal" id="companion-daily-goal" hidden></span>
           </span>
-          <span class="companion-chip__dot" id="status-dot" data-state="idle" aria-hidden="true"></span>
+          <span class="companion-chip__dot" id="status-dot" data-state="idle" role="img" aria-label="Ready · Neutral"></span>
           <span class="companion-chip__caret" aria-hidden="true"></span>
         </button>
         <div class="meta topbar-actions">
@@ -3925,8 +4164,8 @@
         <p class="settings-section-title" id="settings-companion-title">Companion</p>
         <button type="button" class="btn-secondary" id="settings-btn-companions">Switch companion</button>
         <p class="settings-section-title" id="settings-voice-title">Voice</p>
+        <p class="settings-hint settings-voice-note" id="settings-voice-note" aria-live="polite"></p>
         <div class="settings-row">
-          <button type="button" class="btn-secondary" id="settings-btn-voice">Voice</button>
           <button type="button" class="btn-secondary" id="settings-btn-speaker">Speaker: on</button>
         </div>
         <p class="settings-section-title" id="settings-advanced-title">Advanced</p>
@@ -4134,13 +4373,14 @@
         actionChoreographyMod,
         actionResolveMod,
         motionCapabilitiesMod,
-        voicePickerMod,
         uiIntentMod,
         activityRailMod,
         scenePresetsMod,
         chatPersistenceMod,
         bootChitchatMod,
         treatInteractMod,
+        uiEffectsMod,
+        raisingHubMod,
       ] = await Promise.all([
         ami("../amoji-engine/engine/companion/createAvatar.js"),
         ami("../amoji-engine/engine/companion/chatLlm.js"),
@@ -4171,14 +4411,21 @@
         ami("../amoji-engine/engine/companion/companionActionChoreography.js"),
         ami("../amoji-engine/engine/companion/companionActionResolve.js"),
         ami("../amoji-engine/engine/companion/companionMotionCapabilities.js"),
-        ami("../amoji-engine/engine/companion/companionVoicePicker.js"),
         ami("../amoji-engine/engine/companion/companionUiIntent.js"),
         ami("../amoji-engine/engine/companion/companionActivityRail.js"),
         ami("../amoji-engine/engine/companion/companionScenePresets.js"),
         ami("../amoji-engine/engine/companion/companionChatPersistence.js"),
         ami("../amoji-engine/engine/companion/companionBootChitchat.mjs"),
         ami("../amoji-engine/engine/companion/companionTreatInteract.js"),
+        ami("../amoji-engine/engine/companion/companionUiEffects.js"),
+        ami("../amoji-engine/engine/companion/companionRaisingHub.js"),
       ]);
+      const {
+        initCompanionUiEffects,
+        openUiOverlay,
+        closeUiOverlay,
+      } = uiEffectsMod;
+      initCompanionUiEffects(document);
       const { buildBootChitchatReply, isBootChitchatPhase } = bootChitchatMod;
       const { createEmptyAreaCameraReset, shouldResetCameraOnTalkStart } = await ami(
         "../amoji-engine/engine/companion/companionCameraReset.js",
@@ -4196,6 +4443,7 @@
         characterGreeting,
         characterGreetingPerformance,
         characterTapLines,
+        characterGender,
         characterVoiceLabel,
         defaultVoiceForCharacter,
         getCharacter,
@@ -4232,17 +4480,12 @@
         buildCompanionHref,
         cloudVoiceLabel,
         companionLangCode,
-        defaultVoiceForLang,
-        nextVoiceId,
-        persistVoiceId,
-        resolveVoiceId,
-        syncVoiceToUrl,
+        findVoiceEntry,
+        resolveVoiceForCharacter,
         voicePresetById,
         voiceGenderLabel,
         voiceShortLabel,
-        voicePickerButtonLabel,
       } = voiceCatalogMod;
-      const { createCompanionVoicePicker } = voicePickerMod;
       const {
         applyUiIntents,
         buildUiIntentPromptFragment,
@@ -4256,9 +4499,14 @@
         analyzeCompanionReply,
         analyzeStreamingReply,
         analyzeUserInput,
+        buildVrmExpressionBlend,
+        formatReplyForDisplay,
         isUserStopCommand,
       } = contentMotionMod;
-      const { resolveChunkTtsPerformance } = ttsProsodyMod;
+      const {
+        resolveChunkTtsPerformance,
+        resolveVoicePerformanceFromReply,
+      } = ttsProsodyMod;
       const { startPerformancePreload, primeBodyMotionPoses } =
         performancePreloadMod;
       const {
@@ -4269,8 +4517,8 @@
       const { createCompanionBargeMonitor } = bargeMod;
       const { createCompanionVoiceGate } = voiceGateMod;
       const { isIosLike, shouldPauseMicDuringTts } = platformMod;
-      const { createCompanionMicButton } = micButtonMod;
-      const { createCompanionEmotionBall, syncMiniEmotionBall } = emotionBallMod;
+      const { createCompanionMicButton, normalizeEmotionThemeKey } = micButtonMod;
+      const { createCompanionEmotionBall, createMiniEmotionBall, resolveMiniEmotionBallState } = emotionBallMod;
 
       const hostedOnline = isHostedCompanion();
       const { createMotionDownloadClient } = motionDownloadMod;
@@ -4407,13 +4655,7 @@
         }
       };
 
-      const stripReplyTags = (text) =>
-        stripUiIntentTags(
-          String(text || "")
-            .replace(/\s*\[action:\w+\]\s*/gi, "")
-            .replace(/\s*\[nuance:\w+\]\s*/gi, "")
-            .replace(/\s*\[mood:\w+\]\s*$/i, ""),
-        );
+      const stripReplyTags = (text) => formatReplyForDisplay(text);
 
       /** @type {ReturnType<typeof analyzeCompanionReply> | null} */
       let lastAvatarPerformance = null;
@@ -4478,7 +4720,11 @@
         if (!content) return;
         lastAvatarPerformance = content;
         currentEmotion = content.emotion || "neutral";
-        avatar.setEmotion?.(content.emotion || "neutral");
+        avatar.applyExpressionProfile?.({
+          emotion: content.emotion || "neutral",
+          nuance: content.nuance || "none",
+          blend: content.expressionBlend,
+        }) ?? avatar.setEmotion?.(content.emotion || "neutral");
         setEmotionPill(content.emotion || "neutral", content.action || null);
         avatar.setTalkStyle?.(content.talkStyle);
         avatar.setTalkEnergy?.(content.speechEnergy);
@@ -4526,7 +4772,13 @@
         lastAvatarPerformance = content;
         const emotion = content.emotion || "neutral";
         currentEmotion = emotion;
-        avatar.setEmotion?.(emotion);
+        avatar.applyExpressionProfile?.({
+          emotion,
+          nuance: content.nuance || "none",
+          blend: content.expressionBlend,
+        }) ?? avatar.setEmotion?.(emotion);
+        avatar.setTalkStyle?.(content.talkStyle);
+        avatar.setTalkEnergy?.(content.speechEnergy);
         setEmotionPill(emotion);
         return content;
       };
@@ -4604,7 +4856,7 @@
       const emotionBallEl = document.getElementById("emotion-ball");
       const atmosphereEl = document.querySelector(".atmosphere");
       const settingsBtnLang = document.getElementById("settings-btn-lang");
-      const settingsBtnVoice = document.getElementById("settings-btn-voice");
+      const settingsVoiceNote = document.getElementById("settings-voice-note");
       const settingsBtnSpeaker = document.getElementById("settings-btn-speaker");
       const settingsBtnScene = document.getElementById("settings-btn-scene");
       const settingsBtnCompanions = document.getElementById("settings-btn-companions");
@@ -4638,6 +4890,10 @@
       const emotionBall = createCompanionEmotionBall(emotionBallEl, {
         isEnglish,
       });
+      const miniEmotionBall = createMiniEmotionBall(statusDot, {
+        isEnglish: () => isEnglish,
+      });
+      window.__amojiMiniBall = miniEmotionBall;
       let sessionUiState = "idle";
       let sessionStarted = false;
       let sessionStarting = false;
@@ -4645,6 +4901,8 @@
       let voice;
 
       let emotionBallLevel = 0;
+      let lastMouthBallLevel = 0;
+      let voiceOwnsMouth = false;
       let speakContent = { emotion: "neutral", nuance: "none" };
       const syncEmotionBall = () => {
         if (voice) {
@@ -4663,7 +4921,7 @@
           typeof resolveCompanionVoiceState === "function"
             ? resolveCompanionVoiceState(sessionUiState)
             : sessionUiState || "idle";
-        syncMiniEmotionBall(statusDot, {
+        miniEmotionBall.sync({
           emotion: currentEmotion,
           nuance: speakContent?.nuance || "none",
           level: emotionBallLevel,
@@ -4703,10 +4961,11 @@
       });
       persistCharacterId(characterId);
       let charConfig = characterAvatarConfig(characterId, langCode);
-      let voiceId = params.get("voice")
-        ? resolveVoiceId({ lang: langCode, voiceParam: params.get("voice") })
-        : charConfig.voiceId;
-      persistVoiceId(voiceId);
+      const voiceOverride = String(params.get("voice") || "").trim();
+      let voiceId =
+        voiceOverride && findVoiceEntry(voiceOverride)
+          ? voiceOverride
+          : resolveVoiceForCharacter(characterId, langCode);
       const liteMode = params.get("lite") === "1";
       const autoMic = params.get("automic") !== "0";
       dismissLoading();
@@ -4732,23 +4991,19 @@
       };
 
       const openSetup = () => {
-        settings.removeAttribute("hidden");
-        settings.classList.add("open");
-        settingsBackdrop?.classList.add("is-open");
-        settingsBackdrop?.removeAttribute("hidden");
-        document.body.classList.add("settings-open");
+        openUiOverlay(document, {
+          panel: settings,
+          backdrop: settingsBackdrop,
+          bodyClass: "settings-open",
+        });
       };
       const openSettings = openSetup;
       const closeSettings = () => {
-        settings.classList.remove("open");
-        settingsBackdrop?.classList.remove("is-open");
-        settingsBackdrop?.setAttribute("hidden", "");
-        document.body.classList.remove("settings-open");
-        window.setTimeout(() => {
-          if (!settings.classList.contains("open")) {
-            settings.setAttribute("hidden", "");
-          }
-        }, 320);
+        closeUiOverlay(document, {
+          panel: settings,
+          backdrop: settingsBackdrop,
+          bodyClass: "settings-open",
+        });
       };
 
       let activeSceneBgId = loadStoredSceneBackground(isEnglish).id;
@@ -4890,18 +5145,21 @@
       const openSceneSheet = () => {
         closeSettings();
         renderScenePresets();
-        sceneSheet?.classList.add("open");
-        sceneSheetBackdrop?.classList.add("is-open");
-        sceneSheetBackdrop?.removeAttribute("hidden");
-        document.body.classList.add("scene-sheet-open");
+        openUiOverlay(document, {
+          panel: sceneSheet,
+          backdrop: sceneSheetBackdrop,
+          bodyClass: "scene-sheet-open",
+        });
         sceneSheetClose?.focus();
       };
 
       const closeSceneSheet = () => {
-        sceneSheet?.classList.remove("open");
-        sceneSheetBackdrop?.classList.remove("is-open");
-        sceneSheetBackdrop?.setAttribute("hidden", "");
-        document.body.classList.remove("scene-sheet-open");
+        closeUiOverlay(document, {
+          panel: sceneSheet,
+          backdrop: sceneSheetBackdrop,
+          bodyClass: "scene-sheet-open",
+          hidePanelOnClose: false,
+        });
       };
 
       const syncTopbarActionLabels = () => {
@@ -5062,6 +5320,7 @@
         avatarLoadPromise = createCompanionAvatar({
           canvas,
           controlsElement: orbitHit,
+          characterId: loadForCharacterId,
           modelUrl: modelUrlForLoad || undefined,
           prefer: preferForLoad,
           onCharacterTap: () => handleCharacterTap?.(),
@@ -5099,6 +5358,7 @@
             waitAct?.setAvatar?.(avatar);
             window.__amojiAvatarKind = avatarKind;
             window.__amojiAvatar = avatar;
+            window.__amojiFaceReport = avatar?.getFaceReport?.() || null;
             avatar.setEmotion?.(currentEmotion);
             applyOutfitToAvatar(activeSceneOutfitId);
             syncAvatarPerformance();
@@ -5217,32 +5477,45 @@
               "mic-blocked": "麥克風不可用 — 請打字",
             };
 
-      const resolveCompanionVoiceState = (state = sessionUiState) => {
-        if (!conversationUi) return state || "idle";
-        if (document.body.classList.contains("mic-blocked")) return "mic-blocked";
-        if (state === "thinking" || state === "speaking" || state === "loading") {
-          return state;
-        }
-        if (voice?.micOn) return "listening";
-        if (state === "idle" && document.body.classList.contains("composer-text-mode")) {
-          return "typing";
-        }
-        return state || "idle";
-      };
+      const resolveCompanionVoiceState = (state = sessionUiState) =>
+        resolveMiniEmotionBallState({
+          sessionState: state,
+          speaking: voice?.speaking,
+          assistantActive: voice?.assistantOutputActive,
+          micOn: voice?.micOn,
+          micBlocked: document.body.classList.contains("mic-blocked"),
+          textMode: document.body.classList.contains("composer-text-mode"),
+        });
 
       const syncCompanionStatusUi = (state = sessionUiState, emotion = currentEmotion) => {
         const effective = resolveCompanionVoiceState(state);
         const labels = statusLineLabels();
         if (companionStatusLine) {
-          const mood =
-            emotion && emotion !== "neutral" && emotion !== "thinking"
-              ? ` · ${emotion}`
-              : "";
-          companionStatusLine.textContent = `${labels[effective] || labels.idle}${mood}`;
+          const moodKey = normalizeEmotionThemeKey(emotion);
+          const moodLabels = isEnglish
+            ? {
+                happy: "happy",
+                sad: "sad",
+                angry: "angry",
+                surprised: "surprised",
+                thinking: "",
+                neutral: "",
+              }
+            : {
+                happy: "開心",
+                sad: "傷心",
+                angry: "生氣",
+                surprised: "驚訝",
+                thinking: "",
+                neutral: "",
+              };
+          const mood = moodLabels[moodKey] || (moodKey !== "neutral" && moodKey !== "thinking" ? moodKey : "");
+          companionStatusLine.textContent = mood
+            ? `${labels[effective] || labels.idle} · ${mood}`
+            : labels[effective] || labels.idle;
         }
         if (statusDot) {
-          statusDot.dataset.state = effective || "idle";
-          syncMiniEmotionBall(statusDot, {
+          miniEmotionBall.sync({
             emotion,
             nuance: speakContent?.nuance || "none",
             level: emotionBallLevel,
@@ -5370,20 +5643,11 @@
         syncCompanionStatusUi(sessionUiState, emotion);
       };
       const setVoicePill = (label) => {
-        if (settingsBtnVoice) {
-          settingsBtnVoice.textContent = isEnglish
-            ? `Voice: ${label}`
-            : `語音：${label}`;
-          settingsBtnVoice.title = isEnglish
-            ? "Tap to switch voice"
-            : "按一下切換語音";
-        }
-      };
-      /** @type {(nextVoiceId: string) => void} */
-      let applyVoiceSelection = (nextVoiceId) => {
-        voiceId = nextVoiceId;
-        persistVoiceId(voiceId);
-        syncVoiceToUrl(voiceId);
+        if (!settingsVoiceNote) return;
+        const gender = voiceGenderLabel(voiceId, langCode, isEnglish);
+        settingsVoiceNote.textContent = isEnglish
+          ? `${gender} voice · ${label} (fixed to this companion)`
+          : `${gender} · ${label}（跟住角色，唔可以改）`;
       };
 
       const status = createCompanionStatus({
@@ -5591,6 +5855,8 @@
       const canIdleShowcase = () =>
         sessionStarted &&
         !busy &&
+        !voice?.speaking &&
+        !voice?.assistantOutputActive &&
         !isBlockingWaitAct() &&
         !characterSwitching &&
         hasPlayableAvatar();
@@ -5629,8 +5895,6 @@
             speak: false,
             label: isEnglish ? "Just hanging out…" : "等緊你呀…",
           });
-        } else {
-          waitAct?.update({ phase: "idle" });
         }
       };
 
@@ -5638,7 +5902,7 @@
         if (!canIdleShowcase()) return;
         tickIdleShowcase();
         if (idleShowcaseTimer) return;
-        idleShowcaseTimer = setInterval(tickIdleShowcase, 7000);
+        idleShowcaseTimer = setInterval(tickIdleShowcase, 4200);
       };
 
       const autosize = () => {
@@ -5753,6 +6017,12 @@
       };
 
       let speakEmotion = "neutral";
+      let replyEmotionHoldUntil = 0;
+      const REPLY_EMOTION_HOLD_MS = 5500;
+      const markReplyEmotionHold = (emotion) => {
+        replyEmotionHoldUntil = performance.now() + REPLY_EMOTION_HOLD_MS;
+        if (emotion && emotion !== "neutral") speakEmotion = emotion;
+      };
 
       const phaseAEnabled = new URLSearchParams(location.search).get("phaseA") !== "0";
       /** @type {string[]} */
@@ -5769,7 +6039,14 @@
       let shouldAutoStopOnUserSpeech = () => false;
       /** @type {(reason?: string) => boolean} */
       let handleUserSpeechBarge = () => false;
-      const voiceGate = createCompanionVoiceGate();
+      const voiceGate = createCompanionVoiceGate({
+        allowEnergyBarge: false,
+        minFinalChars: 2,
+      });
+      const feedAssistantEcho = (text) => {
+        const chunk = String(text || "").trim();
+        if (chunk) voiceGate.appendAssistantEcho(chunk);
+      };
       let bargeArmed = false;
 
       const armBargeIn = () => {
@@ -5801,32 +6078,83 @@
         onMouth: (open, shape) => {
           if (shape && avatar.setMouthShape) avatar.setMouthShape(shape);
           else if (!shape && avatar.setMouthShape) avatar.setMouthShape(null);
-          avatar.setMouthOpen(open);
-          avatar.setTalkEnergy?.(open);
-          if (voice?.speaking || voice?.assistantOutputActive) {
-            emotionBallLevel = open;
-            emotionBall.setLevel(open);
+          const assistantActive =
+            voice?.speaking || voice?.assistantOutputActive || voice?.thinkingLoopOn;
+          if (open > 0.04) {
+            avatar.setMouthOpen(open);
+          } else if (voiceOwnsMouth && assistantActive) {
+            /* hold mouth pose between TTS segments */
+          } else if (voiceOwnsMouth) {
+            avatar.setMouthOpen(open);
+          }
+          if (open > 0.08 && speakContent?.speechEnergy != null) {
+            avatar.setTalkEnergy?.(speakContent.speechEnergy);
+          }
+          if (assistantActive) {
+            if (open > 0.04) lastMouthBallLevel = open;
+            emotionBallLevel =
+              open > 0.04 ? open : Math.max(0.14, lastMouthBallLevel * 0.68);
+            emotionBall.setLevel(emotionBallLevel);
             syncEmotionBall();
           }
         },
         onTalking: (on) => {
+          if (
+            !on &&
+            (voice?.assistantOutputActive || voice?.speaking || voice?.thinkingLoopOn)
+          ) {
+            return;
+          }
+          voiceOwnsMouth = Boolean(on);
           avatar.setTalking(on);
           if (shouldResetCameraOnTalkStart(on, talkingCameraLatched)) {
             talkingCameraLatched = true;
             avatar.resetCameraView?.();
           }
-          if (!on) talkingCameraLatched = false;
+          if (!on) {
+            talkingCameraLatched = false;
+            emotionBallLevel = 0;
+            lastMouthBallLevel = 0;
+            emotionBall.setLevel(0);
+            miniEmotionBall.setLevel(0);
+          }
           syncMicBtn();
+          syncEmotionBall();
+          syncCompanionStatusUi();
+        },
+        onSpeakExpression: (face) => {
+          if (!face?.unit) return;
+          feedAssistantEcho(face.unit);
+          const baseEmotion =
+            face.emotion || speakContent?.emotion || speakEmotion || "neutral";
+          const baseNuance =
+            face.nuance || speakContent?.nuance || "none";
+          const analysis =
+            avatar.reactToSpeechChunk?.(face.unit, {
+              emotion: baseEmotion,
+              nuance: baseNuance,
+            }) || face;
+          const emotion = analysis?.emotion || baseEmotion;
+          const nuance = analysis?.nuance || baseNuance;
+          avatar.applyExpressionProfile?.({
+            emotion,
+            nuance,
+            blend:
+              analysis?.expressionBlend ||
+              buildVrmExpressionBlend(emotion, nuance),
+          }) ?? avatar.setEmotion?.(emotion);
+          speakEmotion = emotion;
+          setEmotionPill(emotion);
+          micUi.setEmotion(emotion, nuance);
+          emotionBall.setEmotion(emotion, nuance);
+          if (analysis?.talkStyle || face.talkStyle) {
+            avatar.setTalkStyle?.(analysis?.talkStyle || face.talkStyle);
+          }
+          const energy = analysis?.speechEnergy ?? face.speechEnergy;
+          if (energy != null) avatar.setTalkEnergy?.(energy);
         },
         onSpeakChunk: (chunk) => {
-          const analysis = avatar.reactToSpeechChunk?.(chunk, {
-            emotion: speakContent.emotion || speakEmotion,
-            nuance: speakContent.nuance || "none",
-          });
-          if (analysis?.emotion) {
-            speakEmotion = analysis.emotion;
-            setEmotionPill(analysis.emotion);
-          }
+          feedAssistantEcho(chunk);
         },
         onMicLevel: ({ level, rms } = {}) => {
           applyMicMeterVisual(level);
@@ -5851,15 +6179,32 @@
             interim.clear();
             return;
           }
-          if (isFinal && trimmed && shouldAutoStopOnUserSpeech()) {
-            handleUserSpeechBarge("final-speech", { text: trimmed });
-          }
+          const duringAssistant = shouldAutoStopOnUserSpeech();
           if (!isFinal && trimmed) {
+            if (duringAssistant) return;
             interim.set(trimmed);
             if (!voice.micOn) {
               input.value = trimmed;
               autosize();
             }
+            return;
+          }
+          if (isFinal && duringAssistant && trimmed) {
+            const gate = voiceGate.shouldBarge({
+              source: "final-speech",
+              text: trimmed,
+            });
+            if (!gate.allow) {
+              interim.clear();
+              return;
+            }
+            handleUserSpeechBarge("final-speech", { text: trimmed });
+            interim.clear();
+            if (!voice.micOn) {
+              input.value = "";
+              autosize();
+            }
+            void runTurn(trimmed, { fromMic: true });
             return;
           }
           if (isFinal) {
@@ -5995,31 +6340,17 @@
         globalThis.__amojiPreload?.scheduleBackground?.(warmWaitDialogue);
       };
 
-      applyVoiceSelection = (nextVoiceId) => {
-        voiceId = nextVoiceId;
-        persistVoiceId(voiceId);
-        syncVoiceToUrl(voiceId);
+      const syncCharacterVoice = () => {
+        voiceId =
+          voiceOverride && findVoiceEntry(voiceOverride)
+            ? voiceOverride
+            : resolveVoiceForCharacter(characterId, langCode);
         const preset = voicePresetById(voiceId);
         voice.setCloudVoice(preset);
         voice.setCharacterId?.(characterId);
-        const label = voicePickerButtonLabel(voiceId, langCode, isEnglish);
-        setVoicePill(label);
+        setVoicePill(characterVoiceLabel(characterId, langCode, isEnglish));
       };
-      const voicePicker = createCompanionVoicePicker({
-        root: document.body,
-        langCode,
-        selectedId: voiceId,
-        onSelect: (id) => {
-          applyVoiceSelection(id);
-          addBubble(
-            "system",
-            isEnglish
-              ? `Voice: ${voicePickerButtonLabel(id, langCode, true)}`
-              : `語音：${voicePickerButtonLabel(id, langCode, false)}`,
-          );
-        },
-      });
-      applyVoiceSelection(voiceId);
+      syncCharacterVoice();
       updateLangPill();
 
       const {
@@ -6038,7 +6369,7 @@
         charConfig = nextConfig;
         avatarModelUrl = nextConfig.modelUrl;
         avatarPrefer = nextConfig.avatarPrefer === "gltf" ? "gltf" : "vrm";
-        applyVoiceSelection(nextConfig.voiceId);
+        syncCharacterVoice();
         voice.setCharacterId?.(characterId);
         chat.setSystemPrompt?.(
           buildSessionSystemPrompt(characterId, isEnglish),
@@ -6093,10 +6424,12 @@
           waitAct?.setAvatar?.(avatar);
           window.__amojiAvatarKind = avatarKind;
           window.__amojiAvatar = avatar;
+          window.__amojiFaceReport = avatar?.getFaceReport?.() || null;
           avatar.setEmotion?.(currentEmotion);
           applyOutfitToAvatar(activeSceneOutfitId);
           syncAvatarPerformance();
           applyCharacterSession(nextId, { announce: false });
+          raisingHub?.setCharacter?.(nextId);
           addBubble(
             "system",
             isEnglish
@@ -6258,15 +6591,9 @@
       window.__amojiSupportsMic = voice.supportsMic;
 
       bargeMonitor = createCompanionBargeMonitor({
-        energyThreshold: 0.028,
-        minSpeechMs: 180,
-        onBargeIn: (info = {}) => {
-          if (!shouldAutoStopOnUserSpeech()) return;
-          handleUserSpeechBarge("energy-barge", {
-            rms: info.energy,
-            speechMs: info.speechMs,
-          });
-        },
+        energyThreshold: 0.06,
+        minSpeechMs: 520,
+        onBargeIn: () => {},
       });
 
       stopBargeWatch = () => {
@@ -6276,7 +6603,9 @@
 
       startBargeWatch = () => {
         voice.setKeepMicDuringSpeak?.(true);
-        void bargeMonitor.start();
+        if (shouldPauseMicDuringTts()) {
+          void bargeMonitor.start();
+        }
       };
 
       shouldAutoStopOnUserSpeech = () =>
@@ -6335,6 +6664,7 @@
         if (now - lastTapAt < 1400 || busy) return;
         lastTapAt = now;
         window.__amojiTreats?.applyPet?.();
+        raisingHub?.onPet?.();
         avatar.reactToTap?.();
         const line = pickTapLine();
         addBubble("assistant", line);
@@ -6344,7 +6674,12 @@
         speakEmotion = "happy";
         status.speaking();
         armBargeIn();
-        void voice.speak(line, "happy").finally(() => {
+        void voice.speak(line, {
+          emotion: "happy",
+          nuance: "excited",
+          talkStyle: "celebrate",
+          speechEnergy: 0.82,
+        }).finally(() => {
           disarmBargeIn();
           if (!busy) {
             avatar.setEmotion?.("neutral");
@@ -6356,6 +6691,7 @@
 
       const { createCompanionActivityRail } = activityRailMod;
       const { createCompanionTreatDock } = treatInteractMod;
+      const { createCompanionRaisingHub } = raisingHubMod;
       const activityRail = createCompanionActivityRail(document, {
         isEnglish,
         mount: document.querySelector(".topbar"),
@@ -6370,7 +6706,13 @@
           return node?.getBoundingClientRect?.() || null;
         },
         onToast: (msg, kind) => showToast(msg, kind || "info"),
-        onFeed: ({ line, refused }) => {
+        onFeed: ({ item, line, refused }) => {
+          raisingHub?.onFeed?.({
+            item,
+            refused,
+            heartsDelta: refused ? 0 : Number(item?.hearts || 0),
+            hungerDelta: refused ? 0 : Number(item?.hunger || 0),
+          });
           if (!line) return;
           addBubble("assistant", line);
           const feel = refused ? "thinking" : "happy";
@@ -6379,7 +6721,12 @@
           speakEmotion = feel;
           status.speaking();
           armBargeIn();
-          void voice.speak(line, feel).finally(() => {
+          void voice.speak(line, {
+            emotion: feel,
+            nuance: refused ? "none" : "excited",
+            talkStyle: refused ? "soft" : "celebrate",
+            speechEnergy: refused ? 0.55 : 0.8,
+          }).finally(() => {
             disarmBargeIn();
             if (!busy && !voice.micOn) status.idle();
           });
@@ -6390,10 +6737,42 @@
           avatar.setEmotion?.("sad");
           setEmotionPill("sad");
           speakEmotion = "sad";
-          void voice.speak(line, "sad");
+          void voice.speak(line, {
+            emotion: "sad",
+            nuance: "stress",
+            talkStyle: "soft",
+            speechEnergy: 0.48,
+          });
         },
       });
       window.__amojiTreats = treatDock;
+
+      const raisingHub = createCompanionRaisingHub({
+        root: document.querySelector(".stage") || document.body,
+        chipGoalEl: document.getElementById("companion-daily-goal"),
+        petHudEl: treatDock.hud,
+        stageEl: document.querySelector(".stage"),
+        isEnglish: () => isEnglish,
+        characterId: () => characterId,
+        getAvatar: () => avatar,
+        getCare: () => ({
+          hunger: treatDock.state?.hunger,
+          hearts: treatDock.state?.hearts,
+          coins: treatDock.state?.coins,
+        }),
+        setCare: (patch) => {
+          treatDock.setNeeds({
+            hunger: patch.hunger,
+            hearts: patch.hearts,
+          });
+        },
+        onOpenTreat: () => treatDock.setOpen(true),
+        onFocusTalk: () => {
+          input?.focus?.();
+          showToast(isEnglish ? "Say something — mic or type" : "講嘢啦 — 用 mic 或者打字", "info");
+        },
+      });
+      window.__amojiRaising = raisingHub;
 
       const uiContextPill = document.getElementById("ui-context-pill");
 
@@ -6417,10 +6796,6 @@
         },
         openCharacterPicker: () => openCharacterPicker(),
         openSettings: () => openSettings(),
-        openVoicePicker: () => {
-          voicePicker.setSelectedId(voiceId);
-          voicePicker.open();
-        },
         switchLanguage: async (lang) => {
           applyLanguage(lang === "en" ? "en" : "yue");
         },
@@ -6430,7 +6805,6 @@
         },
         closeOverlays: () => {
           characterPicker?.close?.();
-          voicePicker?.close?.();
           closeSettings();
         },
         onContextChange: (ctx) => {
@@ -6456,6 +6830,11 @@
         activityRail.pulse("🎤", isEnglish ? "Heard" : "聽到");
         if (busy) {
           if (phaseAEnabled && fromMic) {
+            const gate = voiceGate.shouldBarge({
+              source: "final-speech",
+              text: cleaned,
+            });
+            if (!gate.allow) return;
             abortActiveTurn("mic-barge");
             await new Promise((r) => setTimeout(r, 60));
             void runTurn(cleaned, { fromMic: true });
@@ -6465,6 +6844,7 @@
           return;
         }
         busy = true;
+        voiceGate.resetEchoContext?.();
         stopIdlePerformance();
         sendBtn.disabled = true;
         const bootChitchat = isBootChitchatPhase({ avatarKind, liteMode });
@@ -6482,6 +6862,8 @@
         }
         lastUserMessage = cleaned;
         window.__amojiTreats?.applyChat?.();
+        raisingHub?.onChat?.();
+        raisingHub?.onUserMessage?.(cleaned);
         avatar.setListening?.(false);
         avatar.setTalking(false);
         avatar.setMouthOpen(0);
@@ -6533,12 +6915,28 @@
           if (!phaseAEnabled || !segments.length) return;
           const analysis = analyzeStreamingReply(fullText);
           streamEmotion = analysis.emotion || streamEmotion;
+          const streamNuance = analysis.nuance || speakContent.nuance || "none";
+          avatar.applyExpressionProfile?.({
+            emotion: streamEmotion,
+            nuance: streamNuance,
+            blend: analysis.expressionBlend,
+          });
+          avatar.setTalkStyle?.(analysis.talkStyle);
+          avatar.setTalkEnergy?.(analysis.speechEnergy);
           if (!streamSpeakStarted) {
             streamSpeakStarted = true;
             waitAct?.stop();
-            voice.beginStreamSpeak?.(streamEmotion, {
-              pauseCapture: true,
-            });
+            voice.beginStreamSpeak?.(
+              {
+                emotion: streamEmotion,
+                nuance: streamNuance,
+                talkStyle: analysis.talkStyle,
+                speechEnergy: analysis.speechEnergy,
+                lang: isEnglish ? "en" : "yue",
+                characterId,
+              },
+              { pauseCapture: !keepMicForBarge },
+            );
             avatar.setThinking?.(false);
             avatar.setTalking?.(true);
             status.speaking();
@@ -6546,16 +6944,16 @@
           for (const seg of segments) {
             const chunkPerf = resolveChunkTtsPerformance(seg, {
               emotion: streamEmotion,
-              nuance: speakContent.nuance || "none",
+              nuance: streamNuance,
               characterId,
               lang: isEnglish ? "en" : "yue",
             });
+            feedAssistantEcho(seg);
             void voice.pushStreamSpeak?.(seg, {
               emotion: chunkPerf.emotion || streamEmotion,
               nuance: chunkPerf.nuance,
               talkStyle: chunkPerf.talkStyle,
               speechEnergy: chunkPerf.speechEnergy,
-              singleUtterance: true,
             });
           }
         };
@@ -6573,14 +6971,17 @@
             syncStarterPrompts();
             speakContent = content;
             speakEmotion = emotion;
+            markReplyEmotionHold(emotion);
+            feedAssistantEcho(finalReply);
             status.speaking();
-            await voice.speak(finalReply, {
-              emotion,
-              nuance: content.nuance || "excited",
-              talkStyle: content.talkStyle || "celebrate",
-              speechEnergy: content.speechEnergy ?? 0.78,
-              singleUtterance: true,
-            });
+            await voice.speak(
+              finalReply,
+              resolveVoicePerformanceFromReply(rawReply, {
+                userText: cleaned,
+                isEnglish,
+                characterId,
+              }),
+            );
             return;
           }
 
@@ -6599,13 +7000,15 @@
               assistantBubble.textContent = visible;
               const stream = avatar.applyStreamingContent?.(full);
               if (stream?.emotion) {
-                const downgrade =
-                  stream.emotion === "neutral" || stream.emotion === "thinking";
-                if (!avatar.currentAction || !downgrade) {
-                  avatar.setEmotion?.(stream.emotion);
-                  setEmotionPill(stream.emotion);
-                  streamEmotion = stream.emotion;
-                }
+                avatar.applyExpressionProfile?.({
+                  emotion: stream.emotion,
+                  nuance: stream.nuance || "none",
+                  blend: stream.expressionBlend,
+                }) ?? avatar.setEmotion?.(stream.emotion);
+                avatar.setTalkStyle?.(stream.talkStyle);
+                avatar.setTalkEnergy?.(stream.speechEnergy);
+                setEmotionPill(stream.emotion);
+                streamEmotion = stream.emotion;
               }
               const streamAction =
                 stream?.action || resolveStreamingAction(full);
@@ -6653,12 +7056,14 @@
           const emotion = content.emotion || "neutral";
           speakContent = content;
           speakEmotion = emotion;
+          markReplyEmotionHold(emotion);
           assistantBubble.classList.remove("thinking", "typing");
           const finalReply = stripReplyTags(reply);
           assistantBubble.textContent = finalReply;
           attachMessageActions(assistantRow, assistantBubble, "assistant", finalReply);
           appendChatHistory(characterId, { role: "assistant", text: finalReply });
           syncStarterPrompts();
+          feedAssistantEcho(finalReply);
 
           if (phaseAEnabled) {
             const spokenReply = stripReplyTags(result.raw || reply);
@@ -6666,13 +7071,15 @@
             await voice.finishStreamSpeak?.();
           } else {
             status.speaking();
-            await voice.speak(finalReply, {
-              emotion,
-              nuance: content.nuance || "none",
-              talkStyle: content.talkStyle || "explain",
-              speechEnergy: content.speechEnergy ?? 0.68,
-              singleUtterance: true,
-            });
+            await voice.speak(
+              finalReply,
+              resolveVoicePerformanceFromReply(result.raw || reply, {
+                userText: cleaned,
+                moodHint: result.emotion || null,
+                isEnglish,
+                characterId,
+              }),
+            );
           }
         } catch (err) {
           if (activeTurn?.aborted || err?.name === "AbortError") {
@@ -6705,8 +7112,12 @@
             status.listening();
           } else {
             avatar.setListening?.(false);
-            avatar.setEmotion?.("neutral");
-            setEmotionPill("neutral");
+            const holdEmotion =
+              performance.now() < replyEmotionHoldUntil
+                ? speakEmotion || avatar.emotion || "neutral"
+                : "neutral";
+            avatar.setEmotion?.(holdEmotion);
+            setEmotionPill(holdEmotion);
             status.idle();
             input.focus();
           }
@@ -6771,6 +7182,7 @@
           return Promise.resolve({ ok: false, reason: "skipped-user-active" });
         }
         const check = window.__amojiTreats?.checkIn?.();
+        window.__amojiRaising?.refresh?.();
         const greetText = (check && check.line) || greetingLine();
         const mood = check?.mood || "ok";
         const greetFeel = mood === "hungry" ? "sad" : "happy";
@@ -7060,19 +7472,13 @@
       });
       }
 
-      settingsBtnVoice?.addEventListener("click", () => {
-        voicePicker.setSelectedId(voiceId);
-        voicePicker.open();
-      });
-
       const applyLanguage = (targetLang) => {
         const nextCode = companionLangCode(targetLang);
         const nextEnglish = nextCode === "en";
         isEnglish = nextEnglish;
         document.documentElement.lang = nextEnglish ? "en" : "zh-Hant";
         langCode = nextCode;
-        const nextVoiceId = defaultVoiceForCharacter(characterId, nextCode);
-        applyVoiceSelection(nextVoiceId);
+        syncCharacterVoice();
         voice.setLang?.(nextEnglish ? "en-US" : "zh-HK");
         if (motionCapabilityAnnounced && motionClient) {
           const installed = Object.keys(motionClient.state?.installed || {});
@@ -7098,7 +7504,6 @@
           liteLink.href = buildCompanionHref({
             basePath: "/companion",
             lang: nextCode,
-            voiceId: nextVoiceId,
           });
         }
         const companionName = characterDisplayName(

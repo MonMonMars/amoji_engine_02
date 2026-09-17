@@ -32,6 +32,10 @@ import {
   resolveOrbitDomElement,
 } from "./companionOrbitControls.js";
 import { sampleEatMouthPulse } from "./companionFaceRest.js";
+import {
+  blendGltfFaceTint,
+  buildModelFaceProfile,
+} from "./companionFaceEmotion.js";
 import { sampleIdleBodyMotion } from "./companionIdleMotion.js";
 
 export const GLTF_AVATAR_SCHEMA = "amoji.gltfAvatar.v1";
@@ -268,6 +272,11 @@ export async function createGltfAvatar(opts) {
     findMorphIndex(/mouth|jaw|viseme|aa|open/i) || null;
 
   let emotion = "neutral";
+  let nuance = "none";
+  const faceProfile = buildModelFaceProfile({
+    avatarKind: "gltf",
+    characterId: opts.characterId || "sora",
+  });
   let mouthOpen = 0;
   let talking = false;
   let eating = false;
@@ -304,20 +313,36 @@ export async function createGltfAvatar(opts) {
     camera.updateProjectionMatrix();
   };
 
-  const setEmotion = (next) => {
-    emotion = String(next || "neutral").toLowerCase();
-    const tint = EMOTION_TINT[emotion] || EMOTION_TINT.neutral;
+  const applyFaceTint = () => {
+    const tint = blendGltfFaceTint(EMOTION_TINT, emotion, nuance);
     for (const m of blushMats) {
       if (!m.userData.baseColor) {
         m.userData.baseColor = m.color.clone();
       }
-      m.color.copy(m.userData.baseColor).lerp(new THREE.Color(tint.color), tint.intensity);
+      m.color
+        .copy(m.userData.baseColor)
+        .lerp(new THREE.Color(tint.color), tint.intensity);
       if ("emissive" in m) {
         m.emissive.setHex(tint.color);
         m.emissiveIntensity = tint.intensity * 0.35;
       }
     }
+  };
+
+  const setEmotion = (next) => {
+    emotion = String(next || "neutral").toLowerCase();
+    applyFaceTint();
     return emotion;
+  };
+
+  const applyExpressionProfile = ({
+    emotion: em = "neutral",
+    nuance: n = "none",
+  } = {}) => {
+    emotion = setEmotion(em);
+    nuance = String(n || "none").toLowerCase();
+    applyFaceTint();
+    return { emotion, nuance };
   };
 
   const playGesture = (style) => {
@@ -553,6 +578,10 @@ export async function createGltfAvatar(opts) {
     schema: GLTF_AVATAR_SCHEMA,
     kind: "gltf",
     setEmotion,
+    applyExpressionProfile,
+    getFaceProfile() {
+      return { ...faceProfile };
+    },
     setMouthOpen,
     setTalking,
     setEating,

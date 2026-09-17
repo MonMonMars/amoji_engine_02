@@ -3,6 +3,7 @@
  */
 import {
   characterNumber,
+  highPolyFacePickerHint,
   listCompanionCharacters,
 } from "./companionCharacterCatalog.js";
 import {
@@ -10,6 +11,7 @@ import {
   PROGRESS_RING_RADIUS,
   progressRingOffset,
 } from "./companionProgressOverlay.js";
+import { closeUiOverlay, openUiOverlay } from "./companionUiEffects.js";
 
 export const COMPANION_CHARACTER_PICKER_SCHEMA =
   "amoji.companionCharacterPicker.v3";
@@ -44,6 +46,10 @@ export function companionCardInnerHtml(item, ctx = {}) {
   const badge = item.badge
     ? `<span class="companion-card-badge${compact ? " companion-card-badge--mini" : ""}">${item.badge}</span>`
     : "";
+  const faceChip =
+    item.showFaceChip && item.faceLabel
+      ? `<span class="companion-card-face${compact ? " companion-card-face--mini" : ""}">${item.faceLabel}</span>`
+      : "";
   const traits = compact
     ? ""
     : (item.traits || [])
@@ -60,6 +66,7 @@ export function companionCardInnerHtml(item, ctx = {}) {
         <img src="${item.previewImage}" alt="" ${imgAttrs} />
         ${numberBadge}
         ${badge}
+        ${faceChip}
         <span class="companion-card-check" aria-hidden="true">✓</span>
       </div>
       <span class="companion-card-name">${labeledName}</span>
@@ -72,6 +79,7 @@ export function companionCardInnerHtml(item, ctx = {}) {
       <img src="${item.previewImage}" alt="" ${imgAttrs} />
       ${numberBadge}
       ${badge}
+      ${faceChip}
       <span class="companion-card-check" aria-hidden="true">✓</span>
     </div>
     <div class="companion-card-body">
@@ -220,9 +228,7 @@ export function createCompanionCharacterPicker(opts = {}) {
         : "揀你想同邊個傾偈。";
     }
     if (footEl) {
-      footEl.textContent = isEnglish
-        ? "Tap a card to switch companion."
-        : "點選角色即可切換同伴。";
+      footEl.textContent = `${isEnglish ? "Tap a card to switch companion." : "點選角色即可切換同伴。"} ${highPolyFacePickerHint(langCode)}`;
     }
   };
 
@@ -246,18 +252,27 @@ export function createCompanionCharacterPicker(opts = {}) {
     copy();
     renderGrid();
     shell.hidden = false;
-    shell.classList.add("is-open");
     open = true;
-    document.body.classList.add("companion-picker-open");
+    openUiOverlay(document, {
+      panel: shell,
+      bodyClass: "companion-picker-open",
+      panelOpenClass: "is-open",
+    });
     shell.querySelector(".companion-picker-close")?.focus?.();
   };
 
   const close = () => {
-    shell.classList.remove("is-open");
-    shell.hidden = true;
     open = false;
-    document.body.classList.remove("companion-picker-open");
-    opts.onClose?.();
+    closeUiOverlay(document, {
+      panel: shell,
+      bodyClass: "companion-picker-open",
+      panelOpenClass: "is-open",
+      hidePanelOnClose: false,
+      onHidden: () => {
+        shell.hidden = true;
+        opts.onClose?.();
+      },
+    });
   };
 
   shell.addEventListener("click", (ev) => {
@@ -369,8 +384,8 @@ export function createCompanionStartPicker(opts = {}) {
             ? "Almost ready — pick a companion in a moment"
             : "快好喇 — 等陣就可以揀同伴"
           : isEnglish
-            ? "★ picks are gallery pretty-girl models — tap to start, 3D loads in background"
-            : "★ 推介係你揀嘅靚女模型 — 點選就可以傾偈，3D 背景載入";
+            ? `★ picks are gallery pretty-girl models — tap to start, 3D loads in background. ${highPolyFacePickerHint(langCode)}`
+            : `★ 推介係你揀嘅靚女模型 — 點選就可以傾偈，3D 背景載入。${highPolyFacePickerHint(langCode)}`;
     }
   };
 
