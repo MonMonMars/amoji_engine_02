@@ -459,7 +459,7 @@ export function createCompanionVoice(opts = {}) {
 
   const ttsPlaybackVolume = () => {
     if (shouldPauseMicDuringTts()) return 1;
-    return keepMicDuringSpeak ? 0.38 : 1;
+    return keepMicDuringSpeak ? 0.92 : 1;
   };
 
   const mustPauseMicForTts = () =>
@@ -1016,7 +1016,7 @@ export function createCompanionVoice(opts = {}) {
       utter.volume = shouldPauseMicDuringTts()
         ? browserProsody.volume
         : keepMicDuringSpeak
-          ? browserProsody.volume * 0.4
+          ? browserProsody.volume * 0.92
           : browserProsody.volume;
 
       startLipSync(clean, utter, {

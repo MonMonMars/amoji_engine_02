@@ -29,7 +29,8 @@ describe("companionTtsProsody", () => {
     const neutralRate = Number(neutral.edge.rate.replace(/[^0-9-]/g, ""));
     const happyRate = Number(happy.edge.rate.replace(/[^0-9-]/g, ""));
     expect(happyRate).toBeGreaterThan(neutralRate);
-    expect(happyRate).toBeGreaterThan(45);
+    expect(happyRate).toBeGreaterThan(20);
+    expect(happyRate).toBeLessThan(55);
     expect(happy.browser.pitch).toBeGreaterThan(neutral.browser.pitch);
     expect(happy.browser.rate).toBeGreaterThan(neutral.browser.rate);
   });
@@ -96,7 +97,8 @@ describe("companionTtsProsody", () => {
     expect(perf.emotion).toBe("happy");
     expect(perf.nuance).toBe("excited");
     expect(perf.talkStyle).toBe("celebrate");
-    expect(perf.speechEnergy).toBeGreaterThan(0.75);
+    expect(perf.speechEnergy).toBeGreaterThan(0.55);
+    expect(perf.speechEnergy).toBeLessThan(0.75);
   });
 
   it("resolves per-chunk performance from text", () => {
@@ -182,8 +184,8 @@ describe("companionTtsProsody", () => {
     expect(happy.emotion).toBe("happy");
     expect(happy.nuance).toBe("excited");
     expect(happy.talkStyle).toBe("celebrate");
-    expect(happy.singleUtterance).toBe(false);
-    expect(happy.expressiveClauses).toBe(true);
+    expect(happy.singleUtterance).toBe(true);
+    expect(happy.expressiveClauses).toBe(false);
     expect(sad.emotion).toBe("sad");
     expect(sad.nuance).toBe("stress");
     expect(sad.talkStyle).toBe("soft");
@@ -212,7 +214,8 @@ describe("companionTtsProsody", () => {
       characterId: "amoji",
     });
     expect(perf.emotion).toBe("happy");
-    expect(perf.expressiveClauses).toBe(true);
+    expect(perf.expressiveClauses).toBe(false);
+    expect(perf.singleUtterance).toBe(true);
     expect(perf.lang).toBe("yue");
   });
 });
