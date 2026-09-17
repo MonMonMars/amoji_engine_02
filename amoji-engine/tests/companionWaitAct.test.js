@@ -61,21 +61,20 @@ describe("companionWaitAct", () => {
     expect(wait.isActive()).toBe(false);
   });
 
-  it("plays preloaded poses when avatar becomes available during load", () => {
+  it("holds library idle when the avatar becomes available during load", () => {
     const avatar = {
       playAction: vi.fn(),
       setEmotion: vi.fn(),
       setThinking: vi.fn(),
       stopAction: vi.fn(),
+      applyExpressionProfile: vi.fn(),
     };
     const wait = createCompanionWaitAct({ avatar: null, isEnglish: false });
     wait.start({ kind: "avatar-load", phase: "avatar-load", speak: false });
     expect(avatar.playAction).not.toHaveBeenCalled();
     wait.setAvatar(avatar);
-    expect(avatar.playAction).toHaveBeenCalled();
-    expect(WAIT_POSES_BY_PHASE["avatar-load"]).toContain(
-      avatar.playAction.mock.calls[0][0],
-    );
+    expect(avatar.playAction).not.toHaveBeenCalled();
+    expect(avatar.setEmotion).toHaveBeenCalledWith("neutral");
     expect(avatar.stopAction).not.toHaveBeenCalled();
   });
 
@@ -85,12 +84,13 @@ describe("companionWaitAct", () => {
       setEmotion: vi.fn(),
       setThinking: vi.fn(),
       stopAction: vi.fn(),
+      applyExpressionProfile: vi.fn(),
     };
     const wait = createCompanionWaitAct({ avatar, isEnglish: true });
     wait.start({ kind: "idle", phase: "idle", speak: false });
     expect(avatar.stopAction).not.toHaveBeenCalled();
     expect(avatar.playAction).not.toHaveBeenCalled();
-    expect(avatar.setEmotion).toHaveBeenCalled();
+    expect(avatar.setEmotion).toHaveBeenCalledWith("neutral");
     wait.stop();
   });
 });

@@ -22,11 +22,7 @@ import {
 } from "./companionActionMotion.js";
 import { buildCharacterSystemPrompt } from "./companionCharacterCatalog.js";
 import {
-  advanceIdleBeat,
-  BOOT_SIMPLE_IDLE_SEC,
-  createIdleBeatState,
-  sampleIdleBodyMotion,
-  sampleSimpleBootIdleMotion,
+  sampleCalmBreathIdle,
 } from "./companionIdleMotion.js";
 import {
   dampPose,
@@ -95,7 +91,6 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
   let footPlantY = 0;
   /** @type {Record<string, number>} */
   let smoothedPose = { ...REST_POSE };
-  let idleBeatState = createIdleBeatState();
   /** @type {string[]} */
   let actionQueue = [];
   /** @type {string[]} */
@@ -289,7 +284,7 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
   };
 
   const applyContentFromReply = (text, moodHint = null) => {
-    const analysis = analyzeCompanionReply(text, moodHint || emotion);
+    const analysis = analyzeCompanionReply(text, moodHint);
     emotion = analysis.emotion;
     nuance = analysis.nuance;
     talkStyle = companionGestureStyle(analysis.talkStyle);
@@ -635,22 +630,8 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
         pose.headX = (pose.headX || 0) + Math.sin(elapsed * 0.55) * 0.024;
         pose.headZ = (pose.headZ || 0) + Math.sin(elapsed * 0.42 + 0.8) * 0.018;
       } else if (!talking) {
-        const bootPhase = elapsed < BOOT_SIMPLE_IDLE_SEC;
-        if (bootPhase) {
-          pose = mergePoses(
-            pose,
-            sampleSimpleBootIdleMotion(elapsed),
-            0.98,
-          );
-        } else {
-          const idleMotion = sampleIdleBodyMotion(elapsed, { listening, emotion });
-          pose = mergePoses(pose, idleMotion, listening ? 0.96 : 0.92);
-        }
-        const beat = advanceIdleBeat(idleBeatState, dt, now);
-        idleBeatState = beat.state;
-        if (beat.overlay && Object.keys(beat.overlay).length) {
-          pose = mergePoses(pose, beat.overlay, bootPhase ? 0.62 : 0.9);
-        }
+        const idleMotion = sampleCalmBreathIdle(elapsed, { listening, emotion });
+        pose = mergePoses(pose, idleMotion, 0.96);
       } else {
         talkTime += dt;
         const nowMs = performance.now();
@@ -737,7 +718,7 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
       actionArms,
       idleArms,
       talkArmBlend,
-      bootPhase: !activeAction && !talking && elapsed < BOOT_SIMPLE_IDLE_SEC,
+      bootPhase: false,
       plantFeet,
     });
     if (plantFeet) {
@@ -760,13 +741,11 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
 
   const resetMotionClock = (now = performance.now()) => {
     t0 = now;
-    idleBeatState = createIdleBeatState(now);
-    idleBeatState.nextAt = now + 420;
     smoothedPose = buildBasePose({ listening, emotion, nuance });
     smoothedPose = mergePoses(
       smoothedPose,
-      sampleSimpleBootIdleMotion(0),
-      0.98,
+      sampleCalmBreathIdle(0.2, { listening, emotion }),
+      0.96,
     );
     smoothedRootMotion = { y: 0, rotY: 0 };
     footPlantY = 0;
@@ -775,7 +754,7 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
       actionArms: false,
       idleArms: true,
       talkArmBlend: 0,
-      bootPhase: true,
+      bootPhase: false,
       plantFeet: true,
     });
     return smoothedPose;
@@ -833,8 +812,8 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
       smoothedPose = buildBasePose({ listening, emotion, nuance });
       smoothedPose = mergePoses(
         smoothedPose,
-        sampleSimpleBootIdleMotion(0.2),
-        0.98,
+        sampleCalmBreathIdle(0.2, { listening, emotion }),
+        0.96,
       );
       smoothedRootMotion = { y: 0, rotY: 0 };
       footPlantY = 0;
@@ -843,7 +822,7 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
         actionArms: false,
         idleArms: true,
         talkArmBlend: 0,
-        bootPhase: true,
+        bootPhase: false,
         plantFeet: true,
       });
       return smoothedPose;

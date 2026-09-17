@@ -20,13 +20,14 @@ export const BOOT_IDLE_BODY_MOTION_IDS = Object.freeze([
 ]);
 
 /**
- * Shared VRMA stems (~115 KB each) used by many light social / idle actions.
- * Three unique files cover nod/wave/bow/thinking/shrug/peace fallbacks and wait poses.
+ * Shared VRMA stems (~115 KB each) used for looping idle + common social clips.
+ * Relax = standing idle; Thinking = wait; Goodbye = wave; LookAround = walk/dance.
  */
 export const BOOT_IDLE_VRMA_STEMS = Object.freeze([
-  "Thinking",
   "Relax",
+  "Thinking",
   "Goodbye",
+  "LookAround",
 ]);
 
 /** @type {Map<string, ArrayBuffer>} */
