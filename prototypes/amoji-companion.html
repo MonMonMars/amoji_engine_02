@@ -8,9 +8,9 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji · Companion</title>
     <script>
-      window.__amojiBuild = "2026-09-17-v197-limb-blend-fix";
+      window.__amojiBuild = "2026-09-17-v198-care-tools-clean";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-17-v197-limb-blend-fix"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-17-v198-care-tools-clean"></script>
     <link
       rel="prefetch"
       href="/prototypes/assets/companion-char-nova.png"
@@ -73,8 +73,129 @@
       body.companion-start-pending .raising-bond-badge,
       body.companion-start-pending .companion-chip__goal,
       body.companion-start-pending .pet-wallet,
-      body.companion-start-pending .pet-thought {
+      body.companion-start-pending .pet-thought,
+      body.companion-start-pending .care-tools-toggle,
+      body.companion-start-pending .care-tools-menu {
         display: none !important;
+      }
+
+      /* Raising / treat chrome — hidden until care toggle (see companionCareTools.js) */
+      body.companion-care-collapsed #raising-activity-bar,
+      body.companion-care-collapsed #treat-dock,
+      body.companion-care-collapsed #pet-hud,
+      body.companion-care-collapsed #pet-wallet,
+      body.companion-care-collapsed #pet-thought,
+      body.companion-care-collapsed #raising-advice,
+      body.companion-care-collapsed #raising-memories,
+      body.companion-care-collapsed .companion-chip__goal {
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+        transform: translateY(8px) scale(0.98);
+        transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
+      }
+
+      #raising-activity-bar {
+        display: none !important;
+      }
+
+      .care-tools-toggle {
+        position: fixed;
+        z-index: 41;
+        right: max(0.75rem, env(safe-area-inset-right));
+        bottom: calc(6.85rem + env(safe-area-inset-bottom));
+        width: 2.75rem;
+        height: 2.75rem;
+        border-radius: 50%;
+        border: 2px solid rgba(255, 255, 255, 0.45);
+        background: radial-gradient(circle at 35% 28%, #ffd6e8, #fb7185 55%, #db2777);
+        color: #fff;
+        font: inherit;
+        cursor: pointer;
+        box-shadow: 0 10px 24px rgba(219, 39, 119, 0.35);
+        display: grid;
+        place-items: center;
+        transition: transform 0.18s ease, box-shadow 0.18s ease;
+      }
+
+      .care-tools-toggle.is-open {
+        transform: rotate(90deg) scale(0.96);
+        box-shadow: 0 6px 16px rgba(219, 39, 119, 0.28);
+      }
+
+      .care-tools-toggle.is-hungry {
+        animation: care-tools-hungry 1.4s ease-in-out infinite;
+      }
+
+      @keyframes care-tools-hungry {
+        0%,
+        100% {
+          box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.45);
+        }
+        50% {
+          box-shadow: 0 0 0 8px rgba(251, 191, 36, 0);
+        }
+      }
+
+      .care-tools-toggle__icon {
+        font-size: 1.25rem;
+        line-height: 1;
+      }
+
+      .care-tools-menu {
+        position: fixed;
+        z-index: 40;
+        right: max(0.65rem, env(safe-area-inset-right));
+        bottom: calc(10.1rem + env(safe-area-inset-bottom));
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.32rem 0.4rem;
+        border-radius: 999px;
+        background: rgba(12, 8, 20, 0.82);
+        border: 1px solid rgba(255, 214, 170, 0.22);
+        box-shadow: 0 10px 28px rgba(0, 0, 0, 0.32);
+        backdrop-filter: blur(14px);
+      }
+
+      .care-tools-menu__btn {
+        width: 2.35rem;
+        height: 2.35rem;
+        border-radius: 50%;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        background: rgba(255, 255, 255, 0.07);
+        color: inherit;
+        font: inherit;
+        cursor: pointer;
+        display: grid;
+        place-items: center;
+        transition: transform 0.16s ease, border-color 0.16s ease, background 0.16s ease;
+      }
+
+      .care-tools-menu__btn:hover,
+      .care-tools-menu__btn:focus-visible {
+        transform: translateY(-1px);
+        border-color: rgba(127, 212, 207, 0.45);
+        background: rgba(127, 212, 207, 0.14);
+      }
+
+      .care-tools-menu__icon {
+        font-size: 1.05rem;
+        line-height: 1;
+      }
+
+      body.companion-care-open #pet-hud {
+        opacity: 1;
+        visibility: visible;
+        pointer-events: auto;
+        transform: none;
+      }
+
+      body.companion-care-open #pet-wallet {
+        opacity: 1;
+        visibility: visible;
+        pointer-events: auto;
+        transform: none;
       }
 
       .companion-picker--start {
@@ -329,8 +450,8 @@
       media="print"
       onload="this.media='all'"
     />
-    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-17-v197-limb-blend-fix" />
-    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-17-v197-limb-blend-fix" />
+    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-17-v198-care-tools-clean" />
+    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-17-v198-care-tools-clean" />
     <noscript>
       <link
         href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap"
@@ -3806,19 +3927,19 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-17-v197-limb-blend-fix",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-17-v198-care-tools-clean",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-17-v197-limb-blend-fix",
-          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-17-v197-limb-blend-fix"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-17-v198-care-tools-clean",
+          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-17-v198-care-tools-clean"
         }
       }
     </script>
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v197-limb-blend-fix"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v198-care-tools-clean"
     />
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-17-v197-limb-blend-fix"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v197-limb-blend-fix"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-17-v198-care-tools-clean"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v198-care-tools-clean"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;
@@ -4381,6 +4502,7 @@
         treatInteractMod,
         uiEffectsMod,
         raisingHubMod,
+        careToolsMod,
       ] = await Promise.all([
         ami("../amoji-engine/engine/companion/createAvatar.js"),
         ami("../amoji-engine/engine/companion/chatLlm.js"),
@@ -4419,6 +4541,7 @@
         ami("../amoji-engine/engine/companion/companionTreatInteract.js"),
         ami("../amoji-engine/engine/companion/companionUiEffects.js"),
         ami("../amoji-engine/engine/companion/companionRaisingHub.js"),
+        ami("../amoji-engine/engine/companion/companionCareTools.js"),
       ]);
       const {
         initCompanionUiEffects,
@@ -6774,6 +6897,43 @@
       });
       window.__amojiRaising = raisingHub;
 
+      const { createCompanionCareTools } = careToolsMod;
+      const careTools = createCompanionCareTools({
+        root: document.querySelector(".stage") || document.body,
+        isEnglish: () => isEnglish,
+        onActivity: (kind) => raisingHub.runActivity?.(kind),
+        onOpenChange: (open) => {
+          if (open) raisingHub.refresh?.();
+          else treatDock.setOpen?.(false);
+          document.getElementById("companion-daily-goal")?.toggleAttribute(
+            "hidden",
+            !open,
+          );
+        },
+      });
+      window.__amojiCareTools = careTools;
+
+      const syncCareNeedsHint = () => {
+        careTools.setNeedsHint?.({
+          hungry: treatDock.hud?.classList.contains("is-hungry"),
+          lonely: treatDock.hud?.classList.contains("is-lonely"),
+        });
+      };
+      syncCareNeedsHint();
+
+      const treatSetOpen = treatDock.setOpen.bind(treatDock);
+      treatDock.setOpen = (next) => {
+        treatSetOpen(next);
+        if (next) careTools.open?.(false);
+        else careTools.close?.();
+      };
+      const treatRender = treatDock.render.bind(treatDock);
+      treatDock.render = (...args) => {
+        const out = treatRender(...args);
+        syncCareNeedsHint();
+        return out;
+      };
+
       const uiContextPill = document.getElementById("ui-context-pill");
 
       const updateUiContextPill = (applied = []) => {
@@ -7527,6 +7687,8 @@
             ? "Switched to English — say something or type below."
             : "已切換粵語 — 講嘢或者打字就得。",
         );
+        careTools.refreshLabels?.();
+        raisingHub.refresh?.();
       };
 
       const switchLanguage = () => {
