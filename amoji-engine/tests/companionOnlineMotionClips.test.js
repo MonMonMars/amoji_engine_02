@@ -15,7 +15,8 @@ describe("companionOnlineMotionClips", () => {
   it("maps idle and social gestures onto the hosted VRMA library", () => {
     expect(ONLINE_IDLE_ACTION).toBe("idle");
     expect(ONLINE_IDLE_CLIP_FILE).toBe("Relax");
-    expect(ONLINE_MOTION_CLIP_FILES.idle).toBe("Relax");
+    expect(ONLINE_MOTION_CLIP_FILES.idle).toBeUndefined();
+    expect(ONLINE_MOTION_CLIP_FILES.relax).toBe("Relax");
     expect(ONLINE_MOTION_CLIP_FILES.wave).toBe("Goodbye");
     expect(ONLINE_MOTION_CLIP_FILES.thinking).toBe("Thinking");
     expect(ONLINE_MOTION_CLIP_FILES.dance).toBe("LookAround");
@@ -25,7 +26,7 @@ describe("companionOnlineMotionClips", () => {
     expect(PROCEDURAL_PREFERRED_ACTIONS.size).toBe(0);
     expect(resolveOnlineMotionClipUrl("wave")).toMatch(/Goodbye\.vrma$/);
     expect(resolveOnlineMotionClipUrl("thinking")).toMatch(/Thinking\.vrma$/);
-    expect(resolveOnlineMotionClipUrl("nod")).toMatch(/Relax\.vrma$/);
+    expect(resolveOnlineMotionClipUrl("nod")).toBeNull();
   });
 
   it("resolves sampler inheritance for cloud extensions", () => {
@@ -55,10 +56,11 @@ describe("companionOnlineMotionClips", () => {
     expect(resolveOnlineMotionClipUrl("none")).toBeNull();
   });
 
-  it("treats idle and thinking as looping library clips", () => {
+  it("keeps standing idle off Relax.vrma so rest is not an arms-up stretch", () => {
+    expect(resolveOnlineMotionClipUrl("idle")).toBeNull();
+    expect(resolveOnlineMotionClipUrl("relax")).toMatch(/Relax\.vrma$/);
     expect(isOnlineIdleAction("idle")).toBe(true);
-    expect(isOnlineIdleAction("relax")).toBe(true);
+    expect(isOnlineLoopingLibraryAction("idle")).toBe(false);
     expect(isOnlineLoopingLibraryAction("thinking")).toBe(true);
-    expect(isOnlineLoopingLibraryAction("wave")).toBe(false);
   });
 });
