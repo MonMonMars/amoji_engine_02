@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <title>Amoji — opening…</title>
+    <style>
+      html, body {
+        margin: 0;
+        min-height: 100dvh;
+        background: #070a10;
+        color: #f7f1e8;
+        font-family: system-ui, sans-serif;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+    </style>
+  </head>
+  <body>
+    <p>Opening Amoji…</p>
+    <script>
+      (function () {
+        var search = location.search || "";
+        var params = new URLSearchParams(search.replace(/^\?/, ""));
+        var kind =
+          params.get("kind") === "lite" || params.get("lite") === "1" ? "lite" : "full";
+        params.delete("kind");
+        params.delete("lite");
+        var stamp =
+          String(Date.now()) +
+          String(Math.floor(Math.random() * 1000)).padStart(3, "0");
+        params.set("_cb", stamp);
+        var qs = params.toString();
+        var suffix = qs ? "?" + qs : "";
+        var openPath = "/n/" + stamp + "/" + (kind === "lite" ? "lite" : "full");
+        var fallbackPath = kind === "lite" ? "/companion" : "/companion-full";
+
+        function go(path) {
+          location.replace(path + suffix);
+        }
+
+        fetch("/api/health", { cache: "no-store" })
+          .then(function (r) {
+            return r.ok ? r.json() : null;
+          })
+          .then(function (health) {
+            if (health && health.build) params.set("build", health.build);
+            qs = params.toString();
+            suffix = qs ? "?" + qs : "";
+            return fetch(openPath + suffix, { method: "HEAD", cache: "no-store" });
+          })
+          .then(function (r) {
+            if (r && r.ok) go(openPath);
+            else go(fallbackPath);
+          })
+          .catch(function () {
+            go(fallbackPath);
+          });
+      })();
+    </script>
+  </body>
+</html>
