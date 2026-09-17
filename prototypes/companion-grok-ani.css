@@ -243,6 +243,21 @@
   background: rgba(28, 22, 52, 0.92);
 }
 
+.theme-grok-ani.ui-fx-enabled,
+.theme-grok-ani body.ui-fx-enabled {
+  --ui-fx-glow: rgba(139, 124, 248, 0.5);
+  --ui-fx-glow-2: rgba(94, 234, 212, 0.38);
+}
+
+.theme-grok-ani.ui-fx-enabled .ui-fx-btn:hover:not(:disabled),
+body.theme-grok-ani.ui-fx-enabled .ui-fx-btn:hover:not(:disabled) {
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.08) inset,
+    0 6px 22px rgba(0, 0, 0, 0.32),
+    0 0 20px var(--ui-fx-glow),
+    0 0 32px var(--ui-fx-glow-2);
+}
+
 .theme-grok-ani .topbar-btn--icon {
   display: inline-flex;
   align-items: center;

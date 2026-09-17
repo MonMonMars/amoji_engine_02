@@ -17,6 +17,7 @@ import {
   loadTreatState,
   saveTreatState,
 } from "./companionTreatStore.js";
+import { closeUiOverlay, openUiOverlay } from "./companionUiEffects.js";
 import {
   applyChatCare,
   applyPetCare,
@@ -533,11 +534,27 @@ export function createCompanionTreatDock(opts = {}) {
   };
 
   const setOpen = (next) => {
-    open = Boolean(next);
-    sheet.classList.toggle("is-open", open);
-    backdrop.classList.toggle("is-open", open);
+    const wantOpen = Boolean(next);
+    if (wantOpen === open) return;
+    open = wantOpen;
     fab.setAttribute("aria-expanded", open ? "true" : "false");
-    if (open) render();
+    if (open) {
+      openUiOverlay(document, {
+        panel: sheet,
+        backdrop,
+        panelOpenClass: "is-open",
+        backdropOpenClass: "is-open",
+      });
+      render();
+      return;
+    }
+    closeUiOverlay(document, {
+      panel: sheet,
+      backdrop,
+      panelOpenClass: "is-open",
+      backdropOpenClass: "is-open",
+      hidePanelOnClose: false,
+    });
   };
 
   const tick = (when = now()) => {

@@ -8,9 +8,9 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji · Companion</title>
     <script>
-      window.__amojiBuild = "2026-09-17-v185-camera-reset";
+      window.__amojiBuild = "2026-09-17-v186-ui-fx";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-17-v185-camera-reset"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-17-v186-ui-fx"></script>
     <link
       rel="prefetch"
       href="/prototypes/assets/companion-char-nova.png"
@@ -324,7 +324,8 @@
       media="print"
       onload="this.media='all'"
     />
-    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-17-v185-camera-reset" />
+    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-17-v186-ui-fx" />
+    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-17-v186-ui-fx" />
     <noscript>
       <link
         href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap"
@@ -3596,19 +3597,19 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-17-v185-camera-reset",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-17-v186-ui-fx",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-17-v185-camera-reset",
-          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-17-v185-camera-reset"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-17-v186-ui-fx",
+          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-17-v186-ui-fx"
         }
       }
     </script>
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v185-camera-reset"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v186-ui-fx"
     />
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-17-v185-camera-reset"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v185-camera-reset"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-17-v186-ui-fx"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v186-ui-fx"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;
@@ -4169,6 +4170,7 @@
         chatPersistenceMod,
         bootChitchatMod,
         treatInteractMod,
+        uiEffectsMod,
       ] = await Promise.all([
         ami("../amoji-engine/engine/companion/createAvatar.js"),
         ami("../amoji-engine/engine/companion/chatLlm.js"),
@@ -4206,7 +4208,14 @@
         ami("../amoji-engine/engine/companion/companionChatPersistence.js"),
         ami("../amoji-engine/engine/companion/companionBootChitchat.mjs"),
         ami("../amoji-engine/engine/companion/companionTreatInteract.js"),
+        ami("../amoji-engine/engine/companion/companionUiEffects.js"),
       ]);
+      const {
+        initCompanionUiEffects,
+        openUiOverlay,
+        closeUiOverlay,
+      } = uiEffectsMod;
+      initCompanionUiEffects(document);
       const { buildBootChitchatReply, isBootChitchatPhase } = bootChitchatMod;
       const { createEmptyAreaCameraReset, shouldResetCameraOnTalkStart } = await ami(
         "../amoji-engine/engine/companion/companionCameraReset.js",
@@ -4776,23 +4785,19 @@
       };
 
       const openSetup = () => {
-        settings.removeAttribute("hidden");
-        settings.classList.add("open");
-        settingsBackdrop?.classList.add("is-open");
-        settingsBackdrop?.removeAttribute("hidden");
-        document.body.classList.add("settings-open");
+        openUiOverlay(document, {
+          panel: settings,
+          backdrop: settingsBackdrop,
+          bodyClass: "settings-open",
+        });
       };
       const openSettings = openSetup;
       const closeSettings = () => {
-        settings.classList.remove("open");
-        settingsBackdrop?.classList.remove("is-open");
-        settingsBackdrop?.setAttribute("hidden", "");
-        document.body.classList.remove("settings-open");
-        window.setTimeout(() => {
-          if (!settings.classList.contains("open")) {
-            settings.setAttribute("hidden", "");
-          }
-        }, 320);
+        closeUiOverlay(document, {
+          panel: settings,
+          backdrop: settingsBackdrop,
+          bodyClass: "settings-open",
+        });
       };
 
       let activeSceneBgId = loadStoredSceneBackground(isEnglish).id;
@@ -4934,18 +4939,21 @@
       const openSceneSheet = () => {
         closeSettings();
         renderScenePresets();
-        sceneSheet?.classList.add("open");
-        sceneSheetBackdrop?.classList.add("is-open");
-        sceneSheetBackdrop?.removeAttribute("hidden");
-        document.body.classList.add("scene-sheet-open");
+        openUiOverlay(document, {
+          panel: sceneSheet,
+          backdrop: sceneSheetBackdrop,
+          bodyClass: "scene-sheet-open",
+        });
         sceneSheetClose?.focus();
       };
 
       const closeSceneSheet = () => {
-        sceneSheet?.classList.remove("open");
-        sceneSheetBackdrop?.classList.remove("is-open");
-        sceneSheetBackdrop?.setAttribute("hidden", "");
-        document.body.classList.remove("scene-sheet-open");
+        closeUiOverlay(document, {
+          panel: sceneSheet,
+          backdrop: sceneSheetBackdrop,
+          bodyClass: "scene-sheet-open",
+          hidePanelOnClose: false,
+        });
       };
 
       const syncTopbarActionLabels = () => {

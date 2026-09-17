@@ -26,6 +26,12 @@ import {
 } from "./prioritiesStore.js";
 import { createCompanionActivityRail } from "../companionActivityRail.js";
 import {
+  closeUiOverlay,
+  initCompanionUiEffects,
+  openUiOverlay,
+  switchUiTabPanel,
+} from "../companionUiEffects.js";
+import {
   applyUiIntents,
   buildUiIntentPromptFragment,
   inferUiIntentFromUserText,
@@ -79,6 +85,7 @@ export function initAmojiSecretaryLite(doc = document) {
   /** Secretary lite is always chat/voice-driven — no manual chrome. */
   const conversationUi = true;
   doc.body.classList.add("conversation-ui");
+  initCompanionUiEffects(doc);
   let voiceId = resolveVoiceId({
     lang: langCode,
     voiceParam: params.get("voice"),
@@ -1023,12 +1030,11 @@ export function initAmojiSecretaryLite(doc = document) {
       openSetup();
       return;
     }
-    for (const [id, panel] of Object.entries(els.panels)) {
-      panel?.classList.toggle("hidden", id !== tabId);
-    }
-    for (const tab of els.tabs) {
-      tab.classList.toggle("active", tab.dataset.tab === tabId);
-    }
+    switchUiTabPanel(doc, {
+      panels: els.panels,
+      tabs: els.tabs,
+      nextId: tabId,
+    });
     if (tabId === "today") renderToday();
     if (tabId === "tasks") {
       renderTaskFilters();
@@ -1045,24 +1051,20 @@ export function initAmojiSecretaryLite(doc = document) {
     renderPrefs();
     renderMemory();
     syncSetupChrome();
-    els.setup.removeAttribute("hidden");
-    els.setup.classList.add("open");
-    els.setupBackdrop?.classList.add("is-open");
-    els.setupBackdrop?.removeAttribute("hidden");
-    doc.body.classList.add("setup-open");
+    openUiOverlay(doc, {
+      panel: els.setup,
+      backdrop: els.setupBackdrop,
+      bodyClass: "setup-open",
+    });
   }
 
   function closeSetup() {
     if (!els.setup) return;
-    els.setup.classList.remove("open");
-    els.setupBackdrop?.classList.remove("is-open");
-    els.setupBackdrop?.setAttribute("hidden", "");
-    doc.body.classList.remove("setup-open");
-    window.setTimeout(() => {
-      if (!els.setup?.classList.contains("open")) {
-        els.setup?.setAttribute("hidden", "");
-      }
-    }, 320);
+    closeUiOverlay(doc, {
+      panel: els.setup,
+      backdrop: els.setupBackdrop,
+      bodyClass: "setup-open",
+    });
   }
 
   function syncSetupSpeakerBtn() {
