@@ -32,12 +32,23 @@ import { createVrmMotionPlayer } from "./companionVrmMotionPlayer.js";
 import { sampleIdleExpressionBlend } from "./companionIdleMotion.js";
 import { configureVrmSpringStability } from "./vrmSpringStability.js";
 import { applyVrmOutfitTint } from "./companionOutfitApply.js";
-import { clampRestFaceBlend, mouthVisemeWeight } from "./companionFaceRest.js";
+import {
+  applyBlinkWeight,
+  blinkExpressionNames,
+  blinkPulseFinished,
+  blinkWeightFromPhase,
+  clampRestFaceBlend,
+  guardLookAtLids,
+  inspectVrmFaceHazards,
+  mouthVisemeWeight,
+  zeroAllExpressions,
+  zeroHazardMorphInfluences,
+} from "./companionFaceRest.js";
 
 export const VRM_AVATAR_SCHEMA = "amoji.vrmAvatar.v1";
 
 const EMOTION_EXPRESSIONS = {
-  neutral: { [VRMExpressionPresetName.Happy]: 0.18 },
+  neutral: {},
   happy: { [VRMExpressionPresetName.Happy]: 0.98 },
   thinking: {
     [VRMExpressionPresetName.Relaxed]: 0.28,
@@ -330,16 +341,34 @@ export async function createVrmAvatar(opts) {
   /** @type {{ x: number, y: number } | null} */
   let pointerDown = null;
 
-  // Subtle look-at toward camera
+  // Look toward the camera in azimuth, but at eye height so lookDown
+  // blendshapes cannot shut the lids on models that bind eyelids to pitch.
+  const lookEyeA = new THREE.Vector3();
+  const lookEyeB = new THREE.Vector3();
+  const lookHead = new THREE.Vector3();
+  const syncLookTarget = () => {
+    if (!vrm.lookAt?.target) return;
+    const leftEye = vrm.humanoid?.getNormalizedBoneNode?.("leftEye");
+    const rightEye = vrm.humanoid?.getNormalizedBoneNode?.("rightEye");
+    const head = vrm.humanoid?.getNormalizedBoneNode?.("head");
+    let eyeY = camera.position.y;
+    if (leftEye && rightEye) {
+      leftEye.getWorldPosition(lookEyeA);
+      rightEye.getWorldPosition(lookEyeB);
+      eyeY = (lookEyeA.y + lookEyeB.y) * 0.5;
+    } else if (head) {
+      head.getWorldPosition(lookHead);
+      eyeY = lookHead.y;
+    }
+    vrm.lookAt.target.position.set(camera.position.x, eyeY, camera.position.z);
+  };
   if (vrm.lookAt) {
     vrm.lookAt.target = new THREE.Object3D();
     scene.add(vrm.lookAt.target);
-    const syncLookTarget = () => {
-      vrm.lookAt.target.position.copy(camera.position);
-    };
     syncLookTarget();
     controls.addEventListener?.("change", syncLookTarget);
   }
+  guardLookAtLids(vrm);
 
   controls.addEventListener?.("start", () => {
     cameraDirector.setUserOrbiting(true);
@@ -350,6 +379,10 @@ export async function createVrmAvatar(opts) {
   });
 
   const expr = vrm.expressionManager;
+  const faceHazards = inspectVrmFaceHazards(expr);
+  zeroAllExpressions(expr);
+  zeroHazardMorphInfluences(model);
+  const blinkPresets = blinkExpressionNames(expr);
   const mouthPresets = [
     VRMExpressionPresetName.Aa,
     VRMExpressionPresetName.Ih,
@@ -387,7 +420,7 @@ export async function createVrmAvatar(opts) {
 
   const setExpressionTargetFromBlend = (blend) => {
     clearExpressionTargets();
-    const safe = clampRestFaceBlend(blend, { talking });
+    const safe = clampRestFaceBlend(blend, { talking, hazards: faceHazards });
     for (const [key, weight] of Object.entries(safe || {})) {
       const preset = VRM_BLEND_PRESET_MAP[key];
       if (preset && expr?.getExpression?.(preset)) {
@@ -432,6 +465,7 @@ export async function createVrmAvatar(opts) {
 
   const warmExpressionPresets = () => {
     if (!expr) return false;
+    zeroAllExpressions(expr);
     for (const preset of emotionPresetKeys()) {
       expr.setValue(preset, 0.001);
       expr.setValue(preset, 0);
@@ -439,6 +473,10 @@ export async function createVrmAvatar(opts) {
     for (const preset of mouthPresets) {
       expr.setValue(preset, 0.001);
       expr.setValue(preset, 0);
+    }
+    for (const name of blinkPresets) {
+      expr.setValue(name, 0.001);
+      expr.setValue(name, 0);
     }
     for (const em of Object.keys(EMOTION_EXPRESSIONS)) {
       applyEmotionExpressions(em);
@@ -450,8 +488,10 @@ export async function createVrmAvatar(opts) {
       );
       tickExpressionBlend(0.12);
     }
+    zeroAllExpressions(expr);
     applyEmotionExpressions("neutral");
     tickExpressionBlend(0.12);
+    zeroAllExpressions(expr);
     return true;
   };
 
@@ -698,6 +738,43 @@ export async function createVrmAvatar(opts) {
     return analysis;
   };
 
+  const tickFace = (dt, now, activeMotion) => {
+    if (!talking && !activeMotion && !bodyMotion.thinking) {
+      const idleBlend = clampRestFaceBlend(
+        sampleIdleExpressionBlend((now - t0) * 0.001, emotion),
+        { talking: false, hazards: faceHazards },
+      );
+      for (const [key, weight] of Object.entries(idleBlend)) {
+        const preset = VRM_BLEND_PRESET_MAP[key];
+        if (preset && expr?.getExpression?.(preset)) {
+          expressionTarget[preset] = Math.max(
+            expressionTarget[preset] ?? 0,
+            weight,
+          );
+        }
+      }
+    }
+
+    mouthOpen += (mouthTarget - mouthOpen) * Math.min(1, dt * (talking ? 36 : 22));
+    if (!talking && mouthOpen < 0.04) mouthOpen = 0;
+
+    zeroAllExpressions(expr);
+    tickExpressionBlend(dt);
+    applyMouth(mouthVisemeWeight(talking, mouthOpen));
+
+    blinkTimer += dt;
+    let blinkW = 0;
+    if (blinkPresets.length && blinkTimer >= nextBlink) {
+      const phase = blinkTimer - nextBlink;
+      blinkW = blinkWeightFromPhase(phase);
+      if (blinkPulseFinished(phase)) {
+        blinkTimer = 0;
+        nextBlink = 2.4 + Math.random() * 2.8;
+      }
+    }
+    applyBlinkWeight(expr, blinkW);
+  };
+
   let raf = 0;
 
   const frame = () => {
@@ -726,8 +803,11 @@ export async function createVrmAvatar(opts) {
       if (vrm.lookAt) {
         vrm.lookAt.autoUpdate = !activeMotion;
       }
+      syncLookTarget();
       syncHumanoidPose();
+      tickFace(dt, now, activeMotion);
       vrm.update(dt);
+      if (!talking) closeJawBone();
 
       computeVrmFrameAnchor(vrm, model, frameAnchor);
       if (smoothedFrameAnchor.lengthSq() < 1e-6) {
@@ -769,42 +849,6 @@ export async function createVrmAvatar(opts) {
       console.warn("[vrm] frame update failed", err);
     }
 
-    if (!talking && !activeMotion && !bodyMotion.thinking) {
-      const idleBlend = clampRestFaceBlend(
-        sampleIdleExpressionBlend((now - t0) * 0.001, emotion),
-        { talking: false },
-      );
-      for (const [key, weight] of Object.entries(idleBlend)) {
-        const preset = VRM_BLEND_PRESET_MAP[key];
-        if (preset && expr?.getExpression?.(preset)) {
-          expressionTarget[preset] = Math.max(
-            expressionTarget[preset] ?? 0,
-            weight,
-          );
-        }
-      }
-    }
-
-    mouthOpen += (mouthTarget - mouthOpen) * Math.min(1, dt * (talking ? 36 : 22));
-    if (!talking && mouthOpen < 0.04) mouthOpen = 0;
-    tickExpressionBlend(dt);
-    applyMouth(mouthVisemeWeight(talking, mouthOpen));
-
-    // Auto blink
-    if (expr?.getExpression?.(VRMExpressionPresetName.Blink)) {
-      blinkTimer += dt;
-      if (blinkTimer >= nextBlink) {
-        const phase = blinkTimer - nextBlink;
-        if (phase < 0.08) {
-          expr.setValue(VRMExpressionPresetName.Blink, 1);
-        } else if (phase < 0.16) {
-          expr.setValue(VRMExpressionPresetName.Blink, 0);
-          blinkTimer = 0;
-          nextBlink = 2.4 + Math.random() * 2.8;
-        }
-      }
-    }
-
     // Keep model scale fixed — uniform scale breathing disturbs spring-bone hair/skirt.
     model.scale.setScalar(scale);
 
@@ -816,9 +860,14 @@ export async function createVrmAvatar(opts) {
   resize();
   clearExpressionTargets();
   setEmotion("neutral");
+  zeroAllExpressions(expr);
+  applyBlinkWeight(expr, 0);
+  applyMouth(0);
   bodyMotion.update(1 / 60);
+  syncLookTarget();
   syncHumanoidPose();
   vrm.update(1 / 60);
+  if (!talking) closeJawBone();
   renderer.render(scene, camera);
   raf = requestAnimationFrame(frame);
   globalThis.addEventListener?.("resize", resize);

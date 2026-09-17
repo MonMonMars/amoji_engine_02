@@ -51,6 +51,13 @@ describe("companionContentMotion", () => {
     expect(blend.Relaxed ?? 0).toBe(0);
   });
 
+  it("keeps untagged rest emotion morph-neutral", () => {
+    const blend = buildVrmExpressionBlend("neutral", "none");
+    expect(blend.Happy ?? 0).toBe(0);
+    expect(blend.Relaxed ?? 0).toBe(0);
+    expect(blend.Surprised ?? 0).toBe(0);
+  });
+
   it("defaults untagged spoken replies to a warm happy performance", () => {
     const content = analyzeCompanionReply("你好呀！一齊傾偈啦");
     expect(content.emotion).toBe("happy");
