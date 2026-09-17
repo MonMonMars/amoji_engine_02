@@ -189,9 +189,9 @@
 
 .theme-grok-ani .companion-chip__dot-canvas {
   position: absolute;
-  inset: -22%;
-  width: 144%;
-  height: 144%;
+  inset: -10%;
+  width: 120%;
+  height: 120%;
   pointer-events: none;
   display: block;
 }

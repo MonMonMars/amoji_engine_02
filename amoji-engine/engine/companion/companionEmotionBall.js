@@ -388,10 +388,10 @@ export function computeMiniEmotionBallFrame(opts = {}) {
   else volume = 0.07 + breath * 0.12 + raw * 0.22;
 
   const scale = live
-    ? 1.06 + volume * 0.82
+    ? 1.02 + volume * 0.16
     : thinking
-      ? 1.05 + volume * 0.28
-      : 1.02 + volume * 0.2;
+      ? 1.03 + volume * 0.08
+      : 1.01 + volume * 0.06;
   const wobble = live
     ? 0.07 + volume * 0.2
     : thinking
@@ -494,7 +494,7 @@ export function createMiniEmotionBall(el) {
     if (!canvas || !ctx) return;
     const dpr = Math.min(2, globalThis.devicePixelRatio || 1);
     const rect = el.getBoundingClientRect?.() || { width: 28, height: 28 };
-    const size = Math.max(28, Math.round(Math.max(rect.width || 0, rect.height || 0) * 1.36));
+    const size = Math.max(28, Math.round(Math.max(rect.width || 0, rect.height || 0) * 1.2));
     canvas.width = Math.round(size * dpr);
     canvas.height = Math.round(size * dpr);
     canvas.style.width = `${size}px`;
