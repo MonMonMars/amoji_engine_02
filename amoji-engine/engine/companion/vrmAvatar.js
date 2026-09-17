@@ -61,6 +61,7 @@ import {
   guardLookAtLids,
   inspectVrmFaceHazards,
   listExpressionNames,
+  MOUTH_CLOSE_EPS,
   resolveMouthPresets,
   sampleEatMouthPulse,
   sampleTalkMouthPulse,
@@ -807,6 +808,9 @@ export async function createVrmAvatar(opts) {
 
   const setMouthOpen = (v) => {
     mouthTarget = Math.max(0, Math.min(1, Number(v) || 0));
+    if (mouthTarget > MOUTH_CLOSE_EPS && !talking && !eating) {
+      setTalking(true);
+    }
     return mouthTarget;
   };
 

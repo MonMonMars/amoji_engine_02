@@ -738,6 +738,8 @@ export function createCompanionVoice(opts = {}) {
     opts.onMouth?.(open, shape);
   };
 
+  const isStreamPlaybackActive = () => Boolean(streamSession);
+
   const stopMouth = ({ keepTalking = false } = {}) => {
     if (mouthTimer) {
       clearInterval(mouthTimer);
@@ -745,8 +747,9 @@ export function createCompanionVoice(opts = {}) {
     }
     for (const t of mouthTimeouts) clearTimeout(t);
     mouthTimeouts = [];
-    if (!keepTalking) {
-      opts.onMouth?.(0, null);
+    const holdTalk = keepTalking || isStreamPlaybackActive();
+    opts.onMouth?.(0, null);
+    if (!holdTalk) {
       opts.onTalking?.(false);
     }
   };
@@ -1055,6 +1058,7 @@ export function createCompanionVoice(opts = {}) {
       capturePaused: pauseMic,
     };
     if (pauseMic) pauseCapture();
+    opts.onTalking?.(true);
     syncAssistantOutput();
     return streamSession;
   };
@@ -1075,7 +1079,7 @@ export function createCompanionVoice(opts = {}) {
       streamSession.emotion || "neutral",
     );
     const next = speakChain.then(() => {
-      if (!streamSession || streamSession.closed) {
+      if (!streamSession) {
         return { ok: false, reason: "stream-closed" };
       }
       return speakOnceCore(clean, {
@@ -1094,12 +1098,13 @@ export function createCompanionVoice(opts = {}) {
     const session = streamSession;
     if (!session) return { ok: true };
     session.closed = true;
-    streamSession = null;
     syncAssistantOutput();
     try {
       await speakChain;
       return { ok: true };
     } finally {
+      streamSession = null;
+      stopMouth();
       if (session.capturePaused) resumeCapture();
       syncAssistantOutput();
     }

@@ -8,9 +8,9 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji · Companion</title>
     <script>
-      window.__amojiBuild = "2026-09-17-v175-emotion-performance";
+      window.__amojiBuild = "2026-09-17-v176-lipsync-stream";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-17-v175-emotion-performance"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-17-v176-lipsync-stream"></script>
     <link
       rel="prefetch"
       href="/prototypes/assets/companion-char-nova.png"
@@ -323,7 +323,7 @@
       media="print"
       onload="this.media='all'"
     />
-    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-17-v175-emotion-performance" />
+    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-17-v176-lipsync-stream" />
     <noscript>
       <link
         href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap"
@@ -3594,19 +3594,19 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-17-v175-emotion-performance",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-17-v176-lipsync-stream",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-17-v175-emotion-performance",
-          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-17-v175-emotion-performance"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-17-v176-lipsync-stream",
+          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-17-v176-lipsync-stream"
         }
       }
     </script>
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v175-emotion-performance"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v176-lipsync-stream"
     />
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-17-v175-emotion-performance"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v175-emotion-performance"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-17-v176-lipsync-stream"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v176-lipsync-stream"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;
@@ -5856,7 +5856,9 @@
           if (shape && avatar.setMouthShape) avatar.setMouthShape(shape);
           else if (!shape && avatar.setMouthShape) avatar.setMouthShape(null);
           avatar.setMouthOpen(open);
-          avatar.setTalkEnergy?.(open);
+          if (open > 0.08 && speakContent?.speechEnergy != null) {
+            avatar.setTalkEnergy?.(speakContent.speechEnergy);
+          }
           if (voice?.speaking || voice?.assistantOutputActive) {
             emotionBallLevel = open;
             emotionBall.setLevel(open);
@@ -5864,6 +5866,13 @@
           }
         },
         onTalking: (on) => {
+          if (
+            !on &&
+            (voice?.assistantOutputActive || voice?.speaking || voice?.thinkingLoopOn)
+          ) {
+            avatar.setMouthOpen?.(0);
+            return;
+          }
           avatar.setTalking(on);
           if (shouldResetCameraOnTalkStart(on, talkingCameraLatched)) {
             talkingCameraLatched = true;
