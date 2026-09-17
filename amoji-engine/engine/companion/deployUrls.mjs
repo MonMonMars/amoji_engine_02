@@ -26,7 +26,8 @@ export function companionFullDemoUrl(opts = {}) {
   if (build) params.set("build", build);
   if (opts.pick !== "0") params.set("pick", "1");
   if (opts.automic === "0" || opts.automic === undefined) params.set("automic", "0");
-  return `${DEMO_BASE_URL}/companion-full?${params.toString()}`;
+  const path = build ? `/c/${encodeURIComponent(build)}/full` : "/companion-full";
+  return `${DEMO_BASE_URL}${path}?${params.toString()}`;
 }
 
 /**
@@ -39,9 +40,8 @@ export function companionLiteDemoUrl(opts = {}) {
   if (opts.tab) params.set("tab", opts.tab);
   if (opts.lang === "en") params.set("lang", "en");
   const qs = params.toString();
-  return qs
-    ? `${DEMO_BASE_URL}/companion?${qs}`
-    : `${DEMO_BASE_URL}/companion`;
+  const path = build ? `/c/${encodeURIComponent(build)}/lite` : "/companion";
+  return qs ? `${DEMO_BASE_URL}${path}?${qs}` : `${DEMO_BASE_URL}${path}`;
 }
 
 /**

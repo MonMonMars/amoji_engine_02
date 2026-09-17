@@ -58,14 +58,25 @@ export function versionedModuleUrl(path, build = AMOJI_BUILD) {
  */
 export function resolveCompanionModuleUrl(path, build = AMOJI_BUILD) {
   const versioned = versionedModuleUrl(path, build);
-  if (/^(?:[a-z]+:)?\/\//i.test(versioned) || versioned.startsWith("/")) {
+  if (/^(?:[a-z]+:)?\/\//i.test(versioned)) {
     return versioned;
   }
-  const base =
+  const pageHref =
     globalThis.document?.baseURI ||
     globalThis.location?.href ||
     "http://localhost/";
-  return new URL(versioned, base).href;
+  const pageUrl = new URL(pageHref);
+  // Unique /c/<build>/full|lite paths would otherwise resolve ../amoji-engine
+  // into /c/<build>/amoji-engine and 404 every module.
+  const underBuildPath = /^\/c\/[^/]+\/(full|lite)\/?$/i.test(pageUrl.pathname);
+  const originBase = `${pageUrl.origin}/`;
+  if (versioned.startsWith("/")) {
+    return new URL(versioned, originBase).href;
+  }
+  const resolveBase = underBuildPath
+    ? `${pageUrl.origin}/companion-full`
+    : pageHref;
+  return new URL(versioned, resolveBase).href;
 }
 
 /**
@@ -82,12 +93,94 @@ export function ami(path) {
 /**
  * @param {string} serverBuild
  */
+export const BUILD_PATH_PREFIX = "/c/";
+
+/**
+ * Unique path so iOS Safari cannot reuse a cached /companion-full HTML.
+ * @param {string} build
+ * @param {"full" | "lite"} [kind]
+ */
+export function companionBuildPath(build, kind = "full") {
+  const id = encodeURIComponent(String(build || "dev"));
+  return `${BUILD_PATH_PREFIX}${id}/${kind === "lite" ? "lite" : "full"}`;
+}
+
+/**
+ * Map pretty companion URLs (including unique /c/<build>/ paths) onto real files.
+ * @param {string | null | undefined} pathname
+ */
+export function rewriteCompanionServePath(pathname) {
+  const path = String(pathname || "/").split("?")[0];
+  if (path === "/companion-full" || /^\/c\/[^/]+\/full\/?$/i.test(path)) {
+    return "/prototypes/amoji-companion.html";
+  }
+  if (path === "/companion" || /^\/c\/[^/]+\/lite\/?$/i.test(path)) {
+    return "/prototypes/amoji-lite.html";
+  }
+  if (path === "/setup") return "/prototypes/amoji-setup.html";
+  return path;
+}
+
+/**
+ * @param {string | null | undefined} pathname
+ */
+export function companionKindFromPath(pathname) {
+  const path = String(pathname || "");
+  if (
+    /\/lite\/?$/.test(path) ||
+    path.includes("amoji-lite") ||
+    path === "/companion" ||
+    path.startsWith("/companion?")
+  ) {
+    return "lite";
+  }
+  return "full";
+}
+
+/**
+ * @param {string | null | undefined} pathname
+ * @param {string | null | undefined} build
+ */
+export function pathHasBuild(pathname, build) {
+  const path = String(pathname || "");
+  const id = String(build || "");
+  if (!id) return false;
+  return (
+    path.includes(`${BUILD_PATH_PREFIX}${id}/`) ||
+    path.includes(`${BUILD_PATH_PREFIX}${encodeURIComponent(id)}/`)
+  );
+}
+
 export function buildFreshBootUrl(serverBuild) {
   const href = globalThis.location?.href || "/";
   const url = new URL(href);
+  const kind = companionKindFromPath(url.pathname);
+  url.pathname = companionBuildPath(serverBuild, kind);
   url.searchParams.set("build", serverBuild);
   url.searchParams.set("_cb", String(Date.now()));
   return url.toString();
+}
+
+/**
+ * Drop service workers + Cache Storage so a later load cannot revive stale JS.
+ */
+export async function purgeStaleBrowserCaches() {
+  try {
+    const regs = await globalThis.navigator?.serviceWorker?.getRegistrations?.();
+    if (Array.isArray(regs)) {
+      await Promise.all(regs.map((reg) => reg.unregister().catch(() => false)));
+    }
+  } catch {
+    /* ignore */
+  }
+  try {
+    const keys = await globalThis.caches?.keys?.();
+    if (Array.isArray(keys)) {
+      await Promise.all(keys.map((key) => globalThis.caches.delete(key)));
+    }
+  } catch {
+    /* ignore */
+  }
 }
 
 /**
@@ -135,12 +228,15 @@ export async function checkForAppUpdate(pageBuild, opts = {}) {
 
   const data = await res.json();
   const serverBuild = data?.build || null;
-  if (!shouldReloadForBuild(embedded, serverBuild)) {
+  const path = globalThis.location?.pathname || "";
+  const needsUniquePath = Boolean(serverBuild && !pathHasBuild(path, serverBuild));
+  void purgeStaleBrowserCaches();
+  if (!shouldReloadForBuild(embedded, serverBuild) && !needsUniquePath) {
     if (serverBuild) globalThis.__amojiActiveBuild = serverBuild;
     return { reloaded: false, serverBuild, pageBuild: embedded };
   }
 
-  if (hasFreshBootAttempted(serverBuild)) {
+  if (hasFreshBootAttempted(serverBuild) && !needsUniquePath) {
     return {
       reloaded: false,
       serverBuild,
@@ -186,10 +282,15 @@ export function runEarlyFreshBootCheck(pageBuild) {
     .then((res) => (res.ok ? res.json() : null))
     .then((data) => {
       const serverBuild = data?.build || null;
-      if (!shouldReloadForBuild(pageBuild, serverBuild)) return;
-      if (requestedBuild === serverBuild) return;
-      if (hasFreshBootAttempted(serverBuild)) return;
-      markFreshBootAttempted(serverBuild);
+      if (!serverBuild) return;
+      void purgeStaleBrowserCaches();
+      const path = globalThis.location?.pathname || "";
+      if (
+        !shouldReloadForBuild(pageBuild, serverBuild) &&
+        pathHasBuild(path, serverBuild)
+      ) {
+        return;
+      }
       globalThis.location.replace(buildFreshBootUrl(serverBuild));
     })
     .catch(() => {});

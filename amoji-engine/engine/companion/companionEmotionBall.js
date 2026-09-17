@@ -357,3 +357,29 @@ export function createCompanionEmotionBall(el, opts = {}) {
     getVolume: () => displayVolume,
   };
 }
+
+/**
+ * Drive the top-left chip dot like a ChatGPT mini emotion ball.
+ * @param {HTMLElement | null} el
+ * @param {{ emotion?: string, nuance?: string, level?: number, state?: string }} [opts]
+ */
+export function syncMiniEmotionBall(el, opts = {}) {
+  if (!el?.style) return null;
+  const theme = resolveMicButtonTheme({
+    emotion: opts.emotion,
+    nuance: opts.nuance,
+  });
+  const level = clamp(Number(opts.level) || 0, 0, 1);
+  const state = String(opts.state || "idle");
+  const scale = 1 + level * 1.2;
+  el.dataset.state = state;
+  el.dataset.emotion = String(opts.emotion || "neutral");
+  const bg = `hsl(${theme.hue} ${theme.sat}% ${theme.light}%)`;
+  const shadow = `0 0 ${8 + level * 22}px hsl(${theme.hue} ${theme.sat}% ${theme.light}% / ${0.42 + level * 0.5})`;
+  el.style.setProperty("--mini-ball-bg", bg);
+  el.style.setProperty("--mini-ball-shadow", shadow);
+  el.style.setProperty("--mini-ball-scale", scale.toFixed(3));
+  el.style.background = bg;
+  el.style.boxShadow = shadow;
+  return { ...theme, scale, level, state };
+}

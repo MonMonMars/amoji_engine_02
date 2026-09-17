@@ -23,6 +23,7 @@ import {
   formatDemoLinkBlock,
   secretaryDemoUrl,
 } from "../amoji-engine/engine/companion/deployUrls.mjs";
+import { rewriteCompanionServePath } from "../amoji-engine/engine/companion/companionFreshBoot.js";
 
 const outDir = process.env.ARTIFACT_DIR || "/opt/cursor/artifacts";
 mkdirSync(outDir, { recursive: true });
@@ -65,8 +66,21 @@ function startLocalServer(port = localPort) {
   return new Promise((resolve, reject) => {
     const srv = createServer((req, res) => {
       let p = req.url?.split("?")[0] || "/";
-      if (p === "/companion") p = "/prototypes/amoji-lite.html";
-      if (p === "/companion-full") p = "/prototypes/amoji-companion.html";
+      if (p === "/api/health") {
+        res.writeHead(200, {
+          "Content-Type": "application/json",
+          "Cache-Control": "no-store",
+        });
+        res.end(
+          JSON.stringify({
+            ok: true,
+            service: "amoji-companion",
+            build: AMOJI_BUILD,
+          }),
+        );
+        return;
+      }
+      p = rewriteCompanionServePath(p);
       const file = pathJoin(root, p.replace(/^\//, ""));
       try {
         statSync(file);

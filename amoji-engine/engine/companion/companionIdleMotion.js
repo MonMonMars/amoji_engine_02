@@ -63,10 +63,10 @@ export function sampleCalmBreathIdle(elapsedSec, opts = {}) {
     armLiftR: 0.12,
     forearmL: 0.4,
     forearmR: 0.34,
-    upperLegL: 0.09,
-    upperLegR: 0.1,
-    lowerLegL: 0.22,
-    lowerLegR: 0.24,
+    upperLegL: 0.04,
+    upperLegR: 0.045,
+    lowerLegL: 0.12,
+    lowerLegR: 0.13,
   };
 }
 
@@ -145,9 +145,10 @@ export function advanceIdleBeat(state, dt, nowMs) {
 
   if (!beat && nowMs >= nextAt) {
     const roll = Math.random();
-    if (roll < 0.24) beat = "nod";
-    else if (roll < 0.44) beat = "look";
-    else if (roll < 0.62) beat = "shift";
+    if (roll < 0.2) beat = "nod";
+    else if (roll < 0.38) beat = "look";
+    else if (roll < 0.52) beat = "comb";
+    else if (roll < 0.66) beat = "shift";
     else if (roll < 0.8) beat = "fidget";
     else if (roll < 0.9) beat = "breathe";
     else beat = "sway";
@@ -157,13 +158,15 @@ export function advanceIdleBeat(state, dt, nowMs) {
         ? 0.95
         : beat === "look"
           ? 1.45
-          : beat === "shift"
-            ? 1.75
-            : beat === "fidget"
-              ? 1.35
-              : beat === "breathe"
-                ? 2.2
-                : 1.65;
+          : beat === "comb"
+            ? 2.1
+            : beat === "shift"
+              ? 1.75
+              : beat === "fidget"
+                ? 1.35
+                : beat === "breathe"
+                  ? 2.2
+                  : 1.65;
     nextAt = nowMs + 1600 + Math.random() * 2800;
   }
 
@@ -181,6 +184,13 @@ export function advanceIdleBeat(state, dt, nowMs) {
       case "look":
         overlay.headZ = Math.sin(p * Math.PI) * 0.11 * env;
         overlay.headX = wave * 0.038 * env;
+        break;
+      case "comb":
+        overlay.armLiftR = 0.72 * wave * env;
+        overlay.forearmR = 0.55 * wave * env;
+        overlay.headZ = 0.07 * wave * env;
+        overlay.headX = -0.04 * wave * env;
+        overlay.leanY = 0.03 * wave * env;
         break;
       case "shift":
         overlay.hipZ = Math.sin(p * Math.PI) * 0.02 * env;
@@ -215,6 +225,7 @@ export function advanceIdleBeat(state, dt, nowMs) {
         overlay.armLiftR = 0.04 + wave * 0.05 * env;
         break;
       default:
+        beat = null;
         break;
     }
 

@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   advanceIdleBeat,
   BOOT_SIMPLE_IDLE_SEC,
@@ -25,6 +25,17 @@ describe("companionIdleMotion", () => {
     const first = advanceIdleBeat(state, 0.05, 100);
     expect(first.state.beat).toBeTruthy();
     expect(Object.keys(first.overlay).length).toBeGreaterThan(0);
+  });
+
+  it("plays a comb-hair beat that lifts the right arm", () => {
+    vi.spyOn(Math, "random").mockReturnValue(0.45);
+    const state = createIdleBeatState(0);
+    state.nextAt = 0;
+    const first = advanceIdleBeat(state, 1.05, 10);
+    expect(first.state.beat).toBe("comb");
+    expect(first.overlay.armLiftR).toBeGreaterThan(0.2);
+    expect(first.overlay.forearmR).toBeGreaterThan(0.1);
+    vi.restoreAllMocks();
   });
 
   it("keeps idle rest morph-neutral so jaws stay shut and lids stay open", () => {
@@ -56,7 +67,8 @@ describe("companionIdleMotion", () => {
     expect(a.leanY).toBe(0);
     expect(a.headZ).toBe(0);
     expect(a.forearmL).toBeGreaterThan(0.32);
-    expect(a.lowerLegR).toBeGreaterThan(0.2);
+    expect(a.lowerLegR).toBeGreaterThan(0.1);
+    expect(a.lowerLegR).toBeLessThan(0.2);
     expect(a.spineX).not.toBe(b.spineX);
   });
 

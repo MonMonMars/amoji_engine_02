@@ -166,56 +166,39 @@
 }
 
 .theme-grok-ani .companion-chip__dot {
-  width: 0.55rem;
-  height: 0.55rem;
+  width: 0.92rem;
+  height: 0.92rem;
   border-radius: 50%;
   margin-left: 0.15rem;
   flex-shrink: 0;
-  background: rgba(255, 255, 255, 0.35);
-  box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+  background: var(--mini-ball-bg, hsl(175 62% 58%));
+  box-shadow: var(--mini-ball-shadow, 0 0 10px rgba(94, 234, 212, 0.45));
+  transform: scale(var(--mini-ball-scale, 1));
+  transform-origin: center;
+  transition: background 0.2s ease, box-shadow 0.2s ease;
 }
 
-.theme-grok-ani .companion-chip__dot[data-state="listening"] {
-  background: #ff8fa8;
-  box-shadow: 0 0 12px rgba(255, 143, 168, 0.75);
-  animation: grokPulse 1.4s ease-in-out infinite;
-}
-
-.theme-grok-ani .companion-chip__dot[data-state="thinking"] {
-  background: #9ec5ff;
-  box-shadow: 0 0 12px rgba(158, 197, 255, 0.7);
-  animation: grokPulse 1.1s ease-in-out infinite;
+.theme-grok-ani .companion-chip__dot[data-state="listening"],
+.theme-grok-ani .companion-chip__dot[data-state="thinking"],
+.theme-grok-ani .companion-chip__dot[data-state="speaking"],
+.theme-grok-ani .companion-chip__dot[data-state="loading"] {
+  animation: grokPulse 1.15s ease-in-out infinite;
 }
 
 .theme-grok-ani .companion-chip__dot[data-state="speaking"] {
-  background: var(--accent-2);
-  box-shadow: 0 0 12px rgba(94, 234, 212, 0.75);
-  animation: grokPulse 0.9s ease-in-out infinite;
+  animation-duration: 0.9s;
 }
 
-.theme-grok-ani .companion-chip__dot[data-state="loading"] {
-  background: var(--accent);
-  box-shadow: 0 0 12px var(--grok-glow);
-}
-
-.theme-grok-ani .companion-chip__dot[data-state="typing"] {
-  background: #b8d4ff;
-  box-shadow: 0 0 10px rgba(184, 212, 255, 0.55);
-}
-
-.theme-grok-ani .companion-chip__dot[data-state="mic-blocked"] {
-  background: #ffb86b;
-  box-shadow: 0 0 10px rgba(255, 184, 107, 0.5);
+.theme-grok-ani .companion-chip__dot[data-state="thinking"] {
+  animation-duration: 1.1s;
 }
 
 @keyframes grokPulse {
   0%,
   100% {
-    transform: scale(1);
-    opacity: 0.85;
+    opacity: 0.82;
   }
   50% {
-    transform: scale(1.18);
     opacity: 1;
   }
 }

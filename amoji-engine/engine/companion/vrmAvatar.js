@@ -1109,6 +1109,14 @@ export async function createVrmAvatar(opts) {
     },
     resize,
     resetCameraView,
+    hitTest(clientX, clientY) {
+      const rect = canvas.getBoundingClientRect();
+      if (!rect.width || !rect.height) return false;
+      pointer.x = ((clientX - rect.left) / rect.width) * 2 - 1;
+      pointer.y = -((clientY - rect.top) / rect.height) * 2 + 1;
+      raycaster.setFromCamera(pointer, camera);
+      return raycaster.intersectObject(model, true).length > 0;
+    },
     dispose() {
       cancelAnimationFrame(raf);
       globalThis.removeEventListener?.("resize", resize);

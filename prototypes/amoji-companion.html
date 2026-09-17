@@ -8,9 +8,9 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji · Companion</title>
     <script>
-      window.__amojiBuild = "2026-09-17-v152-voice-emotion";
+      window.__amojiBuild = "2026-09-17-v153-repeat-issues";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-17-v152-voice-emotion"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-17-v153-repeat-issues"></script>
     <link
       rel="prefetch"
       href="/prototypes/assets/companion-char-nova.png"
@@ -35,7 +35,7 @@
         top: 0;
         left: 0;
         right: 0;
-        z-index: 5;
+        z-index: 30;
         display: flex;
         align-items: center;
         justify-content: space-between;
@@ -219,7 +219,7 @@
         top: auto;
         display: flex;
         flex-direction: column;
-        z-index: auto;
+        z-index: 40;
         pointer-events: none;
       }
       .chat-column {
@@ -326,7 +326,7 @@
       media="print"
       onload="this.media='all'"
     />
-    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-17-v152-voice-emotion" />
+    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-17-v153-repeat-issues" />
     <noscript>
       <link
         href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap"
@@ -521,12 +521,19 @@
         top: 0;
         left: 0;
         right: 0;
-        z-index: 5;
+        z-index: 30;
         display: flex;
         align-items: center;
         justify-content: space-between;
         padding: max(1rem, env(safe-area-inset-top)) 1.25rem 0.5rem;
         pointer-events: none;
+      }
+
+      .topbar .companion-chip,
+      .topbar-actions,
+      .brand,
+      .meta {
+        pointer-events: auto;
       }
 
       .brand {
@@ -686,7 +693,7 @@
         right: 0;
         bottom: 0;
         top: auto;
-        z-index: auto;
+        z-index: 40;
         display: flex;
         flex-direction: column;
         justify-content: flex-end;
@@ -744,7 +751,7 @@
       }
       body.conversation-ui .transcript .msg-row {
         position: relative;
-        z-index: 11;
+        z-index: 42;
         pointer-events: auto;
       }
 
@@ -1786,7 +1793,7 @@
       }
 
       body.conversation-ui .topbar {
-        z-index: 12;
+        z-index: 30;
         pointer-events: none;
       }
 
@@ -3561,19 +3568,19 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-17-v152-voice-emotion",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-17-v153-repeat-issues",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-17-v152-voice-emotion",
-          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-17-v152-voice-emotion"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-17-v153-repeat-issues",
+          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-17-v153-repeat-issues"
         }
       }
     </script>
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v152-voice-emotion"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v153-repeat-issues"
     />
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-17-v152-voice-emotion"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v152-voice-emotion"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-17-v153-repeat-issues"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v153-repeat-issues"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;
@@ -4260,7 +4267,7 @@
       const { createCompanionVoiceGate } = voiceGateMod;
       const { isIosLike, shouldPauseMicDuringTts } = platformMod;
       const { createCompanionMicButton } = micButtonMod;
-      const { createCompanionEmotionBall } = emotionBallMod;
+      const { createCompanionEmotionBall, syncMiniEmotionBall } = emotionBallMod;
 
       const hostedOnline = isHostedCompanion();
       const { createMotionDownloadClient } = motionDownloadMod;
@@ -5214,7 +5221,15 @@
               : "";
           companionStatusLine.textContent = `${labels[effective] || labels.idle}${mood}`;
         }
-        if (statusDot) statusDot.dataset.state = effective || "idle";
+        if (statusDot) {
+          statusDot.dataset.state = effective || "idle";
+          syncMiniEmotionBall(statusDot, {
+            emotion,
+            nuance: speakContent?.nuance || "none",
+            level: emotionBallLevel,
+            state: effective || "idle",
+          });
+        }
       };
 
       const setCharacterUi = () => {
@@ -5290,12 +5305,15 @@
       }
       let lastCanvasTapAt = 0;
       const orbitSurface = orbitHit || canvas;
-      orbitSurface.addEventListener("pointerup", () => {
+      orbitSurface.addEventListener("pointerup", (ev) => {
         const now = Date.now();
         if (now - lastCanvasTapAt < 360) {
-          avatar.resetCameraView?.();
-          orbitHint?.classList.remove("hide");
-          showToast(isEnglish ? "Camera reset" : "已重置視角", "info");
+          const hitCharacter = avatar.hitTest?.(ev.clientX, ev.clientY);
+          if (!hitCharacter) {
+            avatar.resetCameraView?.();
+            orbitHint?.classList.remove("hide");
+            showToast(isEnglish ? "Camera reset" : "已重置視角", "info");
+          }
           lastCanvasTapAt = 0;
           return;
         }
@@ -5770,6 +5788,7 @@
         },
         onTalking: (on) => {
           avatar.setTalking(on);
+          if (on) avatar.resetCameraView?.();
           syncMicBtn();
         },
         onSpeakChunk: (chunk) => {
