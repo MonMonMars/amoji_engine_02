@@ -408,10 +408,18 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
     const restR = armRestRotations.rightUpperArm;
     const restLl = armRestRotations.leftLowerArm;
     const restRl = armRestRotations.rightLowerArm;
+    const apose = isAposeBind();
+    const foreScale = apose ? 0.38 : 1;
     applyBoneRotation("leftUpperArm", restL);
     applyBoneRotation("rightUpperArm", restR);
-    applyBoneRotation("leftLowerArm", withElbowBend(restLl, pose.forearmL ?? REST_POSE.forearmL ?? 0));
-    applyBoneRotation("rightLowerArm", withElbowBend(restRl, pose.forearmR ?? REST_POSE.forearmR ?? 0));
+    applyBoneRotation(
+      "leftLowerArm",
+      withElbowBend(restLl, (pose.forearmL ?? REST_POSE.forearmL ?? 0) * foreScale),
+    );
+    applyBoneRotation(
+      "rightLowerArm",
+      withElbowBend(restRl, (pose.forearmR ?? REST_POSE.forearmR ?? 0) * foreScale),
+    );
   };
 
   const isAposeBind = () =>
@@ -426,14 +434,25 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
     const restLl = armRestRotations.leftLowerArm;
     const restRl = armRestRotations.rightLowerArm;
     const apose = isAposeBind();
-    const liftCap = apose ? (opts.boot ? 0.28 : 0.22) : opts.boot ? 0.4 : 0.34;
-    const foreCap = opts.boot ? 0.7 : 0.62;
-    const liftL = Math.min(liftCap, Math.max(0.12, safe.armLiftL ?? REST_POSE.armLiftL) * k);
-    const liftR = Math.min(liftCap, Math.max(0.08, safe.armLiftR ?? REST_POSE.armLiftR) * k);
-    const foreL = Math.min(foreCap, Math.max(0.32, safe.forearmL ?? REST_POSE.forearmL) * k);
-    const foreR = Math.min(foreCap, Math.max(0.26, safe.forearmR ?? REST_POSE.forearmR) * k);
-    const zLiftMul = apose ? 0.14 : 0.55;
-    const xLiftMul = apose ? 0.035 : 0.08;
+    const liftCap = apose ? (opts.boot ? 0.2 : 0.16) : opts.boot ? 0.4 : 0.34;
+    const foreCap = apose ? (opts.boot ? 0.34 : 0.28) : opts.boot ? 0.7 : 0.62;
+    const liftMinL = apose ? 0.05 : 0.12;
+    const liftMinR = apose ? 0.04 : 0.08;
+    const foreMinL = apose ? 0.1 : 0.32;
+    const foreMinR = apose ? 0.08 : 0.26;
+    const foreScale = apose ? 0.42 : 1;
+    const liftL = Math.min(liftCap, Math.max(liftMinL, safe.armLiftL ?? REST_POSE.armLiftL) * k);
+    const liftR = Math.min(liftCap, Math.max(liftMinR, safe.armLiftR ?? REST_POSE.armLiftR) * k);
+    const foreL = Math.min(
+      foreCap,
+      Math.max(foreMinL, safe.forearmL ?? REST_POSE.forearmL) * k * foreScale,
+    );
+    const foreR = Math.min(
+      foreCap,
+      Math.max(foreMinR, safe.forearmR ?? REST_POSE.forearmR) * k * foreScale,
+    );
+    const zLiftMul = apose ? 0.08 : 0.55;
+    const xLiftMul = apose ? 0.02 : 0.08;
     // T-pose rigs hang on Z; A-pose rigs already sit at the hips — tiny nudge only.
     applyBoneRotation("leftUpperArm", {
       x: restL.x + liftL * xLiftMul,

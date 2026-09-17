@@ -28,10 +28,10 @@ export const VRM_ARM_REST_ROTATIONS = Object.freeze({
  * straight, and extra X blends both arms forward of the hips.
  */
 export const VRM_APOSE_ARM_REST_ROTATIONS = Object.freeze({
-  leftUpperArm: { x: 0.08, y: 0.1, z: -0.22 },
-  rightUpperArm: { x: 0.07, y: -0.08, z: 0.22 },
-  leftLowerArm: { x: 0.18, y: 0.08, z: 0.08, flexAxis: "x" },
-  rightLowerArm: { x: 0.16, y: -0.06, z: -0.06, flexAxis: "x" },
+  leftUpperArm: { x: 0.05, y: 0.06, z: -0.14 },
+  rightUpperArm: { x: 0.04, y: -0.05, z: 0.14 },
+  leftLowerArm: { x: 0.14, y: 0.05, z: 0.05, flexAxis: "x" },
+  rightLowerArm: { x: 0.12, y: -0.04, z: -0.04, flexAxis: "x" },
 });
 
 /** Planted stand — thighs under the hips, knees softly bent. Extra upper-leg X is a forward kick. */

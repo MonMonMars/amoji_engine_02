@@ -32,25 +32,69 @@ describe("companionArmRestCalibration", () => {
   });
 
   it("uses flipped Z when it lowers hands further", () => {
-    let pass = 0;
+    /** @type {Map<string, { rotation: { x: number, y: number, z: number, set?: Function } }>} */
+    const bones = new Map();
+    const bindPos = {
+      leftHand: [0.42, 1.32, 0],
+      rightHand: [-0.42, 1.32, 0],
+      leftUpperArm: [0.2, 1.32, 0],
+      rightUpperArm: [-0.2, 1.32, 0],
+      hips: [0, 0.78, 0],
+    };
     const vrm = {
       humanoid: {
-        resetNormalizedPose() {},
+        resetNormalizedPose() {
+          for (const bone of bones.values()) {
+            bone.rotation.x = 0;
+            bone.rotation.y = 0;
+            bone.rotation.z = 0;
+          }
+        },
         update() {},
         getNormalizedBoneNode(name) {
-          if (name === "leftHand" || name === "rightHand") {
-            return {
-              getWorldPosition(v) {
-                pass += 1;
-                v.y = pass <= 2 ? 0.98 : 0.47;
+          if (!bones.has(name)) {
+            bones.set(name, {
+              rotation: {
+                x: 0,
+                y: 0,
+                z: 0,
+                set(x, y, z) {
+                  this.x = x;
+                  this.y = y;
+                  this.z = z;
+                },
               },
-            };
+            });
           }
-          return { rotation: { x: 0, y: 0, z: 0 } };
+          const bone = bones.get(name);
+          const pos = bindPos[name];
+          if (!pos) return bone;
+          return {
+            ...bone,
+            getWorldPosition(v) {
+              if (name === "leftHand" || name === "rightHand") {
+                const upperName =
+                  name === "leftHand" ? "leftUpperArm" : "rightUpperArm";
+                const upperZ = bones.get(upperName)?.rotation?.z || 0;
+                if (Math.abs(upperZ) < 0.01) {
+                  v.set(pos[0], pos[1], pos[2]);
+                  return;
+                }
+                const leftZ = bones.get("leftUpperArm")?.rotation?.z || 0;
+                const rightZ = bones.get("rightUpperArm")?.rotation?.z || 0;
+                const flippedPair = leftZ > 0 && rightZ < 0;
+                const dropBoost = flippedPair ? 0.52 : 0.28;
+                v.set(pos[0], pos[1] - dropBoost, pos[2]);
+                return;
+              }
+              v.set(pos[0], pos[1], pos[2]);
+            },
+          };
         },
       },
       update() {},
     };
+    expect(detectVrmArmBind(vrm)).toBe("tpose");
     const rest = detectVrmArmRestRotations(vrm);
     expect(rest.leftUpperArm.z).toBe(1.42);
     expect(rest.rightUpperArm.z).toBe(-1.42);
@@ -145,6 +189,39 @@ describe("companionArmRestCalibration", () => {
     const rest = detectVrmArmRestRotations(vrm);
     expect(rest.leftLowerArm.flexAxis).toBe("z");
     expect(Math.abs(rest.leftLowerArm.z)).toBeGreaterThan(0.5);
+  });
+
+  it("uses a gentle elbow bend on A-pose rigs", () => {
+    const vrm = {
+      humanoid: {
+        resetNormalizedPose() {},
+        update() {},
+        getNormalizedBoneNode(name) {
+          const y = {
+            leftHand: 0.82,
+            rightHand: 0.82,
+            leftUpperArm: 1.36,
+            rightUpperArm: 1.36,
+            hips: 0.78,
+          }[name];
+          if (y != null) {
+            return {
+              rotation: { x: 0, y: 0, z: 0 },
+              getWorldPosition(v) {
+                v.set(0, y, 0);
+              },
+            };
+          }
+          return { rotation: { x: 0, y: 0, z: 0 } };
+        },
+      },
+      update() {},
+    };
+    const rest = detectVrmArmRestRotations(vrm);
+    expect(detectVrmArmBind(vrm)).toBe("apose");
+    expect(Math.abs(rest.leftLowerArm.x)).toBeLessThan(0.35);
+    expect(Math.abs(rest.leftLowerArm.z)).toBeLessThan(0.35);
+    expect(Math.abs(rest.leftUpperArm.z)).toBeLessThan(0.2);
   });
 
   it("uses a small A-pose rest when hands already hang by the hips", () => {
