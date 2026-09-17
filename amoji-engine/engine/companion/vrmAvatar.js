@@ -289,7 +289,12 @@ export async function createVrmAvatar(opts) {
     vrmaPending = false;
     vrmaAction = null;
     motionPlayer.stop();
-    bodyMotion.snapToRestPose?.();
+    try {
+      vrm.humanoid?.resetNormalizedPose?.();
+    } catch {
+      /* ignore */
+    }
+    bodyMotion.resetIdleLife?.();
     syncHumanoidPose();
     return false;
   };
@@ -695,7 +700,12 @@ export async function createVrmAvatar(opts) {
     vrmaAction = null;
     const ok = bodyMotion.stopAction();
     applyEmotionExpressions(emotion);
-    bodyMotion.snapToRestPose?.();
+    try {
+      vrm.humanoid?.resetNormalizedPose?.();
+    } catch {
+      /* ignore */
+    }
+    bodyMotion.resetIdleLife?.();
     syncHumanoidPose();
     return ok;
   };

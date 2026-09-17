@@ -111,8 +111,8 @@ export function createCompanionWaitAct(opts = {}) {
       return;
     }
 
-    if (poseTick % 2 === 1) {
-      const beat = IDLE_LIFE_BEATS[Math.floor(poseTick / 2) % IDLE_LIFE_BEATS.length];
+    if (poseTick % 4 !== 0) {
+      const beat = IDLE_LIFE_BEATS[(poseTick - 1) % IDLE_LIFE_BEATS.length];
       avatarRef?.pulseIdleBeat?.(beat);
       opts.onPose?.("idle-stand", phase);
       return;
