@@ -1,2 +1,2 @@
 /** Single source of truth for deployed companion build id (keep HTML __amojiBuild in sync). */
-export const AMOJI_BUILD = "2026-09-17-v181-speech-gate";
+export const AMOJI_BUILD = "2026-09-17-v182-stand-rest";

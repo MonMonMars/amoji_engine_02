@@ -861,6 +861,14 @@ export async function createVrmAvatar(opts) {
       }
       applyEmotionExpressions(emotion);
       softenTalkMouthOverrides(expr, false);
+      if (
+        !eating &&
+        !bodyMotion.currentAction &&
+        !bodyMotion.activeGesture &&
+        !motionPlayer.isPlaying?.()
+      ) {
+        restorePlantedIdle();
+      }
     } else {
       applyEmotionExpressions(emotion);
       if (mouthTarget < 0.2) mouthTarget = Math.max(mouthTarget, 0.55);
