@@ -44,6 +44,10 @@ import { sampleIdleExpressionBlend } from "./companionIdleMotion.js";
 import { configureVrmSpringStability } from "./vrmSpringStability.js";
 import { applyVrmOutfitTint } from "./companionOutfitApply.js";
 import {
+  countMeshTriangles,
+  summarizeMorphTargets,
+} from "./companionMeshStats.js";
+import {
   applyBlinkWeight,
   applyMorphMouthOpen,
   applyTalkEmotionMorphs,
@@ -421,6 +425,21 @@ export async function createVrmAvatar(opts) {
   zeroHazardMorphInfluences(model);
   const blinkPresets = blinkExpressionNames(expr);
   const mouthPresets = resolveMouthPresets(expr);
+  const morphSummary = summarizeMorphTargets(model);
+  const faceReport = {
+    triangleCount: countMeshTriangles(model),
+    morphTargetCount: morphSummary.morphTargetCount,
+    morphNamesSample: morphSummary.morphNames.slice(0, 16),
+    expressionNames: listExpressionNames(expr),
+    mouthPresets: [...mouthPresets],
+    blinkPresets: [...blinkPresets],
+    hasVisemes: mouthPresets.length >= 3,
+    hazards: {
+      opensMouth: [...(faceHazards.opensMouth || [])],
+      blocksMouth: [...(faceHazards.blocksMouth || [])],
+      closesEyes: [...(faceHazards.closesEyes || [])],
+    },
+  };
 
   let emotion = "neutral";
   let mouthOpen = 0;
@@ -1130,23 +1149,29 @@ export async function createVrmAvatar(opts) {
     get mouthOpen() {
       return mouthOpen;
     },
+    getFaceReport() {
+      return { ...faceReport };
+    },
     getFaceDebug() {
+      const now = performance.now();
+      const activeViseme = talkingVisemeShape(
+        now,
+        talking || eating,
+        mouthShape,
+      );
+      const activeVisemePreset = shapeToVisemePreset(activeViseme, mouthPresets);
       return {
+        ...faceReport,
         talking,
         eating,
         emotion,
         mouthOpen,
         mouthTarget,
         mouthShape,
-        mouthPresets: [...mouthPresets],
-        expressionNames: listExpressionNames(expr),
+        activeViseme,
+        activeVisemePreset,
         expressionCurrent: { ...expressionCurrent },
         expressionTarget: { ...expressionTarget },
-        hazards: {
-          opensMouth: [...(faceHazards.opensMouth || [])],
-          blocksMouth: [...(faceHazards.blocksMouth || [])],
-          closesEyes: [...(faceHazards.closesEyes || [])],
-        },
       };
     },
     resize,

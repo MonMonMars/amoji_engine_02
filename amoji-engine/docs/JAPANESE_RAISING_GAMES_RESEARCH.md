@@ -351,6 +351,8 @@ Amoji `companionPetCare.js` already follows **cozy** rules (meters can hit 0; no
 
 **Amoji choice:** VRM full-body stage + **chip portrait** + optional SD sticker reactions in HUD.
 
+**High-poly flagship (v169):** Kizuna AI KAMATTE — ~73k tris, VRM 1.0, 18 expression presets, 5 visemes (`aa/ih/ou/ee/oh`), 210 morph targets. Verified lip sync via `vrmAvatar.getFaceReport()` + companion `onMouth`. See `HIGHPOLY_VRM_FACE.md`.
+
 **Technical checklist from Love Plus applicable to VRM:**
 
 - Single visible actor focus (one companion active).  
