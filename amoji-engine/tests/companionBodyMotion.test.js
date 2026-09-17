@@ -56,8 +56,11 @@ describe("createCompanionBodyMotion", () => {
     const rot = humanoid.bones.get("leftUpperArm").rotation;
     const rest = VRM_ARM_REST_ROTATIONS.leftUpperArm;
     expect(Math.abs(rot.z - rest.z)).toBeGreaterThan(0.008);
-    const knee = humanoid.bones.get("rightLowerLeg").rotation.x;
-    expect(knee).toBeGreaterThan(0.45);
+    const leftKnee = humanoid.bones.get("leftLowerLeg").rotation.x;
+    const rightKnee = humanoid.bones.get("rightLowerLeg").rotation.x;
+    expect(leftKnee).toBeGreaterThan(0.18);
+    expect(rightKnee).toBeGreaterThan(0.18);
+    expect(Math.abs(rightKnee - leftKnee)).toBeLessThan(0.12);
     expect(humanoid.bones.get("leftHand").rotation.y).not.toBe(0);
     expect(Math.abs(humanoid.bones.get("hips").rotation.z)).toBeLessThanOrEqual(
       0.02,
