@@ -153,6 +153,21 @@ function drawCompactEmotionOrb(ctx, width, height, opts) {
   ctx.fillStyle = core;
   fillWobblyBlob(ctx, cx, cy, radius, wobbleAmp, time, spin);
 
+  if (!reduced && state !== "thinking" && state !== "loading") {
+    const ox = cx + Math.sin(time * 1.25) * radius * 0.14;
+    const oy = cy + Math.cos(time * 0.95) * radius * 0.12;
+    const layer = ctx.createRadialGradient(ox, oy, 0, ox, oy, radius * 0.52);
+    layer.addColorStop(
+      0,
+      `hsla(${hue + 10}, ${Math.min(98, sat + 8)}%, ${Math.min(90, light + 18)}%, ${0.32 + volume * 0.28})`,
+    );
+    layer.addColorStop(1, "hsla(0, 0%, 0%, 0)");
+    ctx.fillStyle = layer;
+    ctx.beginPath();
+    ctx.arc(ox, oy, radius * 0.52, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
   if ((state === "thinking" || state === "loading") && !reduced) {
     const orbit = radius * (state === "loading" ? 0.22 : 0.28);
     const ox = cx + Math.cos(time * (state === "loading" ? 1.1 : 1.7) + spin) * orbit;

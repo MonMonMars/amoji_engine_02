@@ -101,7 +101,8 @@ describe("idle showcase wiring", () => {
     expect(grokCss).toMatch(/\.companion-chip__dot-canvas \{[\s\S]*inset:\s*0/);
     expect(grokCss).toMatch(/\.companion-chip__dot \{[\s\S]*?overflow:\s*hidden/);
     expect(html).toContain('role="img"');
-    expect(html).toContain("normalizeEmotionThemeKey");
+    expect(html).toContain("resolveMiniEmotionBallState");
+    expect(html).toMatch(/onTalking: \(on\) => \{[\s\S]*syncCompanionStatusUi\(\)/);
     expect(grokCss).not.toMatch(/animation:\s*miniBallGlow/);
     expect(grokCss).not.toMatch(/animation:\s*miniBallIdle/);
   });
