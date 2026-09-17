@@ -10,37 +10,53 @@ import { talkGesturePoseToBody } from "./companionTalkMotionBridge.js";
 export const COMPANION_POSE_LIBRARY_SCHEMA = "amoji.companionPoseLibrary.v1";
 
 /**
- * Normalized bone rotations that drop this VRM rig from bind T-pose to A-pose rest.
+ * Normalized bone rotations that drop this VRM rig from bind T-pose to a
+ * living stand: A-pose hang, elbows bent, arms slightly forward of the thighs.
  * (0,0,0) on upper arms is horizontal T-pose — not arms-at-sides.
  */
 export const VRM_ARM_REST_ROTATIONS = Object.freeze({
-  leftUpperArm: { x: 0.12, y: 0, z: -1.42 },
-  rightUpperArm: { x: 0.12, y: 0, z: 1.42 },
-  // Elbow bend baked into rest so hands hang naturally (not T-pose straight).
-  leftLowerArm: { x: 0.36, y: 0, z: 0.06 },
-  rightLowerArm: { x: 0.36, y: 0, z: -0.06 },
+  leftUpperArm: { x: 0.28, y: 0.1, z: -1.42 },
+  rightUpperArm: { x: 0.22, y: -0.08, z: 1.42 },
+  leftLowerArm: { x: 0.55, y: 0.14, z: 0.1 },
+  rightLowerArm: { x: 0.42, y: -0.1, z: -0.08 },
 });
 
-/** Standing leg rest — slight knee bend reads natural on most VRM rigs. */
+/** Contrapposto stand — weight on the left leg, free right knee bent. */
 export const VRM_LEG_REST_ROTATIONS = Object.freeze({
-  leftUpperLeg: { x: 0.02, y: 0, z: 0 },
-  rightUpperLeg: { x: 0.02, y: 0, z: 0 },
-  leftLowerLeg: { x: 0.06, y: 0, z: 0 },
-  rightLowerLeg: { x: 0.06, y: 0, z: 0 },
+  leftUpperLeg: { x: 0.04, y: 0.04, z: 0.03 },
+  rightUpperLeg: { x: 0.12, y: -0.05, z: -0.05 },
+  leftLowerLeg: { x: 0.1, y: 0, z: 0 },
+  rightLowerLeg: { x: 0.22, y: 0, z: 0 },
 });
 
-/** Natural standing — arms relaxed at sides (A-pose VRM). */
+/** Soft wrists so palms aren't T-pose flat. */
+export const VRM_HAND_REST_ROTATIONS = Object.freeze({
+  leftHand: { x: 0.16, y: 0.26, z: 0.2 },
+  rightHand: { x: 0.14, y: -0.22, z: -0.16 },
+});
+
+/** Slight foot turnout on the free leg. */
+export const VRM_FOOT_REST_ROTATIONS = Object.freeze({
+  leftFoot: { x: 0.04, y: 0.02, z: 0 },
+  rightFoot: { x: 0.1, y: -0.03, z: 0.02 },
+});
+
+/** Natural standing — bent elbows, cocked hip, not a stick figure. */
 export const REST_POSE = Object.freeze({
-  armLiftL: 0.06,
-  armLiftR: 0.06,
-  forearmL: 0.14,
-  forearmR: 0.14,
-  headX: 0,
-  headZ: 0,
-  spineX: 0.01,
-  chestX: -0.01,
-  hipZ: 0,
-  leanY: 0,
+  armLiftL: 0.12,
+  armLiftR: 0.07,
+  forearmL: 0.26,
+  forearmR: 0.2,
+  headX: -0.015,
+  headZ: 0.02,
+  spineX: 0.018,
+  chestX: -0.012,
+  hipZ: 0.055,
+  leanY: 0.035,
+  upperLegL: 0.02,
+  upperLegR: 0.06,
+  lowerLegL: 0.05,
+  lowerLegR: 0.12,
 });
 
 /** Mic on / waiting — attentive but arms stay down (humans don't raise arms to listen). */
@@ -129,6 +145,22 @@ export function clampArmPose(pose) {
   const out = { ...pose };
   const maxLift = 0.14;
   const maxFore = 0.12;
+  if ("armLiftL" in out) out.armLiftL = Math.min(maxLift, Math.max(0, out.armLiftL));
+  if ("armLiftR" in out) out.armLiftR = Math.min(maxLift, Math.max(0, out.armLiftR));
+  if ("forearmL" in out) out.forearmL = Math.min(maxFore, Math.max(0, out.forearmL ?? 0));
+  if ("forearmR" in out) out.forearmR = Math.min(maxFore, Math.max(0, out.forearmR ?? 0));
+  return out;
+}
+
+/**
+ * Idle stand may bend elbows and shift weight — talk-gesture clampArmPose
+ * is too tight and made limbs look glued to the sides.
+ * @param {Record<string, number>} pose
+ */
+export function clampIdleArmPose(pose) {
+  const out = { ...pose };
+  const maxLift = 0.34;
+  const maxFore = 0.52;
   if ("armLiftL" in out) out.armLiftL = Math.min(maxLift, Math.max(0, out.armLiftL));
   if ("armLiftR" in out) out.armLiftR = Math.min(maxLift, Math.max(0, out.armLiftR));
   if ("forearmL" in out) out.forearmL = Math.min(maxFore, Math.max(0, out.forearmL ?? 0));
