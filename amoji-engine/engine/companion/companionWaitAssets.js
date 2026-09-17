@@ -3,10 +3,10 @@
  */
 import {
   ACTION_COMBOS,
+  IDLE_LIFE_CLIP_POOL,
   IDLE_SHOWCASE_POOL,
   SHOWCASE_SEQUENCE_POOL,
 } from "./companionActionChoreography.js";
-import { BOOT_IDLE_BODY_MOTION_IDS } from "./companionIdleMotionPreload.js";
 import { buildVrmExpressionBlend } from "./companionContentMotion.js";
 import {
   BUNDLED_MOTION_IDS,
@@ -70,7 +70,7 @@ export const WAIT_POSES_BY_PHASE = Object.freeze({
     "stretch",
     "nod",
   ],
-  idle: BOOT_IDLE_BODY_MOTION_IDS,
+  idle: IDLE_LIFE_CLIP_POOL,
   ready: ["wave", "celebrate", "nod", "cheer", "dab", "clap"],
 });
 
@@ -265,7 +265,7 @@ export function collectWaitPreloadExpressionProfiles() {
 
 /** Idle-only motion ids for targeted boot preload. */
 export function collectIdlePreloadMotionIds() {
-  return [...IDLE_SHOWCASE_POOL];
+  return [...IDLE_LIFE_CLIP_POOL];
 }
 
 /** Unique motion ids used while waiting / idling — install at boot when possible. */

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   ACTION_COMBOS,
+  IDLE_LIFE_CLIP_POOL,
   buildActionSequence,
   buildShowcaseSequence,
   isShowcaseRequest,
@@ -24,6 +25,25 @@ describe("companionActionChoreography", () => {
     expect(shouldChainAction("dance")).toBe(true);
     expect(shouldChainAction("wave")).toBe(true);
     expect(shouldChainAction("shy")).toBe(false);
+  });
+
+  it("keeps default idle life on the calm library set, not kungfu showcase", () => {
+    expect(IDLE_LIFE_CLIP_POOL).toEqual([
+      "wave",
+      "thinking",
+      "nod",
+      "bow",
+      "shrug",
+      "peace",
+      "stretch",
+    ]);
+    expect(IDLE_LIFE_CLIP_POOL).not.toContain("spin");
+    expect(IDLE_LIFE_CLIP_POOL).not.toContain("kungfu");
+    expect(IDLE_LIFE_CLIP_POOL).not.toContain("zombie");
+    const first = pickIdleShowcase(null, IDLE_LIFE_CLIP_POOL);
+    const second = pickIdleShowcase(first, IDLE_LIFE_CLIP_POOL);
+    expect(IDLE_LIFE_CLIP_POOL).toContain(first);
+    expect(second).not.toBe(first);
   });
 
   it("avoids repeating the same idle showcase move", () => {

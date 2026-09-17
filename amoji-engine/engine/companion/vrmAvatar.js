@@ -881,7 +881,10 @@ export async function createVrmAvatar(opts) {
     if (vrmaAction && !vrmaPlaying && !vrmaPending) {
       restoreAfterVrma();
     }
-    const libraryMotion = vrmaPlaying || vrmaPending;
+    const libraryMotion =
+      (vrmaPlaying || vrmaPending) &&
+      vrmaAction !== "idle" &&
+      vrmaAction !== "relax";
     const activeMotion = vrmaPlaying || vrmaPending
       ? vrmaAction
       : bodyMotion.currentAction;
@@ -1107,12 +1110,20 @@ export async function createVrmAvatar(opts) {
       return motionPlayer.warmClip(actionId);
     },
     resetIdleLife(now) {
+      vrmaPlayGen += 1;
+      vrmaPending = false;
+      motionPlayer.stop();
+      vrmaAction = null;
       return bodyMotion.resetIdleLife?.(now);
     },
     pulseIdleBeat(beat, now) {
       return bodyMotion.pulseIdleBeat?.(beat, now);
     },
     resetMotionClock(now) {
+      vrmaPlayGen += 1;
+      vrmaPending = false;
+      motionPlayer.stop();
+      vrmaAction = null;
       return bodyMotion.resetMotionClock?.(now);
     },
     get mouthOpen() {

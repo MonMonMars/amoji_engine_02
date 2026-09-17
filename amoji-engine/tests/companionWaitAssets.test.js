@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  collectIdlePreloadMotionIds,
   collectWaitPreloadExpressionProfiles,
   collectWaitPreloadMotionIds,
   pickWaitEmotion,
@@ -7,6 +8,7 @@ import {
   pickWaitPose,
   WAIT_POSES_BY_PHASE,
 } from "../engine/companion/companionWaitAssets.js";
+import { IDLE_LIFE_CLIP_POOL } from "../engine/companion/companionActionChoreography.js";
 
 describe("companionWaitAssets", () => {
   it("collects bundled and idle showcase motions for preload", () => {
@@ -23,7 +25,9 @@ describe("companionWaitAssets", () => {
     expect(WAIT_POSES_BY_PHASE.idle).toContain("peace");
     expect(WAIT_POSES_BY_PHASE.idle).toContain("wave");
     expect(WAIT_POSES_BY_PHASE.idle).toContain("nod");
+    expect(WAIT_POSES_BY_PHASE.idle).toContain("stretch");
     expect(WAIT_POSES_BY_PHASE.idle).not.toContain("spin");
+    expect(WAIT_POSES_BY_PHASE.idle).not.toContain("kungfu");
     expect(pickWaitPose("idle", 0)).toBeTruthy();
     expect(pickWaitEmotion("idle", 0, "idle")).toBe("neutral");
     expect(pickWaitEmotion("idle", 3, "idle")).toBe("neutral");
@@ -33,6 +37,10 @@ describe("companionWaitAssets", () => {
     expect(profile.nuance).toBe("none");
     expect(profile.blend).toBeTruthy();
     expect(pickWaitPose("avatar-load", 0)).toBe("wave");
+  });
+
+  it("preloads the calm idle life pool rather than the kungfu showcase", () => {
+    expect(collectIdlePreloadMotionIds()).toEqual([...IDLE_LIFE_CLIP_POOL]);
   });
 
   it("collects expression profiles for boot warm-up", () => {
