@@ -8,9 +8,9 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji · Companion</title>
     <script>
-      window.__amojiBuild = "2026-09-17-v194-no-emoji-express";
+      window.__amojiBuild = "2026-09-17-v195-voice-emotion";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-17-v194-no-emoji-express"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-17-v195-voice-emotion"></script>
     <link
       rel="prefetch"
       href="/prototypes/assets/companion-char-nova.png"
@@ -329,8 +329,8 @@
       media="print"
       onload="this.media='all'"
     />
-    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-17-v194-no-emoji-express" />
-    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-17-v194-no-emoji-express" />
+    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-17-v195-voice-emotion" />
+    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-17-v195-voice-emotion" />
     <noscript>
       <link
         href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap"
@@ -3806,19 +3806,19 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-17-v194-no-emoji-express",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-17-v195-voice-emotion",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-17-v194-no-emoji-express",
-          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-17-v194-no-emoji-express"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-17-v195-voice-emotion",
+          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-17-v195-voice-emotion"
         }
       }
     </script>
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v194-no-emoji-express"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v195-voice-emotion"
     />
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-17-v194-no-emoji-express"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v194-no-emoji-express"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-17-v195-voice-emotion"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v195-voice-emotion"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;
@@ -4498,10 +4498,14 @@
         analyzeCompanionReply,
         analyzeStreamingReply,
         analyzeUserInput,
+        buildVrmExpressionBlend,
         formatReplyForDisplay,
         isUserStopCommand,
       } = contentMotionMod;
-      const { resolveChunkTtsPerformance } = ttsProsodyMod;
+      const {
+        resolveChunkTtsPerformance,
+        resolveVoicePerformanceFromReply,
+      } = ttsProsodyMod;
       const { startPerformancePreload, primeBodyMotionPoses } =
         performancePreloadMod;
       const {
@@ -6124,21 +6128,33 @@
         onSpeakExpression: (face) => {
           if (!face?.unit) return;
           feedAssistantEcho(face.unit);
+          const baseEmotion =
+            face.emotion || speakContent?.emotion || speakEmotion || "neutral";
+          const baseNuance =
+            face.nuance || speakContent?.nuance || "none";
           const analysis =
             avatar.reactToSpeechChunk?.(face.unit, {
-              emotion: speakContent.emotion || speakEmotion,
-              nuance: speakContent.nuance || "none",
+              emotion: baseEmotion,
+              nuance: baseNuance,
             }) || face;
-          if (analysis?.emotion) {
-            speakEmotion = analysis.emotion;
-            setEmotionPill(analysis.emotion);
-            micUi.setEmotion(analysis.emotion, analysis.nuance || "none");
-            emotionBall.setEmotion(analysis.emotion, analysis.nuance || "none");
+          const emotion = analysis?.emotion || baseEmotion;
+          const nuance = analysis?.nuance || baseNuance;
+          avatar.applyExpressionProfile?.({
+            emotion,
+            nuance,
+            blend:
+              analysis?.expressionBlend ||
+              buildVrmExpressionBlend(emotion, nuance),
+          }) ?? avatar.setEmotion?.(emotion);
+          speakEmotion = emotion;
+          setEmotionPill(emotion);
+          micUi.setEmotion(emotion, nuance);
+          emotionBall.setEmotion(emotion, nuance);
+          if (analysis?.talkStyle || face.talkStyle) {
+            avatar.setTalkStyle?.(analysis?.talkStyle || face.talkStyle);
           }
-          if (analysis?.talkStyle) avatar.setTalkStyle?.(analysis.talkStyle);
-          if (analysis?.speechEnergy != null) {
-            avatar.setTalkEnergy?.(analysis.speechEnergy);
-          }
+          const energy = analysis?.speechEnergy ?? face.speechEnergy;
+          if (energy != null) avatar.setTalkEnergy?.(energy);
         },
         onSpeakChunk: (chunk) => {
           feedAssistantEcho(chunk);
@@ -6658,7 +6674,12 @@
         speakEmotion = "happy";
         status.speaking();
         armBargeIn();
-        void voice.speak(line, "happy").finally(() => {
+        void voice.speak(line, {
+          emotion: "happy",
+          nuance: "excited",
+          talkStyle: "celebrate",
+          speechEnergy: 0.82,
+        }).finally(() => {
           disarmBargeIn();
           if (!busy) {
             avatar.setEmotion?.("neutral");
@@ -6700,7 +6721,12 @@
           speakEmotion = feel;
           status.speaking();
           armBargeIn();
-          void voice.speak(line, feel).finally(() => {
+          void voice.speak(line, {
+            emotion: feel,
+            nuance: refused ? "none" : "excited",
+            talkStyle: refused ? "soft" : "celebrate",
+            speechEnergy: refused ? 0.55 : 0.8,
+          }).finally(() => {
             disarmBargeIn();
             if (!busy && !voice.micOn) status.idle();
           });
@@ -6711,7 +6737,12 @@
           avatar.setEmotion?.("sad");
           setEmotionPill("sad");
           speakEmotion = "sad";
-          void voice.speak(line, "sad");
+          void voice.speak(line, {
+            emotion: "sad",
+            nuance: "stress",
+            talkStyle: "soft",
+            speechEnergy: 0.48,
+          });
         },
       });
       window.__amojiTreats = treatDock;
@@ -6895,9 +6926,17 @@
           if (!streamSpeakStarted) {
             streamSpeakStarted = true;
             waitAct?.stop();
-            voice.beginStreamSpeak?.(streamEmotion, {
-              pauseCapture: !keepMicForBarge,
-            });
+            voice.beginStreamSpeak?.(
+              {
+                emotion: streamEmotion,
+                nuance: streamNuance,
+                talkStyle: analysis.talkStyle,
+                speechEnergy: analysis.speechEnergy,
+                lang: isEnglish ? "en" : "yue",
+                characterId,
+              },
+              { pauseCapture: !keepMicForBarge },
+            );
             avatar.setThinking?.(false);
             avatar.setTalking?.(true);
             status.speaking();
@@ -6935,12 +6974,14 @@
             markReplyEmotionHold(emotion);
             feedAssistantEcho(finalReply);
             status.speaking();
-            await voice.speak(finalReply, {
-              emotion,
-              nuance: content.nuance || "excited",
-              talkStyle: content.talkStyle || "celebrate",
-              speechEnergy: content.speechEnergy ?? 0.78,
-            });
+            await voice.speak(
+              finalReply,
+              resolveVoicePerformanceFromReply(rawReply, {
+                userText: cleaned,
+                isEnglish,
+                characterId,
+              }),
+            );
             return;
           }
 
@@ -7030,12 +7071,15 @@
             await voice.finishStreamSpeak?.();
           } else {
             status.speaking();
-            await voice.speak(finalReply, {
-              emotion,
-              nuance: content.nuance || "none",
-              talkStyle: content.talkStyle || "explain",
-              speechEnergy: content.speechEnergy ?? 0.68,
-            });
+            await voice.speak(
+              finalReply,
+              resolveVoicePerformanceFromReply(result.raw || reply, {
+                userText: cleaned,
+                moodHint: result.emotion || null,
+                isEnglish,
+                characterId,
+              }),
+            );
           }
         } catch (err) {
           if (activeTurn?.aborted || err?.name === "AbortError") {

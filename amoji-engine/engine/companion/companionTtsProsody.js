@@ -6,11 +6,12 @@
  * ChatGPT Advanced Voice: pitch variation, pace changes, never a GPS narrator.
  */
 import { analyzeSpeechChunk, inferContentNuance } from "./companionContentMotion.js";
+import { resolveTurnPerformance } from "./companionActionResolve.js";
 import { characterProsodyBias } from "./companionCharacterCatalog.js";
 import { voiceProfileProsodyBias } from "./companionVoiceProfiles.js";
 import { inferExpressionFromText } from "../face/emotionExpression.js";
 
-export const COMPANION_TTS_PROSODY_SCHEMA = "amoji.companionTtsProsody.v2";
+export const COMPANION_TTS_PROSODY_SCHEMA = "amoji.companionTtsProsody.v3";
 
 /** ChatGPT Advanced Voice — clause-level prosody within one reply. */
 export const CHATGPT_STYLE_TTS = Object.freeze({
@@ -463,6 +464,65 @@ export function resolveCompanionTtsProsody(opts = {}) {
  * @param {string | null | undefined} chunk
  * @param {{ emotion?: string, nuance?: string }} [hints]
  */
+/**
+ * Full voice performance from raw LLM reply (mood/nuance tags + text cues).
+ * Use for TTS — never rely on emoji; tags drive pitch, pace, and cloud instruct.
+ * @param {string | null | undefined} rawReply
+ * @param {{
+ *   userText?: string,
+ *   moodHint?: string | null,
+ *   lang?: string,
+ *   isEnglish?: boolean,
+ *   characterId?: string,
+ * }} [opts]
+ */
+export function resolveVoicePerformanceFromReply(rawReply, opts = {}) {
+  const turn = resolveTurnPerformance(
+    opts.userText || "",
+    rawReply,
+    opts.moodHint ?? null,
+  );
+  const lang =
+    opts.lang ||
+    (opts.isEnglish ? "en" : "yue");
+  return enrichTtsPerformance(
+    {
+      emotion: turn.emotion || "neutral",
+      nuance: turn.nuance || "none",
+      talkStyle: turn.talkStyle || "explain",
+      speechEnergy: turn.speechEnergy ?? 0.68,
+      lang,
+      characterId: opts.characterId,
+      singleUtterance: false,
+      expressiveClauses: true,
+    },
+    turn.reply,
+  );
+}
+
+/**
+ * @param {ReturnType<typeof analyzeSpeechChunk>} analysis
+ * @param {{ lang?: string, characterId?: string, isEnglish?: boolean }} [opts]
+ */
+export function voicePerformanceFromAnalysis(analysis, opts = {}) {
+  const lang =
+    opts.lang ||
+    (opts.isEnglish ? "en" : "yue");
+  return enrichTtsPerformance(
+    {
+      emotion: analysis?.emotion || "neutral",
+      nuance: analysis?.nuance || "none",
+      talkStyle: analysis?.talkStyle || "explain",
+      speechEnergy: analysis?.speechEnergy ?? 0.68,
+      lang,
+      characterId: opts.characterId,
+      singleUtterance: false,
+      expressiveClauses: true,
+    },
+    "",
+  );
+}
+
 export function resolveChunkTtsPerformance(chunk, hints = {}) {
   const analysis = analyzeSpeechChunk(chunk, hints);
   const prosody = resolveCompanionTtsProsody({

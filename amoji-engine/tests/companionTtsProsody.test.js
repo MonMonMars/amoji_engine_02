@@ -8,7 +8,10 @@ import {
   normalizeTtsPerformance,
   resolveChunkTtsPerformance,
   resolveCompanionTtsProsody,
+  resolveVoicePerformanceFromReply,
+  voicePerformanceFromAnalysis,
 } from "../engine/companion/companionTtsProsody.js";
+import { analyzeSpeechChunk } from "../engine/companion/companionContentMotion.js";
 
 describe("companionTtsProsody", () => {
   it("boosts happy excited speech above neutral", () => {
@@ -165,5 +168,51 @@ describe("companionTtsProsody", () => {
     });
     expect(perf.singleUtterance).toBe(false);
     expect(perf.expressiveClauses).toBe(true);
+  });
+
+  it("maps [mood] tags from LLM reply to voice performance", () => {
+    const happy = resolveVoicePerformanceFromReply(
+      "哇好開心呀！ [mood:happy]",
+      { isEnglish: false, characterId: "amoji" },
+    );
+    const sad = resolveVoicePerformanceFromReply(
+      "我陪住你… [mood:sad] [nuance:stress]",
+      { userText: "今日好唔開心", isEnglish: false },
+    );
+    expect(happy.emotion).toBe("happy");
+    expect(happy.nuance).toBe("excited");
+    expect(happy.talkStyle).toBe("celebrate");
+    expect(happy.singleUtterance).toBe(false);
+    expect(happy.expressiveClauses).toBe(true);
+    expect(sad.emotion).toBe("sad");
+    expect(sad.nuance).toBe("stress");
+    expect(sad.talkStyle).toBe("soft");
+    const happyProsody = resolveCompanionTtsProsody({
+      ...happy,
+      text: happy.text,
+      characterId: "amoji",
+    });
+    const sadProsody = resolveCompanionTtsProsody({
+      ...sad,
+      text: sad.text,
+    });
+    expect(happyProsody.browser.rate).toBeGreaterThan(sadProsody.browser.rate);
+    expect(happyProsody.speed).toBeGreaterThan(sadProsody.speed);
+    expect(happyProsody.instruct).toMatch(/delighted|開心|Smile/i);
+    expect(sadProsody.instruct).toMatch(/empathy|陪|Soft/i);
+  });
+
+  it("builds voice performance from speech chunk analysis", () => {
+    const analysis = analyzeSpeechChunk("哈哈好開心呀！", {
+      emotion: "happy",
+      nuance: "excited",
+    });
+    const perf = voicePerformanceFromAnalysis(analysis, {
+      isEnglish: false,
+      characterId: "amoji",
+    });
+    expect(perf.emotion).toBe("happy");
+    expect(perf.expressiveClauses).toBe(true);
+    expect(perf.lang).toBe("yue");
   });
 });

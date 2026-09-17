@@ -33,6 +33,7 @@ import {
 } from "./companionExpressiveTts.js";
 import { expressionAtAudioProgress } from "./companionSpeechFace.js";
 import { characterGender } from "./companionCharacterCatalog.js";
+import { formatReplyForDisplay } from "./companionActionMotion.js";
 import {
   buildCloudTtsRequestBody,
   CHATGPT_STYLE_TTS,
@@ -465,7 +466,7 @@ export function createCompanionVoice(opts = {}) {
     !keepMicDuringSpeak || shouldPauseMicDuringTts();
   /** Serialize TTS so greeting + replies do not overlap or cut each other off. */
   let speakChain = Promise.resolve();
-  /** @type {{ emotion: string, closed: boolean, capturePaused: boolean } | null} */
+  /** @type {{ performance: ReturnType<typeof normalizeTtsPerformance>, closed: boolean, capturePaused: boolean } | null} */
   let streamSession = null;
   /** @type {ReturnType<typeof setInterval> | null} */
   let mouthTimer = null;
@@ -901,9 +902,7 @@ export function createCompanionVoice(opts = {}) {
   };
 
   const cleanSpeakText = (text) =>
-    String(text || "")
-      .replace(/\s*\[action:\w+\]\s*/gi, " ")
-      .replace(/\s*\[mood:\w+\]\s*/gi, " ")
+    formatReplyForDisplay(String(text || ""))
       .replace(/[*_`#>/\\]/g, " ")
       .replace(/\s+/g, " ")
       .trim();
@@ -1123,7 +1122,7 @@ export function createCompanionVoice(opts = {}) {
    * @param {string} [defaultEmotion]
    * @param {{ pauseCapture?: boolean }} [sessionOpts]
    */
-  const beginStreamSpeak = (defaultEmotion = "neutral", sessionOpts = {}) => {
+  const beginStreamSpeak = (defaultPerformance = "neutral", sessionOpts = {}) => {
     if (streamSession) {
       streamSession.closed = true;
       streamSession = null;
@@ -1132,8 +1131,9 @@ export function createCompanionVoice(opts = {}) {
     speakChain = Promise.resolve();
     const pauseMic =
       sessionOpts.pauseCapture !== false || shouldPauseMicDuringTts();
+    const perf = normalizeTtsPerformance(defaultPerformance);
     streamSession = {
-      emotion: defaultEmotion,
+      performance: { ...CHATGPT_STYLE_TTS, ...perf },
       closed: false,
       capturePaused: pauseMic,
     };
@@ -1155,9 +1155,13 @@ export function createCompanionVoice(opts = {}) {
     }
     const clean = cleanSpeakText(text);
     if (!clean) return Promise.resolve({ ok: false, reason: "empty" });
-    const perf = normalizeTtsPerformance(
-      performance,
-      streamSession.emotion || "neutral",
+    const base = streamSession.performance || { emotion: "neutral" };
+    const perf = enrichTtsPerformance(
+      {
+        ...base,
+        ...normalizeTtsPerformance(performance, base.emotion || "neutral"),
+      },
+      clean,
     );
     const next = speakChain.then(() => {
       if (!streamSession) {
