@@ -8,9 +8,9 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji · Companion</title>
     <script>
-      window.__amojiBuild = "2026-09-17-v162-camera-reset";
+      window.__amojiBuild = "2026-09-17-v163-caption-layer";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-17-v162-camera-reset"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-17-v163-caption-layer"></script>
     <link
       rel="prefetch"
       href="/prototypes/assets/companion-char-nova.png"
@@ -219,11 +219,11 @@
         top: auto;
         display: flex;
         flex-direction: column;
-        z-index: 90;
-        isolation: isolate;
         pointer-events: none;
       }
       .chat-column {
+        position: relative;
+        z-index: 10050;
         flex: 1;
         min-height: 0;
         display: flex;
@@ -232,6 +232,8 @@
         pointer-events: none;
       }
       .transcript {
+        position: relative;
+        z-index: 10050;
         flex: 1;
         min-height: 0;
         overflow-y: auto;
@@ -321,7 +323,7 @@
       media="print"
       onload="this.media='all'"
     />
-    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-17-v162-camera-reset" />
+    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-17-v163-caption-layer" />
     <noscript>
       <link
         href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap"
@@ -688,8 +690,6 @@
         right: 0;
         bottom: 0;
         top: auto;
-        z-index: 90;
-        isolation: isolate;
         display: flex;
         flex-direction: column;
         justify-content: flex-end;
@@ -706,6 +706,8 @@
       }
 
       .chat-column {
+        position: relative;
+        z-index: 10050;
         flex: 0 0 auto;
         display: flex;
         flex-direction: column;
@@ -718,6 +720,8 @@
       }
 
       .transcript {
+        position: relative;
+        z-index: 10050;
         pointer-events: auto;
         flex: 0 1 auto;
         max-height: min(36vh, 300px);
@@ -747,7 +751,7 @@
       }
       body.conversation-ui .transcript .msg-row {
         position: relative;
-        z-index: 95;
+        z-index: 10051;
         pointer-events: auto;
       }
 
@@ -3564,19 +3568,19 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-17-v162-camera-reset",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-17-v163-caption-layer",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-17-v162-camera-reset",
-          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-17-v162-camera-reset"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-17-v163-caption-layer",
+          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-17-v163-caption-layer"
         }
       }
     </script>
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v162-camera-reset"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v163-caption-layer"
     />
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-17-v162-camera-reset"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v162-camera-reset"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-17-v163-caption-layer"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v163-caption-layer"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;
@@ -4280,7 +4284,9 @@
       } = actionChoreographyMod;
       const { resolveTurnPerformance, resolveStreamingAction } =
         actionResolveMod;
-      const progressDock = createCompanionProgressDock({ root: document.body });
+      const progressDock = createCompanionProgressDock({
+        root: document.querySelector(".stage") || document.body,
+      });
       /** @type {ReturnType<typeof createCompanionWaitAct> | null} */
       let waitAct = null;
       /** @type {Map<string, Promise<unknown>>} */
@@ -6356,7 +6362,7 @@
       });
 
       const treatDock = createCompanionTreatDock({
-        root: document.body,
+        root: document.querySelector(".stage") || document.body,
         isEnglish: () => isEnglish,
         getAvatar: () => avatar,
         getDropRect: () => {
