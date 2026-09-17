@@ -81,26 +81,19 @@ export function sampleIdleBodyMotion(elapsedSec, opts = {}) {
  */
 export function sampleIdleExpressionBlend(elapsedSec, emotion = "neutral") {
   const t = elapsedSec;
-  const breath = Math.sin(t * 0.52) * 0.5 + 0.5;
   const flutter = Math.sin(t * 0.29 + 1.8) * 0.5 + 0.5;
   const e = String(emotion || "neutral").toLowerCase();
-  // VRM "Relaxed" morphs droop eyelids — ramp in so the first frame stays awake.
-  const awakeRamp = Math.min(1, Math.max(0, (t - 0.12) / 1.35));
-
   /** @type {Record<string, number>} */
-  const blend = {
-    Relaxed: (0.24 + breath * 0.34) * awakeRamp,
-  };
+  const blend = {};
 
   if (e === "happy" || e === "neutral") {
-    blend.Happy = 0.12 + flutter * 0.28;
-  } else if (e === "thinking") {
-    blend.Relaxed = (0.34 + breath * 0.2) * awakeRamp;
+    blend.Happy = 0.04 + flutter * 0.03;
   } else if (e === "sad") {
-    blend.Sad = 0.55 + breath * 0.08;
-    blend.Relaxed = 0.25 * awakeRamp;
+    blend.Sad = 0.32 + Math.sin(t * 0.52) * 0.05;
   } else if (e === "surprised") {
-    blend.Surprised = 0.15 + flutter * 0.12;
+    blend.Surprised = 0.08 + flutter * 0.05;
+  } else if (e === "angry") {
+    blend.Angry = 0.28;
   }
 
   return blend;

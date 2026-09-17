@@ -118,8 +118,7 @@ export function buildVrmExpressionBlend(emotion, nuance) {
       blend.Happy = 0.98;
       break;
     case "thinking":
-      blend.Relaxed = 0.28;
-      blend.Surprised = 0.12;
+      blend.Surprised = 0.1;
       break;
     case "sad":
       blend.Sad = 0.92;
@@ -132,30 +131,27 @@ export function buildVrmExpressionBlend(emotion, nuance) {
       blend.Angry = 0.94;
       break;
     default:
-      blend.Happy = 0.22;
+      blend.Happy = 0.06;
       break;
   }
 
   switch (n) {
     case "shy":
-      blend.Happy = Math.min(blend.Happy ?? 0.35, 0.42);
-      blend.Relaxed = Math.max(blend.Relaxed ?? 0.35, 0.55);
+      blend.Happy = Math.min(blend.Happy ?? 0.35, 0.28);
       break;
     case "love":
       blend.Happy = Math.max(blend.Happy ?? 0.7, 0.72);
-      blend.Relaxed = Math.max(blend.Relaxed ?? 0.25, 0.38);
       break;
     case "curious":
-      blend.Relaxed = Math.max(blend.Relaxed ?? 0.4, 0.52);
+      blend.Surprised = Math.max(blend.Surprised ?? 0, 0.12);
       break;
     case "excited":
-      blend.Happy = Math.max(blend.Happy ?? 0.75, 0.98);
-      blend.Surprised = Math.max(blend.Surprised ?? 0, 0.48);
+      blend.Happy = Math.max(blend.Happy ?? 0.75, 0.92);
+      blend.Surprised = Math.max(blend.Surprised ?? 0, 0.18);
       break;
     case "stress":
       blend.Sad = Math.max(blend.Sad ?? 0, 0.22);
       blend.Angry = Math.max(blend.Angry ?? 0, 0.15);
-      blend.Relaxed = Math.max(blend.Relaxed ?? 0, 0.2);
       break;
     default:
       break;
