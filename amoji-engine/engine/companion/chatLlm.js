@@ -180,14 +180,13 @@ export function createCompanionChat(opts = {}) {
       if (webMeta.searched || !fetchImpl || opts.webSearch === false) return;
       try {
         const web = await fetchWebContextForChat(text, fetchImpl, {
-          basicMode: true,
           viaApi: true,
         });
         webMeta = { searched: Boolean(web.searched), source: web.source || null };
         const webBlock = web.context
-          ? `${web.context}\nUse this web snapshot when helpful. If empty or uncertain, say you could not verify online.`
+          ? `${web.context}\nUse a fact from this snapshot only if it answers this turn. Ignore it if unrelated. Do not paste it.`
           : web.searched
-            ? "Web search returned no useful snapshot. Say you could not verify online for live/current facts."
+            ? "Live lookup returned nothing useful. Chat normally unless they asked for a current fact."
             : "";
         if (webBlock) {
           effectiveSystem = [systemPrompt, actionHint, webBlock]
@@ -488,8 +487,7 @@ function isSmartProxyMode(mode) {
     m === "online" ||
     m.startsWith("online+") ||
     m === "local+web" ||
-    m === "proxy" ||
-    m === "local-fallback"
+    m === "proxy"
   );
 }
 

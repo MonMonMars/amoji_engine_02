@@ -6,14 +6,59 @@ export const COMPANION_WEB_SEARCH_SCHEMA = "amoji.companionWebSearch.v1";
 const SEARCH_UA = "AmojiCompanion/1.0 (web-search)";
 const SEARCH_TIMEOUT_MS = 7000;
 
-const SEARCH_HINT_RE =
-  /天氣|天气|weather|新聞|新闻|news|今日|今天|tonight|today|而家|現在|现在|now|current|latest|幾時|几时|when is|what time|几錢|幾錢|價格|价格|price|cost|搜|查下|查詢|查询|google|網上|网上|online|who is|what is|什麼是|什么是|係咩|係乜|202[4-9]|breaking|headline|股價|股价|stock|比分|score|幾多|多少|邊度|边度|邊個|边个|點樣|点样|為何|為什麼|为什么|why|how much|where|when|最新|資料|信息|资讯|百科|wiki|lookup|look up|search/i;
+/** Live / lookup facts only — not greetings, 今日點呀, or generic 咩/how questions. */
+const LIVE_FACT_RE =
+  /天氣|天气|weather|溫度|温度|气温|幾度|几度|下雨|雨不雨|forecast|觀測|观测|天文台|新聞|新闻|\bnews\b|headline|breaking|股價|股价|\bstock\b|比分|\bscore\b|幾錢|几錢|價格|价格|\bprices?\b|\bcost\b|匯率|汇率|最新消息/i;
 
-const QUESTION_RE =
-  /[?？]|什麼|什么|咩|乜|幾|几|多少|邊度|边度|邊個|边个|點樣|点样|為何|為什麼|为什么|點解|点解|what|who|when|where|why|how|最新|幾時|tell me about|look up|search for/i;
+const LOOKUP_RE =
+  /搜(?:索|尋|一下)?|查下|查詢|查询|\bgoogle\b|網上查|网上查|\bwiki\b|百科|\blookup\b|look\s*up|\bsearch(?:\s+for)?\b|tell me about|介紹一下|介绍一下|什麼是|什么是|係咩嚟|係乜嚟/i;
+
+const DEFINE_EN_RE =
+  /\b(?:who\s+is|who'?s|what\s+is|what'?s|what\s+are|how\s+many|how\s+much|where\s+is|when\s+is|what\s+time)\b/i;
+
+const CANTONESE_FACT_RE =
+  /人口|面積|面积|首都|總統|总统|首相|匯率|汇率|\bGDP\b|幾多人|多少人|邊個係|边个是/i;
 
 const WEATHER_RE =
   /天氣|天气|weather|溫度|温度|气温|幾度|几度|下雨|雨不雨|forecast|觀測|观测|天文台/i;
+
+const LATIN_STOP = new Set([
+  "the",
+  "a",
+  "an",
+  "is",
+  "are",
+  "was",
+  "were",
+  "what",
+  "who",
+  "when",
+  "where",
+  "why",
+  "how",
+  "today",
+  "tonight",
+  "now",
+  "please",
+  "can",
+  "you",
+  "me",
+  "in",
+  "of",
+  "for",
+  "and",
+  "or",
+  "to",
+  "it",
+  "this",
+  "that",
+  "my",
+  "your",
+  "latest",
+  "current",
+  "about",
+  "tell",
+]);
 
 /**
  * @param {string | null | undefined} message
@@ -21,7 +66,13 @@ const WEATHER_RE =
 export function needsWebSearch(message) {
   const text = String(message || "").trim();
   if (!text) return false;
-  return SEARCH_HINT_RE.test(text) || QUESTION_RE.test(text);
+  return (
+    WEATHER_RE.test(text) ||
+    LIVE_FACT_RE.test(text) ||
+    LOOKUP_RE.test(text) ||
+    DEFINE_EN_RE.test(text) ||
+    CANTONESE_FACT_RE.test(text)
+  );
 }
 
 /**
@@ -32,9 +83,51 @@ export function shouldTryWebSearch(message, opts = {}) {
   const text = String(message || "").trim();
   if (!text) return false;
   if (opts.force) return true;
-  if (needsWebSearch(text)) return true;
-  if (!opts.basicMode) return false;
-  return QUESTION_RE.test(text);
+  // basicMode must not expand search to every question — that stuffed
+  // unrelated DDG HTML into casual chat and made the LLM sound broken.
+  return needsWebSearch(text);
+}
+
+/**
+ * Content words worth matching against a search snapshot.
+ * @param {string} query
+ */
+export function significantSearchTokens(query) {
+  const text = String(query || "");
+  const out = [];
+  for (const word of text.match(/[a-z0-9]{3,}/gi) || []) {
+    if (!LATIN_STOP.has(word.toLowerCase())) out.push(word);
+  }
+  const cjk = text.replace(
+    /今日|今天|而家|現在|现在|今晚|點呀|点呀|唔該|唔该|請|请|幫我|帮我|[?？！!。，,]/g,
+    "",
+  );
+  for (const run of cjk.match(/[\u4e00-\u9fff]{2,}/g) || []) {
+    if (!out.includes(run)) out.push(run);
+    for (let i = 0; i < run.length - 1; i += 1) {
+      const gram = run.slice(i, i + 2);
+      if (!out.includes(gram)) out.push(gram);
+    }
+  }
+  return out;
+}
+
+/**
+ * Drop DDG/wiki dumps that do not answer this turn.
+ * @param {string} query
+ * @param {string} summary
+ * @param {string | null} [source]
+ */
+export function snapshotLooksUseful(query, summary, source = null) {
+  const s = String(summary || "").trim();
+  if (s.length < 12) return false;
+  if (source === "wttr" || (WEATHER_RE.test(query) && /°\s*[cf]|humidity|rain|sunny|cloud|weather/i.test(s))) {
+    return true;
+  }
+  const tokens = significantSearchTokens(query);
+  if (!tokens.length) return true;
+  const lower = s.toLowerCase();
+  return tokens.some((token) => lower.includes(token.toLowerCase()));
 }
 
 /**
@@ -298,14 +391,11 @@ export async function fetchWebContextForChat(message, fetchImpl = fetch, opts = 
       if (res.ok) {
         const data = await res.json().catch(() => ({}));
         if (data?.summary) {
-          return {
-            searched: true,
-            context: [
-              "Web search snapshot (may be incomplete — cite uncertainty if unsure):",
-              String(data.summary),
-            ].join("\n"),
+          return packWebContext(message, {
+            ok: true,
+            summary: String(data.summary),
             source: data.source || "api",
-          };
+          });
         }
         if (data?.ok === false && data?.searched) {
           return { searched: true, context: "", source: data.source || null };
@@ -316,11 +406,22 @@ export async function fetchWebContextForChat(message, fetchImpl = fetch, opts = 
     }
   }
   const result = await searchWeb(message, fetchImpl);
-  if (!result.ok || !result.summary) {
-    return { searched: true, context: "", source: result.source };
+  return packWebContext(message, result);
+}
+
+/**
+ * @param {string} message
+ * @param {{ ok?: boolean, summary?: string, source?: string | null }} result
+ */
+function packWebContext(message, result) {
+  if (!result?.ok || !result.summary) {
+    return { searched: true, context: "", source: result?.source || null };
+  }
+  if (!snapshotLooksUseful(message, result.summary, result.source)) {
+    return { searched: true, context: "", source: result.source || null };
   }
   const context = [
-    "Web search snapshot (may be incomplete — cite uncertainty if unsure):",
+    "Optional web snapshot. Use a fact only if it answers THIS user turn. If unrelated, ignore it and chat normally. Never paste the snapshot as the whole reply:",
     result.summary,
   ].join("\n");
   return { searched: true, context, source: result.source };

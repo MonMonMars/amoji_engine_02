@@ -6,6 +6,7 @@ import {
   suggestClosestActions,
 } from "./companionActionIntent.js";
 import { inferActionFromUserText } from "./companionActionMotion.js";
+import { needsWebSearch, snapshotLooksUseful } from "./companionWebSearch.mjs";
 
 /** @type {Record<string, string>} */
 const LOCAL_ACTION_LINES = {
@@ -61,10 +62,18 @@ export function localCompanionReply(message, history = [], webContext = "") {
   const taggedAction = inferActionFromUserText(text);
   const webSnippet = String(webContext || "")
     .replace(/^Web search snapshot[^\n]*\n?/i, "")
+    .replace(/^Optional web snapshot[^\n]*\n?/i, "")
     .trim()
     .slice(0, 360);
-  if (webSnippet) {
-    return `${webSnippet}（網上資料，可能唔完全準） [mood:thinking]`;
+  const quoteWeb =
+    Boolean(webSnippet) &&
+    needsWebSearch(text) &&
+    snapshotLooksUseful(text, webSnippet);
+  if (quoteWeb) {
+    const isEnglish = /[a-z]/i.test(text) && !/[\u4e00-\u9fff]/.test(text);
+    return isEnglish
+      ? `${webSnippet} (from the web, may be incomplete) [mood:thinking]`
+      : `我上網睇過：${webSnippet} [mood:thinking]`;
   }
 
   if (isLikelyImpossibleAction(text)) {
