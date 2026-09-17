@@ -11,6 +11,7 @@ import {
   inspectExpressionHazard,
   inspectVrmFaceHazards,
   mouthVisemeWeight,
+  sampleEatMouthPulse,
   sampleTalkMouthPulse,
   TALK_HAPPY_MAX,
   TALK_JAW_OPEN_RAD,
@@ -65,6 +66,13 @@ describe("companionFaceRest", () => {
     expect(talkJawRotationX(0)).toBe(0);
     expect(talkJawRotationX(1)).toBeCloseTo(TALK_JAW_OPEN_RAD);
     expect(talkJawRotationX(0.5)).toBeGreaterThan(0.1);
+  });
+
+  it("pulses the mouth while eating even when not talking", () => {
+    expect(sampleEatMouthPulse(0, false)).toBe(0);
+    expect(sampleEatMouthPulse(180, true)).toBeGreaterThan(0.08);
+    expect(talkingMouthOpen(false, 0, 180, true)).toBeGreaterThan(0.08);
+    expect(talkingMouthOpen(false, 0.9, 180, false)).toBe(0);
   });
 
   it("drops Happy and Relaxed so idle lids stay open and the jaw stays shut", () => {

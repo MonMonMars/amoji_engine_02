@@ -62,6 +62,19 @@ describe("companionActionMotion", () => {
     expect(mid.armLiftL).toBeGreaterThan(0);
   });
 
+  it("samples a hand-to-mouth eat pose", () => {
+    const mid = sampleActionBodyPose("eat", 0.4, 0.4);
+    expect(mid.armLiftR).toBeGreaterThan(0.3);
+    expect(mid.forearmR).toBeGreaterThan(0.3);
+    expect(mid.headX).toBeGreaterThan(0.04);
+  });
+
+  it("samples a sip drink pose", () => {
+    const mid = sampleActionBodyPose("drink", 0.3, 0.3);
+    expect(mid.armLiftR).toBeGreaterThan(0.3);
+    expect(mid.headX).toBeLessThan(0);
+  });
+
   it("samples jump root bounce", () => {
     const mid = sampleActionRootMotion("jump", 0.5, 0.5);
     expect(mid.y).toBeGreaterThan(0);

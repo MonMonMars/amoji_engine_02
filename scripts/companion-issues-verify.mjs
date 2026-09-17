@@ -165,6 +165,47 @@ async function main() {
   );
   await page.waitForTimeout(2500);
 
+  const treatUi = await page.evaluate(() => {
+    const dock = document.getElementById("treat-dock");
+    const fab = document.getElementById("treat-fab");
+    window.__amojiTreats?.setOpen?.(true);
+    const sheet = document.getElementById("treat-sheet");
+    const bagCard = sheet?.querySelector(".treat-card--bag[data-treat-id='cake']");
+    const shopTab = sheet?.querySelector("[data-treat-tab='shop']");
+    shopTab?.click();
+    const shopCards = [...(sheet?.querySelectorAll(".treat-card--shop") || [])].map(
+      (el) => el.getAttribute("data-treat-id"),
+    );
+    window.__amojiTreats?.setOpen?.(false);
+    return {
+      dock: Boolean(dock),
+      fab: Boolean(fab),
+      coins: (document.getElementById("treat-coins")?.textContent || "").includes("🪙"),
+      shop: shopCards.includes("cake") && shopCards.includes("milk-tea"),
+      cakeInBag: Boolean(bagCard),
+      feed: typeof window.__amojiTreats?.feed === "function",
+    };
+  });
+  record(
+    "treat-shop-bag",
+    treatUi.dock && treatUi.fab && treatUi.coins && treatUi.shop && treatUi.cakeInBag && treatUi.feed,
+    JSON.stringify(treatUi),
+  );
+
+  const fed = await page.evaluate(() => {
+    const ok = window.__amojiTreats?.feed?.("cake", 200, 280);
+    return {
+      ok,
+      action: String(window.__amojiAvatar?.currentAction || ""),
+      eating: Boolean(window.__amojiAvatar?.eating),
+    };
+  });
+  record(
+    "treat-feed-eat-action",
+    fed.ok && (fed.action === "eat" || fed.eating),
+    JSON.stringify(fed),
+  );
+
   const afterNova = await page.evaluate(() => {
     const vrm = window.__amojiAvatar?.vrm;
     const bone = (name) => {
