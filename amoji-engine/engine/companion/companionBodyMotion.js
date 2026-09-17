@@ -49,6 +49,7 @@ import {
   REST_POSE,
   sampleVrmTalkPose,
   VRM_ARM_REST_ROTATIONS,
+  withElbowBend,
 } from "./companionPoseLibrary.js";
 
 export const COMPANION_BODY_SCHEMA = "amoji.companionBody.v1";
@@ -390,16 +391,8 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
     const restRl = armRestRotations.rightLowerArm;
     applyBoneRotation("leftUpperArm", restL);
     applyBoneRotation("rightUpperArm", restR);
-    applyBoneRotation("leftLowerArm", {
-      x: restLl.x + (pose.forearmL ?? REST_POSE.forearmL ?? 0),
-      y: restLl.y,
-      z: restLl.z,
-    });
-    applyBoneRotation("rightLowerArm", {
-      x: restRl.x + (pose.forearmR ?? REST_POSE.forearmR ?? 0),
-      y: restRl.y,
-      z: restRl.z,
-    });
+    applyBoneRotation("leftLowerArm", withElbowBend(restLl, pose.forearmL ?? REST_POSE.forearmL ?? 0));
+    applyBoneRotation("rightLowerArm", withElbowBend(restRl, pose.forearmR ?? REST_POSE.forearmR ?? 0));
   };
 
   const applyIdleArms = (pose, k, opts = {}) => {
@@ -424,16 +417,8 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
       y: restR.y,
       z: restR.z - liftR * 0.55,
     });
-    applyBoneRotation("leftLowerArm", {
-      x: restLl.x + foreL,
-      y: restLl.y,
-      z: restLl.z,
-    });
-    applyBoneRotation("rightLowerArm", {
-      x: restRl.x + foreR,
-      y: restRl.y,
-      z: restRl.z,
-    });
+    applyBoneRotation("leftLowerArm", withElbowBend(restLl, foreL));
+    applyBoneRotation("rightLowerArm", withElbowBend(restRl, foreR));
   };
 
   const applyPointArms = (pose, k) => {
@@ -456,16 +441,8 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
       y: restR.y,
       z: restR.z - liftR * 0.45,
     });
-    applyBoneRotation("leftLowerArm", {
-      x: restLl.x + foreL,
-      y: restLl.y,
-      z: restLl.z,
-    });
-    applyBoneRotation("rightLowerArm", {
-      x: restRl.x + foreR,
-      y: restRl.y,
-      z: restRl.z,
-    });
+    applyBoneRotation("leftLowerArm", withElbowBend(restLl, foreL));
+    applyBoneRotation("rightLowerArm", withElbowBend(restRl, foreR));
   };
 
   const applyActionArms = (pose, k) => {
@@ -488,16 +465,8 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
       y: restR.y,
       z: restR.z - liftR * 0.75,
     });
-    applyBoneRotation("leftLowerArm", {
-      x: restLl.x + foreL,
-      y: restLl.y,
-      z: restLl.z,
-    });
-    applyBoneRotation("rightLowerArm", {
-      x: restRl.x + foreR,
-      y: restRl.y,
-      z: restRl.z,
-    });
+    applyBoneRotation("leftLowerArm", withElbowBend(restLl, foreL));
+    applyBoneRotation("rightLowerArm", withElbowBend(restRl, foreR));
   };
 
   const applyTalkArms = (pose, k) => {
@@ -520,16 +489,8 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
       y: restR.y,
       z: restR.z - liftR * 0.92,
     });
-    applyBoneRotation("leftLowerArm", {
-      x: restLl.x + foreL,
-      y: restLl.y,
-      z: restLl.z,
-    });
-    applyBoneRotation("rightLowerArm", {
-      x: restRl.x + foreR,
-      y: restRl.y,
-      z: restRl.z,
-    });
+    applyBoneRotation("leftLowerArm", withElbowBend(restLl, foreL));
+    applyBoneRotation("rightLowerArm", withElbowBend(restRl, foreR));
   };
 
   const applyLegPose = (pose, k) => {

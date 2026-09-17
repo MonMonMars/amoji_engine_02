@@ -17,8 +17,8 @@ export const COMPANION_POSE_LIBRARY_SCHEMA = "amoji.companionPoseLibrary.v1";
 export const VRM_ARM_REST_ROTATIONS = Object.freeze({
   leftUpperArm: { x: 0.28, y: 0.1, z: -1.42 },
   rightUpperArm: { x: 0.22, y: -0.08, z: 1.42 },
-  leftLowerArm: { x: 0.55, y: 0.14, z: 0.1 },
-  rightLowerArm: { x: 0.42, y: -0.1, z: -0.08 },
+  leftLowerArm: { x: 0.62, y: 0.14, z: 0.1, flexAxis: "x" },
+  rightLowerArm: { x: 0.5, y: -0.1, z: -0.08, flexAxis: "x" },
 });
 
 /** Contrapposto stand — weight on the left leg, free right knee bent. */
@@ -166,6 +166,23 @@ export function clampIdleArmPose(pose) {
   if ("forearmL" in out) out.forearmL = Math.min(maxFore, Math.max(0, out.forearmL ?? 0));
   if ("forearmR" in out) out.forearmR = Math.min(maxFore, Math.max(0, out.forearmR ?? 0));
   return out;
+}
+
+/**
+ * Add extra elbow bend on the calibrated flex axis (x on Mixamo, often z on photoreal VRMs).
+ * @param {{ x?: number, y?: number, z?: number, flexAxis?: string }} restLower
+ * @param {number} extra
+ */
+export function withElbowBend(restLower, extra = 0) {
+  const axis = restLower?.flexAxis === "y" || restLower?.flexAxis === "z"
+    ? restLower.flexAxis
+    : "x";
+  return {
+    x: restLower?.x ?? 0,
+    y: restLower?.y ?? 0,
+    z: restLower?.z ?? 0,
+    [axis]: (restLower?.[axis] ?? 0) + extra,
+  };
 }
 
 /**

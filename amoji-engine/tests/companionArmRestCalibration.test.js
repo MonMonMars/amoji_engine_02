@@ -55,4 +55,48 @@ describe("companionArmRestCalibration", () => {
     expect(rest.leftUpperArm.z).toBe(1.42);
     expect(rest.rightUpperArm.z).toBe(-1.42);
   });
+
+  it("picks the elbow axis that shortens hand-to-upper-arm distance", () => {
+    const bones = new Map();
+    const makeBone = (name) => {
+      if (!bones.has(name)) {
+        bones.set(name, { rotation: { x: 0, y: 0, z: 0 } });
+      }
+      return bones.get(name);
+    };
+    const vrm = {
+      humanoid: {
+        resetNormalizedPose() {},
+        update() {},
+        getNormalizedBoneNode(name) {
+          const bone = makeBone(name);
+          if (name === "leftHand" || name === "rightHand") {
+            return {
+              ...bone,
+              getWorldPosition(v) {
+                const lower = name === "leftHand"
+                  ? bones.get("leftLowerArm")
+                  : bones.get("rightLowerArm");
+                const flex = Math.abs(lower?.rotation.z || 0);
+                v.set(name === "leftHand" ? 0.55 - flex * 0.4 : -0.55 + flex * 0.4, 1, 0);
+              },
+            };
+          }
+          if (name === "leftUpperArm" || name === "rightUpperArm") {
+            return {
+              ...bone,
+              getWorldPosition(v) {
+                v.set(0, 1.25, 0);
+              },
+            };
+          }
+          return bone;
+        },
+      },
+      update() {},
+    };
+    const rest = detectVrmArmRestRotations(vrm);
+    expect(rest.leftLowerArm.flexAxis).toBe("z");
+    expect(Math.abs(rest.leftLowerArm.z)).toBeGreaterThan(0.5);
+  });
 });
