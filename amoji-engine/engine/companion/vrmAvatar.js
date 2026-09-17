@@ -40,6 +40,11 @@ import { createCompanionBodyMotion } from "./companionBodyMotion.js";
 import { inferFingerFlexAxis } from "./companionFingerPose.js";
 import { buildVrmExpressionBlend } from "./companionContentMotion.js";
 import {
+  adaptBlendForFaceProfile,
+  buildModelFaceProfile,
+  resolveTalkEmotionMorphWeights,
+} from "./companionFaceEmotion.js";
+import {
   isOnlineIdleAction,
   isOnlineLoopingLibraryAction,
   resolveOnlineMotionClipUrl,
@@ -472,14 +477,31 @@ export async function createVrmAvatar(opts) {
   const blinkPresets = blinkExpressionNames(expr);
   const mouthPresets = resolveMouthPresets(expr);
   const morphSummary = summarizeMorphTargets(model);
+  const expressionNames = listExpressionNames(expr);
+  const triangleCount = countMeshTriangles(model);
+  const faceProfile = buildModelFaceProfile({
+    expr,
+    morphSummary,
+    hazards: faceHazards,
+    expressionNames,
+    triangleCount,
+    modelUrl,
+    characterId: opts.characterId || null,
+  });
   const faceReport = {
-    triangleCount: countMeshTriangles(model),
+    triangleCount,
     morphTargetCount: morphSummary.morphTargetCount,
     morphNamesSample: morphSummary.morphNames.slice(0, 16),
-    expressionNames: listExpressionNames(expr),
+    expressionNames,
     mouthPresets: [...mouthPresets],
     blinkPresets: [...blinkPresets],
     hasVisemes: mouthPresets.length >= 3,
+    faceProfile: {
+      rigType: faceProfile.rigType,
+      usePresets: faceProfile.usePresets,
+      useMorphFallback: faceProfile.useMorphFallback,
+      presetScale: { ...faceProfile.presetScale },
+    },
     hazards: {
       opensMouth: [...(faceHazards.opensMouth || [])],
       blocksMouth: [...(faceHazards.blocksMouth || [])],
@@ -515,11 +537,23 @@ export async function createVrmAvatar(opts) {
     }
   };
 
+  const resolveMorphWeights = (activeTalking = talking || eating) =>
+    resolveTalkEmotionMorphWeights(
+      emotion,
+      activeTalking,
+      bodyMotion.nuance && bodyMotion.nuance !== "none"
+        ? bodyMotion.nuance
+        : "none",
+      faceProfile,
+    );
+
   const setExpressionTargetFromBlend = (blend) => {
     clearExpressionTargets();
-    const safe = clampRestFaceBlend(blend, {
+    const adapted = adaptBlendForFaceProfile(blend, faceProfile);
+    const safe = clampRestFaceBlend(adapted, {
       talking: talking || eating,
       hazards: faceHazards,
+      caps: faceProfile.caps,
     });
     for (const [key, weight] of Object.entries(safe || {})) {
       const preset = VRM_BLEND_PRESET_MAP[key];
@@ -558,7 +592,7 @@ export async function createVrmAvatar(opts) {
         expressionTarget[preset] = capTalkingEmotionWeight(
           preset,
           expressionTarget[preset] ?? 0,
-          { talking, eating },
+          { talking, eating, caps: faceProfile.caps },
         );
       }
       const target = expressionTarget[preset] ?? 0;
@@ -835,7 +869,12 @@ export async function createVrmAvatar(opts) {
     expr?.update?.();
     // Visemes + jaw last so Happy/Surprised cannot freeze the mouth.
     applyMorphMouthOpen(model, shape, open);
-    applyTalkEmotionMorphs(model, emotion, talking || eating);
+    applyTalkEmotionMorphs(
+      model,
+      emotion,
+      talking || eating,
+      resolveMorphWeights(talking || eating),
+    );
     applyJawOpen(open);
     return open;
   };
@@ -868,7 +907,7 @@ export async function createVrmAvatar(opts) {
         mouthShape = null;
         applyMouth(0);
         applyMorphMouthOpen(model, "aa", 0);
-        applyTalkEmotionMorphs(model, emotion, false);
+        applyTalkEmotionMorphs(model, emotion, false, resolveMorphWeights(false));
         applyJawOpen(0);
       }
       applyEmotionExpressions(emotion);
@@ -916,8 +955,11 @@ export async function createVrmAvatar(opts) {
   const tickFace = (dt, now, activeMotion) => {
     if (!talking && !eating && !activeMotion && !bodyMotion.thinking) {
       const idleBlend = clampRestFaceBlend(
-        sampleIdleExpressionBlend((now - t0) * 0.001, emotion),
-        { talking: false, hazards: faceHazards },
+        adaptBlendForFaceProfile(
+          sampleIdleExpressionBlend((now - t0) * 0.001, emotion),
+          faceProfile,
+        ),
+        { talking: false, hazards: faceHazards, caps: faceProfile.caps },
       );
       for (const [key, weight] of Object.entries(idleBlend)) {
         const preset = VRM_BLEND_PRESET_MAP[key];
@@ -1268,6 +1310,9 @@ export async function createVrmAvatar(opts) {
     },
     get mouthOpen() {
       return mouthOpen;
+    },
+    getFaceProfile() {
+      return { ...faceProfile };
     },
     getFaceReport() {
       return { ...faceReport };

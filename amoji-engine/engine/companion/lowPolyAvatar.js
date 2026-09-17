@@ -3,6 +3,10 @@
  * Feminine proportions, longer hair, dress, larger eyes, earrings.
  */
 import * as THREE from "three";
+import {
+  blendProceduralFaceTargets,
+  buildModelFaceProfile,
+} from "./companionFaceEmotion.js";
 
 export const LOW_POLY_AVATAR_SCHEMA = "amoji.lowPolyAvatar.v1";
 
@@ -363,6 +367,8 @@ export function createLowPolyAvatar(opts) {
 
   /** @type {keyof typeof EMOTION_TARGETS} */
   let emotion = "neutral";
+  let nuance = "none";
+  const faceProfile = buildModelFaceProfile({ avatarKind: "procedural" });
   let mouthOpen = 0;
   let talking = false;
   let t0 = performance.now();
@@ -382,6 +388,15 @@ export function createLowPolyAvatar(opts) {
     return emotion;
   };
 
+  const applyExpressionProfile = ({
+    emotion: em = "neutral",
+    nuance: n = "none",
+  } = {}) => {
+    setEmotion(em);
+    nuance = String(n || "none").toLowerCase();
+    return { emotion, nuance };
+  };
+
   const setMouthOpen = (v) => {
     mouthOpen = clamp(Number(v) || 0, 0, 1);
     return mouthOpen;
@@ -393,7 +408,7 @@ export function createLowPolyAvatar(opts) {
   };
 
   const applyPose = (dt) => {
-    const target = EMOTION_TARGETS[emotion] || EMOTION_TARGETS.neutral;
+    const target = blendProceduralFaceTargets(EMOTION_TARGETS, emotion, nuance);
     const k = 1 - Math.exp(-dt * 6);
     for (const key of Object.keys(target)) {
       current[key] = lerp(current[key] ?? 0, target[key], k);
@@ -475,6 +490,10 @@ export function createLowPolyAvatar(opts) {
   return {
     schema: LOW_POLY_AVATAR_SCHEMA,
     setEmotion,
+    applyExpressionProfile,
+    getFaceProfile() {
+      return { ...faceProfile };
+    },
     setMouthOpen,
     setTalking,
     get emotion() {

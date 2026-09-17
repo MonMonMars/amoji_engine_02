@@ -177,10 +177,12 @@ export function capTalkingEmotionWeight(name, weight, opts = {}) {
   const v = Math.max(0, Math.min(1, Number(weight) || 0));
   const key = String(name || "");
   const isMouthEmotion = /^(happy|surprised)$/i.test(key);
+  const talkHappy = opts.caps?.talkHappy ?? TALK_HAPPY_MAX;
+  const talkSurprised = opts.caps?.talkSurprised ?? TALK_SURPRISED_MAX;
   if (opts.eating && isMouthEmotion) return 0;
   if (!opts.talking) return v;
-  if (/^happy$/i.test(key)) return Math.min(v, TALK_HAPPY_MAX);
-  if (/^surprised$/i.test(key)) return Math.min(v, TALK_SURPRISED_MAX);
+  if (/^happy$/i.test(key)) return Math.min(v, talkHappy);
+  if (/^surprised$/i.test(key)) return Math.min(v, talkSurprised);
   return v;
 }
 
@@ -511,53 +513,70 @@ export function applyMorphMouthOpen(root, shape, open) {
  * @param {string} [emotion]
  * @param {boolean} [talking]
  */
-export function applyTalkEmotionMorphs(root, emotion = "neutral", talking = false) {
+export function applyTalkEmotionMorphs(
+  root,
+  emotion = "neutral",
+  talking = false,
+  morphOpts = null,
+) {
   if (!root || typeof root.traverse !== "function") return 0;
   const e = String(emotion || "neutral").toLowerCase();
-  const smile = talking
-    ? e === "happy"
-      ? 0.54
-      : e === "surprised"
-        ? 0.18
-        : e === "sad" || e === "angry"
-          ? 0
-          : e === "thinking"
-            ? 0.08
-            : 0.24
-    : e === "happy"
-      ? 0.22
-      : 0;
-  const frown = talking
-    ? e === "sad"
-      ? 0.46
-      : e === "angry"
-        ? 0.28
-        : e === "thinking"
-          ? 0.14
-          : 0
-    : e === "thinking"
-      ? 0.1
-      : 0;
-  const browUp = talking
-    ? e === "surprised"
-      ? 0.56
-      : e === "happy"
-        ? 0.3
-        : e === "thinking"
-          ? 0.16
-          : 0.12
-    : 0;
-  const browDown = talking
-    ? e === "angry"
-      ? 0.56
-      : e === "sad"
-        ? 0.34
-        : e === "thinking"
+  const weights =
+    morphOpts && typeof morphOpts === "object" && "smile" in morphOpts
+      ? morphOpts
+      : null;
+  const smile = weights
+    ? Number(weights.smile) || 0
+    : talking
+      ? e === "happy"
+        ? 0.54
+        : e === "surprised"
           ? 0.18
-          : 0
-    : e === "thinking"
-      ? 0.12
+          : e === "sad" || e === "angry"
+            ? 0
+            : e === "thinking"
+              ? 0.08
+              : 0.24
+      : e === "happy"
+        ? 0.22
+        : 0;
+  const frown = weights
+    ? Number(weights.frown) || 0
+    : talking
+      ? e === "sad"
+        ? 0.46
+        : e === "angry"
+          ? 0.28
+          : e === "thinking"
+            ? 0.14
+            : 0
+      : e === "thinking"
+        ? 0.1
+        : 0;
+  const browUp = weights
+    ? Number(weights.browUp) || 0
+    : talking
+      ? e === "surprised"
+        ? 0.56
+        : e === "happy"
+          ? 0.3
+          : e === "thinking"
+            ? 0.16
+            : 0.12
       : 0;
+  const browDown = weights
+    ? Number(weights.browDown) || 0
+    : talking
+      ? e === "angry"
+        ? 0.56
+        : e === "sad"
+          ? 0.34
+          : e === "thinking"
+            ? 0.18
+            : 0
+      : e === "thinking"
+        ? 0.12
+        : 0;
   let applied = 0;
   root.traverse((obj) => {
     const influences = obj?.morphTargetInfluences;
@@ -691,6 +710,10 @@ export function zeroHazardMorphInfluences(root) {
 export function clampRestFaceBlend(blend, opts = {}) {
   const talking = Boolean(opts.talking);
   const hazards = opts.hazards;
+  const idleHappy = opts.caps?.idleHappy ?? IDLE_HAPPY_MAX;
+  const talkHappy = opts.caps?.talkHappy ?? TALK_HAPPY_MAX;
+  const restSurprised = opts.caps?.restSurprised ?? REST_SURPRISED_MAX;
+  const talkSurprised = opts.caps?.talkSurprised ?? TALK_SURPRISED_MAX;
   /** @type {Record<string, number>} */
   const next = {};
   for (const [key, raw] of Object.entries(blend || {})) {
@@ -709,13 +732,13 @@ export function clampRestFaceBlend(blend, opts = {}) {
     if (talking && closesEyes) continue;
 
     if (key === "Happy") {
-      const cap = talking ? TALK_HAPPY_MAX : IDLE_HAPPY_MAX;
+      const cap = talking ? talkHappy : idleHappy;
       const capped = Math.min(value, cap);
       if (capped > 0) next.Happy = capped;
       continue;
     }
     if (key === "Surprised") {
-      const cap = talking ? TALK_SURPRISED_MAX : REST_SURPRISED_MAX;
+      const cap = talking ? talkSurprised : restSurprised;
       const capped = Math.min(value, cap);
       if (capped > 0) next.Surprised = capped;
       continue;

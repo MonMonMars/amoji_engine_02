@@ -8,9 +8,9 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji · Companion</title>
     <script>
-      window.__amojiBuild = "2026-09-17-v188-speech-face";
+      window.__amojiBuild = "2026-09-17-v190-face-emotion";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-17-v188-speech-face"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-17-v190-face-emotion"></script>
     <link
       rel="prefetch"
       href="/prototypes/assets/companion-char-nova.png"
@@ -324,8 +324,8 @@
       media="print"
       onload="this.media='all'"
     />
-    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-17-v188-speech-face" />
-    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-17-v188-speech-face" />
+    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-17-v190-face-emotion" />
+    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-17-v190-face-emotion" />
     <noscript>
       <link
         href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap"
@@ -3618,19 +3618,19 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-17-v188-speech-face",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-17-v190-face-emotion",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-17-v188-speech-face",
-          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-17-v188-speech-face"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-17-v190-face-emotion",
+          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-17-v190-face-emotion"
         }
       }
     </script>
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v188-speech-face"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v190-face-emotion"
     />
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-17-v188-speech-face"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v188-speech-face"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-17-v190-face-emotion"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v190-face-emotion"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;
@@ -5133,6 +5133,7 @@
         avatarLoadPromise = createCompanionAvatar({
           canvas,
           controlsElement: orbitHit,
+          characterId: loadForCharacterId,
           modelUrl: modelUrlForLoad || undefined,
           prefer: preferForLoad,
           onCharacterTap: () => handleCharacterTap?.(),
