@@ -1,30 +1,44 @@
 /**
- * Coins + bag for companion treats. Persists in localStorage.
+ * Coins + bag + pet-care needs. Persists in localStorage.
  */
 import { TREAT_ITEM_IDS, getTreatItem } from "./companionTreatCatalog.js";
+import { defaultCareFields, normalizeCareFields } from "./companionPetCare.js";
 
 export const COMPANION_TREAT_STORE_SCHEMA = "amoji.companionTreatStore.v1";
 export const TREAT_STORAGE_KEY = "amoji.treats.v1";
 export const TREAT_START_COINS = 80;
 
-/** @typedef {{ coins: number, bag: Record<string, number> }} TreatState */
+/** @typedef {{
+ *   coins: number,
+ *   bag: Record<string, number>,
+ *   hunger: number,
+ *   hearts: number,
+ *   lastTickMs: number,
+ *   lastDailyYmd: string,
+ *   lastFedItemId: string,
+ *   lastFedAt: number,
+ *   lastHungryAskAt: number,
+ * }} TreatState */
 
 /**
+ * @param {number} [now]
  * @returns {TreatState}
  */
-export function defaultTreatState() {
+export function defaultTreatState(now = Date.now()) {
   return {
     coins: TREAT_START_COINS,
     bag: { cake: 1 },
+    ...defaultCareFields(now),
   };
 }
 
 /**
  * @param {unknown} raw
+ * @param {number} [now]
  * @returns {TreatState}
  */
-export function normalizeTreatState(raw) {
-  const base = defaultTreatState();
+export function normalizeTreatState(raw, now = Date.now()) {
+  const base = defaultTreatState(now);
   if (!raw || typeof raw !== "object") return base;
   const coins = Math.max(0, Math.round(Number(raw.coins)));
   const bag = {};
@@ -36,6 +50,7 @@ export function normalizeTreatState(raw) {
   return {
     coins: Number.isFinite(coins) ? coins : base.coins,
     bag,
+    ...normalizeCareFields(raw, now),
   };
 }
 
@@ -97,7 +112,7 @@ export function buyTreat(state, itemId) {
   bag[item.id] = bagCount(current, item.id) + 1;
   return {
     ok: true,
-    state: { coins: current.coins - item.price, bag },
+    state: { ...current, coins: current.coins - item.price, bag },
   };
 }
 
@@ -115,5 +130,5 @@ export function consumeTreat(state, itemId) {
   const bag = { ...current.bag };
   if (have === 1) delete bag[item.id];
   else bag[item.id] = have - 1;
-  return { ok: true, state: { coins: current.coins, bag } };
+  return { ok: true, state: { ...current, coins: current.coins, bag } };
 }
