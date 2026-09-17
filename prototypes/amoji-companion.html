@@ -8,9 +8,9 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji · Companion</title>
     <script>
-      window.__amojiBuild = "2026-09-17-v180-limb-rest";
+      window.__amojiBuild = "2026-09-17-v181-speech-gate";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-17-v180-limb-rest"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-17-v181-speech-gate"></script>
     <link
       rel="prefetch"
       href="/prototypes/assets/companion-char-nova.png"
@@ -324,7 +324,7 @@
       media="print"
       onload="this.media='all'"
     />
-    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-17-v180-limb-rest" />
+    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-17-v181-speech-gate" />
     <noscript>
       <link
         href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap"
@@ -3596,19 +3596,19 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-17-v180-limb-rest",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-17-v181-speech-gate",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-17-v180-limb-rest",
-          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-17-v180-limb-rest"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-17-v181-speech-gate",
+          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-17-v181-speech-gate"
         }
       }
     </script>
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v180-limb-rest"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v181-speech-gate"
     />
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-17-v180-limb-rest"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v180-limb-rest"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-17-v181-speech-gate"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v181-speech-gate"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;
@@ -5833,7 +5833,14 @@
       let shouldAutoStopOnUserSpeech = () => false;
       /** @type {(reason?: string) => boolean} */
       let handleUserSpeechBarge = () => false;
-      const voiceGate = createCompanionVoiceGate();
+      const voiceGate = createCompanionVoiceGate({
+        allowEnergyBarge: false,
+        minFinalChars: 2,
+      });
+      const feedAssistantEcho = (text) => {
+        const chunk = String(text || "").trim();
+        if (chunk) voiceGate.appendAssistantEcho(chunk);
+      };
       let bargeArmed = false;
 
       const armBargeIn = () => {
@@ -5910,6 +5917,7 @@
           syncCompanionStatusUi();
         },
         onSpeakChunk: (chunk) => {
+          feedAssistantEcho(chunk);
           const analysis = avatar.reactToSpeechChunk?.(chunk, {
             emotion: speakContent.emotion || speakEmotion,
             nuance: speakContent.nuance || "none",
@@ -5946,15 +5954,32 @@
             interim.clear();
             return;
           }
-          if (isFinal && trimmed && shouldAutoStopOnUserSpeech()) {
-            handleUserSpeechBarge("final-speech", { text: trimmed });
-          }
+          const duringAssistant = shouldAutoStopOnUserSpeech();
           if (!isFinal && trimmed) {
+            if (duringAssistant) return;
             interim.set(trimmed);
             if (!voice.micOn) {
               input.value = trimmed;
               autosize();
             }
+            return;
+          }
+          if (isFinal && duringAssistant && trimmed) {
+            const gate = voiceGate.shouldBarge({
+              source: "final-speech",
+              text: trimmed,
+            });
+            if (!gate.allow) {
+              interim.clear();
+              return;
+            }
+            handleUserSpeechBarge("final-speech", { text: trimmed });
+            interim.clear();
+            if (!voice.micOn) {
+              input.value = "";
+              autosize();
+            }
+            void runTurn(trimmed, { fromMic: true });
             return;
           }
           if (isFinal) {
@@ -6354,15 +6379,9 @@
       window.__amojiSupportsMic = voice.supportsMic;
 
       bargeMonitor = createCompanionBargeMonitor({
-        energyThreshold: 0.028,
-        minSpeechMs: 180,
-        onBargeIn: (info = {}) => {
-          if (!shouldAutoStopOnUserSpeech()) return;
-          handleUserSpeechBarge("energy-barge", {
-            rms: info.energy,
-            speechMs: info.speechMs,
-          });
-        },
+        energyThreshold: 0.06,
+        minSpeechMs: 520,
+        onBargeIn: () => {},
       });
 
       stopBargeWatch = () => {
@@ -6372,7 +6391,9 @@
 
       startBargeWatch = () => {
         voice.setKeepMicDuringSpeak?.(true);
-        void bargeMonitor.start();
+        if (shouldPauseMicDuringTts()) {
+          void bargeMonitor.start();
+        }
       };
 
       shouldAutoStopOnUserSpeech = () =>
@@ -6552,6 +6573,11 @@
         activityRail.pulse("🎤", isEnglish ? "Heard" : "聽到");
         if (busy) {
           if (phaseAEnabled && fromMic) {
+            const gate = voiceGate.shouldBarge({
+              source: "final-speech",
+              text: cleaned,
+            });
+            if (!gate.allow) return;
             abortActiveTurn("mic-barge");
             await new Promise((r) => setTimeout(r, 60));
             void runTurn(cleaned, { fromMic: true });
@@ -6561,6 +6587,7 @@
           return;
         }
         busy = true;
+        voiceGate.resetEchoContext?.();
         stopIdlePerformance();
         sendBtn.disabled = true;
         const bootChitchat = isBootChitchatPhase({ avatarKind, liteMode });
@@ -6641,7 +6668,7 @@
             streamSpeakStarted = true;
             waitAct?.stop();
             voice.beginStreamSpeak?.(streamEmotion, {
-              pauseCapture: true,
+              pauseCapture: !keepMicForBarge,
             });
             avatar.setThinking?.(false);
             avatar.setTalking?.(true);
@@ -6654,6 +6681,7 @@
               characterId,
               lang: isEnglish ? "en" : "yue",
             });
+            feedAssistantEcho(seg);
             void voice.pushStreamSpeak?.(seg, {
               emotion: chunkPerf.emotion || streamEmotion,
               nuance: chunkPerf.nuance,
@@ -6678,6 +6706,7 @@
             speakContent = content;
             speakEmotion = emotion;
             markReplyEmotionHold(emotion);
+            feedAssistantEcho(finalReply);
             status.speaking();
             await voice.speak(finalReply, {
               emotion,
@@ -6767,6 +6796,7 @@
           attachMessageActions(assistantRow, assistantBubble, "assistant", finalReply);
           appendChatHistory(characterId, { role: "assistant", text: finalReply });
           syncStarterPrompts();
+          feedAssistantEcho(finalReply);
 
           if (phaseAEnabled) {
             const spokenReply = stripReplyTags(result.raw || reply);
