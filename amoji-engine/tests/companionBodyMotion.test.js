@@ -69,7 +69,7 @@ describe("createCompanionBodyMotion", () => {
     );
     expect(
       Math.abs(humanoid.bones.get("leftIndexProximal").rotation.z),
-    ).toBeGreaterThan(0.25);
+    ).toBeGreaterThan(0.5);
   });
 
   it("plants root Y so a floating foot comes back to the floor", () => {
