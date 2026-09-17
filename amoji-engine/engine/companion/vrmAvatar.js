@@ -52,7 +52,9 @@ import {
   applyRestEyeOpenMorphs,
   guardLookAtLids,
   inspectVrmFaceHazards,
-  mouthVisemeWeight,
+  sampleTalkMouthPulse,
+  talkJawRotationX,
+  talkingMouthOpen,
   zeroAllExpressions,
   zeroHazardMorphInfluences,
 } from "./companionFaceRest.js";
@@ -81,6 +83,11 @@ const VRM_BLEND_PRESET_MAP = {
   Surprised: VRMExpressionPresetName.Surprised,
   Angry: VRMExpressionPresetName.Angry,
 };
+
+const TALK_MOUTH_BLOCK_PRESETS = new Set([
+  VRMExpressionPresetName.Happy,
+  VRMExpressionPresetName.Surprised,
+]);
 
 /**
  * @param {GLTFLoader} loader
@@ -472,6 +479,12 @@ export async function createVrmAvatar(opts) {
     if (!expr) return;
     const rate = Math.min(1, dt * (talking ? 28 : 16));
     for (const preset of emotionPresetKeys()) {
+      if (talking && TALK_MOUTH_BLOCK_PRESETS.has(preset)) {
+        expressionTarget[preset] = 0;
+        expressionCurrent[preset] = 0;
+        expr.setValue(preset, 0);
+        continue;
+      }
       const target = expressionTarget[preset] ?? 0;
       const current = expressionCurrent[preset] ?? 0;
       const next = current + (target - current) * rate;
@@ -724,34 +737,38 @@ export async function createVrmAvatar(opts) {
     return mouthPresets[0] || null;
   };
 
-  const closeJawBone = () => {
-    const jaw = vrm.humanoid?.getNormalizedBoneNode?.("jaw");
-    if (!jaw?.rotation) return;
-    jaw.rotation.x = 0;
-    jaw.rotation.y = 0;
-    jaw.rotation.z = 0;
+  const applyJawOpen = (open) => {
+    const x = talkJawRotationX(open);
+    const bones = [
+      vrm.humanoid?.getNormalizedBoneNode?.("jaw"),
+      vrm.humanoid?.getRawBoneNode?.("jaw"),
+    ];
+    for (const jaw of bones) {
+      if (!jaw?.rotation) continue;
+      jaw.rotation.x = x;
+      jaw.rotation.y = 0;
+      jaw.rotation.z = 0;
+    }
   };
 
   const applyMouth = (v) => {
-    if (!expr || !mouthPresets.length) {
-      if (v <= 0) closeJawBone();
-      return;
+    const open = Math.max(0, Math.min(1, Number(v) || 0));
+    if (expr && mouthPresets.length) {
+      for (const preset of mouthPresets) expr.setValue(preset, 0);
+      if (open > 0) {
+        const preset = mouthShape ? shapeToPreset(mouthShape) : mouthPresets[0];
+        if (preset) expr.setValue(preset, open);
+      }
     }
-    for (const preset of mouthPresets) expr.setValue(preset, 0);
-    if (v <= 0) {
-      closeJawBone();
-      return;
-    }
-    const preset = mouthShape ? shapeToPreset(mouthShape) : null;
-    if (preset) {
-      expr.setValue(preset, v);
-      return;
-    }
-    const idx = Math.min(
-      mouthPresets.length - 1,
-      Math.floor(v * mouthPresets.length),
-    );
-    expr.setValue(mouthPresets[idx], v);
+    applyJawOpen(open);
+  };
+
+  const applyTalkMouthNow = (now = performance.now()) => {
+    const open = talkingMouthOpen(talking, mouthOpen, now);
+    applyMouth(open);
+    expr?.update?.();
+    applyJawOpen(open);
+    return open;
   };
 
   const setMouthOpen = (v) => {
@@ -775,6 +792,9 @@ export async function createVrmAvatar(opts) {
       mouthShape = null;
       applyMouth(0);
       applyEmotionExpressions(emotion);
+    } else {
+      applyEmotionExpressions(emotion);
+      if (mouthTarget < 0.2) mouthTarget = Math.max(mouthTarget, 0.55);
     }
     return talking;
   };
@@ -810,10 +830,13 @@ export async function createVrmAvatar(opts) {
 
     mouthOpen += (mouthTarget - mouthOpen) * Math.min(1, dt * (talking ? 36 : 22));
     if (!talking && mouthOpen < 0.04) mouthOpen = 0;
+    if (talking && mouthOpen < 0.12) {
+      mouthOpen = Math.max(mouthOpen, sampleTalkMouthPulse(now, true) * 0.7);
+    }
 
     zeroAllExpressions(expr);
     tickExpressionBlend(dt);
-    applyMouth(mouthVisemeWeight(talking, mouthOpen));
+    applyMouth(talkingMouthOpen(talking, mouthOpen, now));
 
     blinkTimer += dt;
     let blinkW = 0;
@@ -866,7 +889,7 @@ export async function createVrmAvatar(opts) {
       syncHumanoidPose();
       tickFace(dt, now, activeMotion);
       vrm.update(dt);
-      if (!talking) closeJawBone();
+      applyTalkMouthNow(now);
 
       computeVrmFrameAnchor(vrm, model, frameAnchor);
       if (smoothedFrameAnchor.lengthSq() < 1e-6) {
@@ -930,7 +953,7 @@ export async function createVrmAvatar(opts) {
   syncLookTarget();
   syncHumanoidPose();
   vrm.update(1 / 60);
-  if (!talking) closeJawBone();
+  applyTalkMouthNow(performance.now());
   renderer.render(scene, camera);
   void motionPlayer.warmClip("wave");
   void motionPlayer.warmClip("thinking");

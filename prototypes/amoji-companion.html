@@ -8,9 +8,9 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji · Companion</title>
     <script>
-      window.__amojiBuild = "2026-09-17-v146-planted-stand";
+      window.__amojiBuild = "2026-09-17-v147-talk-mouth";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-17-v146-planted-stand"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-17-v147-talk-mouth"></script>
     <link
       rel="prefetch"
       href="/prototypes/assets/companion-char-nova.png"
@@ -315,7 +315,7 @@
       media="print"
       onload="this.media='all'"
     />
-    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-17-v146-planted-stand" />
+    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-17-v147-talk-mouth" />
     <noscript>
       <link
         href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap"
@@ -2982,19 +2982,19 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-17-v146-planted-stand",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-17-v147-talk-mouth",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-17-v146-planted-stand",
-          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-17-v146-planted-stand"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-17-v147-talk-mouth",
+          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-17-v147-talk-mouth"
         }
       }
     </script>
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v146-planted-stand"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v147-talk-mouth"
     />
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-17-v146-planted-stand"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v146-planted-stand"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-17-v147-talk-mouth"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v147-talk-mouth"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;
@@ -6019,7 +6019,9 @@
           sendBtn.disabled = false;
           if (!keepMicForBarge) voice.resumeCapture();
           syncMicBtn();
-          avatar.setTalking?.(false);
+          if (!voice?.speaking && !voice?.assistantOutputActive) {
+            avatar.setTalking?.(false);
+          }
           if (voice.micOn) {
             input.placeholder = phaseAEnabled
               ? "Listening… speak anytime to barge in"

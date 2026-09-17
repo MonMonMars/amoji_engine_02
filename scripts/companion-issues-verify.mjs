@@ -231,6 +231,47 @@ async function main() {
   record("eyes-open-rest", (pose.blink || 0) < 0.55, String(pose.blink));
   record("mouth-closed-rest", (pose.aa || 0) < 0.12 && (pose.oh || 0) < 0.12, `aa=${pose.aa} oh=${pose.oh}`);
 
+  const talkingPose = await page.evaluate(async () => {
+    const avatar = window.__amojiAvatar;
+    avatar.setTalking?.(true);
+    avatar.setMouthShape?.("aa");
+    avatar.setMouthOpen?.(0.9);
+    await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+    await new Promise((r) => setTimeout(r, 80));
+    const vrm = avatar.vrm;
+    const jaw =
+      vrm?.humanoid?.getNormalizedBoneNode?.("jaw") ||
+      vrm?.humanoid?.getRawBoneNode?.("jaw");
+    const expr = vrm?.expressionManager;
+    const exprVal = (name) => {
+      try {
+        return Number(expr?.getValue?.(name) ?? 0);
+      } catch {
+        return 0;
+      }
+    };
+    return {
+      aa: exprVal("aa"),
+      oh: exprVal("oh"),
+      jawX: Number(jaw?.rotation?.x ?? 0),
+      mouthOpen: Number(avatar.mouthOpen ?? 0),
+    };
+  });
+  record(
+    "mouth-moves-when-talking",
+    (talkingPose.aa || 0) > 0.2 ||
+      (talkingPose.oh || 0) > 0.2 ||
+      (talkingPose.jawX || 0) > 0.06,
+    JSON.stringify(talkingPose),
+  );
+  await page.screenshot({
+    path: `${outDir}/issues_verify_talking_mouth.png`,
+  });
+  await page.evaluate(() => {
+    window.__amojiAvatar?.setTalking?.(false);
+    window.__amojiAvatar?.setMouthOpen?.(0);
+  });
+
   await page.screenshot({
     path: `${outDir}/issues_verify_idle.png`,
     animations: "disabled",
