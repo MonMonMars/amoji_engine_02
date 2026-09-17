@@ -188,7 +188,8 @@
 .theme-grok-ani .companion-chip__dot[data-state="listening"],
 .theme-grok-ani .companion-chip__dot[data-state="thinking"],
 .theme-grok-ani .companion-chip__dot[data-state="speaking"],
-.theme-grok-ani .companion-chip__dot[data-state="loading"] {
+.theme-grok-ani .companion-chip__dot[data-state="loading"],
+.theme-grok-ani .companion-chip__dot[data-state="typing"] {
   animation: miniBallGlow 1.15s ease-in-out infinite;
 }
 
