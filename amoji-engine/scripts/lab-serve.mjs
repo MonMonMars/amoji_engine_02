@@ -18,6 +18,7 @@ import {
   getOllamaTagsPayload,
   processChatRequest,
 } from "../engine/companion/chatApiHandler.mjs";
+import { searchWeb } from "../engine/companion/companionWebSearch.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, "../..");
@@ -120,6 +121,35 @@ const server = http.createServer(async (req, res) => {
 
   if (req.method === "POST" && url.pathname === "/api/chat") {
     await handleChatApi(req, res);
+    return;
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/search") {
+    try {
+      const body = await readJson(req);
+      const query = String(body.query || body.message || "").trim();
+      if (!query) {
+        send(res, 400, { ok: false, error: "empty query" }, {
+          ...corsHeaders(),
+          "Content-Type": "application/json; charset=utf-8",
+        });
+        return;
+      }
+      const result = await searchWeb(query, fetch);
+      send(res, 200, {
+        ok: result.ok,
+        summary: result.summary,
+        source: result.source,
+      }, {
+        ...corsHeaders(),
+        "Content-Type": "application/json; charset=utf-8",
+      });
+    } catch (err) {
+      send(res, 500, { ok: false, error: err?.message || String(err) }, {
+        ...corsHeaders(),
+        "Content-Type": "application/json; charset=utf-8",
+      });
+    }
     return;
   }
 
