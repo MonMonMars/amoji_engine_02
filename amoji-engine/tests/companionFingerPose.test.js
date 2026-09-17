@@ -3,6 +3,7 @@ import {
   applyFingerRestPose,
   fingerIdleWiggle,
   fingerTalkCurlBoost,
+  fingersLookStraight,
   inferFingerFlexAxis,
   VRM_FINGER_BONE_NAMES,
   VRM_FINGER_REST_ROTATIONS,
@@ -32,6 +33,41 @@ describe("companionFingerPose", () => {
   it("wiggles idle fingers over time", () => {
     expect(fingerIdleWiggle(0.4, 0)).toBeGreaterThan(0.04);
     expect(fingerIdleWiggle(1.1, 0)).not.toBe(fingerIdleWiggle(0.2, 0));
+  });
+
+  it("detects stick-straight Mixamo fingers vs curled VRMA fingers", () => {
+    const straight = {
+      getNormalizedBoneNode(name) {
+        if (!name.includes("Index") && !name.includes("Middle")) return null;
+        return { rotation: { x: 0, y: 0, z: 0.02 } };
+      },
+    };
+    const curled = {
+      getNormalizedBoneNode(name) {
+        if (!name.includes("Index") && !name.includes("Middle")) return null;
+        return { rotation: { x: 0, y: 0, z: name.startsWith("right") ? -0.52 : 0.58 } };
+      },
+    };
+    expect(fingersLookStraight(straight)).toBe(true);
+    expect(fingersLookStraight(curled)).toBe(false);
+  });
+
+  it("blends finger curl toward rest instead of hard overwrite", () => {
+    /** @type {Record<string, { x: number, y: number, z: number }>} */
+    const applied = {};
+    applyFingerRestPose(
+      (name, rot) => {
+        applied[name] = rot;
+      },
+      {
+        readRotation: () => ({ x: 0, y: 0, z: 0.4 }),
+        blendWeight: 0.5,
+      },
+    );
+    expect(applied.leftIndexProximal.z).toBeGreaterThan(0.4);
+    expect(applied.leftIndexProximal.z).toBeLessThan(
+      VRM_FINGER_REST_ROTATIONS.leftIndexProximal.z + 0.2,
+    );
   });
 
   it("keeps optional Mixamo raw-axis helper but defaults normalized fingers to Z", () => {

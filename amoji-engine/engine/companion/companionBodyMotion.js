@@ -49,6 +49,7 @@ import {
   REST_POSE,
   sampleVrmTalkPose,
   VRM_ARM_REST_ROTATIONS,
+  restDirectedLift,
   withElbowBend,
 } from "./companionPoseLibrary.js";
 import {
@@ -422,9 +423,7 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
     );
   };
 
-  const isAposeBind = () =>
-    armBind === "apose" ||
-    Math.abs(Number(armRestRotations.leftUpperArm?.z) || 0) < 0.55;
+  const isAposeBind = () => armBind === "apose";
 
   const applyIdleArms = (pose, k, opts = {}) => {
     const combHair = opts.combHair === true;
@@ -457,20 +456,21 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
     applyBoneRotation("leftUpperArm", {
       x: restL.x + liftL * xLiftMul,
       y: restL.y + 0.03 * k,
-      z: restL.z + liftL * zLiftMul,
+      z: restDirectedLift(restL.z, liftL * zLiftMul, 1),
     });
     if (combHair) {
+      const combScale = apose ? 0.62 : 1;
       applyBoneRotation("rightUpperArm", {
-        x: restR.x + 0.42 * k,
-        y: restR.y - 0.28 * k,
-        z: restR.z - 0.92 * k,
+        x: restR.x + 0.42 * k * combScale,
+        y: restR.y - 0.28 * k * combScale,
+        z: restDirectedLift(restR.z, 0.92 * k * combScale, -1),
       });
-      applyBoneRotation("rightLowerArm", withElbowBend(restRl, 0.82 * k));
+      applyBoneRotation("rightLowerArm", withElbowBend(restRl, 0.82 * k * combScale));
     } else {
       applyBoneRotation("rightUpperArm", {
         x: restR.x + liftR * xLiftMul,
         y: restR.y - 0.03 * k,
-        z: restR.z - liftR * zLiftMul,
+        z: restDirectedLift(restR.z, liftR * zLiftMul, -1),
       });
       applyBoneRotation("rightLowerArm", withElbowBend(restRl, foreR));
     }
@@ -490,12 +490,12 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
     applyBoneRotation("leftUpperArm", {
       x: restL.x,
       y: restL.y,
-      z: restL.z + liftL * 0.45,
+      z: restDirectedLift(restL.z, liftL * 0.45, 1),
     });
     applyBoneRotation("rightUpperArm", {
       x: restR.x,
       y: restR.y,
-      z: restR.z - liftR * 0.45,
+      z: restDirectedLift(restR.z, liftR * 0.45, -1),
     });
     applyBoneRotation("leftLowerArm", withElbowBend(restLl, foreL));
     applyBoneRotation("rightLowerArm", withElbowBend(restRl, foreR));
@@ -510,13 +510,13 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
     applyBoneRotation("rightUpperArm", {
       x: restR.x + (0.62 + chew * 0.1) * k,
       y: restR.y - 0.28 * k,
-      z: restR.z - 0.16 * k,
+      z: restDirectedLift(restR.z, 0.16 * k, -1),
     });
     applyBoneRotation("rightLowerArm", withElbowBend(restRl, 0.9 * k));
     applyBoneRotation("leftUpperArm", {
       x: restL.x + 0.22 * k,
       y: restL.y + 0.1 * k,
-      z: restL.z + 0.16 * k,
+      z: restDirectedLift(restL.z, 0.16 * k, 1),
     });
     applyBoneRotation("leftLowerArm", withElbowBend(restLl, 0.42 * k));
   };
@@ -534,12 +534,12 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
     applyBoneRotation("leftUpperArm", {
       x: restL.x,
       y: restL.y,
-      z: restL.z + liftL * 0.75,
+      z: restDirectedLift(restL.z, liftL * 0.75, 1),
     });
     applyBoneRotation("rightUpperArm", {
       x: restR.x,
       y: restR.y,
-      z: restR.z - liftR * 0.75,
+      z: restDirectedLift(restR.z, liftR * 0.75, -1),
     });
     applyBoneRotation("leftLowerArm", withElbowBend(restLl, foreL));
     applyBoneRotation("rightLowerArm", withElbowBend(restRl, foreR));
@@ -558,12 +558,12 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
     applyBoneRotation("leftUpperArm", {
       x: restL.x + Math.sin(talkTime * 3.2) * 0.05 * k,
       y: restL.y,
-      z: restL.z + liftL * 0.92,
+      z: restDirectedLift(restL.z, liftL * 0.92, 1),
     });
     applyBoneRotation("rightUpperArm", {
       x: restR.x + Math.sin(talkTime * 3.2 + 1.1) * 0.05 * k,
       y: restR.y,
-      z: restR.z - liftR * 0.92,
+      z: restDirectedLift(restR.z, liftR * 0.92, -1),
     });
     applyBoneRotation("leftLowerArm", withElbowBend(restLl, foreL));
     applyBoneRotation("rightLowerArm", withElbowBend(restRl, foreR));
@@ -602,12 +602,20 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
   };
 
   const applyHandAndFootRest = (pose = REST_POSE, k = 1, talkBlend = 0, elapsedSec = 0) => {
-    applyBoneRotation("leftHand", VRM_HAND_REST_ROTATIONS.leftHand);
-    applyBoneRotation("rightHand", VRM_HAND_REST_ROTATIONS.rightHand);
+    if (talkBlend <= 0.08) {
+      applyBoneRotation("leftHand", VRM_HAND_REST_ROTATIONS.leftHand);
+      applyBoneRotation("rightHand", VRM_HAND_REST_ROTATIONS.rightHand);
+    }
     applyFingerRestPose(applyFingerBone, {
       talkBlend,
-      flexAxis: "z",
+      flexAxis: fingerFlexAxis,
       elapsedSec,
+      readRotation: (name) => {
+        const b = bone(name);
+        return b?.rotation
+          ? { x: b.rotation.x, y: b.rotation.y, z: b.rotation.z }
+          : null;
+      },
     });
     applyLockedFootRotations(applyBoneRotation, VRM_FOOT_REST_ROTATIONS, {
       leftUpper: Math.min(0.72, (pose.upperLegL ?? REST_POSE.upperLegL ?? 0) * k),
@@ -686,8 +694,15 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
           : (performance.now() - t0) * 0.001;
     applyFingerRestPose(applyFingerBone, {
       talkBlend,
-      flexAxis: "z",
+      flexAxis: fingerFlexAxis,
       elapsedSec,
+      blendWeight: opts.blendWeight,
+      readRotation: (name) => {
+        const b = bone(name);
+        return b?.rotation
+          ? { x: b.rotation.x, y: b.rotation.y, z: b.rotation.z }
+          : null;
+      },
     });
     humanoid?.update?.();
   };
@@ -749,7 +764,23 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
         const beat = advanceIdleBeat(idleBeat, dt, now);
         idleBeat = beat.state;
         if (beat.overlay && Object.keys(beat.overlay).length) {
-          pose = mergePoses(pose, beat.overlay, 1);
+          let overlay = beat.overlay;
+          if (isAposeBind()) {
+            overlay = { ...beat.overlay };
+            for (const key of [
+              "armLiftL",
+              "armLiftR",
+              "forearmL",
+              "forearmR",
+              "upperLegL",
+              "upperLegR",
+              "lowerLegL",
+              "lowerLegR",
+            ]) {
+              if (key in overlay) overlay[key] = overlay[key] * 0.55;
+            }
+          }
+          pose = mergePoses(pose, overlay, 1);
         }
       } else {
         talkTime += dt;
