@@ -1,5 +1,6 @@
 /**
- * Pet-game treat dock — shop, bag, pointer drag onto the companion.
+ * Pet-game treat dock — shop, bag, pointer drag onto the companion,
+ * plus Pou-style needs HUD (hunger / hearts) and the care loop.
  */
 import {
   TREAT_ITEMS,
@@ -16,8 +17,21 @@ import {
   loadTreatState,
   saveTreatState,
 } from "./companionTreatStore.js";
+import {
+  applyChatCare,
+  applyPetCare,
+  checkInCare,
+  isHungry,
+  isLonely,
+  maybeHungryAsk,
+  refuseLine,
+  thoughtForCare,
+  tickCare,
+  tryFeedTreat,
+} from "./companionPetCare.js";
 
 export const COMPANION_TREAT_INTERACT_SCHEMA = "amoji.companionTreatInteract.v1";
+export const PET_HUD_TICK_MS = 30_000;
 
 export const TREAT_FEED_DURATION_MS = 3600;
 
@@ -97,7 +111,9 @@ function el(tag, className, html) {
  *   getAvatar?: () => object | null,
  *   getDropRect?: () => DOMRect | null,
  *   onToast?: (msg: string, kind?: string) => void,
- *   onFeed?: (info: { item: object, action: string, line: string }) => void,
+ *   onFeed?: (info: { item: object, action: string, line: string, refused?: boolean, reason?: string }) => void,
+ *   onHungryAsk?: (info: { line: string, thought: string }) => void,
+ *   now?: () => number,
  * }} [opts]
  */
 export function createCompanionTreatDock(opts = {}) {
@@ -112,6 +128,8 @@ export function createCompanionTreatDock(opts = {}) {
   let open = false;
   let dragging = false;
   let eatStop = null;
+  let lastOutcome = { ok: false, reason: "" };
+  const now = () => (typeof opts.now === "function" ? opts.now() : Date.now());
 
   const dock = el("div", "treat-dock");
   dock.id = "treat-dock";
@@ -133,6 +151,23 @@ export function createCompanionTreatDock(opts = {}) {
   sheet.setAttribute("aria-modal", "true");
   const backdrop = el("div", "treat-sheet-backdrop");
   backdrop.id = "treat-sheet-backdrop";
+  const hud = el("div", "pet-hud");
+  hud.id = "pet-hud";
+  hud.innerHTML = `
+    <div class="pet-meter pet-meter--hunger" data-pet-meter="hunger">
+      <span class="pet-meter-icon" aria-hidden="true">🍽️</span>
+      <span class="pet-meter-track"><span class="pet-meter-fill" id="pet-hunger-fill"></span></span>
+      <span class="pet-meter-val" id="pet-hunger-val"></span>
+    </div>
+    <div class="pet-meter pet-meter--hearts" data-pet-meter="hearts">
+      <span class="pet-meter-icon" aria-hidden="true">💗</span>
+      <span class="pet-meter-track"><span class="pet-meter-fill" id="pet-hearts-fill"></span></span>
+      <span class="pet-meter-val" id="pet-hearts-val"></span>
+    </div>
+  `;
+  const thought = el("div", "pet-thought");
+  thought.id = "pet-thought";
+  thought.hidden = true;
 
   const labelShop = () => (english() ? "Shop" : "商店");
   const labelBag = () => (english() ? "Bag" : "背包");
@@ -157,6 +192,8 @@ export function createCompanionTreatDock(opts = {}) {
 
   dock.appendChild(coinsEl);
   dock.appendChild(fab);
+  root.appendChild(hud);
+  root.appendChild(thought);
   root.appendChild(halo);
   root.appendChild(ghost);
   root.appendChild(backdrop);
@@ -189,11 +226,36 @@ export function createCompanionTreatDock(opts = {}) {
       hint.textContent =
         tab === "shop"
           ? english()
-            ? "Buy a snack, then drag it from the bag onto her."
-            : "買咗之後去背包，拖去佢度食。"
+            ? "Buy snacks with coins. Chat, pet her, or come back tomorrow to earn more."
+            : "用金幣買零食。傾偈、摸摸佢、或者聽日再嚟會有零用錢。"
           : english()
-            ? "Drag food onto her — she will eat it."
-            : "拖食物去佢身上，佢會真係食。";
+            ? "Drag food onto her when she's hungry. She'll refuse if she's full."
+            : "肚餓先拖食物去佢身上。食飽會搖頭唔食。";
+    }
+  };
+
+  const paintHud = () => {
+    const hungerFill = hud.querySelector("#pet-hunger-fill");
+    const heartsFill = hud.querySelector("#pet-hearts-fill");
+    const hungerVal = hud.querySelector("#pet-hunger-val");
+    const heartsVal = hud.querySelector("#pet-hearts-val");
+    const hunger = Math.round(Number(state.hunger) || 0);
+    const hearts = Math.round(Number(state.hearts) || 0);
+    if (hungerFill) hungerFill.style.width = `${hunger}%`;
+    if (heartsFill) heartsFill.style.width = `${hearts}%`;
+    if (hungerVal) hungerVal.textContent = String(hunger);
+    if (heartsVal) heartsVal.textContent = String(hearts);
+    hud.classList.toggle("is-hungry", isHungry(state));
+    hud.classList.toggle("is-lonely", isLonely(state));
+    fab.classList.toggle("is-hungry", isHungry(state));
+    const bubble = thoughtForCare(state, english());
+    if (bubble) {
+      thought.hidden = false;
+      thought.textContent = bubble;
+      thought.classList.toggle("is-hungry", isHungry(state));
+    } else {
+      thought.hidden = true;
+      thought.textContent = "";
     }
   };
 
@@ -241,6 +303,7 @@ export function createCompanionTreatDock(opts = {}) {
     paintCoins();
     paintTabs();
     paintGrid();
+    paintHud();
   };
 
   const toast = (msg, kind = "info") => opts.onToast?.(msg, kind);
@@ -280,16 +343,32 @@ export function createCompanionTreatDock(opts = {}) {
   };
 
   const feed = (itemId, clientX, clientY) => {
-    const item = getTreatItem(itemId);
-    if (!item) return false;
-    const result = consumeTreat(state, item.id);
-    if (!result.ok) {
-      toast(english() ? "None left" : "冇剩喇", "error");
-      return false;
-    }
+    const result = tryFeedTreat(state, itemId, consumeTreat, now());
+    lastOutcome = { ok: result.ok, reason: result.reason || "" };
     state = result.state;
     persist();
     render();
+    const item = result.item || getTreatItem(itemId);
+    if (!result.ok) {
+      const line = result.reason === "empty" || result.reason === "unknown"
+        ? (english() ? "None left" : "冇剩喇")
+        : refuseLine(result.reason, english());
+      if (result.reason === "empty" || result.reason === "unknown") {
+        toast(line, "error");
+      } else {
+        const avatar = opts.getAvatar?.();
+        avatar?.setEmotion?.("thinking");
+        avatar?.playAction?.("headshake", { emotion: "thinking", single: true });
+        opts.onFeed?.({
+          item,
+          action: "headshake",
+          line,
+          refused: true,
+          reason: result.reason,
+        });
+      }
+      return false;
+    }
     if (eatStop) eatStop();
     eatStop = startTreatPerformance(opts.getAvatar?.(), item);
     const line = treatThanksLine(item, english());
@@ -298,6 +377,8 @@ export function createCompanionTreatDock(opts = {}) {
       item,
       action: treatActionId(item),
       line,
+      refused: false,
+      reason: "",
     });
     return true;
   };
@@ -390,6 +471,65 @@ export function createCompanionTreatDock(opts = {}) {
     if (open) render();
   };
 
+  const tick = (when = now()) => {
+    state = { ...state, ...tickCare(state, when) };
+    persist();
+    render();
+    return state;
+  };
+
+  const checkIn = () => {
+    const result = checkInCare(state, state.coins, { isEnglish: english(), now: now() });
+    state = { ...state, ...result.care, coins: result.coins };
+    persist();
+    render();
+    if (result.claimedDaily && result.dailyCoins > 0) {
+      toast(
+        english()
+          ? `Daily coins +${result.dailyCoins}`
+          : `今日零用錢 +${result.dailyCoins}🪙`,
+        "info",
+      );
+    }
+    return result;
+  };
+
+  const applyChat = () => {
+    const result = applyChatCare(state, state.coins, now());
+    state = { ...state, ...result.care, coins: result.coins };
+    persist();
+    render();
+    return result;
+  };
+
+  const applyPet = () => {
+    const result = applyPetCare(state, state.coins, now());
+    state = { ...state, ...result.care, coins: result.coins };
+    persist();
+    render();
+    return result;
+  };
+
+  const setNeeds = (patch = {}) => {
+    state = {
+      ...state,
+      hunger: patch.hunger != null ? Number(patch.hunger) : state.hunger,
+      hearts: patch.hearts != null ? Number(patch.hearts) : state.hearts,
+    };
+    persist();
+    render();
+    return state;
+  };
+
+  const pollHungry = () => {
+    const ask = maybeHungryAsk(state, english(), now());
+    state = { ...state, ...ask.care };
+    persist();
+    render();
+    if (ask.asked && ask.line) opts.onHungryAsk?.({ line: ask.line, thought: ask.thought });
+    return ask;
+  };
+
   fab.addEventListener("click", () => setOpen(!open));
   backdrop.addEventListener("click", () => setOpen(false));
   closeBtn?.addEventListener("click", () => setOpen(false));
@@ -400,28 +540,52 @@ export function createCompanionTreatDock(opts = {}) {
     });
   });
 
+  const onVis = () => {
+    if (document.visibilityState === "visible") tick();
+  };
+  document.addEventListener?.("visibilitychange", onVis);
+  const tickTimer = globalThis.setInterval?.(() => {
+    tick();
+    pollHungry();
+  }, PET_HUD_TICK_MS);
+
   render();
 
   return {
     schema: COMPANION_TREAT_INTERACT_SCHEMA,
     root: dock,
+    hud,
+    thought,
     buy,
     feed,
+    tick,
+    checkIn,
+    applyChat,
+    applyPet,
+    setNeeds,
+    pollHungry,
     setOpen,
     render,
     get state() {
       return state;
+    },
+    get lastOutcome() {
+      return lastOutcome;
     },
     get open() {
       return open;
     },
     dispose() {
       if (eatStop) eatStop();
+      if (tickTimer) globalThis.clearInterval?.(tickTimer);
+      document.removeEventListener?.("visibilitychange", onVis);
       dock.remove();
       sheet.remove();
       backdrop.remove();
       halo.remove();
       ghost.remove();
+      hud.remove();
+      thought.remove();
     },
   };
 }

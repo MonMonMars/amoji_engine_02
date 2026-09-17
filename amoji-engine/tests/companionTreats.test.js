@@ -69,6 +69,14 @@ describe("companion treats", () => {
     expect(mouth.y).toBeLessThan(320);
   });
 
+  it("lists restoratives on every snack", () => {
+    for (const item of TREAT_ITEMS) {
+      expect(item.hunger).toBeGreaterThan(0);
+      expect(item.hearts).toBeGreaterThan(0);
+    }
+    expect(getTreatItem("bento").hunger).toBeGreaterThan(getTreatItem("cookie").hunger);
+  });
+
   it("plays the stored eat/drink action on the avatar", () => {
     const calls = [];
     const avatar = {
