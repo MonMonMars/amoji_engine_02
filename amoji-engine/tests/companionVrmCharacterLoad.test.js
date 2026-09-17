@@ -16,6 +16,18 @@ describe("vrmAvatar boot clock", () => {
     expect(declareAt).toBeGreaterThanOrEqual(0);
     expect(assignAt).toBe(-1);
   });
+
+  it("writes viseme morphs after expressionManager.update so Happy cannot freeze the jaw", () => {
+    const start = vrmSource.indexOf("const applyTalkMouthNow");
+    const fn = vrmSource.slice(start, start + 900);
+    const updateAt = fn.indexOf("expr?.update");
+    const morphAt = fn.indexOf("applyMorphMouthOpen");
+    const emotionAt = fn.indexOf("applyTalkEmotionMorphs");
+    expect(updateAt).toBeGreaterThan(0);
+    expect(morphAt).toBeGreaterThan(updateAt);
+    expect(emotionAt).toBeGreaterThan(morphAt);
+    expect(fn).toContain("softenTalkMouthOverrides");
+  });
 });
 
 describe("replaceAvatarCanvas", () => {

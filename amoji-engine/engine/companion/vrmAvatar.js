@@ -46,22 +46,25 @@ import { applyVrmOutfitTint } from "./companionOutfitApply.js";
 import {
   applyBlinkWeight,
   applyMorphMouthOpen,
+  applyTalkEmotionMorphs,
   blinkExpressionNames,
   blinkPulseFinished,
   blinkWeightFromPhase,
   clampRestFaceBlend,
   applyRestEyeOpen,
   applyRestEyeOpenMorphs,
+  capTalkingEmotionWeight,
   guardLookAtLids,
   inspectVrmFaceHazards,
+  listExpressionNames,
   resolveMouthPresets,
   sampleEatMouthPulse,
   sampleTalkMouthPulse,
   shapeToVisemePreset,
+  softenTalkMouthOverrides,
   talkJawRotationX,
   talkingMouthOpen,
   talkingVisemeShape,
-  capTalkingEmotionWeight,
   zeroAllExpressions,
   zeroHazardMorphInfluences,
 } from "./companionFaceRest.js";
@@ -752,14 +755,17 @@ export async function createVrmAvatar(opts) {
         if (preset) expr.setValue(preset, open);
       }
     }
-    applyMorphMouthOpen(model, shape, open);
-    applyJawOpen(open);
+    return { open, shape };
   };
 
   const applyTalkMouthNow = (now = performance.now()) => {
+    softenTalkMouthOverrides(expr, talking || eating);
     const open = talkingMouthOpen(talking, mouthOpen, now, eating);
-    applyMouth(open, now);
+    const { shape } = applyMouth(open, now);
     expr?.update?.();
+    // Visemes + jaw last so Happy/Surprised cannot freeze the mouth.
+    applyMorphMouthOpen(model, shape, open);
+    applyTalkEmotionMorphs(model, emotion, talking || eating);
     applyJawOpen(open);
     return open;
   };
@@ -785,8 +791,12 @@ export async function createVrmAvatar(opts) {
         mouthOpen = 0;
         mouthShape = null;
         applyMouth(0);
+        applyMorphMouthOpen(model, "aa", 0);
+        applyTalkEmotionMorphs(model, emotion, false);
+        applyJawOpen(0);
       }
       applyEmotionExpressions(emotion);
+      softenTalkMouthOverrides(expr, false);
     } else {
       applyEmotionExpressions(emotion);
       if (mouthTarget < 0.2) mouthTarget = Math.max(mouthTarget, 0.55);
@@ -1107,6 +1117,25 @@ export async function createVrmAvatar(opts) {
     },
     get mouthOpen() {
       return mouthOpen;
+    },
+    getFaceDebug() {
+      return {
+        talking,
+        eating,
+        emotion,
+        mouthOpen,
+        mouthTarget,
+        mouthShape,
+        mouthPresets: [...mouthPresets],
+        expressionNames: listExpressionNames(expr),
+        expressionCurrent: { ...expressionCurrent },
+        expressionTarget: { ...expressionTarget },
+        hazards: {
+          opensMouth: [...(faceHazards.opensMouth || [])],
+          blocksMouth: [...(faceHazards.blocksMouth || [])],
+          closesEyes: [...(faceHazards.closesEyes || [])],
+        },
+      };
     },
     resize,
     resetCameraView,
