@@ -10,6 +10,7 @@ import {
   PROGRESS_RING_RADIUS,
   progressRingOffset,
 } from "./companionProgressOverlay.js";
+import { closeUiOverlay, openUiOverlay } from "./companionUiEffects.js";
 
 export const COMPANION_CHARACTER_PICKER_SCHEMA =
   "amoji.companionCharacterPicker.v3";
@@ -246,18 +247,27 @@ export function createCompanionCharacterPicker(opts = {}) {
     copy();
     renderGrid();
     shell.hidden = false;
-    shell.classList.add("is-open");
     open = true;
-    document.body.classList.add("companion-picker-open");
+    openUiOverlay(document, {
+      panel: shell,
+      bodyClass: "companion-picker-open",
+      panelOpenClass: "is-open",
+    });
     shell.querySelector(".companion-picker-close")?.focus?.();
   };
 
   const close = () => {
-    shell.classList.remove("is-open");
-    shell.hidden = true;
     open = false;
-    document.body.classList.remove("companion-picker-open");
-    opts.onClose?.();
+    closeUiOverlay(document, {
+      panel: shell,
+      bodyClass: "companion-picker-open",
+      panelOpenClass: "is-open",
+      hidePanelOnClose: false,
+      onHidden: () => {
+        shell.hidden = true;
+        opts.onClose?.();
+      },
+    });
   };
 
   shell.addEventListener("click", (ev) => {
