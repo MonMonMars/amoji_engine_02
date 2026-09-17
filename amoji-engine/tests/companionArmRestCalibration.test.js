@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { detectVrmArmRestRotations } from "../engine/companion/companionArmRestCalibration.js";
-import { VRM_ARM_REST_ROTATIONS } from "../engine/companion/companionPoseLibrary.js";
+import { detectVrmArmBind, detectVrmArmRestRotations, detectVrmIdleRestRotations, detectVrmLegRestRotations } from "../engine/companion/companionArmRestCalibration.js";
+import { VRM_APOSE_ARM_REST_ROTATIONS, VRM_ARM_REST_ROTATIONS } from "../engine/companion/companionPoseLibrary.js";
 
 describe("companionArmRestCalibration", () => {
   it("keeps standard rest when flipped Z is higher", () => {
@@ -98,5 +98,123 @@ describe("companionArmRestCalibration", () => {
     const rest = detectVrmArmRestRotations(vrm);
     expect(rest.leftLowerArm.flexAxis).toBe("z");
     expect(Math.abs(rest.leftLowerArm.z)).toBeGreaterThan(0.5);
+  });
+
+  it("uses a small A-pose rest when hands already hang by the hips", () => {
+    const vrm = {
+      humanoid: {
+        resetNormalizedPose() {},
+        update() {},
+        getNormalizedBoneNode(name) {
+          const y = {
+            leftHand: 0.82,
+            rightHand: 0.82,
+            leftUpperArm: 1.36,
+            hips: 0.78,
+          }[name];
+          if (y != null) {
+            return {
+              rotation: { x: 0, y: 0, z: 0 },
+              getWorldPosition(v) {
+                v.set(0, y, 0);
+              },
+            };
+          }
+          return { rotation: { x: 0, y: 0, z: 0 } };
+        },
+      },
+      update() {},
+    };
+    expect(detectVrmArmBind(vrm)).toBe("apose");
+    const rest = detectVrmArmRestRotations(vrm);
+    expect(Math.abs(rest.leftUpperArm.z)).toBeLessThan(0.5);
+    expect(Math.abs(rest.rightUpperArm.z)).toBeLessThan(0.5);
+    expect(rest.leftUpperArm.z).toBe(VRM_APOSE_ARM_REST_ROTATIONS.leftUpperArm.z);
+  });
+
+  it("picks the knee axis that shortens hip-to-foot distance", () => {
+    const bones = new Map();
+    const makeBone = (name) => {
+      if (!bones.has(name)) {
+        bones.set(name, { rotation: { x: 0, y: 0, z: 0 } });
+      }
+      return bones.get(name);
+    };
+    const vrm = {
+      humanoid: {
+        resetNormalizedPose() {},
+        update() {},
+        getNormalizedBoneNode(name) {
+          const bone = makeBone(name);
+          if (name === "leftFoot" || name === "rightFoot") {
+            return {
+              ...bone,
+              getWorldPosition(v) {
+                const lower = name === "leftFoot"
+                  ? bones.get("leftLowerLeg")
+                  : bones.get("rightLowerLeg");
+                const flex = Math.abs(lower?.rotation.z || 0);
+                v.set(0, 0.1 + flex * 0.35, 0.2 - flex * 0.3);
+              },
+            };
+          }
+          if (name === "leftUpperLeg" || name === "rightUpperLeg") {
+            return {
+              ...bone,
+              getWorldPosition(v) {
+                v.set(0, 0.9, 0);
+              },
+            };
+          }
+          return bone;
+        },
+      },
+      update() {},
+    };
+    const legs = detectVrmLegRestRotations(vrm);
+    expect(legs.leftLowerLeg.flexAxis).toBe("z");
+    expect(Math.abs(legs.leftLowerLeg.z)).toBeGreaterThan(0.2);
+    expect(Math.abs(legs.rightLowerLeg.z)).toBeGreaterThan(0.4);
+  });
+
+  it("returns combined idle rest with bind label", () => {
+    const vrm = {
+      humanoid: {
+        resetNormalizedPose() {},
+        update() {},
+        getNormalizedBoneNode(name) {
+          if (name === "leftHand" || name === "rightHand") {
+            return {
+              rotation: { x: 0, y: 0, z: 0 },
+              getWorldPosition(v) {
+                v.set(0.4, 1.28, 0);
+              },
+            };
+          }
+          if (name === "leftUpperArm") {
+            return {
+              rotation: { x: 0, y: 0, z: 0 },
+              getWorldPosition(v) {
+                v.set(0.2, 1.32, 0);
+              },
+            };
+          }
+          if (name === "hips") {
+            return {
+              rotation: { x: 0, y: 0, z: 0 },
+              getWorldPosition(v) {
+                v.set(0, 0.8, 0);
+              },
+            };
+          }
+          return { rotation: { x: 0, y: 0, z: 0 } };
+        },
+      },
+      update() {},
+    };
+    const idle = detectVrmIdleRestRotations(vrm);
+    expect(idle.bind).toBe("tpose");
+    expect(Math.abs(idle.arms.leftUpperArm.z)).toBeGreaterThan(1);
+    expect(idle.legs.rightLowerLeg).toBeTruthy();
   });
 });

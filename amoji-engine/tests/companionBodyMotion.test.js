@@ -57,7 +57,7 @@ describe("createCompanionBodyMotion", () => {
     const rest = VRM_ARM_REST_ROTATIONS.leftUpperArm;
     expect(Math.abs(rot.z - rest.z)).toBeGreaterThan(0.008);
     const knee = humanoid.bones.get("rightLowerLeg").rotation.x;
-    expect(knee).toBeGreaterThan(0.2);
+    expect(knee).toBeGreaterThan(0.45);
     expect(humanoid.bones.get("leftHand").rotation.y).not.toBe(0);
     expect(Math.abs(humanoid.bones.get("hips").rotation.z)).toBeLessThanOrEqual(
       0.02,
@@ -125,5 +125,20 @@ describe("createCompanionBodyMotion", () => {
     expect(motion.currentAction).toBe("wave");
     for (let i = 0; i < 80; i += 1) motion.update(1 / 30);
     expect(motion.currentAction).toBe("nod");
+  });
+
+  it("bends the calibrated knee axis at rest", () => {
+    const humanoid = mockHumanoid();
+    const motion = createCompanionBodyMotion(humanoid);
+    motion.setLegRestRotations({
+      leftUpperLeg: { x: 0.08, y: 0, z: 0 },
+      rightUpperLeg: { x: 0.2, y: 0, z: 0 },
+      leftLowerLeg: { x: 0.06, y: 0, z: 0.3, flexAxis: "z" },
+      rightLowerLeg: { x: 0.06, y: 0, z: 0.5, flexAxis: "z" },
+    });
+    motion.setTalking(false);
+    motion.snapToRestPose();
+    expect(humanoid.bones.get("rightLowerLeg").rotation.z).toBeGreaterThan(0.45);
+    expect(humanoid.bones.get("leftLowerArm").rotation.x).toBeGreaterThan(0.7);
   });
 });
