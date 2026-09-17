@@ -362,8 +362,10 @@ export async function searchWeb(query, fetchImpl = fetch) {
   let source = null;
   for (const hit of ordered) {
     if (!hit?.summary) continue;
+    if (!snapshotLooksUseful(q, hit.summary, hit.source)) continue;
     if (!source) source = hit.source;
     if (!parts.includes(hit.summary)) parts.push(hit.summary);
+    if (hit.source === "wttr") break;
     if (parts.join(" ").length > 1600) break;
   }
   const summary = parts.join(" ").replace(/\s+/g, " ").trim().slice(0, 1800);

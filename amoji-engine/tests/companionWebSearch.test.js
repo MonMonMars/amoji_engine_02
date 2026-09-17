@@ -87,13 +87,20 @@ describe("companionWebSearch", () => {
           }),
         };
       }
-      return { ok: false, json: async () => ({}) };
+      return {
+        ok: true,
+        json: async () => ({
+          AbstractText: "Artificial intelligence is a field of computer science.",
+          RelatedTopics: [],
+        }),
+      };
     };
     const result = await searchWeb("What is the weather in Hong Kong today?", fetchImpl);
     expect(result.ok).toBe(true);
     expect(result.source).toBe("wttr");
     expect(result.summary).toContain("27°C");
     expect(result.summary).toContain("Patchy rain nearby");
+    expect(result.summary).not.toMatch(/Artificial intelligence/i);
   });
 
   it("uses Wikipedia opensearch when DuckDuckGo is empty", async () => {
