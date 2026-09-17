@@ -98,6 +98,10 @@ describe("idle showcase wiring", () => {
     );
     expect(grokCss).toContain("companion-chip__dot-canvas");
     expect(grokCss).toMatch(/\.companion-chip__dot:has\(canvas\) \{[\s\S]*transform:\s*none/);
+    expect(grokCss).toMatch(/\.companion-chip__dot-canvas \{[\s\S]*inset:\s*0/);
+    expect(grokCss).toMatch(/\.companion-chip__dot \{[\s\S]*?overflow:\s*hidden/);
+    expect(html).toContain('role="img"');
+    expect(html).toContain("normalizeEmotionThemeKey");
     expect(grokCss).not.toMatch(/animation:\s*miniBallGlow/);
     expect(grokCss).not.toMatch(/animation:\s*miniBallIdle/);
   });

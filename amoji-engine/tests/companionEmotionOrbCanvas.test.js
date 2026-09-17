@@ -4,6 +4,7 @@ import {
   clamp,
   drawEmotionOrbFrame,
   lerpHue,
+  prefersReducedMotion,
   smoothStep,
 } from "../engine/companion/companionEmotionOrbCanvas.js";
 
@@ -45,6 +46,12 @@ describe("companionEmotionOrbCanvas", () => {
       ellipse() {},
       fill() {},
       stroke() {},
+      save() {},
+      restore() {},
+      clip() {},
+      rotate() {},
+      scale() {},
+      translate() {},
     };
     drawEmotionOrbFrame(ctx, 120, 120, {
       time: 0.5,
@@ -75,5 +82,63 @@ describe("companionEmotionOrbCanvas", () => {
       compact: true,
     });
     expect(compactCalls).toContain("clear");
+  });
+
+  it("clips the compact chip orb to a circle", () => {
+    const ops = [];
+    const ctx = {
+      clearRect() {
+        ops.push("clear");
+      },
+      createRadialGradient() {
+        return { addColorStop() {} };
+      },
+      fillStyle: "",
+      strokeStyle: "",
+      lineWidth: 0,
+      beginPath() {
+        ops.push("path");
+      },
+      closePath() {},
+      moveTo() {},
+      lineTo() {},
+      arc() {
+        ops.push("arc");
+      },
+      ellipse() {},
+      fill() {},
+      stroke() {},
+      save() {
+        ops.push("save");
+      },
+      restore() {
+        ops.push("restore");
+      },
+      clip() {
+        ops.push("clip");
+      },
+      rotate() {},
+      scale() {},
+      translate() {},
+    };
+    drawEmotionOrbFrame(ctx, 36, 36, {
+      time: 0.8,
+      volume: 0.7,
+      hue: 38,
+      sat: 88,
+      light: 58,
+      state: "speaking",
+      compact: true,
+      squash: 1.08,
+      spin: 0.4,
+    });
+    expect(ops).toContain("clip");
+    expect(ops.indexOf("clip")).toBeGreaterThan(ops.indexOf("save"));
+    expect(ops).toContain("restore");
+  });
+
+  it("reads the reduced-motion preference", () => {
+    expect(prefersReducedMotion(() => ({ matches: true }))).toBe(true);
+    expect(prefersReducedMotion(() => ({ matches: false }))).toBe(false);
   });
 });
