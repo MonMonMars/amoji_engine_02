@@ -124,11 +124,26 @@ if (await casualOutfit.count()) {
 
 await page.click("#scene-sheet-close");
 
-const statusDotListening = await page.evaluate(() => {
+const statusDotReady = await page.evaluate(() => {
   const dot = document.getElementById("status-dot");
-  return dot?.dataset?.state === "typing" || dot?.dataset?.state === "listening";
+  const state = dot?.dataset?.state || "";
+  const aria = dot?.getAttribute("aria-label") || "";
+  const hasCanvas = Boolean(dot?.querySelector("canvas.companion-chip__dot-canvas"));
+  const textMode = document.body.classList.contains("composer-text-mode");
+  const activeVoice =
+    state === "typing" ||
+    state === "listening" ||
+    state === "speaking" ||
+    state === "thinking" ||
+    state === "loading";
+  const idleTextReady =
+    textMode &&
+    (state === "idle" || state === "typing") &&
+    aria.length > 0 &&
+    hasCanvas;
+  return activeVoice || idleTextReady;
 });
-record("voice status dot active", statusDotListening);
+record("voice status dot ready", statusDotReady);
 
 await page.click("#btn-toggle-chat");
 await page.waitForTimeout(300);

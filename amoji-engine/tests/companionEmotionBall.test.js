@@ -221,6 +221,12 @@ describe("companionEmotionBall", () => {
         textMode: true,
         speaking: true,
       }),
+    ).toBe("typing");
+    expect(
+      resolveMiniEmotionBallState({
+        sessionState: "speaking",
+        speaking: true,
+      }),
     ).toBe("speaking");
     expect(
       resolveMiniEmotionBallState({

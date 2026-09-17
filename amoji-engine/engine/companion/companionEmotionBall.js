@@ -382,7 +382,11 @@ export function createCompanionEmotionBall(el, opts = {}) {
  */
 export function resolveMiniEmotionBallState(opts = {}) {
   const session = String(opts.sessionState || "").toLowerCase();
-  if (opts.speaking || opts.assistantActive) return "speaking";
+  const voiceLive = Boolean(opts.speaking || opts.assistantActive);
+  // Session UI is authoritative once back to idle — stale TTS flags must not stick "speaking".
+  const staleVoice =
+    voiceLive && (session === "idle" || session === "typing" || session === "listening");
+  if (voiceLive && !staleVoice) return "speaking";
   if (session === "thinking" || session === "loading" || session === "speaking") {
     return session === "speaking" ? "speaking" : session;
   }
