@@ -497,8 +497,14 @@ export async function createVrmAvatar(opts) {
     return nuance;
   };
 
-  const applyExpressionProfile = ({ emotion: em = "neutral", nuance = "none" } = {}) => {
-    const blend = buildVrmExpressionBlend(em, nuance);
+  const applyExpressionProfile = ({
+    emotion: em = "neutral",
+    nuance = "none",
+    blend: blendOverride,
+  } = {}) => {
+    emotion = bodyMotion.setEmotion(em);
+    bodyMotion.setContentNuance(nuance);
+    const blend = blendOverride || buildVrmExpressionBlend(em, nuance);
     setExpressionTargetFromBlend(blend);
     return { emotion: em, nuance, blend };
   };

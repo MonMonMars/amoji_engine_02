@@ -10,13 +10,13 @@
 export const COMPANION_FACE_REST_SCHEMA = "amoji.companionFaceRest.v7";
 
 export const MOUTH_CLOSE_EPS = 0.035;
-/** No smile morph at rest — visemes own the jaw while talking. */
-export const IDLE_HAPPY_MAX = 0;
+/** Subtle performance smile at rest — hazard filter still blocks jaw-baking presets. */
+export const IDLE_HAPPY_MAX = 0.36;
 /** Talk smile is visible; visemes still write last so the jaw can move. */
-export const TALK_HAPPY_MAX = 0.48;
+export const TALK_HAPPY_MAX = 0.62;
 /** Surprised at rest often drops the jaw. */
-export const REST_SURPRISED_MAX = 0;
-export const TALK_SURPRISED_MAX = 0.22;
+export const REST_SURPRISED_MAX = 0.12;
+export const TALK_SURPRISED_MAX = 0.32;
 /** Max jaw-bone X rotation (radians) at full open. */
 export const TALK_JAW_OPEN_RAD = 0.42;
 /** Fallback viseme walk when TTS has not yet named a shape. */
@@ -516,22 +516,48 @@ export function applyTalkEmotionMorphs(root, emotion = "neutral", talking = fals
   const e = String(emotion || "neutral").toLowerCase();
   const smile = talking
     ? e === "happy"
-      ? 0.42
+      ? 0.54
       : e === "surprised"
-        ? 0.12
+        ? 0.18
         : e === "sad" || e === "angry"
           ? 0
-          : 0.18
-    : 0;
-  const frown = talking ? (e === "sad" ? 0.38 : e === "angry" ? 0.22 : 0) : 0;
+          : e === "thinking"
+            ? 0.08
+            : 0.24
+    : e === "happy"
+      ? 0.22
+      : 0;
+  const frown = talking
+    ? e === "sad"
+      ? 0.46
+      : e === "angry"
+        ? 0.28
+        : e === "thinking"
+          ? 0.14
+          : 0
+    : e === "thinking"
+      ? 0.1
+      : 0;
   const browUp = talking
     ? e === "surprised"
-      ? 0.46
+      ? 0.56
       : e === "happy"
-        ? 0.22
-        : 0.08
+        ? 0.3
+        : e === "thinking"
+          ? 0.16
+          : 0.12
     : 0;
-  const browDown = talking ? (e === "angry" ? 0.48 : e === "sad" ? 0.28 : 0) : 0;
+  const browDown = talking
+    ? e === "angry"
+      ? 0.56
+      : e === "sad"
+        ? 0.34
+        : e === "thinking"
+          ? 0.18
+          : 0
+    : e === "thinking"
+      ? 0.12
+      : 0;
   let applied = 0;
   root.traverse((obj) => {
     const influences = obj?.morphTargetInfluences;

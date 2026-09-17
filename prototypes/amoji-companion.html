@@ -8,9 +8,9 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji · Companion</title>
     <script>
-      window.__amojiBuild = "2026-09-17-v174-tts-full-playback";
+      window.__amojiBuild = "2026-09-17-v175-emotion-performance";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-17-v174-tts-full-playback"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-17-v175-emotion-performance"></script>
     <link
       rel="prefetch"
       href="/prototypes/assets/companion-char-nova.png"
@@ -323,7 +323,7 @@
       media="print"
       onload="this.media='all'"
     />
-    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-17-v174-tts-full-playback" />
+    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-17-v175-emotion-performance" />
     <noscript>
       <link
         href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap"
@@ -3594,19 +3594,19 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-17-v174-tts-full-playback",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-17-v175-emotion-performance",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-17-v174-tts-full-playback",
-          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-17-v174-tts-full-playback"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-17-v175-emotion-performance",
+          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-17-v175-emotion-performance"
         }
       }
     </script>
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v174-tts-full-playback"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v175-emotion-performance"
     />
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-17-v174-tts-full-playback"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v174-tts-full-playback"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-17-v175-emotion-performance"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v175-emotion-performance"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;
@@ -4504,7 +4504,11 @@
         if (!content) return;
         lastAvatarPerformance = content;
         currentEmotion = content.emotion || "neutral";
-        avatar.setEmotion?.(content.emotion || "neutral");
+        avatar.applyExpressionProfile?.({
+          emotion: content.emotion || "neutral",
+          nuance: content.nuance || "none",
+          blend: content.expressionBlend,
+        }) ?? avatar.setEmotion?.(content.emotion || "neutral");
         setEmotionPill(content.emotion || "neutral", content.action || null);
         avatar.setTalkStyle?.(content.talkStyle);
         avatar.setTalkEnergy?.(content.speechEnergy);
@@ -4552,7 +4556,13 @@
         lastAvatarPerformance = content;
         const emotion = content.emotion || "neutral";
         currentEmotion = emotion;
-        avatar.setEmotion?.(emotion);
+        avatar.applyExpressionProfile?.({
+          emotion,
+          nuance: content.nuance || "none",
+          blend: content.expressionBlend,
+        }) ?? avatar.setEmotion?.(emotion);
+        avatar.setTalkStyle?.(content.talkStyle);
+        avatar.setTalkEnergy?.(content.speechEnergy);
         setEmotionPill(emotion);
         return content;
       };
@@ -5878,6 +5888,10 @@
             speakEmotion = analysis.emotion;
             setEmotionPill(analysis.emotion);
           }
+          if (analysis?.talkStyle) avatar.setTalkStyle?.(analysis.talkStyle);
+          if (analysis?.speechEnergy != null) {
+            avatar.setTalkEnergy?.(analysis.speechEnergy);
+          }
         },
         onMicLevel: ({ level, rms } = {}) => {
           applyMicMeterVisual(level);
@@ -6585,6 +6599,14 @@
           if (!phaseAEnabled || !segments.length) return;
           const analysis = analyzeStreamingReply(fullText);
           streamEmotion = analysis.emotion || streamEmotion;
+          const streamNuance = analysis.nuance || speakContent.nuance || "none";
+          avatar.applyExpressionProfile?.({
+            emotion: streamEmotion,
+            nuance: streamNuance,
+            blend: analysis.expressionBlend,
+          });
+          avatar.setTalkStyle?.(analysis.talkStyle);
+          avatar.setTalkEnergy?.(analysis.speechEnergy);
           if (!streamSpeakStarted) {
             streamSpeakStarted = true;
             waitAct?.stop();
@@ -6598,7 +6620,7 @@
           for (const seg of segments) {
             const chunkPerf = resolveChunkTtsPerformance(seg, {
               emotion: streamEmotion,
-              nuance: speakContent.nuance || "none",
+              nuance: streamNuance,
               characterId,
               lang: isEnglish ? "en" : "yue",
             });
@@ -6654,7 +6676,13 @@
                 const downgrade =
                   stream.emotion === "neutral" || stream.emotion === "thinking";
                 if (!avatar.currentAction || !downgrade) {
-                  avatar.setEmotion?.(stream.emotion);
+                  avatar.applyExpressionProfile?.({
+                    emotion: stream.emotion,
+                    nuance: stream.nuance || "none",
+                    blend: stream.expressionBlend,
+                  }) ?? avatar.setEmotion?.(stream.emotion);
+                  avatar.setTalkStyle?.(stream.talkStyle);
+                  avatar.setTalkEnergy?.(stream.speechEnergy);
                   setEmotionPill(stream.emotion);
                   streamEmotion = stream.emotion;
                 }

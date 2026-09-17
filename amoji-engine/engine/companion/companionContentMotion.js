@@ -115,18 +115,21 @@ export function buildVrmExpressionBlend(emotion, nuance) {
 
   switch (e) {
     case "happy":
-      blend.Happy = 0.55;
+      blend.Happy = 0.72;
       break;
     case "thinking":
+      // Pensive brow — avoids Relaxed/Surprised presets that droop lids or drop the jaw.
+      blend.Sad = 0.2;
       break;
     case "sad":
-      blend.Sad = 0.55;
+      blend.Sad = 0.68;
       break;
     case "surprised":
-      blend.Surprised = 0.38;
+      blend.Surprised = 0.52;
+      blend.Happy = 0.28;
       break;
     case "angry":
-      blend.Angry = 0.62;
+      blend.Angry = 0.75;
       break;
     default:
       break;
@@ -134,19 +137,24 @@ export function buildVrmExpressionBlend(emotion, nuance) {
 
   switch (n) {
     case "shy":
-      blend.Happy = Math.min(blend.Happy ?? 0.22, 0.22);
+      blend.Happy = Math.min(blend.Happy ?? 0.28, 0.28);
+      blend.Sad = Math.max(blend.Sad ?? 0, 0.14);
       break;
     case "love":
-      blend.Happy = Math.max(blend.Happy ?? 0.36, 0.4);
+      blend.Happy = Math.max(blend.Happy ?? 0.48, 0.56);
       break;
     case "curious":
+      if (e !== "thinking") {
+        blend.Surprised = Math.max(blend.Surprised ?? 0, 0.18);
+      }
+      blend.Happy = Math.max(blend.Happy ?? 0, e === "happy" ? 0 : 0.16);
       break;
     case "excited":
-      blend.Happy = Math.max(blend.Happy ?? 0.4, 0.5);
+      blend.Happy = Math.max(blend.Happy ?? 0.52, 0.64);
       break;
     case "stress":
-      blend.Sad = Math.max(blend.Sad ?? 0, 0.22);
-      blend.Angry = Math.max(blend.Angry ?? 0, 0.12);
+      blend.Sad = Math.max(blend.Sad ?? 0, 0.3);
+      blend.Angry = Math.max(blend.Angry ?? 0, 0.16);
       break;
     default:
       break;
