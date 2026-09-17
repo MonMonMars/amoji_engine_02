@@ -7,16 +7,18 @@
  * Fcl_EYE_Close morphs are left at file defaults unless we zero them.
  */
 
-export const COMPANION_FACE_REST_SCHEMA = "amoji.companionFaceRest.v3";
+export const COMPANION_FACE_REST_SCHEMA = "amoji.companionFaceRest.v4";
 
 export const MOUTH_CLOSE_EPS = 0.035;
 /** No smile morph at rest — visemes own the jaw while talking. */
 export const IDLE_HAPPY_MAX = 0;
-/** Smile while talking — visemes still own the jaw. */
-export const TALK_HAPPY_MAX = 0.34;
+/** Tiny smile while talking — visemes + jaw still own the mouth. */
+export const TALK_HAPPY_MAX = 0.12;
 /** Surprised at rest often drops the jaw. */
 export const REST_SURPRISED_MAX = 0;
-export const TALK_SURPRISED_MAX = 0.28;
+export const TALK_SURPRISED_MAX = 0.08;
+/** Max jaw-bone X rotation (radians) at full open. */
+export const TALK_JAW_OPEN_RAD = 0.32;
 
 export const BLINK_CLOSE_SEC = 0.08;
 export const BLINK_EXPRESSION_NAMES = ["blink", "blinkLeft", "blinkRight"];
@@ -55,6 +57,42 @@ export function mouthVisemeWeight(talking, open) {
   const v = Math.max(0, Math.min(1, Number(open) || 0));
   if (!talking || v < MOUTH_CLOSE_EPS) return 0;
   return v;
+}
+
+/**
+ * Syllable-like flap so lips keep moving for the whole TTS clip, even when
+ * viseme samples dip between characters or audio analysis is silent.
+ * @param {number} nowMs
+ * @param {boolean} talking
+ */
+export function sampleTalkMouthPulse(nowMs, talking) {
+  if (!talking) return 0;
+  const t = (Number(nowMs) || 0) * 0.001;
+  const a = 0.5 + 0.5 * Math.sin(t * Math.PI * 6.2);
+  const b = 0.5 + 0.5 * Math.sin(t * Math.PI * 9.1 + 1.1);
+  return 0.22 + a * 0.58 + b * 0.16;
+}
+
+/**
+ * Combined viseme + talk pulse, 0 when idle.
+ * @param {boolean} talking
+ * @param {number} visemeOpen
+ * @param {number} [nowMs]
+ */
+export function talkingMouthOpen(talking, visemeOpen, nowMs = 0) {
+  if (!talking) return 0;
+  const viseme = mouthVisemeWeight(true, visemeOpen);
+  const pulse = sampleTalkMouthPulse(nowMs, true);
+  return Math.max(0, Math.min(1, Math.max(viseme, pulse * 0.88)));
+}
+
+/**
+ * Jaw bone open amount in radians. 0 at rest.
+ * @param {number} open 0..1
+ */
+export function talkJawRotationX(open) {
+  const v = Math.max(0, Math.min(1, Number(open) || 0));
+  return v * TALK_JAW_OPEN_RAD;
 }
 
 /**
@@ -362,6 +400,7 @@ export function clampRestFaceBlend(blend, opts = {}) {
     const isBinary = hazardHit(hazards?.binary, key);
 
     if (!talking && (opensMouth || closesEyes || isBinary)) continue;
+    if (talking && opensMouth) continue;
     if (talking && isBinary && (opensMouth || closesEyes)) continue;
     if (talking && closesEyes) continue;
 
