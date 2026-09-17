@@ -1,11 +1,16 @@
 /**
- * Online VRMA motion clips — hosted library used after /api/motions install.
- * Source: tk256ailab/vrm-viewer (MIT sample animations).
+ * Online VRMA motion clips — hosted library for all scripted body actions.
+ *
+ * Policy: VRM avatars play hosted VRMA for every catalog action. We do not
+ * synthesize body motion in code — custom libraries can be added later.
+ * Standing idle / talk sway stay procedural (continuous, not clip-based).
+ *
+ * Source: tk256ailab/vrm-viewer (MIT) — 11 clips mapped to ~50+ action ids.
  */
 import { resolveMotionSamplerKey } from "./companionMotionLibrary.js";
 
 export const COMPANION_ONLINE_MOTION_CLIPS_SCHEMA =
-  "amoji.companionOnlineMotionClips.v2";
+  "amoji.companionOnlineMotionClips.v3";
 
 /** Relax.vrma is a stretch, not a rest — standing idle stays clip-free. */
 export const ONLINE_IDLE_ACTION = "idle";
@@ -13,8 +18,7 @@ export const ONLINE_IDLE_CLIP_FILE = "Relax";
 export const ONLINE_THINKING_ACTION = "thinking";
 
 /**
- * @deprecated Empty — social gestures now play hosted VRMA instead of
- * procedural bone sway (which made the body shake).
+ * @deprecated Empty — all scripted actions use hosted VRMA, not bone samplers.
  */
 export const PROCEDURAL_PREFERRED_ACTIONS = Object.freeze(new Set());
 
@@ -70,6 +74,18 @@ export const ONLINE_MOTION_CLIP_FILES = Object.freeze({
   kungfu: "LookAround",
   zombie: "LookAround",
   superhero: "LookAround",
+  // Social / catalog actions — nearest hosted clip (custom libs later).
+  nod: "Goodbye",
+  bow: "Goodbye",
+  shrug: "Thinking",
+  peace: "Blush",
+  laugh: "Clapping",
+  hug: "Blush",
+  kiss: "Blush",
+  sit: "Relax",
+  squat: "Relax",
+  eat: "LookAround",
+  drink: "LookAround",
 });
 
 /**

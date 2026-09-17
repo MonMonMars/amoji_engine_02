@@ -60,7 +60,7 @@ export const ACTION_COMBOS = Object.freeze({
  * hosted VRMA library (wave=Goodbye, thinking=Thinking, stretch=Relax).
  * Not the huge showcase pool (kungfu/zombie/dance) and not looping Relax.
  */
-/** Quiet between-turn idle — hosted VRMA when available, procedural fallback. */
+/** Quiet between-turn idle — all entries map to hosted VRMA clips. */
 export const IDLE_LIFE_CLIP_POOL = Object.freeze([
   "wave",
   "clap",

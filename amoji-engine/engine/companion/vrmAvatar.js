@@ -289,6 +289,10 @@ export async function createVrmAvatar(opts) {
   let vrmaAction = null;
   let vrmaPending = false;
   let vrmaPlayGen = 0;
+  /** @type {string[]} */
+  let vrmaSequenceQueue = [];
+  /** @type {object | null} */
+  let vrmaSequenceOpts = null;
   const restoreAfterVrma = () => {
     if (vrmaPending) return;
     const finished = vrmaAction;
@@ -302,6 +306,8 @@ export async function createVrmAvatar(opts) {
     vrmaPlayGen += 1;
     vrmaPending = false;
     vrmaAction = null;
+    vrmaSequenceQueue = [];
+    vrmaSequenceOpts = null;
     motionPlayer.releasePose?.();
     try {
       vrm.humanoid?.resetNormalizedPose?.();
@@ -328,6 +334,12 @@ export async function createVrmAvatar(opts) {
   const motionPlayer = createVrmMotionPlayer({
     vrm,
     onComplete: () => {
+      if (vrmaSequenceQueue.length > 0) {
+        const next = vrmaSequenceQueue.shift();
+        void tryPlayVrmaAction(next, vrmaSequenceOpts || {});
+        return;
+      }
+      vrmaSequenceOpts = null;
       restoreAfterVrma();
     },
   });
@@ -704,6 +716,8 @@ export async function createVrmAvatar(opts) {
     if (!key || key === "stop") {
       vrmaPlayGen += 1;
       vrmaPending = false;
+      vrmaSequenceQueue = [];
+      vrmaSequenceOpts = null;
       motionPlayer.stop();
       vrmaAction = null;
       const ok = bodyMotion.playAction(action, {
@@ -719,59 +733,44 @@ export async function createVrmAvatar(opts) {
       return ok;
     }
 
-    if (resolveOnlineMotionClipUrl(key)) {
-      vrmaAction = key;
-      void tryPlayVrmaAction(key, opts).then((ok) => {
-        if (!ok && !vrmaPending && !motionPlayer.isPlaying?.()) {
-          vrmaAction = null;
-          bodyMotion.playAction(action, {
-            emotion: opts.emotion || emotion,
-            loop: opts.loop,
-            loopSequence: opts.loopSequence,
-            single: opts.single,
-            maxMoves: opts.maxMoves,
-          });
-          emotion = bodyMotion.emotion;
-          applyEmotionExpressions(emotion);
-        }
-      });
-      return true;
+    if (!resolveOnlineMotionClipUrl(key)) {
+      return false;
     }
 
-    const ok = bodyMotion.playAction(action, {
-      emotion: opts.emotion || emotion,
-      loop: opts.loop,
-      loopSequence: opts.loopSequence,
-      single: opts.single,
-      maxMoves: opts.maxMoves,
+    vrmaSequenceQueue = [];
+    vrmaSequenceOpts = null;
+    vrmaAction = key;
+    void tryPlayVrmaAction(key, opts).then((ok) => {
+      if (!ok && !vrmaPending && !motionPlayer.isPlaying?.()) {
+        vrmaAction = null;
+      }
     });
-    emotion = bodyMotion.emotion;
-    applyEmotionExpressions(emotion);
-    return ok;
+    return true;
   };
 
   const playActionSequence = (actions, opts = {}) => {
     const sequence = Array.isArray(actions)
       ? actions.map((id) => String(id || "").toLowerCase()).filter(Boolean)
       : [];
-    if (
-      sequence.length === 1 &&
-      resolveOnlineMotionClipUrl(sequence[0])
-    ) {
-      void tryPlayVrmaAction(sequence[0], {
-        emotion: opts.emotion || emotion,
-        loop: opts.loopSequence,
-      });
+    const online = sequence.filter((id) => resolveOnlineMotionClipUrl(id));
+    if (!online.length) return false;
+
+    vrmaPlayGen += 1;
+    vrmaSequenceOpts = {
+      emotion: opts.emotion || emotion,
+      loop: opts.loopSequence,
+    };
+    if (online.length === 1) {
+      vrmaSequenceQueue = [];
+      void tryPlayVrmaAction(online[0], vrmaSequenceOpts);
       return true;
     }
 
-    const ok = bodyMotion.playActionSequence(actions, {
-      emotion: opts.emotion || emotion,
-      loopSequence: opts.loopSequence,
-    });
+    vrmaSequenceQueue = online.slice(1);
+    void tryPlayVrmaAction(online[0], vrmaSequenceOpts);
     emotion = bodyMotion.emotion;
     applyEmotionExpressions(emotion);
-    return ok;
+    return true;
   };
 
   const stopAction = () => {
