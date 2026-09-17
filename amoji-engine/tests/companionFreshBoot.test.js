@@ -161,12 +161,12 @@ describe("companionFreshBoot", () => {
 
   it("buildPlayFallbackLocation targets /companion-full with cache bust", () => {
     const url = buildPlayFallbackLocation("?lang=en&pick=1", {
-      build: "2026-09-17-v173-idle-limb-fix",
+      build: "2026-09-17-v174-tts-full-playback",
       stamp: "1234567890",
     });
     expect(url).toContain("/companion-full?");
     expect(url).toContain("lang=en");
-    expect(url).toContain("build=2026-09-17-v173-idle-limb-fix");
+    expect(url).toContain("build=2026-09-17-v174-tts-full-playback");
     expect(url).toContain("_cb=1234567890");
   });
 
