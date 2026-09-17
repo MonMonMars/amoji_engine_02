@@ -23,6 +23,21 @@ export function smoothStep(current, target, factor) {
 }
 
 /**
+ * Shortest-path hue interpolation (0..360).
+ * @param {number} from
+ * @param {number} to
+ * @param {number} factor
+ */
+export function lerpHue(from, to, factor) {
+  const a = ((Number(from) || 0) % 360 + 360) % 360;
+  const b = ((Number(to) || 0) % 360 + 360) % 360;
+  let delta = b - a;
+  if (delta > 180) delta -= 360;
+  if (delta < -180) delta += 360;
+  return ((a + delta * clamp(factor, 0, 1)) % 360 + 360) % 360;
+}
+
+/**
  * @param {CanvasRenderingContext2D} ctx
  * @param {number} width
  * @param {number} height
@@ -34,14 +49,15 @@ export function smoothStep(current, target, factor) {
  *   light: number,
  *   state: string,
  *   compact?: boolean,
+ *   wobble?: number,
  * }} opts
  */
 export function drawEmotionOrbFrame(ctx, width, height, opts) {
   const { time, volume, hue, sat, light, state, compact = false } = opts;
   const cx = width / 2;
   const cy = height / 2;
-  const base = Math.min(width, height) * 0.34;
-  const pulse = 1 + volume * (compact ? 0.22 : 0.38);
+  const base = Math.min(width, height) * (compact ? 0.4 : 0.34);
+  const pulse = 1 + volume * (compact ? 0.28 : 0.38);
   const radius = base * pulse;
 
   ctx.clearRect(0, 0, width, height);
@@ -57,15 +73,17 @@ export function drawEmotionOrbFrame(ctx, width, height, opts) {
 
   const points = 72;
   const wobbleAmp =
-    state === "thinking"
-      ? compact
-        ? 0.045
-        : 0.05
-      : state === "idle"
+    opts.wobble != null
+      ? clamp(Number(opts.wobble) || 0, 0, 0.45)
+      : state === "thinking"
         ? compact
-          ? 0.03
-          : 0.035
-        : (compact ? 0.055 : 0.08) + volume * (compact ? 0.1 : 0.18);
+          ? 0.05
+          : 0.05
+        : state === "idle"
+          ? compact
+            ? 0.045
+            : 0.035
+          : (compact ? 0.07 : 0.08) + volume * (compact ? 0.12 : 0.18);
 
   ctx.beginPath();
   for (let i = 0; i <= points; i++) {
