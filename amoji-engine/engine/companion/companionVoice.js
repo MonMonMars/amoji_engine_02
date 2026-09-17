@@ -31,6 +31,7 @@ import {
   buildExpressiveTtsPlan,
   clausePauseMs,
 } from "./companionExpressiveTts.js";
+import { expressionAtAudioProgress } from "./companionSpeechFace.js";
 import { characterGender } from "./companionCharacterCatalog.js";
 import {
   buildCloudTtsRequestBody,
@@ -343,6 +344,7 @@ export const CLOUD_ENGLISH_VOICE = Object.freeze({
  *   onMicState?: (on: boolean) => void,
  *   onError?: (msg: string) => void,
  *   onSpeakChunk?: (chunk: string, charIndex: number) => void,
+ *   onSpeakExpression?: (analysis: object) => void,
  *   onAssistantOutputChange?: (active: boolean) => void,
  *   lang?: string,
  *   cloudTtsUrl?: string | null,
@@ -540,7 +542,7 @@ export function createCompanionVoice(opts = {}) {
     blob,
     clean,
     emotion,
-    { holdSpeaking = false } = {},
+    { holdSpeaking = false, nuance = "none" } = {},
   ) => {
     if (!blob.size) return { ok: false, reason: "cloud-tts-empty" };
     const mime = blob.type || "";
@@ -584,6 +586,7 @@ export function createCompanionVoice(opts = {}) {
           audioLevel: analyser
             ? () => readAnalyserMouthLevel(analyser)
             : undefined,
+          speakFace: { emotion: emotion || "neutral", nuance: nuance || "none" },
           getProgress: () => {
             const liveMs =
               Number.isFinite(audio.duration) && audio.duration > 0
@@ -723,6 +726,13 @@ export function createCompanionVoice(opts = {}) {
           : [{ text: part, ...perf }];
         for (let i = 0; i < clauses.length; i += 1) {
           const clause = clauses[i];
+          opts.onSpeakExpression?.({
+            unit: clause.text,
+            emotion: clause.emotion || perf.emotion,
+            nuance: clause.nuance || perf.nuance,
+            talkStyle: clause.talkStyle || perf.talkStyle,
+            speechEnergy: clause.speechEnergy ?? perf.speechEnergy,
+          });
           const res = await fetch(url, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -754,7 +764,10 @@ export function createCompanionVoice(opts = {}) {
             blob,
             clause.text,
             clause.emotion || perf.emotion,
-            { holdSpeaking: true },
+            {
+              holdSpeaking: true,
+              nuance: clause.nuance || perf.nuance,
+            },
           );
           if (!last.ok) return last;
           if (i < clauses.length - 1) {
@@ -806,6 +819,16 @@ export function createCompanionVoice(opts = {}) {
     opts.onTalking?.(true);
     const clean = String(text || "");
     if (!clean) return;
+    const speakFace = timing.speakFace || { emotion: "neutral", nuance: "none" };
+    let lastSpeakUnit = "";
+
+    const emitSpeakFace = (progress) => {
+      const face = expressionAtAudioProgress(clean, progress, speakFace);
+      if (!face.unit || face.unit === lastSpeakUnit) return;
+      lastSpeakUnit = face.unit;
+      opts.onSpeakExpression?.(face);
+      opts.onSpeakChunk?.(face.unit, face.index ?? 0);
+    };
 
     let boundaryWorks = false;
     if (utter && "onboundary" in utter) {
@@ -816,7 +839,11 @@ export function createCompanionVoice(opts = {}) {
         const slice = clean.slice(idx, idx + len);
         const ch = slice[0] || clean[idx] || " ";
         emitViseme(ch);
-        if (slice.trim()) opts.onSpeakChunk?.(slice, idx);
+        if (slice.trim()) {
+          const progress =
+            clean.length > 1 ? Math.min(1, idx / Math.max(1, clean.length - 1)) : 0;
+          emitSpeakFace(progress);
+        }
       };
     }
 
@@ -841,18 +868,15 @@ export function createCompanionVoice(opts = {}) {
     let lastIndex = -1;
     mouthTimer = setInterval(() => {
       if (boundaryWorks) return;
+      const progress = getProgress();
       const sample = visemeAtAudioProgress(
         clean,
-        getProgress(),
+        progress,
         audioLevel?.() ?? 0,
       );
       opts.onMouth?.(sample.open, sample.shape);
-      if (sample.index !== lastIndex && sample.char?.trim()) {
-        const chunk = clean.slice(
-          Math.max(0, sample.index - 1),
-          sample.index + 6,
-        );
-        opts.onSpeakChunk?.(chunk, sample.index);
+      if (sample.index !== lastIndex) {
+        emitSpeakFace(progress);
         lastIndex = sample.index;
       }
     }, 33);
@@ -936,7 +960,9 @@ export function createCompanionVoice(opts = {}) {
     stopThinkingAudio();
     try {
       if (!speakerOn) {
-        startLipSync(clean);
+        startLipSync(clean, null, {
+          speakFace: { emotion: perf.emotion, nuance: perf.nuance },
+        });
         await sleep(Math.min(4200, 400 + clean.length * estimateLipSyncMsPerChar(clean)));
         const holdGap = isStreamPlaybackActive();
         stopMouth({ keepTalking: holdGap, keepMouth: holdGap });
@@ -966,7 +992,9 @@ export function createCompanionVoice(opts = {}) {
       }
 
       if (!synth) {
-        startLipSync(clean);
+        startLipSync(clean, null, {
+          speakFace: { emotion: perf.emotion, nuance: perf.nuance },
+        });
         await sleep(Math.min(4800, 450 + clean.length * estimateLipSyncMsPerChar(clean)));
         const holdGap = isStreamPlaybackActive();
         stopMouth({ keepTalking: holdGap, keepMouth: holdGap });
@@ -992,7 +1020,9 @@ export function createCompanionVoice(opts = {}) {
           ? browserProsody.volume * 0.4
           : browserProsody.volume;
 
-      startLipSync(clean, utter);
+      startLipSync(clean, utter, {
+        speakFace: { emotion: perf.emotion, nuance: perf.nuance },
+      });
 
       const maxMs = browserTtsTimeoutMs(clean);
       let settled = false;

@@ -8,9 +8,9 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji · Companion</title>
     <script>
-      window.__amojiBuild = "2026-09-17-v187-voice-lock";
+      window.__amojiBuild = "2026-09-17-v188-speech-face";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-17-v187-voice-lock"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-17-v188-speech-face"></script>
     <link
       rel="prefetch"
       href="/prototypes/assets/companion-char-nova.png"
@@ -324,8 +324,8 @@
       media="print"
       onload="this.media='all'"
     />
-    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-17-v187-voice-lock" />
-    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-17-v187-voice-lock" />
+    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-17-v188-speech-face" />
+    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-17-v188-speech-face" />
     <noscript>
       <link
         href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap"
@@ -3597,19 +3597,19 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-17-v187-voice-lock",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-17-v188-speech-face",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-17-v187-voice-lock",
-          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-17-v187-voice-lock"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-17-v188-speech-face",
+          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-17-v188-speech-face"
         }
       }
     </script>
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v187-voice-lock"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v188-speech-face"
     />
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-17-v187-voice-lock"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v187-voice-lock"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-17-v188-speech-face"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v188-speech-face"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;
@@ -3954,7 +3954,7 @@
         <p class="settings-section-title" id="settings-companion-title">Companion</p>
         <button type="button" class="btn-secondary" id="settings-btn-companions">Switch companion</button>
         <p class="settings-section-title" id="settings-voice-title">Voice</p>
-        <p class="settings-voice-note" id="settings-voice-note" aria-live="polite"></p>
+        <p class="settings-hint settings-voice-note" id="settings-voice-note" aria-live="polite"></p>
         <div class="settings-row">
           <button type="button" class="btn-secondary" id="settings-btn-speaker">Speaker: on</button>
         </div>
@@ -5913,20 +5913,27 @@
           syncEmotionBall();
           syncCompanionStatusUi();
         },
-        onSpeakChunk: (chunk) => {
-          feedAssistantEcho(chunk);
-          const analysis = avatar.reactToSpeechChunk?.(chunk, {
-            emotion: speakContent.emotion || speakEmotion,
-            nuance: speakContent.nuance || "none",
-          });
+        onSpeakExpression: (face) => {
+          if (!face?.unit) return;
+          feedAssistantEcho(face.unit);
+          const analysis =
+            avatar.reactToSpeechChunk?.(face.unit, {
+              emotion: speakContent.emotion || speakEmotion,
+              nuance: speakContent.nuance || "none",
+            }) || face;
           if (analysis?.emotion) {
             speakEmotion = analysis.emotion;
             setEmotionPill(analysis.emotion);
+            micUi.setEmotion(analysis.emotion, analysis.nuance || "none");
+            emotionBall.setEmotion(analysis.emotion, analysis.nuance || "none");
           }
           if (analysis?.talkStyle) avatar.setTalkStyle?.(analysis.talkStyle);
           if (analysis?.speechEnergy != null) {
             avatar.setTalkEnergy?.(analysis.speechEnergy);
           }
+        },
+        onSpeakChunk: (chunk) => {
+          feedAssistantEcho(chunk);
         },
         onMicLevel: ({ level, rms } = {}) => {
           applyMicMeterVisual(level);
