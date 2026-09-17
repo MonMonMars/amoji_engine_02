@@ -32,6 +32,8 @@
     { "source": "/companion", "destination": "/prototypes/amoji-lite.html" },
     { "source": "/amoji-lite.html", "destination": "/prototypes/amoji-lite.html" },
     { "source": "/companion-full", "destination": "/prototypes/amoji-companion.html" },
+    { "source": "/voice-emotion-demo", "destination": "/prototypes/voice-emotion-demo.html" },
+    { "source": "/voice-demo", "destination": "/prototypes/voice-emotion-demo.html" },
     { "source": "/", "destination": "/index.html" }
   ],
   "headers": [

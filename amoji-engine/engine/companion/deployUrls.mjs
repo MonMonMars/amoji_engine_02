@@ -91,6 +91,34 @@ export function secretaryDemoUrl(opts = {}) {
 }
 
 /**
+ * Voice emotion A/B lab — cached clips + live /api/tts.
+ * @param {{ build?: string, cacheBust?: string | number }} [opts]
+ */
+export function voiceEmotionDemoDirectUrl(opts = {}) {
+  const params = new URLSearchParams();
+  if (opts.build) params.set("build", opts.build);
+  params.set("_cb", String(opts.cacheBust ?? Date.now()));
+  const qs = params.toString();
+  return `${DEMO_BASE_URL}/voice-emotion-demo${qs ? `?${qs}` : ""}`;
+}
+
+/**
+ * English full companion with expressive OpenAI voice override.
+ * @param {{ build?: string, voice?: string, cacheBust?: string | number }} [opts]
+ */
+export function englishEmotionCompanionDirectUrl(opts = {}) {
+  const params = new URLSearchParams({
+    lang: "en",
+    pick: "1",
+    automic: "0",
+    voice: opts.voice || "openai-coral",
+  });
+  if (opts.build) params.set("build", opts.build);
+  params.set("_cb", String(opts.cacheBust ?? Date.now()));
+  return `${DEMO_BASE_URL}/companion-full?${params.toString()}`;
+}
+
+/**
  * Markdown-friendly block for agent summaries and PR bodies.
  * @param {{ build?: string, prUrl?: string | null }} [opts]
  */
@@ -103,9 +131,13 @@ export function formatDemoLinkBlock(opts = {}) {
   const yueDirect = companionFullDirectUrl({ lang: "yue", build });
   const enDirect = companionFullDirectUrl({ lang: "en", build });
   const liteDirect = companionLiteDirectUrl({ build, lang: "yue" });
+  const voiceLab = voiceEmotionDemoDirectUrl({ build });
+  const enEmotion = englishEmotionCompanionDirectUrl({ build });
   const lines = [
     `**Build:** \`${build}\``,
     `- **Bookmark (/play):** ${DEMO_BASE_URL}/play`,
+    `- **Voice emotion lab (EN):** ${voiceLab}`,
+    `- **English companion + Coral voice:** ${enEmotion}`,
     `- **Full companion (粵):** ${yue}`,
     `- **Full companion (EN):** ${en}`,
     `- **Direct full (粵, always works):** ${yueDirect}`,
