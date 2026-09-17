@@ -222,7 +222,7 @@ export function visemeAtAudioProgress(text, progress, audioLevel = 0) {
   const viseme = charToViseme(ch);
   const open = Math.min(
     1,
-    viseme.open * 0.62 + Math.max(viseme.open * 0.28, level * 0.9),
+    viseme.open * 0.92 + Math.max(viseme.open * 0.12, level * 0.55),
   );
   return { shape: viseme.shape, open, index: idx, char: ch };
 }
@@ -729,15 +729,17 @@ export function createCompanionVoice(opts = {}) {
     opts.onMouth?.(open, shape);
   };
 
-  const stopMouth = () => {
+  const stopMouth = ({ keepTalking = false } = {}) => {
     if (mouthTimer) {
       clearInterval(mouthTimer);
       mouthTimer = null;
     }
     for (const t of mouthTimeouts) clearTimeout(t);
     mouthTimeouts = [];
-    opts.onMouth?.(0, null);
-    opts.onTalking?.(false);
+    if (!keepTalking) {
+      opts.onMouth?.(0, null);
+      opts.onTalking?.(false);
+    }
   };
 
   /**
@@ -747,7 +749,7 @@ export function createCompanionVoice(opts = {}) {
    * @param {{ durationMs?: number, audioLevel?: () => number, getProgress?: () => number }} [timing]
    */
   const startLipSync = (text, utter, timing = {}) => {
-    stopMouth();
+    stopMouth({ keepTalking: true });
     opts.onTalking?.(true);
     const clean = String(text || "");
     if (!clean) return;
