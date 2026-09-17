@@ -68,33 +68,26 @@ export function createCompanionWaitAct(opts = {}) {
   let lastPoseId = null;
 
   const playPose = () => {
+    if (kind === "idle" || kind === "avatar-load") {
+      // Hosted Relax.vrma is the living rest. Don't rotate showcase clips
+      // or flash wait-face moods on top of it.
+      lastPoseId = "idle-stand";
+      avatarRef?.setThinking?.(false);
+      if (poseTick === 0) {
+        avatarRef?.setEmotion?.("neutral");
+        avatarRef?.applyExpressionProfile?.({
+          emotion: "neutral",
+          nuance: "none",
+        });
+      }
+      opts.onPose?.("idle-stand", phase);
+      return;
+    }
+
     const expression = pickWaitExpressionProfile(phase, poseTick, kind);
     const emotion = expression.emotion || pickWaitEmotion(phase, poseTick, kind);
     avatarRef?.setEmotion?.(emotion);
     avatarRef?.applyExpressionProfile?.(expression);
-
-    if (kind === "avatar-load") {
-      // Play preloaded procedural gestures as soon as the live model exists.
-      avatarRef?.setThinking?.(false);
-      const pose = pickWaitPose("avatar-load", poseTick);
-      lastPoseId = pose;
-      avatarRef?.playAction?.(pose, {
-        emotion,
-        loop: false,
-        single: true,
-      });
-      opts.onPose?.(pose, phase);
-      return;
-    }
-
-    if (kind === "idle") {
-      // Living rest pose is procedural (bent elbows, weight shift).
-      // One-shot showcase actions flatten limbs back to a stick stand.
-      lastPoseId = "idle-stand";
-      avatarRef?.setThinking?.(false);
-      opts.onPose?.("idle-stand", phase);
-      return;
-    }
 
     const pose = pickWaitPose(phase, poseTick);
     lastPoseId = pose;
