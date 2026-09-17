@@ -78,6 +78,11 @@ function withLoadTimeout(promise, ms, label = "avatar") {
   });
 }
 
+export function shouldSkipGltfFallback(modelUrl, prefer) {
+  if (prefer === "gltf") return false;
+  return Boolean(modelUrl && /\.vrm($|\?)/i.test(modelUrl));
+}
+
 /**
  * Create the female anime companion avatar.
  * Default: VRM anime girl → GLTF fallback → procedural → 2D.
@@ -107,6 +112,7 @@ export async function createCompanionAvatar(opts) {
     prefer === "vrm" ||
     prefer === "auto" ||
     Boolean(modelUrl && /\.vrm($|\?)/i.test(modelUrl));
+  const skipGltfFallback = shouldSkipGltfFallback(modelUrl, prefer);
 
   if (wantsVrm && !wantsGltf) {
     try {
@@ -131,12 +137,17 @@ export async function createCompanionAvatar(opts) {
       emit(96, "ready");
       return { avatar, kind: "vrm3d", canvas };
     } catch (err) {
-      console.warn("[companion] VRM avatar failed, trying GLTF", err);
+      console.warn(
+        skipGltfFallback
+          ? "[companion] VRM avatar failed, skipping other-character GLB"
+          : "[companion] VRM avatar failed, trying GLTF",
+        err,
+      );
       canvas = replaceAvatarCanvas(canvas);
     }
   }
 
-  if (wantsGltf || prefer === "auto") {
+  if (!skipGltfFallback && (wantsGltf || prefer === "auto")) {
     try {
       const gltfModule =
         globalThis.__amojiPreload?.ready?.gltfModule ?? import("./gltfAvatar.js");

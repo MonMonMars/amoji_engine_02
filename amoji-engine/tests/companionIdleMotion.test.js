@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   advanceIdleBeat,
   BOOT_SIMPLE_IDLE_SEC,
@@ -6,7 +6,9 @@ import {
   sampleCalmBreathIdle,
   sampleIdleBodyMotion,
   sampleIdleExpressionBlend,
+  samplePlantedAliveIdle,
   sampleSimpleBootIdleMotion,
+  startIdleBeat,
 } from "../engine/companion/companionIdleMotion.js";
 import { createCompanionBodyMotion } from "../engine/companion/companionBodyMotion.js";
 import { VRM_ARM_REST_ROTATIONS } from "../engine/companion/companionPoseLibrary.js";
@@ -25,6 +27,49 @@ describe("companionIdleMotion", () => {
     const first = advanceIdleBeat(state, 0.05, 100);
     expect(first.state.beat).toBeTruthy();
     expect(Object.keys(first.overlay).length).toBeGreaterThan(0);
+  });
+
+  it("plays a comb-hair beat that lifts the right arm", () => {
+    vi.spyOn(Math, "random").mockReturnValue(0.45);
+    const state = createIdleBeatState(0);
+    state.nextAt = 0;
+    const first = advanceIdleBeat(state, 1.05, 10);
+    expect(first.state.beat).toBe("comb");
+    expect(first.overlay.armLiftR).toBeGreaterThan(0.35);
+    expect(first.overlay.forearmR).toBeGreaterThan(0.2);
+    vi.restoreAllMocks();
+  });
+
+  it("plays a look-around beat that turns the head", () => {
+    vi.spyOn(Math, "random").mockReturnValue(0.2);
+    const state = createIdleBeatState(0);
+    state.nextAt = 0;
+    const first = advanceIdleBeat(state, 0.8, 10);
+    expect(first.state.beat).toBe("look");
+    expect(Math.abs(first.overlay.headZ)).toBeGreaterThan(0.08);
+    vi.restoreAllMocks();
+  });
+
+  it("schedules the next idle life beat within about a second", () => {
+    vi.spyOn(Math, "random").mockReturnValue(0);
+    const state = createIdleBeatState(0);
+    state.nextAt = 0;
+    const first = advanceIdleBeat(state, 0.05, 10);
+    expect(first.state.nextAt).toBeLessThan(10 + 1500);
+    expect(first.state.nextAt).toBeGreaterThan(10 + 300);
+    vi.restoreAllMocks();
+  });
+
+  it("shifts weight without striding the planted legs", () => {
+    vi.spyOn(Math, "random").mockReturnValue(0.6);
+    const state = createIdleBeatState(0);
+    state.nextAt = 0;
+    const first = advanceIdleBeat(state, 1.05, 10);
+    expect(first.state.beat).toBe("shift");
+    expect(first.overlay.upperLegL ?? 0).toBe(0);
+    expect(first.overlay.lowerLegR ?? 0).toBe(0);
+    expect(Math.abs(first.overlay.hipZ || 0) + Math.abs(first.overlay.leanY || 0)).toBeGreaterThan(0.01);
+    vi.restoreAllMocks();
   });
 
   it("keeps idle rest morph-neutral so jaws stay shut and lids stay open", () => {
@@ -56,7 +101,8 @@ describe("companionIdleMotion", () => {
     expect(a.leanY).toBe(0);
     expect(a.headZ).toBe(0);
     expect(a.forearmL).toBeGreaterThan(0.32);
-    expect(a.lowerLegR).toBeGreaterThan(0.2);
+    expect(a.lowerLegR).toBeGreaterThan(0.16);
+    expect(a.lowerLegR).toBeLessThan(0.22);
     expect(a.spineX).not.toBe(b.spineX);
   });
 
@@ -66,6 +112,25 @@ describe("companionIdleMotion", () => {
     expect(idle.armLiftL).toBeGreaterThan(0.08);
     expect(idle.forearmL).toBeGreaterThan(0.3);
     expect(idle.lowerLegR + idle.upperLegR).toBeGreaterThan(0.28);
+  });
+
+  it("plants legs while the upper body breathes and looks around", () => {
+    const a = samplePlantedAliveIdle(0.5);
+    const b = samplePlantedAliveIdle(2.3);
+    expect(a.lowerLegR).toBeLessThan(0.22);
+    expect(a.upperLegR).toBeLessThan(0.08);
+    expect(a.forearmL).toBeGreaterThan(0.3);
+    expect(a.armLiftL).toBeGreaterThan(0.08);
+    expect(Math.abs(a.headZ) + Math.abs(a.leanY) + Math.abs(a.spineX)).toBeGreaterThan(0.02);
+    expect(a.headZ).not.toBe(b.headZ);
+  });
+
+  it("can force a look or comb idle-life beat", () => {
+    const look = startIdleBeat(createIdleBeatState(0), "look", 10);
+    expect(look.beat).toBe("look");
+    expect(look.duration).toBeGreaterThan(1);
+    const comb = startIdleBeat(createIdleBeatState(0), "comb", 10);
+    expect(comb.beat).toBe("comb");
   });
 });
 

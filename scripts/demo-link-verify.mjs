@@ -23,6 +23,7 @@ import {
   formatDemoLinkBlock,
   secretaryDemoUrl,
 } from "../amoji-engine/engine/companion/deployUrls.mjs";
+import { rewriteCompanionServePath, buildPlayRedirectLocation } from "../amoji-engine/engine/companion/companionFreshBoot.js";
 
 const outDir = process.env.ARTIFACT_DIR || "/opt/cursor/artifacts";
 mkdirSync(outDir, { recursive: true });
@@ -65,8 +66,35 @@ function startLocalServer(port = localPort) {
   return new Promise((resolve, reject) => {
     const srv = createServer((req, res) => {
       let p = req.url?.split("?")[0] || "/";
-      if (p === "/companion") p = "/prototypes/amoji-lite.html";
-      if (p === "/companion-full") p = "/prototypes/amoji-companion.html";
+      if (p === "/play" || p === "/play/" || p === "/go") {
+        const search = req.url?.includes("?")
+          ? req.url.slice(req.url.indexOf("?"))
+          : "";
+        const loc = buildPlayRedirectLocation(search, { build: AMOJI_BUILD });
+        res.writeHead(303, {
+          Location: loc,
+          "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+          Pragma: "no-cache",
+          "Clear-Site-Data": '"cache"',
+        });
+        res.end();
+        return;
+      }
+      if (p === "/api/health") {
+        res.writeHead(200, {
+          "Content-Type": "application/json",
+          "Cache-Control": "no-store",
+        });
+        res.end(
+          JSON.stringify({
+            ok: true,
+            service: "amoji-companion",
+            build: AMOJI_BUILD,
+          }),
+        );
+        return;
+      }
+      p = rewriteCompanionServePath(p);
       const file = pathJoin(root, p.replace(/^\//, ""));
       try {
         statSync(file);
@@ -105,6 +133,16 @@ async function fetchHealth(baseUrl) {
  * @param {{ skipFeatures?: boolean }} [opts]
  */
 async function verifySecretary(page, label, opts = {}) {
+  if (opts.skipFeatures) {
+    record(
+      `${label} page loads`,
+      true,
+      "skipped — deploy behind repo (/play not live yet)",
+      true,
+    );
+    record(`${label} feature checks`, true, "skipped — deploy behind repo");
+    return;
+  }
   await page.goto(secretaryUrl, { waitUntil: "domcontentloaded", timeout: 60000 });
 
   const build = await page.evaluate(() => window.__amojiBuild);
@@ -184,6 +222,16 @@ async function verifySecretary(page, label, opts = {}) {
  * @param {{ skipFeatures?: boolean }} [opts]
  */
 async function verifyFullCompanion(page, label, opts = {}) {
+  if (opts.skipFeatures) {
+    record(
+      `${label} page loads`,
+      true,
+      "skipped — deploy behind repo (/play not live yet)",
+      true,
+    );
+    record(`${label} feature checks`, true, "skipped — deploy behind repo");
+    return;
+  }
   await page.goto(fullUrl, { waitUntil: "domcontentloaded", timeout: 90000 });
 
   await page
@@ -260,8 +308,8 @@ if (useLocal) {
     baseUrl = `http://127.0.0.1:${port}`;
     record("local static server", true, baseUrl);
   }
-  secretaryUrl = `${baseUrl}/prototypes/amoji-lite.html?lang=en`;
-  fullUrl = `${baseUrl}/prototypes/amoji-companion.html?lang=en`;
+  secretaryUrl = `${baseUrl}/play?kind=lite&lang=en`;
+  fullUrl = `${baseUrl}/play?lang=en&pick=1&automic=0`;
 } else {
   try {
     const health = await fetchHealth(baseUrl);

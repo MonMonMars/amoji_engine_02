@@ -11,8 +11,8 @@ describe("deployUrls", () => {
   it("builds full companion demo URLs", () => {
     const url = companionFullDemoUrl({ lang: "yue", build: "test-build" });
     expect(url).toContain(DEMO_BASE_URL);
+    expect(url).toContain("/play");
     expect(url).toContain("lang=yue");
-    expect(url).toContain("build=test-build");
     expect(url).toContain("pick=1");
     expect(url).toContain("automic=0");
   });
@@ -20,14 +20,14 @@ describe("deployUrls", () => {
   it("formats demo link block for agents", () => {
     const block = formatDemoLinkBlock({ build: "test-build" });
     expect(block).toContain("test-build");
-    expect(block).toContain("companion-full");
-    expect(block).toContain("companion");
+    expect(block).toContain("/play");
     expect(block).toContain("Secretary");
   });
 
   it("builds secretary demo URL with today tab", () => {
     const url = secretaryDemoUrl({ build: "test-build", lang: "yue" });
     expect(url).toContain("tab=today");
-    expect(url).toContain("build=test-build");
+    expect(url).toContain("/play");
+    expect(url).toContain("kind=lite");
   });
 });

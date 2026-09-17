@@ -20,6 +20,12 @@ import {
 } from "../engine/companion/chatApiHandler.mjs";
 import { searchWeb } from "../engine/companion/companionWebSearch.mjs";
 import { processTtsRequest } from "../engine/companion/ttsHandler.mjs";
+import { AMOJI_BUILD } from "../engine/companion/buildVersion.mjs";
+import {
+  buildPlayRedirectLocation,
+  FRESH_HTML_HEADERS,
+  rewriteCompanionServePath,
+} from "../engine/companion/companionFreshBoot.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, "../..");
@@ -120,6 +126,18 @@ const server = http.createServer(async (req, res) => {
 
   const url = new URL(req.url || "/", `http://127.0.0.1:${port}`);
 
+  if (
+    (req.method === "GET" || req.method === "HEAD") &&
+    (url.pathname === "/play" ||
+      url.pathname === "/play/" ||
+      url.pathname === "/go" ||
+      url.pathname === "/go/")
+  ) {
+    const location = buildPlayRedirectLocation(url.search, { build: AMOJI_BUILD });
+    send(res, 303, "", { ...FRESH_HTML_HEADERS, Location: location });
+    return;
+  }
+
   if (req.method === "POST" && url.pathname === "/api/chat") {
     await handleChatApi(req, res);
     return;
@@ -191,18 +209,38 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  if (req.method === "GET" && url.pathname === "/api/health") {
+    send(
+      res,
+      200,
+      {
+        ok: true,
+        service: "amoji-companion",
+        build: AMOJI_BUILD,
+        time: new Date().toISOString(),
+      },
+      {
+        ...corsHeaders(),
+        "Content-Type": "application/json; charset=utf-8",
+        "Cache-Control": "no-store, no-cache, must-revalidate",
+      },
+    );
+    return;
+  }
+
   if (req.method !== "GET" && req.method !== "HEAD") {
     send(res, 405, "Method Not Allowed");
     return;
   }
 
-  let target = safeJoin(REPO_ROOT, req.url || "/");
+  const servedPath = rewriteCompanionServePath(url.pathname);
+  let target = safeJoin(REPO_ROOT, servedPath);
   if (!target) {
     send(res, 403, "Forbidden");
     return;
   }
 
-  if (req.url === "/" || req.url?.startsWith("/?")) {
+  if (servedPath === "/" || url.pathname === "/") {
     target = path.join(REPO_ROOT, "prototypes/amoji-companion.html");
   }
 
@@ -213,10 +251,14 @@ const server = http.createServer(async (req, res) => {
     }
     const ext = path.extname(target).toLowerCase();
     const type = MIME[ext] || "application/octet-stream";
-    res.writeHead(200, {
+    const headers = {
       "Content-Type": type,
       "Cache-Control": "no-store",
-    });
+    };
+    if (ext === ".html") {
+      Object.assign(headers, FRESH_HTML_HEADERS, { "Content-Type": type });
+    }
+    res.writeHead(200, headers);
     if (req.method === "HEAD") {
       res.end();
       return;
@@ -228,5 +270,7 @@ const server = http.createServer(async (req, res) => {
 server.listen(port, "0.0.0.0", () => {
   console.log(`[lab] serving ${REPO_ROOT}`);
   console.log(`[lab] companion http://127.0.0.1:${port}/`);
+  console.log(`[lab] play     http://127.0.0.1:${port}/play`);
+  console.log(`[lab] unique  http://127.0.0.1:${port}/c/${AMOJI_BUILD}/full`);
   console.log(`[lab] cloud deploy: see DEPLOY.md (Vercel — no local PC needed)`);
 });

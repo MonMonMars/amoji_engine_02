@@ -18,9 +18,17 @@ import {
   TALK_SURPRISED_MAX,
   talkJawRotationX,
   talkingMouthOpen,
+  talkingVisemeShape,
+  capTalkingEmotionWeight,
   zeroAllExpressions,
   zeroHazardMorphInfluences,
   zeroLookLidExpressions,
+  applyMorphMouthOpen,
+  applyTalkEmotionMorphs,
+  resolveMouthPresets,
+  shapeToVisemePreset,
+  softenTalkMouthOverrides,
+  visemeWeightForMorph,
 } from "../engine/companion/companionFaceRest.js";
 
 function mockExpr(entries) {
@@ -92,6 +100,25 @@ describe("companionFaceRest", () => {
     });
     expect(clamped.Happy).toBeLessThanOrEqual(TALK_HAPPY_MAX);
     expect(clamped.Surprised).toBeLessThanOrEqual(TALK_SURPRISED_MAX);
+    expect(clamped.Happy).toBeGreaterThan(0.15);
+  });
+
+  it("walks viseme shapes when TTS has not named one yet", () => {
+    expect(talkingVisemeShape(0, false, null)).toBe("aa");
+    expect(talkingVisemeShape(0, true, "oh")).toBe("oh");
+    const a = talkingVisemeShape(40, true, null);
+    const b = talkingVisemeShape(280, true, null);
+    expect(["aa", "ih", "ou", "ee", "oh"]).toContain(a);
+    expect(["aa", "ih", "ou", "ee", "oh"]).toContain(b);
+    expect(a).not.toBe(b);
+  });
+
+  it("keeps a viseme-safe talk smile instead of wiping the face", () => {
+    expect(capTalkingEmotionWeight("Happy", 0.98, { talking: true })).toBe(
+      TALK_HAPPY_MAX,
+    );
+    expect(capTalkingEmotionWeight("Happy", 0.98, { eating: true })).toBe(0);
+    expect(capTalkingEmotionWeight("Sad", 0.7, { talking: true })).toBeCloseTo(0.7);
   });
 
   it("skips rest presets that bake an open jaw or closed lids", () => {
@@ -110,9 +137,10 @@ describe("companionFaceRest", () => {
     expect(clamped.Angry).toBeCloseTo(0.3);
   });
 
-  it("skips talking Happy when that morph itself opens the mouth", () => {
+  it("keeps a capped talk smile even when Happy also binds a jaw viseme", () => {
     const hazards = {
       opensMouth: new Set(["happy"]),
+      blocksMouth: new Set(),
       closesEyes: new Set(),
       binary: new Set(),
     };
@@ -120,22 +148,24 @@ describe("companionFaceRest", () => {
       talking: true,
       hazards,
     });
-    expect(clamped.Happy).toBeUndefined();
+    expect(clamped.Happy).toBe(TALK_HAPPY_MAX);
   });
 
-  it("skips any talking blend that would override visemes", () => {
+  it("skips emotion presets that BLOCK visemes while talking", () => {
     const hazards = {
       opensMouth: new Set(["surprised", "angry"]),
+      blocksMouth: new Set(["surprised", "angry"]),
       closesEyes: new Set(),
       binary: new Set(),
     };
     const clamped = clampRestFaceBlend(
-      { Surprised: 0.4, Angry: 0.5, Sad: 0.2 },
+      { Surprised: 0.4, Angry: 0.5, Sad: 0.2, Happy: 0.9 },
       { talking: true, hazards },
     );
     expect(clamped.Surprised).toBeUndefined();
     expect(clamped.Angry).toBeUndefined();
     expect(clamped.Sad).toBeCloseTo(0.2);
+    expect(clamped.Happy).toBe(TALK_HAPPY_MAX);
   });
 
   it("reopens blink after a hitch that skips the old 80–160ms window", () => {
@@ -155,6 +185,8 @@ describe("companionFaceRest", () => {
       }],
     });
     expect(happy.opensMouth).toBe(true);
+    expect(happy.bakesJaw).toBe(true);
+    expect(happy.blocksMouth).toBe(false);
     expect(happy.isBinary).toBe(true);
 
     const blink = inspectExpressionHazard("blinkLeft", {
@@ -267,5 +299,77 @@ describe("companionFaceRest", () => {
     expect(applyRestEyeOpenMorphs(root, 0.5)).toBe(1);
     expect(mesh.morphTargetInfluences[0]).toBeCloseTo(0.5);
     expect(mesh.morphTargetInfluences[1]).toBe(0);
+  });
+
+  it("binds VRM 0.x a/i/u/e/o visemes when Aa/Ih are missing", () => {
+    const expr = mockExpr({
+      a: {},
+      i: {},
+      u: {},
+      e: {},
+      o: {},
+      blink: {},
+    });
+    const presets = resolveMouthPresets(expr);
+    expect(presets).toEqual(expect.arrayContaining(["a", "i", "u", "e", "o"]));
+    expect(presets.some((name) => /^aa$/i.test(name))).toBe(false);
+    expect(shapeToVisemePreset("aa", presets)).toBe("a");
+    expect(shapeToVisemePreset("ih", presets)).toBe("i");
+    expect(shapeToVisemePreset("ou", presets)).toBe("u");
+  });
+
+  it("drives unbound viseme morphs so photoreal mouths still flap", () => {
+    const mesh = {
+      morphTargetDictionary: { a: 0, i: 1, mouthOpen: 2, brow: 3 },
+      morphTargetInfluences: [0, 0, 0, 0],
+    };
+    const root = { traverse: (fn) => fn(mesh) };
+    expect(applyMorphMouthOpen(root, "aa", 0.8)).toBeGreaterThan(0);
+    expect(mesh.morphTargetInfluences[0]).toBeCloseTo(0.8);
+    expect(mesh.morphTargetInfluences[1]).toBe(0);
+    expect(mesh.morphTargetInfluences[2]).toBeCloseTo(0.8);
+    applyMorphMouthOpen(root, "aa", 0);
+    expect(mesh.morphTargetInfluences[0]).toBe(0);
+    expect(mesh.morphTargetInfluences[2]).toBe(0);
+  });
+
+  it("does not treat a blend smile as a viseme-blocking jaw", () => {
+    const happy = inspectExpressionHazard("happy", {
+      overrideMouth: "blend",
+      binds: [{
+        index: 0,
+        primitives: [{ morphTargetDictionary: { mouthSmile: 0, browInnerUp: 1 } }],
+      }],
+    });
+    expect(happy.opensMouth).toBe(false);
+    expect(happy.blocksMouth).toBe(false);
+    expect(visemeWeightForMorph("mouthSmile", "aa", 0.9)).toBeNull();
+    expect(visemeWeightForMorph("vrc.v_aa", "aa", 0.7)).toBeCloseTo(0.7);
+    expect(visemeWeightForMorph("jawOpen", "aa", 0.6)).toBeCloseTo(0.6);
+  });
+
+  it("applies talk smile/brow morphs after visemes and clears them at rest", () => {
+    const mesh = {
+      morphTargetDictionary: { mouthSmile: 0, browInnerUp: 1, a: 2 },
+      morphTargetInfluences: [0, 0, 0],
+    };
+    const root = { traverse: (fn) => fn(mesh) };
+    applyTalkEmotionMorphs(root, "happy", true);
+    expect(mesh.morphTargetInfluences[0]).toBeGreaterThan(0.2);
+    expect(mesh.morphTargetInfluences[1]).toBeGreaterThan(0.1);
+    expect(mesh.morphTargetInfluences[2]).toBe(0);
+    applyTalkEmotionMorphs(root, "happy", false);
+    expect(mesh.morphTargetInfluences[0]).toBe(0);
+  });
+
+  it("clears emotion mouth-block overrides while talking", () => {
+    const expr = mockExpr({
+      happy: { overrideMouth: "block" },
+      aa: {},
+    });
+    expect(softenTalkMouthOverrides(expr, true)).toBeGreaterThan(0);
+    expect(expr.expressionMap.happy.overrideMouth).toBe("none");
+    softenTalkMouthOverrides(expr, false);
+    expect(expr.expressionMap.happy.overrideMouth).toBe("block");
   });
 });

@@ -32,6 +32,7 @@ import {
 import { actionLoops } from "./companionActionMotion.js";
 import { detectVrmIdleRestRotations } from "./companionArmRestCalibration.js";
 import { createCompanionBodyMotion } from "./companionBodyMotion.js";
+import { inferFingerFlexAxis } from "./companionFingerPose.js";
 import { buildVrmExpressionBlend } from "./companionContentMotion.js";
 import {
   isOnlineIdleAction,
@@ -44,18 +45,26 @@ import { configureVrmSpringStability } from "./vrmSpringStability.js";
 import { applyVrmOutfitTint } from "./companionOutfitApply.js";
 import {
   applyBlinkWeight,
+  applyMorphMouthOpen,
+  applyTalkEmotionMorphs,
   blinkExpressionNames,
   blinkPulseFinished,
   blinkWeightFromPhase,
   clampRestFaceBlend,
   applyRestEyeOpen,
   applyRestEyeOpenMorphs,
+  capTalkingEmotionWeight,
   guardLookAtLids,
   inspectVrmFaceHazards,
+  listExpressionNames,
+  resolveMouthPresets,
   sampleEatMouthPulse,
   sampleTalkMouthPulse,
+  shapeToVisemePreset,
+  softenTalkMouthOverrides,
   talkJawRotationX,
   talkingMouthOpen,
+  talkingVisemeShape,
   zeroAllExpressions,
   zeroHazardMorphInfluences,
 } from "./companionFaceRest.js";
@@ -84,11 +93,6 @@ const VRM_BLEND_PRESET_MAP = {
   Surprised: VRMExpressionPresetName.Surprised,
   Angry: VRMExpressionPresetName.Angry,
 };
-
-const TALK_MOUTH_BLOCK_PRESETS = new Set([
-  VRMExpressionPresetName.Happy,
-  VRMExpressionPresetName.Surprised,
-]);
 
 /**
  * @param {GLTFLoader} loader
@@ -255,6 +259,7 @@ export async function createVrmAvatar(opts) {
   scene.add(model);
   vrm.humanoid?.resetNormalizedPose?.();
   const bodyMotion = createCompanionBodyMotion(vrm.humanoid);
+  bodyMotion.setFingerFlexAxis?.(inferFingerFlexAxis(vrm.humanoid));
   /** @type {string | null} */
   let vrmaAction = null;
   let vrmaPending = false;
@@ -415,13 +420,7 @@ export async function createVrmAvatar(opts) {
   zeroAllExpressions(expr);
   zeroHazardMorphInfluences(model);
   const blinkPresets = blinkExpressionNames(expr);
-  const mouthPresets = [
-    VRMExpressionPresetName.Aa,
-    VRMExpressionPresetName.Ih,
-    VRMExpressionPresetName.Ou,
-    VRMExpressionPresetName.Ee,
-    VRMExpressionPresetName.Oh,
-  ].filter((name) => expr?.getExpression?.(name));
+  const mouthPresets = resolveMouthPresets(expr);
 
   let emotion = "neutral";
   let mouthOpen = 0;
@@ -484,11 +483,12 @@ export async function createVrmAvatar(opts) {
     if (!expr) return;
     const rate = Math.min(1, dt * (talking ? 28 : 16));
     for (const preset of emotionPresetKeys()) {
-      if ((talking || eating) && TALK_MOUTH_BLOCK_PRESETS.has(preset)) {
-        expressionTarget[preset] = 0;
-        expressionCurrent[preset] = 0;
-        expr.setValue(preset, 0);
-        continue;
+      if (talking || eating) {
+        expressionTarget[preset] = capTalkingEmotionWeight(
+          preset,
+          expressionTarget[preset] ?? 0,
+          { talking, eating },
+        );
       }
       const target = expressionTarget[preset] ?? 0;
       const current = expressionCurrent[preset] ?? 0;
@@ -728,19 +728,8 @@ export async function createVrmAvatar(opts) {
     return analysis;
   };
 
-  const shapeToPreset = (shape) => {
-    const key = String(shape || "aa").toLowerCase();
-    const map = {
-      aa: VRMExpressionPresetName.Aa,
-      ih: VRMExpressionPresetName.Ih,
-      ou: VRMExpressionPresetName.Ou,
-      ee: VRMExpressionPresetName.Ee,
-      oh: VRMExpressionPresetName.Oh,
-    };
-    const preset = map[key];
-    if (preset && expr?.getExpression?.(preset)) return preset;
-    return mouthPresets[0] || null;
-  };
+  const shapeToPreset = (shape) =>
+    shapeToVisemePreset(shape, mouthPresets);
 
   const applyJawOpen = (open) => {
     const x = talkJawRotationX(open);
@@ -756,22 +745,27 @@ export async function createVrmAvatar(opts) {
     }
   };
 
-  const applyMouth = (v) => {
+  const applyMouth = (v, now = performance.now()) => {
     const open = Math.max(0, Math.min(1, Number(v) || 0));
+    const shape = talkingVisemeShape(now, talking || eating, mouthShape);
     if (expr && mouthPresets.length) {
       for (const preset of mouthPresets) expr.setValue(preset, 0);
       if (open > 0) {
-        const preset = mouthShape ? shapeToPreset(mouthShape) : mouthPresets[0];
+        const preset = shapeToPreset(shape) || mouthPresets[0];
         if (preset) expr.setValue(preset, open);
       }
     }
-    applyJawOpen(open);
+    return { open, shape };
   };
 
   const applyTalkMouthNow = (now = performance.now()) => {
+    softenTalkMouthOverrides(expr, talking || eating);
     const open = talkingMouthOpen(talking, mouthOpen, now, eating);
-    applyMouth(open);
+    const { shape } = applyMouth(open, now);
     expr?.update?.();
+    // Visemes + jaw last so Happy/Surprised cannot freeze the mouth.
+    applyMorphMouthOpen(model, shape, open);
+    applyTalkEmotionMorphs(model, emotion, talking || eating);
     applyJawOpen(open);
     return open;
   };
@@ -797,8 +791,12 @@ export async function createVrmAvatar(opts) {
         mouthOpen = 0;
         mouthShape = null;
         applyMouth(0);
+        applyMorphMouthOpen(model, "aa", 0);
+        applyTalkEmotionMorphs(model, emotion, false);
+        applyJawOpen(0);
       }
       applyEmotionExpressions(emotion);
+      softenTalkMouthOverrides(expr, false);
     } else {
       applyEmotionExpressions(emotion);
       if (mouthTarget < 0.2) mouthTarget = Math.max(mouthTarget, 0.55);
@@ -856,7 +854,7 @@ export async function createVrmAvatar(opts) {
 
     zeroAllExpressions(expr);
     tickExpressionBlend(dt);
-    applyMouth(talkingMouthOpen(talking, mouthOpen, now, eating));
+    applyMouth(talkingMouthOpen(talking, mouthOpen, now, eating), now);
 
     blinkTimer += dt;
     let blinkW = 0;
@@ -869,11 +867,9 @@ export async function createVrmAvatar(opts) {
       }
     }
     applyBlinkWeight(expr, blinkW);
-    if (blinkW < 0.25) {
-      const open = 0.42 * (1 - blinkW);
-      applyRestEyeOpen(expr, open);
-      applyRestEyeOpenMorphs(model, open);
-    }
+    const open = 0.42 * (1 - blinkW);
+    applyRestEyeOpen(expr, open);
+    applyRestEyeOpenMorphs(model, open);
   };
 
   let raf = 0;
@@ -885,7 +881,7 @@ export async function createVrmAvatar(opts) {
     if (vrmaAction && !vrmaPlaying && !vrmaPending) {
       restoreAfterVrma();
     }
-    const libraryMotion = vrmaPlaying || vrmaPending || Boolean(vrmaAction);
+    const libraryMotion = vrmaPlaying || vrmaPending;
     const activeMotion = vrmaPlaying || vrmaPending
       ? vrmaAction
       : bodyMotion.currentAction;
@@ -909,6 +905,12 @@ export async function createVrmAvatar(opts) {
       syncHumanoidPose();
       tickFace(dt, now, activeMotion);
       vrm.update(dt);
+      // Fingers last — VRMA mixer and vrm.update would otherwise leave Mixamo
+      // hands in a T-pose (stick-straight).
+      bodyMotion.applyHandRestOnly?.({
+        talkBlend: talking || eating ? 0.7 : 0,
+        now,
+      });
       applyTalkMouthNow(now);
 
       computeVrmFrameAnchor(vrm, model, frameAnchor);
@@ -1104,11 +1106,47 @@ export async function createVrmAvatar(opts) {
     warmMotionClip(actionId) {
       return motionPlayer.warmClip(actionId);
     },
+    resetIdleLife(now) {
+      return bodyMotion.resetIdleLife?.(now);
+    },
+    pulseIdleBeat(beat, now) {
+      return bodyMotion.pulseIdleBeat?.(beat, now);
+    },
+    resetMotionClock(now) {
+      return bodyMotion.resetMotionClock?.(now);
+    },
     get mouthOpen() {
       return mouthOpen;
     },
+    getFaceDebug() {
+      return {
+        talking,
+        eating,
+        emotion,
+        mouthOpen,
+        mouthTarget,
+        mouthShape,
+        mouthPresets: [...mouthPresets],
+        expressionNames: listExpressionNames(expr),
+        expressionCurrent: { ...expressionCurrent },
+        expressionTarget: { ...expressionTarget },
+        hazards: {
+          opensMouth: [...(faceHazards.opensMouth || [])],
+          blocksMouth: [...(faceHazards.blocksMouth || [])],
+          closesEyes: [...(faceHazards.closesEyes || [])],
+        },
+      };
+    },
     resize,
     resetCameraView,
+    hitTest(clientX, clientY) {
+      const rect = canvas.getBoundingClientRect();
+      if (!rect.width || !rect.height) return false;
+      pointer.x = ((clientX - rect.left) / rect.width) * 2 - 1;
+      pointer.y = -((clientY - rect.top) / rect.height) * 2 + 1;
+      raycaster.setFromCamera(pointer, camera);
+      return raycaster.intersectObject(model, true).length > 0;
+    },
     dispose() {
       cancelAnimationFrame(raf);
       globalThis.removeEventListener?.("resize", resize);

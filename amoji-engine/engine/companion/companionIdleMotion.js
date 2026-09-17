@@ -6,7 +6,7 @@ import {
   idleBeatEnvelope,
 } from "./companionPoseSmoothing.js";
 
-export const COMPANION_IDLE_MOTION_SCHEMA = "amoji.companionIdleMotion.v1";
+export const COMPANION_IDLE_MOTION_SCHEMA = "amoji.companionIdleMotion.v2";
 
 /** First seconds after avatar is visible — gentle breathe, sway, relaxed arms. */
 export const BOOT_SIMPLE_IDLE_SEC = 10;
@@ -63,10 +63,37 @@ export function sampleCalmBreathIdle(elapsedSec, opts = {}) {
     armLiftR: 0.12,
     forearmL: 0.4,
     forearmR: 0.34,
-    upperLegL: 0.09,
-    upperLegR: 0.1,
-    lowerLegL: 0.22,
-    lowerLegR: 0.24,
+    upperLegL: 0.05,
+    upperLegR: 0.055,
+    lowerLegL: 0.18,
+    lowerLegR: 0.185,
+  };
+}
+
+/**
+ * Standing idle: planted knees (no Mixamo forward-leg blend) + living upper
+ * body — breathe, look, soft arm hang. Comb/look/nod overlays sit on top.
+ * @param {number} elapsedSec
+ * @param {{ listening?: boolean, emotion?: string }} [opts]
+ */
+export function samplePlantedAliveIdle(elapsedSec, opts = {}) {
+  const calm = sampleCalmBreathIdle(elapsedSec, opts);
+  const life = sampleIdleBodyMotion(elapsedSec, opts);
+  return {
+    upperLegL: calm.upperLegL,
+    upperLegR: calm.upperLegR,
+    lowerLegL: calm.lowerLegL,
+    lowerLegR: calm.lowerLegR,
+    hipZ: calm.hipZ + (life.hipZ - calm.hipZ) * 0.28,
+    headX: life.headX * 0.85,
+    headZ: life.headZ * 0.72,
+    leanY: life.leanY * 0.5,
+    spineX: life.spineX,
+    chestX: life.chestX,
+    armLiftL: life.armLiftL,
+    armLiftR: life.armLiftR,
+    forearmL: life.forearmL,
+    forearmR: life.forearmR,
   };
 }
 
@@ -145,10 +172,11 @@ export function advanceIdleBeat(state, dt, nowMs) {
 
   if (!beat && nowMs >= nextAt) {
     const roll = Math.random();
-    if (roll < 0.24) beat = "nod";
-    else if (roll < 0.44) beat = "look";
-    else if (roll < 0.62) beat = "shift";
-    else if (roll < 0.8) beat = "fidget";
+    if (roll < 0.12) beat = "nod";
+    else if (roll < 0.32) beat = "look";
+    else if (roll < 0.52) beat = "comb";
+    else if (roll < 0.64) beat = "shift";
+    else if (roll < 0.76) beat = "fidget";
     else if (roll < 0.9) beat = "breathe";
     else beat = "sway";
     phase = 0;
@@ -157,14 +185,16 @@ export function advanceIdleBeat(state, dt, nowMs) {
         ? 0.95
         : beat === "look"
           ? 1.45
-          : beat === "shift"
-            ? 1.75
-            : beat === "fidget"
-              ? 1.35
-              : beat === "breathe"
-                ? 2.2
-                : 1.65;
-    nextAt = nowMs + 1600 + Math.random() * 2800;
+          : beat === "comb"
+            ? 2.1
+            : beat === "shift"
+              ? 1.75
+              : beat === "fidget"
+                ? 1.35
+                : beat === "breathe"
+                  ? 2.2
+                  : 1.65;
+    nextAt = nowMs + 380 + Math.random() * 900;
   }
 
   if (beat) {
@@ -175,21 +205,25 @@ export function advanceIdleBeat(state, dt, nowMs) {
 
     switch (beat) {
       case "nod":
-        overlay.headX = -0.12 * Math.sin(p * Math.PI);
-        overlay.leanY = wave * 0.028 * env;
+        overlay.headX = -0.16 * Math.sin(p * Math.PI);
+        overlay.leanY = wave * 0.036 * env;
         break;
       case "look":
-        overlay.headZ = Math.sin(p * Math.PI) * 0.11 * env;
-        overlay.headX = wave * 0.038 * env;
+        overlay.headZ = Math.sin(p * Math.PI) * 0.2 * env;
+        overlay.headX = wave * 0.055 * env;
+        overlay.leanY = wave * 0.04 * env;
+        break;
+      case "comb":
+        overlay.armLiftR = 0.98 * wave * env;
+        overlay.forearmR = 0.82 * wave * env;
+        overlay.headZ = 0.12 * wave * env;
+        overlay.headX = -0.06 * wave * env;
+        overlay.leanY = 0.045 * wave * env;
         break;
       case "shift":
         overlay.hipZ = Math.sin(p * Math.PI) * 0.02 * env;
         overlay.leanY = wave * 0.06 * env;
         overlay.spineX = 0.028 * wave * env;
-        overlay.upperLegL = wave * 0.07 * env;
-        overlay.upperLegR = -wave * 0.05 * env;
-        overlay.lowerLegL = wave * 0.08 * env;
-        overlay.lowerLegR = wave * 0.04 * env;
         overlay.armLiftL = wave * 0.05 * env;
         overlay.forearmL = wave * 0.06 * env;
         break;
@@ -215,6 +249,7 @@ export function advanceIdleBeat(state, dt, nowMs) {
         overlay.armLiftR = 0.04 + wave * 0.05 * env;
         break;
       default:
+        beat = null;
         break;
     }
 
@@ -240,6 +275,34 @@ export function createIdleBeatState(nowMs = performance.now()) {
     beat: null,
     phase: 0,
     duration: 0,
-    nextAt: nowMs + 320 + Math.random() * 680,
+    nextAt: nowMs + 90 + Math.random() * 280,
+  };
+}
+
+const IDLE_BEAT_DURATION_SEC = {
+  nod: 0.95,
+  look: 1.45,
+  comb: 2.1,
+  shift: 1.75,
+  fidget: 1.35,
+  breathe: 2.2,
+  sway: 1.65,
+};
+
+/**
+ * Force an idle life beat (look / comb / breathe) from wait-act ticks.
+ * @param {IdleBeatState} state
+ * @param {string} beat
+ * @param {number} [nowMs]
+ * @returns {IdleBeatState}
+ */
+export function startIdleBeat(state, beat, nowMs = 0) {
+  const key = String(beat || "look");
+  const duration = IDLE_BEAT_DURATION_SEC[key] || 1.4;
+  return {
+    beat: IDLE_BEAT_DURATION_SEC[key] ? key : "look",
+    phase: 0,
+    duration,
+    nextAt: Number(nowMs) + duration * 1000 + 380,
   };
 }
