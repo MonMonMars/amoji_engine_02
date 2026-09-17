@@ -217,10 +217,18 @@ async function main() {
     window.__amojiTreats?.setNeeds?.({ hunger: 96, hearts: 70 });
     const refused = window.__amojiTreats?.feed?.("cookie", 200, 280);
     const outcome = window.__amojiTreats?.lastOutcome || {};
+    const sheet = document.getElementById("treat-sheet");
     return {
       hud: Boolean(hud),
       hungerBar: Boolean(hungerFill),
       heartsBar: Boolean(heartsFill),
+      wallet: Boolean(document.getElementById("pet-wallet")),
+      kitchen:
+        (document.getElementById("treat-fab")?.textContent || "").includes("廚房") ||
+        (document.getElementById("treat-fab")?.textContent || "").toLowerCase().includes("kitchen"),
+      pips: document.querySelectorAll("#pet-hunger-pips .pet-pip").length,
+      fridgeTab: Boolean(sheet?.querySelector("[data-treat-tab='bag']")),
+      shopStats: Boolean(sheet?.querySelector(".treat-card-stats")),
       chatEarn: afterChat === beforeCoins + 3,
       refused: refused === false && outcome.reason === "full",
       cookieKept: (window.__amojiTreats?.state?.bag?.cookie || 0) >= 1,
@@ -231,6 +239,17 @@ async function main() {
     "pet-hud-meters",
     petLoop.hud && petLoop.hungerBar && petLoop.heartsBar,
     JSON.stringify(petLoop),
+  );
+  record(
+    "pet-pou-ui",
+    petLoop.wallet && petLoop.kitchen && petLoop.pips === 5 && petLoop.fridgeTab && petLoop.shopStats,
+    JSON.stringify({
+      wallet: petLoop.wallet,
+      kitchen: petLoop.kitchen,
+      pips: petLoop.pips,
+      fridgeTab: petLoop.fridgeTab,
+      shopStats: petLoop.shopStats,
+    }),
   );
   record(
     "pet-chat-earn",

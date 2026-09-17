@@ -8,9 +8,9 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji · Companion</title>
     <script>
-      window.__amojiBuild = "2026-09-17-v150-pet-game-flow";
+      window.__amojiBuild = "2026-09-17-v151-pet-game-ui";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-17-v150-pet-game-flow"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-17-v151-pet-game-ui"></script>
     <link
       rel="prefetch"
       href="/prototypes/assets/companion-char-nova.png"
@@ -67,6 +67,7 @@
       body.companion-start-pending .treat-drop-halo,
       body.companion-start-pending .treat-drag-ghost,
       body.companion-start-pending .pet-hud,
+      body.companion-start-pending .pet-wallet,
       body.companion-start-pending .pet-thought {
         display: none !important;
       }
@@ -325,7 +326,7 @@
       media="print"
       onload="this.media='all'"
     />
-    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-17-v150-pet-game-flow" />
+    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-17-v151-pet-game-ui" />
     <noscript>
       <link
         href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap"
@@ -1900,11 +1901,11 @@
         position: fixed;
         z-index: 40;
         right: max(0.7rem, env(safe-area-inset-right));
-        bottom: calc(7.1rem + env(safe-area-inset-bottom));
+        bottom: calc(7.15rem + env(safe-area-inset-bottom));
         display: flex;
         flex-direction: column;
-        align-items: flex-end;
-        gap: 0.4rem;
+        align-items: center;
+        gap: 0.28rem;
         pointer-events: none;
       }
 
@@ -1912,57 +1913,80 @@
         pointer-events: auto;
       }
 
+      .pet-wallet {
+        position: fixed;
+        z-index: 36;
+        right: max(0.65rem, env(safe-area-inset-right));
+        top: calc(4.55rem + env(safe-area-inset-top));
+        display: flex;
+        align-items: center;
+        pointer-events: none;
+      }
+
       .treat-coins {
-        font-size: 0.78rem;
+        font-size: 0.82rem;
         font-weight: 800;
-        padding: 0.22rem 0.55rem;
+        padding: 0.32rem 0.7rem;
         border-radius: 999px;
-        background: rgba(8, 6, 18, 0.72);
-        border: 1px solid rgba(255, 255, 255, 0.16);
-        backdrop-filter: blur(12px);
+        background: linear-gradient(180deg, #ffe08a, #fbbf24);
+        color: #3b2204;
+        border: 1px solid rgba(255, 237, 160, 0.9);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.28);
       }
 
       .treat-fab {
         position: relative;
+        width: 3.7rem;
+        height: 3.7rem;
         display: flex;
+        flex-direction: column;
         align-items: center;
-        gap: 0.35rem;
-        padding: 0.45rem 0.7rem 0.45rem 0.5rem;
-        border-radius: 999px;
-        border: 1px solid rgba(255, 255, 255, 0.16);
-        background: linear-gradient(135deg, rgba(244, 114, 182, 0.28), rgba(139, 124, 248, 0.28));
+        justify-content: center;
+        gap: 0;
+        padding: 0.2rem 0.2rem 0.28rem;
+        border-radius: 50%;
+        border: 3px solid rgba(255, 255, 255, 0.55);
+        background: radial-gradient(circle at 35% 30%, #ffd08a, #fb7185 58%, #e11d48 100%);
         color: #fff;
         font: inherit;
         font-weight: 800;
         cursor: pointer;
-        box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+        box-shadow: 0 12px 28px rgba(225, 29, 72, 0.38);
       }
 
       .treat-fab__emoji {
-        font-size: 1.15rem;
+        font-size: 1.45rem;
+        line-height: 1;
+      }
+
+      .treat-fab__label {
+        font-size: 0.52rem;
+        letter-spacing: 0.02em;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
       }
 
       .treat-bag-badge {
         position: absolute;
-        top: -0.3rem;
-        right: -0.25rem;
-        min-width: 1.05rem;
-        height: 1.05rem;
+        top: -0.15rem;
+        right: -0.1rem;
+        min-width: 1.15rem;
+        height: 1.15rem;
         padding: 0 0.22rem;
         border-radius: 999px;
-        background: #f472b6;
-        color: #1a0812;
+        background: #fde68a;
+        color: #3b2204;
         font-size: 0.62rem;
         font-weight: 800;
         display: grid;
         place-items: center;
+        border: 2px solid #fff;
       }
 
       .treat-sheet-backdrop {
         position: fixed;
         inset: 0;
         z-index: 11002;
-        background: rgba(0, 0, 0, 0.45);
+        background: rgba(8, 4, 16, 0.55);
         opacity: 0;
         pointer-events: none;
         transition: opacity 0.28s ease;
@@ -1980,21 +2004,30 @@
         bottom: 0;
         transform: translate(-50%, 110%);
         width: min(100%, 440px);
-        max-height: min(68dvh, 540px);
+        max-height: min(72dvh, 580px);
         overflow-y: auto;
-        padding: 0.85rem 0.95rem calc(1rem + env(safe-area-inset-bottom));
-        border-radius: 1.25rem 1.25rem 0 0;
-        background: var(--glass-strong, rgba(8, 6, 18, 0.88));
-        border: 1px solid var(--line, rgba(255, 255, 255, 0.12));
+        padding: 0.45rem 0.95rem calc(1.1rem + env(safe-area-inset-bottom));
+        border-radius: 1.5rem 1.5rem 0 0;
+        background: linear-gradient(180deg, #2a1a14 0%, #1a1018 42%, rgba(8, 6, 18, 0.96) 100%);
+        border: 1px solid rgba(255, 196, 140, 0.22);
         backdrop-filter: blur(22px);
         display: flex;
         flex-direction: column;
         gap: 0.55rem;
+        box-shadow: 0 -18px 50px rgba(0, 0, 0, 0.45);
         transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
       }
 
       .treat-sheet.is-open {
         transform: translate(-50%, 0);
+      }
+
+      .treat-sheet-handle {
+        width: 2.6rem;
+        height: 0.28rem;
+        margin: 0.15rem auto 0.2rem;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.28);
       }
 
       .treat-sheet-head {
@@ -2003,16 +2036,39 @@
         gap: 0.5rem;
       }
 
+      .treat-sheet-titles {
+        min-width: 0;
+        flex: 1;
+      }
+
+      .treat-sheet-kicker {
+        margin: 0;
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        opacity: 0.62;
+      }
+
       .treat-sheet-title {
         margin: 0;
-        font-size: 1.05rem;
+        font-size: 1.18rem;
         font-weight: 800;
       }
 
+      .treat-sheet-wallet {
+        font-size: 0.78rem;
+        font-weight: 800;
+        padding: 0.22rem 0.55rem;
+        border-radius: 999px;
+        background: linear-gradient(180deg, #ffe08a, #fbbf24);
+        color: #3b2204;
+      }
+
       .treat-sheet-tabs {
-        display: flex;
-        gap: 0.3rem;
-        margin-left: auto;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.35rem;
       }
 
       .treat-tab,
@@ -2021,15 +2077,22 @@
         background: rgba(255, 255, 255, 0.06);
         color: inherit;
         border-radius: 999px;
-        padding: 0.22rem 0.65rem;
+        padding: 0.38rem 0.65rem;
         font: inherit;
-        font-weight: 700;
+        font-weight: 800;
         cursor: pointer;
       }
 
+      .treat-sheet-close {
+        width: 2.1rem;
+        height: 2.1rem;
+        padding: 0;
+        flex: 0 0 auto;
+      }
+
       .treat-tab.is-active {
-        background: rgba(244, 114, 182, 0.28);
-        border-color: rgba(244, 114, 182, 0.5);
+        background: linear-gradient(180deg, rgba(251, 146, 60, 0.45), rgba(244, 114, 182, 0.32));
+        border-color: rgba(251, 191, 36, 0.7);
       }
 
       .treat-sheet-hint {
@@ -2041,22 +2104,24 @@
       .treat-grid {
         display: grid;
         grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 0.5rem;
+        gap: 0.55rem;
       }
 
       .treat-card {
+        position: relative;
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 0.2rem;
-        padding: 0.65rem 0.4rem 0.5rem;
-        border-radius: 1rem;
-        border: 1px solid rgba(255, 255, 255, 0.12);
-        background: rgba(255, 255, 255, 0.05);
+        gap: 0.18rem;
+        padding: 0.72rem 0.35rem 0.55rem;
+        border-radius: 1.15rem;
+        border: 1px solid rgba(255, 214, 170, 0.22);
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.04));
         color: inherit;
         font: inherit;
         cursor: grab;
         touch-action: none;
+        box-shadow: 0 8px 18px rgba(0, 0, 0, 0.18);
       }
 
       .treat-card--shop {
@@ -2064,9 +2129,14 @@
         touch-action: manipulation;
       }
 
+      .treat-card.is-broke {
+        opacity: 0.45;
+      }
+
       .treat-card-emoji {
-        font-size: 1.7rem;
+        font-size: 2.05rem;
         line-height: 1;
+        filter: drop-shadow(0 6px 8px rgba(0, 0, 0, 0.28));
       }
 
       .treat-card-name {
@@ -2074,18 +2144,46 @@
         font-weight: 800;
       }
 
+      .treat-card-stats {
+        display: flex;
+        gap: 0.28rem;
+        font-size: 0.58rem;
+        font-weight: 800;
+        opacity: 0.82;
+      }
+
       .treat-card-price,
       .treat-card-count,
       .treat-card-give {
         font-size: 0.68rem;
-        opacity: 0.8;
+        opacity: 0.85;
+      }
+
+      .treat-card-price {
+        padding: 0.12rem 0.45rem;
+        border-radius: 999px;
+        background: rgba(251, 191, 36, 0.22);
+        color: #fde68a;
+        opacity: 1;
       }
 
       .treat-card-give {
-        padding: 0.12rem 0.45rem;
+        padding: 0.14rem 0.45rem;
         border-radius: 999px;
-        background: rgba(94, 234, 212, 0.18);
+        background: rgba(251, 113, 133, 0.28);
         opacity: 1;
+        font-weight: 800;
+      }
+
+      .treat-card-owned {
+        position: absolute;
+        top: 0.28rem;
+        right: 0.28rem;
+        font-size: 0.58rem;
+        font-weight: 800;
+        padding: 0.08rem 0.32rem;
+        border-radius: 999px;
+        background: rgba(94, 234, 212, 0.28);
       }
 
       .treat-empty {
@@ -2100,31 +2198,46 @@
         position: fixed;
         z-index: 35;
         left: 50%;
-        top: 38%;
-        width: min(42vw, 220px);
-        height: min(52vh, 280px);
+        top: 34%;
+        width: min(46vw, 230px);
+        height: min(46vw, 230px);
         transform: translate(-50%, -50%);
         border-radius: 50%;
-        border: 2px dashed rgba(244, 114, 182, 0.0);
+        border: 3px dashed rgba(251, 146, 60, 0);
         pointer-events: none;
         opacity: 0;
+        display: grid;
+        place-items: center;
         transition: opacity 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+      }
+
+      .treat-drop-halo__hint {
+        font-size: 0.78rem;
+        font-weight: 800;
+        color: #fff7ed;
+        text-shadow: 0 4px 12px rgba(0, 0, 0, 0.55);
+        opacity: 0;
       }
 
       .treat-drop-halo.is-visible {
         opacity: 1;
-        border-color: rgba(244, 114, 182, 0.55);
+        border-color: rgba(251, 146, 60, 0.75);
+        background: radial-gradient(circle, rgba(251, 146, 60, 0.16), transparent 70%);
+      }
+
+      .treat-drop-halo.is-visible .treat-drop-halo__hint {
+        opacity: 1;
       }
 
       .treat-drop-halo.is-hot {
-        border-color: rgba(94, 234, 212, 0.9);
-        box-shadow: 0 0 32px rgba(94, 234, 212, 0.35);
+        border-color: rgba(94, 234, 212, 0.95);
+        box-shadow: 0 0 32px rgba(94, 234, 212, 0.4);
       }
 
       .treat-drag-ghost {
         position: fixed;
         z-index: 12050;
-        font-size: 2.4rem;
+        font-size: 2.8rem;
         pointer-events: none;
         transform: translate(-50%, -50%);
         filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.45));
@@ -2142,34 +2255,97 @@
       .pet-hud {
         position: fixed;
         z-index: 36;
-        left: max(0.65rem, env(safe-area-inset-left));
-        top: calc(4.55rem + env(safe-area-inset-top));
+        left: max(0.55rem, env(safe-area-inset-left));
+        top: calc(4.5rem + env(safe-area-inset-top));
+        width: 11.2rem;
+        pointer-events: none;
+      }
+
+      .pet-hud-card {
         display: flex;
         flex-direction: column;
-        gap: 0.32rem;
-        width: 9.4rem;
-        pointer-events: none;
+        gap: 0.42rem;
+        padding: 0.48rem 0.5rem 0.5rem;
+        border-radius: 1.05rem;
+        background: rgba(12, 8, 20, 0.72);
+        border: 1px solid rgba(255, 214, 170, 0.22);
+        box-shadow: 0 10px 28px rgba(0, 0, 0, 0.32);
+        backdrop-filter: blur(14px);
       }
 
       .pet-meter {
         display: flex;
         align-items: center;
-        gap: 0.32rem;
-        padding: 0.18rem 0.38rem 0.18rem 0.28rem;
-        border-radius: 999px;
-        background: rgba(8, 6, 18, 0.62);
-        border: 1px solid rgba(255, 255, 255, 0.12);
-        backdrop-filter: blur(12px);
+        gap: 0.4rem;
       }
 
-      .pet-meter-icon {
-        font-size: 0.78rem;
-        line-height: 1;
+      .pet-meter-badge {
+        width: 1.55rem;
+        height: 1.55rem;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        font-size: 0.82rem;
+        background: rgba(255, 255, 255, 0.1);
+        border: 2px solid rgba(255, 255, 255, 0.2);
+        flex: 0 0 auto;
+      }
+
+      .pet-meter--hunger .pet-meter-badge {
+        background: radial-gradient(circle at 30% 30%, #fdba74, #ea580c);
+        border-color: #fdba74;
+      }
+
+      .pet-meter--hearts .pet-meter-badge {
+        background: radial-gradient(circle at 30% 30%, #fda4af, #db2777);
+        border-color: #fda4af;
+      }
+
+      .pet-meter-col {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 0.18rem;
+      }
+
+      .pet-meter-head {
+        display: flex;
+        align-items: center;
+        gap: 0.28rem;
+      }
+
+      .pet-meter-label {
+        font-size: 0.62rem;
+        font-weight: 800;
+        letter-spacing: 0.04em;
+        opacity: 0.86;
+      }
+
+      .pet-meter-pips {
+        display: flex;
+        gap: 0.12rem;
+        margin-left: auto;
+      }
+
+      .pet-pip {
+        width: 0.42rem;
+        height: 0.42rem;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.16);
+      }
+
+      .pet-meter--hunger .pet-pip.is-on {
+        background: #fb923c;
+      }
+
+      .pet-meter--hearts .pet-pip.is-on {
+        background: #fb7185;
       }
 
       .pet-meter-track {
-        flex: 1;
-        height: 0.42rem;
+        display: block;
+        height: 0.48rem;
         border-radius: 999px;
         background: rgba(255, 255, 255, 0.12);
         overflow: hidden;
@@ -2191,38 +2367,50 @@
         background: linear-gradient(90deg, #fb7185, #f472b6);
       }
 
+      .pet-meter[data-tone="low"] .pet-meter-fill {
+        background: linear-gradient(90deg, #ef4444, #fb7185);
+      }
+
       .pet-meter-val {
-        min-width: 1.4rem;
-        font-size: 0.62rem;
+        min-width: 1.85rem;
+        font-size: 0.58rem;
         font-weight: 800;
         opacity: 0.82;
         text-align: right;
       }
 
-      .pet-hud.is-hungry .pet-meter--hunger {
-        box-shadow: 0 0 0 1px rgba(251, 146, 60, 0.55);
-        animation: pet-meter-pulse 1.4s ease-in-out infinite;
-      }
-
-      .pet-hud.is-lonely .pet-meter--hearts {
-        box-shadow: 0 0 0 1px rgba(244, 114, 182, 0.5);
+      .pet-hud.is-hungry .pet-meter--hunger .pet-meter-badge,
+      .pet-hud.is-lonely .pet-meter--hearts .pet-meter-badge {
+        animation: pet-meter-pulse 1.2s ease-in-out infinite;
       }
 
       .pet-thought {
         position: fixed;
         z-index: 34;
-        left: 50%;
-        top: 16%;
-        transform: translateX(-50%);
-        max-width: 12rem;
-        padding: 0.38rem 0.7rem;
-        border-radius: 1rem 1rem 1rem 0.25rem;
-        background: rgba(255, 255, 255, 0.92);
-        color: #1a1220;
-        font-size: 0.78rem;
+        left: 58%;
+        top: 15%;
+        transform: translateX(-30%);
+        max-width: 10.5rem;
+        padding: 0.48rem 0.75rem 0.55rem;
+        border-radius: 1.15rem 1.15rem 1.15rem 0.28rem;
+        background: #fff7ed;
+        color: #3b1d12;
+        font-size: 0.8rem;
         font-weight: 800;
         pointer-events: none;
         box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
+      }
+
+      .pet-thought::after {
+        content: "";
+        position: absolute;
+        left: 0.85rem;
+        bottom: -0.42rem;
+        width: 0.72rem;
+        height: 0.72rem;
+        background: #fff7ed;
+        transform: rotate(45deg);
+        border-radius: 0.12rem;
       }
 
       .pet-thought.is-hungry {
@@ -2230,8 +2418,8 @@
       }
 
       .treat-fab.is-hungry {
-        animation: pet-meter-pulse 1.4s ease-in-out infinite;
-        box-shadow: 0 0 0 2px rgba(251, 146, 60, 0.45), 0 10px 28px rgba(0, 0, 0, 0.35);
+        animation: pet-meter-pulse 1.2s ease-in-out infinite;
+        box-shadow: 0 0 0 3px rgba(251, 146, 60, 0.55), 0 12px 28px rgba(225, 29, 72, 0.38);
       }
 
       @keyframes pet-meter-pulse {
@@ -2240,7 +2428,7 @@
           transform: scale(1);
         }
         50% {
-          transform: scale(1.04);
+          transform: scale(1.06);
         }
       }
 
@@ -3373,19 +3561,19 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-17-v150-pet-game-flow",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-17-v151-pet-game-ui",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-17-v150-pet-game-flow",
-          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-17-v150-pet-game-flow"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-17-v151-pet-game-ui",
+          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-17-v151-pet-game-ui"
         }
       }
     </script>
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v150-pet-game-flow"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v151-pet-game-ui"
     />
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-17-v150-pet-game-flow"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v150-pet-game-flow"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-17-v151-pet-game-ui"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v151-pet-game-ui"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;
