@@ -83,7 +83,7 @@ export function spawnUiRipple(el, clientX, clientY, doc = document) {
  * @param {Document} [doc]
  */
 export function markUiFxButtons(root, doc = document) {
-  if (!(root instanceof ParentNode)) return;
+  if (!root || typeof root.querySelectorAll !== "function") return;
   root.querySelectorAll(UI_FX_BUTTON_SELECTOR).forEach((el) => {
     if (el.closest("[data-ui-fx-off]")) return;
     el.classList.add("ui-fx-btn");
