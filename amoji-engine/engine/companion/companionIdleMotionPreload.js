@@ -9,6 +9,8 @@ export const COMPANION_IDLE_MOTION_PRELOAD_SCHEMA =
 const VRMA_BASE =
   "https://raw.githubusercontent.com/tk256ailab/vrm-viewer/main/VRMA";
 
+import { IDLE_LIFE_CLIP_POOL } from "./companionActionChoreography.js";
+
 /** Procedural idle gestures — no network, prime pose samplers at boot. */
 export const BOOT_IDLE_BODY_MOTION_IDS = Object.freeze([
   "nod",
@@ -18,6 +20,15 @@ export const BOOT_IDLE_BODY_MOTION_IDS = Object.freeze([
   "shrug",
   "peace",
   "stretch",
+  "clap",
+  "dab",
+  "shy",
+  "point",
+  "salute",
+  "thumbsup",
+  "headshake",
+  "laugh",
+  "celebrate",
 ]);
 
 /**
@@ -30,6 +41,18 @@ export const BOOT_IDLE_VRMA_STEMS = Object.freeze([
   "Thinking",
   "Goodbye",
   "LookAround",
+  "Clapping",
+  "Blush",
+  "Surprised",
+  "Angry",
+  "Sad",
+  "Sleepy",
+  "Jump",
+]);
+
+/** Warm these clip ids once the avatar is ready (VRMA + procedural). */
+export const BOOT_IDLE_WARM_CLIP_IDS = Object.freeze([
+  ...new Set([...BOOT_IDLE_BODY_MOTION_IDS, ...IDLE_LIFE_CLIP_POOL]),
 ]);
 
 /** @type {Map<string, ArrayBuffer>} */

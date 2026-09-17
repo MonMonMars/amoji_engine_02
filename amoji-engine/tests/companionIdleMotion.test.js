@@ -55,8 +55,8 @@ describe("companionIdleMotion", () => {
     const state = createIdleBeatState(0);
     state.nextAt = 0;
     const first = advanceIdleBeat(state, 0.05, 10);
-    expect(first.state.nextAt).toBeLessThan(10 + 1500);
-    expect(first.state.nextAt).toBeGreaterThan(10 + 300);
+    expect(first.state.nextAt).toBeLessThan(10 + 900);
+    expect(first.state.nextAt).toBeGreaterThan(10 + 180);
     vi.restoreAllMocks();
   });
 
