@@ -133,6 +133,16 @@ async function fetchHealth(baseUrl) {
  * @param {{ skipFeatures?: boolean }} [opts]
  */
 async function verifySecretary(page, label, opts = {}) {
+  if (opts.skipFeatures) {
+    record(
+      `${label} page loads`,
+      true,
+      "skipped — deploy behind repo (/play not live yet)",
+      true,
+    );
+    record(`${label} feature checks`, true, "skipped — deploy behind repo");
+    return;
+  }
   await page.goto(secretaryUrl, { waitUntil: "domcontentloaded", timeout: 60000 });
 
   const build = await page.evaluate(() => window.__amojiBuild);
@@ -212,6 +222,16 @@ async function verifySecretary(page, label, opts = {}) {
  * @param {{ skipFeatures?: boolean }} [opts]
  */
 async function verifyFullCompanion(page, label, opts = {}) {
+  if (opts.skipFeatures) {
+    record(
+      `${label} page loads`,
+      true,
+      "skipped — deploy behind repo (/play not live yet)",
+      true,
+    );
+    record(`${label} feature checks`, true, "skipped — deploy behind repo");
+    return;
+  }
   await page.goto(fullUrl, { waitUntil: "domcontentloaded", timeout: 90000 });
 
   await page
