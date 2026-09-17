@@ -3,6 +3,7 @@ import {
   buildSpectrumLevels,
   clamp,
   drawEmotionOrbFrame,
+  lerpHue,
   smoothStep,
 } from "../engine/companion/companionEmotionOrbCanvas.js";
 
@@ -10,6 +11,8 @@ describe("companionEmotionOrbCanvas", () => {
   it("clamps and smooths volume", () => {
     expect(clamp(1.5, 0, 1)).toBe(1);
     expect(smoothStep(0, 1, 0.5)).toBe(0.5);
+    expect(lerpHue(10, 350, 0.5)).toBeCloseTo(0, 5);
+    expect(lerpHue(350, 10, 1)).toBeCloseTo(10, 5);
   });
 
   it("builds spectrum bar levels from volume", () => {

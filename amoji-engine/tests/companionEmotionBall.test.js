@@ -172,8 +172,8 @@ describe("companionEmotionBall", () => {
     expect(happy.hue).not.toBe(sad.hue);
     expect(sad.hue).not.toBe(angry.hue);
     const idleA = computeMiniEmotionBallFrame({ state: "idle", time: 0 });
-    const idleB = computeMiniEmotionBallFrame({ state: "idle", time: 1.1 });
-    expect(idleA.volume).not.toBe(idleB.volume);
+    const idleB = computeMiniEmotionBallFrame({ state: "idle", time: 1.08 });
+    expect(Math.abs(idleB.volume - idleA.volume)).toBeGreaterThan(0.1);
     const thinking = computeMiniEmotionBallFrame({ state: "thinking", time: 0.4 });
     expect(thinking.thinking).toBe(true);
     expect(thinking.volume).toBeGreaterThan(0.15);
@@ -215,6 +215,12 @@ describe("companionEmotionBall", () => {
     expect(el.style.getPropertyValue("--mini-ball-scale")).not.toBe("");
     expect(ball.getFrame().live).toBe(true);
     ball.destroy();
+    const yueEl = mockBallEl();
+    const yueBall = createMiniEmotionBall(yueEl, { isEnglish: false });
+    yueBall.sync({ emotion: "happy", state: "speaking", level: 0.6 });
+    frames[frames.length - 1](48);
+    expect(yueEl.title).toMatch(/講緊/);
+    yueBall.destroy();
     vi.unstubAllGlobals();
   });
 });

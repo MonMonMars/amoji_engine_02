@@ -83,7 +83,7 @@ describe("idle showcase wiring", () => {
 
   it("drives the chip mini emotion ball from mouth and mic volume", () => {
     expect(html).toContain("createMiniEmotionBall");
-    expect(html).toMatch(/createMiniEmotionBall\(statusDot\)/);
+    expect(html).toMatch(/createMiniEmotionBall\(statusDot/);
     expect(html).toMatch(
       /const syncEmotionBall = \(\) => \{[\s\S]*miniEmotionBall\.sync\(/,
     );
@@ -97,6 +97,7 @@ describe("idle showcase wiring", () => {
       /onMouth: \(open, shape\) => \{[\s\S]*miniEmotionBall\.sync\(|emotionBallLevel = open/,
     );
     expect(grokCss).toContain("companion-chip__dot-canvas");
+    expect(grokCss).toMatch(/\.companion-chip__dot:has\(canvas\) \{[\s\S]*transform:\s*none/);
     expect(grokCss).not.toMatch(/animation:\s*miniBallGlow/);
     expect(grokCss).not.toMatch(/animation:\s*miniBallIdle/);
   });

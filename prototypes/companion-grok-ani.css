@@ -200,6 +200,7 @@
 .theme-grok-ani .companion-chip__dot:has(canvas) {
   background: transparent;
   filter: none;
+  transform: none;
 }
 
 .theme-grok-ani .companion-chip__dot[data-state="listening"],
