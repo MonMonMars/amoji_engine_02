@@ -286,27 +286,30 @@ export async function createVrmAvatar(opts) {
     void resumeCalmStand();
   };
 
-  const resumeCalmStand = async () => {
-    if (bodyMotion.thinking) {
-      const ok = await tryPlayVrmaAction("thinking", {
-        loop: true,
-        emotion: "thinking",
-      });
-      if (ok) return true;
-    }
+  const restorePlantedIdle = () => {
     vrmaPlayGen += 1;
     vrmaPending = false;
     vrmaAction = null;
-    motionPlayer.stop();
+    motionPlayer.releasePose?.();
     try {
       vrm.humanoid?.resetNormalizedPose?.();
     } catch {
       /* ignore */
     }
-    bodyMotion.resetIdleLife?.();
+    const rest = detectVrmIdleRestRotations(vrm);
+    bodyMotion.setArmRestRotations?.(rest.arms);
+    bodyMotion.setLegRestRotations?.(rest.legs);
+    bodyMotion.setArmBind?.(rest.bind);
+    bodyMotion.snapToRestPose?.();
     syncHumanoidPose();
     syncSpringsAfterPose();
     springIdleState = createIdleSpringRecenterState();
+    springTalkState = createIdleSpringRecenterState();
+  };
+
+  const resumeCalmStand = async () => {
+    restorePlantedIdle();
+    bodyMotion.resetIdleLife?.();
     return false;
   };
 
@@ -336,9 +339,7 @@ export async function createVrmAvatar(opts) {
 
   bodyMotion.setActionCompleteHandler?.(({ sequenceDone, next }) => {
     if (!sequenceDone || next) return;
-    syncHumanoidPose();
-    syncSpringsAfterPose();
-    springIdleState = createIdleSpringRecenterState();
+    restorePlantedIdle();
   });
 
   const frameAnchor = new THREE.Vector3();
@@ -376,6 +377,7 @@ export async function createVrmAvatar(opts) {
   const idleRest = detectVrmIdleRestRotations(vrm);
   bodyMotion.setArmRestRotations?.(idleRest.arms);
   bodyMotion.setLegRestRotations?.(idleRest.legs);
+  bodyMotion.setArmBind?.(idleRest.bind);
   bodyMotion.snapToRestPose?.();
   syncHumanoidPose();
   configureVrmSpringStability(vrm);
@@ -727,21 +729,10 @@ export async function createVrmAvatar(opts) {
   };
 
   const stopAction = () => {
-    vrmaPlayGen += 1;
-    vrmaPending = false;
-    motionPlayer.stop();
-    vrmaAction = null;
     const ok = bodyMotion.stopAction();
     applyEmotionExpressions(emotion);
-    try {
-      vrm.humanoid?.resetNormalizedPose?.();
-    } catch {
-      /* ignore */
-    }
+    restorePlantedIdle();
     bodyMotion.resetIdleLife?.();
-    syncHumanoidPose();
-    syncSpringsAfterPose();
-    springIdleState = createIdleSpringRecenterState();
     return ok;
   };
   const playGestureForText = (text, opts = {}) =>
@@ -765,11 +756,14 @@ export async function createVrmAvatar(opts) {
     if (on) {
       emotion = "thinking";
       applyEmotionExpressions("thinking");
-      vrmaAction = "thinking";
-      void tryPlayVrmaAction("thinking", { loop: true, emotion: "thinking" });
-    } else if (vrmaAction === "thinking" || bodyMotion.currentAction == null) {
+      if (vrmaAction === "thinking") {
+        restorePlantedIdle();
+      }
+    } else {
       applyEmotionExpressions(emotion === "thinking" ? "neutral" : emotion);
-      void resumeCalmStand();
+      if (vrmaAction === "thinking") {
+        restorePlantedIdle();
+      }
     }
     return Boolean(on);
   };
