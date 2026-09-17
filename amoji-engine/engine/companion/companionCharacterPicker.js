@@ -2,11 +2,26 @@
  * Grok Ani–style companion picker — grid sheet + compact start-screen grid.
  */
 import { listCompanionCharacters } from "./companionCharacterCatalog.js";
+import {
+  PROGRESS_RING_CIRCUMFERENCE,
+  PROGRESS_RING_RADIUS,
+  progressRingOffset,
+} from "./companionProgressOverlay.js";
 
 export const COMPANION_CHARACTER_PICKER_SCHEMA =
   "amoji.companionCharacterPicker.v2";
 
 export const COMPANION_START_PICKER_SCHEMA = "amoji.companionStartPicker.v1";
+
+export const START_PICKER_PRELOAD_RING_HTML = `
+  <div class="start-picker-preload-ring companion-progress-ring" aria-hidden="true">
+    <svg class="companion-progress-ring-svg" viewBox="0 0 36 36">
+      <circle class="companion-progress-ring-track" cx="18" cy="18" r="${PROGRESS_RING_RADIUS}" />
+      <circle class="companion-progress-ring-fill" cx="18" cy="18" r="${PROGRESS_RING_RADIUS}" />
+    </svg>
+    <span class="start-picker-preload-pct">0%</span>
+  </div>
+`.trim();
 
 /**
  * @param {ReturnType<typeof listCompanionCharacters>[number]} item
@@ -286,9 +301,7 @@ export function createCompanionStartPicker(opts = {}) {
         </div>
       </header>
       <div class="start-picker-preload" aria-live="polite">
-        <div class="start-picker-preload-track" aria-hidden="true">
-          <div class="start-picker-preload-fill"></div>
-        </div>
+        ${START_PICKER_PRELOAD_RING_HTML}
         <p class="start-picker-preload-label"></p>
       </div>
       <div class="start-picker-grid-wrap">
@@ -307,7 +320,8 @@ export function createCompanionStartPicker(opts = {}) {
   const gridEl = shell.querySelector(".companion-picker-grid");
   const footEl = shell.querySelector(".companion-picker-foot");
   const preloadEl = shell.querySelector(".start-picker-preload");
-  const preloadFill = shell.querySelector(".start-picker-preload-fill");
+  const preloadFill = shell.querySelector(".companion-progress-ring-fill");
+  const preloadPctEl = shell.querySelector(".start-picker-preload-pct");
   const preloadLabel = shell.querySelector(".start-picker-preload-label");
   const gridWrapEl = shell.querySelector(".start-picker-grid-wrap");
   const scrollHintEl = shell.querySelector(".start-picker-scroll-hint");
@@ -338,7 +352,11 @@ export function createCompanionStartPicker(opts = {}) {
 
   const renderPreload = () => {
     const clamped = Math.max(0, Math.min(100, Math.round(preloadPct)));
-    if (preloadFill) preloadFill.style.width = `${clamped}%`;
+    if (preloadFill) {
+      preloadFill.setAttribute("stroke-dasharray", String(PROGRESS_RING_CIRCUMFERENCE));
+      preloadFill.style.strokeDashoffset = String(progressRingOffset(clamped));
+    }
+    if (preloadPctEl) preloadPctEl.textContent = `${clamped}%`;
     if (preloadLabel) {
       preloadLabel.textContent =
         clamped >= 100
@@ -458,9 +476,6 @@ export function createCompanionSwitchOverlay(opts = {}) {
       <div class="companion-switch-ring" style="--pct:0">
         <span class="companion-switch-pct">0%</span>
       </div>
-      <div class="companion-switch-bar" aria-hidden="true">
-        <div class="companion-switch-bar-fill"></div>
-      </div>
       <p class="companion-switch-label">Loading…</p>
     </div>
   `;
@@ -469,7 +484,6 @@ export function createCompanionSwitchOverlay(opts = {}) {
   const ring = el.querySelector(".companion-switch-ring");
   const pctEl = el.querySelector(".companion-switch-pct");
   const labelEl = el.querySelector(".companion-switch-label");
-  const barFill = el.querySelector(".companion-switch-bar-fill");
 
   return {
     show(label = "Loading…") {
@@ -477,13 +491,11 @@ export function createCompanionSwitchOverlay(opts = {}) {
       if (labelEl) labelEl.textContent = label;
       if (ring) ring.style.setProperty("--pct", "0");
       if (pctEl) pctEl.textContent = "0%";
-      if (barFill) barFill.style.width = "0%";
     },
     update(pct, label) {
       const clamped = Math.max(0, Math.min(100, Math.round(pct)));
       if (ring) ring.style.setProperty("--pct", String(clamped));
       if (pctEl) pctEl.textContent = `${clamped}%`;
-      if (barFill) barFill.style.width = `${clamped}%`;
       if (label && labelEl) labelEl.textContent = label;
     },
     hide() {

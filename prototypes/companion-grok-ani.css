@@ -509,8 +509,8 @@ body.conversation-ui.composer-always-visible.theme-grok-ani .composer .speaker-b
     rgba(3, 3, 10, 0.72);
 }
 
-.theme-grok-ani .companion-picker--start .start-picker-preload-fill {
-  background: linear-gradient(90deg, #8b7cf8, #5eead4, #f472b6);
+.theme-grok-ani .companion-picker--start .start-picker-preload-ring {
+  border-color: rgba(139, 124, 248, 0.28);
 }
 
 /* —— In-session picker sheet —— */

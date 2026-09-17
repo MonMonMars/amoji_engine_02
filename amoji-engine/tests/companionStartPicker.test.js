@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { listCompanionCharacters } from "../engine/companion/companionCharacterCatalog.js";
-import { companionCardInnerHtml } from "../engine/companion/companionCharacterPicker.js";
+import {
+  companionCardInnerHtml,
+  START_PICKER_PRELOAD_RING_HTML,
+} from "../engine/companion/companionCharacterPicker.js";
 
 describe("companion start picker", () => {
   it("renders compact card html without tagline block", () => {
@@ -37,5 +40,11 @@ describe("companion start picker", () => {
     const sessionCard = companionCardInnerHtml(item, { compact: true });
     expect(startCard).toBe(sessionCard);
     expect(startCard).not.toContain("companion-card-tagline");
+  });
+
+  it("uses a small progress ring instead of a loading bar", () => {
+    expect(START_PICKER_PRELOAD_RING_HTML).toContain("companion-progress-ring");
+    expect(START_PICKER_PRELOAD_RING_HTML).toContain("companion-progress-ring-fill");
+    expect(START_PICKER_PRELOAD_RING_HTML).not.toMatch(/preload-track|preload-fill/);
   });
 });
