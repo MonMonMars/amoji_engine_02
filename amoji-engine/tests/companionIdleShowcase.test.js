@@ -58,6 +58,7 @@ describe("idle showcase wiring", () => {
     expect(html).toMatch(/\.chat-shell \{[\s\S]*z-index:\s*90/);
     expect(html).toMatch(/\.companion-toast \{[\s\S]*z-index:\s*70/);
     expect(html).toMatch(/z-index:\s*95;/);
+    expect(html).toMatch(/const host = document\.querySelector\("\.stage"\) \|\| document\.body/);
     expect(grokCss).toMatch(/\.theme-grok-ani \.chat-shell \{[\s\S]*z-index:\s*90/);
     expect(grokCss).toMatch(/\.theme-grok-ani \.companion-toast \{[\s\S]*z-index:\s*70/);
   });

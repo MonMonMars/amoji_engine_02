@@ -4560,7 +4560,8 @@
         t.className = `companion-toast ${kind === "info" ? "info" : ""}`;
         t.setAttribute("role", "alert");
         t.textContent = String(msg || "Something went wrong");
-        document.body.appendChild(t);
+        const host = document.querySelector(".stage") || document.body;
+        host.appendChild(t);
         requestAnimationFrame(() => t.classList.add("show"));
         setTimeout(() => {
           t.classList.remove("show");
