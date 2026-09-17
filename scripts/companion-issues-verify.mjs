@@ -33,7 +33,7 @@ function record(name, ok, detail = "") {
 async function main() {
   const base = parseArg(
     "--url",
-    "http://127.0.0.1:5178/companion-full?lang=yue&automic=0",
+    "http://127.0.0.1:5178/prototypes/amoji-companion.html?lang=yue&automic=0",
   );
   const url = new URL(base);
   url.searchParams.set("lang", url.searchParams.get("lang") || "yue");
@@ -152,6 +152,8 @@ async function main() {
       return {
         x: Number(node.rotation?.x) || 0,
         y: Number(node.position?.y) || 0,
+        z: Number(node.rotation?.z) || 0,
+        ry: Number(node.rotation?.y) || 0,
       };
     };
     const expr = vrm?.expressionManager;
@@ -168,6 +170,10 @@ async function main() {
       kind: window.__amojiAvatarKind,
       character: window.localStorage?.getItem("amoji.companion.characterId"),
       pose: {
+        leftUpperArmZ: bone("leftUpperArm")?.z,
+        rightUpperArmZ: bone("rightUpperArm")?.z,
+        leftForearmY: bone("leftLowerArm")?.ry,
+        rightForearmY: bone("rightLowerArm")?.ry,
         leftForearmX: bone("leftLowerArm")?.x,
         rightForearmX: bone("rightLowerArm")?.x,
         leftLowerLegX: bone("leftLowerLeg")?.x,
@@ -190,8 +196,14 @@ async function main() {
   const pose = afterNova.pose || {};
   record(
     "idle-arms-bent",
-    Math.abs(pose.leftForearmX || 0) > 0.08 || Math.abs(pose.rightForearmX || 0) > 0.08,
-    JSON.stringify({ l: pose.leftForearmX, r: pose.rightForearmX }),
+    Math.abs(pose.leftUpperArmZ || 0) > 0.4 ||
+      Math.abs(pose.rightUpperArmZ || 0) > 0.4 ||
+      Math.abs(pose.leftForearmY || 0) > 0.2 ||
+      Math.abs(pose.rightForearmY || 0) > 0.2,
+    JSON.stringify({
+      upperZ: [pose.leftUpperArmZ, pose.rightUpperArmZ],
+      forearmY: [pose.leftForearmY, pose.rightForearmY],
+    }),
   );
   record(
     "idle-legs-bent",
