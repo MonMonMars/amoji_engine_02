@@ -175,27 +175,29 @@ export function createCompanionChat(opts = {}) {
       .filter(Boolean)
       .join("\n");
     let webMeta = { searched: false, source: null };
-    let effectiveSystem = systemPrompt;
-    if (fetchImpl && opts.webSearch !== false) {
+    let effectiveSystem = [systemPrompt, actionHint].filter(Boolean).join("\n\n");
+    const ensureWebSnapshot = async () => {
+      if (webMeta.searched || !fetchImpl || opts.webSearch === false) return;
       try {
         const web = await fetchWebContextForChat(text, fetchImpl, {
           basicMode: true,
+          viaApi: true,
         });
-        webMeta = { searched: web.searched, source: web.source || null };
+        webMeta = { searched: Boolean(web.searched), source: web.source || null };
         const webBlock = web.context
           ? `${web.context}\nUse this web snapshot when helpful. If empty or uncertain, say you could not verify online.`
           : web.searched
             ? "Web search returned no useful snapshot. Say you could not verify online for live/current facts."
             : "";
-        effectiveSystem = [systemPrompt, actionHint, webBlock]
-          .filter(Boolean)
-          .join("\n\n");
+        if (webBlock) {
+          effectiveSystem = [systemPrompt, actionHint, webBlock]
+            .filter(Boolean)
+            .join("\n\n");
+        }
       } catch {
-        effectiveSystem = [systemPrompt, actionHint].filter(Boolean).join("\n\n");
+        /* keep system prompt */
       }
-    } else if (actionHint) {
-      effectiveSystem = `${systemPrompt}\n\n${actionHint}`;
-    }
+    };
 
     const throwIfAborted = () => {
       if (signal.aborted) {
@@ -253,6 +255,7 @@ export function createCompanionChat(opts = {}) {
     ) {
       try {
         throwIfAborted();
+        await ensureWebSnapshot();
         const online = await callOpenAiCompatible({
           fetchImpl,
           apiUrl,
@@ -298,6 +301,7 @@ export function createCompanionChat(opts = {}) {
     if (!forceLocal && apiUrl && fetchImpl) {
       try {
         throwIfAborted();
+        await ensureWebSnapshot();
         const online = await callOpenAiCompatible({
           fetchImpl,
           apiUrl,
