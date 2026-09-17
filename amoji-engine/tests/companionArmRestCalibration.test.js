@@ -56,6 +56,53 @@ describe("companionArmRestCalibration", () => {
     expect(rest.rightUpperArm.z).toBe(-1.42);
   });
 
+  it("never picks Y-axis elbow twist (VRM limbs hinge on X or Z only)", () => {
+    const bones = new Map();
+    const makeBone = (name) => {
+      if (!bones.has(name)) {
+        bones.set(name, { rotation: { x: 0, y: 0, z: 0 } });
+      }
+      return bones.get(name);
+    };
+    const vrm = {
+      humanoid: {
+        resetNormalizedPose() {},
+        update() {},
+        getNormalizedBoneNode(name) {
+          const bone = makeBone(name);
+          if (name === "leftHand" || name === "rightHand") {
+            return {
+              ...bone,
+              getWorldPosition(v) {
+                const lower = name === "leftHand"
+                  ? bones.get("leftLowerArm")
+                  : bones.get("rightLowerArm");
+                const twist = Math.abs(lower?.rotation.y || 0);
+                const flex = Math.abs(lower?.rotation.x || 0) + Math.abs(lower?.rotation.z || 0);
+                v.set(name === "leftHand" ? 0.55 - flex * 0.4 : -0.55 + flex * 0.4, 1 - twist * 0.2, 0);
+              },
+            };
+          }
+          if (name === "leftUpperArm" || name === "rightUpperArm") {
+            return {
+              ...bone,
+              getWorldPosition(v) {
+                v.set(0, 1.25, 0);
+              },
+            };
+          }
+          return bone;
+        },
+      },
+      update() {},
+    };
+    const rest = detectVrmArmRestRotations(vrm);
+    expect(rest.leftLowerArm.flexAxis).not.toBe("y");
+    expect(rest.rightLowerArm.flexAxis).not.toBe("y");
+    expect(Math.abs(rest.leftLowerArm.y)).toBeLessThan(0.35);
+    expect(Math.abs(rest.rightLowerArm.y)).toBeLessThan(0.35);
+  });
+
   it("picks the elbow axis that shortens hand-to-upper-arm distance", () => {
     const bones = new Map();
     const makeBone = (name) => {

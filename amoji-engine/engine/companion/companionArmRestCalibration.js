@@ -127,17 +127,21 @@ function hingeOnAxis(axis, signedBend, flexAxis) {
   };
 }
 
+/** VRM humanoid elbows/knees hinge on X or Z — never Y (that twists the limb). */
+const LIMB_HINGE_AXES = Object.freeze(["x", "z"]);
+
 /**
  * @param {import('@pixiv/three-vrm').VRM} vrm
  * @param {(lower: { x: number, y: number, z: number }) => number} metric
  * @param {number} delta
+ * @param {readonly string[]} [allowedAxes]
  */
-function pickHingeAxis(metric, delta = 0.02) {
+function pickHingeAxis(metric, delta = 0.02, allowedAxes = LIMB_HINGE_AXES) {
   const restMetric = metric({ x: 0, y: 0, z: 0 });
-  let bestAxis = "x";
+  let bestAxis = allowedAxes[0] || "x";
   let bestSign = 1;
   let bestMetric = restMetric;
-  for (const axis of ["x", "y", "z"]) {
+  for (const axis of allowedAxes) {
     for (const sign of [1, -1]) {
       const value = metric({ x: 0, y: 0, z: 0, [axis]: 0.9 * sign });
       if (value < bestMetric - delta) {
@@ -148,6 +152,21 @@ function pickHingeAxis(metric, delta = 0.02) {
     }
   }
   return { axis: bestAxis, sign: bestSign, improved: bestMetric < restMetric - delta };
+}
+
+/**
+ * @param {{ x?: number, y?: number, z?: number, flexAxis?: string }} rest
+ * @param {{ x?: number, y?: number, z?: number, flexAxis?: string }} fallback
+ */
+function sanitizeLimbHinge(rest, fallback) {
+  const axis = rest?.flexAxis;
+  if (axis === "y" || Math.abs(Number(rest?.y) || 0) > 0.35) {
+    return { ...fallback, flexAxis: fallback.flexAxis || "x" };
+  }
+  if (axis !== "x" && axis !== "z") {
+    return { ...fallback, flexAxis: fallback.flexAxis || "x" };
+  }
+  return rest;
 }
 
 /**
@@ -200,8 +219,13 @@ function detectElbowFlex(vrm, upperRest, side) {
     return scratchA.distanceTo(scratchB);
   };
 
-  const picked = pickHingeAxis(metric, 0.02);
-  return hingeOnAxis(picked.axis, ELBOW_BEND * picked.sign, picked.axis);
+  const picked = pickHingeAxis(metric, 0.02, LIMB_HINGE_AXES);
+  const hinge = hingeOnAxis(picked.axis, ELBOW_BEND * picked.sign, picked.axis);
+  const fallback =
+    side === "left"
+      ? VRM_ARM_REST_ROTATIONS.leftLowerArm
+      : VRM_ARM_REST_ROTATIONS.rightLowerArm;
+  return sanitizeLimbHinge(hinge, fallback);
 }
 
 /**
@@ -236,8 +260,17 @@ function detectKneeFlex(vrm, side, bend) {
     return scratchA.distanceTo(scratchB);
   };
 
-  const picked = pickHingeAxis(metric, 0.015);
-  return hingeOnAxis(picked.axis, bend * picked.sign, picked.axis);
+  const picked = pickHingeAxis(metric, 0.015, LIMB_HINGE_AXES);
+  const hinge = hingeOnAxis(picked.axis, bend * picked.sign, picked.axis);
+  const fallback =
+    side === "left"
+      ? VRM_LEG_REST_ROTATIONS.leftLowerLeg
+      : VRM_LEG_REST_ROTATIONS.rightLowerLeg;
+  const sane = sanitizeLimbHinge(hinge, fallback);
+  if (sane.flexAxis === "x" && sane.x < 0) {
+    return { ...sane, x: Math.abs(sane.x) };
+  }
+  return sane;
 }
 
 /**

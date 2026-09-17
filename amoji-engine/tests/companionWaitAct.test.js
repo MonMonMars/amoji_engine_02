@@ -131,8 +131,12 @@ describe("companionWaitAct", () => {
     expect(avatar.playAction).not.toHaveBeenCalled();
     expect(avatar.pulseIdleBeat).toHaveBeenCalledWith("look");
 
-    vi.advanceTimersByTime(IDLE_LIFE_INTERVAL_MS);
+    vi.advanceTimersByTime(IDLE_LIFE_INTERVAL_MS * 2);
     expect(avatar.playActionSequence).not.toHaveBeenCalled();
+    expect(avatar.pulseIdleBeat).toHaveBeenCalledWith("comb");
+    expect(avatar.pulseIdleBeat).toHaveBeenCalledWith("breathe");
+
+    vi.advanceTimersByTime(IDLE_LIFE_INTERVAL_MS);
     expect(avatar.playAction).toHaveBeenCalledTimes(1);
     const [pose, opts] = avatar.playAction.mock.calls[0];
     expect(IDLE_LIFE_CLIP_POOL).toContain(pose);
