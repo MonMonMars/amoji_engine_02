@@ -3433,6 +3433,7 @@
           var picker = document.getElementById("start-character-picker");
           window.__amojiStart.sessionStarted = true;
           window.__amojiStart.starting = false;
+          document.body.classList.remove("companion-start-pending", "companion-picker-open");
           if (!picker) return;
           picker.classList.add("hide");
           picker.setAttribute("aria-hidden", "true");
@@ -6494,6 +6495,7 @@
         }
 
         startPicker?.setStarting?.(false);
+        document.body.classList.remove("companion-start-pending", "companion-picker-open");
         if (typeof window.__amojiDismissStartButton === "function") {
           window.__amojiDismissStartButton();
         } else {
