@@ -21,12 +21,23 @@ export const VRM_ARM_REST_ROTATIONS = Object.freeze({
   rightLowerArm: { x: 0.5, y: -0.1, z: -0.08, flexAxis: "x" },
 });
 
-/** Contrapposto stand — weight on the left leg, free right knee bent. */
+/**
+ * Authored A-pose (VRoid / photoreal) already hangs the arms. Only nudge
+ * them forward and in — a Mixamo T-pose drop on top twists elbows straight.
+ */
+export const VRM_APOSE_ARM_REST_ROTATIONS = Object.freeze({
+  leftUpperArm: { x: 0.38, y: 0.18, z: -0.22 },
+  rightUpperArm: { x: 0.32, y: -0.16, z: 0.22 },
+  leftLowerArm: { x: 0.18, y: 0.08, z: 0.08, flexAxis: "x" },
+  rightLowerArm: { x: 0.16, y: -0.06, z: -0.06, flexAxis: "x" },
+});
+
+/** Contrapposto stand — weight on the left leg, free right knee clearly bent. */
 export const VRM_LEG_REST_ROTATIONS = Object.freeze({
-  leftUpperLeg: { x: 0.04, y: 0.04, z: 0.03 },
-  rightUpperLeg: { x: 0.12, y: -0.05, z: -0.05 },
-  leftLowerLeg: { x: 0.1, y: 0, z: 0 },
-  rightLowerLeg: { x: 0.22, y: 0, z: 0 },
+  leftUpperLeg: { x: 0.08, y: 0.05, z: 0.04 },
+  rightUpperLeg: { x: 0.22, y: -0.08, z: -0.07 },
+  leftLowerLeg: { x: 0.24, y: 0, z: 0, flexAxis: "x" },
+  rightLowerLeg: { x: 0.52, y: 0, z: 0, flexAxis: "x" },
 });
 
 /** Soft wrists so palms aren't T-pose flat. */
@@ -43,20 +54,20 @@ export const VRM_FOOT_REST_ROTATIONS = Object.freeze({
 
 /** Natural standing — bent elbows, cocked hip, not a stick figure. */
 export const REST_POSE = Object.freeze({
-  armLiftL: 0.12,
-  armLiftR: 0.07,
-  forearmL: 0.26,
-  forearmR: 0.2,
+  armLiftL: 0.18,
+  armLiftR: 0.12,
+  forearmL: 0.38,
+  forearmR: 0.32,
   headX: -0.015,
   headZ: 0.02,
   spineX: 0.018,
   chestX: -0.012,
-    hipZ: 0.018,
+  hipZ: 0.018,
   leanY: 0.035,
-  upperLegL: 0.02,
-  upperLegR: 0.06,
-  lowerLegL: 0.05,
-  lowerLegR: 0.12,
+  upperLegL: 0.08,
+  upperLegR: 0.16,
+  lowerLegL: 0.2,
+  lowerLegR: 0.34,
 });
 
 /** Mic on / waiting — attentive but arms stay down (humans don't raise arms to listen). */
@@ -160,7 +171,7 @@ export function clampArmPose(pose) {
 export function clampIdleArmPose(pose) {
   const out = { ...pose };
   const maxLift = 0.34;
-  const maxFore = 0.52;
+  const maxFore = 0.7;
   if ("armLiftL" in out) out.armLiftL = Math.min(maxLift, Math.max(0, out.armLiftL));
   if ("armLiftR" in out) out.armLiftR = Math.min(maxLift, Math.max(0, out.armLiftR));
   if ("forearmL" in out) out.forearmL = Math.min(maxFore, Math.max(0, out.forearmL ?? 0));
@@ -169,7 +180,7 @@ export function clampIdleArmPose(pose) {
 }
 
 /**
- * Add extra elbow bend on the calibrated flex axis (x on Mixamo, often z on photoreal VRMs).
+ * Add extra hinge bend on the calibrated flex axis (x on Mixamo, often z on photoreal VRMs).
  * @param {{ x?: number, y?: number, z?: number, flexAxis?: string }} restLower
  * @param {number} extra
  */
