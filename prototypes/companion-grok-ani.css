@@ -290,6 +290,7 @@
 
 /* —— Chat stage —— */
 .theme-grok-ani .chat-shell {
+  z-index: 10050;
   background: linear-gradient(
     180deg,
     transparent 0%,
@@ -300,10 +301,14 @@
   );
 }
 
-.theme-grok-ani .chat-column,
+.theme-grok-ani .chat-column {
+  position: relative;
+  z-index: 1;
+}
+
 .theme-grok-ani .transcript {
   position: relative;
-  z-index: 10050;
+  z-index: 2;
 }
 
 .theme-grok-ani .chat-column {
