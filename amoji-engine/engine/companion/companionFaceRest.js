@@ -7,18 +7,20 @@
  * Fcl_EYE_Close morphs are left at file defaults unless we zero them.
  */
 
-export const COMPANION_FACE_REST_SCHEMA = "amoji.companionFaceRest.v5";
+export const COMPANION_FACE_REST_SCHEMA = "amoji.companionFaceRest.v6";
 
 export const MOUTH_CLOSE_EPS = 0.035;
 /** No smile morph at rest — visemes own the jaw while talking. */
 export const IDLE_HAPPY_MAX = 0;
-/** Tiny smile while talking — visemes + jaw still own the mouth. */
-export const TALK_HAPPY_MAX = 0.12;
+/** Visible smile while talking — still below jaw-bake levels. */
+export const TALK_HAPPY_MAX = 0.28;
 /** Surprised at rest often drops the jaw. */
 export const REST_SURPRISED_MAX = 0;
-export const TALK_SURPRISED_MAX = 0.08;
+export const TALK_SURPRISED_MAX = 0.16;
 /** Max jaw-bone X rotation (radians) at full open. */
-export const TALK_JAW_OPEN_RAD = 0.32;
+export const TALK_JAW_OPEN_RAD = 0.38;
+/** Fallback viseme walk when TTS has not yet named a shape. */
+export const TALK_VISEME_CYCLE = ["aa", "ih", "ou", "ee", "oh"];
 
 export const BLINK_CLOSE_SEC = 0.08;
 export const BLINK_EXPRESSION_NAMES = ["blink", "blinkLeft", "blinkRight"];
@@ -136,6 +138,42 @@ export function talkingMouthOpen(talking, visemeOpen, nowMs = 0, eating = false)
   const viseme = mouthVisemeWeight(true, visemeOpen);
   const pulse = sampleTalkMouthPulse(nowMs, true);
   return Math.max(0, Math.min(1, Math.max(viseme, pulse * 0.88, eat)));
+}
+
+/**
+ * Prefer the live TTS viseme; otherwise walk aa/ih/ou/ee/oh so the mouth
+ * changes shape instead of flapping a single "aa".
+ * @param {number} nowMs
+ * @param {boolean} talking
+ * @param {string | null | undefined} requestedShape
+ */
+export function talkingVisemeShape(nowMs, talking, requestedShape) {
+  const asked = String(requestedShape || "").toLowerCase().trim();
+  if (asked && asked !== "null" && asked !== "undefined") return asked;
+  if (!talking) return "aa";
+  const t = (Number(nowMs) || 0) * 0.001;
+  const idx =
+    Math.floor(((t * 7.2) % TALK_VISEME_CYCLE.length) + TALK_VISEME_CYCLE.length) %
+    TALK_VISEME_CYCLE.length;
+  return TALK_VISEME_CYCLE[idx];
+}
+
+/**
+ * Cap Happy/Surprised while talking so visemes still own the jaw, without
+ * wiping the rest of the face to a dead rest pose.
+ * @param {string} name
+ * @param {number} weight
+ * @param {{ talking?: boolean, eating?: boolean }} [opts]
+ */
+export function capTalkingEmotionWeight(name, weight, opts = {}) {
+  const v = Math.max(0, Math.min(1, Number(weight) || 0));
+  const key = String(name || "");
+  const isMouthEmotion = /^(happy|surprised)$/i.test(key);
+  if (opts.eating && isMouthEmotion) return 0;
+  if (!opts.talking) return v;
+  if (/^happy$/i.test(key)) return Math.min(v, TALK_HAPPY_MAX);
+  if (/^surprised$/i.test(key)) return Math.min(v, TALK_SURPRISED_MAX);
+  return v;
 }
 
 /**

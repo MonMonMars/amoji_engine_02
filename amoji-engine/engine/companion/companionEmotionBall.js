@@ -371,15 +371,17 @@ export function syncMiniEmotionBall(el, opts = {}) {
   });
   const level = clamp(Number(opts.level) || 0, 0, 1);
   const state = String(opts.state || "idle");
-  const scale = 1 + level * 1.2;
+  const speaking = state === "speaking" || state === "listening";
+  const scale = 1 + level * (speaking ? 1.35 : 1.05);
+  const bright = 0.92 + level * 0.45;
   el.dataset.state = state;
   el.dataset.emotion = String(opts.emotion || "neutral");
   const bg = `hsl(${theme.hue} ${theme.sat}% ${theme.light}%)`;
-  const shadow = `0 0 ${8 + level * 22}px hsl(${theme.hue} ${theme.sat}% ${theme.light}% / ${0.42 + level * 0.5})`;
+  const glow = 8 + level * 26;
+  const shadow = `0 0 ${glow}px hsl(${theme.hue} ${theme.sat}% ${theme.light}% / ${0.42 + level * 0.5}), 0 0 ${glow * 1.8}px hsl(${theme.hue} ${Math.max(40, theme.sat - 8)}% ${Math.min(72, theme.light + 8)}% / ${0.22 + level * 0.28})`;
   el.style.setProperty("--mini-ball-bg", bg);
   el.style.setProperty("--mini-ball-shadow", shadow);
   el.style.setProperty("--mini-ball-scale", scale.toFixed(3));
-  el.style.background = bg;
-  el.style.boxShadow = shadow;
-  return { ...theme, scale, level, state };
+  el.style.setProperty("--mini-ball-bright", bright.toFixed(3));
+  return { ...theme, scale, level, state, bright };
 }

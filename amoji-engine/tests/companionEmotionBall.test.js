@@ -130,6 +130,7 @@ describe("companionEmotionBall", () => {
     expect(el.dataset.emotion).toBe("happy");
     expect(el.style.getPropertyValue("--mini-ball-scale")).not.toBe("");
     expect(el.style.getPropertyValue("--mini-ball-bg")).toContain("hsl(");
+    expect(el.style.getPropertyValue("--mini-ball-bright")).not.toBe("");
     expect(theme.scale).toBeGreaterThan(1.5);
   });
 });

@@ -8,9 +8,9 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji · Companion</title>
     <script>
-      window.__amojiBuild = "2026-09-17-v155-finger-curl";
+      window.__amojiBuild = "2026-09-17-v156-idle-face-camera";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-17-v155-finger-curl"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-17-v156-idle-face-camera"></script>
     <link
       rel="prefetch"
       href="/prototypes/assets/companion-char-nova.png"
@@ -219,7 +219,8 @@
         top: auto;
         display: flex;
         flex-direction: column;
-        z-index: 40;
+        z-index: 50;
+        isolation: isolate;
         pointer-events: none;
       }
       .chat-column {
@@ -320,7 +321,7 @@
       media="print"
       onload="this.media='all'"
     />
-    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-17-v155-finger-curl" />
+    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-17-v156-idle-face-camera" />
     <noscript>
       <link
         href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap"
@@ -687,7 +688,8 @@
         right: 0;
         bottom: 0;
         top: auto;
-        z-index: 40;
+        z-index: 50;
+        isolation: isolate;
         display: flex;
         flex-direction: column;
         justify-content: flex-end;
@@ -745,7 +747,7 @@
       }
       body.conversation-ui .transcript .msg-row {
         position: relative;
-        z-index: 42;
+        z-index: 60;
         pointer-events: auto;
       }
 
@@ -3562,19 +3564,19 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-17-v155-finger-curl",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-17-v156-idle-face-camera",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-17-v155-finger-curl",
-          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-17-v155-finger-curl"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-17-v156-idle-face-camera",
+          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-17-v156-idle-face-camera"
         }
       }
     </script>
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v155-finger-curl"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v156-idle-face-camera"
     />
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-17-v155-finger-curl"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v155-finger-curl"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-17-v156-idle-face-camera"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v156-idle-face-camera"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;
@@ -5300,10 +5302,11 @@
           : "拖曳旋轉 · 雙擊重置視角";
       }
       let lastCanvasTapAt = 0;
+      let talkingCameraLatched = false;
       const orbitSurface = orbitHit || canvas;
       orbitSurface.addEventListener("pointerup", (ev) => {
         const now = Date.now();
-        if (now - lastCanvasTapAt < 360) {
+        if (now - lastCanvasTapAt < 500) {
           const hitCharacter = avatar.hitTest?.(ev.clientX, ev.clientY);
           if (!hitCharacter) {
             avatar.resetCameraView?.();
@@ -5782,7 +5785,11 @@
         },
         onTalking: (on) => {
           avatar.setTalking(on);
-          if (on) avatar.resetCameraView?.();
+          if (on && !talkingCameraLatched) {
+            talkingCameraLatched = true;
+            avatar.resetCameraView?.();
+          }
+          if (!on) talkingCameraLatched = false;
           syncMicBtn();
         },
         onSpeakChunk: (chunk) => {

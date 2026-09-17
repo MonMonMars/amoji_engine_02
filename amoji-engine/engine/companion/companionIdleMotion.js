@@ -63,10 +63,37 @@ export function sampleCalmBreathIdle(elapsedSec, opts = {}) {
     armLiftR: 0.12,
     forearmL: 0.4,
     forearmR: 0.34,
-    upperLegL: 0.04,
-    upperLegR: 0.045,
-    lowerLegL: 0.12,
-    lowerLegR: 0.13,
+    upperLegL: 0.05,
+    upperLegR: 0.055,
+    lowerLegL: 0.18,
+    lowerLegR: 0.185,
+  };
+}
+
+/**
+ * Standing idle: planted knees (no Mixamo forward-leg blend) + living upper
+ * body — breathe, look, soft arm hang. Comb/look/nod overlays sit on top.
+ * @param {number} elapsedSec
+ * @param {{ listening?: boolean, emotion?: string }} [opts]
+ */
+export function samplePlantedAliveIdle(elapsedSec, opts = {}) {
+  const calm = sampleCalmBreathIdle(elapsedSec, opts);
+  const life = sampleIdleBodyMotion(elapsedSec, opts);
+  return {
+    upperLegL: calm.upperLegL,
+    upperLegR: calm.upperLegR,
+    lowerLegL: calm.lowerLegL,
+    lowerLegR: calm.lowerLegR,
+    hipZ: calm.hipZ + (life.hipZ - calm.hipZ) * 0.28,
+    headX: life.headX * 0.85,
+    headZ: life.headZ * 0.72,
+    leanY: life.leanY * 0.42,
+    spineX: life.spineX,
+    chestX: life.chestX,
+    armLiftL: life.armLiftL,
+    armLiftR: life.armLiftR,
+    forearmL: life.forearmL,
+    forearmR: life.forearmR,
   };
 }
 
@@ -145,11 +172,11 @@ export function advanceIdleBeat(state, dt, nowMs) {
 
   if (!beat && nowMs >= nextAt) {
     const roll = Math.random();
-    if (roll < 0.2) beat = "nod";
-    else if (roll < 0.38) beat = "look";
+    if (roll < 0.12) beat = "nod";
+    else if (roll < 0.32) beat = "look";
     else if (roll < 0.52) beat = "comb";
-    else if (roll < 0.66) beat = "shift";
-    else if (roll < 0.8) beat = "fidget";
+    else if (roll < 0.64) beat = "shift";
+    else if (roll < 0.76) beat = "fidget";
     else if (roll < 0.9) beat = "breathe";
     else beat = "sway";
     phase = 0;
@@ -167,7 +194,7 @@ export function advanceIdleBeat(state, dt, nowMs) {
                 : beat === "breathe"
                   ? 2.2
                   : 1.65;
-    nextAt = nowMs + 1600 + Math.random() * 2800;
+    nextAt = nowMs + 700 + Math.random() * 1400;
   }
 
   if (beat) {
@@ -247,6 +274,34 @@ export function createIdleBeatState(nowMs = performance.now()) {
     beat: null,
     phase: 0,
     duration: 0,
-    nextAt: nowMs + 320 + Math.random() * 680,
+    nextAt: nowMs + 180 + Math.random() * 420,
+  };
+}
+
+const IDLE_BEAT_DURATION_SEC = {
+  nod: 0.95,
+  look: 1.45,
+  comb: 2.1,
+  shift: 1.75,
+  fidget: 1.35,
+  breathe: 2.2,
+  sway: 1.65,
+};
+
+/**
+ * Force an idle life beat (look / comb / breathe) from wait-act ticks.
+ * @param {IdleBeatState} state
+ * @param {string} beat
+ * @param {number} [nowMs]
+ * @returns {IdleBeatState}
+ */
+export function startIdleBeat(state, beat, nowMs = 0) {
+  const key = String(beat || "look");
+  const duration = IDLE_BEAT_DURATION_SEC[key] || 1.4;
+  return {
+    beat: IDLE_BEAT_DURATION_SEC[key] ? key : "look",
+    phase: 0,
+    duration,
+    nextAt: Number(nowMs) + duration * 1000 + 700,
   };
 }
