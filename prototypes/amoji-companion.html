@@ -8,9 +8,9 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji · Companion</title>
     <script>
-      window.__amojiBuild = "2026-09-17-v166-mini-ball-motion";
+      window.__amojiBuild = "2026-09-17-v167-mini-ball-detail";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-17-v166-mini-ball-motion"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-17-v167-mini-ball-detail"></script>
     <link
       rel="prefetch"
       href="/prototypes/assets/companion-char-nova.png"
@@ -323,7 +323,7 @@
       media="print"
       onload="this.media='all'"
     />
-    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-17-v166-mini-ball-motion" />
+    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-17-v167-mini-ball-detail" />
     <noscript>
       <link
         href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap"
@@ -538,7 +538,7 @@
         height: 1.72rem;
         border-radius: 50%;
         flex-shrink: 0;
-        overflow: visible;
+        overflow: hidden;
         background: radial-gradient(
           circle at 32% 28%,
           rgba(255, 255, 255, 0.9),
@@ -549,9 +549,10 @@
       }
       .companion-chip__dot-canvas {
         position: absolute;
-        inset: -10%;
-        width: 120%;
-        height: 120%;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
         pointer-events: none;
       }
 
@@ -1633,6 +1634,9 @@
           animation: none;
         }
         .emotion-ball__bar {
+          transition: none;
+        }
+        .companion-chip__dot {
           transition: none;
         }
       }
@@ -3590,19 +3594,19 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-17-v166-mini-ball-motion",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-17-v167-mini-ball-detail",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-17-v166-mini-ball-motion",
-          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-17-v166-mini-ball-motion"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-17-v167-mini-ball-detail",
+          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-17-v167-mini-ball-detail"
         }
       }
     </script>
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v166-mini-ball-motion"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v167-mini-ball-detail"
     />
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-17-v166-mini-ball-motion"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v166-mini-ball-motion"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-17-v167-mini-ball-detail"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v167-mini-ball-detail"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;
@@ -3857,7 +3861,7 @@
             <span class="companion-chip__name" id="brand-name">Amoji</span>
             <span class="companion-chip__status" id="companion-status-line">Ready</span>
           </span>
-          <span class="companion-chip__dot" id="status-dot" data-state="idle" aria-hidden="true"></span>
+          <span class="companion-chip__dot" id="status-dot" data-state="idle" role="img" aria-label="Ready · Neutral"></span>
           <span class="companion-chip__caret" aria-hidden="true"></span>
         </button>
         <div class="meta topbar-actions">
@@ -4291,7 +4295,7 @@
       const { createCompanionBargeMonitor } = bargeMod;
       const { createCompanionVoiceGate } = voiceGateMod;
       const { isIosLike, shouldPauseMicDuringTts } = platformMod;
-      const { createCompanionMicButton } = micButtonMod;
+      const { createCompanionMicButton, normalizeEmotionThemeKey } = micButtonMod;
       const { createCompanionEmotionBall, createMiniEmotionBall } = emotionBallMod;
 
       const hostedOnline = isHostedCompanion();
@@ -5260,7 +5264,7 @@
         const effective = resolveCompanionVoiceState(state);
         const labels = statusLineLabels();
         if (companionStatusLine) {
-          const moodKey = String(emotion || "neutral").toLowerCase();
+          const moodKey = normalizeEmotionThemeKey(emotion);
           const moodLabels = isEnglish
             ? {
                 happy: "happy",

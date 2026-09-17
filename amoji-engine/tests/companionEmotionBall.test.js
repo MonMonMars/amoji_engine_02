@@ -4,6 +4,7 @@ import {
   computeMiniEmotionBallFrame,
   createCompanionEmotionBall,
   createMiniEmotionBall,
+  miniEmotionBallLabel,
   syncMiniEmotionBall,
 } from "../engine/companion/companionEmotionBall.js";
 
@@ -65,12 +66,20 @@ function mockBallEl() {
     innerHTML: "",
     hidden: true,
     parentElement: stack,
+    attrs: { role: "", "aria-label": "" },
     querySelector(sel) {
       if (sel === ".emotion-ball__canvas") return null;
       return null;
     },
-    setAttribute() {},
-    removeAttribute() {},
+    setAttribute(key, value) {
+      this.attrs[key] = String(value);
+    },
+    getAttribute(key) {
+      return this.attrs[key] || null;
+    },
+    removeAttribute(key) {
+      delete this.attrs[key];
+    },
     getBoundingClientRect() {
       return { width: 88, height: 88 };
     },
@@ -195,6 +204,44 @@ describe("companionEmotionBall", () => {
     const typing = computeMiniEmotionBallFrame({ state: "typing", time: 0.3 });
     expect(typing.typing).toBe(true);
     expect(typing.live).toBe(false);
+    const joy = computeMiniEmotionBallFrame({
+      emotion: "joy",
+      state: "speaking",
+      level: 0.5,
+    });
+    expect(joy.emotion).toBe("happy");
+    expect(joy.hue).toBe(happy.hue);
+    const idleSquashA = computeMiniEmotionBallFrame({ state: "idle", time: 0 });
+    const idleSquashB = computeMiniEmotionBallFrame({ state: "idle", time: 1.08 });
+    expect(Math.abs(idleSquashB.squash - idleSquashA.squash)).toBeGreaterThan(0.08);
+    const still = computeMiniEmotionBallFrame({
+      state: "idle",
+      time: 1.08,
+      reducedMotion: true,
+    });
+    expect(still.squash).toBe(1);
+    expect(still.spin).toBe(0);
+    const loading = computeMiniEmotionBallFrame({ state: "loading", time: 0.4 });
+    expect(loading.loading).toBe(true);
+    expect(loading.thinking).toBe(true);
+    expect(loading.volume).toBeLessThan(thinking.volume + 0.05);
+  });
+
+  it("labels aliased emotions and exposes an accessible name", () => {
+    const el = mockBallEl();
+    const theme = syncMiniEmotionBall(el, {
+      emotion: "sorrow",
+      state: "speaking",
+      level: 0.4,
+      isEnglish: true,
+    });
+    expect(theme.emotion).toBe("sad");
+    expect(el.title).toMatch(/Sad/);
+    expect(el.getAttribute("aria-label")).toMatch(/Speaking · Sad/);
+    expect(el.getAttribute("role")).toBe("img");
+    expect(miniEmotionBallLabel({ emotion: "thinking", state: "thinking" }, true)).toBe(
+      "Thinking",
+    );
   });
 
   it("runs a live mini emotion ball control loop", () => {
