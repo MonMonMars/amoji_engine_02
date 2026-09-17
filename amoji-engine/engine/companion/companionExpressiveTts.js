@@ -20,17 +20,7 @@ export function splitExpressiveClauses(text) {
     .map((s) => s.trim())
     .filter(Boolean);
 
-  if (sentenceParts.length > 1) return sentenceParts;
-
-  if (clean.length > 28) {
-    const commaParts = clean
-      .split(/(?<=[，,、])\s*/)
-      .map((s) => s.trim())
-      .filter(Boolean);
-    if (commaParts.length > 1) return commaParts;
-  }
-
-  return [clean];
+  return sentenceParts.length ? sentenceParts : [clean];
 }
 
 /**

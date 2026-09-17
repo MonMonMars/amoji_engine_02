@@ -26,6 +26,26 @@ describe("companionStreamSpeak", () => {
     expect(second).toEqual(["我係 Amoji。"]);
   });
 
+  it("holds a sentence until terminal punctuation instead of commas", () => {
+    const planner = createStreamSpeakPlanner();
+    expect(planner.feed("Sure, I'd love to help")).toEqual([]);
+    expect(
+      planner.feed("Sure, I'd love to help you plan your day today"),
+    ).toEqual([]);
+    expect(
+      planner.feed("Sure, I'd love to help you plan your day today."),
+    ).toEqual(["Sure, I'd love to help you plan your day today."]);
+  });
+
+  it("does not emit at 42 characters mid-sentence", () => {
+    const planner = createStreamSpeakPlanner();
+    const partial =
+      "I would really love to walk you through a calm morning routine with";
+    expect(partial.length).toBeGreaterThan(42);
+    expect(planner.feed(partial)).toEqual([]);
+    expect(planner.feed(`${partial} tea.`)).toEqual([`${partial} tea.`]);
+  });
+
   it("flushes remaining tail", () => {
     const planner = createStreamSpeakPlanner();
     planner.feed("前半句，");
