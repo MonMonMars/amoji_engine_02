@@ -489,7 +489,13 @@ export function createCompanionVoice(opts = {}) {
       currentCloudAudio = audio;
       audio.volume = ttsPlaybackVolume();
       audio.src = objectUrl;
+      let settled = false;
       let mouthStarted = false;
+      const fallbackMs =
+        Number.isFinite(audio.duration) && audio.duration > 0
+          ? audio.duration * 1000
+          : clean.length * estimateLipSyncMsPerChar(clean);
+      const maxMs = Math.min(120000, Math.max(2500, fallbackMs + 1200));
       const beginMouth = () => {
         if (mouthStarted) return;
         mouthStarted = true;
@@ -518,7 +524,15 @@ export function createCompanionVoice(opts = {}) {
         });
       };
       const finish = (result) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(safetyTimer);
         if (currentCloudAudio === audio) currentCloudAudio = null;
+        try {
+          audio.pause();
+        } catch {
+          /* ignore */
+        }
         URL.revokeObjectURL(objectUrl);
         if (!holdSpeaking) {
           speaking = false;
@@ -527,6 +541,9 @@ export function createCompanionVoice(opts = {}) {
         stopMouth();
         resolve(result);
       };
+      const safetyTimer = setTimeout(() => {
+        finish({ ok: true, voice: preset.name, emotion, cloud: true, timedOut: true });
+      }, maxMs);
       audio.onplaying = () => beginMouth();
       audio.ontimeupdate = () => {
         if (!mouthStarted && audio.currentTime > 0) beginMouth();
