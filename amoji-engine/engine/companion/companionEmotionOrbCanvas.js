@@ -41,7 +41,7 @@ export function drawEmotionOrbFrame(ctx, width, height, opts) {
   const cx = width / 2;
   const cy = height / 2;
   const base = Math.min(width, height) * 0.34;
-  const pulse = 1 + volume * 0.38;
+  const pulse = 1 + volume * (compact ? 0.22 : 0.38);
   const radius = base * pulse;
 
   ctx.clearRect(0, 0, width, height);
@@ -58,10 +58,14 @@ export function drawEmotionOrbFrame(ctx, width, height, opts) {
   const points = 72;
   const wobbleAmp =
     state === "thinking"
-      ? 0.05
+      ? compact
+        ? 0.045
+        : 0.05
       : state === "idle"
-        ? 0.035
-        : 0.08 + volume * 0.18;
+        ? compact
+          ? 0.03
+          : 0.035
+        : (compact ? 0.055 : 0.08) + volume * (compact ? 0.1 : 0.18);
 
   ctx.beginPath();
   for (let i = 0; i <= points; i++) {

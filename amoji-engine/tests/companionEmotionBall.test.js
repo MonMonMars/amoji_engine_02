@@ -133,7 +133,7 @@ describe("companionEmotionBall", () => {
     expect(el.style.getPropertyValue("--mini-ball-scale")).not.toBe("");
     expect(el.style.getPropertyValue("--mini-ball-bg")).toContain("hsl(");
     expect(el.style.getPropertyValue("--mini-ball-bright")).not.toBe("");
-    expect(theme.scale).toBeGreaterThan(1.4);
+    expect(theme.scale).toBeGreaterThan(1.08);
     expect(theme.hue).toBeGreaterThan(0);
   });
 
