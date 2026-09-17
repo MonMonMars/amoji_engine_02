@@ -25,6 +25,7 @@ export const PET_TAP_COINS = 1;
 export const PET_TAP_HEARTS = 8;
 export const PET_SAME_FOOD_MS = 90_000;
 export const PET_HUNGRY_ASK_COOLDOWN_MS = 50_000;
+export const PET_PIP_COUNT = 5;
 export const MS_PER_HOUR = 3_600_000;
 
 const CARE_KEYS = [
@@ -136,6 +137,28 @@ export function isFull(care) {
  */
 export function isLonely(care) {
   return clampNeed(care?.hearts) < PET_LONELY_BELOW;
+}
+
+/**
+ * Tamagotchi-style 5 pips for a 0–100 need.
+ * @param {number} value
+ * @param {number} [count]
+ */
+export function needPips(value, count = PET_PIP_COUNT) {
+  const n = Math.max(1, Math.round(Number(count) || PET_PIP_COUNT));
+  return Math.max(0, Math.min(n, Math.round((clampNeed(value) / 100) * n)));
+}
+
+/**
+ * Pou meter color band: low &lt;31%, mid &lt;55%, else ok.
+ * @param {number} value
+ */
+export function needTone(value, kind = "hunger") {
+  const n = clampNeed(value);
+  const low = kind === "hearts" ? PET_LONELY_BELOW : PET_HUNGRY_BELOW;
+  if (n < low) return "low";
+  if (n < 55) return "mid";
+  return "ok";
 }
 
 /**

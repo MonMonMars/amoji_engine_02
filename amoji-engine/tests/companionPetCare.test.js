@@ -7,6 +7,8 @@ import {
   PET_HUNGER_PER_HOUR,
   PET_START_HUNGER,
   PET_TAP_COINS,
+  needPips,
+  needTone,
   applyChatCare,
   applyFeedCare,
   applyPetCare,
@@ -132,5 +134,14 @@ describe("companion pet care loop", () => {
     expect(next.hunger).toBe(PET_START_HUNGER);
     expect(next.hearts).toBeGreaterThan(0);
     expect(next.lastTickMs).toBe(1_700_000_000_000);
+  });
+
+  it("maps needs to Tamagotchi pips and Pou color bands", () => {
+    expect(needPips(0)).toBe(0);
+    expect(needPips(40)).toBe(2);
+    expect(needPips(100)).toBe(5);
+    expect(needTone(18, "hunger")).toBe("low");
+    expect(needTone(40, "hunger")).toBe("mid");
+    expect(needTone(80, "hearts")).toBe("ok");
   });
 });

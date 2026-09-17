@@ -24,10 +24,13 @@ import {
   isHungry,
   isLonely,
   maybeHungryAsk,
+  needPips,
+  needTone,
   refuseLine,
   thoughtForCare,
   tickCare,
   tryFeedTreat,
+  PET_PIP_COUNT,
 } from "./companionPetCare.js";
 
 export const COMPANION_TREAT_INTERACT_SCHEMA = "amoji.companionTreatInteract.v1";
@@ -139,9 +142,13 @@ export function createCompanionTreatDock(opts = {}) {
   const coinsEl = el("span", "treat-coins");
   coinsEl.id = "treat-coins";
   const bagBadge = el("span", "treat-bag-badge");
+  const wallet = el("div", "pet-wallet");
+  wallet.id = "pet-wallet";
+  wallet.appendChild(coinsEl);
   const halo = el("div", "treat-drop-halo");
   halo.id = "treat-drop-halo";
   halo.setAttribute("aria-hidden", "true");
+  halo.innerHTML = `<span class="treat-drop-halo__hint"></span>`;
   const ghost = el("div", "treat-drag-ghost");
   ghost.id = "treat-drag-ghost";
   ghost.hidden = true;
@@ -151,48 +158,74 @@ export function createCompanionTreatDock(opts = {}) {
   sheet.setAttribute("aria-modal", "true");
   const backdrop = el("div", "treat-sheet-backdrop");
   backdrop.id = "treat-sheet-backdrop";
+  const pipRow = (id) =>
+    Array.from({ length: PET_PIP_COUNT }, (_, i) =>
+      `<span class="pet-pip" data-pip="${i}" id="${id}-${i}"></span>`,
+    ).join("");
   const hud = el("div", "pet-hud");
   hud.id = "pet-hud";
   hud.innerHTML = `
-    <div class="pet-meter pet-meter--hunger" data-pet-meter="hunger">
-      <span class="pet-meter-icon" aria-hidden="true">🍽️</span>
-      <span class="pet-meter-track"><span class="pet-meter-fill" id="pet-hunger-fill"></span></span>
-      <span class="pet-meter-val" id="pet-hunger-val"></span>
-    </div>
-    <div class="pet-meter pet-meter--hearts" data-pet-meter="hearts">
-      <span class="pet-meter-icon" aria-hidden="true">💗</span>
-      <span class="pet-meter-track"><span class="pet-meter-fill" id="pet-hearts-fill"></span></span>
-      <span class="pet-meter-val" id="pet-hearts-val"></span>
+    <div class="pet-hud-card">
+      <div class="pet-meter pet-meter--hunger" data-pet-meter="hunger">
+        <span class="pet-meter-badge" aria-hidden="true">🍽️</span>
+        <div class="pet-meter-col">
+          <div class="pet-meter-head">
+            <span class="pet-meter-label" id="pet-hunger-label"></span>
+            <span class="pet-meter-pips" id="pet-hunger-pips">${pipRow("pet-hunger-pip")}</span>
+            <span class="pet-meter-val" id="pet-hunger-val"></span>
+          </div>
+          <span class="pet-meter-track"><span class="pet-meter-fill" id="pet-hunger-fill"></span></span>
+        </div>
+      </div>
+      <div class="pet-meter pet-meter--hearts" data-pet-meter="hearts">
+        <span class="pet-meter-badge" aria-hidden="true">💗</span>
+        <div class="pet-meter-col">
+          <div class="pet-meter-head">
+            <span class="pet-meter-label" id="pet-hearts-label"></span>
+            <span class="pet-meter-pips" id="pet-hearts-pips">${pipRow("pet-hearts-pip")}</span>
+            <span class="pet-meter-val" id="pet-hearts-val"></span>
+          </div>
+          <span class="pet-meter-track"><span class="pet-meter-fill" id="pet-hearts-fill"></span></span>
+        </div>
+      </div>
     </div>
   `;
   const thought = el("div", "pet-thought");
   thought.id = "pet-thought";
   thought.hidden = true;
+  thought.innerHTML = `<span class="pet-thought-text"></span>`;
 
   const labelShop = () => (english() ? "Shop" : "商店");
-  const labelBag = () => (english() ? "Bag" : "背包");
-  const labelTreats = () => (english() ? "Treats" : "請食");
+  const labelBag = () => (english() ? "Fridge" : "雪櫃");
+  const labelKitchen = () => (english() ? "Kitchen" : "廚房");
+  const labelFood = () => (english() ? "Food" : "肚餓");
+  const labelMood = () => (english() ? "Fun" : "心情");
 
-  fab.setAttribute("aria-label", labelTreats());
-  fab.innerHTML = `<span class="treat-fab__emoji" aria-hidden="true">🍰</span><span class="treat-fab__label">${labelTreats()}</span>`;
+  fab.setAttribute("aria-label", labelKitchen());
+  fab.innerHTML = `<span class="treat-fab__emoji" aria-hidden="true">🍳</span><span class="treat-fab__label">${labelKitchen()}</span>`;
   fab.appendChild(bagBadge);
 
   sheet.innerHTML = `
+    <div class="treat-sheet-handle" aria-hidden="true"></div>
     <div class="treat-sheet-head">
-      <h2 class="treat-sheet-title">${english() ? "Treats" : "請食"}</h2>
-      <div class="treat-sheet-tabs" role="tablist">
-        <button type="button" class="treat-tab" data-treat-tab="shop" role="tab">${labelShop()}</button>
-        <button type="button" class="treat-tab" data-treat-tab="bag" role="tab">${labelBag()}</button>
+      <div class="treat-sheet-titles">
+        <p class="treat-sheet-kicker">${english() ? "Care room" : "照顧房間"}</p>
+        <h2 class="treat-sheet-title">${labelKitchen()}</h2>
       </div>
+      <span class="treat-sheet-wallet" id="treat-sheet-wallet"></span>
       <button type="button" class="treat-sheet-close" aria-label="${english() ? "Close" : "關閉"}">✕</button>
+    </div>
+    <div class="treat-sheet-tabs" role="tablist">
+      <button type="button" class="treat-tab" data-treat-tab="bag" role="tab">${labelBag()}</button>
+      <button type="button" class="treat-tab" data-treat-tab="shop" role="tab">${labelShop()}</button>
     </div>
     <p class="treat-sheet-hint"></p>
     <div class="treat-grid" id="treat-grid"></div>
   `;
 
-  dock.appendChild(coinsEl);
   dock.appendChild(fab);
   root.appendChild(hud);
+  root.appendChild(wallet);
   root.appendChild(thought);
   root.appendChild(halo);
   root.appendChild(ghost);
@@ -203,6 +236,9 @@ export function createCompanionTreatDock(opts = {}) {
   const grid = sheet.querySelector("#treat-grid");
   const hint = sheet.querySelector(".treat-sheet-hint");
   const closeBtn = sheet.querySelector(".treat-sheet-close");
+  const sheetWallet = sheet.querySelector("#treat-sheet-wallet");
+  const haloHint = halo.querySelector(".treat-drop-halo__hint");
+  const thoughtText = thought.querySelector(".pet-thought-text");
 
   const persist = () => {
     state = saveTreatState(state, storage);
@@ -210,6 +246,7 @@ export function createCompanionTreatDock(opts = {}) {
 
   const paintCoins = () => {
     coinsEl.textContent = `🪙 ${state.coins}`;
+    if (sheetWallet) sheetWallet.textContent = `🪙 ${state.coins}`;
     const n = bagTotal(state);
     bagBadge.textContent = n > 0 ? String(n) : "";
     bagBadge.hidden = n < 1;
@@ -226,11 +263,23 @@ export function createCompanionTreatDock(opts = {}) {
       hint.textContent =
         tab === "shop"
           ? english()
-            ? "Buy snacks with coins. Chat, pet her, or come back tomorrow to earn more."
-            : "用金幣買零食。傾偈、摸摸佢、或者聽日再嚟會有零用錢。"
+            ? "Buy food with coins — fridge keeps it until you drag it to her mouth."
+            : "用金幣買食物，放雪櫃，拖去佢嘴邊先食到。"
           : english()
-            ? "Drag food onto her when she's hungry. She'll refuse if she's full."
-            : "肚餓先拖食物去佢身上。食飽會搖頭唔食。";
+            ? "Drag food onto her mouth. She refuses when she's full."
+            : "拖食物去佢嘴邊。食飽會搖頭唔食。";
+    }
+    if (haloHint) {
+      haloHint.textContent = english() ? "Drop on her mouth" : "拖去嘴邊";
+    }
+  };
+
+  const paintPipRow = (rowId, filled) => {
+    const row = hud.querySelector(`#${rowId}`);
+    if (!row) return;
+    for (const pip of row.querySelectorAll(".pet-pip")) {
+      const i = Number(pip.getAttribute("data-pip") || 0);
+      pip.classList.toggle("is-on", i < filled);
     }
   };
 
@@ -239,25 +288,40 @@ export function createCompanionTreatDock(opts = {}) {
     const heartsFill = hud.querySelector("#pet-hearts-fill");
     const hungerVal = hud.querySelector("#pet-hunger-val");
     const heartsVal = hud.querySelector("#pet-hearts-val");
+    const hungerLabel = hud.querySelector("#pet-hunger-label");
+    const heartsLabel = hud.querySelector("#pet-hearts-label");
     const hunger = Math.round(Number(state.hunger) || 0);
     const hearts = Math.round(Number(state.hearts) || 0);
     if (hungerFill) hungerFill.style.width = `${hunger}%`;
     if (heartsFill) heartsFill.style.width = `${hearts}%`;
-    if (hungerVal) hungerVal.textContent = String(hunger);
-    if (heartsVal) heartsVal.textContent = String(hearts);
+    if (hungerVal) hungerVal.textContent = `${hunger}%`;
+    if (heartsVal) heartsVal.textContent = `${hearts}%`;
+    if (hungerLabel) hungerLabel.textContent = labelFood();
+    if (heartsLabel) heartsLabel.textContent = labelMood();
+    paintPipRow("pet-hunger-pips", needPips(hunger));
+    paintPipRow("pet-hearts-pips", needPips(hearts));
+    const hungerMeter = hud.querySelector(".pet-meter--hunger");
+    const heartsMeter = hud.querySelector(".pet-meter--hearts");
+    hungerMeter?.setAttribute("data-tone", needTone(hunger, "hunger"));
+    heartsMeter?.setAttribute("data-tone", needTone(hearts, "hearts"));
     hud.classList.toggle("is-hungry", isHungry(state));
     hud.classList.toggle("is-lonely", isLonely(state));
     fab.classList.toggle("is-hungry", isHungry(state));
     const bubble = thoughtForCare(state, english());
     if (bubble) {
       thought.hidden = false;
-      thought.textContent = bubble;
+      if (thoughtText) thoughtText.textContent = bubble;
+      else thought.textContent = bubble;
       thought.classList.toggle("is-hungry", isHungry(state));
     } else {
       thought.hidden = true;
-      thought.textContent = "";
+      if (thoughtText) thoughtText.textContent = "";
+      else thought.textContent = "";
     }
   };
+
+  const itemStatsHtml = (item) =>
+    `<span class="treat-card-stats"><span>🍽️+${item.hunger}</span><span>💗+${item.hearts}</span></span>`;
 
   const paintGrid = () => {
     if (!grid) return;
@@ -267,32 +331,37 @@ export function createCompanionTreatDock(opts = {}) {
         const card = el("button", "treat-card treat-card--shop");
         card.type = "button";
         card.dataset.treatId = item.id;
+        const owned = bagCount(state, item.id);
+        card.classList.toggle("is-broke", state.coins < item.price);
         card.innerHTML = `
           <span class="treat-card-emoji">${item.emoji}</span>
           <span class="treat-card-name">${treatDisplayName(item, english())}</span>
+          ${itemStatsHtml(item)}
           <span class="treat-card-price">🪙 ${item.price}</span>
+          ${owned > 0 ? `<span class="treat-card-owned">×${owned}</span>` : ""}
         `;
         card.addEventListener("click", () => buy(item.id));
         grid.appendChild(card);
       }
       return;
     }
-    const owned = TREAT_ITEMS.filter((item) => bagCount(state, item.id) > 0);
-    if (!owned.length) {
+    const ownedItems = TREAT_ITEMS.filter((item) => bagCount(state, item.id) > 0);
+    if (!ownedItems.length) {
       grid.innerHTML = `<p class="treat-empty">${
-        english() ? "Bag is empty — buy something in the shop." : "背包空嘅，去商店買嘢啦。"
+        english() ? "Fridge is empty — buy something in the shop." : "雪櫃空嘅，去商店買嘢啦。"
       }</p>`;
       return;
     }
-    for (const item of owned) {
+    for (const item of ownedItems) {
       const card = el("button", "treat-card treat-card--bag");
       card.type = "button";
       card.dataset.treatId = item.id;
       card.innerHTML = `
         <span class="treat-card-emoji">${item.emoji}</span>
         <span class="treat-card-name">${treatDisplayName(item, english())}</span>
+        ${itemStatsHtml(item)}
         <span class="treat-card-count">×${bagCount(state, item.id)}</span>
-        <span class="treat-card-give">${english() ? "Give" : "餵佢"}</span>
+        <span class="treat-card-give">${english() ? "Drag to mouth" : "拖去嘴邊"}</span>
       `;
       bindBagCard(card, item);
       grid.appendChild(card);
@@ -325,8 +394,8 @@ export function createCompanionTreatDock(opts = {}) {
     }
     toast(
       english()
-        ? `Got ${treatDisplayName(item, true)} — drag it from the bag`
-        : `買咗${treatDisplayName(item, false)} — 去背包拖俾佢食`,
+        ? `Got ${treatDisplayName(item, true)} — drag it from the fridge`
+        : `買咗${treatDisplayName(item, false)} — 去雪櫃拖去嘴邊`,
       "info",
     );
     tab = "bag";
@@ -555,6 +624,7 @@ export function createCompanionTreatDock(opts = {}) {
     schema: COMPANION_TREAT_INTERACT_SCHEMA,
     root: dock,
     hud,
+    wallet,
     thought,
     buy,
     feed,
@@ -585,6 +655,7 @@ export function createCompanionTreatDock(opts = {}) {
       halo.remove();
       ghost.remove();
       hud.remove();
+      wallet.remove();
       thought.remove();
     },
   };
