@@ -102,7 +102,7 @@ describe("companionWaitAct", () => {
     wait.stop();
   });
 
-  it("pulses look/comb/breathe between one-shot library idle clips", () => {
+  it("rotates idle beats and library clips every idle tick", () => {
     vi.useFakeTimers();
     const avatar = {
       playAction: vi.fn(),
@@ -128,16 +128,12 @@ describe("companionWaitAct", () => {
     expect(avatar.playAction).not.toHaveBeenCalled();
 
     vi.advanceTimersByTime(2);
-    expect(avatar.playAction).not.toHaveBeenCalled();
+    expect(avatar.playAction).toHaveBeenCalledTimes(1);
     expect(avatar.pulseIdleBeat).toHaveBeenCalledWith("look");
 
-    vi.advanceTimersByTime(IDLE_LIFE_INTERVAL_MS * 2);
-    expect(avatar.playActionSequence).not.toHaveBeenCalled();
-    expect(avatar.pulseIdleBeat).toHaveBeenCalledWith("comb");
-    expect(avatar.pulseIdleBeat).toHaveBeenCalledWith("breathe");
-
     vi.advanceTimersByTime(IDLE_LIFE_INTERVAL_MS);
-    expect(avatar.playAction).toHaveBeenCalledTimes(1);
+    expect(avatar.playAction).toHaveBeenCalledTimes(2);
+    expect(avatar.pulseIdleBeat).toHaveBeenCalledWith("comb");
     const [pose, opts] = avatar.playAction.mock.calls[0];
     expect(IDLE_LIFE_CLIP_POOL).toContain(pose);
     expect(opts).toEqual({
@@ -151,6 +147,26 @@ describe("companionWaitAct", () => {
 
     wait.stop();
     vi.useRealTimers();
+  });
+
+  it("nudgePose advances idle clips on demand", () => {
+    const avatar = {
+      playAction: vi.fn(),
+      setEmotion: vi.fn(),
+      setThinking: vi.fn(),
+      stopAction: vi.fn(),
+      applyExpressionProfile: vi.fn(),
+      resetIdleLife: vi.fn(),
+      pulseIdleBeat: vi.fn(),
+    };
+    const wait = createCompanionWaitAct({ avatar, isEnglish: true });
+    wait.start({ kind: "idle", phase: "idle", speak: false });
+    avatar.playAction.mockClear();
+    expect(wait.nudgePose()).toBe(true);
+    expect(avatar.playAction).toHaveBeenCalledTimes(1);
+    expect(wait.nudgePose()).toBe(true);
+    expect(avatar.playAction).toHaveBeenCalledTimes(2);
+    wait.stop();
   });
 
   it("keeps avatar-load on a faster planted idle without library clips", () => {
