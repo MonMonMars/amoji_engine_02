@@ -370,6 +370,29 @@ export function createCompanionEmotionBall(el, opts = {}) {
 }
 
 /**
+ * Live chip state: voice/TTS wins over the text-mode "typing" idle.
+ * @param {{
+ *   sessionState?: string,
+ *   speaking?: boolean,
+ *   assistantActive?: boolean,
+ *   micOn?: boolean,
+ *   micBlocked?: boolean,
+ *   textMode?: boolean,
+ * }} [opts]
+ */
+export function resolveMiniEmotionBallState(opts = {}) {
+  const session = String(opts.sessionState || "").toLowerCase();
+  if (opts.speaking || opts.assistantActive) return "speaking";
+  if (session === "thinking" || session === "loading" || session === "speaking") {
+    return session === "speaking" ? "speaking" : session;
+  }
+  if (opts.micOn || session === "listening") return "listening";
+  if (opts.micBlocked) return "mic-blocked";
+  if ((session === "idle" || !session) && opts.textMode) return "typing";
+  return session || "idle";
+}
+
+/**
  * Localized chip title: "Speaking · Happy" / "講緊 · 開心".
  */
 export function miniEmotionBallLabel(frame, isEnglish = false) {
@@ -424,7 +447,6 @@ export function computeMiniEmotionBallFrame(opts = {}) {
   else if (listening) volume = Math.max(raw, 0.14 + breath * 0.14);
   else if (loading) volume = 0.16 + thinkWave * 0.18;
   else if (thinking) volume = 0.22 + thinkWave * 0.32;
-  else if (typing) volume = 0.07 + breath * 0.1;
   else volume = 0.12 + breath * 0.26 + raw * 0.12;
 
   const scale = disabled
@@ -451,9 +473,7 @@ export function computeMiniEmotionBallFrame(opts = {}) {
         ? 1 + (breath - 0.5) * 0.1
         : thinking
           ? 1 + (thinkWave - 0.5) * 0.08
-          : typing
-            ? 1 + (breath - 0.5) * 0.06
-            : 1 + (breath - 0.5) * 0.22;
+          : 1 + (breath - 0.5) * 0.22;
   const spin = reducedMotion || disabled
     ? 0
     : thinking
@@ -608,7 +628,7 @@ export function createMiniEmotionBall(el, opts = {}) {
 
   const resizeCanvas = () => {
     if (!canvas || !ctx) return;
-    const dpr = Math.min(2, globalThis.devicePixelRatio || 1);
+    const dpr = Math.min(3, Math.max(1, globalThis.devicePixelRatio || 1));
     const rect =
       canvas.getBoundingClientRect?.() ||
       el.getBoundingClientRect?.() ||
@@ -649,7 +669,7 @@ export function createMiniEmotionBall(el, opts = {}) {
     drawnFrame = drawn;
     applyMiniEmotionBallFrame(el, drawn, { isEnglish: isEnglish() });
     if (ctx && canvas) {
-      const dpr = Math.min(2, globalThis.devicePixelRatio || 1);
+      const dpr = Math.min(3, Math.max(1, globalThis.devicePixelRatio || 1));
       const w = (canvas.width || 36) / dpr;
       const h = (canvas.height || 36) / dpr;
       if (typeof ctx.setTransform === "function") {

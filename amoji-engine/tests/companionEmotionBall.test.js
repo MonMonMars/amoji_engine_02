@@ -5,6 +5,7 @@ import {
   createCompanionEmotionBall,
   createMiniEmotionBall,
   miniEmotionBallLabel,
+  resolveMiniEmotionBallState,
   syncMiniEmotionBall,
 } from "../engine/companion/companionEmotionBall.js";
 
@@ -204,6 +205,29 @@ describe("companionEmotionBall", () => {
     const typing = computeMiniEmotionBallFrame({ state: "typing", time: 0.3 });
     expect(typing.typing).toBe(true);
     expect(typing.live).toBe(false);
+    const typeA = computeMiniEmotionBallFrame({ state: "typing", time: 0 });
+    const typeB = computeMiniEmotionBallFrame({ state: "typing", time: 1.08 });
+    expect(Math.abs(typeB.volume - typeA.volume)).toBeGreaterThan(0.1);
+    expect(Math.abs(typeB.squash - typeA.squash)).toBeGreaterThan(0.08);
+    expect(
+      resolveMiniEmotionBallState({
+        sessionState: "idle",
+        textMode: true,
+      }),
+    ).toBe("typing");
+    expect(
+      resolveMiniEmotionBallState({
+        sessionState: "idle",
+        textMode: true,
+        speaking: true,
+      }),
+    ).toBe("speaking");
+    expect(
+      resolveMiniEmotionBallState({
+        sessionState: "thinking",
+        micBlocked: true,
+      }),
+    ).toBe("thinking");
     const joy = computeMiniEmotionBallFrame({
       emotion: "joy",
       state: "speaking",

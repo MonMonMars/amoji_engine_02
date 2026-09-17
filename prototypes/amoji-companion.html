@@ -8,9 +8,9 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji · Companion</title>
     <script>
-      window.__amojiBuild = "2026-09-17-v167-mini-ball-detail";
+      window.__amojiBuild = "2026-09-17-v168-mini-ball-live";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-17-v167-mini-ball-detail"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-17-v168-mini-ball-live"></script>
     <link
       rel="prefetch"
       href="/prototypes/assets/companion-char-nova.png"
@@ -323,7 +323,7 @@
       media="print"
       onload="this.media='all'"
     />
-    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-17-v167-mini-ball-detail" />
+    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-17-v168-mini-ball-live" />
     <noscript>
       <link
         href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap"
@@ -3594,19 +3594,19 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-17-v167-mini-ball-detail",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-17-v168-mini-ball-live",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-17-v167-mini-ball-detail",
-          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-17-v167-mini-ball-detail"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-17-v168-mini-ball-live",
+          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-17-v168-mini-ball-live"
         }
       }
     </script>
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v167-mini-ball-detail"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v168-mini-ball-live"
     />
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-17-v167-mini-ball-detail"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v167-mini-ball-detail"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-17-v168-mini-ball-live"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v168-mini-ball-live"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;
@@ -4296,7 +4296,7 @@
       const { createCompanionVoiceGate } = voiceGateMod;
       const { isIosLike, shouldPauseMicDuringTts } = platformMod;
       const { createCompanionMicButton, normalizeEmotionThemeKey } = micButtonMod;
-      const { createCompanionEmotionBall, createMiniEmotionBall } = emotionBallMod;
+      const { createCompanionEmotionBall, createMiniEmotionBall, resolveMiniEmotionBallState } = emotionBallMod;
 
       const hostedOnline = isHostedCompanion();
       const { createMotionDownloadClient } = motionDownloadMod;
@@ -5247,18 +5247,15 @@
               "mic-blocked": "麥克風不可用 — 請打字",
             };
 
-      const resolveCompanionVoiceState = (state = sessionUiState) => {
-        if (!conversationUi) return state || "idle";
-        if (document.body.classList.contains("mic-blocked")) return "mic-blocked";
-        if (state === "thinking" || state === "speaking" || state === "loading") {
-          return state;
-        }
-        if (voice?.micOn) return "listening";
-        if (state === "idle" && document.body.classList.contains("composer-text-mode")) {
-          return "typing";
-        }
-        return state || "idle";
-      };
+      const resolveCompanionVoiceState = (state = sessionUiState) =>
+        resolveMiniEmotionBallState({
+          sessionState: state,
+          speaking: voice?.speaking,
+          assistantActive: voice?.assistantOutputActive,
+          micOn: voice?.micOn,
+          micBlocked: document.body.classList.contains("mic-blocked"),
+          textMode: document.body.classList.contains("composer-text-mode"),
+        });
 
       const syncCompanionStatusUi = (state = sessionUiState, emotion = currentEmotion) => {
         const effective = resolveCompanionVoiceState(state);
@@ -5866,9 +5863,10 @@
             emotionBallLevel = 0;
             emotionBall.setLevel(0);
             miniEmotionBall.setLevel(0);
-            syncEmotionBall();
           }
           syncMicBtn();
+          syncEmotionBall();
+          syncCompanionStatusUi();
         },
         onSpeakChunk: (chunk) => {
           const analysis = avatar.reactToSpeechChunk?.(chunk, {
