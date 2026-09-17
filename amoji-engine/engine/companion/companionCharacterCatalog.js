@@ -896,11 +896,11 @@ export const COMPANION_CHARACTERS = Object.freeze({
  */
 export const CHARACTER_IDS = Object.freeze([
   "nova",
+  "kizuna",
   "alicia",
   "ember",
   "chibi",
   "sky",
-  "kizuna",
   "rose",
   "mimi",
   "olivia",
@@ -927,6 +927,7 @@ export function characterNumber(id) {
 /** @type {ReadonlySet<string>} */
 export const GALLERY_PRIORITY_IDS = new Set([
   "nova",
+  "kizuna",
   "alicia",
   "ember",
   "chibi",
@@ -1021,6 +1022,9 @@ export function resolveCharacterId(opts = {}) {
   }
   if (model.includes("companion-mikel.vrm")) {
     return "mikel";
+  }
+  if (model.includes("kizuna-kamatte.vrm")) {
+    return "kizuna";
   }
 
   const storage = opts.storage ?? globalThis.localStorage ?? null;

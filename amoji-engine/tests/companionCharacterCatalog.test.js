@@ -22,18 +22,21 @@ describe("companionCharacterCatalog", () => {
   });
 
   it("lists gallery pretty-girl picks first", () => {
-    expect(CHARACTER_IDS.slice(0, 5)).toEqual([
+    expect(CHARACTER_IDS.slice(0, 6)).toEqual([
       "nova",
+      "kizuna",
       "alicia",
       "ember",
       "chibi",
       "sky",
     ]);
     expect(characterNumber("nova")).toBe(1);
-    expect(characterNumber("alicia")).toBe(2);
+    expect(characterNumber("kizuna")).toBe(2);
+    expect(characterNumber("alicia")).toBe(3);
     expect(characterNumber("mikel")).toBe(CHARACTER_IDS.length);
     expect(characterNumber("missing")).toBe(0);
     expect(GALLERY_PRIORITY_IDS.has("nova")).toBe(true);
+    expect(GALLERY_PRIORITY_IDS.has("kizuna")).toBe(true);
     expect(CHARACTER_IDS.indexOf("mikel")).toBeGreaterThan(
       CHARACTER_IDS.indexOf("kate"),
     );
@@ -106,8 +109,8 @@ describe("companionCharacterCatalog", () => {
   });
 
   it("cycles characters", () => {
-    expect(nextCharacterId("nova")).toBe("alicia");
-    expect(nextCharacterId("sky")).toBe("kizuna");
+    expect(nextCharacterId("nova")).toBe("kizuna");
+    expect(nextCharacterId("sky")).toBe("rose");
     expect(nextCharacterId("mimi")).toBe("olivia");
     expect(nextCharacterId("amoji")).toBe("sora");
     expect(nextCharacterId("mikel")).toBe("nova");
@@ -159,6 +162,9 @@ describe("companionCharacterCatalog", () => {
     expect(resolveCharacterId({ modelUrl: "/prototypes/assets/companion-mikel.vrm" })).toBe(
       "mikel",
     );
+    expect(
+      resolveCharacterId({ modelUrl: "/prototypes/assets/kizuna-kamatte.vrm" }),
+    ).toBe("kizuna");
     expect(defaultVoiceForCharacter("mikel", "yue")).toBe("zh-HK-WanLungNeural-bold");
     expect(defaultVoiceForCharacter("kate", "yue")).toBe("zh-HK-HiuMaanNeural-sharp");
     expect(defaultVoiceForCharacter("olivia", "yue")).toBe("zh-HK-HiuGaaiNeural-sunny");

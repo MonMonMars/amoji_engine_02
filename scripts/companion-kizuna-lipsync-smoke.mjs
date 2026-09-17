@@ -106,6 +106,7 @@ async function main() {
     return {
       build: window.__amojiBuild,
       avatarKind: window.__amojiAvatarKind,
+      faceReportWindow: window.__amojiFaceReport?.triangleCount ?? null,
       triangles: load.triangleCount,
       hasVisemes: load.hasVisemes,
       mouthPresets: load.mouthPresets,
@@ -128,7 +129,8 @@ async function main() {
       report.hasVisemes === true &&
       report.talking === true &&
       mouthOk &&
-      report.activeViseme === "aa",
+      report.activeViseme === "aa" &&
+      (report.faceReportWindow || 0) > 50000,
     ...report,
     errors,
     url: url.toString(),

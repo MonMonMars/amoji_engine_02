@@ -1,6 +1,6 @@
 # High-poly VRM face + lip sync
 
-**Build:** `2026-09-17-v169-highpoly-face`  
+**Build:** `2026-09-17-v170-kizuna-roster`  
 **Purpose:** Document the flagship high-polygon VRM path, expression control, and lip sync verification.
 
 ---
@@ -14,7 +14,8 @@
 | VRM | 1.0 (MToon, spring bone) |
 | Expressions | 18 loaded presets |
 | Visemes | `aa`, `ih`, `ou`, `ee`, `oh` |
-| Character id | `kizuna` in companion roster |
+| Character id | `kizuna` — roster **#2** (gallery priority, after Nova) |
+| Window probe | `window.__amojiFaceReport` after VRM load |
 
 **Alternates**
 
