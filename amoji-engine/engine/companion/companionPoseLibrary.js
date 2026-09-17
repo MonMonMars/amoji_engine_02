@@ -32,12 +32,12 @@ export const VRM_APOSE_ARM_REST_ROTATIONS = Object.freeze({
   rightLowerArm: { x: 0.16, y: -0.06, z: -0.06, flexAxis: "x" },
 });
 
-/** Contrapposto stand — weight on the left leg, free right knee clearly bent. */
+/** Planted stand — both knees softly bent, no fashion-walk free leg. */
 export const VRM_LEG_REST_ROTATIONS = Object.freeze({
-  leftUpperLeg: { x: 0.08, y: 0.05, z: 0.04 },
-  rightUpperLeg: { x: 0.22, y: -0.08, z: -0.07 },
-  leftLowerLeg: { x: 0.24, y: 0, z: 0, flexAxis: "x" },
-  rightLowerLeg: { x: 0.52, y: 0, z: 0, flexAxis: "x" },
+  leftUpperLeg: { x: 0.1, y: 0.03, z: 0.02 },
+  rightUpperLeg: { x: 0.1, y: -0.03, z: -0.02 },
+  leftLowerLeg: { x: 0.22, y: 0, z: 0, flexAxis: "x" },
+  rightLowerLeg: { x: 0.22, y: 0, z: 0, flexAxis: "x" },
 });
 
 /** Soft wrists so palms aren't T-pose flat. */
@@ -46,10 +46,10 @@ export const VRM_HAND_REST_ROTATIONS = Object.freeze({
   rightHand: { x: 0.14, y: -0.22, z: -0.16 },
 });
 
-/** Slight foot turnout on the free leg. */
+/** Slight symmetric foot turnout so soles stay floor-parallel. */
 export const VRM_FOOT_REST_ROTATIONS = Object.freeze({
-  leftFoot: { x: 0.04, y: 0.02, z: 0 },
-  rightFoot: { x: 0.1, y: -0.03, z: 0.02 },
+  leftFoot: { x: 0.02, y: 0.02, z: 0 },
+  rightFoot: { x: 0.02, y: -0.02, z: 0 },
 });
 
 /** Natural standing — bent elbows, cocked hip, not a stick figure. */
@@ -62,12 +62,12 @@ export const REST_POSE = Object.freeze({
   headZ: 0.02,
   spineX: 0.018,
   chestX: -0.012,
-  hipZ: 0.018,
-  leanY: 0.035,
+  hipZ: 0.008,
+  leanY: 0.012,
   upperLegL: 0.08,
-  upperLegR: 0.16,
+  upperLegR: 0.08,
   lowerLegL: 0.2,
-  lowerLegR: 0.34,
+  lowerLegR: 0.2,
 });
 
 /** Mic on / waiting — attentive but arms stay down (humans don't raise arms to listen). */

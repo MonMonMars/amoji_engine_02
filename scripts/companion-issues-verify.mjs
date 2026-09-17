@@ -212,6 +212,11 @@ async function main() {
     Math.abs(pose.leftLowerLegX || 0) > 0.04 || Math.abs(pose.rightLowerLegX || 0) > 0.04,
     JSON.stringify({ l: pose.leftLowerLegX, r: pose.rightLowerLegX }),
   );
+  record(
+    "idle-legs-not-stride",
+    Math.abs((pose.leftLowerLegX || 0) - (pose.rightLowerLegX || 0)) < 0.22,
+    JSON.stringify({ l: pose.leftLowerLegX, r: pose.rightLowerLegX }),
+  );
   record("feet-planted", pose.footDy == null || pose.footDy < 0.08, String(pose.footDy));
   record(
     "idle-not-walk",
