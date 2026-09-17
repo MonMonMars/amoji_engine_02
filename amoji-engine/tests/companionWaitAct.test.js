@@ -44,7 +44,12 @@ describe("companionWaitAct", () => {
     });
     expect(progress.show).toHaveBeenCalled();
     expect(avatar.playAction).toHaveBeenCalled();
-    expect(voice.startLearnLoop).toHaveBeenCalled();
+    expect(voice.startLearnLoop).toHaveBeenCalledWith(
+      expect.objectContaining({
+        kind: "motion",
+        progress: 0.2,
+      }),
+    );
 
     wait.update({ progress: 0.55, phase: "learning" });
     expect(progress.update).toHaveBeenCalled();

@@ -122,10 +122,15 @@ export function progressPhaseLabel(phase, isEnglish = false) {
   const map = isEnglish
     ? {
         connecting: "Connecting",
+        waking: "Waking",
         searching: "Searching",
+        assembling: "Assembling",
         downloading: "Downloading",
+        warming: "Warming up",
         learning: "Learning",
         installing: "Installing",
+        settling: "Settling",
+        almost: "Almost",
         ready: "Ready",
         failed: "Failed",
         thinking: "Thinking",
@@ -135,10 +140,15 @@ export function progressPhaseLabel(phase, isEnglish = false) {
       }
     : {
         connecting: "連線中",
+        waking: "醒緊",
         searching: "搜尋中",
+        assembling: "組合中",
         downloading: "下載中",
+        warming: "熱身中",
         learning: "學習中",
         installing: "安裝中",
+        settling: "定定",
+        almost: "就快",
         ready: "完成",
         failed: "失敗",
         thinking: "思考中",

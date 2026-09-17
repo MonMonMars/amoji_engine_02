@@ -48,8 +48,15 @@ export function collectWaitDialoguePhrases(isEnglish = false, perPhase = 2) {
   const phases = [
     "avatar-load",
     "connecting",
+    "waking",
+    "searching",
+    "assembling",
     "downloading",
+    "warming",
     "learning",
+    "installing",
+    "settling",
+    "almost",
     "thinking-wait",
   ];
   /** @type {string[]} */
