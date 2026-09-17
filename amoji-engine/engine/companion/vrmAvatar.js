@@ -932,6 +932,7 @@ export async function createVrmAvatar(opts) {
         Boolean(pointerDown) ||
         camState.userOrbiting ||
         camState.userFramingHeld;
+      const vrmaOwnsBody = Boolean(vrmaAction || vrmaPending);
       if (!userOwnsCamera && camState.autoActive) {
         const desired = applyAutoCameraFrame(
           controls,
@@ -951,7 +952,7 @@ export async function createVrmAvatar(opts) {
         portraitCamera.fov = desired.fov;
         portraitCamera.distance = desired.distance;
       } else {
-        if (!userOwnsCamera) {
+        if (!userOwnsCamera && !vrmaOwnsBody) {
           applyOrbitFollowAnchor(controls, camera, smoothedFrameAnchor);
         }
         controls.update();

@@ -8,9 +8,9 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji · Companion</title>
     <script>
-      window.__amojiBuild = "2026-09-17-v161-idle-library";
+      window.__amojiBuild = "2026-09-17-v162-camera-reset";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-17-v161-idle-library"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-17-v162-camera-reset"></script>
     <link
       rel="prefetch"
       href="/prototypes/assets/companion-char-nova.png"
@@ -321,7 +321,7 @@
       media="print"
       onload="this.media='all'"
     />
-    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-17-v161-idle-library" />
+    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-17-v162-camera-reset" />
     <noscript>
       <link
         href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap"
@@ -3564,19 +3564,19 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-17-v161-idle-library",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-17-v162-camera-reset",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-17-v161-idle-library",
-          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-17-v161-idle-library"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-17-v162-camera-reset",
+          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-17-v162-camera-reset"
         }
       }
     </script>
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v161-idle-library"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v162-camera-reset"
     />
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-17-v161-idle-library"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v161-idle-library"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-17-v162-camera-reset"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v162-camera-reset"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;
@@ -3807,7 +3807,7 @@
         aria-hidden="true"
         title="Drag to rotate camera"
       ></div>
-      <div class="orbit-hint" id="orbit-hint">拖曳旋轉 · 雙擊重置視角 · Double-tap to reset view</div>
+      <div class="orbit-hint" id="orbit-hint">拖曳旋轉 · 雙擊空白處重置視角 · Double-click empty space to reset</div>
       <header class="topbar">
         <button
           type="button"
@@ -4176,6 +4176,9 @@
         ami("../amoji-engine/engine/companion/companionTreatInteract.js"),
       ]);
       const { buildBootChitchatReply, isBootChitchatPhase } = bootChitchatMod;
+      const { createEmptyAreaCameraReset, shouldResetCameraOnTalkStart } = await ami(
+        "../amoji-engine/engine/companion/companionCameraReset.js",
+      );
       window.__amojiModuleBooted = true;
       const {
         createCompanionVoice,
@@ -5310,36 +5313,30 @@
       const orbitHint = document.getElementById("orbit-hint");
       if (orbitHint) {
         orbitHint.textContent = isEnglish
-          ? "Drag to orbit · double-tap to reset view"
-          : "拖曳旋轉 · 雙擊重置視角";
+          ? "Drag to orbit · double-click empty space to reset"
+          : "拖曳旋轉 · 雙擊空白處重置視角";
       }
-      let lastCanvasTapAt = 0;
-      let lastCameraResetAt = 0;
       let talkingCameraLatched = false;
       const orbitSurface = orbitHit || canvas;
-      const tryResetCameraFromEmptyHit = (ev) => {
-        const now = Date.now();
-        if (now - lastCameraResetAt < 700) return false;
-        const hitCharacter = avatar.hitTest?.(ev.clientX, ev.clientY);
-        if (hitCharacter) return false;
-        lastCameraResetAt = now;
-        avatar.resetCameraView?.();
-        orbitHint?.classList.remove("hide");
-        showToast(isEnglish ? "Camera reset" : "已重置視角", "info");
-        return true;
-      };
+      const emptyAreaCameraReset = createEmptyAreaCameraReset({
+        hitTest: (x, y) => Boolean(avatar.hitTest?.(x, y)),
+        reset: () => {
+          avatar.resetCameraView?.();
+          orbitHint?.classList.remove("hide");
+          showToast(isEnglish ? "Camera reset" : "已重置視角", "info");
+        },
+      });
+      orbitSurface.addEventListener("pointerdown", (ev) => {
+        emptyAreaCameraReset.onPointerDown(ev);
+      });
+      orbitSurface.addEventListener("pointermove", (ev) => {
+        emptyAreaCameraReset.onPointerMove(ev);
+      });
       orbitSurface.addEventListener("pointerup", (ev) => {
-        const now = Date.now();
-        if (now - lastCanvasTapAt < 500) {
-          tryResetCameraFromEmptyHit(ev);
-          lastCanvasTapAt = 0;
-          return;
-        }
-        lastCanvasTapAt = now;
+        emptyAreaCameraReset.onPointerUp(ev);
       });
       orbitSurface.addEventListener("dblclick", (ev) => {
-        tryResetCameraFromEmptyHit(ev);
-        lastCanvasTapAt = 0;
+        emptyAreaCameraReset.onDblClick(ev);
       });
       orbitSurface.addEventListener(
         "pointerdown",
@@ -5808,7 +5805,7 @@
         },
         onTalking: (on) => {
           avatar.setTalking(on);
-          if (on && !talkingCameraLatched) {
+          if (shouldResetCameraOnTalkStart(on, talkingCameraLatched)) {
             talkingCameraLatched = true;
             avatar.resetCameraView?.();
           }
@@ -7088,8 +7085,8 @@
         waitAct?.setLocale?.(nextEnglish);
         if (orbitHint) {
           orbitHint.textContent = nextEnglish
-            ? "Drag to orbit · double-tap to reset view"
-            : "拖曳旋轉 · 雙擊重置視角";
+            ? "Drag to orbit · double-click empty space to reset"
+            : "拖曳旋轉 · 雙擊空白處重置視角";
         }
         if (liteLink) {
           liteLink.href = buildCompanionHref({

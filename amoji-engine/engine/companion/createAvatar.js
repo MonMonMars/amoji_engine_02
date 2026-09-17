@@ -49,6 +49,8 @@ export function createStubAvatar() {
     setThinking: noop,
     applyStreamingContent: () => ({ emotion: "thinking", talkStyle: "thinking" }),
     prepareThinkingFromUser: () => ({ emotion: "thinking", talkStyle: "thinking" }),
+    resetCameraView: noop,
+    hitTest: () => false,
   };
 }
 
