@@ -28,7 +28,7 @@ export function sampleSimpleBootIdleMotion(elapsedSec) {
     leanY: 0.03 + (sway * 0.08 + weight * 0.04) * pulse,
     spineX: 0.02 + breath * 0.038 * pulse,
     chestX: -0.01 + breath * 0.026 * pulse,
-    hipZ: 0.05 + weight * 0.05 * pulse,
+    hipZ: 0.018 + weight * 0.012 * pulse,
     armLiftL: 0.14 + Math.sin(t * 0.55 + 0.3) * 0.05 * pulse,
     armLiftR: 0.1 + Math.sin(t * 0.5 + 1.1) * 0.045 * pulse,
     forearmL: 0.3 + Math.max(0, Math.sin(t * 0.62 + 0.2) * 0.07) * pulse,
@@ -62,7 +62,7 @@ export function sampleIdleBodyMotion(elapsedSec, opts = {}) {
     leanY: (shift * 0.055 + bob * 0.028) * energy,
     spineX: 0.02 + breath * 0.042 * energy,
     chestX: -0.01 + breath * 0.028 * energy,
-    hipZ: (0.045 + shift * 0.07) * energy,
+    hipZ: (0.016 + shift * 0.014) * energy,
     armLiftL: (0.13 + breath * 0.035 + rightFree * 0.05 + Math.sin(t * 0.8 + 0.4) * 0.045) * energy,
     armLiftR: (0.09 + breath * 0.03 + leftFree * 0.05 + Math.sin(t * 0.74 + 1.2) * 0.04) * energy,
     forearmL: (0.28 + Math.max(0, breath) * 0.06 + Math.sin(t * 0.9 + 0.2) * 0.07) * energy,
@@ -162,7 +162,7 @@ export function advanceIdleBeat(state, dt, nowMs) {
         overlay.headX = wave * 0.038 * env;
         break;
       case "shift":
-        overlay.hipZ = Math.sin(p * Math.PI) * 0.09 * env;
+        overlay.hipZ = Math.sin(p * Math.PI) * 0.02 * env;
         overlay.leanY = wave * 0.06 * env;
         overlay.spineX = 0.028 * wave * env;
         overlay.upperLegL = wave * 0.07 * env;
@@ -188,7 +188,7 @@ export function advanceIdleBeat(state, dt, nowMs) {
         break;
       case "sway":
         overlay.headZ = Math.sin(p * Math.PI * 2) * 0.06 * env;
-        overlay.hipZ = Math.sin(p * Math.PI) * 0.05 * env;
+        overlay.hipZ = Math.sin(p * Math.PI) * 0.016 * env;
         overlay.leanY = wave * 0.044 * env;
         overlay.armLiftL = 0.04 + wave * 0.05 * env;
         overlay.armLiftR = 0.04 + wave * 0.05 * env;

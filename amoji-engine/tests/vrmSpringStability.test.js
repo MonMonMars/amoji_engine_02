@@ -21,8 +21,8 @@ describe("vrmSpringStability", () => {
       },
     });
     expect(result.ok).toBe(true);
-    expect(joint.settings.dragForce).toBeGreaterThanOrEqual(0.58);
-    expect(joint.settings.gravityPower).toBeGreaterThanOrEqual(0.04);
+    expect(joint.settings.dragForce).toBeGreaterThanOrEqual(0.82);
+    expect(joint.settings.gravityPower).toBeGreaterThanOrEqual(0.14);
     expect(joint.settings.gravityDir.y).toBe(-1);
   });
 
