@@ -8,15 +8,18 @@
 
 export const VRM_SPRING_STABILITY_SCHEMA = "amoji.vrmSpringStability.v3";
 
-export const MIN_DRAG_FORCE = 0.92;
-export const MIN_GRAVITY_POWER = 0.38;
-export const MAX_STIFFNESS = 0.55;
+export const MIN_DRAG_FORCE = 0.96;
+export const MIN_GRAVITY_POWER = 0.52;
+export const MAX_STIFFNESS = 0.42;
 
 /** Soft reset while standing idle — pulls hair/skirt back without re-capture. */
-export const IDLE_SPRING_RECENTER_SEC = 5.5;
+export const IDLE_SPRING_RECENTER_SEC = 2.4;
 
-/** Longer interval while talking — head motion still excites hair/skirt springs. */
-export const TALK_SPRING_RECENTER_SEC = 10;
+/** Head/thinking motion still excites hair/skirt springs — reset a bit sooner. */
+export const TALK_SPRING_RECENTER_SEC = 4;
+
+/** LLM wait pose — procedural head tilt without TTS mouth drive. */
+export const THINK_SPRING_RECENTER_SEC = 3.2;
 
 /**
  * @param {unknown} raw
@@ -66,9 +69,29 @@ export function tuneSpringJointSettings(settings) {
     settings.stiffness = MAX_STIFFNESS;
   }
   if (settings.gravityDir) {
-    forceGravityDirDown(settings.gravityDir);
+    const y = Number(settings.gravityDir.y) || 0;
+    if (y > -0.85) {
+      forceGravityDirDown(settings.gravityDir);
+    }
   }
   return true;
+}
+
+/**
+ * Keep hair/skirt gravity pointing down every frame — some VRMs author
+ * gravityDir as (0, 1, 0) which reads as wind from below.
+ * @param {import('@pixiv/three-vrm').VRM | null | undefined} vrm
+ */
+export function stabilizeVrmSpringBones(vrm) {
+  const joints = getVrmSpringJoints(vrm);
+  if (!joints.length) {
+    return { ok: false, reason: "no-spring-bones", joints: 0, tuned: 0 };
+  }
+  let tuned = 0;
+  for (const joint of joints) {
+    if (tuneSpringJointSettings(joint?.settings)) tuned += 1;
+  }
+  return { ok: true, joints: joints.length, tuned };
 }
 
 /**
@@ -140,7 +163,10 @@ export function tickIdleSpringRecenter(
   state.calmSec += Math.max(0, dt);
   if (state.calmSec < intervalSec) return state;
 
-  const result = recenterVrmSpringBones(vrm, { captureInit: false });
+  const result = recenterVrmSpringBones(vrm, {
+    captureInit: false,
+    retune: true,
+  });
   if (result.ok) {
     state.calmSec = 0;
     state.lastResetMs =
