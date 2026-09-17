@@ -166,6 +166,21 @@
   max-width: 100%;
 }
 
+.theme-grok-ani .companion-chip__goal {
+  font-size: 0.58rem;
+  font-weight: 700;
+  color: rgba(255, 214, 170, 0.92);
+  line-height: 1.15;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.theme-grok-ani .companion-chip__goal.is-complete {
+  color: rgba(134, 239, 172, 0.95);
+}
+
 .theme-grok-ani .companion-chip__dot {
   position: relative;
   width: 1.72rem;

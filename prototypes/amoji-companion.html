@@ -8,9 +8,9 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji · Companion</title>
     <script>
-      window.__amojiBuild = "2026-09-17-v191-face-emotion-demo";
+      window.__amojiBuild = "2026-09-17-v192-raising-ui";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-17-v191-face-emotion-demo"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-17-v192-raising-ui"></script>
     <link
       rel="prefetch"
       href="/prototypes/assets/companion-char-nova.png"
@@ -67,6 +67,11 @@
       body.companion-start-pending .treat-drop-halo,
       body.companion-start-pending .treat-drag-ghost,
       body.companion-start-pending .pet-hud,
+      body.companion-start-pending .raising-activity-bar,
+      body.companion-start-pending .raising-advice,
+      body.companion-start-pending .raising-memories,
+      body.companion-start-pending .raising-bond-badge,
+      body.companion-start-pending .companion-chip__goal,
       body.companion-start-pending .pet-wallet,
       body.companion-start-pending .pet-thought {
         display: none !important;
@@ -324,8 +329,8 @@
       media="print"
       onload="this.media='all'"
     />
-    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-17-v191-face-emotion-demo" />
-    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-17-v191-face-emotion-demo" />
+    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-17-v192-raising-ui" />
+    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-17-v192-raising-ui" />
     <noscript>
       <link
         href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap"
@@ -2468,6 +2473,189 @@
         }
       }
 
+      .companion-chip__goal {
+        display: block;
+        font-size: 0.58rem;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        color: rgba(255, 214, 170, 0.92);
+        line-height: 1.15;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 100%;
+      }
+
+      .companion-chip__goal.is-complete {
+        color: rgba(134, 239, 172, 0.95);
+      }
+
+      .raising-bond-badge {
+        display: flex;
+        align-items: center;
+        gap: 0.32rem;
+        margin-top: 0.18rem;
+        padding-top: 0.28rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        font-size: 0.62rem;
+        font-weight: 800;
+        letter-spacing: 0.03em;
+        opacity: 0.92;
+      }
+
+      .raising-bond-badge__icon {
+        font-size: 0.82rem;
+        line-height: 1;
+      }
+
+      .raising-bond-badge[data-tier="4"] .raising-bond-badge__label {
+        color: #fde68a;
+      }
+
+      .raising-activity-bar {
+        position: fixed;
+        z-index: 39;
+        left: 50%;
+        transform: translateX(-50%);
+        bottom: calc(7.05rem + env(safe-area-inset-bottom));
+        display: flex;
+        align-items: center;
+        gap: 0.38rem;
+        padding: 0.28rem 0.42rem;
+        border-radius: 999px;
+        background: rgba(12, 8, 20, 0.78);
+        border: 1px solid rgba(255, 214, 170, 0.22);
+        box-shadow: 0 10px 28px rgba(0, 0, 0, 0.32);
+        backdrop-filter: blur(14px);
+        pointer-events: auto;
+      }
+
+      .raising-activity-btn {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.08rem;
+        min-width: 2.85rem;
+        padding: 0.28rem 0.38rem 0.32rem;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        border-radius: 0.85rem;
+        background: rgba(255, 255, 255, 0.06);
+        color: inherit;
+        font: inherit;
+        cursor: pointer;
+        transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+      }
+
+      .raising-activity-btn:hover,
+      .raising-activity-btn:focus-visible {
+        transform: translateY(-1px);
+        border-color: rgba(127, 212, 207, 0.45);
+        background: rgba(127, 212, 207, 0.12);
+      }
+
+      .raising-activity-btn__icon {
+        font-size: 1.05rem;
+        line-height: 1;
+      }
+
+      .raising-activity-btn__label {
+        font-size: 0.56rem;
+        font-weight: 800;
+        opacity: 0.88;
+      }
+
+      .raising-advice {
+        position: fixed;
+        z-index: 35;
+        left: 50%;
+        top: calc(4.85rem + env(safe-area-inset-top));
+        transform: translateX(-50%);
+        max-width: min(18rem, 88vw);
+        padding: 0.45rem 0.82rem 0.52rem;
+        border-radius: 1rem;
+        background: rgba(255, 247, 237, 0.94);
+        color: #3b1d12;
+        font-size: 0.78rem;
+        font-weight: 800;
+        text-align: center;
+        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
+        pointer-events: none;
+        animation: raising-advice-in 0.28s ease;
+      }
+
+      @keyframes raising-advice-in {
+        from {
+          opacity: 0;
+          transform: translateX(-50%) translateY(-6px);
+        }
+        to {
+          opacity: 1;
+          transform: translateX(-50%) translateY(0);
+        }
+      }
+
+      .raising-memories {
+        position: fixed;
+        z-index: 34;
+        left: max(0.55rem, env(safe-area-inset-left));
+        bottom: calc(10.5rem + env(safe-area-inset-bottom));
+        max-width: min(11rem, 42vw);
+        display: flex;
+        flex-direction: column;
+        gap: 0.22rem;
+        pointer-events: none;
+      }
+
+      .raising-memories__label {
+        font-size: 0.58rem;
+        font-weight: 800;
+        letter-spacing: 0.04em;
+        opacity: 0.72;
+      }
+
+      .raising-memories__list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.18rem;
+      }
+
+      .raising-memory-chip {
+        display: block;
+        padding: 0.22rem 0.48rem;
+        border-radius: 999px;
+        background: rgba(12, 8, 20, 0.72);
+        border: 1px solid rgba(255, 214, 170, 0.2);
+        font-size: 0.62rem;
+        font-weight: 700;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .raising-delta-layer {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        overflow: visible;
+        z-index: 33;
+      }
+
+      .raising-delta-pop {
+        position: absolute;
+        transform: translate(-50%, 0);
+        font-size: 0.82rem;
+        font-weight: 900;
+        color: #fecdd3;
+        text-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
+        opacity: 0;
+        transition: transform 0.85s ease, opacity 0.85s ease;
+      }
+
+      .raising-delta-pop.is-visible {
+        opacity: 1;
+        transform: translate(-50%, -1.6rem);
+      }
+
       .scene-sheet-head {
         display: flex;
         align-items: center;
@@ -3618,19 +3806,19 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-17-v191-face-emotion-demo",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-17-v192-raising-ui",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-17-v191-face-emotion-demo",
-          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-17-v191-face-emotion-demo"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-17-v192-raising-ui",
+          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-17-v192-raising-ui"
         }
       }
     </script>
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v191-face-emotion-demo"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v192-raising-ui"
     />
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-17-v191-face-emotion-demo"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v191-face-emotion-demo"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-17-v192-raising-ui"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v192-raising-ui"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;
@@ -3884,6 +4072,7 @@
           <span class="companion-chip__text">
             <span class="companion-chip__name" id="brand-name">Amoji</span>
             <span class="companion-chip__status" id="companion-status-line">Ready</span>
+            <span class="companion-chip__goal" id="companion-daily-goal" hidden></span>
           </span>
           <span class="companion-chip__dot" id="status-dot" data-state="idle" role="img" aria-label="Ready · Neutral"></span>
           <span class="companion-chip__caret" aria-hidden="true"></span>
@@ -4191,6 +4380,7 @@
         bootChitchatMod,
         treatInteractMod,
         uiEffectsMod,
+        raisingHubMod,
       ] = await Promise.all([
         ami("../amoji-engine/engine/companion/createAvatar.js"),
         ami("../amoji-engine/engine/companion/chatLlm.js"),
@@ -4228,6 +4418,7 @@
         ami("../amoji-engine/engine/companion/companionBootChitchat.mjs"),
         ami("../amoji-engine/engine/companion/companionTreatInteract.js"),
         ami("../amoji-engine/engine/companion/companionUiEffects.js"),
+        ami("../amoji-engine/engine/companion/companionRaisingHub.js"),
       ]);
       const {
         initCompanionUiEffects,
@@ -6227,6 +6418,7 @@
           applyOutfitToAvatar(activeSceneOutfitId);
           syncAvatarPerformance();
           applyCharacterSession(nextId, { announce: false });
+          raisingHub?.setCharacter?.(nextId);
           addBubble(
             "system",
             isEnglish
@@ -6461,6 +6653,7 @@
         if (now - lastTapAt < 1400 || busy) return;
         lastTapAt = now;
         window.__amojiTreats?.applyPet?.();
+        raisingHub?.onPet?.();
         avatar.reactToTap?.();
         const line = pickTapLine();
         addBubble("assistant", line);
@@ -6482,6 +6675,7 @@
 
       const { createCompanionActivityRail } = activityRailMod;
       const { createCompanionTreatDock } = treatInteractMod;
+      const { createCompanionRaisingHub } = raisingHubMod;
       const activityRail = createCompanionActivityRail(document, {
         isEnglish,
         mount: document.querySelector(".topbar"),
@@ -6496,7 +6690,13 @@
           return node?.getBoundingClientRect?.() || null;
         },
         onToast: (msg, kind) => showToast(msg, kind || "info"),
-        onFeed: ({ line, refused }) => {
+        onFeed: ({ item, line, refused }) => {
+          raisingHub?.onFeed?.({
+            item,
+            refused,
+            heartsDelta: refused ? 0 : Number(item?.hearts || 0),
+            hungerDelta: refused ? 0 : Number(item?.hunger || 0),
+          });
           if (!line) return;
           addBubble("assistant", line);
           const feel = refused ? "thinking" : "happy";
@@ -6520,6 +6720,33 @@
         },
       });
       window.__amojiTreats = treatDock;
+
+      const raisingHub = createCompanionRaisingHub({
+        root: document.querySelector(".stage") || document.body,
+        chipGoalEl: document.getElementById("companion-daily-goal"),
+        petHudEl: treatDock.hud,
+        stageEl: document.querySelector(".stage"),
+        isEnglish: () => isEnglish,
+        characterId: () => characterId,
+        getAvatar: () => avatar,
+        getCare: () => ({
+          hunger: treatDock.state?.hunger,
+          hearts: treatDock.state?.hearts,
+          coins: treatDock.state?.coins,
+        }),
+        setCare: (patch) => {
+          treatDock.setNeeds({
+            hunger: patch.hunger,
+            hearts: patch.hearts,
+          });
+        },
+        onOpenTreat: () => treatDock.setOpen(true),
+        onFocusTalk: () => {
+          input?.focus?.();
+          showToast(isEnglish ? "Say something — mic or type" : "講嘢啦 — 用 mic 或者打字", "info");
+        },
+      });
+      window.__amojiRaising = raisingHub;
 
       const uiContextPill = document.getElementById("ui-context-pill");
 
@@ -6609,6 +6836,8 @@
         }
         lastUserMessage = cleaned;
         window.__amojiTreats?.applyChat?.();
+        raisingHub?.onChat?.();
+        raisingHub?.onUserMessage?.(cleaned);
         avatar.setListening?.(false);
         avatar.setTalking(false);
         avatar.setMouthOpen(0);
@@ -6914,6 +7143,7 @@
           return Promise.resolve({ ok: false, reason: "skipped-user-active" });
         }
         const check = window.__amojiTreats?.checkIn?.();
+        window.__amojiRaising?.refresh?.();
         const greetText = (check && check.line) || greetingLine();
         const mood = check?.mood || "ok";
         const greetFeel = mood === "hungry" ? "sad" : "happy";
