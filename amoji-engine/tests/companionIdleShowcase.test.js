@@ -46,12 +46,13 @@ describe("idle showcase wiring", () => {
     );
   });
 
-  it("resets camera on talk start once and on empty double-tap or dblclick", () => {
+  it("resets camera on talk start once and on empty double-click, not orbit taps", () => {
+    expect(html).toContain("createEmptyAreaCameraReset");
+    expect(html).toContain("shouldResetCameraOnTalkStart");
     expect(html).toMatch(/talkingCameraLatched/);
-    expect(html).toMatch(/lastCanvasTapAt < 500/);
-    expect(html).toMatch(/if \(on && !talkingCameraLatched\)/);
-    expect(html).toMatch(/addEventListener\("dblclick"/);
-    expect(html).toMatch(/tryResetCameraFromEmptyHit/);
+    expect(html).toMatch(/emptyAreaCameraReset\.onDblClick/);
+    expect(html).not.toMatch(/lastCanvasTapAt < 500/);
+    expect(html).not.toMatch(/tryResetCameraFromEmptyHit/);
   });
 
   it("keeps conversation captions above toasts", () => {
