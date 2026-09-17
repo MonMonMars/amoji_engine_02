@@ -67,6 +67,13 @@ export const VRM_FINGER_BONE_NAMES = Object.freeze(
   Object.keys(VRM_FINGER_REST_ROTATIONS),
 );
 
+const FINGER_STRAIGHT_PROBE_NAMES = Object.freeze([
+  "leftIndexProximal",
+  "leftMiddleProximal",
+  "rightIndexProximal",
+  "rightMiddleProximal",
+]);
+
 /**
  * Normalized VRM fingers always flex on Z. Raw Mixamo names still map
  * through humanoid.update — do not switch the normalized axis to X.
@@ -98,12 +105,32 @@ export function fingerTalkCurlBoost(talkBlend = 0) {
 }
 
 /**
+ * Average |Z| curl on index/middle — near zero means Mixamo stick-straight fingers.
+ * @param {import('@pixiv/three-vrm').VRMHumanoid | null | undefined} humanoid
+ * @param {number} [threshold]
+ */
+export function fingersLookStraight(humanoid, threshold = 0.14) {
+  if (!humanoid?.getNormalizedBoneNode) return true;
+  let sum = 0;
+  let count = 0;
+  for (const name of FINGER_STRAIGHT_PROBE_NAMES) {
+    const bone = humanoid.getNormalizedBoneNode(name);
+    if (!bone?.rotation) continue;
+    sum += Math.abs(Number(bone.rotation.z) || 0);
+    count += 1;
+  }
+  if (!count) return true;
+  return sum / count < threshold;
+}
+
+/**
  * @param {(name: string, rot: { x: number, y: number, z: number }) => void} applyBone
- * @param {{ talkBlend?: number, flexAxis?: "x" | "z", elapsedSec?: number }} [opts]
+ * @param {{ talkBlend?: number, flexAxis?: "x" | "z", elapsedSec?: number, blendWeight?: number, readRotation?: (name: string) => { x: number, y: number, z: number } | null }} [opts]
  */
 export function applyFingerRestPose(applyBone, opts = {}) {
   if (typeof applyBone !== "function") return 0;
   const flexAxis = opts.flexAxis === "x" ? "x" : "z";
+  const weight = Math.max(0, Math.min(1, Number(opts.blendWeight ?? 1)));
   const boost = fingerTalkCurlBoost(opts.talkBlend);
   const wiggle = fingerIdleWiggle(opts.elapsedSec, opts.talkBlend);
   let applied = 0;
@@ -112,20 +139,33 @@ export function applyFingerRestPose(applyBone, opts = {}) {
     const sign = name.startsWith("right") ? -1 : 1;
     const extra =
       sign * (name.includes("Thumb") ? (boost + wiggle) * 0.45 : boost + wiggle);
+    /** @type {{ x: number, y: number, z: number }} */
+    let target;
     if (flexAxis === "x") {
       const curl = Math.abs(rest.z) + Math.abs(extra);
-      applyBone(name, {
+      target = {
         x: rest.x + curl,
         y: rest.y,
         z: rest.z * 0.08,
-      });
+      };
     } else {
-      applyBone(name, {
+      target = {
         x: rest.x,
         y: rest.y,
         z: rest.z + extra,
-      });
+      };
     }
+    if (weight < 0.999 && typeof opts.readRotation === "function") {
+      const current = opts.readRotation(name);
+      if (current) {
+        target = {
+          x: current.x + (target.x - current.x) * weight,
+          y: current.y + (target.y - current.y) * weight,
+          z: current.z + (target.z - current.z) * weight,
+        };
+      }
+    }
+    applyBone(name, target);
     applied += 1;
   }
   return applied;

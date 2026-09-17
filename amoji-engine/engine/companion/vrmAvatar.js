@@ -37,7 +37,10 @@ import {
 import { actionLoops } from "./companionActionMotion.js";
 import { detectVrmIdleRestRotations } from "./companionArmRestCalibration.js";
 import { createCompanionBodyMotion } from "./companionBodyMotion.js";
-import { inferFingerFlexAxis } from "./companionFingerPose.js";
+import {
+  fingersLookStraight,
+  inferFingerFlexAxis,
+} from "./companionFingerPose.js";
 import { buildVrmExpressionBlend } from "./companionContentMotion.js";
 import {
   adaptBlendForFaceProfile,
@@ -1009,10 +1012,7 @@ export async function createVrmAvatar(opts) {
     if (vrmaAction && !vrmaPlaying && !vrmaPending) {
       restoreAfterVrma();
     }
-    const libraryMotion =
-      vrmaPlaying &&
-      vrmaAction !== "idle" &&
-      vrmaAction !== "relax";
+    const libraryMotion = vrmaPlaying && vrmaAction !== "idle";
     const activeMotion = vrmaPlaying || vrmaPending
       ? vrmaAction
       : bodyMotion.currentAction;
@@ -1061,12 +1061,22 @@ export async function createVrmAvatar(opts) {
       }
       stabilizeVrmSpringBones(vrm);
       vrm.update(dt);
-      // Fingers last — VRMA mixer and vrm.update would otherwise leave Mixamo
-      // hands in a T-pose (stick-straight).
-      bodyMotion.applyHandRestOnly?.({
-        talkBlend: talking || eating ? 0.7 : 0,
-        now,
-      });
+      // Fingers last for procedural idle/talk — skip during VRMA hand gestures
+      // (full curl overwrote clip fingers and looked inverted). Only nudge when
+      // Mixamo leaves stick-straight fingers on non-hand clips.
+      const fingerTalkBlend = talking || eating ? 0.7 : 0;
+      if (!libraryMotion) {
+        bodyMotion.applyHandRestOnly?.({
+          talkBlend: fingerTalkBlend,
+          now,
+        });
+      } else if (fingersLookStraight(vrm.humanoid)) {
+        bodyMotion.applyHandRestOnly?.({
+          talkBlend: 0,
+          now,
+          blendWeight: 0.28,
+        });
+      }
       applyTalkMouthNow(now);
 
       computeVrmFrameAnchor(vrm, model, frameAnchor);

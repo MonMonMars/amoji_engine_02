@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { clampActionPose, clampArmPose, clampIdleArmPose, clampTalkArmPose, withElbowBend } from "../engine/companion/companionPoseLibrary.js";
+import {
+  clampActionPose,
+  clampArmPose,
+  clampIdleArmPose,
+  clampTalkArmPose,
+  restDirectedLift,
+  withElbowBend,
+} from "../engine/companion/companionPoseLibrary.js";
 
 describe("companionPoseLibrary clamps", () => {
   it("keeps talk gestures subtle", () => {
@@ -31,5 +38,12 @@ describe("companionPoseLibrary clamps", () => {
     const bent = withElbowBend({ x: 0.2, y: 0, z: 0.1, flexAxis: "z" }, 0.3);
     expect(bent.z).toBeCloseTo(0.4);
     expect(bent.x).toBeCloseTo(0.2);
+  });
+
+  it("lifts arms toward neutral from T-pose or flipped-Z rest", () => {
+    expect(restDirectedLift(-1.42, 0.3, 1)).toBeCloseTo(-1.12);
+    expect(restDirectedLift(1.42, 0.3, -1)).toBeCloseTo(1.12);
+    expect(restDirectedLift(-0.14, 0.2, 1)).toBeCloseTo(0.06);
+    expect(restDirectedLift(1.42, 0.92, -1)).toBeCloseTo(0.5);
   });
 });

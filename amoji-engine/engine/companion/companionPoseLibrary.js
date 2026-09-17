@@ -182,6 +182,22 @@ export function clampIdleArmPose(pose) {
 }
 
 /**
+ * Raise the upper arm from calibrated rest (works for T-pose and flipped-Z rigs).
+ * @param {number} restComponent
+ * @param {number} delta
+ * @param {number} [defaultSign]
+ */
+export function restDirectedLift(restComponent, delta, defaultSign = 1) {
+  const base = Number(restComponent) || 0;
+  const towardLift =
+    Math.abs(base) > 0.06 ? Math.sign(-base) : defaultSign;
+  return base + towardLift * delta;
+}
+
+/** @deprecated Use restDirectedLift */
+export const restDirectedDelta = restDirectedLift;
+
+/**
  * Add extra hinge bend on the calibrated flex axis (x on Mixamo, often z on photoreal VRMs).
  * @param {{ x?: number, y?: number, z?: number, flexAxis?: string }} restLower
  * @param {number} extra
