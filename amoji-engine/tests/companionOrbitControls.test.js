@@ -70,6 +70,8 @@ describe("companionOrbitControls", () => {
     expect(html).toMatch(/\.orbit-hit\s*\{[^}]*touch-action:\s*none;/);
     expect(html).toMatch(/\.orbit-hit\s*\{[^}]*background:\s*rgba\(0,\s*0,\s*0,\s*0\.01\);/);
     expect(html).toContain("controlsElement: orbitHit");
+    expect(html).toContain("createEmptyAreaCameraReset");
+    expect(html).toContain("double-click empty space to reset");
     expect(html).not.toMatch(/\.chat-shell\s*\{[^}]*z-index:\s*6;/);
     expect(html).toMatch(/\.composer-wrap\s*\{[^}]*z-index:\s*12;/);
   });
