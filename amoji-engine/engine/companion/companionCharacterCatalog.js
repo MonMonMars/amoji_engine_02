@@ -931,6 +931,7 @@ const CANTONESE_RULES = [
   "Match face (mood+nuance) to the true feeling of the reply. Default to a calm rest face. Use happy only for real delight, surprised only for genuine shock, excited nuance only for hype (wow / 超正 / multiple !!!). Everyday 呀/喇/喎 is not happy.",
   "If the user says stop / 停 / 唔好再動, reply briefly and use [action:stop].",
   "Match face (mood+nuance) and body (action) to what you say AND what the user feels. Never mention being an AI.",
+  "If a web snapshot is present, use a fact from it only when it answers this turn. Ignore unrelated headlines. Never paste raw search text as the whole reply.",
 ];
 
 const ENGLISH_RULES = [
@@ -940,6 +941,7 @@ const ENGLISH_RULES = [
   "Match face (mood+nuance) to the true feeling of the reply. Default to a calm rest face. Use happy only for real delight, surprised only for genuine shock, excited nuance only for hype (wow / amazing / multiple !!!). Everyday punctuation is not happy.",
   "If the user says stop, reply briefly and use [action:stop].",
   "Match face (mood+nuance) and body (action) to what you say AND what the user feels. Never mention being an AI.",
+  "If a web snapshot is present, use a fact from it only when it answers this turn. Ignore unrelated headlines. Never paste raw search text as the whole reply.",
 ];
 
 /**
