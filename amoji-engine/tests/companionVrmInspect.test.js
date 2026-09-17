@@ -35,8 +35,12 @@ describe("companionVrmInspect", () => {
       "/prototypes/assets/companion-chibi.vrm",
       "/prototypes/assets/kizuna-kamatte.vrm",
       "/prototypes/assets/companion-nova.vrm",
+      "/prototypes/assets/companion-alicia.vrm",
+      "/prototypes/assets/companion-ember.vrm",
     ]);
     expect(sorted[0]).toContain("kizuna-kamatte");
-    expect(sorted[1]).toContain("companion-nova");
+    expect(sorted[1]).toContain("companion-alicia");
+    expect(sorted[2]).toContain("companion-ember");
+    expect(sorted[3]).toContain("companion-nova");
   });
 });

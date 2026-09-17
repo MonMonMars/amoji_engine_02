@@ -12,7 +12,10 @@ import {
   defaultVoiceForCharacter,
   getCharacter,
   GALLERY_PRIORITY_IDS,
+  HIGH_POLY_FACE_CHARACTER_IDS,
+  isHighPolyFaceCharacter,
   listCompanionCharacters,
+  listHighPolyFaceCharacters,
   nextCharacterId,
   resolveCharacterId,
 } from "../engine/companion/companionCharacterCatalog.js";
@@ -88,6 +91,23 @@ describe("companionCharacterCatalog", () => {
     expect(characterVoiceLabel("sora", "en", true)).toBe("Jenny");
     expect(characterGreetingPerformance("kizuna").speechEnergy).toBeGreaterThan(0.8);
     expect(characterGreetingPerformance("sora").talkStyle).toBe("soft");
+  });
+
+  it("lists high-poly face characters sorted by triangle count", () => {
+    expect([...HIGH_POLY_FACE_CHARACTER_IDS].sort()).toEqual([
+      "alicia",
+      "ember",
+      "kizuna",
+      "rex",
+    ]);
+    expect(isHighPolyFaceCharacter("kizuna")).toBe(true);
+    expect(isHighPolyFaceCharacter("rex")).toBe(true);
+    expect(isHighPolyFaceCharacter("nova")).toBe(false);
+    const hd = listHighPolyFaceCharacters("en");
+    expect(hd.map((c) => c.id)).toEqual(["kizuna", "rex", "alicia", "ember"]);
+    expect(hd[0].faceTriangles).toBeGreaterThan(hd[1].faceTriangles);
+    expect(hd.find((c) => c.id === "rex")?.showFaceChip).toBe(true);
+    expect(hd.find((c) => c.id === "kizuna")?.showFaceChip).toBe(false);
   });
 
   it("lists voice metadata for picker cards", () => {
