@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>High-poly VRM face + lip sync test</title>
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "/amoji-engine/vendor/three.module.js",
+          "three/addons/": "/amoji-engine/vendor/three/addons/",
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js",
+          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js"
+        }
+      }
+    </script>
+    <style>
+      :root {
+        color-scheme: dark;
+        --panel: rgba(18, 22, 30, 0.92);
+        --accent: #7fd4cf;
+        --border: rgba(255, 255, 255, 0.12);
+      }
+      * { box-sizing: border-box; }
+      html, body {
+        margin: 0;
+        height: 100%;
+        background: #0b0f14;
+        font: 13px/1.4 system-ui, sans-serif;
+        color: #e8eef5;
+      }
+      #layout {
+        display: grid;
+        grid-template-columns: minmax(280px, 340px) 1fr;
+        height: 100%;
+      }
+      #panel {
+        overflow: auto;
+        padding: 14px;
+        background: var(--panel);
+        border-right: 1px solid var(--border);
+      }
+      h1 {
+        margin: 0 0 8px;
+        font-size: 16px;
+      }
+      .sub {
+        color: #9fb0c3;
+        margin-bottom: 12px;
+      }
+      section {
+        margin-bottom: 14px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid var(--border);
+      }
+      section:last-child { border-bottom: 0; }
+      label { display: block; margin-bottom: 6px; color: #9fb0c3; }
+      select, input[type="range"] { width: 100%; }
+      .row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+      button {
+        border: 1px solid var(--border);
+        background: #1a2230;
+        color: inherit;
+        border-radius: 8px;
+        padding: 6px 10px;
+        cursor: pointer;
+      }
+      button.active, button:hover { border-color: var(--accent); }
+      #stats {
+        font-family: ui-monospace, monospace;
+        font-size: 11px;
+        white-space: pre-wrap;
+        color: #b8c7d8;
+      }
+      #stage { position: relative; min-height: 0; }
+      #avatar-canvas {
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+      #viseme-label {
+        position: absolute;
+        left: 12px;
+        bottom: 12px;
+        padding: 6px 10px;
+        border-radius: 999px;
+        background: rgba(0, 0, 0, 0.55);
+        font-weight: 600;
+        letter-spacing: 0.04em;
+      }
+      @media (max-width: 860px) {
+        #layout { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
+        #panel { max-height: 42vh; }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="layout">
+      <aside id="panel">
+        <h1>High-poly face test</h1>
+        <p class="sub">Amoji VRM expression + lip sync on dense meshes.</p>
+
+        <section>
+          <label for="model-select">Model</label>
+          <select id="model-select">
+            <option value="/prototypes/assets/kizuna-kamatte.vrm" selected>
+              Kizuna AI KAMATTE (~73k tris, VRM 1.0, 19 expressions)
+            </option>
+            <option value="/prototypes/assets/companion-kai.vrm">
+              Kai (~50k tris, ARKit morphs + visemes)
+            </option>
+            <option value="/prototypes/assets/companion-alicia.vrm">
+              Alicia (~32k tris, VRM 0.x visemes)
+            </option>
+            <option value="/prototypes/assets/companion-nova.vrm">
+              Nova (~17k tris, photoreal)
+            </option>
+            <option value="/prototypes/assets/companion-ember.vrm">
+              Ember (~23k tris, expressive anime)
+            </option>
+          </select>
+          <div class="row" style="margin-top: 8px">
+            <button type="button" id="reload-btn">Reload model</button>
+          </div>
+        </section>
+
+        <section>
+          <label>Emotion presets</label>
+          <div class="row" id="emotion-row">
+            <button type="button" data-emotion="neutral">neutral</button>
+            <button type="button" data-emotion="happy">happy</button>
+            <button type="button" data-emotion="sad">sad</button>
+            <button type="button" data-emotion="angry">angry</button>
+            <button type="button" data-emotion="surprised">surprised</button>
+            <button type="button" data-emotion="thinking">thinking</button>
+          </div>
+        </section>
+
+        <section>
+          <label>Lip sync</label>
+          <div class="row">
+            <button type="button" id="talk-on">Talk ON</button>
+            <button type="button" id="talk-off">Talk OFF</button>
+            <button type="button" id="cycle-visemes">Cycle visemes</button>
+            <button type="button" id="demo-lipsync">Demo lip sync</button>
+          </div>
+          <label for="mouth-open" style="margin-top: 10px">Mouth open</label>
+          <input id="mouth-open" type="range" min="0" max="1" step="0.01" value="0" />
+          <label for="mouth-shape">Viseme shape</label>
+          <select id="mouth-shape">
+            <option value="aa">aa / a</option>
+            <option value="ih">ih / i</option>
+            <option value="ou">ou / u</option>
+            <option value="ee">ee / e</option>
+            <option value="oh">oh / o</option>
+          </select>
+        </section>
+
+        <section>
+          <label>Diagnostics</label>
+          <pre id="stats">Loading…</pre>
+        </section>
+      </aside>
+      <div id="stage">
+        <canvas id="avatar-canvas"></canvas>
+        <div id="viseme-label">idle</div>
+      </div>
+    </div>
+
+    <script type="module">
+      import { createVrmAvatar } from "/amoji-engine/engine/companion/vrmAvatar.js";
+      import { TALK_VISEME_CYCLE } from "/amoji-engine/engine/companion/companionFaceRest.js";
+
+      /** Minimal char→viseme for demo (same rules as companionVoice.charToViseme). */
+      function charToViseme(ch) {
+        const c = String(ch || " ").toLowerCase();
+        if (/[\s.,!?;:'"()\-—…]/.test(c)) return { shape: "ee", open: 0.08 };
+        if (/[aeæəàáâãäå]/.test(c)) return { shape: "aa", open: 0.82 };
+        if (/[iɪyìíîï]/.test(c)) return { shape: "ih", open: 0.58 };
+        if (/[oòóôõöø]/.test(c)) return { shape: "oh", open: 0.72 };
+        if (/[uùúûü]/.test(c)) return { shape: "ou", open: 0.64 };
+        if (/[eèéêë]/.test(c)) return { shape: "ee", open: 0.55 };
+        if (/[pbm]/.test(c)) return { shape: "ou", open: 0.35 };
+        if (/[fv]/.test(c)) return { shape: "ee", open: 0.42 };
+        if (/[\u4e00-\u9fff\u3400-\u4dbf]/.test(c)) {
+          const shapes = ["aa", "ih", "ou", "ee", "oh"];
+          return { shape: shapes[c.charCodeAt(0) % 5], open: 0.68 };
+        }
+        return { shape: "aa", open: 0.45 };
+      }
+
+      const VISEME_LABEL = document.getElementById("viseme-label");
+      const STATS = document.getElementById("stats");
+      const MODEL_SELECT = document.getElementById("model-select");
+      const MOUTH_OPEN = document.getElementById("mouth-open");
+      const MOUTH_SHAPE = document.getElementById("mouth-shape");
+
+      /** @type {ReturnType<typeof createVrmAvatar> extends Promise<infer T> ? T : never | null} */
+      let avatar = null;
+      let raf = 0;
+      let visemeTimer = 0;
+      let demoTimer = 0;
+      let demoIdx = 0;
+
+      window.__highpolyFaceTest = { ready: false };
+
+      function countTriangles(root) {
+        let tris = 0;
+        root?.traverse?.((obj) => {
+          const geo = obj.geometry;
+          if (!geo) return;
+          const idx = geo.index;
+          if (idx) tris += Math.floor(idx.count / 3);
+          else if (geo.attributes?.position) tris += Math.floor(geo.attributes.position.count / 3);
+        });
+        return tris;
+      }
+
+      function renderStats() {
+        if (!avatar) {
+          STATS.textContent = "No avatar loaded.";
+          return;
+        }
+        const dbg = avatar.getFaceDebug?.() || {};
+        const tris = countTriangles(avatar.vrm?.scene);
+        STATS.textContent = [
+          `triangles: ${tris}`,
+          `expressions: ${dbg.expressionNames?.length ?? 0}`,
+          `mouthPresets: ${(dbg.mouthPresets || []).join(", ") || "none"}`,
+          `emotion: ${dbg.emotion}`,
+          `talking: ${dbg.talking}`,
+          `mouthOpen: ${dbg.mouthOpen?.toFixed?.(3) ?? dbg.mouthOpen}`,
+          `mouthShape: ${dbg.mouthShape ?? "—"}`,
+          `visemes: ${(dbg.mouthPresets || []).filter((n) => /^[aioeu]{1,2}$/i.test(n)).join(", ")}`,
+          `hazard opensMouth: ${(dbg.hazards?.opensMouth || []).slice(0, 6).join(", ")}`,
+        ].join("\n");
+      }
+
+      function stopTimers() {
+        if (visemeTimer) clearInterval(visemeTimer);
+        if (demoTimer) clearInterval(demoTimer);
+        visemeTimer = 0;
+        demoTimer = 0;
+      }
+
+      function applyManualMouth() {
+        if (!avatar) return;
+        const open = Number(MOUTH_OPEN.value) || 0;
+        const shape = MOUTH_SHAPE.value;
+        avatar.setTalking?.(open > 0.02);
+        avatar.setMouthShape?.(shape);
+        avatar.setMouthOpen?.(open);
+        VISEME_LABEL.textContent = `${shape} · ${open.toFixed(2)}`;
+        renderStats();
+      }
+
+      async function loadModel(url) {
+        stopTimers();
+        if (avatar?.dispose) avatar.dispose();
+        avatar = null;
+        window.__highpolyFaceTest = { ready: false, loading: url };
+        STATS.textContent = `Loading ${url}…`;
+
+        const canvas = document.getElementById("avatar-canvas");
+        avatar = await createVrmAvatar({ canvas, modelUrl: url });
+        avatar.setEmotion?.("neutral");
+
+        for (let i = 0; i < 45; i += 1) avatar.update?.(1 / 30);
+
+        const dbg = avatar.getFaceDebug?.() || {};
+        const tris = countTriangles(avatar.vrm?.scene);
+        const hasVisemes = (dbg.mouthPresets || []).length >= 3;
+
+        window.__highpolyFaceTest = {
+          ready: true,
+          modelUrl: url,
+          triangles: tris,
+          expressionCount: dbg.expressionNames?.length ?? 0,
+          mouthPresets: dbg.mouthPresets || [],
+          hasVisemes,
+          lipSyncApplied: false,
+        };
+        renderStats();
+        return window.__highpolyFaceTest;
+      }
+
+      function startVisemeCycle() {
+        stopTimers();
+        if (!avatar) return;
+        avatar.setEmotion?.("happy");
+        avatar.setTalking?.(true);
+        let idx = 0;
+        visemeTimer = setInterval(() => {
+          const shape = TALK_VISEME_CYCLE[idx % TALK_VISEME_CYCLE.length];
+          idx += 1;
+          avatar.setMouthShape?.(shape);
+          avatar.setMouthOpen?.(0.75);
+          VISEME_LABEL.textContent = `cycle · ${shape}`;
+          window.__highpolyFaceTest.lipSyncApplied = true;
+          renderStats();
+        }, 280);
+      }
+
+      function startDemoLipSync() {
+        stopTimers();
+        if (!avatar) return;
+        avatar.setEmotion?.("happy");
+        avatar.setTalking?.(true);
+        const phrase = "Hello! A E I O U — 你好呀，我係曖咪！";
+        demoIdx = 0;
+        demoTimer = setInterval(() => {
+          if (demoIdx >= phrase.length) {
+            avatar.setTalking?.(false);
+            avatar.setMouthOpen?.(0);
+            VISEME_LABEL.textContent = "demo done";
+            stopTimers();
+            return;
+          }
+          const ch = phrase[demoIdx];
+          const { shape, open } = charToViseme(ch);
+          avatar.setMouthShape?.(shape);
+          avatar.setMouthOpen?.(open);
+          VISEME_LABEL.textContent = `${ch} → ${shape} ${open.toFixed(2)}`;
+          window.__highpolyFaceTest.lipSyncApplied = true;
+          demoIdx += 1;
+          renderStats();
+        }, 90);
+      }
+
+      MOUTH_OPEN.addEventListener("input", applyManualMouth);
+      MOUTH_SHAPE.addEventListener("change", applyManualMouth);
+
+      document.getElementById("reload-btn").addEventListener("click", () => {
+        loadModel(MODEL_SELECT.value).catch((err) => {
+          window.__highpolyFaceTest = { ready: false, error: err?.message || String(err) };
+          STATS.textContent = String(err);
+        });
+      });
+
+      document.getElementById("talk-on").addEventListener("click", () => {
+        avatar?.setTalking?.(true);
+        avatar?.setEmotion?.("happy");
+        applyManualMouth();
+      });
+      document.getElementById("talk-off").addEventListener("click", () => {
+        stopTimers();
+        avatar?.setTalking?.(false);
+        avatar?.setMouthOpen?.(0);
+        avatar?.setMouthShape?.(null);
+        VISEME_LABEL.textContent = "idle";
+        renderStats();
+      });
+      document.getElementById("cycle-visemes").addEventListener("click", startVisemeCycle);
+      document.getElementById("demo-lipsync").addEventListener("click", startDemoLipSync);
+
+      for (const btn of document.querySelectorAll("[data-emotion]")) {
+        btn.addEventListener("click", () => {
+          const emotion = btn.getAttribute("data-emotion");
+          avatar?.setEmotion?.(emotion);
+          for (const b of document.querySelectorAll("[data-emotion]")) {
+            b.classList.toggle("active", b === btn);
+          }
+          renderStats();
+        });
+      }
+
+      function tick() {
+        avatar?.update?.(1 / 60);
+        renderStats();
+        raf = requestAnimationFrame(tick);
+      }
+      tick();
+
+      const params = new URLSearchParams(location.search);
+      const modelParam = params.get("model");
+      if (modelParam) {
+        const opt = [...MODEL_SELECT.options].find((o) => o.value.includes(modelParam));
+        if (opt) MODEL_SELECT.value = opt.value;
+      }
+
+      loadModel(MODEL_SELECT.value).catch((err) => {
+        window.__highpolyFaceTest = { ready: false, error: err?.message || String(err) };
+        STATS.textContent = String(err);
+      });
+    </script>
+  </body>
+</html>
