@@ -8,9 +8,9 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji · Companion</title>
     <script>
-      window.__amojiBuild = "2026-09-17-v149-food-interact";
+      window.__amojiBuild = "2026-09-17-v150-pet-game-flow";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-17-v149-food-interact"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-17-v150-pet-game-flow"></script>
     <link
       rel="prefetch"
       href="/prototypes/assets/companion-char-nova.png"
@@ -65,7 +65,9 @@
       body.companion-start-pending .treat-sheet,
       body.companion-start-pending .treat-sheet-backdrop,
       body.companion-start-pending .treat-drop-halo,
-      body.companion-start-pending .treat-drag-ghost {
+      body.companion-start-pending .treat-drag-ghost,
+      body.companion-start-pending .pet-hud,
+      body.companion-start-pending .pet-thought {
         display: none !important;
       }
 
@@ -323,7 +325,7 @@
       media="print"
       onload="this.media='all'"
     />
-    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-17-v149-food-interact" />
+    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-17-v150-pet-game-flow" />
     <noscript>
       <link
         href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap"
@@ -2137,6 +2139,111 @@
         pointer-events: none;
       }
 
+      .pet-hud {
+        position: fixed;
+        z-index: 36;
+        left: max(0.65rem, env(safe-area-inset-left));
+        top: calc(4.55rem + env(safe-area-inset-top));
+        display: flex;
+        flex-direction: column;
+        gap: 0.32rem;
+        width: 9.4rem;
+        pointer-events: none;
+      }
+
+      .pet-meter {
+        display: flex;
+        align-items: center;
+        gap: 0.32rem;
+        padding: 0.18rem 0.38rem 0.18rem 0.28rem;
+        border-radius: 999px;
+        background: rgba(8, 6, 18, 0.62);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        backdrop-filter: blur(12px);
+      }
+
+      .pet-meter-icon {
+        font-size: 0.78rem;
+        line-height: 1;
+      }
+
+      .pet-meter-track {
+        flex: 1;
+        height: 0.42rem;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.12);
+        overflow: hidden;
+      }
+
+      .pet-meter-fill {
+        display: block;
+        height: 100%;
+        width: 40%;
+        border-radius: 999px;
+        transition: width 0.45s ease;
+      }
+
+      .pet-meter--hunger .pet-meter-fill {
+        background: linear-gradient(90deg, #fb923c, #facc15);
+      }
+
+      .pet-meter--hearts .pet-meter-fill {
+        background: linear-gradient(90deg, #fb7185, #f472b6);
+      }
+
+      .pet-meter-val {
+        min-width: 1.4rem;
+        font-size: 0.62rem;
+        font-weight: 800;
+        opacity: 0.82;
+        text-align: right;
+      }
+
+      .pet-hud.is-hungry .pet-meter--hunger {
+        box-shadow: 0 0 0 1px rgba(251, 146, 60, 0.55);
+        animation: pet-meter-pulse 1.4s ease-in-out infinite;
+      }
+
+      .pet-hud.is-lonely .pet-meter--hearts {
+        box-shadow: 0 0 0 1px rgba(244, 114, 182, 0.5);
+      }
+
+      .pet-thought {
+        position: fixed;
+        z-index: 34;
+        left: 50%;
+        top: 16%;
+        transform: translateX(-50%);
+        max-width: 12rem;
+        padding: 0.38rem 0.7rem;
+        border-radius: 1rem 1rem 1rem 0.25rem;
+        background: rgba(255, 255, 255, 0.92);
+        color: #1a1220;
+        font-size: 0.78rem;
+        font-weight: 800;
+        pointer-events: none;
+        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
+      }
+
+      .pet-thought.is-hungry {
+        animation: pet-meter-pulse 1.6s ease-in-out infinite;
+      }
+
+      .treat-fab.is-hungry {
+        animation: pet-meter-pulse 1.4s ease-in-out infinite;
+        box-shadow: 0 0 0 2px rgba(251, 146, 60, 0.45), 0 10px 28px rgba(0, 0, 0, 0.35);
+      }
+
+      @keyframes pet-meter-pulse {
+        0%,
+        100% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.04);
+        }
+      }
+
       .scene-sheet-head {
         display: flex;
         align-items: center;
@@ -3266,19 +3373,19 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-17-v149-food-interact",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-17-v150-pet-game-flow",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-17-v149-food-interact",
-          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-17-v149-food-interact"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-17-v150-pet-game-flow",
+          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-17-v150-pet-game-flow"
         }
       }
     </script>
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v149-food-interact"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v150-pet-game-flow"
     />
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-17-v149-food-interact"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v149-food-interact"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-17-v150-pet-game-flow"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v150-pet-game-flow"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;
@@ -3326,6 +3433,7 @@
           var picker = document.getElementById("start-character-picker");
           window.__amojiStart.sessionStarted = true;
           window.__amojiStart.starting = false;
+          document.body.classList.remove("companion-start-pending", "companion-picker-open");
           if (!picker) return;
           picker.classList.add("hide");
           picker.setAttribute("aria-hidden", "true");
@@ -5982,6 +6090,7 @@
         const now = Date.now();
         if (now - lastTapAt < 1400 || busy) return;
         lastTapAt = now;
+        window.__amojiTreats?.applyPet?.();
         avatar.reactToTap?.();
         const line = pickTapLine();
         addBubble("assistant", line);
@@ -6017,18 +6126,27 @@
           return node?.getBoundingClientRect?.() || null;
         },
         onToast: (msg, kind) => showToast(msg, kind || "info"),
-        onFeed: ({ line }) => {
+        onFeed: ({ line, refused }) => {
           if (!line) return;
           addBubble("assistant", line);
-          avatar.setEmotion?.("happy");
-          setEmotionPill("happy");
-          speakEmotion = "happy";
+          const feel = refused ? "thinking" : "happy";
+          avatar.setEmotion?.(feel);
+          setEmotionPill(feel);
+          speakEmotion = feel;
           status.speaking();
           armBargeIn();
-          void voice.speak(line, "happy").finally(() => {
+          void voice.speak(line, feel).finally(() => {
             disarmBargeIn();
             if (!busy && !voice.micOn) status.idle();
           });
+        },
+        onHungryAsk: ({ line }) => {
+          if (!line || busy || voice.speaking) return;
+          addBubble("assistant", line);
+          avatar.setEmotion?.("sad");
+          setEmotionPill("sad");
+          speakEmotion = "sad";
+          void voice.speak(line, "sad");
         },
       });
       window.__amojiTreats = treatDock;
@@ -6119,6 +6237,7 @@
           addBubble("user", cleaned, { persist: true, withActions: true });
         }
         lastUserMessage = cleaned;
+        window.__amojiTreats?.applyChat?.();
         avatar.setListening?.(false);
         avatar.setTalking(false);
         avatar.setMouthOpen(0);
@@ -6376,6 +6495,7 @@
         }
 
         startPicker?.setStarting?.(false);
+        document.body.classList.remove("companion-start-pending", "companion-picker-open");
         if (typeof window.__amojiDismissStartButton === "function") {
           window.__amojiDismissStartButton();
         } else {
@@ -6406,13 +6526,17 @@
         if (busy || voice.speaking || hasUserMessages(loadChatHistory(characterId))) {
           return Promise.resolve({ ok: false, reason: "skipped-user-active" });
         }
-        avatar.setEmotion("happy");
-        setEmotionPill("happy");
-        avatar.playGesture?.("nod");
-        speakEmotion = "happy";
+        const check = window.__amojiTreats?.checkIn?.();
+        const greetText = (check && check.line) || greetingLine();
+        const mood = check?.mood || "ok";
+        const greetFeel = mood === "hungry" ? "sad" : "happy";
+        avatar.setEmotion(greetFeel);
+        setEmotionPill(greetFeel);
+        if (mood === "hungry") avatar.playAction?.("headshake", { emotion: "sad", single: true });
+        else avatar.playGesture?.("nod");
+        speakEmotion = greetFeel;
         status.speaking();
         armBargeIn();
-        const greetText = greetingLine();
         if (!greetingBubble) {
           greetingBubble = addBubble("assistant", greetText, {
             persist: false,
@@ -6421,7 +6545,8 @@
         } else {
           greetingBubble.textContent = greetText;
         }
-        const greetPerf = characterGreetingPerformance(characterId);
+        const greetPerf =
+          mood === "hungry" ? "sad" : characterGreetingPerformance(characterId);
         return voice.speak(greetText, greetPerf).then((spoke) => {
           if (spoke?.ok === false && spoke?.reason) {
             const reason = String(spoke.reason);

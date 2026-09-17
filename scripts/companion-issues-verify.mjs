@@ -206,6 +206,43 @@ async function main() {
     JSON.stringify(fed),
   );
 
+  const petLoop = await page.evaluate(() => {
+    const hud = document.getElementById("pet-hud");
+    const hungerFill = document.getElementById("pet-hunger-fill");
+    const heartsFill = document.getElementById("pet-hearts-fill");
+    const beforeCoins = Number(window.__amojiTreats?.state?.coins || 0);
+    window.__amojiTreats?.applyChat?.();
+    const afterChat = Number(window.__amojiTreats?.state?.coins || 0);
+    window.__amojiTreats?.buy?.("cookie");
+    window.__amojiTreats?.setNeeds?.({ hunger: 96, hearts: 70 });
+    const refused = window.__amojiTreats?.feed?.("cookie", 200, 280);
+    const outcome = window.__amojiTreats?.lastOutcome || {};
+    return {
+      hud: Boolean(hud),
+      hungerBar: Boolean(hungerFill),
+      heartsBar: Boolean(heartsFill),
+      chatEarn: afterChat === beforeCoins + 3,
+      refused: refused === false && outcome.reason === "full",
+      cookieKept: (window.__amojiTreats?.state?.bag?.cookie || 0) >= 1,
+      action: String(window.__amojiAvatar?.currentAction || ""),
+    };
+  });
+  record(
+    "pet-hud-meters",
+    petLoop.hud && petLoop.hungerBar && petLoop.heartsBar,
+    JSON.stringify(petLoop),
+  );
+  record(
+    "pet-chat-earn",
+    petLoop.chatEarn,
+    JSON.stringify({ chatEarn: petLoop.chatEarn }),
+  );
+  record(
+    "pet-refuse-full",
+    petLoop.refused && petLoop.cookieKept,
+    JSON.stringify(petLoop),
+  );
+
   const afterNova = await page.evaluate(() => {
     const vrm = window.__amojiAvatar?.vrm;
     const bone = (name) => {
