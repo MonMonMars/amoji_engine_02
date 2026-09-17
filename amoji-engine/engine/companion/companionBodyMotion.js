@@ -553,25 +553,19 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
   };
 
   const applyFingerBone = (name, rot) => {
+    // Normalized bones only. Copying the same Euler onto Mixamo raw bones
+    // twists fingers along their length so they look stick-straight.
     applyBoneRotation(name, rot);
-    const raw = humanoid?.getRawBoneNode?.(name);
-    const norm = bone(name);
-    if (raw && raw !== norm && raw.rotation) {
-      if (typeof raw.rotation.set === "function") {
-        raw.rotation.order = "XYZ";
-        raw.rotation.set(rot.x ?? 0, rot.y ?? 0, rot.z ?? 0);
-      } else {
-        raw.rotation.x = rot.x ?? 0;
-        raw.rotation.y = rot.y ?? 0;
-        raw.rotation.z = rot.z ?? 0;
-      }
-    }
   };
 
-  const applyHandAndFootRest = (pose = REST_POSE, k = 1, talkBlend = 0) => {
+  const applyHandAndFootRest = (pose = REST_POSE, k = 1, talkBlend = 0, elapsedSec = 0) => {
     applyBoneRotation("leftHand", VRM_HAND_REST_ROTATIONS.leftHand);
     applyBoneRotation("rightHand", VRM_HAND_REST_ROTATIONS.rightHand);
-    applyFingerRestPose(applyFingerBone, { talkBlend, flexAxis: fingerFlexAxis });
+    applyFingerRestPose(applyFingerBone, {
+      talkBlend,
+      flexAxis: "z",
+      elapsedSec,
+    });
     applyLockedFootRotations(applyBoneRotation, VRM_FOOT_REST_ROTATIONS, {
       leftUpper: Math.min(0.72, (pose.upperLegL ?? REST_POSE.upperLegL ?? 0) * k),
       rightUpper: Math.min(0.72, (pose.upperLegR ?? REST_POSE.upperLegR ?? 0) * k),
@@ -627,22 +621,34 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
         : (pose.hipZ || 0) * k;
     }
     applyLegPose(pose, k);
-    applyHandAndFootRest(pose, k, talkArmBlend);
+    applyHandAndFootRest(
+      pose,
+      k,
+      talkArmBlend,
+      (performance.now() - t0) * 0.001,
+    );
     humanoid.update?.();
   };
 
   const applyHandRestOnly = (opts = {}) => {
     const talkBlend = Number(opts.talkBlend) || 0;
+    const elapsedSec =
+      opts.elapsedSec != null
+        ? Number(opts.elapsedSec)
+        : opts.now != null
+          ? (Number(opts.now) - t0) * 0.001
+          : (performance.now() - t0) * 0.001;
     applyFingerRestPose(applyFingerBone, {
       talkBlend,
-      flexAxis: fingerFlexAxis,
+      flexAxis: "z",
+      elapsedSec,
     });
     humanoid?.update?.();
   };
 
   const setFingerFlexAxis = (axis) => {
     fingerFlexAxis = axis === "x" ? "x" : "z";
-    return fingerFlexAxis;
+    return "z";
   };
 
   const update = (dt, opts = {}) => {

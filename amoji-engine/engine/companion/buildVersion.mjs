@@ -1,2 +1,2 @@
 /** Single source of truth for deployed companion build id (keep HTML __amojiBuild in sync). */
-export const AMOJI_BUILD = "2026-09-17-v154-repeat-all";
+export const AMOJI_BUILD = "2026-09-17-v155-finger-curl";

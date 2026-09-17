@@ -879,10 +879,6 @@ export async function createVrmAvatar(opts) {
     try {
       if (!libraryMotion) {
         bodyMotion.update(dt, { talking, now });
-      } else {
-        bodyMotion.applyHandRestOnly?.({
-          talkBlend: talking || eating ? 0.7 : 0,
-        });
       }
       motionPlayer.update(dt);
       if (!libraryMotion) {
@@ -900,6 +896,12 @@ export async function createVrmAvatar(opts) {
       syncHumanoidPose();
       tickFace(dt, now, activeMotion);
       vrm.update(dt);
+      // Fingers last — VRMA mixer and vrm.update would otherwise leave Mixamo
+      // hands in a T-pose (stick-straight).
+      bodyMotion.applyHandRestOnly?.({
+        talkBlend: talking || eating ? 0.7 : 0,
+        now,
+      });
       applyTalkMouthNow(now);
 
       computeVrmFrameAnchor(vrm, model, frameAnchor);
