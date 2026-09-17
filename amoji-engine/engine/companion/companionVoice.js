@@ -34,6 +34,7 @@ import {
 import {
   buildCloudTtsRequestBody,
   enrichTtsPerformance,
+  MAX_CLOUD_TTS_CHARS,
   normalizeTtsPerformance,
   resolveCompanionTtsProsody,
 } from "./companionTtsProsody.js";
@@ -578,7 +579,7 @@ export function createCompanionVoice(opts = {}) {
           speaking = false;
           syncAssistantOutput();
         }
-        stopMouth();
+        stopMouth({ keepTalking: holdSpeaking, keepMouth: holdSpeaking });
         resolve(result);
       };
       const scheduleSafety = (budgetMs = safetyBudgetMs) => {
@@ -738,9 +739,10 @@ export function createCompanionVoice(opts = {}) {
     opts.onMouth?.(open, shape);
   };
 
-  const isStreamPlaybackActive = () => Boolean(streamSession);
+  const isStreamPlaybackActive = () =>
+    Boolean(streamSession && !streamSession.closed);
 
-  const stopMouth = ({ keepTalking = false } = {}) => {
+  const stopMouth = ({ keepTalking = false, keepMouth = false } = {}) => {
     if (mouthTimer) {
       clearInterval(mouthTimer);
       mouthTimer = null;
@@ -748,7 +750,10 @@ export function createCompanionVoice(opts = {}) {
     for (const t of mouthTimeouts) clearTimeout(t);
     mouthTimeouts = [];
     const holdTalk = keepTalking || isStreamPlaybackActive();
-    opts.onMouth?.(0, null);
+    const holdMouth = keepMouth || holdTalk;
+    if (!holdMouth) {
+      opts.onMouth?.(0, null);
+    }
     if (!holdTalk) {
       opts.onTalking?.(false);
     }
@@ -761,7 +766,7 @@ export function createCompanionVoice(opts = {}) {
    * @param {{ durationMs?: number, audioLevel?: () => number, getProgress?: () => number }} [timing]
    */
   const startLipSync = (text, utter, timing = {}) => {
-    stopMouth({ keepTalking: true });
+    stopMouth({ keepTalking: true, keepMouth: true });
     opts.onTalking?.(true);
     const clean = String(text || "");
     if (!clean) return;
@@ -819,7 +824,9 @@ export function createCompanionVoice(opts = {}) {
     if (!timing.getProgress) {
       mouthTimeouts.push(
         setTimeout(() => {
-          if (!boundaryWorks) opts.onMouth?.(0, null);
+          if (!boundaryWorks && !isStreamPlaybackActive()) {
+            opts.onMouth?.(0, null);
+          }
         }, Math.min(20000, durationMs + 400)),
       );
     }
@@ -840,8 +847,6 @@ export function createCompanionVoice(opts = {}) {
       .replace(/[*_`#>/\\]/g, " ")
       .replace(/\s+/g, " ")
       .trim();
-
-  const MAX_CLOUD_TTS_CHARS = 480;
 
   /**
    * @param {string} text
@@ -891,7 +896,8 @@ export function createCompanionVoice(opts = {}) {
       if (!speakerOn) {
         startLipSync(clean);
         await sleep(Math.min(4200, 400 + clean.length * estimateLipSyncMsPerChar(clean)));
-        stopMouth();
+        const holdGap = isStreamPlaybackActive();
+        stopMouth({ keepTalking: holdGap, keepMouth: holdGap });
         return { ok: true, muted: true };
       }
       await ensureVoices();
@@ -920,7 +926,8 @@ export function createCompanionVoice(opts = {}) {
       if (!synth) {
         startLipSync(clean);
         await sleep(Math.min(4800, 450 + clean.length * estimateLipSyncMsPerChar(clean)));
-        stopMouth();
+        const holdGap = isStreamPlaybackActive();
+        stopMouth({ keepTalking: holdGap, keepMouth: holdGap });
         return {
           ok: false,
           reason: tryCloud ? "cloud-and-browser-tts-unavailable" : "no-speech-synthesis",
@@ -951,7 +958,8 @@ export function createCompanionVoice(opts = {}) {
         if (settled) return result;
         settled = true;
         speaking = false;
-        stopMouth();
+        const holdGap = isStreamPlaybackActive();
+        stopMouth({ keepTalking: holdGap, keepMouth: holdGap });
         return result;
       };
       const spoken = await Promise.race([
@@ -1058,6 +1066,7 @@ export function createCompanionVoice(opts = {}) {
       capturePaused: pauseMic,
     };
     if (pauseMic) pauseCapture();
+    speaking = true;
     opts.onTalking?.(true);
     syncAssistantOutput();
     return streamSession;
@@ -1104,6 +1113,7 @@ export function createCompanionVoice(opts = {}) {
       return { ok: true };
     } finally {
       streamSession = null;
+      speaking = false;
       stopMouth();
       if (session.capturePaused) resumeCapture();
       syncAssistantOutput();

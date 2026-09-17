@@ -2,7 +2,11 @@
  * OpenAI gpt-4o-mini-tts — ChatGPT-style emotional speech via natural-language instructions.
  * @see https://developers.openai.com/api/docs/guides/text-to-speech
  */
-import { buildTtsInstruct, instructSpeakingSpeed } from "./companionTtsProsody.js";
+import {
+  buildTtsInstruct,
+  instructSpeakingSpeed,
+  MAX_CLOUD_TTS_CHARS,
+} from "./companionTtsProsody.js";
 
 export const OPENAI_TTS_SCHEMA = "amoji.openaiTts.v2";
 
@@ -74,7 +78,7 @@ export async function synthesizeOpenAiSpeech(text, opts = {}) {
     .replace(/[*_`#>/\\]/g, " ")
     .replace(/\s+/g, " ")
     .trim()
-    .slice(0, 500);
+    .slice(0, MAX_CLOUD_TTS_CHARS);
   if (!clean) return null;
 
   const instructions =

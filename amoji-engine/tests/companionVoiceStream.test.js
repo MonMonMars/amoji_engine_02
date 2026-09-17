@@ -20,6 +20,14 @@ describe("companionVoice stream lip sync", () => {
 
     await Promise.all([first, second]);
     expect(onTalking.mock.calls.at(-1)?.[0]).not.toBe(false);
+    const voicedSamples = onMouth.mock.calls.filter(
+      ([open]) => Number(open) > 0.04,
+    );
+    expect(voicedSamples.length).toBeGreaterThan(2);
+    const gapResets = onMouth.mock.calls.filter(
+      ([open, shape]) => Number(open) === 0 && shape == null,
+    );
+    expect(gapResets.length).toBeLessThan(voicedSamples.length);
 
     await voice.finishStreamSpeak();
     expect(onTalking.mock.calls.at(-1)?.[0]).toBe(false);

@@ -5,6 +5,7 @@
 import { EdgeTTS } from "edge-tts-universal";
 import {
   enrichTtsPerformance,
+  MAX_CLOUD_TTS_CHARS,
   resolveCompanionTtsProsody,
 } from "./companionTtsProsody.js";
 import { resolveEdgeVoiceId } from "./companionVoiceProfiles.js";
@@ -58,7 +59,7 @@ export async function synthesizeSpeech(text, opts = {}) {
     .replace(/[*_`#>/\\]/g, " ")
     .replace(/\s+/g, " ")
     .trim()
-    .slice(0, 500);
+    .slice(0, MAX_CLOUD_TTS_CHARS);
   if (!clean) {
     throw new Error("empty text");
   }
