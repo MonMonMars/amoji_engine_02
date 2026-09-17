@@ -8,9 +8,9 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji · Companion</title>
     <script>
-      window.__amojiBuild = "2026-09-17-v144-all-issues";
+      window.__amojiBuild = "2026-09-17-v145-live-repeat";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-17-v144-all-issues"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-17-v145-live-repeat"></script>
     <link
       rel="prefetch"
       href="/prototypes/assets/companion-char-nova.png"
@@ -315,7 +315,7 @@
       media="print"
       onload="this.media='all'"
     />
-    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-17-v144-all-issues" />
+    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-17-v145-live-repeat" />
     <noscript>
       <link
         href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap"
@@ -2982,19 +2982,19 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-17-v144-all-issues",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-17-v145-live-repeat",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-17-v144-all-issues",
-          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-17-v144-all-issues"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-17-v145-live-repeat",
+          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-17-v145-live-repeat"
         }
       }
     </script>
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v144-all-issues"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v145-live-repeat"
     />
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-17-v144-all-issues"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v144-all-issues"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-17-v145-live-repeat"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v145-live-repeat"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;
@@ -3930,7 +3930,7 @@
       const applyBootChitchatPerformance = (replyText, userText = lastUserMessage) => {
         const content = resolveTurnPerformance(userText, replyText, null);
         lastAvatarPerformance = content;
-        const emotion = content.emotion || "happy";
+        const emotion = content.emotion || "neutral";
         currentEmotion = emotion;
         avatar.setEmotion?.(emotion);
         setEmotionPill(emotion);
@@ -4545,11 +4545,8 @@
               avatarKind === "gltf3d" ||
               avatarKind === "webgl3d"
             ) {
-              avatar?.playAction?.("wave", {
-                emotion: currentEmotion || "happy",
-                loop: false,
-                single: true,
-              });
+              avatar?.stopAction?.();
+              avatar?.setEmotion?.("neutral");
             }
             stopIdlePerformance();
             scheduleIdlePerformance();
@@ -5710,6 +5707,10 @@
         armBargeIn();
         void voice.speak(line, "happy").finally(() => {
           disarmBargeIn();
+          if (!busy) {
+            avatar.setEmotion?.("neutral");
+            setEmotionPill("neutral");
+          }
           if (!busy && !voice.micOn) status.idle();
         });
       };
@@ -5889,7 +5890,7 @@
             const rawReply = buildBootChitchatReply(cleaned, { isEnglish });
             const content = applyBootChitchatPerformance(rawReply, cleaned);
             await applyConversationUi(cleaned, rawReply);
-            const emotion = content.emotion || "happy";
+            const emotion = content.emotion || "neutral";
             const finalReply = stripReplyTags(rawReply);
             assistantBubble.textContent = finalReply;
             attachMessageActions(assistantRow, assistantBubble, "assistant", finalReply);
@@ -5968,13 +5969,13 @@
           await applyConversationUi(cleaned, result.raw || reply);
           let content = applyReplyPerformance(
             result.raw || reply,
-            result.emotion || "happy",
+            result.emotion || null,
             cleaned,
           );
           if (content.action === "none") {
             content = { ...content, action: null };
           }
-          const emotion = content.emotion || "happy";
+          const emotion = content.emotion || "neutral";
           speakContent = content;
           speakEmotion = emotion;
           assistantBubble.classList.remove("thinking", "typing");
@@ -6023,10 +6024,12 @@
             input.placeholder = phaseAEnabled
               ? "Listening… speak anytime to barge in"
               : "Listening… speak, pause → she replies, then listens again";
-            setEmotionPill(avatar.emotion || speakEmotion || "happy");
+            setEmotionPill(avatar.emotion || speakEmotion || "neutral");
             status.listening();
           } else {
             avatar.setListening?.(false);
+            avatar.setEmotion?.("neutral");
+            setEmotionPill("neutral");
             status.idle();
             input.focus();
           }
@@ -6122,6 +6125,8 @@
           if (!busy && !voice.micOn) status.idle();
           syncListenPose();
           disarmBargeIn();
+          avatar.setEmotion?.("neutral");
+          setEmotionPill("neutral");
           scheduleIdlePerformance();
           return spoke;
         });

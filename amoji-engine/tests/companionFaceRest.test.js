@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   applyBlinkWeight,
+  applyRestEyeOpen,
+  applyRestEyeOpenMorphs,
   blinkPulseFinished,
   blinkWeightFromPhase,
   clampRestFaceBlend,
@@ -200,5 +202,30 @@ describe("companionFaceRest", () => {
     expect(expr.values.lookDown).toBe(0);
     expect(expr.values.lookUp).toBe(0);
     expect(guardLookAtLids(vrm)).toBe(true);
+  });
+
+  it("drives dedicated eye-open morphs at rest", () => {
+    const expr = mockExpr({
+      blink: {},
+      Fcl_EYE_Open: {},
+      eyeOpen: {},
+    });
+    expect(applyRestEyeOpen(expr, 0.4)).toBe(2);
+    expect(expr.values.eyeOpen).toBeCloseTo(0.4);
+    expect(expr.values.Fcl_EYE_Open).toBeCloseTo(0.4);
+    expect(expr.values.blink ?? 0).toBe(0);
+
+    const mesh = {
+      morphTargetDictionary: {
+        eyeOpen: 0,
+        blink: 1,
+        brow: 2,
+      },
+      morphTargetInfluences: [0, 0, 0],
+    };
+    const root = { traverse: (fn) => fn(mesh) };
+    expect(applyRestEyeOpenMorphs(root, 0.5)).toBe(1);
+    expect(mesh.morphTargetInfluences[0]).toBeCloseTo(0.5);
+    expect(mesh.morphTargetInfluences[1]).toBe(0);
   });
 });
