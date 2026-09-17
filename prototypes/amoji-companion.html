@@ -8,9 +8,9 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji · Companion</title>
     <script>
-      window.__amojiBuild = "2026-09-17-v176-lipsync-stream";
+      window.__amojiBuild = "2026-09-17-v177-chat-text-layer";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-17-v176-lipsync-stream"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-17-v177-chat-text-layer"></script>
     <link
       rel="prefetch"
       href="/prototypes/assets/companion-char-nova.png"
@@ -217,13 +217,14 @@
         right: 0;
         bottom: 0;
         top: auto;
+        z-index: 10050;
         display: flex;
         flex-direction: column;
         pointer-events: none;
       }
       .chat-column {
         position: relative;
-        z-index: 10050;
+        z-index: 1;
         flex: 1;
         min-height: 0;
         display: flex;
@@ -233,7 +234,7 @@
       }
       .transcript {
         position: relative;
-        z-index: 10050;
+        z-index: 2;
         flex: 1;
         min-height: 0;
         overflow-y: auto;
@@ -243,7 +244,7 @@
       .composer-wrap {
         position: relative;
         flex-shrink: 0;
-        z-index: 12;
+        z-index: 3;
         padding: 0 1rem max(1rem, env(safe-area-inset-bottom));
         pointer-events: auto;
         touch-action: manipulation;
@@ -323,7 +324,7 @@
       media="print"
       onload="this.media='all'"
     />
-    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-17-v176-lipsync-stream" />
+    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-17-v177-chat-text-layer" />
     <noscript>
       <link
         href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap"
@@ -713,6 +714,7 @@
         right: 0;
         bottom: 0;
         top: auto;
+        z-index: 10050;
         display: flex;
         flex-direction: column;
         justify-content: flex-end;
@@ -730,7 +732,7 @@
 
       .chat-column {
         position: relative;
-        z-index: 10050;
+        z-index: 1;
         flex: 0 0 auto;
         display: flex;
         flex-direction: column;
@@ -744,7 +746,7 @@
 
       .transcript {
         position: relative;
-        z-index: 10050;
+        z-index: 2;
         pointer-events: auto;
         flex: 0 1 auto;
         max-height: min(36vh, 300px);
@@ -998,7 +1000,7 @@
         pointer-events: auto;
         padding: 0 1rem max(0.75rem, env(safe-area-inset-bottom));
         background: linear-gradient(180deg, transparent, rgba(5, 7, 12, 0.94) 35%);
-        z-index: 12;
+        z-index: 3;
         touch-action: manipulation;
       }
 
@@ -3594,19 +3596,19 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-17-v176-lipsync-stream",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-17-v177-chat-text-layer",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-17-v176-lipsync-stream",
-          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-17-v176-lipsync-stream"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-17-v177-chat-text-layer",
+          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-17-v177-chat-text-layer"
         }
       }
     </script>
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v176-lipsync-stream"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v177-chat-text-layer"
     />
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-17-v176-lipsync-stream"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v176-lipsync-stream"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-17-v177-chat-text-layer"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v177-chat-text-layer"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;

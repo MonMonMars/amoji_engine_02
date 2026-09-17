@@ -73,7 +73,8 @@ describe("companionOrbitControls", () => {
     expect(html).toContain("createEmptyAreaCameraReset");
     expect(html).toContain("double-click empty space to reset");
     expect(html).not.toMatch(/\.chat-shell\s*\{[^}]*z-index:\s*6;/);
-    expect(html).toMatch(/\.composer-wrap\s*\{[^}]*z-index:\s*12;/);
+    expect(html).toMatch(/\.chat-shell\s*\{[^}]*z-index:\s*10050;/);
+    expect(html).toMatch(/\.composer-wrap\s*\{[^}]*z-index:\s*3;/);
   });
 
   it("pauses auto-camera when OrbitControls starts a drag", () => {

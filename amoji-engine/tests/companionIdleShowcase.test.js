@@ -58,8 +58,9 @@ describe("idle showcase wiring", () => {
   it("keeps conversation captions on the top chrome layer", () => {
     expect(html).not.toMatch(/\.chat-shell\s*\{[^}]*z-index:\s*90/);
     expect(html).not.toMatch(/\.chat-shell\s*\{[^}]*isolation:\s*isolate/);
-    expect(html).toMatch(/\.chat-column \{[\s\S]*?z-index:\s*10050/);
-    expect(html).toMatch(/\.transcript \{[\s\S]*?z-index:\s*10050/);
+    expect(html).toMatch(/\.chat-shell \{[\s\S]*?z-index:\s*10050/);
+    expect(html).toMatch(/\.chat-column \{[\s\S]*?z-index:\s*1/);
+    expect(html).toMatch(/\.transcript \{[\s\S]*?z-index:\s*2/);
     expect(html).toMatch(
       /body\.conversation-ui \.transcript \.msg-row \{[\s\S]*?z-index:\s*10051/,
     );
@@ -76,7 +77,8 @@ describe("idle showcase wiring", () => {
     expect(html).toMatch(/const host = document\.querySelector\("\.stage"\) \|\| document\.body/);
     expect(grokCss).not.toMatch(/\.theme-grok-ani \.chat-shell\s*\{[^}]*z-index:\s*90/);
     expect(grokCss).not.toMatch(/\.theme-grok-ani \.chat-shell\s*\{[^}]*isolation:\s*isolate/);
-    expect(grokCss).toMatch(/\.theme-grok-ani \.chat-column,[\s\S]*?z-index:\s*10050/);
+    expect(grokCss).toMatch(/\.theme-grok-ani \.chat-shell \{[\s\S]*?z-index:\s*10050/);
+    expect(grokCss).toMatch(/\.theme-grok-ani \.transcript \{[\s\S]*?z-index:\s*2/);
     expect(grokCss).toMatch(/\.theme-grok-ani \.msg-row\s*\{[\s\S]*?z-index:\s*10051/);
     expect(grokCss).toMatch(/\.theme-grok-ani \.companion-toast \{[\s\S]*?z-index:\s*70/);
   });
