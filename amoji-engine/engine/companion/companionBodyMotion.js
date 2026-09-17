@@ -66,6 +66,7 @@ export const COMPANION_BODY_SCHEMA = "amoji.companionBody.v1";
  */
 export function createCompanionBodyMotion(humanoid, opts = {}) {
   let armRestRotations = opts.armRestRotations || VRM_ARM_REST_ROTATIONS;
+  let legRestRotations = opts.legRestRotations || VRM_LEG_REST_ROTATIONS;
   let emotion = "neutral";
   let nuance = "none";
   let thinking = false;
@@ -386,6 +387,11 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
   const applyBoneRotation = (name, rot) => {
     const b = bone(name);
     if (!b || !rot) return;
+    if (typeof b.rotation.set === "function") {
+      b.rotation.order = "XYZ";
+      b.rotation.set(rot.x ?? 0, rot.y ?? 0, rot.z ?? 0);
+      return;
+    }
     b.rotation.x = rot.x ?? 0;
     b.rotation.y = rot.y ?? 0;
     b.rotation.z = rot.z ?? 0;
@@ -409,20 +415,20 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
     const restLl = armRestRotations.leftLowerArm;
     const restRl = armRestRotations.rightLowerArm;
     const liftCap = opts.boot ? 0.4 : 0.34;
-    const foreCap = opts.boot ? 0.58 : 0.52;
-    const liftL = Math.min(liftCap, Math.max(0.08, safe.armLiftL ?? REST_POSE.armLiftL) * k);
-    const liftR = Math.min(liftCap, Math.max(0.05, safe.armLiftR ?? REST_POSE.armLiftR) * k);
-    const foreL = Math.min(foreCap, Math.max(0.18, safe.forearmL ?? REST_POSE.forearmL) * k);
-    const foreR = Math.min(foreCap, Math.max(0.14, safe.forearmR ?? REST_POSE.forearmR) * k);
+    const foreCap = opts.boot ? 0.7 : 0.62;
+    const liftL = Math.min(liftCap, Math.max(0.12, safe.armLiftL ?? REST_POSE.armLiftL) * k);
+    const liftR = Math.min(liftCap, Math.max(0.08, safe.armLiftR ?? REST_POSE.armLiftR) * k);
+    const foreL = Math.min(foreCap, Math.max(0.32, safe.forearmL ?? REST_POSE.forearmL) * k);
+    const foreR = Math.min(foreCap, Math.max(0.26, safe.forearmR ?? REST_POSE.forearmR) * k);
     applyBoneRotation("leftUpperArm", {
-      x: restL.x + liftL * 0.4,
-      y: restL.y,
-      z: restL.z + liftL * 0.55,
+      x: restL.x + liftL * 0.55,
+      y: restL.y + 0.06 * k,
+      z: restL.z + liftL * 0.4,
     });
     applyBoneRotation("rightUpperArm", {
-      x: restR.x + liftR * 0.4,
-      y: restR.y,
-      z: restR.z - liftR * 0.55,
+      x: restR.x + liftR * 0.55,
+      y: restR.y - 0.05 * k,
+      z: restR.z - liftR * 0.4,
     });
     applyBoneRotation("leftLowerArm", withElbowBend(restLl, foreL));
     applyBoneRotation("rightLowerArm", withElbowBend(restRl, foreR));
@@ -501,10 +507,10 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
   };
 
   const applyLegPose = (pose, k) => {
-    const restUL = VRM_LEG_REST_ROTATIONS.leftUpperLeg;
-    const restUR = VRM_LEG_REST_ROTATIONS.rightUpperLeg;
-    const restLL = VRM_LEG_REST_ROTATIONS.leftLowerLeg;
-    const restLR = VRM_LEG_REST_ROTATIONS.rightLowerLeg;
+    const restUL = legRestRotations.leftUpperLeg;
+    const restUR = legRestRotations.rightUpperLeg;
+    const restLL = legRestRotations.leftLowerLeg;
+    const restLR = legRestRotations.rightLowerLeg;
     const upperL = Math.min(0.72, (pose.upperLegL ?? REST_POSE.upperLegL ?? 0) * k);
     const upperR = Math.min(0.72, (pose.upperLegR ?? REST_POSE.upperLegR ?? 0) * k);
     const lowerL = Math.min(0.78, (pose.lowerLegL ?? REST_POSE.lowerLegL ?? 0) * k);
@@ -519,16 +525,8 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
       y: restUR.y,
       z: restUR.z - (pose.hipZ ?? 0) * 0.08 * k,
     });
-    applyBoneRotation("leftLowerLeg", {
-      x: restLL.x + lowerL,
-      y: restLL.y,
-      z: restLL.z,
-    });
-    applyBoneRotation("rightLowerLeg", {
-      x: restLR.x + lowerR,
-      y: restLR.y,
-      z: restLR.z,
-    });
+    applyBoneRotation("leftLowerLeg", withElbowBend(restLL, lowerL));
+    applyBoneRotation("rightLowerLeg", withElbowBend(restLR, lowerR));
   };
 
   const applyHandAndFootRest = (pose = REST_POSE, k = 1) => {
@@ -587,6 +585,7 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
     }
     applyLegPose(pose, k);
     applyHandAndFootRest(pose, k);
+    humanoid.update?.();
   };
 
   const update = (dt, opts = {}) => {
@@ -855,8 +854,16 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
       armRestRotations = next;
       return armRestRotations;
     },
+    setLegRestRotations(next) {
+      if (!next) return legRestRotations;
+      legRestRotations = next;
+      return legRestRotations;
+    },
     get armRestRotations() {
       return armRestRotations;
+    },
+    get legRestRotations() {
+      return legRestRotations;
     },
   };
 }
