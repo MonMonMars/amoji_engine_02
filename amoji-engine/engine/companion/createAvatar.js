@@ -82,6 +82,7 @@ function withLoadTimeout(promise, ms, label = "avatar") {
  * Default: VRM anime girl → GLTF fallback → procedural → 2D.
  * @param {{
  *   canvas: HTMLCanvasElement,
+ *   controlsElement?: HTMLElement | null,
  *   color?: string,
  *   modelUrl?: string,
  *   prefer?: 'vrm'|'gltf'|'auto',
@@ -99,6 +100,7 @@ export async function createCompanionAvatar(opts) {
   const prefer = opts.prefer || "vrm";
   const modelUrl = opts.modelUrl || undefined;
   let canvas = opts.canvas;
+  const controlsElement = opts.controlsElement || null;
   const wantsGltf = prefer === "gltf";
   const wantsVrm =
     prefer === "vrm" ||
@@ -114,6 +116,7 @@ export async function createCompanionAvatar(opts) {
       const avatar = await withLoadTimeout(
         createVrmAvatar({
           canvas,
+          controlsElement,
           modelUrl: modelUrl || "/prototypes/assets/companion-girl.vrm",
           onCharacterTap: opts.onCharacterTap,
           onProgress: (ratio, label) => {
@@ -141,6 +144,7 @@ export async function createCompanionAvatar(opts) {
       const avatar = await withLoadTimeout(
         createGltfAvatar({
           canvas,
+          controlsElement,
           modelUrl:
             modelUrl && /\.glb($|\?)/i.test(modelUrl)
               ? modelUrl

@@ -23,6 +23,12 @@ import {
   isHeadFacingCamera,
   portraitDistanceForHeight,
 } from "./companionPortraitFraming.js";
+import {
+  bindOrbitControlSession,
+  bindOrbitTouchGuard,
+  configureCompanionOrbitControls,
+  resolveOrbitDomElement,
+} from "./companionOrbitControls.js";
 import { actionLoops } from "./companionActionMotion.js";
 import { detectVrmIdleRestRotations } from "./companionArmRestCalibration.js";
 import { createCompanionBodyMotion } from "./companionBodyMotion.js";
@@ -123,6 +129,7 @@ function frameFaceCamera({
 /**
  * @param {{
  *   canvas: HTMLCanvasElement,
+ *   controlsElement?: HTMLElement | null,
  *   modelUrl?: string,
  *   onCharacterTap?: (info: { point: import('three').Vector3 }) => void,
  *   onProgress?: (ratio: number, label?: string) => void,
@@ -130,6 +137,10 @@ function frameFaceCamera({
  */
 export async function createVrmAvatar(opts) {
   const canvas = opts.canvas;
+  const orbitElement = resolveOrbitDomElement({
+    canvas,
+    controlsElement: opts.controlsElement,
+  });
   const modelUrl = opts.modelUrl || "/prototypes/assets/companion-girl.vrm";
 
   let renderer;
@@ -192,25 +203,10 @@ export async function createVrmAvatar(opts) {
   ground.receiveShadow = true;
   scene.add(ground);
 
-  const controls = new OrbitControls(camera, canvas);
-  controls.enableDamping = true;
-  controls.dampingFactor = 0.08;
-  controls.minDistance = 1.1;
-  controls.maxDistance = 4.2;
-  applyUserOrbitLimits(controls);
+  const controls = new OrbitControls(camera, orbitElement || canvas);
+  configureCompanionOrbitControls(controls);
   controls.target.set(0, 1.15, 0);
   controls.update();
-  controls.mouseButtons = {
-    LEFT: THREE.MOUSE.ROTATE,
-    MIDDLE: THREE.MOUSE.DOLLY,
-    RIGHT: THREE.MOUSE.ROTATE,
-  };
-  controls.rotateSpeed = 1.35;
-  controls.zoomSpeed = 1.15;
-  controls.touches = {
-    ONE: THREE.TOUCH.ROTATE,
-    TWO: THREE.TOUCH.DOLLY,
-  };
 
   const loader = new GLTFLoader();
   loader.register((parser) => new VRMLoaderPlugin(parser));
@@ -821,8 +817,12 @@ export async function createVrmAvatar(opts) {
 
       cameraDirector.setCurrentAction(activeMotion);
       const camState = cameraDirector.update(dt);
+      applyUserOrbitLimits(controls);
+      controls.enabled = true;
       const userOwnsCamera =
-        camState.userOrbiting || camState.userFramingHeld;
+        Boolean(pointerDown) ||
+        camState.userOrbiting ||
+        camState.userFramingHeld;
       if (!userOwnsCamera && camState.autoActive) {
         const desired = applyAutoCameraFrame(
           controls,
@@ -902,22 +902,33 @@ export async function createVrmAvatar(opts) {
   };
 
   canvas.style.touchAction = "none";
-  canvas.style.userSelect = "none";
-  canvas.style.webkitUserSelect = "none";
-  canvas.style.cursor = "grab";
-  canvas.addEventListener("pointerdown", (e) => {
+  const orbitSurface = orbitElement || canvas;
+  orbitSurface.style.touchAction = "none";
+  orbitSurface.style.userSelect = "none";
+  orbitSurface.style.webkitUserSelect = "none";
+  orbitSurface.style.cursor = "grab";
+  const unbindOrbitGuard = bindOrbitTouchGuard(orbitSurface);
+  const unbindOrbitSession = bindOrbitControlSession(
+    controls,
+    () => {
+      cameraDirector.setUserOrbiting(true);
+    },
+    () => {
+      cameraDirector.holdUserFraming(true);
+    },
+  );
+  orbitSurface.addEventListener("pointerdown", (e) => {
     if (e.button !== 0 && e.pointerType === "mouse") return;
     pointerDown = { x: e.clientX, y: e.clientY };
     cameraDirector.setUserOrbiting(true);
-    canvas.style.cursor = "grabbing";
+    orbitSurface.style.cursor = "grabbing";
   });
-  canvas.addEventListener("pointercancel", () => {
-    canvas.style.cursor = "grab";
-    cameraDirector.setUserOrbiting(false);
+  orbitSurface.addEventListener("pointercancel", () => {
+    orbitSurface.style.cursor = "grab";
     pointerDown = null;
   });
-  canvas.addEventListener("pointerup", (e) => {
-    canvas.style.cursor = "grab";
+  orbitSurface.addEventListener("pointerup", (e) => {
+    orbitSurface.style.cursor = "grab";
     if (!pointerDown) return;
     const dx = e.clientX - pointerDown.x;
     const dy = e.clientY - pointerDown.y;
@@ -931,18 +942,18 @@ export async function createVrmAvatar(opts) {
     const hits = raycaster.intersectObject(model, true);
     if (!hits.length) return;
 
-    canvas.style.cursor = "pointer";
+    orbitSurface.style.cursor = "pointer";
     reactToTap();
     opts.onCharacterTap?.({ point: hits[0].point });
   });
-  canvas.addEventListener("pointermove", (e) => {
+  orbitSurface.addEventListener("pointermove", (e) => {
     if (pointerDown) return;
     const rect = canvas.getBoundingClientRect();
     pointer.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
     pointer.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
     raycaster.setFromCamera(pointer, camera);
     const hits = raycaster.intersectObject(model, true);
-    canvas.style.cursor = hits.length ? "pointer" : "grab";
+    orbitSurface.style.cursor = hits.length ? "pointer" : "grab";
   });
 
   const setOutfitPreset = (outfitId) => {
@@ -991,6 +1002,8 @@ export async function createVrmAvatar(opts) {
     dispose() {
       cancelAnimationFrame(raf);
       globalThis.removeEventListener?.("resize", resize);
+      unbindOrbitGuard();
+      unbindOrbitSession();
       controls.dispose();
       vrm.dispose?.();
       renderer.dispose();

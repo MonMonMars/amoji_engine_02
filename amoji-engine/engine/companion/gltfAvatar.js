@@ -25,6 +25,12 @@ import {
   isHeadFacingCamera,
   portraitDistanceForHeight,
 } from "./companionPortraitFraming.js";
+import {
+  bindOrbitControlSession,
+  bindOrbitTouchGuard,
+  configureCompanionOrbitControls,
+  resolveOrbitDomElement,
+} from "./companionOrbitControls.js";
 import { sampleIdleBodyMotion } from "./companionIdleMotion.js";
 
 export const GLTF_AVATAR_SCHEMA = "amoji.gltfAvatar.v1";
@@ -50,12 +56,17 @@ const EMOTION_BODY = {
 /**
  * @param {{
  *   canvas: HTMLCanvasElement,
+ *   controlsElement?: HTMLElement | null,
  *   modelUrl?: string,
  *   onProgress?: (ratio: number, label?: string) => void,
  * }} opts
  */
 export async function createGltfAvatar(opts) {
   const canvas = opts.canvas;
+  const orbitElement = resolveOrbitDomElement({
+    canvas,
+    controlsElement: opts.controlsElement,
+  });
   const modelUrl = opts.modelUrl || "/prototypes/assets/companion-girl.glb";
 
   let renderer;
@@ -117,26 +128,10 @@ export async function createGltfAvatar(opts) {
   ground.receiveShadow = true;
   scene.add(ground);
 
-  const controls = new OrbitControls(camera, canvas);
-  controls.enableDamping = true;
-  controls.dampingFactor = 0.08;
-  controls.minDistance = 1.1;
-  controls.maxDistance = 4.2;
-  applyUserOrbitLimits(controls);
+  const controls = new OrbitControls(camera, orbitElement || canvas);
+  configureCompanionOrbitControls(controls);
   controls.target.set(0, 1.15, 0);
   controls.update();
-  // Unreal-like: left drag orbit, wheel zoom
-  controls.mouseButtons = {
-    LEFT: THREE.MOUSE.ROTATE,
-    MIDDLE: THREE.MOUSE.DOLLY,
-    RIGHT: THREE.MOUSE.ROTATE,
-  };
-  controls.touches = {
-    ONE: THREE.TOUCH.ROTATE,
-    TWO: THREE.TOUCH.DOLLY,
-  };
-  controls.rotateSpeed = 1.35;
-  controls.zoomSpeed = 1.15;
 
   const loader = new GLTFLoader();
   const preload =
@@ -502,6 +497,8 @@ export async function createGltfAvatar(opts) {
     if (!orbitPointerDown) {
       applyOrbitFollowAnchor(controls, camera, smoothedFrameAnchor);
     }
+    applyUserOrbitLimits(controls);
+    controls.enabled = true;
     controls.update();
 
     faceLight.intensity = 0.55 + (talking ? 0.2 : 0) + Math.sin((now - t0) * 0.002) * 0.05;
@@ -514,22 +511,31 @@ export async function createGltfAvatar(opts) {
   raf = requestAnimationFrame(frame);
   globalThis.addEventListener?.("resize", resize);
 
-  // Prevent page scroll while orbiting on canvas
-  canvas.style.touchAction = "none";
-  canvas.style.userSelect = "none";
-  canvas.style.webkitUserSelect = "none";
-  canvas.style.cursor = "grab";
-  canvas.addEventListener("pointerdown", () => {
+  const orbitSurface = orbitElement || canvas;
+  orbitSurface.style.touchAction = "none";
+  orbitSurface.style.userSelect = "none";
+  orbitSurface.style.webkitUserSelect = "none";
+  orbitSurface.style.cursor = "grab";
+  const unbindOrbitGuard = bindOrbitTouchGuard(orbitSurface);
+  const unbindOrbitSession = bindOrbitControlSession(
+    controls,
+    () => {
+      orbitPointerDown = true;
+    },
+    () => {
+      orbitPointerDown = false;
+    },
+  );
+  orbitSurface.addEventListener("pointerdown", () => {
     orbitPointerDown = true;
-    canvas.style.cursor = "grabbing";
+    orbitSurface.style.cursor = "grabbing";
   });
-  canvas.addEventListener("pointerup", () => {
+  orbitSurface.addEventListener("pointerup", () => {
     orbitPointerDown = false;
-    canvas.style.cursor = "grab";
+    orbitSurface.style.cursor = "grab";
   });
-  canvas.addEventListener("pointercancel", () => {
-    orbitPointerDown = false;
-    canvas.style.cursor = "grab";
+  orbitSurface.addEventListener("pointercancel", () => {
+    orbitSurface.style.cursor = "grab";
   });
 
   return {
@@ -556,6 +562,8 @@ export async function createGltfAvatar(opts) {
     dispose() {
       cancelAnimationFrame(raf);
       globalThis.removeEventListener?.("resize", resize);
+      unbindOrbitGuard();
+      unbindOrbitSession();
       controls.dispose();
       renderer.dispose();
       renderer.forceContextLoss?.();
