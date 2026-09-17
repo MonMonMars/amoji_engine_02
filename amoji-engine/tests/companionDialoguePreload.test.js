@@ -11,8 +11,11 @@ describe("companionDialoguePreload", () => {
     const en = collectWaitDialoguePhrases(true, 2);
     expect(yue.length).toBeGreaterThan(8);
     expect(en.length).toBeGreaterThan(8);
-    expect(yue.some((p) => p.includes("載入"))).toBe(true);
-    expect(en.some((p) => /loading|waking/i.test(p))).toBe(true);
+    expect(yue.some((p) => p.includes("嗯"))).toBe(true);
+    expect(en.some((p) => /um|amm|hmm/i.test(p))).toBe(true);
+    expect(en.some((p) => /taking longer|still loading|hang on/i.test(p))).toBe(
+      true,
+    );
   });
 
   it("builds stable cache keys", () => {

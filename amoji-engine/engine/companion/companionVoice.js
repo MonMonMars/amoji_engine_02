@@ -13,9 +13,18 @@ import {
   getCachedDialogueTts,
 } from "./companionDialoguePreload.js";
 import {
+  isLearnThinkingSound,
+  isLoadingLearnPhase,
+  isLoadingWaitKind,
+  LEARN_SPEAK_DELAY_MS,
+  LEARN_SPEAK_INTERVAL_MS,
+  LEARN_SPEAK_POLL_MS,
+  LEARN_SPEAK_WORDS_INTERVAL_MS,
   learnPhaseForProgress,
   pickLearnPhrase,
   pickNextLearnPhrase,
+  shouldSpeakLearnFill,
+  shouldUseLearnWords,
 } from "./companionLearnDialogue.js";
 import { isIosLike, shouldPauseMicDuringTts } from "./companionPlatform.js";
 import {
@@ -415,6 +424,11 @@ export function createCompanionVoice(opts = {}) {
   let learnPhase = "learning";
   let learnProgress = 0;
   let learnAnnouncedPct = -1;
+  let learnKind = "";
+  let learnSpokenCount = 0;
+  let learnLoopStartedAt = 0;
+  let learnLastSpeakAt = 0;
+  let learnSpeakInFlight = false;
   /** @type {ReturnType<typeof setTimeout> | null} */
   let learnLoopTimer = null;
 
@@ -1226,8 +1240,9 @@ export function createCompanionVoice(opts = {}) {
     phase = learnPhase,
     progress = learnProgress,
     phrase: forcedPhrase,
+    useWords = false,
   } = {}) => {
-    const ctx = { pct: Math.round(progress * 100) };
+    const ctx = { pct: Math.round(progress * 100), useWords };
     const picked = forcedPhrase
       ? { phrase: forcedPhrase, index: learnPhraseIndex }
       : pickNextLearnPhrase(phase, isEnglish, learnPhraseIndex, ctx);
@@ -1243,6 +1258,9 @@ export function createCompanionVoice(opts = {}) {
     const preset = cloudVoicePreset();
     const lang = isEnglish ? "en-US" : preset.lang || "zh-HK";
     const voiceName = preset.name;
+    const wordMode = Boolean(useWords) && !isLearnThinkingSound(phrase);
+    const learnEmotion = phase === "failed" ? "sad" : wordMode ? "happy" : "thinking";
+    const learnEnergy = phase === "failed" ? 0.4 : wordMode ? 0.44 : 0.32;
 
     const playLearnBlob = async (blob) => {
       if (!blob?.size || !learnActive) return false;
@@ -1272,17 +1290,17 @@ export function createCompanionVoice(opts = {}) {
     if (opts.cloudTtsUrl) {
       try {
         const learnProsody = resolveSpeakProsody(phrase, {
-          emotion: phase === "failed" ? "sad" : "happy",
-          nuance: phase === "progress" ? "excited" : "curious",
-          talkStyle: phase === "progress" ? "celebrate" : "soft",
-          speechEnergy: phase === "progress" ? 0.62 : 0.45,
+          emotion: learnEmotion,
+          nuance: phase === "failed" ? "none" : "curious",
+          talkStyle: "soft",
+          speechEnergy: learnEnergy,
         }, lang);
         const res = await fetch(opts.cloudTtsUrl, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             text: phrase,
-            emotion: phase === "failed" ? "sad" : "thinking",
+            emotion: learnEmotion,
             nuance: learnProsody.nuance,
             talkStyle: learnProsody.talkStyle,
             speechEnergy: learnProsody.speechEnergy,
@@ -1307,10 +1325,10 @@ export function createCompanionVoice(opts = {}) {
     }
 
     const prosody = resolveSpeakProsody(phrase, {
-      emotion: phase === "failed" ? "sad" : "thinking",
-      nuance: phase === "progress" ? "excited" : "curious",
-      talkStyle: phase === "progress" ? "celebrate" : "soft",
-      speechEnergy: phase === "progress" ? 0.62 : 0.45,
+      emotion: learnEmotion,
+      nuance: phase === "failed" ? "none" : "curious",
+      talkStyle: "soft",
+      speechEnergy: phase === "failed" ? 0.4 : wordMode ? 0.4 : 0.28,
     }, lang).browser;
     const utter = new SpeechSynthesisUtterance(phrase);
     if (voice && !voice.cloud) utter.voice = voice;
@@ -1327,10 +1345,58 @@ export function createCompanionVoice(opts = {}) {
       } catch {
         resolve();
       }
-      setTimeout(resolve, 2400);
+      setTimeout(resolve, wordMode ? 5600 : 2400);
     });
 
     return { ok: true, phrase, phase };
+  };
+
+  const resolveLearnSpeakPhase = () => {
+    if (learnPhase === "failed" || learnPhase === "idle") return learnPhase;
+    if (isLoadingWaitKind(learnKind) || isLoadingLearnPhase(learnPhase)) {
+      return learnPhaseForProgress(learnProgress) || learnPhase;
+    }
+    return learnPhase;
+  };
+
+  const tryLearnSpeak = async () => {
+    if (!learnLoopActive || learnSpeakInFlight) return false;
+    const elapsedMs = Date.now() - learnLoopStartedAt;
+    const sinceLastSpeakMs = learnLastSpeakAt
+      ? Date.now() - learnLastSpeakAt
+      : Number.POSITIVE_INFINITY;
+    const activePhase = resolveLearnSpeakPhase();
+    if (
+      !shouldSpeakLearnFill({
+        elapsedMs,
+        progress: learnProgress,
+        spokenCount: learnSpokenCount,
+        phase: activePhase,
+        kind: learnKind,
+        sinceLastSpeakMs,
+      })
+    ) {
+      return false;
+    }
+    learnSpeakInFlight = true;
+    try {
+      await speakLearn({
+        isEnglish: learnLoopIsEnglish,
+        phase: activePhase,
+        progress: learnProgress,
+        useWords: shouldUseLearnWords({
+          elapsedMs,
+          phase: activePhase,
+          kind: learnKind,
+        }),
+      });
+      learnSpokenCount += 1;
+      learnLastSpeakAt = Date.now();
+      learnAnnouncedPct = Math.round(learnProgress * 100);
+      return true;
+    } finally {
+      learnSpeakInFlight = false;
+    }
   };
 
   const startLearnLoop = ({
@@ -1338,6 +1404,7 @@ export function createCompanionVoice(opts = {}) {
     phase = "learning",
     progress = 0,
     intervalMs = 2600,
+    kind = "",
   } = {}) => {
     stopThinkingLoop();
     stopLearnAudio();
@@ -1346,47 +1413,59 @@ export function createCompanionVoice(opts = {}) {
     learnActive = true;
     learnPhase = phase;
     learnProgress = progress;
+    learnKind = kind;
     learnAnnouncedPct = -1;
+    learnSpokenCount = 0;
+    learnLoopStartedAt = Date.now();
+    learnLastSpeakAt = 0;
+    learnSpeakInFlight = false;
     syncAssistantOutput();
+
+    const loading = isLoadingWaitKind(kind) || isLoadingLearnPhase(phase);
+    const delay = loading ? LEARN_SPEAK_DELAY_MS : 0;
 
     const tick = async () => {
       if (!learnLoopActive) return;
-      const activePhase = learnPhaseForProgress(learnProgress) || learnPhase;
-      await speakLearn({
-        isEnglish: learnLoopIsEnglish,
-        phase: activePhase,
-        progress: learnProgress,
+      const elapsedMs = Date.now() - learnLoopStartedAt;
+      const wordMode = shouldUseLearnWords({
+        elapsedMs,
+        phase: resolveLearnSpeakPhase(),
+        kind: learnKind,
       });
+      const spoke = await tryLearnSpeak();
       if (!learnLoopActive) return;
+      let interval = intervalMs;
+      if (loading) {
+        if (wordMode) {
+          interval =
+            intervalMs === 2600
+              ? LEARN_SPEAK_WORDS_INTERVAL_MS
+              : Math.max(intervalMs, LEARN_SPEAK_WORDS_INTERVAL_MS);
+        } else if (intervalMs === 2600) {
+          interval = LEARN_SPEAK_INTERVAL_MS;
+        }
+      }
+      const wait = spoke ? interval : LEARN_SPEAK_POLL_MS;
       learnLoopTimer = setTimeout(() => {
         void tick();
-      }, intervalMs);
+      }, wait);
     };
 
-    void tick();
+    if (delay > 0) {
+      learnLoopTimer = setTimeout(() => {
+        void tick();
+      }, delay);
+    } else {
+      void tick();
+    }
     return true;
   };
 
   const updateLearnLoop = ({ phase, progress } = {}) => {
     if (phase) learnPhase = phase;
     if (progress != null) learnProgress = progress;
-    const pct = Math.round(learnProgress * 100);
-    if (
-      learnLoopActive &&
-      pct >= 8 &&
-      pct - learnAnnouncedPct >= 15 &&
-      phase !== "failed"
-    ) {
-      learnAnnouncedPct = pct;
-      const activePhase =
-        phase === "progress"
-          ? "progress"
-          : learnPhaseForProgress(learnProgress) || learnPhase;
-      void speakLearn({
-        isEnglish: learnLoopIsEnglish,
-        phase: activePhase,
-        progress: learnProgress,
-      });
+    if (learnLoopActive && phase !== "failed") {
+      void tryLearnSpeak();
     }
     return { phase: learnPhase, progress: learnProgress };
   };
@@ -1394,6 +1473,7 @@ export function createCompanionVoice(opts = {}) {
   const stopLearnLoop = () => {
     learnLoopActive = false;
     learnActive = false;
+    learnSpeakInFlight = false;
     if (learnLoopTimer) {
       clearTimeout(learnLoopTimer);
       learnLoopTimer = null;

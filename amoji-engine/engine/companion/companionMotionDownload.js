@@ -175,9 +175,11 @@ export function createMotionDownloadClient(opts = {}) {
 
         if (!prefetched?.pack) {
           await simulateProgress(null, [
-            { phase: "connecting", delta: 0.12, delayMs: 120 },
-            { phase: "searching", delta: 0.18, delayMs: 140 },
-            { phase: "downloading", delta: 0.35, delayMs: 180 },
+            { phase: "connecting", delta: 0.06, delayMs: 80 },
+            { phase: "waking", delta: 0.08, delayMs: 80 },
+            { phase: "searching", delta: 0.1, delayMs: 90 },
+            { phase: "assembling", delta: 0.1, delayMs: 90 },
+            { phase: "downloading", delta: 0.31, delayMs: 140 },
           ]);
         } else {
           emit("downloading", 0.62);
@@ -196,9 +198,12 @@ export function createMotionDownloadClient(opts = {}) {
         }
 
         await simulateProgress(null, [
-          { phase: "learning", delta: 0.15, delayMs: 120 },
-          { phase: "installing", delta: 0.12, delayMs: 100 },
-          { phase: "ready", delta: 0.03, delayMs: 60 },
+          { phase: "warming", delta: 0.08, delayMs: 80 },
+          { phase: "learning", delta: 0.1, delayMs: 90 },
+          { phase: "installing", delta: 0.08, delayMs: 80 },
+          { phase: "settling", delta: 0.06, delayMs: 70 },
+          { phase: "almost", delta: 0.05, delayMs: 60 },
+          { phase: "ready", delta: 0.03, delayMs: 50 },
         ]);
 
         const ids = installPackMotions(pack, "basic");
@@ -240,9 +245,11 @@ export function createMotionDownloadClient(opts = {}) {
       emit("learning", 0.08, id);
       try {
         await simulateProgress(id, [
-          { phase: "connecting", delta: 0.1, delayMs: 100 },
-          { phase: "searching", delta: 0.12, delayMs: 120 },
-          { phase: "downloading", delta: 0.28, delayMs: 160 },
+          { phase: "connecting", delta: 0.06, delayMs: 70 },
+          { phase: "waking", delta: 0.06, delayMs: 70 },
+          { phase: "searching", delta: 0.08, delayMs: 80 },
+          { phase: "assembling", delta: 0.1, delayMs: 90 },
+          { phase: "downloading", delta: 0.2, delayMs: 120 },
         ]);
 
         const cloudDef = getCloudMotionDef(id);
@@ -276,9 +283,12 @@ export function createMotionDownloadClient(opts = {}) {
         }
 
         await simulateProgress(id, [
-          { phase: "learning", delta: 0.22, delayMs: 180 },
-          { phase: "installing", delta: 0.18, delayMs: 140 },
-          { phase: "ready", delta: 0.02, delayMs: 80 },
+          { phase: "warming", delta: 0.08, delayMs: 80 },
+          { phase: "learning", delta: 0.1, delayMs: 90 },
+          { phase: "installing", delta: 0.1, delayMs: 80 },
+          { phase: "settling", delta: 0.08, delayMs: 70 },
+          { phase: "almost", delta: 0.04, delayMs: 60 },
+          { phase: "ready", delta: 0.02, delayMs: 50 },
         ]);
 
         markMotionInstalled(id, state, { pack: packTier, tier: packTier });
