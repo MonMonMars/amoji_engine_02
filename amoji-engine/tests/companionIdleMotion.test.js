@@ -92,7 +92,8 @@ describe("companionIdleMotion", () => {
     expect(boot.forearmL).toBeGreaterThan(0.32);
     expect(boot.forearmR).toBeGreaterThan(0.28);
     expect(boot.armLiftL).toBeGreaterThan(0.12);
-    expect(boot.lowerLegR).toBeGreaterThan(0.2);
+    expect(boot.upperLegR).toBeLessThan(0.05);
+    expect(boot.lowerLegR).toBeLessThan(0.14);
   });
 
   it("samples a planted calm-breath idle without limb sway", () => {
@@ -101,8 +102,8 @@ describe("companionIdleMotion", () => {
     expect(a.leanY).toBe(0);
     expect(a.headZ).toBe(0);
     expect(a.forearmL).toBeGreaterThan(0.32);
-    expect(a.lowerLegR).toBeGreaterThan(0.16);
-    expect(a.lowerLegR).toBeLessThan(0.22);
+    expect(a.lowerLegR).toBeGreaterThan(0.08);
+    expect(a.lowerLegR).toBeLessThan(0.14);
     expect(a.spineX).not.toBe(b.spineX);
   });
 
@@ -111,14 +112,15 @@ describe("companionIdleMotion", () => {
     expect(Math.abs(idle.leanY) + Math.abs(idle.headZ)).toBeGreaterThan(0.08);
     expect(idle.armLiftL).toBeGreaterThan(0.08);
     expect(idle.forearmL).toBeGreaterThan(0.3);
-    expect(idle.lowerLegR + idle.upperLegR).toBeGreaterThan(0.28);
+    expect(idle.upperLegR).toBeLessThan(0.05);
+    expect(idle.lowerLegR).toBeLessThan(0.14);
   });
 
   it("plants legs while the upper body breathes and looks around", () => {
     const a = samplePlantedAliveIdle(0.5);
     const b = samplePlantedAliveIdle(2.3);
-    expect(a.lowerLegR).toBeLessThan(0.22);
-    expect(a.upperLegR).toBeLessThan(0.08);
+    expect(a.lowerLegR).toBeLessThan(0.14);
+    expect(a.upperLegR).toBeLessThan(0.05);
     expect(a.forearmL).toBeGreaterThan(0.3);
     expect(a.armLiftL).toBeGreaterThan(0.08);
     expect(Math.abs(a.headZ) + Math.abs(a.leanY) + Math.abs(a.spineX)).toBeGreaterThan(0.02);

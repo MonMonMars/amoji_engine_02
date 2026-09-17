@@ -413,6 +413,7 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
   };
 
   const applyIdleArms = (pose, k, opts = {}) => {
+    const combHair = opts.combHair === true;
     const safe = clampIdleArmPose(pose);
     const restL = armRestRotations.leftUpperArm;
     const restR = armRestRotations.rightUpperArm;
@@ -424,18 +425,28 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
     const liftR = Math.min(liftCap, Math.max(0.08, safe.armLiftR ?? REST_POSE.armLiftR) * k);
     const foreL = Math.min(foreCap, Math.max(0.32, safe.forearmL ?? REST_POSE.forearmL) * k);
     const foreR = Math.min(foreCap, Math.max(0.26, safe.forearmR ?? REST_POSE.forearmR) * k);
+    // Hang at the sides: Z raises the arm, X pitches it forward like a Mixamo blend.
     applyBoneRotation("leftUpperArm", {
-      x: restL.x + liftL * 0.55,
-      y: restL.y + 0.06 * k,
-      z: restL.z + liftL * 0.4,
+      x: restL.x + liftL * 0.08,
+      y: restL.y + 0.03 * k,
+      z: restL.z + liftL * 0.55,
     });
-    applyBoneRotation("rightUpperArm", {
-      x: restR.x + liftR * 0.55,
-      y: restR.y - 0.05 * k,
-      z: restR.z - liftR * 0.4,
-    });
+    if (combHair) {
+      applyBoneRotation("rightUpperArm", {
+        x: restR.x + 0.42 * k,
+        y: restR.y - 0.28 * k,
+        z: restR.z - 0.92 * k,
+      });
+      applyBoneRotation("rightLowerArm", withElbowBend(restRl, 0.82 * k));
+    } else {
+      applyBoneRotation("rightUpperArm", {
+        x: restR.x + liftR * 0.08,
+        y: restR.y - 0.03 * k,
+        z: restR.z - liftR * 0.55,
+      });
+      applyBoneRotation("rightLowerArm", withElbowBend(restRl, foreR));
+    }
     applyBoneRotation("leftLowerArm", withElbowBend(restLl, foreL));
-    applyBoneRotation("rightLowerArm", withElbowBend(restRl, foreR));
   };
 
   const applyPointArms = (pose, k) => {
@@ -530,24 +541,27 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
     applyBoneRotation("rightLowerArm", withElbowBend(restRl, foreR));
   };
 
-  const applyLegPose = (pose, k) => {
+  const applyLegPose = (pose, k, opts = {}) => {
     const restUL = legRestRotations.leftUpperLeg;
     const restUR = legRestRotations.rightUpperLeg;
     const restLL = legRestRotations.leftLowerLeg;
     const restLR = legRestRotations.rightLowerLeg;
-    const upperL = Math.min(0.72, (pose.upperLegL ?? REST_POSE.upperLegL ?? 0) * k);
-    const upperR = Math.min(0.72, (pose.upperLegR ?? REST_POSE.upperLegR ?? 0) * k);
-    const lowerL = Math.min(0.78, (pose.lowerLegL ?? REST_POSE.lowerLegL ?? 0) * k);
-    const lowerR = Math.min(0.78, (pose.lowerLegR ?? REST_POSE.lowerLegR ?? 0) * k);
+    const planted = opts.plantFeet !== false;
+    const upperCap = planted ? 0.035 : 0.72;
+    const lowerCap = planted ? 0.16 : 0.78;
+    const upperL = Math.min(upperCap, (pose.upperLegL ?? REST_POSE.upperLegL ?? 0) * k);
+    const upperR = Math.min(upperCap, (pose.upperLegR ?? REST_POSE.upperLegR ?? 0) * k);
+    const lowerL = Math.min(lowerCap, (pose.lowerLegL ?? REST_POSE.lowerLegL ?? 0) * k);
+    const lowerR = Math.min(lowerCap, (pose.lowerLegR ?? REST_POSE.lowerLegR ?? 0) * k);
     applyBoneRotation("leftUpperLeg", {
       x: restUL.x + upperL,
       y: restUL.y,
-      z: restUL.z + (pose.hipZ ?? 0) * 0.08 * k,
+      z: restUL.z + (pose.hipZ ?? 0) * 0.04 * k,
     });
     applyBoneRotation("rightUpperLeg", {
       x: restUR.x + upperR,
       y: restUR.y,
-      z: restUR.z - (pose.hipZ ?? 0) * 0.08 * k,
+      z: restUR.z - (pose.hipZ ?? 0) * 0.04 * k,
     });
     applyBoneRotation("leftLowerLeg", withElbowBend(restLL, lowerL));
     applyBoneRotation("rightLowerLeg", withElbowBend(restLR, lowerR));
@@ -592,7 +606,10 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
     } else if (allowArms) {
       applyPointArms(pose, k);
     } else if (idleArms) {
-      applyIdleArms(pose, k, { boot: opts.bootPhase === true });
+      applyIdleArms(pose, k, {
+        boot: opts.bootPhase === true,
+        combHair: opts.combHair === true,
+      });
     } else if (talkArmBlend > 0.01) {
       applyTalkArms(pose, talkArmBlend);
     } else {
@@ -621,7 +638,7 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
         ? lockedIdleHipTilt(pose.hipZ || 0, k)
         : (pose.hipZ || 0) * k;
     }
-    applyLegPose(pose, k);
+    applyLegPose(pose, k, { plantFeet: opts.plantFeet !== false });
     applyHandAndFootRest(
       pose,
       k,
@@ -798,6 +815,7 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
       talkArmBlend,
       bootPhase: false,
       plantFeet,
+      combHair: !talking && !thinking && idleBeat.beat === "comb",
     });
     if (plantFeet) {
       const dy = footPlantRootDelta(bone, 0);

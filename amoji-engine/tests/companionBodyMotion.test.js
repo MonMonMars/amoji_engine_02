@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { createCompanionBodyMotion } from "../engine/companion/companionBodyMotion.js";
-import { VRM_ARM_REST_ROTATIONS } from "../engine/companion/companionPoseLibrary.js";
+import {
+  VRM_ARM_REST_ROTATIONS,
+  VRM_LEG_REST_ROTATIONS,
+} from "../engine/companion/companionPoseLibrary.js";
 
 function mockHumanoid() {
   const bones = new Map();
@@ -70,6 +73,37 @@ describe("createCompanionBodyMotion", () => {
     expect(
       Math.abs(humanoid.bones.get("leftIndexProximal").rotation.z),
     ).toBeGreaterThan(0.5);
+  });
+
+  it("does not pitch thighs or both arms forward while idle", () => {
+    const humanoid = mockHumanoid();
+    const motion = createCompanionBodyMotion(humanoid);
+    motion.setTalking(false);
+    for (let i = 0; i < 60; i += 1) motion.update(1 / 30);
+    const leftThigh = humanoid.bones.get("leftUpperLeg").rotation.x;
+    const rightThigh = humanoid.bones.get("rightUpperLeg").rotation.x;
+    expect(leftThigh).toBeLessThan(VRM_LEG_REST_ROTATIONS.leftUpperLeg.x + 0.05);
+    expect(rightThigh).toBeLessThan(VRM_LEG_REST_ROTATIONS.rightUpperLeg.x + 0.05);
+    const leftArmX = humanoid.bones.get("leftUpperArm").rotation.x;
+    const rightArmX = humanoid.bones.get("rightUpperArm").rotation.x;
+    expect(leftArmX).toBeLessThan(VRM_ARM_REST_ROTATIONS.leftUpperArm.x + 0.08);
+    expect(rightArmX).toBeLessThan(VRM_ARM_REST_ROTATIONS.rightUpperArm.x + 0.08);
+  });
+
+  it("combs hair by raising the right arm without kicking the legs forward", () => {
+    const humanoid = mockHumanoid();
+    const motion = createCompanionBodyMotion(humanoid);
+    motion.setTalking(false);
+    const t0 = 1000;
+    motion.pulseIdleBeat("comb", t0);
+    for (let i = 0; i < 24; i += 1) motion.update(1 / 30, { now: t0 + i * 33 });
+    const restR = VRM_ARM_REST_ROTATIONS.rightUpperArm;
+    expect(humanoid.bones.get("rightUpperArm").rotation.z).toBeLessThan(
+      restR.z - 0.4,
+    );
+    expect(humanoid.bones.get("leftUpperLeg").rotation.x).toBeLessThan(
+      VRM_LEG_REST_ROTATIONS.leftUpperLeg.x + 0.05,
+    );
   });
 
   it("plants root Y so a floating foot comes back to the floor", () => {
