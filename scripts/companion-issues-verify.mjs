@@ -169,6 +169,8 @@ async function main() {
     return {
       kind: window.__amojiAvatarKind,
       character: window.localStorage?.getItem("amoji.companion.characterId"),
+      action: window.__amojiAvatar?.currentAction || null,
+      emotion: window.__amojiAvatar?.emotion || null,
       pose: {
         leftUpperArmZ: bone("leftUpperArm")?.z,
         rightUpperArmZ: bone("rightUpperArm")?.z,
@@ -210,7 +212,22 @@ async function main() {
     Math.abs(pose.leftLowerLegX || 0) > 0.04 || Math.abs(pose.rightLowerLegX || 0) > 0.04,
     JSON.stringify({ l: pose.leftLowerLegX, r: pose.rightLowerLegX }),
   );
+  record(
+    "idle-legs-not-stride",
+    Math.abs((pose.leftLowerLegX || 0) - (pose.rightLowerLegX || 0)) < 0.22,
+    JSON.stringify({ l: pose.leftLowerLegX, r: pose.rightLowerLegX }),
+  );
   record("feet-planted", pose.footDy == null || pose.footDy < 0.08, String(pose.footDy));
+  record(
+    "idle-not-walk",
+    !["walk", "run", "dance", "moonwalk"].includes(String(afterNova.action || "")),
+    String(afterNova.action),
+  );
+  record(
+    "rest-emotion-not-happy",
+    afterNova.emotion !== "happy",
+    String(afterNova.emotion),
+  );
   record("eyes-open-rest", (pose.blink || 0) < 0.55, String(pose.blink));
   record("mouth-closed-rest", (pose.aa || 0) < 0.12 && (pose.oh || 0) < 0.12, `aa=${pose.aa} oh=${pose.oh}`);
 

@@ -63,10 +63,10 @@ export function sampleCalmBreathIdle(elapsedSec, opts = {}) {
     armLiftR: 0.12,
     forearmL: 0.4,
     forearmR: 0.34,
-    upperLegL: 0.06,
-    upperLegR: 0.14,
-    lowerLegL: 0.16,
-    lowerLegR: 0.28,
+    upperLegL: 0.09,
+    upperLegR: 0.1,
+    lowerLegL: 0.22,
+    lowerLegR: 0.24,
   };
 }
 

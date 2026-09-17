@@ -221,7 +221,10 @@ export function createCompanionChat(opts = {}) {
           signal,
           webSearch: opts.webSearch !== false,
         });
-        if (proxied.ok && isSmartProxyMode(proxied.mode)) {
+        if (
+          proxied.ok &&
+          (isSmartProxyMode(proxied.mode) || isHostedCompanion())
+        ) {
           const finalized = finalizeReply(proxied.reply);
           if (onToken) await emitTypewriter(finalized.reply, onToken, signal);
           throwIfAborted();
@@ -590,7 +593,9 @@ async function callLocalProxy({
           system: systemPrompt,
           model: proxyModel,
           providerId: providerId && providerId !== "custom" ? providerId : undefined,
-          apiKey: resolveClientApiKey(providerId) || undefined,
+          apiKey: hosted
+            ? undefined
+            : resolveClientApiKey(providerId) || undefined,
           webSearch,
         }),
       },
@@ -653,12 +658,13 @@ async function callOpenAiCompatible({
       method: "POST",
       headers,
       signal: signal || undefined,
-      body: JSON.stringify({
-        model,
-        temperature: 0.8,
-        stream: true,
-        messages,
-      }),
+        body: JSON.stringify({
+          model,
+          temperature: 0.8,
+          max_tokens: 1024,
+          stream: true,
+          messages,
+        }),
     });
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
@@ -679,6 +685,7 @@ async function callOpenAiCompatible({
     body: JSON.stringify({
       model,
       temperature: 0.8,
+      max_tokens: 1024,
       messages,
     }),
   });
