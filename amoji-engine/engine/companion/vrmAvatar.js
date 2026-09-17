@@ -48,6 +48,8 @@ import {
   blinkPulseFinished,
   blinkWeightFromPhase,
   clampRestFaceBlend,
+  applyRestEyeOpen,
+  applyRestEyeOpenMorphs,
   guardLookAtLids,
   inspectVrmFaceHazards,
   mouthVisemeWeight,
@@ -824,6 +826,11 @@ export async function createVrmAvatar(opts) {
       }
     }
     applyBlinkWeight(expr, blinkW);
+    if (blinkW < 0.25) {
+      const open = 0.42 * (1 - blinkW);
+      applyRestEyeOpen(expr, open);
+      applyRestEyeOpenMorphs(model, open);
+    }
   };
 
   let raf = 0;
@@ -927,7 +934,6 @@ export async function createVrmAvatar(opts) {
   renderer.render(scene, camera);
   void motionPlayer.warmClip("wave");
   void motionPlayer.warmClip("thinking");
-  void motionPlayer.warmClip("walk");
   raf = requestAnimationFrame(frame);
   globalThis.addEventListener?.("resize", resize);
 

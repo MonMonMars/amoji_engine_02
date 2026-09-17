@@ -19,7 +19,10 @@ import {
   shouldTryWebSearch,
 } from "./companionWebSearch.mjs";
 
-export const CHAT_API_HANDLER_SCHEMA = "amoji.chatApiHandler.v1";
+export const CHAT_API_HANDLER_SCHEMA = "amoji.chatApiHandler.v2";
+
+/** OpenRouter treats omitted max_tokens as the full context window and 402s low-credit keys. */
+export const CLOUD_CHAT_MAX_TOKENS = 1024;
 
 const OLLAMA_HOST_CANDIDATES = [
   process.env.OLLAMA_HOST,
@@ -112,6 +115,7 @@ async function callCloudChat({
   const payload = {
     model,
     temperature: 0.75,
+    max_tokens: CLOUD_CHAT_MAX_TOKENS,
     messages,
   };
   if (Array.isArray(plugins) && plugins.length) {
@@ -263,7 +267,12 @@ export async function processChatRequest(body) {
     process.env.OLLAMA_MODEL ||
     process.env.AMOJI_LLM_MODEL;
 
-  const clientKey = String(body.apiKey || "").trim();
+  // Hosted already has server keys. Stale browser Groq keys return
+  // "User not found" and used to skip the working OpenRouter path.
+  const clientKey =
+    cloud && process.env.OPENROUTER_API_KEY
+      ? ""
+      : String(body.apiKey || "").trim();
   const clientGroqKey =
     clientKey.startsWith("gsk_") ? clientKey : "";
   const clientOpenRouterKey =
@@ -274,11 +283,13 @@ export async function processChatRequest(body) {
   const openRouterApiKey =
     process.env.OPENROUTER_API_KEY || clientOpenRouterKey;
 
-  // OpenRouter first on cloud — Groq console/signup is often flaky
+  // Hosted: always try OpenRouter first so a leftover groq providerId cannot
+  // drop the turn onto canned local replies.
   const wantOpenRouter =
-    providerId?.startsWith("openrouter") ||
-    (autoProvider && cloud && openRouterApiKey) ||
-    (cloud && !providerId && openRouterApiKey);
+    Boolean(openRouterApiKey) &&
+    providerId !== "basic" &&
+    providerId !== "together" &&
+    (cloud || autoProvider || providerId?.startsWith("openrouter"));
   if (wantOpenRouter && openRouterApiKey) {
     const orModel = resolveOpenRouterModel(
       requestedModel,
@@ -411,7 +422,12 @@ export async function processChatRequest(body) {
   return {
     ok: true,
     reply: fallbackReply,
-    mode: process.env.GROQ_API_KEY || apiKey ? "local-fallback" : "local",
+    mode:
+      process.env.GROQ_API_KEY ||
+      process.env.OPENROUTER_API_KEY ||
+      apiKey
+        ? "local-fallback"
+        : "local",
     model: null,
     web: webSearched ? { searched: true, source: webSource } : undefined,
   };

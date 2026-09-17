@@ -134,7 +134,7 @@ export function createVrmMotionPlayer(opts) {
       loop ? THREE.LoopRepeat : THREE.LoopOnce,
       loop ? Infinity : 1,
     );
-    clipAction.clampWhenFinished = !loop;
+    clipAction.clampWhenFinished = false;
     clipAction.fadeIn(0.2);
     clipAction.play();
     activeActionId = id;
