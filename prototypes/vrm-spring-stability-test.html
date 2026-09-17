@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>VRM spring stability test</title>
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "/amoji-engine/vendor/three.module.js",
+          "three/addons/": "/amoji-engine/vendor/three/addons/",
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js",
+          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js"
+        }
+      }
+    </script>
+    <style>
+      html, body { margin: 0; height: 100%; background: #111; }
+      #avatar-canvas { width: 100%; height: 100%; display: block; }
+    </style>
+  </head>
+  <body>
+    <canvas id="avatar-canvas"></canvas>
+    <script type="module">
+      import { createVrmAvatar } from "/amoji-engine/engine/companion/vrmAvatar.js";
+      import {
+        getVrmSpringJoints,
+        IDLE_SPRING_RECENTER_SEC,
+        MIN_DRAG_FORCE,
+      } from "/amoji-engine/engine/companion/vrmSpringStability.js";
+
+      window.__springStabilityTest = { ready: false };
+
+      const modelUrl = "/prototypes/assets/kizuna-kamatte.vrm";
+
+      try {
+        const head = await fetch(modelUrl, { method: "HEAD" });
+        if (!head.ok) {
+          window.__springStabilityTest = {
+            skipped: true,
+            reason: "model-missing",
+            modelUrl,
+          };
+          throw new Error("skip");
+        }
+
+        const canvas = document.getElementById("avatar-canvas");
+        const avatar = await createVrmAvatar({ canvas, modelUrl });
+        const vrm = avatar.vrm;
+        const joints = getVrmSpringJoints(vrm);
+        const sample = joints[0]?.settings || null;
+
+        for (let i = 0; i < 240; i += 1) {
+          avatar.update?.(1 / 60);
+        }
+
+        avatar.playAction?.("wave", { emotion: "happy", single: true });
+        for (let i = 0; i < 120; i += 1) {
+          avatar.update?.(1 / 60);
+        }
+        avatar.stopAction?.();
+        for (let i = 0; i < Math.ceil(IDLE_SPRING_RECENTER_SEC * 60) + 30; i += 1) {
+          avatar.update?.(1 / 60);
+        }
+
+        window.__springStabilityTest = {
+          ready: true,
+          jointCount: joints.length,
+          dragForce: sample?.dragForce ?? null,
+          gravityY: sample?.gravityDir?.y ?? null,
+          minDrag: MIN_DRAG_FORCE,
+          idleRecenterSec: IDLE_SPRING_RECENTER_SEC,
+        };
+      } catch (err) {
+        if (err?.message === "skip") {
+          /* model missing — skipped above */
+        } else {
+          window.__springStabilityTest = {
+            ready: false,
+            error: err?.message || String(err),
+          };
+        }
+      }
+    </script>
+  </body>
+</html>
