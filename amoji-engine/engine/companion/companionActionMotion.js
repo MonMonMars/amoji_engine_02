@@ -518,20 +518,29 @@ const BODY_SAMPLERS = {
     };
   },
   eat(_p, t, amp) {
-    const e = beat(t, 4.5);
+    const chew = beat(t, 5.4);
     return {
-      armLiftR: 0.1 * amp + e * 0.04 * amp,
-      forearmR: 0.12 * amp + e * 0.08 * amp,
-      headX: e * 0.04 * amp,
+      armLiftR: 0.5 * amp,
+      forearmR: 0.44 * amp + chew * 0.02 * amp,
+      armLiftL: 0.22 * amp,
+      forearmL: 0.3 * amp,
+      headX: 0.08 * amp + chew * 0.1 * amp,
+      spineX: 0.04 * amp,
+      leanY: -0.03 * amp,
+      eatChew: chew,
     };
   },
   drink(_p, t, amp) {
-    const d = beat(t, 3.8);
+    const sip = beat(t, 3.2);
     return {
-      armLiftR: 0.12 * amp,
-      forearmR: 0.14 * amp + d * 0.06 * amp,
-      headX: -0.04 * amp,
-      leanY: -0.02 * amp,
+      armLiftR: 0.52 * amp,
+      forearmR: 0.46 * amp,
+      armLiftL: 0.16 * amp,
+      forearmL: 0.22 * amp,
+      headX: -0.1 * amp + sip * 0.08 * amp,
+      spineX: -0.04 * amp,
+      leanY: -0.04 * amp,
+      eatChew: sip,
     };
   },
   yoga(_p, t, amp) {

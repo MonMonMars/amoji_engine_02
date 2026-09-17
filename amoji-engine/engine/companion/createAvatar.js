@@ -36,6 +36,7 @@ export function createStubAvatar() {
     setMouthOpen: noop,
     setMouthShape: noop,
     setTalking: noop,
+    setEating: noop,
     setTalkEnergy: noop,
     setTalkStyle: noop,
     reactToTap: noop,
