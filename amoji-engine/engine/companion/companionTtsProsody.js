@@ -13,10 +13,10 @@ import { inferExpressionFromText } from "../face/emotionExpression.js";
 
 export const COMPANION_TTS_PROSODY_SCHEMA = "amoji.companionTtsProsody.v3";
 
-/** ChatGPT Advanced Voice — clause-level prosody within one reply. */
+/** One natural utterance per line — avoids rushed clause stitching. */
 export const CHATGPT_STYLE_TTS = Object.freeze({
-  singleUtterance: false,
-  expressiveClauses: true,
+  singleUtterance: true,
+  expressiveClauses: false,
 });
 
 /** Must match client chunkTextForCloudTts — server rejects/truncates above this. */
@@ -26,43 +26,43 @@ export const MAX_CLOUD_TTS_CHARS = 480;
 /** @typedef {{ rate: number, pitch: number, volume: number }} BrowserProsody */
 
 const EMOTION_EDGE_BASE = Object.freeze({
-  neutral: { rate: 32, pitch: 38, volume: 16 },
-  happy: { rate: 62, pitch: 72, volume: 32 },
-  thinking: { rate: -4, pitch: 12, volume: 0 },
-  sad: { rate: -18, pitch: -10, volume: -6 },
-  surprised: { rate: 66, pitch: 74, volume: 34 },
-  angry: { rate: 42, pitch: 4, volume: 24 },
+  neutral: { rate: 0, pitch: 24, volume: 8 },
+  happy: { rate: 10, pitch: 36, volume: 14 },
+  thinking: { rate: -10, pitch: 8, volume: 0 },
+  sad: { rate: -16, pitch: -8, volume: -4 },
+  surprised: { rate: 14, pitch: 40, volume: 12 },
+  angry: { rate: 6, pitch: 0, volume: 8 },
 });
 
 const NUANCE_EDGE_DELTA = Object.freeze({
   none: { rate: 0, pitch: 0, volume: 0 },
-  shy: { rate: -8, pitch: 6, volume: -10 },
-  curious: { rate: 8, pitch: 12, volume: 4 },
-  excited: { rate: 18, pitch: 20, volume: 14 },
-  love: { rate: 10, pitch: 14, volume: 8 },
-  stress: { rate: -8, pitch: -8, volume: -6 },
+  shy: { rate: -6, pitch: 6, volume: -6 },
+  curious: { rate: 4, pitch: 10, volume: 2 },
+  excited: { rate: 8, pitch: 14, volume: 6 },
+  love: { rate: 4, pitch: 10, volume: 4 },
+  stress: { rate: -6, pitch: -6, volume: -4 },
 });
 
 const STYLE_EDGE_DELTA = Object.freeze({
-  explain: { rate: 2, pitch: 4, volume: 0 },
-  soft: { rate: -8, pitch: 2, volume: -6 },
-  question: { rate: 6, pitch: 12, volume: 2 },
-  emphasize: { rate: 10, pitch: 8, volume: 6 },
-  celebrate: { rate: 14, pitch: 16, volume: 10 },
-  wave: { rate: 8, pitch: 10, volume: 4 },
-  nod: { rate: 4, pitch: 6, volume: 2 },
-  point: { rate: 6, pitch: 8, volume: 4 },
-  thinking: { rate: -6, pitch: 0, volume: -8 },
-  count: { rate: 4, pitch: 6, volume: 2 },
+  explain: { rate: 0, pitch: 4, volume: 0 },
+  soft: { rate: -6, pitch: 2, volume: -4 },
+  question: { rate: 2, pitch: 10, volume: 0 },
+  emphasize: { rate: 4, pitch: 6, volume: 2 },
+  celebrate: { rate: 6, pitch: 10, volume: 4 },
+  wave: { rate: 4, pitch: 8, volume: 2 },
+  nod: { rate: 0, pitch: 4, volume: 0 },
+  point: { rate: 2, pitch: 6, volume: 0 },
+  thinking: { rate: -8, pitch: 0, volume: -4 },
+  count: { rate: 0, pitch: 4, volume: 0 },
 });
 
 const EMOTION_BROWSER_BASE = Object.freeze({
-  neutral: { rate: 1.14, pitch: 1.34, volume: 1 },
-  happy: { rate: 1.34, pitch: 1.64, volume: 1 },
-  thinking: { rate: 0.9, pitch: 1.08, volume: 0.94 },
-  sad: { rate: 0.82, pitch: 0.9, volume: 0.9 },
-  surprised: { rate: 1.4, pitch: 1.72, volume: 1 },
-  angry: { rate: 1.2, pitch: 0.96, volume: 1 },
+  neutral: { rate: 1, pitch: 1.12, volume: 1 },
+  happy: { rate: 1.05, pitch: 1.22, volume: 1 },
+  thinking: { rate: 0.94, pitch: 1.04, volume: 0.96 },
+  sad: { rate: 0.9, pitch: 0.94, volume: 0.92 },
+  surprised: { rate: 1.06, pitch: 1.24, volume: 1 },
+  angry: { rate: 1.02, pitch: 0.98, volume: 1 },
 });
 
 /**
@@ -92,28 +92,28 @@ function analyzeTextExpressiveness(text) {
   const cantoneseParticles = (raw.match(/[呀啊喇喎喔呢咩]/g) || []).length;
 
   if (exclamations) {
-    rateBoost += Math.min(16, exclamations * 6);
-    pitchBoost += Math.min(18, exclamations * 7);
-    volumeBoost += Math.min(12, exclamations * 4);
+    rateBoost += Math.min(6, exclamations * 2);
+    pitchBoost += Math.min(14, exclamations * 5);
+    volumeBoost += Math.min(8, exclamations * 3);
   }
   if (questions) {
-    pitchBoost += Math.min(20, questions * 9);
-    rateBoost += Math.min(10, questions * 4);
+    pitchBoost += Math.min(14, questions * 6);
+    rateBoost += Math.min(4, questions * 2);
   }
   if (ellipses) {
-    rateBoost -= Math.min(10, ellipses * 5);
+    rateBoost -= Math.min(8, ellipses * 4);
     pitchBoost -= Math.min(6, ellipses * 3);
-    volumeBoost -= Math.min(6, ellipses * 2);
+    volumeBoost -= Math.min(4, ellipses * 2);
   }
   if (cantoneseParticles) {
-    pitchBoost += Math.min(14, cantoneseParticles * 3);
-    rateBoost += Math.min(10, cantoneseParticles * 2);
-    volumeBoost += Math.min(6, cantoneseParticles * 1.5);
+    pitchBoost += Math.min(10, cantoneseParticles * 2);
+    rateBoost += Math.min(4, cantoneseParticles * 1);
+    volumeBoost += Math.min(4, cantoneseParticles * 1);
   }
   if (raw.length <= 12) {
-    rateBoost += 6;
-    pitchBoost += 10;
-    volumeBoost += 2;
+    rateBoost += 1;
+    pitchBoost += 6;
+    volumeBoost += 1;
   }
   if (/[～~]/.test(raw)) {
     pitchBoost += 4;
@@ -152,16 +152,16 @@ export function instructSpeakingSpeed(opts = {}) {
   const energy = Number.isFinite(opts.speechEnergy) ? opts.speechEnergy : 0.68;
   let speed =
     emotion === "happy" || emotion === "surprised"
-      ? 1.16
+      ? 1.02
       : emotion === "sad"
-        ? 0.88
+        ? 0.94
         : emotion === "thinking"
-          ? 0.92
+          ? 0.96
           : emotion === "angry"
-            ? 1.1
-            : 1.08;
-  speed += (energy - 0.68) * 0.2;
-  return Number(Math.max(0.82, Math.min(1.28, speed)).toFixed(2));
+            ? 1.01
+            : 1;
+  speed += (energy - 0.55) * 0.08;
+  return Number(Math.max(0.9, Math.min(1.06, speed)).toFixed(2));
 }
 
 /**
@@ -222,10 +222,10 @@ export function buildTtsInstruct(opts = {}) {
 
   const pacing =
     energy > 0.75
-      ? `Speak at ${speed}x. Speed up on exclamations; linger on kind words.`
+      ? `Speak at ${speed}x — normal conversational pace. Lift pitch on exclamations; do not rush.`
       : energy < 0.38
-        ? `Speak at ${speed}x. Slow, calm, still vary pitch.`
-        : `Speak at ${speed}x. Conversational: some words faster, some slower.`;
+        ? `Speak at ${speed}x — calm and unhurried, still vary pitch naturally.`
+        : `Speak at ${speed}x — natural everyday pace, like a friend on a video call.`;
 
   const emotionLine =
     emotion === "happy"
@@ -329,12 +329,12 @@ export function enrichTtsPerformance(performance, text = "") {
       1,
       perf.speechEnergy ??
         (emotion === "happy" || emotion === "surprised"
-          ? 0.86
+          ? 0.62
           : emotion === "thinking"
-            ? 0.58
+            ? 0.48
             : emotion === "sad"
-              ? 0.52
-              : 0.76),
+              ? 0.44
+              : 0.55),
     ),
   );
   return {
@@ -371,9 +371,9 @@ export function resolveCompanionTtsProsody(opts = {}) {
   const characterBias = characterProsodyBias(String(opts.characterId || ""));
   const voiceBias = voiceProfileProsodyBias(String(opts.voiceId || ""));
 
-  const energyRate = (speechEnergy - 0.5) * 18;
-  const energyPitch = (speechEnergy - 0.5) * 16;
-  const energyVolume = (speechEnergy - 0.5) * 12;
+  const energyRate = (speechEnergy - 0.5) * 8;
+  const energyPitch = (speechEnergy - 0.5) * 14;
+  const energyVolume = (speechEnergy - 0.5) * 10;
 
   const edgeRate =
     base.rate +
@@ -403,12 +403,12 @@ export function resolveCompanionTtsProsody(opts = {}) {
   const browserBase =
     EMOTION_BROWSER_BASE[emotion] || EMOTION_BROWSER_BASE.neutral;
   const browserRate = Math.max(
-    0.72,
+    0.86,
     Math.min(
-      1.48,
+      1.12,
       browserBase.rate +
-        (edgeRate / 100) * 0.35 +
-        (speechEnergy - 0.5) * 0.12,
+        (edgeRate / 100) * 0.18 +
+        (speechEnergy - 0.5) * 0.06,
     ),
   );
   const browserPitch = Math.max(
@@ -493,8 +493,8 @@ export function resolveVoicePerformanceFromReply(rawReply, opts = {}) {
       speechEnergy: turn.speechEnergy ?? 0.68,
       lang,
       characterId: opts.characterId,
-      singleUtterance: false,
-      expressiveClauses: true,
+      singleUtterance: true,
+      expressiveClauses: false,
     },
     turn.reply,
   );
@@ -516,8 +516,8 @@ export function voicePerformanceFromAnalysis(analysis, opts = {}) {
       speechEnergy: analysis?.speechEnergy ?? 0.68,
       lang,
       characterId: opts.characterId,
-      singleUtterance: false,
-      expressiveClauses: true,
+      singleUtterance: true,
+      expressiveClauses: false,
     },
     "",
   );
@@ -556,10 +556,10 @@ export function normalizeTtsPerformance(performance, fallbackEmotion = "neutral"
         emotion === "happy" || emotion === "surprised" ? "celebrate" : "explain",
       speechEnergy:
         emotion === "happy" || emotion === "surprised"
-          ? 0.86
+          ? 0.62
           : emotion === "thinking"
-            ? 0.58
-            : 0.76,
+            ? 0.48
+            : 0.55,
     };
   }
   const perf = performance || {};
@@ -578,7 +578,7 @@ export function normalizeTtsPerformance(performance, fallbackEmotion = "neutral"
     talkStyle,
     speechEnergy:
       perf.speechEnergy ??
-      (emotion === "happy" || emotion === "surprised" ? 0.82 : 0.7),
+      (emotion === "happy" || emotion === "surprised" ? 0.62 : 0.55),
     lang: perf.lang,
     text: perf.text,
     /**

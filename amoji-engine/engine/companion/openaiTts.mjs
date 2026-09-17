@@ -136,7 +136,7 @@ export async function synthesizeOpenAiSpeech(text, opts = {}) {
       model,
       voice,
       input: clean,
-      instructions: `${instructions}\n\nSpeak at ${speed}x. Never monotone.`,
+      instructions: `${instructions}\n\nKeep a natural ${speed}x pace. Never monotone or rushed.`,
       response_format: "mp3",
     }),
   });
