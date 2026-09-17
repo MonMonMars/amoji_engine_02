@@ -20,22 +20,39 @@ const VOICE_MAP = Object.freeze({
   "zh-hk-wanlungneural": "ash",
   "en-us-arianeural": "marin",
   "en-us-jennyneural": "coral",
+  "en-hk-yanneural": "coral",
+  "en-hk-samneural": "ash",
   marin: "marin",
   coral: "coral",
   shimmer: "shimmer",
   sage: "sage",
   alloy: "alloy",
+  ash: "ash",
 });
+
+/**
+ * @param {string | null | undefined} voice
+ */
+export function normalizeOpenAiVoiceKey(voice) {
+  let key = String(voice || "")
+    .trim()
+    .toLowerCase();
+  key = key.replace(
+    /-(idol|warm|cool|bright|sweet|story|calm|bold|soft|fiery|chibi|hero|sunny|sporty|elegant|sharp)$/i,
+    "",
+  );
+  return key;
+}
 
 /**
  * @param {string | null | undefined} voice
  * @param {string | null | undefined} lang
  */
 export function resolveOpenAiVoice(voice, lang = "") {
-  const key = String(voice || "")
-    .trim()
-    .toLowerCase();
+  const key = normalizeOpenAiVoiceKey(voice);
   if (VOICE_MAP[key]) return VOICE_MAP[key];
+  if (/wanlung|samneural/.test(key)) return "ash";
+  if (/hiumaan|hiugaai|yanneural|jenny|aria/.test(key)) return "marin";
   const lc = String(lang || "").toLowerCase();
   if (lc === "en" || lc.startsWith("en-")) return "marin";
   return "coral";

@@ -12,6 +12,12 @@ import { inferExpressionFromText } from "../face/emotionExpression.js";
 
 export const COMPANION_TTS_PROSODY_SCHEMA = "amoji.companionTtsProsody.v2";
 
+/** ChatGPT Advanced Voice — clause-level prosody within one reply. */
+export const CHATGPT_STYLE_TTS = Object.freeze({
+  singleUtterance: false,
+  expressiveClauses: true,
+});
+
 /** Must match client chunkTextForCloudTts — server rejects/truncates above this. */
 export const MAX_CLOUD_TTS_CHARS = 480;
 

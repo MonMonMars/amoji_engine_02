@@ -8,9 +8,9 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji · Companion</title>
     <script>
-      window.__amojiBuild = "2026-09-17-v186-ui-fx";
+      window.__amojiBuild = "2026-09-17-v187-voice-lock";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-17-v186-ui-fx"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-17-v187-voice-lock"></script>
     <link
       rel="prefetch"
       href="/prototypes/assets/companion-char-nova.png"
@@ -324,8 +324,8 @@
       media="print"
       onload="this.media='all'"
     />
-    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-17-v186-ui-fx" />
-    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-17-v186-ui-fx" />
+    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-17-v187-voice-lock" />
+    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-17-v187-voice-lock" />
     <noscript>
       <link
         href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap"
@@ -3597,19 +3597,19 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-17-v186-ui-fx",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-17-v187-voice-lock",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-17-v186-ui-fx",
-          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-17-v186-ui-fx"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-17-v187-voice-lock",
+          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-17-v187-voice-lock"
         }
       }
     </script>
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v186-ui-fx"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v187-voice-lock"
     />
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-17-v186-ui-fx"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v186-ui-fx"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-17-v187-voice-lock"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v187-voice-lock"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;
@@ -3954,8 +3954,8 @@
         <p class="settings-section-title" id="settings-companion-title">Companion</p>
         <button type="button" class="btn-secondary" id="settings-btn-companions">Switch companion</button>
         <p class="settings-section-title" id="settings-voice-title">Voice</p>
+        <p class="settings-voice-note" id="settings-voice-note" aria-live="polite"></p>
         <div class="settings-row">
-          <button type="button" class="btn-secondary" id="settings-btn-voice">Voice</button>
           <button type="button" class="btn-secondary" id="settings-btn-speaker">Speaker: on</button>
         </div>
         <p class="settings-section-title" id="settings-advanced-title">Advanced</p>
@@ -4163,7 +4163,6 @@
         actionChoreographyMod,
         actionResolveMod,
         motionCapabilitiesMod,
-        voicePickerMod,
         uiIntentMod,
         activityRailMod,
         scenePresetsMod,
@@ -4201,7 +4200,6 @@
         ami("../amoji-engine/engine/companion/companionActionChoreography.js"),
         ami("../amoji-engine/engine/companion/companionActionResolve.js"),
         ami("../amoji-engine/engine/companion/companionMotionCapabilities.js"),
-        ami("../amoji-engine/engine/companion/companionVoicePicker.js"),
         ami("../amoji-engine/engine/companion/companionUiIntent.js"),
         ami("../amoji-engine/engine/companion/companionActivityRail.js"),
         ami("../amoji-engine/engine/companion/companionScenePresets.js"),
@@ -4233,6 +4231,7 @@
         characterGreeting,
         characterGreetingPerformance,
         characterTapLines,
+        characterGender,
         characterVoiceLabel,
         defaultVoiceForCharacter,
         getCharacter,
@@ -4269,17 +4268,11 @@
         buildCompanionHref,
         cloudVoiceLabel,
         companionLangCode,
-        defaultVoiceForLang,
-        nextVoiceId,
-        persistVoiceId,
-        resolveVoiceId,
-        syncVoiceToUrl,
+        resolveVoiceForCharacter,
         voicePresetById,
         voiceGenderLabel,
         voiceShortLabel,
-        voicePickerButtonLabel,
       } = voiceCatalogMod;
-      const { createCompanionVoicePicker } = voicePickerMod;
       const {
         applyUiIntents,
         buildUiIntentPromptFragment,
@@ -4651,7 +4644,7 @@
       const emotionBallEl = document.getElementById("emotion-ball");
       const atmosphereEl = document.querySelector(".atmosphere");
       const settingsBtnLang = document.getElementById("settings-btn-lang");
-      const settingsBtnVoice = document.getElementById("settings-btn-voice");
+      const settingsVoiceNote = document.getElementById("settings-voice-note");
       const settingsBtnSpeaker = document.getElementById("settings-btn-speaker");
       const settingsBtnScene = document.getElementById("settings-btn-scene");
       const settingsBtnCompanions = document.getElementById("settings-btn-companions");
@@ -4756,10 +4749,15 @@
       });
       persistCharacterId(characterId);
       let charConfig = characterAvatarConfig(characterId, langCode);
-      let voiceId = params.get("voice")
-        ? resolveVoiceId({ lang: langCode, voiceParam: params.get("voice") })
-        : charConfig.voiceId;
-      persistVoiceId(voiceId);
+      let voiceId = resolveVoiceForCharacter(characterId, langCode);
+      if (params.has("voice")) {
+        params.delete("voice");
+        history.replaceState(
+          null,
+          "",
+          `${location.pathname}${params.toString() ? `?${params}` : ""}`,
+        );
+      }
       const liteMode = params.get("lite") === "1";
       const autoMic = params.get("automic") !== "0";
       dismissLoading();
@@ -5436,20 +5434,11 @@
         syncCompanionStatusUi(sessionUiState, emotion);
       };
       const setVoicePill = (label) => {
-        if (settingsBtnVoice) {
-          settingsBtnVoice.textContent = isEnglish
-            ? `Voice: ${label}`
-            : `語音：${label}`;
-          settingsBtnVoice.title = isEnglish
-            ? "Tap to switch voice"
-            : "按一下切換語音";
-        }
-      };
-      /** @type {(nextVoiceId: string) => void} */
-      let applyVoiceSelection = (nextVoiceId) => {
-        voiceId = nextVoiceId;
-        persistVoiceId(voiceId);
-        syncVoiceToUrl(voiceId);
+        if (!settingsVoiceNote) return;
+        const gender = voiceGenderLabel(voiceId, langCode, isEnglish);
+        settingsVoiceNote.textContent = isEnglish
+          ? `${gender} voice · ${label} (fixed to this companion)`
+          : `${gender} · ${label}（跟住角色，唔可以改）`;
       };
 
       const status = createCompanionStatus({
@@ -6123,31 +6112,14 @@
         globalThis.__amojiPreload?.scheduleBackground?.(warmWaitDialogue);
       };
 
-      applyVoiceSelection = (nextVoiceId) => {
-        voiceId = nextVoiceId;
-        persistVoiceId(voiceId);
-        syncVoiceToUrl(voiceId);
+      const syncCharacterVoice = () => {
+        voiceId = resolveVoiceForCharacter(characterId, langCode);
         const preset = voicePresetById(voiceId);
         voice.setCloudVoice(preset);
         voice.setCharacterId?.(characterId);
-        const label = voicePickerButtonLabel(voiceId, langCode, isEnglish);
-        setVoicePill(label);
+        setVoicePill(characterVoiceLabel(characterId, langCode, isEnglish));
       };
-      const voicePicker = createCompanionVoicePicker({
-        root: document.body,
-        langCode,
-        selectedId: voiceId,
-        onSelect: (id) => {
-          applyVoiceSelection(id);
-          addBubble(
-            "system",
-            isEnglish
-              ? `Voice: ${voicePickerButtonLabel(id, langCode, true)}`
-              : `語音：${voicePickerButtonLabel(id, langCode, false)}`,
-          );
-        },
-      });
-      applyVoiceSelection(voiceId);
+      syncCharacterVoice();
       updateLangPill();
 
       const {
@@ -6166,7 +6138,7 @@
         charConfig = nextConfig;
         avatarModelUrl = nextConfig.modelUrl;
         avatarPrefer = nextConfig.avatarPrefer === "gltf" ? "gltf" : "vrm";
-        applyVoiceSelection(nextConfig.voiceId);
+        syncCharacterVoice();
         voice.setCharacterId?.(characterId);
         chat.setSystemPrompt?.(
           buildSessionSystemPrompt(characterId, isEnglish),
@@ -6542,10 +6514,6 @@
         },
         openCharacterPicker: () => openCharacterPicker(),
         openSettings: () => openSettings(),
-        openVoicePicker: () => {
-          voicePicker.setSelectedId(voiceId);
-          voicePicker.open();
-        },
         switchLanguage: async (lang) => {
           applyLanguage(lang === "en" ? "en" : "yue");
         },
@@ -6555,7 +6523,6 @@
         },
         closeOverlays: () => {
           characterPicker?.close?.();
-          voicePicker?.close?.();
           closeSettings();
         },
         onContextChange: (ctx) => {
@@ -6695,7 +6662,6 @@
               nuance: chunkPerf.nuance,
               talkStyle: chunkPerf.talkStyle,
               speechEnergy: chunkPerf.speechEnergy,
-              singleUtterance: true,
             });
           }
         };
@@ -6721,7 +6687,6 @@
               nuance: content.nuance || "excited",
               talkStyle: content.talkStyle || "celebrate",
               speechEnergy: content.speechEnergy ?? 0.78,
-              singleUtterance: true,
             });
             return;
           }
@@ -6817,7 +6782,6 @@
               nuance: content.nuance || "none",
               talkStyle: content.talkStyle || "explain",
               speechEnergy: content.speechEnergy ?? 0.68,
-              singleUtterance: true,
             });
           }
         } catch (err) {
@@ -7210,19 +7174,13 @@
       });
       }
 
-      settingsBtnVoice?.addEventListener("click", () => {
-        voicePicker.setSelectedId(voiceId);
-        voicePicker.open();
-      });
-
       const applyLanguage = (targetLang) => {
         const nextCode = companionLangCode(targetLang);
         const nextEnglish = nextCode === "en";
         isEnglish = nextEnglish;
         document.documentElement.lang = nextEnglish ? "en" : "zh-Hant";
         langCode = nextCode;
-        const nextVoiceId = defaultVoiceForCharacter(characterId, nextCode);
-        applyVoiceSelection(nextVoiceId);
+        syncCharacterVoice();
         voice.setLang?.(nextEnglish ? "en-US" : "zh-HK");
         if (motionCapabilityAnnounced && motionClient) {
           const installed = Object.keys(motionClient.state?.installed || {});
@@ -7248,7 +7206,6 @@
           liteLink.href = buildCompanionHref({
             basePath: "/companion",
             lang: nextCode,
-            voiceId: nextVoiceId,
           });
         }
         const companionName = characterDisplayName(

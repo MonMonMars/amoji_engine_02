@@ -5,14 +5,10 @@
 import {
   buildCompanionHref,
   companionLangCode,
-  defaultVoiceForLang,
-  persistVoiceId,
-  resolveVoiceId,
-  syncVoiceToUrl,
-  voicePickerButtonLabel,
+  resolveVoiceForCharacter,
+  voiceGenderLabel,
 } from "../companionVoiceCatalog.js";
 import { buildExpressiveTtsPlan } from "../companionExpressiveTts.js";
-import { createCompanionVoicePicker } from "../companionVoicePicker.js";
 import {
   buildCloudTtsRequestBody,
   enrichTtsPerformance,
@@ -86,11 +82,16 @@ export function initAmojiSecretaryLite(doc = document) {
   const conversationUi = true;
   doc.body.classList.add("conversation-ui");
   initCompanionUiEffects(doc);
-  let voiceId = resolveVoiceId({
-    lang: langCode,
-    voiceParam: params.get("voice"),
-  });
-  persistVoiceId(voiceId);
+  const secretaryCharacterId = "rose";
+  let voiceId = resolveVoiceForCharacter(secretaryCharacterId, langCode);
+  if (params.has("voice")) {
+    params.delete("voice");
+    globalThis.history?.replaceState?.(
+      null,
+      "",
+      `${globalThis.location?.pathname || ""}${params.toString() ? `?${params}` : ""}`,
+    );
+  }
 
   const hosted =
     globalThis.location?.hostname &&
@@ -667,16 +668,11 @@ export function initAmojiSecretaryLite(doc = document) {
       renderTaskFilters();
       renderTasks();
     },
-    openVoicePicker: () => {
-      voicePicker.setSelectedId(voiceId);
-      voicePicker.open();
-    },
     switchLanguage: async (lang) => {
       const targetLang = lang === "en" ? "en" : "yue";
       window.location.href = buildCompanionHref({
         basePath: "/companion",
         lang: targetLang,
-        voiceId: defaultVoiceForLang(targetLang, voiceId),
       });
     },
     openSettings: () => {
@@ -1149,23 +1145,6 @@ export function initAmojiSecretaryLite(doc = document) {
     return micCapture;
   }
 
-  const voicePicker = createCompanionVoicePicker({
-    root: doc.body,
-    langCode,
-    selectedId: voiceId,
-    onSelect: (id) => {
-      voiceId = id;
-      persistVoiceId(voiceId);
-      syncVoiceToUrl(voiceId);
-      syncSetupChrome();
-      setStatus(
-        isEn
-          ? `Voice: ${voicePickerButtonLabel(voiceId, langCode, true)}`
-          : `語音：${voicePickerButtonLabel(voiceId, langCode, false)}`,
-      );
-    },
-  });
-
   function syncSetupChrome() {
     if (els.btnOpenSetup) {
       els.btnOpenSetup.textContent = strings.setup;
@@ -1191,17 +1170,20 @@ export function initAmojiSecretaryLite(doc = document) {
         : "Switch to English";
     }
     if (els.setupBtnVoice) {
+      const gender = voiceGenderLabel(voiceId, langCode, isEn);
       els.setupBtnVoice.textContent = isEn
-        ? `Voice: ${voicePickerButtonLabel(voiceId, langCode, true)}`
-        : `語音：${voicePickerButtonLabel(voiceId, langCode, false)}`;
-      els.setupBtnVoice.title = isEn ? "Tap to switch voice" : "按一下切換語音";
+        ? `${gender} voice (fixed)`
+        : `${gender}（跟住角色）`;
+      els.setupBtnVoice.disabled = true;
+      els.setupBtnVoice.title = isEn
+        ? "Voice is fixed to this companion"
+        : "語音跟住角色，唔可以改";
     }
     if (els.setupLink3d) {
       els.setupLink3d.textContent = strings.setup3d;
       els.setupLink3d.href = buildCompanionHref({
         basePath: "/companion-full",
         lang: langCode,
-        voiceId,
       });
     }
     syncSetupSpeakerBtn();
@@ -1212,16 +1194,11 @@ export function initAmojiSecretaryLite(doc = document) {
     els.btnOpenSetup?.addEventListener("click", openSetup);
     els.setupClose?.addEventListener("click", closeSetup);
     els.setupBackdrop?.addEventListener("click", closeSetup);
-    els.setupBtnVoice?.addEventListener("click", () => {
-      voicePicker.setSelectedId(voiceId);
-      voicePicker.open();
-    });
     els.setupBtnLang?.addEventListener("click", () => {
       const targetLang = isEn ? "yue" : "en";
       window.location.href = buildCompanionHref({
         basePath: "/companion",
         lang: targetLang,
-        voiceId: defaultVoiceForLang(targetLang, voiceId),
       });
     });
     els.setupBtnSpeaker?.addEventListener("click", () => {

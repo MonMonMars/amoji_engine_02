@@ -1,6 +1,7 @@
 /**
  * Edge TTS voice catalog + URL/localStorage helpers for companion UIs.
  */
+import { defaultVoiceForCharacter } from "./companionCharacterCatalog.js";
 import {
   EN_VOICE_PROFILES,
   findVoiceProfile,
@@ -56,6 +57,15 @@ export function resolveVoiceId(opts = {}) {
   const candidate = fromUrl || fromStorage;
   const found = list.find((v) => v.id === candidate);
   return (found || list[0]).id;
+}
+
+/**
+ * Voice is fixed per character — ignores URL/localStorage overrides.
+ * @param {string} characterId
+ * @param {"yue" | "en" | string | null | undefined} lang
+ */
+export function resolveVoiceForCharacter(characterId, lang) {
+  return defaultVoiceForCharacter(characterId, companionLangCode(lang));
 }
 
 /**

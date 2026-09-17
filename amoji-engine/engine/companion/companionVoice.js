@@ -31,8 +31,10 @@ import {
   buildExpressiveTtsPlan,
   clausePauseMs,
 } from "./companionExpressiveTts.js";
+import { characterGender } from "./companionCharacterCatalog.js";
 import {
   buildCloudTtsRequestBody,
+  CHATGPT_STYLE_TTS,
   enrichTtsPerformance,
   MAX_CLOUD_TTS_CHARS,
   normalizeTtsPerformance,
@@ -217,6 +219,36 @@ export function readAnalyserMouthLevel(analyser) {
  */
 const MALE_VOICE_RE =
   /\b(male|man|boy|david|daniel|ravi|keda|alex|fred|bruce|tom|jorge|lee|james|mark|aaron|guy|richard|nathan|oliver|matthew|ryan|paul)\b/i;
+
+export function pickMaleVoice(voices) {
+  const list = (Array.isArray(voices) ? voices : []).filter((v) => {
+    if (!v || typeof v.name !== "string") return false;
+    if (v.gender === "female") return false;
+    const name = `${v.name} ${v.lang || ""}`;
+    if (/female|woman|girl/i.test(name) && !MALE_VOICE_RE.test(name)) return false;
+    return true;
+  });
+  const score = (v) => {
+    const name = `${v.name} ${v.lang || ""}`.toLowerCase();
+    let s = 0;
+    if (v.gender === "male") s += 80;
+    if (/wanlung|sam|david|guy|ryan|mark|james|paul|aaron|richard/.test(name)) s += 55;
+    if (/male|man|boy/.test(name)) s += 45;
+    if (/zh-hk|yue|cantonese|hong kong/.test(name)) s += 20;
+    if (/en-hk|en-gb|en-au|en-us/.test(name)) s += 10;
+    if (v.localService) s += 5;
+    return s;
+  };
+  return [...list].sort((a, b) => score(b) - score(a))[0] || null;
+}
+
+/**
+ * @param {"female" | "male"} gender
+ * @param {SpeechSynthesisVoice[]} voices
+ */
+export function pickVoiceForGender(gender, voices) {
+  return gender === "male" ? pickMaleVoice(voices) : pickFemaleVoice(voices);
+}
 
 export function pickFemaleVoice(voices) {
   const list = (Array.isArray(voices) ? voices : []).filter((v) => {
@@ -448,7 +480,11 @@ export function createCompanionVoice(opts = {}) {
       }
       if (!synth) return resolve(null);
       const pick = () => {
-        voice = pickFemaleVoice(synth.getVoices());
+        const langCode = String(opts.lang || voice?.lang || "zh-HK").startsWith("en")
+          ? "en"
+          : "yue";
+        const gender = characterGender(activeCharacterId, langCode);
+        voice = pickVoiceForGender(gender, synth.getVoices());
         resolve(voice);
       };
       const existing = synth.getVoices();
@@ -884,7 +920,13 @@ export function createCompanionVoice(opts = {}) {
     const clean = cleanSpeakText(text);
     if (!clean) return { ok: false, reason: "empty" };
 
-    const perf = enrichTtsPerformance(performance, clean);
+    const rawPerf =
+      typeof performance === "object" && performance !== null
+        ? performance.singleUtterance === true
+          ? performance
+          : { ...CHATGPT_STYLE_TTS, ...performance }
+        : { ...CHATGPT_STYLE_TTS, emotion: performance || "neutral" };
+    const perf = enrichTtsPerformance(rawPerf, clean);
     const prosody = resolveSpeakProsody(
       clean,
       perf,
@@ -1092,10 +1134,9 @@ export function createCompanionVoice(opts = {}) {
         return { ok: false, reason: "stream-closed" };
       }
       return speakOnceCore(clean, {
+        ...CHATGPT_STYLE_TTS,
         ...perf,
         text: clean,
-        singleUtterance: true,
-        expressiveClauses: false,
       });
     });
     speakChain = next.catch(() => {});
@@ -1613,6 +1654,15 @@ export function createCompanionVoice(opts = {}) {
 
   const setCharacterId = (nextId) => {
     activeCharacterId = String(nextId || "amoji").toLowerCase();
+    if (!usingCloudTts && synth) {
+      const langCode = String(opts.lang || voice?.lang || "zh-HK").startsWith("en")
+        ? "en"
+        : "yue";
+      voice = pickVoiceForGender(
+        characterGender(activeCharacterId, langCode),
+        synth.getVoices(),
+      );
+    }
     return activeCharacterId;
   };
 

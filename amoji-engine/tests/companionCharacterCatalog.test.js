@@ -3,6 +3,7 @@ import {
   buildCharacterSystemPrompt,
   CHARACTER_IDS,
   characterAvatarConfig,
+  characterGender,
   characterGreeting,
   characterGreetingPerformance,
   characterNumber,
@@ -81,6 +82,9 @@ describe("companionCharacterCatalog", () => {
     expect(characterGreeting("kizuna", false)).toContain("絆");
     expect(characterGreeting("sora", true)).toMatch(/sora/i);
     expect(characterVoiceLabel("rex", "yue", false)).toBe("雲龍");
+    expect(characterGender("rex", "yue")).toBe("male");
+    expect(characterGender("nova", "yue")).toBe("female");
+    expect(characterGender("robert", "en")).toBe("male");
     expect(characterVoiceLabel("sora", "en", true)).toBe("Jenny");
     expect(characterGreetingPerformance("kizuna").speechEnergy).toBeGreaterThan(0.8);
     expect(characterGreetingPerformance("sora").talkStyle).toBe("soft");
