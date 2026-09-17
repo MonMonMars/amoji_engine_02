@@ -21,7 +21,11 @@ import {
 import { searchWeb } from "../engine/companion/companionWebSearch.mjs";
 import { processTtsRequest } from "../engine/companion/ttsHandler.mjs";
 import { AMOJI_BUILD } from "../engine/companion/buildVersion.mjs";
-import { rewriteCompanionServePath } from "../engine/companion/companionFreshBoot.js";
+import {
+  buildPlayRedirectLocation,
+  FRESH_HTML_HEADERS,
+  rewriteCompanionServePath,
+} from "../engine/companion/companionFreshBoot.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, "../..");
@@ -121,6 +125,18 @@ const server = http.createServer(async (req, res) => {
   }
 
   const url = new URL(req.url || "/", `http://127.0.0.1:${port}`);
+
+  if (
+    (req.method === "GET" || req.method === "HEAD") &&
+    (url.pathname === "/play" ||
+      url.pathname === "/play/" ||
+      url.pathname === "/go" ||
+      url.pathname === "/go/")
+  ) {
+    const location = buildPlayRedirectLocation(url.search, { build: AMOJI_BUILD });
+    send(res, 303, "", { ...FRESH_HTML_HEADERS, Location: location });
+    return;
+  }
 
   if (req.method === "POST" && url.pathname === "/api/chat") {
     await handleChatApi(req, res);
@@ -235,10 +251,14 @@ const server = http.createServer(async (req, res) => {
     }
     const ext = path.extname(target).toLowerCase();
     const type = MIME[ext] || "application/octet-stream";
-    res.writeHead(200, {
+    const headers = {
       "Content-Type": type,
       "Cache-Control": "no-store",
-    });
+    };
+    if (ext === ".html") {
+      Object.assign(headers, FRESH_HTML_HEADERS, { "Content-Type": type });
+    }
+    res.writeHead(200, headers);
     if (req.method === "HEAD") {
       res.end();
       return;
@@ -250,6 +270,7 @@ const server = http.createServer(async (req, res) => {
 server.listen(port, "0.0.0.0", () => {
   console.log(`[lab] serving ${REPO_ROOT}`);
   console.log(`[lab] companion http://127.0.0.1:${port}/`);
+  console.log(`[lab] play     http://127.0.0.1:${port}/play`);
   console.log(`[lab] unique  http://127.0.0.1:${port}/c/${AMOJI_BUILD}/full`);
   console.log(`[lab] cloud deploy: see DEPLOY.md (Vercel — no local PC needed)`);
 });

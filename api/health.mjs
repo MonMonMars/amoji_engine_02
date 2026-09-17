@@ -14,6 +14,8 @@ export default function handler(_req, res) {
       full: "/companion-full?lang=yue",
       uniqueFull: `/c/${AMOJI_BUILD}/full`,
       uniqueLite: `/c/${AMOJI_BUILD}/lite`,
+      play: "/play",
+      openFull: "/n/{stamp}/full",
     },
   });
 }
