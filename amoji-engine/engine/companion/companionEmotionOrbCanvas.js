@@ -153,12 +153,12 @@ export function drawEmotionOrbFrame(ctx, width, height, opts) {
   }
 
   if (volume > 0.08 && (state === "speaking" || state === "listening")) {
-    const ripples = 2;
+    const ripples = compact ? 1 : 2;
     for (let r = 0; r < ripples; r++) {
       const phase = (time * 1.6 + r * 0.5) % 1;
-      const rippleR = radius * (1.05 + phase * 0.55);
-      ctx.strokeStyle = `hsla(${hue}, ${sat}%, ${light + 10}%, ${(1 - phase) * volume * 0.5})`;
-      ctx.lineWidth = 1.2;
+      const rippleR = radius * (1.05 + phase * (compact ? 0.38 : 0.55));
+      ctx.strokeStyle = `hsla(${hue}, ${sat}%, ${light + 10}%, ${(1 - phase) * volume * (compact ? 0.38 : 0.5)})`;
+      ctx.lineWidth = compact ? 1 : 1.2;
       ctx.beginPath();
       ctx.arc(cx, cy, rippleR, 0, Math.PI * 2);
       ctx.stroke();

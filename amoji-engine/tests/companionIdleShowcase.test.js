@@ -88,6 +88,9 @@ describe("idle showcase wiring", () => {
       /const syncEmotionBall = \(\) => \{[\s\S]*miniEmotionBall\.sync\(/,
     );
     expect(html).toMatch(
+      /onTalking: \(on\) => \{[\s\S]*emotionBallLevel = 0/,
+    );
+    expect(html).toMatch(
       /onMicLevel: \(\{ level, rms \} = \{\}\) => \{[\s\S]*emotionBallLevel = Math\.max/,
     );
     expect(html).toMatch(

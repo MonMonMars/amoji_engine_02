@@ -177,6 +177,24 @@ describe("companionEmotionBall", () => {
     const thinking = computeMiniEmotionBallFrame({ state: "thinking", time: 0.4 });
     expect(thinking.thinking).toBe(true);
     expect(thinking.volume).toBeGreaterThan(0.15);
+    const listenQuiet = computeMiniEmotionBallFrame({
+      state: "listening",
+      level: 0,
+      time: 0.2,
+    });
+    expect(listenQuiet.live).toBe(true);
+    expect(listenQuiet.volume).toBeGreaterThan(0.08);
+    const blocked = computeMiniEmotionBallFrame({
+      state: "mic-blocked",
+      emotion: "happy",
+      level: 0.9,
+    });
+    expect(blocked.disabled).toBe(true);
+    expect(blocked.live).toBe(false);
+    expect(blocked.sat).toBeLessThan(30);
+    const typing = computeMiniEmotionBallFrame({ state: "typing", time: 0.3 });
+    expect(typing.typing).toBe(true);
+    expect(typing.live).toBe(false);
   });
 
   it("runs a live mini emotion ball control loop", () => {

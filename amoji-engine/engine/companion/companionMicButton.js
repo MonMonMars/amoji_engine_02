@@ -32,11 +32,42 @@ function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value));
 }
 
+export const EMOTION_THEME_ALIASES = Object.freeze({
+  joy: "happy",
+  cheerful: "happy",
+  laughing: "happy",
+  laughter: "happy",
+  calm: "neutral",
+  idle: "neutral",
+  curious: "thinking",
+  confused: "thinking",
+  sorrow: "sad",
+  cry: "sad",
+  surprise: "surprised",
+  shocked: "surprised",
+  fearful: "surprised",
+  fear: "surprised",
+  anger: "angry",
+  mad: "angry",
+  disgusted: "angry",
+  disgust: "angry",
+});
+
+/**
+ * @param {string | null | undefined} emotion
+ * @returns {keyof typeof EMOTION_MIC_THEME}
+ */
+export function normalizeEmotionThemeKey(emotion) {
+  const key = String(emotion || "neutral").toLowerCase();
+  if (EMOTION_MIC_THEME[key]) return key;
+  return EMOTION_THEME_ALIASES[key] || "neutral";
+}
+
 /**
  * @param {{ emotion?: string, nuance?: string }} [opts]
  */
 export function resolveMicButtonTheme(opts = {}) {
-  const emotion = String(opts.emotion || "neutral").toLowerCase();
+  const emotion = normalizeEmotionThemeKey(opts.emotion);
   const nuance = String(opts.nuance || "none").toLowerCase();
   const base = EMOTION_MIC_THEME[emotion] || EMOTION_MIC_THEME.neutral;
   const delta = NUANCE_MIC_DELTA[nuance] || NUANCE_MIC_DELTA.none;

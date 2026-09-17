@@ -378,31 +378,44 @@ export function computeMiniEmotionBallFrame(opts = {}) {
   const speaking = state === "speaking";
   const listening = state === "listening";
   const thinking = state === "thinking" || state === "loading";
+  const typing = state === "typing";
+  const disabled = state === "disabled" || state === "mic-blocked";
   const live = speaking || listening;
   const breath = Math.sin(time * 1.45) * 0.5 + 0.5;
   const thinkWave = Math.sin(time * 2.35) * 0.5 + 0.5;
 
   let volume = raw;
-  if (live) volume = raw;
+  if (disabled) volume = 0.03;
+  else if (speaking) volume = Math.max(raw, 0.05 + breath * 0.04);
+  else if (listening) volume = Math.max(raw, 0.1 + breath * 0.08);
   else if (thinking) volume = 0.2 + thinkWave * 0.28;
-  else volume = 0.07 + breath * 0.12 + raw * 0.22;
+  else if (typing) volume = 0.05 + breath * 0.06;
+  else volume = 0.07 + breath * 0.12 + raw * 0.18;
 
-  const scale = live
-    ? 1.02 + volume * 0.16
-    : thinking
-      ? 1.03 + volume * 0.08
-      : 1.01 + volume * 0.06;
-  const wobble = live
-    ? 0.07 + volume * 0.2
-    : thinking
-      ? 0.055 + thinkWave * 0.035
-      : 0.03 + breath * 0.02;
-  const glow = 7 + volume * (live ? 26 : thinking ? 16 : 10);
-  const bright = live
-    ? 0.96 + volume * 0.42
-    : thinking
-      ? 0.98 + thinkWave * 0.14
-      : 0.94 + breath * 0.1;
+  const scale = disabled
+    ? 1
+    : live
+      ? 1.02 + volume * 0.16
+      : thinking
+        ? 1.03 + volume * 0.08
+        : 1.01 + volume * 0.06;
+  const wobble = disabled
+    ? 0.012
+    : live
+      ? 0.07 + volume * 0.2
+      : thinking
+        ? 0.055 + thinkWave * 0.035
+        : 0.03 + breath * 0.02;
+  const glow = disabled
+    ? 4
+    : 7 + volume * (live ? 26 : thinking ? 16 : 10);
+  const bright = disabled
+    ? 0.78
+    : live
+      ? 0.96 + volume * 0.42
+      : thinking
+        ? 0.98 + thinkWave * 0.14
+        : 0.94 + breath * 0.1;
 
   return {
     emotion,
@@ -410,8 +423,8 @@ export function computeMiniEmotionBallFrame(opts = {}) {
     state,
     theme,
     hue: theme.hue,
-    sat: theme.sat,
-    light: theme.light,
+    sat: disabled ? Math.min(theme.sat, 22) : theme.sat,
+    light: disabled ? Math.min(theme.light, 44) : theme.light,
     volume,
     scale,
     wobble,
@@ -419,6 +432,8 @@ export function computeMiniEmotionBallFrame(opts = {}) {
     bright,
     live,
     thinking,
+    typing,
+    disabled,
   };
 }
 
@@ -439,6 +454,9 @@ export function applyMiniEmotionBallFrame(el, frame) {
   el.style.setProperty("--mini-ball-bright", frame.bright.toFixed(3));
   el.style.setProperty("--mini-ball-wobble", frame.wobble.toFixed(3));
   el.style.setProperty("--mini-ball-hue", String(frame.hue));
+  const label = `${frame.state} · ${frame.emotion}`;
+  el.title = label;
+  el.dataset.ballLabel = label;
   return frame;
 }
 
@@ -493,12 +511,13 @@ export function createMiniEmotionBall(el) {
   const resizeCanvas = () => {
     if (!canvas || !ctx) return;
     const dpr = Math.min(2, globalThis.devicePixelRatio || 1);
-    const rect = el.getBoundingClientRect?.() || { width: 28, height: 28 };
-    const size = Math.max(28, Math.round(Math.max(rect.width || 0, rect.height || 0) * 1.2));
-    canvas.width = Math.round(size * dpr);
-    canvas.height = Math.round(size * dpr);
-    canvas.style.width = `${size}px`;
-    canvas.style.height = `${size}px`;
+    const rect =
+      canvas.getBoundingClientRect?.() ||
+      el.getBoundingClientRect?.() ||
+      { width: 28, height: 28 };
+    const css = Math.max(28, Math.round(Math.max(rect.width || 0, rect.height || 0)));
+    canvas.width = Math.round(css * dpr);
+    canvas.height = Math.round(css * dpr);
     if (typeof ctx.setTransform === "function") {
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     }
@@ -507,7 +526,11 @@ export function createMiniEmotionBall(el) {
   const paint = (timestamp) => {
     if (!startTime) startTime = timestamp;
     const time = (timestamp - startTime) / 1000;
-    displayVolume = smoothStep(displayVolume, targetVolume, 0.32);
+    displayVolume = smoothStep(
+      displayVolume,
+      targetVolume,
+      lastFrame.live ? 0.42 : 0.22,
+    );
     lastFrame = computeMiniEmotionBallFrame({
       emotion,
       nuance,
@@ -523,13 +546,20 @@ export function createMiniEmotionBall(el) {
       if (typeof ctx.setTransform === "function") {
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       }
+      const drawState = lastFrame.disabled
+        ? "idle"
+        : lastFrame.live
+          ? state
+          : lastFrame.thinking
+            ? "thinking"
+            : "idle";
       drawEmotionOrbFrame(ctx, w || 36, h || 36, {
         time,
         volume: lastFrame.volume,
         hue: lastFrame.hue,
         sat: lastFrame.sat,
         light: lastFrame.light,
-        state: lastFrame.live ? state : lastFrame.thinking ? "thinking" : "idle",
+        state: drawState,
         compact: true,
       });
     }
@@ -540,6 +570,7 @@ export function createMiniEmotionBall(el) {
 
   const startLoop = () => {
     if (rafId) return;
+    if (typeof document !== "undefined" && document.hidden) return;
     resizeCanvas();
     const raf = globalThis.requestAnimationFrame;
     if (typeof raf === "function") {
@@ -555,6 +586,14 @@ export function createMiniEmotionBall(el) {
     startTime = 0;
   };
 
+  const onVisibility = () => {
+    if (typeof document !== "undefined" && document.hidden) stopLoop();
+    else startLoop();
+  };
+  if (typeof document !== "undefined" && document.addEventListener) {
+    document.addEventListener("visibilitychange", onVisibility);
+  }
+
   const setState = (next) => {
     state = String(next || "idle").toLowerCase();
   };
@@ -569,8 +608,11 @@ export function createMiniEmotionBall(el) {
   };
 
   const sync = (ctxIn = {}) => {
-    if (ctxIn.emotion) setEmotion(ctxIn.emotion, ctxIn.nuance || nuance);
-    else if (ctxIn.nuance) nuance = String(ctxIn.nuance).toLowerCase();
+    if (ctxIn.emotion != null && ctxIn.emotion !== "") {
+      setEmotion(ctxIn.emotion, ctxIn.nuance || nuance);
+    } else if (ctxIn.nuance) {
+      nuance = String(ctxIn.nuance).toLowerCase();
+    }
     if (ctxIn.state) setState(ctxIn.state);
     if (ctxIn.level != null) setLevel(ctxIn.level);
     startLoop();
@@ -589,7 +631,12 @@ export function createMiniEmotionBall(el) {
     setState,
     setEmotion,
     setLevel,
-    destroy: stopLoop,
+    destroy() {
+      stopLoop();
+      if (typeof document !== "undefined" && document.removeEventListener) {
+        document.removeEventListener("visibilitychange", onVisibility);
+      }
+    },
     getFrame: () => lastFrame,
     getState: () => state,
     getVolume: () => displayVolume,
