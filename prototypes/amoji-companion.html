@@ -4639,6 +4639,7 @@
       let voice;
 
       let emotionBallLevel = 0;
+      let speakContent = { emotion: "neutral", nuance: "none" };
       const syncEmotionBall = () => {
         if (!voice) return;
         emotionBall.sync({
@@ -5728,8 +5729,6 @@
       };
 
       let speakEmotion = "neutral";
-      /** @type {{ emotion?: string, nuance?: string }} */
-      let speakContent = { emotion: "neutral", nuance: "none" };
 
       const phaseAEnabled = new URLSearchParams(location.search).get("phaseA") !== "0";
       /** @type {string[]} */
