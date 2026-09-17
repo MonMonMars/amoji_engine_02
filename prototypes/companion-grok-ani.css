@@ -104,6 +104,7 @@
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.32);
   max-width: min(72vw, 280px);
   cursor: pointer;
+  overflow: visible;
 }
 
 .theme-grok-ani .companion-chip:hover,
@@ -198,6 +199,7 @@
 
 .theme-grok-ani .companion-chip__dot:has(canvas) {
   background: transparent;
+  filter: none;
 }
 
 .theme-grok-ani .companion-chip__dot[data-state="listening"],
