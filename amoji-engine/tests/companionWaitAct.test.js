@@ -95,4 +95,29 @@ describe("companionWaitAct", () => {
     expect(avatar.setEmotion).toHaveBeenCalledWith("neutral");
     wait.stop();
   });
+
+  it("pulses look/comb idle life on later idle ticks without playing VRMA", () => {
+    vi.useFakeTimers();
+    const avatar = {
+      playAction: vi.fn(),
+      setEmotion: vi.fn(),
+      setThinking: vi.fn(),
+      stopAction: vi.fn(),
+      applyExpressionProfile: vi.fn(),
+      resetIdleLife: vi.fn(),
+      pulseIdleBeat: vi.fn(),
+    };
+    const wait = createCompanionWaitAct({
+      avatar,
+      isEnglish: true,
+      poseIntervalMs: 2000,
+    });
+    wait.start({ kind: "idle", phase: "idle", speak: false });
+    expect(avatar.pulseIdleBeat).not.toHaveBeenCalled();
+    vi.advanceTimersByTime(2000);
+    expect(avatar.playAction).not.toHaveBeenCalled();
+    expect(avatar.pulseIdleBeat).toHaveBeenCalled();
+    wait.stop();
+    vi.useRealTimers();
+  });
 });

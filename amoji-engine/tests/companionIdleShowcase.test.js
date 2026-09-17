@@ -46,4 +46,15 @@ describe("idle showcase wiring", () => {
       /if \(!avatar\.currentAction\) \{\s*avatar\.setEmotion\("neutral"\)/,
     );
   });
+
+  it("resets camera on talk start once and on empty double-tap", () => {
+    expect(html).toMatch(/talkingCameraLatched/);
+    expect(html).toMatch(/lastCanvasTapAt < 500/);
+    expect(html).toMatch(/if \(on && !talkingCameraLatched\)/);
+  });
+
+  it("keeps conversation captions above the orbit surface", () => {
+    expect(html).toMatch(/\.chat-shell \{[\s\S]*z-index:\s*50/);
+    expect(html).toMatch(/\.msg-row \{[\s\S]*z-index:\s*60|z-index:\s*60;[\s\S]*pointer-events:\s*auto/);
+  });
 });

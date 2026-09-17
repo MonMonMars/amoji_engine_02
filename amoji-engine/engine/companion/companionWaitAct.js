@@ -79,6 +79,9 @@ export function createCompanionWaitAct(opts = {}) {
           emotion: "neutral",
           nuance: "none",
         });
+      } else {
+        const beats = ["look", "breathe", "comb", "nod"];
+        avatarRef?.pulseIdleBeat?.(beats[poseTick % beats.length]);
       }
       opts.onPose?.("idle-stand", phase);
       return;

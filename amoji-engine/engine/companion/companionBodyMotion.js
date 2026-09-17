@@ -22,9 +22,10 @@ import {
 } from "./companionActionMotion.js";
 import { buildCharacterSystemPrompt } from "./companionCharacterCatalog.js";
 import {
-  sampleCalmBreathIdle,
+  samplePlantedAliveIdle,
   advanceIdleBeat,
   createIdleBeatState,
+  startIdleBeat,
 } from "./companionIdleMotion.js";
 import { applyFingerRestPose } from "./companionFingerPose.js";
 import {
@@ -698,7 +699,7 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
         pose.headX = (pose.headX || 0) + Math.sin(elapsed * 0.55) * 0.024;
         pose.headZ = (pose.headZ || 0) + Math.sin(elapsed * 0.42 + 0.8) * 0.018;
       } else if (!talking) {
-        const idleMotion = sampleCalmBreathIdle(elapsed, { listening, emotion });
+        const idleMotion = samplePlantedAliveIdle(elapsed, { listening, emotion });
         pose = mergePoses(pose, idleMotion, 0.96);
         const beat = advanceIdleBeat(idleBeat, dt, now);
         idleBeat = beat.state;
@@ -821,7 +822,7 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
     smoothedPose = buildBasePose({ listening, emotion, nuance });
     smoothedPose = mergePoses(
       smoothedPose,
-      sampleCalmBreathIdle(0.2, { listening, emotion }),
+      samplePlantedAliveIdle(0.2, { listening, emotion }),
       0.96,
     );
     smoothedRootMotion = { y: 0, rotY: 0 };
@@ -840,6 +841,11 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
   const resetIdleLife = (now = performance.now()) => {
     idleBeat = createIdleBeatState(now);
     return resetMotionClock(now);
+  };
+
+  const pulseIdleBeat = (beat, now = performance.now()) => {
+    idleBeat = startIdleBeat(idleBeat, beat, now);
+    return idleBeat;
   };
 
   return {
@@ -896,7 +902,7 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
       smoothedPose = buildBasePose({ listening, emotion, nuance });
       smoothedPose = mergePoses(
         smoothedPose,
-        sampleCalmBreathIdle(0.2, { listening, emotion }),
+        samplePlantedAliveIdle(0.2, { listening, emotion }),
         0.96,
       );
       smoothedRootMotion = { y: 0, rotY: 0 };
@@ -912,6 +918,7 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
       return smoothedPose;
     },
     resetIdleLife,
+    pulseIdleBeat,
     resetMotionClock,
     setArmRestRotations(next) {
       if (!next) return armRestRotations;

@@ -6,7 +6,9 @@ import {
   sampleCalmBreathIdle,
   sampleIdleBodyMotion,
   sampleIdleExpressionBlend,
+  samplePlantedAliveIdle,
   sampleSimpleBootIdleMotion,
+  startIdleBeat,
 } from "../engine/companion/companionIdleMotion.js";
 import { createCompanionBodyMotion } from "../engine/companion/companionBodyMotion.js";
 import { VRM_ARM_REST_ROTATIONS } from "../engine/companion/companionPoseLibrary.js";
@@ -79,8 +81,8 @@ describe("companionIdleMotion", () => {
     expect(a.leanY).toBe(0);
     expect(a.headZ).toBe(0);
     expect(a.forearmL).toBeGreaterThan(0.32);
-    expect(a.lowerLegR).toBeGreaterThan(0.1);
-    expect(a.lowerLegR).toBeLessThan(0.2);
+    expect(a.lowerLegR).toBeGreaterThan(0.16);
+    expect(a.lowerLegR).toBeLessThan(0.22);
     expect(a.spineX).not.toBe(b.spineX);
   });
 
@@ -90,6 +92,25 @@ describe("companionIdleMotion", () => {
     expect(idle.armLiftL).toBeGreaterThan(0.08);
     expect(idle.forearmL).toBeGreaterThan(0.3);
     expect(idle.lowerLegR + idle.upperLegR).toBeGreaterThan(0.28);
+  });
+
+  it("plants legs while the upper body breathes and looks around", () => {
+    const a = samplePlantedAliveIdle(0.5);
+    const b = samplePlantedAliveIdle(2.3);
+    expect(a.lowerLegR).toBeLessThan(0.22);
+    expect(a.upperLegR).toBeLessThan(0.08);
+    expect(a.forearmL).toBeGreaterThan(0.3);
+    expect(a.armLiftL).toBeGreaterThan(0.08);
+    expect(Math.abs(a.headZ) + Math.abs(a.leanY) + Math.abs(a.spineX)).toBeGreaterThan(0.02);
+    expect(a.headZ).not.toBe(b.headZ);
+  });
+
+  it("can force a look or comb idle-life beat", () => {
+    const look = startIdleBeat(createIdleBeatState(0), "look", 10);
+    expect(look.beat).toBe("look");
+    expect(look.duration).toBeGreaterThan(1);
+    const comb = startIdleBeat(createIdleBeatState(0), "comb", 10);
+    expect(comb.beat).toBe("comb");
   });
 });
 

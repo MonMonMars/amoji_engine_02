@@ -18,6 +18,8 @@ import {
   TALK_SURPRISED_MAX,
   talkJawRotationX,
   talkingMouthOpen,
+  talkingVisemeShape,
+  capTalkingEmotionWeight,
   zeroAllExpressions,
   zeroHazardMorphInfluences,
   zeroLookLidExpressions,
@@ -95,6 +97,25 @@ describe("companionFaceRest", () => {
     });
     expect(clamped.Happy).toBeLessThanOrEqual(TALK_HAPPY_MAX);
     expect(clamped.Surprised).toBeLessThanOrEqual(TALK_SURPRISED_MAX);
+    expect(clamped.Happy).toBeGreaterThan(0.15);
+  });
+
+  it("walks viseme shapes when TTS has not named one yet", () => {
+    expect(talkingVisemeShape(0, false, null)).toBe("aa");
+    expect(talkingVisemeShape(0, true, "oh")).toBe("oh");
+    const a = talkingVisemeShape(40, true, null);
+    const b = talkingVisemeShape(280, true, null);
+    expect(["aa", "ih", "ou", "ee", "oh"]).toContain(a);
+    expect(["aa", "ih", "ou", "ee", "oh"]).toContain(b);
+    expect(a).not.toBe(b);
+  });
+
+  it("keeps a viseme-safe talk smile instead of wiping the face", () => {
+    expect(capTalkingEmotionWeight("Happy", 0.98, { talking: true })).toBe(
+      TALK_HAPPY_MAX,
+    );
+    expect(capTalkingEmotionWeight("Happy", 0.98, { eating: true })).toBe(0);
+    expect(capTalkingEmotionWeight("Sad", 0.7, { talking: true })).toBeCloseTo(0.7);
   });
 
   it("skips rest presets that bake an open jaw or closed lids", () => {
