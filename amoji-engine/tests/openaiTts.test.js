@@ -22,6 +22,11 @@ describe("openaiTts", () => {
     expect(resolveOpenAiVoice("zh-HK-HiuMaanNeural", "zh-HK")).toBe("marin");
   });
 
+  it("maps openai-coral profile directly", () => {
+    expect(resolveOpenAiVoice("openai-coral", "en")).toBe("coral");
+    expect(resolveOpenAiVoice("openai-shimmer", "en")).toBe("shimmer");
+  });
+
   it("maps male English and persona-suffixed voices correctly", () => {
     expect(resolveOpenAiVoice("en-HK-SamNeural", "en-HK")).toBe("ash");
     expect(normalizeOpenAiVoiceKey("zh-HK-WanLungNeural-calm")).toBe(

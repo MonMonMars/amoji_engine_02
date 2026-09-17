@@ -7,6 +7,7 @@ import {
   instructSpeakingSpeed,
   MAX_CLOUD_TTS_CHARS,
 } from "./companionTtsProsody.js";
+import { resolveOpenAiVoiceFromProfile } from "./companionVoiceProfiles.js";
 
 export const OPENAI_TTS_SCHEMA = "amoji.openaiTts.v2";
 
@@ -49,6 +50,15 @@ export function normalizeOpenAiVoiceKey(voice) {
  * @param {string | null | undefined} lang
  */
 export function resolveOpenAiVoice(voice, lang = "") {
+  const fromProfile = resolveOpenAiVoiceFromProfile(voice);
+  if (fromProfile) return fromProfile;
+  const raw = String(voice || "")
+    .trim()
+    .toLowerCase();
+  if (raw.startsWith("openai-")) {
+    const name = raw.slice("openai-".length);
+    return VOICE_MAP[name] || name;
+  }
   const key = normalizeOpenAiVoiceKey(voice);
   if (VOICE_MAP[key]) return VOICE_MAP[key];
   if (/wanlung|samneural/.test(key)) return "ash";
