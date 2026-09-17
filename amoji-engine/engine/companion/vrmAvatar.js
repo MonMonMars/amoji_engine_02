@@ -52,6 +52,12 @@ import {
   isOnlineLoopingLibraryAction,
   resolveOnlineMotionClipUrl,
 } from "./companionOnlineMotionClips.mjs";
+import {
+  isTalkBackgroundLibraryAction,
+  isTalkLibraryLoopAction,
+  resolveTalkGestureLibraryAction,
+  resolveTalkLibraryAction,
+} from "./companionTalkMotionLibrary.mjs";
 import { createVrmMotionPlayer } from "./companionVrmMotionPlayer.js";
 import { sampleIdleExpressionBlend } from "./companionIdleMotion.js";
 import {
@@ -292,14 +298,50 @@ export async function createVrmAvatar(opts) {
   let vrmaAction = null;
   let vrmaPending = false;
   let vrmaPlayGen = 0;
+  /** @type {string | null} */
+  let talkLibraryAction = null;
   /** @type {string[]} */
   let vrmaSequenceQueue = [];
   /** @type {object | null} */
   let vrmaSequenceOpts = null;
+  const syncTalkLibraryMotion = (force = false) => {
+    if (!talking || eating) {
+      talkLibraryAction = null;
+      return false;
+    }
+    const desired = resolveTalkLibraryAction(bodyMotion.talkStyle, emotion);
+    if (!desired || !resolveOnlineMotionClipUrl(desired)) {
+      talkLibraryAction = null;
+      return false;
+    }
+    const sameTrack =
+      talkLibraryAction === desired &&
+      vrmaAction === desired &&
+      (motionPlayer.isPlaying?.() || vrmaPending);
+    if (!force && sameTrack) return true;
+
+    if (
+      !force &&
+      vrmaAction &&
+      !isTalkBackgroundLibraryAction(vrmaAction) &&
+      (motionPlayer.isPlaying?.() || vrmaPending)
+    ) {
+      return false;
+    }
+
+    talkLibraryAction = desired;
+    void tryPlayVrmaAction(desired, { loop: isTalkLibraryLoopAction(desired) });
+    return true;
+  };
+
   const restoreAfterVrma = () => {
     if (vrmaPending) return;
     const finished = vrmaAction;
     if (isOnlineLoopingLibraryAction(finished) && motionPlayer.isPlaying?.()) {
+      return;
+    }
+    if (talking && !eating) {
+      syncTalkLibraryMotion(true);
       return;
     }
     void resumeCalmStand();
@@ -804,12 +846,12 @@ export async function createVrmAvatar(opts) {
     if (on) {
       emotion = "thinking";
       applyEmotionExpressions("thinking");
-      if (vrmaAction === "thinking") {
+      if (vrmaAction === "thinking" && !talking) {
         restorePlantedIdle();
       }
     } else {
       applyEmotionExpressions(emotion === "thinking" ? "neutral" : emotion);
-      if (vrmaAction === "thinking") {
+      if (vrmaAction === "thinking" && !talking) {
         restorePlantedIdle();
       }
     }
@@ -902,6 +944,7 @@ export async function createVrmAvatar(opts) {
     bodyMotion.setTalking(talking);
     cameraDirector.setTalking(talking);
     if (!talking) {
+      talkLibraryAction = null;
       cameraDirector.resetDialogue();
       if (!eating) {
         mouthTarget = 0;
@@ -918,13 +961,14 @@ export async function createVrmAvatar(opts) {
         !eating &&
         !bodyMotion.currentAction &&
         !bodyMotion.activeGesture &&
-        !motionPlayer.isPlaying?.()
+        (!motionPlayer.isPlaying?.() || isTalkBackgroundLibraryAction(vrmaAction))
       ) {
         restorePlantedIdle();
       }
     } else {
       applyEmotionExpressions(emotion);
       if (mouthTarget < 0.2) mouthTarget = Math.max(mouthTarget, 0.55);
+      syncTalkLibraryMotion(true);
     }
     return talking;
   };
@@ -940,9 +984,15 @@ export async function createVrmAvatar(opts) {
   };
 
   const setTalkEnergy = (v) => bodyMotion.setTalkEnergy(v);
-  const setTalkStyle = (style) => bodyMotion.setTalkStyle(style);
+  const setTalkStyle = (style) => {
+    const prev = bodyMotion.talkStyle;
+    bodyMotion.setTalkStyle(style);
+    if (talking && style !== prev) syncTalkLibraryMotion(true);
+    return bodyMotion.talkStyle;
+  };
   const reactToSpeechChunk = (chunk, opts) => {
     cameraDirector.notifySpeech(chunk);
+    const prevStyle = bodyMotion.talkStyle;
     const analysis = bodyMotion.reactToSpeechChunk(chunk, opts);
     if (analysis?.expressionBlend) {
       applyExpressionProfile({
@@ -950,6 +1000,19 @@ export async function createVrmAvatar(opts) {
         nuance: analysis.nuance || bodyMotion.nuance || "none",
         blend: analysis.expressionBlend,
       });
+    }
+    if (talking && analysis?.gesture) {
+      const accent = resolveTalkGestureLibraryAction(analysis.gesture);
+      if (accent && resolveOnlineMotionClipUrl(accent)) {
+        void tryPlayVrmaAction(accent, { loop: false });
+      }
+    }
+    if (
+      talking &&
+      analysis?.talkStyle &&
+      analysis.talkStyle !== prevStyle
+    ) {
+      syncTalkLibraryMotion(true);
     }
     return analysis;
   };
