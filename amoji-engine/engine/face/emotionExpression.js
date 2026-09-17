@@ -88,7 +88,6 @@ export function inferExpressionFromText(text) {
   if (/哇|嘩|唔信|真係|嚇死/.test(raw) || /!{2,}|！{2,}/.test(raw)) {
     return "surprised";
   }
-  if (/[!！]/.test(raw) || /[呀啊喇喎喔呢咩~～]/.test(raw)) return "happy";
   return "neutral";
 }
 

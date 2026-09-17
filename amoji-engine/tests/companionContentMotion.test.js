@@ -29,7 +29,7 @@ describe("companionContentMotion", () => {
     expect(content.nuance).toBe("love");
     expect(content.talkStyle).toBe("soft");
     expect(content.gesture).toBe("nod");
-    expect(content.expressionBlend.Happy).toBeGreaterThan(0.7);
+    expect(content.expressionBlend.Happy).toBeGreaterThan(0.35);
   });
 
   it("maps curious questions to question style", () => {
@@ -39,16 +39,18 @@ describe("companionContentMotion", () => {
     expect(content.talkStyle).toBe("question");
   });
 
-  it("builds excited expression blend without sleepy Relaxed lids", () => {
+  it("builds a mild happy blend without shocked Surprised lids", () => {
     const blend = buildVrmExpressionBlend("happy", "excited");
-    expect(blend.Happy).toBeGreaterThan(0.85);
-    expect(blend.Surprised).toBeGreaterThan(0.1);
+    expect(blend.Happy).toBeGreaterThan(0.35);
+    expect(blend.Happy).toBeLessThan(0.7);
+    expect(blend.Surprised ?? 0).toBe(0);
     expect(blend.Relaxed ?? 0).toBe(0);
   });
 
-  it("does not use Relaxed for thinking", () => {
+  it("does not use Relaxed or Surprised for thinking", () => {
     const blend = buildVrmExpressionBlend("thinking", "curious");
     expect(blend.Relaxed ?? 0).toBe(0);
+    expect(blend.Surprised ?? 0).toBe(0);
   });
 
   it("keeps untagged rest emotion morph-neutral", () => {
@@ -58,11 +60,18 @@ describe("companionContentMotion", () => {
     expect(blend.Surprised ?? 0).toBe(0);
   });
 
-  it("defaults untagged spoken replies to a warm happy performance", () => {
+  it("keeps everyday Cantonese particles on a calm face", () => {
     const content = analyzeCompanionReply("你好呀！一齊傾偈啦");
     expect(content.emotion).toBe("happy");
-    expect(content.nuance).toBe("excited");
-    expect(content.speechEnergy).toBeGreaterThan(0.75);
+    expect(content.nuance).toBe("none");
+    expect(content.expressionBlend.Surprised ?? 0).toBe(0);
+  });
+
+  it("does not smile at factual untagged replies", () => {
+    const content = analyzeCompanionReply("而家香港大約二十七度，有幾陣雨");
+    expect(content.emotion).toBe("neutral");
+    expect(content.nuance).toBe("none");
+    expect(content.expressionBlend.Happy ?? 0).toBe(0);
   });
 
   it("infers user worry as stress nuance for thinking pose", () => {

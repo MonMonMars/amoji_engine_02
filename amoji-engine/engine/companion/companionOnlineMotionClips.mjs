@@ -5,30 +5,26 @@
 import { resolveMotionSamplerKey } from "./companionMotionLibrary.js";
 
 export const COMPANION_ONLINE_MOTION_CLIPS_SCHEMA =
-  "amoji.companionOnlineMotionClips.v1";
+  "amoji.companionOnlineMotionClips.v2";
 
-/** Subtle social gestures — procedural body motion returns to arms-down rest. */
-export const PROCEDURAL_PREFERRED_ACTIONS = Object.freeze(
-  new Set([
-    "wave",
-    "nod",
-    "bow",
-    "thinking",
-    "shrug",
-    "point",
-    "peace",
-    "thumbsup",
-    "highfive",
-    "salute",
-    "handshake",
-  ]),
-);
+/** Loop this clip as standing idle instead of procedural sine-wave sway. */
+export const ONLINE_IDLE_ACTION = "idle";
+export const ONLINE_IDLE_CLIP_FILE = "Relax";
+export const ONLINE_THINKING_ACTION = "thinking";
+
+/**
+ * @deprecated Empty — social gestures now play hosted VRMA instead of
+ * procedural bone sway (which made the body shake).
+ */
+export const PROCEDURAL_PREFERRED_ACTIONS = Object.freeze(new Set());
 
 const VRMA_BASE =
   "https://raw.githubusercontent.com/tk256ailab/vrm-viewer/main/VRMA";
 
 /** @type {Readonly<Record<string, string>>} */
 export const ONLINE_MOTION_CLIP_FILES = Object.freeze({
+  idle: "Relax",
+  relax: "Relax",
   wave: "Goodbye",
   highfive: "Goodbye",
   salute: "Goodbye",
@@ -36,18 +32,18 @@ export const ONLINE_MOTION_CLIP_FILES = Object.freeze({
   clap: "Clapping",
   cheer: "Clapping",
   thumbsup: "Clapping",
+  celebrate: "Clapping",
   jump: "Jump",
   jumpjack: "Jump",
-  celebrate: "Jump",
-  dance: "Jump",
-  dab: "Jump",
-  breakdance: "Jump",
-  tiktokdance: "Jump",
-  ballet: "Jump",
-  hiphop: "Jump",
-  macarena: "Jump",
-  floss: "Jump",
-  wiggle: "Jump",
+  dance: "LookAround",
+  dab: "LookAround",
+  breakdance: "LookAround",
+  tiktokdance: "LookAround",
+  ballet: "LookAround",
+  hiphop: "LookAround",
+  macarena: "LookAround",
+  floss: "LookAround",
+  wiggle: "LookAround",
   thinking: "Thinking",
   learning: "Thinking",
   downloading: "Thinking",
@@ -73,10 +69,10 @@ export const ONLINE_MOTION_CLIP_FILES = Object.freeze({
   eat: "Relax",
   drink: "Relax",
   nod: "Relax",
-  point: "Relax",
+  point: "LookAround",
   peace: "Relax",
   shrug: "Relax",
-  fingerheart: "Relax",
+  fingerheart: "Blush",
   photopose: "Relax",
   walk: "LookAround",
   run: "LookAround",
@@ -87,10 +83,26 @@ export const ONLINE_MOTION_CLIP_FILES = Object.freeze({
   kungfu: "LookAround",
   taiji: "Relax",
   zombie: "LookAround",
-  superhero: "Jump",
+  superhero: "LookAround",
   pushup: "Relax",
   plank: "Relax",
 });
+
+/**
+ * @param {string | null | undefined} actionId
+ */
+export function isOnlineIdleAction(actionId) {
+  const id = String(actionId || "").toLowerCase();
+  return id === ONLINE_IDLE_ACTION || id === "relax";
+}
+
+/**
+ * @param {string | null | undefined} actionId
+ */
+export function isOnlineLoopingLibraryAction(actionId) {
+  const id = String(actionId || "").toLowerCase();
+  return isOnlineIdleAction(id) || id === ONLINE_THINKING_ACTION;
+}
 
 /**
  * @param {string | null | undefined} actionId
@@ -110,9 +122,7 @@ export function resolveOnlineMotionClipFile(actionId) {
  * @param {string | null | undefined} actionId
  */
 export function resolveOnlineMotionClipUrl(actionId) {
-  const id = String(actionId || "").toLowerCase();
-  if (PROCEDURAL_PREFERRED_ACTIONS.has(id)) return null;
-  const file = resolveOnlineMotionClipFile(id);
+  const file = resolveOnlineMotionClipFile(actionId);
   if (!file) return null;
   return `${VRMA_BASE}/${file}.vrma`;
 }
