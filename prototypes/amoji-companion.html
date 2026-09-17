@@ -8,9 +8,9 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji · Companion</title>
     <script>
-      window.__amojiBuild = "2026-09-17-v195-voice-emotion";
+      window.__amojiBuild = "2026-09-17-v196-voice-emotion-demo";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-17-v195-voice-emotion"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-17-v196-voice-emotion-demo"></script>
     <link
       rel="prefetch"
       href="/prototypes/assets/companion-char-nova.png"
@@ -329,8 +329,8 @@
       media="print"
       onload="this.media='all'"
     />
-    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-17-v195-voice-emotion" />
-    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-17-v195-voice-emotion" />
+    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-17-v196-voice-emotion-demo" />
+    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-17-v196-voice-emotion-demo" />
     <noscript>
       <link
         href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap"
@@ -3806,19 +3806,19 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-17-v195-voice-emotion",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-17-v196-voice-emotion-demo",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-17-v195-voice-emotion",
-          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-17-v195-voice-emotion"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-17-v196-voice-emotion-demo",
+          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-17-v196-voice-emotion-demo"
         }
       }
     </script>
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v195-voice-emotion"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v196-voice-emotion-demo"
     />
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-17-v195-voice-emotion"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v195-voice-emotion"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-17-v196-voice-emotion-demo"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v196-voice-emotion-demo"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;
@@ -4480,6 +4480,7 @@
         buildCompanionHref,
         cloudVoiceLabel,
         companionLangCode,
+        findVoiceEntry,
         resolveVoiceForCharacter,
         voicePresetById,
         voiceGenderLabel,
@@ -4960,15 +4961,11 @@
       });
       persistCharacterId(characterId);
       let charConfig = characterAvatarConfig(characterId, langCode);
-      let voiceId = resolveVoiceForCharacter(characterId, langCode);
-      if (params.has("voice")) {
-        params.delete("voice");
-        history.replaceState(
-          null,
-          "",
-          `${location.pathname}${params.toString() ? `?${params}` : ""}`,
-        );
-      }
+      const voiceOverride = String(params.get("voice") || "").trim();
+      let voiceId =
+        voiceOverride && findVoiceEntry(voiceOverride)
+          ? voiceOverride
+          : resolveVoiceForCharacter(characterId, langCode);
       const liteMode = params.get("lite") === "1";
       const autoMic = params.get("automic") !== "0";
       dismissLoading();
@@ -6344,7 +6341,10 @@
       };
 
       const syncCharacterVoice = () => {
-        voiceId = resolveVoiceForCharacter(characterId, langCode);
+        voiceId =
+          voiceOverride && findVoiceEntry(voiceOverride)
+            ? voiceOverride
+            : resolveVoiceForCharacter(characterId, langCode);
         const preset = voicePresetById(voiceId);
         voice.setCloudVoice(preset);
         voice.setCharacterId?.(characterId);

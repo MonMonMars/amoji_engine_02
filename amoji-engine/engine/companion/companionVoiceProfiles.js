@@ -13,8 +13,10 @@ export const COMPANION_VOICE_PROFILES_SCHEMA =
  *   lang: string,
  *   gender: "female" | "male",
  *   source: string,
+ *   openAiVoice?: string,
  *   samplePath?: string,
  *   prosodyBias?: { rate?: number, pitch?: number, volume?: number },
+ *   emotionRank?: number,
  * }} VoiceProfile */
 
 /** @type {ReadonlyArray<VoiceProfile>} */
@@ -283,6 +285,78 @@ export const EN_VOICE_PROFILES = Object.freeze([
     source: "Edge TTS",
     prosodyBias: { rate: -4, pitch: -6, volume: 2 },
   },
+  {
+    id: "openai-coral",
+    edgeVoice: "en-US-AriaNeural",
+    openAiVoice: "coral",
+    shortLabel: "Coral",
+    shortLabelEn: "Coral (OpenAI)",
+    lang: "en-US",
+    gender: "female",
+    source: "OpenAI TTS",
+    prosodyBias: { rate: 8, pitch: 12, volume: 6 },
+    emotionRank: 1,
+  },
+  {
+    id: "openai-marin",
+    edgeVoice: "en-US-AriaNeural",
+    openAiVoice: "marin",
+    shortLabel: "Marin",
+    shortLabelEn: "Marin (OpenAI)",
+    lang: "en-US",
+    gender: "female",
+    source: "OpenAI TTS",
+    prosodyBias: { rate: 6, pitch: 10, volume: 4 },
+    emotionRank: 2,
+  },
+  {
+    id: "openai-shimmer",
+    edgeVoice: "en-US-JennyNeural",
+    openAiVoice: "shimmer",
+    shortLabel: "Shimmer",
+    shortLabelEn: "Shimmer (OpenAI)",
+    lang: "en-US",
+    gender: "female",
+    source: "OpenAI TTS",
+    prosodyBias: { rate: 10, pitch: 14, volume: 6 },
+    emotionRank: 2,
+  },
+  {
+    id: "openai-sage",
+    edgeVoice: "en-US-JennyNeural",
+    openAiVoice: "sage",
+    shortLabel: "Sage",
+    shortLabelEn: "Sage (OpenAI)",
+    lang: "en-US",
+    gender: "female",
+    source: "OpenAI TTS",
+    prosodyBias: { rate: -2, pitch: 4, volume: 0 },
+    emotionRank: 7,
+  },
+  {
+    id: "openai-alloy",
+    edgeVoice: "en-US-GuyNeural",
+    openAiVoice: "alloy",
+    shortLabel: "Alloy",
+    shortLabelEn: "Alloy (OpenAI)",
+    lang: "en-US",
+    gender: "female",
+    source: "OpenAI TTS",
+    prosodyBias: { rate: 0, pitch: 0, volume: 0 },
+    emotionRank: 8,
+  },
+  {
+    id: "openai-ash",
+    edgeVoice: "en-US-GuyNeural",
+    openAiVoice: "ash",
+    shortLabel: "Ash",
+    shortLabelEn: "Ash (OpenAI)",
+    lang: "en-US",
+    gender: "male",
+    source: "OpenAI TTS",
+    prosodyBias: { rate: 4, pitch: -2, volume: 4 },
+    emotionRank: 9,
+  },
 ]);
 
 const ALL_PROFILES = [...YUE_VOICE_PROFILES, ...EN_VOICE_PROFILES];
@@ -318,4 +392,44 @@ export function voiceProfileProsodyBias(voiceProfileId) {
  */
 export function voiceProfilesForLang(langCode) {
   return langCode === "en" ? EN_VOICE_PROFILES : YUE_VOICE_PROFILES;
+}
+
+/**
+ * English voices sorted by emotion expressiveness (OpenAI first when deployed).
+ * @param {boolean} [openAiAvailable]
+ */
+export function rankedEnglishVoicesForEmotion(openAiAvailable = true) {
+  const list = [...EN_VOICE_PROFILES];
+  return list.sort((a, b) => {
+    const aOpenAi = a.source === "OpenAI TTS";
+    const bOpenAi = b.source === "OpenAI TTS";
+    if (openAiAvailable && aOpenAi !== bOpenAi) return aOpenAi ? -1 : 1;
+    return (a.emotionRank ?? 50) - (b.emotionRank ?? 50);
+  });
+}
+
+/**
+ * @param {string} voiceProfileId
+ */
+export function isOpenAiVoiceProfile(voiceProfileId) {
+  const profile = findVoiceProfile(voiceProfileId);
+  if (profile?.source === "OpenAI TTS") return true;
+  return String(voiceProfileId || "")
+    .trim()
+    .toLowerCase()
+    .startsWith("openai-");
+}
+
+/**
+ * OpenAI built-in voice id for a profile (openai-coral → coral).
+ * @param {string} voiceProfileId
+ */
+export function resolveOpenAiVoiceFromProfile(voiceProfileId) {
+  const profile = findVoiceProfile(voiceProfileId);
+  if (profile?.openAiVoice) return profile.openAiVoice;
+  const raw = String(voiceProfileId || "")
+    .trim()
+    .toLowerCase();
+  if (raw.startsWith("openai-")) return raw.slice("openai-".length);
+  return null;
 }
