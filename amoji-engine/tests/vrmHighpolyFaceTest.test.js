@@ -24,5 +24,8 @@ describe("vrm-highpoly-face-test.html", () => {
     expect(html).toContain("companionViseme.js");
     expect(html).toContain("autocycle");
     expect(html).toContain("data-nuance");
+    expect(html).toContain("cycle-emotions");
+    expect(html).toContain("companionFaceEmotion.js");
+    expect(html).toContain("data-character");
   });
 });

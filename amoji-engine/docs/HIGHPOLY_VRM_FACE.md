@@ -1,6 +1,6 @@
 # High-poly VRM face + lip sync
 
-**Build:** `2026-09-17-v190-face-emotion`  
+**Build:** `2026-09-17-v191-face-emotion-demo`  
 **Purpose:** Document the flagship high-polygon VRM path, expression control, and lip sync verification.
 
 ---

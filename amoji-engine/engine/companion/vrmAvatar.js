@@ -1330,6 +1330,15 @@ export async function createVrmAvatar(opts) {
         talking,
         eating,
         emotion,
+        nuance:
+          bodyMotion.nuance && bodyMotion.nuance !== "none"
+            ? bodyMotion.nuance
+            : "none",
+        faceProfile: {
+          rigType: faceProfile.rigType,
+          presetScale: { ...faceProfile.presetScale },
+          morphScale: faceProfile.morphScale,
+        },
         mouthOpen,
         mouthTarget,
         mouthShape,

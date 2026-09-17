@@ -17,6 +17,18 @@ describe("companionFaceReportSync", () => {
     expect(report?.triangleCount).toBe(72691);
     expect(globalThis.__amojiFaceReport?.hasVisemes).toBe(true);
     globalThis.__amojiFaceReport = undefined;
+    globalThis.__amojiFaceProfile = undefined;
+  });
+
+  it("publishes face profile alongside face report", () => {
+    const avatar = {
+      getFaceReport: () => ({ triangleCount: 1000 }),
+      getFaceProfile: () => ({ rigType: "arkit", morphScale: 1 }),
+    };
+    syncCompanionFaceReport(avatar);
+    expect(globalThis.__amojiFaceProfile?.rigType).toBe("arkit");
+    globalThis.__amojiFaceReport = undefined;
+    globalThis.__amojiFaceProfile = undefined;
   });
 
   it("reads live face debug safely", () => {
