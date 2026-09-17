@@ -5,7 +5,9 @@
 export function syncCompanionFaceReport(avatar) {
   if (typeof globalThis === "undefined") return null;
   const report = avatar?.getFaceReport?.() || null;
+  const profile = avatar?.getFaceProfile?.() || report?.faceProfile || null;
   globalThis.__amojiFaceReport = report;
+  globalThis.__amojiFaceProfile = profile;
   return report;
 }
 

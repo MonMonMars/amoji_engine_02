@@ -104,28 +104,28 @@
   <body>
     <div id="layout">
       <aside id="panel">
-        <h1>High-poly face lab</h1>
-        <p class="sub">VRM expression stack + lip sync on dense meshes (Amoji pipeline).</p>
+        <h1>Face emotion lab</h1>
+        <p class="sub">Model-adaptive expressions + lip sync — same API as the full companion.</p>
         <p class="link-row">
-          <a href="/prototypes/amoji-companion.html?character=kizuna&lang=en">Open in companion →</a>
+          <a id="companion-link" href="/prototypes/amoji-companion.html?character=kizuna&lang=en">Open in companion →</a>
         </p>
 
         <section>
           <label for="model-select">Model</label>
           <select id="model-select">
-            <option value="/prototypes/assets/kizuna-kamatte.vrm" selected>
+            <option value="/prototypes/assets/kizuna-kamatte.vrm" data-character="kizuna" selected>
               Kizuna KAMATTE — 73k tris · VRM 1.0 · 19 expr
             </option>
-            <option value="/prototypes/assets/companion-kai.vrm">
+            <option value="/prototypes/assets/companion-kai.vrm" data-character="rex">
               Kai — 50k tris · ARKit morphs + visemes
             </option>
-            <option value="/prototypes/assets/companion-alicia.vrm">
+            <option value="/prototypes/assets/companion-alicia.vrm" data-character="alicia">
               Alicia — 32k tris · VRM 0.x visemes
             </option>
-            <option value="/prototypes/assets/companion-nova.vrm">
+            <option value="/prototypes/assets/companion-nova.vrm" data-character="nova">
               Nova — 17k tris · photoreal
             </option>
-            <option value="/prototypes/assets/companion-ember.vrm">
+            <option value="/prototypes/assets/companion-ember.vrm" data-character="ember">
               Ember — 23k tris · expressive anime
             </option>
           </select>
@@ -151,6 +151,11 @@
             <button type="button" data-nuance="curious">curious</button>
             <button type="button" data-nuance="excited">excited</button>
             <button type="button" data-nuance="love">love</button>
+            <button type="button" data-nuance="stress">stress</button>
+          </div>
+          <div class="row" style="margin-top: 8px">
+            <button type="button" id="cycle-emotions">Cycle emotions</button>
+            <button type="button" id="cycle-nuances">Cycle nuances</button>
           </div>
         </section>
 
@@ -189,6 +194,8 @@
 
     <script type="module">
       import { createVrmAvatar } from "/amoji-engine/engine/companion/vrmAvatar.js";
+      import { resolveCharacterId } from "/amoji-engine/engine/companion/companionCharacterCatalog.js";
+      import { resolveFaceExpression } from "/amoji-engine/engine/companion/companionFaceEmotion.js";
       import { TALK_VISEME_CYCLE } from "/amoji-engine/engine/companion/companionFaceRest.js";
       import { charToViseme } from "/amoji-engine/engine/companion/companionViseme.js";
 
@@ -198,6 +205,16 @@
       const MODEL_SELECT = document.getElementById("model-select");
       const MOUTH_OPEN = document.getElementById("mouth-open");
       const MOUTH_SHAPE = document.getElementById("mouth-shape");
+      const COMPANION_LINK = document.getElementById("companion-link");
+      const EMOTION_CYCLE = [
+        "neutral",
+        "happy",
+        "sad",
+        "angry",
+        "surprised",
+        "thinking",
+      ];
+      const NUANCE_CYCLE = ["none", "shy", "curious", "excited", "love", "stress"];
 
       const params = new URLSearchParams(location.search);
       const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -229,20 +246,37 @@
         }
         const report = avatar.getFaceReport?.() || {};
         const dbg = avatar.getFaceDebug?.() || {};
+        const profile = avatar.getFaceProfile?.() || report.faceProfile || {};
+        const resolved = resolveFaceExpression({
+          emotion: currentEmotion,
+          nuance: currentNuance,
+          profile,
+        });
         STATS.textContent = [
+          `rigType: ${profile.rigType ?? dbg.faceProfile?.rigType ?? "?"}`,
+          `character: ${window.__highpolyFaceTest?.characterId ?? "?"}`,
           `triangles: ${report.triangleCount ?? "?"}`,
           `morphTargets: ${report.morphTargetCount ?? "?"}`,
           `expressions: ${report.expressionNames?.length ?? 0}`,
           `mouthPresets: ${(report.mouthPresets || []).join(", ") || "none"}`,
           `hasVisemes: ${report.hasVisemes}`,
           `emotion: ${dbg.emotion} · nuance: ${currentNuance}`,
+          `blend Happy: ${Number(resolved.blend?.Happy || 0).toFixed(3)} (base ${Number(resolved.baseBlend?.Happy || 0).toFixed(3)})`,
+          `morph smile: ${Number(resolved.morphWeights?.smile || 0).toFixed(3)}`,
           `talking: ${dbg.talking} · eating: ${dbg.eating}`,
           `mouthOpen: ${Number(dbg.mouthOpen || 0).toFixed(3)}`,
           `mouthShape: ${dbg.mouthShape ?? "—"}`,
           `activeViseme: ${dbg.activeViseme ?? "—"} → ${dbg.activeVisemePreset ?? "—"}`,
+          `presetScale: ${JSON.stringify(profile.presetScale || dbg.faceProfile?.presetScale || {})}`,
           `hazard opensMouth: ${(report.hazards?.opensMouth || []).slice(0, 5).join(", ") || "—"}`,
           `morph sample: ${(report.morphNamesSample || []).slice(0, 4).join(", ") || "—"}`,
         ].join("\n");
+      }
+
+      function updateCompanionLink(characterId) {
+        if (!COMPANION_LINK) return;
+        const id = characterId || "kizuna";
+        COMPANION_LINK.href = `/prototypes/amoji-companion.html?character=${encodeURIComponent(id)}&lang=en&pick=0`;
       }
 
       function stopTimers() {
@@ -273,7 +307,11 @@
         STATS.textContent = `Loading ${url}…`;
 
         const canvas = document.getElementById("avatar-canvas");
-        avatar = await createVrmAvatar({ canvas, modelUrl: url });
+        const characterId =
+          MODEL_SELECT.selectedOptions[0]?.dataset?.character ||
+          resolveCharacterId({ modelUrl: url });
+        updateCompanionLink(characterId);
+        avatar = await createVrmAvatar({ canvas, modelUrl: url, characterId });
         avatar.setEmotion?.("neutral");
         avatar.applyExpressionProfile?.({ emotion: "neutral", nuance: "none" });
 
@@ -283,6 +321,8 @@
         window.__highpolyFaceTest = {
           ready: true,
           modelUrl: url,
+          characterId,
+          rigType: avatar.getFaceProfile?.()?.rigType || report.faceProfile?.rigType,
           triangles: report.triangleCount ?? 0,
           expressionCount: report.expressionNames?.length ?? 0,
           mouthPresets: report.mouthPresets || [],
@@ -391,6 +431,48 @@
       document.getElementById("cycle-visemes").addEventListener("click", startVisemeCycle);
       document.getElementById("demo-lipsync").addEventListener("click", startDemoLipSync);
       document.getElementById("demo-eating").addEventListener("click", startEatingDemo);
+
+      document.getElementById("cycle-emotions").addEventListener("click", () => {
+        stopTimers();
+        if (!avatar) return;
+        avatar.setTalking?.(true);
+        let idx = 0;
+        visemeTimer = setInterval(() => {
+          currentEmotion = EMOTION_CYCLE[idx % EMOTION_CYCLE.length];
+          idx += 1;
+          avatar.applyExpressionProfile?.({
+            emotion: currentEmotion,
+            nuance: currentNuance,
+          });
+          avatar.setMouthOpen?.(0.55);
+          VISEME_LABEL.textContent = `emotion · ${currentEmotion}`;
+          window.__highpolyFaceTest.emotionApplied = true;
+          for (const b of document.querySelectorAll("[data-emotion]")) {
+            b.classList.toggle("active", b.getAttribute("data-emotion") === currentEmotion);
+          }
+          markStatsDirty();
+        }, reducedMotion ? 1800 : 1200);
+      });
+
+      document.getElementById("cycle-nuances").addEventListener("click", () => {
+        stopTimers();
+        if (!avatar) return;
+        avatar.setTalking?.(true);
+        let idx = 0;
+        visemeTimer = setInterval(() => {
+          currentNuance = NUANCE_CYCLE[idx % NUANCE_CYCLE.length];
+          idx += 1;
+          avatar.applyExpressionProfile?.({
+            emotion: currentEmotion,
+            nuance: currentNuance,
+          });
+          VISEME_LABEL.textContent = `nuance · ${currentNuance}`;
+          for (const b of document.querySelectorAll("[data-nuance]")) {
+            b.classList.toggle("active", b.getAttribute("data-nuance") === currentNuance);
+          }
+          markStatsDirty();
+        }, reducedMotion ? 1600 : 1000);
+      });
 
       for (const btn of document.querySelectorAll("[data-emotion]")) {
         btn.addEventListener("click", () => {
