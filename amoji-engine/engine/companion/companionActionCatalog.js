@@ -273,17 +273,17 @@ export const ACTION_CATALOG = Object.freeze({
     aliases: ["sleepy", "yawn"],
   },
   eat: {
-    duration: 2.4,
+    duration: 3.6,
     loops: true,
     emotion: "happy",
-    keywords: [/食嘢|食飯|吃東西|吃东西|\beat\b|\beating\b|飲茶/i],
+    keywords: [/食嘢|食飯|吃東西|吃东西|\beat\b|\beating\b|飲茶|蛋糕|曲奇/i],
     aliases: ["eating"],
   },
   drink: {
-    duration: 2.0,
+    duration: 3.2,
     loops: true,
     emotion: "happy",
-    keywords: [/飲|喝|drink|sip|飲嘢/i],
+    keywords: [/飲|喝|drink|sip|飲嘢|奶茶|汽水/i],
     aliases: ["drinking", "sip"],
   },
   yoga: {

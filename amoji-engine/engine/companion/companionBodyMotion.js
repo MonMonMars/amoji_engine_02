@@ -251,6 +251,8 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
       key === "cheer"
     ) {
       setTalkEnergy(0.65);
+    } else if (key === "eat" || key === "drink") {
+      setTalkEnergy(0.45);
     } else if (key === "angry" || key === "punch" || key === "kick") {
       setTalkEnergy(0.7);
     } else if (key === "thinking") {
@@ -453,6 +455,26 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
     applyBoneRotation("rightLowerArm", withElbowBend(restRl, foreR));
   };
 
+  const applyEatArms = (pose, k) => {
+    const restL = armRestRotations.leftUpperArm;
+    const restR = armRestRotations.rightUpperArm;
+    const restLl = armRestRotations.leftLowerArm;
+    const restRl = armRestRotations.rightLowerArm;
+    const chew = Math.max(0, Number(pose.eatChew) || 0);
+    applyBoneRotation("rightUpperArm", {
+      x: restR.x + (0.62 + chew * 0.1) * k,
+      y: restR.y - 0.28 * k,
+      z: restR.z - 0.16 * k,
+    });
+    applyBoneRotation("rightLowerArm", withElbowBend(restRl, 0.9 * k));
+    applyBoneRotation("leftUpperArm", {
+      x: restL.x + 0.22 * k,
+      y: restL.y + 0.1 * k,
+      z: restL.z + 0.16 * k,
+    });
+    applyBoneRotation("leftLowerArm", withElbowBend(restLl, 0.42 * k));
+  };
+
   const applyActionArms = (pose, k) => {
     const safe = clampActionPose(pose);
     const restL = armRestRotations.leftUpperArm;
@@ -541,10 +563,13 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
     const k = Math.max(0, Math.min(1, intensity));
     const allowArms = opts.allowArms === true;
     const actionArms = opts.actionArms === true;
+    const eatArms = opts.eatArms === true;
     const idleArms = opts.idleArms === true;
     const talkArmBlend = Number(opts.talkArmBlend) || 0;
 
-    if (actionArms) {
+    if (eatArms) {
+      applyEatArms(pose, k);
+    } else if (actionArms) {
       applyActionArms(pose, k);
     } else if (allowArms) {
       applyPointArms(pose, k);
@@ -664,9 +689,12 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
 
     let allowArms = false;
     let actionArms = false;
+    let eatArms = false;
     let idleArms = false;
     let talkArmBlend = 0;
-    if (activeAction) {
+    if (activeAction === "eat" || activeAction === "drink") {
+      eatArms = true;
+    } else if (activeAction) {
       actionArms = true;
     }
     if (talking && !activeGesture && !activeAction) {
@@ -716,6 +744,7 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
     applyPose(smoothedPose, 1, {
       allowArms,
       actionArms,
+      eatArms,
       idleArms,
       talkArmBlend,
       bootPhase: false,
