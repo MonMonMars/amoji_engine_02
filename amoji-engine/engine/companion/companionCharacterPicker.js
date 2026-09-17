@@ -1,7 +1,10 @@
 /**
  * Grok Ani–style companion picker — grid sheet + compact start-screen grid.
  */
-import { listCompanionCharacters } from "./companionCharacterCatalog.js";
+import {
+  characterNumber,
+  listCompanionCharacters,
+} from "./companionCharacterCatalog.js";
 import {
   PROGRESS_RING_CIRCUMFERENCE,
   PROGRESS_RING_RADIUS,
@@ -9,9 +12,9 @@ import {
 } from "./companionProgressOverlay.js";
 
 export const COMPANION_CHARACTER_PICKER_SCHEMA =
-  "amoji.companionCharacterPicker.v2";
+  "amoji.companionCharacterPicker.v3";
 
-export const COMPANION_START_PICKER_SCHEMA = "amoji.companionStartPicker.v1";
+export const COMPANION_START_PICKER_SCHEMA = "amoji.companionStartPicker.v2";
 
 export const START_PICKER_PRELOAD_RING_HTML = `
   <div class="start-picker-preload-ring companion-progress-ring" aria-hidden="true">
@@ -30,10 +33,14 @@ export const START_PICKER_PRELOAD_RING_HTML = `
 export function companionCardInnerHtml(item, ctx = {}) {
   const compact = Boolean(ctx.compact);
   const eagerPreview = Boolean(ctx.eagerPreview);
-  const selected = item.id === ctx.selectedId;
   const imgAttrs = eagerPreview
     ? 'loading="eager" fetchpriority="high" decoding="async"'
     : 'loading="lazy" decoding="async"';
+  const number = cardNumber(item);
+  const numberBadge = number
+    ? `<span class="companion-card-number" aria-hidden="true">${number}</span>`
+    : "";
+  const labeledName = number ? `${number} ${item.name}` : item.name;
   const badge = item.badge
     ? `<span class="companion-card-badge${compact ? " companion-card-badge--mini" : ""}">${item.badge}</span>`
     : "";
@@ -51,10 +58,11 @@ export function companionCardInnerHtml(item, ctx = {}) {
     return `
       <div class="companion-card-portrait">
         <img src="${item.previewImage}" alt="" ${imgAttrs} />
+        ${numberBadge}
         ${badge}
         <span class="companion-card-check" aria-hidden="true">✓</span>
       </div>
-      <span class="companion-card-name">${item.name}</span>
+      <span class="companion-card-name">${labeledName}</span>
       ${voiceChip}
     `;
   }
@@ -62,15 +70,25 @@ export function companionCardInnerHtml(item, ctx = {}) {
   return `
     <div class="companion-card-portrait">
       <img src="${item.previewImage}" alt="" ${imgAttrs} />
+      ${numberBadge}
       ${badge}
       <span class="companion-card-check" aria-hidden="true">✓</span>
     </div>
     <div class="companion-card-body">
-      <h3 class="companion-card-name">${item.name}</h3>
+      <h3 class="companion-card-name">${labeledName}</h3>
       <p class="companion-card-tagline">${item.tagline}</p>
       <div class="companion-card-traits">${traits}${voiceChip}</div>
     </div>
   `;
+}
+
+/**
+ * @param {{ id?: string, number?: number }} item
+ */
+function cardNumber(item) {
+  const fromItem = Number(item?.number);
+  if (Number.isFinite(fromItem) && fromItem > 0) return Math.round(fromItem);
+  return characterNumber(item?.id);
 }
 
 /**
@@ -127,7 +145,13 @@ export function createCompanionCardButton(item, ctx = {}) {
     ? "companion-card companion-card--compact"
     : "companion-card";
   card.dataset.characterId = item.id;
+  card.dataset.characterNumber = String(cardNumber(item) || "");
   card.setAttribute("role", "option");
+  const number = cardNumber(item);
+  card.setAttribute(
+    "aria-label",
+    number ? `${number}. ${item.name}` : String(item.name || item.id),
+  );
   card.setAttribute(
     "aria-selected",
     item.id === ctx.selectedId ? "true" : "false",

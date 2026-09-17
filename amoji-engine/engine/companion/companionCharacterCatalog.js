@@ -915,6 +915,15 @@ export const CHARACTER_IDS = Object.freeze([
   "mikel",
 ]);
 
+/**
+ * 1-based roster number for picker cards. Unknown ids return 0.
+ * @param {string | null | undefined} id
+ */
+export function characterNumber(id) {
+  const idx = CHARACTER_IDS.indexOf(String(id || "").toLowerCase());
+  return idx >= 0 ? idx + 1 : 0;
+}
+
 /** @type {ReadonlySet<string>} */
 export const GALLERY_PRIORITY_IDS = new Set([
   "nova",
@@ -1179,6 +1188,7 @@ export function listCompanionCharacters(langCode = "yue") {
     const voiceId = en ? def.voices.en : def.voices.yue;
     return {
       id,
+      number: characterNumber(id),
       name: en ? def.name.en : def.name.yue,
       tagline: en ? def.tagline.en : def.tagline.yue,
       traits: en ? def.traits.en : def.traits.yue,

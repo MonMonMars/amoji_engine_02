@@ -27,7 +27,16 @@ describe("companion character picker data", () => {
     expect(sora?.voiceLabel).toBe("曉曼");
   });
 
+  it("numbers picker cards in roster order", () => {
+    const list = listCompanionCharacters("en");
+    expect(list[0]).toMatchObject({ id: "nova", number: 1 });
+    expect(list[1]).toMatchObject({ id: "alicia", number: 2 });
+    expect(list.map((c) => c.number)).toEqual(
+      list.map((_, i) => i + 1),
+    );
+  });
+
   it("keeps the in-session picker schema for the top-left chip", () => {
-    expect(COMPANION_CHARACTER_PICKER_SCHEMA).toBe("amoji.companionCharacterPicker.v2");
+    expect(COMPANION_CHARACTER_PICKER_SCHEMA).toBe("amoji.companionCharacterPicker.v3");
   });
 });

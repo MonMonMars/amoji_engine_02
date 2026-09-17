@@ -5,6 +5,7 @@ import {
   characterAvatarConfig,
   characterGreeting,
   characterGreetingPerformance,
+  characterNumber,
   characterVoiceLabel,
   COMPANION_CHARACTERS,
   defaultVoiceForCharacter,
@@ -28,6 +29,10 @@ describe("companionCharacterCatalog", () => {
       "chibi",
       "sky",
     ]);
+    expect(characterNumber("nova")).toBe(1);
+    expect(characterNumber("alicia")).toBe(2);
+    expect(characterNumber("mikel")).toBe(CHARACTER_IDS.length);
+    expect(characterNumber("missing")).toBe(0);
     expect(GALLERY_PRIORITY_IDS.has("nova")).toBe(true);
     expect(CHARACTER_IDS.indexOf("mikel")).toBeGreaterThan(
       CHARACTER_IDS.indexOf("kate"),
@@ -86,6 +91,9 @@ describe("companionCharacterCatalog", () => {
     expect(list.find((c) => c.id === "sky")?.voiceLabel).toBe("曉曼·酷");
     expect(rex?.greeting).toContain("烈");
     expect(list.every((c) => c.voiceId && c.voiceLabel)).toBe(true);
+    expect(list.every((c) => c.number === characterNumber(c.id))).toBe(true);
+    expect(list[0]).toMatchObject({ id: "nova", number: 1 });
+    expect(list.find((c) => c.id === "mikel")?.number).toBe(list.length);
   });
 
   it("builds character-specific system prompts", () => {
