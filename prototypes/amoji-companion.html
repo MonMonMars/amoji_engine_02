@@ -8,9 +8,9 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji · Companion</title>
     <script>
-      window.__amojiBuild = "2026-09-17-v143-llm-reply-sense";
+      window.__amojiBuild = "2026-09-17-v144-all-issues";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-17-v143-llm-reply-sense"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-17-v144-all-issues"></script>
     <link
       rel="prefetch"
       href="/prototypes/assets/companion-char-nova.png"
@@ -153,31 +153,51 @@
 
       .companion-picker--start .start-picker-preload {
         margin: 0 0 0.75rem;
+        display: flex;
+        align-items: center;
+        gap: 0.7rem;
       }
 
-      .start-picker-preload-track {
-        height: 0.28rem;
-        border-radius: 999px;
-        background: rgba(255, 255, 255, 0.08);
-        overflow: hidden;
+      .start-picker-preload-ring {
+        position: relative;
+        flex: 0 0 auto;
+        width: 2.85rem;
+        height: 2.85rem;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(10, 14, 22, 0.5);
+        border: 1px solid rgba(127, 212, 207, 0.16);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.22);
+        backdrop-filter: blur(8px);
       }
 
-      .start-picker-preload-fill {
-        height: 100%;
-        width: 0;
-        border-radius: inherit;
-        background: linear-gradient(90deg, #7fd4cf, #9ad7ff);
-        transition: width 0.35s ease;
+      .start-picker-preload-ring .companion-progress-ring {
+        width: 2.45rem;
+        height: 2.45rem;
+      }
+
+      .start-picker-preload-pct {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.56rem;
+        font-weight: 700;
+        color: rgba(247, 241, 232, 0.88);
       }
 
       .start-picker-preload-label {
-        margin: 0.45rem 0 0;
+        margin: 0;
         font-size: 0.72rem;
         color: rgba(247, 241, 232, 0.62);
+        line-height: 1.35;
       }
 
-      .start-picker-preload.is-ready .start-picker-preload-track {
-        opacity: 0.45;
+      .start-picker-preload.is-ready {
+        opacity: 0.72;
       }
 
       .chat-shell {
@@ -295,7 +315,7 @@
       media="print"
       onload="this.media='all'"
     />
-    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-17-v143-llm-reply-sense" />
+    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-17-v144-all-issues" />
     <noscript>
       <link
         href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap"
@@ -2834,31 +2854,36 @@
 
       .companion-switch-ring {
         --pct: 0;
-        width: 5.5rem;
-        height: 5.5rem;
+        width: 2.85rem;
+        height: 2.85rem;
         border-radius: 999px;
         display: grid;
         place-items: center;
-        background: conic-gradient(
-          var(--accent) calc(var(--pct) * 1%),
-          rgba(255, 255, 255, 0.08) 0
-        );
+        background:
+          conic-gradient(
+            var(--accent) calc(var(--pct) * 1%),
+            rgba(255, 255, 255, 0.12) 0
+          ),
+          rgba(10, 14, 22, 0.5);
         position: relative;
+        border: 1px solid rgba(127, 212, 207, 0.16);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.22);
+        backdrop-filter: blur(8px);
       }
 
       .companion-switch-ring::before {
         content: "";
         position: absolute;
-        inset: 0.45rem;
+        inset: 0.28rem;
         border-radius: inherit;
-        background: #0a0e16;
+        background: rgba(10, 14, 22, 0.72);
       }
 
       .companion-switch-pct {
         position: relative;
         z-index: 1;
         font-weight: 800;
-        font-size: 0.95rem;
+        font-size: 0.56rem;
       }
 
       .companion-switch-label {
@@ -2866,22 +2891,6 @@
         color: var(--muted);
         font-size: 0.82rem;
         text-align: center;
-      }
-
-      .companion-switch-bar {
-        width: min(72vw, 220px);
-        height: 0.38rem;
-        border-radius: 999px;
-        background: rgba(255, 255, 255, 0.08);
-        overflow: hidden;
-      }
-
-      .companion-switch-bar-fill {
-        height: 100%;
-        width: 0%;
-        border-radius: inherit;
-        background: linear-gradient(90deg, var(--accent), #5bb8d6);
-        transition: width 0.25s ease;
       }
 
       .companion-progress-dock {
@@ -2973,19 +2982,19 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-17-v143-llm-reply-sense",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-17-v144-all-issues",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-17-v143-llm-reply-sense",
-          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-17-v143-llm-reply-sense"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-17-v144-all-issues",
+          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-17-v144-all-issues"
         }
       }
     </script>
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v143-llm-reply-sense"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v144-all-issues"
     />
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-17-v143-llm-reply-sense"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v143-llm-reply-sense"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-17-v144-all-issues"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v144-all-issues"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;
@@ -5531,7 +5540,8 @@
       });
       startPicker.setSelected(characterId);
       startPicker.enablePicking(true);
-      const showStartPicker = params.get("pick") === "1";
+      const showStartPicker =
+        params.get("autostart") !== "1" && params.get("pick") !== "0";
 
       const syncRosterPreloadUi = () => {
         const roster =
