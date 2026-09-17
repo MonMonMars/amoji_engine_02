@@ -52,5 +52,25 @@ describe("companionEmotionOrbCanvas", () => {
       state: "speaking",
     });
     expect(calls.length).toBeGreaterThan(0);
+    const compactCalls = [];
+    const compactCtx = {
+      ...ctx,
+      beginPath() {
+        compactCalls.push("path");
+      },
+      clearRect() {
+        compactCalls.push("clear");
+      },
+    };
+    drawEmotionOrbFrame(compactCtx, 48, 48, {
+      time: 0.5,
+      volume: 0.6,
+      hue: 38,
+      sat: 80,
+      light: 58,
+      state: "speaking",
+      compact: true,
+    });
+    expect(compactCalls).toContain("clear");
   });
 });

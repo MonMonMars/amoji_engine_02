@@ -166,11 +166,13 @@
 }
 
 .theme-grok-ani .companion-chip__dot {
-  width: 1.32rem;
-  height: 1.32rem;
+  position: relative;
+  width: 1.72rem;
+  height: 1.72rem;
   border-radius: 50%;
-  margin-left: 0.2rem;
+  margin-left: 0.12rem;
   flex-shrink: 0;
+  overflow: visible;
   background:
     radial-gradient(
       circle at 32% 28%,
@@ -182,47 +184,29 @@
   transform: scale(var(--mini-ball-scale, 1));
   transform-origin: center;
   filter: brightness(var(--mini-ball-bright, 1));
-  transition: background 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
+  transition: box-shadow 0.16s ease;
+}
+
+.theme-grok-ani .companion-chip__dot-canvas {
+  position: absolute;
+  inset: -22%;
+  width: 144%;
+  height: 144%;
+  pointer-events: none;
+  display: block;
+}
+
+.theme-grok-ani .companion-chip__dot:has(canvas) {
+  background: transparent;
 }
 
 .theme-grok-ani .companion-chip__dot[data-state="listening"],
 .theme-grok-ani .companion-chip__dot[data-state="thinking"],
 .theme-grok-ani .companion-chip__dot[data-state="speaking"],
 .theme-grok-ani .companion-chip__dot[data-state="loading"],
-.theme-grok-ani .companion-chip__dot[data-state="typing"] {
-  animation: miniBallGlow 1.15s ease-in-out infinite;
-}
-
-.theme-grok-ani .companion-chip__dot[data-state="speaking"] {
-  animation-duration: 0.72s;
-}
-
-.theme-grok-ani .companion-chip__dot[data-state="thinking"] {
-  animation-duration: 1.35s;
-}
-
+.theme-grok-ani .companion-chip__dot[data-state="typing"],
 .theme-grok-ani .companion-chip__dot[data-state="idle"] {
-  animation: miniBallIdle 2.6s ease-in-out infinite;
-}
-
-@keyframes miniBallGlow {
-  0%,
-  100% {
-    filter: brightness(1);
-  }
-  50% {
-    filter: brightness(1.28);
-  }
-}
-
-@keyframes miniBallIdle {
-  0%,
-  100% {
-    filter: brightness(0.96);
-  }
-  50% {
-    filter: brightness(1.08);
-  }
+  animation: none;
 }
 
 .theme-grok-ani .brand-live {

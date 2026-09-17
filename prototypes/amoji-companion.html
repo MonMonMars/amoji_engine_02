@@ -8,9 +8,9 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji · Companion</title>
     <script>
-      window.__amojiBuild = "2026-09-17-v163-caption-layer";
+      window.__amojiBuild = "2026-09-17-v164-mini-emotion-ball";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-17-v163-caption-layer"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-17-v164-mini-emotion-ball"></script>
     <link
       rel="prefetch"
       href="/prototypes/assets/companion-char-nova.png"
@@ -323,7 +323,7 @@
       media="print"
       onload="this.media='all'"
     />
-    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-17-v163-caption-layer" />
+    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-17-v164-mini-emotion-ball" />
     <noscript>
       <link
         href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap"
@@ -3568,19 +3568,19 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-17-v163-caption-layer",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-17-v164-mini-emotion-ball",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-17-v163-caption-layer",
-          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-17-v163-caption-layer"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-17-v164-mini-emotion-ball",
+          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-17-v164-mini-emotion-ball"
         }
       }
     </script>
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v163-caption-layer"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v164-mini-emotion-ball"
     />
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-17-v163-caption-layer"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v163-caption-layer"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-17-v164-mini-emotion-ball"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v164-mini-emotion-ball"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;
@@ -4270,7 +4270,7 @@
       const { createCompanionVoiceGate } = voiceGateMod;
       const { isIosLike, shouldPauseMicDuringTts } = platformMod;
       const { createCompanionMicButton } = micButtonMod;
-      const { createCompanionEmotionBall, syncMiniEmotionBall } = emotionBallMod;
+      const { createCompanionEmotionBall, createMiniEmotionBall } = emotionBallMod;
 
       const hostedOnline = isHostedCompanion();
       const { createMotionDownloadClient } = motionDownloadMod;
@@ -4638,6 +4638,8 @@
       const emotionBall = createCompanionEmotionBall(emotionBallEl, {
         isEnglish,
       });
+      const miniEmotionBall = createMiniEmotionBall(statusDot);
+      window.__amojiMiniBall = miniEmotionBall;
       let sessionUiState = "idle";
       let sessionStarted = false;
       let sessionStarting = false;
@@ -4663,7 +4665,7 @@
           typeof resolveCompanionVoiceState === "function"
             ? resolveCompanionVoiceState(sessionUiState)
             : sessionUiState || "idle";
-        syncMiniEmotionBall(statusDot, {
+        miniEmotionBall.sync({
           emotion: currentEmotion,
           nuance: speakContent?.nuance || "none",
           level: emotionBallLevel,
@@ -5241,8 +5243,7 @@
           companionStatusLine.textContent = `${labels[effective] || labels.idle}${mood}`;
         }
         if (statusDot) {
-          statusDot.dataset.state = effective || "idle";
-          syncMiniEmotionBall(statusDot, {
+          miniEmotionBall.sync({
             emotion,
             nuance: speakContent?.nuance || "none",
             level: emotionBallLevel,
