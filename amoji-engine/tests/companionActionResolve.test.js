@@ -29,4 +29,10 @@ describe("companionActionResolve", () => {
     expect(resolveStreamingAction("OK [action:wave] [mood:")).toBe("wave");
     expect(resolveStreamingAction("hi [action:none]")).toBe(null);
   });
+
+  it("infers body action from mood when LLM omits action tag", () => {
+    const out = resolveTurnPerformance("今日好唔開心", "我陪住你。[mood:sad]");
+    expect(out.action).toBe("hug");
+    expect(out.emotion).toBe("sad");
+  });
 });

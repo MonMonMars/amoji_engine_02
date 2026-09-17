@@ -138,7 +138,7 @@ export function inferTalkGestureFromText(text, opts = {}) {
   if (/害羞|面紅| blush|embarrass/.test(lower)) {
     return "soft";
   }
-  if (/愛你|鍾意你|想你|miss you|love you|💕|❤/.test(lower)) {
+  if (/愛你|鍾意你|想你|miss you|love you/.test(lower)) {
     return "soft";
   }
   if (/好奇|想知道|curious|interesting|原來/.test(lower)) {

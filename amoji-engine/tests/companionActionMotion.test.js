@@ -1,11 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
+  formatReplyForDisplay,
   inferActionFromReply,
   inferActionFromUserText,
   isUserStopCommand,
   parseReplyTags,
   sampleActionBodyPose,
   sampleActionRootMotion,
+  stripEmojiFromText,
 } from "../engine/companion/companionActionMotion.js";
 
 describe("companionActionMotion", () => {
@@ -14,6 +16,14 @@ describe("companionActionMotion", () => {
     expect(parsed.reply).toBe("好呀！我跳俾你睇");
     expect(parsed.action).toBe("jump");
     expect(parsed.emotion).toBe("happy");
+  });
+
+  it("strips emoji from display text while keeping performance tags", () => {
+    const parsed = parseReplyTags("好開心呀 😊❤️ [action:wave] [mood:happy]");
+    expect(parsed.reply).toBe("好開心呀");
+    expect(parsed.emotion).toBe("happy");
+    expect(formatReplyForDisplay("收到 🎉 [mood:happy]")).toBe("收到");
+    expect(stripEmojiFromText("Hello 👋 world")).toBe("Hello world");
   });
 
   it("parses nuance tag", () => {

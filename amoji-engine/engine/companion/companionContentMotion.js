@@ -22,7 +22,13 @@ export function parseReplyMood(text) {
   return { reply: parsed.reply, emotion: parsed.emotion };
 }
 
-export { isUserStopCommand, inferActionFromUserText, parseReplyTags } from "./companionActionMotion.js";
+export {
+  formatReplyForDisplay,
+  isUserStopCommand,
+  inferActionFromUserText,
+  parseReplyTags,
+  stripEmojiFromText,
+} from "./companionActionMotion.js";
 
 export const COMPANION_CONTENT_MOTION_SCHEMA = "amoji.companionContentMotion.v1";
 
@@ -44,7 +50,7 @@ export function inferContentNuance(text) {
   const raw = String(text || "");
   const lower = raw.toLowerCase();
   if (/害羞|面紅| blush|embarrass|唔好意思咁/.test(lower)) return "shy";
-  if (/愛你|鍾意你|想你|miss you|love you|💕|❤/.test(lower)) return "love";
+  if (/愛你|鍾意你|想你|miss you|love you/.test(lower)) return "love";
   if (/好奇|想知道|interesting|curious|咁嘅|原來/.test(lower)) return "curious";
   if (/緊張|擔心|stress|anxious|worried|唔安/.test(lower)) return "stress";
   if (/超正|好兴奋|amazing|awesome|哇|嘩|yay|！{2,}|!{2,}/.test(raw)) {
@@ -306,6 +312,34 @@ export function pickNextThinkingPhrase(isEnglish = false, lastIndex = -1) {
   let index = Math.floor(Math.random() * list.length);
   if (index === lastIndex) index = (index + 1) % list.length;
   return { phrase: list[index], index };
+}
+
+/**
+ * Default body move when the LLM tags mood/nuance but omits [action:…].
+ * @param {string | null | undefined} emotion
+ * @param {string | null | undefined} [nuance]
+ */
+export function inferActionFromEmotion(emotion, nuance = "none") {
+  const e = String(emotion || "neutral").toLowerCase();
+  const n = String(nuance || "none").toLowerCase();
+  if (n === "love") return "fingerheart";
+  if (n === "shy") return "shy";
+  if (n === "excited") return "celebrate";
+  if (n === "stress") return "thinking";
+  switch (e) {
+    case "happy":
+      return "nod";
+    case "sad":
+      return "hug";
+    case "thinking":
+      return "thinking";
+    case "surprised":
+      return "jump";
+    case "angry":
+      return "angry";
+    default:
+      return null;
+  }
 }
 
 export function analyzeCompanionReply(text, moodHint = null) {

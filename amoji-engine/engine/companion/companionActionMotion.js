@@ -47,6 +47,28 @@ export function getActionDefExtended(actionId) {
 
 export const COMPANION_ACTION_MOTION_SCHEMA = "amoji.companionActionMotion.v1";
 
+/** Strip pictographs / emoji from spoken and transcript text. */
+const EMOJI_PATTERN =
+  /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE00}-\u{FE0F}\u{200D}\u{20E3}\u{1F1E6}-\u{1F1FF}]/gu;
+
+/**
+ * @param {string | null | undefined} text
+ */
+export function stripEmojiFromText(text) {
+  return String(text || "")
+    .replace(EMOJI_PATTERN, "")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
+
+/**
+ * Visible reply — strip performance tags and emoji (avatar shows emotion instead).
+ * @param {string | null | undefined} text
+ */
+export function formatReplyForDisplay(text) {
+  return parseReplyTags(text).reply;
+}
+
 /**
  * @param {string | null | undefined} text
  */
@@ -77,6 +99,8 @@ export function parseReplyTags(text) {
     .replace(/\s*\[action:\w+\]\s*/gi, " ")
     .replace(/\s*\[nuance:\w+\]\s*/gi, " ")
     .trim();
+
+  reply = stripEmojiFromText(reply);
 
   return { reply, emotion, action, nuance };
 }
