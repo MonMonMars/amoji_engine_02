@@ -4,7 +4,13 @@
 import * as THREE from "three";
 import { PORTRAIT_CAMERA_Z_SIGN } from "./companionPortraitFraming.js";
 
-export const COMPANION_CAMERA_APPLY_SCHEMA = "amoji.companionCameraApply.v1";
+export const COMPANION_CAMERA_APPLY_SCHEMA = "amoji.companionCameraApply.v2";
+
+/** Auto follow while talking / full-body moves (~4.2/s). */
+export const AUTO_CAMERA_LERP_RATE = 4.2;
+
+/** Explicit portrait reset — 10× gentler than auto follow. */
+export const CAMERA_RESET_LERP_RATE = AUTO_CAMERA_LERP_RATE / 10;
 
 /**
  * @param {import('three').Vector3} anchor
@@ -141,11 +147,48 @@ export function applyAutoCameraFrame(
   const fullBody = buildFullBodyShot(anchor, portraitDist, baseFov, cameraZSign);
   const desired = blendCameraShots(portrait, talkClose, fullBody, blends);
 
-  const rate = Math.min(1, dt * (blends.fullBodyBlend > 0.05 ? 5.5 : 4.2));
+  const rate = Math.min(
+    1,
+    dt *
+      (blends.fullBodyBlend > 0.05
+        ? AUTO_CAMERA_LERP_RATE + 1.3
+        : AUTO_CAMERA_LERP_RATE),
+  );
   controls.target.lerp(desired.target, rate);
   camera.position.lerp(desired.position, rate);
   camera.fov += (desired.fov - camera.fov) * rate;
   camera.updateProjectionMatrix();
   controls.update();
   return desired;
+}
+
+/**
+ * Smoothly glide camera back to a stored portrait shot (reset view).
+ * @param {import('three').OrbitControls} controls
+ * @param {import('three').PerspectiveCamera} camera
+ * @param {{
+ *   target: import('three').Vector3,
+ *   position: import('three').Vector3,
+ *   fov: number,
+ * }} desired
+ * @param {number} dt
+ * @param {number} [ratePerSec]
+ */
+export function lerpCameraTowardShot(
+  controls,
+  camera,
+  desired,
+  dt,
+  ratePerSec = CAMERA_RESET_LERP_RATE,
+) {
+  const rate = Math.min(1, Math.max(0, dt) * ratePerSec);
+  controls.target.lerp(desired.target, rate);
+  camera.position.lerp(desired.position, rate);
+  camera.fov += (desired.fov - camera.fov) * rate;
+  camera.updateProjectionMatrix();
+  controls.update();
+  const posDelta = camera.position.distanceTo(desired.position);
+  const targetDelta = controls.target.distanceTo(desired.target);
+  const fovDelta = Math.abs(camera.fov - desired.fov);
+  return posDelta < 0.004 && targetDelta < 0.004 && fovDelta < 0.08;
 }
