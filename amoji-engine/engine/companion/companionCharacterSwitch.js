@@ -15,6 +15,7 @@ export const COMPANION_CHARACTER_SWITCH_SCHEMA =
 /**
  * @param {{
  *   canvas: HTMLCanvasElement,
+ *   controlsElement?: HTMLElement | null,
  *   characterId: string,
  *   langCode: "yue" | "en",
  *   currentAvatar?: { dispose?: () => void } | null,
@@ -25,6 +26,7 @@ export const COMPANION_CHARACTER_SWITCH_SCHEMA =
 export async function switchCompanionCharacter(opts) {
   const {
     canvas,
+    controlsElement,
     characterId,
     langCode,
     currentAvatar,
@@ -49,6 +51,7 @@ export async function switchCompanionCharacter(opts) {
   emit(22, isEnglish ? "Downloading model…" : "下載模型中…");
   const loaded = await createCompanionAvatar({
     canvas: freshCanvas,
+    controlsElement,
     modelUrl: config.modelUrl,
     prefer: config.avatarPrefer,
     onCharacterTap,
