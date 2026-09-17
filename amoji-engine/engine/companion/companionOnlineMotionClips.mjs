@@ -3,7 +3,8 @@
  *
  * Policy: VRM avatars play hosted VRMA for every catalog action. We do not
  * synthesize body motion in code — custom libraries can be added later.
- * Standing idle / talk sway stay procedural (continuous, not clip-based).
+ * Standing idle stays procedural; continuous talk sway uses hosted VRMA loops
+ * (see companionTalkMotionLibrary.mjs).
  *
  * Source: tk256ailab/vrm-viewer (MIT) — 11 clips mapped to ~50+ action ids.
  */
@@ -16,6 +17,11 @@ export const COMPANION_ONLINE_MOTION_CLIPS_SCHEMA =
 export const ONLINE_IDLE_ACTION = "idle";
 export const ONLINE_IDLE_CLIP_FILE = "Relax";
 export const ONLINE_THINKING_ACTION = "thinking";
+
+/** Hosted VRMA clips that loop during talk (Thinking, LookAround, Blush, etc.). */
+export const ONLINE_TALK_LOOP_ACTIONS = Object.freeze(
+  new Set(["thinking", "learning", "wiggle", "point", "shy", "shrug"]),
+);
 
 /**
  * @deprecated Empty — all scripted actions use hosted VRMA, not bone samplers.
@@ -101,7 +107,7 @@ export function isOnlineIdleAction(actionId) {
  */
 export function isOnlineLoopingLibraryAction(actionId) {
   const id = String(actionId || "").toLowerCase();
-  return id === ONLINE_THINKING_ACTION;
+  return id === ONLINE_THINKING_ACTION || ONLINE_TALK_LOOP_ACTIONS.has(id);
 }
 
 /**

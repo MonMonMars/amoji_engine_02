@@ -1,5 +1,5 @@
 /**
- * VRM body motion — rest/listen arms-down; talkGestures library while speaking.
+ * VRM body motion — rest/listen arms-down; talk VRMA library while speaking.
  */
 import { inferTalkGestureFromText } from "../face/talkGestures.js";
 import {
@@ -959,6 +959,9 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
     },
     get thinking() {
       return thinking;
+    },
+    get talkStyle() {
+      return talkStyle;
     },
     get activeGesture() {
       return activeGesture;

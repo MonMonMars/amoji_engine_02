@@ -83,5 +83,7 @@ describe("companionOnlineMotionClips", () => {
     expect(isOnlineIdleAction("idle")).toBe(true);
     expect(isOnlineLoopingLibraryAction("idle")).toBe(false);
     expect(isOnlineLoopingLibraryAction("thinking")).toBe(true);
+    expect(isOnlineLoopingLibraryAction("wiggle")).toBe(true);
+    expect(isOnlineLoopingLibraryAction("point")).toBe(true);
   });
 });
