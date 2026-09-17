@@ -1,5 +1,5 @@
+import { corsHeaders } from "../amoji-engine/engine/companion/chatApiHandler.mjs";
 import {
-  corsHeaders,
   fetchWebContextForChat,
   needsWebSearch,
   searchWeb,

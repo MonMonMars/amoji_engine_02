@@ -276,7 +276,7 @@ export const ACTION_CATALOG = Object.freeze({
     duration: 2.4,
     loops: true,
     emotion: "happy",
-    keywords: [/食|吃|eat|eating|飲茶|食飯/i],
+    keywords: [/食嘢|食飯|吃東西|吃东西|\beat\b|\beating\b|飲茶/i],
     aliases: ["eating"],
   },
   drink: {
