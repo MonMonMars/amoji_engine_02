@@ -209,8 +209,7 @@ export function createCompanionCameraDirector(opts = {}) {
       userFramingHeld,
       talkCloseBlend: Math.max(0, Math.min(1, talkCloseBlend)),
       fullBodyBlend: Math.max(0, Math.min(1, fullBodyBlend)),
-      autoActive:
-        mode === CAMERA_MODE_AUTO && !userOrbiting && !userFramingHeld,
+      autoActive: false,
     };
   };
 

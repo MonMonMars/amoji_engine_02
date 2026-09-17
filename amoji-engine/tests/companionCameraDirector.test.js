@@ -83,7 +83,7 @@ describe("companionCameraDirector", () => {
     director.holdUserFraming(false);
     const reset = director.update(0.1);
     expect(reset.userFramingHeld).toBe(false);
-    expect(reset.autoActive).toBe(true);
+    expect(reset.autoActive).toBe(false);
   });
 
   it("pauses auto framing on pointerdown before OrbitControls start", () => {
@@ -92,6 +92,15 @@ describe("companionCameraDirector", () => {
     const duringDrag = director.update(0.016);
     expect(duringDrag.autoActive).toBe(false);
     expect(duringDrag.userFramingHeld).toBe(true);
+  });
+
+  it("never auto-resets framing every frame", () => {
+    const director = createCompanionCameraDirector();
+    expect(director.update(0.016).autoActive).toBe(false);
+    director.setTalking(true);
+    director.notifySpeech("Hello there, this is a longer spoken reply.");
+    for (let i = 0; i < 40; i += 1) director.update(0.1);
+    expect(director.update(0.016).autoActive).toBe(false);
   });
 });
 

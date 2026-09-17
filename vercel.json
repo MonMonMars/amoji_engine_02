@@ -15,6 +15,10 @@
     { "source": "/prototypes/realtime-voice-lab.html", "destination": "/prototypes/realtime-voice-lab.html" },
     { "source": "/amoji-engine/(.*)", "destination": "/amoji-engine/$1" },
     { "source": "/prototypes/(.*)", "destination": "/prototypes/$1" },
+    { "source": "/c/:build/full", "destination": "/prototypes/amoji-companion.html" },
+    { "source": "/c/:build/full/", "destination": "/prototypes/amoji-companion.html" },
+    { "source": "/c/:build/lite", "destination": "/prototypes/amoji-lite.html" },
+    { "source": "/c/:build/lite/", "destination": "/prototypes/amoji-lite.html" },
     { "source": "/setup", "destination": "/prototypes/amoji-setup.html" },
     { "source": "/companion", "destination": "/prototypes/amoji-lite.html" },
     { "source": "/amoji-lite.html", "destination": "/prototypes/amoji-lite.html" },
@@ -30,6 +34,13 @@
     },
     {
       "source": "/prototypes/(.*)\\.html",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-store, no-cache, must-revalidate" },
+        { "key": "Pragma", "value": "no-cache" }
+      ]
+    },
+    {
+      "source": "/c/(.*)",
       "headers": [
         { "key": "Cache-Control", "value": "no-store, no-cache, must-revalidate" },
         { "key": "Pragma", "value": "no-cache" }

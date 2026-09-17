@@ -2,9 +2,13 @@ import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 import {
   buildFreshBootUrl,
   checkForAppUpdate,
+  companionBuildPath,
+  companionKindFromPath,
   isServerBuildNewer,
   parseBuildNumber,
+  pathHasBuild,
   resolveCompanionModuleUrl,
+  rewriteCompanionServePath,
   shouldReloadForBuild,
   versionedModuleUrl,
 } from "../engine/companion/companionFreshBoot.js";
@@ -101,17 +105,22 @@ describe("companionFreshBoot", () => {
     expect(result.reloaded).toBe(true);
     expect(replace).toHaveBeenCalledTimes(1);
     const nextUrl = replace.mock.calls[0][0];
+    expect(nextUrl).toContain("/c/2026-09-15-v69-demo-fresh/full");
     expect(nextUrl).toContain("build=2026-09-15-v69-demo-fresh");
     expect(nextUrl).toContain("_cb=");
   });
 
-  it("does not reload when page build is newer than server", async () => {
+  it("does not reload when page build is newer and already on unique path", async () => {
     const replace = vi.fn();
     const fetchImpl = vi.fn(async () => ({
       ok: true,
       json: async () => ({ build: "2026-09-14-v39-body-rig-actions" }),
     }));
-    globalThis.location = { href: "https://example.com/companion-full", replace };
+    globalThis.location = {
+      href: "https://example.com/c/2026-09-14-v39-body-rig-actions/full",
+      pathname: "/c/2026-09-14-v39-body-rig-actions/full",
+      replace,
+    };
     globalThis.__amojiBuild = "2026-09-15-v69-demo-fresh";
 
     const result = await checkForAppUpdate("2026-09-15-v69-demo-fresh", {
@@ -121,13 +130,65 @@ describe("companionFreshBoot", () => {
     expect(replace).not.toHaveBeenCalled();
   });
 
-  it("buildFreshBootUrl adds build and cache-bust query params", () => {
+  it("moves /companion-full onto a unique /c/<build>/ path even when builds match", async () => {
+    const replace = vi.fn();
+    const fetchImpl = vi.fn(async () => ({
+      ok: true,
+      json: async () => ({ build: "2026-09-17-v153-repeat-issues" }),
+    }));
+    globalThis.location = {
+      href: "https://example.com/companion-full?lang=yue",
+      pathname: "/companion-full",
+      replace,
+    };
+    globalThis.__amojiBuild = "2026-09-17-v153-repeat-issues";
+
+    const result = await checkForAppUpdate("2026-09-17-v153-repeat-issues", {
+      fetchImpl,
+    });
+    expect(result.reloaded).toBe(true);
+    expect(replace.mock.calls[0][0]).toContain(
+      "/c/2026-09-17-v153-repeat-issues/full",
+    );
+  });
+
+  it("buildFreshBootUrl uses unique /c/<build>/ paths", () => {
     globalThis.location = {
       href: "https://example.com/companion-full?lang=yue",
     };
     const url = buildFreshBootUrl("2026-09-15-v69-demo-fresh");
+    expect(url).toContain("/c/2026-09-15-v69-demo-fresh/full");
     expect(url).toContain("lang=yue");
     expect(url).toContain("build=2026-09-15-v69-demo-fresh");
     expect(url).toContain("_cb=");
+  });
+
+  it("rewrites unique companion paths onto prototype HTML files", () => {
+    expect(rewriteCompanionServePath("/c/2026-09-17-v153-repeat-issues/full")).toBe(
+      "/prototypes/amoji-companion.html",
+    );
+    expect(rewriteCompanionServePath("/c/2026-09-17-v153-repeat-issues/lite")).toBe(
+      "/prototypes/amoji-lite.html",
+    );
+    expect(rewriteCompanionServePath("/companion-full")).toBe(
+      "/prototypes/amoji-companion.html",
+    );
+    expect(companionBuildPath("a b", "lite")).toBe("/c/a%20b/lite");
+    expect(companionKindFromPath("/c/x/lite")).toBe("lite");
+    expect(pathHasBuild("/c/x/full", "x")).toBe(true);
+  });
+
+  it("resolves unique /c/<build>/ page paths onto /amoji-engine modules", () => {
+    globalThis.document = {
+      baseURI: "https://example.com/c/2026-09-17-v153-repeat-issues/full",
+    };
+    const spec = resolveCompanionModuleUrl(
+      "../amoji-engine/engine/companion/createAvatar.js",
+      "build-1",
+    );
+    expect(spec).toBe(
+      "https://example.com/amoji-engine/engine/companion/createAvatar.js?v=build-1",
+    );
+    expect(spec).not.toContain("/c/2026-09-17-v153-repeat-issues/amoji-engine");
   });
 });

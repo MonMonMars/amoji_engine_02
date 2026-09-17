@@ -6,7 +6,6 @@
   var pageBuild = window.__amojiBuild;
   if (!pageBuild || typeof fetch !== "function" || !window.location) return;
 
-  var prefix = "amoji.freshBoot.v1:";
   var url = new URL(window.location.href);
   var requestedBuild = url.searchParams.get("build");
   if (requestedBuild) {
@@ -26,9 +25,50 @@
     return page !== server;
   }
 
+  function pageKind() {
+    var path = url.pathname || "";
+    if (
+      path === "/companion" ||
+      path.indexOf("/companion?") === 0 ||
+      path.indexOf("amoji-lite") >= 0 ||
+      /\/lite\/?$/.test(path)
+    ) {
+      return "lite";
+    }
+    return "full";
+  }
+
+  function hasBuildPath(serverBuild) {
+    var path = url.pathname || "";
+    return (
+      path.indexOf("/c/" + serverBuild + "/") >= 0 ||
+      path.indexOf("/c/" + encodeURIComponent(serverBuild) + "/") >= 0
+    );
+  }
+
+  function purgeCaches() {
+    try {
+      if (navigator.serviceWorker && navigator.serviceWorker.getRegistrations) {
+        navigator.serviceWorker.getRegistrations().then(function (regs) {
+          regs.forEach(function (reg) {
+            reg.unregister();
+          });
+        });
+      }
+      if (window.caches && caches.keys) {
+        caches.keys().then(function (keys) {
+          keys.forEach(function (key) {
+            caches.delete(key);
+          });
+        });
+      }
+    } catch (e) {}
+  }
+
   function redirect(serverBuild) {
-    if (sessionStorage.getItem(prefix + serverBuild) === "1") return;
-    sessionStorage.setItem(prefix + serverBuild, "1");
+    var nextPath = "/c/" + encodeURIComponent(serverBuild) + "/" + pageKind();
+    if (url.pathname === nextPath) return;
+    url.pathname = nextPath;
     url.searchParams.set("build", serverBuild);
     url.searchParams.set("_cb", String(Date.now()));
     window.location.replace(url.toString());
@@ -40,8 +80,9 @@
     })
     .then(function (data) {
       var serverBuild = data && data.build;
-      if (!shouldReload(pageBuild, serverBuild)) return;
-      if (requestedBuild === serverBuild) return;
+      if (!serverBuild) return;
+      purgeCaches();
+      if (!shouldReload(pageBuild, serverBuild) && hasBuildPath(serverBuild)) return;
       redirect(serverBuild);
     })
     .catch(function () {});

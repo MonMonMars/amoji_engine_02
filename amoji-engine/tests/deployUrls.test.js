@@ -20,8 +20,8 @@ describe("deployUrls", () => {
   it("formats demo link block for agents", () => {
     const block = formatDemoLinkBlock({ build: "test-build" });
     expect(block).toContain("test-build");
-    expect(block).toContain("companion-full");
-    expect(block).toContain("companion");
+    expect(block).toContain("/c/test-build/full");
+    expect(block).toContain("/c/test-build/lite");
     expect(block).toContain("Secretary");
   });
 
