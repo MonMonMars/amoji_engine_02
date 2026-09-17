@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { clampActionPose, clampArmPose, clampTalkArmPose } from "../engine/companion/companionPoseLibrary.js";
+import { clampActionPose, clampArmPose, clampIdleArmPose, clampTalkArmPose, withElbowBend } from "../engine/companion/companionPoseLibrary.js";
 
 describe("companionPoseLibrary clamps", () => {
   it("keeps talk gestures subtle", () => {
@@ -18,5 +18,18 @@ describe("companionPoseLibrary clamps", () => {
     const clamped = clampTalkArmPose({ armLiftL: 0.35, forearmL: 0.2 });
     expect(clamped.armLiftL).toBeGreaterThan(0.3);
     expect(clamped.forearmL).toBeGreaterThan(0.18);
+  });
+
+  it("allows idle elbows to bend past the talk-gesture clamp", () => {
+    const clamped = clampIdleArmPose({ armLiftL: 0.28, forearmL: 0.4 });
+    expect(clamped.armLiftL).toBeGreaterThan(0.2);
+    expect(clamped.forearmL).toBeGreaterThan(0.3);
+    expect(clamped.forearmL).toBeLessThanOrEqual(0.52);
+  });
+
+  it("adds idle elbow bend on the calibrated flex axis", () => {
+    const bent = withElbowBend({ x: 0.2, y: 0, z: 0.1, flexAxis: "z" }, 0.3);
+    expect(bent.z).toBeCloseTo(0.4);
+    expect(bent.x).toBeCloseTo(0.2);
   });
 });
