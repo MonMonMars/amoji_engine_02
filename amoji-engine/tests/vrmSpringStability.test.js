@@ -10,6 +10,7 @@ import {
   MIN_GRAVITY_POWER,
   MAX_STIFFNESS,
   recenterVrmSpringBones,
+  stabilizeVrmSpringBones,
   tickIdleSpringRecenter,
 } from "../engine/companion/vrmSpringStability.js";
 
@@ -131,6 +132,18 @@ describe("vrmSpringStability", () => {
     expect(resetCount()).toBe(1);
     expect(state.calmSec).toBe(0);
     expect(state.lastResetMs).toBeGreaterThan(0);
+  });
+
+  it("stabilizeVrmSpringBones enforces downward gravity every frame", () => {
+    const joint = makeJoint();
+    joint.settings.gravityDir.y = 1;
+    joint.settings.gravityPower = 0;
+    const vrm = { springBoneManager: { joints: new Set([joint]) } };
+    const result = stabilizeVrmSpringBones(vrm);
+    expect(result.ok).toBe(true);
+    expect(joint.settings.gravityDir.y).toBe(-1);
+    expect(joint.settings.gravityPower).toBeGreaterThanOrEqual(MIN_GRAVITY_POWER);
+    expect(joint.settings.dragForce).toBeGreaterThanOrEqual(MIN_DRAG_FORCE);
   });
 
   it("getVrmSpringJoints reads Set-backed managers", () => {

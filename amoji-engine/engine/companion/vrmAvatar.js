@@ -45,7 +45,9 @@ import {
   configureVrmSpringStability,
   createIdleSpringRecenterState,
   recenterVrmSpringBones,
+  stabilizeVrmSpringBones,
   tickIdleSpringRecenter,
+  THINK_SPRING_RECENTER_SEC,
   TALK_SPRING_RECENTER_SEC,
 } from "./vrmSpringStability.js";
 import { applyVrmOutfitTint } from "./companionOutfitApply.js";
@@ -334,7 +336,10 @@ export async function createVrmAvatar(opts) {
     } catch {
       /* ignore */
     }
-    return recenterVrmSpringBones(vrm, opts);
+    return recenterVrmSpringBones(vrm, {
+      retune: true,
+      captureInit: opts.captureInit,
+    });
   };
 
   bodyMotion.setActionCompleteHandler?.(({ sequenceDone, next }) => {
@@ -981,9 +986,7 @@ export async function createVrmAvatar(opts) {
       tickFace(dt, now, activeMotion);
       const springEligible =
         !libraryMotion && !activeMotion && !bodyMotion.activeGesture;
-      if (springEligible && !talking && !bodyMotion.thinking) {
-        tickIdleSpringRecenter(vrm, springIdleState, dt, true);
-      } else if (springEligible && talking) {
+      if (springEligible && talking) {
         tickIdleSpringRecenter(
           vrm,
           springTalkState,
@@ -991,10 +994,21 @@ export async function createVrmAvatar(opts) {
           true,
           TALK_SPRING_RECENTER_SEC,
         );
+      } else if (springEligible && bodyMotion.thinking) {
+        tickIdleSpringRecenter(
+          vrm,
+          springTalkState,
+          dt,
+          true,
+          THINK_SPRING_RECENTER_SEC,
+        );
+      } else if (springEligible) {
+        tickIdleSpringRecenter(vrm, springIdleState, dt, true);
       } else {
         springIdleState.calmSec = 0;
         springTalkState.calmSec = 0;
       }
+      stabilizeVrmSpringBones(vrm);
       vrm.update(dt);
       // Fingers last — VRMA mixer and vrm.update would otherwise leave Mixamo
       // hands in a T-pose (stick-straight).
