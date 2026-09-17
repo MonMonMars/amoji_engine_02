@@ -2,24 +2,25 @@
  * ChatGPT-style expressive TTS prosody for the companion.
  * Maps emotion + nuance + talk style + speech energy + text cues → Edge / browser prosody.
  *
- * OpenAI's gpt-4o-mini-tts uses natural-language instructions for tone; here we translate
- * the same performance intent into Edge TTS rate/pitch/volume and Web Speech API values.
+ * Face mood can stay calm on everyday lines. Spoken TTS still performs like
+ * ChatGPT Advanced Voice: pitch variation, pace changes, never a GPS narrator.
  */
-import { analyzeSpeechChunk } from "./companionContentMotion.js";
+import { analyzeSpeechChunk, inferContentNuance } from "./companionContentMotion.js";
 import { characterProsodyBias } from "./companionCharacterCatalog.js";
 import { voiceProfileProsodyBias } from "./companionVoiceProfiles.js";
+import { inferExpressionFromText } from "../face/emotionExpression.js";
 
-export const COMPANION_TTS_PROSODY_SCHEMA = "amoji.companionTtsProsody.v1";
+export const COMPANION_TTS_PROSODY_SCHEMA = "amoji.companionTtsProsody.v2";
 
 /** @typedef {{ rate: string, pitch: string, volume: string }} EdgeProsody */
 /** @typedef {{ rate: number, pitch: number, volume: number }} BrowserProsody */
 
 const EMOTION_EDGE_BASE = Object.freeze({
-  neutral: { rate: 18, pitch: 22, volume: 8 },
-  happy: { rate: 52, pitch: 58, volume: 26 },
+  neutral: { rate: 24, pitch: 30, volume: 12 },
+  happy: { rate: 56, pitch: 64, volume: 28 },
   thinking: { rate: -10, pitch: 6, volume: -4 },
   sad: { rate: -24, pitch: -16, volume: -10 },
-  surprised: { rate: 58, pitch: 62, volume: 28 },
+  surprised: { rate: 60, pitch: 66, volume: 30 },
   angry: { rate: 36, pitch: -2, volume: 20 },
 });
 
@@ -46,11 +47,11 @@ const STYLE_EDGE_DELTA = Object.freeze({
 });
 
 const EMOTION_BROWSER_BASE = Object.freeze({
-  neutral: { rate: 1.06, pitch: 1.2, volume: 1 },
-  happy: { rate: 1.28, pitch: 1.55, volume: 1 },
+  neutral: { rate: 1.1, pitch: 1.28, volume: 1 },
+  happy: { rate: 1.3, pitch: 1.58, volume: 1 },
   thinking: { rate: 0.86, pitch: 1.02, volume: 0.9 },
   sad: { rate: 0.78, pitch: 0.86, volume: 0.86 },
-  surprised: { rate: 1.34, pitch: 1.62, volume: 1 },
+  surprised: { rate: 1.36, pitch: 1.66, volume: 1 },
   angry: { rate: 1.16, pitch: 0.92, volume: 1 },
 });
 
@@ -113,13 +114,57 @@ function analyzeTextExpressiveness(text) {
 }
 
 /**
- * ChatGPT-style natural-language performance hint (for instruct-capable TTS backends).
+ * Infer a spoken-performance emotion from the line.
+ * Face mood can stay calm; TTS still lifts when the words are warm.
+ * @param {string | null | undefined} text
+ * @param {string} [fallback]
+ */
+export function inferSpeechEmotionFromText(text, fallback = "neutral") {
+  const raw = String(text || "").trim();
+  if (!raw) return fallback;
+  const face = inferExpressionFromText(raw);
+  if (face && face !== "neutral") return face;
+  if (/哈哈|呵呵|嘻嘻|yay|wow/i.test(raw)) return "happy";
+  if (/[!！]/.test(raw)) return "happy";
+  if (/哇|嘩/.test(raw)) return "surprised";
+  if (/thank|thanks|glad|love you|好開心|鍾意你/i.test(raw)) return "happy";
+  if (/^(嗨|哈囉|早晨)([呀啊！!]|$)/.test(raw)) return "happy";
+  if (/^(hi|hey|hello)\b/i.test(raw) && /[!！]/.test(raw)) return "happy";
+  return fallback;
+}
+
+/**
+ * OpenAI gpt-4o-mini-tts follows speed best when it is written into instructions.
+ * @param {{ emotion?: string, speechEnergy?: number }} [opts]
+ */
+export function instructSpeakingSpeed(opts = {}) {
+  const emotion = String(opts.emotion || "neutral").toLowerCase();
+  const energy = Number.isFinite(opts.speechEnergy) ? opts.speechEnergy : 0.68;
+  let speed =
+    emotion === "happy" || emotion === "surprised"
+      ? 1.16
+      : emotion === "sad"
+        ? 0.88
+        : emotion === "thinking"
+          ? 0.92
+          : emotion === "angry"
+            ? 1.1
+            : 1.08;
+  speed += (energy - 0.68) * 0.2;
+  return Number(Math.max(0.82, Math.min(1.28, speed)).toFixed(2));
+}
+
+/**
+ * ChatGPT Advanced Voice-style natural-language performance hint.
+ * Keep it imperative and include an explicit speed — newer TTS snapshots
+ * ignore vague “be expressive” copy.
  * @param {{
  *   emotion?: string,
  *   nuance?: string,
  *   talkStyle?: string,
  *   speechEnergy?: number,
  *   lang?: string,
+ *   text?: string,
  * }} opts
  */
 export function buildTtsInstruct(opts = {}) {
@@ -130,6 +175,7 @@ export function buildTtsInstruct(opts = {}) {
   const energy = opts.speechEnergy ?? 0.68;
   const lang = String(opts.lang || "yue").toLowerCase();
   const isEnglish = lang === "en" || lang.startsWith("en-");
+  const speed = instructSpeakingSpeed({ emotion, speechEnergy: energy });
 
   if (nuance === "none" && emotion === "happy") nuance = "excited";
   if (nuance === "none" && emotion === "surprised") nuance = "excited";
@@ -137,71 +183,86 @@ export function buildTtsInstruct(opts = {}) {
 
   const affect =
     emotion === "happy"
-      ? "Bright, warm, and very playful — like ChatGPT Advanced Voice: a close friend who is genuinely delighted."
+      ? "A close friend on a video call who is genuinely delighted. Smile in the voice. Bright vowels, lifted pitch."
       : emotion === "sad"
-        ? "Soft, gentle, and empathetic — caring without sounding flat or robotic."
+        ? "A close friend comforting you. Soft, warm, empathetic — still human, never flat."
         : emotion === "thinking"
-          ? "Thoughtful and unhurried, with quiet curiosity."
+          ? "A close friend thinking out loud. Curious, unhurried, with pitch that still moves."
           : emotion === "surprised"
-            ? "Animated and bright, with lifted energy on key words — almost a gasp of delight."
+            ? "A close friend gasping with delight. Animated lift on key words."
             : emotion === "angry"
-              ? "Firm and intense, but still human and controlled."
-              : "Natural, relaxed, and conversational — never monotone.";
+              ? "A close friend who is firm and intense, still human, not shouting."
+              : "ChatGPT Advanced Voice: a warm close friend on a video call. Emotionally present even on a simple line.";
 
   const toneBits = [];
-  if (nuance === "excited") toneBits.push("enthusiastic", "smiling voice");
-  if (nuance === "shy") toneBits.push("a little shy", "soft edges");
-  if (nuance === "love") toneBits.push("affectionate", "caring");
+  if (nuance === "excited") toneBits.push("enthusiastic", "smiling");
+  if (nuance === "shy") toneBits.push("a little shy", "soft");
+  if (nuance === "love") toneBits.push("affectionate");
   if (nuance === "curious") toneBits.push("curious", "engaged");
-  if (nuance === "stress") toneBits.push("reassuring", "steady");
+  if (nuance === "stress") toneBits.push("reassuring");
   if (talkStyle === "celebrate") toneBits.push("celebratory");
-  if (talkStyle === "question") toneBits.push("inquisitive");
+  if (talkStyle === "question") toneBits.push("inquisitive, rising last word");
   if (talkStyle === "soft") toneBits.push("tender");
   const tone =
     toneBits.length > 0
       ? toneBits.join(", ")
       : isEnglish
-        ? "Friendly and emotionally present"
-        : "親切、有感情";
+        ? "Friendly, playful, emotionally present"
+        : "親切、有感情、好似傾偈";
 
   const pacing =
     energy > 0.75
-      ? "Lively and expressive; speed up slightly on exclamations."
+      ? `Speak at ${speed}x. Speed up on exclamations; linger on kind words.`
       : energy < 0.38
-        ? "Slow, calm, and measured."
-        : "Natural conversational pacing with light variation.";
+        ? `Speak at ${speed}x. Slow, calm, still vary pitch.`
+        : `Speak at ${speed}x. Conversational: some words faster, some slower.`;
 
   const emotionLine =
     emotion === "happy"
-      ? "Genuine warmth and delight — let happiness show in pitch lifts and brighter vowels."
+      ? "Let delight show: pitch lifts, brighter vowels, a tiny laugh if the line is playful."
       : emotion === "sad"
-        ? "Quiet empathy; slightly slower with softer volume on sympathetic phrases."
+        ? "Quiet empathy. Softer volume on caring phrases. Do not go monotone."
         : emotion === "thinking"
-          ? "Curious pondering; brief pauses where the character is considering."
+          ? "Pondering. Brief breaths where you consider. Keep the voice alive."
           : emotion === "surprised"
-            ? "Delighted surprise; quick lift on reactions."
+            ? "Delighted surprise. Quick lift, almost a gasp, then recover."
             : emotion === "angry"
-              ? "Controlled frustration; sharper consonants, not shouting."
-              : "Neutral but engaged — still sound human, not a GPS voice.";
+              ? "Controlled frustration. Sharper consonants. Not shouting."
+              : "Even a greeting must feel alive: pitch moves, warmth in the vowels, never GPS.";
 
   const pronunciation = isEnglish
-    ? "Clear and expressive. Lift pitch on questions and exclamations; emphasize emotional words."
-    : "咬字清楚，問句尾音上揚，感嘆詞要有活力，唔好平平淡淡。";
+    ? "Clear and expressive. Lift questions and exclamations. Stress feeling-words."
+    : "咬字清楚。問句尾音上揚。感嘆詞要有活力。粵語口語，唔好似朗讀。";
+
+  const laughs = /哈哈|呵呵|嘻嘻|haha|hehe/i.test(text)
+    ? "Play the laugh as a real chuckle, not a spoken word."
+    : /哇|嘩|wow/i.test(text)
+      ? "Let the gasp/wow land with a pitch jump."
+      : "";
 
   const pauses = /[…\.]{3,}/.test(text)
-    ? "Use meaningful pauses around ellipses; let suspense breathe."
+    ? "Meaningful pause around ellipses."
     : /[!！?？]/.test(text)
-      ? "Brief pause after exclamations or questions before continuing."
-      : "Light pauses at commas; don't rush through the line.";
+      ? "Tiny pause after ! or ? then continue."
+      : "Light comma pauses. Do not rush.";
+
+  const delivery = isEnglish
+    ? `You are ChatGPT Advanced Voice Mode. React. Never sound like Siri, GPS, a newsreader, or an audiobook.`
+    : `你係 ChatGPT Advanced Voice。要有反應。絕對唔好似 Siri、導航、新聞或者朗讀。`;
 
   return [
     `Voice Affect: ${affect}`,
     `Tone: ${tone}`,
     `Pacing: ${pacing}`,
     `Emotion: ${emotionLine}`,
+    `Delivery: ${delivery}`,
     `Pronunciation: ${pronunciation}`,
     `Pauses: ${pauses}`,
-  ].join("\n\n");
+    laughs ? `Color: ${laughs}` : "",
+    `Never: monotone, robotic, even pitch, announcer cadence.`,
+  ]
+    .filter(Boolean)
+    .join("\n");
 }
 
 /**
@@ -227,21 +288,63 @@ function inferTalkStyleFromEmotion(emotion, nuance, text, talkStyle) {
   return talkStyle || "explain";
 }
 
+/**
+ * Fill in spoken emotion from the line when the caller left it calm/neutral.
+ * Face can stay rest; voice still performs.
+ * @param {string | object | null | undefined} performance
+ * @param {string} [text]
+ */
+export function enrichTtsPerformance(performance, text = "") {
+  const perf = normalizeTtsPerformance(performance);
+  const line = String(text || perf.text || "").trim();
+  const inferred = inferSpeechEmotionFromText(line, perf.emotion || "neutral");
+  const emotion =
+    !perf.emotion || perf.emotion === "neutral" ? inferred : perf.emotion;
+  let nuance = String(perf.nuance || "none").toLowerCase();
+  if (nuance === "none") {
+    const fromText = inferContentNuance(line);
+    if (fromText && fromText !== "none") nuance = fromText;
+    else if (emotion === "happy" || emotion === "surprised") nuance = "excited";
+    else if (emotion === "thinking") nuance = "curious";
+  }
+  const talkStyle = inferTalkStyleFromEmotion(
+    emotion,
+    nuance,
+    line,
+    String(perf.talkStyle || "explain").toLowerCase(),
+  );
+  const speechEnergy = Math.max(
+    0,
+    Math.min(
+      1,
+      perf.speechEnergy ??
+        (emotion === "happy" || emotion === "surprised" ? 0.82 : 0.7),
+    ),
+  );
+  return {
+    ...perf,
+    emotion,
+    nuance,
+    talkStyle,
+    speechEnergy,
+    text: line || perf.text,
+  };
+}
+
 export function resolveCompanionTtsProsody(opts = {}) {
-  const emotion = String(opts.emotion || "neutral").toLowerCase();
-  let nuance = String(opts.nuance || "none").toLowerCase();
-  const text = String(opts.text || "");
-  if (nuance === "none" && emotion === "happy") nuance = "excited";
-  if (nuance === "none" && emotion === "surprised") nuance = "excited";
+  const enriched = enrichTtsPerformance(opts, opts.text);
+  const emotion = enriched.emotion;
+  const nuance = enriched.nuance;
+  const text = String(opts.text || enriched.text || "");
   const talkStyle = inferTalkStyleFromEmotion(
     emotion,
     nuance,
     text,
-    String(opts.talkStyle || "explain").toLowerCase(),
+    String(enriched.talkStyle || opts.talkStyle || "explain").toLowerCase(),
   );
   const speechEnergy = Math.max(
     0,
-    Math.min(1, opts.speechEnergy ?? (emotion === "happy" ? 0.78 : 0.68)),
+    Math.min(1, enriched.speechEnergy ?? (emotion === "happy" ? 0.78 : 0.68)),
   );
 
   const base =
@@ -327,6 +430,7 @@ export function resolveCompanionTtsProsody(opts = {}) {
       pitch: Number(browserPitch.toFixed(3)),
       volume: Number(browserVolume.toFixed(3)),
     },
+    speed: instructSpeakingSpeed({ emotion, speechEnergy }),
     instruct: buildTtsInstruct({
       ...opts,
       emotion,
@@ -334,6 +438,7 @@ export function resolveCompanionTtsProsody(opts = {}) {
       talkStyle,
       speechEnergy,
       text,
+      lang: opts.lang || enriched.lang,
     }),
   };
 }
@@ -404,5 +509,38 @@ export function normalizeTtsPerformance(performance, fallbackEmotion = "neutral"
     singleUtterance: perf.singleUtterance !== false,
     expressiveClauses:
       perf.singleUtterance === false && perf.expressiveClauses === true,
+  };
+}
+
+/**
+ * JSON body for POST /api/tts — always includes ChatGPT-style instructions.
+ * @param {{
+ *   text: string,
+ *   performance?: string | object,
+ *   voice?: string,
+ *   lang?: string,
+ *   characterId?: string,
+ * }} opts
+ */
+export function buildCloudTtsRequestBody(opts = {}) {
+  const text = String(opts.text || "").trim();
+  const pack = resolveCompanionTtsProsody({
+    ...enrichTtsPerformance(opts.performance, text),
+    text,
+    lang: opts.lang,
+    characterId: opts.characterId,
+    voiceId: opts.voice,
+  });
+  return {
+    text,
+    emotion: pack.emotion,
+    nuance: pack.nuance,
+    talkStyle: pack.talkStyle,
+    speechEnergy: pack.speechEnergy,
+    voice: opts.voice,
+    lang: opts.lang,
+    characterId: opts.characterId,
+    instructions: pack.instruct,
+    speed: pack.speed,
   };
 }

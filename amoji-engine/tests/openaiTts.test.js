@@ -31,7 +31,8 @@ describe("openaiTts", () => {
     expect(instruct).toContain("Voice Affect:");
     expect(instruct).toContain("Tone:");
     expect(instruct).toContain("Emotion:");
-    expect(instruct).toMatch(/warm|cheerful|delight/i);
+    expect(instruct).toMatch(/warm|cheerful|delight|friend/i);
+    expect(instruct).toMatch(/Speak at /);
   });
 
   it("posts instructions to OpenAI speech API", async () => {
@@ -49,6 +50,8 @@ describe("openaiTts", () => {
     const body = JSON.parse(fetchImpl.mock.calls[0][1].body);
     expect(body.model).toBe("gpt-4o-mini-tts");
     expect(body.instructions).toContain("Voice Affect:");
+    expect(body.instructions).toMatch(/Speak at /);
+    expect(body.instructions).toMatch(/Never monotone/i);
     expect(body.input).toBe("Hello there!");
   });
 });
