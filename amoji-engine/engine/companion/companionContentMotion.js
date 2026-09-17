@@ -4,6 +4,7 @@
  */
 import { inferExpressionFromText } from "../face/emotionExpression.js";
 import { inferTalkGestureFromText } from "../face/talkGestures.js";
+import { analyzeSpeechChunkFace } from "./companionSpeechFace.js";
 import { getActionDef } from "./companionActionCatalog.js";
 import {
   inferActionFromReply,
@@ -238,10 +239,15 @@ export function analyzeStreamingReply(partialText) {
  */
 export function analyzeSpeechChunk(chunk, opts = {}) {
   const raw = String(chunk || "").trim();
-  const emotion = opts.emotion || inferExpressionFromText(raw) || "neutral";
-  const nuance = opts.nuance || inferContentNuance(raw);
-  const talkStyle = inferTalkGestureFromText(raw, { emotion });
-  const boundary = /[.!?。！？,，、:：\uFF01\uFF1F]/.test(raw);
+  const face = analyzeSpeechChunkFace(raw, {
+    emotion: opts.emotion || "neutral",
+    nuance: opts.nuance || "none",
+  });
+  const emotion = face.emotion || opts.emotion || "neutral";
+  const nuance = face.nuance || opts.nuance || "none";
+  const talkStyle = face.talkStyle || inferTalkGestureFromText(raw, { emotion });
+  const boundary =
+    face.boundary ?? /[.!?。！？,，、:：\uFF01\uFF1F]/.test(raw);
   const gesture =
     boundary && /[.!?。！？\uFF01\uFF1F]/.test(raw)
       ? inferOneShotGesture(raw, emotion, nuance)
@@ -252,8 +258,10 @@ export function analyzeSpeechChunk(chunk, opts = {}) {
     talkStyle,
     gesture,
     boundary,
-    speechEnergy: inferSpeechEnergy(raw, emotion, nuance),
-    expressionBlend: buildVrmExpressionBlend(emotion, nuance),
+    unit: face.unit,
+    speechEnergy: face.speechEnergy ?? inferSpeechEnergy(raw, emotion, nuance),
+    expressionBlend:
+      face.expressionBlend ?? buildVrmExpressionBlend(emotion, nuance),
   };
 }
 

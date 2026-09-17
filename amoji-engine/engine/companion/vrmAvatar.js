@@ -552,7 +552,7 @@ export async function createVrmAvatar(opts) {
 
   const tickExpressionBlend = (dt) => {
     if (!expr) return;
-    const rate = Math.min(1, dt * (talking ? 28 : 16));
+    const rate = Math.min(1, dt * (talking ? 36 : 16));
     for (const preset of emotionPresetKeys()) {
       if (talking || eating) {
         expressionTarget[preset] = capTalkingEmotionWeight(
@@ -904,8 +904,11 @@ export async function createVrmAvatar(opts) {
     cameraDirector.notifySpeech(chunk);
     const analysis = bodyMotion.reactToSpeechChunk(chunk, opts);
     if (analysis?.expressionBlend) {
-      emotion = analysis.emotion || emotion;
-      setExpressionTargetFromBlend(analysis.expressionBlend);
+      applyExpressionProfile({
+        emotion: analysis.emotion || emotion,
+        nuance: analysis.nuance || bodyMotion.nuance || "none",
+        blend: analysis.expressionBlend,
+      });
     }
     return analysis;
   };
