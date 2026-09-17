@@ -133,4 +133,20 @@ describe("companionEmotionBall", () => {
     expect(el.style.getPropertyValue("--mini-ball-bright")).not.toBe("");
     expect(theme.scale).toBeGreaterThan(1.5);
   });
+
+  it("grows the chip ball with speaking volume", () => {
+    const el = mockBallEl();
+    const quiet = syncMiniEmotionBall(el, {
+      emotion: "happy",
+      level: 0.1,
+      state: "speaking",
+    });
+    const loud = syncMiniEmotionBall(el, {
+      emotion: "happy",
+      level: 0.9,
+      state: "speaking",
+    });
+    expect(loud.scale).toBeGreaterThan(quiet.scale);
+    expect(loud.scale).toBeGreaterThan(2);
+  });
 });

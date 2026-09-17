@@ -104,17 +104,35 @@
       });
   }
 
-  fetch("/api/health", { cache: "no-store", headers: { Pragma: "no-cache" } })
-    .then(function (res) {
-      return res.ok ? res.json() : null;
-    })
-    .then(function (data) {
-      var serverBuild = data && data.build;
-      if (!serverBuild) return;
+  function probeServerBuild() {
+    url = new URL(window.location.href);
+    fetch("/api/health", { cache: "no-store", headers: { Pragma: "no-cache" } })
+      .then(function (res) {
+        return res.ok ? res.json() : null;
+      })
+      .then(function (data) {
+        var serverBuild = data && data.build;
+        if (!serverBuild) return;
+        purgeCaches();
+        if (!shouldReload(pageBuild, serverBuild) && hasBuildPath(serverBuild)) return;
+        if (!shouldReload(pageBuild, serverBuild) && pathSatisfiesBuild(serverBuild)) return;
+        redirect(serverBuild);
+      })
+      .catch(function () {});
+  }
+
+  // Drop Cache Storage / SW on every open so iOS cannot keep an old page.
+  purgeCaches();
+  probeServerBuild();
+
+  window.addEventListener("pageshow", function (ev) {
+    if (ev && ev.persisted) {
       purgeCaches();
-      if (!shouldReload(pageBuild, serverBuild) && hasBuildPath(serverBuild)) return;
-      if (!shouldReload(pageBuild, serverBuild) && pathSatisfiesBuild(serverBuild)) return;
-      redirect(serverBuild);
-    })
-    .catch(function () {});
+      probeServerBuild();
+    }
+  });
+
+  document.addEventListener("visibilitychange", function () {
+    if (document.visibilityState === "visible") purgeCaches();
+  });
 })();

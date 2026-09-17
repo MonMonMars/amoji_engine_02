@@ -8,9 +8,9 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji · Companion</title>
     <script>
-      window.__amojiBuild = "2026-09-17-v157-lipsync-face";
+      window.__amojiBuild = "2026-09-17-v158-finish-details";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-17-v157-lipsync-face"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-17-v158-finish-details"></script>
     <link
       rel="prefetch"
       href="/prototypes/assets/companion-char-nova.png"
@@ -219,7 +219,7 @@
         top: auto;
         display: flex;
         flex-direction: column;
-        z-index: 50;
+        z-index: 90;
         isolation: isolate;
         pointer-events: none;
       }
@@ -321,7 +321,7 @@
       media="print"
       onload="this.media='all'"
     />
-    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-17-v157-lipsync-face" />
+    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-17-v158-finish-details" />
     <noscript>
       <link
         href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap"
@@ -486,7 +486,7 @@
         left: 50%;
         bottom: max(1.25rem, env(safe-area-inset-bottom));
         transform: translateX(-50%) translateY(120%);
-        z-index: 200;
+        z-index: 70;
         max-width: min(92vw, 420px);
         padding: 0.75rem 1rem;
         border-radius: 0.85rem;
@@ -688,7 +688,7 @@
         right: 0;
         bottom: 0;
         top: auto;
-        z-index: 50;
+        z-index: 90;
         isolation: isolate;
         display: flex;
         flex-direction: column;
@@ -747,7 +747,7 @@
       }
       body.conversation-ui .transcript .msg-row {
         position: relative;
-        z-index: 60;
+        z-index: 95;
         pointer-events: auto;
       }
 
@@ -3564,19 +3564,19 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-17-v157-lipsync-face",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-17-v158-finish-details",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-17-v157-lipsync-face",
-          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-17-v157-lipsync-face"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-17-v158-finish-details",
+          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-17-v158-finish-details"
         }
       }
     </script>
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v157-lipsync-face"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v158-finish-details"
     />
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-17-v157-lipsync-face"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v157-lipsync-face"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-17-v158-finish-details"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v158-finish-details"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;
@@ -4637,16 +4637,27 @@
       let emotionBallLevel = 0;
       let speakContent = { emotion: "neutral", nuance: "none" };
       const syncEmotionBall = () => {
-        if (!voice) return;
-        emotionBall.sync({
-          sessionState: sessionUiState,
-          micOn: voice.micOn,
-          speaking: voice.speaking,
-          assistantActive: voice.assistantOutputActive,
-          disabled: btnMic.disabled,
+        if (voice) {
+          emotionBall.sync({
+            sessionState: sessionUiState,
+            micOn: voice.micOn,
+            speaking: voice.speaking,
+            assistantActive: voice.assistantOutputActive,
+            disabled: btnMic.disabled,
+            emotion: currentEmotion,
+            nuance: speakContent?.nuance || "none",
+            level: emotionBallLevel,
+          });
+        }
+        const effective =
+          typeof resolveCompanionVoiceState === "function"
+            ? resolveCompanionVoiceState(sessionUiState)
+            : sessionUiState || "idle";
+        syncMiniEmotionBall(statusDot, {
           emotion: currentEmotion,
           nuance: speakContent?.nuance || "none",
           level: emotionBallLevel,
+          state: effective || "idle",
         });
       };
 
@@ -5302,21 +5313,32 @@
           : "拖曳旋轉 · 雙擊重置視角";
       }
       let lastCanvasTapAt = 0;
+      let lastCameraResetAt = 0;
       let talkingCameraLatched = false;
       const orbitSurface = orbitHit || canvas;
+      const tryResetCameraFromEmptyHit = (ev) => {
+        const now = Date.now();
+        if (now - lastCameraResetAt < 700) return false;
+        const hitCharacter = avatar.hitTest?.(ev.clientX, ev.clientY);
+        if (hitCharacter) return false;
+        lastCameraResetAt = now;
+        avatar.resetCameraView?.();
+        orbitHint?.classList.remove("hide");
+        showToast(isEnglish ? "Camera reset" : "已重置視角", "info");
+        return true;
+      };
       orbitSurface.addEventListener("pointerup", (ev) => {
         const now = Date.now();
         if (now - lastCanvasTapAt < 500) {
-          const hitCharacter = avatar.hitTest?.(ev.clientX, ev.clientY);
-          if (!hitCharacter) {
-            avatar.resetCameraView?.();
-            orbitHint?.classList.remove("hide");
-            showToast(isEnglish ? "Camera reset" : "已重置視角", "info");
-          }
+          tryResetCameraFromEmptyHit(ev);
           lastCanvasTapAt = 0;
           return;
         }
         lastCanvasTapAt = now;
+      });
+      orbitSurface.addEventListener("dblclick", (ev) => {
+        tryResetCameraFromEmptyHit(ev);
+        lastCanvasTapAt = 0;
       });
       orbitSurface.addEventListener(
         "pointerdown",
@@ -5805,6 +5827,11 @@
         onMicLevel: ({ level, rms } = {}) => {
           applyMicMeterVisual(level);
           if (rms != null) voiceGate.observeEnergy(rms);
+          if (voice?.micOn && !(voice?.speaking || voice?.assistantOutputActive)) {
+            emotionBallLevel = Math.max(0, Math.min(1, Number(level) || 0));
+            emotionBall.setLevel(emotionBallLevel);
+            syncEmotionBall();
+          }
         },
         onSpeechDetected: (info = {}) => {
           if (!shouldAutoStopOnUserSpeech()) return;

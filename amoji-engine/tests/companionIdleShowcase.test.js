@@ -3,10 +3,9 @@ import { readFileSync } from "fs";
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
 
-const html = readFileSync(
-  join(dirname(fileURLToPath(import.meta.url)), "../../prototypes/amoji-companion.html"),
-  "utf8",
-);
+const root = join(dirname(fileURLToPath(import.meta.url)), "../..");
+const html = readFileSync(join(root, "prototypes/amoji-companion.html"), "utf8");
+const grokCss = readFileSync(join(root, "prototypes/companion-grok-ani.css"), "utf8");
 
 describe("idle showcase wiring", () => {
   it("starts idle wait without TTS so speaking cannot freeze motion", () => {
@@ -47,14 +46,29 @@ describe("idle showcase wiring", () => {
     );
   });
 
-  it("resets camera on talk start once and on empty double-tap", () => {
+  it("resets camera on talk start once and on empty double-tap or dblclick", () => {
     expect(html).toMatch(/talkingCameraLatched/);
     expect(html).toMatch(/lastCanvasTapAt < 500/);
     expect(html).toMatch(/if \(on && !talkingCameraLatched\)/);
+    expect(html).toMatch(/addEventListener\("dblclick"/);
+    expect(html).toMatch(/tryResetCameraFromEmptyHit/);
   });
 
-  it("keeps conversation captions above the orbit surface", () => {
-    expect(html).toMatch(/\.chat-shell \{[\s\S]*z-index:\s*50/);
-    expect(html).toMatch(/\.msg-row \{[\s\S]*z-index:\s*60|z-index:\s*60;[\s\S]*pointer-events:\s*auto/);
+  it("keeps conversation captions above toasts", () => {
+    expect(html).toMatch(/\.chat-shell \{[\s\S]*z-index:\s*90/);
+    expect(html).toMatch(/\.companion-toast \{[\s\S]*z-index:\s*70/);
+    expect(html).toMatch(/z-index:\s*95;/);
+    expect(grokCss).toMatch(/\.theme-grok-ani \.chat-shell \{[\s\S]*z-index:\s*90/);
+    expect(grokCss).toMatch(/\.theme-grok-ani \.companion-toast \{[\s\S]*z-index:\s*70/);
+  });
+
+  it("drives the chip mini emotion ball from mouth and mic volume", () => {
+    expect(html).toMatch(/syncMiniEmotionBall\(statusDot/);
+    expect(html).toMatch(
+      /const syncEmotionBall = \(\) => \{[\s\S]*syncMiniEmotionBall\(statusDot/,
+    );
+    expect(html).toMatch(
+      /onMicLevel: \(\{ level, rms \} = \{\}\) => \{[\s\S]*emotionBallLevel = Math\.max/,
+    );
   });
 });
