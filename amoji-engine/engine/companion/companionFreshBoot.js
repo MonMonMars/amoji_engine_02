@@ -325,6 +325,9 @@ export function rewriteCompanionServePath(pathname) {
     return "/prototypes/amoji-lite.html";
   }
   if (path === "/setup") return "/prototypes/amoji-setup.html";
+  if (path === "/voice-emotion-demo" || path === "/voice-demo") {
+    return "/prototypes/voice-emotion-demo.html";
+  }
   return path;
 }
 
