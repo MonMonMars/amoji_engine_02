@@ -10,6 +10,7 @@ describe("companion start picker", () => {
     const html = companionCardInnerHtml(
       {
         id: "amoji",
+        number: 14,
         name: "Amoji",
         tagline: "Playful friend",
         traits: ["warm", "witty"],
@@ -20,7 +21,9 @@ describe("companion start picker", () => {
       { compact: true, selectedId: "amoji" },
     );
     expect(html).toContain("companion-card-portrait");
-    expect(html).toContain("Amoji");
+    expect(html).toContain("companion-card-number");
+    expect(html).toContain(">14<");
+    expect(html).toContain("14 Amoji");
     expect(html).not.toContain("companion-card-tagline");
   });
 
@@ -32,6 +35,8 @@ describe("companion start picker", () => {
       selectedId: list[0].id,
     });
     expect(html).toContain(list[0].name);
+    expect(html).toContain("companion-card-number");
+    expect(html).toContain(`>${list[0].number}<`);
   });
 
   it("start picker uses the same compact card layout as in-session picker", () => {

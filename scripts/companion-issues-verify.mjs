@@ -127,6 +127,27 @@ async function main() {
   record("orbit-hit", boot.orbit);
   record("progress-dock-circle", boot.dockCircle);
 
+  const numbered = await page.evaluate(() => {
+    const cards = [
+      ...document.querySelectorAll("#start-character-picker [data-character-id]"),
+    ];
+    return cards.slice(0, 3).map((card) => ({
+      id: card.getAttribute("data-character-id"),
+      number: card.getAttribute("data-character-number"),
+      label: card.getAttribute("aria-label") || "",
+      text: (card.textContent || "").replace(/\s+/g, " ").trim(),
+    }));
+  });
+  record(
+    "picker-cards-numbered",
+    numbered.length >= 3 &&
+      numbered[0].id === "nova" &&
+      numbered[0].number === "1" &&
+      numbered[1].number === "2" &&
+      numbered.every((card) => /^\d+\./.test(card.label)),
+    JSON.stringify(numbered),
+  );
+
   await page.screenshot({
     path: `${outDir}/issues_verify_picker.png`,
     animations: "disabled",
