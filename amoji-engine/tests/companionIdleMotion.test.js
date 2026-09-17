@@ -26,11 +26,11 @@ describe("companionIdleMotion", () => {
     expect(Object.keys(first.overlay).length).toBeGreaterThan(0);
   });
 
-  it("adds idle expression life without opening the jaw or closing eyes", () => {
+  it("keeps idle rest morph-neutral so jaws stay shut and lids stay open", () => {
     const blend = sampleIdleExpressionBlend(1.2, "neutral");
-    expect(blend.Happy).toBeGreaterThan(0.03);
-    expect(blend.Happy).toBeLessThan(0.1);
+    expect(blend.Happy ?? 0).toBe(0);
     expect(blend.Relaxed ?? 0).toBe(0);
+    expect(blend.Surprised ?? 0).toBe(0);
   });
 
   it("keeps Relaxed off so eyelids stay open", () => {
