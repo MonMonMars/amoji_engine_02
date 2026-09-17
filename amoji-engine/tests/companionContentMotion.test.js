@@ -5,6 +5,7 @@ import {
   analyzeStreamingReply,
   analyzeUserInput,
   buildVrmExpressionBlend,
+  inferActionFromEmotion,
   inferContentNuance,
   inferOneShotGesture,
   parseReplyMood,
@@ -21,6 +22,14 @@ describe("companionContentMotion", () => {
 
   it("detects shy nuance from Cantonese blush cues", () => {
     expect(inferContentNuance("哎呀，講到咁我會面紅㗎")).toBe("shy");
+  });
+
+  it("maps moods to default body actions for avatar performance", () => {
+    expect(inferActionFromEmotion("happy", "none")).toBe("nod");
+    expect(inferActionFromEmotion("sad", "none")).toBe("hug");
+    expect(inferActionFromEmotion("happy", "love")).toBe("fingerheart");
+    expect(inferActionFromEmotion("happy", "excited")).toBe("celebrate");
+    expect(inferActionFromEmotion("thinking", "curious")).toBe("thinking");
   });
 
   it("maps love + happy reply to soft talk and nod gesture", () => {

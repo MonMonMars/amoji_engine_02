@@ -344,7 +344,7 @@ export function buildPerformancePresetPromptFragment(
 
   if (isEnglish) {
     return [
-      "PERFORMANCE TAG FORMAT (every reply): optional [action:id] then optional [nuance:shy|curious|excited|love|stress|none] then required [mood:happy|thinking|sad|surprised|angry] at the end.",
+      "PERFORMANCE TAG FORMAT (every reply): optional [action:id] then optional [nuance:shy|curious|excited|love|stress|none] then required [mood:happy|thinking|sad|surprised|angry] at the end. Never use emoji in text — express only via tags; avatar face + VRMA body show emotion.",
       `FACIAL MOODS: ${buildMoodPresetLines(true).join("; ")}.`,
       `FACE NUANCE (optional): ${buildNuancePresetLines(true).join("; ")}.`,
       `BODY MOVES by intent: ${buildBodyMoveGroupLines(true).join("; ")}.`,
@@ -358,7 +358,7 @@ export function buildPerformancePresetPromptFragment(
   }
 
   return [
-    "表演 tag 格式（每句回覆）：可選 [action:id]，可選 [nuance:shy|curious|excited|love|stress|none]，最尾必須 [mood:happy|thinking|sad|surprised|angry]。",
+    "表演 tag 格式（每句回覆）：可選 [action:id]，可選 [nuance:shy|curious|excited|love|stress|none]，最尾必須 [mood:happy|thinking|sad|surprised|angry]。文字唔好用 emoji — 只用 tag 表達，3D 面孔同身體會演出。",
     `面部表情 mood：${buildMoodPresetLines(false).join("；")}。`,
     `面部分層 nuance（可選）：${buildNuancePresetLines(false).join("；")}。`,
     `身體動作分類：${buildBodyMoveGroupLines(false).join("；")}。`,
