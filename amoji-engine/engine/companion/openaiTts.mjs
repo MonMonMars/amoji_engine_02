@@ -2,9 +2,9 @@
  * OpenAI gpt-4o-mini-tts — ChatGPT-style emotional speech via natural-language instructions.
  * @see https://developers.openai.com/api/docs/guides/text-to-speech
  */
-import { buildTtsInstruct } from "./companionTtsProsody.js";
+import { buildTtsInstruct, instructSpeakingSpeed } from "./companionTtsProsody.js";
 
-export const OPENAI_TTS_SCHEMA = "amoji.openaiTts.v1";
+export const OPENAI_TTS_SCHEMA = "amoji.openaiTts.v2";
 
 const OPENAI_SPEECH_URL = "https://api.openai.com/v1/audio/speech";
 const DEFAULT_MODEL = "gpt-4o-mini-tts";
@@ -87,6 +87,10 @@ export async function synthesizeOpenAiSpeech(text, opts = {}) {
       lang: opts.lang,
       text: clean,
     });
+  const speed = instructSpeakingSpeed({
+    emotion: opts.emotion,
+    speechEnergy: opts.speechEnergy,
+  });
 
   const voice = resolveOpenAiVoice(opts.voice, opts.lang);
   const model = opts.model || process.env.OPENAI_TTS_MODEL || DEFAULT_MODEL;
@@ -101,7 +105,7 @@ export async function synthesizeOpenAiSpeech(text, opts = {}) {
       model,
       voice,
       input: clean,
-      instructions,
+      instructions: `${instructions}\n\nSpeak at ${speed}x. Never monotone.`,
       response_format: "mp3",
     }),
   });
@@ -124,5 +128,6 @@ export async function synthesizeOpenAiSpeech(text, opts = {}) {
     model,
     contentType: "audio/mpeg",
     instructions,
+    speed,
   };
 }

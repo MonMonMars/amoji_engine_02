@@ -19,6 +19,7 @@ import {
   processChatRequest,
 } from "../engine/companion/chatApiHandler.mjs";
 import { searchWeb } from "../engine/companion/companionWebSearch.mjs";
+import { processTtsRequest } from "../engine/companion/ttsHandler.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, "../..");
@@ -154,10 +155,21 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (req.method === "POST" && url.pathname === "/api/tts") {
-    send(res, 200, Buffer.alloc(44), {
-      ...corsHeaders(),
-      "Content-Type": "audio/wav",
-    });
+    try {
+      const body = await readJson(req);
+      const result = await processTtsRequest({ method: "POST", body });
+      const headers = { ...corsHeaders(), ...result.headers };
+      if (result.status === 204) {
+        send(res, 204, "", headers);
+        return;
+      }
+      send(res, result.status, result.body, headers);
+    } catch (err) {
+      send(res, 500, { ok: false, error: err?.message || String(err) }, {
+        ...corsHeaders(),
+        "Content-Type": "application/json; charset=utf-8",
+      });
+    }
     return;
   }
 
