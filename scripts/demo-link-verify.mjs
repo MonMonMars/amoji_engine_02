@@ -274,8 +274,8 @@ if (useLocal) {
     baseUrl = `http://127.0.0.1:${port}`;
     record("local static server", true, baseUrl);
   }
-  secretaryUrl = `${baseUrl}/prototypes/amoji-lite.html?lang=en`;
-  fullUrl = `${baseUrl}/prototypes/amoji-companion.html?lang=en`;
+  secretaryUrl = `${baseUrl}/c/${encodeURIComponent(AMOJI_BUILD)}/lite?lang=en`;
+  fullUrl = `${baseUrl}/c/${encodeURIComponent(AMOJI_BUILD)}/full?lang=en`;
 } else {
   try {
     const health = await fetchHealth(baseUrl);
