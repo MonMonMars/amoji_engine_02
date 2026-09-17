@@ -41,7 +41,12 @@ import {
 } from "./companionOnlineMotionClips.mjs";
 import { createVrmMotionPlayer } from "./companionVrmMotionPlayer.js";
 import { sampleIdleExpressionBlend } from "./companionIdleMotion.js";
-import { configureVrmSpringStability } from "./vrmSpringStability.js";
+import {
+  configureVrmSpringStability,
+  createIdleSpringRecenterState,
+  recenterVrmSpringBones,
+  tickIdleSpringRecenter,
+} from "./vrmSpringStability.js";
 import { applyVrmOutfitTint } from "./companionOutfitApply.js";
 import {
   countMeshTriangles,
@@ -265,6 +270,7 @@ export async function createVrmAvatar(opts) {
   vrm.humanoid?.resetNormalizedPose?.();
   const bodyMotion = createCompanionBodyMotion(vrm.humanoid);
   bodyMotion.setFingerFlexAxis?.(inferFingerFlexAxis(vrm.humanoid));
+  let springIdleState = createIdleSpringRecenterState();
   /** @type {string | null} */
   let vrmaAction = null;
   let vrmaPending = false;
@@ -297,6 +303,8 @@ export async function createVrmAvatar(opts) {
     }
     bodyMotion.resetIdleLife?.();
     syncHumanoidPose();
+    syncSpringsAfterPose();
+    springIdleState = createIdleSpringRecenterState();
     return false;
   };
 
@@ -314,6 +322,22 @@ export async function createVrmAvatar(opts) {
       console.warn("[vrm] humanoid.update failed", err);
     }
   };
+
+  const syncSpringsAfterPose = (opts = {}) => {
+    try {
+      vrm.scene?.updateMatrixWorld?.(true);
+    } catch {
+      /* ignore */
+    }
+    return recenterVrmSpringBones(vrm, opts);
+  };
+
+  bodyMotion.setActionCompleteHandler?.(({ sequenceDone, next }) => {
+    if (!sequenceDone || next) return;
+    syncHumanoidPose();
+    syncSpringsAfterPose();
+    springIdleState = createIdleSpringRecenterState();
+  });
 
   const frameAnchor = new THREE.Vector3();
   const smoothedFrameAnchor = new THREE.Vector3();
@@ -714,6 +738,8 @@ export async function createVrmAvatar(opts) {
     }
     bodyMotion.resetIdleLife?.();
     syncHumanoidPose();
+    syncSpringsAfterPose();
+    springIdleState = createIdleSpringRecenterState();
     return ok;
   };
   const playGestureForText = (text, opts = {}) =>
@@ -946,6 +972,13 @@ export async function createVrmAvatar(opts) {
       syncLookTarget();
       syncHumanoidPose();
       tickFace(dt, now, activeMotion);
+      const calmSpringIdle =
+        !libraryMotion &&
+        !activeMotion &&
+        !talking &&
+        !bodyMotion.thinking &&
+        !bodyMotion.activeGesture;
+      tickIdleSpringRecenter(vrm, springIdleState, dt, calmSpringIdle);
       vrm.update(dt);
       // Fingers last — VRMA mixer and vrm.update would otherwise leave Mixamo
       // hands in a T-pose (stick-straight).

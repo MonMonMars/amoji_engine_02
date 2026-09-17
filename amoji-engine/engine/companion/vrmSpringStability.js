@@ -6,11 +6,14 @@
  * and left author gravityDir pointing up — which reads as wind from below.
  */
 
-export const VRM_SPRING_STABILITY_SCHEMA = "amoji.vrmSpringStability.v2";
+export const VRM_SPRING_STABILITY_SCHEMA = "amoji.vrmSpringStability.v3";
 
-export const MIN_DRAG_FORCE = 0.88;
-export const MIN_GRAVITY_POWER = 0.28;
-export const MAX_STIFFNESS = 0.7;
+export const MIN_DRAG_FORCE = 0.92;
+export const MIN_GRAVITY_POWER = 0.38;
+export const MAX_STIFFNESS = 0.55;
+
+/** Soft reset while standing idle — pulls hair/skirt back without re-capture. */
+export const IDLE_SPRING_RECENTER_SEC = 5.5;
 
 /**
  * @param {unknown} raw
@@ -66,27 +69,96 @@ export function tuneSpringJointSettings(settings) {
 }
 
 /**
+ * @param {import('@pixiv/three-vrm').VRM | null | undefined} vrm
+ * @returns {object[]}
+ */
+export function getVrmSpringJoints(vrm) {
+  const manager = vrm?.springBoneManager;
+  if (!manager) return [];
+  return collectSpringJoints(
+    manager.joints || manager.springBones || manager._joints,
+  );
+}
+
+/**
+ * Snap spring bones to their baseline after the humanoid pose is settled.
+ * @param {import('@pixiv/three-vrm').VRM | null | undefined} vrm
+ * @param {{ retune?: boolean, captureInit?: boolean }} [opts]
+ */
+export function recenterVrmSpringBones(vrm, opts = {}) {
+  const manager = vrm?.springBoneManager;
+  if (!manager) return { ok: false, reason: "no-spring-bones" };
+
+  const joints = getVrmSpringJoints(vrm);
+  if (!joints.length) return { ok: false, reason: "no-spring-bones" };
+
+  let tuned = 0;
+  if (opts.retune) {
+    for (const joint of joints) {
+      if (tuneSpringJointSettings(joint?.settings)) tuned += 1;
+    }
+  }
+
+  if (opts.captureInit !== false) {
+    manager.setInitState?.();
+  }
+  manager.reset?.();
+  return { ok: true, joints: joints.length, tuned };
+}
+
+/**
+ * @returns {{ calmSec: number, lastResetMs: number }}
+ */
+export function createIdleSpringRecenterState() {
+  return { calmSec: 0, lastResetMs: 0 };
+}
+
+/**
+ * Periodically reset spring tails while the avatar is in calm idle — stops
+ * hair/skirt from slowly winding upward under procedural sway.
+ * @param {import('@pixiv/three-vrm').VRM | null | undefined} vrm
+ * @param {{ calmSec: number, lastResetMs: number } | null | undefined} state
+ * @param {number} dt
+ * @param {boolean} calm
+ */
+export function tickIdleSpringRecenter(vrm, state, dt, calm) {
+  if (!state) return state;
+  if (!calm || !vrm?.springBoneManager) {
+    state.calmSec = 0;
+    return state;
+  }
+
+  state.calmSec += Math.max(0, dt);
+  if (state.calmSec < IDLE_SPRING_RECENTER_SEC) return state;
+
+  const result = recenterVrmSpringBones(vrm, { captureInit: false });
+  if (result.ok) {
+    state.calmSec = 0;
+    state.lastResetMs =
+      typeof performance !== "undefined" ? performance.now() : Date.now();
+  }
+  return state;
+}
+
+/**
  * Spring bones simulate after humanoid pose — stabilize drag/gravity so hair
  * does not look like wind is pushing from below.
  * @param {import('@pixiv/three-vrm').VRM | null | undefined} vrm
  */
 export function configureVrmSpringStability(vrm) {
-  const manager = vrm?.springBoneManager;
-  if (!manager) return { ok: false, reason: "no-spring-bones" };
-
-  const joints = collectSpringJoints(
-    manager.joints || manager.springBones || manager._joints,
-  );
-  if (!joints.length) return { ok: false, reason: "no-spring-bones" };
+  const joints = getVrmSpringJoints(vrm);
+  if (!joints.length) {
+    return { ok: false, reason: "no-spring-bones" };
+  }
 
   let tuned = 0;
   for (const joint of joints) {
-    const settings = joint?.settings;
-    if (!tuneSpringJointSettings(settings)) continue;
-    tuned += 1;
+    if (tuneSpringJointSettings(joint?.settings)) tuned += 1;
   }
 
-  manager.setInitState?.();
-  manager.reset?.();
-  return { ok: true, tuned };
+  const recentered = recenterVrmSpringBones(vrm, {
+    retune: false,
+    captureInit: true,
+  });
+  return { ok: recentered.ok, tuned, joints: recentered.joints ?? joints.length };
 }
