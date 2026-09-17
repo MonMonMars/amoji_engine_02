@@ -46,6 +46,7 @@ import {
   createIdleSpringRecenterState,
   recenterVrmSpringBones,
   tickIdleSpringRecenter,
+  TALK_SPRING_RECENTER_SEC,
 } from "./vrmSpringStability.js";
 import { applyVrmOutfitTint } from "./companionOutfitApply.js";
 import {
@@ -271,6 +272,7 @@ export async function createVrmAvatar(opts) {
   const bodyMotion = createCompanionBodyMotion(vrm.humanoid);
   bodyMotion.setFingerFlexAxis?.(inferFingerFlexAxis(vrm.humanoid));
   let springIdleState = createIdleSpringRecenterState();
+  let springTalkState = createIdleSpringRecenterState();
   /** @type {string | null} */
   let vrmaAction = null;
   let vrmaPending = false;
@@ -837,6 +839,9 @@ export async function createVrmAvatar(opts) {
     if (mouthTarget > MOUTH_CLOSE_EPS && !talking && !eating) {
       setTalking(true);
     }
+    if (mouthTarget > 0.2 && (talking || eating)) {
+      mouthOpen = Math.max(mouthOpen, mouthTarget * 0.82);
+    }
     return mouthTarget;
   };
 
@@ -947,7 +952,7 @@ export async function createVrmAvatar(opts) {
       restoreAfterVrma();
     }
     const libraryMotion =
-      (vrmaPlaying || vrmaPending) &&
+      vrmaPlaying &&
       vrmaAction !== "idle" &&
       vrmaAction !== "relax";
     const activeMotion = vrmaPlaying || vrmaPending
@@ -972,13 +977,22 @@ export async function createVrmAvatar(opts) {
       syncLookTarget();
       syncHumanoidPose();
       tickFace(dt, now, activeMotion);
-      const calmSpringIdle =
-        !libraryMotion &&
-        !activeMotion &&
-        !talking &&
-        !bodyMotion.thinking &&
-        !bodyMotion.activeGesture;
-      tickIdleSpringRecenter(vrm, springIdleState, dt, calmSpringIdle);
+      const springEligible =
+        !libraryMotion && !activeMotion && !bodyMotion.activeGesture;
+      if (springEligible && !talking && !bodyMotion.thinking) {
+        tickIdleSpringRecenter(vrm, springIdleState, dt, true);
+      } else if (springEligible && talking) {
+        tickIdleSpringRecenter(
+          vrm,
+          springTalkState,
+          dt,
+          true,
+          TALK_SPRING_RECENTER_SEC,
+        );
+      } else {
+        springIdleState.calmSec = 0;
+        springTalkState.calmSec = 0;
+      }
       vrm.update(dt);
       // Fingers last — VRMA mixer and vrm.update would otherwise leave Mixamo
       // hands in a T-pose (stick-straight).

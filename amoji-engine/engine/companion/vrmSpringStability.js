@@ -15,6 +15,9 @@ export const MAX_STIFFNESS = 0.55;
 /** Soft reset while standing idle — pulls hair/skirt back without re-capture. */
 export const IDLE_SPRING_RECENTER_SEC = 5.5;
 
+/** Longer interval while talking — head motion still excites hair/skirt springs. */
+export const TALK_SPRING_RECENTER_SEC = 10;
+
 /**
  * @param {unknown} raw
  * @returns {object[]}
@@ -121,7 +124,13 @@ export function createIdleSpringRecenterState() {
  * @param {number} dt
  * @param {boolean} calm
  */
-export function tickIdleSpringRecenter(vrm, state, dt, calm) {
+export function tickIdleSpringRecenter(
+  vrm,
+  state,
+  dt,
+  calm,
+  intervalSec = IDLE_SPRING_RECENTER_SEC,
+) {
   if (!state) return state;
   if (!calm || !vrm?.springBoneManager) {
     state.calmSec = 0;
@@ -129,7 +138,7 @@ export function tickIdleSpringRecenter(vrm, state, dt, calm) {
   }
 
   state.calmSec += Math.max(0, dt);
-  if (state.calmSec < IDLE_SPRING_RECENTER_SEC) return state;
+  if (state.calmSec < intervalSec) return state;
 
   const result = recenterVrmSpringBones(vrm, { captureInit: false });
   if (result.ok) {

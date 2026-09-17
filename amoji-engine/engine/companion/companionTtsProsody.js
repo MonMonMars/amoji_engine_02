@@ -12,6 +12,9 @@ import { inferExpressionFromText } from "../face/emotionExpression.js";
 
 export const COMPANION_TTS_PROSODY_SCHEMA = "amoji.companionTtsProsody.v2";
 
+/** Must match client chunkTextForCloudTts — server rejects/truncates above this. */
+export const MAX_CLOUD_TTS_CHARS = 480;
+
 /** @typedef {{ rate: string, pitch: string, volume: string }} EdgeProsody */
 /** @typedef {{ rate: number, pitch: number, volume: number }} BrowserProsody */
 

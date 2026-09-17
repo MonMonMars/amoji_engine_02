@@ -96,8 +96,10 @@ describe("idle showcase wiring", () => {
       /onMicLevel: \(\{ level, rms \} = \{\}\) => \{[\s\S]*emotionBallLevel = Math\.max/,
     );
     expect(html).toMatch(
-      /onMouth: \(open, shape\) => \{[\s\S]*miniEmotionBall\.sync\(|emotionBallLevel = open/,
+      /onMouth: \(open, shape\) => \{[\s\S]*lastMouthBallLevel[\s\S]*emotionBall\.setLevel/,
     );
+    expect(html).toMatch(/markReplyEmotionHold/);
+    expect(html).toMatch(/REPLY_EMOTION_HOLD_MS/);
     expect(grokCss).toContain("companion-chip__dot-canvas");
     expect(grokCss).toMatch(/\.companion-chip__dot:has\(canvas\) \{[\s\S]*transform:\s*none/);
     expect(grokCss).toMatch(/\.companion-chip__dot-canvas \{[\s\S]*inset:\s*0/);
