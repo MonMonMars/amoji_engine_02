@@ -8,6 +8,7 @@
 import { buildActionPromptFragment } from "./companionActionMotion.js";
 import { buildPerformancePresetPromptFragment } from "./companionLlmPerformancePreset.js";
 import { voiceShortLabel } from "./companionVoiceCatalog.js";
+import { findVoiceProfile } from "./companionVoiceProfiles.js";
 
 export const CHARACTER_STORAGE_KEY = "amoji.companion.characterId";
 
@@ -1045,6 +1046,16 @@ export function defaultVoiceForCharacter(characterId, langCode) {
 
 /**
  * @param {string} characterId
+ * @param {"yue" | "en"} [langCode]
+ * @returns {"female" | "male"}
+ */
+export function characterGender(characterId, langCode = "yue") {
+  const voiceId = defaultVoiceForCharacter(characterId, langCode);
+  return findVoiceProfile(voiceId)?.gender ?? "female";
+}
+
+/**
+ * @param {string} characterId
  * @param {boolean} [isEnglish]
  */
 export function buildCharacterSystemPrompt(characterId, isEnglish = false) {
@@ -1214,8 +1225,6 @@ export function buildCharacterCompanionHref(opts = {}) {
   const q = new URLSearchParams();
   q.set("lang", langCode === "en" ? "en" : "yue");
   q.set("character", def.id);
-  if (opts.voiceId) q.set("voice", opts.voiceId);
-  else q.set("voice", langCode === "en" ? def.voices.en : def.voices.yue);
   if (def.avatarPrefer === "gltf") {
     q.set("avatar", "gltf");
     q.set("model3d", def.modelUrl);

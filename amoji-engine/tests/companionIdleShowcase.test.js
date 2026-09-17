@@ -38,9 +38,10 @@ describe("idle showcase wiring", () => {
     );
   });
 
-  it("streams full sentences as single utterances and keeps the last talking face", () => {
-    expect(html).toMatch(/singleUtterance:\s*true/);
-    expect(html).not.toMatch(/expressiveClauses:\s*true/);
+  it("uses expressive clause TTS and keeps the last talking face", () => {
+    expect(html).not.toMatch(/singleUtterance:\s*true/);
+    expect(html).not.toMatch(/settings-btn-voice/);
+    expect(html).toContain("settings-voice-note");
     expect(html).not.toMatch(
       /if \(!avatar\.currentAction\) \{\s*avatar\.setEmotion\("neutral"\)/,
     );

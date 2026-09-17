@@ -10,6 +10,7 @@ import {
   formatMicError,
   lipSyncCharWeight,
   pickFemaleVoice,
+  pickVoiceForGender,
   readAnalyserMouthLevel,
   unlockAudioSync,
   visemeAtAudioProgress,
@@ -33,6 +34,15 @@ describe("companionVoice", () => {
       { name: "Sin-Ji", lang: "zh-HK", localService: true },
     ];
     expect(pickFemaleVoice(voices)?.name).toBe("Sin-Ji");
+  });
+
+  it("picks browser voice by gender for offline fallback", () => {
+    const voices = [
+      { name: "Daniel", lang: "en-US", gender: "male", localService: true },
+      { name: "Sin-Ji", lang: "zh-HK", gender: "female", localService: true },
+    ];
+    expect(pickVoiceForGender("male", voices)?.name).toBe("Daniel");
+    expect(pickVoiceForGender("female", voices)?.name).toBe("Sin-Ji");
   });
 
   it("labels cloud Cantonese neural voice", () => {

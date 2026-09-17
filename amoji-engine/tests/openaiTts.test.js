@@ -1,5 +1,6 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 import {
+  normalizeOpenAiVoiceKey,
   resolveOpenAiVoice,
   synthesizeOpenAiSpeech,
 } from "../engine/companion/openaiTts.mjs";
@@ -19,6 +20,14 @@ describe("openaiTts", () => {
 
   it("maps Cantonese neural voice to OpenAI marin", () => {
     expect(resolveOpenAiVoice("zh-HK-HiuMaanNeural", "zh-HK")).toBe("marin");
+  });
+
+  it("maps male English and persona-suffixed voices correctly", () => {
+    expect(resolveOpenAiVoice("en-HK-SamNeural", "en-HK")).toBe("ash");
+    expect(normalizeOpenAiVoiceKey("zh-HK-WanLungNeural-calm")).toBe(
+      "zh-hk-wanlungneural",
+    );
+    expect(resolveOpenAiVoice("zh-HK-WanLungNeural-bold", "zh-HK")).toBe("ash");
   });
 
   it("builds ChatGPT-style structured instructions", () => {
