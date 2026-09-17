@@ -372,7 +372,7 @@ export function syncMiniEmotionBall(el, opts = {}) {
   const level = clamp(Number(opts.level) || 0, 0, 1);
   const state = String(opts.state || "idle");
   const speaking = state === "speaking" || state === "listening";
-  const scale = 1 + level * (speaking ? 1.35 : 1.05);
+  const scale = 1 + level * (speaking ? 1.55 : 1.12);
   const bright = 0.92 + level * 0.45;
   el.dataset.state = state;
   el.dataset.emotion = String(opts.emotion || "neutral");

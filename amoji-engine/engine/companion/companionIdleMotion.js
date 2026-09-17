@@ -6,7 +6,7 @@ import {
   idleBeatEnvelope,
 } from "./companionPoseSmoothing.js";
 
-export const COMPANION_IDLE_MOTION_SCHEMA = "amoji.companionIdleMotion.v1";
+export const COMPANION_IDLE_MOTION_SCHEMA = "amoji.companionIdleMotion.v2";
 
 /** First seconds after avatar is visible — gentle breathe, sway, relaxed arms. */
 export const BOOT_SIMPLE_IDLE_SEC = 10;
@@ -87,7 +87,7 @@ export function samplePlantedAliveIdle(elapsedSec, opts = {}) {
     hipZ: calm.hipZ + (life.hipZ - calm.hipZ) * 0.28,
     headX: life.headX * 0.85,
     headZ: life.headZ * 0.72,
-    leanY: life.leanY * 0.42,
+    leanY: life.leanY * 0.5,
     spineX: life.spineX,
     chestX: life.chestX,
     armLiftL: life.armLiftL,
@@ -194,7 +194,7 @@ export function advanceIdleBeat(state, dt, nowMs) {
                 : beat === "breathe"
                   ? 2.2
                   : 1.65;
-    nextAt = nowMs + 700 + Math.random() * 1400;
+    nextAt = nowMs + 380 + Math.random() * 900;
   }
 
   if (beat) {
@@ -205,19 +205,20 @@ export function advanceIdleBeat(state, dt, nowMs) {
 
     switch (beat) {
       case "nod":
-        overlay.headX = -0.12 * Math.sin(p * Math.PI);
-        overlay.leanY = wave * 0.028 * env;
+        overlay.headX = -0.16 * Math.sin(p * Math.PI);
+        overlay.leanY = wave * 0.036 * env;
         break;
       case "look":
-        overlay.headZ = Math.sin(p * Math.PI) * 0.11 * env;
-        overlay.headX = wave * 0.038 * env;
+        overlay.headZ = Math.sin(p * Math.PI) * 0.2 * env;
+        overlay.headX = wave * 0.055 * env;
+        overlay.leanY = wave * 0.04 * env;
         break;
       case "comb":
-        overlay.armLiftR = 0.72 * wave * env;
-        overlay.forearmR = 0.55 * wave * env;
-        overlay.headZ = 0.07 * wave * env;
-        overlay.headX = -0.04 * wave * env;
-        overlay.leanY = 0.03 * wave * env;
+        overlay.armLiftR = 0.98 * wave * env;
+        overlay.forearmR = 0.82 * wave * env;
+        overlay.headZ = 0.12 * wave * env;
+        overlay.headX = -0.06 * wave * env;
+        overlay.leanY = 0.045 * wave * env;
         break;
       case "shift":
         overlay.hipZ = Math.sin(p * Math.PI) * 0.02 * env;
@@ -274,7 +275,7 @@ export function createIdleBeatState(nowMs = performance.now()) {
     beat: null,
     phase: 0,
     duration: 0,
-    nextAt: nowMs + 180 + Math.random() * 420,
+    nextAt: nowMs + 90 + Math.random() * 280,
   };
 }
 
@@ -302,6 +303,6 @@ export function startIdleBeat(state, beat, nowMs = 0) {
     beat: IDLE_BEAT_DURATION_SEC[key] ? key : "look",
     phase: 0,
     duration,
-    nextAt: Number(nowMs) + duration * 1000 + 700,
+    nextAt: Number(nowMs) + duration * 1000 + 380,
   };
 }

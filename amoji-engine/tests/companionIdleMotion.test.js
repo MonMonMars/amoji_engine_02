@@ -35,8 +35,28 @@ describe("companionIdleMotion", () => {
     state.nextAt = 0;
     const first = advanceIdleBeat(state, 1.05, 10);
     expect(first.state.beat).toBe("comb");
-    expect(first.overlay.armLiftR).toBeGreaterThan(0.2);
-    expect(first.overlay.forearmR).toBeGreaterThan(0.1);
+    expect(first.overlay.armLiftR).toBeGreaterThan(0.35);
+    expect(first.overlay.forearmR).toBeGreaterThan(0.2);
+    vi.restoreAllMocks();
+  });
+
+  it("plays a look-around beat that turns the head", () => {
+    vi.spyOn(Math, "random").mockReturnValue(0.2);
+    const state = createIdleBeatState(0);
+    state.nextAt = 0;
+    const first = advanceIdleBeat(state, 0.8, 10);
+    expect(first.state.beat).toBe("look");
+    expect(Math.abs(first.overlay.headZ)).toBeGreaterThan(0.08);
+    vi.restoreAllMocks();
+  });
+
+  it("schedules the next idle life beat within about a second", () => {
+    vi.spyOn(Math, "random").mockReturnValue(0);
+    const state = createIdleBeatState(0);
+    state.nextAt = 0;
+    const first = advanceIdleBeat(state, 0.05, 10);
+    expect(first.state.nextAt).toBeLessThan(10 + 1500);
+    expect(first.state.nextAt).toBeGreaterThan(10 + 300);
     vi.restoreAllMocks();
   });
 

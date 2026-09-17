@@ -80,7 +80,7 @@ export function createCompanionWaitAct(opts = {}) {
           nuance: "none",
         });
       } else {
-        const beats = ["look", "breathe", "comb", "nod"];
+        const beats = ["look", "comb", "breathe", "look", "nod", "comb"];
         avatarRef?.pulseIdleBeat?.(beats[poseTick % beats.length]);
       }
       opts.onPose?.("idle-stand", phase);
@@ -124,7 +124,7 @@ export function createCompanionWaitAct(opts = {}) {
     clearInterval(poseTimer);
     const interval =
       kind === "idle" || kind === "avatar-load"
-        ? Math.max(1600, Math.round(poseIntervalMs * 0.48))
+        ? 1100
         : kind === "thinking"
           ? Math.max(poseIntervalMs, 4200)
           : poseIntervalMs;

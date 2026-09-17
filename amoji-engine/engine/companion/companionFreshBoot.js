@@ -366,12 +366,18 @@ export function runEarlyFreshBootCheck(pageBuild) {
 export function startAppUpdateWatcher(opts = {}) {
   const intervalMs = opts.intervalMs ?? 180_000;
   const run = () => {
+    void purgeStaleBrowserCaches();
     void checkForAppUpdate(undefined, opts);
   };
   run();
   if (typeof document !== "undefined") {
     document.addEventListener("visibilitychange", () => {
       if (!document.hidden) run();
+    });
+  }
+  if (typeof globalThis.addEventListener === "function") {
+    globalThis.addEventListener("pageshow", (ev) => {
+      if (ev?.persisted) run();
     });
   }
   if (typeof globalThis.setInterval === "function" && intervalMs > 0) {

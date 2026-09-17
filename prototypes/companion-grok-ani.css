@@ -166,8 +166,8 @@
 }
 
 .theme-grok-ani .companion-chip__dot {
-  width: 1.18rem;
-  height: 1.18rem;
+  width: 1.32rem;
+  height: 1.32rem;
   border-radius: 50%;
   margin-left: 0.2rem;
   flex-shrink: 0;
@@ -301,7 +301,7 @@
 
 /* —— Chat stage —— */
 .theme-grok-ani .chat-shell {
-  z-index: 50;
+  z-index: 90;
   isolation: isolate;
   background: linear-gradient(
     180deg,
@@ -561,8 +561,14 @@ body.conversation-ui.composer-always-visible.theme-grok-ani .composer .speaker-b
 }
 
 .theme-grok-ani .companion-toast {
+  z-index: 70;
   border-radius: 1rem;
   background: rgba(12, 10, 24, 0.92);
   backdrop-filter: blur(16px);
+}
+
+.theme-grok-ani .msg-row {
+  position: relative;
+  z-index: 95;
 }
 

@@ -114,9 +114,11 @@ describe("companionWaitAct", () => {
     });
     wait.start({ kind: "idle", phase: "idle", speak: false });
     expect(avatar.pulseIdleBeat).not.toHaveBeenCalled();
-    vi.advanceTimersByTime(2000);
+    vi.advanceTimersByTime(1099);
+    expect(avatar.pulseIdleBeat).not.toHaveBeenCalled();
+    vi.advanceTimersByTime(2);
     expect(avatar.playAction).not.toHaveBeenCalled();
-    expect(avatar.pulseIdleBeat).toHaveBeenCalled();
+    expect(avatar.pulseIdleBeat).toHaveBeenCalledWith("comb");
     wait.stop();
     vi.useRealTimers();
   });
