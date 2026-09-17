@@ -14,8 +14,9 @@ describe("companion character picker data", () => {
     }
   });
 
-  it("includes official badge for kizuna", () => {
+  it("includes high-poly official badge for kizuna", () => {
     const kizuna = listCompanionCharacters("en").find((c) => c.id === "kizuna");
+    expect(kizuna?.badge).toMatch(/73k/i);
     expect(kizuna?.badge).toMatch(/official/i);
     expect(kizuna?.previewImage).toContain("kizuna");
   });
@@ -30,7 +31,7 @@ describe("companion character picker data", () => {
   it("numbers picker cards in roster order", () => {
     const list = listCompanionCharacters("en");
     expect(list[0]).toMatchObject({ id: "nova", number: 1 });
-    expect(list[1]).toMatchObject({ id: "alicia", number: 2 });
+    expect(list[1]).toMatchObject({ id: "kizuna", number: 2 });
     expect(list.map((c) => c.number)).toEqual(
       list.map((_, i) => i + 1),
     );
