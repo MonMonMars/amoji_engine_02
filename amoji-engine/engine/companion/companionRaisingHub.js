@@ -114,7 +114,8 @@ export function createCompanionRaisingHub(opts = {}) {
   const paintGoal = () => {
     if (!chipGoalEl) return;
     chipGoalEl.textContent = formatDailyGoalLine(raising, english(), now());
-    chipGoalEl.hidden = false;
+    const careOpen = document.body.classList.contains("companion-care-open");
+    chipGoalEl.hidden = !careOpen;
     chipGoalEl.classList.toggle("is-complete", Boolean(raising.goalComplete));
   };
 
