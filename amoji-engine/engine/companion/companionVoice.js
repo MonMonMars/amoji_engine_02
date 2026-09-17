@@ -659,11 +659,13 @@ export function createCompanionVoice(opts = {}) {
           preset.lang,
           preset.name,
         );
-        const clauses = perf.singleUtterance
-          ? [{ text: part, ...perf }]
-          : plan.clauses.length
-            ? plan.clauses
-            : [{ text: part, ...perf }];
+        const useClauses =
+          perf.singleUtterance === false &&
+          perf.expressiveClauses === true &&
+          plan.clauses.length > 0;
+        const clauses = useClauses
+          ? plan.clauses
+          : [{ text: part, ...perf }];
         for (let i = 0; i < clauses.length; i += 1) {
           const clause = clauses[i];
           const res = await fetch(url, {
@@ -1051,7 +1053,12 @@ export function createCompanionVoice(opts = {}) {
       if (!streamSession || streamSession.closed) {
         return { ok: false, reason: "stream-closed" };
       }
-      return speakOnceCore(clean, { ...perf, text: clean });
+      return speakOnceCore(clean, {
+        ...perf,
+        text: clean,
+        singleUtterance: true,
+        expressiveClauses: false,
+      });
     });
     speakChain = next.catch(() => {});
     return next;

@@ -397,8 +397,12 @@ export function normalizeTtsPerformance(performance, fallbackEmotion = "neutral"
       (emotion === "happy" || emotion === "surprised" ? 0.82 : 0.7),
     lang: perf.lang,
     text: perf.text,
-    /** Clause-level TTS so pitch/energy can shift mid-reply like ChatGPT Voice. */
-    expressiveClauses: perf.expressiveClauses !== false,
-    singleUtterance: perf.singleUtterance === true,
+    /**
+     * Speak the full line in one cloud TTS job by default.
+     * Clause splitting is opt-in: singleUtterance:false + expressiveClauses:true.
+     */
+    singleUtterance: perf.singleUtterance !== false,
+    expressiveClauses:
+      perf.singleUtterance === false && perf.expressiveClauses === true,
   };
 }
