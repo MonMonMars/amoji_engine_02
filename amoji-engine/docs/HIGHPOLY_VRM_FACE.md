@@ -1,6 +1,6 @@
 # High-poly VRM face + lip sync
 
-**Build:** `2026-09-17-v189-hd-face`  
+**Build:** `2026-09-17-v190-face-emotion`  
 **Purpose:** Document the flagship high-polygon VRM path, expression control, and lip sync verification.
 
 ---
@@ -34,6 +34,7 @@
 ```
 LLM [mood] + [nuance]
   → buildVrmExpressionBlend() (companionContentMotion.js)
+  → adaptBlendForFaceProfile() (companionFaceEmotion.js)
   → VRM expressionManager presets (Happy, Sad, Angry, …)
   → clampRestFaceBlend / capTalkingEmotionWeight (companionFaceRest.js)
 
@@ -41,7 +42,13 @@ TTS / charToViseme (companionViseme.js)
   → onMouth(open, shape) in amoji-companion.html
   → vrmAvatar.setMouthOpen / setMouthShape
   → VRM viseme presets + applyMorphMouthOpen + jaw bone
+  → resolveTalkEmotionMorphWeights() → applyTalkEmotionMorphs (ARKit fallback)
 ```
+
+Model-adaptive profiles (`buildModelFaceProfile`) auto-detect rig type
+(`vrm1-anime`, `vrm0-standard`, `arkit`, `minimal`, `gltf`, `procedural`) and
+scale preset/morph weights per character. GLTF + procedural avatars expose the
+same `applyExpressionProfile({ emotion, nuance })` API.
 
 **Rule:** visemes and jaw are applied **after** `expressionManager.update()` so Happy/Surprised cannot freeze the mouth.
 
