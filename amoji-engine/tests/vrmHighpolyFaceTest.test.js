@@ -18,7 +18,11 @@ describe("vrm-highpoly-face-test.html", () => {
     expect(html).toContain("kizuna-kamatte.vrm");
     expect(html).toContain("cycle-visemes");
     expect(html).toContain("getFaceDebug");
+    expect(html).toContain("getFaceReport");
     expect(html).toContain("setMouthOpen");
     expect(html).toContain("setMouthShape");
+    expect(html).toContain("companionViseme.js");
+    expect(html).toContain("autocycle");
+    expect(html).toContain("data-nuance");
   });
 });

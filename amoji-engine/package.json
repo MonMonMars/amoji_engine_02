@@ -31,6 +31,7 @@
     "demo:http-smoke": "node scripts/voice-worker-http-smoke.mjs",
     "demo:motion-smoke": "node scripts/motion-bridge-smoke.mjs",
     "demo:facelive-smoke": "node scripts/face-live-smoke.mjs",
+    "demo:highpoly-face-smoke": "node scripts/highpoly-face-lipsync-smoke.mjs --model kizuna-kamatte.vrm && node ../scripts/companion-kizuna-lipsync-smoke.mjs",
     "lab": "node scripts/lab-serve.mjs",
     "ci": "npm run typecheck && npm run build && npm test && npm run demo:e2e && npm run demo:facelive-smoke && npm run demo:http-smoke && npm run demo:motion-smoke",
     "lint": "eslint src"

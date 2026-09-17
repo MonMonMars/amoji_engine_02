@@ -69,7 +69,7 @@ async function main() {
   const errors = [];
   page.on("pageerror", (e) => errors.push(e.message));
 
-  const url = `${baseUrl}/prototypes/vrm-highpoly-face-test.html?model=${encodeURIComponent(model)}`;
+  const url = `${baseUrl}/prototypes/vrm-highpoly-face-test.html?model=${encodeURIComponent(model)}&autocycle=1`;
   await page.goto(url, { waitUntil: "networkidle", timeout: 120000 });
 
   await page.waitForFunction(

@@ -147,7 +147,7 @@ export const COMPANION_CHARACTERS = Object.freeze({
     avatarPrefer: "vrm",
     previewImage: "/prototypes/assets/companion-char-kizuna.png",
     accent: "#ff9e7a",
-    badge: { yue: "官方 VRM", en: "Official VRM" },
+    badge: { yue: "73k · 官方 VRM", en: "73k · Official VRM" },
     voices: {
       yue: "zh-HK-HiuGaaiNeural-idol",
       en: "en-HK-YanNeural",
