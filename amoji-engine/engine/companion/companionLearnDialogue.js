@@ -4,14 +4,16 @@
  * Distinct from generic LLM "thinking" fillers in companionContentMotion.js.
  */
 
-export const LEARN_DIALOGUE_SCHEMA = "amoji.companionLearnDialogue.v2";
+export const LEARN_DIALOGUE_SCHEMA = "amoji.companionLearnDialogue.v3";
 
 /** Stay quiet when a load starts; speak later or when almost done. */
 export const LEARN_SPEAK_DELAY_MS = 4800;
 export const LEARN_SPEAK_STALL_MS = 11000;
+export const LEARN_SPEAK_WORDS_MS = 16000;
 export const LEARN_SPEAK_MIN_PROGRESS = 0.68;
 export const LEARN_SPEAK_NEAR_DONE = 0.86;
 export const LEARN_SPEAK_INTERVAL_MS = 4400;
+export const LEARN_SPEAK_WORDS_INTERVAL_MS = 5600;
 export const LEARN_SPEAK_COOLDOWN_MS = 3600;
 export const LEARN_SPEAK_POLL_MS = 500;
 
@@ -136,6 +138,173 @@ const LOADING_HUMS = Object.freeze({
   }),
 });
 
+/**
+ * Real sentences used only when a load has already taken too long.
+ * @type {Record<string, { yue: readonly string[], en: readonly string[] }>}
+ */
+export const LOADING_WAIT_WORDS = Object.freeze({
+  waiting: {
+    yue: [
+      "等陣呀，呢次載入慢咗少少…",
+      "仲等緊，檔案有啲大…",
+      "再等我一陣，就快好…",
+      "載入緊過咗一陣，你等我吓…",
+    ],
+    en: [
+      "Hang on — this is taking longer than usual…",
+      "Still loading — the file's a bit big…",
+      "Give me another moment, almost there…",
+      "This wait is longer than I hoped — still on it…",
+    ],
+  },
+  connecting: {
+    yue: [
+      "連線好似慢咗少少，再等我一陣…",
+      "網絡有啲慢，我仲連緊…",
+    ],
+    en: [
+      "The connection is slower than usual — hang on…",
+      "Still connecting — network's taking its time…",
+    ],
+  },
+  waking: {
+    yue: [
+      "我醒得好慢，再等我一陣…",
+      "身體仲未醒齊，你等我吓…",
+    ],
+    en: [
+      "I'm waking up slower than usual — one more sec…",
+      "Still getting my body online…",
+    ],
+  },
+  searching: {
+    yue: [
+      "搵檔案搵得好耐，再等吓…",
+      "雲端好似忙緊，我仲搵緊…",
+    ],
+    en: [
+      "Still looking that up — the cloud is slow today…",
+      "Searching is taking a while — hang tight…",
+    ],
+  },
+  assembling: {
+    yue: [
+      "組合緊模型，今次慢咗少少…",
+      "零件仲砌緊，再等我一陣…",
+    ],
+    en: [
+      "Still putting the model together — this is a long one…",
+      "Assembling is taking longer than I wanted…",
+    ],
+  },
+  downloading: {
+    yue: [
+      "下載好慢呀，檔案有啲大…",
+      "條下載仲行緊，你等我吓…",
+      "已經 {pct}% 喇，再等一陣…",
+    ],
+    en: [
+      "Download's slow — this file is pretty big…",
+      "Still fetching it — hang on a bit longer…",
+      "{pct}% so far — still downloading…",
+    ],
+  },
+  warming: {
+    yue: [
+      "熱身熱得好耐，再等我一陣…",
+      "我仲暖緊身體，就快得…",
+    ],
+    en: [
+      "Warming up is taking a while — still here…",
+      "Give me a little longer to get ready…",
+    ],
+  },
+  learning: {
+    yue: [
+      "呢招學得慢咗，再等我練一陣…",
+      "我仲學緊，今次要耐少少…",
+    ],
+    en: [
+      "This move is taking longer to learn — hang on…",
+      "Still practicing — almost got it…",
+    ],
+  },
+  installing: {
+    yue: [
+      "安裝緊，今次慢咗少少…",
+      "存落身體庫仲要一陣…",
+    ],
+    en: [
+      "Installing is taking a bit longer…",
+      "Still saving it into my motion library…",
+    ],
+  },
+  settling: {
+    yue: [
+      "就快定定，再等我一陣…",
+      "仲收尾，耐咗少少…",
+    ],
+    en: [
+      "Settling in — this last bit is slow…",
+      "Almost wrapped up, just a little longer…",
+    ],
+  },
+  almost: {
+    yue: [
+      "就快好喇，再等我一下下…",
+      "尾段慢咗，但真係就快…",
+    ],
+    en: [
+      "Almost done — just a little longer…",
+      "The last bit is slow, but I'm close…",
+    ],
+  },
+  progress: {
+    yue: [
+      "已經 {pct}% 喇，再等一陣…",
+      "進度 {pct}%，今次載入比較耐…",
+    ],
+    en: [
+      "{pct}% so far — still working on it…",
+      "Progress {pct}%. This one's taking a while…",
+    ],
+  },
+  "avatar-load": {
+    yue: [
+      "等陣呀，我嘅身體仲載入緊…",
+      "3D 模型好大，今次慢咗少少…",
+      "我仲未出現齊，你等我吓…",
+      "載入身體載入得好耐，再等一陣…",
+    ],
+    en: [
+      "Hold on — my 3D body is still loading…",
+      "This model file is huge, it's taking a while…",
+      "I'm still materializing — one more moment…",
+      "Loading my body is taking longer than usual…",
+    ],
+  },
+  "character-switch": {
+    yue: [
+      "換造型換得好耐，再等我一陣…",
+      "新同伴仲載入緊，你等我吓…",
+    ],
+    en: [
+      "Switching characters is taking a while — hang on…",
+      "The new look is still loading…",
+    ],
+  },
+  ready: {
+    yue: [
+      "好喇，我準備好喇…",
+      "搞掂，終於載入完…",
+    ],
+    en: [
+      "Okay — I'm ready now…",
+      "Got it. That took a minute…",
+    ],
+  },
+});
+
 /** @type {Record<LearnPhase, { yue: readonly string[], en: readonly string[] }>} */
 export const LEARN_DIALOGUE = Object.freeze({
   ...LOADING_HUMS,
@@ -258,7 +427,26 @@ export function isLoadingWaitKind(kind) {
 }
 
 /**
+ * After a long load, switch from thinking hums to real words.
+ * @param {{
+ *   elapsedMs?: number,
+ *   phase?: string,
+ *   kind?: string,
+ * }} [opts]
+ */
+export function shouldUseLearnWords({
+  elapsedMs = 0,
+  phase = "",
+  kind = "",
+} = {}) {
+  const loading = isLoadingLearnPhase(phase) || isLoadingWaitKind(kind);
+  if (!loading) return false;
+  return elapsedMs >= LEARN_SPEAK_WORDS_MS;
+}
+
+/**
  * Loading fillers stay quiet at the start. Speak later, or when almost done.
+ * After a long stall, keep speaking (words, not just hums).
  * @param {{
  *   elapsedMs?: number,
  *   progress?: number,
@@ -285,6 +473,7 @@ export function shouldSpeakLearnFill({
 
   const p = Math.max(0, Math.min(1, Number(progress) || 0));
   if (elapsedMs < LEARN_SPEAK_DELAY_MS) return false;
+  if (elapsedMs >= LEARN_SPEAK_WORDS_MS) return true;
   if (p >= LEARN_SPEAK_NEAR_DONE) return true;
   if (p >= LEARN_SPEAK_MIN_PROGRESS) return true;
   if (spokenCount === 0 && elapsedMs >= LEARN_SPEAK_STALL_MS) return true;
@@ -320,21 +509,41 @@ export function resolveWaitDialoguePhase(kind, phase, progress = 0) {
 }
 
 /**
+ * @param {LearnPhase | string} phase
+ * @param {boolean} [isEnglish]
+ * @param {boolean} [useWords]
+ * @returns {readonly string[]}
+ */
+function phraseListFor(phase, isEnglish = false, useWords = false) {
+  if (useWords) {
+    const words = LOADING_WAIT_WORDS[phase] || LOADING_WAIT_WORDS.waiting;
+    const list = isEnglish ? words.en : words.yue;
+    if (list?.length) return list;
+  }
+  const bucket = LEARN_DIALOGUE[phase] || LEARN_DIALOGUE.learning;
+  return isEnglish ? bucket.en : bucket.yue;
+}
+
+function interpolateLearnPhrase(phrase, ctx = {}) {
+  let next = phrase || "";
+  if (ctx.pct != null && next.includes("{pct}")) {
+    next = next.replace(/\{pct\}/g, String(Math.round(ctx.pct)));
+  }
+  if (ctx.actionLabel && next.includes("{action}")) {
+    next = next.replace(/\{action\}/g, ctx.actionLabel);
+  }
+  return next;
+}
+
+/**
  * @param {LearnPhase} phase
  * @param {boolean} [isEnglish]
- * @param {{ pct?: number, actionLabel?: string }} [ctx]
+ * @param {{ pct?: number, actionLabel?: string, useWords?: boolean }} [ctx]
  */
 export function pickLearnPhrase(phase, isEnglish = false, ctx = {}) {
-  const bucket = LEARN_DIALOGUE[phase] || LEARN_DIALOGUE.learning;
-  const list = isEnglish ? bucket.en : bucket.yue;
-  let phrase = list[Math.floor(Math.random() * list.length)] || "";
-  if (ctx.pct != null && phrase.includes("{pct}")) {
-    phrase = phrase.replace(/\{pct\}/g, String(Math.round(ctx.pct)));
-  }
-  if (ctx.actionLabel && phrase.includes("{action}")) {
-    phrase = phrase.replace(/\{action\}/g, ctx.actionLabel);
-  }
-  return phrase;
+  const list = phraseListFor(phase, isEnglish, Boolean(ctx.useWords));
+  const phrase = list[Math.floor(Math.random() * list.length)] || "";
+  return interpolateLearnPhrase(phrase, ctx);
 }
 
 /**
@@ -342,7 +551,7 @@ export function pickLearnPhrase(phase, isEnglish = false, ctx = {}) {
  * @param {LearnPhase} phase
  * @param {boolean} [isEnglish]
  * @param {number} [lastIndex]
- * @param {{ pct?: number, actionLabel?: string }} [ctx]
+ * @param {{ pct?: number, actionLabel?: string, useWords?: boolean }} [ctx]
  */
 export function pickNextLearnPhrase(
   phase,
@@ -350,18 +559,13 @@ export function pickNextLearnPhrase(
   lastIndex = -1,
   ctx = {},
 ) {
-  const bucket = LEARN_DIALOGUE[phase] || LEARN_DIALOGUE.learning;
-  const list = isEnglish ? bucket.en : bucket.yue;
+  const list = phraseListFor(phase, isEnglish, Boolean(ctx.useWords));
   if (list.length <= 1) {
-    return { phrase: pickLearnPhrase(phase, isEnglish, ctx), index: 0 };
+    return { phrase: interpolateLearnPhrase(list[0] || "", ctx), index: 0 };
   }
   let index = Math.floor(Math.random() * list.length);
   if (index === lastIndex) index = (index + 1) % list.length;
-  let phrase = list[index];
-  if (ctx.pct != null && phrase.includes("{pct}")) {
-    phrase = phrase.replace(/\{pct\}/g, String(Math.round(ctx.pct)));
-  }
-  return { phrase, index };
+  return { phrase: interpolateLearnPhrase(list[index], ctx), index };
 }
 
 /**

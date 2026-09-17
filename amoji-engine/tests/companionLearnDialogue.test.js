@@ -8,11 +8,14 @@ import {
   LEARN_SPEAK_MIN_PROGRESS,
   LEARN_SPEAK_NEAR_DONE,
   LEARN_SPEAK_STALL_MS,
+  LEARN_SPEAK_WORDS_MS,
+  LOADING_WAIT_WORDS,
   learnPhaseForProgress,
   pickLearnPhrase,
   pickNextLearnPhrase,
   resolveWaitDialoguePhase,
   shouldSpeakLearnFill,
+  shouldUseLearnWords,
 } from "../engine/companion/companionLearnDialogue.js";
 
 describe("companionLearnDialogue", () => {
@@ -121,6 +124,52 @@ describe("companionLearnDialogue", () => {
         kind: "avatar-load",
       }),
     ).toBe(false);
+  });
+
+  it("switches to real words when loading takes too long", () => {
+    expect(
+      shouldUseLearnWords({
+        elapsedMs: LEARN_SPEAK_WORDS_MS - 1,
+        phase: "avatar-load",
+        kind: "avatar-load",
+      }),
+    ).toBe(false);
+    expect(
+      shouldUseLearnWords({
+        elapsedMs: LEARN_SPEAK_WORDS_MS,
+        phase: "downloading",
+        kind: "motion",
+      }),
+    ).toBe(true);
+    expect(
+      shouldSpeakLearnFill({
+        elapsedMs: LEARN_SPEAK_WORDS_MS,
+        progress: 0.2,
+        spokenCount: 1,
+        sinceLastSpeakMs: LEARN_SPEAK_COOLDOWN_MS,
+        phase: "downloading",
+        kind: "motion",
+      }),
+    ).toBe(true);
+
+    const en = pickLearnPhrase("avatar-load", true, { useWords: true });
+    const yue = pickLearnPhrase("avatar-load", false, { useWords: true });
+    expect(isLearnThinkingSound(en)).toBe(false);
+    expect(isLearnThinkingSound(yue)).toBe(false);
+    expect(en.length).toBeGreaterThan(12);
+    expect(yue.length).toBeGreaterThan(6);
+    const seen = new Set();
+    let last = -1;
+    for (let i = 0; i < 8; i += 1) {
+      const next = pickNextLearnPhrase("downloading", true, last, {
+        useWords: true,
+        pct: 42,
+      });
+      seen.add(next.phrase);
+      last = next.index;
+    }
+    expect([...seen].some((line) => line.includes("42"))).toBe(true);
+    expect([...seen].every((line) => !line.includes("{pct}"))).toBe(true);
   });
 
   it("lets idle lines speak without the loading delay", () => {
