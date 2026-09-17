@@ -33,10 +33,11 @@ export function smoothStep(current, target, factor) {
  *   sat: number,
  *   light: number,
  *   state: string,
+ *   compact?: boolean,
  * }} opts
  */
 export function drawEmotionOrbFrame(ctx, width, height, opts) {
-  const { time, volume, hue, sat, light, state } = opts;
+  const { time, volume, hue, sat, light, state, compact = false } = opts;
   const cx = width / 2;
   const cy = height / 2;
   const base = Math.min(width, height) * 0.34;
@@ -119,7 +120,10 @@ export function drawEmotionOrbFrame(ctx, width, height, opts) {
   );
   ctx.fill();
 
-  if (state === "listening" || state === "speaking" || state === "thinking") {
+  if (
+    !compact &&
+    (state === "listening" || state === "speaking" || state === "thinking")
+  ) {
     const bars = 28;
     const innerR = radius * 1.12;
     const outerR = radius * (1.32 + volume * 0.22);
