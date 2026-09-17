@@ -36,7 +36,6 @@ import { buildVrmExpressionBlend } from "./companionContentMotion.js";
 import {
   isOnlineIdleAction,
   isOnlineLoopingLibraryAction,
-  ONLINE_IDLE_ACTION,
   resolveOnlineMotionClipUrl,
 } from "./companionOnlineMotionClips.mjs";
 import { createVrmMotionPlayer } from "./companionVrmMotionPlayer.js";
@@ -256,11 +255,10 @@ export async function createVrmAvatar(opts) {
     if (isOnlineLoopingLibraryAction(finished) && motionPlayer.isPlaying?.()) {
       return;
     }
-    vrmaAction = null;
-    void resumeLibraryIdle();
+    void resumeCalmStand();
   };
 
-  const resumeLibraryIdle = async () => {
+  const resumeCalmStand = async () => {
     if (bodyMotion.thinking) {
       const ok = await tryPlayVrmaAction("thinking", {
         loop: true,
@@ -268,7 +266,13 @@ export async function createVrmAvatar(opts) {
       });
       if (ok) return true;
     }
-    return tryPlayVrmaAction(ONLINE_IDLE_ACTION, { loop: true });
+    vrmaPlayGen += 1;
+    vrmaPending = false;
+    vrmaAction = null;
+    motionPlayer.stop();
+    bodyMotion.snapToRestPose?.();
+    syncHumanoidPose();
+    return false;
   };
 
   const motionPlayer = createVrmMotionPlayer({
@@ -586,7 +590,7 @@ export async function createVrmAvatar(opts) {
       });
       emotion = bodyMotion.emotion;
       applyEmotionExpressions(emotion);
-      void resumeLibraryIdle();
+      void resumeCalmStand();
       return ok;
     }
 
@@ -652,7 +656,8 @@ export async function createVrmAvatar(opts) {
     vrmaAction = null;
     const ok = bodyMotion.stopAction();
     applyEmotionExpressions(emotion);
-    void resumeLibraryIdle();
+    bodyMotion.snapToRestPose?.();
+    syncHumanoidPose();
     return ok;
   };
   const playGestureForText = (text, opts = {}) =>
@@ -680,7 +685,7 @@ export async function createVrmAvatar(opts) {
       void tryPlayVrmaAction("thinking", { loop: true, emotion: "thinking" });
     } else if (vrmaAction === "thinking" || bodyMotion.currentAction == null) {
       applyEmotionExpressions(emotion === "thinking" ? "neutral" : emotion);
-      void resumeLibraryIdle();
+      void resumeCalmStand();
     }
     return Boolean(on);
   };
@@ -920,9 +925,9 @@ export async function createVrmAvatar(opts) {
   vrm.update(1 / 60);
   if (!talking) closeJawBone();
   renderer.render(scene, camera);
-  void resumeLibraryIdle();
   void motionPlayer.warmClip("wave");
   void motionPlayer.warmClip("thinking");
+  void motionPlayer.warmClip("walk");
   raf = requestAnimationFrame(frame);
   globalThis.addEventListener?.("resize", resize);
 

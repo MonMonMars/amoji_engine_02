@@ -7,7 +7,7 @@ import { resolveMotionSamplerKey } from "./companionMotionLibrary.js";
 export const COMPANION_ONLINE_MOTION_CLIPS_SCHEMA =
   "amoji.companionOnlineMotionClips.v2";
 
-/** Loop this clip as standing idle instead of procedural sine-wave sway. */
+/** Relax.vrma is a stretch, not a rest — standing idle stays clip-free. */
 export const ONLINE_IDLE_ACTION = "idle";
 export const ONLINE_IDLE_CLIP_FILE = "Relax";
 export const ONLINE_THINKING_ACTION = "thinking";
@@ -23,7 +23,6 @@ const VRMA_BASE =
 
 /** @type {Readonly<Record<string, string>>} */
 export const ONLINE_MOTION_CLIP_FILES = Object.freeze({
-  idle: "Relax",
   relax: "Relax",
   wave: "Goodbye",
   highfive: "Goodbye",
@@ -58,22 +57,10 @@ export const ONLINE_MOTION_CLIP_FILES = Object.freeze({
   headshake: "Surprised",
   shy: "Blush",
   blush: "Blush",
-  bow: "Relax",
-  curtsy: "Relax",
-  hug: "Relax",
-  kiss: "Relax",
-  sit: "Relax",
-  squat: "Relax",
   yoga: "Relax",
   stretch: "Relax",
-  eat: "Relax",
-  drink: "Relax",
-  nod: "Relax",
   point: "LookAround",
-  peace: "Relax",
-  shrug: "Relax",
   fingerheart: "Blush",
-  photopose: "Relax",
   walk: "LookAround",
   run: "LookAround",
   moonwalk: "LookAround",
@@ -81,11 +68,8 @@ export const ONLINE_MOTION_CLIP_FILES = Object.freeze({
   spin: "LookAround",
   rock: "LookAround",
   kungfu: "LookAround",
-  taiji: "Relax",
   zombie: "LookAround",
   superhero: "LookAround",
-  pushup: "Relax",
-  plank: "Relax",
 });
 
 /**
@@ -101,7 +85,7 @@ export function isOnlineIdleAction(actionId) {
  */
 export function isOnlineLoopingLibraryAction(actionId) {
   const id = String(actionId || "").toLowerCase();
-  return isOnlineIdleAction(id) || id === ONLINE_THINKING_ACTION;
+  return id === ONLINE_THINKING_ACTION;
 }
 
 /**
@@ -109,7 +93,9 @@ export function isOnlineLoopingLibraryAction(actionId) {
  */
 export function resolveOnlineMotionClipFile(actionId) {
   const id = String(actionId || "").toLowerCase();
-  if (!id || id === "none" || id === "stop") return null;
+  if (!id || id === "none" || id === "stop" || id === ONLINE_IDLE_ACTION) {
+    return null;
+  }
   if (ONLINE_MOTION_CLIP_FILES[id]) return ONLINE_MOTION_CLIP_FILES[id];
   const sampler = resolveMotionSamplerKey(id);
   if (sampler && ONLINE_MOTION_CLIP_FILES[sampler]) {
