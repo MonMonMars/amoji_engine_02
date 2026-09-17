@@ -18,7 +18,9 @@ import { fileURLToPath } from "url";
 import { AMOJI_BUILD } from "../amoji-engine/engine/companion/buildVersion.mjs";
 import {
   companionFullDemoUrl,
+  companionFullDirectUrl,
   companionLiteDemoUrl,
+  companionLiteDirectUrl,
   DEMO_BASE_URL,
   formatDemoLinkBlock,
   secretaryDemoUrl,
@@ -123,26 +125,22 @@ async function fetchHealth(baseUrl) {
   return res.json();
 }
 
-/**
- * @param {import('playwright').Page} page
- * @param {string} label
- */
-/**
- * @param {import('playwright').Page} page
- * @param {string} label
- * @param {{ skipFeatures?: boolean }} [opts]
- */
-async function verifySecretary(page, label, opts = {}) {
-  if (opts.skipFeatures) {
-    record(
-      `${label} page loads`,
-      true,
-      "skipped — deploy behind repo (/play not live yet)",
-      true,
-    );
-    record(`${label} feature checks`, true, "skipped — deploy behind repo");
-    return;
+/** @param {string} base */
+async function probePlayEntry(base) {
+  try {
+    const res = await fetch(`${base}/play`, {
+      method: "HEAD",
+      redirect: "manual",
+      cache: "no-store",
+      signal: AbortSignal.timeout(8000),
+    });
+    return res.status === 200 || res.status === 303 || res.status === 307;
+  } catch {
+    return false;
   }
+}
+
+async function verifySecretary(page, label) {
   await page.goto(secretaryUrl, { waitUntil: "domcontentloaded", timeout: 60000 });
 
   const build = await page.evaluate(() => window.__amojiBuild);
@@ -155,11 +153,6 @@ async function verifySecretary(page, label, opts = {}) {
     `page=${build} repo=${AMOJI_BUILD}`,
     !useLocal && !buildMatch,
   );
-
-  if (opts.skipFeatures) {
-    record(`${label} feature checks`, true, "skipped — deploy behind repo");
-    return;
-  }
 
   const state = await page.evaluate(() => {
     const tabbar = document.querySelector(".tabbar");
@@ -212,26 +205,7 @@ async function verifySecretary(page, label, opts = {}) {
   });
 }
 
-/**
- * @param {import('playwright').Page} page
- * @param {string} label
- */
-/**
- * @param {import('playwright').Page} page
- * @param {string} label
- * @param {{ skipFeatures?: boolean }} [opts]
- */
-async function verifyFullCompanion(page, label, opts = {}) {
-  if (opts.skipFeatures) {
-    record(
-      `${label} page loads`,
-      true,
-      "skipped — deploy behind repo (/play not live yet)",
-      true,
-    );
-    record(`${label} feature checks`, true, "skipped — deploy behind repo");
-    return;
-  }
+async function verifyFullCompanion(page, label) {
   await page.goto(fullUrl, { waitUntil: "domcontentloaded", timeout: 90000 });
 
   await page
@@ -263,11 +237,6 @@ async function verifyFullCompanion(page, label, opts = {}) {
     !useLocal && !buildMatch,
   );
 
-  if (opts.skipFeatures) {
-    record(`${label} feature checks`, true, "skipped — deploy behind repo");
-    return;
-  }
-
   record(`${label} module booted`, state.moduleBooted);
   record(`${label} conversation-ui`, state.conversationUi);
   record(
@@ -291,6 +260,8 @@ let secretaryUrl = secretaryDemoUrl({ build: AMOJI_BUILD, lang: "en" });
 let fullUrl = companionFullDemoUrl({ build: AMOJI_BUILD, lang: "en" });
 
 let prodDeployMatch = true;
+let deployedBuild = AMOJI_BUILD;
+let playEntryOk = true;
 
 if (useLocal) {
   const existing = process.env.LITE_URL
@@ -314,7 +285,7 @@ if (useLocal) {
   try {
     const health = await fetchHealth(baseUrl);
     record("production /api/health", health.ok === true, JSON.stringify(health));
-    const deployedBuild = health.build || "unknown";
+    deployedBuild = health.build || "unknown";
     prodDeployMatch = deployedBuild === AMOJI_BUILD;
     record(
       "production build matches repo",
@@ -326,8 +297,24 @@ if (useLocal) {
     prodDeployMatch = false;
     record("production /api/health", false, err.message || String(err));
   }
-  secretaryUrl = secretaryDemoUrl({ build: AMOJI_BUILD, lang: "en" });
-  fullUrl = companionFullDemoUrl({ build: AMOJI_BUILD, lang: "en" });
+  playEntryOk = await probePlayEntry(baseUrl);
+  record(
+    "production /play entry",
+    playEntryOk,
+    playEntryOk ? "ok" : "404 — using /companion-full fallback",
+    !playEntryOk,
+  );
+  if (playEntryOk) {
+    secretaryUrl = secretaryDemoUrl({ build: AMOJI_BUILD, lang: "en" });
+    fullUrl = companionFullDemoUrl({ build: AMOJI_BUILD, lang: "en" });
+  } else {
+    secretaryUrl = `${baseUrl}/companion?lang=en&tab=today&build=${encodeURIComponent(deployedBuild)}&_cb=${Date.now()}`;
+    fullUrl = companionFullDirectUrl({
+      lang: "en",
+      build: deployedBuild,
+      cacheBust: Date.now(),
+    }).replace(DEMO_BASE_URL, baseUrl);
+  }
 }
 
 const browser = await chromium.launch({ headless: true });
@@ -335,15 +322,9 @@ const page = await browser.newPage();
 const pageErrors = [];
 page.on("pageerror", (err) => pageErrors.push(String(err)));
 
-const skipProdFeatures = !useLocal && !prodDeployMatch;
-
 try {
-  await verifySecretary(page, useLocal ? "local" : "prod", {
-    skipFeatures: skipProdFeatures,
-  });
-  await verifyFullCompanion(page, useLocal ? "local" : "prod", {
-    skipFeatures: skipProdFeatures,
-  });
+  await verifySecretary(page, useLocal ? "local" : "prod");
+  await verifyFullCompanion(page, useLocal ? "local" : "prod");
 } finally {
   await browser.close();
   localSrv?.close();
