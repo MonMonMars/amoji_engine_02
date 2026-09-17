@@ -17,6 +17,8 @@ describe("companionProgressOverlay", () => {
   it("labels phases in English and Cantonese", () => {
     expect(progressPhaseLabel("downloading", true)).toMatch(/download/i);
     expect(progressPhaseLabel("downloading", false)).toMatch(/下載/);
+    expect(progressPhaseLabel("almost", true)).toMatch(/almost/i);
+    expect(progressPhaseLabel("waking", false)).toMatch(/醒/);
   });
 
   it("maps percent to circular ring stroke offset", () => {

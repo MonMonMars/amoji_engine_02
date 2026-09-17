@@ -2,6 +2,9 @@
  * Companion wait performance — progress UI + rotating poses + learn dialogue.
  */
 import {
+  isLoadingWaitKind,
+  LEARN_SPEAK_INTERVAL_MS,
+  LEARN_SPEAK_MIN_PROGRESS,
   learnPhaseForProgress,
   resolveWaitDialoguePhase,
 } from "./companionLearnDialogue.js";
@@ -15,7 +18,7 @@ import {
 
 export const COMPANION_WAIT_ACT_SCHEMA = "amoji.companionWaitAct.v1";
 
-/** @typedef {'connecting'|'searching'|'downloading'|'learning'|'installing'|'ready'|'failed'|'thinking'|'avatar-load'|'character-switch'|'motion-pack'|'idle'} WaitPhase */
+/** @typedef {'connecting'|'waking'|'searching'|'assembling'|'downloading'|'warming'|'learning'|'installing'|'settling'|'almost'|'ready'|'failed'|'thinking'|'avatar-load'|'character-switch'|'motion-pack'|'idle'} WaitPhase */
 
 export { WAIT_POSES_BY_PHASE, pickWaitPose };
 
@@ -156,8 +159,10 @@ export function createCompanionWaitAct(opts = {}) {
     ) {
       voiceRef?.startLearnLoop?.({
         isEnglish,
+        kind,
         phase: resolveWaitDialoguePhase(kind, phase, progress),
         progress,
+        intervalMs: isLoadingWaitKind(kind) ? LEARN_SPEAK_INTERVAL_MS : 2600,
       });
     }
   };
@@ -168,10 +173,14 @@ export function createCompanionWaitAct(opts = {}) {
   };
 
   const maybeAnnounceProgress = () => {
+    if (progress < LEARN_SPEAK_MIN_PROGRESS) return;
     const pct = Math.round(progress * 100);
-    if (pct - lastAnnouncedPct < 12) return;
+    if (pct - lastAnnouncedPct < 18) return;
     lastAnnouncedPct = pct;
-    voiceRef?.updateLearnLoop?.({ phase: "progress", progress });
+    voiceRef?.updateLearnLoop?.({
+      phase: resolveWaitDialoguePhase(kind, phase, progress),
+      progress,
+    });
   };
 
   return {
@@ -229,21 +238,25 @@ export function createCompanionWaitAct(opts = {}) {
      */
     update(ctx = {}) {
       if (!active) return;
-      if (ctx.phase) {
-        if (ctx.phase !== phase) {
-          phase = ctx.phase;
+      if (ctx.progress != null) progress = ctx.progress;
+      if (ctx.phase === "failed") {
+        if (phase !== "failed") {
+          phase = "failed";
           poseTick = 0;
           playPose();
         }
-      } else if (ctx.progress != null) {
-        const derived = learnPhaseForProgress(ctx.progress);
-        if (derived !== phase && kind !== "thinking") {
+      } else if (ctx.progress != null && kind !== "thinking" && kind !== "idle") {
+        const derived = learnPhaseForProgress(progress);
+        if (derived !== phase) {
           phase = derived;
           poseTick = 0;
           playPose();
         }
+      } else if (ctx.phase && ctx.phase !== phase) {
+        phase = ctx.phase;
+        poseTick = 0;
+        playPose();
       }
-      if (ctx.progress != null) progress = ctx.progress;
       if (ctx.indeterminate != null) indeterminate = Boolean(ctx.indeterminate);
       syncProgressUi(ctx.label);
       voiceRef?.updateLearnLoop?.({

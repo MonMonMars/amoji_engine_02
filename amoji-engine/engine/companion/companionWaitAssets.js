@@ -50,10 +50,15 @@ export const PRIORITY_REPLY_MOTION_IDS = Object.freeze([
 /** @type {Record<string, readonly string[]>} */
 export const WAIT_POSES_BY_PHASE = Object.freeze({
   connecting: ["wave", "nod", "thinking", "stretch", "peace"],
+  waking: ["stretch", "wave", "nod", "peace", "thinking"],
   searching: ["thinking", "nod", "wave", "shrug", "point"],
+  assembling: ["thinking", "stretch", "nod", "wave", "peace"],
   downloading: ["downloading", "learning", "wave", "nod", "thinking"],
+  warming: ["stretch", "learning", "nod", "wave", "thinking"],
   learning: ["learning", "thinking", "nod", "stretch", "wave"],
   installing: ["nod", "learning", "downloading", "clap", "thumbsup"],
+  settling: ["nod", "peace", "wave", "stretch", "thinking"],
+  almost: ["thumbsup", "nod", "peace", "wave", "clap"],
   thinking: ["thinking", "nod", "wave", "shrug", "point"],
   "avatar-load": ["wave", "nod", "peace", "shrug", "wave"],
   "character-switch": ["wave", "nod", "celebrate", "cheer", "dab"],
@@ -81,10 +86,15 @@ export function pickWaitPose(phase, tick = 0) {
 /** Base emotions rotated during wait performances (VRM expression presets). */
 export const WAIT_EMOTIONS_BY_PHASE = Object.freeze({
   connecting: ["thinking", "neutral", "happy", "surprised"],
+  waking: ["thinking", "neutral", "happy"],
   searching: ["thinking", "neutral", "surprised"],
+  assembling: ["thinking", "neutral", "happy"],
   downloading: ["thinking", "happy", "neutral", "surprised"],
+  warming: ["thinking", "happy", "neutral"],
   learning: ["thinking", "happy", "neutral"],
   installing: ["happy", "thinking", "surprised"],
+  settling: ["thinking", "neutral", "happy"],
+  almost: ["happy", "thinking", "surprised"],
   thinking: ["thinking", "neutral", "happy"],
   "avatar-load": ["happy", "neutral", "surprised", "happy", "neutral"],
   "character-switch": ["happy", "thinking", "surprised"],
@@ -103,15 +113,30 @@ export const WAIT_EXPRESSION_BY_PHASE = Object.freeze({
     { emotion: "neutral", nuance: "none" },
     { emotion: "happy", nuance: "shy" },
   ],
+  waking: [
+    { emotion: "thinking", nuance: "none" },
+    { emotion: "neutral", nuance: "none" },
+    { emotion: "happy", nuance: "shy" },
+  ],
   searching: [
     { emotion: "thinking", nuance: "curious" },
     { emotion: "neutral", nuance: "none" },
     { emotion: "surprised", nuance: "curious" },
   ],
+  assembling: [
+    { emotion: "thinking", nuance: "curious" },
+    { emotion: "neutral", nuance: "none" },
+    { emotion: "happy", nuance: "none" },
+  ],
   downloading: [
     { emotion: "thinking", nuance: "none" },
     { emotion: "happy", nuance: "excited" },
     { emotion: "neutral", nuance: "curious" },
+  ],
+  warming: [
+    { emotion: "thinking", nuance: "none" },
+    { emotion: "happy", nuance: "shy" },
+    { emotion: "neutral", nuance: "none" },
   ],
   learning: [
     { emotion: "thinking", nuance: "curious" },
@@ -122,6 +147,16 @@ export const WAIT_EXPRESSION_BY_PHASE = Object.freeze({
     { emotion: "happy", nuance: "excited" },
     { emotion: "thinking", nuance: "none" },
     { emotion: "neutral", nuance: "curious" },
+  ],
+  settling: [
+    { emotion: "thinking", nuance: "none" },
+    { emotion: "neutral", nuance: "none" },
+    { emotion: "happy", nuance: "shy" },
+  ],
+  almost: [
+    { emotion: "happy", nuance: "shy" },
+    { emotion: "thinking", nuance: "curious" },
+    { emotion: "neutral", nuance: "none" },
   ],
   thinking: [
     { emotion: "thinking", nuance: "curious" },
