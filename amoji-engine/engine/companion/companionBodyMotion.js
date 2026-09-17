@@ -51,6 +51,12 @@ import {
   VRM_ARM_REST_ROTATIONS,
   withElbowBend,
 } from "./companionPoseLibrary.js";
+import {
+  applyLockedFootRotations,
+  FOOT_PLANT_Y_MAX,
+  footPlantRootDelta,
+  lockedIdleHipTilt,
+} from "./companionFootLock.js";
 
 export const COMPANION_BODY_SCHEMA = "amoji.companionBody.v1";
 
@@ -85,6 +91,7 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
   let rootMotion = { y: 0, rotY: 0 };
   /** @type {{ y: number, rotY: number }} */
   let smoothedRootMotion = { y: 0, rotY: 0 };
+  let footPlantY = 0;
   /** @type {Record<string, number>} */
   let smoothedPose = { ...REST_POSE };
   let idleBeatState = createIdleBeatState();
@@ -505,12 +512,12 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
     applyBoneRotation("leftUpperLeg", {
       x: restUL.x + upperL,
       y: restUL.y,
-      z: restUL.z + (pose.hipZ ?? 0) * 0.4 * k,
+      z: restUL.z + (pose.hipZ ?? 0) * 0.08 * k,
     });
     applyBoneRotation("rightUpperLeg", {
       x: restUR.x + upperR,
       y: restUR.y,
-      z: restUR.z - (pose.hipZ ?? 0) * 0.4 * k,
+      z: restUR.z - (pose.hipZ ?? 0) * 0.08 * k,
     });
     applyBoneRotation("leftLowerLeg", {
       x: restLL.x + lowerL,
@@ -524,11 +531,16 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
     });
   };
 
-  const applyHandAndFootRest = () => {
+  const applyHandAndFootRest = (pose = REST_POSE, k = 1) => {
     applyBoneRotation("leftHand", VRM_HAND_REST_ROTATIONS.leftHand);
     applyBoneRotation("rightHand", VRM_HAND_REST_ROTATIONS.rightHand);
-    applyBoneRotation("leftFoot", VRM_FOOT_REST_ROTATIONS.leftFoot);
-    applyBoneRotation("rightFoot", VRM_FOOT_REST_ROTATIONS.rightFoot);
+    applyLockedFootRotations(applyBoneRotation, VRM_FOOT_REST_ROTATIONS, {
+      leftUpper: Math.min(0.72, (pose.upperLegL ?? REST_POSE.upperLegL ?? 0) * k),
+      rightUpper: Math.min(0.72, (pose.upperLegR ?? REST_POSE.upperLegR ?? 0) * k),
+      leftLower: Math.min(0.78, (pose.lowerLegL ?? REST_POSE.lowerLegL ?? 0) * k),
+      rightLower: Math.min(0.78, (pose.lowerLegR ?? REST_POSE.lowerLegR ?? 0) * k),
+      hipZ: pose.hipZ ?? 0,
+    });
   };
 
   const applyPose = (pose, intensity = 1, opts = {}) => {
@@ -568,10 +580,13 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
       chest.rotation.x = (pose.chestX || -0.01) * k;
     }
     if (hips) {
-      hips.rotation.z = (pose.hipZ || 0) * k;
+      const plantFeet = opts.plantFeet !== false;
+      hips.rotation.z = plantFeet
+        ? lockedIdleHipTilt(pose.hipZ || 0, k)
+        : (pose.hipZ || 0) * k;
     }
     applyLegPose(pose, k);
-    applyHandAndFootRest();
+    applyHandAndFootRest(pose, k);
   };
 
   const update = (dt, opts = {}) => {
@@ -713,18 +728,34 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
       activeAction ? 11 : 12,
     );
     if (!activeAction) {
-      if (Math.abs(smoothedRootMotion.y) < 0.002) smoothedRootMotion.y = 0;
       if (Math.abs(smoothedRootMotion.rotY) < 0.002) {
         smoothedRootMotion.rotY = 0;
       }
     }
+    const plantFeet = !activeAction;
     applyPose(smoothedPose, 1, {
       allowArms,
       actionArms,
       idleArms,
       talkArmBlend,
       bootPhase: !activeAction && !talking && elapsed < BOOT_SIMPLE_IDLE_SEC,
+      plantFeet,
     });
+    if (plantFeet) {
+      const dy = footPlantRootDelta(bone, 0);
+      footPlantY += dy;
+      footPlantY = Math.max(
+        -FOOT_PLANT_Y_MAX,
+        Math.min(FOOT_PLANT_Y_MAX, footPlantY),
+      );
+      if (Math.abs(footPlantY) < 0.001) footPlantY = 0;
+      smoothedRootMotion = {
+        ...smoothedRootMotion,
+        y: footPlantY,
+      };
+    } else {
+      footPlantY = 0;
+    }
     return smoothedPose;
   };
 
@@ -739,12 +770,14 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
       0.98,
     );
     smoothedRootMotion = { y: 0, rotY: 0 };
+    footPlantY = 0;
     applyPose(smoothedPose, 1, {
       allowArms: false,
       actionArms: false,
       idleArms: true,
       talkArmBlend: 0,
       bootPhase: true,
+      plantFeet: true,
     });
     return smoothedPose;
   };
@@ -805,12 +838,14 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
         0.98,
       );
       smoothedRootMotion = { y: 0, rotY: 0 };
+      footPlantY = 0;
       applyPose(smoothedPose, 1, {
         allowArms: false,
         actionArms: false,
         idleArms: true,
         talkArmBlend: 0,
         bootPhase: true,
+        plantFeet: true,
       });
       return smoothedPose;
     },

@@ -59,6 +59,25 @@ describe("createCompanionBodyMotion", () => {
     const knee = humanoid.bones.get("rightLowerLeg").rotation.x;
     expect(knee).toBeGreaterThan(0.2);
     expect(humanoid.bones.get("leftHand").rotation.y).not.toBe(0);
+    expect(Math.abs(humanoid.bones.get("hips").rotation.z)).toBeLessThanOrEqual(
+      0.02,
+    );
+  });
+
+  it("plants root Y so a floating foot comes back to the floor", () => {
+    const humanoid = mockHumanoid();
+    humanoid.bones.get("leftFoot").getWorldPosition = (v) => {
+      v.y = 0.05;
+      return v;
+    };
+    humanoid.bones.get("rightFoot").getWorldPosition = (v) => {
+      v.y = 0.02;
+      return v;
+    };
+    const motion = createCompanionBodyMotion(humanoid);
+    motion.setTalking(false);
+    motion.update(1 / 30);
+    expect(motion.getRootMotion().y).toBeCloseTo(-0.02);
   });
 
   it("uses content-aware nod for happy laughter without arm overlay", () => {
