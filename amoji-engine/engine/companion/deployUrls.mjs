@@ -22,11 +22,10 @@ export const DEMO_DASHBOARD_URL =
 export function companionFullDemoUrl(opts = {}) {
   const lang = opts.lang === "en" ? "en" : "yue";
   const params = new URLSearchParams({ lang });
-  const build = opts.build ?? AMOJI_BUILD;
-  if (build) params.set("build", build);
   if (opts.pick !== "0") params.set("pick", "1");
   if (opts.automic === "0" || opts.automic === undefined) params.set("automic", "0");
-  const path = build ? `/c/${encodeURIComponent(build)}/full` : "/companion-full";
+  if (opts.kind === "lite") params.set("kind", "lite");
+  const path = "/play";
   return `${DEMO_BASE_URL}${path}?${params.toString()}`;
 }
 
@@ -34,14 +33,12 @@ export function companionFullDemoUrl(opts = {}) {
  * @param {{ build?: string }} [opts]
  */
 export function companionLiteDemoUrl(opts = {}) {
-  const params = new URLSearchParams();
-  const build = opts.build ?? AMOJI_BUILD;
-  if (build) params.set("build", build);
+  const params = new URLSearchParams({ kind: "lite" });
   if (opts.tab) params.set("tab", opts.tab);
   if (opts.lang === "en") params.set("lang", "en");
+  else if (opts.lang === "yue") params.set("lang", "yue");
   const qs = params.toString();
-  const path = build ? `/c/${encodeURIComponent(build)}/lite` : "/companion";
-  return qs ? `${DEMO_BASE_URL}${path}?${qs}` : `${DEMO_BASE_URL}${path}`;
+  return `${DEMO_BASE_URL}/play${qs ? `?${qs}` : ""}`;
 }
 
 /**

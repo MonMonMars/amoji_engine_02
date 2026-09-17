@@ -28,26 +28,29 @@ The script checks `/api/health` build id, page load, conversation-ui, activity r
 
 | App | Path |
 |-----|------|
-| Secretary MVP (Today tab, 粵) | `/companion?tab=today&lang=yue&build=<AMOJI_BUILD>` |
-| Full 3D companion (Cantonese) | `/companion-full?lang=yue&build=<AMOJI_BUILD>` |
-| Full 3D companion (English) | `/companion-full?lang=en&build=<AMOJI_BUILD>` |
-| Lite chat | `/companion` |
+| **Bookmark this** (new URL every open) | `/play` |
+| Full 3D companion (Cantonese) | `/play?lang=yue` |
+| Full 3D companion (English) | `/play?lang=en` |
+| Secretary MVP (Today tab, 粵) | `/play?kind=lite&tab=today&lang=yue` |
+| Lite chat | `/play?kind=lite` |
 | Setup / API key | `/setup` |
 
-**Example (replace build id after each bump):**
+Do **not** bookmark `/companion-full` or `/companion`. iOS Safari often caches those pathnames forever and ignores `?build=`. `/play` is a never-cached 303 onto a brand-new `/n/<timestamp>/full` (or `/lite`) path on every open, then wipes Cache Storage / service workers.
 
-- https://temporary-rushing-oxygen-ok5jzhd.vercel.app/companion?tab=today&lang=yue&build=2026-09-15-v76-character-model-fix
-- https://temporary-rushing-oxygen-ok5jzhd.vercel.app/companion-full?lang=yue&build=2026-09-15-v76-character-model-fix
-- https://temporary-rushing-oxygen-ok5jzhd.vercel.app/companion-full?lang=en&build=2026-09-15-v76-character-model-fix
-- https://temporary-rushing-oxygen-ok5jzhd.vercel.app/companion
+**Example:**
+
+- https://temporary-rushing-oxygen-ok5jzhd.vercel.app/play?lang=yue
+- https://temporary-rushing-oxygen-ok5jzhd.vercel.app/play?lang=en
+- https://temporary-rushing-oxygen-ok5jzhd.vercel.app/play?kind=lite&tab=today&lang=yue
+- Backup entry (same 303): https://temporary-rushing-oxygen-ok5jzhd.vercel.app/go
 
 Programmatic helper: `formatDemoLinkBlock()` in `amoji-engine/engine/companion/deployUrls.mjs`.
 
 **Deploy caveat:** Links point at production Vercel. They reflect your changes only after the branch is merged to the deploy branch (`cursor/companion-improvements-6647` or `main`) and Vercel finishes redeploying (~1 min). Until `node scripts/demo-link-verify.mjs` exits `0`, do **not** claim production is updated — run `LOCAL=1` verifier and report deploy pending.
 
-**Cache bust:** Demo pages auto-redirect to the latest server build via `/api/health` + `?build=` query. Before deploy, run `node scripts/sync-build-version.mjs` so HTML `?v=` tags match `AMOJI_BUILD`.
+**Cache bust:** Bookmark `/play` (not `/companion-full`). Each visit 303s to a unique `/n/<stamp>/full` pathname, sends `Clear-Site-Data: "cache"` on the HTML document only (never `"storage"`, so keys survive), and the page purges Cache Storage on open plus BFCache `pageshow`. Query `?build=` is a fallback only. Before deploy, run `node scripts/sync-build-version.mjs` so HTML `?v=` tags match `AMOJI_BUILD`.
 
 ## Testing
 
 - Unit tests: `cd amoji-engine && npm test`
-- Local full companion: `cd amoji-engine && node scripts/lab-serve.mjs` → http://127.0.0.1:5173/companion-full
+- Local full companion: `cd amoji-engine && node scripts/lab-serve.mjs` → http://127.0.0.1:5173/play

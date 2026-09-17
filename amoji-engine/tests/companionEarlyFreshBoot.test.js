@@ -15,7 +15,7 @@ const earlyBoot = readFileSync(
 describe("companionEarlyFreshBoot", () => {
   it("purges Cache Storage on every open, not only after health succeeds", () => {
     const purgeIdx = earlyBoot.indexOf("function purgeCaches()");
-    const immediateIdx = earlyBoot.indexOf("purgeCaches();\n  probeServerBuild();");
+    const immediateIdx = earlyBoot.search(/purgeCaches\(\);\s*\n\s*probeServerBuild\(/);
     const healthIdx = earlyBoot.indexOf('fetch("/api/health"');
     expect(purgeIdx).toBeGreaterThan(0);
     expect(immediateIdx).toBeGreaterThan(purgeIdx);
@@ -26,7 +26,9 @@ describe("companionEarlyFreshBoot", () => {
   it("re-purges when iOS restores a BFCache page", () => {
     expect(earlyBoot).toMatch(/addEventListener\("pageshow"/);
     expect(earlyBoot).toMatch(/ev\.persisted/);
-    expect(earlyBoot).toMatch(/visibilitychange/);
+    expect(earlyBoot).toMatch(/\/n\/" \+ stamp/);
+    expect(earlyBoot).toMatch(/isStickyPath/);
+    expect(earlyBoot).toMatch(/forceNewOpen/);
   });
 });
 

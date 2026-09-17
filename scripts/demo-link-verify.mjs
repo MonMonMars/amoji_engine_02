@@ -23,7 +23,7 @@ import {
   formatDemoLinkBlock,
   secretaryDemoUrl,
 } from "../amoji-engine/engine/companion/deployUrls.mjs";
-import { rewriteCompanionServePath } from "../amoji-engine/engine/companion/companionFreshBoot.js";
+import { rewriteCompanionServePath, buildPlayRedirectLocation } from "../amoji-engine/engine/companion/companionFreshBoot.js";
 
 const outDir = process.env.ARTIFACT_DIR || "/opt/cursor/artifacts";
 mkdirSync(outDir, { recursive: true });
@@ -66,6 +66,20 @@ function startLocalServer(port = localPort) {
   return new Promise((resolve, reject) => {
     const srv = createServer((req, res) => {
       let p = req.url?.split("?")[0] || "/";
+      if (p === "/play" || p === "/play/" || p === "/go") {
+        const search = req.url?.includes("?")
+          ? req.url.slice(req.url.indexOf("?"))
+          : "";
+        const loc = buildPlayRedirectLocation(search, { build: AMOJI_BUILD });
+        res.writeHead(303, {
+          Location: loc,
+          "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+          Pragma: "no-cache",
+          "Clear-Site-Data": '"cache"',
+        });
+        res.end();
+        return;
+      }
       if (p === "/api/health") {
         res.writeHead(200, {
           "Content-Type": "application/json",
@@ -274,8 +288,8 @@ if (useLocal) {
     baseUrl = `http://127.0.0.1:${port}`;
     record("local static server", true, baseUrl);
   }
-  secretaryUrl = `${baseUrl}/c/${encodeURIComponent(AMOJI_BUILD)}/lite?lang=en`;
-  fullUrl = `${baseUrl}/c/${encodeURIComponent(AMOJI_BUILD)}/full?lang=en`;
+  secretaryUrl = `${baseUrl}/play?kind=lite&lang=en`;
+  fullUrl = `${baseUrl}/play?lang=en&pick=1&automic=0`;
 } else {
   try {
     const health = await fetchHealth(baseUrl);
