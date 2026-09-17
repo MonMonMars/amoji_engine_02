@@ -13,15 +13,18 @@ import {
   getCachedDialogueTts,
 } from "./companionDialoguePreload.js";
 import {
+  isLearnThinkingSound,
   isLoadingLearnPhase,
   isLoadingWaitKind,
   LEARN_SPEAK_DELAY_MS,
   LEARN_SPEAK_INTERVAL_MS,
   LEARN_SPEAK_POLL_MS,
+  LEARN_SPEAK_WORDS_INTERVAL_MS,
   learnPhaseForProgress,
   pickLearnPhrase,
   pickNextLearnPhrase,
   shouldSpeakLearnFill,
+  shouldUseLearnWords,
 } from "./companionLearnDialogue.js";
 import { isIosLike, shouldPauseMicDuringTts } from "./companionPlatform.js";
 import {
@@ -1237,8 +1240,9 @@ export function createCompanionVoice(opts = {}) {
     phase = learnPhase,
     progress = learnProgress,
     phrase: forcedPhrase,
+    useWords = false,
   } = {}) => {
-    const ctx = { pct: Math.round(progress * 100) };
+    const ctx = { pct: Math.round(progress * 100), useWords };
     const picked = forcedPhrase
       ? { phrase: forcedPhrase, index: learnPhraseIndex }
       : pickNextLearnPhrase(phase, isEnglish, learnPhraseIndex, ctx);
@@ -1254,6 +1258,9 @@ export function createCompanionVoice(opts = {}) {
     const preset = cloudVoicePreset();
     const lang = isEnglish ? "en-US" : preset.lang || "zh-HK";
     const voiceName = preset.name;
+    const wordMode = Boolean(useWords) && !isLearnThinkingSound(phrase);
+    const learnEmotion = phase === "failed" ? "sad" : wordMode ? "happy" : "thinking";
+    const learnEnergy = phase === "failed" ? 0.4 : wordMode ? 0.44 : 0.32;
 
     const playLearnBlob = async (blob) => {
       if (!blob?.size || !learnActive) return false;
@@ -1283,17 +1290,17 @@ export function createCompanionVoice(opts = {}) {
     if (opts.cloudTtsUrl) {
       try {
         const learnProsody = resolveSpeakProsody(phrase, {
-          emotion: phase === "failed" ? "sad" : "thinking",
+          emotion: learnEmotion,
           nuance: phase === "failed" ? "none" : "curious",
           talkStyle: "soft",
-          speechEnergy: phase === "failed" ? 0.4 : 0.32,
+          speechEnergy: learnEnergy,
         }, lang);
         const res = await fetch(opts.cloudTtsUrl, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             text: phrase,
-            emotion: phase === "failed" ? "sad" : "thinking",
+            emotion: learnEmotion,
             nuance: learnProsody.nuance,
             talkStyle: learnProsody.talkStyle,
             speechEnergy: learnProsody.speechEnergy,
@@ -1318,10 +1325,10 @@ export function createCompanionVoice(opts = {}) {
     }
 
     const prosody = resolveSpeakProsody(phrase, {
-      emotion: phase === "failed" ? "sad" : "thinking",
+      emotion: learnEmotion,
       nuance: phase === "failed" ? "none" : "curious",
       talkStyle: "soft",
-      speechEnergy: phase === "failed" ? 0.4 : 0.28,
+      speechEnergy: phase === "failed" ? 0.4 : wordMode ? 0.4 : 0.28,
     }, lang).browser;
     const utter = new SpeechSynthesisUtterance(phrase);
     if (voice && !voice.cloud) utter.voice = voice;
@@ -1338,7 +1345,7 @@ export function createCompanionVoice(opts = {}) {
       } catch {
         resolve();
       }
-      setTimeout(resolve, 2400);
+      setTimeout(resolve, wordMode ? 5600 : 2400);
     });
 
     return { ok: true, phrase, phase };
@@ -1377,6 +1384,11 @@ export function createCompanionVoice(opts = {}) {
         isEnglish: learnLoopIsEnglish,
         phase: activePhase,
         progress: learnProgress,
+        useWords: shouldUseLearnWords({
+          elapsedMs,
+          phase: activePhase,
+          kind: learnKind,
+        }),
       });
       learnSpokenCount += 1;
       learnLastSpeakAt = Date.now();
@@ -1411,16 +1423,28 @@ export function createCompanionVoice(opts = {}) {
 
     const loading = isLoadingWaitKind(kind) || isLoadingLearnPhase(phase);
     const delay = loading ? LEARN_SPEAK_DELAY_MS : 0;
-    const interval = loading
-      ? intervalMs === 2600
-        ? LEARN_SPEAK_INTERVAL_MS
-        : intervalMs
-      : intervalMs;
 
     const tick = async () => {
       if (!learnLoopActive) return;
+      const elapsedMs = Date.now() - learnLoopStartedAt;
+      const wordMode = shouldUseLearnWords({
+        elapsedMs,
+        phase: resolveLearnSpeakPhase(),
+        kind: learnKind,
+      });
       const spoke = await tryLearnSpeak();
       if (!learnLoopActive) return;
+      let interval = intervalMs;
+      if (loading) {
+        if (wordMode) {
+          interval =
+            intervalMs === 2600
+              ? LEARN_SPEAK_WORDS_INTERVAL_MS
+              : Math.max(intervalMs, LEARN_SPEAK_WORDS_INTERVAL_MS);
+        } else if (intervalMs === 2600) {
+          interval = LEARN_SPEAK_INTERVAL_MS;
+        }
+      }
       const wait = spoke ? interval : LEARN_SPEAK_POLL_MS;
       learnLoopTimer = setTimeout(() => {
         void tick();
