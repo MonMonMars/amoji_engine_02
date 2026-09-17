@@ -7,18 +7,18 @@
  * Fcl_EYE_Close morphs are left at file defaults unless we zero them.
  */
 
-export const COMPANION_FACE_REST_SCHEMA = "amoji.companionFaceRest.v6";
+export const COMPANION_FACE_REST_SCHEMA = "amoji.companionFaceRest.v7";
 
 export const MOUTH_CLOSE_EPS = 0.035;
 /** No smile morph at rest — visemes own the jaw while talking. */
 export const IDLE_HAPPY_MAX = 0;
-/** Visible smile while talking — still below jaw-bake levels. */
-export const TALK_HAPPY_MAX = 0.28;
+/** Talk smile is visible; visemes still write last so the jaw can move. */
+export const TALK_HAPPY_MAX = 0.48;
 /** Surprised at rest often drops the jaw. */
 export const REST_SURPRISED_MAX = 0;
-export const TALK_SURPRISED_MAX = 0.16;
+export const TALK_SURPRISED_MAX = 0.22;
 /** Max jaw-bone X rotation (radians) at full open. */
-export const TALK_JAW_OPEN_RAD = 0.38;
+export const TALK_JAW_OPEN_RAD = 0.42;
 /** Fallback viseme walk when TTS has not yet named a shape. */
 export const TALK_VISEME_CYCLE = ["aa", "ih", "ou", "ee", "oh"];
 
@@ -58,8 +58,16 @@ export const VISEME_SHAPE_ALIASES = {
 };
 
 const VISEME_MORPH_RE =
-  /^(?:fcl[_-]?mth[_-]?)?(a|i|u|e|o|aa|ih|ou|ee|oh)$/i;
-const GENERIC_MOUTH_OPEN_RE = /(mouth[_-]?open|jaw[_-]?open|viseme[_-]?sil)/i;
+  /^(?:fcl[_-]?mth[_-]?|vrc\.v[_-]?|viseme[_-]?|mouth[_-]?|v[_-]?)?(a|i|u|e|o|aa|ih|ou|ee|oh)$/i;
+const GENERIC_MOUTH_OPEN_RE =
+  /(jaw[_-]?open|mouth[_-]?open|mouthopen|jawopen|viseme[_-]?sil)/i;
+const SMILE_MORPH_RE =
+  /(smile|grin|cheer|fun\b|mouth[_-]?smile|fcl[_-]?mth[_-]?(fun|smile|inner))/i;
+const FROWN_MORPH_RE = /(frown|sad[_-]?mouth|mouth[_-]?frown|fcl[_-]?mth[_-]?sad)/i;
+const BROW_UP_MORPH_RE =
+  /(brow[_-]?(inner)?[_-]?up|browraise|fcl[_-]?brw[_-]?(fun|surprised|up))/i;
+const BROW_DOWN_MORPH_RE =
+  /(brow[_-]?down|brow[_-]?angry|fcl[_-]?brw[_-]?(angry|sad))/i;
 
 const EYE_CLOSE_RE =
   /(blink|wink|eye[_.\s-]?close|eyes[_.\s-]?close|eyelid|lidclose|close[_.\s-]?eye|fcl_eye_close|eye[_.\s-]?smile|eyesmile|squint|まばたき|目閉|瞑)/i;
@@ -279,14 +287,20 @@ export function inspectExpressionHazard(name, expression) {
   const closesEyes =
     EYE_CLOSE_RE.test(joined) ||
     (overrideBlink !== "none" && overrideBlink != null);
-  const opensMouth =
-    MOUTH_OPEN_RE.test(joined) ||
-    (overrideMouth !== "none" && overrideMouth != null);
+  const bakesJaw = morphs.some((morph) => {
+    const lower = String(morph || "");
+    if (SMILE_MORPH_RE.test(lower)) return false;
+    return MOUTH_OPEN_RE.test(lower) || VISEME_MORPH_RE.test(lower);
+  });
+  const blocksMouth = overrideMouth === "block";
+  const opensMouth = bakesJaw || blocksMouth;
   return {
     name,
     morphs,
     closesEyes,
     opensMouth,
+    blocksMouth,
+    bakesJaw,
     isBinary: Boolean(expression?.isBinary),
     overrideBlink,
     overrideMouth,
@@ -301,10 +315,11 @@ export function inspectVrmFaceHazards(expr) {
   /** @type {ReturnType<typeof inspectExpressionHazard>[]} */
   const expressions = [];
   const opensMouth = new Set();
+  const blocksMouth = new Set();
   const closesEyes = new Set();
   const binary = new Set();
   if (!expr) {
-    return { expressions, opensMouth, closesEyes, binary };
+    return { expressions, opensMouth, blocksMouth, closesEyes, binary };
   }
   const seen = new Set();
   for (const name of listExpressionNames(expr)) {
@@ -318,10 +333,11 @@ export function inspectVrmFaceHazards(expr) {
     const hazard = inspectExpressionHazard(name, expression);
     expressions.push(hazard);
     if (hazard.opensMouth) addHazardName(opensMouth, name);
+    if (hazard.blocksMouth) addHazardName(blocksMouth, name);
     if (hazard.closesEyes) addHazardName(closesEyes, name);
     if (hazard.isBinary) addHazardName(binary, name);
   }
-  return { expressions, opensMouth, closesEyes, binary };
+  return { expressions, opensMouth, blocksMouth, closesEyes, binary };
 }
 
 /**
@@ -427,20 +443,51 @@ export function shapeToVisemePreset(shape, available = []) {
 }
 
 /**
- * Drive unbound viseme / mouthOpen morphs so VRM 0.x faces still flap.
- * @param {{ traverse?: Function } | null | undefined} root
- * @param {string | null | undefined} shape
+ * Map a lipsync shape onto a morph name. 0 if this morph is not a mouth target.
+ * Smile morphs are never visemes — talk emotion owns those.
+ * @param {string} morphName
+ * @param {string} shape
  * @param {number} open
  */
-export function applyMorphMouthOpen(root, shape, open) {
-  if (!root || typeof root.traverse !== "function") return 0;
+export function visemeWeightForMorph(morphName, shape, open) {
   const w = Math.max(0, Math.min(1, Number(open) || 0));
+  const lower = String(morphName || "").toLowerCase();
+  if (SMILE_MORPH_RE.test(lower) || FROWN_MORPH_RE.test(lower)) return null;
+  const stripped = lower
+    .replace(/^fcl[_-]?mth[_-]?/, "")
+    .replace(/^vrc\.v[_-]?/, "")
+    .replace(/^viseme[_-]?/, "")
+    .replace(/^mouth[_-]?/, "")
+    .replace(/^v[_-]?/, "");
   const shapeKey = String(shape || "aa").toLowerCase();
   const aliases = new Set(
     (VISEME_SHAPE_ALIASES[shapeKey] || ["aa", "a"]).map((name) =>
       String(name).toLowerCase(),
     ),
   );
+  if (VISEME_MORPH_RE.test(morphName) || VISEME_MORPH_RE.test(stripped)) {
+    const match = aliases.has(lower) || aliases.has(stripped);
+    return match && w > 0 ? w : 0;
+  }
+  if (GENERIC_MOUTH_OPEN_RE.test(morphName) || /jawopen/i.test(lower)) {
+    return w;
+  }
+  if (shapeKey === "ou" && /mouth(pucker|funnel)/i.test(lower)) return w;
+  if (shapeKey === "oh" && /mouthfunnel/i.test(lower)) return w * 0.85;
+  if (shapeKey === "ih" && /mouthstretch/i.test(lower)) return w * 0.7;
+  if (shapeKey === "aa" && /jaw/i.test(lower) && /open/i.test(lower)) return w;
+  return null;
+}
+
+/**
+ * Drive unbound viseme / mouthOpen morphs so VRM 0.x and ARKit faces still flap.
+ * Call this AFTER expressionManager.update so visemes win the jaw.
+ * @param {{ traverse?: Function } | null | undefined} root
+ * @param {string | null | undefined} shape
+ * @param {number} open
+ */
+export function applyMorphMouthOpen(root, shape, open) {
+  if (!root || typeof root.traverse !== "function") return 0;
   let applied = 0;
   root.traverse((obj) => {
     const influences = obj?.morphTargetInfluences;
@@ -448,22 +495,93 @@ export function applyMorphMouthOpen(root, shape, open) {
     if (!influences || !dict) return;
     for (const [morphName, index] of Object.entries(dict)) {
       if (typeof index !== "number") continue;
-      const lower = String(morphName).toLowerCase();
-      const stripped = lower.replace(/^fcl[_-]?mth[_-]?/, "");
-      const isViseme = VISEME_MORPH_RE.test(morphName) || VISEME_MORPH_RE.test(stripped);
-      const isGeneric = GENERIC_MOUTH_OPEN_RE.test(morphName);
-      if (!isViseme && !isGeneric) continue;
-      if (isGeneric) {
-        influences[index] = w;
-        applied += 1;
-        continue;
-      }
-      const match = aliases.has(lower) || aliases.has(stripped);
-      influences[index] = match && w > 0 ? w : 0;
+      const weight = visemeWeightForMorph(morphName, shape, open);
+      if (weight == null) continue;
+      influences[index] = weight;
       applied += 1;
     }
   });
   return applied;
+}
+
+/**
+ * Photoreal faces often lack VRM Happy/Surprised presets. Drive smile/brow
+ * morphs directly while talking, never touching viseme/jaw morphs.
+ * @param {{ traverse?: Function } | null | undefined} root
+ * @param {string} [emotion]
+ * @param {boolean} [talking]
+ */
+export function applyTalkEmotionMorphs(root, emotion = "neutral", talking = false) {
+  if (!root || typeof root.traverse !== "function") return 0;
+  const e = String(emotion || "neutral").toLowerCase();
+  const smile = talking
+    ? e === "happy"
+      ? 0.42
+      : e === "surprised"
+        ? 0.12
+        : e === "sad" || e === "angry"
+          ? 0
+          : 0.18
+    : 0;
+  const frown = talking ? (e === "sad" ? 0.38 : e === "angry" ? 0.22 : 0) : 0;
+  const browUp = talking
+    ? e === "surprised"
+      ? 0.46
+      : e === "happy"
+        ? 0.22
+        : 0.08
+    : 0;
+  const browDown = talking ? (e === "angry" ? 0.48 : e === "sad" ? 0.28 : 0) : 0;
+  let applied = 0;
+  root.traverse((obj) => {
+    const influences = obj?.morphTargetInfluences;
+    const dict = obj?.morphTargetDictionary;
+    if (!influences || !dict) return;
+    for (const [morphName, index] of Object.entries(dict)) {
+      if (typeof index !== "number") continue;
+      if (visemeWeightForMorph(morphName, "aa", 1) != null) continue;
+      const lower = String(morphName);
+      if (SMILE_MORPH_RE.test(lower)) {
+        influences[index] = smile;
+        applied += 1;
+      } else if (FROWN_MORPH_RE.test(lower)) {
+        influences[index] = frown;
+        applied += 1;
+      } else if (BROW_UP_MORPH_RE.test(lower)) {
+        influences[index] = browUp;
+        applied += 1;
+      } else if (BROW_DOWN_MORPH_RE.test(lower)) {
+        influences[index] = browDown;
+        applied += 1;
+      }
+    }
+  });
+  return applied;
+}
+
+/**
+ * While talking, do not let emotion presets BLOCK visemes (`overrideMouth: block`).
+ * Blend/none still allow Happy to sit under visemes.
+ * @param {unknown} expr
+ * @param {boolean} talking
+ */
+export function softenTalkMouthOverrides(expr, talking) {
+  if (!expr?.getExpression) return 0;
+  let changed = 0;
+  for (const name of listExpressionNames(expr)) {
+    if (!/^(happy|sad|angry|surprised|relaxed)$/i.test(name)) continue;
+    const expression = expr.getExpression(name);
+    if (!expression) continue;
+    if (expression._amojiMouthOverride == null) {
+      expression._amojiMouthOverride = expression.overrideMouth || "none";
+    }
+    const next = talking ? "none" : expression._amojiMouthOverride;
+    if (expression.overrideMouth !== next) {
+      expression.overrideMouth = next;
+      changed += 1;
+    }
+  }
+  return changed;
 }
 
 export function applyRestEyeOpenMorphs(root, weight = 0.42) {
@@ -555,24 +673,25 @@ export function clampRestFaceBlend(blend, opts = {}) {
     if (key === "Relaxed") continue;
 
     const opensMouth = hazardHit(hazards?.opensMouth, key);
+    const blocksMouth = hazardHit(hazards?.blocksMouth, key);
     const closesEyes = hazardHit(hazards?.closesEyes, key);
     const isBinary = hazardHit(hazards?.binary, key);
 
     if (!talking && (opensMouth || closesEyes || isBinary)) continue;
-    if (talking && opensMouth) continue;
+    if (talking && blocksMouth) continue;
     if (talking && isBinary && (opensMouth || closesEyes)) continue;
     if (talking && closesEyes) continue;
 
     if (key === "Happy") {
       const cap = talking ? TALK_HAPPY_MAX : IDLE_HAPPY_MAX;
       const capped = Math.min(value, cap);
-      if (capped > 0 && !(talking && opensMouth)) next.Happy = capped;
+      if (capped > 0) next.Happy = capped;
       continue;
     }
     if (key === "Surprised") {
       const cap = talking ? TALK_SURPRISED_MAX : REST_SURPRISED_MAX;
       const capped = Math.min(value, cap);
-      if (capped > 0 && !(talking && opensMouth)) next.Surprised = capped;
+      if (capped > 0) next.Surprised = capped;
       continue;
     }
     next[key] = value;
