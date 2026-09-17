@@ -41,13 +41,10 @@ describe("companionExpressiveTts", () => {
     expect(clausePauseMs("好呀！")).toBeGreaterThan(clausePauseMs("好呀，"));
   });
 
-  it("splits English boot greetings into multiple clauses", () => {
+  it("keeps a comma-separated English sentence as one clause", () => {
     const parts = splitExpressiveClauses(
-      "Hi! I'm still loading my 3D body — you can chat while I get ready.",
+      "Sure, I'd love to help you plan your day today.",
     );
-    expect(parts).toEqual([
-      "Hi!",
-      "I'm still loading my 3D body — you can chat while I get ready.",
-    ]);
+    expect(parts).toEqual(["Sure, I'd love to help you plan your day today."]);
   });
 });
