@@ -3,10 +3,13 @@ import {
   buildFreshBootUrl,
   checkForAppUpdate,
   companionBuildPath,
+  companionFallbackPath,
   companionKindFromPath,
   isServerBuildNewer,
   parseBuildNumber,
   pathHasBuild,
+  pathSatisfiesBuild,
+  resolveCompanionBootPath,
   resolveCompanionModuleUrl,
   rewriteCompanionServePath,
   shouldReloadForBuild,
@@ -190,5 +193,42 @@ describe("companionFreshBoot", () => {
       "https://example.com/amoji-engine/engine/companion/createAvatar.js?v=build-1",
     );
     expect(spec).not.toContain("/c/2026-09-17-v153-repeat-issues/amoji-engine");
+  });
+
+  it("falls back to /companion-full when unique /c/ path is missing", async () => {
+    expect(companionFallbackPath("full")).toBe("/companion-full");
+    expect(pathSatisfiesBuild("/companion-full", "v154", "?build=v154")).toBe(true);
+    expect(pathSatisfiesBuild("/companion-full", "v154", "")).toBe(false);
+    const fetchImpl = vi.fn(async (url) => {
+      if (String(url).includes("/c/")) return { ok: false, status: 404 };
+      return { ok: true, json: async () => ({ build: "v154" }) };
+    });
+    const path = await resolveCompanionBootPath("v154", "full", { fetchImpl });
+    expect(path).toBe("/companion-full");
+  });
+
+  it("does not loop when unique /c/ 404s and the fallback already has ?build=", async () => {
+    const replace = vi.fn();
+    const fetchImpl = vi.fn(async (url) => {
+      if (String(url).includes("/api/health")) {
+        return {
+          ok: true,
+          json: async () => ({ build: "2026-09-17-v154-repeat-all" }),
+        };
+      }
+      return { ok: false, status: 404 };
+    });
+    globalThis.location = {
+      href: "https://example.com/companion-full?lang=yue&build=2026-09-17-v154-repeat-all",
+      pathname: "/companion-full",
+      search: "?lang=yue&build=2026-09-17-v154-repeat-all",
+      replace,
+    };
+    globalThis.__amojiBuild = "2026-09-17-v154-repeat-all";
+    const result = await checkForAppUpdate("2026-09-17-v154-repeat-all", {
+      fetchImpl,
+    });
+    expect(result.reloaded).toBe(false);
+    expect(replace).not.toHaveBeenCalled();
   });
 });

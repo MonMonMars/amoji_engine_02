@@ -7,7 +7,7 @@
  * Fcl_EYE_Close morphs are left at file defaults unless we zero them.
  */
 
-export const COMPANION_FACE_REST_SCHEMA = "amoji.companionFaceRest.v4";
+export const COMPANION_FACE_REST_SCHEMA = "amoji.companionFaceRest.v5";
 
 export const MOUTH_CLOSE_EPS = 0.035;
 /** No smile morph at rest — visemes own the jaw while talking. */
@@ -30,6 +30,34 @@ export const LOOK_EXPRESSION_NAMES = [
   "lookDown",
 ];
 export const MOUTH_VISEME_NAMES = ["aa", "ee", "ih", "oh", "ou"];
+
+/** VRM 1.0 viseme presets (three-vrm uses mixed case). */
+export const VRM1_MOUTH_PRESETS = [
+  "aa",
+  "ih",
+  "ou",
+  "ee",
+  "oh",
+  "Aa",
+  "Ih",
+  "Ou",
+  "Ee",
+  "Oh",
+];
+/** VRM 0.x viseme presets (Nova and many VRoid 0.x files). */
+export const VRM0_MOUTH_PRESETS = ["a", "i", "u", "e", "o", "A", "I", "U", "E", "O"];
+
+export const VISEME_SHAPE_ALIASES = {
+  aa: ["aa", "Aa", "a", "A"],
+  ih: ["ih", "Ih", "i", "I"],
+  ou: ["ou", "Ou", "u", "U"],
+  ee: ["ee", "Ee", "e", "E"],
+  oh: ["oh", "Oh", "o", "O"],
+};
+
+const VISEME_MORPH_RE =
+  /^(?:fcl[_-]?mth[_-]?)?(a|i|u|e|o|aa|ih|ou|ee|oh)$/i;
+const GENERIC_MOUTH_OPEN_RE = /(mouth[_-]?open|jaw[_-]?open|viseme[_-]?sil)/i;
 
 const EYE_CLOSE_RE =
   /(blink|wink|eye[_.\s-]?close|eyes[_.\s-]?close|eyelid|lidclose|close[_.\s-]?eye|fcl_eye_close|eye[_.\s-]?smile|eyesmile|squint|まばたき|目閉|瞑)/i;
@@ -328,9 +356,78 @@ export function applyRestEyeOpen(expr, weight = 0.42) {
 }
 
 /**
- * @param {{ traverse?: Function } | null | undefined} root
- * @param {number} [weight]
+ * Bind whatever viseme names this VRM actually ships (VRM 1 Aa… or VRM 0 a…).
+ * @param {unknown} expr
+ * @returns {string[]}
  */
+export function resolveMouthPresets(expr) {
+  const has = (name) => Boolean(expr?.getExpression?.(name));
+  const vrm1 = VRM1_MOUTH_PRESETS.filter(has);
+  if (vrm1.length) return [...new Set(vrm1)];
+  const vrm0 = VRM0_MOUTH_PRESETS.filter(has);
+  if (vrm0.length) return [...new Set(vrm0)];
+  return listExpressionNames(expr).filter(
+    (name) => /^(a|i|u|e|o|aa|ih|ou|ee|oh)$/i.test(name) && has(name),
+  );
+}
+
+/**
+ * Map a lipsync shape (aa/ih/…) onto a preset this VRM actually has.
+ * @param {string | null | undefined} shape
+ * @param {string[]} available
+ */
+export function shapeToVisemePreset(shape, available = []) {
+  const list = Array.isArray(available) ? available : [];
+  const key = String(shape || "aa").toLowerCase();
+  const aliases = VISEME_SHAPE_ALIASES[key] || [shape, key];
+  const byLower = new Map(list.map((name) => [String(name).toLowerCase(), name]));
+  for (const alias of aliases) {
+    const hit = byLower.get(String(alias).toLowerCase());
+    if (hit) return hit;
+  }
+  return list[0] || null;
+}
+
+/**
+ * Drive unbound viseme / mouthOpen morphs so VRM 0.x faces still flap.
+ * @param {{ traverse?: Function } | null | undefined} root
+ * @param {string | null | undefined} shape
+ * @param {number} open
+ */
+export function applyMorphMouthOpen(root, shape, open) {
+  if (!root || typeof root.traverse !== "function") return 0;
+  const w = Math.max(0, Math.min(1, Number(open) || 0));
+  const shapeKey = String(shape || "aa").toLowerCase();
+  const aliases = new Set(
+    (VISEME_SHAPE_ALIASES[shapeKey] || ["aa", "a"]).map((name) =>
+      String(name).toLowerCase(),
+    ),
+  );
+  let applied = 0;
+  root.traverse((obj) => {
+    const influences = obj?.morphTargetInfluences;
+    const dict = obj?.morphTargetDictionary;
+    if (!influences || !dict) return;
+    for (const [morphName, index] of Object.entries(dict)) {
+      if (typeof index !== "number") continue;
+      const lower = String(morphName).toLowerCase();
+      const stripped = lower.replace(/^fcl[_-]?mth[_-]?/, "");
+      const isViseme = VISEME_MORPH_RE.test(morphName) || VISEME_MORPH_RE.test(stripped);
+      const isGeneric = GENERIC_MOUTH_OPEN_RE.test(morphName);
+      if (!isViseme && !isGeneric) continue;
+      if (isGeneric) {
+        influences[index] = w;
+        applied += 1;
+        continue;
+      }
+      const match = aliases.has(lower) || aliases.has(stripped);
+      influences[index] = match && w > 0 ? w : 0;
+      applied += 1;
+    }
+  });
+  return applied;
+}
+
 export function applyRestEyeOpenMorphs(root, weight = 0.42) {
   if (!root || typeof root.traverse !== "function") return 0;
   const w = Math.max(0, Math.min(1, Number(weight) || 0));

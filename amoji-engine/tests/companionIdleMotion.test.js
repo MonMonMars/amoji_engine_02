@@ -38,6 +38,18 @@ describe("companionIdleMotion", () => {
     vi.restoreAllMocks();
   });
 
+  it("shifts weight without striding the planted legs", () => {
+    vi.spyOn(Math, "random").mockReturnValue(0.6);
+    const state = createIdleBeatState(0);
+    state.nextAt = 0;
+    const first = advanceIdleBeat(state, 1.05, 10);
+    expect(first.state.beat).toBe("shift");
+    expect(first.overlay.upperLegL ?? 0).toBe(0);
+    expect(first.overlay.lowerLegR ?? 0).toBe(0);
+    expect(Math.abs(first.overlay.hipZ || 0) + Math.abs(first.overlay.leanY || 0)).toBeGreaterThan(0.01);
+    vi.restoreAllMocks();
+  });
+
   it("keeps idle rest morph-neutral so jaws stay shut and lids stay open", () => {
     const blend = sampleIdleExpressionBlend(1.2, "neutral");
     expect(blend.Happy ?? 0).toBe(0);

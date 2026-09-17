@@ -32,6 +32,7 @@ import {
 import { actionLoops } from "./companionActionMotion.js";
 import { detectVrmIdleRestRotations } from "./companionArmRestCalibration.js";
 import { createCompanionBodyMotion } from "./companionBodyMotion.js";
+import { inferFingerFlexAxis } from "./companionFingerPose.js";
 import { buildVrmExpressionBlend } from "./companionContentMotion.js";
 import {
   isOnlineIdleAction,
@@ -44,6 +45,7 @@ import { configureVrmSpringStability } from "./vrmSpringStability.js";
 import { applyVrmOutfitTint } from "./companionOutfitApply.js";
 import {
   applyBlinkWeight,
+  applyMorphMouthOpen,
   blinkExpressionNames,
   blinkPulseFinished,
   blinkWeightFromPhase,
@@ -52,8 +54,10 @@ import {
   applyRestEyeOpenMorphs,
   guardLookAtLids,
   inspectVrmFaceHazards,
+  resolveMouthPresets,
   sampleEatMouthPulse,
   sampleTalkMouthPulse,
+  shapeToVisemePreset,
   talkJawRotationX,
   talkingMouthOpen,
   zeroAllExpressions,
@@ -255,6 +259,7 @@ export async function createVrmAvatar(opts) {
   scene.add(model);
   vrm.humanoid?.resetNormalizedPose?.();
   const bodyMotion = createCompanionBodyMotion(vrm.humanoid);
+  bodyMotion.setFingerFlexAxis?.(inferFingerFlexAxis(vrm.humanoid));
   /** @type {string | null} */
   let vrmaAction = null;
   let vrmaPending = false;
@@ -415,13 +420,7 @@ export async function createVrmAvatar(opts) {
   zeroAllExpressions(expr);
   zeroHazardMorphInfluences(model);
   const blinkPresets = blinkExpressionNames(expr);
-  const mouthPresets = [
-    VRMExpressionPresetName.Aa,
-    VRMExpressionPresetName.Ih,
-    VRMExpressionPresetName.Ou,
-    VRMExpressionPresetName.Ee,
-    VRMExpressionPresetName.Oh,
-  ].filter((name) => expr?.getExpression?.(name));
+  const mouthPresets = resolveMouthPresets(expr);
 
   let emotion = "neutral";
   let mouthOpen = 0;
@@ -728,19 +727,8 @@ export async function createVrmAvatar(opts) {
     return analysis;
   };
 
-  const shapeToPreset = (shape) => {
-    const key = String(shape || "aa").toLowerCase();
-    const map = {
-      aa: VRMExpressionPresetName.Aa,
-      ih: VRMExpressionPresetName.Ih,
-      ou: VRMExpressionPresetName.Ou,
-      ee: VRMExpressionPresetName.Ee,
-      oh: VRMExpressionPresetName.Oh,
-    };
-    const preset = map[key];
-    if (preset && expr?.getExpression?.(preset)) return preset;
-    return mouthPresets[0] || null;
-  };
+  const shapeToPreset = (shape) =>
+    shapeToVisemePreset(shape, mouthPresets);
 
   const applyJawOpen = (open) => {
     const x = talkJawRotationX(open);
@@ -765,6 +753,7 @@ export async function createVrmAvatar(opts) {
         if (preset) expr.setValue(preset, open);
       }
     }
+    applyMorphMouthOpen(model, mouthShape || "aa", open);
     applyJawOpen(open);
   };
 
@@ -869,11 +858,9 @@ export async function createVrmAvatar(opts) {
       }
     }
     applyBlinkWeight(expr, blinkW);
-    if (blinkW < 0.25) {
-      const open = 0.42 * (1 - blinkW);
-      applyRestEyeOpen(expr, open);
-      applyRestEyeOpenMorphs(model, open);
-    }
+    const open = 0.42 * (1 - blinkW);
+    applyRestEyeOpen(expr, open);
+    applyRestEyeOpenMorphs(model, open);
   };
 
   let raf = 0;
@@ -892,6 +879,10 @@ export async function createVrmAvatar(opts) {
     try {
       if (!libraryMotion) {
         bodyMotion.update(dt, { talking, now });
+      } else {
+        bodyMotion.applyHandRestOnly?.({
+          talkBlend: talking || eating ? 0.7 : 0,
+        });
       }
       motionPlayer.update(dt);
       if (!libraryMotion) {
@@ -1103,6 +1094,12 @@ export async function createVrmAvatar(opts) {
     },
     warmMotionClip(actionId) {
       return motionPlayer.warmClip(actionId);
+    },
+    resetIdleLife(now) {
+      return bodyMotion.resetIdleLife?.(now);
+    },
+    resetMotionClock(now) {
+      return bodyMotion.resetMotionClock?.(now);
     },
     get mouthOpen() {
       return mouthOpen;

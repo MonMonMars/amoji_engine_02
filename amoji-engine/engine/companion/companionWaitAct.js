@@ -69,11 +69,11 @@ export function createCompanionWaitAct(opts = {}) {
 
   const playPose = () => {
     if (kind === "idle" || kind === "avatar-load") {
-      // Hosted Relax.vrma is the living rest. Don't rotate showcase clips
-      // or flash wait-face moods on top of it.
+      // Procedural planted idle (hosted Relax.vrma is a stretch, not rest).
       lastPoseId = "idle-stand";
       avatarRef?.setThinking?.(false);
       if (poseTick === 0) {
+        avatarRef?.resetIdleLife?.();
         avatarRef?.setEmotion?.("neutral");
         avatarRef?.applyExpressionProfile?.({
           emotion: "neutral",

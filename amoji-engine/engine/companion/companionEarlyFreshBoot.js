@@ -46,6 +46,21 @@
     );
   }
 
+  function isFallbackPath() {
+    var path = url.pathname || "";
+    return (
+      path === "/companion-full" ||
+      path === "/companion" ||
+      path === "/prototypes/amoji-companion.html" ||
+      path === "/prototypes/amoji-lite.html"
+    );
+  }
+
+  function pathSatisfiesBuild(serverBuild) {
+    if (hasBuildPath(serverBuild)) return true;
+    return isFallbackPath() && url.searchParams.get("build") === serverBuild;
+  }
+
   function purgeCaches() {
     try {
       if (navigator.serviceWorker && navigator.serviceWorker.getRegistrations) {
@@ -66,12 +81,27 @@
   }
 
   function redirect(serverBuild) {
-    var nextPath = "/c/" + encodeURIComponent(serverBuild) + "/" + pageKind();
-    if (url.pathname === nextPath) return;
-    url.pathname = nextPath;
-    url.searchParams.set("build", serverBuild);
-    url.searchParams.set("_cb", String(Date.now()));
-    window.location.replace(url.toString());
+    var uniquePath = "/c/" + encodeURIComponent(serverBuild) + "/" + pageKind();
+    var fallbackPath = pageKind() === "lite" ? "/companion" : "/companion-full";
+    function go(path) {
+      if (
+        url.pathname === path &&
+        url.searchParams.get("build") === serverBuild
+      ) {
+        return;
+      }
+      url.pathname = path;
+      url.searchParams.set("build", serverBuild);
+      url.searchParams.set("_cb", String(Date.now()));
+      window.location.replace(url.toString());
+    }
+    fetch(uniquePath, { method: "HEAD", cache: "no-store" })
+      .then(function (res) {
+        go(res && res.ok ? uniquePath : fallbackPath);
+      })
+      .catch(function () {
+        go(fallbackPath);
+      });
   }
 
   fetch("/api/health", { cache: "no-store", headers: { Pragma: "no-cache" } })
@@ -83,6 +113,7 @@
       if (!serverBuild) return;
       purgeCaches();
       if (!shouldReload(pageBuild, serverBuild) && hasBuildPath(serverBuild)) return;
+      if (!shouldReload(pageBuild, serverBuild) && pathSatisfiesBuild(serverBuild)) return;
       redirect(serverBuild);
     })
     .catch(function () {});

@@ -82,6 +82,8 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
   let talkTime = 0;
   let t0 = performance.now();
   let idleBeat = createIdleBeatState(t0);
+  /** @type {"x" | "z"} */
+  let fingerFlexAxis = "z";
   /** @type {string | null} */
   let activeAction = null;
   let actionPhase = 0;
@@ -569,7 +571,7 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
   const applyHandAndFootRest = (pose = REST_POSE, k = 1, talkBlend = 0) => {
     applyBoneRotation("leftHand", VRM_HAND_REST_ROTATIONS.leftHand);
     applyBoneRotation("rightHand", VRM_HAND_REST_ROTATIONS.rightHand);
-    applyFingerRestPose(applyFingerBone, { talkBlend });
+    applyFingerRestPose(applyFingerBone, { talkBlend, flexAxis: fingerFlexAxis });
     applyLockedFootRotations(applyBoneRotation, VRM_FOOT_REST_ROTATIONS, {
       leftUpper: Math.min(0.72, (pose.upperLegL ?? REST_POSE.upperLegL ?? 0) * k),
       rightUpper: Math.min(0.72, (pose.upperLegR ?? REST_POSE.upperLegR ?? 0) * k),
@@ -627,6 +629,20 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
     applyLegPose(pose, k);
     applyHandAndFootRest(pose, k, talkArmBlend);
     humanoid.update?.();
+  };
+
+  const applyHandRestOnly = (opts = {}) => {
+    const talkBlend = Number(opts.talkBlend) || 0;
+    applyFingerRestPose(applyFingerBone, {
+      talkBlend,
+      flexAxis: fingerFlexAxis,
+    });
+    humanoid?.update?.();
+  };
+
+  const setFingerFlexAxis = (axis) => {
+    fingerFlexAxis = axis === "x" ? "x" : "z";
+    return fingerFlexAxis;
   };
 
   const update = (dt, opts = {}) => {
@@ -815,6 +831,11 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
     return smoothedPose;
   };
 
+  const resetIdleLife = (now = performance.now()) => {
+    idleBeat = createIdleBeatState(now);
+    return resetMotionClock(now);
+  };
+
   return {
     schema: COMPANION_BODY_SCHEMA,
     setEmotion,
@@ -836,6 +857,8 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
     setTalking,
     setTalkEnergy,
     update,
+    applyHandRestOnly,
+    setFingerFlexAxis,
     get emotion() {
       return emotion;
     },
@@ -882,6 +905,7 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
       });
       return smoothedPose;
     },
+    resetIdleLife,
     resetMotionClock,
     setArmRestRotations(next) {
       if (!next) return armRestRotations;

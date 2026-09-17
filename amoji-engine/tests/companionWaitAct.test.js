@@ -85,11 +85,13 @@ describe("companionWaitAct", () => {
       setThinking: vi.fn(),
       stopAction: vi.fn(),
       applyExpressionProfile: vi.fn(),
+      resetIdleLife: vi.fn(),
     };
     const wait = createCompanionWaitAct({ avatar, isEnglish: true });
     wait.start({ kind: "idle", phase: "idle", speak: false });
     expect(avatar.stopAction).not.toHaveBeenCalled();
     expect(avatar.playAction).not.toHaveBeenCalled();
+    expect(avatar.resetIdleLife).toHaveBeenCalled();
     expect(avatar.setEmotion).toHaveBeenCalledWith("neutral");
     wait.stop();
   });
