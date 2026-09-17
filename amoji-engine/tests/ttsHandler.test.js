@@ -40,4 +40,21 @@ describe("ttsHandler", () => {
     },
     15000,
   );
+
+  it(
+    "exposes engine and emotion headers",
+    async () => {
+      const result = await processTtsRequest({
+        method: "POST",
+        body: { text: "你好呀！", emotion: "neutral", lang: "yue" },
+      });
+      expect(result.status).toBe(200);
+      expect(result.headers["X-Tts-Engine"]).toMatch(/openai|edge/);
+      expect(result.headers["X-Tts-Emotion"]).toBe("happy");
+      expect(Buffer.isBuffer(result.body) ? result.body.byteLength : 0).toBeGreaterThan(
+        1000,
+      );
+    },
+    15000,
+  );
 });

@@ -3,11 +3,14 @@
  * Server-side only — browsers cannot call these hosts directly.
  */
 import { EdgeTTS } from "edge-tts-universal";
-import { resolveCompanionTtsProsody } from "./companionTtsProsody.js";
+import {
+  enrichTtsPerformance,
+  resolveCompanionTtsProsody,
+} from "./companionTtsProsody.js";
 import { resolveEdgeVoiceId } from "./companionVoiceProfiles.js";
 import { resolveOpenAiApiKey, synthesizeOpenAiSpeech } from "./openaiTts.mjs";
 
-export const TTS_HANDLER_SCHEMA = "amoji.ttsHandler.v2";
+export const TTS_HANDLER_SCHEMA = "amoji.ttsHandler.v3";
 
 /** Cantonese (Hong Kong) female — 曉曼 */
 export const CANTONESE_FEMALE_VOICE = "zh-HK-HiuMaanNeural";
@@ -61,16 +64,24 @@ export async function synthesizeSpeech(text, opts = {}) {
   }
 
   const lang = String(opts.lang || "").toLowerCase();
+  const enriched = enrichTtsPerformance(
+    {
+      emotion: opts.emotion || "neutral",
+      nuance: opts.nuance || "none",
+      talkStyle: opts.talkStyle || "explain",
+      speechEnergy: opts.speechEnergy,
+      lang,
+    },
+    clean,
+  );
   const prosodyPack = resolveCompanionTtsProsody({
-    emotion: opts.emotion || "neutral",
-    nuance: opts.nuance || "none",
-    talkStyle: opts.talkStyle || "explain",
-    speechEnergy: opts.speechEnergy,
+    ...enriched,
     text: clean,
     lang,
     characterId: opts.characterId,
     voiceId: opts.voice,
   });
+  const instructions = opts.instructions || prosodyPack.instruct;
 
   const provider = String(process.env.AMOJI_TTS_PROVIDER || "auto").toLowerCase();
   const tryOpenAi =
@@ -82,11 +93,11 @@ export async function synthesizeSpeech(text, opts = {}) {
       const oai = await synthesizeOpenAiSpeech(clean, {
         voice: opts.voice,
         lang,
-        emotion: opts.emotion,
-        nuance: opts.nuance,
-        talkStyle: opts.talkStyle,
-        speechEnergy: opts.speechEnergy,
-        instructions: prosodyPack.instruct,
+        emotion: enriched.emotion,
+        nuance: enriched.nuance,
+        talkStyle: enriched.talkStyle,
+        speechEnergy: enriched.speechEnergy,
+        instructions,
         fetchImpl: opts.fetchImpl,
       });
       if (oai) {
@@ -135,6 +146,8 @@ export function ttsCorsHeaders() {
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Methods": "POST, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type",
+    "Access-Control-Expose-Headers":
+      "X-Tts-Voice, X-Tts-Engine, X-Tts-Emotion, X-Tts-Model",
   };
 }
 
@@ -159,25 +172,29 @@ export async function processTtsRequest(req) {
       ? JSON.parse(req.body || "{}")
       : req.body || {};
   const text = raw.text ?? raw.message ?? "";
-  const emotion = raw.emotion ?? "neutral";
   const lang = raw.lang ?? raw.language ?? "";
 
   try {
-    const { audio, voice, contentType } = await synthesizeSpeech(text, {
-      emotion,
-      nuance: raw.nuance,
-      talkStyle: raw.talkStyle,
-      speechEnergy: raw.speechEnergy,
-      voice: raw.voice,
-      lang,
-      characterId: raw.characterId,
-    });
+    const { audio, voice, contentType, engine, model, prosody } =
+      await synthesizeSpeech(text, {
+        emotion: raw.emotion ?? "neutral",
+        nuance: raw.nuance,
+        talkStyle: raw.talkStyle,
+        speechEnergy: raw.speechEnergy,
+        voice: raw.voice,
+        lang,
+        characterId: raw.characterId,
+        instructions: raw.instructions,
+      });
     return {
       status: 200,
       headers: {
         ...ttsCorsHeaders(),
         "Content-Type": contentType,
         "X-Tts-Voice": voice,
+        "X-Tts-Engine": engine || "edge",
+        "X-Tts-Emotion": prosody?.emotion || String(raw.emotion || "neutral"),
+        ...(model ? { "X-Tts-Model": model } : {}),
         "Cache-Control": "no-store",
       },
       body: audio,

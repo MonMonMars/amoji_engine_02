@@ -32,6 +32,8 @@ import {
   clausePauseMs,
 } from "./companionExpressiveTts.js";
 import {
+  buildCloudTtsRequestBody,
+  enrichTtsPerformance,
   normalizeTtsPerformance,
   resolveCompanionTtsProsody,
 } from "./companionTtsProsody.js";
@@ -655,7 +657,7 @@ export function createCompanionVoice(opts = {}) {
     synth?.cancel();
 
     const preset = cloudVoicePreset();
-    const perf = normalizeTtsPerformance(performance);
+    const perf = enrichTtsPerformance(performance, clean);
     const parts = chunkTextForCloudTts(clean);
     if (!parts.length) return { ok: false, reason: "empty" };
 
@@ -685,16 +687,21 @@ export function createCompanionVoice(opts = {}) {
           const res = await fetch(url, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              text: clause.text,
-              emotion: clause.emotion || perf.emotion,
-              nuance: clause.nuance || perf.nuance,
-              talkStyle: clause.talkStyle || perf.talkStyle,
-              speechEnergy: clause.speechEnergy ?? perf.speechEnergy,
-              voice: preset.name,
-              lang: preset.lang,
-              characterId: activeCharacterId,
-            }),
+            body: JSON.stringify(
+              buildCloudTtsRequestBody({
+                text: clause.text,
+                performance: {
+                  ...perf,
+                  emotion: clause.emotion || perf.emotion,
+                  nuance: clause.nuance || perf.nuance,
+                  talkStyle: clause.talkStyle || perf.talkStyle,
+                  speechEnergy: clause.speechEnergy ?? perf.speechEnergy,
+                },
+                voice: preset.name,
+                lang: preset.lang,
+                characterId: activeCharacterId,
+              }),
+            ),
           });
           if (!res.ok) {
             const errText = await res.text().catch(() => "");
@@ -867,7 +874,7 @@ export function createCompanionVoice(opts = {}) {
     const clean = cleanSpeakText(text);
     if (!clean) return { ok: false, reason: "empty" };
 
-    const perf = normalizeTtsPerformance(performance);
+    const perf = enrichTtsPerformance(performance, clean);
     const prosody = resolveSpeakProsody(
       clean,
       perf,
