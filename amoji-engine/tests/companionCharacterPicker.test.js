@@ -18,7 +18,18 @@ describe("companion character picker data", () => {
     const kizuna = listCompanionCharacters("en").find((c) => c.id === "kizuna");
     expect(kizuna?.badge).toMatch(/73k/i);
     expect(kizuna?.badge).toMatch(/official/i);
+    expect(kizuna?.faceTier).toBe("high");
+    expect(kizuna?.faceTriangles).toBeGreaterThan(70000);
     expect(kizuna?.previewImage).toContain("kizuna");
+  });
+
+  it("exposes HD face chips for high-poly picks without triangle badges", () => {
+    const rex = listCompanionCharacters("en").find((c) => c.id === "rex");
+    const alicia = listCompanionCharacters("en").find((c) => c.id === "alicia");
+    expect(rex?.showFaceChip).toBe(true);
+    expect(rex?.faceLabel).toMatch(/HD · 50k/i);
+    expect(alicia?.showFaceChip).toBe(true);
+    expect(alicia?.faceLabel).toMatch(/HD · 32k/i);
   });
 
   it("includes per-character voice labels for picker cards", () => {

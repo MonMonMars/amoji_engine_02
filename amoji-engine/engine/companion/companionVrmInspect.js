@@ -119,6 +119,8 @@ export function inspectVrmBuffer(buffer, fileName = "model.vrm") {
 export const HIGH_POLY_FACE_MODEL_HINTS = [
   "/prototypes/assets/kizuna-kamatte.vrm",
   "/prototypes/assets/companion-kai.vrm",
+  "/prototypes/assets/companion-alicia.vrm",
+  "/prototypes/assets/companion-ember.vrm",
   "/prototypes/assets/companion-nova.vrm",
 ];
 
