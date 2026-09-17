@@ -85,15 +85,11 @@ export function createCompanionWaitAct(opts = {}) {
     }
 
     if (kind === "idle") {
-      const pose = pickWaitPose("idle", poseTick);
-      lastPoseId = pose;
+      // Living rest pose is procedural (bent elbows, weight shift).
+      // One-shot showcase actions flatten limbs back to a stick stand.
+      lastPoseId = "idle-stand";
       avatarRef?.setThinking?.(false);
-      avatarRef?.playAction?.(pose, {
-        emotion,
-        loop: false,
-        single: true,
-      });
-      opts.onPose?.(pose, phase);
+      opts.onPose?.("idle-stand", phase);
       return;
     }
 

@@ -74,7 +74,7 @@ describe("companionWaitAct", () => {
     expect(avatar.stopAction).not.toHaveBeenCalled();
   });
 
-  it("plays idle showcase poses instead of freezing the model", () => {
+  it("keeps the living rest pose while idle instead of one-shot actions", () => {
     const avatar = {
       playAction: vi.fn(),
       setEmotion: vi.fn(),
@@ -84,9 +84,8 @@ describe("companionWaitAct", () => {
     const wait = createCompanionWaitAct({ avatar, isEnglish: true });
     wait.start({ kind: "idle", phase: "idle", speak: false });
     expect(avatar.stopAction).not.toHaveBeenCalled();
-    expect(avatar.playAction).toHaveBeenCalled();
-    const played = avatar.playAction.mock.calls[0][0];
-    expect(WAIT_POSES_BY_PHASE.idle).toContain(played);
+    expect(avatar.playAction).not.toHaveBeenCalled();
+    expect(avatar.setEmotion).toHaveBeenCalled();
     wait.stop();
   });
 });

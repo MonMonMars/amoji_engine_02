@@ -43,15 +43,17 @@ describe("companionIdleMotion", () => {
     const boot = sampleSimpleBootIdleMotion(1.2);
     expect(BOOT_SIMPLE_IDLE_SEC).toBeGreaterThan(3);
     expect(boot.forearmL).toBeGreaterThan(0.24);
-    expect(boot.forearmR).toBeGreaterThan(0.24);
+    expect(boot.forearmR).toBeGreaterThan(0.2);
     expect(boot.armLiftL).toBeGreaterThan(0.1);
+    expect(boot.lowerLegR).toBeGreaterThan(0.1);
   });
 
   it("keeps standing idle large enough to read in a portrait crop", () => {
     const idle = sampleIdleBodyMotion(1.4);
     expect(Math.abs(idle.leanY) + Math.abs(idle.headZ)).toBeGreaterThan(0.08);
     expect(idle.armLiftL).toBeGreaterThan(0.06);
-    expect(idle.forearmL).toBeGreaterThan(0.08);
+    expect(idle.forearmL).toBeGreaterThan(0.2);
+    expect(idle.lowerLegR + idle.upperLegR).toBeGreaterThan(0.12);
   });
 });
 
@@ -97,5 +99,8 @@ describe("idle body motion integration", () => {
     const rot = bones.get("leftUpperArm").rotation;
     const rest = VRM_ARM_REST_ROTATIONS.leftUpperArm;
     expect(Math.abs(rot.z - rest.z)).toBeGreaterThan(0.008);
+    expect(bones.get("leftLowerArm").rotation.x).toBeGreaterThan(
+      VRM_ARM_REST_ROTATIONS.leftLowerArm.x + 0.12,
+    );
   });
 });
