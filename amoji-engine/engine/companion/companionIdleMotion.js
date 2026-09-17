@@ -196,10 +196,6 @@ export function advanceIdleBeat(state, dt, nowMs) {
         overlay.hipZ = Math.sin(p * Math.PI) * 0.02 * env;
         overlay.leanY = wave * 0.06 * env;
         overlay.spineX = 0.028 * wave * env;
-        overlay.upperLegL = wave * 0.07 * env;
-        overlay.upperLegR = -wave * 0.05 * env;
-        overlay.lowerLegL = wave * 0.08 * env;
-        overlay.lowerLegR = wave * 0.04 * env;
         overlay.armLiftL = wave * 0.05 * env;
         overlay.forearmL = wave * 0.06 * env;
         break;

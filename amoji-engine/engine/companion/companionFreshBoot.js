@@ -3,7 +3,7 @@
  */
 import { AMOJI_BUILD } from "./buildVersion.mjs";
 
-export const COMPANION_FRESH_BOOT_SCHEMA = "amoji.companionFreshBoot.v1";
+export const COMPANION_FRESH_BOOT_SCHEMA = "amoji.companionFreshBoot.v2";
 export const FRESH_BOOT_SESSION_PREFIX = "amoji.freshBoot.v1:";
 
 /**
@@ -106,6 +106,57 @@ export function companionBuildPath(build, kind = "full") {
 }
 
 /**
+ * Stable path used when unique /c/<build>/ is not rewritten on the host.
+ * @param {"full" | "lite"} [kind]
+ */
+export function companionFallbackPath(kind = "full") {
+  return kind === "lite" ? "/companion" : "/companion-full";
+}
+
+/**
+ * True when the page already carries this build — unique /c/ path or
+ * fallback HTML with ?build= so a 404 unique path cannot loop forever.
+ * @param {string | null | undefined} pathname
+ * @param {string | null | undefined} build
+ * @param {string | null | undefined} search
+ */
+export function pathSatisfiesBuild(pathname, build, search = "") {
+  if (pathHasBuild(pathname, build)) return true;
+  const id = String(build || "");
+  if (!id) return false;
+  const params = new URLSearchParams(String(search || "").replace(/^\?/, ""));
+  if (params.get("build") !== id) return false;
+  const path = String(pathname || "").split("?")[0];
+  return (
+    path === "/companion-full" ||
+    path === "/companion" ||
+    path === "/prototypes/amoji-companion.html" ||
+    path === "/prototypes/amoji-lite.html"
+  );
+}
+
+/**
+ * HEAD-probe unique /c/<build>/ and fall back if the host has no rewrite.
+ * @param {string} build
+ * @param {"full" | "lite"} [kind]
+ * @param {{ fetchImpl?: typeof fetch }} [opts]
+ */
+export async function resolveCompanionBootPath(build, kind = "full", opts = {}) {
+  const unique = companionBuildPath(build, kind);
+  const fallback = companionFallbackPath(kind);
+  const fetchImpl =
+    opts.fetchImpl ||
+    (typeof globalThis.fetch === "function" ? globalThis.fetch.bind(globalThis) : null);
+  if (!fetchImpl) return unique;
+  try {
+    const res = await fetchImpl(unique, { method: "HEAD", cache: "no-store" });
+    return res?.ok ? unique : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+/**
  * Map pretty companion URLs (including unique /c/<build>/ paths) onto real files.
  * @param {string | null | undefined} pathname
  */
@@ -151,11 +202,11 @@ export function pathHasBuild(pathname, build) {
   );
 }
 
-export function buildFreshBootUrl(serverBuild) {
+export function buildFreshBootUrl(serverBuild, pathOverride) {
   const href = globalThis.location?.href || "/";
   const url = new URL(href);
   const kind = companionKindFromPath(url.pathname);
-  url.pathname = companionBuildPath(serverBuild, kind);
+  url.pathname = pathOverride || companionBuildPath(serverBuild, kind);
   url.searchParams.set("build", serverBuild);
   url.searchParams.set("_cb", String(Date.now()));
   return url.toString();
@@ -229,7 +280,10 @@ export async function checkForAppUpdate(pageBuild, opts = {}) {
   const data = await res.json();
   const serverBuild = data?.build || null;
   const path = globalThis.location?.pathname || "";
-  const needsUniquePath = Boolean(serverBuild && !pathHasBuild(path, serverBuild));
+  const search = globalThis.location?.search || "";
+  const needsUniquePath = Boolean(
+    serverBuild && !pathSatisfiesBuild(path, serverBuild, search),
+  );
   void purgeStaleBrowserCaches();
   if (!shouldReloadForBuild(embedded, serverBuild) && !needsUniquePath) {
     if (serverBuild) globalThis.__amojiActiveBuild = serverBuild;
@@ -247,7 +301,11 @@ export async function checkForAppUpdate(pageBuild, opts = {}) {
 
   markFreshBootAttempted(serverBuild);
   globalThis.__amojiActiveBuild = serverBuild;
-  const nextUrl = buildFreshBootUrl(serverBuild);
+  const kind = companionKindFromPath(path);
+  const bootPath = await resolveCompanionBootPath(serverBuild, kind, {
+    fetchImpl,
+  });
+  const nextUrl = buildFreshBootUrl(serverBuild, bootPath);
   if (typeof globalThis.location?.replace === "function") {
     globalThis.location.replace(nextUrl);
     return { reloaded: true, serverBuild, pageBuild: embedded, nextUrl };
@@ -285,13 +343,19 @@ export function runEarlyFreshBootCheck(pageBuild) {
       if (!serverBuild) return;
       void purgeStaleBrowserCaches();
       const path = globalThis.location?.pathname || "";
+      const search = globalThis.location?.search || "";
       if (
         !shouldReloadForBuild(pageBuild, serverBuild) &&
-        pathHasBuild(path, serverBuild)
+        pathSatisfiesBuild(path, serverBuild, search)
       ) {
         return;
       }
-      globalThis.location.replace(buildFreshBootUrl(serverBuild));
+      const kind = companionKindFromPath(path);
+      void resolveCompanionBootPath(serverBuild, kind, { fetchImpl }).then(
+        (bootPath) => {
+          globalThis.location.replace(buildFreshBootUrl(serverBuild, bootPath));
+        },
+      );
     })
     .catch(() => {});
 }

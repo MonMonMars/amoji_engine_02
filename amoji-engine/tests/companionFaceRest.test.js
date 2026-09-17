@@ -21,6 +21,9 @@ import {
   zeroAllExpressions,
   zeroHazardMorphInfluences,
   zeroLookLidExpressions,
+  applyMorphMouthOpen,
+  resolveMouthPresets,
+  shapeToVisemePreset,
 } from "../engine/companion/companionFaceRest.js";
 
 function mockExpr(entries) {
@@ -267,5 +270,37 @@ describe("companionFaceRest", () => {
     expect(applyRestEyeOpenMorphs(root, 0.5)).toBe(1);
     expect(mesh.morphTargetInfluences[0]).toBeCloseTo(0.5);
     expect(mesh.morphTargetInfluences[1]).toBe(0);
+  });
+
+  it("binds VRM 0.x a/i/u/e/o visemes when Aa/Ih are missing", () => {
+    const expr = mockExpr({
+      a: {},
+      i: {},
+      u: {},
+      e: {},
+      o: {},
+      blink: {},
+    });
+    const presets = resolveMouthPresets(expr);
+    expect(presets).toEqual(expect.arrayContaining(["a", "i", "u", "e", "o"]));
+    expect(presets.some((name) => /^aa$/i.test(name))).toBe(false);
+    expect(shapeToVisemePreset("aa", presets)).toBe("a");
+    expect(shapeToVisemePreset("ih", presets)).toBe("i");
+    expect(shapeToVisemePreset("ou", presets)).toBe("u");
+  });
+
+  it("drives unbound viseme morphs so photoreal mouths still flap", () => {
+    const mesh = {
+      morphTargetDictionary: { a: 0, i: 1, mouthOpen: 2, brow: 3 },
+      morphTargetInfluences: [0, 0, 0, 0],
+    };
+    const root = { traverse: (fn) => fn(mesh) };
+    expect(applyMorphMouthOpen(root, "aa", 0.8)).toBeGreaterThan(0);
+    expect(mesh.morphTargetInfluences[0]).toBeCloseTo(0.8);
+    expect(mesh.morphTargetInfluences[1]).toBe(0);
+    expect(mesh.morphTargetInfluences[2]).toBeCloseTo(0.8);
+    applyMorphMouthOpen(root, "aa", 0);
+    expect(mesh.morphTargetInfluences[0]).toBe(0);
+    expect(mesh.morphTargetInfluences[2]).toBe(0);
   });
 });
