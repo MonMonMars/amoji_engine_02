@@ -169,6 +169,21 @@ describe("createCompanionBodyMotion", () => {
     expect(motion.currentAction).toBe("nod");
   });
 
+  it("uses smaller idle arm lift on A-pose rigs", () => {
+    const humanoid = mockHumanoid();
+    const motion = createCompanionBodyMotion(humanoid);
+    motion.setArmBind("apose");
+    motion.setArmRestRotations({
+      leftUpperArm: { x: 0.08, y: 0.1, z: -0.22 },
+      rightUpperArm: { x: 0.07, y: -0.08, z: 0.22 },
+      leftLowerArm: { x: 0.18, y: 0.08, z: 0.08, flexAxis: "x" },
+      rightLowerArm: { x: 0.16, y: -0.06, z: -0.06, flexAxis: "x" },
+    });
+    motion.snapToRestPose();
+    const lua = humanoid.bones.get("leftUpperArm");
+    expect(Math.abs(lua.rotation.z)).toBeLessThan(0.35);
+  });
+
   it("bends the calibrated knee axis at rest", () => {
     const humanoid = mockHumanoid();
     const motion = createCompanionBodyMotion(humanoid);
