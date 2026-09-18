@@ -219,10 +219,11 @@ export function pickerCopyForRole(role, isEnglish = false) {
 }
 
 export {
+  COMPANION_ROLES,
   loadCompanionRole,
   normalizeCompanionRole,
   roleLabel,
   rolePreset,
   rolePromptFragment,
   saveCompanionRole,
-};
+} from "../mobile/companionRolePresets.js";
