@@ -8,7 +8,7 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji · Companion</title>
     <script>
-      window.__amojiBuild = "2026-09-18-v219-talk-speed";
+      window.__amojiBuild = "2026-09-18-v220-poke-giggle-laugh";
     </script>
     <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-18-v212-motion-library-complete"></script>
     <link
@@ -6937,15 +6937,17 @@
         addBubble("assistant", line);
         avatar.setEmotion("happy");
         setEmotionPill("happy");
-        avatar.setTalkStyle?.("soft");
+        avatar.setTalkStyle?.("celebrate");
+        avatar.playAction?.("laugh");
         speakEmotion = "happy";
         status.speaking();
         armBargeIn();
         void voice.speakPoke(line, {
           emotion: "happy",
-          nuance: "excited",
+          nuance: "shy",
           talkStyle: "celebrate",
-          speechEnergy: 0.82,
+          speechEnergy: 0.84,
+          pokeReaction: true,
         }).finally(() => {
           disarmBargeIn();
           if (!busy) {

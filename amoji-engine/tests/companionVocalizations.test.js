@@ -5,7 +5,9 @@ import {
   COMPANION_VOCALIZATIONS_SCHEMA,
   isVocalizationText,
   mergeVocalIntoSpeech,
+  mergePokeVocalIntoSpeech,
   pickPokeVocalization,
+  POKE_VOCAL_TYPES,
   pickPreSentenceVocalization,
   pickVocalLine,
   textAlreadyHasLeadingVocal,
@@ -50,11 +52,18 @@ describe("companionVocalizations", () => {
     expect(vocal.text.length).toBeGreaterThan(1);
   });
 
-  it("picks playful poke vocalizations", () => {
+  it("picks giggle or laugh for poke only", () => {
     const poke = pickPokeVocalization(false);
     expect(poke.text).toBeTruthy();
-    expect(["giggle", "laugh", "smile", "gasp", "coy", "aww"]).toContain(poke.type);
+    expect(POKE_VOCAL_TYPES).toContain(poke.type);
     expect(poke.performance.emotion).toBe("happy");
+    expect(poke.performance.pokeReaction).toBe(true);
+    expect(poke.text).toMatch(/嘻|哈|he|ha|tee/i);
+  });
+
+  it("mergePokeVocalIntoSpeech pauses between giggle and line", () => {
+    expect(mergePokeVocalIntoSpeech("嘻嘻～", "我喺度呀", false)).toBe("嘻嘻～，我喺度呀");
+    expect(mergePokeVocalIntoSpeech("Hehe!", "I'm here", true)).toBe("Hehe!… I'm here");
   });
 
   it("returns bilingual vocal lines", () => {

@@ -1324,10 +1324,15 @@ export async function createVrmAvatar(opts) {
 
   const reactToTap = () => {
     setEmotion("happy");
-    if (resolveOnlineMotionClipUrl("nod")) {
+    setTalkStyle?.("celebrate");
+    if (resolveOnlineMotionClipUrl("laugh")) {
+      void tryPlayVrmaAction("laugh", { loop: false });
+    } else if (resolveOnlineMotionClipUrl("clap")) {
+      void tryPlayVrmaAction("clap", { loop: false });
+    } else if (resolveOnlineMotionClipUrl("nod")) {
       void tryPlayVrmaAction("nod", { loop: false });
     } else {
-      playGesture("nod");
+      playGesture("celebrate");
     }
     return emotion;
   };

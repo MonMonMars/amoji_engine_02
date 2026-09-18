@@ -6,6 +6,9 @@ export const COMPANION_VOCALIZATIONS_SCHEMA = "amoji.companionVocalizations.v1";
 
 /** @typedef {'smile'|'laugh'|'giggle'|'um'|'thinking'|'gasp'|'sigh'|'aww'|'coy'} VocalizationType */
 
+/** Poke/tap uses giggles + laughs only. */
+export const POKE_VOCAL_TYPES = Object.freeze(["giggle", "laugh"]);
+
 export const VOCALIZATION_TYPES = Object.freeze([
   "smile",
   "laugh",
@@ -25,12 +28,12 @@ const VOCAL_LINES = Object.freeze({
     en: Object.freeze(["Heh～", "Mhm～", "Heh heh～"]),
   }),
   laugh: Object.freeze({
-    yue: Object.freeze(["哈哈～", "哈哈哈！", "呵哈哈～"]),
-    en: Object.freeze(["Ha ha～", "Haha!", "Ahaha～"]),
+    yue: Object.freeze(["哈哈～", "哈哈哈！", "呵哈哈～", "哈哈你戳我～", "呵呵哈哈哈！"]),
+    en: Object.freeze(["Ha ha～", "Haha!", "Ahaha～", "Ha ha ha!", "Ahaha you poked me!"]),
   }),
   giggle: Object.freeze({
-    yue: Object.freeze(["嘻嘻～", "嘿嘿嘻～", "唔嘻嘻～"]),
-    en: Object.freeze(["Hehe～", "Teehee～", "Ehehe～"]),
+    yue: Object.freeze(["嘻嘻～", "嘿嘿嘻～", "唔嘻嘻～", "哎呀嘻嘻～", "唔呵呵嘻～"]),
+    en: Object.freeze(["Hehe～", "Teehee～", "Ehehe～", "Hehe hehe!", "Tee hee～"]),
   }),
   um: Object.freeze({
     yue: Object.freeze(["嗯……", "唔……", "嗯嗯……"]),
@@ -306,22 +309,18 @@ export function pickPreSentenceVocalization(performance = {}, text, opts = {}) {
 }
 
 /**
- * Poke/tap reaction vocal — playful giggle, laugh, or smile.
+ * Poke/tap reaction vocal — giggle or laugh only (user request).
  * @param {boolean} [isEnglish]
  */
 export function pickPokeVocalization(isEnglish = false) {
-  const type = /** @type {VocalizationType} */ (
+  const type = /** @type {"giggle" | "laugh"} */ (
     weightedPick({
-      giggle: 4,
-      laugh: 3,
-      smile: 3,
-      gasp: 2,
-      coy: 2,
-      aww: 1,
+      giggle: 3,
+      laugh: 2,
     })
   );
   const vocalText = pickVocalLine(type, isEnglish);
-  const base = VOCALIZATION_PERFORMANCE[type] || VOCALIZATION_PERFORMANCE.giggle;
+  const base = VOCALIZATION_PERFORMANCE[type];
   return {
     type,
     text: vocalText,
@@ -329,13 +328,30 @@ export function pickPokeVocalization(isEnglish = false) {
     performance: {
       ...base,
       emotion: "happy",
-      nuance: "excited",
+      nuance: type === "giggle" ? "shy" : "excited",
       talkStyle: "celebrate",
-      speechEnergy: 0.74,
+      speechEnergy: type === "laugh" ? 0.86 : 0.8,
       vocalization: type,
+      pokeReaction: true,
       singleUtterance: true,
     },
   };
+}
+
+/**
+ * Merge poke giggle/laugh with tap line — brief pause so the laugh lands first.
+ * @param {string} vocalText
+ * @param {string} sentenceText
+ * @param {boolean} [isEnglish]
+ */
+export function mergePokeVocalIntoSpeech(vocalText, sentenceText, isEnglish = false) {
+  const vocal = String(vocalText || "").trim();
+  const sentence = String(sentenceText || "").trim();
+  if (!vocal) return sentence;
+  if (!sentence) return vocal;
+  const bridge = isEnglish ? "… " : "～，";
+  const lead = vocal.replace(/[～~…]+$/u, "");
+  return `${lead}${bridge}${sentence}`;
 }
 
 /**
@@ -400,12 +416,14 @@ export function applyPokeVocalToSpeech(sentenceText, performance = {}, isEnglish
   const raw = String(sentenceText || "").trim();
   const vocal = pickPokeVocalization(isEnglish);
   return {
-    text: mergeVocalIntoSpeech(vocal.text, raw),
+    text: mergePokeVocalIntoSpeech(vocal.text, raw, isEnglish),
     performance: {
+      ...vocal.performance,
       ...performance,
       skipVocalization: true,
       vocalization: vocal.type,
       vocalPrefix: vocal.text,
+      pokeReaction: true,
     },
     merged: true,
   };
