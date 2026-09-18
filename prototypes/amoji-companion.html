@@ -4881,6 +4881,8 @@
         characterDisplayName,
         characterGreeting,
         characterGreetingPerformance,
+        characterHungryPerformance,
+        characterLonelyPerformance,
         characterTapLines,
         characterGender,
         characterVoiceLabel,
@@ -7429,17 +7431,20 @@
           });
         },
         onHungryAsk: ({ line }) => {
-          if (!line || busy || voice.speaking) return;
+          if (!line || busy || voice.speaking || voice.assistantOutputActive) return;
+          if (!sessionStarted || !window.__amojiAudioUnlocked) return;
           addBubble("assistant", line);
           avatar.setEmotion?.("sad");
           setEmotionPill("sad");
           speakEmotion = "sad";
-          void voice.speak(line, {
-            emotion: "sad",
-            nuance: "stress",
-            talkStyle: "soft",
-            speechEnergy: 0.48,
-          });
+          status.speaking();
+          armBargeIn();
+          void voice
+            .speak(line, characterHungryPerformance(characterId))
+            .finally(() => {
+              disarmBargeIn();
+              if (!busy && !voice.micOn) status.idle();
+            });
         },
       });
         window.__amojiTreats = treatDock;
@@ -7962,7 +7967,7 @@
         window.__amojiRaising?.refresh?.();
         const greetText = (check && check.line) || greetingLine();
         const mood = check?.mood || "ok";
-        const greetFeel = mood === "hungry" ? "sad" : "happy";
+        const greetFeel = mood === "hungry" || mood === "lonely" ? "sad" : "happy";
         avatar.setEmotion(greetFeel);
         setEmotionPill(greetFeel);
         if (mood === "hungry") avatar.playAction?.("headshake", { emotion: "sad", single: true });
@@ -7979,7 +7984,11 @@
           greetingBubble.textContent = greetText;
         }
         const greetPerf =
-          mood === "hungry" ? "sad" : characterGreetingPerformance(characterId);
+          mood === "hungry"
+            ? characterHungryPerformance(characterId)
+            : mood === "lonely"
+              ? characterLonelyPerformance(characterId)
+              : characterGreetingPerformance(characterId);
         return voice.speak(greetText, greetPerf).then((spoke) => {
           if (spoke?.ok !== false) scheduleVoiceWarmAfterFirstSpeak();
           if (spoke?.ok === false && spoke?.reason) {
