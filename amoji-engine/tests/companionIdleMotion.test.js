@@ -35,7 +35,7 @@ describe("companionIdleMotion", () => {
     state.nextAt = 0;
     const first = advanceIdleBeat(state, 1.05, 10);
     expect(first.state.beat).toBe("comb");
-    expect(first.overlay.armLiftR).toBeGreaterThan(0.35);
+    expect(first.overlay.armLiftR).toBeGreaterThan(0.32);
     expect(first.overlay.forearmR).toBeGreaterThan(0.2);
     vi.restoreAllMocks();
   });

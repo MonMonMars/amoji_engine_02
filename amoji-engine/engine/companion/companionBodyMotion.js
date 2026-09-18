@@ -569,27 +569,37 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
     applyBoneRotation("rightLowerArm", withElbowBend(restRl, foreR));
   };
 
+  const legFlexCaps = (planted) => ({
+    upperCap: planted ? 0.035 : 0.72,
+    lowerCap: planted ? 0.16 : 0.78,
+  });
+
+  const sampleLegFlex = (pose, k, planted = true) => {
+    const { upperCap, lowerCap } = legFlexCaps(planted);
+    return {
+      upperL: Math.min(upperCap, (pose.upperLegL ?? REST_POSE.upperLegL ?? 0) * k),
+      upperR: Math.min(upperCap, (pose.upperLegR ?? REST_POSE.upperLegR ?? 0) * k),
+      lowerL: Math.min(lowerCap, (pose.lowerLegL ?? REST_POSE.lowerLegL ?? 0) * k),
+      lowerR: Math.min(lowerCap, (pose.lowerLegR ?? REST_POSE.lowerLegR ?? 0) * k),
+    };
+  };
+
   const applyLegPose = (pose, k, opts = {}) => {
     const restUL = legRestRotations.leftUpperLeg;
     const restUR = legRestRotations.rightUpperLeg;
     const restLL = legRestRotations.leftLowerLeg;
     const restLR = legRestRotations.rightLowerLeg;
     const planted = opts.plantFeet !== false;
-    const upperCap = planted ? 0.035 : 0.72;
-    const lowerCap = planted ? 0.16 : 0.78;
-    const upperL = Math.min(upperCap, (pose.upperLegL ?? REST_POSE.upperLegL ?? 0) * k);
-    const upperR = Math.min(upperCap, (pose.upperLegR ?? REST_POSE.upperLegR ?? 0) * k);
-    const lowerL = Math.min(lowerCap, (pose.lowerLegL ?? REST_POSE.lowerLegL ?? 0) * k);
-    const lowerR = Math.min(lowerCap, (pose.lowerLegR ?? REST_POSE.lowerLegR ?? 0) * k);
+    const { upperL, upperR, lowerL, lowerR } = sampleLegFlex(pose, k, planted);
+    const leftUpper = withElbowBend(restUL, upperL);
+    const rightUpper = withElbowBend(restUR, upperR);
     applyBoneRotation("leftUpperLeg", {
-      x: restUL.x + upperL,
-      y: restUL.y,
-      z: restUL.z + (pose.hipZ ?? 0) * 0.04 * k,
+      ...leftUpper,
+      z: (leftUpper.z ?? 0) + (pose.hipZ ?? 0) * 0.04 * k,
     });
     applyBoneRotation("rightUpperLeg", {
-      x: restUR.x + upperR,
-      y: restUR.y,
-      z: restUR.z - (pose.hipZ ?? 0) * 0.04 * k,
+      ...rightUpper,
+      z: (rightUpper.z ?? 0) - (pose.hipZ ?? 0) * 0.04 * k,
     });
     applyBoneRotation("leftLowerLeg", withElbowBend(restLL, lowerL));
     applyBoneRotation("rightLowerLeg", withElbowBend(restLR, lowerR));
@@ -601,29 +611,27 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
     applyBoneRotation(name, rot);
   };
 
-  const applyHandAndFootRest = (pose = REST_POSE, k = 1, talkBlend = 0, elapsedSec = 0) => {
+  const applyFootLock = (pose = REST_POSE, k = 1, planted = true) => {
+    const flex = sampleLegFlex(pose, k, planted);
+    applyLockedFootRotations(applyBoneRotation, VRM_FOOT_REST_ROTATIONS, {
+      leftUpper: flex.upperL,
+      rightUpper: flex.upperR,
+      leftLower: flex.lowerL,
+      rightLower: flex.lowerR,
+      hipZ: pose.hipZ ?? 0,
+      leftFlexAxis:
+        legRestRotations.leftLowerLeg?.flexAxis === "z" ? "z" : "x",
+      rightFlexAxis:
+        legRestRotations.rightLowerLeg?.flexAxis === "z" ? "z" : "x",
+    });
+  };
+
+  const applyHandAndFootRest = (pose = REST_POSE, k = 1, talkBlend = 0) => {
     if (talkBlend <= 0.08) {
       applyBoneRotation("leftHand", VRM_HAND_REST_ROTATIONS.leftHand);
       applyBoneRotation("rightHand", VRM_HAND_REST_ROTATIONS.rightHand);
     }
-    applyFingerRestPose(applyFingerBone, {
-      talkBlend,
-      flexAxis: fingerFlexAxis,
-      elapsedSec,
-      readRotation: (name) => {
-        const b = bone(name);
-        return b?.rotation
-          ? { x: b.rotation.x, y: b.rotation.y, z: b.rotation.z }
-          : null;
-      },
-    });
-    applyLockedFootRotations(applyBoneRotation, VRM_FOOT_REST_ROTATIONS, {
-      leftUpper: Math.min(0.72, (pose.upperLegL ?? REST_POSE.upperLegL ?? 0) * k),
-      rightUpper: Math.min(0.72, (pose.upperLegR ?? REST_POSE.upperLegR ?? 0) * k),
-      leftLower: Math.min(0.78, (pose.lowerLegL ?? REST_POSE.lowerLegL ?? 0) * k),
-      rightLower: Math.min(0.78, (pose.lowerLegR ?? REST_POSE.lowerLegR ?? 0) * k),
-      hipZ: pose.hipZ ?? 0,
-    });
+    applyFootLock(pose, k, true);
   };
 
   const applyPose = (pose, intensity = 1, opts = {}) => {
@@ -675,12 +683,7 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
         : (pose.hipZ || 0) * k;
     }
     applyLegPose(pose, k, { plantFeet: opts.plantFeet !== false });
-    applyHandAndFootRest(
-      pose,
-      k,
-      talkArmBlend,
-      (performance.now() - t0) * 0.001,
-    );
+    applyHandAndFootRest(pose, k, talkArmBlend);
     humanoid.update?.();
   };
 
@@ -709,7 +712,20 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
 
   const setFingerFlexAxis = (axis) => {
     fingerFlexAxis = axis === "x" ? "x" : "z";
-    return "z";
+    return fingerFlexAxis;
+  };
+
+  const holdForLibraryMotion = (now = performance.now()) => {
+    const elapsed = (now - t0) * 0.001;
+    smoothedPose = buildBasePose({ listening, emotion, nuance });
+    smoothedPose = mergePoses(
+      smoothedPose,
+      samplePlantedAliveIdle(elapsed, { listening, emotion }),
+      0.96,
+    );
+    smoothedRootMotion = { y: 0, rotY: 0 };
+    footPlantY = 0;
+    return smoothedPose;
   };
 
   const update = (dt, opts = {}) => {
@@ -912,6 +928,7 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
       bootPhase: false,
       plantFeet: true,
     });
+    applyHandRestOnly({ talkBlend: 0, now });
     return smoothedPose;
   };
 
@@ -947,6 +964,7 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
     setTalkEnergy,
     update,
     applyHandRestOnly,
+    holdForLibraryMotion,
     setFingerFlexAxis,
     get emotion() {
       return emotion;
@@ -995,6 +1013,7 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
         bootPhase: false,
         plantFeet: true,
       });
+      applyHandRestOnly({ talkBlend: 0, now: performance.now() });
       return smoothedPose;
     },
     resetIdleLife,

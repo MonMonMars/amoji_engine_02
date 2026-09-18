@@ -111,6 +111,7 @@ describe("finger rest on the body rig", () => {
     const motion = createCompanionBodyMotion(humanoid);
     motion.setTalking(false);
     motion.update(1 / 30);
+    motion.applyHandRestOnly({ talkBlend: 0 });
     expect(Math.abs(bones.get("leftIndexProximal").rotation.z)).toBeGreaterThan(0.5);
     expect(Math.abs(bones.get("rightIndexProximal").rotation.z)).toBeGreaterThan(0.5);
     expect(Math.abs(bones.get("leftIndexIntermediate").rotation.z)).toBeGreaterThan(0.6);

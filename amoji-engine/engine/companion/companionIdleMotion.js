@@ -214,8 +214,8 @@ export function advanceIdleBeat(state, dt, nowMs) {
         overlay.leanY = wave * 0.05 * env;
         break;
       case "comb":
-        overlay.armLiftR = 0.98 * wave * env;
-        overlay.forearmR = 0.88 * wave * env;
+        overlay.armLiftR = 0.68 * wave * env;
+        overlay.forearmR = 0.58 * wave * env;
         overlay.headZ = 0.14 * wave * env;
         overlay.headX = -0.08 * wave * env;
         overlay.leanY = 0.05 * wave * env;
