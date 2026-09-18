@@ -66,7 +66,10 @@ import {
   tickVrmMotionTransition,
 } from "./vrmMotionTransition.js";
 import { companionGestureStyle } from "./companionPoseLibrary.js";
-import { sampleIdleExpressionBlend } from "./companionIdleMotion.js";
+import {
+  idleBeatDurationSec,
+  sampleIdleExpressionBlend,
+} from "./companionIdleMotion.js";
 import {
   configureVrmSpringStability,
   createIdleSpringRecenterState,
@@ -313,6 +316,27 @@ export async function createVrmAvatar(opts) {
   let vrmaSequenceQueue = [];
   /** @type {object | null} */
   let vrmaSequenceOpts = null;
+  /** @type {ReturnType<typeof setTimeout> | null} */
+  let idleBeatRestoreTimer = null;
+
+  const scheduleCalmIdleAfterBeat = (beat, now = performance.now()) => {
+    if (idleBeatRestoreTimer) clearTimeout(idleBeatRestoreTimer);
+    const durationMs = idleBeatDurationSec(beat) * 1000 + 260;
+    idleBeatRestoreTimer = setTimeout(() => {
+      idleBeatRestoreTimer = null;
+      if (
+        talking ||
+        eating ||
+        bodyMotion.thinking ||
+        bodyMotion.currentAction ||
+        vrmaPending
+      ) {
+        return;
+      }
+      void playCalmLibraryIdle();
+    }, durationMs);
+  };
+
   const syncThinkingLibraryMotion = () => {
     if (talking || eating || !bodyMotion.thinking) return false;
     if (
@@ -1468,9 +1492,20 @@ export async function createVrmAvatar(opts) {
       void playCalmLibraryIdle();
       return bodyMotion.emotion;
     },
-    pulseIdleBeat(beat, now) {
-      if (motionPlayer.isPlaying?.()) return null;
-      return bodyMotion.pulseIdleBeat?.(beat, now);
+    pulseIdleBeat(beat, now = performance.now()) {
+      const key = String(beat || "look");
+      const calmIdleOnly =
+        String(vrmaAction || "").toLowerCase() === ONLINE_CALM_IDLE_ACTION &&
+        !vrmaPending;
+      if (motionPlayer.isPlaying?.() && !calmIdleOnly) return null;
+      if (calmIdleOnly) {
+        motionPlayer.releasePose?.(0.22);
+        vrmaAction = null;
+        vrmaPending = false;
+      }
+      const state = bodyMotion.pulseIdleBeat?.(key, now);
+      scheduleCalmIdleAfterBeat(key, now);
+      return state;
     },
     resetMotionClock(now) {
       vrmaPlayGen += 1;

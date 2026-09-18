@@ -6,7 +6,17 @@ import {
   idleBeatEnvelope,
 } from "./companionPoseSmoothing.js";
 
-export const COMPANION_IDLE_MOTION_SCHEMA = "amoji.companionIdleMotion.v3";
+export const COMPANION_IDLE_MOTION_SCHEMA = "amoji.companionIdleMotion.v4";
+
+/** Procedural beats between hosted VRMA idle clips (look, hair, breathe, cross). */
+export const PROCEDURAL_IDLE_BEAT_POOL = Object.freeze([
+  "look",
+  "comb",
+  "breathe",
+  "cross",
+  "sway",
+  "shift",
+]);
 
 /** First seconds after avatar is visible — gentle breathe, sway, relaxed arms. */
 export const BOOT_SIMPLE_IDLE_SEC = 10;
@@ -172,28 +182,25 @@ export function advanceIdleBeat(state, dt, nowMs) {
 
   if (!beat && nowMs >= nextAt) {
     const roll = Math.random();
-    if (roll < 0.12) beat = "nod";
-    else if (roll < 0.32) beat = "look";
-    else if (roll < 0.52) beat = "comb";
-    else if (roll < 0.64) beat = "shift";
-    else if (roll < 0.76) beat = "fidget";
-    else if (roll < 0.9) beat = "breathe";
-    else beat = "sway";
+    if (roll < 0.22) beat = "look";
+    else if (roll < 0.4) beat = "comb";
+    else if (roll < 0.58) beat = "breathe";
+    else if (roll < 0.72) beat = "cross";
+    else if (roll < 0.84) beat = "sway";
+    else beat = "shift";
     phase = 0;
     duration =
-      beat === "nod"
-        ? 0.95
-        : beat === "look"
-          ? 1.45
-          : beat === "comb"
-            ? 2.1
+      beat === "look"
+        ? 1.45
+        : beat === "comb"
+          ? 2.0
+          : beat === "cross"
+            ? 1.85
             : beat === "shift"
               ? 1.75
-              : beat === "fidget"
-                ? 1.35
-                : beat === "breathe"
-                  ? 2.2
-                  : 1.65;
+              : beat === "breathe"
+                ? 2.2
+                : 1.65;
     nextAt = nowMs + 220 + Math.random() * 520;
   }
 
@@ -204,21 +211,25 @@ export function advanceIdleBeat(state, dt, nowMs) {
     const wave = easeInOutSine(p);
 
     switch (beat) {
-      case "nod":
-        overlay.headX = -0.16 * Math.sin(p * Math.PI);
-        overlay.leanY = wave * 0.036 * env;
-        break;
       case "look":
         overlay.headZ = Math.sin(p * Math.PI) * 0.28 * env;
         overlay.headX = wave * 0.07 * env;
         overlay.leanY = wave * 0.05 * env;
         break;
       case "comb":
-        overlay.armLiftR = 0.68 * wave * env;
-        overlay.forearmR = 0.58 * wave * env;
-        overlay.headZ = 0.14 * wave * env;
-        overlay.headX = -0.08 * wave * env;
-        overlay.leanY = 0.05 * wave * env;
+        overlay.armLiftR = 0.46 * wave * env;
+        overlay.forearmR = 0.42 * wave * env;
+        overlay.headZ = 0.12 * wave * env;
+        overlay.headX = -0.06 * wave * env;
+        overlay.leanY = 0.04 * wave * env;
+        break;
+      case "cross":
+        overlay.armLiftL = 0.24 * wave * env;
+        overlay.armLiftR = 0.22 * wave * env;
+        overlay.forearmL = 0.34 * wave * env;
+        overlay.forearmR = 0.32 * wave * env;
+        overlay.headZ = 0.05 * wave * env;
+        overlay.spineX = 0.02 * wave * env;
         break;
       case "shift":
         overlay.hipZ = Math.sin(p * Math.PI) * 0.02 * env;
@@ -226,13 +237,6 @@ export function advanceIdleBeat(state, dt, nowMs) {
         overlay.spineX = 0.028 * wave * env;
         overlay.armLiftL = wave * 0.05 * env;
         overlay.forearmL = wave * 0.06 * env;
-        break;
-      case "fidget":
-        overlay.armLiftL = wave * 0.12 * env;
-        overlay.armLiftR = wave * 0.08 * env;
-        overlay.forearmL = wave * 0.12 * env;
-        overlay.forearmR = wave * 0.08 * env;
-        overlay.headZ = Math.sin(p * Math.PI * 2) * 0.038 * env;
         break;
       case "breathe":
         overlay.spineX = 0.055 * wave * env;
@@ -280,14 +284,32 @@ export function createIdleBeatState(nowMs = performance.now()) {
 }
 
 const IDLE_BEAT_DURATION_SEC = {
-  nod: 0.95,
   look: 1.45,
-  comb: 2.1,
+  comb: 2.0,
+  cross: 1.85,
   shift: 1.75,
-  fidget: 1.35,
   breathe: 2.2,
   sway: 1.65,
 };
+
+/**
+ * @param {number} tick
+ * @returns {string}
+ */
+export function pickProceduralIdleBeat(tick = 0) {
+  const pool = PROCEDURAL_IDLE_BEAT_POOL;
+  const idx = Math.abs(Math.floor(Number(tick) || 0)) % pool.length;
+  return pool[idx] || "look";
+}
+
+/**
+ * @param {string | null | undefined} beat
+ * @returns {number}
+ */
+export function idleBeatDurationSec(beat) {
+  const key = String(beat || "look");
+  return IDLE_BEAT_DURATION_SEC[key] || 1.4;
+}
 
 /**
  * Force an idle life beat (look / comb / breathe) from wait-act ticks.
