@@ -1,15 +1,22 @@
 import { describe, expect, it } from "vitest";
 import {
+  blendVisemeWithAudioLevel,
   buildLipSyncTimeline,
+  buildLipSyncTimelineCached,
   charToViseme,
+  estimateLipSyncMsPerChar,
   visemeAtAudioProgress,
+  visemeAtTimelineProgress,
 } from "../engine/companion/companionViseme.js";
 
 describe("companionViseme", () => {
-  it("maps vowels and CJK to viseme shapes", () => {
+  it("maps vowels and CJK interjections to viseme shapes", () => {
     expect(charToViseme("a")).toEqual({ shape: "aa", open: 0.82 });
     expect(charToViseme("i").shape).toBe("ih");
-    expect(charToViseme("你").shape).toMatch(/^(aa|ih|oh|ou|ee)$/);
+    expect(charToViseme("啊").shape).toBe("aa");
+    expect(charToViseme("嗯").open).toBeLessThan(0.3);
+    expect(charToViseme("好").shape).toBe("ou");
+    expect(charToViseme("你").shape).toBe("ee");
   });
 
   it("builds a monotonic lip sync timeline", () => {
@@ -19,11 +26,36 @@ describe("companionViseme", () => {
     expect(starts.every((s, i) => i === 0 || s >= starts[i - 1])).toBe(true);
   });
 
+  it("caches lip sync timelines per utterance", () => {
+    const a = buildLipSyncTimelineCached("你好呀");
+    const b = buildLipSyncTimelineCached("你好呀");
+    expect(a).toBe(b);
+  });
+
   it("walks visemes across audio progress", () => {
     const mid = visemeAtAudioProgress("aeiou", 0.5, 0.4);
     expect(mid.shape).toBeTruthy();
     expect(mid.open).toBeGreaterThan(0.1);
     const end = visemeAtAudioProgress("aeiou", 1, 0);
     expect(end.open).toBeLessThan(0.2);
+  });
+
+  it("boosts jaw openness from audio RMS", () => {
+    const quiet = blendVisemeWithAudioLevel({ shape: "aa", open: 0.5 }, 0);
+    const loud = blendVisemeWithAudioLevel({ shape: "aa", open: 0.5 }, 0.8);
+    expect(loud.open).toBeGreaterThan(quiet.open);
+  });
+
+  it("slows lip sync estimate when talk speed is lower", () => {
+    const normal = estimateLipSyncMsPerChar("你好", 0, 1);
+    const slow = estimateLipSyncMsPerChar("你好", 0, 0.45);
+    expect(slow).toBeGreaterThan(normal);
+  });
+
+  it("uses cached timeline for progress sampling", () => {
+    const timeline = buildLipSyncTimelineCached("啊哦嗯");
+    const sample = visemeAtTimelineProgress(timeline, 0.2, 0.5);
+    expect(sample.char).toBeTruthy();
+    expect(sample.open).toBeGreaterThan(0.1);
   });
 });

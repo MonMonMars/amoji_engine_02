@@ -18,6 +18,7 @@ describe("companionTtsProsody", () => {
     const neutral = resolveCompanionTtsProsody({
       emotion: "neutral",
       text: "你好。",
+      speedMultiplier: 1,
     });
     const happy = resolveCompanionTtsProsody({
       emotion: "happy",
@@ -25,6 +26,7 @@ describe("companionTtsProsody", () => {
       talkStyle: "celebrate",
       speechEnergy: 0.85,
       text: "哇！真係好開心呀！",
+      speedMultiplier: 1,
     });
     const neutralRate = Number(neutral.edge.rate.replace(/[^0-9-]/g, ""));
     const happyRate = Number(happy.edge.rate.replace(/[^0-9-]/g, ""));
@@ -154,7 +156,7 @@ describe("companionTtsProsody", () => {
     expect(body.emotion).toBe("happy");
     expect(body.instructions).toContain("Voice Affect:");
     expect(body.instructions).toMatch(/Speak at |慢速講|0\.\d+x/);
-    expect(body.speedMultiplier).toBe(0.5);
+    expect(body.speedMultiplier).toBe(0.45);
     expect(body.speed).toBeLessThan(0.75);
   });
 
@@ -198,10 +200,12 @@ describe("companionTtsProsody", () => {
       ...happy,
       text: happy.text,
       characterId: "amoji",
+      speedMultiplier: 1,
     });
     const sadProsody = resolveCompanionTtsProsody({
       ...sad,
       text: sad.text,
+      speedMultiplier: 1,
     });
     expect(happyProsody.browser.rate).toBeGreaterThan(sadProsody.browser.rate);
     expect(happyProsody.speed).toBeGreaterThan(sadProsody.speed);

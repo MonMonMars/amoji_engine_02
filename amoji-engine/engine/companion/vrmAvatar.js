@@ -698,21 +698,39 @@ export async function createVrmAvatar(opts) {
     return nuance;
   };
 
+  let expressionSnapBoost = 0;
+
   const applyExpressionProfile = ({
     emotion: em = "neutral",
     nuance = "none",
     blend: blendOverride,
+    snapStrength = 0,
   } = {}) => {
     emotion = bodyMotion.setEmotion(em);
     bodyMotion.setContentNuance(nuance);
     const blend = blendOverride || buildVrmExpressionBlend(em, nuance);
     setExpressionTargetFromBlend(blend);
+    const snap = Math.max(0, Math.min(1, Number(snapStrength) || 0));
+    if (snap > 0.35) {
+      expressionSnapBoost = Math.max(expressionSnapBoost, snap);
+      if (talking && expr) {
+        const pull = Math.min(1, 0.42 + snap * 0.58);
+        for (const preset of emotionPresetKeys()) {
+          const target = expressionTarget[preset] ?? 0;
+          const current = expressionCurrent[preset] ?? 0;
+          expressionCurrent[preset] = current + (target - current) * pull;
+        }
+      }
+    }
     return { emotion: em, nuance, blend };
   };
 
   const tickExpressionBlend = (dt) => {
     if (!expr) return;
-    const rate = Math.min(1, dt * (talking ? 36 : 16));
+    const snap = expressionSnapBoost;
+    expressionSnapBoost = Math.max(0, expressionSnapBoost - dt * 3.6);
+    const talkRate = talking ? 42 + snap * 48 : 16;
+    const rate = Math.min(1, dt * talkRate);
     for (const preset of emotionPresetKeys()) {
       if (talking || eating) {
         expressionTarget[preset] = capTalkingEmotionWeight(
@@ -1066,6 +1084,7 @@ export async function createVrmAvatar(opts) {
     }
     if (mouthTarget > 0.2 && (talking || eating)) {
       mouthOpen = Math.max(mouthOpen, mouthTarget * 0.82);
+      mouthOpen += (mouthTarget - mouthOpen) * 0.62;
     }
     return mouthTarget;
   };
@@ -1177,7 +1196,7 @@ export async function createVrmAvatar(opts) {
       }
     }
 
-    mouthOpen += (mouthTarget - mouthOpen) * Math.min(1, dt * (talking || eating ? 36 : 22));
+    mouthOpen += (mouthTarget - mouthOpen) * Math.min(1, dt * (talking || eating ? 52 : 22));
     if (!talking && !eating && mouthOpen < 0.04) mouthOpen = 0;
     if (talking && mouthOpen < 0.12) {
       mouthOpen = Math.max(mouthOpen, sampleTalkMouthPulse(now, true) * 0.7);
