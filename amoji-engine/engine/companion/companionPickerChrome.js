@@ -49,6 +49,9 @@ export function pickerCopy(isEnglish = false) {
       : "隨時切換 — 每位同伴嘅對話記錄分開保存。",
     starting: en ? "Starting…" : "開始中…",
     waiting: en ? "Almost ready…" : "快好喇…",
+    emptyResults: en
+      ? "No companions match — try another filter or search."
+      : "搵唔到同伴 — 試吓其他篩選或搜尋。",
   };
 }
 
@@ -148,9 +151,20 @@ export function updatePickerHero(root, item, isEnglish = false) {
   hero.style.setProperty("--hero-accent", accent);
   if (img) {
     if (item?.previewImage) {
-      img.src = item.previewImage;
+      const nextSrc = item.previewImage;
+      const currentSrc = img.getAttribute("src") || "";
+      if (currentSrc !== nextSrc) {
+        hero.classList.add("is-updating");
+        img.addEventListener(
+          "load",
+          () => hero.classList.remove("is-updating"),
+          { once: true },
+        );
+        img.src = nextSrc;
+      }
       img.alt = item?.name || "";
     } else {
+      hero.classList.remove("is-updating");
       img.removeAttribute("src");
       img.alt = "";
     }
@@ -225,6 +239,7 @@ export const PICKER_FEATURED_ROW_HTML = `
  *   getSelectedId: () => string,
  *   setSelectedId: (id: string) => void,
  *   onSelect?: (id: string) => void,
+ *   onConfirm?: () => void,
  *   disabled?: () => boolean,
  * }} opts
  * @returns {() => void} cleanup
@@ -284,6 +299,17 @@ export function wirePickerRosterKeyboard(gridEl, opts) {
       case "End":
         ev.preventDefault();
         selectIndex(list.length - 1);
+        break;
+      case "Enter":
+        if (
+          opts.onConfirm &&
+          !ev.target.closest(".picker-search") &&
+          !ev.target.closest(".picker-begin-btn") &&
+          !ev.target.closest(".picker-switch-btn")
+        ) {
+          ev.preventDefault();
+          opts.onConfirm();
+        }
         break;
       default:
         break;

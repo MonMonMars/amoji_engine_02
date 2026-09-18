@@ -126,4 +126,32 @@ describe("companionPickerChrome", () => {
     const byNum = filterPickerCharacters(list, { query: "2" });
     expect(byNum.some((c) => c.id === "kizuna")).toBe(true);
   });
+
+  it("provides empty-results copy", () => {
+    expect(pickerCopy(true).emptyResults).toMatch(/No companions/i);
+    expect(pickerCopy(false).emptyResults).toMatch(/搵唔到/);
+    expect(filterPickerCharacters(list, { query: "zzznomatch" })).toHaveLength(0);
+  });
+
+  it("enter on roster confirms when handler is wired", () => {
+    if (typeof document === "undefined") return;
+    const grid = document.createElement("div");
+    grid.innerHTML = `<button class="companion-card" data-character-id="nova"></button>`;
+    document.body.appendChild(grid);
+    let confirmed = false;
+    wirePickerRosterKeyboard(grid, {
+      getSelectedId: () => "nova",
+      setSelectedId: () => {},
+      onConfirm: () => {
+        confirmed = true;
+      },
+    });
+    const card = grid.querySelector(".companion-card");
+    card?.focus();
+    card?.dispatchEvent(
+      new KeyboardEvent("keydown", { key: "Enter", bubbles: true }),
+    );
+    expect(confirmed).toBe(true);
+    grid.remove();
+  });
 });

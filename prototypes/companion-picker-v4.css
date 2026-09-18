@@ -160,6 +160,32 @@
   opacity: 0.35;
 }
 
+.companion-picker--v4 .picker-hero.is-updating .picker-hero-portrait img {
+  opacity: 0.55;
+  transform: scale(0.98);
+  transition:
+    opacity 0.22s ease,
+    transform 0.22s ease;
+}
+
+.companion-picker--v4 .picker-hero-portrait img {
+  transition:
+    opacity 0.28s ease,
+    transform 0.28s ease;
+}
+
+.companion-picker--v4 .picker-empty {
+  margin: 0.5rem 0 0.75rem;
+  padding: 1rem 0.75rem;
+  text-align: center;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: rgba(228, 220, 255, 0.58);
+  border: 1px dashed rgba(255, 255, 255, 0.12);
+  border-radius: 0.85rem;
+  background: rgba(255, 255, 255, 0.02);
+}
+
 /* —— Featured quick-pick row —— */
 .companion-picker--v4 .picker-featured-wrap {
   flex-shrink: 0;
