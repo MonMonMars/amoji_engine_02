@@ -2,7 +2,7 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "version": 2,
   "name": "amoji-companion",
-  "installCommand": "npm install && cd amoji-engine && npm install",
+  "installCommand": "npm install && cd amoji-engine && npm install && node scripts/download-legal-vrm.mjs",
   "rewrites": [
     { "source": "/api/chat", "destination": "/api/chat" },
     { "source": "/api/search", "destination": "/api/search" },

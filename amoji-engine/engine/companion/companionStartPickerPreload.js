@@ -2,8 +2,13 @@
  * Start-picker roster + selected companion model preload with live progress.
  */
 import { characterAvatarConfig } from "./companionCharacterCatalog.js";
+import { characterModelFetchUrl } from "./companionModelAssets.mjs";
 import { startCharacterPreviewPreload } from "./companionCharacterPreload.js";
-import { getPreloadedVrmPromise, preloadVrmBuffer } from "./companionPreload.js";
+import {
+  getPreloadedVrmPromise,
+  preloadVrmBuffer,
+  releaseVrmPreloadExcept,
+} from "./companionPreload.js";
 
 export const COMPANION_START_PICKER_PRELOAD_SCHEMA =
   "amoji.companionStartPickerPreload.v1";
@@ -66,8 +71,10 @@ export function attachStartPickerModelPreload(picker, opts = {}) {
 
   const loadSelectedModel = async (characterId) => {
     const job = ++modelJob;
-    const config = characterAvatarConfig(String(characterId || "nova").toLowerCase(), langCode);
+    const id = String(characterId || "nova").toLowerCase();
+    const config = characterAvatarConfig(id, langCode);
     const url = String(config.modelUrl || "").trim();
+    const fetchUrl = characterModelFetchUrl(id, langCode);
     if (!url || !/\.(vrm|glb)($|\?)/i.test(url)) {
       if (job !== modelJob) return;
       apply(100, readyLabel);
@@ -75,7 +82,9 @@ export function attachStartPickerModelPreload(picker, opts = {}) {
       return;
     }
 
-    const cached = getPreloadedVrmPromise(url);
+    releaseVrmPreloadExcept(url);
+
+    const cached = getPreloadedVrmPromise(fetchUrl);
     if (cached) {
       try {
         await cached;
@@ -84,13 +93,13 @@ export function attachStartPickerModelPreload(picker, opts = {}) {
         setPreloading(false);
         return;
       } catch {
-        /* refetch below */
+        releaseVrmPreload(url);
       }
     }
 
     apply(PICKER_PREVIEW_PROGRESS_MAX, modelLabel(PICKER_PREVIEW_PROGRESS_MAX));
     try {
-      await preloadVrmBuffer(url, fetchImpl);
+      await preloadVrmBuffer(fetchUrl, fetchImpl);
       if (job !== modelJob) return;
       apply(100, readyLabel);
     } catch {

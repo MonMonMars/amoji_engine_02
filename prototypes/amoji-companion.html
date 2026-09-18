@@ -8,9 +8,9 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji · Companion</title>
     <script>
-      window.__amojiBuild = "2026-09-18-v253-model-download-bar";
+      window.__amojiBuild = "2026-09-18-v254-model-cache-roster";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-18-v253-model-download-bar"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-18-v254-model-cache-roster"></script>
     <link
       rel="prefetch"
       href="/prototypes/assets/companion-char-nova.png"
@@ -592,13 +592,13 @@
       media="print"
       onload="this.media='all'"
     />
-    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-18-v253-model-download-bar" />
-    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-18-v253-model-download-bar" />
-    <link rel="stylesheet" href="/prototypes/companion-mic-button.css?v=2026-09-18-v253-model-download-bar" />
-    <link rel="stylesheet" href="/prototypes/companion-minimal-ui.css?v=2026-09-18-v253-model-download-bar" />
-    <link rel="stylesheet" href="/prototypes/companion-picker-v4.css?v=2026-09-18-v253-model-download-bar" />
+    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-18-v254-model-cache-roster" />
+    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-18-v254-model-cache-roster" />
+    <link rel="stylesheet" href="/prototypes/companion-mic-button.css?v=2026-09-18-v254-model-cache-roster" />
+    <link rel="stylesheet" href="/prototypes/companion-minimal-ui.css?v=2026-09-18-v254-model-cache-roster" />
+    <link rel="stylesheet" href="/prototypes/companion-picker-v4.css?v=2026-09-18-v254-model-cache-roster" />
     <script type="module">
-      import { bootEarlyStartPicker } from "/amoji-engine/engine/companion/companionEarlyStartPicker.js?v=2026-09-18-v253-model-download-bar";
+      import { bootEarlyStartPicker } from "/amoji-engine/engine/companion/companionEarlyStartPicker.js?v=2026-09-18-v254-model-cache-roster";
       const bootParams = new URLSearchParams(location.search);
       if (bootParams.get("autostart") !== "1" && bootParams.get("pick") !== "0") {
         globalThis.__amojiEarlyStartPickerPromise = bootEarlyStartPicker({
@@ -4280,19 +4280,19 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-18-v253-model-download-bar",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-18-v254-model-cache-roster",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-18-v253-model-download-bar",
-          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-18-v253-model-download-bar"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-18-v254-model-cache-roster",
+          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-18-v254-model-cache-roster"
         }
       }
     </script>
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-18-v253-model-download-bar"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-18-v254-model-cache-roster"
     />
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-18-v253-model-download-bar"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-18-v253-model-download-bar"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-18-v254-model-cache-roster"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-18-v254-model-cache-roster"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;
@@ -4948,6 +4948,7 @@
       const {
         buildCharacterSystemPrompt,
         characterAvatarConfig,
+        characterModelFetchUrl,
         characterDisplayName,
         characterGreeting,
         characterGreetingPerformance,
@@ -5896,9 +5897,13 @@
         const loadForCharacterId = characterId;
         const loadEpoch = ++avatarEpoch;
         const loadConfig = characterAvatarConfig(loadForCharacterId, langCode);
-        const modelUrlForLoad = loadConfig.modelUrl;
+        const modelUrlForLoad = characterModelFetchUrl(
+          loadForCharacterId,
+          langCode,
+        );
         const preferForLoad = loadConfig.avatarPrefer === "gltf" ? "gltf" : "vrm";
-        avatarModelUrl = modelUrlForLoad;
+        releaseUnselectedCharacterCache(loadForCharacterId);
+        avatarModelUrl = loadConfig.modelUrl;
         avatarPrefer = preferForLoad;
         globalThis.__amojiPreload?.startHeavy?.({
           modelUrl: modelUrlForLoad,
@@ -7006,6 +7011,7 @@
         persistCharacterId(characterId);
         const nextConfig = characterAvatarConfig(characterId, langCode);
         charConfig = nextConfig;
+        releaseUnselectedCharacterCache(characterId);
         avatarModelUrl = nextConfig.modelUrl;
         avatarPrefer = nextConfig.avatarPrefer === "gltf" ? "gltf" : "vrm";
         syncCharacterVoice();

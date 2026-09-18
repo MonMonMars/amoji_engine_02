@@ -8,6 +8,8 @@ import {
   characterTapLines,
   persistCharacterId,
 } from "./companionCharacterCatalog.js";
+import { characterModelFetchUrl } from "./companionModelAssets.mjs";
+import { releaseVrmPreloadExcept } from "./companionPreload.js";
 
 export const COMPANION_CHARACTER_SWITCH_SCHEMA =
   "amoji.companionCharacterSwitch.v1";
@@ -39,6 +41,8 @@ export async function switchCompanionCharacter(opts) {
   } = opts;
   const isEnglish = langCode === "en";
   const config = characterAvatarConfig(characterId, langCode);
+  const modelFetchUrl = characterModelFetchUrl(characterId, langCode);
+  releaseVrmPreloadExcept(config.modelUrl);
 
   const emit = (pct, label) => onProgress?.(pct, label);
 
@@ -53,7 +57,7 @@ export async function switchCompanionCharacter(opts) {
     canvas: freshCanvas,
     controlsElement,
     characterId,
-    modelUrl: config.modelUrl,
+    modelUrl: modelFetchUrl,
     prefer: config.avatarPrefer,
     onCharacterTap,
     onProgress: (pct, _label) => {

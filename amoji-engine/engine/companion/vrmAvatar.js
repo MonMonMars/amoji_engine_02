@@ -149,7 +149,10 @@ const VRM_BLEND_PRESET_MAP = {
 async function loadVrmGltf(loader, modelUrl, onProgress) {
   // Only use a prefetch buffer for the exact model URL — never fall back to the
   // default boot preload (companion-girl.vrm) or the wrong character appears.
-  const preload = globalThis.__amojiPreload?.getVrm?.(modelUrl) ?? null;
+  const preload =
+    globalThis.__amojiPreload?.getVrm?.(modelUrl) ??
+    globalThis.__amojiPreload?.getVrm?.(modelUrl.split("?")[0]) ??
+    null;
   if (preload) {
     try {
       const buffer = await preload;
