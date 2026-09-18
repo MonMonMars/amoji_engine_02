@@ -1,0 +1,173 @@
+/**
+ * Minimal companion chrome — mic + text field + menu only.
+ * Secondary controls live in the settings sheet; no topbar overlap with chat.
+ */
+
+body.companion-minimal-chrome .topbar {
+  display: none !important;
+}
+
+body.companion-minimal-chrome .chat-shell {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 0.55rem;
+  max-height: min(46vh, 380px);
+  padding-bottom: 0;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    transparent 42%,
+    rgba(3, 3, 10, 0.18) 58%,
+    rgba(2, 2, 8, 0.72) 82%,
+    rgba(2, 2, 8, 0.9) 100%
+  );
+}
+
+body.companion-minimal-chrome .chat-column {
+  width: min(680px, calc(100% - 1.5rem));
+  margin: 0 auto;
+  padding: 0 0.75rem;
+  max-height: min(34vh, 260px);
+  min-height: 0;
+  overflow: hidden;
+}
+
+body.companion-minimal-chrome .transcript {
+  max-height: min(34vh, 260px);
+  padding: 0.25rem 0.1rem 0.65rem;
+  mask-image: linear-gradient(180deg, transparent 0%, #000 16%, #000 88%, transparent 100%);
+  -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 16%, #000 88%, transparent 100%);
+}
+
+body.companion-minimal-chrome.chat-panel-hidden .chat-column {
+  display: none;
+}
+
+body.companion-minimal-chrome .composer-wrap {
+  width: min(680px, calc(100% - 1.5rem));
+  margin: 0 auto;
+  padding: 0 0.75rem max(0.85rem, env(safe-area-inset-bottom));
+  background: none;
+}
+
+body.companion-minimal-chrome .composer.composer-pro {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.42rem 0.5rem 0.42rem 0.42rem;
+  border-radius: 1.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(8, 6, 18, 0.78);
+  box-shadow:
+    0 0 0 1px rgba(139, 124, 248, 0.1) inset,
+    0 16px 40px rgba(0, 0, 0, 0.42),
+    0 0 32px rgba(139, 124, 248, 0.06);
+  backdrop-filter: blur(22px);
+  -webkit-backdrop-filter: blur(22px);
+}
+
+body.companion-minimal-chrome .composer-field {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+}
+
+body.companion-minimal-chrome .composer-field textarea {
+  width: 100%;
+  min-height: 2.35rem;
+  max-height: 5.5rem;
+  padding: 0.55rem 0.35rem;
+  border: none;
+  background: transparent;
+  color: var(--ink, #f4f0ff);
+  font-size: 1rem;
+  line-height: 1.35;
+  resize: none;
+  outline: none;
+}
+
+body.companion-minimal-chrome .composer-field textarea::placeholder {
+  color: rgba(228, 220, 255, 0.42);
+}
+
+body.companion-minimal-chrome .composer .send {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+body.companion-minimal-chrome .composer-settings-btn {
+  flex-shrink: 0;
+  width: 2.55rem;
+  height: 2.55rem;
+  padding: 0;
+  line-height: 0;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(244, 240, 255, 0.88);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    border-color 0.18s ease,
+    background 0.18s ease,
+    transform 0.15s ease;
+}
+
+body.companion-minimal-chrome .composer-settings-btn:hover,
+body.companion-minimal-chrome .composer-settings-btn:focus-visible {
+  border-color: rgba(139, 124, 248, 0.48);
+  background: rgba(139, 124, 248, 0.14);
+  transform: translateY(-1px);
+}
+
+body.companion-minimal-chrome .composer #btn-mic {
+  width: 3.5rem;
+  height: 3.5rem;
+  flex-shrink: 0;
+}
+
+body.companion-minimal-chrome.conversation-ui.composer-always-visible .composer #btn-mic,
+body.companion-minimal-chrome.conversation-ui.composer-always-visible .stage.mic-mode #btn-mic {
+  width: 3.5rem;
+  height: 3.5rem;
+}
+
+body.companion-minimal-chrome .settings {
+  border-radius: 1.35rem 1.35rem 0 0;
+}
+
+body.companion-minimal-chrome .settings-head {
+  margin-bottom: 0.35rem;
+}
+
+body.companion-minimal-chrome .settings .btn-secondary {
+  width: 100%;
+  text-align: left;
+  justify-content: flex-start;
+}
+
+@media (max-width: 640px) {
+  body.companion-minimal-chrome .chat-column {
+    padding-top: 0;
+    max-height: min(32vh, 220px);
+  }
+
+  body.companion-minimal-chrome .transcript {
+    max-height: min(32vh, 220px);
+  }
+
+  body.companion-minimal-chrome .chat-shell {
+    max-height: min(42vh, 340px);
+  }
+}

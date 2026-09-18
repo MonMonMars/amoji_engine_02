@@ -450,6 +450,21 @@ body.conversation-ui.composer-always-visible.theme-grok-ani .composer #btn-mic {
   height: 4.35rem;
 }
 
+body.companion-minimal-chrome.theme-grok-ani .composer.composer-pro {
+  border-color: rgba(255, 255, 255, 0.13);
+  background: rgba(8, 6, 18, 0.82);
+}
+
+body.companion-minimal-chrome.theme-grok-ani .composer-settings-btn {
+  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(139, 124, 248, 0.1);
+  color: #e9e4ff;
+}
+
+body.companion-minimal-chrome.theme-grok-ani .bubble.assistant {
+  max-width: min(92%, 520px);
+}
+
 body.conversation-ui.theme-grok-ani .companion-chip__dot,
 body.conversation-ui.theme-grok-ani .companion-chip__dot--legacy {
   display: none !important;
