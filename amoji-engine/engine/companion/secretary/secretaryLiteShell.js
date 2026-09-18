@@ -21,12 +21,21 @@ import {
   togglePriority,
 } from "./prioritiesStore.js";
 import { createCompanionActivityRail } from "../companionActivityRail.js";
+import { createCompanionMicButton } from "../companionMicButton.js";
 import {
   closeUiOverlay,
   initCompanionUiEffects,
   openUiOverlay,
   switchUiTabPanel,
 } from "../companionUiEffects.js";
+import { createCompanionUiAudio } from "../companionUiAudio.js";
+import { spawnUiRingBurst } from "../companionUiParticles.js";
+import {
+  applyUiSettingsToAudio,
+  formatSfxVolumeLabel,
+  loadUiSettings,
+  saveUiSettings,
+} from "../companionUiSettings.js";
 import {
   applyUiIntents,
   buildUiIntentPromptFragment,
@@ -81,7 +90,23 @@ export function initAmojiSecretaryLite(doc = document) {
   /** Secretary lite is always chat/voice-driven — no manual chrome. */
   const conversationUi = true;
   doc.body.classList.add("conversation-ui");
-  initCompanionUiEffects(doc);
+  const storage = globalThis.localStorage ?? null;
+  const uiSettings = loadUiSettings(storage);
+  if (doc.defaultView?.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches) {
+    uiSettings.reducedMotion = true;
+  }
+  const uiAudio = createCompanionUiAudio({
+    volume: uiSettings.sfxVolume,
+    haptics: uiSettings.haptics,
+    reducedMotion: uiSettings.reducedMotion,
+  });
+  applyUiSettingsToAudio(uiAudio, uiSettings);
+  initCompanionUiEffects(doc, {
+    audio: uiAudio,
+    reducedMotion: uiSettings.reducedMotion,
+  });
+  globalThis.__amojiUiAudio = uiAudio;
+  globalThis.__amojiUiSettings = uiSettings;
   const secretaryCharacterId = "rose";
   let voiceId = resolveVoiceForCharacter(secretaryCharacterId, langCode);
   if (params.has("voice")) {
@@ -100,7 +125,6 @@ export function initAmojiSecretaryLite(doc = document) {
     !globalThis.location.hostname.startsWith("192.168.") &&
     !globalThis.location.hostname.endsWith(".local");
 
-  const storage = globalThis.localStorage ?? null;
   let mode = readSecretaryMode(storage);
   let taskFilter = "all";
   let speakerOn = true;
@@ -178,6 +202,8 @@ export function initAmojiSecretaryLite(doc = document) {
         setupSpeakerOn: "Speaker: on",
         setupSpeakerOff: "Speaker: off",
         setup3d: "3D companion",
+        setupSound: "Sound effects",
+        setupHaptics: "Haptic feedback",
         panelMeHint: "Open Setup from the header for language, voice, and preferences.",
       }
     : {
@@ -246,6 +272,8 @@ export function initAmojiSecretaryLite(doc = document) {
         setupSpeakerOn: "喇叭：開",
         setupSpeakerOff: "喇叭：關",
         setup3d: "3D 同伴",
+        setupSound: "介面音效",
+        setupHaptics: "觸感回饋",
         panelMeHint: "喺頂部按「設定」可以改語言、語音同偏好。",
       };
 
@@ -292,7 +320,30 @@ export function initAmojiSecretaryLite(doc = document) {
     setupBtnVoice: doc.getElementById("setup-btn-voice"),
     setupLink3d: doc.getElementById("setup-link-3d"),
     setupBtnSpeaker: doc.getElementById("setup-btn-speaker"),
+    setupSfxVolume: doc.getElementById("setup-sfx-volume"),
+    setupSfxVolumeLabel: doc.getElementById("setup-sfx-volume-label"),
+    setupHaptics: doc.getElementById("setup-haptics"),
+    setupSoundTitle: doc.getElementById("setup-sound-title"),
+    setupHapticsLabel: doc.getElementById("setup-haptics-label"),
   };
+
+  /** @type {ReturnType<typeof createCompanionMicButton> | null} */
+  let micUi = null;
+  if (els.mic) {
+    els.mic.classList.add("mic-btn");
+    els.mic.textContent = "";
+    micUi = createCompanionMicButton(els.mic, { emotion: "neutral", nuance: "none" });
+    micUi.setOnStateChange?.((from, to) => {
+      if (from === "idle" && (to === "listening" || to === "speaking")) {
+        uiAudio?.play?.("mic-on");
+        uiAudio?.haptic?.("medium");
+        spawnUiRingBurst(els.mic, { hue: 258 });
+      } else if (to === "idle" && (from === "listening" || from === "speaking")) {
+        uiAudio?.play?.("mic-off");
+        uiAudio?.haptic?.("light");
+      }
+    });
+  }
 
   function setStatus(text) {
     if (els.status) els.status.textContent = text || "";
@@ -1031,6 +1082,8 @@ export function initAmojiSecretaryLite(doc = document) {
       tabs: els.tabs,
       nextId: tabId,
     });
+    uiAudio?.play?.("page");
+    uiAudio?.haptic?.("light");
     if (tabId === "today") renderToday();
     if (tabId === "tasks") {
       renderTaskFilters();
@@ -1044,6 +1097,7 @@ export function initAmojiSecretaryLite(doc = document) {
 
   function openSetup() {
     if (!els.setup) return;
+    uiAudio?.unlock?.();
     renderPrefs();
     renderMemory();
     syncSetupChrome();
@@ -1123,6 +1177,7 @@ export function initAmojiSecretaryLite(doc = document) {
       onState: (on) => {
         micOn = on;
         els.mic?.classList.toggle("active", on);
+        micUi?.sync?.({ micOn: on, speaking: busy, disabled: false });
         const listenHint = doc.getElementById("listen-hint");
         listenHint?.classList.toggle("mic-active", on);
         if (listenHint) {
@@ -1187,6 +1242,24 @@ export function initAmojiSecretaryLite(doc = document) {
       });
     }
     syncSetupSpeakerBtn();
+    syncUiSettingsControls();
+  }
+
+  function syncUiSettingsControls() {
+    const pct = Math.round((uiSettings.sfxVolume ?? 0.42) * 100);
+    if (els.setupSfxVolume) els.setupSfxVolume.value = String(pct);
+    if (els.setupSfxVolumeLabel) {
+      els.setupSfxVolumeLabel.textContent = formatSfxVolumeLabel(pct, isEn);
+    }
+    if (els.setupHaptics) els.setupHaptics.checked = uiSettings.haptics !== false;
+    if (els.setupSoundTitle) els.setupSoundTitle.textContent = strings.setupSound;
+    if (els.setupHapticsLabel) els.setupHapticsLabel.textContent = strings.setupHaptics;
+  }
+
+  function persistUiSettings() {
+    saveUiSettings(uiSettings, storage);
+    applyUiSettingsToAudio(uiAudio, uiSettings);
+    globalThis.__amojiUiSettings = uiSettings;
   }
 
   function wireSetup() {
@@ -1204,11 +1277,30 @@ export function initAmojiSecretaryLite(doc = document) {
     els.setupBtnSpeaker?.addEventListener("click", () => {
       speakerOn = !speakerOn;
       els.speaker?.classList.toggle("off", !speakerOn);
+      uiAudio?.play?.(speakerOn ? "toggle-on" : "toggle-off");
+      uiAudio?.haptic?.("light");
       syncSetupSpeakerBtn();
       if (!speakerOn) {
         audioEl.pause();
         audioEl.src = "";
       }
+    });
+    els.setupSfxVolume?.addEventListener("input", () => {
+      const pct = Math.max(0, Math.min(100, Number(els.setupSfxVolume?.value) || 0));
+      uiSettings.sfxVolume = pct / 100;
+      if (els.setupSfxVolumeLabel) {
+        els.setupSfxVolumeLabel.textContent = formatSfxVolumeLabel(pct, isEn);
+      }
+      uiAudio?.setVolume?.(uiSettings.sfxVolume);
+      uiAudio?.play?.("tap");
+      persistUiSettings();
+    });
+    els.setupHaptics?.addEventListener("change", () => {
+      uiSettings.haptics = Boolean(els.setupHaptics?.checked);
+      uiAudio?.setHaptics?.(uiSettings.haptics);
+      if (uiSettings.haptics) uiAudio?.haptic?.("light");
+      uiAudio?.play?.("toggle-on");
+      persistUiSettings();
     });
     doc.addEventListener("keydown", (ev) => {
       if (ev.key === "Escape" && els.setup?.classList.contains("open")) {
@@ -1227,11 +1319,16 @@ export function initAmojiSecretaryLite(doc = document) {
     });
     els.composer?.addEventListener("submit", (e) => {
       e.preventDefault();
+      uiAudio?.unlock?.();
+      uiAudio?.play?.("send");
+      uiAudio?.haptic?.("light");
       void sendMessage(els.input?.value || "");
     });
     els.speaker?.addEventListener("click", () => {
       speakerOn = !speakerOn;
       els.speaker.classList.toggle("off", !speakerOn);
+      uiAudio?.play?.(speakerOn ? "toggle-on" : "toggle-off");
+      uiAudio?.haptic?.("light");
       syncSetupSpeakerBtn();
       if (!speakerOn) {
         audioEl.pause();
@@ -1239,6 +1336,7 @@ export function initAmojiSecretaryLite(doc = document) {
       }
     });
     els.mic?.addEventListener("click", () => {
+      uiAudio?.unlock?.();
       void ensureMicCapture().then((mic) => {
         if (!mic?.supportsMic) {
           showError(strings.errMic);
@@ -1257,6 +1355,8 @@ export function initAmojiSecretaryLite(doc = document) {
       if (!title) return;
       createTask({ title, source: "manual" }, { storage });
       if (els.quickTaskInput) els.quickTaskInput.value = "";
+      uiAudio?.play?.("success");
+      uiAudio?.haptic?.("light");
       renderToday();
       renderTasks();
     });
@@ -1266,6 +1366,8 @@ export function initAmojiSecretaryLite(doc = document) {
       if (!text) return;
       addMemoryFact(text, { storage });
       if (els.memoryInput) els.memoryInput.value = "";
+      uiAudio?.play?.("success");
+      uiAudio?.haptic?.("light");
       renderMemory();
     });
     els.prefMorningBrief?.addEventListener("change", () => {
