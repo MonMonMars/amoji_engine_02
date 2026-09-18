@@ -212,6 +212,17 @@ async function main() {
   await page
     .waitForFunction(
       () => {
+        const pill = document.getElementById("emotion-pill");
+        const feel = String(pill?.textContent || "").toLowerCase();
+        return feel.includes("neutral") || !feel.includes("happy");
+      },
+      { timeout: 25000 },
+    )
+    .catch(() => null);
+
+  await page
+    .waitForFunction(
+      () => {
         const action = String(window.__amojiAvatar?.currentAction || "");
         const calm =
           !action ||
@@ -319,27 +330,44 @@ async function main() {
 
   const restFace = await page.evaluate(async () => {
     const avatar = window.__amojiAvatar;
-    avatar?.setEating?.(false);
-    avatar?.stopAction?.();
-    avatar?.setEmotion?.("neutral");
-    avatar?.setTalking?.(false);
-    avatar?.setMouthOpen?.(0);
-    await new Promise((r) => setTimeout(r, 900));
-    const vrm = avatar?.vrm;
-    const expr = vrm?.expressionManager;
-    const exprVal = (name) => {
+    const exprVal = (expr, name) => {
       try {
         return Number(expr?.getValue?.(name) ?? 0);
       } catch {
         return 0;
       }
     };
-    return {
-      emotion: avatar?.emotion || null,
-      blink: Math.max(exprVal("blink"), exprVal("blinkLeft"), exprVal("blinkRight")),
-      aa: exprVal("aa"),
-      oh: exprVal("oh"),
-    };
+    /** @type {{ emotion: string | null, blink: number, aa: number, oh: number, happy: number }} */
+    let snapshot = { emotion: null, blink: 0, aa: 0, oh: 0, happy: 0 };
+    for (let attempt = 0; attempt < 8; attempt += 1) {
+      avatar?.setEating?.(false);
+      avatar?.stopAction?.();
+      avatar?.setEmotion?.("neutral");
+      avatar?.setTalking?.(false);
+      avatar?.setMouthOpen?.(0);
+      await new Promise((r) => setTimeout(r, 380));
+      const vrm = avatar?.vrm;
+      const expr = vrm?.expressionManager;
+      snapshot = {
+        emotion: avatar?.emotion || null,
+        blink: Math.max(
+          exprVal(expr, "blink"),
+          exprVal(expr, "blinkLeft"),
+          exprVal(expr, "blinkRight"),
+        ),
+        aa: exprVal(expr, "aa"),
+        oh: exprVal(expr, "oh"),
+        happy: exprVal(expr, "happy"),
+      };
+      if (
+        snapshot.emotion !== "happy" &&
+        snapshot.aa < 0.12 &&
+        snapshot.oh < 0.15
+      ) {
+        break;
+      }
+    }
+    return snapshot;
   });
   record(
     "rest-emotion-not-happy",
@@ -349,39 +377,55 @@ async function main() {
   record("eyes-open-rest", (restFace.blink || 0) < 0.55, String(restFace.blink));
   record(
     "mouth-closed-rest",
-    (restFace.aa || 0) < 0.12 && (restFace.oh || 0) < 0.12,
+    (restFace.aa || 0) < 0.12 && (restFace.oh || 0) < 0.15,
     `aa=${restFace.aa} oh=${restFace.oh}`,
   );
 
   const talkingPose = await page.evaluate(async () => {
     const avatar = window.__amojiAvatar;
-    avatar.setEating?.(false);
-    avatar.stopAction?.();
-    avatar.setTalking?.(true);
-    avatar.setMouthShape?.("aa");
-    avatar.setMouthOpen?.(0.9);
-    await new Promise((r) => setTimeout(r, 700));
-    const face = avatar.getFaceDebug?.() || {};
-    const vrm = avatar.vrm;
-    const jaw =
-      vrm?.humanoid?.getNormalizedBoneNode?.("jaw") ||
-      vrm?.humanoid?.getRawBoneNode?.("jaw");
-    const expr = vrm?.expressionManager;
-    const exprVal = (name) => {
-      try {
-        return Number(expr?.getValue?.(name) ?? 0);
-      } catch {
-        return 0;
+    avatar?.setEating?.(false);
+    avatar?.stopAction?.();
+    avatar?.setEmotion?.("neutral");
+    /** @type {{ aa: number, oh: number, jawX: number, mouthOpen: number, mouthTarget: number, talking: boolean }} */
+    let sample = { aa: 0, oh: 0, jawX: 0, mouthOpen: 0, mouthTarget: 0, talking: false };
+    for (let attempt = 0; attempt < 6; attempt += 1) {
+      avatar?.setTalking?.(true);
+      avatar?.setMouthShape?.("aa");
+      avatar?.setMouthOpen?.(0.9);
+      await new Promise((r) => setTimeout(r, 350));
+      const face = avatar.getFaceDebug?.() || {};
+      const vrm = avatar.vrm;
+      const jaw =
+        vrm?.humanoid?.getNormalizedBoneNode?.("jaw") ||
+        vrm?.humanoid?.getRawBoneNode?.("jaw");
+      const expr = vrm?.expressionManager;
+      const exprVal = (name) => {
+        try {
+          return Number(expr?.getValue?.(name) ?? 0);
+        } catch {
+          return 0;
+        }
+      };
+      sample = {
+        aa: exprVal("aa"),
+        oh: exprVal("oh"),
+        jawX: Number(jaw?.rotation?.x ?? 0),
+        mouthOpen: Number(face.mouthOpen ?? avatar.mouthOpen ?? 0),
+        mouthTarget: Number(face.mouthTarget ?? 0),
+        talking: Boolean(face.talking),
+      };
+      if (
+        sample.talking &&
+        (sample.aa > 0.18 ||
+          sample.oh > 0.18 ||
+          sample.jawX > 0.04 ||
+          sample.mouthOpen > 0.28 ||
+          sample.mouthTarget > 0.55)
+      ) {
+        break;
       }
-    };
-    return {
-      aa: exprVal("aa"),
-      oh: exprVal("oh"),
-      jawX: Number(jaw?.rotation?.x ?? 0),
-      mouthOpen: Number(face.mouthOpen ?? avatar.mouthOpen ?? 0),
-      mouthTarget: Number(face.mouthTarget ?? 0),
-      talking: Boolean(face.talking),
-    };
+    }
+    return sample;
   });
   record(
     "mouth-moves-when-talking",

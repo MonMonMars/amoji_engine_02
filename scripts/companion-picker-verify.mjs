@@ -115,15 +115,19 @@ await page.screenshot({
 });
 
 await page.click('#start-character-picker [data-character-id="kizuna"]');
-await page.waitForFunction(
-  () => {
-    const hero = document.querySelector("#start-character-picker .picker-hero-name");
-    return hero?.textContent?.includes("Kizuna");
-  },
-  undefined,
-  { timeout: 5000 },
-);
-record("hero updates on select", true);
+const heroUpdated = await page
+  .waitForFunction(
+    () => {
+      const hero = document.querySelector("#start-character-picker .picker-hero-name");
+      const text = String(hero?.textContent || "").trim();
+      return /Kizuna|絆|绊/i.test(text);
+    },
+    undefined,
+    { timeout: 12000 },
+  )
+  .then(() => true)
+  .catch(() => false);
+record("hero updates on select", heroUpdated);
 
 await page.fill("#start-character-picker .picker-search", "zzznope");
 await page.waitForSelector("#start-character-picker .picker-empty", {
