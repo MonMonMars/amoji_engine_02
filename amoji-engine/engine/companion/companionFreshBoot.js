@@ -2,6 +2,7 @@
  * Fresh-boot helpers — detect newer server builds and cache-bust dynamic imports.
  */
 import { AMOJI_BUILD } from "./buildVersion.mjs";
+import { normalizeUnifiedEntryParams } from "./companionUnifiedApp.js";
 
 export const COMPANION_FRESH_BOOT_SCHEMA = "amoji.companionFreshBoot.v3";
 export const FRESH_BOOT_SESSION_PREFIX = "amoji.freshBoot.v1:";
@@ -169,12 +170,10 @@ export function isVersionedCompanionPath(pathname) {
  * @param {{ build?: string, stamp?: number }} [opts]
  */
 export function buildPlayRedirectLocation(search, opts = {}) {
-  const params = new URLSearchParams(String(search || "").replace(/^\?/, ""));
-  const kind =
-    params.get("kind") === "lite" || params.get("lite") === "1" ? "lite" : "full";
-  params.delete("kind");
-  params.delete("lite");
-  const path = companionOpenPath(kind, opts.stamp);
+  const params = normalizeUnifiedEntryParams(
+    new URLSearchParams(String(search || "").replace(/^\?/, "")),
+  );
+  const path = companionOpenPath("full", opts.stamp);
   const stamp = opts.stamp ?? path.split("/")[2];
   const build = opts.build ?? AMOJI_BUILD;
   params.set("build", build);
@@ -188,18 +187,16 @@ export function buildPlayRedirectLocation(search, opts = {}) {
  * @param {{ build?: string, stamp?: number | string }} [opts]
  */
 export function buildPlayFallbackLocation(search, opts = {}) {
-  const params = new URLSearchParams(String(search || "").replace(/^\?/, ""));
-  const kind =
-    params.get("kind") === "lite" || params.get("lite") === "1" ? "lite" : "full";
-  params.delete("kind");
-  params.delete("lite");
+  const params = normalizeUnifiedEntryParams(
+    new URLSearchParams(String(search || "").replace(/^\?/, "")),
+  );
   const stamp =
     opts.stamp ??
     `${Date.now()}${String(Math.floor(Math.random() * 1000)).padStart(3, "0")}`;
   const build = opts.build ?? AMOJI_BUILD;
   if (build) params.set("build", build);
   params.set("_cb", String(stamp));
-  const path = companionFallbackPath(kind);
+  const path = companionFallbackPath("full");
   const qs = params.toString();
   return qs ? `${path}?${qs}` : path;
 }
@@ -243,7 +240,8 @@ export async function resolvePlayEntryLocation(search, opts = {}) {
  * @param {"full" | "lite"} [kind]
  */
 export function companionFallbackPath(kind = "full") {
-  return kind === "lite" ? "/companion" : "/companion-full";
+  void kind;
+  return "/companion-full";
 }
 
 /**
@@ -322,7 +320,7 @@ export function rewriteCompanionServePath(pathname) {
     /^\/c\/[^/]+\/lite\/?$/i.test(path) ||
     /^\/n\/\d+\/lite\/?$/i.test(path)
   ) {
-    return "/prototypes/amoji-lite.html";
+    return "/prototypes/amoji-companion.html";
   }
   if (path === "/setup") return "/prototypes/amoji-setup.html";
   if (path === "/voice-emotion-demo" || path === "/voice-demo") {

@@ -162,10 +162,33 @@ async function gotoCompanionEntry(page, url, timeout = 90000) {
 
 async function verifySecretary(page, label) {
   await gotoCompanionEntry(page, secretaryUrl);
+  await verifyBootPaint(page, `${label} secretary`);
+
   await page
-    .waitForFunction(() => window.__amojiLite?.ready === true, {
-      timeout: 45000,
+    .waitForFunction(() => window.__amojiModuleBooted === true, {
+      timeout: 120000,
     })
+    .catch(() => null);
+
+  const pickerOpen = await page.evaluate(() => {
+    const picker = document.getElementById("start-character-picker");
+    return Boolean(
+      picker &&
+        !picker.classList.contains("hide") &&
+        picker.getAttribute("aria-hidden") !== "true",
+    );
+  });
+
+  if (pickerOpen) {
+    await beginStartPickerSession(page, {
+      cardTimeout: 90000,
+      dismissTimeout: 120000,
+    });
+    record(`${label} secretary picker begin chat`, true);
+  }
+
+  await page
+    .waitForSelector("#activity-rail", { state: "attached", timeout: 30000 })
     .catch(() => null);
 
   const build = await page.evaluate(() => window.__amojiBuild);
@@ -179,58 +202,37 @@ async function verifySecretary(page, label) {
     !useLocal && !buildMatch,
   );
 
-  const state = await page.evaluate(() => {
-    const tabbar = document.querySelector(".tabbar");
-    const tabStyle = tabbar ? getComputedStyle(tabbar).display : "";
-    return {
-      conversationUi: document.body.classList.contains("conversation-ui"),
-      tabbarHidden: tabStyle === "none",
-      hasActivityRail: !!document.getElementById("activity-rail"),
-      hasComposer: !!document.getElementById("composer"),
-    };
-  });
+  const state = await page.evaluate(() => ({
+    conversationUi: document.body.classList.contains("conversation-ui"),
+    roleSecretary: document.body.classList.contains("companion-role-secretary"),
+    roleGrid: !!document.getElementById("settings-role-grid"),
+    hasActivityRail: !!document.getElementById("activity-rail"),
+    hasCanvas: !!document.getElementById("avatar-canvas"),
+    hasComposer: !!document.getElementById("composer"),
+  }));
 
   record(`${label} conversation-ui`, state.conversationUi);
-  record(`${label} tabbar hidden`, state.tabbarHidden);
+  record(`${label} unified secretary role`, state.roleSecretary);
+  record(`${label} mode switcher`, state.roleGrid);
+  record(`${label} 3D canvas`, state.hasCanvas);
   record(`${label} activity rail`, state.hasActivityRail);
 
-  if (!(await page.locator("#composer:not(.hidden)").count())) {
-    await page.evaluate(() => {
-      document.querySelector('[data-tab="chat"]')?.click();
-      document.getElementById("start-btn")?.click();
-      document.getElementById("open-chat-btn")?.click();
-    });
-  }
+  await page.click("#btn-open-setup").catch(() => null);
   await page
-    .waitForSelector("#composer:not(.hidden)", { timeout: 20000 })
-    .catch(async () => {
-      await page.evaluate(() => {
-        document.querySelector('[data-tab="chat"]')?.click();
-      });
-      await page.waitForSelector("#composer:not(.hidden)", { timeout: 15000 });
-    });
+    .waitForSelector("#settings-role-grid", { timeout: 15000 })
+    .catch(() => null);
+  record(`${label} unified mode menu`, state.roleGrid);
 
-  await page.evaluate(() => {
-    const input = document.getElementById("input");
-    const form = document.getElementById("composer");
-    if (input && form) {
-      input.value = "show my tasks";
-      form.requestSubmit();
-    }
-  });
+  await page.click("#settings-btn-secretary-today").catch(() => null);
+  await page
+    .waitForSelector(".secretary-overlay.is-open", { timeout: 15000 })
+    .catch(() => null);
 
-  await page.waitForFunction(
-    () => {
-      const tasks = document.getElementById("panel-tasks");
-      const chip = document.querySelector(
-        '.activity-chip--function[data-kind="tab"][data-value="tasks"]',
-      );
-      return tasks && !tasks.classList.contains("hidden") && chip;
-    },
-    { timeout: 15000 },
+  const panelOpen = await page.evaluate(
+    () => document.querySelector(".secretary-overlay.is-open") != null,
   );
+  record(`${label} Today panel in 3D app`, panelOpen);
 
-  record(`${label} voice nav → tasks + icon`, true);
   await page.screenshot({
     path: join(outDir, `demo-verify-secretary-${label}.png`),
     fullPage: true,
@@ -404,7 +406,7 @@ if (useLocal) {
     baseUrl = `http://127.0.0.1:${port}`;
     record("local static server", true, baseUrl);
   }
-  secretaryUrl = `${baseUrl}/play?kind=lite&lang=en`;
+    secretaryUrl = `${baseUrl}/play?role=secretary&lang=en`;
   fullUrl = `${baseUrl}/play?lang=en&pick=1&automic=0`;
 } else {
   try {
