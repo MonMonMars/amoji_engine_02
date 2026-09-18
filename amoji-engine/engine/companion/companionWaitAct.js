@@ -102,16 +102,17 @@ export function createCompanionWaitAct(opts = {}) {
     // Thinking.vrma calm loop + occasional one-shot social clips (crossfaded).
     avatarRef?.setThinking?.(false);
     avatarRef?.setEmotion?.("neutral");
+    const idleExpression = pickWaitExpressionProfile(phase, poseTick, kind);
     if (poseTick === 0) {
       avatarRef?.resetIdleLife?.();
-      avatarRef?.applyExpressionProfile?.({
-        emotion: "neutral",
-        nuance: "none",
-      });
+      avatarRef?.setEmotion?.(idleExpression.emotion || "neutral");
+      avatarRef?.applyExpressionProfile?.(idleExpression);
       opts.onPose?.("idle-stand", phase);
       return;
     }
 
+    avatarRef?.setEmotion?.(idleExpression.emotion || "neutral");
+    avatarRef?.applyExpressionProfile?.(idleExpression);
     avatarRef?.playCalmIdle?.();
 
     if (poseTick % IDLE_LIFE_CLIP_EVERY_N_TICKS !== 0) {

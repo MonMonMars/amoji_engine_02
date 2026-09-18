@@ -14,7 +14,7 @@ import { lipSyncCharWeight } from "./companionViseme.js";
 export const COMPANION_SPEECH_FACE_SCHEMA = "amoji.companionSpeechFace.v2";
 
 const SPEECH_FACE_CACHE = new Map();
-const SPEECH_FACE_CACHE_MAX = 72;
+const SPEECH_FACE_CACHE_MAX = 160;
 
 /**
  * Split spoken text into expression units (CJK char, Latin word, punctuation).

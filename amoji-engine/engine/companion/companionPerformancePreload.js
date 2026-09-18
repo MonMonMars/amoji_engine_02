@@ -4,13 +4,21 @@
  */
 import { sampleActionBodyPose } from "./companionActionMotion.js";
 import {
+  primeIdleTalkSpeechFaceCache,
+  warmAvatarIdleTalkExpressions,
+} from "./companionExpressionPreload.js";
+import {
+  BOOT_FULL_LIBRARY_WARM_CLIP_IDS,
+  primeBootIdleBodyMotions,
+} from "./companionIdleMotionPreload.js";
+import {
   collectIdlePreloadMotionIds,
   collectWaitPreloadExpressionProfiles,
   collectWaitPreloadMotionIds,
 } from "./companionWaitAssets.js";
 
 export const COMPANION_PERFORMANCE_PRELOAD_SCHEMA =
-  "amoji.companionPerformancePreload.v1";
+  "amoji.companionPerformancePreload.v2";
 
 /**
  * JIT-warm action pose samplers so first playback avoids cold-start hitch.
@@ -98,8 +106,12 @@ export async function warmAvatarExpressionProfiles(avatar, opts = {}) {
 export async function startPerformancePreload(opts = {}) {
   const motionIds = opts.motionIds || collectWaitPreloadMotionIds();
   const idleMotionIds = collectIdlePreloadMotionIds();
+  const fullLibraryIds = BOOT_FULL_LIBRARY_WARM_CLIP_IDS;
   const poseWarm = primeBodyMotionPoses(motionIds);
   primeBodyMotionPoses(idleMotionIds);
+  primeBodyMotionPoses(fullLibraryIds);
+  const idleTalkPoseWarm = primeBootIdleBodyMotions(fullLibraryIds);
+  const speechFaceWarm = primeIdleTalkSpeechFaceCache();
 
   const motionJob =
     opts.motionClient?.ensureWaitMotions?.(motionIds) ??
@@ -110,10 +122,12 @@ export async function startPerformancePreload(opts = {}) {
     opts.motionClient?.ensureExtensionsPack?.() ??
     Promise.resolve({ ok: false, reason: "no-extensions-api" });
   const expressionJob = opts.avatar
-    ? warmAvatarExpressionProfiles(opts.avatar, {
-        profiles: opts.expressionProfiles,
-        maxProfiles: opts.maxExpressionProfiles,
-        frameDelay: 0,
+    ? warmAvatarIdleTalkExpressions(opts.avatar, {
+        profiles:
+          opts.expressionProfiles || collectWaitPreloadExpressionProfiles(),
+        maxProfiles:
+          opts.maxExpressionProfiles ??
+          collectWaitPreloadExpressionProfiles().length,
       })
     : Promise.resolve({ ok: false, reason: "no-avatar" });
 
@@ -126,6 +140,8 @@ export async function startPerformancePreload(opts = {}) {
   return {
     schema: COMPANION_PERFORMANCE_PRELOAD_SCHEMA,
     poses: poseWarm,
+    idleTalkPoses: idleTalkPoseWarm,
+    speechFace: speechFaceWarm,
     motion,
     extensions,
     expressions,
