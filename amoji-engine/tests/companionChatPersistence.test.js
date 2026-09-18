@@ -71,9 +71,9 @@ describe("companionChatPersistence", () => {
   });
 
   it("returns character starter prompts", () => {
-    expect(starterPromptsForCharacter("nova", true)).toHaveLength(3);
+    expect(starterPromptsForCharacter("nova", true)).toHaveLength(4);
     expect(starterPromptsForCharacter("nova", true)[0]).toMatch(/today/i);
-    expect(starterPromptsForCharacter("unknown", false)).toHaveLength(3);
+    expect(starterPromptsForCharacter("unknown", false)).toHaveLength(4);
   });
 
   it("detects user messages in history", () => {
