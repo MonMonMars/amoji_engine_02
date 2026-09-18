@@ -78,13 +78,15 @@ record("session started", true);
 const ui = await page.evaluate(() => ({
   chatBtn: !!document.getElementById("btn-toggle-chat"),
   sceneBtn: !!document.getElementById("btn-open-scene"),
-  speakerBtn: !!document.getElementById("btn-speaker"),
+  speakerBtn: !!document.getElementById("settings-btn-speaker"),
+  composerSpeakerBtn: !!document.getElementById("btn-speaker"),
   menuBtn: !!document.getElementById("btn-open-setup"),
   composer: !!document.getElementById("input"),
 }));
 record("chat shortcut", ui.chatBtn);
 record("scene shortcut", ui.sceneBtn);
-record("speaker shortcut", ui.speakerBtn);
+record("speaker in menu", ui.speakerBtn);
+record("composer speaker hidden", !ui.composerSpeakerBtn);
 record("menu shortcut", ui.menuBtn);
 record("composer visible", ui.composer);
 
@@ -156,12 +158,15 @@ await page.screenshot({
   fullPage: false,
 });
 
-await page.click("#btn-speaker");
+await page.click("#btn-open-setup");
+await page.waitForSelector("#settings.open", { timeout: 5000 });
+await page.click("#settings-btn-speaker");
 await page.waitForTimeout(200);
 const speakerMuted = await page.evaluate(
-  () => document.getElementById("btn-speaker")?.getAttribute("aria-pressed") === "false",
+  () => document.getElementById("settings-btn-speaker")?.getAttribute("aria-pressed") === "false",
 );
 record("speaker mutes", speakerMuted);
+await page.click("#settings-close");
 
 await page.evaluate(() => {
   document.body.classList.add("mic-blocked");
