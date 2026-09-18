@@ -1,2 +1,2 @@
 /** Single source of truth for deployed companion build id (keep HTML __amojiBuild in sync). */
-export const AMOJI_BUILD = "2026-09-18-v258-fix-all-reported";
+export const AMOJI_BUILD = "2026-09-18-v259-treat-emotion-reset";
