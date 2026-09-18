@@ -25,7 +25,8 @@ describe("companionMinimalUi", () => {
   it("moves secondary controls into the settings menu", () => {
     expect(html).toContain('id="settings-btn-chat"');
     expect(html).toContain('id="settings-btn-talk-speed"');
-    expect(html).toContain('id="settings-btn-scene-sheet"');
+    expect(html).not.toContain('id="settings-btn-scene-sheet"');
+    expect(html).not.toContain('id="btn-settings"');
     expect(html).toContain('id="settings-btn-speaker"');
   });
 

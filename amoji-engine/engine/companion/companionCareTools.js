@@ -78,11 +78,30 @@ export function saveCareToolsPosition(storage, pos) {
  * @param {number} [stackW]
  * @param {number} [stackH]
  */
-export function defaultCareToolsPosition(vw, vh, stackW = 44, stackH = 44) {
+function minimalComposerChromeActive() {
+  return (
+    typeof document !== "undefined" &&
+    document.body?.classList?.contains("companion-minimal-chrome")
+  );
+}
+
+export function defaultCareToolsPosition(
+  vw,
+  vh,
+  stackW = 44,
+  stackH = 44,
+  { minimalChrome } = {},
+) {
   const margin = 12;
+  const minimal =
+    minimalChrome === undefined
+      ? minimalComposerChromeActive()
+      : Boolean(minimalChrome);
+  const clearance = minimal ? 152 : 104;
+  const x = minimal ? margin : vw - stackW - margin;
   return clampCareToolsPosition(
-    vw - stackW - margin,
-    vh - stackH - margin - 104,
+    x,
+    vh - stackH - margin - clearance,
     vw,
     vh,
     stackW,

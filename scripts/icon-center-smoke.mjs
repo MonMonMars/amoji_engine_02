@@ -53,7 +53,7 @@ await page.goto(
 );
 await page.waitForSelector("#send", { timeout: 15000 });
 await page.waitForFunction(
-  () => document.getElementById("btn-toggle-chat")?.querySelector("svg.btn-icon"),
+  () => document.getElementById("btn-open-setup")?.querySelector("svg.btn-icon"),
   { timeout: 15000 },
 );
 await page.evaluate(() => {
@@ -62,17 +62,15 @@ await page.evaluate(() => {
     picker.classList.add("hide");
     picker.style.display = "none";
   }
-  document.body.classList.add("conversation-ui", "composer-always-visible");
+  document.body.classList.add(
+    "conversation-ui",
+    "composer-always-visible",
+    "companion-minimal-chrome",
+  );
 });
 
 const MAX_OFFSET = 2.2;
-const selectors = [
-  "#btn-toggle-chat",
-  "#btn-open-scene",
-  "#btn-open-setup",
-  "#btn-mic",
-  "#send",
-];
+const selectors = ["#btn-open-setup", "#btn-mic", "#send"];
 
 const report = await page.evaluate((sels) => {
   const glyphBox = (btn) => {
@@ -95,8 +93,8 @@ const report = await page.evaluate((sels) => {
     }
     const br = btn.getBoundingClientRect();
     const gr = glyphBox(btn);
-    const dx = (gr.left + gr.width / 2) - (br.left + br.width / 2);
-    const dy = (gr.top + gr.height / 2) - (br.top + br.height / 2);
+    const dx = gr.left + gr.width / 2 - (br.left + br.width / 2);
+    const dy = gr.top + gr.height / 2 - (br.top + br.height / 2);
     const cs = getComputedStyle(btn);
     rows.push({
       sel,
@@ -129,8 +127,8 @@ const closeRow = await page.evaluate(() => {
   const el = btn.querySelector("svg") || btn;
   const br = btn.getBoundingClientRect();
   const gr = el.getBoundingClientRect();
-  const dx = (gr.left + gr.width / 2) - (br.left + br.width / 2);
-  const dy = (gr.top + gr.height / 2) - (br.top + br.height / 2);
+  const dx = gr.left + gr.width / 2 - (br.left + br.width / 2);
+  const dy = gr.top + gr.height / 2 - (br.top + br.height / 2);
   const cs = getComputedStyle(btn);
   return {
     sel: "#settings-close",

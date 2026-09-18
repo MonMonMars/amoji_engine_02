@@ -157,6 +157,14 @@ body.companion-minimal-chrome .settings .btn-secondary {
   justify-content: flex-start;
 }
 
+body.companion-minimal-chrome .care-tools-stack {
+  z-index: 10040;
+}
+
+body.companion-minimal-chrome .care-tools-stack.is-open {
+  z-index: 10042;
+}
+
 @media (max-width: 640px) {
   body.companion-minimal-chrome .chat-column {
     padding-top: 0;
