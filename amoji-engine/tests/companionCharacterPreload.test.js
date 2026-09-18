@@ -17,7 +17,7 @@ import { sortModelUrlsForPreload } from "../engine/companion/companionVrmInspect
 describe("companionCharacterPreload", () => {
   it("lists unique VRM + GLB model urls for the full roster", () => {
     const urls = uniqueCharacterModelUrls("en");
-    expect(urls.length).toBeGreaterThanOrEqual(16);
+    expect(urls.length).toBeGreaterThanOrEqual(28);
     expect(new Set(urls).size).toBe(urls.length);
     expect(urls.every((u) => /\.(vrm|glb)($|\?)/i.test(u))).toBe(true);
     expect(urls.some((u) => u.includes("companion-quinn"))).toBe(true);
