@@ -1503,6 +1503,17 @@ export function initAmojiSecretaryLite(doc = document) {
     });
   }
 
+  const buildTag = doc.getElementById("build-tag");
+  if (buildTag && globalThis.__amojiBuild) {
+    buildTag.textContent = String(globalThis.__amojiBuild);
+  }
+  const liteProbe = globalThis.__amojiLite;
+  if (liteProbe && typeof liteProbe === "object") {
+    liteProbe.ready = true;
+  } else {
+    globalThis.__amojiLite = { ready: true, ttsCalls: 0, chatCalls: 0 };
+  }
+
   return {
     sendMessage,
     switchTab,

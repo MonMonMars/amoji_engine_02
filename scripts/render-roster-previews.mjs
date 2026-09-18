@@ -18,13 +18,16 @@ import { fileURLToPath } from "node:url";
 import { chromium } from "playwright";
 import { AMOJI_BUILD } from "../amoji-engine/engine/companion/buildVersion.mjs";
 import { CHARACTER_IDS } from "../amoji-engine/engine/companion/companionCharacterCatalog.js";
+import {
+  BLACK_LOADER_BYTES,
+  MIN_PREVIEW_BYTES,
+  isBadPreviewCapture,
+} from "../amoji-engine/engine/companion/companionPreviewAssets.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const outDir = join(root, "prototypes/assets");
 
-/** Playwright element screenshots of WebGL canvases come out blank (~333412 bytes). */
-const BLACK_LOADER_BYTES = 333412;
-const MIN_GOOD_BYTES = 240000;
+const MIN_GOOD_BYTES = MIN_PREVIEW_BYTES;
 
 const DEFAULT_TARGETS = [
   "amoji",
@@ -65,9 +68,7 @@ function previewPath(id) {
 }
 
 function isBadCapture(filePath) {
-  if (!existsSync(filePath)) return true;
-  const size = statSync(filePath).size;
-  return size <= MIN_GOOD_BYTES || size === BLACK_LOADER_BYTES;
+  return isBadPreviewCapture(filePath);
 }
 
 function copyPreview(fromId, toId) {
