@@ -8,7 +8,7 @@ import {
   applyTaskActions,
 } from "./secretaryTagActions.js";
 import { createTask, listActiveTasks } from "./taskStore.js";
-import { addMemoryFact } from "./memoryStore.js";
+import { addMemoryFact, readMemoryStore } from "./memoryStore.js";
 import {
   modeLabel,
   persistSecretaryMode,
@@ -236,6 +236,9 @@ export function createCompanionSecretaryBridge(opts = {}) {
         taskAdded: "Task saved",
         memorySaved: "Saved to memory",
         draftCopied: "Draft copied",
+        memoryTitle: "Saved memories",
+        memoryEmpty: "No saved memories yet — tell me what to remember.",
+        chatHint: "Talk or type below — I will capture tasks and memories automatically.",
       }
     : {
         today: "今日",
@@ -250,6 +253,9 @@ export function createCompanionSecretaryBridge(opts = {}) {
         taskAdded: "已加入任務",
         memorySaved: "已加入記憶",
         draftCopied: "草稿已複製",
+        memoryTitle: "已記住嘅資料",
+        memoryEmpty: "暫時未有記憶 — 同我講想記住咩。",
+        chatHint: "下面講或者打字 — 我會自動記任務同記憶。",
       };
 
   const renderTasksList = () => {
@@ -320,7 +326,22 @@ export function createCompanionSecretaryBridge(opts = {}) {
       bodyEl.innerHTML = renderTasks();
     } else if (activePanel === "chat") {
       titleEl.textContent = strings.chat;
-      bodyEl.innerHTML = `<p>${isEnglish ? "Talk to your 3D secretary — voice or type in the chat panel." : "同 3D 秘書講嘢 — 用語音或者下面打字。"}</p>`;
+      bodyEl.innerHTML = `<p>${strings.chatHint}</p>`;
+    } else if (activePanel === "me") {
+      titleEl.textContent = isEnglish ? "Me" : "我";
+      const facts = readMemoryStore(storage).facts || [];
+      bodyEl.innerHTML = `
+        <div class="secretary-card">
+          <h3>${strings.memoryTitle}</h3>
+          ${
+            facts.length
+              ? facts
+                  .slice(0, 12)
+                  .map((f) => `<div class="secretary-task"><span>${escapeHtml(f.text || f)}</span></div>`)
+                  .join("")
+              : `<p>${strings.memoryEmpty}</p>`
+          }
+        </div>`;
     } else {
       titleEl.textContent = strings.today;
       bodyEl.innerHTML = renderToday();
@@ -460,8 +481,8 @@ export function createCompanionSecretaryBridge(opts = {}) {
         closePanel();
         return;
       }
-      if (tabId === "today" || tabId === "tasks" || tabId === "me") {
-        openPanel(tabId === "me" ? "today" : tabId);
+      if (tabId === "today" || tabId === "tasks" || tabId === "me" || tabId === "chat") {
+        openPanel(tabId);
       }
     },
     setMode: (nextMode) => {

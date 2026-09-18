@@ -41,6 +41,7 @@ describe("companionUnifiedApp", () => {
     const roster = rosterCharactersForRole("en", "secretary");
     expect(roster[0]?.id).toBe("kate");
     expect(roster.some((c) => c.roleRecommended)).toBe(true);
+    expect(roster[0]?.badge).toContain("★");
     expect(roster.length).toBeGreaterThan(10);
   });
 
