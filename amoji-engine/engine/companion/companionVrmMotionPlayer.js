@@ -16,7 +16,7 @@ import {
 import { DEFAULT_MOTION_CROSSFADE_SEC } from "./vrmMotionTransition.js";
 
 export const COMPANION_VRM_MOTION_PLAYER_SCHEMA =
-  "amoji.companionVrmMotionPlayer.v2";
+  "amoji.companionVrmMotionPlayer.v3";
 
 /**
  * @param {{
@@ -45,6 +45,7 @@ export function createVrmMotionPlayer(opts) {
   const inflight = new Map();
   /** @type {{ action: THREE.AnimationAction, stopAtMs: number }[]} */
   let retiringActions = [];
+  let crossfadeUntilMs = 0;
 
   const scheduleRetireAction = (action, transitionSec) => {
     if (!action) return;
@@ -190,8 +191,10 @@ export function createVrmMotionPlayer(opts) {
     if (previousAction && previousAction !== nextAction) {
       nextAction.crossFadeFrom(previousAction, transitionSec, true);
       scheduleRetireAction(previousAction, transitionSec);
+      crossfadeUntilMs = performance.now() + transitionSec * 1000 + 40;
     } else {
       nextAction.fadeIn(transitionSec);
+      crossfadeUntilMs = performance.now() + transitionSec * 1000 + 40;
     }
 
     clipAction = nextAction;
@@ -239,6 +242,16 @@ export function createVrmMotionPlayer(opts) {
     },
     get crossfadeSec() {
       return DEFAULT_MOTION_CROSSFADE_SEC;
+    },
+    isCrossfading() {
+      return performance.now() < crossfadeUntilMs || retiringActions.length > 0;
+    },
+    getTransitionStatus() {
+      return {
+        activeActionId,
+        crossfading: performance.now() < crossfadeUntilMs,
+        retiringActions: retiringActions.length,
+      };
     },
   };
 }

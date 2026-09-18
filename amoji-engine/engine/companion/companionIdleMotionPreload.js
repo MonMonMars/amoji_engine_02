@@ -4,12 +4,13 @@
 import { sampleActionBodyPose } from "./companionActionMotion.js";
 
 export const COMPANION_IDLE_MOTION_PRELOAD_SCHEMA =
-  "amoji.companionIdleMotionPreload.v1";
+  "amoji.companionIdleMotionPreload.v2";
 
 const VRMA_BASE =
   "https://raw.githubusercontent.com/tk256ailab/vrm-viewer/main/VRMA";
 
 import { IDLE_LIFE_CLIP_POOL } from "./companionActionChoreography.js";
+import { ONLINE_CALM_IDLE_ACTION } from "./companionOnlineMotionClips.mjs";
 
 /** Procedural idle gestures — no network, prime pose samplers at boot. */
 export const BOOT_IDLE_BODY_MOTION_IDS = Object.freeze([
@@ -32,9 +33,8 @@ export const BOOT_IDLE_BODY_MOTION_IDS = Object.freeze([
 ]);
 
 /**
- * Shared VRMA stems (~115 KB each) for social clips — not standing rest.
- * Relax is a stretch (standing idle stays procedural); Thinking = wait;
- * Goodbye = wave; LookAround = walk/dance.
+ * Shared VRMA stems (~115 KB each) for social clips + calm standing idle.
+ * Relax = default calm loop; Thinking = wait/talk; Goodbye = wave; LookAround = dance/walk.
  */
 export const BOOT_IDLE_VRMA_STEMS = Object.freeze([
   "Relax",
@@ -50,9 +50,13 @@ export const BOOT_IDLE_VRMA_STEMS = Object.freeze([
   "Jump",
 ]);
 
-/** Warm these clip ids once the avatar is ready (VRMA + procedural). */
+/** Warm these clip ids once the avatar is ready (VRMA-first body). */
 export const BOOT_IDLE_WARM_CLIP_IDS = Object.freeze([
-  ...new Set([...BOOT_IDLE_BODY_MOTION_IDS, ...IDLE_LIFE_CLIP_POOL]),
+  ...new Set([
+    ONLINE_CALM_IDLE_ACTION,
+    ...BOOT_IDLE_BODY_MOTION_IDS,
+    ...IDLE_LIFE_CLIP_POOL,
+  ]),
 ]);
 
 /** @type {Map<string, ArrayBuffer>} */

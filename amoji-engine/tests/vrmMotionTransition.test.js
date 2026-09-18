@@ -3,8 +3,11 @@ import * as THREE from "three";
 import {
   blendVrmBoneRotationsFromSnapshot,
   captureVrmBoneRotations,
+  captureVrmBoneRotationsDegrees,
   createMotionTransitionState,
   DEFAULT_MOTION_CROSSFADE_SEC,
+  planMotionTransition,
+  RAD_TO_DEG,
   tickVrmMotionTransition,
 } from "../engine/companion/vrmMotionTransition.js";
 
@@ -59,6 +62,46 @@ describe("vrmMotionTransition", () => {
     blendVrmBoneRotationsFromSnapshot(vrm, from, 0.5);
     expect(Math.abs(bones.get("head").rotation.x)).toBeLessThan(0.5);
     expect(Math.abs(bones.get("head").rotation.x)).toBeGreaterThan(0);
+  });
+
+  it("captures degrees for debug and UI", () => {
+    const bones = new Map([["head", makeBone(Math.PI / 2, 0, 0)]]);
+    const vrm = {
+      humanoid: {
+        getNormalizedBoneNode: (name) => bones.get(name) || null,
+      },
+    };
+    const deg = captureVrmBoneRotationsDegrees(vrm, ["head"]);
+    expect(deg.get("head").x).toBeCloseTo(90);
+    expect(RAD_TO_DEG).toBeCloseTo(180 / Math.PI);
+  });
+
+  it("plans manual transition only when library is not already playing", () => {
+    const vrm = { humanoid: { getNormalizedBoneNode: () => null } };
+    expect(
+      planMotionTransition(vrm, { isPlaying: () => false, activeActionId: null }, {
+        nextActionId: "relax",
+      }),
+    ).toBeNull();
+    const bones = new Map([["head", makeBone(0.1, 0, 0)]]);
+    const vrm2 = {
+      humanoid: {
+        getNormalizedBoneNode: (name) => bones.get(name) || null,
+      },
+    };
+    const planned = planMotionTransition(
+      vrm2,
+      { isPlaying: () => false, activeActionId: null },
+      { nextActionId: "relax" },
+    );
+    expect(planned?.from.size).toBe(1);
+    expect(
+      planMotionTransition(
+        vrm2,
+        { isPlaying: () => true, activeActionId: "thinking" },
+        { nextActionId: "wiggle" },
+      ),
+    ).toBeNull();
   });
 
   it("ticks transition state to completion", () => {

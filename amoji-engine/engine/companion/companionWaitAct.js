@@ -25,10 +25,8 @@ export const COMPANION_WAIT_ACT_SCHEMA = "amoji.companionWaitAct.v1";
 /** One-shot library clips need room to finish (wave ~1.8s, thinking ~2.4s). */
 export const IDLE_LIFE_INTERVAL_MS = 2400;
 export const AVATAR_LOAD_IDLE_INTERVAL_MS = 900;
-/** Play a subtle library clip every N idle ticks — mostly procedural planted idle. */
+/** Play a subtle library clip every N idle ticks — calm Relax loop between clips. */
 export const IDLE_LIFE_CLIP_EVERY_N_TICKS = 3;
-const IDLE_LIFE_BEATS = Object.freeze(["look", "comb", "breathe"]);
-
 /** @typedef {'connecting'|'waking'|'searching'|'assembling'|'downloading'|'warming'|'learning'|'installing'|'settling'|'almost'|'ready'|'failed'|'thinking'|'avatar-load'|'character-switch'|'motion-pack'|'idle'} WaitPhase */
 
 export { WAIT_POSES_BY_PHASE, pickWaitPose };
@@ -81,7 +79,7 @@ export function createCompanionWaitAct(opts = {}) {
   let lastPoseId = null;
 
   const playAvatarLoadIdle = () => {
-    // Procedural planted idle while the model is still loading.
+    // Hosted Relax loop when the avatar is ready; expressions only while loading.
     lastPoseId = "idle-stand";
     avatarRef?.setThinking?.(false);
     if (poseTick === 0) {
@@ -92,14 +90,13 @@ export function createCompanionWaitAct(opts = {}) {
         nuance: "none",
       });
     } else {
-      const beat = IDLE_LIFE_BEATS[poseTick % IDLE_LIFE_BEATS.length];
-      avatarRef?.pulseIdleBeat?.(beat);
+      avatarRef?.playCalmIdle?.();
     }
     opts.onPose?.("idle-stand", phase);
   };
 
   const playIdleLife = () => {
-    // Planted breath + rotating one-shot clips (never loop Relax/Thinking).
+    // Relax.vrma calm loop + occasional one-shot social clips (crossfaded).
     avatarRef?.setThinking?.(false);
     avatarRef?.setEmotion?.("neutral");
     if (poseTick === 0) {
@@ -112,8 +109,7 @@ export function createCompanionWaitAct(opts = {}) {
       return;
     }
 
-    const beat = IDLE_LIFE_BEATS[(poseTick - 1) % IDLE_LIFE_BEATS.length];
-    avatarRef?.pulseIdleBeat?.(beat);
+    avatarRef?.playCalmIdle?.();
 
     if (poseTick % IDLE_LIFE_CLIP_EVERY_N_TICKS !== 0) {
       opts.onPose?.("idle-stand", phase);
