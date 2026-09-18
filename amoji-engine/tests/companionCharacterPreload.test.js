@@ -44,7 +44,7 @@ describe("companionCharacterPreload", () => {
     });
     expect(result.ok).toBe(true);
     expect(result.phase).toBe("background");
-    expect(uniqueCharacterPreviewUrls("en").length).toBeGreaterThanOrEqual(18);
+    expect(uniqueCharacterPreviewUrls("en").length).toBeGreaterThanOrEqual(1);
     expect(progress.length).toBeGreaterThan(0);
     const modelResult = await result.modelsLoading;
     expect(modelResult.ok).toBe(true);

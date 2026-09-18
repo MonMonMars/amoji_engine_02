@@ -183,7 +183,7 @@ export function createCompanionCardButton(item, ctx = {}) {
 export function createCompanionCharacterPicker(opts = {}) {
   const isEnglish = Boolean(opts.isEnglish);
   const langCode = isEnglish ? "en" : "yue";
-  let selectedId = opts.selectedId || "amoji";
+  let selectedId = opts.selectedId || "nova";
   let open = false;
 
   const shell = document.createElement("div");
@@ -317,7 +317,7 @@ export function createCompanionCharacterPicker(opts = {}) {
 export function createCompanionStartPicker(opts = {}) {
   const isEnglish = Boolean(opts.isEnglish);
   const langCode = isEnglish ? "en" : "yue";
-  let selectedId = opts.selectedId || "amoji";
+  let selectedId = opts.selectedId || "nova";
   let starting = false;
   let pickable = true;
   let preloadPct = 0;

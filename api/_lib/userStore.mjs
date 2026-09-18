@@ -149,7 +149,7 @@ export function defaultSave() {
     raising: null,
     chase: null,
     characters: {},
-    lastCharacterId: "amoji",
+    lastCharacterId: "nova",
   };
 }
 

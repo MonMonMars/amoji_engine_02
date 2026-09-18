@@ -1047,11 +1047,11 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
 
 export { parseReplyMood } from "./companionContentMotion.js";
 
-/** Cantonese-first companion system prompt (default Amoji persona). */
+/** Cantonese-first companion system prompt (default Nova persona). */
 export const CANTONESE_COMPANION_PROMPT = buildCharacterSystemPrompt(
-  "amoji",
+  "nova",
   false,
 );
 
-/** English companion mode — default Amoji persona. */
-export const ENGLISH_COMPANION_PROMPT = buildCharacterSystemPrompt("amoji", true);
+/** English companion mode — default Nova persona. */
+export const ENGLISH_COMPANION_PROMPT = buildCharacterSystemPrompt("nova", true);

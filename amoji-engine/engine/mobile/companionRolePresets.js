@@ -1,9 +1,5 @@
 /**
  * Companion role presets — girlfriend / boyfriend / secretary / pet.
- * Maps user intent to recommended characters, prompts, and mobile UI emphasis.
- *
- * Inspired by iBoy/Nomi boyfriend apps, Replika relationship modes,
- * Ami VRM roles, and pet sims (Pou, PetPal).
  */
 export const COMPANION_ROLE_SCHEMA = "amoji.companionRole.v1";
 export const ROLE_STORAGE_KEY = "amoji.companionRole.v1";
@@ -69,7 +65,6 @@ export function roleTagline(role, isEnglish = false) {
 
 /**
  * @param {CompanionRole} role
- * @param {boolean} [isEnglish]
  */
 export function roleEmoji(role) {
   const r = normalizeCompanionRole(role);
@@ -82,26 +77,26 @@ export function roleEmoji(role) {
 /** @type {Record<CompanionRole, { characterIds: string[], defaultCharacterId: string, hubPrimary: string, hubSecondary: string }>} */
 export const ROLE_PRESETS = Object.freeze({
   girlfriend: {
-    characterIds: ["amoji", "kizuna", "yuki", "alicia", "nova", "ember"],
-    defaultCharacterId: "amoji",
+    characterIds: ["nova", "kizuna", "yuki", "alicia", "ember", "shiro", "jennifer"],
+    defaultCharacterId: "nova",
     hubPrimary: "companion",
     hubSecondary: "chase",
   },
   boyfriend: {
-    characterIds: ["rex", "chad", "david", "mikel", "kai", "vroidm"],
+    characterIds: ["chad", "david", "hugo", "vroidm"],
     defaultCharacterId: "chad",
     hubPrimary: "companion",
     hubSecondary: "chase",
   },
   secretary: {
-    characterIds: ["rose", "robert", "nova", "sora"],
-    defaultCharacterId: "rose",
+    characterIds: ["kate", "nova", "quinn", "vroidm", "sora"],
+    defaultCharacterId: "kate",
     hubPrimary: "companion",
     hubSecondary: "pet",
   },
   pet: {
-    characterIds: ["mimi", "chibi", "yuki", "amoji"],
-    defaultCharacterId: "mimi",
+    characterIds: ["shiro", "poly", "aesthe", "jennifer"],
+    defaultCharacterId: "shiro",
     hubPrimary: "pet",
     hubSecondary: "companion",
   },

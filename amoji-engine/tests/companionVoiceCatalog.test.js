@@ -24,10 +24,10 @@ describe("companionVoiceCatalog", () => {
   });
 
   it("locks voice to character gender regardless of overrides", () => {
-    expect(resolveVoiceForCharacter("rex", "yue")).toBe("zh-HK-WanLungNeural");
+    expect(resolveVoiceForCharacter("chad", "yue")).toBe("zh-HK-WanLungNeural-chad");
     expect(resolveVoiceForCharacter("nova", "en")).toBe("en-US-JennyNeural");
-    expect(resolveVoiceForCharacter("robert", "yue")).toBe(
-      "zh-HK-WanLungNeural-calm",
+    expect(resolveVoiceForCharacter("vroidm", "yue")).toBe(
+      "zh-HK-WanLungNeural-ren",
     );
   });
 

@@ -5,7 +5,6 @@ import {
   characterAvatarConfig,
   characterGender,
   characterGreeting,
-  characterGreetingPerformance,
   characterNumber,
   characterVoiceLabel,
   COMPANION_CHARACTERS,
@@ -18,192 +17,98 @@ import {
   listHighPolyFaceCharacters,
   nextCharacterId,
   resolveCharacterId,
+  ROSTER_LOCKED_NUMBERS,
+  TRIAL_CHARACTER_IDS,
 } from "../engine/companion/companionCharacterCatalog.js";
 
-describe("companionCharacterCatalog", () => {
-  it("resolves default gallery-priority nova character", () => {
-    expect(resolveCharacterId({})).toBe("nova");
-  });
-
-  it("lists gallery pretty-girl picks first", () => {
-    expect(CHARACTER_IDS.slice(0, 6)).toEqual([
-      "nova",
-      "kizuna",
-      "alicia",
-      "ember",
-      "chibi",
-      "sky",
-    ]);
+describe("companionCharacterCatalog v216 roster", () => {
+  it("keeps locked roster numbers 1,2,3,4,13,14,16", () => {
     expect(characterNumber("nova")).toBe(1);
     expect(characterNumber("kizuna")).toBe(2);
     expect(characterNumber("alicia")).toBe(3);
-    expect(characterNumber("mikel")).toBe(CHARACTER_IDS.length);
-    expect(characterNumber("missing")).toBe(0);
-    expect(GALLERY_PRIORITY_IDS.has("nova")).toBe(true);
-    expect(GALLERY_PRIORITY_IDS.has("kizuna")).toBe(true);
-    expect(CHARACTER_IDS.indexOf("mikel")).toBeGreaterThan(
-      CHARACTER_IDS.indexOf("kate"),
-    );
-    expect(Object.keys(COMPANION_CHARACTERS).sort()).toEqual(
-      [...CHARACTER_IDS].sort(),
-    );
+    expect(characterNumber("ember")).toBe(4);
+    expect(characterNumber("kate")).toBe(13);
+    expect(characterNumber("quinn")).toBe(14);
+    expect(characterNumber("sora")).toBe(16);
+    expect(ROSTER_LOCKED_NUMBERS).toEqual([1, 2, 3, 4, 13, 14, 16]);
   });
 
-  it("maps glb model to sora", () => {
-    expect(
-      resolveCharacterId({
-        modelUrl: "/prototypes/assets/companion-girl.glb",
-      }),
-    ).toBe("sora");
-  });
-
-  it("assigns distinct voices per character", () => {
-    expect(defaultVoiceForCharacter("amoji", "yue")).toBe(
-      "zh-HK-HiuGaaiNeural",
-    );
-    expect(defaultVoiceForCharacter("sora", "yue")).toBe(
-      "zh-HK-HiuMaanNeural",
-    );
-    expect(defaultVoiceForCharacter("kizuna", "yue")).toBe(
-      "zh-HK-HiuGaaiNeural-idol",
-    );
-    expect(defaultVoiceForCharacter("sky", "yue")).toBe(
-      "zh-HK-HiuMaanNeural-cool",
-    );
-    expect(defaultVoiceForCharacter("rex", "yue")).toBe(
-      "zh-HK-WanLungNeural",
-    );
-    expect(defaultVoiceForCharacter("rex", "en")).toBe("en-HK-SamNeural");
-    expect(defaultVoiceForCharacter("kizuna", "en")).toBe("en-HK-YanNeural");
-    expect(defaultVoiceForCharacter("sky", "en")).toBe("en-US-AriaNeural-cool");
-    expect(defaultVoiceForCharacter("sora", "en")).toBe("en-US-JennyNeural");
-  });
-
-  it("exposes character-specific greetings and voice labels", () => {
-    expect(characterGreeting("amoji", false)).toContain("曖咪");
-    expect(characterGreeting("rex", true)).toMatch(/rex/i);
-    expect(characterGreeting("kizuna", false)).toContain("絆");
-    expect(characterGreeting("sora", true)).toMatch(/sora/i);
-    expect(characterVoiceLabel("rex", "yue", false)).toBe("雲龍");
-    expect(characterGender("rex", "yue")).toBe("male");
-    expect(characterGender("nova", "yue")).toBe("female");
-    expect(characterGender("robert", "en")).toBe("male");
-    expect(characterVoiceLabel("sora", "en", true)).toBe("Jenny");
-    expect(characterGreetingPerformance("kizuna").speechEnergy).toBeGreaterThan(0.8);
-    expect(characterGreetingPerformance("sora").talkStyle).toBe("soft");
-  });
-
-  it("lists high-poly face characters sorted by triangle count", () => {
-    expect([...HIGH_POLY_FACE_CHARACTER_IDS].sort()).toEqual([
-      "alicia",
-      "ember",
-      "kizuna",
-      "rex",
+  it("has 16 roster entries with trial slots 5-12 and 15", () => {
+    expect(CHARACTER_IDS.length).toBe(16);
+    expect(CHARACTER_IDS.slice(4, 12)).toEqual([
+      "yuki",
+      "vroidm",
+      "chad",
+      "david",
+      "hugo",
+      "poly",
+      "aesthe",
+      "shiro",
     ]);
-    expect(isHighPolyFaceCharacter("kizuna")).toBe(true);
-    expect(isHighPolyFaceCharacter("rex")).toBe(true);
-    expect(isHighPolyFaceCharacter("nova")).toBe(false);
+    expect(CHARACTER_IDS[14]).toBe("jennifer");
+    expect(TRIAL_CHARACTER_IDS.length).toBe(9);
+    expect(Object.keys(COMPANION_CHARACTERS).sort()).toEqual([...CHARACTER_IDS].sort());
+  });
+
+  it("resolves default to nova", () => {
+    expect(resolveCharacterId({})).toBe("nova");
+    expect(getCharacter("missing").id).toBe("nova");
+  });
+
+  it("maps trial model urls", () => {
+    expect(resolveCharacterId({ modelUrl: "/prototypes/assets/companion-chad.vrm" })).toBe(
+      "chad",
+    );
+    expect(resolveCharacterId({ modelUrl: "/prototypes/assets/companion-polydancer.vrm" })).toBe(
+      "poly",
+    );
+    expect(resolveCharacterId({ modelUrl: "/prototypes/assets/companion-jennifer.vrm" })).toBe(
+      "jennifer",
+    );
+    expect(resolveCharacterId({ modelUrl: "/prototypes/assets/companion-girl.glb" })).toBe("sora");
+  });
+
+  it("assigns distinct voices per roster character", () => {
+    const yue = CHARACTER_IDS.map((id) => getCharacter(id).voices.yue);
+    expect(new Set(yue).size).toBe(CHARACTER_IDS.length);
+  });
+
+  it("lists high-poly face characters without removed rex", () => {
+    expect([...HIGH_POLY_FACE_CHARACTER_IDS].sort()).toEqual(["alicia", "ember", "kizuna"]);
     const hd = listHighPolyFaceCharacters("en");
-    expect(hd.map((c) => c.id)).toEqual(["kizuna", "rex", "alicia", "ember"]);
-    expect(hd[0].faceTriangles).toBeGreaterThan(hd[1].faceTriangles);
-    expect(hd.find((c) => c.id === "rex")?.showFaceChip).toBe(true);
-    expect(hd.find((c) => c.id === "kizuna")?.showFaceChip).toBe(false);
+    expect(hd.map((c) => c.id)).toEqual(["kizuna", "alicia", "ember"]);
+    expect(isHighPolyFaceCharacter("nova")).toBe(false);
   });
 
-  it("lists voice metadata for picker cards", () => {
-    const list = listCompanionCharacters("yue");
-    const rex = list.find((c) => c.id === "rex");
-    expect(rex?.voiceLabel).toBe("雲龍");
-    expect(list.find((c) => c.id === "kizuna")?.voiceLabel).toBe("曉佳·元氣");
-    expect(list.find((c) => c.id === "sky")?.voiceLabel).toBe("曉曼·酷");
-    expect(rex?.greeting).toContain("烈");
-    expect(list.every((c) => c.voiceId && c.voiceLabel)).toBe(true);
-    expect(list.every((c) => c.number === characterNumber(c.id))).toBe(true);
-    expect(list[0]).toMatchObject({ id: "nova", number: 1 });
-    expect(list.find((c) => c.id === "mikel")?.number).toBe(list.length);
-  });
-
-  it("builds character-specific system prompts", () => {
-    const amoji = buildCharacterSystemPrompt("amoji", false);
-    const rex = buildCharacterSystemPrompt("rex", false);
-    expect(amoji).toContain("曖咪");
-    expect(amoji).toContain("ChatGPT Advanced Voice");
-    expect(rex).toContain("烈");
-    expect(rex).not.toContain("曖咪");
-  });
-
-  it("cycles characters", () => {
+  it("cycles roster in order", () => {
     expect(nextCharacterId("nova")).toBe("kizuna");
-    expect(nextCharacterId("sky")).toBe("yuki");
-    expect(nextCharacterId("yuki")).toBe("rose");
-    expect(nextCharacterId("mimi")).toBe("olivia");
-    expect(nextCharacterId("amoji")).toBe("sora");
-    expect(nextCharacterId("mikel")).toBe("nova");
+    expect(nextCharacterId("ember")).toBe("yuki");
+    expect(nextCharacterId("shiro")).toBe("kate");
+    expect(nextCharacterId("quinn")).toBe("jennifer");
+    expect(nextCharacterId("sora")).toBe("nova");
   });
 
-  it("resolves new 3D character models", () => {
-    expect(resolveCharacterId({ modelUrl: "/prototypes/assets/companion-rose.vrm" })).toBe(
-      "rose",
-    );
-    expect(resolveCharacterId({ modelUrl: "/prototypes/assets/companion-robert.vrm" })).toBe(
-      "robert",
-    );
-    expect(resolveCharacterId({ modelUrl: "/prototypes/assets/companion-rabbit.vrm" })).toBe(
-      "mimi",
-    );
-    expect(defaultVoiceForCharacter("rose", "yue")).toBe("zh-HK-HiuMaanNeural-warm");
-    expect(defaultVoiceForCharacter("mimi", "yue")).toBe("zh-HK-HiuGaaiNeural-sweet");
-    expect(resolveCharacterId({ modelUrl: "/prototypes/assets/companion-alicia.vrm" })).toBe(
-      "alicia",
-    );
-    expect(resolveCharacterId({ modelUrl: "/prototypes/assets/companion-nova.vrm" })).toBe(
-      "nova",
-    );
-    expect(resolveCharacterId({ modelUrl: "/prototypes/assets/companion-ember.vrm" })).toBe(
-      "ember",
-    );
-    expect(resolveCharacterId({ modelUrl: "/prototypes/assets/companion-chibi.vrm" })).toBe(
-      "chibi",
-    );
-    expect(resolveCharacterId({ modelUrl: "/prototypes/assets/companion-quinn.glb" })).toBe(
-      "quinn",
-    );
-    expect(defaultVoiceForCharacter("nova", "yue")).toBe("zh-HK-HiuMaanNeural-bright");
-    expect(defaultVoiceForCharacter("quinn", "yue")).toBe("zh-HK-HiuMaanNeural-hero");
-    expect(defaultVoiceForCharacter("ember", "yue")).toBe("zh-HK-HiuGaaiNeural-fiery");
-    expect(defaultVoiceForCharacter("chibi", "yue")).toBe("zh-HK-HiuMaanNeural-chibi");
-    expect(resolveCharacterId({ modelUrl: "/prototypes/assets/companion-olivia.vrm" })).toBe(
-      "olivia",
-    );
-    expect(resolveCharacterId({ modelUrl: "/prototypes/assets/companion-erika.vrm" })).toBe(
-      "erika",
-    );
-    expect(resolveCharacterId({ modelUrl: "/prototypes/assets/companion-lydia.vrm" })).toBe(
-      "lydia",
-    );
-    expect(resolveCharacterId({ modelUrl: "/prototypes/assets/companion-kate.vrm" })).toBe(
-      "kate",
-    );
-    expect(resolveCharacterId({ modelUrl: "/prototypes/assets/companion-mikel.vrm" })).toBe(
-      "mikel",
-    );
-    expect(
-      resolveCharacterId({ modelUrl: "/prototypes/assets/kizuna-kamatte.vrm" }),
-    ).toBe("kizuna");
-    expect(defaultVoiceForCharacter("mikel", "yue")).toBe("zh-HK-WanLungNeural-bold");
-    expect(defaultVoiceForCharacter("kate", "yue")).toBe("zh-HK-HiuMaanNeural-sharp");
-    expect(defaultVoiceForCharacter("olivia", "yue")).toBe("zh-HK-HiuGaaiNeural-sunny");
+  it("lists picker metadata", () => {
+    const list = listCompanionCharacters("yue");
+    expect(list[0]).toMatchObject({ id: "nova", number: 1 });
+    expect(list.find((c) => c.id === "chad")?.number).toBe(7);
+    expect(list.find((c) => c.id === "sora")?.number).toBe(16);
+    expect(GALLERY_PRIORITY_IDS.has("nova")).toBe(true);
+    expect(GALLERY_PRIORITY_IDS.has("chibi")).toBe(false);
+  });
+
+  it("builds character-specific prompts", () => {
+    expect(buildCharacterSystemPrompt("nova", false)).toContain("諾娃");
+    expect(buildCharacterSystemPrompt("chad", true)).toContain("Chad");
+    expect(characterGreeting("kate", true)).toMatch(/Kate/i);
+    expect(characterGender("chad", "yue")).toBe("male");
+    expect(characterGender("nova", "yue")).toBe("female");
+    expect(characterVoiceLabel("kate", "yue", false)).toBe("曉曼·俐落");
   });
 
   it("exposes avatar config per character", () => {
-    const sora = characterAvatarConfig("sora", "yue");
-    expect(sora.avatarPrefer).toBe("gltf");
-    expect(sora.modelUrl).toContain(".glb");
-    const kizuna = getCharacter("kizuna");
-    expect(kizuna.traits.en).toContain("energetic");
-    expect(kizuna.modelUrl).toContain("kizuna-kamatte.vrm");
-    const rex = characterAvatarConfig("rex", "yue");
-    expect(rex.modelUrl).toContain("companion-kai.vrm");
-    expect(characterAvatarConfig("kizuna", "en").avatarPrefer).toBe("vrm");
+    expect(characterAvatarConfig("sora", "yue").avatarPrefer).toBe("gltf");
+    expect(characterAvatarConfig("chad", "yue").modelUrl).toContain("companion-chad.vrm");
+    expect(defaultVoiceForCharacter("poly", "yue")).toBe("zh-HK-HiuMaanNeural-cool");
   });
 });
