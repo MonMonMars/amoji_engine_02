@@ -77,7 +77,8 @@ async function main() {
     ok:
       (Boolean(data?.ready) || Boolean(data?.skipped)) &&
       !data?.error &&
-      errors.length === 0,
+      errors.length === 0 &&
+      (data?.skipped || data?.libraryOk !== false),
     ...data,
     errors,
     baseUrl,

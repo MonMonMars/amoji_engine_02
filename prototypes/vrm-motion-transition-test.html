@@ -51,8 +51,8 @@
         avatar.playAction?.("thinking", { loop: true });
         for (let i = 0; i < 60; i += 1) avatar.update?.(1 / 60);
 
-        avatar.playCalmIdle?.();
-        for (let i = 0; i < Math.ceil(DEFAULT_MOTION_CROSSFADE_SEC * 60) + 30; i += 1) {
+        await avatar.playCalmIdle?.();
+        for (let i = 0; i < Math.ceil(DEFAULT_MOTION_CROSSFADE_SEC * 60) + 90; i += 1) {
           avatar.update?.(1 / 60);
         }
 
@@ -63,6 +63,9 @@
           currentAction: avatar.currentAction,
           transitionProgress: avatar.getMotionTransitionProgress?.(),
           playerStatus: status,
+          libraryOk:
+            status.libraryOwnsBody === true &&
+            (status.activeActionId === "relax" || avatar.currentAction === "relax"),
         };
         hud.textContent = JSON.stringify(window.__motionTransitionTest, null, 2);
       } catch (err) {

@@ -61,6 +61,7 @@ import {
 import { createVrmMotionPlayer } from "./companionVrmMotionPlayer.js";
 import {
   DEFAULT_MOTION_CROSSFADE_SEC,
+  libraryOwnsVrmBody,
   planMotionTransition,
   tickVrmMotionTransition,
 } from "./vrmMotionTransition.js";
@@ -312,6 +313,17 @@ export async function createVrmAvatar(opts) {
   let vrmaSequenceQueue = [];
   /** @type {object | null} */
   let vrmaSequenceOpts = null;
+  const syncThinkingLibraryMotion = () => {
+    if (talking || eating || !bodyMotion.thinking) return false;
+    if (
+      vrmaAction === "thinking" &&
+      (motionPlayer.isAnimating?.() || motionPlayer.isPlaying?.())
+    ) {
+      return true;
+    }
+    return tryPlayVrmaAction("thinking", { loop: true });
+  };
+
   const syncTalkLibraryMotion = (force = false) => {
     if (!talking || eating) {
       talkLibraryAction = null;
@@ -350,6 +362,10 @@ export async function createVrmAvatar(opts) {
     }
     if (talking && !eating) {
       syncTalkLibraryMotion(true);
+      return;
+    }
+    if (bodyMotion.thinking && !eating) {
+      syncThinkingLibraryMotion();
       return;
     }
     void resumeCalmStand();
@@ -784,7 +800,6 @@ export async function createVrmAvatar(opts) {
     if (gen !== vrmaPlayGen) return true;
     vrmaPending = false;
     if (!ok) {
-      motionTransitionState = null;
       if (vrmaAction === key) vrmaAction = null;
       return false;
     }
@@ -835,7 +850,6 @@ export async function createVrmAvatar(opts) {
     void tryPlayVrmaAction(key, opts).then((ok) => {
       if (ok || vrmaPending || motionPlayer.isPlaying?.()) return;
       vrmaAction = null;
-      motionTransitionState = null;
       bodyMotion.playAction(key, {
         emotion: opts.emotion || emotion,
         loop: opts.loop,
@@ -901,13 +915,14 @@ export async function createVrmAvatar(opts) {
     if (on) {
       emotion = "thinking";
       applyEmotionExpressions("thinking");
-      if (vrmaAction === "thinking" && !talking) {
-        restorePlantedIdle();
+      if (!talking && !eating) {
+        syncThinkingLibraryMotion();
       }
     } else {
-      applyEmotionExpressions(emotion === "thinking" ? "neutral" : emotion);
-      if (vrmaAction === "thinking" && !talking) {
-        restorePlantedIdle();
+      if (emotion === "thinking") emotion = "neutral";
+      applyEmotionExpressions(emotion);
+      if (!talking && !eating) {
+        void playCalmLibraryIdle();
       }
     }
     return Boolean(on);
@@ -927,7 +942,12 @@ export async function createVrmAvatar(opts) {
   const prepareThinkingFromUser = (userText, isEnglish = false) => {
     const analysis = bodyMotion.prepareThinkingFromUser(userText, isEnglish);
     emotion = analysis.emotion;
+    applyEmotionExpressions(emotion);
     setExpressionTargetFromBlend(analysis.expressionBlend);
+    if (!talking && !eating) {
+      bodyMotion.setThinking(true);
+      syncThinkingLibraryMotion();
+    }
     return analysis;
   };
 
@@ -1132,7 +1152,7 @@ export async function createVrmAvatar(opts) {
     if (vrmaAction && !vrmaPlaying && !vrmaPending) {
       restoreAfterVrma();
     }
-    const libraryMotion = vrmaPlaying && Boolean(vrmaAction);
+    const libraryMotion = libraryOwnsVrmBody(vrmaAction, motionPlayer, vrmaPending);
     if (libraryMotion && !wasLibraryMotion) {
       bodyMotion.holdForLibraryMotion?.(now);
     }
@@ -1462,10 +1482,18 @@ export async function createVrmAvatar(opts) {
       );
     },
     getMotionPlayerStatus() {
-      return motionPlayer.getTransitionStatus?.() || {
+      const base = motionPlayer.getTransitionStatus?.() || {
         activeActionId: motionPlayer.activeActionId,
         crossfading: false,
         retiringActions: 0,
+      };
+      return {
+        ...base,
+        vrmaAction,
+        vrmaPending,
+        libraryOwnsBody: libraryOwnsVrmBody(vrmaAction, motionPlayer, vrmaPending),
+        animating: motionPlayer.isAnimating?.() ?? false,
+        holdingLastFrame: motionPlayer.isHoldingLastFrame?.() ?? false,
       };
     },
     get mouthOpen() {

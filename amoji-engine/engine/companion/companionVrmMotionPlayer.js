@@ -223,6 +223,12 @@ export function createVrmMotionPlayer(opts) {
     stop,
     update,
     warmClip,
+    isAnimating() {
+      return Boolean(activeActionId && clipAction?.isRunning?.());
+    },
+    isHoldingLastFrame() {
+      return Boolean(activeActionId && clipAction?.paused);
+    },
     isPlaying() {
       return Boolean(
         activeActionId &&
