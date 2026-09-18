@@ -84,9 +84,11 @@ describe("idle showcase wiring", () => {
     expect(grokCss).toMatch(/\.theme-grok-ani \.companion-toast \{[\s\S]*?z-index:\s*70/);
   });
 
-  it("drives the chip mini emotion ball from mouth and mic volume", () => {
+  it("drives the mic-orb from mouth and mic volume", () => {
     expect(html).toContain("createMiniEmotionBall");
-    expect(html).toMatch(/createMiniEmotionBall\(statusDot/);
+    expect(html).toMatch(/createMiniEmotionBall\(btnMic/);
+    expect(html).toMatch(/keepHostRole:\s*true/);
+    expect(html).toMatch(/companion-chip__dot--legacy/);
     expect(html).toMatch(
       /const syncEmotionBall = \(\) => \{[\s\S]*miniEmotionBall\.sync\(/,
     );
@@ -105,7 +107,9 @@ describe("idle showcase wiring", () => {
     expect(grokCss).toMatch(/\.companion-chip__dot:has\(canvas\) \{[\s\S]*transform:\s*none/);
     expect(grokCss).toMatch(/\.companion-chip__dot-canvas \{[\s\S]*inset:\s*0/);
     expect(grokCss).toMatch(/\.companion-chip__dot \{[\s\S]*?overflow:\s*hidden/);
-    expect(html).toContain('role="img"');
+    expect(html).toContain('id="btn-mic"');
+    expect(html).toMatch(/\.mic-btn\.mini-emotion-ball/);
+    expect(html).toMatch(/keepHostRole:\s*true/);
     expect(html).toContain("resolveMiniEmotionBallState");
     expect(html).toMatch(/onTalking: \(on\) => \{[\s\S]*syncCompanionStatusUi\(\)/);
     expect(grokCss).not.toMatch(/animation:\s*miniBallGlow/);

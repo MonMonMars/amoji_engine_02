@@ -528,6 +528,7 @@ export function computeMiniEmotionBallFrame(opts = {}) {
 export function applyMiniEmotionBallFrame(el, frame, opts = {}) {
   if (!el?.style || !frame) return null;
   const isEnglish = Boolean(opts.isEnglish);
+  const keepHostRole = Boolean(opts.keepHostRole);
   el.dataset.state = frame.state;
   el.dataset.emotion = frame.emotion;
   const bg = `hsl(${frame.hue} ${frame.sat}% ${frame.light}%)`;
@@ -546,7 +547,7 @@ export function applyMiniEmotionBallFrame(el, frame, opts = {}) {
   el.title = label;
   el.dataset.ballLabel = label;
   el.removeAttribute?.("aria-hidden");
-  if (el.getAttribute?.("role") !== "img") {
+  if (!keepHostRole && el.getAttribute?.("role") !== "img") {
     el.setAttribute?.("role", "img");
   }
   if (el.getAttribute?.("aria-label") !== label) {
@@ -564,6 +565,7 @@ export function syncMiniEmotionBall(el, opts = {}) {
   if (!el?.style) return null;
   return applyMiniEmotionBallFrame(el, computeMiniEmotionBallFrame(opts), {
     isEnglish: Boolean(opts.isEnglish),
+    keepHostRole: Boolean(opts.keepHostRole),
   });
 }
 
@@ -593,12 +595,17 @@ export function createMiniEmotionBall(el, opts = {}) {
       : Boolean(opts.isEnglish);
 
   el.classList.add("mini-emotion-ball");
+  const keepHostRole = Boolean(opts.keepHostRole);
   let canvas = el.querySelector?.("canvas.companion-chip__dot-canvas") || null;
   if (!canvas && typeof document !== "undefined") {
     canvas = document.createElement("canvas");
     canvas.className = "companion-chip__dot-canvas";
     canvas.setAttribute("aria-hidden", "true");
-    el.appendChild(canvas);
+    if (opts.prependCanvas && el.firstChild) {
+      el.insertBefore(canvas, el.firstChild);
+    } else {
+      el.appendChild(canvas);
+    }
   }
   const ctx = canvas?.getContext?.("2d") || null;
 
@@ -671,7 +678,10 @@ export function createMiniEmotionBall(el, opts = {}) {
       light: displayLight,
     };
     drawnFrame = drawn;
-    applyMiniEmotionBallFrame(el, drawn, { isEnglish: isEnglish() });
+    applyMiniEmotionBallFrame(el, drawn, {
+      isEnglish: isEnglish(),
+      keepHostRole,
+    });
     if (ctx && canvas) {
       const dpr = Math.min(3, Math.max(1, globalThis.devicePixelRatio || 1));
       const w = (canvas.width || 36) / dpr;
