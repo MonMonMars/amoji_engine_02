@@ -3,7 +3,7 @@
  *
  * Policy: VRM avatars play hosted VRMA for every catalog action. We do not
  * synthesize body motion in code — custom libraries can be added later.
- * Calm standing idle loops Relax.vrma; talk sway uses hosted VRMA loops
+ * Calm standing idle loops Thinking.vrma; talk sway uses hosted VRMA loops
  * (see companionTalkMotionLibrary.mjs). Clip switches crossfade in the player.
  *
  * Source: tk256ailab/vrm-viewer (MIT) — 11 clips mapped to ~50+ action ids.
@@ -13,11 +13,11 @@ import { resolveMotionSamplerKey } from "./companionMotionLibrary.js";
 export const COMPANION_ONLINE_MOTION_CLIPS_SCHEMA =
   "amoji.companionOnlineMotionClips.v4";
 
-/** Legacy alias — calm standing uses the Relax VRMA loop. */
+/** Legacy alias — calm standing uses the Thinking VRMA loop. */
 export const ONLINE_IDLE_ACTION = "idle";
-export const ONLINE_IDLE_CLIP_FILE = "Relax";
+export const ONLINE_IDLE_CLIP_FILE = "Thinking";
 /** Default calm idle loop from the hosted motion library. */
-export const ONLINE_CALM_IDLE_ACTION = "relax";
+export const ONLINE_CALM_IDLE_ACTION = "thinking";
 export const ONLINE_THINKING_ACTION = "thinking";
 
 /** Hosted VRMA clips that loop during talk (Thinking, LookAround, Blush, etc.). */
@@ -30,6 +30,7 @@ export const ONLINE_LOOPING_LIBRARY_ACTIONS = Object.freeze(
   new Set([
     ONLINE_CALM_IDLE_ACTION,
     ONLINE_THINKING_ACTION,
+    "relax",
     ...ONLINE_TALK_LOOP_ACTIONS,
   ]),
 );
