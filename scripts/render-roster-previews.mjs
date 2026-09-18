@@ -22,9 +22,9 @@ import { CHARACTER_IDS } from "../amoji-engine/engine/companion/companionCharact
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const outDir = join(root, "prototypes/assets");
 
-/** Known bad captures from an empty/loading canvas (identical byte size). */
+/** Playwright element screenshots of WebGL canvases come out blank (~333412 bytes). */
 const BLACK_LOADER_BYTES = 333412;
-const MIN_GOOD_BYTES = 360000;
+const MIN_GOOD_BYTES = 240000;
 
 const DEFAULT_TARGETS = [
   "amoji",
@@ -133,7 +133,20 @@ async function captureCharacter(page, characterId, baseUrl) {
   });
   await waitForStageReady(page, characterId);
   const out = previewPath(characterId);
-  await page.locator("#avatar-canvas").screenshot({ path: out });
+  const dataUrl = await page.evaluate(() => {
+    const canvas = document.getElementById("avatar-canvas");
+    if (!canvas) return "";
+    try {
+      return canvas.toDataURL("image/png");
+    } catch {
+      return "";
+    }
+  });
+  if (!dataUrl.startsWith("data:image/png;base64,")) {
+    throw new Error("canvas toDataURL failed");
+  }
+  const png = Buffer.from(dataUrl.slice("data:image/png;base64,".length), "base64");
+  writeFileSync(out, png);
   if (isBadCapture(out)) {
     throw new Error(`capture too small or black loader (${statSync(out).size} bytes)`);
   }
