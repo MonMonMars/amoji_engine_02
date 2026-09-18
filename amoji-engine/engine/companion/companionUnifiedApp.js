@@ -30,7 +30,13 @@ export function normalizeUnifiedEntryParams(params) {
     next.delete("kind");
     next.delete("lite");
   }
-  if (next.get("tab") === "today" && !next.get("role")) {
+  const secretaryTab = next.get("tab");
+  if (
+    (secretaryTab === "today" ||
+      secretaryTab === "tasks" ||
+      secretaryTab === "me") &&
+    !next.get("role")
+  ) {
     next.set("role", "secretary");
   }
   return next;

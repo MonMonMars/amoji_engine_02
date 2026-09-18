@@ -2,6 +2,7 @@ import { registerRoute } from "../router.js";
 import { loadMobileSettings } from "/amoji-engine/engine/mobile/companionMobileSettings.js";
 import {
   loadCompanionRole,
+  roleLabel,
   rolePreset,
 } from "/amoji-engine/engine/mobile/companionRolePresets.js";
 
@@ -13,6 +14,7 @@ registerRoute("companion", (ctx) => {
   const charId =
     localStorage.getItem("amoji.mobile.lastCharacterId") ||
     rolePreset(role).defaultCharacterId;
+  const secretaryTab = role === "secretary" ? "&tab=today" : "";
 
   const screen = document.createElement("section");
   screen.className = "screen";
@@ -20,13 +22,13 @@ registerRoute("companion", (ctx) => {
   screen.innerHTML = `
     <div class="topbar">
       <button type="button" class="btn btn-secondary" data-action="back">←</button>
-      <h1>${en ? "Companion" : "同伴"}</h1>
+      <h1>${roleLabel(role, en)}</h1>
       <span></span>
     </div>
     <iframe
       class="companion-frame"
-      title="Amoji Companion"
-      src="/companion-full?lang=${lang}&mobile=1&character=${charId}&role=${role}&voice=openai-coral"
+      title="Amoji ${roleLabel(role, en)}"
+      src="/play?lang=${lang}&mobile=1&character=${charId}&role=${role}&pick=0&automic=0&voice=openai-coral${secretaryTab}"
       allow="microphone; autoplay"
     ></iframe>
   `;
