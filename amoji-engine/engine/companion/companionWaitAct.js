@@ -322,6 +322,12 @@ export function createCompanionWaitAct(opts = {}) {
       avatarRef = next || null;
       if (active && avatarRef) playPose();
     },
+    /** Turn on filler speech after the greeting (avatar-load / idle). */
+    enableVoice() {
+      if (!active) return false;
+      startWaitVoice(true);
+      return true;
+    },
     setVoice(next) {
       voiceRef = next || null;
     },

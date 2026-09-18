@@ -56,6 +56,24 @@ export { formatMicError, MIC_ERROR_MESSAGES, requestMicPermission };
 
 export const COMPANION_VOICE_SCHEMA = "amoji.companionVoice.v1";
 
+/** Abort slow /api/tts calls so the greeting can fall back to browser voice. */
+export const CLOUD_TTS_FETCH_TIMEOUT_MS = 12000;
+
+/**
+ * @param {string} url
+ * @param {RequestInit} [init]
+ * @param {number} [timeoutMs]
+ */
+export async function fetchCloudTts(url, init = {}, timeoutMs = CLOUD_TTS_FETCH_TIMEOUT_MS) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 /** Tiny silent WAV — unlocks iOS/Safari audio in the same user-gesture turn. */
 const SILENT_AUDIO_DATA_URI =
   "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEAQB8AAEAfAAABAAgAZGF0YQQAAAAAAA==";
@@ -99,8 +117,12 @@ export function unlockAudioSync() {
     globalThis.window.__amojiPrimeAudio = audio;
     audio.volume = 0.001;
     if (!audio.src || audio.src === "") audio.src = SILENT_AUDIO_DATA_URI;
-    void audio.play().catch(() => {});
-    globalThis.window.__amojiAudioUnlocked = true;
+    void audio
+      .play()
+      .then(() => {
+        globalThis.window.__amojiAudioUnlocked = true;
+      })
+      .catch(() => {});
     return true;
   } catch {
     return false;
@@ -734,11 +756,13 @@ export function createCompanionVoice(opts = {}) {
             talkStyle: clause.talkStyle || perf.talkStyle,
             speechEnergy: clause.speechEnergy ?? perf.speechEnergy,
           });
-          const res = await fetch(url, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(
-              buildCloudTtsRequestBody({
+          let res;
+          try {
+            res = await fetchCloudTts(url, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(
+                buildCloudTtsRequestBody({
                 text: clause.text,
                 performance: {
                   ...perf,
@@ -749,10 +773,17 @@ export function createCompanionVoice(opts = {}) {
                 },
                 voice: preset.name,
                 lang: preset.lang,
-                characterId: activeCharacterId,
-              }),
-            ),
-          });
+                  characterId: activeCharacterId,
+                }),
+              ),
+            });
+          } catch (err) {
+            const reason =
+              err?.name === "AbortError"
+                ? "cloud-tts-timeout"
+                : err?.message || "cloud-tts-fetch-failed";
+            return { ok: false, reason };
+          }
           if (!res.ok) {
             const errText = await res.text().catch(() => "");
             return {
@@ -1254,7 +1285,7 @@ export function createCompanionVoice(opts = {}) {
           talkStyle: "thinking",
           speechEnergy: 0.32,
         }, lang);
-        const res = await fetch(opts.cloudTtsUrl, {
+        const res = await fetchCloudTts(opts.cloudTtsUrl, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -1396,7 +1427,7 @@ export function createCompanionVoice(opts = {}) {
           talkStyle: "soft",
           speechEnergy: learnEnergy,
         }, lang);
-        const res = await fetch(opts.cloudTtsUrl, {
+        const res = await fetchCloudTts(opts.cloudTtsUrl, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -1604,17 +1635,22 @@ export function createCompanionVoice(opts = {}) {
       try {
         const preset = cloudVoicePreset();
         const primeWord = preset.lang?.startsWith("en") ? "Hi" : "好";
-        const res = await fetch(opts.cloudTtsUrl, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            text: primeWord,
-            emotion: "neutral",
-            voice: preset.name,
-            lang: preset.lang,
-          }),
-        });
-        if (res.ok) {
+        let res;
+        try {
+          res = await fetchCloudTts(opts.cloudTtsUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              text: primeWord,
+              emotion: "neutral",
+              voice: preset.name,
+              lang: preset.lang,
+            }),
+          });
+        } catch {
+          res = null;
+        }
+        if (res?.ok) {
           const blob = await res.blob();
           if (blob.size > 0) {
             if (speaking) {
@@ -1623,12 +1659,15 @@ export function createCompanionVoice(opts = {}) {
               return true;
             }
             const objectUrl = URL.createObjectURL(blob);
-            const audio = configureCompanionAudioElement(new Audio());
+            const audio = configureCompanionAudioElement(getSharedAudio());
             audio.volume = 0.12;
             audio.src = objectUrl;
             const played = await audio
               .play()
-              .then(() => true)
+              .then(() => {
+                globalThis.window.__amojiAudioUnlocked = true;
+                return true;
+              })
               .catch(() => false);
             URL.revokeObjectURL(objectUrl);
             if (played) {

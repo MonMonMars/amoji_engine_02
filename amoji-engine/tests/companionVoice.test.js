@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   audioPlaybackProgress,
   browserTtsTimeoutMs,
@@ -14,6 +14,8 @@ import {
   readAnalyserMouthLevel,
   unlockAudioSync,
   visemeAtAudioProgress,
+  fetchCloudTts,
+  CLOUD_TTS_FETCH_TIMEOUT_MS,
 } from "../engine/companion/companionVoice.js";
 
 describe("companionVoice", () => {
@@ -67,6 +69,17 @@ describe("companionVoice", () => {
 
   it("unlockAudioSync is safe without window", () => {
     expect(unlockAudioSync()).toBe(false);
+  });
+
+  it("passes abort signal with timeout to cloud TTS fetch", async () => {
+    const fetchImpl = vi.fn((_url, init) => {
+      expect(init.signal).toBeInstanceOf(AbortSignal);
+      return Promise.resolve({ ok: true });
+    });
+    globalThis.fetch = fetchImpl;
+    await fetchCloudTts("/api/tts", { method: "POST" });
+    expect(fetchImpl).toHaveBeenCalledOnce();
+    expect(CLOUD_TTS_FETCH_TIMEOUT_MS).toBeGreaterThan(5000);
   });
 
   it("slows CJK lip-sync to spoken Cantonese pace", () => {
