@@ -1324,7 +1324,7 @@ export async function createVrmAvatar(opts) {
 
   const reactToTap = () => {
     setEmotion("happy");
-    setTalkStyle?.("celebrate");
+    setTalkStyle("celebrate");
     if (resolveOnlineMotionClipUrl("laugh")) {
       void tryPlayVrmaAction("laugh", { loop: false });
     } else if (resolveOnlineMotionClipUrl("clap")) {
