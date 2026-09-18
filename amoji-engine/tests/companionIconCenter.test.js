@@ -6,6 +6,7 @@ import { fileURLToPath } from "url";
 const root = join(dirname(fileURLToPath(import.meta.url)), "../..");
 const html = readFileSync(join(root, "prototypes/amoji-companion.html"), "utf8");
 const grok = readFileSync(join(root, "prototypes/companion-grok-ani.css"), "utf8");
+const minimalUi = readFileSync(join(root, "prototypes/companion-minimal-ui.css"), "utf8");
 const picker = readFileSync(
   join(root, "amoji-engine/engine/companion/companionCharacterPicker.js"),
   "utf8",
