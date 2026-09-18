@@ -42,12 +42,12 @@ export const MAX_CLOUD_TTS_CHARS = 480;
 /** @typedef {{ rate: number, pitch: number, volume: number }} BrowserProsody */
 
 const EMOTION_EDGE_BASE = Object.freeze({
-  neutral: { rate: 6, pitch: 28, volume: 8 },
-  happy: { rate: 22, pitch: 50, volume: 20 },
-  thinking: { rate: -14, pitch: 10, volume: -2 },
-  sad: { rate: -22, pitch: -16, volume: -8 },
-  surprised: { rate: 24, pitch: 54, volume: 18 },
-  angry: { rate: 12, pitch: 2, volume: 14 },
+  neutral: { rate: -2, pitch: 28, volume: 8 },
+  happy: { rate: 6, pitch: 50, volume: 20 },
+  thinking: { rate: -20, pitch: 10, volume: -2 },
+  sad: { rate: -26, pitch: -16, volume: -8 },
+  surprised: { rate: 8, pitch: 54, volume: 18 },
+  angry: { rate: 4, pitch: 2, volume: 14 },
 });
 
 const NUANCE_EDGE_DELTA = Object.freeze({
@@ -73,12 +73,12 @@ const STYLE_EDGE_DELTA = Object.freeze({
 });
 
 const EMOTION_BROWSER_BASE = Object.freeze({
-  neutral: { rate: 1, pitch: 1.14, volume: 1 },
-  happy: { rate: 1.08, pitch: 1.28, volume: 1 },
-  thinking: { rate: 0.92, pitch: 1.06, volume: 0.96 },
-  sad: { rate: 0.88, pitch: 0.92, volume: 0.9 },
-  surprised: { rate: 1.1, pitch: 1.32, volume: 1 },
-  angry: { rate: 1.04, pitch: 1, volume: 1 },
+  neutral: { rate: 0.92, pitch: 1.14, volume: 1 },
+  happy: { rate: 0.94, pitch: 1.28, volume: 1 },
+  thinking: { rate: 0.86, pitch: 1.06, volume: 0.96 },
+  sad: { rate: 0.84, pitch: 0.92, volume: 0.9 },
+  surprised: { rate: 0.96, pitch: 1.32, volume: 1 },
+  angry: { rate: 0.9, pitch: 1, volume: 1 },
 });
 
 /**
@@ -215,17 +215,17 @@ export function instructSpeakingSpeed(opts = {}) {
   const speedMultiplier = normalizeTalkSpeed(opts.speedMultiplier);
   let speed =
     emotion === "happy" || emotion === "surprised"
-      ? 1.06
+      ? 0.92
       : emotion === "sad"
-        ? 0.9
+        ? 0.82
         : emotion === "thinking"
-          ? 0.94
+          ? 0.86
           : emotion === "angry"
-            ? 1.05
-            : 1.02;
-  speed += (energy - 0.55) * 0.14;
+            ? 0.9
+            : 0.88;
+  speed += (energy - 0.55) * 0.06;
   speed = applyTalkSpeedMultiplier(speed, speedMultiplier);
-  return Number(Math.max(0.45, Math.min(1.08, speed)).toFixed(2));
+  return Number(Math.max(0.28, Math.min(0.95, speed)).toFixed(2));
 }
 
 /**
@@ -286,15 +286,19 @@ export function buildTtsInstruct(opts = {}) {
         : "親切、有感情、好似傾偈";
 
   const pacing =
-    speedMultiplier <= 0.55
+    speedMultiplier <= 0.42
       ? isEnglish
-        ? `Speak at ${speed}x — SLOW, relaxed, unhurried. Longer pauses between phrases. Never rush.`
-        : `用 ${speed}x 慢速講 — 放鬆、唔好急，句與句之間留啲位。`
-      : energy > 0.75
-        ? `Speak at ${speed}x — conversational pace. Lift pitch on exclamations; do not rush.`
-        : energy < 0.38
-          ? `Speak at ${speed}x — calm and unhurried, still vary pitch naturally.`
-          : `Speak at ${speed}x — natural everyday pace, like a friend on a video call.`;
+        ? `Speak at ${speed}x — VERY SLOW. Relaxed VN/gacha pace. Long breath between phrases and words. Never rush or clip syllables.`
+        : `用 ${speed}x 好慢講 — 視覺小說節奏，字與字之間留位，句與句之間停一停，絕對唔好急。`
+      : speedMultiplier <= 0.65
+        ? isEnglish
+          ? `Speak at ${speed}x — SLOW, relaxed, unhurried. Longer pauses between phrases. Never rush.`
+          : `用 ${speed}x 慢速講 — 放鬆、唔好急，句與句之間留啲位。`
+        : energy > 0.75
+          ? `Speak at ${speed}x — warm pace. Lift pitch on exclamations; still unhurried.`
+          : energy < 0.38
+            ? `Speak at ${speed}x — calm and unhurried, still vary pitch naturally.`
+            : `Speak at ${speed}x — gentle everyday pace, like a friend on a video call. Never rushed.`;
 
   const emotionLine =
     emotion === "happy"

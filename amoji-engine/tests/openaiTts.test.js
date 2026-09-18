@@ -65,7 +65,8 @@ describe("openaiTts", () => {
     expect(body.model).toBe("gpt-4o-mini-tts");
     expect(body.instructions).toContain("Voice Affect:");
     expect(body.instructions).toMatch(/Speak at /);
-    expect(body.instructions).toMatch(/Never monotone/i);
+    expect(body.speed).toBeLessThan(0.55);
+    expect(body.instructions).toMatch(/unhurried|Never rush/i);
     expect(body.input).toBe("Hello there!");
   });
 });

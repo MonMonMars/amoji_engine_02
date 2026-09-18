@@ -2,15 +2,16 @@
  * User-adjustable companion talking speed — applies to cloud + browser TTS.
  */
 export const COMPANION_TALK_SPEED_SCHEMA = "amoji.companionTalkSpeed.v1";
-export const TALK_SPEED_STORAGE_KEY = "amoji.companionTalkSpeed.v1";
+export const TALK_SPEED_STORAGE_KEY = "amoji.companionTalkSpeed.v2";
+const LEGACY_TALK_SPEED_KEY = "amoji.companionTalkSpeed.v1";
 
-/** Default: slower pace so expression + lip sync can load per word (VN / gacha style). */
-export const DEFAULT_TALK_SPEED = 0.45;
+/** Default: very slow pace so expression + lip sync can load per word (VN / gacha style). */
+export const DEFAULT_TALK_SPEED = 0.38;
 
 /** Cycle order for the topbar speed button. */
-export const TALK_SPEED_PRESETS = Object.freeze([0.45, 0.55, 0.7, 0.85, 1]);
+export const TALK_SPEED_PRESETS = Object.freeze([0.38, 0.48, 0.6, 0.75, 0.9]);
 
-const MIN_TALK_SPEED = 0.4;
+const MIN_TALK_SPEED = 0.32;
 const MAX_TALK_SPEED = 1.05;
 
 /**
@@ -49,7 +50,7 @@ export function applyTalkSpeedMultiplier(baseSpeed, multiplier = DEFAULT_TALK_SP
  */
 export function slowEdgeRatePercent(edgeRatePercent, multiplier = DEFAULT_TALK_SPEED) {
   const mult = normalizeTalkSpeed(multiplier);
-  const shift = (1 - mult) * 32;
+  const shift = (1 - mult) * 52;
   return edgeRatePercent - shift;
 }
 
@@ -60,7 +61,7 @@ export function slowEdgeRatePercent(edgeRatePercent, multiplier = DEFAULT_TALK_S
 export function slowBrowserRate(browserRate, multiplier = DEFAULT_TALK_SPEED) {
   const mult = normalizeTalkSpeed(multiplier);
   const base = Number.isFinite(browserRate) ? browserRate : 1;
-  return Number(Math.max(0.55, Math.min(1.12, base * mult)).toFixed(3));
+  return Number(Math.max(0.42, Math.min(1.08, base * mult)).toFixed(3));
 }
 
 /**
@@ -69,11 +70,11 @@ export function slowBrowserRate(browserRate, multiplier = DEFAULT_TALK_SPEED) {
  */
 export function formatTalkSpeedLabel(speed, isEnglish = false) {
   const s = normalizeTalkSpeed(speed);
-  if (s === 0.45) return isEnglish ? "0.45× Slow" : "0.45× 慢";
-  if (s === 0.55) return isEnglish ? "0.55×" : "0.55×";
-  if (s === 0.7) return isEnglish ? "0.7×" : "0.7×";
-  if (s === 0.85) return isEnglish ? "0.85×" : "0.85×";
-  if (s >= 1) return isEnglish ? "1× Normal" : "1× 正常";
+  if (s <= 0.4) return isEnglish ? "0.38× Slow" : "0.38× 慢";
+  if (s === 0.48) return isEnglish ? "0.48×" : "0.48×";
+  if (s === 0.6) return isEnglish ? "0.6×" : "0.6×";
+  if (s === 0.75) return isEnglish ? "0.75×" : "0.75×";
+  if (s >= 0.9) return isEnglish ? "0.9× Normal" : "0.9× 正常";
   return `${s}×`;
 }
 
@@ -93,15 +94,24 @@ export function talkSpeedButtonTitle(speed, isEnglish = false) {
 export function loadTalkSpeed(storage = globalThis.localStorage) {
   try {
     const raw = storage?.getItem?.(TALK_SPEED_STORAGE_KEY);
-    if (raw == null || raw === "") return DEFAULT_TALK_SPEED;
-    return normalizeTalkSpeed(JSON.parse(raw));
-  } catch {
-    try {
-      return normalizeTalkSpeed(storage?.getItem?.(TALK_SPEED_STORAGE_KEY));
-    } catch {
-      return DEFAULT_TALK_SPEED;
+    if (raw != null && raw !== "") {
+      return normalizeTalkSpeed(JSON.parse(raw));
     }
+  } catch {
+    /* fall through to legacy */
   }
+  try {
+    const legacy = storage?.getItem?.(LEGACY_TALK_SPEED_KEY);
+    if (legacy != null && legacy !== "") {
+      const parsed = JSON.parse(legacy);
+      const scaled = normalizeTalkSpeed(Number(parsed) * 0.84);
+      saveTalkSpeed(scaled, storage);
+      return scaled;
+    }
+  } catch {
+    /* ignore */
+  }
+  return DEFAULT_TALK_SPEED;
 }
 
 /**

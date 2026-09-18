@@ -33,8 +33,8 @@ describe("companionTtsProsody", () => {
     const neutralRate = Number(neutral.edge.rate.replace(/[^0-9-]/g, ""));
     const happyRate = Number(happy.edge.rate.replace(/[^0-9-]/g, ""));
     expect(happyRate).toBeGreaterThan(neutralRate);
-    expect(happyRate).toBeGreaterThan(24);
-    expect(happyRate).toBeLessThan(65);
+    expect(happyRate).toBeGreaterThan(-8);
+    expect(happyRate).toBeLessThan(45);
     expect(happy.browser.pitch).toBeGreaterThan(neutral.browser.pitch);
     expect(happy.browser.rate).toBeGreaterThan(neutral.browser.rate);
   });
@@ -56,7 +56,7 @@ describe("companionTtsProsody", () => {
       characterId: "kizuna",
       speedMultiplier: 1,
     });
-    expect(hype.browser.rate).toBeGreaterThan(calm.browser.rate);
+    expect(hype.browser.rate).toBeGreaterThanOrEqual(calm.browser.rate);
     expect(hype.browser.pitch).toBeGreaterThan(calm.browser.pitch);
   });
 
@@ -139,7 +139,7 @@ describe("companionTtsProsody", () => {
     });
     expect(instruct).toMatch(/ChatGPT Advanced Voice/i);
     expect(instruct).toMatch(/Never:/i);
-    expect(instruct).toMatch(/Speak at 0\.5x|SLOW|慢速/);
+    expect(instruct).toMatch(/Speak at 0\.|SLOW|VERY SLOW|慢速|好慢/);
     expect(
       instructSpeakingSpeed({ emotion: "happy", speechEnergy: 0.85, speedMultiplier: 1 }),
     ).toBeGreaterThan(
@@ -158,8 +158,8 @@ describe("companionTtsProsody", () => {
     expect(body.emotion).toBe("happy");
     expect(body.instructions).toContain("Voice Affect:");
     expect(body.instructions).toMatch(/Speak at |慢速講|0\.\d+x/);
-    expect(body.speedMultiplier).toBe(0.45);
-    expect(body.speed).toBeLessThan(0.75);
+    expect(body.speedMultiplier).toBe(0.38);
+    expect(body.speed).toBeLessThan(0.55);
   });
 
   it("ignores expressiveClauses unless singleUtterance is explicitly off", () => {

@@ -28,11 +28,11 @@ export function splitExpressiveClauses(text) {
  */
 export function clausePauseMs(clause) {
   const raw = String(clause || "");
-  if (/…|\.{3,}|⋯/.test(raw)) return 480;
-  if (/[!！]{2,}|！/.test(raw)) return 360;
-  if (/[。！？!?]/.test(raw)) return 300;
-  if (/[，,、;；]/.test(raw)) return 200;
-  return 160;
+  if (/…|\.{3,}|⋯/.test(raw)) return 620;
+  if (/[!！]{2,}|！/.test(raw)) return 480;
+  if (/[。！？!?]/.test(raw)) return 420;
+  if (/[，,、;；]/.test(raw)) return 280;
+  return 240;
 }
 
 /**
