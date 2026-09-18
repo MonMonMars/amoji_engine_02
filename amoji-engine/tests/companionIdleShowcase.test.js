@@ -66,7 +66,7 @@ describe("idle showcase wiring", () => {
       /body\.conversation-ui \.transcript \.msg-row \{[\s\S]*?z-index:\s*10051/,
     );
     expect(html).toMatch(
-      /createCompanionProgressDock\(\{\s*root:\s*document\.querySelector\("\.stage"\)/,
+      /createCompanionProgressDock\(\{\s*root:\s*document\.body/,
     );
     expect(html).toMatch(
       /createCompanionTreatDock\(\{[\s\S]*?root:\s*careRoot/,
