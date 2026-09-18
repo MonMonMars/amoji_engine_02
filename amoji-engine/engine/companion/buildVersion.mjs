@@ -1,2 +1,2 @@
 /** Single source of truth for deployed companion build id (keep HTML __amojiBuild in sync). */
-export const AMOJI_BUILD = "2026-09-18-v227-treat-eat-props";
+export const AMOJI_BUILD = "2026-09-18-v228-fast-boot-preview-switch";

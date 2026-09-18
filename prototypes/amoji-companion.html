@@ -8,9 +8,9 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji · Companion</title>
     <script>
-      window.__amojiBuild = "2026-09-18-v227-treat-eat-props";
+      window.__amojiBuild = "2026-09-18-v228-fast-boot-preview-switch";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-18-v227-treat-eat-props"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-18-v228-fast-boot-preview-switch"></script>
     <link
       rel="prefetch"
       href="/prototypes/assets/companion-char-nova.png"
@@ -487,8 +487,8 @@
       media="print"
       onload="this.media='all'"
     />
-    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-18-v227-treat-eat-props" />
-    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-18-v227-treat-eat-props" />
+    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-18-v228-fast-boot-preview-switch" />
+    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-18-v228-fast-boot-preview-switch" />
     <noscript>
       <link
         href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap"
@@ -595,6 +595,29 @@
         user-select: none;
         -webkit-user-select: none;
         -webkit-touch-callout: none;
+      }
+
+      .avatar-stage-preview {
+        position: absolute;
+        inset: 0;
+        z-index: 2;
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        object-position: center 18%;
+        pointer-events: none;
+        user-select: none;
+        opacity: 1;
+        transition: opacity 0.28s ease;
+        filter: drop-shadow(0 18px 42px rgba(0, 0, 0, 0.35));
+      }
+
+      .avatar-stage-preview[hidden] {
+        display: none !important;
+      }
+
+      .stage.has-stage-preview #avatar-canvas {
+        opacity: 0.02;
       }
 
       .orbit-hit {
@@ -3934,13 +3957,14 @@
 
       .companion-switch-overlay {
         position: fixed;
-        inset: 0;
+        inset: auto 0 max(1.1rem, env(safe-area-inset-bottom, 0px)) 0;
         z-index: 11000;
         display: grid;
-        place-items: center;
-        background: rgba(6, 8, 14, 0.55);
-        backdrop-filter: blur(4px);
-        pointer-events: auto;
+        place-items: end center;
+        padding: 0 1rem 0.35rem;
+        background: transparent;
+        backdrop-filter: none;
+        pointer-events: none;
       }
 
       .companion-switch-overlay[hidden] {
@@ -3957,6 +3981,8 @@
         background: rgba(12, 16, 24, 0.92);
         border: 1px solid rgba(247, 241, 232, 0.12);
         min-width: min(82vw, 240px);
+        pointer-events: auto;
+        box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
       }
 
       .companion-switch-ring {
@@ -4089,19 +4115,19 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-18-v227-treat-eat-props",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-18-v228-fast-boot-preview-switch",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-18-v227-treat-eat-props",
-          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-18-v227-treat-eat-props"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-18-v228-fast-boot-preview-switch",
+          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-18-v228-fast-boot-preview-switch"
         }
       }
     </script>
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-18-v227-treat-eat-props"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-18-v228-fast-boot-preview-switch"
     />
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-18-v227-treat-eat-props"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-18-v227-treat-eat-props"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-18-v228-fast-boot-preview-switch"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-18-v228-fast-boot-preview-switch"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;
@@ -4612,7 +4638,6 @@
         { createCompanionAvatar, createStubAvatar },
         { createCompanionChat },
         voiceMod,
-        bodyMod,
         { resolveDialectPref },
         uiMod,
         { createCompanionLlmSwitcher },
@@ -4622,13 +4647,11 @@
         voiceCatalogMod,
         contentMotionMod,
         ttsProsodyMod,
-        performancePreloadMod,
         streamSpeakMod,
         bargeMod,
         voiceGateMod,
         platformMod,
         characterMod,
-        motionDownloadMod,
         characterPickerMod,
         micButtonMod,
         emotionBallMod,
@@ -4639,21 +4662,17 @@
         actionResolveMod,
         motionCapabilitiesMod,
         uiIntentMod,
-        activityRailMod,
         scenePresetsMod,
         chatPersistenceMod,
         bootChitchatMod,
-        treatInteractMod,
         uiEffectsMod,
-        raisingHubMod,
-        careToolsMod,
         talkSpeedMod,
         cleanUiMod,
+        stagePreviewMod,
       ] = await Promise.all([
         ami("../amoji-engine/engine/companion/createAvatar.js"),
         ami("../amoji-engine/engine/companion/chatLlm.js"),
         ami("../amoji-engine/engine/companion/companionVoice.js"),
-        ami("../amoji-engine/engine/companion/companionBodyMotion.js"),
         ami("../amoji-engine/engine/lab/dialectPref.js"),
         ami("../amoji-engine/engine/companion/companionUi.js"),
         ami("../amoji-engine/engine/companion/companionLlmUi.js"),
@@ -4663,13 +4682,11 @@
         ami("../amoji-engine/engine/companion/companionVoiceCatalog.js"),
         ami("../amoji-engine/engine/companion/companionContentMotion.js"),
         ami("../amoji-engine/engine/companion/companionTtsProsody.js"),
-        ami("../amoji-engine/engine/companion/companionPerformancePreload.js"),
         ami("../amoji-engine/engine/companion/companionStreamSpeak.js"),
         ami("../amoji-engine/engine/companion/companionBargeMonitor.js"),
         ami("../amoji-engine/engine/companion/companionVoiceGate.js"),
         ami("../amoji-engine/engine/companion/companionPlatform.js"),
         ami("../amoji-engine/engine/companion/companionCharacterCatalog.js"),
-        ami("../amoji-engine/engine/companion/companionMotionDownload.js"),
         ami("../amoji-engine/engine/companion/companionCharacterPicker.js"),
         ami("../amoji-engine/engine/companion/companionMicButton.js"),
         ami("../amoji-engine/engine/companion/companionEmotionBall.js"),
@@ -4680,16 +4697,13 @@
         ami("../amoji-engine/engine/companion/companionActionResolve.js"),
         ami("../amoji-engine/engine/companion/companionMotionCapabilities.js"),
         ami("../amoji-engine/engine/companion/companionUiIntent.js"),
-        ami("../amoji-engine/engine/companion/companionActivityRail.js"),
         ami("../amoji-engine/engine/companion/companionScenePresets.js"),
         ami("../amoji-engine/engine/companion/companionChatPersistence.js"),
         ami("../amoji-engine/engine/companion/companionBootChitchat.mjs"),
-        ami("../amoji-engine/engine/companion/companionTreatInteract.js"),
         ami("../amoji-engine/engine/companion/companionUiEffects.js"),
-        ami("../amoji-engine/engine/companion/companionRaisingHub.js"),
-        ami("../amoji-engine/engine/companion/companionCareTools.js"),
         ami("../amoji-engine/engine/companion/companionTalkSpeed.js"),
         ami("../amoji-engine/engine/companion/companionCleanUi.js"),
+        ami("../amoji-engine/engine/companion/companionStagePreview.js"),
       ]);
       const { talkSpeedButtonTitle } = talkSpeedMod;
       const {
@@ -4707,10 +4721,11 @@
       } = uiEffectsMod;
       initCompanionUiEffects(document);
       const { buildBootChitchatReply, isBootChitchatPhase } = bootChitchatMod;
+      const { createCompanionStagePreview } = stagePreviewMod;
+      window.__amojiModuleBooted = true;
       const { createEmptyAreaCameraReset, shouldResetCameraOnTalkStart } = await ami(
         "../amoji-engine/engine/companion/companionCameraReset.js",
       );
-      window.__amojiModuleBooted = true;
       const {
         createCompanionVoice,
         formatMicError,
@@ -4787,8 +4802,8 @@
         resolveChunkTtsPerformance,
         resolveVoicePerformanceFromReply,
       } = ttsProsodyMod;
-      const { startPerformancePreload, primeBodyMotionPoses } =
-        performancePreloadMod;
+      let startPerformancePreload = null;
+      let primeBodyMotionPoses = () => {};
       const {
         buildMotionCapabilityPromptFragment,
         formatMotionCapabilitySummary,
@@ -4801,7 +4816,7 @@
       const { createCompanionEmotionBall, createMiniEmotionBall, resolveMiniEmotionBallState } = emotionBallMod;
 
       const hostedOnline = isHostedCompanion();
-      const { createMotionDownloadClient } = motionDownloadMod;
+      const stagePreview = createCompanionStagePreview(document.querySelector(".stage"));
       const { createCompanionProgressDock } = progressOverlayMod;
       const { createCompanionWaitAct } = waitActMod;
       const {
@@ -4829,7 +4844,8 @@
       let announceMotionLibraryReady = () => {};
 
       const prefetchBasicMotionPack = async ({ coupled = false } = {}) => {
-        if (!motionClient) return { ok: false, reason: "motion-client-not-ready" };
+        const client = await ensureMotionClient();
+        if (!client) return { ok: false, reason: "motion-client-not-ready" };
         if (basicMotionPackReady) return { ok: true, cached: true };
         const waitKind = waitAct?.state?.kind;
         const showPackUi =
@@ -4858,7 +4874,7 @@
         }
         try {
           const result = await Promise.race([
-            motionClient.ensureBasicPack(),
+            client.ensureBasicPack(),
             new Promise((_, reject) => {
               setTimeout(
                 () => reject(new Error("basic motion pack timeout")),
@@ -4868,7 +4884,7 @@
           ]);
           basicMotionPackReady = Boolean(result?.ok);
           if (result?.ok) {
-            void motionClient.ensureFullMotionLibrary?.().then((full) => {
+            void client.ensureFullMotionLibrary?.().then((full) => {
               if (full?.ok || full?.extensions?.ok || full?.premium?.ok) {
                 announceMotionLibraryReady();
               }
@@ -4893,12 +4909,13 @@
       };
 
       const ensureActionInstalled = async (actionId) => {
-        if (!motionClient) return { ok: false, reason: "motion-client-not-ready" };
+        const client = await ensureMotionClient();
+        if (!client) return { ok: false, reason: "motion-client-not-ready" };
         const id = String(actionId || "").toLowerCase();
         if (!id || id === "none" || id === "stop") {
           return { ok: true, action: id, installed: true };
         }
-        if (motionClient.isInstalled(id)) {
+        if (client.isInstalled(id)) {
           return { ok: true, action: id, installed: true, cached: true };
         }
         if (pendingMotionJobs.has(id)) {
@@ -4915,7 +4932,7 @@
               : `學習「${id}」動作 — 下載中…`,
           });
           setEmotionPill("thinking", id);
-          const result = await motionClient.ensureMotion(id);
+          const result = await client.ensureMotion(id);
           waitAct?.stop();
           if (!result.ok) {
             showToast(
@@ -5600,7 +5617,7 @@
             ? "Loading 3D companion model…"
             : "載入 3D 同伴模型…",
         });
-        void prefetchBasicMotionPack({ coupled: true });
+        stagePreview.show(getCharacter(loadForCharacterId)?.previewImage);
         avatarLoadPromise = createCompanionAvatar({
           canvas,
           controlsElement: orbitHit,
@@ -5646,20 +5663,34 @@
             avatar.setEmotion?.(currentEmotion);
             applyOutfitToAvatar(activeSceneOutfitId);
             syncAvatarPerformance();
+            stagePreview.hide();
+            globalThis.__amojiPreload?.scheduleBackground?.(() => {
+              globalThis.__amojiPreload?.primeIdleBodyMotions?.();
+              globalThis.__amojiPreload?.ensureIdleMotions?.();
+              globalThis.__amojiPreload?.ensureRosterModels?.();
+              globalThis.__amojiPreload?.scheduleMotionExtras?.();
+            });
             void globalThis.__amojiPreload?.getIdleMotionPreload?.()?.then(() => {
               for (const id of globalThis.__amojiPreload?.bootIdleMotionIds || []) {
                 avatar.warmMotionClip?.(id);
               }
             });
-            void startPerformancePreload?.({
-              avatar,
-              motionClient,
-              maxExpressionProfiles: 24,
-            }).then((preload) => {
-              if (preload?.extensions?.ok || preload?.motion?.ok) {
-                announceMotionLibraryReady();
-              }
-            });
+            void ami("../amoji-engine/engine/companion/companionPerformancePreload.js")
+              .then((mod) => {
+                startPerformancePreload = mod.startPerformancePreload;
+                primeBodyMotionPoses = mod.primeBodyMotionPoses;
+                return mod.startPerformancePreload({
+                  avatar,
+                  motionClient,
+                  maxExpressionProfiles: 24,
+                });
+              })
+              .then((preload) => {
+                if (preload?.extensions?.ok || preload?.motion?.ok) {
+                  announceMotionLibraryReady();
+                }
+              })
+              .catch(() => null);
             const label =
               avatarKind === "vrm3d"
                 ? isEnglish
@@ -6575,7 +6606,12 @@
         syncTalkSpeedBtn();
       });
 
-      motionClient = createMotionDownloadClient({
+      const ensureMotionClient = async () => {
+        if (motionClient) return motionClient;
+        const { createMotionDownloadClient } = await ami(
+          "../amoji-engine/engine/companion/companionMotionDownload.js",
+        );
+        motionClient = createMotionDownloadClient({
         motionsUrl: "/api/motions",
         fastProgress: true,
         getPrefetchedBasicPack: () =>
@@ -6606,12 +6642,16 @@
           }
         },
       });
+        return motionClient;
+      };
       const warmMotionLibraryBackground = () => {
-        void motionClient.ensureFullMotionLibrary?.().then((result) => {
-          if (result?.ok || result?.extensions?.ok || result?.premium?.ok) {
-            announceMotionLibraryReady();
-          }
-        });
+        void ensureMotionClient().then((client) =>
+          client.ensureFullMotionLibrary?.().then((result) => {
+            if (result?.ok || result?.extensions?.ok || result?.premium?.ok) {
+              announceMotionLibraryReady();
+            }
+          }),
+        );
       };
 
       waitAct = createCompanionWaitAct({
@@ -6720,6 +6760,11 @@
             characterId: nextId,
             langCode,
             currentAvatar: avatarKind !== "loading" ? avatar : null,
+            previewImageUrl: getCharacter(nextId)?.previewImage,
+            onStagePreview: (url) => {
+              if (url) stagePreview.show(url);
+              else stagePreview.hide();
+            },
             onProgress: (pct, label) => switchOverlay.update(pct, label),
             onCharacterTap: () => handleCharacterTap?.(),
           });
@@ -7000,15 +7045,58 @@
         });
       };
 
-      const { createCompanionActivityRail } = activityRailMod;
-      const { createCompanionTreatDock } = treatInteractMod;
-      const { createCompanionRaisingHub } = raisingHubMod;
-      const activityRail = createCompanionActivityRail(document, {
-        isEnglish,
-        mount: document.querySelector(".topbar"),
-      });
+      /** @type {{ pulse?: Function, showFunctions?: Function }} */
+      let activityRail = { pulse: () => {}, showFunctions: () => {} };
+      /** @type {Record<string, unknown>} */
+      let treatDock = {
+        state: { hunger: 55, hearts: 55, coins: 0, bag: {} },
+        hud: null,
+        setOpen: () => {},
+        render: () => {},
+        setNeeds: () => {},
+        checkIn: () => null,
+      };
+      /** @type {Record<string, Function>} */
+      let raisingHub = {
+        refresh: () => {},
+        onChat: () => {},
+        onFeed: () => {},
+        onPet: () => {},
+        onUserMessage: () => {},
+        setCharacter: () => {},
+        runActivity: () => {},
+      };
+      /** @type {Record<string, Function>} */
+      let careTools = {
+        open: () => {},
+        close: () => {},
+        setNeedsHint: () => {},
+      };
+      let careFeaturesReady = false;
 
-      const treatDock = createCompanionTreatDock({
+      const initCareFeatures = async () => {
+        if (careFeaturesReady) return;
+        careFeaturesReady = true;
+        const [
+          activityRailMod,
+          treatInteractMod,
+          raisingHubMod,
+          careToolsMod,
+        ] = await Promise.all([
+          ami("../amoji-engine/engine/companion/companionActivityRail.js"),
+          ami("../amoji-engine/engine/companion/companionTreatInteract.js"),
+          ami("../amoji-engine/engine/companion/companionRaisingHub.js"),
+          ami("../amoji-engine/engine/companion/companionCareTools.js"),
+        ]);
+        const { createCompanionActivityRail } = activityRailMod;
+        const { createCompanionTreatDock } = treatInteractMod;
+        const { createCompanionRaisingHub } = raisingHubMod;
+        activityRail = createCompanionActivityRail(document, {
+          isEnglish,
+          mount: document.querySelector(".topbar"),
+        });
+
+        treatDock = createCompanionTreatDock({
         root: document.querySelector(".stage") || document.body,
         isEnglish: () => isEnglish,
         getAvatar: () => avatar,
@@ -7056,9 +7144,9 @@
           });
         },
       });
-      window.__amojiTreats = treatDock;
+        window.__amojiTreats = treatDock;
 
-      const raisingHub = createCompanionRaisingHub({
+        raisingHub = createCompanionRaisingHub({
         root: document.querySelector(".stage") || document.body,
         chipGoalEl: document.getElementById("companion-daily-goal"),
         petHudEl: treatDock.hud,
@@ -7083,10 +7171,10 @@
           showToast(isEnglish ? "Say something — mic or type" : "講嘢啦 — 用 mic 或者打字", "info");
         },
       });
-      window.__amojiRaising = raisingHub;
+        window.__amojiRaising = raisingHub;
 
-      const { createCompanionCareTools } = careToolsMod;
-      const careTools = createCompanionCareTools({
+        const { createCompanionCareTools } = careToolsMod;
+        careTools = createCompanionCareTools({
         root: document.querySelector(".stage") || document.body,
         isEnglish: () => isEnglish,
         onActivity: (kind) => raisingHub.runActivity?.(kind),
@@ -7099,28 +7187,32 @@
           );
         },
       });
-      window.__amojiCareTools = careTools;
+        window.__amojiCareTools = careTools;
 
-      const syncCareNeedsHint = () => {
-        careTools.setNeedsHint?.({
-          hungry: treatDock.hud?.classList.contains("is-hungry"),
-          lonely: treatDock.hud?.classList.contains("is-lonely"),
-        });
-      };
-      syncCareNeedsHint();
-
-      const treatSetOpen = treatDock.setOpen.bind(treatDock);
-      treatDock.setOpen = (next) => {
-        treatSetOpen(next);
-        if (next) careTools.open?.(false);
-        else careTools.close?.();
-      };
-      const treatRender = treatDock.render.bind(treatDock);
-      treatDock.render = (...args) => {
-        const out = treatRender(...args);
+        const syncCareNeedsHint = () => {
+          careTools.setNeedsHint?.({
+            hungry: treatDock.hud?.classList.contains("is-hungry"),
+            lonely: treatDock.hud?.classList.contains("is-lonely"),
+          });
+        };
         syncCareNeedsHint();
-        return out;
+
+        const treatSetOpen = treatDock.setOpen.bind(treatDock);
+        treatDock.setOpen = (next) => {
+          treatSetOpen(next);
+          if (next) careTools.open?.(false);
+          else careTools.close?.();
+        };
+        const treatRender = treatDock.render.bind(treatDock);
+        treatDock.render = (...args) => {
+          const out = treatRender(...args);
+          syncCareNeedsHint();
+          return out;
+        };
       };
+      globalThis.__amojiPreload?.scheduleBackground?.(() => {
+        void initCareFeatures();
+      });
 
       const uiContextPill = document.getElementById("ui-context-pill");
 
@@ -7542,6 +7634,7 @@
         globalThis.__amojiPreload?.scheduleBackground?.(() => {
           void prefetchBasicMotionPack();
           warmMotionLibraryBackground();
+          void initCareFeatures?.();
         });
         setTimeout(() => {
           if (!voiceWarmScheduled) scheduleVoiceWarmAfterFirstSpeak();

@@ -140,9 +140,24 @@ function reportCombinedProgress(
   onProgress?.(rosterPreloadProgress, lastUrl);
 }
 
+/**
+ * Preview images only — fast boot, no multi-hundred-MB VRM download.
+ * @param {{
+ *   langCode?: "yue" | "en",
+ *   onProgress?: (ratio: number, url: string) => void,
+ *   onPreviewsReady?: () => void,
+ * }} [opts]
+ */
+export async function startCharacterPreviewPreload(opts = {}) {
+  return startCharacterRosterPreload({ ...opts, preloadModels: false });
+}
+
 export async function startCharacterRosterPreload(opts = {}) {
   const langCode = opts.langCode === "en" ? "en" : "yue";
-  const modelUrls = sortModelUrlsForPreload(uniqueCharacterModelUrls(langCode));
+  const preloadModels = opts.preloadModels !== false;
+  const modelUrls = preloadModels
+    ? sortModelUrlsForPreload(uniqueCharacterModelUrls(langCode))
+    : [];
   const previewUrls = uniqueCharacterPreviewUrls(langCode);
   const priorityPreviewUrls = previewUrls.slice(0, PRIORITY_PREVIEW_COUNT);
   const deferredPreviewUrls = previewUrls.slice(PRIORITY_PREVIEW_COUNT);
@@ -191,9 +206,13 @@ export async function startCharacterRosterPreload(opts = {}) {
     });
 
     if (!fetchImpl || !modelUrls.length) {
-      rosterPreloadProgress = 1;
-      opts.onProgress?.(1, "");
-      return { ok: Boolean(priorityPreviewResult.ok), results: [] };
+      rosterPreloadProgress = preloadModels ? rosterPreloadProgress : 1;
+      if (!preloadModels) opts.onProgress?.(1, "");
+      return {
+        ok: Boolean(priorityPreviewResult.ok),
+        results: [],
+        modelsSkipped: !preloadModels,
+      };
     }
 
     const results = [];
@@ -225,8 +244,21 @@ export async function startCharacterRosterPreload(opts = {}) {
     phase: "background",
     models: modelUrls,
     previews: previewUrls.length,
+    preloadModels,
     modelsLoading: rosterModelsPreloadPromise,
   };
+}
+
+/**
+ * Background download of roster VRM/GLB buffers — run after chat + first avatar.
+ * @param {{
+ *   langCode?: "yue" | "en",
+ *   fetchImpl?: typeof fetch,
+ *   onProgress?: (ratio: number, url: string) => void,
+ * }} [opts]
+ */
+export function startCharacterRosterModelPreload(opts = {}) {
+  return startCharacterRosterPreload({ ...opts, preloadModels: true });
 }
 
 /**

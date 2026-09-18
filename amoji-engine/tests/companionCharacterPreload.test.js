@@ -3,6 +3,7 @@ import {
   getRosterPreloadProgress,
   injectRosterAssetHints,
   retainSelectedCharacterCache,
+  startCharacterPreviewPreload,
   startCharacterRosterPreload,
   uniqueCharacterModelUrls,
   uniqueCharacterPreviewUrls,
@@ -29,7 +30,27 @@ describe("companionCharacterPreload", () => {
     expect(urls[0]).toContain("kizuna-kamatte.vrm");
   });
 
-  it("preloads preview images and models together", async () => {
+  it("preloads preview images only by default (no roster VRM download)", async () => {
+    const fetchImpl = vi.fn(async (url) => ({
+      ok: true,
+      async arrayBuffer() {
+        return new TextEncoder().encode(`model:${url}`).buffer;
+      },
+    }));
+    const progress = [];
+    const result = await startCharacterPreviewPreload({
+      langCode: "en",
+      fetchImpl,
+      onProgress: (ratio) => progress.push(ratio),
+    });
+    expect(fetchImpl).not.toHaveBeenCalled();
+    expect(result.preloadModels).toBe(false);
+    const modelResult = await result.modelsLoading;
+    expect(modelResult.modelsSkipped).toBe(true);
+    expect(getRosterPreloadProgress()).toBe(1);
+  });
+
+  it("preloads preview images and models when requested", async () => {
     const fetchImpl = vi.fn(async (url) => ({
       ok: true,
       async arrayBuffer() {
@@ -40,6 +61,7 @@ describe("companionCharacterPreload", () => {
     const result = await startCharacterRosterPreload({
       langCode: "en",
       fetchImpl,
+      preloadModels: true,
       onProgress: (ratio) => progress.push(ratio),
     });
     expect(result.ok).toBe(true);
