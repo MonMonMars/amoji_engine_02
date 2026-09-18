@@ -2,22 +2,35 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 import {
   BOOT_IDLE_BODY_MOTION_IDS,
   BOOT_IDLE_VRMA_STEMS,
+  BOOT_IDLE_WARM_CLIP_IDS,
+  IDLE_LIFE_VRMA_STEMS,
   bootIdleVrmaUrls,
   getBootIdleMotionPreloadPromise,
   getPreloadedIdleVrmaBuffer,
   primeBootIdleBodyMotions,
   startBootIdleMotionPreload,
+  uniqueVrmaStemsForActions,
 } from "../engine/companion/companionIdleMotionPreload.js";
+import { IDLE_LIFE_CLIP_POOL } from "../engine/companion/companionActionChoreography.js";
+import { ONLINE_CALM_IDLE_ACTION } from "../engine/companion/companionOnlineMotionClips.mjs";
 
 describe("companionIdleMotionPreload", () => {
   beforeEach(() => {
     vi.restoreAllMocks();
   });
 
-  it("defines a small boot idle motion set", () => {
-    expect(BOOT_IDLE_BODY_MOTION_IDS.length).toBeGreaterThanOrEqual(8);
-    expect(BOOT_IDLE_VRMA_STEMS.length).toBeGreaterThanOrEqual(8);
+  it("preloads full VRMA library and idle-life warm clip ids", () => {
+    expect(BOOT_IDLE_BODY_MOTION_IDS.length).toBeGreaterThanOrEqual(12);
+    expect(BOOT_IDLE_VRMA_STEMS.length).toBe(11);
     expect(bootIdleVrmaUrls()).toHaveLength(BOOT_IDLE_VRMA_STEMS.length);
+    expect(IDLE_LIFE_VRMA_STEMS.length).toBeGreaterThanOrEqual(6);
+    expect(uniqueVrmaStemsForActions(IDLE_LIFE_CLIP_POOL).length).toBeGreaterThanOrEqual(
+      6,
+    );
+    expect(BOOT_IDLE_WARM_CLIP_IDS).toContain(ONLINE_CALM_IDLE_ACTION);
+    for (const id of IDLE_LIFE_CLIP_POOL) {
+      expect(BOOT_IDLE_WARM_CLIP_IDS).toContain(id);
+    }
   });
 
   it("primes procedural idle pose samplers synchronously", () => {

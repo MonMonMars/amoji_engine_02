@@ -56,19 +56,22 @@ export const ACTION_COMBOS = Object.freeze({
 });
 
 /**
- * Default idle life — Thinking.vrma calm loop plus one-shot social clips
- * (nod, shrug, shy, sleepy) crossfaded in the player.
- */
-/**
- * Quiet between-turn idle — natural standing life (no wave/clap/cheer/hands-up).
- * Calm Thinking loop runs between one-shots: nod, shrug, blush, think, sleepy.
+ * Quiet between-turn idle — Thinking.vrma calm loop plus one-shot social clips.
+ * Each entry maps to a distinct hosted VRMA (no repeat Thinking/shrug on the loop).
  */
 export const IDLE_LIFE_CLIP_POOL = Object.freeze([
-  "thinking",
-  "shrug",
-  "shy",
-  "sleep",
   "nod",
+  "bow",
+  "shy",
+  "peace",
+  "sleep",
+  "stretch",
+  "sit",
+  "yoga",
+  "headshake",
+  "surprised",
+  "facepalm",
+  "sad",
 ]);
 
 /** Large idle rotation pool — quiet companion moments between turns. */

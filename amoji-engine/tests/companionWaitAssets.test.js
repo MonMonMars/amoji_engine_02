@@ -22,14 +22,15 @@ describe("companionWaitAssets", () => {
   });
 
   it("rotates wait poses, emotions, and expression profiles", () => {
-    expect(WAIT_POSES_BY_PHASE.idle).toContain("thinking");
-    expect(WAIT_POSES_BY_PHASE.idle).toContain("shrug");
     expect(WAIT_POSES_BY_PHASE.idle).toContain("sleep");
     expect(WAIT_POSES_BY_PHASE.idle).toContain("nod");
     expect(WAIT_POSES_BY_PHASE.idle).toContain("shy");
+    expect(WAIT_POSES_BY_PHASE.idle).toContain("stretch");
+    expect(WAIT_POSES_BY_PHASE.idle).toContain("bow");
+    expect(WAIT_POSES_BY_PHASE.idle).not.toContain("thinking");
+    expect(WAIT_POSES_BY_PHASE.idle).not.toContain("shrug");
     expect(WAIT_POSES_BY_PHASE.idle).not.toContain("walk");
     expect(WAIT_POSES_BY_PHASE.idle).not.toContain("jump");
-    expect(WAIT_POSES_BY_PHASE.idle).not.toContain("stretch");
     expect(WAIT_POSES_BY_PHASE.idle).not.toContain("wave");
     expect(WAIT_POSES_BY_PHASE.idle).not.toContain("celebrate");
     expect(WAIT_POSES_BY_PHASE.idle).not.toContain("spin");
