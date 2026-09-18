@@ -3,6 +3,7 @@
  * Diagnose companion-full after Start tap — console errors, module boot, avatar, chat.
  */
 import { chromium } from "playwright";
+import { beginStartPickerSession } from "./companion-picker-smoke-util.mjs";
 
 const url =
   process.argv.find((a) => a.startsWith("--url="))?.split("=").slice(1).join("=") ||
@@ -30,7 +31,7 @@ async function main() {
     avatarKind: window.__amojiAvatarKind,
   }));
 
-  await page.click("#start-character-picker .companion-card");
+  await beginStartPickerSession(page);
   await page.waitForTimeout(3500);
 
   const postStart = await page.evaluate(() => ({

@@ -7,6 +7,7 @@
  *   node scripts/companion-full-smoke.mjs --url http://127.0.0.1:5173/companion-full
  */
 import { chromium } from "playwright";
+import { beginStartPickerSession } from "./companion-picker-smoke-util.mjs";
 
 function parseArg(name, fallback) {
   const idx = process.argv.indexOf(name);
@@ -29,28 +30,9 @@ async function main() {
   const page = await browser.newPage({ viewport: { width: 900, height: 1200 } });
 
   await page.goto(url, { waitUntil: "domcontentloaded", timeout: 45000 });
-  await page.waitForSelector("#start-character-picker .companion-card", { timeout: 20000 });
-  await page.waitForSelector(
-    "#start-character-picker .companion-card:not([disabled])",
-    { timeout: 90000 },
-  );
-
   const build = await page.evaluate(() => window.__amojiBuild);
   const t0 = Date.now();
-  await page.click("#start-character-picker .companion-card:not([disabled])");
-
-  await page.waitForFunction(
-    () => {
-      const btn = document.getElementById("start-character-picker");
-      return (
-        !btn ||
-        btn.classList.contains("hide") ||
-        btn.getAttribute("aria-hidden") === "true"
-      );
-    },
-    undefined,
-    { timeout: 1500 },
-  );
+  await beginStartPickerSession(page, { dismissTimeout: 1500 });
   const readyMs = Date.now() - t0;
 
   await page.evaluate(() => {

@@ -3,6 +3,7 @@
  * Playwright: verify VRM loads and kungfu action moves arm bones.
  */
 import { chromium } from "playwright";
+import { beginStartPickerSession } from "./companion-picker-smoke-util.mjs";
 
 const url =
   process.argv[2] ||
@@ -15,7 +16,7 @@ async function main() {
   });
   const page = await browser.newPage({ viewport: { width: 900, height: 1200 } });
   await page.goto(url, { waitUntil: "domcontentloaded", timeout: 60000 });
-  await page.click("#start-character-picker .companion-card");
+  await beginStartPickerSession(page);
   await page.waitForTimeout(8000);
 
   const before = await page.evaluate(() => {

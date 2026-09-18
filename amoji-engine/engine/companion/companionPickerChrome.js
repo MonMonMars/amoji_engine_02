@@ -37,6 +37,7 @@ export function pickerCopy(isEnglish = false) {
       : "睇吓佢哋嘅感覺，再開始傾偈。",
     begin: en ? "Begin chat" : "開始傾偈",
     switch: en ? "Switch companion" : "切換同伴",
+    featuredLabel: en ? "★ Featured" : "★ 推介",
     searchPlaceholder: en ? "Search by name…" : "搜尋名字…",
     rosterHint: (total) =>
       en ? `${total} companions · swipe to browse` : `${total} 位同伴 · 滑動瀏覽`,
@@ -81,6 +82,21 @@ export function isPickerWarmTone(item) {
  * @param {ReturnType<import("./companionCharacterCatalog.js").listCompanionCharacters>} list
  * @param {{ filter?: PickerFilterId, query?: string }} [opts]
  */
+/**
+ * Top featured roster picks in catalog order (gacha banner row).
+ * @param {ReturnType<import("./companionCharacterCatalog.js").listCompanionCharacters>} list
+ * @param {number} [limit]
+ */
+export function listPickerFeatured(list, limit = 4) {
+  const out = [];
+  for (const item of Array.isArray(list) ? list : []) {
+    if (!isPickerFeatured(item)) continue;
+    out.push(item);
+    if (out.length >= limit) break;
+  }
+  return out;
+}
+
 export function filterPickerCharacters(list, opts = {}) {
   const filter = opts.filter || "all";
   const q = String(opts.query || "")
@@ -194,3 +210,100 @@ export const PICKER_TOOLBAR_HTML = `
     <div class="picker-filters" role="tablist"></div>
   </div>
 `.trim();
+
+export const PICKER_FEATURED_ROW_HTML = `
+  <div class="picker-featured-wrap">
+    <p class="picker-featured-label"></p>
+    <div class="picker-featured-row" role="listbox" aria-label="Featured companions"></div>
+  </div>
+`.trim();
+
+/**
+ * Roving keyboard focus for horizontal roster strips (gacha/VN listbox pattern).
+ * @param {HTMLElement | null | undefined} gridEl
+ * @param {{
+ *   getSelectedId: () => string,
+ *   setSelectedId: (id: string) => void,
+ *   onSelect?: (id: string) => void,
+ *   disabled?: () => boolean,
+ * }} opts
+ * @returns {() => void} cleanup
+ */
+export function wirePickerRosterKeyboard(gridEl, opts) {
+  if (!gridEl) return () => {};
+
+  const cards = () =>
+    [...gridEl.querySelectorAll(".companion-card:not([disabled])")].filter(
+      (el) => el instanceof HTMLElement,
+    );
+
+  const ids = () =>
+    cards()
+      .map((card) => card.dataset.characterId)
+      .filter(Boolean);
+
+  const focusId = (id) => {
+    const card = gridEl.querySelector(`[data-character-id="${id}"]`);
+    if (card instanceof HTMLElement) card.focus();
+  };
+
+  const selectIndex = (nextIdx) => {
+    if (opts.disabled?.()) return;
+    const list = ids();
+    if (!list.length) return;
+    const clamped = Math.max(0, Math.min(list.length - 1, nextIdx));
+    const id = list[clamped];
+    if (!id) return;
+    opts.setSelectedId(id);
+    opts.onSelect?.(id);
+    focusId(id);
+  };
+
+  const onKeyDown = (ev) => {
+    if (!(ev.target instanceof Element)) return;
+    if (!ev.target.closest(".companion-card")) return;
+    if (opts.disabled?.()) return;
+
+    const list = ids();
+    const idx = list.indexOf(opts.getSelectedId());
+    switch (ev.key) {
+      case "ArrowRight":
+      case "ArrowDown":
+        ev.preventDefault();
+        selectIndex(idx < 0 ? 0 : idx + 1);
+        break;
+      case "ArrowLeft":
+      case "ArrowUp":
+        ev.preventDefault();
+        selectIndex(idx < 0 ? 0 : idx - 1);
+        break;
+      case "Home":
+        ev.preventDefault();
+        selectIndex(0);
+        break;
+      case "End":
+        ev.preventDefault();
+        selectIndex(list.length - 1);
+        break;
+      default:
+        break;
+    }
+  };
+
+  gridEl.addEventListener("keydown", onKeyDown);
+  return () => gridEl.removeEventListener("keydown", onKeyDown);
+}
+
+/**
+ * Sync tabindex for listbox roving focus — selected option is tabbable.
+ * @param {ParentNode | null | undefined} root
+ * @param {string | null | undefined} selectedId
+ */
+export function syncPickerCardTabIndex(root, selectedId) {
+  if (!root) return;
+  root.querySelectorAll?.(".companion-card").forEach((card) => {
+    if (!(card instanceof HTMLElement)) return;
+    const selected = card.dataset.characterId === selectedId;
+    card.tabIndex = selected ? 0 : -1;
+  });
+}

@@ -3,6 +3,7 @@
  * Smoke: mic mode transcript shows multi-line captions (not clipped to one line).
  */
 import { chromium } from "playwright";
+import { beginStartPickerSession } from "./companion-picker-smoke-util.mjs";
 
 const url =
   process.argv[2] ||
@@ -15,7 +16,7 @@ async function main() {
   const browser = await chromium.launch({ headless: true });
   const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
   await page.goto(url, { waitUntil: "domcontentloaded", timeout: 45000 });
-  await page.click("#start-character-picker .companion-card");
+  await beginStartPickerSession(page);
   await page.waitForTimeout(400);
 
   await page.evaluate((text) => {

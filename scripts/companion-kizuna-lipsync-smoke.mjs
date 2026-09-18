@@ -6,6 +6,7 @@
  *   node scripts/companion-kizuna-lipsync-smoke.mjs --url http://127.0.0.1:5203/...
  */
 import { chromium } from "playwright-core";
+import { beginStartPickerSession } from "./companion-picker-smoke-util.mjs";
 import { createServer } from "node:http";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
@@ -80,10 +81,11 @@ async function main() {
   url.searchParams.set("lang", "en");
 
   await page.goto(url.toString(), { waitUntil: "domcontentloaded", timeout: 90000 });
-  await page.waitForSelector('#start-character-picker [data-character-id="kizuna"]', {
-    timeout: 30000,
+  await beginStartPickerSession(page, {
+    characterId: "kizuna",
+    cardTimeout: 30000,
+    dismissTimeout: 120000,
   });
-  await page.click('#start-character-picker [data-character-id="kizuna"]');
 
   await page.waitForFunction(
     () => window.__amojiAvatarKind === "vrm3d" && window.__amojiAvatar?.getFaceReport,

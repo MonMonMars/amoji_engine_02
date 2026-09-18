@@ -6,6 +6,7 @@
  *   node scripts/companion-voice-smoke.mjs --url https://temporary-rushing-oxygen-ok5jzhd.vercel.app/prototypes/amoji-companion.html
  */
 import { chromium } from "playwright-core";
+import { beginStartPickerSession } from "../../scripts/companion-picker-smoke-util.mjs";
 
 function parseArg(name, fallback) {
   const idx = process.argv.indexOf(name);
@@ -64,21 +65,7 @@ async function main() {
     };
   });
 
-  await page.click("#start-character-picker .companion-card");
-
-  await page.waitForFunction(
-    () => {
-      const btn = document.getElementById("start-character-picker");
-      return (
-        !btn ||
-        btn.classList.contains("hide") ||
-        btn.disabled ||
-        btn.getAttribute("aria-hidden") === "true"
-      );
-    },
-    undefined,
-    { timeout: 5000 },
-  );
+  await beginStartPickerSession(page, { dismissTimeout: 5000 });
 
   await page.waitForTimeout(8000);
 

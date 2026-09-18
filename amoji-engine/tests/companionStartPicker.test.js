@@ -68,6 +68,7 @@ describe("companion start picker", () => {
     });
     expect(picker.schema).toBe("amoji.companionStartPicker.v3");
     expect(picker.element.querySelector(".picker-hero")).toBeTruthy();
+    expect(picker.element.querySelector(".picker-featured-row")).toBeTruthy();
     expect(picker.element.querySelector(".picker-begin-btn")).toBeTruthy();
     expect(picker.element.classList.contains("companion-picker--v4")).toBe(true);
     picker.enablePicking(true);
