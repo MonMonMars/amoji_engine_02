@@ -44,7 +44,7 @@ describe("companionVocalizations", () => {
   it("picks thinking vocal before thinking mood lines", () => {
     const vocal = pickPreSentenceVocalization(
       { emotion: "thinking", nuance: "curious", talkStyle: "thinking" },
-      "等我諗清楚先再答你。",
+      "今日天氣真係好舒服呀。",
       { isEnglish: false },
     );
     expect(vocal).not.toBeNull();

@@ -13,7 +13,7 @@ describe("companionDialoguePreload", () => {
     expect(en.length).toBeGreaterThan(8);
     expect(yue.some((p) => p.includes("嗯"))).toBe(true);
     expect(en.some((p) => /um|amm|hmm/i.test(p))).toBe(true);
-    expect(en.some((p) => /taking longer|still loading|hang on/i.test(p))).toBe(
+    expect(en.some((p) => /let me see|let me search|one sec|hang on/i.test(p))).toBe(
       true,
     );
   });

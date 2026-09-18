@@ -265,48 +265,12 @@ export function analyzeSpeechChunk(chunk, opts = {}) {
   };
 }
 
-/** @type {readonly string[]} */
-export const THINKING_PHRASES_YUE = Object.freeze([
-  "嗯…",
-  "等我諗諗…",
-  "等陣…",
-  "我諗緊點答你…",
-  "等我整理下思路…",
-  "諗一諗先…",
-  "好問題呀，等我諗吓…",
-]);
-
-/** @type {readonly string[]} */
-export const THINKING_PHRASES_EN = Object.freeze([
-  "Hmm…",
-  "Let me think…",
-  "One moment…",
-  "I'm working on an answer…",
-  "Give me a sec to think…",
-  "That's a good question — hold on…",
-  "Still thinking…",
-]);
-
-/**
- * @param {boolean} [isEnglish]
- */
-export function pickThinkingPhrase(isEnglish = false) {
-  const list = isEnglish ? THINKING_PHRASES_EN : THINKING_PHRASES_YUE;
-  return list[Math.floor(Math.random() * list.length)];
-}
-
-/**
- * Cycle through thinking fillers without immediate repeats.
- * @param {boolean} [isEnglish]
- * @param {number} [lastIndex]
- */
-export function pickNextThinkingPhrase(isEnglish = false, lastIndex = -1) {
-  const list = isEnglish ? THINKING_PHRASES_EN : THINKING_PHRASES_YUE;
-  if (list.length <= 1) return { phrase: list[0], index: 0 };
-  let index = Math.floor(Math.random() * list.length);
-  if (index === lastIndex) index = (index + 1) % list.length;
-  return { phrase: list[index], index };
-}
+export {
+  THINKING_PHRASES_EN,
+  THINKING_PHRASES_YUE,
+  pickNextThinkingPhrase,
+  pickThinkingPhrase,
+} from "./companionThinkingDialogue.js";
 
 /**
  * Default body move when the LLM tags mood/nuance but omits [action:…].
