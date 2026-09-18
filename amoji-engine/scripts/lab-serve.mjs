@@ -209,6 +209,53 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  const mobileApi =
+    url.pathname === "/api/auth/guest" ||
+    url.pathname === "/api/auth/apple" ||
+    url.pathname === "/api/auth/session" ||
+    url.pathname === "/api/user/save" ||
+    url.pathname === "/api/user/settings" ||
+    url.pathname === "/api/iap/products" ||
+    url.pathname === "/api/iap/verify" ||
+    url.pathname === "/api/iap/webhook";
+  if (mobileApi) {
+    try {
+      process.env.AMOJI_IAP_DEV = process.env.AMOJI_IAP_DEV || "1";
+      process.env.AMOJI_USER_STORE_FS = process.env.AMOJI_USER_STORE_FS || "1";
+      const modPath = `../../api${url.pathname.replace(/^\/api/, "")}.mjs`;
+      const mod = await import(modPath);
+      const body = await readJson(req).catch(() => ({}));
+      const fakeRes = {
+        statusCode: 200,
+        headers: {},
+        setHeader(k, v) {
+          this.headers[k] = v;
+        },
+        status(code) {
+          this.statusCode = code;
+          return this;
+        },
+        json(payload) {
+          send(res, this.statusCode, payload, {
+            ...corsHeaders(),
+            ...this.headers,
+            "Content-Type": "application/json; charset=utf-8",
+          });
+        },
+        end() {
+          send(res, this.statusCode, "", { ...corsHeaders(), ...this.headers });
+        },
+      };
+      await mod.default({ ...req, body, method: req.method, headers: req.headers }, fakeRes);
+    } catch (err) {
+      send(res, 500, { ok: false, error: err?.message || String(err) }, {
+        ...corsHeaders(),
+        "Content-Type": "application/json; charset=utf-8",
+      });
+    }
+    return;
+  }
+
   if (req.method === "GET" && url.pathname === "/api/health") {
     send(
       res,
@@ -242,6 +289,10 @@ const server = http.createServer(async (req, res) => {
 
   if (servedPath === "/" || url.pathname === "/") {
     target = path.join(REPO_ROOT, "prototypes/amoji-companion.html");
+  } else if (url.pathname === "/app" || url.pathname === "/app/") {
+    target = path.join(REPO_ROOT, "app/index.html");
+  } else if (url.pathname === "/privacy" || url.pathname === "/privacy/") {
+    target = path.join(REPO_ROOT, "privacy.html");
   }
 
   fs.stat(target, (err, st) => {
@@ -271,6 +322,7 @@ server.listen(port, "0.0.0.0", () => {
   console.log(`[lab] serving ${REPO_ROOT}`);
   console.log(`[lab] companion http://127.0.0.1:${port}/`);
   console.log(`[lab] play     http://127.0.0.1:${port}/play`);
+  console.log(`[lab] mobile   http://127.0.0.1:${port}/app`);
   console.log(`[lab] unique  http://127.0.0.1:${port}/c/${AMOJI_BUILD}/full`);
   console.log(`[lab] cloud deploy: see DEPLOY.md (Vercel — no local PC needed)`);
 });
