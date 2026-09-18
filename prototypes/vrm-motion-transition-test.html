@@ -65,7 +65,8 @@
           playerStatus: status,
           libraryOk:
             status.libraryOwnsBody === true &&
-            (status.activeActionId === "relax" || avatar.currentAction === "relax"),
+            (status.activeActionId === "thinking" ||
+              avatar.currentAction === "thinking"),
         };
         hud.textContent = JSON.stringify(window.__motionTransitionTest, null, 2);
       } catch (err) {

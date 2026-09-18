@@ -19,7 +19,33 @@ import {
 } from "./vrmMotionTransition.js";
 
 export const COMPANION_VRM_MOTION_PLAYER_SCHEMA =
-  "amoji.companionVrmMotionPlayer.v4";
+  "amoji.companionVrmMotionPlayer.v5";
+
+/**
+ * Ramp a VRMA clip action in from weight 0 (crossfade or fadeIn).
+ * @param {{
+ *   previousAction?: THREE.AnimationAction | null,
+ *   nextAction: THREE.AnimationAction,
+ *   transitionSec: number,
+ * }} opts
+ */
+export function applyMotionActionCrossfade(opts) {
+  const { previousAction, nextAction, transitionSec } = opts;
+  nextAction.reset();
+  nextAction.setEffectiveWeight(0);
+  nextAction.play();
+  const crossfadingIn = Boolean(
+    previousAction && previousAction !== nextAction,
+  );
+  if (crossfadingIn) {
+    nextAction.crossFadeFrom(previousAction, transitionSec, true);
+  } else if (transitionSec > 0) {
+    nextAction.fadeIn(transitionSec);
+  } else {
+    nextAction.setEffectiveWeight(1);
+  }
+  return { crossfadingIn };
+}
 
 /**
  * @param {{
@@ -49,6 +75,7 @@ export function createVrmMotionPlayer(opts) {
   /** @type {{ action: THREE.AnimationAction, stopAtMs: number }[]} */
   let retiringActions = [];
   let crossfadeUntilMs = 0;
+  let lastTransitionSec = DEFAULT_MOTION_CROSSFADE_SEC;
 
   const scheduleRetireAction = (action, transitionSec) => {
     if (!action) return;
@@ -150,6 +177,30 @@ export function createVrmMotionPlayer(opts) {
     haltAction(false, transitionSec);
   };
 
+  /** Outgoing clip still weighted on the mixer (active or fading out). */
+  const getActiveCrossfadeSource = () => {
+    if (clipAction) {
+      const weight = clipAction.getEffectiveWeight?.() ?? 1;
+      if (
+        weight > 0.001 &&
+        (clipAction.isRunning?.() || clipAction.paused)
+      ) {
+        return clipAction;
+      }
+    }
+    for (let i = retiringActions.length - 1; i >= 0; i -= 1) {
+      const { action } = retiringActions[i];
+      const weight = action.getEffectiveWeight?.() ?? 0;
+      if (
+        weight > 0.001 &&
+        (action.isRunning?.() || action.paused)
+      ) {
+        return action;
+      }
+    }
+    return null;
+  };
+
   /**
    * @param {string} actionId
    * @param {{ loop?: boolean, transitionSec?: number }} [playOpts]
@@ -176,33 +227,31 @@ export function createVrmMotionPlayer(opts) {
     if (!clip) return false;
 
     const mx = ensureMixer();
-    const previousAction = clipAction?.paused ? clipAction : clipAction;
-    if (previousAction?.paused) {
-      previousAction.paused = false;
-    }
+    const previousAction = getActiveCrossfadeSource();
 
     const nextAction = mx.clipAction(clip);
-    nextAction.reset();
     nextAction.setLoop(
       loop ? THREE.LoopRepeat : THREE.LoopOnce,
       loop ? Infinity : 1,
     );
     nextAction.clampWhenFinished = !loop;
-    const crossfadingIn = Boolean(
-      previousAction && previousAction !== nextAction,
-    );
-    // Never expose bind pose at full weight — ramp via crossFade/fadeIn only.
-    nextAction.setEffectiveWeight(crossfadingIn ? 0 : 1);
-    nextAction.play();
+    const { crossfadingIn } = applyMotionActionCrossfade({
+      previousAction,
+      nextAction,
+      transitionSec,
+    });
 
-    if (crossfadingIn) {
-      nextAction.crossFadeFrom(previousAction, transitionSec, true);
-      scheduleRetireAction(previousAction, transitionSec);
-      crossfadeUntilMs = performance.now() + transitionSec * 1000 + 40;
-    } else {
-      nextAction.fadeIn(transitionSec);
-      crossfadeUntilMs = performance.now() + transitionSec * 1000 + 40;
+    if (crossfadingIn && previousAction) {
+      const alreadyRetiring = retiringActions.some(
+        ({ action }) => action === previousAction,
+      );
+      if (!alreadyRetiring) {
+        scheduleRetireAction(previousAction, transitionSec);
+      }
     }
+
+    lastTransitionSec = transitionSec;
+    crossfadeUntilMs = performance.now() + transitionSec * 1000 + 80;
 
     clipAction = nextAction;
     activeActionId = id;
@@ -262,7 +311,7 @@ export function createVrmMotionPlayer(opts) {
     getCrossfadeProgress() {
       if (!crossfadeUntilMs) return 1;
       const remaining = crossfadeUntilMs - performance.now();
-      const total = DEFAULT_MOTION_CROSSFADE_SEC * 1000 + 40;
+      const total = lastTransitionSec * 1000 + 80;
       if (remaining <= 0) return 1;
       return Math.max(0, Math.min(1, 1 - remaining / total));
     },
