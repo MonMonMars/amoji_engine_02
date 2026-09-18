@@ -274,6 +274,20 @@ describe("companionEmotionBall", () => {
     );
   });
 
+  it("keeps button role when mounted on the mic control", () => {
+    const el = mockBallEl();
+    el.setAttribute("role", "button");
+    syncMiniEmotionBall(el, {
+      emotion: "happy",
+      state: "listening",
+      level: 0.5,
+      isEnglish: true,
+      keepHostRole: true,
+    });
+    expect(el.getAttribute("role")).toBe("button");
+    expect(el.getAttribute("aria-label")).toMatch(/Listening/);
+  });
+
   it("runs a live mini emotion ball control loop", () => {
     const frames = [];
     vi.stubGlobal("requestAnimationFrame", (cb) => {

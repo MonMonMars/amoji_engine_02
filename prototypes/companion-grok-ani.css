@@ -445,9 +445,34 @@ body.conversation-ui.composer-always-visible.theme-grok-ani .stage.mic-mode .com
 }
 
 body.conversation-ui.composer-always-visible.theme-grok-ani .stage.mic-mode #btn-mic,
+body.conversation-ui.composer-always-visible.theme-grok-ani .composer #btn-mic {
+  width: 4.35rem;
+  height: 4.35rem;
+}
+
 body.conversation-ui.composer-always-visible.theme-grok-ani .composer .speaker-btn {
-  width: 2.65rem;
-  height: 2.65rem;
+  width: 2.05rem;
+  height: 2.05rem;
+}
+
+body.conversation-ui.theme-grok-ani .companion-chip__dot,
+body.conversation-ui.theme-grok-ani .companion-chip__dot--legacy {
+  display: none !important;
+}
+
+.theme-grok-ani .mic-btn.mini-emotion-ball {
+  background: transparent !important;
+  border-color: rgba(255, 255, 255, 0.22) !important;
+  filter: drop-shadow(0 0 12px hsl(var(--mini-ball-hue, 210) 42% 80% / 0.42));
+}
+
+.theme-grok-ani .mic-btn.mini-emotion-ball .companion-chip__dot-canvas {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
 }
 
 .theme-grok-ani .composer .speaker-btn {
