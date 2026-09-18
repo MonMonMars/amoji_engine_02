@@ -13,6 +13,7 @@ import {
   resolveEdgeVoiceId,
 } from "./companionVoiceProfiles.js";
 import { resolveOpenAiApiKey, synthesizeOpenAiSpeech } from "./openaiTts.mjs";
+import { normalizeTalkSpeed } from "./companionTalkSpeed.js";
 
 export const TTS_HANDLER_SCHEMA = "amoji.ttsHandler.v3";
 
@@ -68,6 +69,7 @@ export async function synthesizeSpeech(text, opts = {}) {
   }
 
   const lang = String(opts.lang || "").toLowerCase();
+  const speedMultiplier = normalizeTalkSpeed(opts.speedMultiplier);
   const enriched = enrichTtsPerformance(
     {
       emotion: opts.emotion || "neutral",
@@ -75,6 +77,7 @@ export async function synthesizeSpeech(text, opts = {}) {
       talkStyle: opts.talkStyle || "explain",
       speechEnergy: opts.speechEnergy,
       lang,
+      speedMultiplier,
     },
     clean,
   );
@@ -84,6 +87,7 @@ export async function synthesizeSpeech(text, opts = {}) {
     lang,
     characterId: opts.characterId,
     voiceId: opts.voice,
+    speedMultiplier,
   });
   const instructions = opts.instructions || prosodyPack.instruct;
 
@@ -103,6 +107,8 @@ export async function synthesizeSpeech(text, opts = {}) {
         nuance: enriched.nuance,
         talkStyle: enriched.talkStyle,
         speechEnergy: enriched.speechEnergy,
+        speedMultiplier,
+        speed: prosodyPack.speed,
         instructions,
         fetchImpl: opts.fetchImpl,
       });
@@ -194,6 +200,8 @@ export async function processTtsRequest(req) {
         lang,
         characterId: raw.characterId,
         instructions: raw.instructions,
+        speedMultiplier: raw.speedMultiplier,
+        speed: raw.speed,
       });
     return {
       status: 200,

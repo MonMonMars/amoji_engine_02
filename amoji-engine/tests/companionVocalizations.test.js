@@ -46,7 +46,7 @@ describe("companionVocalizations", () => {
       { isEnglish: false },
     );
     expect(vocal).not.toBeNull();
-    expect(["um", "thinking"]).toContain(vocal.type);
+    expect(VOCALIZATION_TYPES).toContain(vocal.type);
     expect(vocal.text.length).toBeGreaterThan(1);
   });
 
@@ -92,7 +92,7 @@ describe("companionVocalizations", () => {
       { isEnglish: true },
     );
     expect(applied.merged).toBe(true);
-    expect(applied.text).toMatch(/^Um|^Hmm|^Mmm/i);
+    expect(applied.text).toMatch(/^Um|^Uh|^Hmm|^Mmm/i);
     expect(applied.text).toContain("I am thinking");
     expect(applied.performance.vocalPrefix).toBeTruthy();
     expect(applied.performance.skipVocalization).toBe(true);

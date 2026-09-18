@@ -8,7 +8,7 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji · Companion</title>
     <script>
-      window.__amojiBuild = "2026-09-18-v218-voice-unified-tts";
+      window.__amojiBuild = "2026-09-18-v219-talk-speed";
     </script>
     <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-18-v212-motion-library-complete"></script>
     <link
@@ -1938,7 +1938,7 @@
         transform: none;
       }
 
-      body.conversation-ui .topbar-actions .topbar-btn:not(#btn-open-setup):not(#btn-toggle-chat):not(#btn-open-scene),
+      body.conversation-ui .topbar-actions .topbar-btn:not(#btn-open-setup):not(#btn-toggle-chat):not(#btn-open-scene):not(#btn-talk-speed),
       body.conversation-ui .topbar-actions #btn-settings,
       body.conversation-ui .llm-switcher-wrap,
       body.conversation-ui .cloud-key-banner button,
@@ -3141,6 +3141,13 @@
         background: rgba(255, 255, 255, 0.1);
       }
 
+      .topbar-btn--speed .talk-speed-label {
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        line-height: 1;
+      }
+
       .topbar-btn.topbar-btn--icon {
         padding: 0;
         line-height: 0;
@@ -4318,6 +4325,15 @@
           </button>
           <button
             type="button"
+            class="topbar-btn topbar-btn--icon topbar-btn--speed"
+            id="btn-talk-speed"
+            aria-label="Talking speed"
+            title="Talking speed"
+          >
+            <span class="talk-speed-label" id="btn-talk-speed-label">½×</span>
+          </button>
+          <button
+            type="button"
             class="topbar-btn topbar-btn--icon"
             id="btn-open-scene"
             aria-label="Look and scene"
@@ -4596,6 +4612,7 @@
         uiEffectsMod,
         raisingHubMod,
         careToolsMod,
+        talkSpeedMod,
       ] = await Promise.all([
         ami("../amoji-engine/engine/companion/createAvatar.js"),
         ami("../amoji-engine/engine/companion/chatLlm.js"),
@@ -4635,7 +4652,9 @@
         ami("../amoji-engine/engine/companion/companionUiEffects.js"),
         ami("../amoji-engine/engine/companion/companionRaisingHub.js"),
         ami("../amoji-engine/engine/companion/companionCareTools.js"),
+        ami("../amoji-engine/engine/companion/companionTalkSpeed.js"),
       ]);
+      const { talkSpeedButtonTitle } = talkSpeedMod;
       const {
         initCompanionUiEffects,
         openUiOverlay,
@@ -5066,6 +5085,8 @@
       const btnOpenSetup = document.getElementById("btn-open-setup");
       const btnToggleChat = document.getElementById("btn-toggle-chat");
       const btnOpenScene = document.getElementById("btn-open-scene");
+      const btnTalkSpeed = document.getElementById("btn-talk-speed");
+      const btnTalkSpeedLabel = document.getElementById("btn-talk-speed-label");
       const btnSpeaker = document.getElementById("btn-speaker");
       const btnMic = document.getElementById("btn-mic");
       const emotionBallEl = document.getElementById("emotion-ball");
@@ -6488,6 +6509,28 @@
         },
       });
       voice.setCharacterId?.(characterId);
+
+      const syncTalkSpeedBtn = () => {
+        if (!btnTalkSpeed || !btnTalkSpeedLabel || !voice?.getTalkSpeed) return;
+        const speed = voice.getTalkSpeed();
+        btnTalkSpeedLabel.textContent = speed === 0.5 ? "½×" : speed === 1 ? "1×" : `${speed}×`;
+        btnTalkSpeed.title = talkSpeedButtonTitle(speed, isEnglish);
+        btnTalkSpeed.setAttribute(
+          "aria-label",
+          isEnglish ? `Talking speed ${speed}×` : `講嘢速度 ${speed}×`,
+        );
+      };
+      syncTalkSpeedBtn();
+      btnTalkSpeed?.addEventListener("click", () => {
+        voice?.cycleTalkSpeed?.();
+        syncTalkSpeedBtn();
+        showToast(
+          isEnglish
+            ? `Talking speed: ${voice.getTalkSpeed()}×`
+            : `講嘢速度：${voice.getTalkSpeed()}×`,
+          "info",
+        );
+      });
 
       motionClient = createMotionDownloadClient({
         motionsUrl: "/api/motions",

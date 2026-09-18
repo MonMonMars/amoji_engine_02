@@ -11,6 +11,12 @@ import { characterProsodyBias } from "./companionCharacterCatalog.js";
 import { voiceProfileProsodyBias } from "./companionVoiceProfiles.js";
 import { inferExpressionFromText } from "../face/emotionExpression.js";
 import { vocalizationInstructHint } from "./companionVocalizations.js";
+import {
+  applyTalkSpeedMultiplier,
+  normalizeTalkSpeed,
+  slowBrowserRate,
+  slowEdgeRatePercent,
+} from "./companionTalkSpeed.js";
 
 export const COMPANION_TTS_PROSODY_SCHEMA = "amoji.companionTtsProsody.v3";
 
@@ -151,6 +157,7 @@ export function inferSpeechEmotionFromText(text, fallback = "neutral") {
 export function instructSpeakingSpeed(opts = {}) {
   const emotion = String(opts.emotion || "neutral").toLowerCase();
   const energy = Number.isFinite(opts.speechEnergy) ? opts.speechEnergy : 0.68;
+  const speedMultiplier = normalizeTalkSpeed(opts.speedMultiplier);
   let speed =
     emotion === "happy" || emotion === "surprised"
       ? 1.04
@@ -162,7 +169,8 @@ export function instructSpeakingSpeed(opts = {}) {
             ? 1.03
             : 1;
   speed += (energy - 0.55) * 0.1;
-  return Number(Math.max(0.88, Math.min(1.08, speed)).toFixed(2));
+  speed = applyTalkSpeedMultiplier(speed, speedMultiplier);
+  return Number(Math.max(0.45, Math.min(1.08, speed)).toFixed(2));
 }
 
 /**
@@ -186,7 +194,8 @@ export function buildTtsInstruct(opts = {}) {
   const energy = opts.speechEnergy ?? 0.68;
   const lang = String(opts.lang || "yue").toLowerCase();
   const isEnglish = lang === "en" || lang.startsWith("en-");
-  const speed = instructSpeakingSpeed({ emotion, speechEnergy: energy });
+  const speedMultiplier = normalizeTalkSpeed(opts.speedMultiplier);
+  const speed = instructSpeakingSpeed({ emotion, speechEnergy: energy, speedMultiplier });
 
   if (nuance === "none" && emotion === "happy") nuance = "excited";
   if (nuance === "none" && emotion === "surprised") nuance = "excited";
@@ -222,11 +231,15 @@ export function buildTtsInstruct(opts = {}) {
         : "親切、有感情、好似傾偈";
 
   const pacing =
-    energy > 0.75
-      ? `Speak at ${speed}x — normal conversational pace. Lift pitch on exclamations; do not rush.`
-      : energy < 0.38
-        ? `Speak at ${speed}x — calm and unhurried, still vary pitch naturally.`
-        : `Speak at ${speed}x — natural everyday pace, like a friend on a video call.`;
+    speedMultiplier <= 0.55
+      ? isEnglish
+        ? `Speak at ${speed}x — SLOW, relaxed, unhurried. Longer pauses between phrases. Never rush.`
+        : `用 ${speed}x 慢速講 — 放鬆、唔好急，句與句之間留啲位。`
+      : energy > 0.75
+        ? `Speak at ${speed}x — conversational pace. Lift pitch on exclamations; do not rush.`
+        : energy < 0.38
+          ? `Speak at ${speed}x — calm and unhurried, still vary pitch naturally.`
+          : `Speak at ${speed}x — natural everyday pace, like a friend on a video call.`;
 
   const emotionLine =
     emotion === "happy"
@@ -370,11 +383,15 @@ export function enrichTtsPerformance(performance, text = "") {
     vocalPrefix: perf.vocalPrefix,
     vocalization: perf.vocalization,
     skipVocalization: perf.skipVocalization,
+    speedMultiplier: normalizeTalkSpeed(perf.speedMultiplier),
   };
 }
 
 export function resolveCompanionTtsProsody(opts = {}) {
   const enriched = enrichTtsPerformance(opts, opts.text);
+  const speedMultiplier = normalizeTalkSpeed(
+    opts.speedMultiplier ?? enriched.speedMultiplier,
+  );
   const emotion = enriched.emotion;
   const nuance = enriched.nuance;
   const text = String(opts.text || enriched.text || "");
@@ -401,7 +418,7 @@ export function resolveCompanionTtsProsody(opts = {}) {
   const energyPitch = (speechEnergy - 0.5) * 14;
   const energyVolume = (speechEnergy - 0.5) * 10;
 
-  const edgeRate =
+  let edgeRate =
     base.rate +
     nuanceDelta.rate +
     styleDelta.rate +
@@ -409,6 +426,7 @@ export function resolveCompanionTtsProsody(opts = {}) {
     energyRate +
     (characterBias.rate || 0) +
     (voiceBias.rate || 0);
+  edgeRate = slowEdgeRatePercent(edgeRate, speedMultiplier);
   const edgePitch =
     base.pitch +
     nuanceDelta.pitch +
@@ -428,14 +446,17 @@ export function resolveCompanionTtsProsody(opts = {}) {
 
   const browserBase =
     EMOTION_BROWSER_BASE[emotion] || EMOTION_BROWSER_BASE.neutral;
-  const browserRate = Math.max(
-    0.86,
-    Math.min(
-      1.12,
-      browserBase.rate +
-        (edgeRate / 100) * 0.18 +
-        (speechEnergy - 0.5) * 0.06,
+  const browserRate = slowBrowserRate(
+    Math.max(
+      0.86,
+      Math.min(
+        1.12,
+        browserBase.rate +
+          (edgeRate / 100) * 0.18 +
+          (speechEnergy - 0.5) * 0.06,
+      ),
     ),
+    speedMultiplier,
   );
   const browserPitch = Math.max(
     0.82,
@@ -472,7 +493,8 @@ export function resolveCompanionTtsProsody(opts = {}) {
       pitch: Number(browserPitch.toFixed(3)),
       volume: Number(browserVolume.toFixed(3)),
     },
-    speed: instructSpeakingSpeed({ emotion, speechEnergy }),
+    speed: instructSpeakingSpeed({ emotion, speechEnergy, speedMultiplier }),
+    speedMultiplier,
     instruct: buildTtsInstruct({
       ...opts,
       emotion,
@@ -481,6 +503,7 @@ export function resolveCompanionTtsProsody(opts = {}) {
       speechEnergy,
       text,
       lang: opts.lang || enriched.lang,
+      speedMultiplier,
       vocalPrefix: opts.vocalPrefix || enriched.vocalPrefix,
       vocalization: opts.vocalization || enriched.vocalization,
     }),
@@ -649,5 +672,6 @@ export function buildCloudTtsRequestBody(opts = {}) {
     characterId: opts.characterId,
     instructions: pack.instruct,
     speed: pack.speed,
+    speedMultiplier: pack.speedMultiplier,
   };
 }
