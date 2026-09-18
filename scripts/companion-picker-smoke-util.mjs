@@ -14,7 +14,7 @@ export async function beginStartPickerSession(page, opts = {}) {
   const dismissTimeout = opts.dismissTimeout ?? 60000;
   const cardSel = opts.characterId
     ? `${START_ROOT} [data-character-id="${opts.characterId}"]:not([disabled])`
-    : `${START_ROOT} .companion-card:not([disabled])`;
+    : `${START_ROOT} .picker-featured-row [data-character-id="nova"]:not([disabled])`;
 
   await page.waitForSelector(cardSel, { timeout: cardTimeout });
   await page.evaluate((sel) => {

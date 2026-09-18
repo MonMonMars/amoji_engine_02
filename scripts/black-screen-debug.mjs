@@ -15,12 +15,11 @@ async function test(label, url) {
     .catch(() => {});
 
   const hasBegin = await page.locator("#start-character-picker .picker-begin-btn").count();
-  const hasOldPicker = await page.locator("#start-character-picker .companion-card").count();
   if (hasBegin) {
-    await beginStartPickerSession(page, { dismissTimeout: 120000 });
-  } else if (hasOldPicker) {
-    await page.click("#start-character-picker .companion-card:not([disabled])");
-    await page.waitForTimeout(3000);
+    await beginStartPickerSession(page, {
+      characterId: "nova",
+      dismissTimeout: 120000,
+    });
   }
   await page.waitForTimeout(2000);
 
