@@ -34,18 +34,32 @@ export async function beginStartPickerSession(page, opts = {}) {
 }
 
 /**
+ * Open in-session companion picker (brand chip or minimal settings menu).
+ * @param {import("playwright").Page} page
+ */
+export async function openInSessionCompanionPicker(page) {
+  const alreadyOpen = await page.$(`${SESSION_ROOT}.is-open`);
+  if (alreadyOpen) return;
+
+  const brand = page.locator("#brand-btn");
+  if (await brand.isVisible().catch(() => false)) {
+    await brand.click();
+  } else {
+    await page.click("#btn-open-setup");
+    await page.waitForSelector("#settings-btn-companions", { timeout: 8000 });
+    await page.click("#settings-btn-companions");
+  }
+  await page.waitForSelector(`${SESSION_ROOT}.is-open`, { timeout: 8000 });
+}
+
+/**
  * @param {import("playwright").Page} page
  * @param {string} characterId
- * @param {{ openSelector?: string, timeout?: number }} [opts]
+ * @param {{ timeout?: number }} [opts]
  */
 export async function switchCompanionInSession(page, characterId, opts = {}) {
-  const openSelector = opts.openSelector ?? "#brand-btn";
   const timeout = opts.timeout ?? 120000;
-  const alreadyOpen = await page.$(`${SESSION_ROOT}.is-open`);
-  if (!alreadyOpen) {
-    await page.click(openSelector);
-    await page.waitForSelector(`${SESSION_ROOT}.is-open`, { timeout: 8000 });
-  }
+  await openInSessionCompanionPicker(page);
   const cardSel = `${SESSION_ROOT} [data-character-id="${characterId}"]`;
   await page.waitForSelector(cardSel, { timeout: 15000 });
   await page.click(cardSel);

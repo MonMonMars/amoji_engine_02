@@ -26,6 +26,7 @@ import {
   secretaryDemoUrl,
 } from "../amoji-engine/engine/companion/deployUrls.mjs";
 import { rewriteCompanionServePath, buildPlayRedirectLocation } from "../amoji-engine/engine/companion/companionFreshBoot.js";
+import { beginStartPickerSession } from "./companion-picker-smoke-util.mjs";
 
 const outDir = process.env.ARTIFACT_DIR || "/opt/cursor/artifacts";
 mkdirSync(outDir, { recursive: true });
@@ -214,8 +215,42 @@ async function verifyFullCompanion(page, label) {
     })
     .catch(() => null);
 
+  const pickerOpen = await page.evaluate(() => {
+    const picker = document.getElementById("start-character-picker");
+    return Boolean(
+      picker &&
+        !picker.classList.contains("hide") &&
+        picker.getAttribute("aria-hidden") !== "true",
+    );
+  });
+
+  if (pickerOpen) {
+    const pickerChrome = await page.evaluate(() => {
+      const picker = document.getElementById("start-character-picker");
+      return {
+        hero: Boolean(picker?.querySelector(".picker-hero")),
+        featured: Boolean(picker?.querySelector(".picker-featured-row")),
+        begin: Boolean(picker?.querySelector(".picker-begin-btn")),
+        filters: Boolean(picker?.querySelector(".picker-filters")),
+      };
+    });
+    record(`${label} picker v4 hero`, pickerChrome.hero);
+    record(`${label} picker featured row`, pickerChrome.featured);
+    record(`${label} picker begin CTA`, pickerChrome.begin);
+    record(`${label} picker filters`, pickerChrome.filters);
+    await page.screenshot({
+      path: join(outDir, `demo-verify-picker-${label}.png`),
+      fullPage: true,
+    });
+    await beginStartPickerSession(page, {
+      cardTimeout: 90000,
+      dismissTimeout: 120000,
+    });
+    record(`${label} picker begin chat`, true);
+  }
+
   await page
-    .waitForSelector("#activity-rail, .stage.mic-mode", { timeout: 30000 })
+    .waitForSelector("#activity-rail", { state: "attached", timeout: 30000 })
     .catch(() => null);
 
   const state = await page.evaluate(() => ({
@@ -225,6 +260,7 @@ async function verifyFullCompanion(page, label) {
     hasActivityRail: !!document.getElementById("activity-rail"),
     hasTranscript: !!document.getElementById("transcript"),
     moduleBooted: window.__amojiModuleBooted === true,
+    sessionStarted: window.__amojiStart?.sessionStarted === true,
   }));
 
   record(`${label} page loads`, Boolean(state.build), state.build);
@@ -238,6 +274,9 @@ async function verifyFullCompanion(page, label) {
   );
 
   record(`${label} module booted`, state.moduleBooted);
+  if (pickerOpen) {
+    record(`${label} session started`, state.sessionStarted);
+  }
   record(`${label} conversation-ui`, state.conversationUi);
   record(
     `${label} mic-mode`,
