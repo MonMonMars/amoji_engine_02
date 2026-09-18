@@ -400,7 +400,7 @@ export async function createVrmAvatar(opts) {
     void resumeCalmStand();
   };
 
-  const playCalmLibraryIdle = () => {
+  const playCalmLibraryIdle = (opts = {}) => {
     if (
       motionPlayer.isPlaying?.() &&
       vrmaAction === ONLINE_CALM_IDLE_ACTION &&
@@ -408,12 +408,14 @@ export async function createVrmAvatar(opts) {
     ) {
       return Promise.resolve(true);
     }
-    motionTransitionState =
-      planMotionTransition(vrm, motionPlayer, {
-        nextActionId: ONLINE_CALM_IDLE_ACTION,
-        durationSec: DEFAULT_MOTION_CROSSFADE_SEC,
-        label: "calm-idle",
-      }) ?? null;
+    if (!opts.skipTransitionPlan) {
+      motionTransitionState =
+        planMotionTransition(vrm, motionPlayer, {
+          nextActionId: ONLINE_CALM_IDLE_ACTION,
+          durationSec: DEFAULT_MOTION_CROSSFADE_SEC + 0.08,
+          label: "calm-idle",
+        }) ?? motionTransitionState;
+    }
     return tryPlayVrmaAction(ONLINE_CALM_IDLE_ACTION, {
       loop: true,
       skipTransitionPlan: true,
@@ -421,17 +423,32 @@ export async function createVrmAvatar(opts) {
   };
 
   const restorePlantedIdle = () => {
+    const fromLibrary = Boolean(
+      motionPlayer.activeActionId &&
+        (motionPlayer.isPlaying?.() || motionPlayer.isCrossfading?.()),
+    );
+    if (fromLibrary) {
+      motionTransitionState =
+        planMotionTransition(vrm, motionPlayer, {
+          nextActionId: ONLINE_CALM_IDLE_ACTION,
+          durationSec: DEFAULT_MOTION_CROSSFADE_SEC + 0.08,
+          forceCapture: true,
+          label: "calm-idle-restore",
+        }) ?? motionTransitionState;
+    }
     vrmaPlayGen += 1;
     vrmaPending = false;
     vrmaSequenceQueue = [];
     vrmaSequenceOpts = null;
     bodyMotion.holdForLibraryMotion?.();
-    const rest = detectVrmIdleRestRotations(vrm);
-    bodyMotion.setArmRestRotations?.(rest.arms);
-    bodyMotion.setLegRestRotations?.(rest.legs);
-    bodyMotion.setArmBind?.(rest.bind);
-    syncHumanoidPose();
-    void playCalmLibraryIdle();
+    if (!fromLibrary) {
+      const rest = detectVrmIdleRestRotations(vrm);
+      bodyMotion.setArmRestRotations?.(rest.arms);
+      bodyMotion.setLegRestRotations?.(rest.legs);
+      bodyMotion.setArmBind?.(rest.bind);
+      syncHumanoidPose();
+    }
+    void playCalmLibraryIdle({ skipTransitionPlan: true });
     syncSpringsAfterPose();
     springIdleState = createIdleSpringRecenterState();
     springTalkState = createIdleSpringRecenterState();

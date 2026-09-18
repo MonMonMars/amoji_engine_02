@@ -12,7 +12,7 @@ import { easeInOutCubic } from "./companionPoseSmoothing.js";
 export const VRM_MOTION_TRANSITION_SCHEMA = "amoji.vrmMotionTransition.v5";
 
 /** Default crossfade when switching hosted VRMA clips or entering the library. */
-export const DEFAULT_MOTION_CROSSFADE_SEC = 0.52;
+export const DEFAULT_MOTION_CROSSFADE_SEC = 0.6;
 
 /** VRM humanoid bones with normalized rotation (3 Euler DOF each). */
 export const VRM_HUMANOID_ROTATION_BONES = Object.freeze([
@@ -213,7 +213,7 @@ export function blendVrmBoneRotationsFromSnapshot(vrm, fromSnapshot, alpha) {
   const humanoid = vrm?.humanoid;
   if (!humanoid || !fromSnapshot?.size) return 0;
   const t = easeInOutCubic(Math.max(0, Math.min(1, alpha)));
-  if (t >= 0.999) return 0;
+  if (alpha >= 1) return 0;
 
   let updated = 0;
   for (const [name, from] of fromSnapshot) {
