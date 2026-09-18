@@ -5,10 +5,18 @@
 import { chromium } from "playwright";
 import { beginStartPickerSession } from "./companion-picker-smoke-util.mjs";
 
-const url =
-  process.argv.find((a) => a.startsWith("--url="))?.split("=").slice(1).join("=") ||
-  process.argv[process.argv.indexOf("--url") + 1] ||
-  "https://temporary-rushing-oxygen-ok5jzhd.vercel.app/companion-full?lang=yue";
+function resolveUrl() {
+  const eq = process.argv.find((a) => a.startsWith("--url="));
+  if (eq) return eq.split("=").slice(1).join("=");
+  const flagIdx = process.argv.indexOf("--url");
+  if (flagIdx >= 0 && process.argv[flagIdx + 1]) return process.argv[flagIdx + 1];
+  return (
+    process.env.COMPANION_URL ||
+    process.env.BASE_URL ||
+    "https://temporary-rushing-oxygen-ok5jzhd.vercel.app/play?lang=yue&pick=1&automic=0"
+  );
+}
+const url = resolveUrl();
 
 async function main() {
   const browser = await chromium.launch({
@@ -58,7 +66,7 @@ async function main() {
   }));
 
   await page.fill("#input", "你好");
-  await page.click("#send");
+  await page.evaluate(() => document.getElementById("send")?.click());
   let chatResult = { user: false, assistant: false, system: [] };
   try {
     await page.waitForSelector(".msg-row.user .bubble", { timeout: 8000 });
