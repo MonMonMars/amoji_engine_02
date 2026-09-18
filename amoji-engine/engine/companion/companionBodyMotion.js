@@ -29,6 +29,7 @@ import {
 } from "./companionIdleMotion.js";
 import { applyFingerRestPose } from "./companionFingerPose.js";
 import {
+  actionMotionEnvelope,
   dampPose,
   dampRootMotion,
   poseDampingRate,
@@ -663,18 +664,44 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
     const head = bone("head");
     const spine = bone("spine");
     const chest = bone("chest");
+    const upperChest = bone("upperChest");
+    const leftShoulder = bone("leftShoulder");
+    const rightShoulder = bone("rightShoulder");
+    const leftHand = bone("leftHand");
+    const rightHand = bone("rightHand");
     const hips = bone("hips");
 
     if (head) {
       head.rotation.x = (pose.headX || 0) * k;
+      head.rotation.y = (pose.headY || 0) * k;
       head.rotation.z = (pose.headZ || 0) * k;
     }
     if (spine) {
       spine.rotation.x = (pose.spineX || 0.01) * k;
       spine.rotation.y = (pose.leanY || 0) * k;
+      spine.rotation.z = (pose.spineZ || 0) * k;
     }
     if (chest) {
       chest.rotation.x = (pose.chestX || -0.01) * k;
+      chest.rotation.y = (pose.chestY || 0) * k;
+    }
+    if (upperChest) {
+      upperChest.rotation.x = (pose.chestX || 0) * 0.42 * k;
+      upperChest.rotation.y = (pose.leanY || 0) * 0.28 * k;
+    }
+    if (leftShoulder) {
+      leftShoulder.rotation.z = (pose.shoulderL || 0) * k;
+    }
+    if (rightShoulder) {
+      rightShoulder.rotation.z = -(pose.shoulderR || 0) * k;
+    }
+    if (leftHand && Number(pose.handWaveL)) {
+      leftHand.rotation.y =
+        (VRM_HAND_REST_ROTATIONS.leftHand?.y || 0) + (pose.handWaveL || 0) * k;
+    }
+    if (rightHand && Number(pose.handWaveR)) {
+      rightHand.rotation.y =
+        (VRM_HAND_REST_ROTATIONS.rightHand?.y || 0) + (pose.handWaveR || 0) * k;
     }
     if (hips) {
       const plantFeet = opts.plantFeet !== false;
@@ -743,13 +770,15 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
       );
       const actionBlend =
         activeAction === "kungfu" || activeAction === "laugh" ? 0.94 : 0.86;
-      const fadeInSec = 0.38;
-      const fadeOutSec = 0.44;
-      const fadeIn = Math.min(1, actionElapsed / fadeInSec);
-      const fadeOut = actionLoop
-        ? 1
-        : Math.min(1, Math.max(0, actionDuration - actionElapsed) / fadeOutSec);
-      const actionEnvelope = Math.min(fadeIn, fadeOut);
+      const fadeInSec = 0.42;
+      const fadeOutSec = 0.48;
+      const actionEnvelope = actionMotionEnvelope(
+        actionElapsed,
+        actionDuration,
+        fadeInSec,
+        fadeOutSec,
+        actionLoop,
+      );
       pose = mergePoses(pose, actionPose, actionBlend * actionEnvelope);
       rootMotion = sampleActionRootMotion(
         activeAction,

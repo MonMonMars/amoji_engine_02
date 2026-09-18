@@ -33,8 +33,10 @@ export function talkGesturePoseToBody(pose, opts = {}) {
   };
 
   if (includeArms) {
-    body.armLiftL = 0.12 + armL * 0.72 + shoulderL * 0.22;
-    body.armLiftR = 0.12 + armR * 0.72 + shoulderR * 0.22;
+    body.shoulderL = shoulderL * 0.42;
+    body.shoulderR = shoulderR * 0.42;
+    body.armLiftL = 0.12 + armL * 0.72;
+    body.armLiftR = 0.12 + armR * 0.72;
     body.forearmL = Number(p.armLB ?? 0.05) + Number(p.handLY ?? 0.1) * 0.7;
     body.forearmR = Number(p.armRB ?? 0.05) + Number(p.handRY ?? 0.1) * 0.7;
     body.handWaveR = Number(p.handRX ?? 0) * 0.4;

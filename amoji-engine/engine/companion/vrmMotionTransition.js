@@ -9,22 +9,21 @@ import * as THREE from "three";
 import { VRM_FINGER_BONE_NAMES } from "./companionFingerPose.js";
 import { easeInOutCubic } from "./companionPoseSmoothing.js";
 
-export const VRM_MOTION_TRANSITION_SCHEMA = "amoji.vrmMotionTransition.v3";
+export const VRM_MOTION_TRANSITION_SCHEMA = "amoji.vrmMotionTransition.v4";
 
 /** Default crossfade when switching hosted VRMA clips or entering the library. */
-export const DEFAULT_MOTION_CROSSFADE_SEC = 0.48;
+export const DEFAULT_MOTION_CROSSFADE_SEC = 0.52;
 
-export const RAD_TO_DEG = 180 / Math.PI;
-export const DEG_TO_RAD = Math.PI / 180;
-
-/** Bones we blend during transitions (body + fingers). */
-export const VRM_MOTION_TRANSITION_BONES = Object.freeze([
+/** VRM humanoid bones with normalized rotation (3 Euler DOF each). */
+export const VRM_HUMANOID_ROTATION_BONES = Object.freeze([
   "hips",
   "spine",
   "chest",
   "upperChest",
   "neck",
   "head",
+  "leftShoulder",
+  "rightShoulder",
   "leftUpperArm",
   "leftLowerArm",
   "leftHand",
@@ -41,6 +40,12 @@ export const VRM_MOTION_TRANSITION_BONES = Object.freeze([
   "rightToes",
   ...VRM_FINGER_BONE_NAMES,
 ]);
+
+export const RAD_TO_DEG = 180 / Math.PI;
+export const DEG_TO_RAD = Math.PI / 180;
+
+/** Bones we blend during manual A→B transitions (full humanoid rotation set). */
+export const VRM_MOTION_TRANSITION_BONES = VRM_HUMANOID_ROTATION_BONES;
 
 const _fromEuler = new THREE.Euler();
 const _fromQuat = new THREE.Quaternion();
@@ -108,21 +113,75 @@ export function captureVrmBoneRotationsDegrees(vrm, boneNames = VRM_MOTION_TRANS
 export function planMotionTransition(vrm, motionPlayer, opts = {}) {
   const durationSec = opts.durationSec ?? DEFAULT_MOTION_CROSSFADE_SEC;
   const playing = Boolean(motionPlayer?.isPlaying?.());
-  const currentId = String(motionPlayer?.activeActionId || "").toLowerCase();
-  const nextId = String(opts.nextActionId || "").toLowerCase();
+  const forceCapture = Boolean(opts.forceCapture);
 
-  if (!playing) {
+  if (!playing || forceCapture) {
     const from = captureVrmBoneRotations(vrm);
     const state = createMotionTransitionState(from, durationSec);
     if (state && opts.label) state.label = opts.label;
     return state;
   }
 
-  if (nextId && currentId && nextId !== currentId) {
-    return null;
-  }
-
   return null;
+}
+
+/**
+ * List normalized humanoid bones present on a loaded VRM.
+ * @param {import('@pixiv/three-vrm').VRM | null | undefined} vrm
+ */
+export function listVrmHumanoidBoneNames(vrm) {
+  const humanoid = vrm?.humanoid;
+  if (!humanoid) return [];
+  const found = [];
+  for (const name of VRM_HUMANOID_ROTATION_BONES) {
+    if (humanoid.getNormalizedBoneNode?.(name)) found.push(name);
+  }
+  return found;
+}
+
+/**
+ * Audit every available humanoid bone rotation in degrees (debug / QA).
+ * @param {import('@pixiv/three-vrm').VRM | null | undefined} vrm
+ */
+export function auditVrmSkeletonDegrees(vrm) {
+  const names = listVrmHumanoidBoneNames(vrm);
+  const degrees = captureVrmBoneRotationsDegrees(vrm, names);
+  /** @type {{ bone: string, x: number, y: number, z: number, order: string }[]} */
+  const rows = [];
+  for (const bone of names) {
+    const rot = degrees.get(bone);
+    if (!rot) continue;
+    rows.push({
+      bone,
+      x: rot.x,
+      y: rot.y,
+      z: rot.z,
+      order: rot.order || "XYZ",
+    });
+  }
+  return {
+    schema: VRM_MOTION_TRANSITION_SCHEMA,
+    boneCount: rows.length,
+    expectedCount: VRM_HUMANOID_ROTATION_BONES.length,
+    missing: VRM_HUMANOID_ROTATION_BONES.filter(
+      (name) => !names.includes(name),
+    ),
+    rows,
+  };
+}
+
+/**
+ * Pick crossfade duration — longer when switching major motion families.
+ * @param {string | null | undefined} fromId
+ * @param {string | null | undefined} toId
+ */
+export function resolveMotionCrossfadeSec(fromId, toId) {
+  const from = String(fromId || "").toLowerCase();
+  const to = String(toId || "").toLowerCase();
+  if (!from || !to || from === to) return DEFAULT_MOTION_CROSSFADE_SEC;
+  const major = /dance|run|jump|kungfu|walk|laugh|clap|wave|eat|drink/;
+  if (major.test(from) || major.test(to)) return DEFAULT_MOTION_CROSSFADE_SEC + 0.12;
+  return DEFAULT_MOTION_CROSSFADE_SEC;
 }
 
 /**

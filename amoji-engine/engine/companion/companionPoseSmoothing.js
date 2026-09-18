@@ -4,22 +4,34 @@
 
 export const COMPANION_POSE_SMOOTHING_SCHEMA = "amoji.companionPoseSmoothing.v1";
 
-/** Channels merged into VRM body motion each frame. */
+/**
+ * Abstract pose channels → normalized humanoid bones in companionBodyMotion.
+ * Each scalar is one primary rotation axis on a bone chain (full 3-DOF per bone
+ * is handled by rest rotations + these deltas, or by VRMA clips).
+ */
 export const POSE_CHANNELS = Object.freeze([
   "headX",
+  "headY",
   "headZ",
   "leanY",
   "spineX",
+  "spineZ",
   "chestX",
+  "chestY",
   "hipZ",
+  "shoulderL",
+  "shoulderR",
   "armLiftL",
   "armLiftR",
   "forearmL",
   "forearmR",
+  "handWaveL",
+  "handWaveR",
   "upperLegL",
   "upperLegR",
   "lowerLegL",
   "lowerLegR",
+  "eatChew",
 ]);
 
 /**
@@ -92,7 +104,31 @@ export function dampRootMotion(current, target, dt, rate = 9) {
  * @param {boolean} talking
  */
 export function poseDampingRate(actionActive, talking) {
-  if (actionActive) return 13.5;
-  if (talking) return 14.5;
-  return 10.8;
+  if (actionActive) return 12.8;
+  if (talking) return 13.8;
+  return 10.2;
+}
+
+/**
+ * Smooth action enter/exit envelope (0..1).
+ * @param {number} elapsedSec
+ * @param {number} durationSec
+ * @param {number} fadeInSec
+ * @param {number} fadeOutSec
+ * @param {boolean} loop
+ */
+export function actionMotionEnvelope(
+  elapsedSec,
+  durationSec,
+  fadeInSec = 0.42,
+  fadeOutSec = 0.48,
+  loop = false,
+) {
+  const fadeIn = easeInOutCubic(Math.min(1, Math.max(0, elapsedSec) / fadeInSec));
+  const fadeOut = loop
+    ? 1
+    : easeInOutCubic(
+        Math.min(1, Math.max(0, (durationSec - elapsedSec) / fadeOutSec)),
+      );
+  return Math.min(fadeIn, fadeOut);
 }
