@@ -60,26 +60,17 @@ export const ACTION_COMBOS = Object.freeze({
  * hosted VRMA library (wave=Goodbye, thinking=Thinking, stretch=Relax).
  * Not the huge showcase pool (kungfu/zombie/dance) and not looping Relax.
  */
-/** Quiet between-turn idle — all entries map to hosted VRMA clips. */
+/**
+ * Quiet between-turn idle — subtle standing clips only (no wave/dance/cheer).
+ * Most idle time stays on procedural planted breath + look/comb beats.
+ */
 export const IDLE_LIFE_CLIP_POOL = Object.freeze([
-  "wave",
-  "clap",
-  "thinking",
   "stretch",
   "shy",
-  "surprised",
+  "thinking",
   "sleep",
-  "headshake",
-  "point",
-  "salute",
-  "dab",
-  "thumbsup",
-  "nod",
-  "bow",
   "shrug",
-  "peace",
-  "celebrate",
-  "laugh",
+  "nod",
 ]);
 
 /** Large idle rotation pool — quiet companion moments between turns. */

@@ -28,10 +28,12 @@ describe("companionActionChoreography", () => {
   });
 
   it("keeps default idle life on the calm library set, not kungfu showcase", () => {
-    expect(IDLE_LIFE_CLIP_POOL.length).toBeGreaterThanOrEqual(10);
-    expect(IDLE_LIFE_CLIP_POOL).toContain("wave");
+    expect(IDLE_LIFE_CLIP_POOL.length).toBeGreaterThanOrEqual(4);
     expect(IDLE_LIFE_CLIP_POOL).toContain("thinking");
     expect(IDLE_LIFE_CLIP_POOL).toContain("stretch");
+    expect(IDLE_LIFE_CLIP_POOL).not.toContain("wave");
+    expect(IDLE_LIFE_CLIP_POOL).not.toContain("celebrate");
+    expect(IDLE_LIFE_CLIP_POOL).not.toContain("dab");
     expect(IDLE_LIFE_CLIP_POOL).not.toContain("spin");
     expect(IDLE_LIFE_CLIP_POOL).not.toContain("kungfu");
     expect(IDLE_LIFE_CLIP_POOL).not.toContain("zombie");

@@ -25,8 +25,8 @@ export const COMPANION_WAIT_ACT_SCHEMA = "amoji.companionWaitAct.v1";
 /** One-shot library clips need room to finish (wave ~1.8s, thinking ~2.4s). */
 export const IDLE_LIFE_INTERVAL_MS = 2400;
 export const AVATAR_LOAD_IDLE_INTERVAL_MS = 900;
-/** Play a visible clip every N idle ticks (1 = every rotation). */
-export const IDLE_LIFE_CLIP_EVERY_N_TICKS = 1;
+/** Play a subtle library clip every N idle ticks — mostly procedural planted idle. */
+export const IDLE_LIFE_CLIP_EVERY_N_TICKS = 3;
 const IDLE_LIFE_BEATS = Object.freeze(["look", "comb", "breathe"]);
 
 /** @typedef {'connecting'|'waking'|'searching'|'assembling'|'downloading'|'warming'|'learning'|'installing'|'settling'|'almost'|'ready'|'failed'|'thinking'|'avatar-load'|'character-switch'|'motion-pack'|'idle'} WaitPhase */
@@ -264,6 +264,10 @@ export function createCompanionWaitAct(opts = {}) {
 
       const speak = ctx.speak !== false;
       const showProgress = kind !== "idle";
+
+      if (kind === "idle") {
+        avatarRef?.stopAction?.();
+      }
 
       if (showProgress) {
         opts.progress?.show?.({
