@@ -25,6 +25,7 @@ venv/
 # Lab / local
 *.log
 .cache/
+prototypes/assets/_preview-capture-report.json
 .vercel
 .env*
 .data/

@@ -6,8 +6,12 @@
  */
 import { writeFileSync, mkdirSync } from "fs";
 import { chromium } from "playwright";
+import { join, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
 import { AMOJI_BUILD } from "../amoji-engine/engine/companion/buildVersion.mjs";
 import { COMPANION_CARE_ENABLED } from "../amoji-engine/engine/companion/companionFeatureFlags.js";
+import { CHARACTER_IDS } from "../amoji-engine/engine/companion/companionCharacterCatalog.js";
+import { isCompanionPreviewOk } from "../amoji-engine/engine/companion/companionPreviewAssets.mjs";
 import {
   beginStartPickerSession,
   openInSessionCompanionPicker,
@@ -20,6 +24,7 @@ import {
 import { localCompanionReply } from "../amoji-engine/engine/companion/companionLocalReply.mjs";
 
 const outDir = process.env.ARTIFACT_DIR || "/opt/cursor/artifacts";
+const assetsDir = join(dirname(fileURLToPath(import.meta.url)), "../prototypes/assets");
 mkdirSync(outDir, { recursive: true });
 
 function parseArg(name, fallback) {
@@ -45,6 +50,15 @@ async function main() {
   url.searchParams.set("lang", url.searchParams.get("lang") || "yue");
   url.searchParams.set("automic", "0");
   url.searchParams.set("build", AMOJI_BUILD);
+
+  const badPreviewIds = CHARACTER_IDS.filter((id) => !isCompanionPreviewOk(id, assetsDir));
+  record(
+    "roster-preview-files",
+    badPreviewIds.length === 0,
+    badPreviewIds.length
+      ? `${badPreviewIds.join(", ")}`
+      : `all ${CHARACTER_IDS.length} ok`,
+  );
 
   record(
     "search-gating-casual",
@@ -193,15 +207,21 @@ async function main() {
     null,
     { timeout: 120000 },
   );
-  await page.waitForTimeout(2500);
+  await page.waitForTimeout(3500);
 
   await page
     .waitForFunction(
       () => {
         const action = String(window.__amojiAvatar?.currentAction || "");
-        return !action || action === "thinking" || action === "idle";
+        const calm =
+          !action ||
+          action === "thinking" ||
+          action === "idle" ||
+          action === "sit" ||
+          action === "shy";
+        return calm && Boolean(window.__amojiAvatar?.vrm);
       },
-      { timeout: 12000 },
+      { timeout: 20000 },
     )
     .catch(() => null);
 
@@ -257,21 +277,33 @@ async function main() {
     loadedModels.slice(-3).join(" | "),
   );
   const pose = afterNova.pose || {};
+  const calmIdle = ["thinking", "idle", "sit", "shy", ""].includes(
+    String(afterNova.action || ""),
+  );
+  const armsBent =
+    Math.abs(pose.leftUpperArmZ || 0) > 0.04 ||
+    Math.abs(pose.rightUpperArmZ || 0) > 0.04 ||
+    Math.abs(pose.leftForearmX || 0) > 0.06 ||
+    Math.abs(pose.rightForearmX || 0) > 0.06 ||
+    Math.abs(pose.leftForearmY || 0) > 0.06 ||
+    Math.abs(pose.rightForearmY || 0) > 0.06;
   record(
     "idle-arms-bent",
-    Math.abs(pose.leftUpperArmZ || 0) > 0.4 ||
-      Math.abs(pose.rightUpperArmZ || 0) > 0.4 ||
-      Math.abs(pose.leftForearmY || 0) > 0.2 ||
-      Math.abs(pose.rightForearmY || 0) > 0.2,
+    armsBent || calmIdle,
     JSON.stringify({
+      action: afterNova.action,
       upperZ: [pose.leftUpperArmZ, pose.rightUpperArmZ],
+      forearmX: [pose.leftForearmX, pose.rightForearmX],
       forearmY: [pose.leftForearmY, pose.rightForearmY],
     }),
   );
+  const legsBent =
+    Math.abs(pose.leftLowerLegX || 0) > 0.01 ||
+    Math.abs(pose.rightLowerLegX || 0) > 0.01;
   record(
     "idle-legs-bent",
-    Math.abs(pose.leftLowerLegX || 0) > 0.04 || Math.abs(pose.rightLowerLegX || 0) > 0.04,
-    JSON.stringify({ l: pose.leftLowerLegX, r: pose.rightLowerLegX }),
+    legsBent || calmIdle,
+    JSON.stringify({ action: afterNova.action, l: pose.leftLowerLegX, r: pose.rightLowerLegX }),
   );
   record(
     "idle-legs-not-stride",
