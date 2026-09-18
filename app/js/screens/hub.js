@@ -38,10 +38,17 @@ registerRoute("hub", (ctx) => {
     </div>
     <div class="hub-grid">
       <button type="button" class="hub-card" data-go="companion">
-        <div class="hub-card__icon">💬</div>
+        <div class="hub-card__icon">${roleEmoji(role)}</div>
         <div>
-          <h2 class="hub-card__title">${en ? "Companion" : "同伴"}</h2>
-          <p class="hub-card__desc">${en ? "3D chat & voice" : "3D 傾偈同語音"}</p>
+          <h2 class="hub-card__title">${roleLabel(role, en)}</h2>
+          <p class="hub-card__desc">${en ? "Unified 3D app · chat & voice" : "統一 3D app · 傾偈同語音"}</p>
+        </div>
+      </button>
+      <button type="button" class="hub-card" data-open="/play?role=secretary&pick=1&automic=0&lang=${en ? "en" : "yue"}">
+        <div class="hub-card__icon">📋</div>
+        <div>
+          <h2 class="hub-card__title">${en ? "Secretary" : "秘書"}</h2>
+          <p class="hub-card__desc">${en ? "Tasks · Today · 3D avatar" : "任務 · Today · 3D 同伴"}</p>
         </div>
       </button>
       <button type="button" class="hub-card" data-go="pet">
@@ -75,6 +82,12 @@ registerRoute("hub", (ctx) => {
     btn.addEventListener("click", () => {
       const target = btn.getAttribute("data-go");
       if (target) ctx.navigate(/** @type {import("../router.js").ScreenName} */ (target));
+    });
+  }
+  for (const btn of screen.querySelectorAll("[data-open]")) {
+    btn.addEventListener("click", () => {
+      const url = btn.getAttribute("data-open");
+      if (url) globalThis.location.href = url;
     });
   }
 

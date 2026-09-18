@@ -38,13 +38,16 @@ export function companionFullDirectUrl(opts = {}) {
  * @param {{ lang?: "yue" | "en", build?: string, cacheBust?: string | number }} [opts]
  */
 export function companionLiteDirectUrl(opts = {}) {
-  const params = new URLSearchParams();
+  const params = new URLSearchParams({
+    role: "secretary",
+    pick: "1",
+    automic: "0",
+  });
   if (opts.lang === "en") params.set("lang", "en");
   else if (opts.lang === "yue") params.set("lang", "yue");
   if (opts.build) params.set("build", opts.build);
   params.set("_cb", String(opts.cacheBust ?? Date.now()));
-  const qs = params.toString();
-  return `${DEMO_BASE_URL}/companion${qs ? `?${qs}` : ""}`;
+  return `${DEMO_BASE_URL}/play?${params.toString()}`;
 }
 
 /**
@@ -148,8 +151,9 @@ export function formatDemoLinkBlock(opts = {}) {
     `- **Direct full (粵, always works):** ${yueDirect}`,
     `- **Direct full (EN):** ${enDirect}`,
     `- **Secretary (Today, 粵):** ${secretary}`,
-    `- **Lite chat:** ${lite}`,
-    `- **Direct lite:** ${liteDirect}`,
+    `- **Secretary mode (EN):** ${lite}`,
+    `- **Direct secretary:** ${liteDirect}`,
+    `- **Boyfriend (EN):** ${DEMO_BASE_URL}/play?role=boyfriend&lang=en&pick=1&automic=0&build=${encodeURIComponent(build)}`,
     `- **Dashboard:** ${DEMO_DASHBOARD_URL}`,
   ];
   if (opts.prUrl) {

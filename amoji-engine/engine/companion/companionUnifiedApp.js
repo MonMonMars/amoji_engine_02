@@ -114,11 +114,17 @@ export function rosterCharactersForRole(langCode = "yue", role = "girlfriend") {
   const preset = rolePreset(role);
   const all = listCompanionCharacters(langCode);
   const recommended = new Set(preset.characterIds);
+  const badge = rolePickBadge(role, langCode === "en");
   const picks = [];
   const rest = [];
   for (const item of all) {
-    if (recommended.has(item.id)) picks.push({ ...item, roleRecommended: true });
-    else rest.push({ ...item, roleRecommended: false });
+    if (recommended.has(item.id)) {
+      picks.push({
+        ...item,
+        roleRecommended: true,
+        badge,
+      });
+    } else rest.push({ ...item, roleRecommended: false });
   }
   picks.sort(
     (a, b) =>
@@ -131,6 +137,20 @@ export function rosterCharactersForRole(langCode = "yue", role = "girlfriend") {
  * @param {import("../mobile/companionRolePresets.js").CompanionRole} role
  * @param {boolean} [isEnglish]
  */
+export function rolePickBadge(role, isEnglish = false) {
+  const r = normalizeCompanionRole(role);
+  if (isEnglish) {
+    if (r === "secretary") return "★ Secretary";
+    if (r === "boyfriend") return "★ BF pick";
+    if (r === "pet") return "★ Pet";
+    return "★ GF pick";
+  }
+  if (r === "secretary") return "★ 秘書";
+  if (r === "boyfriend") return "★ 男友";
+  if (r === "pet") return "★ 寵物";
+  return "★ 女友";
+}
+
 export function pickerCopyForRole(role, isEnglish = false) {
   const r = normalizeCompanionRole(role);
   const en = Boolean(isEnglish);

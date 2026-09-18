@@ -33,7 +33,8 @@ describe("deployUrls", () => {
     expect(full).toContain("lang=en");
     expect(full).toContain("build=test-build");
     const lite = companionLiteDirectUrl({ lang: "yue", build: "test-build" });
-    expect(lite).toContain("/companion?");
+    expect(lite).toContain("/play?");
+    expect(lite).toContain("role=secretary");
     expect(lite).toContain("lang=yue");
   });
 
