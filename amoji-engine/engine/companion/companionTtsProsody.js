@@ -10,6 +10,7 @@ import { resolveTurnPerformance } from "./companionActionResolve.js";
 import { characterProsodyBias } from "./companionCharacterCatalog.js";
 import { voiceProfileProsodyBias } from "./companionVoiceProfiles.js";
 import { inferExpressionFromText } from "../face/emotionExpression.js";
+import { vocalizationInstructHint } from "./companionVocalizations.js";
 
 export const COMPANION_TTS_PROSODY_SCHEMA = "amoji.companionTtsProsody.v3";
 
@@ -244,11 +245,16 @@ export function buildTtsInstruct(opts = {}) {
     ? "Clear and expressive. Lift questions and exclamations. Stress feeling-words."
     : "咬字清楚。問句尾音上揚。感嘆詞要有活力。粵語口語，唔好似朗讀。";
 
-  const laughs = /哈哈|呵呵|嘻嘻|haha|hehe/i.test(text)
-    ? "Play the laugh as a real chuckle, not a spoken word."
-    : /哇|嘩|wow/i.test(text)
-      ? "Let the gasp/wow land with a pitch jump."
-      : "";
+  const vocalHint = vocalizationInstructHint(text);
+  const laughs =
+    vocalHint ||
+    (/哈哈|呵呵|嘻嘻|haha|hehe/i.test(text)
+      ? "Play the laugh as a real chuckle, not a spoken word."
+      : /哇|嘩|wow/i.test(text)
+        ? "Let the gasp/wow land with a pitch jump."
+        : /嗯|唔|um+|hmm|呣/i.test(text)
+          ? "Natural thinking hum before the sentence — soft filler, not a word."
+          : "");
 
   const pauses = /[…\.]{3,}/.test(text)
     ? "Meaningful pause around ellipses."
