@@ -87,6 +87,12 @@ describe("companion treats", () => {
       setEating(v) {
         calls.push(["eating", v]);
       },
+      attachTreatProp(item) {
+        calls.push(["prop", item?.id]);
+      },
+      detachTreatProp() {
+        calls.push(["prop-off"]);
+      },
       playAction(id, opts) {
         calls.push(["play", id, opts.loop]);
       },
@@ -100,10 +106,12 @@ describe("companion treats", () => {
     expect(calls).toEqual([
       ["emotion", "happy"],
       ["eating", true],
+      ["prop", "cake"],
       ["play", "eat", true],
     ]);
     expect(TREAT_FEED_DURATION_MS).toBeGreaterThan(2000);
     stop();
+    expect(calls).toContainEqual(["prop-off"]);
     expect(calls.at(-1)).toEqual(["stop"]);
   });
 });

@@ -50,8 +50,10 @@ import {
   isOnlineIdleAction,
   isOnlineLoopingLibraryAction,
   ONLINE_CALM_IDLE_ACTION,
+  PROCEDURAL_PREFERRED_ACTIONS,
   resolveOnlineMotionClipUrl,
 } from "./companionOnlineMotionClips.mjs";
+import { createCompanionTreatProp } from "./companionTreatProp.js";
 import {
   isTalkBackgroundLibraryAction,
   isTalkLibraryLoopAction,
@@ -302,6 +304,7 @@ export async function createVrmAvatar(opts) {
   vrm.humanoid?.resetNormalizedPose?.();
   const bodyMotion = createCompanionBodyMotion(vrm.humanoid);
   bodyMotion.setFingerFlexAxis?.(inferFingerFlexAxis(vrm.humanoid));
+  const treatProp = createCompanionTreatProp(vrm.humanoid);
   let springIdleState = createIdleSpringRecenterState();
   let springTalkState = createIdleSpringRecenterState();
   /** @type {ReturnType<typeof createMotionTransitionState>} */
@@ -864,6 +867,25 @@ export async function createVrmAvatar(opts) {
       return ok;
     }
 
+    if (PROCEDURAL_PREFERRED_ACTIONS.has(key)) {
+      vrmaPlayGen += 1;
+      vrmaPending = false;
+      vrmaSequenceQueue = [];
+      vrmaSequenceOpts = null;
+      motionPlayer.stop(DEFAULT_MOTION_CROSSFADE_SEC);
+      vrmaAction = null;
+      motionTransitionState = null;
+      const ok = bodyMotion.playAction(action, {
+        emotion: opts.emotion || emotion,
+        loop: opts.loop,
+        single: opts.single ?? !opts.loop,
+        maxMoves: opts.maxMoves,
+      });
+      emotion = bodyMotion.emotion;
+      applyEmotionExpressions(emotion);
+      return ok;
+    }
+
     if (!resolveOnlineMotionClipUrl(key)) {
       return false;
     }
@@ -912,12 +934,15 @@ export async function createVrmAvatar(opts) {
   };
 
   const stopAction = () => {
+    treatProp.detach();
     const ok = bodyMotion.stopAction();
     applyEmotionExpressions(emotion);
     restorePlantedIdle();
     bodyMotion.resetIdleLife?.();
     return ok;
   };
+  const attachTreatProp = (item) => treatProp.attach(item);
+  const detachTreatProp = () => treatProp.detach();
   const playGestureForText = (text, opts = {}) =>
     bodyMotion.playGestureForText(text, { emotion: opts.emotion || emotion });
 
@@ -1075,10 +1100,13 @@ export async function createVrmAvatar(opts) {
 
   const setEating = (on) => {
     eating = Boolean(on);
-    if (!eating && !talking) {
-      mouthTarget = 0;
-      mouthOpen = 0;
-      applyMouth(0);
+    if (!eating) {
+      treatProp.detach();
+      if (!talking) {
+        mouthTarget = 0;
+        mouthOpen = 0;
+        applyMouth(0);
+      }
     }
     return eating;
   };
@@ -1237,9 +1265,12 @@ export async function createVrmAvatar(opts) {
       // Fingers last — after spring sim, and only when VRMA is not driving the skeleton.
       if (!libraryMotion) {
         bodyMotion.applyHandRestOnly?.({
-          talkBlend: talking || eating ? 0.7 : 0,
+          talkBlend: talking ? 0.7 : eating ? 0.12 : 0,
           now,
         });
+      }
+      if (eating && treatProp.active) {
+        treatProp.update(bodyMotion.getEatChewSample?.());
       }
       applyTalkMouthNow(now);
 
@@ -1457,6 +1488,8 @@ export async function createVrmAvatar(opts) {
     setMouthShape,
     setTalking,
     setEating,
+    attachTreatProp,
+    detachTreatProp,
     setTalkEnergy,
     setTalkStyle,
     reactToSpeechChunk,

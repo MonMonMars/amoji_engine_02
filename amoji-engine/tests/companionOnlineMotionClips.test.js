@@ -23,7 +23,8 @@ describe("companionOnlineMotionClips", () => {
   });
 
   it("maps social gestures to hosted VRMA instead of procedural bone sway", () => {
-    expect(PROCEDURAL_PREFERRED_ACTIONS.size).toBe(0);
+    expect(PROCEDURAL_PREFERRED_ACTIONS.has("eat")).toBe(true);
+    expect(PROCEDURAL_PREFERRED_ACTIONS.has("drink")).toBe(true);
     expect(resolveOnlineMotionClipUrl("wave")).toMatch(/Goodbye\.vrma$/);
     expect(resolveOnlineMotionClipUrl("thinking")).toMatch(/Thinking\.vrma$/);
     expect(resolveOnlineMotionClipUrl("nod")).toMatch(/Goodbye\.vrma$/);

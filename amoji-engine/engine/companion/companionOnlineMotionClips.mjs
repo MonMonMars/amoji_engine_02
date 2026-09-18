@@ -34,10 +34,8 @@ export const ONLINE_LOOPING_LIBRARY_ACTIONS = Object.freeze(
   ]),
 );
 
-/**
- * @deprecated Empty — all scripted actions use hosted VRMA, not bone samplers.
- */
-export const PROCEDURAL_PREFERRED_ACTIONS = Object.freeze(new Set());
+/** Treat feed uses hand-to-mouth procedural motion instead of generic LookAround VRMA. */
+export const PROCEDURAL_PREFERRED_ACTIONS = Object.freeze(new Set(["eat", "drink"]));
 
 const VRMA_BASE =
   "https://raw.githubusercontent.com/tk256ailab/vrm-viewer/main/VRMA";
