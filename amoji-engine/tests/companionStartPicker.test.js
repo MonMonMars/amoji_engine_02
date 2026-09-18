@@ -49,10 +49,22 @@ describe("companion start picker", () => {
     expect(startCard).not.toContain("companion-card-tagline");
   });
 
-  it("uses a small progress ring instead of a loading bar", () => {
+  it("includes ring plus linear model download bar", () => {
     expect(START_PICKER_PRELOAD_RING_HTML).toContain("companion-progress-ring");
     expect(START_PICKER_PRELOAD_RING_HTML).toContain("companion-progress-ring-fill");
-    expect(START_PICKER_PRELOAD_RING_HTML).not.toMatch(/preload-track|preload-fill/);
+    if (typeof document === "undefined") return;
+    const picker = createCompanionStartPicker({
+      isEnglish: true,
+      selectedId: "nova",
+      onStart: () => {},
+    });
+    expect(picker.element.querySelector(".start-picker-preload-track")).toBeTruthy();
+    expect(picker.element.querySelector(".start-picker-preload-fill")).toBeTruthy();
+    picker.setPreloadProgress(42, "Downloading model… 42%");
+    expect(
+      picker.element.querySelector(".start-picker-preload-fill")?.style.width,
+    ).toBe("42%");
+    picker.destroy();
   });
 
   it("v4 start picker includes hero preview and begin CTA", () => {

@@ -2,6 +2,7 @@
  * Fast path — show character picker before the heavy companion module graph loads.
  */
 import { createCompanionStartPicker } from "./companionCharacterPicker.js";
+import { attachStartPickerModelPreload } from "./companionStartPickerPreload.js";
 import { playCompanionCardTapFx } from "./companionUiGacha.js";
 import { pickerCopy } from "./companionPickerChrome.js";
 
@@ -25,11 +26,15 @@ export async function bootEarlyStartPicker(opts = {}) {
   const splash = document.getElementById("amoji-boot-splash");
   splash?.setAttribute("aria-busy", "true");
 
+  let preloadJob = null;
   const picker = createCompanionStartPicker({
     root: opts.root || document.body,
     isEnglish,
     selectedId,
     onCardTapFx: playCompanionCardTapFx,
+    onSelectionChange: () => {
+      void preloadJob?.refreshSelectedModel?.();
+    },
     onStart: (nextId) => {
       globalThis.__amojiUnlockAudio?.();
       globalThis.__amojiHideLoading?.();
@@ -46,13 +51,14 @@ export async function bootEarlyStartPicker(opts = {}) {
 
   picker.setSelected(selectedId);
   picker.enablePicking(true);
-  picker.setPreloadProgress?.(
-    100,
-    isEnglish
-      ? "Ready — 3D loads after you begin"
-      : "可以揀啦 — 3D 開始後先載入",
-  );
+  const langCode = isEnglish ? "en" : "yue";
+  preloadJob = attachStartPickerModelPreload(picker, {
+    isEnglish,
+    langCode,
+    getSelectedId: () => picker.getSelectedId?.() || selectedId,
+  });
   picker.show();
+  void preloadJob.previewPromise;
   document.body.classList.add("companion-start-pending", "companion-picker-open");
   await new Promise((resolve) => {
     requestAnimationFrame(() => requestAnimationFrame(resolve));

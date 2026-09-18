@@ -424,11 +424,15 @@
 .companion-picker--v4 .start-picker-preload {
   margin: 0;
   padding: 0;
-  opacity: 0.55;
+  opacity: 1;
 }
 
 .companion-picker--v4 .start-picker-preload.is-ready {
-  opacity: 0.45;
+  opacity: 0.88;
+}
+
+.companion-picker--v4 .start-picker-preload-track {
+  width: 100%;
 }
 
 .companion-picker--v4.is-preloading .companion-card:not(:disabled) {

@@ -8,9 +8,9 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji · Companion</title>
     <script>
-      window.__amojiBuild = "2026-09-18-v252-camera-default";
+      window.__amojiBuild = "2026-09-18-v253-model-download-bar";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-18-v252-camera-default"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-18-v253-model-download-bar"></script>
     <link
       rel="prefetch"
       href="/prototypes/assets/companion-char-nova.png"
@@ -400,8 +400,41 @@
       .companion-picker--start .start-picker-preload {
         margin: 0 0 0.75rem;
         display: flex;
+        flex-direction: column;
+        gap: 0.55rem;
+        width: 100%;
+      }
+
+      .start-picker-preload-row {
+        display: flex;
         align-items: center;
         gap: 0.7rem;
+        width: 100%;
+      }
+
+      .start-picker-preload-track {
+        width: 100%;
+        height: 0.38rem;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.12);
+        overflow: hidden;
+        box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.18);
+      }
+
+      .start-picker-preload-fill {
+        height: 100%;
+        width: 0%;
+        border-radius: inherit;
+        background: linear-gradient(
+          90deg,
+          rgba(127, 212, 207, 0.85),
+          rgba(168, 196, 255, 0.95)
+        );
+        transition: width 0.24s ease;
+      }
+
+      .companion-picker--start.is-preloading .picker-begin-btn:not(:disabled) {
+        opacity: 0.92;
       }
 
       .start-picker-preload-ring {
@@ -559,13 +592,13 @@
       media="print"
       onload="this.media='all'"
     />
-    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-18-v252-camera-default" />
-    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-18-v252-camera-default" />
-    <link rel="stylesheet" href="/prototypes/companion-mic-button.css?v=2026-09-18-v252-camera-default" />
-    <link rel="stylesheet" href="/prototypes/companion-minimal-ui.css?v=2026-09-18-v252-camera-default" />
-    <link rel="stylesheet" href="/prototypes/companion-picker-v4.css?v=2026-09-18-v252-camera-default" />
+    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-18-v253-model-download-bar" />
+    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-18-v253-model-download-bar" />
+    <link rel="stylesheet" href="/prototypes/companion-mic-button.css?v=2026-09-18-v253-model-download-bar" />
+    <link rel="stylesheet" href="/prototypes/companion-minimal-ui.css?v=2026-09-18-v253-model-download-bar" />
+    <link rel="stylesheet" href="/prototypes/companion-picker-v4.css?v=2026-09-18-v253-model-download-bar" />
     <script type="module">
-      import { bootEarlyStartPicker } from "/amoji-engine/engine/companion/companionEarlyStartPicker.js?v=2026-09-18-v252-camera-default";
+      import { bootEarlyStartPicker } from "/amoji-engine/engine/companion/companionEarlyStartPicker.js?v=2026-09-18-v253-model-download-bar";
       const bootParams = new URLSearchParams(location.search);
       if (bootParams.get("autostart") !== "1" && bootParams.get("pick") !== "0") {
         globalThis.__amojiEarlyStartPickerPromise = bootEarlyStartPicker({
@@ -4247,19 +4280,19 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-18-v252-camera-default",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-18-v253-model-download-bar",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-18-v252-camera-default",
-          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-18-v252-camera-default"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-18-v253-model-download-bar",
+          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-18-v253-model-download-bar"
         }
       }
     </script>
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-18-v252-camera-default"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-18-v253-model-download-bar"
     />
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-18-v252-camera-default"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-18-v252-camera-default"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-18-v253-model-download-bar"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-18-v253-model-download-bar"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;
@@ -4796,6 +4829,7 @@
         platformMod,
         characterMod,
         characterPickerMod,
+        startPickerPreloadMod,
         micButtonMod,
         emotionBallMod,
         characterSwitchMod,
@@ -4833,6 +4867,7 @@
         ami("../amoji-engine/engine/companion/companionPlatform.js"),
         ami("../amoji-engine/engine/companion/companionCharacterCatalog.js"),
         ami("../amoji-engine/engine/companion/companionCharacterPicker.js"),
+        ami("../amoji-engine/engine/companion/companionStartPickerPreload.js"),
         ami("../amoji-engine/engine/companion/companionMicButton.js"),
         ami("../amoji-engine/engine/companion/companionEmotionBall.js"),
         ami("../amoji-engine/engine/companion/companionCharacterSwitch.js"),
@@ -5009,7 +5044,7 @@
       const { resolveTurnPerformance, resolveStreamingAction } =
         actionResolveMod;
       const progressDock = createCompanionProgressDock({
-        root: document.querySelector(".stage") || document.body,
+        root: document.body,
       });
       /** @type {ReturnType<typeof createCompanionWaitAct> | null} */
       let waitAct = null;
@@ -5887,13 +5922,18 @@
           prefer: preferForLoad,
           onCharacterTap: () => handleCharacterTap?.(),
           onProgress: (pct, _label) => {
+            const rounded = Math.round(pct);
+            const loadLabel = isEnglish
+              ? `Loading 3D model… ${rounded}%`
+              : `載入 3D 模型… ${rounded}%`;
             waitAct?.update({
               phase: "avatar-load",
               progress: pct / 100,
-              label: isEnglish
-                ? `Loading 3D model… ${Math.round(pct)}%`
-                : `載入 3D 模型… ${Math.round(pct)}%`,
+              label: loadLabel,
             });
+            if (startPicker?.element?.classList.contains("is-starting")) {
+              startPicker.setPreloadProgress?.(rounded, loadLabel);
+            }
           },
         })
           .then((loaded) => {
@@ -7112,12 +7152,30 @@
       const showStartPicker =
         params.get("autostart") !== "1" && params.get("pick") !== "0";
 
+      const { attachStartPickerModelPreload } = startPickerPreloadMod;
+      /** @type {ReturnType<typeof attachStartPickerModelPreload> | null} */
+      let startPickerPreloadJob = null;
+      const ensureStartPickerModelPreload = () => {
+        if (!startPicker || startPickerPreloadJob) return startPickerPreloadJob;
+        startPickerPreloadJob = attachStartPickerModelPreload(startPicker, {
+          isEnglish,
+          langCode,
+          getSelectedId: () =>
+            startPicker?.getSelectedId?.() || characterId,
+        });
+        void startPickerPreloadJob.previewPromise;
+        return startPickerPreloadJob;
+      };
+
       if (!startPicker) {
         startPicker = createCompanionStartPicker({
           root: document.body,
           isEnglish,
           selectedId: characterId,
           onCardTapFx: playCompanionCardSelectFx,
+          onSelectionChange: () => {
+            startPickerPreloadJob?.refreshSelectedModel?.();
+          },
           onStart: (nextId) => {
             window.__amojiUnlockAudio?.();
             dismissLoading();
@@ -7128,40 +7186,20 @@
             window.__amojiStartWithCharacter?.(nextId);
           },
         });
+        ensureStartPickerModelPreload();
       } else {
         startPicker.setSelected(characterId);
         startPicker.enablePicking(true);
+        ensureStartPickerModelPreload();
       }
 
-      const syncRosterPreloadUi = () => {
-        globalThis.__amojiPreload?.scheduleRosterPreview?.();
-        const roster =
-          globalThis.__amojiPreload?.rosterReady ??
-          globalThis.__amojiPreload?.ensureRoster?.();
-        if (!roster) return;
-        void roster.then(() => {
-          startPicker?.setPreloadProgress?.(
-            100,
-            isEnglish
-              ? "More portraits ready in background"
-              : "更多肖像喺背景載入",
-          );
-        });
-      };
-
       if (showStartPicker) {
-        startPicker.setPreloadProgress?.(
-          100,
-          isEnglish
-            ? "Ready — 3D loads after you begin"
-            : "可以揀啦 — 3D 開始後先載入",
-        );
         startPicker.enablePicking(true);
         if (!startPicker.element?.classList.contains("is-open")) {
           startPicker.show();
         }
       }
-      syncRosterPreloadUi();
+      globalThis.__amojiPreload?.scheduleRosterPreview?.();
 
       const openCharacterPicker = () => {
         characterPicker.setSelected(characterId);
