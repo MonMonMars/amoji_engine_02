@@ -266,16 +266,33 @@ export function buildTtsInstruct(opts = {}) {
     ? `You are ChatGPT Advanced Voice Mode. React. Never sound like Siri, GPS, a newsreader, or an audiobook.`
     : `你係 ChatGPT Advanced Voice。要有反應。絕對唔好似 Siri、導航、新聞或者朗讀。`;
 
+  const vocalPrefix = String(opts.vocalPrefix || "").trim();
+  const vocalLead = vocalPrefix
+    ? isEnglish
+      ? `Opening: "${vocalPrefix}" as a natural ${opts.vocalization || "soft"} vocal — SAME speaker, SAME voice — then flow seamlessly into the rest without resetting tone or switching persona.`
+      : `開頭："${vocalPrefix}" 做自然${opts.vocalization || "軟"}聲 — 同一個人、同一把聲 — 然後順滑接落去，唔好換人換聲。`
+    : "";
+
+  const continuity = vocalPrefix
+    ? isEnglish
+      ? "This entire clip is ONE continuous take from one person. Never sound like two different speakers mid-sentence."
+      : "成段音係同一個人一次過錄。絕對唔好講到一半似換咗另一個人。"
+    : isEnglish
+      ? "Keep one consistent voice identity for the entire clip — same person start to finish."
+      : "成段音保持同一把聲、同一個人，由頭到尾一致。";
+
   return [
     `Voice Affect: ${affect}`,
     `Tone: ${tone}`,
     `Pacing: ${pacing}`,
     `Emotion: ${emotionLine}`,
     `Delivery: ${delivery}`,
+    vocalLead,
+    `Continuity: ${continuity}`,
     `Pronunciation: ${pronunciation}`,
     `Pauses: ${pauses}`,
     laughs ? `Color: ${laughs}` : "",
-    `Never: monotone, robotic, even pitch, announcer cadence.`,
+    `Never: monotone, robotic, even pitch, announcer cadence, or switching speaker mid-clip.`,
   ]
     .filter(Boolean)
     .join("\n");
@@ -350,6 +367,9 @@ export function enrichTtsPerformance(performance, text = "") {
     talkStyle,
     speechEnergy,
     text: line || perf.text,
+    vocalPrefix: perf.vocalPrefix,
+    vocalization: perf.vocalization,
+    skipVocalization: perf.skipVocalization,
   };
 }
 
@@ -461,6 +481,8 @@ export function resolveCompanionTtsProsody(opts = {}) {
       speechEnergy,
       text,
       lang: opts.lang || enriched.lang,
+      vocalPrefix: opts.vocalPrefix || enriched.vocalPrefix,
+      vocalization: opts.vocalization || enriched.vocalization,
     }),
   };
 }

@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
+  applyPokeVocalToSpeech,
+  applyVocalPrefixToSpeech,
   COMPANION_VOCALIZATIONS_SCHEMA,
   isVocalizationText,
+  mergeVocalIntoSpeech,
   pickPokeVocalization,
   pickPreSentenceVocalization,
   pickVocalLine,
@@ -9,6 +12,7 @@ import {
   vocalizationInstructHint,
   VOCALIZATION_TYPES,
 } from "../engine/companion/companionVocalizations.js";
+import { buildTtsInstruct } from "../engine/companion/companionTtsProsody.js";
 
 describe("companionVocalizations", () => {
   it("exports schema and vocal types", () => {
@@ -72,5 +76,43 @@ describe("companionVocalizations", () => {
         { isEnglish: false },
       ),
     ).toBeNull();
+  });
+
+  it("merges vocal + sentence into one utterance string", () => {
+    expect(mergeVocalIntoSpeech("Um……", "I am thinking about that.")).toBe(
+      "Um…… I am thinking about that.",
+    );
+    expect(mergeVocalIntoSpeech("嗯……", "等我諗諗。")).toBe("嗯…… 等我諗諗。");
+  });
+
+  it("applyVocalPrefixToSpeech returns merged single-clip text", () => {
+    const applied = applyVocalPrefixToSpeech(
+      "I am thinking about that.",
+      { emotion: "thinking", nuance: "curious" },
+      { isEnglish: true },
+    );
+    expect(applied.merged).toBe(true);
+    expect(applied.text).toMatch(/^Um|^Hmm|^Mmm/i);
+    expect(applied.text).toContain("I am thinking");
+    expect(applied.performance.vocalPrefix).toBeTruthy();
+    expect(applied.performance.skipVocalization).toBe(true);
+  });
+
+  it("applyPokeVocalToSpeech merges poke vocal into tap line", () => {
+    const poke = applyPokeVocalToSpeech("I'm here!", { emotion: "happy" }, true);
+    expect(poke.text).toMatch(/he|ha|tee|oh/i);
+    expect(poke.text).toContain("I'm here!");
+  });
+
+  it("TTS instruct demands same speaker for vocal prefix clips", () => {
+    const instruct = buildTtsInstruct({
+      text: "Um…… I am thinking.",
+      vocalPrefix: "Um……",
+      vocalization: "um",
+      emotion: "thinking",
+      lang: "en",
+    });
+    expect(instruct).toMatch(/SAME speaker|SAME voice/i);
+    expect(instruct).toMatch(/continuous take|one person/i);
   });
 });
