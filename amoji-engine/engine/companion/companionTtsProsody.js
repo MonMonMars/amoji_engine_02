@@ -26,12 +26,12 @@ export const MAX_CLOUD_TTS_CHARS = 480;
 /** @typedef {{ rate: number, pitch: number, volume: number }} BrowserProsody */
 
 const EMOTION_EDGE_BASE = Object.freeze({
-  neutral: { rate: 0, pitch: 24, volume: 8 },
-  happy: { rate: 10, pitch: 36, volume: 14 },
-  thinking: { rate: -10, pitch: 8, volume: 0 },
-  sad: { rate: -16, pitch: -8, volume: -4 },
-  surprised: { rate: 14, pitch: 40, volume: 12 },
-  angry: { rate: 6, pitch: 0, volume: 8 },
+  neutral: { rate: 4, pitch: 22, volume: 6 },
+  happy: { rate: 16, pitch: 42, volume: 16 },
+  thinking: { rate: -12, pitch: 6, volume: -2 },
+  sad: { rate: -18, pitch: -12, volume: -6 },
+  surprised: { rate: 18, pitch: 46, volume: 14 },
+  angry: { rate: 8, pitch: -2, volume: 10 },
 });
 
 const NUANCE_EDGE_DELTA = Object.freeze({
@@ -152,16 +152,16 @@ export function instructSpeakingSpeed(opts = {}) {
   const energy = Number.isFinite(opts.speechEnergy) ? opts.speechEnergy : 0.68;
   let speed =
     emotion === "happy" || emotion === "surprised"
-      ? 1.02
+      ? 1.04
       : emotion === "sad"
-        ? 0.94
+        ? 0.92
         : emotion === "thinking"
-          ? 0.96
+          ? 0.95
           : emotion === "angry"
-            ? 1.01
+            ? 1.03
             : 1;
-  speed += (energy - 0.55) * 0.08;
-  return Number(Math.max(0.9, Math.min(1.06, speed)).toFixed(2));
+  speed += (energy - 0.55) * 0.1;
+  return Number(Math.max(0.88, Math.min(1.08, speed)).toFixed(2));
 }
 
 /**

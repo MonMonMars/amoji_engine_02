@@ -203,11 +203,10 @@ export function analyzeUserInput(text, isEnglish = false) {
  * @param {string | null | undefined} partialText
  */
 export function analyzeStreamingReply(partialText) {
-  const visible = String(partialText || "")
-    .replace(/\s*\[action:\w*\]?/i, "")
-    .replace(/\s*\[mood:\w*\]?/i, "")
-    .trim();
-  if (!visible) {
+  const raw = String(partialText || "");
+  const tagged = parseReplyTags(raw);
+  const visible = tagged.reply.trim();
+  if (!visible && !tagged.emotion) {
     return {
       emotion: "thinking",
       nuance: "none",
@@ -216,25 +215,20 @@ export function analyzeStreamingReply(partialText) {
       speechEnergy: 0.28,
     };
   }
-  const parsed = parseReplyMood(visible);
   const emotion =
-    parsed.emotion || inferExpressionFromText(parsed.reply) || "thinking";
-  const nuanceMatch = String(partialText || "").match(/\[nuance:(\w+)\]/i);
-  const taggedNuance =
-    nuanceMatch && CONTENT_NUANCES.includes(nuanceMatch[1].toLowerCase())
-      ? nuanceMatch[1].toLowerCase()
-      : null;
-  const nuance = taggedNuance || inferContentNuance(parsed.reply);
-  const talkStyle = inferTalkGestureFromText(parsed.reply, { emotion });
-  const actionMatch = String(partialText || "").match(/\[action:(\w+)\]/i);
-  const action = actionMatch ? resolveAction(actionMatch[1]) : null;
+    tagged.emotion ||
+    inferExpressionFromText(visible) ||
+    "thinking";
+  const nuance = tagged.nuance || inferContentNuance(visible);
+  const talkStyle = inferTalkGestureFromText(visible, { emotion });
+  const action = tagged.action || null;
   return {
     emotion,
     nuance,
     talkStyle,
     action,
     expressionBlend: buildVrmExpressionBlend(emotion, nuance),
-    speechEnergy: inferSpeechEnergy(parsed.reply, emotion, nuance),
+    speechEnergy: inferSpeechEnergy(visible, emotion, nuance),
   };
 }
 

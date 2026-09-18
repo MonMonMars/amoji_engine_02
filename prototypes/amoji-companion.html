@@ -8,9 +8,9 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji · Companion</title>
     <script>
-      window.__amojiBuild = "2026-09-18-v202-idle-planted-pose";
+      window.__amojiBuild = "2026-09-18-v203-stream-mood-voice";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-18-v202-idle-planted-pose"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-18-v203-stream-mood-voice"></script>
     <link
       rel="prefetch"
       href="/prototypes/assets/companion-char-nova.png"
@@ -450,8 +450,8 @@
       media="print"
       onload="this.media='all'"
     />
-    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-18-v202-idle-planted-pose" />
-    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-18-v202-idle-planted-pose" />
+    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-18-v203-stream-mood-voice" />
+    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-18-v203-stream-mood-voice" />
     <noscript>
       <link
         href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap"
@@ -3927,19 +3927,19 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-18-v202-idle-planted-pose",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-18-v203-stream-mood-voice",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-18-v202-idle-planted-pose",
-          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-18-v202-idle-planted-pose"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-18-v203-stream-mood-voice",
+          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-18-v203-stream-mood-voice"
         }
       }
     </script>
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-18-v202-idle-planted-pose"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-18-v203-stream-mood-voice"
     />
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-18-v202-idle-planted-pose"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-18-v202-idle-planted-pose"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-18-v203-stream-mood-voice"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-18-v203-stream-mood-voice"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;
@@ -4636,7 +4636,7 @@
         buildMotionCapabilityPromptFragment,
         formatMotionCapabilitySummary,
       } = motionCapabilitiesMod;
-      const { createStreamSpeakPlanner } = streamSpeakMod;
+      const { createStreamSpeakPlanner, hasCompleteMoodTag } = streamSpeakMod;
       const { createCompanionBargeMonitor } = bargeMod;
       const { createCompanionVoiceGate } = voiceGateMod;
       const { isIosLike, shouldPauseMicDuringTts } = platformMod;
@@ -7079,28 +7079,35 @@
         let streamSpeakStarted = false;
         let streamEmotion = "neutral";
         let streamActionPlayed = false;
+        /** @type {{ seg: string, fullRaw: string }[]} */
+        let pendingStreamSpeakQueue = [];
 
-        const enqueueStreamSegments = (segments, fullText) => {
-          if (!phaseAEnabled || !segments.length) return;
-          const analysis = analyzeStreamingReply(fullText);
-          streamEmotion = analysis.emotion || streamEmotion;
-          const streamNuance = analysis.nuance || speakContent.nuance || "none";
+        const flushPendingStreamSpeak = (fullRaw, { force = false } = {}) => {
+          if (!phaseAEnabled || !pendingStreamSpeakQueue.length) return;
+          if (!force && !hasCompleteMoodTag(fullRaw)) return;
+
+          const voicePerf = resolveVoicePerformanceFromReply(fullRaw, {
+            userText: cleaned,
+            isEnglish,
+            characterId,
+          });
+          const analysis = analyzeStreamingReply(fullRaw);
+          streamEmotion = voicePerf.emotion || analysis.emotion || streamEmotion;
+          const streamNuance =
+            voicePerf.nuance || analysis.nuance || speakContent.nuance || "none";
           avatar.applyExpressionProfile?.({
             emotion: streamEmotion,
             nuance: streamNuance,
             blend: analysis.expressionBlend,
           });
-          avatar.setTalkStyle?.(analysis.talkStyle);
-          avatar.setTalkEnergy?.(analysis.speechEnergy);
+          avatar.setTalkStyle?.(voicePerf.talkStyle || analysis.talkStyle);
+          avatar.setTalkEnergy?.(voicePerf.speechEnergy ?? analysis.speechEnergy);
           if (!streamSpeakStarted) {
             streamSpeakStarted = true;
             waitAct?.stop();
             voice.beginStreamSpeak?.(
               {
-                emotion: streamEmotion,
-                nuance: streamNuance,
-                talkStyle: analysis.talkStyle,
-                speechEnergy: analysis.speechEnergy,
+                ...voicePerf,
                 lang: isEnglish ? "en" : "yue",
                 characterId,
               },
@@ -7109,22 +7116,39 @@
             avatar.setThinking?.(false);
             avatar.setTalking?.(true);
             status.speaking();
+          } else {
+            voice.updateStreamSpeakPerformance?.({
+              ...voicePerf,
+              lang: isEnglish ? "en" : "yue",
+              characterId,
+            });
           }
-          for (const seg of segments) {
+          for (const { seg } of pendingStreamSpeakQueue) {
             const chunkPerf = resolveChunkTtsPerformance(seg, {
-              emotion: streamEmotion,
-              nuance: streamNuance,
+              emotion: voicePerf.emotion,
+              nuance: voicePerf.nuance,
+              talkStyle: voicePerf.talkStyle,
+              speechEnergy: voicePerf.speechEnergy,
               characterId,
               lang: isEnglish ? "en" : "yue",
             });
             feedAssistantEcho(seg);
             void voice.pushStreamSpeak?.(seg, {
-              emotion: chunkPerf.emotion || streamEmotion,
-              nuance: chunkPerf.nuance,
-              talkStyle: chunkPerf.talkStyle,
-              speechEnergy: chunkPerf.speechEnergy,
+              emotion: chunkPerf.emotion || voicePerf.emotion,
+              nuance: chunkPerf.nuance || voicePerf.nuance,
+              talkStyle: chunkPerf.talkStyle || voicePerf.talkStyle,
+              speechEnergy: chunkPerf.speechEnergy ?? voicePerf.speechEnergy,
             });
           }
+          pendingStreamSpeakQueue = [];
+        };
+
+        const enqueueStreamSegments = (segments, fullRaw, opts = {}) => {
+          if (!phaseAEnabled || !segments.length) return;
+          for (const seg of segments) {
+            pendingStreamSpeakQueue.push({ seg, fullRaw });
+          }
+          flushPendingStreamSpeak(fullRaw, opts);
         };
 
         try {
@@ -7192,10 +7216,10 @@
                   emotion: stream.emotion || streamEmotion,
                 });
               }
-              enqueueStreamSegments(
-                streamPlanner.feed(stripReplyTags(full)),
-                stripReplyTags(full),
-              );
+              enqueueStreamSegments(streamPlanner.feed(stripReplyTags(full)), full);
+              if (hasCompleteMoodTag(full)) {
+                flushPendingStreamSpeak(full);
+              }
               scrollTranscript();
             },
           });
@@ -7236,7 +7260,11 @@
 
           if (phaseAEnabled) {
             const spokenReply = stripReplyTags(result.raw || reply);
-            enqueueStreamSegments(streamPlanner.flush(spokenReply), spokenReply);
+            const rawReply = result.raw || reply;
+            for (const seg of streamPlanner.flush(spokenReply)) {
+              pendingStreamSpeakQueue.push({ seg, fullRaw: rawReply });
+            }
+            flushPendingStreamSpeak(rawReply, { force: true });
             await voice.finishStreamSpeak?.();
           } else {
             status.speaking();

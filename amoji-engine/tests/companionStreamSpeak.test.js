@@ -1,11 +1,18 @@
 import { describe, expect, it } from "vitest";
 import {
   createStreamSpeakPlanner,
+  hasCompleteMoodTag,
   stripMoodTagForSpeak,
   stripReplyTagsForSpeak,
 } from "../engine/companion/companionStreamSpeak.js";
 
 describe("companionStreamSpeak", () => {
+  it("detects complete mood tags in streamed raw reply", () => {
+    expect(hasCompleteMoodTag("你好呀！[mood:happy]")).toBe(true);
+    expect(hasCompleteMoodTag("你好呀！[mood:hap")).toBe(false);
+    expect(hasCompleteMoodTag("你好呀！")).toBe(false);
+  });
+
   it("strips mood tags for TTS", () => {
     expect(stripMoodTagForSpeak("你好呀！[mood:happy]")).toBe("你好呀！");
     expect(stripMoodTagForSpeak("嗯[mood:thi")).toBe("嗯");
