@@ -13,7 +13,10 @@ import {
   ONLINE_CALM_IDLE_ACTION,
   resolveOnlineMotionClipUrl,
 } from "./companionOnlineMotionClips.mjs";
-import { DEFAULT_MOTION_CROSSFADE_SEC } from "./vrmMotionTransition.js";
+import {
+  DEFAULT_MOTION_CROSSFADE_SEC,
+  resolveMotionCrossfadeSec,
+} from "./vrmMotionTransition.js";
 
 export const COMPANION_VRM_MOTION_PLAYER_SCHEMA =
   "amoji.companionVrmMotionPlayer.v3";
@@ -162,7 +165,7 @@ export function createVrmMotionPlayer(opts) {
     const transitionSec =
       Number(playOpts.transitionSec) > 0
         ? Number(playOpts.transitionSec)
-        : DEFAULT_MOTION_CROSSFADE_SEC;
+        : resolveMotionCrossfadeSec(activeActionId, id);
 
     if (loop && activeActionId === id && clipAction?.isRunning?.()) {
       if (clipAction.paused) clipAction.paused = false;
@@ -251,6 +254,13 @@ export function createVrmMotionPlayer(opts) {
     },
     isCrossfading() {
       return performance.now() < crossfadeUntilMs || retiringActions.length > 0;
+    },
+    getCrossfadeProgress() {
+      if (!crossfadeUntilMs) return 1;
+      const remaining = crossfadeUntilMs - performance.now();
+      const total = DEFAULT_MOTION_CROSSFADE_SEC * 1000 + 40;
+      if (remaining <= 0) return 1;
+      return Math.max(0, Math.min(1, 1 - remaining / total));
     },
     getTransitionStatus() {
       return {

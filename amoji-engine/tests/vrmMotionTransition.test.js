@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import * as THREE from "three";
 import {
+  auditVrmSkeletonDegrees,
   blendVrmBoneRotationsFromSnapshot,
   captureVrmBoneRotations,
   captureVrmBoneRotationsDegrees,
@@ -9,7 +10,9 @@ import {
   libraryOwnsVrmBody,
   planMotionTransition,
   RAD_TO_DEG,
+  resolveMotionCrossfadeSec,
   tickVrmMotionTransition,
+  VRM_HUMANOID_ROTATION_BONES,
 } from "../engine/companion/vrmMotionTransition.js";
 
 function makeBone(x = 0, y = 0, z = 0) {
@@ -77,7 +80,37 @@ describe("vrmMotionTransition", () => {
     expect(RAD_TO_DEG).toBeCloseTo(180 / Math.PI);
   });
 
-  it("plans manual transition only when library is not already playing", () => {
+  it("includes shoulders in humanoid rotation bone list", () => {
+    expect(VRM_HUMANOID_ROTATION_BONES).toContain("leftShoulder");
+    expect(VRM_HUMANOID_ROTATION_BONES).toContain("rightShoulder");
+    expect(VRM_HUMANOID_ROTATION_BONES.length).toBeGreaterThan(50);
+  });
+
+  it("audits skeleton degrees for available bones", () => {
+    const bones = new Map([
+      ["head", makeBone(Math.PI / 4, 0, 0)],
+      ["leftShoulder", makeBone(0, 0, 0.2)],
+    ]);
+    const vrm = {
+      humanoid: {
+        getNormalizedBoneNode: (name) => bones.get(name) || null,
+      },
+    };
+    const audit = auditVrmSkeletonDegrees(vrm);
+    expect(audit.boneCount).toBe(2);
+    expect(audit.rows[0].x).toBeCloseTo(45);
+  });
+
+  it("uses longer crossfade for major motion family switches", () => {
+    expect(resolveMotionCrossfadeSec("relax", "dance")).toBeGreaterThan(
+      DEFAULT_MOTION_CROSSFADE_SEC,
+    );
+    expect(resolveMotionCrossfadeSec("thinking", "wiggle")).toBe(
+      DEFAULT_MOTION_CROSSFADE_SEC,
+    );
+  });
+
+  it("plans manual transition when idle or forceCapture from library", () => {
     const vrm = { humanoid: { getNormalizedBoneNode: () => null } };
     expect(
       planMotionTransition(vrm, { isPlaying: () => false, activeActionId: null }, {
@@ -103,6 +136,12 @@ describe("vrmMotionTransition", () => {
         { nextActionId: "wiggle" },
       ),
     ).toBeNull();
+    const exit = planMotionTransition(
+      vrm2,
+      { isPlaying: () => true, activeActionId: "wave" },
+      { nextActionId: "eat", forceCapture: true },
+    );
+    expect(exit?.from.size).toBe(1);
   });
 
   it("libraryOwnsVrmBody covers pending and crossfade", () => {

@@ -62,9 +62,11 @@ import {
 } from "./companionTalkMotionLibrary.mjs";
 import { createVrmMotionPlayer } from "./companionVrmMotionPlayer.js";
 import {
+  auditVrmSkeletonDegrees,
   DEFAULT_MOTION_CROSSFADE_SEC,
   libraryOwnsVrmBody,
   planMotionTransition,
+  resolveMotionCrossfadeSec,
   tickVrmMotionTransition,
 } from "./vrmMotionTransition.js";
 import { companionGestureStyle } from "./companionPoseLibrary.js";
@@ -812,17 +814,21 @@ export async function createVrmAvatar(opts) {
     const gen = ++vrmaPlayGen;
     vrmaPending = true;
     vrmaAction = key;
+    const crossfadeSec = resolveMotionCrossfadeSec(
+      motionPlayer.activeActionId,
+      key,
+    );
     if (!opts.skipTransitionPlan) {
       motionTransitionState =
         planMotionTransition(vrm, motionPlayer, {
           nextActionId: key,
-          durationSec: DEFAULT_MOTION_CROSSFADE_SEC,
+          durationSec: crossfadeSec,
           label: key,
         }) ?? null;
     }
     const ok = await motionPlayer.play(key, {
       loop,
-      transitionSec: DEFAULT_MOTION_CROSSFADE_SEC,
+      transitionSec: crossfadeSec,
     });
     if (gen !== vrmaPlayGen) return true;
     vrmaPending = false;
@@ -872,9 +878,15 @@ export async function createVrmAvatar(opts) {
       vrmaPending = false;
       vrmaSequenceQueue = [];
       vrmaSequenceOpts = null;
+      motionTransitionState =
+        planMotionTransition(vrm, motionPlayer, {
+          nextActionId: key,
+          durationSec: DEFAULT_MOTION_CROSSFADE_SEC,
+          forceCapture: Boolean(motionPlayer.isPlaying?.()),
+          label: `procedural-${key}`,
+        }) ?? null;
       motionPlayer.stop(DEFAULT_MOTION_CROSSFADE_SEC);
       vrmaAction = null;
-      motionTransitionState = null;
       const ok = bodyMotion.playAction(action, {
         emotion: opts.emotion || emotion,
         loop: opts.loop,
@@ -1262,10 +1274,12 @@ export async function createVrmAvatar(opts) {
       }
       stabilizeVrmSpringBones(vrm);
       vrm.update(dt);
-      // Fingers last — after spring sim, and only when VRMA is not driving the skeleton.
-      if (!libraryMotion) {
+      // Fingers last — blend through VRMA crossfades to avoid pops at clip edges.
+      const crossfading = Boolean(motionPlayer.isCrossfading?.());
+      if (!libraryMotion || crossfading) {
         bodyMotion.applyHandRestOnly?.({
-          talkBlend: talking ? 0.7 : eating ? 0.12 : 0,
+          talkBlend: crossfading ? 0.22 : talking ? 0.7 : eating ? 0.12 : 0,
+          blendWeight: crossfading ? 0.55 : 1,
           now,
         });
       }
@@ -1553,6 +1567,9 @@ export async function createVrmAvatar(opts) {
         1,
         motionTransitionState.elapsedSec / motionTransitionState.durationSec,
       );
+    },
+    getSkeletonAudit() {
+      return auditVrmSkeletonDegrees(vrm);
     },
     getMotionPlayerStatus() {
       const base = motionPlayer.getTransitionStatus?.() || {

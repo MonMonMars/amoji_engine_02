@@ -8,7 +8,7 @@ describe("companionVrmMotionPlayer", () => {
     expect(COMPANION_VRM_MOTION_PLAYER_SCHEMA).toBe(
       "amoji.companionVrmMotionPlayer.v3",
     );
-    expect(DEFAULT_MOTION_CROSSFADE_SEC).toBeCloseTo(0.48);
+    expect(DEFAULT_MOTION_CROSSFADE_SEC).toBeCloseTo(0.52);
     expect(ONLINE_CALM_IDLE_ACTION).toBe("relax");
   });
 });
