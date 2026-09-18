@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
+  canStartStreamSpeakEarly,
   createStreamSpeakPlanner,
   hasCompleteMoodTag,
+  shouldFlushStreamSpeak,
   stripMoodTagForSpeak,
   stripReplyTagsForSpeak,
 } from "../engine/companion/companionStreamSpeak.js";
@@ -11,6 +13,13 @@ describe("companionStreamSpeak", () => {
     expect(hasCompleteMoodTag("你好呀！[mood:happy]")).toBe(true);
     expect(hasCompleteMoodTag("你好呀！[mood:hap")).toBe(false);
     expect(hasCompleteMoodTag("你好呀！")).toBe(false);
+  });
+
+  it("allows early stream speak after first sentence without mood tag", () => {
+    expect(canStartStreamSpeakEarly("你好呀！")).toBe(true);
+    expect(canStartStreamSpeakEarly("你好")).toBe(false);
+    expect(shouldFlushStreamSpeak("你好呀！我係 Amoji")).toBe(true);
+    expect(shouldFlushStreamSpeak("你好呀！[mood:happy]")).toBe(true);
   });
 
   it("strips mood tags for TTS", () => {

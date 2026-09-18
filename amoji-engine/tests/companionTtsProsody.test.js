@@ -2,12 +2,14 @@ import { describe, expect, it } from "vitest";
 import {
   buildCloudTtsRequestBody,
   buildTtsInstruct,
+  countSpeakSentences,
   enrichTtsPerformance,
   inferSpeechEmotionFromText,
   instructSpeakingSpeed,
   normalizeTtsPerformance,
   resolveChunkTtsPerformance,
   resolveCompanionTtsProsody,
+  resolveTtsDeliveryMode,
   resolveVoicePerformanceFromReply,
   voicePerformanceFromAnalysis,
 } from "../engine/companion/companionTtsProsody.js";
@@ -31,8 +33,8 @@ describe("companionTtsProsody", () => {
     const neutralRate = Number(neutral.edge.rate.replace(/[^0-9-]/g, ""));
     const happyRate = Number(happy.edge.rate.replace(/[^0-9-]/g, ""));
     expect(happyRate).toBeGreaterThan(neutralRate);
-    expect(happyRate).toBeGreaterThan(20);
-    expect(happyRate).toBeLessThan(55);
+    expect(happyRate).toBeGreaterThan(24);
+    expect(happyRate).toBeLessThan(65);
     expect(happy.browser.pitch).toBeGreaterThan(neutral.browser.pitch);
     expect(happy.browser.rate).toBeGreaterThan(neutral.browser.rate);
   });
@@ -179,6 +181,18 @@ describe("companionTtsProsody", () => {
     expect(perf.expressiveClauses).toBe(true);
   });
 
+  it("auto-enables expressive clauses for multi-sentence replies", () => {
+    expect(countSpeakSentences("你好呀！今日天氣好好。")).toBe(2);
+    const delivery = resolveTtsDeliveryMode("你好呀！今日天氣好好。", {
+      emotion: "happy",
+    });
+    expect(delivery.singleUtterance).toBe(false);
+    expect(delivery.expressiveClauses).toBe(true);
+    const short = resolveTtsDeliveryMode("你好呀！", { emotion: "happy" });
+    expect(short.singleUtterance).toBe(true);
+    expect(short.expressiveClauses).toBe(false);
+  });
+
   it("maps [mood] tags from LLM reply to voice performance", () => {
     const happy = resolveVoicePerformanceFromReply(
       "哇好開心呀！ [mood:happy]",
@@ -226,5 +240,30 @@ describe("companionTtsProsody", () => {
     expect(perf.expressiveClauses).toBe(false);
     expect(perf.singleUtterance).toBe(true);
     expect(perf.lang).toBe("yue");
+  });
+
+  it("applies inline prosody markers to cloud prosody", () => {
+    const marked = resolveCompanionTtsProsody({
+      emotion: "neutral",
+      text: "[bright]哇！真係好開心呀！",
+      speedMultiplier: 1,
+    });
+    const plain = resolveCompanionTtsProsody({
+      emotion: "neutral",
+      text: "哇！真係好開心呀！",
+      speedMultiplier: 1,
+    });
+    expect(marked.browser.pitch).toBeGreaterThan(plain.browser.pitch);
+    expect(marked.speechEnergy).toBeGreaterThan(plain.speechEnergy);
+  });
+
+  it("enables expressive delivery on multi-sentence LLM replies", () => {
+    const perf = resolveVoicePerformanceFromReply(
+      "哈囉！我喺度呀。有咩想傾？ [mood:happy]",
+      { isEnglish: false, characterId: "kizuna" },
+    );
+    expect(perf.expressiveClauses).toBe(true);
+    expect(perf.singleUtterance).toBe(false);
+    expect(perf.speechEnergy).toBeGreaterThan(0.6);
   });
 });

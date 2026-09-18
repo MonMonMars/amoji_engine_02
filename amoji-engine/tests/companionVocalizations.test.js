@@ -101,7 +101,7 @@ describe("companionVocalizations", () => {
       { isEnglish: true },
     );
     expect(applied.merged).toBe(true);
-    expect(applied.text).toMatch(/^Um|^Uh|^Hmm|^Mmm|^Heh/i);
+    expect(applied.text).toMatch(/^(Um|Uh|Hmm|Mmm|Heh|Mhm|Hmm|呣|嗯)/i);
     expect(applied.text).toContain("I am thinking");
     expect(applied.performance.vocalPrefix).toBeTruthy();
     expect(applied.performance.skipVocalization).toBe(true);

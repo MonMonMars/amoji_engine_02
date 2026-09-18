@@ -256,8 +256,21 @@ function emotionVocalWeights(emotion, nuance, talkStyle, text) {
     w.laugh = (w.laugh || 0) + 1.5;
   }
   if (e === "neutral") {
-    w.smile = 2;
-    w.um = 2;
+    w.smile = 2.5;
+    w.um = 2.5;
+    w.giggle = 1.5;
+  }
+  if (n === "stress") {
+    w.sigh = (w.sigh || 0) + 2;
+    w.um = (w.um || 0) + 1.5;
+  }
+  if (/鍾意|love|miss|掛住|想你/.test(raw)) {
+    w.aww = (w.aww || 0) + 3;
+    w.coy = (w.coy || 0) + 2;
+  }
+  if (/對唔住|sorry|唔好意思/.test(raw)) {
+    w.sigh = (w.sigh || 0) + 2;
+    w.um = (w.um || 0) + 1.5;
   }
 
   return w;
@@ -273,7 +286,8 @@ function emotionVocalWeights(emotion, nuance, talkStyle, text) {
 export function pickPreSentenceVocalization(performance = {}, text, opts = {}) {
   if (performance.skipVocalization) return null;
   const raw = String(text || "").trim();
-  if (!raw || raw.length < 2) return null;
+  if (!raw) return null;
+  if (raw.length < 2 && !/[?？!！]/.test(raw)) return null;
   if (textAlreadyHasLeadingVocal(raw)) return null;
   if (isVocalizationText(raw)) return null;
   if (isNaturalFillerPhrase(raw)) return null;

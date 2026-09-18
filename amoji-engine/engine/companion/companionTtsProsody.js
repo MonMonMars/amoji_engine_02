@@ -5,12 +5,17 @@
  * Face mood can stay calm on everyday lines. Spoken TTS still performs like
  * ChatGPT Advanced Voice: pitch variation, pace changes, never a GPS narrator.
  */
-import { analyzeSpeechChunk, inferContentNuance } from "./companionContentMotion.js";
+import {
+  analyzeSpeechChunk,
+  inferContentNuance,
+  inferSpeechEnergy,
+} from "./companionContentMotion.js";
 import { resolveTurnPerformance } from "./companionActionResolve.js";
 import { characterProsodyBias } from "./companionCharacterCatalog.js";
 import { voiceProfileProsodyBias } from "./companionVoiceProfiles.js";
 import { inferExpressionFromText } from "../face/emotionExpression.js";
 import { vocalizationInstructHint } from "./companionVocalizations.js";
+import { parseProsodyMarkers } from "../voice/prosodyMarkers.js";
 import {
   applyTalkSpeedMultiplier,
   normalizeTalkSpeed,
@@ -18,12 +23,16 @@ import {
   slowEdgeRatePercent,
 } from "./companionTalkSpeed.js";
 
-export const COMPANION_TTS_PROSODY_SCHEMA = "amoji.companionTtsProsody.v3";
+export const COMPANION_TTS_PROSODY_SCHEMA = "amoji.companionTtsProsody.v4";
 
-/** One natural utterance per line — avoids rushed clause stitching. */
+/**
+ * Default delivery — short lines stay one clip; multi-sentence replies auto-split
+ * into expressive clauses via resolveTtsDeliveryMode().
+ */
 export const CHATGPT_STYLE_TTS = Object.freeze({
   singleUtterance: true,
   expressiveClauses: false,
+  autoExpressiveClauses: true,
 });
 
 /** Must match client chunkTextForCloudTts — server rejects/truncates above this. */
@@ -33,12 +42,12 @@ export const MAX_CLOUD_TTS_CHARS = 480;
 /** @typedef {{ rate: number, pitch: number, volume: number }} BrowserProsody */
 
 const EMOTION_EDGE_BASE = Object.freeze({
-  neutral: { rate: 4, pitch: 22, volume: 6 },
-  happy: { rate: 16, pitch: 42, volume: 16 },
-  thinking: { rate: -12, pitch: 6, volume: -2 },
-  sad: { rate: -18, pitch: -12, volume: -6 },
-  surprised: { rate: 18, pitch: 46, volume: 14 },
-  angry: { rate: 8, pitch: -2, volume: 10 },
+  neutral: { rate: 6, pitch: 28, volume: 8 },
+  happy: { rate: 22, pitch: 50, volume: 20 },
+  thinking: { rate: -14, pitch: 10, volume: -2 },
+  sad: { rate: -22, pitch: -16, volume: -8 },
+  surprised: { rate: 24, pitch: 54, volume: 18 },
+  angry: { rate: 12, pitch: 2, volume: 14 },
 });
 
 const NUANCE_EDGE_DELTA = Object.freeze({
@@ -64,12 +73,12 @@ const STYLE_EDGE_DELTA = Object.freeze({
 });
 
 const EMOTION_BROWSER_BASE = Object.freeze({
-  neutral: { rate: 1, pitch: 1.12, volume: 1 },
-  happy: { rate: 1.05, pitch: 1.22, volume: 1 },
-  thinking: { rate: 0.94, pitch: 1.04, volume: 0.96 },
-  sad: { rate: 0.9, pitch: 0.94, volume: 0.92 },
-  surprised: { rate: 1.06, pitch: 1.24, volume: 1 },
-  angry: { rate: 1.02, pitch: 0.98, volume: 1 },
+  neutral: { rate: 1, pitch: 1.14, volume: 1 },
+  happy: { rate: 1.08, pitch: 1.28, volume: 1 },
+  thinking: { rate: 0.92, pitch: 1.06, volume: 0.96 },
+  sad: { rate: 0.88, pitch: 0.92, volume: 0.9 },
+  surprised: { rate: 1.1, pitch: 1.32, volume: 1 },
+  angry: { rate: 1.04, pitch: 1, volume: 1 },
 });
 
 /**
@@ -144,10 +153,56 @@ export function inferSpeechEmotionFromText(text, fallback = "neutral") {
   if (/哈哈|呵呵|嘻嘻|yay|wow/i.test(raw)) return "happy";
   if (/[!！]/.test(raw)) return "happy";
   if (/哇|嘩/.test(raw)) return "surprised";
-  if (/thank|thanks|glad|love you|好開心|鍾意你/i.test(raw)) return "happy";
+  if (/thank|thanks|glad|love you|好開心|鍾意你|開心|興奮|excited|yay/i.test(raw)) {
+    return "happy";
+  }
   if (/^(嗨|哈囉|早晨)([呀啊！!]|$)/.test(raw)) return "happy";
   if (/^(hi|hey|hello)\b/i.test(raw) && /[!！]/.test(raw)) return "happy";
+  if (/唔開心|傷心|sad|sorry|對唔住|miss you|掛住/i.test(raw)) return "sad";
+  if (/唔知|諗諗|hmm|let me think|等我諗/i.test(raw)) return "thinking";
+  if (/真係|really|seriously|唔係呀|what/i.test(raw) && /[?？!！]/.test(raw)) {
+    return "surprised";
+  }
   return fallback;
+}
+
+/**
+ * Count speakable sentences for auto clause-level TTS.
+ * @param {string | null | undefined} text
+ */
+export function countSpeakSentences(text) {
+  const clean = String(text || "")
+    .trim()
+    .replace(/\[\s*(pause|fast|slow|soft|bright|rate)(?:\s*[:=]\s*[0-9.]*)?\s*\]/gi, "");
+  if (!clean) return 0;
+  const parts = clean
+    .split(/(?<=[。！？!?；;\n])\s*/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+  return parts.length || 1;
+}
+
+/**
+ * Auto-enable per-clause expressive TTS for multi-sentence replies.
+ * @param {string | null | undefined} text
+ * @param {ReturnType<typeof normalizeTtsPerformance>} [perf]
+ */
+export function resolveTtsDeliveryMode(text, perf = {}) {
+  const normalized = normalizeTtsPerformance(perf);
+  if (normalized.singleUtterance === false && normalized.expressiveClauses) {
+    return normalized;
+  }
+  if (perf.autoExpressiveClauses === false) {
+    return normalized;
+  }
+  const raw = String(text || perf.text || "").trim();
+  const sentenceCount = countSpeakSentences(raw);
+  const useExpressive = sentenceCount >= 2 && raw.length >= 10;
+  return {
+    ...normalized,
+    singleUtterance: !useExpressive,
+    expressiveClauses: useExpressive,
+  };
 }
 
 /**
@@ -160,15 +215,15 @@ export function instructSpeakingSpeed(opts = {}) {
   const speedMultiplier = normalizeTalkSpeed(opts.speedMultiplier);
   let speed =
     emotion === "happy" || emotion === "surprised"
-      ? 1.04
+      ? 1.06
       : emotion === "sad"
-        ? 0.92
+        ? 0.9
         : emotion === "thinking"
-          ? 0.95
+          ? 0.94
           : emotion === "angry"
-            ? 1.03
-            : 1;
-  speed += (energy - 0.55) * 0.1;
+            ? 1.05
+            : 1.02;
+  speed += (energy - 0.55) * 0.14;
   speed = applyTalkSpeedMultiplier(speed, speedMultiplier);
   return Number(Math.max(0.45, Math.min(1.08, speed)).toFixed(2));
 }
@@ -203,16 +258,16 @@ export function buildTtsInstruct(opts = {}) {
 
   const affect =
     emotion === "happy"
-      ? "A close friend on a video call who is genuinely delighted. Smile in the voice. Bright vowels, lifted pitch."
+      ? "A close friend on a video call who is genuinely delighted — audible smile, bright vowels, playful lift on exclamations."
       : emotion === "sad"
-        ? "A close friend comforting you. Soft, warm, empathetic — still human, never flat."
+        ? "A close friend comforting you. Soft, warm, empathetic — voice trembles slightly on caring words, never flat."
         : emotion === "thinking"
-          ? "A close friend thinking out loud. Curious, unhurried, with pitch that still moves."
+          ? "A close friend thinking out loud. Curious hums, breath before ideas, pitch that rises when a thought lands."
           : emotion === "surprised"
-            ? "A close friend gasping with delight. Animated lift on key words."
+            ? "A close friend gasping with delight — quick pitch jump, almost breathless, then warm recovery."
             : emotion === "angry"
-              ? "A close friend who is firm and intense, still human, not shouting."
-              : "ChatGPT Advanced Voice: a warm close friend on a video call. Emotionally present even on a simple line.";
+              ? "A close friend who is firm and intense — sharper consonants, controlled heat, never shouting."
+              : "ChatGPT Advanced Voice: a warm close friend on a video call. Emotionally alive on every syllable — never GPS, never newsreader.";
 
   const toneBits = [];
   if (nuance === "excited") toneBits.push("enthusiastic", "smiling");
@@ -368,22 +423,24 @@ export function enrichTtsPerformance(performance, text = "") {
     0,
     Math.min(
       1,
-      perf.speechEnergy ??
-        (emotion === "happy" || emotion === "surprised"
-          ? 0.62
-          : emotion === "thinking"
-            ? 0.48
-            : emotion === "sad"
-              ? 0.44
-              : 0.55),
+      perf.speechEnergy ?? inferSpeechEnergy(line, emotion, nuance),
     ),
   );
+  const delivery = resolveTtsDeliveryMode(line || perf.text, {
+    ...perf,
+    emotion,
+    nuance,
+    talkStyle,
+    speechEnergy,
+  });
   return {
     ...perf,
     emotion,
     nuance,
     talkStyle,
     speechEnergy,
+    singleUtterance: delivery.singleUtterance,
+    expressiveClauses: delivery.expressiveClauses,
     text: line || perf.text,
     vocalPrefix: perf.vocalPrefix,
     vocalization: perf.vocalization,
@@ -400,17 +457,26 @@ export function resolveCompanionTtsProsody(opts = {}) {
   );
   const emotion = enriched.emotion;
   const nuance = enriched.nuance;
-  const text = String(opts.text || enriched.text || "");
+  const rawText = String(opts.text || enriched.text || "");
+  const parsedMarkers = parseProsodyMarkers(rawText);
+  const text = parsedMarkers.text || rawText;
+  const markerOverrides = parsedMarkers.overrides || {};
   const talkStyle = inferTalkStyleFromEmotion(
     emotion,
     nuance,
     text,
     String(enriched.talkStyle || opts.talkStyle || "explain").toLowerCase(),
   );
-  const speechEnergy = Math.max(
+  let speechEnergy = Math.max(
     0,
     Math.min(1, enriched.speechEnergy ?? (emotion === "happy" ? 0.78 : 0.68)),
   );
+  if (markerOverrides.energyMul && markerOverrides.energyMul !== 1) {
+    speechEnergy = Math.max(
+      0.15,
+      Math.min(1.2, speechEnergy * markerOverrides.energyMul),
+    );
+  }
 
   const base =
     EMOTION_EDGE_BASE[emotion] || EMOTION_EDGE_BASE.neutral;
@@ -432,6 +498,9 @@ export function resolveCompanionTtsProsody(opts = {}) {
     energyRate +
     (characterBias.rate || 0) +
     (voiceBias.rate || 0);
+  if (markerOverrides.speedMul && markerOverrides.speedMul !== 1) {
+    edgeRate = Math.round(edgeRate * markerOverrides.speedMul);
+  }
   edgeRate = slowEdgeRatePercent(edgeRate, speedMultiplier);
   const edgePitch =
     base.pitch +
@@ -470,7 +539,8 @@ export function resolveCompanionTtsProsody(opts = {}) {
       1.85,
       browserBase.pitch +
         (edgePitch / 40) * 0.22 +
-        (speechEnergy - 0.5) * 0.1,
+        (speechEnergy - 0.5) * 0.1 +
+        (markerOverrides.pitchAdd || 0),
     ),
   );
   const browserVolume = Math.max(
@@ -551,8 +621,7 @@ export function resolveVoicePerformanceFromReply(rawReply, opts = {}) {
       speechEnergy: turn.speechEnergy ?? 0.68,
       lang,
       characterId: opts.characterId,
-      singleUtterance: true,
-      expressiveClauses: false,
+      ...CHATGPT_STYLE_TTS,
     },
     turn.reply,
   );
@@ -574,8 +643,7 @@ export function voicePerformanceFromAnalysis(analysis, opts = {}) {
       speechEnergy: analysis?.speechEnergy ?? 0.68,
       lang,
       characterId: opts.characterId,
-      singleUtterance: true,
-      expressiveClauses: false,
+      ...CHATGPT_STYLE_TTS,
     },
     "",
   );
@@ -646,6 +714,7 @@ export function normalizeTtsPerformance(performance, fallbackEmotion = "neutral"
     singleUtterance: perf.singleUtterance !== false,
     expressiveClauses:
       perf.singleUtterance === false && perf.expressiveClauses === true,
+    autoExpressiveClauses: perf.autoExpressiveClauses !== false,
   };
 }
 

@@ -23,6 +23,27 @@ export function hasCompleteMoodTag(text) {
 }
 
 /**
+ * Start stream TTS after the first complete sentence even before [mood:…] arrives.
+ * Uses text-inferred emotion until the mood tag lands.
+ * @param {string | null | undefined} text
+ */
+export function canStartStreamSpeakEarly(text) {
+  const stripped = stripReplyTagsForSpeak(text);
+  if (stripped.length < 4) return false;
+  return /[。！？!?]/.test(stripped);
+}
+
+/**
+ * @param {string | null | undefined} fullRaw
+ * @param {{ force?: boolean }} [opts]
+ */
+export function shouldFlushStreamSpeak(fullRaw, opts = {}) {
+  if (opts.force) return true;
+  if (hasCompleteMoodTag(fullRaw)) return true;
+  return canStartStreamSpeakEarly(fullRaw);
+}
+
+/**
  * @param {string | null | undefined} text
  */
 export function stripMoodTagForSpeak(text) {
