@@ -553,6 +553,22 @@ export function createCompanionTreatDock(opts = {}) {
 
   const setOpen = (next) => {
     const wantOpen = Boolean(next);
+    if (!wantOpen && !open) {
+      const stuckOpen =
+        sheet.classList.contains("is-open") ||
+        backdrop.classList.contains("is-open");
+      if (stuckOpen) {
+        closeUiOverlay(doc, {
+          panel: sheet,
+          backdrop,
+          bodyClass: "companion-treat-open",
+          panelOpenClass: "is-open",
+          backdropOpenClass: "is-open",
+          hidePanelOnClose: false,
+        });
+      }
+      return;
+    }
     if (wantOpen === open) return;
     open = wantOpen;
     fab.setAttribute("aria-expanded", open ? "true" : "false");

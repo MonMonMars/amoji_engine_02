@@ -122,8 +122,7 @@ const EMOTION_EXPRESSIONS = {
   neutral: {},
   happy: { [VRMExpressionPresetName.Happy]: 0.98 },
   thinking: {
-    [VRMExpressionPresetName.Relaxed]: 0.28,
-    [VRMExpressionPresetName.Surprised]: 0.12,
+    [VRMExpressionPresetName.Relaxed]: 0.32,
   },
   sad: { [VRMExpressionPresetName.Sad]: 0.92 },
   surprised: {
@@ -1083,7 +1082,12 @@ export async function createVrmAvatar(opts) {
 
   const applyTalkMouthNow = (now = performance.now()) => {
     softenTalkMouthOverrides(expr, talking || eating);
-    const open = talkingMouthOpen(talking, mouthOpen, now, eating);
+    let open = talkingMouthOpen(talking, mouthOpen, now, eating);
+    if (!talking && !eating) {
+      open = 0;
+      if (mouthOpen < MOUTH_CLOSE_EPS) mouthOpen = 0;
+      if (mouthTarget < MOUTH_CLOSE_EPS) mouthTarget = 0;
+    }
     const { shape } = applyMouth(open, now);
     expr?.update?.();
     // Visemes + jaw last so Happy/Surprised cannot freeze the mouth.
