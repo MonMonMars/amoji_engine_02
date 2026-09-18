@@ -640,12 +640,12 @@ export function createCompanionStartPicker(opts = {}) {
       roster: filtered,
       rosterStrip: true,
       isEnglish,
-      eagerPreview: true,
+      eagerPreview: false,
       disabled: starting || !pickable,
       onCardTapFx: opts.onCardTapFx,
       onCardClick: applySelection,
     });
-    shell.classList.toggle("is-preloading", preloadPct < 100 && !starting);
+    shell.classList.toggle("is-preloading", false);
     updatePickerHero(shell, findPickerItem(fullList(), selectedId), isEnglish);
     requestAnimationFrame(renderScrollHint);
   };
