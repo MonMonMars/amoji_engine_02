@@ -177,113 +177,6 @@ async function main() {
   );
   await page.waitForTimeout(2500);
 
-  const treatUi = await page.evaluate(() => {
-    const dock = document.getElementById("treat-dock");
-    const fab = document.getElementById("treat-fab");
-    window.__amojiTreats?.setOpen?.(true);
-    const sheet = document.getElementById("treat-sheet");
-    const bagCard = sheet?.querySelector(".treat-card--bag[data-treat-id='cake']");
-    const shopTab = sheet?.querySelector("[data-treat-tab='shop']");
-    shopTab?.click();
-    const shopCards = [...(sheet?.querySelectorAll(".treat-card--shop") || [])].map(
-      (el) => el.getAttribute("data-treat-id"),
-    );
-    window.__amojiTreats?.setOpen?.(false);
-    return {
-      dock: Boolean(dock),
-      fab: Boolean(fab),
-      coins: (document.getElementById("treat-coins")?.textContent || "").includes("🪙"),
-      shop: shopCards.includes("cake") && shopCards.includes("milk-tea"),
-      cakeInBag: Boolean(bagCard),
-      feed: typeof window.__amojiTreats?.feed === "function",
-    };
-  });
-  record(
-    "treat-shop-bag",
-    treatUi.dock && treatUi.fab && treatUi.coins && treatUi.shop && treatUi.cakeInBag && treatUi.feed,
-    JSON.stringify(treatUi),
-  );
-
-  const fed = await page.evaluate(() => {
-    const ok = window.__amojiTreats?.feed?.("cake", 200, 280);
-    return {
-      ok,
-      action: String(window.__amojiAvatar?.currentAction || ""),
-      eating: Boolean(window.__amojiAvatar?.eating),
-    };
-  });
-  record(
-    "treat-feed-eat-action",
-    fed.ok && (fed.action === "eat" || fed.eating),
-    JSON.stringify(fed),
-  );
-
-  const petLoop = await page.evaluate(() => {
-    const hud = document.getElementById("pet-hud");
-    const hungerFill = document.getElementById("pet-hunger-fill");
-    const heartsFill = document.getElementById("pet-hearts-fill");
-    const beforeCoins = Number(window.__amojiTreats?.state?.coins || 0);
-    window.__amojiTreats?.applyChat?.();
-    const afterChat = Number(window.__amojiTreats?.state?.coins || 0);
-    window.__amojiTreats?.buy?.("cookie");
-    window.__amojiTreats?.setNeeds?.({ hunger: 96, hearts: 70 });
-    const refused = window.__amojiTreats?.feed?.("cookie", 200, 280);
-    const outcome = window.__amojiTreats?.lastOutcome || {};
-    const sheet = document.getElementById("treat-sheet");
-    return {
-      hud: Boolean(hud),
-      hungerBar: Boolean(hungerFill),
-      heartsBar: Boolean(heartsFill),
-      wallet: Boolean(document.getElementById("pet-wallet")),
-      kitchen:
-        (document.getElementById("treat-fab")?.textContent || "").includes("廚房") ||
-        (document.getElementById("treat-fab")?.textContent || "").toLowerCase().includes("kitchen"),
-      pips: document.querySelectorAll("#pet-hunger-pips .pet-pip").length,
-      fridgeTab: Boolean(sheet?.querySelector("[data-treat-tab='bag']")),
-      shopStats: Boolean(sheet?.querySelector(".treat-card-stats")),
-      chatEarn: afterChat === beforeCoins + 3,
-      refused: refused === false && outcome.reason === "full",
-      cookieKept: (window.__amojiTreats?.state?.bag?.cookie || 0) >= 1,
-      action: String(window.__amojiAvatar?.currentAction || ""),
-    };
-  });
-  record(
-    "pet-hud-meters",
-    petLoop.hud && petLoop.hungerBar && petLoop.heartsBar,
-    JSON.stringify(petLoop),
-  );
-  record(
-    "pet-pou-ui",
-    petLoop.wallet && petLoop.kitchen && petLoop.pips === 5 && petLoop.fridgeTab && petLoop.shopStats,
-    JSON.stringify({
-      wallet: petLoop.wallet,
-      kitchen: petLoop.kitchen,
-      pips: petLoop.pips,
-      fridgeTab: petLoop.fridgeTab,
-      shopStats: petLoop.shopStats,
-    }),
-  );
-  record(
-    "pet-chat-earn",
-    petLoop.chatEarn,
-    JSON.stringify({ chatEarn: petLoop.chatEarn }),
-  );
-  record(
-    "pet-refuse-full",
-    petLoop.refused && petLoop.cookieKept,
-    JSON.stringify(petLoop),
-  );
-
-  await page.evaluate(async () => {
-    window.__amojiTreats?.setOpen?.(false);
-    await new Promise((r) => setTimeout(r, 4200));
-    window.__amojiAvatar?.setEating?.(false);
-    window.__amojiAvatar?.setTalking?.(false);
-    window.__amojiAvatar?.stopAction?.();
-    window.__amojiAvatar?.setEmotion?.("neutral");
-    await new Promise((r) => setTimeout(r, 600));
-  });
-
   await page
     .waitForFunction(
       () => {
@@ -293,7 +186,6 @@ async function main() {
       { timeout: 12000 },
     )
     .catch(() => null);
-  await page.waitForTimeout(1500);
 
   const afterNova = await page.evaluate(() => {
     const vrm = window.__amojiAvatar?.vrm;
@@ -457,6 +349,103 @@ async function main() {
   } else {
     record("camera-orbit-drag", false, "no orbit-hit box");
   }
+
+  const treatUi = await page.evaluate(() => {
+    const dock = document.getElementById("treat-dock");
+    const fab = document.getElementById("treat-fab");
+    window.__amojiTreats?.setOpen?.(true);
+    const sheet = document.getElementById("treat-sheet");
+    const bagCard = sheet?.querySelector(".treat-card--bag[data-treat-id='cake']");
+    const shopTab = sheet?.querySelector("[data-treat-tab='shop']");
+    shopTab?.click();
+    const shopCards = [...(sheet?.querySelectorAll(".treat-card--shop") || [])].map(
+      (el) => el.getAttribute("data-treat-id"),
+    );
+    window.__amojiTreats?.setOpen?.(false);
+    return {
+      dock: Boolean(dock),
+      fab: Boolean(fab),
+      coins: (document.getElementById("treat-coins")?.textContent || "").includes("🪙"),
+      shop: shopCards.includes("cake") && shopCards.includes("milk-tea"),
+      cakeInBag: Boolean(bagCard),
+      feed: typeof window.__amojiTreats?.feed === "function",
+    };
+  });
+  record(
+    "treat-shop-bag",
+    treatUi.dock && treatUi.fab && treatUi.coins && treatUi.shop && treatUi.cakeInBag && treatUi.feed,
+    JSON.stringify(treatUi),
+  );
+
+  const fed = await page.evaluate(() => {
+    const ok = window.__amojiTreats?.feed?.("cake", 200, 280);
+    return {
+      ok,
+      action: String(window.__amojiAvatar?.currentAction || ""),
+      eating: Boolean(window.__amojiAvatar?.eating),
+    };
+  });
+  record(
+    "treat-feed-eat-action",
+    fed.ok && (fed.action === "eat" || fed.eating),
+    JSON.stringify(fed),
+  );
+
+  const petLoop = await page.evaluate(() => {
+    const hud = document.getElementById("pet-hud");
+    const hungerFill = document.getElementById("pet-hunger-fill");
+    const heartsFill = document.getElementById("pet-hearts-fill");
+    const beforeCoins = Number(window.__amojiTreats?.state?.coins || 0);
+    window.__amojiTreats?.applyChat?.();
+    const afterChat = Number(window.__amojiTreats?.state?.coins || 0);
+    window.__amojiTreats?.buy?.("cookie");
+    window.__amojiTreats?.setNeeds?.({ hunger: 96, hearts: 70 });
+    const refused = window.__amojiTreats?.feed?.("cookie", 200, 280);
+    const outcome = window.__amojiTreats?.lastOutcome || {};
+    const sheet = document.getElementById("treat-sheet");
+    return {
+      hud: Boolean(hud),
+      hungerBar: Boolean(hungerFill),
+      heartsBar: Boolean(heartsFill),
+      wallet: Boolean(document.getElementById("pet-wallet")),
+      kitchen:
+        (document.getElementById("treat-fab")?.textContent || "").includes("廚房") ||
+        (document.getElementById("treat-fab")?.textContent || "").toLowerCase().includes("kitchen"),
+      pips: document.querySelectorAll("#pet-hunger-pips .pet-pip").length,
+      fridgeTab: Boolean(sheet?.querySelector("[data-treat-tab='bag']")),
+      shopStats: Boolean(sheet?.querySelector(".treat-card-stats")),
+      chatEarn: afterChat === beforeCoins + 3,
+      refused: refused === false && outcome.reason === "full",
+      cookieKept: (window.__amojiTreats?.state?.bag?.cookie || 0) >= 1,
+      action: String(window.__amojiAvatar?.currentAction || ""),
+    };
+  });
+  record(
+    "pet-hud-meters",
+    petLoop.hud && petLoop.hungerBar && petLoop.heartsBar,
+    JSON.stringify(petLoop),
+  );
+  record(
+    "pet-pou-ui",
+    petLoop.wallet && petLoop.kitchen && petLoop.pips === 5 && petLoop.fridgeTab && petLoop.shopStats,
+    JSON.stringify({
+      wallet: petLoop.wallet,
+      kitchen: petLoop.kitchen,
+      pips: petLoop.pips,
+      fridgeTab: petLoop.fridgeTab,
+      shopStats: petLoop.shopStats,
+    }),
+  );
+  record(
+    "pet-chat-earn",
+    petLoop.chatEarn,
+    JSON.stringify({ chatEarn: petLoop.chatEarn }),
+  );
+  record(
+    "pet-refuse-full",
+    petLoop.refused && petLoop.cookieKept,
+    JSON.stringify(petLoop),
+  );
 
   await page.evaluate(() => {
     window.__amojiTreats?.setOpen?.(false);
