@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   companionMicButtonInnerHtml,
+  createCompanionMicButton,
   MIC_BUTTON_CHATGPT_LIVE,
   resolveMicButtonTheme,
   resolveMicButtonThemeForState,
@@ -44,6 +45,19 @@ describe("companionMicButton", () => {
     expect(html).toContain("mic-btn__icon");
     expect((html.match(/<i><\/i>/g) || []).length).toBe(7);
     expect(html).not.toContain("🎤");
+  });
+
+  it("upgrades legacy mic markup to full ChatGPT layers", () => {
+    if (typeof document === "undefined") return;
+    const el = document.createElement("button");
+    el.innerHTML = `
+      <span class="mic-btn__wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>
+      <span class="mic-btn__icon" aria-hidden="true"></span>
+    `;
+    createCompanionMicButton(el);
+    expect(el.querySelector(".mic-btn__halo")).toBeTruthy();
+    expect(el.querySelector(".mic-btn__ring--c")).toBeTruthy();
+    expect(el.querySelectorAll(".mic-btn__wave i").length).toBe(7);
   });
 
   it("uses muted gray when mic is off and ChatGPT blue when live", () => {

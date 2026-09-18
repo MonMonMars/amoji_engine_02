@@ -108,6 +108,7 @@ function cardNumber(item) {
  *   disabled?: boolean,
  *   eagerPreview?: boolean,
  *   onCardClick?: (id: string) => void,
+ *   onCardTapFx?: (card: HTMLButtonElement, item: ReturnType<typeof listCompanionCharacters>[number]) => void,
  * }} ctx
  */
 export function renderCompanionPickerGrid(gridEl, langCode, ctx = {}) {
@@ -122,6 +123,7 @@ export function renderCompanionPickerGrid(gridEl, langCode, ctx = {}) {
         compact,
         eagerPreview: ctx.eagerPreview,
         disabled: ctx.disabled,
+        onCardTapFx: ctx.onCardTapFx,
         onClick: (id) => {
           if (ctx.disabled) return;
           ctx.onCardClick?.(id);
@@ -139,6 +141,7 @@ export function renderCompanionPickerGrid(gridEl, langCode, ctx = {}) {
  *   eagerPreview?: boolean,
  *   disabled?: boolean,
  *   onClick?: (id: string) => void,
+ *   onCardTapFx?: (card: HTMLButtonElement, item: ReturnType<typeof listCompanionCharacters>[number]) => void,
  * }} ctx
  */
 export function createCompanionCardButton(item, ctx = {}) {
@@ -167,7 +170,10 @@ export function createCompanionCardButton(item, ctx = {}) {
   if (item.id === ctx.selectedId) card.classList.add("is-selected");
   card.style.setProperty("--card-accent", item.accent || "#7fd4cf");
   card.innerHTML = companionCardInnerHtml(item, ctx);
-  card.addEventListener("click", () => ctx.onClick?.(item.id));
+  card.addEventListener("click", () => {
+    ctx.onCardTapFx?.(card, item);
+    ctx.onClick?.(item.id);
+  });
   return card;
 }
 
@@ -178,6 +184,7 @@ export function createCompanionCardButton(item, ctx = {}) {
  *   selectedId?: string,
  *   onSelect?: (id: string) => void,
  *   onClose?: () => void,
+ *   onCardTapFx?: (card: HTMLButtonElement, item: ReturnType<typeof listCompanionCharacters>[number]) => void,
  * }} opts
  */
 export function createCompanionCharacterPicker(opts = {}) {
@@ -236,6 +243,7 @@ export function createCompanionCharacterPicker(opts = {}) {
     renderCompanionPickerGrid(gridEl, langCode, {
       selectedId,
       compact: true,
+      onCardTapFx: opts.onCardTapFx,
       onCardClick: (id) => {
         if (id === selectedId) {
           close();
@@ -312,6 +320,7 @@ export function createCompanionCharacterPicker(opts = {}) {
  *   selectedId?: string,
  *   fullPage?: boolean,
  *   onStart?: (id: string) => void,
+ *   onCardTapFx?: (card: HTMLButtonElement, item: ReturnType<typeof listCompanionCharacters>[number]) => void,
  * }} opts
  */
 export function createCompanionStartPicker(opts = {}) {
@@ -430,6 +439,7 @@ export function createCompanionStartPicker(opts = {}) {
       compact: true,
       eagerPreview: true,
       disabled: starting || !pickable,
+      onCardTapFx: opts.onCardTapFx,
       onCardClick: (id) => {
         if (!pickable || starting) return;
         selectedId = id;
@@ -511,33 +521,62 @@ export function createCompanionSwitchOverlay(opts = {}) {
   el.className = "companion-switch-overlay";
   el.hidden = true;
   el.innerHTML = `
-    <div class="companion-switch-card">
+    <div class="companion-switch-card companion-gacha-card">
+      <div class="companion-gacha-rays" aria-hidden="true"></div>
+      <div class="companion-gacha-portrait-wrap" aria-hidden="true">
+        <img class="companion-gacha-portrait" alt="" />
+      </div>
       <div class="companion-switch-ring" style="--pct:0">
         <span class="companion-switch-pct">0%</span>
       </div>
+      <p class="companion-gacha-name"></p>
       <p class="companion-switch-label">Loading…</p>
     </div>
   `;
   root.appendChild(el);
 
+  const card = el.querySelector(".companion-switch-card");
   const ring = el.querySelector(".companion-switch-ring");
   const pctEl = el.querySelector(".companion-switch-pct");
   const labelEl = el.querySelector(".companion-switch-label");
+  const nameEl = el.querySelector(".companion-gacha-name");
+  const portraitEl = el.querySelector(".companion-gacha-portrait");
 
   return {
-    show(label = "Loading…") {
+    element: el,
+    show(label = "Loading…", character = null) {
       el.hidden = false;
+      el.classList.remove("is-gacha-ready");
       if (labelEl) labelEl.textContent = label;
       if (ring) ring.style.setProperty("--pct", "0");
       if (pctEl) pctEl.textContent = "0%";
+      if (character && portraitEl && nameEl && card) {
+        portraitEl.src = String(character.previewImage || "");
+        portraitEl.alt = String(character.name || "");
+        nameEl.textContent = String(character.name || "");
+        card.style.setProperty("--card-accent", character.accent || "#7fd4cf");
+        el.classList.add("is-gacha-active");
+      } else {
+        if (portraitEl) portraitEl.removeAttribute("src");
+        if (nameEl) nameEl.textContent = "";
+        el.classList.remove("is-gacha-active");
+      }
     },
     update(pct, label) {
       const clamped = Math.max(0, Math.min(100, Math.round(pct)));
       if (ring) ring.style.setProperty("--pct", String(clamped));
       if (pctEl) pctEl.textContent = `${clamped}%`;
       if (label && labelEl) labelEl.textContent = label;
+      if (clamped >= 100) el.classList.add("is-gacha-ready");
+    },
+    celebrate() {
+      el.classList.add("is-gacha-ready");
+      card?.classList.add("gacha-reveal-burst");
+      globalThis.setTimeout?.(() => card?.classList.remove("gacha-reveal-burst"), 900);
     },
     hide() {
+      el.classList.remove("is-gacha-active", "is-gacha-ready");
+      card?.classList.remove("gacha-reveal-burst");
       el.hidden = true;
     },
     destroy() {

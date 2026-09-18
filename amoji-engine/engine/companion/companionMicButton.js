@@ -220,7 +220,12 @@ export function createCompanionMicButton(el, opts = {}) {
   }
 
   el.classList.add("mic-btn");
-  if (!el.querySelector(".mic-btn__icon")) {
+  const waveBars = el.querySelectorAll(".mic-btn__wave i").length;
+  const needsUpgrade =
+    !el.querySelector(".mic-btn__halo") ||
+    !el.querySelector(".mic-btn__ring--c") ||
+    waveBars < 7;
+  if (!el.querySelector(".mic-btn__icon") || needsUpgrade) {
     el.innerHTML = companionMicButtonInnerHtml();
   }
 
