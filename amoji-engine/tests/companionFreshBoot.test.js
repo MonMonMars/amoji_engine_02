@@ -205,10 +205,10 @@ describe("companionFreshBoot", () => {
       "/prototypes/amoji-companion.html",
     );
     expect(rewriteCompanionServePath("/n/1726550000/lite")).toBe(
-      "/prototypes/amoji-lite.html",
+      "/prototypes/amoji-companion.html",
     );
     expect(rewriteCompanionServePath("/c/2026-09-17-v153-repeat-issues/lite")).toBe(
-      "/prototypes/amoji-lite.html",
+      "/prototypes/amoji-companion.html",
     );
     expect(rewriteCompanionServePath("/companion-full")).toBe(
       "/prototypes/amoji-companion.html",

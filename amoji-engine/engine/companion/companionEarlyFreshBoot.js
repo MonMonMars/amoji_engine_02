@@ -105,12 +105,21 @@
     window.location.replace(url.toString());
   }
 
+  function ensureSecretaryRole() {
+    if (pageKind() !== "lite") return;
+    if (!url.searchParams.get("role")) {
+      url.searchParams.set("role", "secretary");
+    }
+    url.searchParams.delete("kind");
+    url.searchParams.delete("lite");
+  }
+
   function redirect(serverBuild, forceNewOpen) {
-    var kind = pageKind();
+    ensureSecretaryRole();
     var stamp = Date.now();
-    var openPath = "/n/" + stamp + "/" + kind;
-    var pinnedPath = "/c/" + encodeURIComponent(serverBuild) + "/" + kind;
-    var fallbackPath = kind === "lite" ? "/companion" : "/companion-full";
+    var openPath = "/n/" + stamp + "/full";
+    var pinnedPath = "/c/" + encodeURIComponent(serverBuild) + "/full";
+    var fallbackPath = "/companion-full";
     var stay =
       !forceNewOpen &&
       (isOpenPath(url.pathname) || hasBuildPath(serverBuild));

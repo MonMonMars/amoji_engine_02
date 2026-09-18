@@ -41,6 +41,6 @@ describe("deployUrls", () => {
     const url = secretaryDemoUrl({ build: "test-build", lang: "yue" });
     expect(url).toContain("tab=today");
     expect(url).toContain("/play");
-    expect(url).toContain("kind=lite");
+    expect(url).toContain("role=secretary");
   });
 });

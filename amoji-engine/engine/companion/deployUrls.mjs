@@ -70,10 +70,15 @@ export function companionFullDemoUrl(opts = {}) {
  * @param {{ build?: string }} [opts]
  */
 export function companionLiteDemoUrl(opts = {}) {
-  const params = new URLSearchParams({ kind: "lite" });
+  const params = new URLSearchParams({
+    role: "secretary",
+    pick: "1",
+    automic: "0",
+  });
   if (opts.tab) params.set("tab", opts.tab);
   if (opts.lang === "en") params.set("lang", "en");
   else if (opts.lang === "yue") params.set("lang", "yue");
+  if (opts.build) params.set("build", opts.build);
   const qs = params.toString();
   return `${DEMO_BASE_URL}/play${qs ? `?${qs}` : ""}`;
 }
