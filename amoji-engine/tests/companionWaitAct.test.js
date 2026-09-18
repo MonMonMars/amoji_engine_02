@@ -93,7 +93,7 @@ describe("companionWaitAct", () => {
     };
     const wait = createCompanionWaitAct({ avatar, isEnglish: true });
     wait.start({ kind: "idle", phase: "idle", speak: false });
-    expect(avatar.stopAction).not.toHaveBeenCalled();
+    expect(avatar.stopAction).toHaveBeenCalled();
     expect(avatar.playAction).not.toHaveBeenCalled();
     expect(avatar.playActionSequence).not.toHaveBeenCalled();
     expect(avatar.resetIdleLife).toHaveBeenCalled();
@@ -102,7 +102,7 @@ describe("companionWaitAct", () => {
     wait.stop();
   });
 
-  it("rotates idle beats and library clips every idle tick", () => {
+  it("rotates idle beats and subtle library clips every few ticks", () => {
     vi.useFakeTimers();
     const avatar = {
       playAction: vi.fn(),
@@ -120,20 +120,21 @@ describe("companionWaitAct", () => {
       poseIntervalMs: 2000,
     });
     wait.start({ kind: "idle", phase: "idle", speak: false });
+    expect(avatar.stopAction).toHaveBeenCalled();
     expect(avatar.pulseIdleBeat).not.toHaveBeenCalled();
     expect(avatar.playAction).not.toHaveBeenCalled();
-
-    vi.advanceTimersByTime(IDLE_LIFE_INTERVAL_MS - 1);
-    expect(avatar.pulseIdleBeat).not.toHaveBeenCalled();
-    expect(avatar.playAction).not.toHaveBeenCalled();
-
-    vi.advanceTimersByTime(2);
-    expect(avatar.playAction).toHaveBeenCalledTimes(1);
-    expect(avatar.pulseIdleBeat).toHaveBeenCalledWith("look");
 
     vi.advanceTimersByTime(IDLE_LIFE_INTERVAL_MS);
-    expect(avatar.playAction).toHaveBeenCalledTimes(2);
+    expect(avatar.pulseIdleBeat).toHaveBeenCalledWith("look");
+    expect(avatar.playAction).not.toHaveBeenCalled();
+
+    vi.advanceTimersByTime(IDLE_LIFE_INTERVAL_MS);
     expect(avatar.pulseIdleBeat).toHaveBeenCalledWith("comb");
+    expect(avatar.playAction).not.toHaveBeenCalled();
+
+    vi.advanceTimersByTime(IDLE_LIFE_INTERVAL_MS);
+    expect(avatar.playAction).toHaveBeenCalledTimes(1);
+    expect(avatar.pulseIdleBeat).toHaveBeenCalledWith("breathe");
     const [pose, opts] = avatar.playAction.mock.calls[0];
     expect(IDLE_LIFE_CLIP_POOL).toContain(pose);
     expect(opts).toEqual({
@@ -162,10 +163,13 @@ describe("companionWaitAct", () => {
     const wait = createCompanionWaitAct({ avatar, isEnglish: true });
     wait.start({ kind: "idle", phase: "idle", speak: false });
     avatar.playAction.mockClear();
+    avatar.pulseIdleBeat.mockClear();
+    expect(wait.nudgePose()).toBe(true);
+    expect(avatar.pulseIdleBeat).toHaveBeenCalled();
+    expect(avatar.playAction).not.toHaveBeenCalled();
+    expect(wait.nudgePose()).toBe(true);
     expect(wait.nudgePose()).toBe(true);
     expect(avatar.playAction).toHaveBeenCalledTimes(1);
-    expect(wait.nudgePose()).toBe(true);
-    expect(avatar.playAction).toHaveBeenCalledTimes(2);
     wait.stop();
   });
 

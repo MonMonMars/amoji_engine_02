@@ -959,9 +959,10 @@ export async function createVrmAvatar(opts) {
       softenTalkMouthOverrides(expr, false);
       if (
         !eating &&
-        !bodyMotion.currentAction &&
-        !bodyMotion.activeGesture &&
-        (!motionPlayer.isPlaying?.() || isTalkBackgroundLibraryAction(vrmaAction))
+        (isTalkBackgroundLibraryAction(vrmaAction) ||
+          (!bodyMotion.currentAction &&
+            !bodyMotion.activeGesture &&
+            !motionPlayer.isPlaying?.()))
       ) {
         restorePlantedIdle();
       }
