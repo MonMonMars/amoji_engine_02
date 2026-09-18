@@ -8,11 +8,12 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji Secretary</title>
     <script>
-      window.__amojiBuild = "2026-09-18-v230-aaa-ui-complete";
+      window.__amojiBuild = "2026-09-18-v231-aaa-ui-complete";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-18-v230-aaa-ui-complete"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-18-v230-aaa-ui-complete"></script>
-    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-18-v230-aaa-ui-complete" />
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-18-v231-aaa-ui-complete"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-18-v231-aaa-ui-complete"></script>
+    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-18-v231-aaa-ui-complete" />
+    <link rel="stylesheet" href="/prototypes/companion-mic-button.css?v=2026-09-18-v231-aaa-ui-complete" />
     <style>
       *,
       *::before,
@@ -286,6 +287,16 @@
         border-color: rgba(255, 120, 120, 0.35);
         color: #ffb4b4;
       }
+      .composer .mic-btn {
+        width: 2.85rem;
+        height: 2.85rem;
+        flex-shrink: 0;
+        padding: 0;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        background: rgba(16, 20, 28, 0.94);
+      }
+
+      .composer .mic-btn.active,
       .btn.mic.active {
         background: rgba(255, 100, 100, 0.25);
         border-color: rgba(255, 120, 120, 0.5);
@@ -417,6 +428,29 @@
       .setup .btn-secondary:hover {
         border-color: rgba(127, 212, 207, 0.35);
       }
+      .setup-range {
+        display: grid;
+        gap: 0.35rem;
+        margin: 0.15rem 0 0.35rem;
+        font-size: 0.72rem;
+        color: rgba(247, 241, 232, 0.62);
+      }
+
+      .setup-range input[type="range"] {
+        width: 100%;
+        accent-color: #7fd4cf;
+      }
+
+      .setup-toggle {
+        display: flex;
+        align-items: center;
+        gap: 0.55rem;
+        margin: 0 0 0.45rem;
+        font-size: 0.72rem;
+        color: rgba(247, 241, 232, 0.62);
+        cursor: pointer;
+      }
+
       .setup .me-section {
         margin-bottom: 0.85rem;
       }
@@ -951,6 +985,15 @@
         </div>
         <a class="btn-secondary" id="setup-link-3d" href="/companion-full">3D companion</a>
         <button type="button" class="btn-secondary" id="setup-btn-speaker">Speaker: on</button>
+        <p class="setup-section-title" id="setup-sound-title">Sound effects</p>
+        <label class="setup-range" id="setup-sfx-volume-wrap">
+          <span id="setup-sfx-volume-label">UI sounds: 42%</span>
+          <input type="range" id="setup-sfx-volume" min="0" max="100" step="5" value="42" />
+        </label>
+        <label class="setup-toggle" id="setup-haptics-wrap">
+          <input type="checkbox" id="setup-haptics" checked />
+          <span id="setup-haptics-label">Haptic feedback</span>
+        </label>
         <p class="setup-section-title" id="setup-prefs-title">Preferences</p>
         <div class="me-section">
           <label><input type="checkbox" id="pref-morning-brief" checked /> 早晨簡報</label>
@@ -1029,14 +1072,14 @@
         <textarea id="input" rows="1" placeholder="輸入訊息…" enterkeyhint="send" aria-hidden="true" tabindex="-1"></textarea>
         <div class="row">
           <button type="button" class="btn speaker" id="speaker-btn" title="Speaker" aria-pressed="true">🔊</button>
-          <button type="button" class="btn mic" id="mic-btn" title="Mic">🎤</button>
+          <button type="button" class="btn mic mic-btn" id="mic-btn" title="Mic" aria-label="Microphone"></button>
           <button type="submit" class="btn send" id="send-btn">Send</button>
         </div>
       </form>
     </div>
 
     <script type="module">
-      import { initAmojiSecretaryLite } from "/amoji-engine/engine/companion/secretary/secretaryLiteShell.js?v=2026-09-18-v230-aaa-ui-complete";
+      import { initAmojiSecretaryLite } from "/amoji-engine/engine/companion/secretary/secretaryLiteShell.js?v=2026-09-18-v231-aaa-ui-complete";
       window.__amojiLiteTag = "secretary-v1";
       window.__amojiLite = { ready: true, ttsCalls: 0, chatCalls: 0 };
       initAmojiSecretaryLite(document);

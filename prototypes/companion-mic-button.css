@@ -1,0 +1,174 @@
+/**
+ * Shared ChatGPT-style mic button layers (companion + secretary lite).
+ */
+.mic-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(16, 20, 28, 0.94);
+  color: rgba(255, 255, 255, 0.78);
+  cursor: pointer;
+  overflow: hidden;
+  isolation: isolate;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    transform 0.18s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.22s ease,
+    border-color 0.18s ease,
+    background 0.18s ease;
+}
+
+.mic-btn__halo {
+  position: absolute;
+  inset: -14px;
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0;
+  border: 2px solid hsl(212 78% 62% / 0.28);
+  box-shadow:
+    0 0 28px hsl(212 82% 58% / 0.22),
+    0 0 56px hsl(212 90% 68% / 0.12);
+  transition: opacity 0.28s ease;
+}
+
+.mic-btn[data-mic-state="listening"] .mic-btn__halo,
+.mic-btn[data-mic-state="speaking"] .mic-btn__halo {
+  opacity: calc(0.42 + var(--mic-level, 0) * 0.48);
+  animation: micHaloPulse calc(var(--mic-ring-speed, 1s) * 1.35) ease-out infinite;
+}
+
+.mic-btn.mic-state-flash {
+  animation: micStateFlash 0.32s ease-out;
+}
+
+.mic-btn__aura,
+.mic-btn__ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.mic-btn__wave {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  height: 100%;
+  z-index: 2;
+}
+
+.mic-btn__wave i {
+  display: block;
+  width: 3px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.72);
+  height: 8px;
+  animation: micWaveChatGpt 0.9s ease-in-out infinite;
+}
+
+.mic-btn__wave i:nth-child(1),
+.mic-btn__wave i:nth-child(7) {
+  animation-delay: 0s;
+}
+.mic-btn__wave i:nth-child(2),
+.mic-btn__wave i:nth-child(6) {
+  animation-delay: 0.08s;
+}
+.mic-btn__wave i:nth-child(3),
+.mic-btn__wave i:nth-child(5) {
+  animation-delay: 0.14s;
+}
+.mic-btn__wave i:nth-child(4) {
+  animation-delay: 0.2s;
+}
+
+.mic-btn__icon {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mic-btn[data-mic-state="idle"] .mic-btn__icon,
+.mic-btn[data-mic-state="disabled"] .mic-btn__icon {
+  display: none;
+}
+
+.mic-btn[data-mic-state="idle"] .mic-btn__wave,
+.mic-btn[data-mic-state="disabled"] .mic-btn__wave {
+  display: flex;
+  opacity: 0.52;
+}
+
+.mic-btn[data-mic-state="idle"] .mic-btn__wave i,
+.mic-btn[data-mic-state="disabled"] .mic-btn__wave i {
+  animation: none;
+  height: 7px;
+  background: rgba(255, 255, 255, 0.62);
+}
+
+.mic-btn[data-mic-state="listening"] .mic-btn__wave,
+.mic-btn[data-mic-state="speaking"] .mic-btn__wave {
+  display: flex;
+}
+
+.mic-btn[data-mic-state="listening"] .mic-btn__icon,
+.mic-btn[data-mic-state="speaking"] .mic-btn__icon {
+  display: none;
+}
+
+.mic-btn[data-mic-state="listening"],
+.mic-btn[data-mic-state="speaking"] {
+  background: var(--mic-surface, hsl(212 36% 42% / 0.96));
+  border-color: var(--mic-border, hsl(212 72% 62% / 0.88));
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.08) inset,
+    0 0 calc(14px + var(--mic-level, 0) * 16px) var(--mic-glow-a, hsl(212 80% 58% / 0.62)),
+    0 8px 24px rgba(0, 0, 0, 0.32);
+  color: #fff;
+}
+
+@keyframes micHaloPulse {
+  0% {
+    transform: scale(0.88);
+    opacity: calc(0.5 + var(--mic-level, 0) * 0.35);
+  }
+  100% {
+    transform: scale(1.18);
+    opacity: 0;
+  }
+}
+
+@keyframes micStateFlash {
+  0% {
+    filter: brightness(1.35);
+  }
+  100% {
+    filter: brightness(1);
+  }
+}
+
+@keyframes micWaveChatGpt {
+  0%,
+  100% {
+    height: 6px;
+    opacity: 0.55;
+  }
+  50% {
+    height: calc(8px + var(--mic-bounce, 6px));
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mic-btn__halo,
+  .mic-btn__wave i,
+  .mic-btn.mic-state-flash {
+    animation: none !important;
+  }
+}

@@ -1,5 +1,6 @@
 import { describe, expect, it, vi, afterEach } from "vitest";
 import {
+  bindCompanionUiAudio,
   COMPANION_UI_EFFECTS_SCHEMA,
   closeUiOverlay,
   initCompanionUiEffects,
@@ -129,6 +130,24 @@ describe("companionUiEffects", () => {
     const doc = mockDoc();
     initCompanionUiEffects(doc, { reducedMotion: true });
     expect(doc.body.classList.contains("ui-fx-enabled")).toBe(false);
+  });
+
+  it("plays sheet SFX when audio is bound", () => {
+    const doc = mockDoc();
+    const panel = mockEl("div");
+    const played = [];
+    bindCompanionUiAudio({
+      play: (id) => {
+        played.push(id);
+        return true;
+      },
+      haptic: () => true,
+    });
+    openUiOverlay(doc, { panel, bodyClass: "settings-open" });
+    expect(played).toContain("sheet-open");
+    closeUiOverlay(doc, { panel, bodyClass: "settings-open", hideDelay: 0 });
+    expect(played).toContain("sheet-close");
+    bindCompanionUiAudio(null);
   });
 
   it("opens and closes overlays with transition classes", () => {

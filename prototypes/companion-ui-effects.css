@@ -379,6 +379,78 @@ body.ui-fx-enabled.ui-page-open .topbar {
   opacity: 1;
 }
 
+/* —— Character switch overlay (base + gacha reveal) —— */
+.companion-switch-overlay {
+  position: fixed;
+  inset: auto 0 max(1.1rem, env(safe-area-inset-bottom, 0px)) 0;
+  z-index: 11000;
+  display: grid;
+  place-items: end center;
+  padding: 0 1rem 0.35rem;
+  background: transparent;
+  backdrop-filter: none;
+  pointer-events: none;
+}
+
+.companion-switch-overlay[hidden] {
+  display: none !important;
+}
+
+.companion-switch-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1.2rem 1.4rem;
+  border-radius: 1.1rem;
+  background: rgba(12, 16, 24, 0.92);
+  border: 1px solid rgba(247, 241, 232, 0.12);
+  min-width: min(82vw, 240px);
+  pointer-events: auto;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+}
+
+.companion-switch-ring {
+  --pct: 0;
+  width: 2.85rem;
+  height: 2.85rem;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background:
+    conic-gradient(
+      var(--card-accent, var(--accent, #7fd4cf)) calc(var(--pct) * 1%),
+      rgba(255, 255, 255, 0.12) 0
+    ),
+    rgba(10, 14, 22, 0.5);
+  position: relative;
+  border: 1px solid rgba(127, 212, 207, 0.16);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.22);
+  backdrop-filter: blur(8px);
+}
+
+.companion-switch-ring::before {
+  content: "";
+  position: absolute;
+  inset: 0.28rem;
+  border-radius: inherit;
+  background: rgba(10, 14, 22, 0.72);
+}
+
+.companion-switch-pct {
+  position: relative;
+  z-index: 1;
+  font-weight: 800;
+  font-size: 0.56rem;
+}
+
+.companion-switch-label {
+  margin: 0;
+  color: var(--muted, rgba(247, 241, 232, 0.62));
+  font-size: 0.82rem;
+  text-align: center;
+}
+
 /* —— Gacha card tap + companion reveal —— */
 body.ui-fx-enabled .companion-card.gacha-card-pop {
   animation: gachaCardPop 0.52s cubic-bezier(0.22, 1, 0.36, 1);

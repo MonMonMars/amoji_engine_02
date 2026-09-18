@@ -463,18 +463,25 @@ body.conversation-ui.theme-grok-ani .companion-chip__dot--legacy {
 }
 
 .theme-grok-ani .mic-btn.mini-emotion-ball[data-mic-state="listening"],
-.theme-grok-ani .mic-btn.mini-emotion-ball[data-mic-state="speaking"] {
-  filter: drop-shadow(0 0 18px hsl(212 72% 50% / 0.48));
+.theme-grok-ani .mic-btn.mini-emotion-ball[data-mic-state="speaking"],
+.theme-grok-ani .mic-btn[data-mic-state="listening"],
+.theme-grok-ani .mic-btn[data-mic-state="speaking"] {
+  filter: drop-shadow(0 0 18px rgba(139, 124, 248, 0.52));
   box-shadow:
     0 0 0 1px rgba(255, 255, 255, 0.1) inset,
-    0 0 calc(22px + var(--mic-level, 0) * 28px) hsl(212 80% 58% / 0.55),
-    0 0 calc(48px + var(--mic-level, 0) * 36px) hsl(212 90% 68% / 0.22),
+    0 0 calc(22px + var(--mic-level, 0) * 28px) rgba(139, 124, 248, 0.58),
+    0 0 calc(48px + var(--mic-level, 0) * 36px) rgba(94, 234, 212, 0.24),
     0 12px 32px rgba(0, 0, 0, 0.38) !important;
 }
 
 .theme-grok-ani .mic-btn.mini-emotion-ball[data-mic-state="listening"] .mic-btn__halo,
-.theme-grok-ani .mic-btn.mini-emotion-ball[data-mic-state="speaking"] .mic-btn__halo {
-  border-color: hsl(212 88% 68% / 0.42);
+.theme-grok-ani .mic-btn.mini-emotion-ball[data-mic-state="speaking"] .mic-btn__halo,
+.theme-grok-ani .mic-btn[data-mic-state="listening"] .mic-btn__halo,
+.theme-grok-ani .mic-btn[data-mic-state="speaking"] .mic-btn__halo {
+  border-color: rgba(139, 124, 248, 0.48);
+  box-shadow:
+    0 0 28px rgba(139, 124, 248, 0.32),
+    0 0 56px rgba(94, 234, 212, 0.16);
 }
 
 .theme-grok-ani .mic-btn.mini-emotion-ball .companion-chip__dot-canvas {

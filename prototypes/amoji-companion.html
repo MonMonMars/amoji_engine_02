@@ -8,9 +8,9 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji · Companion</title>
     <script>
-      window.__amojiBuild = "2026-09-18-v230-aaa-ui-complete";
+      window.__amojiBuild = "2026-09-18-v231-aaa-ui-complete";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-18-v230-aaa-ui-complete"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-18-v231-aaa-ui-complete"></script>
     <link
       rel="prefetch"
       href="/prototypes/assets/companion-char-nova.png"
@@ -487,8 +487,9 @@
       media="print"
       onload="this.media='all'"
     />
-    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-18-v230-aaa-ui-complete" />
-    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-18-v230-aaa-ui-complete" />
+    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-18-v231-aaa-ui-complete" />
+    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-18-v231-aaa-ui-complete" />
+    <link rel="stylesheet" href="/prototypes/companion-mic-button.css?v=2026-09-18-v231-aaa-ui-complete" />
     <noscript>
       <link
         href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap"
@@ -4059,77 +4060,6 @@
         color: rgba(247, 241, 232, 0.55);
       }
 
-      .companion-switch-overlay {
-        position: fixed;
-        inset: auto 0 max(1.1rem, env(safe-area-inset-bottom, 0px)) 0;
-        z-index: 11000;
-        display: grid;
-        place-items: end center;
-        padding: 0 1rem 0.35rem;
-        background: transparent;
-        backdrop-filter: none;
-        pointer-events: none;
-      }
-
-      .companion-switch-overlay[hidden] {
-        display: none !important;
-      }
-
-      .companion-switch-card {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 0.75rem;
-        padding: 1.2rem 1.4rem;
-        border-radius: 1.1rem;
-        background: rgba(12, 16, 24, 0.92);
-        border: 1px solid rgba(247, 241, 232, 0.12);
-        min-width: min(82vw, 240px);
-        pointer-events: auto;
-        box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
-      }
-
-      .companion-switch-ring {
-        --pct: 0;
-        width: 2.85rem;
-        height: 2.85rem;
-        border-radius: 999px;
-        display: grid;
-        place-items: center;
-        background:
-          conic-gradient(
-            var(--accent) calc(var(--pct) * 1%),
-            rgba(255, 255, 255, 0.12) 0
-          ),
-          rgba(10, 14, 22, 0.5);
-        position: relative;
-        border: 1px solid rgba(127, 212, 207, 0.16);
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.22);
-        backdrop-filter: blur(8px);
-      }
-
-      .companion-switch-ring::before {
-        content: "";
-        position: absolute;
-        inset: 0.28rem;
-        border-radius: inherit;
-        background: rgba(10, 14, 22, 0.72);
-      }
-
-      .companion-switch-pct {
-        position: relative;
-        z-index: 1;
-        font-weight: 800;
-        font-size: 0.56rem;
-      }
-
-      .companion-switch-label {
-        margin: 0;
-        color: var(--muted);
-        font-size: 0.82rem;
-        text-align: center;
-      }
-
       .companion-progress-dock {
         position: fixed;
         right: max(0.85rem, env(safe-area-inset-right, 0px));
@@ -4219,19 +4149,19 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-18-v230-aaa-ui-complete",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-18-v231-aaa-ui-complete",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-18-v230-aaa-ui-complete",
-          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-18-v230-aaa-ui-complete"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-18-v231-aaa-ui-complete",
+          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-18-v231-aaa-ui-complete"
         }
       }
     </script>
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-18-v230-aaa-ui-complete"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-18-v231-aaa-ui-complete"
     />
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-18-v230-aaa-ui-complete"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-18-v230-aaa-ui-complete"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-18-v231-aaa-ui-complete"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-18-v231-aaa-ui-complete"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;
@@ -4582,7 +4512,7 @@
         <button type="button" class="btn-secondary" id="settings-btn-lang">Language</button>
         <p class="settings-section-title" id="settings-look-title">Look &amp; scene</p>
         <button type="button" class="btn-secondary" id="settings-btn-scene">Background</button>
-        <p class="settings-hint" id="settings-outfit-hint">Outfit presets coming soon.</p>
+        <p class="settings-hint" id="settings-outfit-hint">Background &amp; lighting — outfit swaps roll out per character.</p>
         <p class="settings-section-title" id="settings-companion-title">Companion</p>
         <button type="button" class="btn-secondary" id="settings-btn-companions">Switch companion</button>
         <p class="settings-section-title" id="settings-voice-title">Voice</p>
@@ -4688,9 +4618,10 @@
         <div class="composer-wrap">
           <div class="starter-prompts" id="starter-prompts" hidden aria-label="Suggested prompts"></div>
           <div class="listen-hint" id="listen-hint" aria-live="polite" hidden></div>
-          <div class="emotion-ball-stack is-hidden" id="emotion-ball-stack" aria-hidden="true">
+          <!-- Full emotion ball stack retired — mini orb on #btn-mic is canonical in conversation UI -->
+          <div class="emotion-ball-stack is-hidden" id="emotion-ball-stack" aria-hidden="true" hidden>
             <div class="emotion-ball" id="emotion-ball" data-ball-state="idle" hidden></div>
-            <p class="emotion-ball__caption" id="emotion-ball-caption">Ready · neutral</p>
+            <p class="emotion-ball__caption" id="emotion-ball-caption" hidden>Ready · neutral</p>
           </div>
           <form class="composer composer-minimal" id="composer">
             <button
@@ -4854,11 +4785,7 @@
         loadUiSettings,
         saveUiSettings,
       } = uiSettingsMod;
-      const {
-        celebrateCompanionSwitchReveal,
-        playCompanionCardTapFx,
-        playStartPickerDismissFx,
-      } = uiGachaMod;
+      const { playCompanionCardTapFx, playStartPickerDismissFx } = uiGachaMod;
       const uiSettings = loadUiSettings();
       if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
         uiSettings.reducedMotion = true;
@@ -7018,7 +6945,6 @@
           applyCharacterSession(nextId, { announce: false });
           raisingHub?.setCharacter?.(nextId);
           switchOverlay.celebrate?.();
-          celebrateCompanionSwitchReveal(switchOverlay.element);
           uiAudio?.play?.("success");
           uiAudio?.haptic?.("medium");
           spawnUiRingBurst(canvas, { hue: 212 });
