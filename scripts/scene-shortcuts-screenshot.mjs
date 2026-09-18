@@ -57,7 +57,7 @@ const readUi = () =>
     return {
       chatBtn: document.getElementById("btn-toggle-chat")?.getAttribute("aria-pressed"),
       sceneBtn: style(document.getElementById("btn-open-scene")),
-      speakerBtn: document.getElementById("btn-speaker")?.getAttribute("aria-pressed"),
+      speakerBtn: document.getElementById("settings-btn-speaker")?.getAttribute("aria-pressed"),
       chatHidden: document.body.classList.contains("chat-panel-hidden"),
       sceneBg: atmosphere?.dataset?.sceneBg || null,
       atmosphereUsesSunset: atmosphereBg.includes("ff8a5c") || atmosphereBg.includes("255, 138, 92"),
@@ -87,9 +87,12 @@ await page.waitForTimeout(300);
 ui.afterChatHide = await readUi();
 await page.screenshot({ path: `${artifacts}/scene-shortcuts-chat-hidden.png`, fullPage: false });
 
-await page.click("#btn-speaker");
+await page.click("#btn-open-setup");
+await page.waitForSelector("#settings.open", { timeout: 5000 });
+await page.click("#settings-btn-speaker");
 await page.waitForTimeout(200);
 ui.afterSpeakerMute = await readUi();
+await page.click("#settings-close");
 
 console.log(JSON.stringify(ui, null, 2));
 await browser.close();

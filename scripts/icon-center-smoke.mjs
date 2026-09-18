@@ -70,7 +70,6 @@ const selectors = [
   "#btn-toggle-chat",
   "#btn-open-scene",
   "#btn-open-setup",
-  "#btn-speaker",
   "#btn-mic",
   "#send",
 ];

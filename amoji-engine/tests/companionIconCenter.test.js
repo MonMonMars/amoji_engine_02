@@ -55,8 +55,8 @@ describe("circular icon centering", () => {
     expect(html).toMatch(/id="btn-open-scene"[\s\S]{0,500}<svg class="btn-icon"/);
     expect(html).toMatch(/id="btn-open-setup"[\s\S]{0,500}<svg class="btn-icon"/);
     expect(html).toMatch(/id="send"[\s\S]{0,400}<svg class="btn-icon"/);
-    expect(html).toContain("btn-icon--speaker-on");
-    expect(html).toContain("btn-icon--speaker-off");
+    expect(html).toContain('id="settings-btn-speaker"');
+    expect(html).not.toMatch(/class="composer[^"]*"[\s\S]{0,1200}id="btn-speaker"/);
     expect(html).not.toContain('btnSpeaker.textContent = on ? "🔊"');
     expect(html).not.toContain('btnToggleChat.textContent = "💬"');
     expect(html).not.toContain('btnOpenScene.textContent = "🎨"');
@@ -80,18 +80,13 @@ describe("circular icon centering", () => {
     expect(css).toContain("align-items: center");
   });
 
-  it("keeps grok-ani send and speaker buttons as flex-centered circles", () => {
+  it("keeps grok-ani send button as a flex-centered circle", () => {
     expect(grok).toMatch(
       /\.theme-grok-ani \.composer \.send \{[^}]*display:\s*inline-flex/,
     );
     expect(grok).toMatch(
       /\.theme-grok-ani \.composer \.send \{[^}]*align-items:\s*center/,
     );
-    expect(grok).toMatch(
-      /\.theme-grok-ani \.composer \.speaker-btn \{[^}]*border-radius:\s*999px[^}]*display:\s*inline-flex/,
-    );
-    expect(grok).toMatch(
-      /\.theme-grok-ani \.composer \.speaker-btn \{[^}]*justify-content:\s*center/,
-    );
+    expect(grok).not.toMatch(/\.theme-grok-ani \.composer \.speaker-btn/);
   });
 });

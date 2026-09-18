@@ -8,9 +8,9 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji · Companion</title>
     <script>
-      window.__amojiBuild = "2026-09-18-v225-full-pro-roster";
+      window.__amojiBuild = "2026-09-18-v226-speaker-in-menu";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-18-v212-motion-library-complete"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-18-v226-speaker-in-menu"></script>
     <link
       rel="prefetch"
       href="/prototypes/assets/companion-char-nova.png"
@@ -487,8 +487,8 @@
       media="print"
       onload="this.media='all'"
     />
-    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-18-v212-motion-library-complete" />
-    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-18-v212-motion-library-complete" />
+    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-18-v226-speaker-in-menu" />
+    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-18-v226-speaker-in-menu" />
     <noscript>
       <link
         href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap"
@@ -1369,18 +1369,6 @@
         font-style: normal;
       }
 
-      .speaker-btn .btn-icon--speaker-off {
-        display: none;
-      }
-
-      .speaker-btn[aria-pressed="false"] .btn-icon--speaker-on {
-        display: none;
-      }
-
-      .speaker-btn[aria-pressed="false"] .btn-icon--speaker-off {
-        display: block;
-      }
-
       .icon-btn:hover {
         transform: translateY(-1px);
         background: rgba(255, 255, 255, 0.1);
@@ -2084,8 +2072,7 @@
       }
 
       body.conversation-ui.composer-always-visible .composer .send,
-      body.conversation-ui.composer-always-visible .composer #btn-mic,
-      body.conversation-ui.composer-always-visible .composer #btn-speaker {
+      body.conversation-ui.composer-always-visible .composer #btn-mic {
         display: inline-flex !important;
         align-items: center;
         justify-content: center;
@@ -2179,37 +2166,10 @@
         max-height: min(38vh, 300px);
       }
 
-      body.conversation-ui .composer .speaker-btn {
-        width: 2.05rem;
-        height: 2.05rem;
-        flex-shrink: 0;
-        font-size: 0.85rem;
-        line-height: 0;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        padding: 0;
-        opacity: 0.88;
-      }
-
-      body.conversation-ui .composer .speaker-btn .btn-icon {
-        width: 14px;
-        height: 14px;
-      }
-
       body.conversation-ui.composer-always-visible .composer #btn-mic {
         width: 4.35rem;
         height: 4.35rem;
         flex-shrink: 0;
-      }
-
-      body.conversation-ui .composer .speaker-btn[aria-pressed="true"] {
-        background: rgba(127, 212, 207, 0.16);
-        border-color: rgba(127, 212, 207, 0.38);
-      }
-
-      body.conversation-ui .composer .speaker-btn[aria-pressed="false"] {
-        opacity: 0.72;
       }
 
       .scene-sheet {
@@ -4129,19 +4089,19 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-18-v212-motion-library-complete",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-18-v226-speaker-in-menu",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-18-v212-motion-library-complete",
-          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-18-v212-motion-library-complete"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-18-v226-speaker-in-menu",
+          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-18-v226-speaker-in-menu"
         }
       }
     </script>
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-18-v212-motion-library-complete"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-18-v226-speaker-in-menu"
     />
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-18-v212-motion-library-complete"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-18-v212-motion-library-complete"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-18-v226-speaker-in-menu"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-18-v226-speaker-in-menu"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;
@@ -4586,33 +4546,6 @@
             <p class="emotion-ball__caption" id="emotion-ball-caption">Ready · neutral</p>
           </div>
           <form class="composer composer-minimal" id="composer">
-            <button
-              type="button"
-              class="icon-btn speaker-btn"
-              id="btn-speaker"
-              aria-pressed="true"
-              aria-label="Speaker"
-              title="Speaker on"
-            >
-              <svg class="btn-icon btn-icon--speaker-on" viewBox="0 0 24 24" width="14" height="14" fill="none" aria-hidden="true">
-                <path d="M4.7 9.15v5.7h2.95L12.3 19V5L7.65 9.15H4.7Z" fill="currentColor" />
-                <path
-                  d="M16.05 9.05a3.35 3.35 0 0 1 0 5.9M18.5 6.75a6.1 6.1 0 0 1 0 10.5"
-                  stroke="currentColor"
-                  stroke-width="1.7"
-                  stroke-linecap="round"
-                />
-              </svg>
-              <svg class="btn-icon btn-icon--speaker-off" viewBox="0 0 24 24" width="14" height="14" fill="none" aria-hidden="true">
-                <path d="M4.7 9.15v5.7h2.95L12.3 19V5L7.65 9.15H4.7Z" fill="currentColor" />
-                <path
-                  d="M16.15 9.15 21 16.1M21 9.15l-4.85 6.95"
-                  stroke="currentColor"
-                  stroke-width="1.8"
-                  stroke-linecap="round"
-                />
-              </svg>
-            </button>
             <button
               type="button"
               class="icon-btn mic-btn"
@@ -5200,7 +5133,6 @@
       const btnOpenScene = document.getElementById("btn-open-scene");
       const btnTalkSpeed = document.getElementById("btn-talk-speed");
       const btnTalkSpeedLabel = document.getElementById("btn-talk-speed-label");
-      const btnSpeaker = document.getElementById("btn-speaker");
       const btnMic = document.getElementById("btn-mic");
       const emotionBallEl = document.getElementById("emotion-ball");
       const atmosphereEl = document.querySelector(".atmosphere");
@@ -6360,13 +6292,15 @@
               ? "喇叭：開"
               : "喇叭：關";
           settingsBtnSpeaker.setAttribute("aria-pressed", on ? "true" : "false");
-        }
-        if (btnSpeaker) {
-          btnSpeaker.setAttribute("aria-pressed", on ? "true" : "false");
-          btnSpeaker.title = isEnglish ? "Speaker" : "喇叭";
-          btnSpeaker.setAttribute(
+          settingsBtnSpeaker.setAttribute(
             "aria-label",
-            isEnglish ? "Speaker" : "喇叭",
+            isEnglish
+              ? on
+                ? "Speaker on"
+                : "Speaker muted"
+              : on
+                ? "喇叭已開"
+                : "喇叭已關",
           );
         }
       };
@@ -7997,7 +7931,6 @@
         );
       };
       settingsBtnSpeaker?.addEventListener("click", toggleSpeaker);
-      btnSpeaker?.addEventListener("click", toggleSpeaker);
 
       btnMic.addEventListener("click", async () => {
         unlockAudioSync();
