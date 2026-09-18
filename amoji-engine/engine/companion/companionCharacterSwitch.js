@@ -50,6 +50,11 @@ export async function switchCompanionCharacter(opts) {
   onStagePreview?.(previewImageUrl || config.previewImage || null);
 
   emit(12, isEnglish ? "Clearing stage…" : "清理場景…");
+  try {
+    currentAvatar?.dispose?.();
+  } catch {
+    /* ignore dispose errors */
+  }
   const freshCanvas = replaceAvatarCanvas(canvas);
 
   emit(22, isEnglish ? "Downloading model…" : "下載模型中…");
@@ -69,14 +74,8 @@ export async function switchCompanionCharacter(opts) {
     },
   });
 
-  try {
-    currentAvatar?.dispose?.();
-  } catch {
-    /* ignore dispose errors */
-  }
-
   emit(88, isEnglish ? "Warming up…" : "熱身中…");
-  loaded.avatar.setEmotion?.("happy");
+  loaded.avatar.setEmotion?.("neutral");
   loaded.avatar.resize?.();
   onStagePreview?.(null);
 

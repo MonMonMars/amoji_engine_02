@@ -75,7 +75,7 @@ describe("companionFaceEmotion", () => {
     expect(ember.talkJawScale).toBe(0);
     expect(nova.skipMorphMouthWhenPresets).toBe(true);
     expect(kizuna.talkMouthScale).toBe(1);
-    expect(scaleTalkMouthOpen(0.9, nova)).toBeLessThan(0.5);
+    expect(scaleTalkMouthOpen(0.9, nova)).toBeLessThan(0.4);
     expect(scaleTalkMouthOpen(0.9, kizuna)).toBeCloseTo(0.9);
   });
 

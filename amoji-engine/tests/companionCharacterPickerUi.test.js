@@ -61,4 +61,23 @@ describe("companionCharacterPicker UI", () => {
     expect(picker.isOpen()).toBe(false);
     picker.destroy();
   });
+
+  it("switches after hot-swap when active character differs from initial opts", () => {
+    if (typeof document === "undefined") return;
+    let switchedTo = null;
+    const picker = createCompanionCharacterPicker({
+      isEnglish: true,
+      selectedId: "nova",
+      onSelect: (id) => {
+        switchedTo = id;
+      },
+    });
+    picker.setSelected("ember");
+    expect(picker.getActiveCharacterId()).toBe("ember");
+    picker.open();
+    picker.setSelected("nova");
+    picker.element.querySelector(".picker-switch-btn")?.click();
+    expect(switchedTo).toBe("nova");
+    picker.destroy();
+  });
 });

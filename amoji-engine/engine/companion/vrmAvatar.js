@@ -1168,6 +1168,9 @@ export async function createVrmAvatar(opts) {
         mouthTarget = 0;
         mouthOpen = 0;
         applyMouth(0);
+        if (emotion === "happy") {
+          setEmotion("neutral");
+        }
       }
     }
     return eating;

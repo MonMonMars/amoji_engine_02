@@ -17,11 +17,17 @@ export async function beginStartPickerSession(page, opts = {}) {
     : `${START_ROOT} .companion-card:not([disabled])`;
 
   await page.waitForSelector(cardSel, { timeout: cardTimeout });
-  await page.click(cardSel);
+  await page.evaluate((sel) => {
+    const card = document.querySelector(sel);
+    card?.scrollIntoView?.({ block: "center", inline: "center" });
+    card?.click();
+  }, cardSel);
 
   const beginSel = `${START_ROOT} .picker-begin-btn:not([disabled])`;
   await page.waitForSelector(beginSel, { timeout: 15000 });
-  await page.click(beginSel);
+  await page.evaluate((sel) => {
+    document.querySelector(sel)?.click();
+  }, beginSel);
 
   await page.waitForFunction(
     () => {

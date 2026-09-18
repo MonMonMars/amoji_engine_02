@@ -277,6 +277,8 @@ async function main() {
   await page.evaluate(async () => {
     window.__amojiTreats?.setOpen?.(false);
     window.__amojiAvatar?.setEating?.(false);
+    window.__amojiAvatar?.setTalking?.(false);
+    window.__amojiAvatar?.setEmotion?.("neutral");
     window.__amojiAvatar?.stopAction?.();
     await new Promise((r) => setTimeout(r, 3800));
   });
@@ -468,11 +470,62 @@ async function main() {
   try {
     const modelsBefore = loadedModels.length;
     await switchCompanionInSession(page, "alicia");
-    await page.waitForTimeout(4000);
+    await page.waitForFunction(
+      () =>
+        window.localStorage?.getItem("amoji.companion.characterId") === "alicia" &&
+        window.__amojiAvatar?.vrm,
+      { timeout: 120000 },
+    );
     const switched = loadedModels.slice(modelsBefore).some((u) => /alicia/i.test(u));
     record("switch-character-model", switched, loadedModels.slice(modelsBefore).join(" | "));
+
+    await switchCompanionInSession(page, "ember");
+    await page.waitForFunction(
+      () =>
+        window.localStorage?.getItem("amoji.companion.characterId") === "ember" &&
+        window.__amojiAvatar?.vrm,
+      { timeout: 120000 },
+    );
+    const emberMouth = await page.evaluate(async () => {
+      window.__amojiAvatar.setTalking(true);
+      window.__amojiAvatar.setMouthOpen(0.9);
+      window.__amojiAvatar.setMouthShape("aa");
+      await new Promise((r) => setTimeout(r, 700));
+      const expr = window.__amojiAvatar.vrm?.expressionManager;
+      const jaw = window.__amojiAvatar.vrm?.humanoid?.getNormalizedBoneNode?.("jaw");
+      return {
+        aa: Number(expr?.getValue?.("aa") ?? expr?.getValue?.("A") ?? 0),
+        jawX: Number(jaw?.rotation?.x ?? 0),
+      };
+    });
+    record(
+      "ember-talk-mouth-capped",
+      (emberMouth.aa || 0) <= 0.42 && Math.abs(emberMouth.jawX || 0) < 0.02,
+      JSON.stringify(emberMouth),
+    );
+    await page.evaluate(() => {
+      window.__amojiAvatar?.setTalking?.(false);
+      window.__amojiAvatar?.setMouthOpen?.(0);
+    });
+
+    const beforeNova = loadedModels.length;
+    await switchCompanionInSession(page, "nova");
+    const roundTrip = await page.waitForFunction(
+      () =>
+        window.localStorage?.getItem("amoji.companion.characterId") === "nova" &&
+        window.__amojiAvatar?.vrm,
+      { timeout: 120000 },
+    ).then(() => true).catch(() => false);
+    const novaReloaded = loadedModels.slice(beforeNova).some((u) => /nova\.vrm/i.test(u));
+    record(
+      "switch-round-trip-nova",
+      roundTrip && novaReloaded,
+      JSON.stringify({ roundTrip, novaReloaded }),
+    );
   } catch (err) {
     record("switch-character-model", false, String(err?.message || err));
+    record("switch-round-trip-nova", false, String(err?.message || err));
+    record("ember-talk-mouth-capped", false, String(err?.message || err));
   }
 
   await browser.close();
