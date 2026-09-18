@@ -37,12 +37,11 @@
         transition: opacity 0.35s ease;
       }
 
-      .stage.has-stage-preview #avatar-canvas,
       .stage.avatar-ready #avatar-canvas {
         opacity: 1;
       }
 
-      .stage.has-stage-preview #avatar-canvas {
+      .stage.has-stage-preview:not(.avatar-ready) #avatar-canvas {
         opacity: 0.04;
       }
 
@@ -784,7 +783,7 @@
         display: none !important;
       }
 
-      .stage.has-stage-preview #avatar-canvas {
+      .stage.has-stage-preview:not(.avatar-ready) #avatar-canvas {
         opacity: 0.02;
       }
 
