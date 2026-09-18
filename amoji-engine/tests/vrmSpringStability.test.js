@@ -10,6 +10,8 @@ import {
   MIN_GRAVITY_POWER,
   MAX_STIFFNESS,
   recenterVrmSpringBones,
+  resolveSpringJointSettings,
+  tuneSpringJoint,
   stabilizeVrmSpringBones,
   tickIdleSpringRecenter,
 } from "../engine/companion/vrmSpringStability.js";
@@ -132,6 +134,18 @@ describe("vrmSpringStability", () => {
     expect(resetCount()).toBe(1);
     expect(state.calmSec).toBe(0);
     expect(state.lastResetMs).toBeGreaterThan(0);
+  });
+
+  it("resolves settings from joint root when settings bag is missing", () => {
+    const joint = {
+      dragForce: 0.1,
+      gravityPower: 0,
+      gravityDir: { x: 0, y: 1, z: 0, set(x, y, z) { this.x = x; this.y = y; this.z = z; } },
+    };
+    expect(resolveSpringJointSettings(joint)).toBe(joint);
+    tuneSpringJoint(joint);
+    expect(joint.gravityDir.y).toBe(-1);
+    expect(joint.gravityPower).toBeGreaterThanOrEqual(MIN_GRAVITY_POWER);
   });
 
   it("stabilizeVrmSpringBones enforces downward gravity every frame", () => {
