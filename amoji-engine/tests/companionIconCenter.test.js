@@ -51,17 +51,11 @@ describe("circular icon centering", () => {
   });
 
   it("uses centered SVG glyphs instead of emoji in round buttons", () => {
-    expect(html).toMatch(/id="btn-toggle-chat"[\s\S]{0,500}<svg class="btn-icon"/);
-    expect(html).toMatch(/id="btn-open-scene"[\s\S]{0,500}<svg class="btn-icon"/);
     expect(html).toMatch(/id="btn-open-setup"[\s\S]{0,500}<svg class="btn-icon"/);
     expect(html).toMatch(/id="send"[\s\S]{0,400}<svg class="btn-icon"/);
     expect(html).toContain('id="settings-btn-speaker"');
     expect(html).not.toMatch(/class="composer[^"]*"[\s\S]{0,1200}id="btn-speaker"/);
     expect(html).not.toContain('btnSpeaker.textContent = on ? "🔊"');
-    expect(html).not.toContain('btnToggleChat.textContent = "💬"');
-    expect(html).not.toContain('btnOpenScene.textContent = "🎨"');
-    expect(html).not.toContain('btnOpenSetup.textContent = "⋯"');
-    expect(html).not.toMatch(/id="btn-toggle-chat"[\s\S]{0,400}💬/);
     expect(html).not.toMatch(/id="send"[^>]*>↑</);
   });
 

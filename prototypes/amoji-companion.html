@@ -8,9 +8,9 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji · Companion</title>
     <script>
-      window.__amojiBuild = "2026-09-18-v233-lip-face-sync";
+      window.__amojiBuild = "2026-09-18-v234-minimal-ui";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-18-v233-lip-face-sync"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-18-v234-minimal-ui"></script>
     <link
       rel="prefetch"
       href="/prototypes/assets/companion-char-nova.png"
@@ -487,9 +487,10 @@
       media="print"
       onload="this.media='all'"
     />
-    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-18-v233-lip-face-sync" />
-    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-18-v233-lip-face-sync" />
-    <link rel="stylesheet" href="/prototypes/companion-mic-button.css?v=2026-09-18-v233-lip-face-sync" />
+    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-18-v234-minimal-ui" />
+    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-18-v234-minimal-ui" />
+    <link rel="stylesheet" href="/prototypes/companion-mic-button.css?v=2026-09-18-v234-minimal-ui" />
+    <link rel="stylesheet" href="/prototypes/companion-minimal-ui.css?v=2026-09-18-v234-minimal-ui" />
     <noscript>
       <link
         href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap"
@@ -2108,7 +2109,7 @@
         transform: none;
       }
 
-      body.conversation-ui .topbar-actions .topbar-btn:not(#btn-open-setup):not(#btn-toggle-chat):not(#btn-open-scene):not(#btn-talk-speed),
+      body.conversation-ui .topbar-actions .topbar-btn,
       body.conversation-ui .topbar-actions #btn-settings,
       body.conversation-ui .llm-switcher-wrap,
       body.conversation-ui .cloud-key-banner button,
@@ -4149,19 +4150,19 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-18-v233-lip-face-sync",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-18-v234-minimal-ui",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-18-v233-lip-face-sync",
-          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-18-v233-lip-face-sync"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-18-v234-minimal-ui",
+          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-18-v234-minimal-ui"
         }
       }
     </script>
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-18-v233-lip-face-sync"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-18-v234-minimal-ui"
     />
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-18-v233-lip-face-sync"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-18-v233-lip-face-sync"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-18-v234-minimal-ui"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-18-v234-minimal-ui"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;
@@ -4354,7 +4355,7 @@
       })();
     </script>
   </head>
-  <body class="theme-grok-ani conversation-ui composer-text-mode composer-always-visible companion-clean-ui">
+  <body class="theme-grok-ani conversation-ui composer-text-mode composer-always-visible companion-clean-ui companion-minimal-chrome">
     <!-- amoji-build: 2026-09-14-v37-companion-picker — Grok Ani–style character grid -->
     <noscript>
       <div
@@ -4428,65 +4429,6 @@
           <div class="pill" id="mode-pill" hidden aria-hidden="true">LLM · <strong>local</strong></div>
           <div class="pill" id="emotion-pill" hidden aria-hidden="true">feel · <strong>neutral</strong></div>
           <span class="ui-context-pill" id="ui-context-pill" hidden></span>
-          <button
-            type="button"
-            class="topbar-btn topbar-btn--icon is-active"
-            id="btn-toggle-chat"
-            aria-label="Chat"
-            title="Chat"
-            aria-pressed="true"
-          >
-            <svg class="btn-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" aria-hidden="true">
-              <path
-                d="M6.2 5.6h11.6A2.2 2.2 0 0 1 20 7.8v6.2a2.2 2.2 0 0 1-2.2 2.2h-4.05L8.55 19.4c-.6.38-1.35-.12-1.35-.82v-2.38H6.2A2.2 2.2 0 0 1 4 14V7.8A2.2 2.2 0 0 1 6.2 5.6Z"
-                stroke="currentColor"
-                stroke-width="1.75"
-                stroke-linejoin="round"
-              />
-            </svg>
-          </button>
-          <button
-            type="button"
-            class="topbar-btn topbar-btn--icon topbar-btn--speed"
-            id="btn-talk-speed"
-            aria-label="Talking speed"
-            title="Talking speed"
-          >
-            <span class="talk-speed-label" id="btn-talk-speed-label">½×</span>
-          </button>
-          <button
-            type="button"
-            class="topbar-btn topbar-btn--icon"
-            id="btn-open-scene"
-            aria-label="Look and scene"
-            title="Look & scene"
-          >
-            <svg class="btn-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" aria-hidden="true">
-              <path
-                d="M12.15 4.5a7.6 7.6 0 1 0 .05 15.2c.88 0 1.4-.7 1.4-1.46 0-.38-.14-.72-.38-.98-.24-.27-.38-.62-.38-1 0-.8.64-1.44 1.44-1.44h2.05a3.72 3.72 0 0 0 0-7.44H15"
-                stroke="currentColor"
-                stroke-width="1.75"
-                stroke-linecap="round"
-              />
-              <circle cx="8.25" cy="10.2" r="1.05" fill="currentColor" />
-              <circle cx="10.7" cy="7.65" r="1.05" fill="currentColor" />
-              <circle cx="14.15" cy="7.85" r="1.05" fill="currentColor" />
-              <circle cx="8.7" cy="13.55" r="1.05" fill="currentColor" />
-            </svg>
-          </button>
-          <button
-            type="button"
-            class="topbar-btn topbar-btn--icon"
-            id="btn-open-setup"
-            aria-label="Menu"
-            title="Menu"
-          >
-            <svg class="btn-icon" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
-              <circle cx="6.2" cy="12" r="1.55" fill="currentColor" />
-              <circle cx="12" cy="12" r="1.55" fill="currentColor" />
-              <circle cx="17.8" cy="12" r="1.55" fill="currentColor" />
-            </svg>
-          </button>
           <button type="button" class="gear" id="btn-settings" title="Chat settings" aria-label="Settings" hidden>⚙</button>
         </div>
       </header>
@@ -4501,7 +4443,7 @@
         hidden
       >
         <header class="settings-head">
-          <h2 class="settings-page-title" id="settings-page-title">Setup</h2>
+          <h2 class="settings-page-title" id="settings-page-title">Menu</h2>
           <button type="button" class="settings-close" id="settings-close" aria-label="Close setup">
             <svg class="btn-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" aria-hidden="true">
               <path d="M6.2 6.2 17.8 17.8M17.8 6.2 6.2 17.8" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" />
@@ -4510,8 +4452,13 @@
         </header>
         <p class="settings-section-title" id="settings-session-title">Session</p>
         <button type="button" class="btn-secondary" id="settings-btn-lang">Language</button>
+        <button type="button" class="btn-secondary" id="settings-btn-chat">Chat: visible</button>
+        <button type="button" class="btn-secondary" id="settings-btn-talk-speed">
+          <span id="settings-talk-speed-label">Talking speed: 0.45×</span>
+        </button>
         <p class="settings-section-title" id="settings-look-title">Look &amp; scene</p>
         <button type="button" class="btn-secondary" id="settings-btn-scene">Background</button>
+        <button type="button" class="btn-secondary" id="settings-btn-scene-sheet">Look &amp; scene</button>
         <p class="settings-hint" id="settings-outfit-hint">Background &amp; lighting — outfit swaps roll out per character.</p>
         <p class="settings-section-title" id="settings-companion-title">Companion</p>
         <button type="button" class="btn-secondary" id="settings-btn-companions">Switch companion</button>
@@ -4623,7 +4570,7 @@
             <div class="emotion-ball" id="emotion-ball" data-ball-state="idle" hidden></div>
             <p class="emotion-ball__caption" id="emotion-ball-caption" hidden>Ready · neutral</p>
           </div>
-          <form class="composer composer-minimal" id="composer">
+          <form class="composer composer-minimal composer-pro" id="composer">
             <button
               type="button"
               class="icon-btn mic-btn"
@@ -4660,13 +4607,37 @@
                 </svg>
               </span>
             </button>
-            <textarea
-              id="input"
-              rows="1"
-              placeholder="輸入…"
-              enterkeyhint="send"
-            ></textarea>
-            <button class="send" id="send" type="submit" aria-label="Send">
+            <div class="composer-field">
+              <textarea
+                id="input"
+                rows="1"
+                placeholder="輸入…"
+                enterkeyhint="send"
+                aria-label="Message"
+              ></textarea>
+            </div>
+            <button
+              type="button"
+              class="composer-settings-btn"
+              id="btn-open-setup"
+              aria-label="Menu"
+              title="Menu"
+            >
+              <svg class="btn-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" aria-hidden="true">
+                <path
+                  d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"
+                  stroke="currentColor"
+                  stroke-width="1.75"
+                />
+                <path
+                  d="M19.4 15a7.9 7.9 0 0 0 .05-.98 7.9 7.9 0 0 0-.05-.98M4.6 15a7.9 7.9 0 0 1-.05-.98 7.9 7.9 0 0 1 .05-.98M19.4 9a7.9 7.9 0 0 0 .05.98 7.9 7.9 0 0 0-.05.98M4.6 9a7.9 7.9 0 0 1 .05.98 7.9 7.9 0 0 1-.05.98"
+                  stroke="currentColor"
+                  stroke-width="1.75"
+                  stroke-linecap="round"
+                />
+              </svg>
+            </button>
+            <button class="send" id="send" type="submit" aria-label="Send" tabindex="-1">
               <svg class="btn-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" aria-hidden="true">
                 <path
                   d="M12 18.5V5.5M6.7 11 12 5.5 17.3 11"
@@ -4757,7 +4728,7 @@
         ami("../amoji-engine/engine/companion/companionCleanUi.js"),
         ami("../amoji-engine/engine/companion/companionStagePreview.js"),
       ]);
-      const { talkSpeedButtonTitle } = talkSpeedMod;
+      const { talkSpeedButtonTitle, formatTalkSpeedLabel } = talkSpeedMod;
       const {
         cleanComposerPlaceholder,
         shouldShowChatBubble,
@@ -5230,10 +5201,10 @@
       const settingsPageTitle = document.getElementById("settings-page-title");
       const btnSettings = document.getElementById("btn-settings");
       const btnOpenSetup = document.getElementById("btn-open-setup");
-      const btnToggleChat = document.getElementById("btn-toggle-chat");
-      const btnOpenScene = document.getElementById("btn-open-scene");
-      const btnTalkSpeed = document.getElementById("btn-talk-speed");
-      const btnTalkSpeedLabel = document.getElementById("btn-talk-speed-label");
+      const settingsBtnChat = document.getElementById("settings-btn-chat");
+      const settingsBtnTalkSpeed = document.getElementById("settings-btn-talk-speed");
+      const settingsTalkSpeedLabel = document.getElementById("settings-talk-speed-label");
+      const settingsBtnSceneSheet = document.getElementById("settings-btn-scene-sheet");
       const btnMic = document.getElementById("btn-mic");
       const emotionBallEl = document.getElementById("emotion-ball");
       const atmosphereEl = document.querySelector(".atmosphere");
@@ -5417,19 +5388,17 @@
 
       const syncChatPanelUi = () => {
         const visible = !document.body.classList.contains("chat-panel-hidden");
-        if (btnToggleChat) {
-          btnToggleChat.classList.toggle("is-active", visible);
-          btnToggleChat.setAttribute("aria-pressed", visible ? "true" : "false");
-          btnToggleChat.title = isEnglish
+        if (settingsBtnChat) {
+          settingsBtnChat.textContent = isEnglish
             ? visible
-              ? "Hide chat panel"
-              : "Show chat panel"
+              ? "Chat: visible"
+              : "Chat: hidden"
             : visible
-              ? "收起對話"
-              : "顯示對話";
-          btnToggleChat.setAttribute(
-            "aria-label",
-            isEnglish ? "Chat panel" : "對話面板",
+              ? "對話：顯示"
+              : "對話：收起";
+          settingsBtnChat.setAttribute(
+            "aria-pressed",
+            visible ? "true" : "false",
           );
         }
       };
@@ -5568,16 +5537,7 @@
       };
 
       const syncTopbarActionLabels = () => {
-        if (btnToggleChat) {
-          syncChatPanelUi();
-        }
-        if (btnOpenScene) {
-          btnOpenScene.title = isEnglish ? "Look & scene" : "造型同場景";
-          btnOpenScene.setAttribute(
-            "aria-label",
-            isEnglish ? "Look and scene" : "造型同場景",
-          );
-        }
+        syncChatPanelUi();
         if (btnOpenSetup) {
           btnOpenSetup.title = isEnglish
             ? "Menu — language, voice, companion, brain"
@@ -5587,8 +5547,13 @@
             isEnglish ? "Menu" : "選單",
           );
         }
+        if (settingsBtnSceneSheet) {
+          settingsBtnSceneSheet.textContent = isEnglish
+            ? "Look & scene"
+            : "造型同場景";
+        }
         if (settingsPageTitle) {
-          settingsPageTitle.textContent = isEnglish ? "Setup" : "設定";
+          settingsPageTitle.textContent = isEnglish ? "Menu" : "選單";
         }
         if (settingsClose) {
           settingsClose.setAttribute(
@@ -6751,19 +6716,28 @@
       voice.setCharacterId?.(characterId);
 
       const syncTalkSpeedBtn = () => {
-        if (!btnTalkSpeed || !btnTalkSpeedLabel || !voice?.getTalkSpeed) return;
+        if (!voice?.getTalkSpeed) return;
         const speed = voice.getTalkSpeed();
-        btnTalkSpeedLabel.textContent = speed === 0.5 ? "½×" : speed === 1 ? "1×" : `${speed}×`;
-        btnTalkSpeed.title = talkSpeedButtonTitle(speed, isEnglish);
-        btnTalkSpeed.setAttribute(
-          "aria-label",
-          isEnglish ? `Talking speed ${speed}×` : `講嘢速度 ${speed}×`,
-        );
+        const label = formatTalkSpeedLabel(speed, isEnglish);
+        if (settingsTalkSpeedLabel) {
+          settingsTalkSpeedLabel.textContent = isEnglish
+            ? `Talking speed: ${label}`
+            : `講嘢速度：${label}`;
+        }
+        if (settingsBtnTalkSpeed) {
+          settingsBtnTalkSpeed.title = talkSpeedButtonTitle(speed, isEnglish);
+          settingsBtnTalkSpeed.setAttribute(
+            "aria-label",
+            isEnglish ? `Talking speed ${speed}×` : `講嘢速度 ${speed}×`,
+          );
+        }
       };
       syncTalkSpeedBtn();
-      btnTalkSpeed?.addEventListener("click", () => {
+      settingsBtnTalkSpeed?.addEventListener("click", () => {
         voice?.cycleTalkSpeed?.();
         syncTalkSpeedBtn();
+        uiAudio?.play?.("select");
+        uiAudio?.haptic?.("light");
       });
 
       const ensureMotionClient = async () => {
@@ -7090,10 +7064,13 @@
         closeSceneSheet();
         openSetup();
       });
-      btnToggleChat?.addEventListener("click", () => {
+      settingsBtnChat?.addEventListener("click", () => {
         setChatPanelVisible(document.body.classList.contains("chat-panel-hidden"));
       });
-      btnOpenScene?.addEventListener("click", openSceneSheet);
+      settingsBtnSceneSheet?.addEventListener("click", () => {
+        closeSettings();
+        openSceneSheet();
+      });
       settingsBtnScene?.addEventListener("click", () => {
         closeSettings();
         openSceneSheet();
