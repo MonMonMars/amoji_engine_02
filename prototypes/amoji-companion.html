@@ -8,9 +8,9 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji · Companion</title>
     <script>
-      window.__amojiBuild = "2026-09-18-v229-aaa-ui-sfx-orb";
+      window.__amojiBuild = "2026-09-18-v230-aaa-ui-complete";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-18-v229-aaa-ui-sfx-orb"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-18-v230-aaa-ui-complete"></script>
     <link
       rel="prefetch"
       href="/prototypes/assets/companion-char-nova.png"
@@ -487,8 +487,8 @@
       media="print"
       onload="this.media='all'"
     />
-    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-18-v229-aaa-ui-sfx-orb" />
-    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-18-v229-aaa-ui-sfx-orb" />
+    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-18-v230-aaa-ui-complete" />
+    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-18-v230-aaa-ui-complete" />
     <noscript>
       <link
         href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap"
@@ -3440,6 +3440,37 @@
         min-width: 7.5rem;
       }
 
+      .settings-range {
+        display: grid;
+        gap: 0.35rem;
+        margin: 0.15rem 0 0.35rem;
+        font-size: 0.72rem;
+        color: var(--muted);
+      }
+
+      .settings-range input[type="range"] {
+        width: 100%;
+        accent-color: var(--accent);
+        padding: 0;
+        border: 0;
+        background: transparent;
+      }
+
+      .settings-toggle {
+        display: flex;
+        align-items: center;
+        gap: 0.55rem;
+        margin: 0 0 0.45rem;
+        font-size: 0.72rem;
+        color: var(--muted);
+        cursor: pointer;
+      }
+
+      .settings-toggle input {
+        width: auto;
+        accent-color: var(--accent);
+      }
+
       .settings-llm-panel {
         margin: 0.15rem 0 0.35rem;
         padding: 0.55rem 0.15rem 0.15rem;
@@ -4188,19 +4219,19 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-18-v229-aaa-ui-sfx-orb",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-18-v230-aaa-ui-complete",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-18-v229-aaa-ui-sfx-orb",
-          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-18-v229-aaa-ui-sfx-orb"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-18-v230-aaa-ui-complete",
+          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-18-v230-aaa-ui-complete"
         }
       }
     </script>
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-18-v229-aaa-ui-sfx-orb"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-18-v230-aaa-ui-complete"
     />
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-18-v229-aaa-ui-sfx-orb"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-18-v229-aaa-ui-sfx-orb"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-18-v230-aaa-ui-complete"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-18-v230-aaa-ui-complete"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;
@@ -4559,6 +4590,23 @@
         <div class="settings-row">
           <button type="button" class="btn-secondary" id="settings-btn-speaker">Speaker: on</button>
         </div>
+        <p class="settings-section-title" id="settings-sound-title">Sound effects</p>
+        <label class="settings-range" id="settings-sfx-volume-wrap">
+          <span id="settings-sfx-volume-label">UI sounds: 42%</span>
+          <input
+            type="range"
+            id="settings-sfx-volume"
+            min="0"
+            max="100"
+            step="5"
+            value="42"
+            aria-labelledby="settings-sfx-volume-label"
+          />
+        </label>
+        <label class="settings-toggle" id="settings-haptics-wrap">
+          <input type="checkbox" id="settings-haptics" checked />
+          <span id="settings-haptics-label">Haptic feedback</span>
+        </label>
         <p class="settings-section-title" id="settings-advanced-title">Advanced</p>
         <button type="button" class="btn-secondary" id="settings-btn-camera">Reset camera view</button>
         <div class="settings-links">
@@ -4792,15 +4840,41 @@
         openUiOverlay,
         closeUiOverlay,
       } = uiEffectsMod;
-      const [uiAudioMod, uiParticlesMod] = await Promise.all([
+      const [uiAudioMod, uiParticlesMod, uiSettingsMod, uiGachaMod] = await Promise.all([
         ami("../amoji-engine/engine/companion/companionUiAudio.js"),
         ami("../amoji-engine/engine/companion/companionUiParticles.js"),
+        ami("../amoji-engine/engine/companion/companionUiSettings.js"),
+        ami("../amoji-engine/engine/companion/companionUiGacha.js"),
       ]);
       const { createCompanionUiAudio } = uiAudioMod;
       const { spawnUiRingBurst } = uiParticlesMod;
-      const uiAudio = createCompanionUiAudio();
-      initCompanionUiEffects(document, { audio: uiAudio });
+      const {
+        applyUiSettingsToAudio,
+        formatSfxVolumeLabel,
+        loadUiSettings,
+        saveUiSettings,
+      } = uiSettingsMod;
+      const {
+        celebrateCompanionSwitchReveal,
+        playCompanionCardTapFx,
+        playStartPickerDismissFx,
+      } = uiGachaMod;
+      const uiSettings = loadUiSettings();
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        uiSettings.reducedMotion = true;
+      }
+      const uiAudio = createCompanionUiAudio({
+        volume: uiSettings.sfxVolume,
+        haptics: uiSettings.haptics,
+        reducedMotion: uiSettings.reducedMotion,
+      });
+      applyUiSettingsToAudio(uiAudio, uiSettings);
+      initCompanionUiEffects(document, {
+        audio: uiAudio,
+        reducedMotion: uiSettings.reducedMotion,
+      });
       window.__amojiUiAudio = uiAudio;
+      window.__amojiUiSettings = uiSettings;
       const { buildBootChitchatReply, isBootChitchatPhase } = bootChitchatMod;
       const { createCompanionStagePreview } = stagePreviewMod;
       window.__amojiModuleBooted = true;
@@ -5239,6 +5313,11 @@
       const settingsBtnLang = document.getElementById("settings-btn-lang");
       const settingsVoiceNote = document.getElementById("settings-voice-note");
       const settingsBtnSpeaker = document.getElementById("settings-btn-speaker");
+      const settingsSfxVolume = document.getElementById("settings-sfx-volume");
+      const settingsSfxVolumeLabel = document.getElementById("settings-sfx-volume-label");
+      const settingsHaptics = document.getElementById("settings-haptics");
+      const settingsSoundTitle = document.getElementById("settings-sound-title");
+      const settingsHapticsLabel = document.getElementById("settings-haptics-label");
       const settingsBtnScene = document.getElementById("settings-btn-scene");
       const settingsBtnCompanions = document.getElementById("settings-btn-companions");
       const settingsBtnCamera = document.getElementById("settings-btn-camera");
@@ -5432,6 +5511,8 @@
         document.body.classList.toggle("chat-panel-hidden", !visible);
         persistChatPanelVisible(visible);
         syncChatPanelUi();
+        uiAudio?.play?.(visible ? "toggle-on" : "toggle-off");
+        uiAudio?.haptic?.("light");
       };
 
       const syncSceneSettingsLabel = () => {
@@ -5518,12 +5599,16 @@
         activeSceneBgId = applySceneBackground(atmosphereEl, backgroundId);
         persistSceneBackground(activeSceneBgId);
         renderScenePresets();
+        uiAudio?.play?.("select");
+        uiAudio?.haptic?.("light");
       };
 
       const selectSceneOutfit = (outfitId) => {
         activeSceneOutfitId = persistSceneOutfit(characterId, outfitId);
         applyActiveSceneOutfit();
         renderScenePresets();
+        uiAudio?.play?.("select");
+        uiAudio?.haptic?.("light");
         const preset =
           SCENE_OUTFIT_PRESETS.find((p) => p.id === activeSceneOutfitId) ||
           SCENE_OUTFIT_PRESETS[0];
@@ -6324,11 +6409,19 @@
       };
       input.addEventListener("input", autosize);
 
+      let lastLivePulseAt = 0;
       const applyMicMeterVisual = (level) => {
         micUi.setLevel(level);
         emotionBallLevel = level;
         emotionBall.setLevel(level);
         syncEmotionBall();
+        if (voice?.micOn && level > 0.08) {
+          const now = Date.now();
+          if (now - lastLivePulseAt > 130) {
+            uiAudio?.play?.("live-pulse");
+            lastLivePulseAt = now;
+          }
+        }
       };
 
       const syncListenHint = () => {
@@ -6427,6 +6520,52 @@
                 : "喇叭已關",
           );
         }
+      };
+
+      const syncUiSettingsControls = () => {
+        const pct = Math.round((uiSettings.sfxVolume ?? 0.42) * 100);
+        if (settingsSfxVolume) settingsSfxVolume.value = String(pct);
+        if (settingsSfxVolumeLabel) {
+          settingsSfxVolumeLabel.textContent = formatSfxVolumeLabel(pct, isEnglish);
+        }
+        if (settingsHaptics) settingsHaptics.checked = uiSettings.haptics !== false;
+        if (settingsSoundTitle) {
+          settingsSoundTitle.textContent = isEnglish ? "Sound effects" : "介面音效";
+        }
+        if (settingsHapticsLabel) {
+          settingsHapticsLabel.textContent = isEnglish ? "Haptic feedback" : "觸感回饋";
+        }
+      };
+
+      const persistUiSettings = () => {
+        saveUiSettings(uiSettings);
+        applyUiSettingsToAudio(uiAudio, uiSettings);
+        window.__amojiUiSettings = uiSettings;
+      };
+
+      settingsSfxVolume?.addEventListener("input", () => {
+        const pct = Math.max(0, Math.min(100, Number(settingsSfxVolume.value) || 0));
+        uiSettings.sfxVolume = pct / 100;
+        if (settingsSfxVolumeLabel) {
+          settingsSfxVolumeLabel.textContent = formatSfxVolumeLabel(pct, isEnglish);
+        }
+        uiAudio?.setVolume?.(uiSettings.sfxVolume);
+        uiAudio?.play?.("tap");
+        persistUiSettings();
+      });
+
+      settingsHaptics?.addEventListener("change", () => {
+        uiSettings.haptics = Boolean(settingsHaptics.checked);
+        uiAudio?.setHaptics?.(uiSettings.haptics);
+        if (uiSettings.haptics) uiAudio?.haptic?.("light");
+        uiAudio?.play?.("toggle-on");
+        persistUiSettings();
+      });
+
+      const playCompanionCardSelectFx = (card, item) => {
+        playCompanionCardTapFx(card, item);
+        uiAudio?.play?.("select");
+        uiAudio?.haptic?.("medium");
       };
 
       let speakEmotion = "neutral";
@@ -6845,6 +6984,7 @@
         const name = characterDisplayName(nextId, langCode, isEnglish);
         switchOverlay.show(
           isEnglish ? `Loading ${name}…` : `載入 ${name} 中…`,
+          getCharacter(nextId),
         );
         try {
           const result = await switchCompanionCharacter({
@@ -6877,7 +7017,9 @@
           syncAvatarPerformance();
           applyCharacterSession(nextId, { announce: false });
           raisingHub?.setCharacter?.(nextId);
-          uiAudio?.play?.("select");
+          switchOverlay.celebrate?.();
+          celebrateCompanionSwitchReveal(switchOverlay.element);
+          uiAudio?.play?.("success");
           uiAudio?.haptic?.("medium");
           spawnUiRingBurst(canvas, { hue: 212 });
           addBubble(
@@ -6903,6 +7045,7 @@
       const characterPicker = createCompanionCharacterPicker({
         isEnglish,
         selectedId: characterId,
+        onCardTapFx: playCompanionCardSelectFx,
         onSelect: (nextId) => {
           characterPicker.close();
           void hotSwapCharacter(nextId);
@@ -6947,6 +7090,7 @@
         root: document.body,
         isEnglish,
         selectedId: characterId,
+        onCardTapFx: playCompanionCardSelectFx,
         onStart: (nextId) => {
           window.__amojiUnlockAudio?.();
           dismissLoading();
@@ -7714,6 +7858,9 @@
         }
 
         startPicker?.setStarting?.(false);
+        playStartPickerDismissFx(startPicker?.element);
+        uiAudio?.play?.("page");
+        globalThis.setTimeout?.(() => uiAudio?.play?.("success"), 180);
         document.body.classList.remove("companion-start-pending", "companion-picker-open");
         if (typeof window.__amojiDismissStartButton === "function") {
           window.__amojiDismissStartButton();
@@ -7943,6 +8090,7 @@
       };
 
       syncSpeakerBtn();
+      syncUiSettingsControls();
       syncMicBtn();
 
       const llmSwitcher = createCompanionLlmSwitcher({
@@ -8097,6 +8245,7 @@
         );
         careTools.refreshLabels?.();
         raisingHub.refresh?.();
+        syncUiSettingsControls();
       };
 
       const switchLanguage = () => {
@@ -8106,7 +8255,10 @@
 
       const toggleSpeaker = () => {
         unlockAudioSync();
-        voice.setSpeakerOn(!voice.speakerOn);
+        const nextOn = !voice.speakerOn;
+        voice.setSpeakerOn(nextOn);
+        uiAudio?.play?.(nextOn ? "toggle-on" : "toggle-off");
+        uiAudio?.haptic?.("light");
         syncSpeakerBtn();
         addBubble(
           "system",
