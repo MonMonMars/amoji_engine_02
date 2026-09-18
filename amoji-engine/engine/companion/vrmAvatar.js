@@ -49,6 +49,7 @@ import {
 import {
   isOnlineIdleAction,
   isOnlineLoopingLibraryAction,
+  ONLINE_CALM_IDLE_ACTION,
   resolveOnlineMotionClipUrl,
 } from "./companionOnlineMotionClips.mjs";
 import {
@@ -58,6 +59,12 @@ import {
   resolveTalkLibraryAction,
 } from "./companionTalkMotionLibrary.mjs";
 import { createVrmMotionPlayer } from "./companionVrmMotionPlayer.js";
+import {
+  captureVrmBoneRotations,
+  createMotionTransitionState,
+  DEFAULT_MOTION_CROSSFADE_SEC,
+  tickVrmMotionTransition,
+} from "./vrmMotionTransition.js";
 import { sampleIdleExpressionBlend } from "./companionIdleMotion.js";
 import {
   configureVrmSpringStability,
@@ -293,6 +300,8 @@ export async function createVrmAvatar(opts) {
   bodyMotion.setFingerFlexAxis?.(inferFingerFlexAxis(vrm.humanoid));
   let springIdleState = createIdleSpringRecenterState();
   let springTalkState = createIdleSpringRecenterState();
+  /** @type {ReturnType<typeof createMotionTransitionState>} */
+  let motionTransitionState = null;
   /** @type {string | null} */
   let vrmaAction = null;
   let vrmaPending = false;
@@ -346,24 +355,37 @@ export async function createVrmAvatar(opts) {
     void resumeCalmStand();
   };
 
+  const playCalmLibraryIdle = () => {
+    if (
+      motionPlayer.isPlaying?.() &&
+      vrmaAction === ONLINE_CALM_IDLE_ACTION &&
+      !vrmaPending
+    ) {
+      return true;
+    }
+    if (!motionPlayer.isPlaying?.()) {
+      motionTransitionState = createMotionTransitionState(
+        captureVrmBoneRotations(vrm),
+        DEFAULT_MOTION_CROSSFADE_SEC,
+      );
+    } else {
+      motionTransitionState = null;
+    }
+    return tryPlayVrmaAction(ONLINE_CALM_IDLE_ACTION, { loop: true });
+  };
+
   const restorePlantedIdle = () => {
     vrmaPlayGen += 1;
     vrmaPending = false;
-    vrmaAction = null;
     vrmaSequenceQueue = [];
     vrmaSequenceOpts = null;
-    motionPlayer.releasePose?.();
-    try {
-      vrm.humanoid?.resetNormalizedPose?.();
-    } catch {
-      /* ignore */
-    }
+    bodyMotion.holdForLibraryMotion?.();
     const rest = detectVrmIdleRestRotations(vrm);
     bodyMotion.setArmRestRotations?.(rest.arms);
     bodyMotion.setLegRestRotations?.(rest.legs);
     bodyMotion.setArmBind?.(rest.bind);
-    bodyMotion.snapToRestPose?.();
     syncHumanoidPose();
+    void playCalmLibraryIdle();
     syncSpringsAfterPose();
     springIdleState = createIdleSpringRecenterState();
     springTalkState = createIdleSpringRecenterState();
@@ -736,7 +758,19 @@ export async function createVrmAvatar(opts) {
     const gen = ++vrmaPlayGen;
     vrmaPending = true;
     vrmaAction = key;
-    const ok = await motionPlayer.play(key, { loop });
+    const wasLibraryPlaying = motionPlayer.isPlaying?.();
+    if (!wasLibraryPlaying) {
+      motionTransitionState = createMotionTransitionState(
+        captureVrmBoneRotations(vrm),
+        DEFAULT_MOTION_CROSSFADE_SEC,
+      );
+    } else if (motionPlayer.activeActionId !== key) {
+      motionTransitionState = null;
+    }
+    const ok = await motionPlayer.play(key, {
+      loop,
+      transitionSec: DEFAULT_MOTION_CROSSFADE_SEC,
+    });
     if (gen !== vrmaPlayGen) return true;
     vrmaPending = false;
     if (!ok) {
@@ -1078,7 +1112,7 @@ export async function createVrmAvatar(opts) {
     if (vrmaAction && !vrmaPlaying && !vrmaPending) {
       restoreAfterVrma();
     }
-    const libraryMotion = vrmaPlaying && vrmaAction !== "idle";
+    const libraryMotion = vrmaPlaying && Boolean(vrmaAction);
     if (libraryMotion && !wasLibraryMotion) {
       bodyMotion.holdForLibraryMotion?.(now);
     }
@@ -1091,6 +1125,10 @@ export async function createVrmAvatar(opts) {
         bodyMotion.update(dt, { talking, now });
       }
       motionPlayer.update(dt);
+      if (motionTransitionState) {
+        const tick = tickVrmMotionTransition(vrm, motionTransitionState, dt);
+        motionTransitionState = tick.state;
+      }
       if (!libraryMotion) {
         const root = bodyMotion.getRootMotion?.() || { y: 0, rotY: 0 };
         model.position.y = baseModelY + (root.y || 0);
@@ -1232,6 +1270,12 @@ export async function createVrmAvatar(opts) {
   renderer.render(scene, camera);
   void motionPlayer.warmClip("wave");
   void motionPlayer.warmClip("thinking");
+  void motionPlayer.warmClip(ONLINE_CALM_IDLE_ACTION);
+  motionTransitionState = createMotionTransitionState(
+    captureVrmBoneRotations(vrm),
+    DEFAULT_MOTION_CROSSFADE_SEC,
+  );
+  void playCalmLibraryIdle();
   raf = requestAnimationFrame(frame);
   globalThis.addEventListener?.("resize", resize);
 

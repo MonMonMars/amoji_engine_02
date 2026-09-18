@@ -10,12 +10,13 @@ import {
 import { getPreloadedIdleVrmaBuffer } from "./companionIdleMotionPreload.js";
 import {
   isOnlineLoopingLibraryAction,
-  ONLINE_IDLE_ACTION,
+  ONLINE_CALM_IDLE_ACTION,
   resolveOnlineMotionClipUrl,
 } from "./companionOnlineMotionClips.mjs";
+import { DEFAULT_MOTION_CROSSFADE_SEC } from "./vrmMotionTransition.js";
 
 export const COMPANION_VRM_MOTION_PLAYER_SCHEMA =
-  "amoji.companionVrmMotionPlayer.v1";
+  "amoji.companionVrmMotionPlayer.v2";
 
 /**
  * @param {{
@@ -42,16 +43,51 @@ export function createVrmMotionPlayer(opts) {
   const clipCache = new Map();
   /** @type {Map<string, Promise<THREE.AnimationClip | null>>} */
   const inflight = new Map();
+  /** @type {{ action: THREE.AnimationAction, stopAtMs: number }[]} */
+  let retiringActions = [];
 
-  const haltAction = (resetPose) => {
-    if (clipAction) {
-      clipAction.fadeOut(0.12);
-      clipAction.stop();
-      clipAction.reset();
-      clipAction = null;
+  const scheduleRetireAction = (action, transitionSec) => {
+    if (!action) return;
+    retiringActions.push({
+      action,
+      stopAtMs: performance.now() + transitionSec * 1000 + 80,
+    });
+  };
+
+  const cleanupRetiredActions = () => {
+    if (!retiringActions.length) return;
+    const now = performance.now();
+    retiringActions = retiringActions.filter(({ action, stopAtMs }) => {
+      if (now < stopAtMs) return true;
+      try {
+        action.stop();
+        action.reset();
+      } catch {
+        /* ignore */
+      }
+      return false;
+    });
+  };
+
+  const stopActionInstance = (action, transitionSec = 0.12) => {
+    if (!action) return;
+    try {
+      if (transitionSec > 0 && action.isRunning?.()) {
+        action.fadeOut(transitionSec);
+        scheduleRetireAction(action, transitionSec);
+        return;
+      }
+      action.stop();
+      action.reset();
+    } catch {
+      /* ignore */
     }
-    if (mixer) {
-      mixer.stopAllAction();
+  };
+
+  const haltAction = (resetPose, transitionSec = 0) => {
+    if (clipAction) {
+      stopActionInstance(clipAction, transitionSec);
+      clipAction = null;
     }
     activeActionId = null;
     if (resetPose) {
@@ -59,16 +95,19 @@ export function createVrmMotionPlayer(opts) {
     }
   };
 
-  const releasePose = () => {
-    haltAction(true);
+  const releasePose = (transitionSec = DEFAULT_MOTION_CROSSFADE_SEC) => {
+    haltAction(false, transitionSec);
   };
 
   const ensureMixer = () => {
     if (!mixer) {
       mixer = new THREE.AnimationMixer(vrm.scene);
       mixer.addEventListener("finished", () => {
+        if (clipAction) {
+          clipAction.clampWhenFinished = true;
+          clipAction.paused = true;
+        }
         const completed = activeActionId;
-        haltAction(false);
         opts.onComplete?.(completed);
       });
     }
@@ -103,13 +142,13 @@ export function createVrmMotionPlayer(opts) {
     return job;
   };
 
-  const stop = () => {
-    haltAction(false);
+  const stop = (transitionSec = DEFAULT_MOTION_CROSSFADE_SEC) => {
+    haltAction(false, transitionSec);
   };
 
   /**
    * @param {string} actionId
-   * @param {{ loop?: boolean }} [playOpts]
+   * @param {{ loop?: boolean, transitionSec?: number }} [playOpts]
    */
   const play = async (actionId, playOpts = {}) => {
     const id = String(actionId || "").toLowerCase();
@@ -119,32 +158,53 @@ export function createVrmMotionPlayer(opts) {
     const loop = Boolean(
       playOpts.loop ?? isOnlineLoopingLibraryAction(id),
     );
+    const transitionSec =
+      Number(playOpts.transitionSec) > 0
+        ? Number(playOpts.transitionSec)
+        : DEFAULT_MOTION_CROSSFADE_SEC;
+
     if (loop && activeActionId === id && clipAction?.isRunning?.()) {
+      if (clipAction.paused) clipAction.paused = false;
       return true;
     }
 
     const clip = await loadClip(url);
     if (!clip) return false;
 
-    haltAction(false);
     const mx = ensureMixer();
-    clipAction = mx.clipAction(clip);
-    clipAction.reset();
-    clipAction.setLoop(
+    const previousAction = clipAction?.paused ? clipAction : clipAction;
+    if (previousAction?.paused) {
+      previousAction.paused = false;
+    }
+
+    const nextAction = mx.clipAction(clip);
+    nextAction.reset();
+    nextAction.setLoop(
       loop ? THREE.LoopRepeat : THREE.LoopOnce,
       loop ? Infinity : 1,
     );
-    clipAction.clampWhenFinished = false;
-    clipAction.fadeIn(0.2);
-    clipAction.play();
+    nextAction.clampWhenFinished = !loop;
+    nextAction.setEffectiveWeight(1);
+    nextAction.play();
+
+    if (previousAction && previousAction !== nextAction) {
+      nextAction.crossFadeFrom(previousAction, transitionSec, true);
+      scheduleRetireAction(previousAction, transitionSec);
+    } else {
+      nextAction.fadeIn(transitionSec);
+    }
+
+    clipAction = nextAction;
     activeActionId = id;
     return true;
   };
 
-  const playIdle = async () => play(ONLINE_IDLE_ACTION, { loop: true });
+  const playIdle = async (playOpts = {}) =>
+    play(ONLINE_CALM_IDLE_ACTION, { loop: true, ...playOpts });
 
   const update = (dt) => {
     mixer?.update(dt);
+    cleanupRetiredActions();
   };
 
   const warmClip = async (actionId) => {
@@ -161,14 +221,24 @@ export function createVrmMotionPlayer(opts) {
     update,
     warmClip,
     isPlaying() {
-      return Boolean(activeActionId && clipAction?.isRunning?.());
+      return Boolean(
+        activeActionId &&
+          clipAction &&
+          (clipAction.isRunning?.() || clipAction.paused),
+      );
     },
     isIdle() {
-      return isOnlineLoopingLibraryAction(activeActionId) && Boolean(clipAction?.isRunning?.());
+      return (
+        String(activeActionId || "").toLowerCase() === ONLINE_CALM_IDLE_ACTION &&
+        Boolean(clipAction?.isRunning?.() || clipAction?.paused)
+      );
     },
     releasePose,
     get activeActionId() {
       return activeActionId;
+    },
+    get crossfadeSec() {
+      return DEFAULT_MOTION_CROSSFADE_SEC;
     },
   };
 }

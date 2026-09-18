@@ -77,13 +77,15 @@ describe("companionOnlineMotionClips", () => {
     }
   });
 
-  it("keeps standing idle off Relax.vrma so rest is not an arms-up stretch", () => {
+  it("loops calm idle and talk tracks from the hosted library", () => {
     expect(resolveOnlineMotionClipUrl("idle")).toBeNull();
     expect(resolveOnlineMotionClipUrl("relax")).toMatch(/Relax\.vrma$/);
     expect(isOnlineIdleAction("idle")).toBe(true);
-    expect(isOnlineLoopingLibraryAction("idle")).toBe(false);
+    expect(isOnlineIdleAction("relax")).toBe(true);
+    expect(isOnlineLoopingLibraryAction("relax")).toBe(true);
     expect(isOnlineLoopingLibraryAction("thinking")).toBe(true);
     expect(isOnlineLoopingLibraryAction("wiggle")).toBe(true);
     expect(isOnlineLoopingLibraryAction("point")).toBe(true);
+    expect(isOnlineLoopingLibraryAction("wave")).toBe(false);
   });
 });
