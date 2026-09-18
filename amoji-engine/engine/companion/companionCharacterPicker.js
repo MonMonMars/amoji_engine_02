@@ -39,6 +39,19 @@ export const START_PICKER_PRELOAD_RING_HTML = `
   </div>
 `.trim();
 
+export const START_PICKER_PRELOAD_BAR_HTML = `
+  <div
+    class="start-picker-preload-track"
+    role="progressbar"
+    aria-valuemin="0"
+    aria-valuemax="100"
+    aria-valuenow="0"
+    aria-label="Download progress"
+  >
+    <div class="start-picker-preload-fill"></div>
+  </div>
+`.trim();
+
 /**
  * @param {ReturnType<typeof listCompanionCharacters>[number]} item
  * @param {{ selectedId?: string, compact?: boolean, eagerPreview?: boolean }} [ctx]
@@ -552,8 +565,11 @@ export function createCompanionStartPicker(opts = {}) {
       </div>
       <footer class="picker-footer">
         <div class="start-picker-preload" aria-live="polite">
-          ${START_PICKER_PRELOAD_RING_HTML}
-          <p class="start-picker-preload-label"></p>
+          <div class="start-picker-preload-row">
+            ${START_PICKER_PRELOAD_RING_HTML}
+            <p class="start-picker-preload-label"></p>
+          </div>
+          ${START_PICKER_PRELOAD_BAR_HTML}
         </div>
         <button type="button" class="picker-confirm-btn picker-begin-btn"></button>
         <p class="companion-picker-foot"></p>
@@ -570,6 +586,8 @@ export function createCompanionStartPicker(opts = {}) {
   const footEl = shell.querySelector(".companion-picker-foot");
   const preloadEl = shell.querySelector(".start-picker-preload");
   const preloadFill = shell.querySelector(".companion-progress-ring-fill");
+  const preloadBarFill = shell.querySelector(".start-picker-preload-fill");
+  const preloadTrack = shell.querySelector(".start-picker-preload-track");
   const preloadPctEl = shell.querySelector(".start-picker-preload-pct");
   const preloadLabel = shell.querySelector(".start-picker-preload-label");
   const gridWrapEl = shell.querySelector(".start-picker-grid-wrap");
@@ -606,6 +624,8 @@ export function createCompanionStartPicker(opts = {}) {
       preloadFill.setAttribute("stroke-dasharray", String(PROGRESS_RING_CIRCUMFERENCE));
       preloadFill.style.strokeDashoffset = String(progressRingOffset(clamped));
     }
+    if (preloadBarFill) preloadBarFill.style.width = `${clamped}%`;
+    if (preloadTrack) preloadTrack.setAttribute("aria-valuenow", String(clamped));
     if (preloadPctEl) preloadPctEl.textContent = `${clamped}%`;
     if (preloadLabel) {
       preloadLabel.textContent =
@@ -646,6 +666,7 @@ export function createCompanionStartPicker(opts = {}) {
     selectedId = id;
     renderAll();
     scrollSelectedIntoView();
+    opts.onSelectionChange?.(id);
   };
 
   const renderFeatured = () => {
@@ -737,8 +758,14 @@ export function createCompanionStartPicker(opts = {}) {
       renderAll();
       scrollSelectedIntoView();
     },
+    getSelectedId() {
+      return selectedId;
+    },
     setPreloadProgress(pct, label) {
-      preloadPct = Number(pct) || 0;
+      const n = Number(pct);
+      preloadPct =
+        Number.isFinite(n) && n > 0 && n <= 1 ? Math.round(n * 100) : Math.round(n) || 0;
+      preloadPct = Math.max(0, Math.min(100, preloadPct));
       if (label && preloadLabel) preloadLabel.textContent = label;
       const ready = preloadPct >= 100;
       if (ready !== preloadReady) {

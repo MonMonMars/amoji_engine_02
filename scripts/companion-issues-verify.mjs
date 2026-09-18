@@ -107,7 +107,7 @@ async function main() {
   const boot = await page.evaluate(() => {
     const picker = document.getElementById("start-character-picker");
     const ring = picker?.querySelector(".start-picker-preload-ring, .companion-progress-ring");
-    const bar = picker?.querySelector(".start-picker-preload-track, .companion-switch-bar");
+    const bar = picker?.querySelector(".start-picker-preload-track");
     const chip = document.getElementById("brand-btn");
     const orbit = document.getElementById("orbit-hit");
     const dock = document.querySelector(".companion-progress-dock-inner");
@@ -133,7 +133,7 @@ async function main() {
   record("picker-v4-hero", boot.hero);
   record("picker-begin-cta", boot.beginBtn);
   record("picker-featured-row", boot.featuredRow);
-  record("loading-ring-not-bar", boot.ring && !boot.bar && !boot.progressBarClass);
+  record("loading-ring-and-bar", boot.ring && boot.bar && boot.progressBarClass);
   record("character-chip", boot.chip);
   record("orbit-hit", boot.orbit);
   record("progress-dock-circle", boot.dockCircle);
