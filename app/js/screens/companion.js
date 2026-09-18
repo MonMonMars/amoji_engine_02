@@ -26,7 +26,7 @@ registerRoute("companion", (ctx) => {
     <iframe
       class="companion-frame"
       title="Amoji Companion"
-      src="/companion-full?lang=${lang}&mobile=1&character=${charId}&voice=openai-coral"
+      src="/companion-full?lang=${lang}&mobile=1&character=${charId}&role=${role}&voice=openai-coral"
       allow="microphone; autoplay"
     ></iframe>
   `;

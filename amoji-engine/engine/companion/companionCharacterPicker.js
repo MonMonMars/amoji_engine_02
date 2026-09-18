@@ -320,13 +320,16 @@ export function createCompanionCharacterPicker(opts = {}) {
   /** Live session character — updated by setSelected after hot-swap. */
   let activeCharacterId = opts.selectedId || "nova";
   let selectedId = activeCharacterId;
+  const roleRoster =
+    typeof opts.rosterProvider === "function" ? opts.rosterProvider : null;
   let filterId = "all";
   let query = "";
   let open = false;
   let unwireFeaturedKeys = () => {};
   let unwireRosterKeys = () => {};
-  const copy = pickerCopy(isEnglish);
-  const fullList = () => listCompanionCharacters(langCode);
+  const copy = { ...pickerCopy(isEnglish), ...(opts.pickerCopy || {}) };
+  const fullList = () =>
+    roleRoster ? roleRoster(langCode) : listCompanionCharacters(langCode);
 
   const shell = document.createElement("div");
   shell.className = "companion-picker companion-picker--v4";
@@ -535,6 +538,8 @@ export function createCompanionStartPicker(opts = {}) {
   const isEnglish = Boolean(opts.isEnglish);
   const langCode = isEnglish ? "en" : "yue";
   let selectedId = opts.selectedId || "nova";
+  const roleRoster =
+    typeof opts.rosterProvider === "function" ? opts.rosterProvider : null;
   let filterId = "all";
   let query = "";
   let starting = false;
@@ -543,8 +548,9 @@ export function createCompanionStartPicker(opts = {}) {
   let preloadReady = false;
   let unwireFeaturedKeys = () => {};
   let unwireRosterKeys = () => {};
-  const copy = pickerCopy(isEnglish);
-  const fullList = () => listCompanionCharacters(langCode);
+  const copy = { ...pickerCopy(isEnglish), ...(opts.pickerCopy || {}) };
+  const fullList = () =>
+    roleRoster ? roleRoster(langCode) : listCompanionCharacters(langCode);
 
   const shell = document.createElement("div");
   shell.className = "companion-picker companion-picker--start companion-picker--v4 hide";

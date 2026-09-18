@@ -2,11 +2,15 @@
  * Unified Amoji app — girlfriend / boyfriend / secretary / pet in one 3D shell.
  */
 import {
+  listCompanionCharacters,
+} from "./companionCharacterCatalog.js";
+import {
   loadCompanionRole,
   normalizeCompanionRole,
   roleLabel,
   rolePreset,
   rolePromptFragment,
+  roleTagline,
   saveCompanionRole,
 } from "../mobile/companionRolePresets.js";
 import { buildSecretaryPromptExtras } from "./secretary/secretaryPromptFragments.js";
@@ -94,28 +98,98 @@ export function buildUnifiedSessionPrompt(opts) {
 export function roleModeHint(role, isEnglish = false) {
   const r = normalizeCompanionRole(role);
   const label = roleLabel(r, isEnglish);
+  const tagline = roleTagline(r, isEnglish);
   if (isEnglish) {
-    return `${label} mode — 3D companion with ${roleTaglineShort(r, true)}`;
+    return `${label} mode — ${tagline}`;
   }
-  return `${label}模式 — 3D 同伴 · ${roleTaglineShort(r, false)}`;
+  return `${label}模式 — ${tagline}`;
+}
+
+/**
+ * Picker roster — role picks first, then the rest of the catalog.
+ * @param {"yue" | "en"} langCode
+ * @param {import("../mobile/companionRolePresets.js").CompanionRole} role
+ */
+export function rosterCharactersForRole(langCode = "yue", role = "girlfriend") {
+  const preset = rolePreset(role);
+  const all = listCompanionCharacters(langCode);
+  const recommended = new Set(preset.characterIds);
+  const picks = [];
+  const rest = [];
+  for (const item of all) {
+    if (recommended.has(item.id)) picks.push({ ...item, roleRecommended: true });
+    else rest.push({ ...item, roleRecommended: false });
+  }
+  picks.sort(
+    (a, b) =>
+      preset.characterIds.indexOf(a.id) - preset.characterIds.indexOf(b.id),
+  );
+  return [...picks, ...rest];
 }
 
 /**
  * @param {import("../mobile/companionRolePresets.js").CompanionRole} role
- * @param {boolean} isEnglish
+ * @param {boolean} [isEnglish]
  */
-function roleTaglineShort(role, isEnglish) {
+export function pickerCopyForRole(role, isEnglish = false) {
   const r = normalizeCompanionRole(role);
-  if (isEnglish) {
-    if (r === "boyfriend") return "romance + voice";
-    if (r === "secretary") return "tasks + Today panel";
-    if (r === "pet") return "cozy pet care";
-    return "romance + chat";
+  const en = Boolean(isEnglish);
+  const label = roleLabel(r, en);
+  const tagline = roleTagline(r, en);
+  if (en) {
+    if (r === "secretary") {
+      return {
+        title: "Choose your secretary",
+        sub: "3D companion + Today tasks — voice-first productivity.",
+        footStart: "Begin — your 3D secretary loads while you talk.",
+      };
+    }
+    if (r === "boyfriend") {
+      return {
+        title: "Choose your boyfriend",
+        sub: "3D anime companion — protective romance & voice chat.",
+        footStart: "Begin — he loads in the background while you talk.",
+      };
+    }
+    if (r === "pet") {
+      return {
+        title: "Choose your pet companion",
+        sub: "Cozy 3D pet — playful voice and daily care.",
+        footStart: "Begin — your pet loads while you talk.",
+      };
+    }
+    return {
+      title: "Choose your girlfriend",
+      sub: "3D anime romance — expressive voice & motion.",
+      footStart: "Begin — she loads in the background while you talk.",
+    };
   }
-  if (r === "boyfriend") return "浪漫語音";
-  if (r === "secretary") return "任務同 Today";
-  if (r === "pet") return "寵物陪伴";
-  return "戀愛傾偈";
+  if (r === "secretary") {
+    return {
+      title: "揀你嘅秘書",
+      sub: "3D 同伴 + Today 任務 — 語音優先秘書模式。",
+      footStart: "開始 — 3D 秘書會喺背景載入。",
+    };
+  }
+  if (r === "boyfriend") {
+    return {
+      title: "揀你嘅男朋友",
+      sub: "3D 動漫同伴 — 可靠浪漫同語音傾偈。",
+      footStart: "開始 — 佢會喺背景載入。",
+    };
+  }
+  if (r === "pet") {
+    return {
+      title: "揀你嘅寵物同伴",
+      sub: "治癒 3D 寵物 — 可愛語音同日常陪伴。",
+      footStart: "開始 — 寵物會喺背景載入。",
+    };
+  }
+  return {
+    title: "揀你嘅女朋友",
+    sub: "3D 動漫戀愛 — 表情豐富語音同動作。",
+    footStart: "開始 — 佢會喺背景載入。",
+  };
 }
 
 export {

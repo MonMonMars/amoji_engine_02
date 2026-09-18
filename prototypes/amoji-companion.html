@@ -8,9 +8,9 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji · Companion</title>
     <script>
-      window.__amojiBuild = "2026-09-18-v275-unified-3d-secretary-app";
+      window.__amojiBuild = "2026-09-18-v276-unified-app-details";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-18-v275-unified-3d-secretary-app"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-18-v276-unified-app-details"></script>
     <link
       rel="prefetch"
       href="/prototypes/assets/companion-char-nova.png"
@@ -612,11 +612,11 @@
       media="print"
       onload="this.media='all'"
     />
-    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-18-v275-unified-3d-secretary-app" />
-    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-18-v275-unified-3d-secretary-app" />
-    <link rel="stylesheet" href="/prototypes/companion-mic-button.css?v=2026-09-18-v275-unified-3d-secretary-app" />
-    <link rel="stylesheet" href="/prototypes/companion-minimal-ui.css?v=2026-09-18-v275-unified-3d-secretary-app" />
-    <link rel="stylesheet" href="/prototypes/companion-picker-v4.css?v=2026-09-18-v275-unified-3d-secretary-app" />
+    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-18-v276-unified-app-details" />
+    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-18-v276-unified-app-details" />
+    <link rel="stylesheet" href="/prototypes/companion-mic-button.css?v=2026-09-18-v276-unified-app-details" />
+    <link rel="stylesheet" href="/prototypes/companion-minimal-ui.css?v=2026-09-18-v276-unified-app-details" />
+    <link rel="stylesheet" href="/prototypes/companion-picker-v4.css?v=2026-09-18-v276-unified-app-details" />
     <script>
       (function () {
         var params = new URLSearchParams(location.search);
@@ -642,7 +642,7 @@
       })();
     </script>
     <script type="module">
-      import { bootEarlyStartPicker } from "/amoji-engine/engine/companion/companionEarlyStartPicker.js?v=2026-09-18-v275-unified-3d-secretary-app";
+      import { bootEarlyStartPicker } from "/amoji-engine/engine/companion/companionEarlyStartPicker.js?v=2026-09-18-v276-unified-app-details";
       const bootParams = new URLSearchParams(location.search);
       if (bootParams.get("autostart") !== "1" && bootParams.get("pick") !== "0") {
         globalThis.__amojiEarlyStartPickerPromise = bootEarlyStartPicker({
@@ -4342,19 +4342,19 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-18-v275-unified-3d-secretary-app",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-18-v276-unified-app-details",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-18-v275-unified-3d-secretary-app",
-          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-18-v275-unified-3d-secretary-app"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-18-v276-unified-app-details",
+          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-18-v276-unified-app-details"
         }
       }
     </script>
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-18-v275-unified-3d-secretary-app"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-18-v276-unified-app-details"
     />
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-18-v275-unified-3d-secretary-app"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-18-v275-unified-3d-secretary-app"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-18-v276-unified-app-details"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-18-v276-unified-app-details"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;
@@ -4635,6 +4635,7 @@
           </div>
           <div class="pill" id="mode-pill" hidden aria-hidden="true">LLM · <strong>local</strong></div>
           <div class="pill" id="emotion-pill" hidden aria-hidden="true">feel · <strong>neutral</strong></div>
+          <span class="companion-role-pill secretary-role-pill" id="companion-role-pill" hidden></span>
           <span class="ui-context-pill" id="ui-context-pill" hidden></span>
         </div>
       </header>
@@ -4702,7 +4703,7 @@
         <p class="settings-section-title" id="settings-advanced-title">Advanced</p>
         <button type="button" class="btn-secondary" id="settings-btn-camera">Reset camera view</button>
         <div class="settings-links">
-          <a id="lite-link" href="/companion">Text-only</a>
+          <a id="lite-link" href="/play?role=secretary">Secretary mode</a>
           <a id="lab-link" href="/prototypes/realtime-voice-lab.html">Voice lab</a>
         </div>
         <p class="settings-section-title" id="settings-brain-title">Brain</p>
@@ -4970,10 +4971,17 @@
         resolveAppRole,
         resolveRoleDefaultCharacter,
         roleLabel,
+        roleModeHint,
+        pickerCopyForRole,
+        rosterCharactersForRole,
         saveCompanionRole,
         normalizeCompanionRole,
         COMPANION_ROLES,
+        rolePreset,
       } = unifiedAppMod;
+      const rolePickerCopy = () => pickerCopyForRole(appRole, isEnglish);
+      const roleRosterProvider = (langCode) =>
+        rosterCharactersForRole(langCode, appRole);
       const { createCompanionSecretaryBridge } = secretaryBridgeMod;
       const { COMPANION_CARE_ENABLED } = featureFlagsMod;
       window.__amojiCareEnabled = COMPANION_CARE_ENABLED;
@@ -5721,7 +5729,14 @@
         if (settingsHapticsLabel) settingsHapticsLabel.textContent = labels.haptics;
         const liteLinkEl = document.getElementById("lite-link");
         const labLinkEl = document.getElementById("lab-link");
-        if (liteLinkEl) liteLinkEl.textContent = labels.liteLink;
+        if (liteLinkEl) {
+          liteLinkEl.textContent = isEnglish ? "Secretary mode" : "秘書模式";
+          liteLinkEl.href = buildCompanionHref({
+            basePath: "/play",
+            lang: langCode,
+            extra: { role: "secretary", pick: "1", automic: "0" },
+          });
+        }
         if (labLinkEl) labLinkEl.textContent = labels.labLink;
         if (btnListOllama) btnListOllama.textContent = labels.listOllama;
         if (btnSaveLlm) btnSaveLlm.textContent = labels.saveLlm;
@@ -5785,6 +5800,19 @@
           btnSecretaryTasks.hidden = !secretaryVisible;
           btnSecretaryTasks.textContent = isEnglish ? "Task list" : "任務清單";
         }
+        const rolePill = document.getElementById("companion-role-pill");
+        if (rolePill) {
+          const emojis = {
+            girlfriend: "💗",
+            boyfriend: "💙",
+            secretary: "📋",
+            pet: "🐾",
+          };
+          const em = emojis[appRole] || "✨";
+          rolePill.textContent = `${em} ${roleLabel(appRole, isEnglish)}`;
+          rolePill.hidden = false;
+          rolePill.title = roleModeHint(appRole, isEnglish);
+        }
       };
 
       const applyAppRole = (nextRole, { announce = true } = {}) => {
@@ -5800,7 +5828,19 @@
         }
         if (secretaryBridge) {
           secretaryBridge.enabled = appRole === "secretary";
+        } else if (appRole === "secretary") {
+          void initCompanionChrome();
         }
+        const preset = rolePreset(appRole);
+        if (!preset.characterIds.includes(characterId)) {
+          const nextChar = preset.defaultCharacterId;
+          if (sessionStarted) void hotSwapCharacter(nextChar);
+          else {
+            characterId = nextChar;
+            applyCharacterSession(nextChar, { announce: false });
+          }
+        }
+        startPicker?.setSelected?.(characterId);
         syncSettingsChrome();
         if (announce) {
           showToast(
@@ -5966,7 +6006,7 @@
       if (hostedOnline) {
         document.getElementById("lab-link")?.remove();
         const liteLink = document.getElementById("lite-link");
-        if (liteLink) liteLink.textContent = isEnglish ? "Text-only" : "文字版";
+        if (liteLink) liteLink.textContent = isEnglish ? "Secretary mode" : "秘書模式";
         document.getElementById("settings-local").hidden = true;
         document.getElementById("settings-cloud").hidden = false;
         if (!hasAnyClientCloudKey()) {
@@ -6336,10 +6376,11 @@
 
       const liteLink = document.getElementById("lite-link");
       if (liteLink) {
+        liteLink.textContent = isEnglish ? "Secretary mode" : "秘書模式";
         liteLink.href = buildCompanionHref({
-          basePath: "/companion",
+          basePath: "/play",
           lang: langCode,
-          voiceId,
+          extra: { role: "secretary", pick: "1", automic: "0" },
         });
       }
       document.documentElement.lang = isEnglish ? "en" : "zh-HK";
@@ -7267,6 +7308,8 @@
       const characterPicker = createCompanionCharacterPicker({
         isEnglish,
         selectedId: characterId,
+        pickerCopy: rolePickerCopy(),
+        rosterProvider: roleRosterProvider,
         onCardTapFx: playCompanionCardSelectFx,
         onSelect: (nextId) => {
           characterPicker.close();
@@ -7336,6 +7379,8 @@
           root: document.body,
           isEnglish,
           selectedId: characterId,
+          pickerCopy: rolePickerCopy(),
+          rosterProvider: roleRosterProvider,
           onCardTapFx: playCompanionCardSelectFx,
           onSelectionChange: () => {
             startPickerPreloadJob?.refreshSelectedModel?.();
@@ -7567,6 +7612,9 @@
           storage: localStorage,
           activityRail,
           onToast: (msg, kind) => showToast(msg, kind || "info"),
+          onModeChange: () => {
+            chat.setSystemPrompt?.(buildSessionSystemPrompt(characterId, isEnglish));
+          },
           enabled: appRole === "secretary",
         });
         if (appRole === "secretary") {

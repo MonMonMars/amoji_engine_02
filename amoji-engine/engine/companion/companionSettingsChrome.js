@@ -56,7 +56,13 @@ export function buildSettingsChromeLabels(isEnglish = false, state = {}) {
     advanced: en ? "Advanced" : "進階",
     camera: en ? "Reset camera view" : "重置鏡頭視角",
     brain: en ? "Brain" : "大腦",
-    liteLink: en ? "Text-only" : "文字版",
+    liteLink: en ? "Secretary mode" : "秘書模式",
+    roleSection: en ? "Mode" : "模式",
+    roleHint: en
+      ? "One 3D app — girlfriend, boyfriend, secretary, or pet."
+      : "同一個 3D app — 女朋友、男朋友、秘書或寵物。",
+    secretaryToday: en ? "Today briefing" : "今日簡報",
+    secretaryTasks: en ? "Task list" : "任務清單",
     labLink: en ? "Voice lab" : "語音實驗室",
     listOllama: en ? "List Ollama models" : "列出 Ollama 模型",
     saveLlm: en ? "Save LLM" : "儲存 LLM",
