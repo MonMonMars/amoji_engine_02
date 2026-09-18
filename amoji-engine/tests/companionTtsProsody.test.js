@@ -42,6 +42,7 @@ describe("companionTtsProsody", () => {
       speechEnergy: 0.45,
       text: "嗯，我明白你的意思，讓我慢慢整理一下。",
       characterId: "sora",
+      speedMultiplier: 1,
     });
     const hype = resolveCompanionTtsProsody({
       emotion: "thinking",
@@ -49,6 +50,7 @@ describe("companionTtsProsody", () => {
       speechEnergy: 0.45,
       text: "嗯，我明白你的意思，讓我慢慢整理一下。",
       characterId: "kizuna",
+      speedMultiplier: 1,
     });
     expect(hype.browser.rate).toBeGreaterThan(calm.browser.rate);
     expect(hype.browser.pitch).toBeGreaterThan(calm.browser.pitch);
@@ -133,9 +135,11 @@ describe("companionTtsProsody", () => {
     });
     expect(instruct).toMatch(/ChatGPT Advanced Voice/i);
     expect(instruct).toMatch(/Never:/i);
-    expect(instruct).toMatch(/Speak at 1\.\d+x/);
-    expect(instructSpeakingSpeed({ emotion: "happy", speechEnergy: 0.85 })).toBeGreaterThan(
-      instructSpeakingSpeed({ emotion: "sad", speechEnergy: 0.4 }),
+    expect(instruct).toMatch(/Speak at 0\.5x|SLOW|慢速/);
+    expect(
+      instructSpeakingSpeed({ emotion: "happy", speechEnergy: 0.85, speedMultiplier: 1 }),
+    ).toBeGreaterThan(
+      instructSpeakingSpeed({ emotion: "sad", speechEnergy: 0.4, speedMultiplier: 1 }),
     );
   });
 
@@ -149,8 +153,9 @@ describe("companionTtsProsody", () => {
     });
     expect(body.emotion).toBe("happy");
     expect(body.instructions).toContain("Voice Affect:");
-    expect(body.instructions).toMatch(/Speak at /);
-    expect(body.speed).toBeGreaterThan(1);
+    expect(body.instructions).toMatch(/Speak at |慢速講|0\.\d+x/);
+    expect(body.speedMultiplier).toBe(0.5);
+    expect(body.speed).toBeLessThan(0.75);
   });
 
   it("ignores expressiveClauses unless singleUtterance is explicitly off", () => {

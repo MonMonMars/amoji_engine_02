@@ -46,6 +46,12 @@ import {
   applyPokeVocalToSpeech,
   applyVocalPrefixToSpeech,
 } from "./companionVocalizations.js";
+import {
+  cycleTalkSpeed,
+  loadTalkSpeed,
+  normalizeTalkSpeed,
+  saveTalkSpeed,
+} from "./companionTalkSpeed.js";
 
 export { formatMicError, MIC_ERROR_MESSAGES, requestMicPermission };
 
@@ -149,6 +155,7 @@ const EMOTION_PROSODY = {
  * @param {string} [lang]
  */
 let activeCharacterId = "nova";
+let talkSpeedMultiplier = loadTalkSpeed();
 
 const resolveSpeakProsody = (text, performance, lang) =>
   resolveCompanionTtsProsody({
@@ -156,7 +163,14 @@ const resolveSpeakProsody = (text, performance, lang) =>
     text,
     lang: lang || performance.lang,
     characterId: activeCharacterId,
+    speedMultiplier:
+      performance?.speedMultiplier ?? talkSpeedMultiplier,
   });
+
+const withTalkSpeed = (performance = {}) => ({
+  ...performance,
+  speedMultiplier: performance.speedMultiplier ?? talkSpeedMultiplier,
+});
 
 import {
   buildLipSyncTimeline,
@@ -726,7 +740,7 @@ export function createCompanionVoice(opts = {}) {
     synth?.cancel();
 
     const preset = cloudVoicePreset();
-    const perf = enrichTtsPerformance(performance, clean);
+    const perf = enrichTtsPerformance(withTalkSpeed(performance), clean);
     const parts = chunkTextForCloudTts(clean);
     if (!parts.length) return { ok: false, reason: "empty" };
 
@@ -981,9 +995,17 @@ export function createCompanionVoice(opts = {}) {
     const rawPerf =
       typeof performance === "object" && performance !== null
         ? performance.singleUtterance === true
-          ? performance
-          : { ...CHATGPT_STYLE_TTS, ...performance }
-        : { ...CHATGPT_STYLE_TTS, emotion: performance || "neutral" };
+          ? { ...performance, speedMultiplier: performance.speedMultiplier ?? talkSpeedMultiplier }
+          : {
+              ...CHATGPT_STYLE_TTS,
+              ...performance,
+              speedMultiplier: performance.speedMultiplier ?? talkSpeedMultiplier,
+            }
+        : {
+            ...CHATGPT_STYLE_TTS,
+            emotion: performance || "neutral",
+            speedMultiplier: talkSpeedMultiplier,
+          };
     let perf = enrichTtsPerformance(rawPerf, clean);
     const langCode = String(voice?.lang || opts.lang || "zh-HK");
     const isEnglish = langCode.startsWith("en");
@@ -1346,13 +1368,13 @@ export function createCompanionVoice(opts = {}) {
           body: JSON.stringify(
             buildCloudTtsRequestBody({
               text: phrase,
-              performance: {
+              performance: withTalkSpeed({
                 emotion: "thinking",
                 nuance: "curious",
                 talkStyle: "thinking",
                 speechEnergy: 0.32,
                 skipVocalization: true,
-              },
+              }),
               voice: voiceName,
               lang,
               characterId: activeCharacterId,
@@ -1488,13 +1510,13 @@ export function createCompanionVoice(opts = {}) {
           body: JSON.stringify(
             buildCloudTtsRequestBody({
               text: phrase,
-              performance: {
+              performance: withTalkSpeed({
                 emotion: learnEmotion,
                 nuance: phase === "failed" ? "none" : "curious",
                 talkStyle: "soft",
                 speechEnergy: learnEnergy,
                 skipVocalization: true,
-              },
+              }),
               voice: voiceName,
               lang,
               characterId: activeCharacterId,
@@ -1786,6 +1808,20 @@ export function createCompanionVoice(opts = {}) {
     return voice;
   };
 
+  const setTalkSpeed = (multiplier) => {
+    talkSpeedMultiplier = normalizeTalkSpeed(multiplier);
+    saveTalkSpeed(talkSpeedMultiplier);
+    return talkSpeedMultiplier;
+  };
+
+  const getTalkSpeed = () => talkSpeedMultiplier;
+
+  const cycleTalkSpeedSetting = () => {
+    talkSpeedMultiplier = cycleTalkSpeed(talkSpeedMultiplier);
+    saveTalkSpeed(talkSpeedMultiplier);
+    return talkSpeedMultiplier;
+  };
+
   const setCharacterId = (nextId) => {
     activeCharacterId = String(nextId || "nova").toLowerCase();
     if (!usingCloudTts && synth) {
@@ -1848,6 +1884,9 @@ export function createCompanionVoice(opts = {}) {
     primeMicPermission,
     speak,
     speakPoke,
+    getTalkSpeed,
+    setTalkSpeed,
+    cycleTalkSpeed: cycleTalkSpeedSetting,
     speakThinking,
     startThinkingLoop,
     stopThinkingLoop,

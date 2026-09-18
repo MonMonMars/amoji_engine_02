@@ -118,10 +118,13 @@ export async function synthesizeOpenAiSpeech(text, opts = {}) {
       lang: opts.lang,
       text: clean,
     });
-  const speed = instructSpeakingSpeed({
-    emotion: opts.emotion,
-    speechEnergy: opts.speechEnergy,
-  });
+  const speed =
+    opts.speed ??
+    instructSpeakingSpeed({
+      emotion: opts.emotion,
+      speechEnergy: opts.speechEnergy,
+      speedMultiplier: opts.speedMultiplier,
+    });
 
   const voice = resolveOpenAiVoice(opts.voice, opts.lang);
   const model = opts.model || process.env.OPENAI_TTS_MODEL || DEFAULT_MODEL;
