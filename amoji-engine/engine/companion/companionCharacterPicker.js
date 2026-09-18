@@ -317,7 +317,9 @@ function findPickerItem(list, id) {
 export function createCompanionCharacterPicker(opts = {}) {
   const isEnglish = Boolean(opts.isEnglish);
   const langCode = isEnglish ? "en" : "yue";
-  let selectedId = opts.selectedId || "nova";
+  /** Live session character — updated by setSelected after hot-swap. */
+  let activeCharacterId = opts.selectedId || "nova";
+  let selectedId = activeCharacterId;
   let filterId = "all";
   let query = "";
   let open = false;
@@ -417,7 +419,7 @@ export function createCompanionCharacterPicker(opts = {}) {
   };
 
   const confirmSelection = () => {
-    if (selectedId === opts.selectedId) {
+    if (selectedId === activeCharacterId) {
       close();
       return;
     }
@@ -457,7 +459,7 @@ export function createCompanionCharacterPicker(opts = {}) {
   confirmBtn?.addEventListener("click", confirmSelection);
 
   const openPicker = () => {
-    selectedId = opts.selectedId || selectedId;
+    selectedId = activeCharacterId;
     paintCopy();
     renderAll();
     shell.hidden = false;
@@ -501,8 +503,12 @@ export function createCompanionCharacterPicker(opts = {}) {
     open: openPicker,
     close,
     setSelected(id) {
+      activeCharacterId = id;
       selectedId = id;
       renderAll();
+    },
+    getActiveCharacterId() {
+      return activeCharacterId;
     },
     isOpen() {
       return open;
@@ -560,7 +566,7 @@ export function createCompanionStartPicker(opts = {}) {
       ${PICKER_FEATURED_ROW_HTML}
       ${PICKER_TOOLBAR_HTML}
       <div class="start-picker-grid-wrap">
-        <div class="companion-picker-grid companion-picker-grid--start companion-picker-grid--roster" role="listbox"></div>
+        <div class="companion-picker-grid companion-picker-grid--start" role="listbox"></div>
         <p class="start-picker-scroll-hint" hidden></p>
       </div>
       <footer class="picker-footer">
@@ -691,7 +697,7 @@ export function createCompanionStartPicker(opts = {}) {
     renderCompanionPickerGrid(gridEl, langCode, {
       selectedId,
       roster: filtered,
-      rosterStrip: true,
+      rosterStrip: false,
       isEnglish,
       eagerPreview: false,
       disabled: starting || !pickable,

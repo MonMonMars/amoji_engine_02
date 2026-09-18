@@ -76,7 +76,7 @@ describe("companionFaceRest", () => {
     expect(talkJawRotationX(1)).toBeCloseTo(TALK_JAW_OPEN_RAD);
     expect(talkJawRotationX(0.5)).toBeGreaterThan(0.1);
     expect(talkJawRotationX(1, 0)).toBe(0);
-    expect(scaleTalkMouthOpen(0.9, { talkMouthScale: 0.48 })).toBeCloseTo(0.432);
+    expect(scaleTalkMouthOpen(0.9, { talkMouthScale: 0.38 })).toBeCloseTo(0.342);
     expect(scaleTalkMouthOpen(0.9, null)).toBeCloseTo(0.9);
   });
 
