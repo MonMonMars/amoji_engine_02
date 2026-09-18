@@ -120,6 +120,7 @@ function cardNumber(item) {
  *   eagerPreview?: boolean,
  *   roster?: ReturnType<typeof listCompanionCharacters>,
  *   rosterStrip?: boolean,
+ *   isEnglish?: boolean,
  *   onCardClick?: (id: string) => void,
  *   onCardTapFx?: (card: HTMLButtonElement, item: ReturnType<typeof listCompanionCharacters>[number]) => void,
  * }} ctx
@@ -130,6 +131,12 @@ export function renderCompanionPickerGrid(gridEl, langCode, ctx = {}) {
   const list = ctx.roster || listCompanionCharacters(langCode);
   gridEl.innerHTML = "";
   gridEl.classList.toggle("companion-picker-grid--roster", Boolean(ctx.rosterStrip));
+  if (list.length === 0) {
+    const empty = pickerCopy(ctx.isEnglish).emptyResults;
+    gridEl.innerHTML = `<p class="picker-empty" role="status">${empty}</p>`;
+    gridEl.classList.remove("companion-picker-grid--roster");
+    return;
+  }
   for (const item of list) {
     gridEl.appendChild(
       createCompanionCardButton(item, {
@@ -366,10 +373,19 @@ export function createCompanionCharacterPicker(opts = {}) {
     renderCompanionPickerGrid(gridEl, langCode, {
       selectedId,
       roster: filtered,
+      isEnglish,
       onCardTapFx: opts.onCardTapFx,
       onCardClick: applySelection,
     });
     updatePickerHero(shell, findPickerItem(fullList(), selectedId), isEnglish);
+  };
+
+  const confirmSelection = () => {
+    if (selectedId === opts.selectedId) {
+      close();
+      return;
+    }
+    opts.onSelect?.(selectedId);
   };
 
   unwireRosterKeys = wirePickerRosterKeyboard(gridEl, {
@@ -378,6 +394,7 @@ export function createCompanionCharacterPicker(opts = {}) {
       selectedId = id;
     },
     onSelect: applySelection,
+    onConfirm: confirmSelection,
   });
 
   wirePickerToolbar(shell, {
@@ -393,13 +410,7 @@ export function createCompanionCharacterPicker(opts = {}) {
     onChange: renderGrid,
   });
 
-  confirmBtn?.addEventListener("click", () => {
-    if (selectedId === opts.selectedId) {
-      close();
-      return;
-    }
-    opts.onSelect?.(selectedId);
-  });
+  confirmBtn?.addEventListener("click", confirmSelection);
 
   const openPicker = () => {
     selectedId = opts.selectedId || selectedId;
@@ -549,6 +560,10 @@ export function createCompanionStartPicker(opts = {}) {
     if (beginBtn) {
       beginBtn.textContent = starting ? copy.starting : copy.begin;
       beginBtn.disabled = starting || !pickable;
+      beginBtn.setAttribute(
+        "aria-label",
+        starting ? copy.starting : copy.begin,
+      );
     }
     if (featuredLabel) featuredLabel.textContent = copy.featuredLabel;
   };
@@ -584,8 +599,14 @@ export function createCompanionStartPicker(opts = {}) {
   };
 
   const scrollSelectedIntoView = () => {
-    const card = gridEl?.querySelector(`[data-character-id="${selectedId}"]`);
+    const sel = `[data-character-id="${selectedId}"]`;
+    const card = featuredRow?.querySelector(sel) || gridEl?.querySelector(sel);
     card?.scrollIntoView?.({ behavior: "smooth", inline: "center", block: "nearest" });
+  };
+
+  const beginSession = () => {
+    if (!pickable || starting) return;
+    opts.onStart?.(selectedId);
   };
 
   const applySelection = (id) => {
@@ -618,6 +639,7 @@ export function createCompanionStartPicker(opts = {}) {
       selectedId,
       roster: filtered,
       rosterStrip: true,
+      isEnglish,
       eagerPreview: true,
       disabled: starting || !pickable,
       onCardTapFx: opts.onCardTapFx,
@@ -640,6 +662,7 @@ export function createCompanionStartPicker(opts = {}) {
       selectedId = id;
     },
     onSelect: applySelection,
+    onConfirm: beginSession,
     disabled: () => starting || !pickable,
   });
   unwireRosterKeys();
@@ -649,6 +672,7 @@ export function createCompanionStartPicker(opts = {}) {
       selectedId = id;
     },
     onSelect: applySelection,
+    onConfirm: beginSession,
     disabled: () => starting || !pickable,
   });
 
@@ -665,10 +689,7 @@ export function createCompanionStartPicker(opts = {}) {
     onChange: renderAll,
   });
 
-  beginBtn?.addEventListener("click", () => {
-    if (!pickable || starting) return;
-    opts.onStart?.(selectedId);
-  });
+  beginBtn?.addEventListener("click", beginSession);
 
   paintCopy();
   renderAll();

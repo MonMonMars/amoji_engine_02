@@ -85,8 +85,8 @@ async function diagnose(page, label) {
   try {
     const start = page.locator("#start-character-picker .companion-card");
     if (await start.isVisible({ timeout: 500 })) {
-      await start.click({ timeout: 2000 });
-      clickResult = "clicked";
+      await beginStartPickerSession(page, { dismissTimeout: 60000 });
+      clickResult = "begin-chat";
     } else {
       clickResult = "not visible";
     }
