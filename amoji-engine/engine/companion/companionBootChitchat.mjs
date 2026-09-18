@@ -1,7 +1,10 @@
 /**
  * Instant offline replies while the 3D avatar is still loading.
  */
+import { buildDemoBootReplyEn } from "./companionDemoDialogue.mjs";
 import { localCompanionReply } from "./companionLocalReply.mjs";
+
+export const BOOT_CHITCHAT_SCHEMA = "amoji.companionBootChitchat.v2";
 
 /**
  * @param {{ avatarKind?: string, liteMode?: boolean }} opts
@@ -10,18 +13,6 @@ export function isBootChitchatPhase({ avatarKind = "loading", liteMode = false }
   if (liteMode) return false;
   return avatarKind === "loading";
 }
-
-/** @type {Record<string, string>} */
-const EN_BOOT_SNIPPETS = {
-  hello: "Hi! I'm still loading my 3D body — you can chat while I get ready. [action:wave] [mood:happy] [nuance:excited]",
-  howareyou:
-    "Doing great! My 3D model is still loading, but I'm here to chat. [mood:happy] [nuance:excited]",
-  who: "I'm Amoji — your anime companion. Still booting my 3D avatar. [action:wave] [mood:happy] [nuance:excited]",
-  bye: "Bye for now! [action:wave] [mood:happy] [nuance:excited]",
-  thanks: "You're welcome! [mood:happy] [nuance:love]",
-  default:
-    "Got it — I'm still loading my 3D body, but I'm listening. [mood:thinking]",
-};
 
 /**
  * @param {string} message
@@ -32,20 +23,14 @@ export function buildBootChitchatReply(
   { isEnglish = false, history = [], webContext = "" } = {},
 ) {
   const text = String(message || "").trim();
-  const lower = text.toLowerCase();
 
   if (isEnglish) {
-    if (/^hello|^hi\b|^hey\b/.test(lower)) return EN_BOOT_SNIPPETS.hello;
-    if (/how are you|how's it going|what's up/.test(lower)) {
-      return EN_BOOT_SNIPPETS.howareyou;
-    }
-    if (/who are you|what are you/.test(lower)) return EN_BOOT_SNIPPETS.who;
-    if (/^bye\b|^goodbye|see you/.test(lower)) return EN_BOOT_SNIPPETS.bye;
-    if (/thank/.test(lower)) return EN_BOOT_SNIPPETS.thanks;
+    const demo = buildDemoBootReplyEn(text);
+    if (demo) return demo;
     if (webContext) {
       return localCompanionReply(text, history, webContext);
     }
-    return EN_BOOT_SNIPPETS.default;
+    return buildDemoBootReplyEn("");
   }
 
   return localCompanionReply(text, history, webContext);

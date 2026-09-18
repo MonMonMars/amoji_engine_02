@@ -131,6 +131,13 @@ export function localCompanionReply(message, history = [], webContext = "") {
     `「${text.slice(0, 24)}」——我聽到啦～ [mood:thinking]`,
     "有意思喎！ [mood:happy]",
     "嗯嗯，繼續講啦。 [mood:neutral]",
+    "咁呀…然後呢？ [mood:thinking] [nuance:curious]",
+    "我好奇呀，再多講少少？ [mood:happy] [nuance:curious]",
+    "明白～你而家最想傾咩？ [mood:thinking]",
+    "哈哈，我喺度等緊你下一句。 [mood:happy]",
+    "好呀好呀，我聽緊。 [mood:neutral]",
+    "嘩，咁有趣？講多啲！ [mood:surprised]",
+    "嗯…我有 follow-up 問題，得唔得？ [mood:thinking] [nuance:curious]",
   ];
   return snippets[Math.floor(Math.random() * snippets.length)];
 }

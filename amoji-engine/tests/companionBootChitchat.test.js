@@ -31,4 +31,13 @@ describe("buildBootChitchatReply", () => {
     const reply = buildBootChitchatReply("你好", { isEnglish: false });
     expect(reply).toContain("[mood:happy]");
   });
+
+  it("returns demo joke and bored replies in English", () => {
+    expect(buildBootChitchatReply("tell me a joke", { isEnglish: true })).toMatch(
+      /punchline/i,
+    );
+    expect(buildBootChitchatReply("I'm bored", { isEnglish: true })).toMatch(
+      /story/i,
+    );
+  });
 });
