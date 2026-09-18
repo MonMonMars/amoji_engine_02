@@ -8,9 +8,9 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji · Companion</title>
     <script>
-      window.__amojiBuild = "2026-09-18-v265-roster-portraits";
+      window.__amojiBuild = "2026-09-18-v266-talk-focus";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-18-v265-roster-portraits"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-18-v266-talk-focus"></script>
     <link
       rel="prefetch"
       href="/prototypes/assets/companion-char-nova.png"
@@ -137,6 +137,26 @@
         pointer-events: none;
         transform: translateY(8px) scale(0.98);
         transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
+      }
+
+      /* Care subsystem off — no eating, petting, treat shop, or pet HUD */
+      body.companion-no-care #care-tools-stack,
+      body.companion-no-care #treat-dock,
+      body.companion-no-care #treat-sheet,
+      body.companion-no-care #treat-sheet-backdrop,
+      body.companion-no-care #treat-drop-halo,
+      body.companion-no-care #treat-drag-ghost,
+      body.companion-no-care #pet-hud,
+      body.companion-no-care #pet-wallet,
+      body.companion-no-care #pet-thought,
+      body.companion-no-care #raising-activity-bar,
+      body.companion-no-care #raising-advice,
+      body.companion-no-care #raising-memories,
+      body.companion-no-care #raising-bond-badge,
+      body.companion-no-care .companion-chip__goal {
+        display: none !important;
+        visibility: hidden !important;
+        pointer-events: none !important;
       }
 
       #raising-activity-bar {
@@ -592,13 +612,13 @@
       media="print"
       onload="this.media='all'"
     />
-    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-18-v265-roster-portraits" />
-    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-18-v265-roster-portraits" />
-    <link rel="stylesheet" href="/prototypes/companion-mic-button.css?v=2026-09-18-v265-roster-portraits" />
-    <link rel="stylesheet" href="/prototypes/companion-minimal-ui.css?v=2026-09-18-v265-roster-portraits" />
-    <link rel="stylesheet" href="/prototypes/companion-picker-v4.css?v=2026-09-18-v265-roster-portraits" />
+    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-18-v266-talk-focus" />
+    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-18-v266-talk-focus" />
+    <link rel="stylesheet" href="/prototypes/companion-mic-button.css?v=2026-09-18-v266-talk-focus" />
+    <link rel="stylesheet" href="/prototypes/companion-minimal-ui.css?v=2026-09-18-v266-talk-focus" />
+    <link rel="stylesheet" href="/prototypes/companion-picker-v4.css?v=2026-09-18-v266-talk-focus" />
     <script type="module">
-      import { bootEarlyStartPicker } from "/amoji-engine/engine/companion/companionEarlyStartPicker.js?v=2026-09-18-v265-roster-portraits";
+      import { bootEarlyStartPicker } from "/amoji-engine/engine/companion/companionEarlyStartPicker.js?v=2026-09-18-v266-talk-focus";
       const bootParams = new URLSearchParams(location.search);
       if (bootParams.get("autostart") !== "1" && bootParams.get("pick") !== "0") {
         globalThis.__amojiEarlyStartPickerPromise = bootEarlyStartPicker({
@@ -4298,19 +4318,19 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-18-v265-roster-portraits",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-18-v266-talk-focus",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-18-v265-roster-portraits",
-          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-18-v265-roster-portraits"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-18-v266-talk-focus",
+          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-18-v266-talk-focus"
         }
       }
     </script>
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-18-v265-roster-portraits"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-18-v266-talk-focus"
     />
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-18-v265-roster-portraits"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-18-v265-roster-portraits"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-18-v266-talk-focus"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-18-v266-talk-focus"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;
@@ -4866,6 +4886,7 @@
         cleanUiMod,
         stagePreviewMod,
         settingsChromeMod,
+        featureFlagsMod,
       ] = await Promise.all([
         ami("../amoji-engine/engine/companion/createAvatar.js"),
         ami("../amoji-engine/engine/companion/chatLlm.js"),
@@ -4904,7 +4925,13 @@
         ami("../amoji-engine/engine/companion/companionCleanUi.js"),
         ami("../amoji-engine/engine/companion/companionStagePreview.js"),
         ami("../amoji-engine/engine/companion/companionSettingsChrome.js"),
+        ami("../amoji-engine/engine/companion/companionFeatureFlags.js"),
       ]);
+      const { COMPANION_CARE_ENABLED } = featureFlagsMod;
+      window.__amojiCareEnabled = COMPANION_CARE_ENABLED;
+      if (!COMPANION_CARE_ENABLED) {
+        document.body.classList.add("companion-no-care", "companion-care-collapsed");
+      }
       const { talkSpeedButtonTitle, formatTalkSpeedLabel } = talkSpeedMod;
       const { buildSettingsChromeLabels } = settingsChromeMod;
       const {
@@ -7337,6 +7364,7 @@
       };
 
       handleCharacterTap = () => {
+        if (!COMPANION_CARE_ENABLED) return;
         const now = Date.now();
         if (now - lastTapAt < 1400 || busy) return;
         lastTapAt = now;
@@ -7395,29 +7423,28 @@
         close: () => {},
         setNeedsHint: () => {},
       };
-      let careFeaturesReady = false;
+      let companionChromeReady = false;
 
-      const initCareFeatures = async () => {
-        if (careFeaturesReady) return;
-        careFeaturesReady = true;
-        const [
-          activityRailMod,
-          treatInteractMod,
-          raisingHubMod,
-          careToolsMod,
-        ] = await Promise.all([
-          ami("../amoji-engine/engine/companion/companionActivityRail.js"),
-          ami("../amoji-engine/engine/companion/companionTreatInteract.js"),
-          ami("../amoji-engine/engine/companion/companionRaisingHub.js"),
-          ami("../amoji-engine/engine/companion/companionCareTools.js"),
-        ]);
+      const initCompanionChrome = async () => {
+        if (companionChromeReady) return;
+        companionChromeReady = true;
+        const activityRailMod = await ami(
+          "../amoji-engine/engine/companion/companionActivityRail.js",
+        );
         const { createCompanionActivityRail } = activityRailMod;
-        const { createCompanionTreatDock } = treatInteractMod;
-        const { createCompanionRaisingHub } = raisingHubMod;
         activityRail = createCompanionActivityRail(document, {
           isEnglish,
           mount: document.querySelector(".topbar"),
         });
+        if (!COMPANION_CARE_ENABLED) return;
+
+        const [treatInteractMod, raisingHubMod, careToolsMod] = await Promise.all([
+          ami("../amoji-engine/engine/companion/companionTreatInteract.js"),
+          ami("../amoji-engine/engine/companion/companionRaisingHub.js"),
+          ami("../amoji-engine/engine/companion/companionCareTools.js"),
+        ]);
+        const { createCompanionTreatDock } = treatInteractMod;
+        const { createCompanionRaisingHub } = raisingHubMod;
 
         const careRoot = document.body;
         treatDock = createCompanionTreatDock({
@@ -7542,7 +7569,7 @@
         };
       };
       globalThis.__amojiPreload?.scheduleBackground?.(() => {
-        void initCareFeatures();
+        void initCompanionChrome();
       });
 
       const uiContextPill = document.getElementById("ui-context-pill");
@@ -7633,9 +7660,11 @@
           addBubble("user", cleaned, { persist: true });
         }
         lastUserMessage = cleaned;
-        window.__amojiTreats?.applyChat?.();
-        raisingHub?.onChat?.();
-        raisingHub?.onUserMessage?.(cleaned);
+        if (COMPANION_CARE_ENABLED) {
+          window.__amojiTreats?.applyChat?.();
+          raisingHub?.onChat?.();
+          raisingHub?.onUserMessage?.(cleaned);
+        }
         avatar.setListening?.(false);
         avatar.setTalking(false);
         avatar.setMouthOpen(0);
@@ -7968,7 +7997,7 @@
         globalThis.__amojiPreload?.scheduleBackground?.(() => {
           void prefetchBasicMotionPack();
           warmMotionLibraryBackground();
-          void initCareFeatures?.();
+          void initCompanionChrome?.();
         });
         setTimeout(() => {
           if (!voiceWarmScheduled) scheduleVoiceWarmAfterFirstSpeak();
@@ -7986,15 +8015,21 @@
         if (busy || voice.speaking || hasUserMessages(loadChatHistory(characterId))) {
           return Promise.resolve({ ok: false, reason: "skipped-user-active" });
         }
-        const check = window.__amojiTreats?.checkIn?.();
-        window.__amojiRaising?.refresh?.();
+        const check = COMPANION_CARE_ENABLED ? window.__amojiTreats?.checkIn?.() : null;
+        if (COMPANION_CARE_ENABLED) window.__amojiRaising?.refresh?.();
         const greetText = (check && check.line) || greetingLine();
         const mood = check?.mood || "ok";
-        const greetFeel = mood === "hungry" || mood === "lonely" ? "sad" : "happy";
+        const greetFeel =
+          COMPANION_CARE_ENABLED && (mood === "hungry" || mood === "lonely")
+            ? "sad"
+            : "happy";
         avatar.setEmotion(greetFeel);
         setEmotionPill(greetFeel);
-        if (mood === "hungry") avatar.playAction?.("headshake", { emotion: "sad", single: true });
-        else avatar.playGesture?.("nod");
+        if (COMPANION_CARE_ENABLED && mood === "hungry") {
+          avatar.playAction?.("headshake", { emotion: "sad", single: true });
+        } else {
+          avatar.playGesture?.("nod");
+        }
         speakEmotion = greetFeel;
         status.speaking();
         armBargeIn();
@@ -8004,9 +8039,9 @@
           greetingBubble.textContent = greetText;
         }
         const greetPerf =
-          mood === "hungry"
+          COMPANION_CARE_ENABLED && mood === "hungry"
             ? characterHungryPerformance(characterId)
-            : mood === "lonely"
+            : COMPANION_CARE_ENABLED && mood === "lonely"
               ? characterLonelyPerformance(characterId)
               : characterGreetingPerformance(characterId);
         return voice.speak(greetText, greetPerf).then((spoke) => {
@@ -8326,8 +8361,10 @@
           "info",
           { force: true },
         );
-        careTools.refreshLabels?.();
-        raisingHub.refresh?.();
+        if (COMPANION_CARE_ENABLED) {
+          careTools.refreshLabels?.();
+          raisingHub.refresh?.();
+        }
         syncUiSettingsControls();
         syncTalkSpeedBtn();
         syncSpeakerBtn();

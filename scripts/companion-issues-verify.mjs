@@ -7,6 +7,7 @@
 import { writeFileSync, mkdirSync } from "fs";
 import { chromium } from "playwright";
 import { AMOJI_BUILD } from "../amoji-engine/engine/companion/buildVersion.mjs";
+import { COMPANION_CARE_ENABLED } from "../amoji-engine/engine/companion/companionFeatureFlags.js";
 import {
   beginStartPickerSession,
   openInSessionCompanionPicker,
@@ -396,6 +397,21 @@ async function main() {
     record("camera-orbit-drag", false, "no orbit-hit box");
   }
 
+  if (!COMPANION_CARE_ENABLED) {
+    const careOff = await page.evaluate(() => ({
+      flag: window.__amojiCareEnabled === false,
+      hud: Boolean(document.getElementById("pet-hud")),
+      dock: Boolean(document.getElementById("treat-dock")),
+      careTools: Boolean(document.getElementById("care-tools-stack")),
+    }));
+    record(
+      "care-disabled",
+      careOff.flag && !careOff.hud && !careOff.dock && !careOff.careTools,
+      JSON.stringify(careOff),
+    );
+  }
+
+  if (COMPANION_CARE_ENABLED) {
   const treatUi = await page.evaluate(() => {
     const dock = document.getElementById("treat-dock");
     const fab = document.getElementById("treat-fab");
@@ -500,6 +516,7 @@ async function main() {
     bd?.setAttribute("hidden", "");
   });
   await page.waitForTimeout(450);
+  }
 
   const sceneOverlay = await page.evaluate(async () => {
     const settingsBtn = document.getElementById("settings-btn-scene");
