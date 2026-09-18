@@ -35,7 +35,7 @@ import {
   resolveOrbitDomElement,
 } from "./companionOrbitControls.js";
 import { actionLoops } from "./companionActionMotion.js";
-import { IDLE_LIFE_CLIP_POOL } from "./companionActionChoreography.js";
+import { BOOT_IDLE_WARM_CLIP_IDS } from "./companionIdleMotionPreload.js";
 import { detectVrmIdleRestRotations } from "./companionArmRestCalibration.js";
 import { createCompanionBodyMotion } from "./companionBodyMotion.js";
 import {
@@ -1438,7 +1438,7 @@ export async function createVrmAvatar(opts) {
   applyTalkMouthNow(performance.now());
   renderer.render(scene, camera);
   void motionPlayer.warmClip(ONLINE_CALM_IDLE_ACTION);
-  for (const id of IDLE_LIFE_CLIP_POOL) {
+  for (const id of BOOT_IDLE_WARM_CLIP_IDS) {
     void motionPlayer.warmClip(id);
   }
   motionTransitionState = planMotionTransition(vrm, motionPlayer, {

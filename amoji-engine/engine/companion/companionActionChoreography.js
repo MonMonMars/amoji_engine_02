@@ -72,6 +72,16 @@ export const IDLE_LIFE_CLIP_POOL = Object.freeze([
   "surprised",
   "facepalm",
   "sad",
+  "wave",
+  "thinking",
+  "thumbsup",
+  "shrug",
+  "point",
+  "blush",
+  "relax",
+  "learning",
+  "clap",
+  "salute",
 ]);
 
 /** Large idle rotation pool — quiet companion moments between turns. */
