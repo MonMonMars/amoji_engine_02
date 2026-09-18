@@ -19,6 +19,8 @@ export const COMPANION_CHARACTER_SWITCH_SCHEMA =
  *   characterId: string,
  *   langCode: "yue" | "en",
  *   currentAvatar?: { dispose?: () => void } | null,
+ *   previewImageUrl?: string | null,
+ *   onStagePreview?: (url: string | null) => void,
  *   onProgress?: (pct: number, label: string) => void,
  *   onCharacterTap?: () => void,
  * }} opts
@@ -30,6 +32,8 @@ export async function switchCompanionCharacter(opts) {
     characterId,
     langCode,
     currentAvatar,
+    previewImageUrl,
+    onStagePreview,
     onProgress,
     onCharacterTap,
   } = opts;
@@ -39,11 +43,7 @@ export async function switchCompanionCharacter(opts) {
   const emit = (pct, label) => onProgress?.(pct, label);
 
   emit(5, isEnglish ? "Preparing…" : "準備中…");
-  try {
-    currentAvatar?.dispose?.();
-  } catch {
-    /* ignore dispose errors */
-  }
+  onStagePreview?.(previewImageUrl || config.previewImage || null);
 
   emit(12, isEnglish ? "Clearing stage…" : "清理場景…");
   const freshCanvas = replaceAvatarCanvas(canvas);
@@ -52,6 +52,7 @@ export async function switchCompanionCharacter(opts) {
   const loaded = await createCompanionAvatar({
     canvas: freshCanvas,
     controlsElement,
+    characterId,
     modelUrl: config.modelUrl,
     prefer: config.avatarPrefer,
     onCharacterTap,
@@ -64,9 +65,16 @@ export async function switchCompanionCharacter(opts) {
     },
   });
 
+  try {
+    currentAvatar?.dispose?.();
+  } catch {
+    /* ignore dispose errors */
+  }
+
   emit(88, isEnglish ? "Warming up…" : "熱身中…");
   loaded.avatar.setEmotion?.("happy");
   loaded.avatar.resize?.();
+  onStagePreview?.(null);
 
   persistCharacterId(characterId);
 

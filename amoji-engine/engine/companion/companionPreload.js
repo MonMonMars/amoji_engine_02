@@ -201,24 +201,6 @@ export function startHeavyCompanionPreload(opts = {}) {
     );
   }
 
-  if (fetchImpl && !motionExtensionsPromise) {
-    motionExtensionsPromise = fetchImpl(DEFAULT_MOTIONS_EXTENSIONS_URL, {
-      method: "GET",
-      headers: { Accept: "application/json" },
-    })
-      .then((res) => (res.ok ? res.json() : null))
-      .catch(() => null);
-  }
-
-  if (fetchImpl && !motionPremiumPromise) {
-    motionPremiumPromise = fetchImpl(DEFAULT_MOTIONS_PREMIUM_URL, {
-      method: "GET",
-      headers: { Accept: "application/json" },
-    })
-      .then((res) => (res.ok ? res.json() : null))
-      .catch(() => null);
-  }
-
   if (!vrmModulePromise) {
     vrmModulePromise = import("./vrmAvatar.js");
   }
@@ -249,8 +231,8 @@ export function startHeavyCompanionPreload(opts = {}) {
     mode: "heavy",
     vrm: vrmBuffers.get(modelUrl) ?? null,
     motionBasic: motionBasicPromise,
-    motionExtensions: motionExtensionsPromise,
-    motionPremium: motionPremiumPromise,
+    motionExtensions: null,
+    motionPremium: null,
     vrmModule: vrmModulePromise,
     threeModule: threeModulePromise,
     waitAssetsModule: waitAssetsModulePromise,
@@ -271,7 +253,7 @@ export function ensureRosterPreloadStarted() {
   if (rosterPreloadPromise) return rosterPreloadPromise;
   rosterPreloadPromise = import("./companionCharacterPreload.js")
     .then((mod) =>
-      mod.startCharacterRosterPreload({
+      mod.startCharacterPreviewPreload({
         onProgress: (ratio) => {
           globalThis.__amojiRosterPreloadPct = ratio;
         },
@@ -279,14 +261,69 @@ export function ensureRosterPreloadStarted() {
           globalThis.__amojiRosterPreviewsReady = true;
         },
       }).then((result) => {
-        if (result?.modelsLoading) {
-          globalThis.__amojiRosterModelsReady = result.modelsLoading;
-        }
+        globalThis.__amojiRosterModelsReady = Promise.resolve({
+          ok: true,
+          skipped: true,
+        });
         return result;
       }),
     )
     .catch(() => null);
   return rosterPreloadPromise;
+}
+
+/** @type {Promise<unknown> | null} */
+let rosterModelPreloadPromise = null;
+
+/**
+ * Optional full roster model warm-up — after chat + first avatar are up.
+ */
+export function ensureRosterModelPreloadStarted() {
+  if (rosterModelPreloadPromise) return rosterModelPreloadPromise;
+  rosterModelPreloadPromise = import("./companionCharacterPreload.js")
+    .then((mod) =>
+      mod.startCharacterRosterModelPreload({
+        onProgress: (ratio) => {
+          globalThis.__amojiRosterModelPreloadPct = ratio;
+        },
+      }),
+    )
+    .catch(() => null);
+  return rosterModelPreloadPromise;
+}
+
+/**
+ * Defer extension/premium motion packs until after first chat session.
+ * @param {typeof fetch} [fetchImpl]
+ */
+export function scheduleHeavyMotionExtras(fetchImpl) {
+  const fetchFn =
+    fetchImpl ||
+    (typeof globalThis.fetch === "function" ? globalThis.fetch.bind(globalThis) : null);
+  if (!fetchFn) return { motionExtensions: null, motionPremium: null };
+
+  if (!motionExtensionsPromise) {
+    motionExtensionsPromise = fetchFn(DEFAULT_MOTIONS_EXTENSIONS_URL, {
+      method: "GET",
+      headers: { Accept: "application/json" },
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .catch(() => null);
+  }
+
+  if (!motionPremiumPromise) {
+    motionPremiumPromise = fetchFn(DEFAULT_MOTIONS_PREMIUM_URL, {
+      method: "GET",
+      headers: { Accept: "application/json" },
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .catch(() => null);
+  }
+
+  return {
+    motionExtensions: motionExtensionsPromise,
+    motionPremium: motionPremiumPromise,
+  };
 }
 
 const shouldAutoBoot =
@@ -295,7 +332,6 @@ const shouldAutoBoot =
 const boot = shouldAutoBoot ? startMinimalCompanionPreload() : null;
 
 if (shouldAutoBoot) {
-  startBootIdleMotionPreload();
   scheduleCompanionBackgroundWork(ensureRosterPreloadStarted);
 }
 
@@ -315,9 +351,16 @@ if (typeof globalThis !== "undefined") {
     releaseExcept: releaseVrmPreloadExcept,
     rosterReady: rosterPreloadPromise,
     ensureRoster: ensureRosterPreloadStarted,
+    ensureRosterModels: ensureRosterModelPreloadStarted,
+    scheduleMotionExtras: scheduleHeavyMotionExtras,
     getRosterProgress: () => globalThis.__amojiRosterPreloadPct ?? 0,
     bootIdleMotionIds: BOOT_IDLE_WARM_CLIP_IDS,
     ensureIdleMotions: startBootIdleMotionPreload,
+    primeIdleBodyMotions: () => {
+      void import("./companionIdleMotionPreload.js").then((mod) => {
+        mod.primeBootIdleBodyMotions();
+      });
+    },
     getIdleMotionPreload: getBootIdleMotionPreloadPromise,
     ready: boot,
   };
