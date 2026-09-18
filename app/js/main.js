@@ -1,0 +1,96 @@
+import { initRouter, navigate } from "./router.js";
+import {
+  loadAuthSession,
+  restoreSession,
+  saveAuthSession,
+} from "/amoji-engine/engine/mobile/companionMobileAuth.js";
+import { loadMobileSettings } from "/amoji-engine/engine/mobile/companionMobileSettings.js";
+
+import "./screens/title.js";
+import "./screens/login.js";
+import "./screens/hub.js";
+import "./screens/companion.js";
+import "./screens/pet.js";
+import "./screens/chase.js";
+import "./screens/shop.js";
+import "./screens/settings.js";
+
+/** @type {Record<string, unknown>} */
+let session = loadAuthSession() || {};
+
+/**
+ * @returns {boolean}
+ */
+function isEnglish() {
+  const settings = loadMobileSettings();
+  const urlLang = new URLSearchParams(location.search).get("lang");
+  if (urlLang === "en") return true;
+  if (urlLang === "yue") return false;
+  return settings.lang === "en";
+}
+
+/** @type {HTMLElement | null} */
+let toastNode = null;
+/** @type {number | null} */
+let toastTimer = null;
+
+/**
+ * @param {string} message
+ */
+function toast(message) {
+  if (!message) return;
+  if (!toastNode) {
+    toastNode = document.createElement("div");
+    toastNode.className = "toast";
+    document.body.appendChild(toastNode);
+  }
+  toastNode.textContent = message;
+  toastNode.classList.remove("hidden");
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toastNode?.classList.add("hidden"), 2600);
+}
+
+const root = document.getElementById("app-root");
+if (!root) throw new Error("#app-root missing");
+
+const baseUrl = location.origin.replace(/\/$/, "");
+
+initRouter({
+  root,
+  isEnglish,
+  getSession: () => session,
+  setSession: (patch) => {
+    session = { ...session, ...patch };
+    if (patch.token) saveAuthSession(/** @type {Record<string, unknown>} */ (session));
+  },
+  navigate,
+  toast,
+  baseUrl,
+});
+
+async function boot() {
+  try {
+    const restored = await restoreSession({ baseUrl });
+    if (restored) session = restored;
+  } catch {
+    /* offline boot */
+  }
+
+  const params = new URLSearchParams(location.search);
+  const screen = params.get("screen");
+  const valid = ["title", "login", "hub", "companion", "pet", "chase", "shop", "settings"];
+  if (screen && valid.includes(screen)) {
+    await navigate(/** @type {import("./router.js").ScreenName} */ (screen));
+    return;
+  }
+  if (session?.token) {
+    await navigate("hub");
+  } else {
+    await navigate("title");
+  }
+}
+
+boot().catch((err) => {
+  toast(err?.message || String(err));
+  navigate("title");
+});

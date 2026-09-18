@@ -27,3 +27,4 @@ venv/
 .cache/
 .vercel
 .env*
+.data/

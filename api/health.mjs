@@ -10,12 +10,16 @@ export default function handler(_req, res) {
     build: AMOJI_BUILD,
     time: new Date().toISOString(),
     routes: {
+      mobileApp: "/app",
       lite: "/companion?lang=yue",
       full: "/companion-full?lang=yue",
       uniqueFull: `/c/${AMOJI_BUILD}/full`,
       uniqueLite: `/c/${AMOJI_BUILD}/lite`,
       play: "/play",
       openFull: "/n/{stamp}/full",
+      privacy: "/privacy",
+      authGuest: "/api/auth/guest",
+      iapProducts: "/api/iap/products",
     },
   });
 }
