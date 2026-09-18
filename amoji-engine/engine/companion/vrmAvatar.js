@@ -108,6 +108,7 @@ import {
   sampleEatMouthPulse,
   sampleTalkMouthPulse,
   shapeToVisemePreset,
+  scaleTalkMouthOpen,
   softenTalkMouthOverrides,
   talkJawRotationX,
   talkingMouthOpen,
@@ -1054,7 +1055,7 @@ export async function createVrmAvatar(opts) {
     shapeToVisemePreset(shape, mouthPresets);
 
   const applyJawOpen = (open) => {
-    const x = talkJawRotationX(open);
+    const x = talkJawRotationX(open, faceProfile.talkJawScale ?? 1);
     const bones = [
       vrm.humanoid?.getNormalizedBoneNode?.("jaw"),
       vrm.humanoid?.getRawBoneNode?.("jaw"),
@@ -1088,10 +1089,15 @@ export async function createVrmAvatar(opts) {
       if (mouthOpen < MOUTH_CLOSE_EPS) mouthOpen = 0;
       if (mouthTarget < MOUTH_CLOSE_EPS) mouthTarget = 0;
     }
+    open = scaleTalkMouthOpen(open, faceProfile);
     const { shape } = applyMouth(open, now);
     expr?.update?.();
     // Visemes + jaw last so Happy/Surprised cannot freeze the mouth.
-    applyMorphMouthOpen(model, shape, open);
+    const skipMorphMouth =
+      faceProfile.skipMorphMouthWhenPresets && mouthPresets.length >= 3;
+    if (!skipMorphMouth) {
+      applyMorphMouthOpen(model, shape, open);
+    }
     applyTalkEmotionMorphs(
       model,
       emotion,
@@ -1224,7 +1230,11 @@ export async function createVrmAvatar(opts) {
     mouthOpen += (mouthTarget - mouthOpen) * Math.min(1, dt * (talking || eating ? 52 : 22));
     if (!talking && !eating && mouthOpen < 0.04) mouthOpen = 0;
     if (talking && mouthOpen < 0.12) {
-      mouthOpen = Math.max(mouthOpen, sampleTalkMouthPulse(now, true) * 0.7);
+      const pulseScale = faceProfile.talkPulseScale ?? 1;
+      mouthOpen = Math.max(
+        mouthOpen,
+        sampleTalkMouthPulse(now, true) * 0.7 * pulseScale,
+      );
     }
     if (eating && !talking) {
       mouthOpen = Math.max(mouthOpen, sampleEatMouthPulse(now, true) * 0.86);
