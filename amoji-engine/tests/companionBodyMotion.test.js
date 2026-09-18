@@ -57,7 +57,10 @@ describe("createCompanionBodyMotion", () => {
     const humanoid = mockHumanoid();
     const motion = createCompanionBodyMotion(humanoid);
     motion.setTalking(false);
-    for (let i = 0; i < 45; i += 1) motion.update(1 / 30);
+    for (let i = 0; i < 45; i += 1) {
+      motion.update(1 / 30);
+      motion.applyHandRestOnly({ talkBlend: 0 });
+    }
     const rot = humanoid.bones.get("leftUpperArm").rotation;
     const rest = VRM_ARM_REST_ROTATIONS.leftUpperArm;
     expect(Math.abs(rot.z - rest.z)).toBeGreaterThan(0.008);

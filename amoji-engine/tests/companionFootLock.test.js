@@ -15,8 +15,9 @@ describe("companionFootLock", () => {
   });
 
   it("counters thigh+shin flex so the sole stays floor-parallel", () => {
-    expect(lockedFootPitch(0.12, 0.22, 0.04)).toBeCloseTo(0.04 - 0.34);
-    expect(lockedFootPitch(0, 0, 0.1)).toBeCloseTo(0.1);
+    expect(lockedFootPitch(0.12, 0.22, { x: 0.04 }, "x")).toBeCloseTo(0.04 - 0.34);
+    expect(lockedFootPitch(0, 0, { x: 0.1 }, "x")).toBeCloseTo(0.1);
+    expect(lockedFootPitch(0.08, 0.12, { z: 0.2 }, "z")).toBeCloseTo(0.2 - 0.2);
   });
 
   it("plants the straighter (weighted) leg", () => {

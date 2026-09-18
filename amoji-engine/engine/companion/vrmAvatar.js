@@ -38,7 +38,6 @@ import { actionLoops } from "./companionActionMotion.js";
 import { detectVrmIdleRestRotations } from "./companionArmRestCalibration.js";
 import { createCompanionBodyMotion } from "./companionBodyMotion.js";
 import {
-  fingersLookStraight,
   inferFingerFlexAxis,
 } from "./companionFingerPose.js";
 import { buildVrmExpressionBlend } from "./companionContentMotion.js";
@@ -1070,6 +1069,7 @@ export async function createVrmAvatar(opts) {
   };
 
   let raf = 0;
+  let wasLibraryMotion = false;
 
   const frame = () => {
     const dt = clock.getDelta();
@@ -1079,6 +1079,10 @@ export async function createVrmAvatar(opts) {
       restoreAfterVrma();
     }
     const libraryMotion = vrmaPlaying && vrmaAction !== "idle";
+    if (libraryMotion && !wasLibraryMotion) {
+      bodyMotion.holdForLibraryMotion?.(now);
+    }
+    wasLibraryMotion = libraryMotion;
     const activeMotion = vrmaPlaying || vrmaPending
       ? vrmaAction
       : bodyMotion.currentAction;
@@ -1126,20 +1130,11 @@ export async function createVrmAvatar(opts) {
       }
       stabilizeVrmSpringBones(vrm);
       vrm.update(dt);
-      // Fingers last for procedural idle/talk — skip during VRMA hand gestures
-      // (full curl overwrote clip fingers and looked inverted). Only nudge when
-      // Mixamo leaves stick-straight fingers on non-hand clips.
-      const fingerTalkBlend = talking || eating ? 0.7 : 0;
+      // Fingers last — after spring sim, and only when VRMA is not driving the skeleton.
       if (!libraryMotion) {
         bodyMotion.applyHandRestOnly?.({
-          talkBlend: fingerTalkBlend,
+          talkBlend: talking || eating ? 0.7 : 0,
           now,
-        });
-      } else if (fingersLookStraight(vrm.humanoid)) {
-        bodyMotion.applyHandRestOnly?.({
-          talkBlend: 0,
-          now,
-          blendWeight: 0.28,
         });
       }
       applyTalkMouthNow(now);
@@ -1232,6 +1227,7 @@ export async function createVrmAvatar(opts) {
   syncHumanoidPose();
   stabilizeVrmSpringBones(vrm);
   vrm.update(1 / 60);
+  bodyMotion.applyHandRestOnly?.({ talkBlend: 0, now: performance.now() });
   applyTalkMouthNow(performance.now());
   renderer.render(scene, camera);
   void motionPlayer.warmClip("wave");

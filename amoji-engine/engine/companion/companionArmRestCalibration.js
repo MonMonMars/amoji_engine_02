@@ -122,9 +122,9 @@ function applyNamedRest(humanoid, names, rest) {
  */
 function hingeOnAxis(axis, signedBend, flexAxis) {
   return {
-    x: axis === "x" ? signedBend : 0.06,
+    x: axis === "x" ? signedBend : 0,
     y: axis === "y" ? signedBend : 0,
-    z: axis === "z" ? signedBend : 0.06,
+    z: axis === "z" ? signedBend : 0,
     flexAxis,
   };
 }

@@ -6,7 +6,7 @@
  * so the lowest foot/toe stays on y = 0.
  */
 
-export const COMPANION_FOOT_LOCK_SCHEMA = "amoji.companionFootLock.v1";
+export const COMPANION_FOOT_LOCK_SCHEMA = "amoji.companionFootLock.v2";
 
 /** Idle pelvis tilt is capped — large hipZ is what lifts a foot off the floor. */
 export const IDLE_HIP_TILT_SCALE = 0.22;
@@ -27,14 +27,33 @@ export function lockedIdleHipTilt(hipZ, intensity = 1) {
 
 /**
  * Ankle pitch that keeps the sole parallel to the floor given thigh+shin flex.
- * VRM normalized X: extra knee/thigh flex would otherwise point the toes.
+ * Uses the same hinge axis as the calibrated knee (x on Mixamo, z on some VRMs).
  * @param {number} upperFlex
  * @param {number} lowerFlex
- * @param {number} [restFootX]
+ * @param {{ x?: number, y?: number, z?: number }} [restFoot]
+ * @param {"x" | "z"} [flexAxis]
  */
-export function lockedFootPitch(upperFlex, lowerFlex, restFootX = 0) {
+export function lockedFootPitch(upperFlex, lowerFlex, restFoot = {}, flexAxis = "x") {
   const chain = (Number(upperFlex) || 0) + (Number(lowerFlex) || 0);
-  return restFootX - chain;
+  const axis = flexAxis === "z" ? "z" : "x";
+  const restVal = Number(restFoot?.[axis]) || 0;
+  return restVal - chain;
+}
+
+/**
+ * @param {number} upperFlex
+ * @param {number} lowerFlex
+ * @param {{ x?: number, y?: number, z?: number }} [restFoot]
+ * @param {"x" | "z"} [flexAxis]
+ */
+export function lockedFootRotation(upperFlex, lowerFlex, restFoot = {}, flexAxis = "x") {
+  const axis = flexAxis === "z" ? "z" : "x";
+  return {
+    x: restFoot?.x ?? 0,
+    y: restFoot?.y ?? 0,
+    z: restFoot?.z ?? 0,
+    [axis]: lockedFootPitch(upperFlex, lowerFlex, restFoot, axis),
+  };
 }
 
 /**
@@ -99,30 +118,32 @@ export function footPlantRootDelta(getBone, floorY = 0) {
  *   leftLower: number,
  *   rightLower: number,
  *   hipZ?: number,
+ *   leftFlexAxis?: "x" | "z",
+ *   rightFlexAxis?: "x" | "z",
  * }} chain
  */
 export function applyLockedFootRotations(applyBoneRotation, restFeet, chain) {
   if (typeof applyBoneRotation !== "function" || !restFeet) return;
   const hipZ = Number(chain?.hipZ) || 0;
-  const leftX = lockedFootPitch(
+  const leftFoot = lockedFootRotation(
     chain?.leftUpper,
     chain?.leftLower,
-    restFeet.leftFoot?.x ?? 0,
+    restFeet.leftFoot,
+    chain?.leftFlexAxis,
   );
-  const rightX = lockedFootPitch(
+  const rightFoot = lockedFootRotation(
     chain?.rightUpper,
     chain?.rightLower,
-    restFeet.rightFoot?.x ?? 0,
+    restFeet.rightFoot,
+    chain?.rightFlexAxis,
   );
   applyBoneRotation("leftFoot", {
-    x: leftX,
-    y: restFeet.leftFoot?.y ?? 0,
-    z: (restFeet.leftFoot?.z ?? 0) - hipZ * 0.12,
+    ...leftFoot,
+    z: leftFoot.z - hipZ * 0.12,
   });
   applyBoneRotation("rightFoot", {
-    x: rightX,
-    y: restFeet.rightFoot?.y ?? 0,
-    z: (restFeet.rightFoot?.z ?? 0) + hipZ * 0.12,
+    ...rightFoot,
+    z: rightFoot.z + hipZ * 0.12,
   });
   applyBoneRotation("leftToes", { x: 0, y: 0, z: 0 });
   applyBoneRotation("rightToes", { x: 0, y: 0, z: 0 });
