@@ -113,7 +113,7 @@ describe("companionUiEffects", () => {
   });
 
   it("exports schema and button selector", () => {
-    expect(COMPANION_UI_EFFECTS_SCHEMA).toBe("amoji.companionUiEffects.v1");
+    expect(COMPANION_UI_EFFECTS_SCHEMA).toBe("amoji.companionUiEffects.v2");
     expect(UI_FX_BUTTON_SELECTOR).toContain("button:not([disabled])");
   });
 

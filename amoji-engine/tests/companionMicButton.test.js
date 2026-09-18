@@ -39,7 +39,10 @@ describe("companionMicButton", () => {
   it("renders mic layers without emoji", () => {
     const html = companionMicButtonInnerHtml();
     expect(html).toContain("mic-btn__wave");
+    expect(html).toContain("mic-btn__halo");
+    expect(html).toContain("mic-btn__ring--c");
     expect(html).toContain("mic-btn__icon");
+    expect((html.match(/<i><\/i>/g) || []).length).toBe(7);
     expect(html).not.toContain("🎤");
   });
 

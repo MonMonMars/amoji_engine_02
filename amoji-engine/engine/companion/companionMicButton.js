@@ -170,14 +170,16 @@ export function resolveMicButtonThemeForState(state, opts = {}) {
   };
 }
 
-/** Mic icon + waveform layers (ChatGPT-inspired). */
+/** Mic icon + waveform layers (ChatGPT Advanced Voice inspired). */
 export function companionMicButtonInnerHtml() {
   return `
+    <span class="mic-btn__halo" aria-hidden="true"></span>
     <span class="mic-btn__aura" aria-hidden="true"></span>
     <span class="mic-btn__ring mic-btn__ring--a" aria-hidden="true"></span>
     <span class="mic-btn__ring mic-btn__ring--b" aria-hidden="true"></span>
+    <span class="mic-btn__ring mic-btn__ring--c" aria-hidden="true"></span>
     <span class="mic-btn__wave" aria-hidden="true">
-      <i></i><i></i><i></i><i></i><i></i>
+      <i></i><i></i><i></i><i></i><i></i><i></i><i></i>
     </span>
     <span class="mic-btn__icon" aria-hidden="true">
       <svg viewBox="0 0 24 24" width="20" height="20" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -245,9 +247,18 @@ export function createCompanionMicButton(el, opts = {}) {
     applyTheme();
   };
 
+  /** @type {((from: string, to: string) => void) | null} */
+  let onStateChange = null;
+
   const setState = (next) => {
     const allowed = ["idle", "listening", "speaking", "disabled"];
+    const prev = state;
     state = allowed.includes(next) ? next : "idle";
+    if (prev !== state) {
+      el.classList.add("mic-state-flash");
+      globalThis.setTimeout?.(() => el.classList.remove("mic-state-flash"), 320);
+      onStateChange?.(prev, state);
+    }
     el.dataset.micState = state;
     el.dataset.micLive = state === "listening" || state === "speaking" ? "true" : "false";
     el.classList.toggle("mic-live", state === "listening" || state === "speaking");
@@ -321,6 +332,9 @@ export function createCompanionMicButton(el, opts = {}) {
     setLevel,
     sync,
     reset,
+    setOnStateChange(fn) {
+      onStateChange = typeof fn === "function" ? fn : null;
+    },
     getState: () => state,
     getTheme: () => theme,
   };

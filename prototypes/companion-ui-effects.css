@@ -316,6 +316,69 @@ body.ui-fx-enabled .companion-toast.show {
   }
 }
 
+/* —— Particle bursts (gacha / AAA tap sparkle) —— */
+.ui-fx-particle-layer {
+  position: fixed;
+  z-index: 12000;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+}
+
+.ui-fx-particle {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: var(--ps, 4px);
+  height: var(--ps, 4px);
+  border-radius: 999px;
+  animation: uiFxParticleFly 0.68s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes uiFxParticleFly {
+  0% {
+    opacity: 1;
+    transform: translate(0, 0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--px, 0), var(--py, 0)) scale(0.2);
+  }
+}
+
+/* —— Cinematic page / sheet transitions —— */
+body.ui-fx-enabled.ui-page-entering .stage {
+  transform: scale(0.992);
+  filter: brightness(0.92) saturate(1.05);
+  transition:
+    transform 0.42s var(--ui-fx-ease),
+    filter 0.42s ease;
+}
+
+body.ui-fx-enabled.ui-page-open .stage {
+  transform: scale(1);
+  filter: none;
+}
+
+body.ui-fx-enabled.ui-page-leaving .stage {
+  transform: scale(0.996);
+  transition: transform 0.32s var(--ui-fx-ease);
+}
+
+body.ui-fx-enabled.ui-page-entering .topbar,
+body.ui-fx-enabled.ui-page-leaving .topbar {
+  transition: transform 0.38s var(--ui-fx-ease), opacity 0.32s ease;
+}
+
+body.ui-fx-enabled.ui-page-entering .topbar {
+  transform: translateY(-4px);
+  opacity: 0.92;
+}
+
+body.ui-fx-enabled.ui-page-open .topbar {
+  transform: translateY(0);
+  opacity: 1;
+}
+
 @media (prefers-reduced-motion: reduce) {
   body.ui-fx-enabled .ui-fx-btn::after,
   body.ui-fx-enabled .treat-fab.ui-fx-btn,

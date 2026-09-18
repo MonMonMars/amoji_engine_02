@@ -1,7 +1,9 @@
 /**
  * Button special effects + overlay/tab page transitions for companion UIs.
  */
-export const COMPANION_UI_EFFECTS_SCHEMA = "amoji.companionUiEffects.v1";
+import { spawnUiParticles } from "./companionUiParticles.js";
+
+export const COMPANION_UI_EFFECTS_SCHEMA = "amoji.companionUiEffects.v2";
 
 export const UI_OVERLAY_OPEN_MS = 420;
 export const UI_OVERLAY_CLOSE_MS = 380;
@@ -45,6 +47,23 @@ function scheduleFrame(doc, fn) {
   fn();
 }
 
+/**
+ * @typedef {{
+ *   play?: (id: string) => boolean,
+ *   haptic?: (kind?: string) => boolean,
+ * }} CompanionUiAudioLike
+ */
+
+/** @type {CompanionUiAudioLike | null} */
+let uiAudio = null;
+
+/**
+ * @param {CompanionUiAudioLike | null | undefined} audio
+ */
+export function bindCompanionUiAudio(audio) {
+  uiAudio = audio || null;
+}
+
 export function spawnUiRipple(el, clientX, clientY, doc = document) {
   if (
     !el ||
@@ -65,6 +84,15 @@ export function spawnUiRipple(el, clientX, clientY, doc = document) {
 
   el.classList.add("ui-fx-has-ripple");
   el.appendChild(ripple);
+  uiAudio?.play?.("tap");
+  uiAudio?.haptic?.("light");
+  spawnUiParticles({
+    x: clientX,
+    y: clientY,
+    hue: 212,
+    count: 8,
+    spread: Math.max(rect.width, 28) * 0.45,
+  });
   ripple.addEventListener(
     "animationend",
     () => {
@@ -92,11 +120,13 @@ export function markUiFxButtons(root, doc = document) {
 
 /**
  * @param {Document} [doc]
- * @param {{ reducedMotion?: boolean }} [opts]
+ * @param {{ reducedMotion?: boolean, audio?: CompanionUiAudioLike | null }} [opts]
  */
 export function initCompanionUiEffects(doc = document, opts = {}) {
   const reduced = opts.reducedMotion ?? prefersReducedUiMotion(doc);
+  if (opts.audio) bindCompanionUiAudio(opts.audio);
   if (reduced) {
+    opts.audio?.setReducedMotion?.(true);
     return {
       schema: COMPANION_UI_EFFECTS_SCHEMA,
       destroy: () => {},
@@ -170,12 +200,17 @@ export function openUiOverlay(doc, cfg) {
   panel.classList.remove("ui-overlay-closing");
   panel.classList.add("ui-overlay-entering");
   if (bodyClass) doc.body.classList.add(bodyClass);
+  doc.body.classList.add("ui-page-entering");
+  uiAudio?.play?.("sheet-open");
+  uiAudio?.haptic?.("light");
 
   scheduleFrame(doc, () => {
     scheduleFrame(doc, () => {
       backdrop?.classList.add(backdropOpenClass);
       panel.classList.add(panelOpenClass);
       panel.classList.remove("ui-overlay-entering");
+      doc.body.classList.remove("ui-page-entering");
+      doc.body.classList.add("ui-page-open");
     });
   });
 }
@@ -210,12 +245,17 @@ export function closeUiOverlay(doc, cfg) {
   panel.classList.remove(panelOpenClass);
   backdrop?.classList.remove(backdropOpenClass);
   if (bodyClass) doc.body.classList.remove(bodyClass);
+  doc.body.classList.remove("ui-page-open");
+  doc.body.classList.add("ui-page-leaving");
+  uiAudio?.play?.("sheet-close");
+  uiAudio?.haptic?.("light");
 
   viewOf(doc).setTimeout(() => {
     if (panel.classList.contains(panelOpenClass)) return;
     panel.classList.remove("ui-overlay-closing");
     if (hidePanelOnClose) panel.setAttribute("hidden", "");
     backdrop?.setAttribute("hidden", "");
+    doc.body.classList.remove("ui-page-leaving");
     onHidden?.();
   }, hideDelay);
 }
