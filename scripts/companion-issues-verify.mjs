@@ -159,6 +159,23 @@ async function main() {
     JSON.stringify(numbered),
   );
 
+  const rosterPreviews = await page.evaluate(() => {
+    const ids = ["poly", "jennifer", "shiro", "aesthe"];
+    return ids.map((id) => {
+      const card = document.querySelector(
+        `#start-character-picker [data-character-id="${id}"]`,
+      );
+      const img = card?.querySelector("img");
+      const src = img?.getAttribute("src") || img?.currentSrc || "";
+      return { id, src, ok: src.includes(`companion-char-${id}`) };
+    });
+  });
+  record(
+    "roster-preview-images",
+    rosterPreviews.length === 4 && rosterPreviews.every((row) => row.ok),
+    JSON.stringify(rosterPreviews),
+  );
+
   await page.screenshot({
     path: `${outDir}/issues_verify_picker.png`,
     animations: "disabled",
@@ -454,6 +471,34 @@ async function main() {
     bd?.setAttribute("hidden", "");
   });
   await page.waitForTimeout(450);
+
+  const sceneOverlay = await page.evaluate(async () => {
+    const settingsBtn = document.getElementById("settings-btn-scene");
+    const sceneBtn = document.getElementById("settings-btn-scene-sheet");
+    const openBtn = sceneBtn || settingsBtn;
+    if (!openBtn) return { ok: false, reason: "no scene button" };
+    openBtn.click();
+    await new Promise((r) => setTimeout(r, 450));
+    const scene = document.getElementById("scene-sheet");
+    const settings = document.getElementById("settings");
+    const sceneZ = scene ? Number(getComputedStyle(scene).zIndex) || 0 : 0;
+    const settingsZ = settings ? Number(getComputedStyle(settings).zIndex) || 0 : 0;
+    const sceneOpen = document.body.classList.contains("scene-sheet-open");
+    document.getElementById("scene-sheet-close")?.click();
+    await new Promise((r) => setTimeout(r, 300));
+    return { ok: sceneOpen && sceneZ >= settingsZ, sceneZ, settingsZ, sceneOpen };
+  });
+  record(
+    "scene-sheet-above-settings",
+    sceneOverlay.ok,
+    JSON.stringify(sceneOverlay),
+  );
+
+  const starterVisible = await page.evaluate(() => {
+    const chips = document.querySelectorAll("#starter-prompts .starter-chip");
+    return chips.length >= 4;
+  });
+  record("starter-prompts-visible", starterVisible, String(starterVisible));
 
   await openInSessionCompanionPicker(page);
   record("in-session-picker", true);

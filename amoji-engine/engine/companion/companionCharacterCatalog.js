@@ -77,6 +77,15 @@ export function characterNumber(id) {
   return idx >= 0 ? idx + 1 : 0;
 }
 
+/**
+ * Canonical roster card portrait path — one PNG per character id.
+ * @param {string | null | undefined} id
+ */
+export function characterPreviewImage(id) {
+  const key = String(id || "nova").toLowerCase();
+  return `/prototypes/assets/companion-char-${key}.png`;
+}
+
 /** @type {ReadonlySet<string>} */
 export const GALLERY_PRIORITY_IDS = new Set([
   "nova",
@@ -183,7 +192,11 @@ const ENGLISH_RULES = [
  */
 export function getCharacter(id) {
   const key = String(id || "nova").toLowerCase();
-  return COMPANION_CHARACTERS[key] || COMPANION_CHARACTERS.nova;
+  const def = COMPANION_CHARACTERS[key] || COMPANION_CHARACTERS.nova;
+  return {
+    ...def,
+    previewImage: characterPreviewImage(def.id),
+  };
 }
 
 /**
@@ -474,7 +487,7 @@ export function listCompanionCharacters(langCode = "yue") {
       name: en ? def.name.en : def.name.yue,
       tagline: en ? def.tagline.en : def.tagline.yue,
       traits: en ? def.traits.en : def.traits.yue,
-      previewImage: def.previewImage,
+      previewImage: characterPreviewImage(id),
       accent: def.accent,
       badge,
       faceTier,
