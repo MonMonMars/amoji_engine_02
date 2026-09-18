@@ -25,7 +25,7 @@ export const EMOTION_DEMO_LINES = Object.freeze({
       speechEnergy: 0.9,
     }),
     thinking: Object.freeze({
-      text: "Hmm... let me think about that for a second.",
+      text: "Hmm… let me see…",
       emotion: "thinking",
       nuance: "curious",
       talkStyle: "thinking",
@@ -83,7 +83,7 @@ export const EMOTION_DEMO_LINES = Object.freeze({
       speechEnergy: 0.9,
     }),
     thinking: Object.freeze({
-      text: "嗯...等我諗諗先。",
+      text: "嗯…等我睇下…",
       emotion: "thinking",
       nuance: "curious",
       talkStyle: "thinking",

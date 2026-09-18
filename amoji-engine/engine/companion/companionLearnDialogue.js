@@ -144,164 +144,64 @@ const LOADING_HUMS = Object.freeze({
  */
 export const LOADING_WAIT_WORDS = Object.freeze({
   waiting: {
-    yue: [
-      "等陣呀，呢次載入慢咗少少…",
-      "仲等緊，檔案有啲大…",
-      "再等我一陣，就快好…",
-      "載入緊過咗一陣，你等我吓…",
-    ],
-    en: [
-      "Hang on — this is taking longer than usual…",
-      "Still loading — the file's a bit big…",
-      "Give me another moment, almost there…",
-      "This wait is longer than I hoped — still on it…",
-    ],
+    yue: ["等陣…", "等我睇下…", "好啦…"],
+    en: ["One sec…", "Let me see…", "Hang on…"],
   },
   connecting: {
-    yue: [
-      "連線好似慢咗少少，再等我一陣…",
-      "網絡有啲慢，我仲連緊…",
-    ],
-    en: [
-      "The connection is slower than usual — hang on…",
-      "Still connecting — network's taking its time…",
-    ],
+    yue: ["等陣…", "等我睇下…"],
+    en: ["One sec…", "Let me see…"],
   },
   waking: {
-    yue: [
-      "我醒得好慢，再等我一陣…",
-      "身體仲未醒齊，你等我吓…",
-    ],
-    en: [
-      "I'm waking up slower than usual — one more sec…",
-      "Still getting my body online…",
-    ],
+    yue: ["等陣…", "等我睇下…"],
+    en: ["One sec…", "Let me see…"],
   },
   searching: {
-    yue: [
-      "搵檔案搵得好耐，再等吓…",
-      "雲端好似忙緊，我仲搵緊…",
-    ],
-    en: [
-      "Still looking that up — the cloud is slow today…",
-      "Searching is taking a while — hang tight…",
-    ],
+    yue: ["等我上網搵下…", "等我查下…", "嗯，等我睇下…"],
+    en: ["Let me search online…", "Let me look that up…", "Hmm, let me see…"],
   },
   assembling: {
-    yue: [
-      "組合緊模型，今次慢咗少少…",
-      "零件仲砌緊，再等我一陣…",
-    ],
-    en: [
-      "Still putting the model together — this is a long one…",
-      "Assembling is taking longer than I wanted…",
-    ],
+    yue: ["等陣…", "等我睇下…"],
+    en: ["One sec…", "Let me see…"],
   },
   downloading: {
-    yue: [
-      "下載好慢呀，檔案有啲大…",
-      "條下載仲行緊，你等我吓…",
-      "已經 {pct}% 喇，再等一陣…",
-    ],
-    en: [
-      "Download's slow — this file is pretty big…",
-      "Still fetching it — hang on a bit longer…",
-      "{pct}% so far — still downloading…",
-    ],
+    yue: ["等陣…", "等我睇下…", "就快好…"],
+    en: ["One sec…", "Let me see…", "Almost there…"],
   },
   warming: {
-    yue: [
-      "熱身熱得好耐，再等我一陣…",
-      "我仲暖緊身體，就快得…",
-    ],
-    en: [
-      "Warming up is taking a while — still here…",
-      "Give me a little longer to get ready…",
-    ],
+    yue: ["等陣…"],
+    en: ["One sec…"],
   },
   learning: {
-    yue: [
-      "呢招學得慢咗，再等我練一陣…",
-      "我仲學緊，今次要耐少少…",
-    ],
-    en: [
-      "This move is taking longer to learn — hang on…",
-      "Still practicing — almost got it…",
-    ],
+    yue: ["等我睇下…", "等陣…"],
+    en: ["Let me see…", "One sec…"],
   },
   installing: {
-    yue: [
-      "安裝緊，今次慢咗少少…",
-      "存落身體庫仲要一陣…",
-    ],
-    en: [
-      "Installing is taking a bit longer…",
-      "Still saving it into my motion library…",
-    ],
+    yue: ["等陣…"],
+    en: ["One sec…"],
   },
   settling: {
-    yue: [
-      "就快定定，再等我一陣…",
-      "仲收尾，耐咗少少…",
-    ],
-    en: [
-      "Settling in — this last bit is slow…",
-      "Almost wrapped up, just a little longer…",
-    ],
+    yue: ["就快好…"],
+    en: ["Almost there…"],
   },
   almost: {
-    yue: [
-      "就快好喇，再等我一下下…",
-      "尾段慢咗，但真係就快…",
-    ],
-    en: [
-      "Almost done — just a little longer…",
-      "The last bit is slow, but I'm close…",
-    ],
+    yue: ["就快好…"],
+    en: ["Almost there…"],
   },
   progress: {
-    yue: [
-      "已經 {pct}% 喇，再等一陣…",
-      "進度 {pct}%，今次載入比較耐…",
-    ],
-    en: [
-      "{pct}% so far — still working on it…",
-      "Progress {pct}%. This one's taking a while…",
-    ],
+    yue: ["等陣…", "等我睇下…"],
+    en: ["One sec…", "Let me see…"],
   },
   "avatar-load": {
-    yue: [
-      "等陣呀，我嘅身體仲載入緊…",
-      "3D 模型好大，今次慢咗少少…",
-      "我仲未出現齊，你等我吓…",
-      "載入身體載入得好耐，再等一陣…",
-    ],
-    en: [
-      "Hold on — my 3D body is still loading…",
-      "This model file is huge, it's taking a while…",
-      "I'm still materializing — one more moment…",
-      "Loading my body is taking longer than usual…",
-    ],
+    yue: ["等陣…", "等我睇下…", "就快好…"],
+    en: ["One sec…", "Let me see…", "Almost there…"],
   },
   "character-switch": {
-    yue: [
-      "換造型換得好耐，再等我一陣…",
-      "新同伴仲載入緊，你等我吓…",
-    ],
-    en: [
-      "Switching characters is taking a while — hang on…",
-      "The new look is still loading…",
-    ],
+    yue: ["等陣…", "等我睇下…"],
+    en: ["One sec…", "Let me see…"],
   },
   ready: {
-    yue: [
-      "好喇，我準備好喇…",
-      "搞掂，終於載入完…",
-    ],
-    en: [
-      "Okay — I'm ready now…",
-      "Got it. That took a minute…",
-    ],
+    yue: ["好啦…"],
+    en: ["Okay…"],
   },
 });
 

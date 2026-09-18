@@ -1,3 +1,5 @@
+import { isNaturalFillerPhrase } from "./companionThinkingDialogue.js";
+
 /**
  * Expressive non-word vocalizations — smile, laugh, giggle, um, thinking hums, etc.
  * Played before spoken sentences and on character poke/tap.
@@ -274,6 +276,8 @@ export function pickPreSentenceVocalization(performance = {}, text, opts = {}) {
   if (!raw || raw.length < 2) return null;
   if (textAlreadyHasLeadingVocal(raw)) return null;
   if (isVocalizationText(raw)) return null;
+  if (isNaturalFillerPhrase(raw)) return null;
+  if (performance.thinkingFiller) return null;
 
   const isEnglish = Boolean(
     opts.isEnglish ?? String(performance.lang || "").startsWith("en"),

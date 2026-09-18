@@ -1374,6 +1374,7 @@ export function createCompanionVoice(opts = {}) {
                 talkStyle: "thinking",
                 speechEnergy: 0.32,
                 skipVocalization: true,
+                thinkingFiller: true,
               }),
               voice: voiceName,
               lang,

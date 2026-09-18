@@ -156,8 +156,8 @@ describe("companionLearnDialogue", () => {
     const yue = pickLearnPhrase("avatar-load", false, { useWords: true });
     expect(isLearnThinkingSound(en)).toBe(false);
     expect(isLearnThinkingSound(yue)).toBe(false);
-    expect(en.length).toBeGreaterThan(12);
-    expect(yue.length).toBeGreaterThan(6);
+    expect(en).toMatch(/let me see|one sec|um|almost there/i);
+    expect(yue).toMatch(/嗯|等|睇|就快/);
     const seen = new Set();
     let last = -1;
     for (let i = 0; i < 8; i += 1) {
@@ -168,7 +168,9 @@ describe("companionLearnDialogue", () => {
       seen.add(next.phrase);
       last = next.index;
     }
-    expect([...seen].some((line) => line.includes("42"))).toBe(true);
+    expect([...seen].some((line) => /let me see|one sec|almost there/i.test(line))).toBe(
+      true,
+    );
     expect([...seen].every((line) => !line.includes("{pct}"))).toBe(true);
   });
 
