@@ -8,9 +8,9 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji · Companion</title>
     <script>
-      window.__amojiBuild = "2026-09-18-v228-fast-boot-preview-switch";
+      window.__amojiBuild = "2026-09-18-v229-aaa-ui-sfx-orb";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-18-v228-fast-boot-preview-switch"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-18-v229-aaa-ui-sfx-orb"></script>
     <link
       rel="prefetch"
       href="/prototypes/assets/companion-char-nova.png"
@@ -487,8 +487,8 @@
       media="print"
       onload="this.media='all'"
     />
-    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-18-v228-fast-boot-preview-switch" />
-    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-18-v228-fast-boot-preview-switch" />
+    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-18-v229-aaa-ui-sfx-orb" />
+    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-18-v229-aaa-ui-sfx-orb" />
     <noscript>
       <link
         href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap"
@@ -1471,6 +1471,49 @@
         display: none !important;
       }
 
+      .mic-btn__halo {
+        position: absolute;
+        inset: -14px;
+        border-radius: 50%;
+        pointer-events: none;
+        opacity: 0;
+        border: 2px solid hsl(212 78% 62% / 0.28);
+        box-shadow:
+          0 0 28px hsl(212 82% 58% / 0.22),
+          0 0 56px hsl(212 90% 68% / 0.12);
+        transition: opacity 0.28s ease;
+      }
+
+      .mic-btn.mini-emotion-ball[data-mic-state="listening"] .mic-btn__halo,
+      .mic-btn.mini-emotion-ball[data-mic-state="speaking"] .mic-btn__halo {
+        opacity: calc(0.42 + var(--mic-level, 0) * 0.48);
+        animation: micHaloPulse calc(var(--mic-ring-speed, 1s) * 1.35) ease-out infinite;
+      }
+
+      .mic-btn.mic-state-flash {
+        animation: micStateFlash 0.32s ease-out;
+      }
+
+      @keyframes micHaloPulse {
+        0% {
+          transform: scale(0.88);
+          opacity: calc(0.5 + var(--mic-level, 0) * 0.35);
+        }
+        100% {
+          transform: scale(1.18);
+          opacity: 0;
+        }
+      }
+
+      @keyframes micStateFlash {
+        0% {
+          filter: brightness(1.35);
+        }
+        100% {
+          filter: brightness(1);
+        }
+      }
+
       .mic-btn.mini-emotion-ball .mic-btn__wave,
       .mic-btn.mini-emotion-ball .mic-btn__icon {
         position: relative;
@@ -1682,6 +1725,36 @@
       }
       .mic-btn__wave i:nth-child(5) {
         animation-delay: 0.2s;
+      }
+      .mic-btn__wave i:nth-child(6) {
+        animation-delay: 0.12s;
+      }
+      .mic-btn__wave i:nth-child(7) {
+        animation-delay: 0.18s;
+      }
+
+      .mic-btn__ring--c {
+        inset: -4px;
+        border-width: 1px;
+        animation: micRingPulse calc(var(--mic-ring-speed) * 1.15) ease-out infinite
+          calc(var(--mic-ring-speed) * 0.62);
+      }
+
+      .mic-btn.mini-emotion-ball[data-mic-state="listening"] .mic-btn__wave i,
+      .mic-btn.mini-emotion-ball[data-mic-state="speaking"] .mic-btn__wave i {
+        width: 2px;
+        animation: micWaveChatGpt 0.72s ease-in-out infinite;
+      }
+
+      @keyframes micWaveChatGpt {
+        0%, 100% {
+          transform: scaleY(0.45);
+          opacity: 0.72;
+        }
+        50% {
+          transform: scaleY(calc(1 + var(--mic-level, 0) * 0.85));
+          opacity: 1;
+        }
       }
 
       .mic-btn__icon {
@@ -4115,19 +4188,19 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-18-v228-fast-boot-preview-switch",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-18-v229-aaa-ui-sfx-orb",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-18-v228-fast-boot-preview-switch",
-          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-18-v228-fast-boot-preview-switch"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-18-v229-aaa-ui-sfx-orb",
+          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-18-v229-aaa-ui-sfx-orb"
         }
       }
     </script>
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-18-v228-fast-boot-preview-switch"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-18-v229-aaa-ui-sfx-orb"
     />
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-18-v228-fast-boot-preview-switch"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-18-v228-fast-boot-preview-switch"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-18-v229-aaa-ui-sfx-orb"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-18-v229-aaa-ui-sfx-orb"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;
@@ -4719,7 +4792,15 @@
         openUiOverlay,
         closeUiOverlay,
       } = uiEffectsMod;
-      initCompanionUiEffects(document);
+      const [uiAudioMod, uiParticlesMod] = await Promise.all([
+        ami("../amoji-engine/engine/companion/companionUiAudio.js"),
+        ami("../amoji-engine/engine/companion/companionUiParticles.js"),
+      ]);
+      const { createCompanionUiAudio } = uiAudioMod;
+      const { spawnUiRingBurst } = uiParticlesMod;
+      const uiAudio = createCompanionUiAudio();
+      initCompanionUiEffects(document, { audio: uiAudio });
+      window.__amojiUiAudio = uiAudio;
       const { buildBootChitchatReply, isBootChitchatPhase } = bootChitchatMod;
       const { createCompanionStagePreview } = stagePreviewMod;
       window.__amojiModuleBooted = true;
@@ -5115,6 +5196,8 @@
 
       const showToast = (msg, kind = "error") => {
         if (!shouldShowCleanToast(kind)) return;
+        uiAudio?.play?.(kind === "info" ? "toast" : "tap");
+        uiAudio?.haptic?.("light");
         const t = document.createElement("div");
         t.className = `companion-toast ${kind === "info" ? "info" : ""}`;
         t.setAttribute("role", "alert");
@@ -5184,6 +5267,16 @@
       const micUi = createCompanionMicButton(btnMic, {
         emotion: "neutral",
         nuance: "none",
+      });
+      micUi.setOnStateChange?.((from, to) => {
+        if (from === "idle" && (to === "listening" || to === "speaking")) {
+          uiAudio?.play?.("mic-on");
+          uiAudio?.haptic?.("medium");
+          spawnUiRingBurst(btnMic, { hue: 212 });
+        } else if (to === "idle" && (from === "listening" || from === "speaking")) {
+          uiAudio?.play?.("mic-off");
+          uiAudio?.haptic?.("light");
+        }
       });
       const emotionBall = createCompanionEmotionBall(emotionBallEl, {
         isEnglish,
@@ -6784,6 +6877,9 @@
           syncAvatarPerformance();
           applyCharacterSession(nextId, { announce: false });
           raisingHub?.setCharacter?.(nextId);
+          uiAudio?.play?.("select");
+          uiAudio?.haptic?.("medium");
+          spawnUiRingBurst(canvas, { hue: 212 });
           addBubble(
             "system",
             isEnglish
@@ -8088,6 +8184,9 @@
         const text = input.value.trim();
         if (!text) return;
         unlockAudioSync();
+        uiAudio?.unlock?.();
+        uiAudio?.play?.("send");
+        uiAudio?.haptic?.("light");
         input.value = "";
         autosize();
         if (!sessionStarted) {
