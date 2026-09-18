@@ -280,10 +280,15 @@ export function buildTtsInstruct(opts = {}) {
     : `你係 ChatGPT Advanced Voice。要有反應。絕對唔好似 Siri、導航、新聞或者朗讀。`;
 
   const vocalPrefix = String(opts.vocalPrefix || "").trim();
+  const pokeReaction = Boolean(opts.pokeReaction);
   const vocalLead = vocalPrefix
-    ? isEnglish
-      ? `Opening: "${vocalPrefix}" as a natural ${opts.vocalization || "soft"} vocal — SAME speaker, SAME voice — then flow seamlessly into the rest without resetting tone or switching persona.`
-      : `開頭："${vocalPrefix}" 做自然${opts.vocalization || "軟"}聲 — 同一個人、同一把聲 — 然後順滑接落去，唔好換人換聲。`
+    ? pokeReaction && (opts.vocalization === "giggle" || opts.vocalization === "laugh")
+      ? isEnglish
+        ? `POKE REACTION: Start with a real ${opts.vocalization} ("${vocalPrefix}") — breathy, playful, cute — SAME voice — then continue the line still smiling and amused. Never spell "haha" or "hehe" as words.`
+        : `戳一下：先 genuine ${opts.vocalization === "giggle" ? "嘻嘻" : "哈哈"}（"${vocalPrefix}"）— 俏皮可愛 — 同一個人 — 再講后面句，保持開心笑住。`
+      : isEnglish
+        ? `Opening: "${vocalPrefix}" as a natural ${opts.vocalization || "soft"} vocal — SAME speaker, SAME voice — then flow seamlessly into the rest without resetting tone or switching persona.`
+        : `開頭："${vocalPrefix}" 做自然${opts.vocalization || "軟"}聲 — 同一個人、同一把聲 — 然後順滑接落去，唔好換人換聲。`
     : "";
 
   const continuity = vocalPrefix
@@ -384,6 +389,7 @@ export function enrichTtsPerformance(performance, text = "") {
     vocalization: perf.vocalization,
     skipVocalization: perf.skipVocalization,
     speedMultiplier: normalizeTalkSpeed(perf.speedMultiplier),
+    pokeReaction: perf.pokeReaction,
   };
 }
 
@@ -506,6 +512,7 @@ export function resolveCompanionTtsProsody(opts = {}) {
       speedMultiplier,
       vocalPrefix: opts.vocalPrefix || enriched.vocalPrefix,
       vocalization: opts.vocalization || enriched.vocalization,
+      pokeReaction: opts.pokeReaction ?? enriched.pokeReaction,
     }),
   };
 }
