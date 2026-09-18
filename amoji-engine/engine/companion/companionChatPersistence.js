@@ -1,55 +1,20 @@
 /**
  * Per-character chat history + starter prompts for the companion transcript.
  */
+import {
+  DEMO_STARTER_PROMPTS,
+  demoStarterPrompts,
+} from "./companionDemoDialogue.mjs";
+
 export const CHAT_HISTORY_SCHEMA = "amoji.companion.chatHistory.v1";
 export const CHAT_HISTORY_MAX = 40;
 export const CHAT_DOM_MAX = 20;
+export const STARTER_PROMPT_COUNT = 6;
 
 /** @typedef {{ id: string, role: "user" | "assistant", text: string, ts: number }} ChatMessage */
 
-/** @type {Readonly<Record<string, { en: string[], yue: string[] }>>} */
-export const CHARACTER_STARTER_PROMPTS = Object.freeze({
-  nova: {
-    en: [
-      "How are you today?",
-      "What's on your mind?",
-      "Tell me something interesting",
-      "Help me plan my day",
-    ],
-    yue: [
-      "今日點呀？",
-      "有咩心事想講？",
-      "同我講件有趣嘅事",
-      "幫我計劃今日",
-    ],
-  },
-  kizuna: {
-    en: ["What's up today?", "Got a secret?", "Want to hang out?"],
-    yue: ["今日搞咩？", "有冇秘密？", "想唔想陪我？"],
-  },
-  amoji: {
-    en: ["What's fun today?", "Roast me gently", "Tell me a joke", "Ask me anything"],
-    yue: ["今日有咩好玩？", "輕鬆吐槽我一下", "講個笑話俾我聽", "問我咩都得"],
-  },
-  sora: {
-    en: [
-      "I need calm advice",
-      "Explain something simply",
-      "How do I unwind?",
-      "Can we talk through my day?",
-    ],
-    yue: [
-      "我需要啲淡定建議",
-      "用簡單方式解釋件事",
-      "點樣放鬆心情？",
-      "可唔可以同我梳理今日？",
-    ],
-  },
-  default: {
-    en: ["Say hi", "What can you do?", "Let's chat", "Ask me a question"],
-    yue: ["打個招呼", "你可以做咩？", "我哋傾下偈", "問我問題啦"],
-  },
-});
+/** Re-export demo starter pools for tests and docs. */
+export const CHARACTER_STARTER_PROMPTS = DEMO_STARTER_PROMPTS;
 
 /**
  * @param {string} characterId
@@ -166,11 +131,7 @@ export function clearChatHistory(characterId, storage = globalThis.localStorage)
  * @param {boolean} [isEnglish]
  */
 export function starterPromptsForCharacter(characterId, isEnglish = false) {
-  const id = String(characterId || "amoji").toLowerCase();
-  const pack = CHARACTER_STARTER_PROMPTS[id] || CHARACTER_STARTER_PROMPTS.default;
-  const lang = isEnglish ? "en" : "yue";
-  const prompts = pack[lang] || CHARACTER_STARTER_PROMPTS.default[lang];
-  return prompts.slice(0, 4);
+  return demoStarterPrompts(characterId, isEnglish, STARTER_PROMPT_COUNT);
 }
 
 /**

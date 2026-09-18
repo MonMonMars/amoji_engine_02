@@ -264,6 +264,9 @@ export const LEARN_DIALOGUE = Object.freeze({
       "我聽緊環境音，等你講嘢…",
       "唔使客氣，想點都得…",
       "我喺度 smile 住等緊你…",
+      "想玩快問快答？我可以先問你㗎…",
+      "有咩煩惱或者開心事，都可以同我講…",
+      "你而家最想我問你咩問題？",
     ],
     en: [
       "I'm here whenever you're ready…",
@@ -294,6 +297,9 @@ export const LEARN_DIALOGUE = Object.freeze({
       "Listening to the room — speak when ready…",
       "Don't be shy — I'm all ears…",
       "Smiling quietly until you say hi…",
+      "Want a quick question game? I can start…",
+      "Happy news or a rant — I'm here for both…",
+      "What question do you wish I'd ask you right now?",
     ],
   },
   "thinking-wait": {

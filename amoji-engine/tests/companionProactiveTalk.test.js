@@ -10,7 +10,7 @@ import {
 describe("companionProactiveTalk", () => {
   it("exports schema and character lines", () => {
     expect(PROACTIVE_TALK_SCHEMA).toMatch(/proactiveTalk/i);
-    expect(CHARACTER_PROACTIVE_LINES.nova.en.length).toBeGreaterThan(2);
+    expect(CHARACTER_PROACTIVE_LINES.nova.en.length).toBeGreaterThan(6);
     expect(CHARACTER_PROACTIVE_LINES.default.yue.length).toBeGreaterThan(2);
   });
 
