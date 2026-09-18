@@ -840,7 +840,7 @@ export async function createVrmAvatar(opts) {
       motionTransitionState =
         planMotionTransition(vrm, motionPlayer, {
           nextActionId: key,
-          durationSec: crossfadeSec,
+          durationSec: crossfadeSec + 0.08,
           label: key,
         }) ?? null;
     }
@@ -1565,6 +1565,12 @@ export async function createVrmAvatar(opts) {
         !vrmaPending;
       if (motionPlayer.isPlaying?.() && !calmIdleOnly) return null;
       if (calmIdleOnly) {
+        motionTransitionState =
+          planMotionTransition(vrm, motionPlayer, {
+            durationSec: 0.28,
+            forceCapture: true,
+            label: `idle-beat-${key}`,
+          }) ?? null;
         motionPlayer.releasePose?.(0.22);
         vrmaAction = null;
         vrmaPending = false;

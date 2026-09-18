@@ -129,11 +129,17 @@ describe("vrmMotionTransition", () => {
       { nextActionId: "relax" },
     );
     expect(planned?.from.size).toBe(1);
+    const clipSwitch = planMotionTransition(
+      vrm2,
+      { isPlaying: () => true, activeActionId: "thinking" },
+      { nextActionId: "wiggle" },
+    );
+    expect(clipSwitch?.from.size).toBe(1);
     expect(
       planMotionTransition(
         vrm2,
         { isPlaying: () => true, activeActionId: "thinking" },
-        { nextActionId: "wiggle" },
+        { nextActionId: "thinking" },
       ),
     ).toBeNull();
     const exit = planMotionTransition(

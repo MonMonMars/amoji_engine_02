@@ -6,7 +6,7 @@ import { DEFAULT_MOTION_CROSSFADE_SEC } from "../engine/companion/vrmMotionTrans
 describe("companionVrmMotionPlayer", () => {
   it("uses v3 schema and shares crossfade timing with transition module", () => {
     expect(COMPANION_VRM_MOTION_PLAYER_SCHEMA).toBe(
-      "amoji.companionVrmMotionPlayer.v3",
+      "amoji.companionVrmMotionPlayer.v4",
     );
     expect(DEFAULT_MOTION_CROSSFADE_SEC).toBeCloseTo(0.52);
     expect(ONLINE_CALM_IDLE_ACTION).toBe("relax");
