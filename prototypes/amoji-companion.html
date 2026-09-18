@@ -8,7 +8,7 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji · Companion</title>
     <script>
-      window.__amojiBuild = "2026-09-18-v220-poke-giggle-laugh";
+      window.__amojiBuild = "2026-09-18-v221-clean-ui";
     </script>
     <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-18-v212-motion-library-complete"></script>
     <link
@@ -1972,6 +1972,23 @@
       /* Minimal UI: text bar + mic always visible; functions live in menu. */
       body.conversation-ui.composer-always-visible .emotion-ball-stack,
       body.conversation-ui.composer-always-visible .listen-hint {
+        display: none !important;
+      }
+
+      /* Clean stage — no instructional overlays */
+      body.companion-clean-ui .orbit-hint,
+      body.companion-clean-ui .listen-hint,
+      body.companion-clean-ui .companion-chip__status,
+      body.companion-clean-ui .emotion-ball__caption,
+      body.companion-clean-ui .starter-prompts,
+      body.companion-clean-ui .avatar-load-pill,
+      body.companion-clean-ui .ui-context-pill,
+      body.companion-clean-ui .treat-sheet-hint,
+      body.companion-clean-ui .treat-drop-halo__hint {
+        display: none !important;
+      }
+
+      body.companion-clean-ui .bubble.system {
         display: none !important;
       }
 
@@ -4232,7 +4249,7 @@
       })();
     </script>
   </head>
-  <body class="theme-grok-ani conversation-ui composer-text-mode composer-always-visible">
+  <body class="theme-grok-ani conversation-ui composer-text-mode composer-always-visible companion-clean-ui">
     <!-- amoji-build: 2026-09-14-v37-companion-picker — Grok Ani–style character grid -->
     <noscript>
       <div
@@ -4270,7 +4287,7 @@
         aria-hidden="true"
         title="Drag to rotate camera"
       ></div>
-      <div class="orbit-hint" id="orbit-hint">拖曳旋轉 · 雙擊空白處重置視角 · Double-click empty space to reset</div>
+      <div class="orbit-hint hide" id="orbit-hint" hidden aria-hidden="true"></div>
       <header class="topbar">
         <button
           type="button"
@@ -4292,7 +4309,7 @@
           />
           <span class="companion-chip__text">
             <span class="companion-chip__name" id="brand-name">Amoji</span>
-            <span class="companion-chip__status" id="companion-status-line">Ready</span>
+            <span class="companion-chip__status" id="companion-status-line" hidden aria-hidden="true"></span>
             <span class="companion-chip__goal" id="companion-daily-goal" hidden></span>
           </span>
           <span class="companion-chip__dot companion-chip__dot--legacy" id="status-dot" hidden aria-hidden="true"></span>
@@ -4516,7 +4533,7 @@
               class="icon-btn mic-btn"
               id="btn-mic"
               data-mic-state="idle"
-              title="Mic on/off — continuous listen; replies when you pause"
+              title="Mic"
               aria-pressed="false"
               aria-label="Microphone"
             >
@@ -4550,7 +4567,7 @@
             <textarea
               id="input"
               rows="1"
-              placeholder="同 Amoji 傾偈…"
+              placeholder="輸入…"
               enterkeyhint="send"
             ></textarea>
             <button class="send" id="send" type="submit" aria-label="Send">
@@ -4613,6 +4630,7 @@
         raisingHubMod,
         careToolsMod,
         talkSpeedMod,
+        cleanUiMod,
       ] = await Promise.all([
         ami("../amoji-engine/engine/companion/createAvatar.js"),
         ami("../amoji-engine/engine/companion/chatLlm.js"),
@@ -4653,8 +4671,17 @@
         ami("../amoji-engine/engine/companion/companionRaisingHub.js"),
         ami("../amoji-engine/engine/companion/companionCareTools.js"),
         ami("../amoji-engine/engine/companion/companionTalkSpeed.js"),
+        ami("../amoji-engine/engine/companion/companionCleanUi.js"),
       ]);
       const { talkSpeedButtonTitle } = talkSpeedMod;
+      const {
+        cleanComposerPlaceholder,
+        shouldShowChatBubble,
+        shouldShowListenHint,
+        shouldShowOrbitHint,
+        shouldShowStarterPrompts,
+        shouldShowToast: shouldShowCleanToast,
+      } = cleanUiMod;
       const {
         initCompanionUiEffects,
         openUiOverlay,
@@ -5052,6 +5079,7 @@
       dismissLoading();
 
       const showToast = (msg, kind = "error") => {
+        if (!shouldShowCleanToast(kind)) return;
         const t = document.createElement("div");
         t.className = `companion-toast ${kind === "info" ? "info" : ""}`;
         t.setAttribute("role", "alert");
@@ -5729,7 +5757,7 @@
       const syncCompanionStatusUi = (state = sessionUiState, emotion = currentEmotion) => {
         const effective = resolveCompanionVoiceState(state);
         const labels = statusLineLabels();
-        if (companionStatusLine) {
+        if (companionStatusLine && !document.body.classList.contains("companion-clean-ui")) {
           const moodKey = normalizeEmotionThemeKey(emotion);
           const moodLabels = isEnglish
             ? {
@@ -5821,13 +5849,14 @@
           voiceId,
         });
       }
-      if (isEnglish) {
-        document.documentElement.lang = "en";
-        input.placeholder = "Chat with Amoji…";
-      }
+      document.documentElement.lang = isEnglish ? "en" : "zh-HK";
+      input.placeholder = cleanComposerPlaceholder(isEnglish);
 
       const orbitHint = document.getElementById("orbit-hint");
-      if (orbitHint) {
+      if (orbitHint && shouldShowOrbitHint()) {
+        orbitHint.hidden = false;
+        orbitHint.removeAttribute("aria-hidden");
+        orbitHint.classList.remove("hide");
         orbitHint.textContent = isEnglish
           ? "Drag to orbit · double-click empty space to reset"
           : "拖曳旋轉 · 雙擊空白處重置視角";
@@ -5839,7 +5868,6 @@
         reset: () => {
           avatar.resetCameraView?.();
           orbitHint?.classList.remove("hide");
-          showToast(isEnglish ? "Camera reset" : "已重置視角", "info");
         },
       });
       orbitSurface.addEventListener("pointerdown", (ev) => {
@@ -5997,6 +6025,11 @@
       };
 
       const syncStarterPrompts = () => {
+        if (!shouldShowStarterPrompts()) {
+          starterPromptsEl?.replaceChildren();
+          if (starterPromptsEl) starterPromptsEl.hidden = true;
+          return;
+        }
         if (!starterPromptsEl || !conversationUi) return;
         const hist = loadChatHistory(characterId);
         const show = sessionStarted && !hasUserMessages(hist) && !busy;
@@ -6041,8 +6074,9 @@
       const addBubble = (
         role,
         text,
-        { persist = true, withActions = true } = {},
+        { persist = true, withActions = true, force = false } = {},
       ) => {
+        if (!shouldShowChatBubble(role, { force })) return null;
         const row = document.createElement("div");
         row.className = `msg-row ${role}`;
         const el = document.createElement("div");
@@ -6157,6 +6191,10 @@
       };
 
       const syncListenHint = () => {
+        if (!shouldShowListenHint()) {
+          listenHintEl?.setAttribute("hidden", "");
+          return;
+        }
         if (!conversationUi || !listenHintEl) return;
         listenHintEl.classList.toggle("mic-active", voice.micOn);
         if (document.body.classList.contains("mic-blocked")) {
@@ -6240,13 +6278,7 @@
         }
         if (btnSpeaker) {
           btnSpeaker.setAttribute("aria-pressed", on ? "true" : "false");
-          btnSpeaker.title = isEnglish
-            ? on
-              ? "Speaker on — tap to mute"
-              : "Speaker muted — tap to unmute"
-            : on
-              ? "喇叭開 — 撳一下靜音"
-              : "喇叭關 — 撳一下開";
+          btnSpeaker.title = isEnglish ? "Speaker" : "喇叭";
           btnSpeaker.setAttribute(
             "aria-label",
             isEnglish ? "Speaker" : "喇叭",
@@ -6465,11 +6497,9 @@
           if (voice.micOn && !busy) status.listening();
           else if (!busy && !voice.speaking) status.idle();
           if (voice.micOn) {
-            input.placeholder = phaseAEnabled
-              ? "Listening… speak anytime to interrupt her"
-              : "Listening… speak, pause → she replies, then listens again";
+            input.placeholder = cleanComposerPlaceholder(isEnglish);
           } else if (!busy) {
-            input.placeholder = "同 Amoji 傾偈… or tap 🎤 for continuous talk";
+            input.placeholder = cleanComposerPlaceholder(isEnglish);
           }
         },
         onError: (msg) => {
@@ -6524,12 +6554,6 @@
       btnTalkSpeed?.addEventListener("click", () => {
         voice?.cycleTalkSpeed?.();
         syncTalkSpeedBtn();
-        showToast(
-          isEnglish
-            ? `Talking speed: ${voice.getTalkSpeed()}×`
-            : `講嘢速度：${voice.getTalkSpeed()}×`,
-          "info",
-        );
       });
 
       motionClient = createMotionDownloadClient({
@@ -6853,7 +6877,6 @@
       });
       settingsBtnCamera?.addEventListener("click", () => {
         avatar.resetCameraView?.();
-        showToast(isEnglish ? "Camera reset" : "已重置視角", "info");
       });
       window.__amojiSupportsMic = voice.supportsMic;
 
@@ -7718,7 +7741,9 @@
         container: document.getElementById("llm-switcher-wrap"),
         chat,
         onMode: (label) => setModePill(label),
-        onSystem: (msg) => addBubble("system", msg),
+        onSystem: (msg) => {
+          if (shouldShowChatBubble("system")) addBubble("system", msg);
+        },
       });
 
       const saveCloudKey = (key) => {
