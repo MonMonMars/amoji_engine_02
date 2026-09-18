@@ -331,7 +331,8 @@ const shouldAutoBoot =
 
 const boot = shouldAutoBoot ? startMinimalCompanionPreload() : null;
 
-if (shouldAutoBoot) {
+/** Start featured preview warm-up — call after picker is visible, not at HTML parse. */
+export function scheduleRosterPreviewAfterPicker() {
   scheduleCompanionBackgroundWork(ensureRosterPreloadStarted);
 }
 
@@ -351,6 +352,7 @@ if (typeof globalThis !== "undefined") {
     releaseExcept: releaseVrmPreloadExcept,
     rosterReady: rosterPreloadPromise,
     ensureRoster: ensureRosterPreloadStarted,
+    scheduleRosterPreview: scheduleRosterPreviewAfterPicker,
     ensureRosterModels: ensureRosterModelPreloadStarted,
     scheduleMotionExtras: scheduleHeavyMotionExtras,
     getRosterProgress: () => globalThis.__amojiRosterPreloadPct ?? 0,

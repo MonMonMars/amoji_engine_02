@@ -405,6 +405,16 @@
 .companion-picker--v4 .start-picker-preload {
   margin: 0;
   padding: 0;
+  opacity: 0.55;
+}
+
+.companion-picker--v4 .start-picker-preload.is-ready {
+  opacity: 0.45;
+}
+
+.companion-picker--v4.is-preloading .companion-card:not(:disabled) {
+  opacity: 1;
+  cursor: pointer;
 }
 
 .companion-picker--v4 .picker-session-actions {

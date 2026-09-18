@@ -42,8 +42,8 @@ export function pickerCopy(isEnglish = false) {
     rosterHint: (total) =>
       en ? `${total} companions · swipe to browse` : `${total} 位同伴 · 滑動瀏覽`,
     footStart: en
-      ? "★ Featured picks use gallery-quality models. 3D loads after you begin."
-      : "★ 推介角色用靚女 gallery 模型。開始後先載入 3D。",
+      ? "Tap Begin chat anytime — portraits & 3D load in the background."
+      : "隨時按開始傾偈 — 肖像同 3D 會喺背景載入。",
     footSession: en
       ? "Switch anytime — your chat history stays with each companion."
       : "隨時切換 — 每位同伴嘅對話記錄分開保存。",

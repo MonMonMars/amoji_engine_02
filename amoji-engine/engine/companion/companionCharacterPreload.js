@@ -12,8 +12,8 @@ import { sortModelUrlsForPreload } from "./companionVrmInspect.js";
 export const COMPANION_CHARACTER_PRELOAD_SCHEMA =
   "amoji.companionCharacterPreload.v3";
 
-/** Gallery-priority preview count warmed before the rest of the roster. */
-export const PRIORITY_PREVIEW_COUNT = 6;
+/** Gallery-priority preview count for instant picker (rest lazy-loads). */
+export const PRIORITY_PREVIEW_COUNT = 4;
 
 const PREVIEW_PROGRESS_WEIGHT = 0.22;
 const MODEL_PROGRESS_WEIGHT = 0.78;
@@ -63,6 +63,28 @@ export function uniqueCharacterPreviewUrls(langCode = "yue") {
  * Inject `<link rel="prefetch">` hints for roster previews + models.
  * @param {"yue" | "en"} [langCode]
  */
+/**
+ * Prefetch only featured preview PNGs — not full roster VRMs at boot.
+ * @param {"yue" | "en"} [langCode]
+ * @param {number} [previewCount]
+ */
+export function injectPriorityRosterAssetHints(
+  langCode = "yue",
+  previewCount = PRIORITY_PREVIEW_COUNT,
+) {
+  if (typeof document === "undefined") return;
+  const urls = uniqueCharacterPreviewUrls(langCode).slice(0, previewCount);
+  for (const url of urls) {
+    if (document.querySelector(`link[data-amoji-roster-hint="${url}"]`)) continue;
+    const link = document.createElement("link");
+    link.rel = "prefetch";
+    link.dataset.amojiRosterHint = url;
+    link.as = "image";
+    link.href = url;
+    document.head.appendChild(link);
+  }
+}
+
 export function injectRosterAssetHints(langCode = "yue") {
   if (typeof document === "undefined") return;
   const urls = [
@@ -172,8 +194,10 @@ export async function startCharacterRosterPreload(opts = {}) {
   rosterPreloadProgress = 0;
   opts.onProgress?.(0, "");
 
-  if (typeof document !== "undefined") {
+  if (typeof document !== "undefined" && preloadModels) {
     scheduleCompanionAssetHints(langCode);
+  } else if (typeof document !== "undefined") {
+    injectPriorityRosterAssetHints(langCode, PRIORITY_PREVIEW_COUNT);
   }
 
   rosterModelsPreloadPromise = (async () => {
@@ -181,17 +205,30 @@ export async function startCharacterRosterPreload(opts = {}) {
       priorityPreviewUrls,
       (done) => {
         previewDone = done;
-        reportCombinedProgress(
-          previewDone,
-          previewUrls.length,
-          modelDone,
-          modelUrls.length,
-          opts.onProgress,
-          "",
-        );
+        if (preloadModels) {
+          reportCombinedProgress(
+            previewDone,
+            previewUrls.length,
+            modelDone,
+            modelUrls.length,
+            opts.onProgress,
+            "",
+          );
+        }
       },
     );
     opts.onPreviewsReady?.();
+
+    if (!preloadModels) {
+      rosterPreloadProgress = 1;
+      opts.onProgress?.(1, "");
+      void preloadPreviewImages(deferredPreviewUrls);
+      return {
+        ok: Boolean(priorityPreviewResult.ok),
+        results: [],
+        modelsSkipped: true,
+      };
+    }
 
     void preloadPreviewImages(deferredPreviewUrls, (done) => {
       previewDone = priorityPreviewUrls.length + done;

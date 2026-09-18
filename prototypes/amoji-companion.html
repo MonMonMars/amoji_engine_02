@@ -8,9 +8,9 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji · Companion</title>
     <script>
-      window.__amojiBuild = "2026-09-18-v239-picker-debug";
+      window.__amojiBuild = "2026-09-18-v240-slim-startup";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-18-v239-picker-debug"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-18-v240-slim-startup"></script>
     <link
       rel="prefetch"
       href="/prototypes/assets/companion-char-nova.png"
@@ -487,11 +487,11 @@
       media="print"
       onload="this.media='all'"
     />
-    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-18-v239-picker-debug" />
-    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-18-v239-picker-debug" />
-    <link rel="stylesheet" href="/prototypes/companion-mic-button.css?v=2026-09-18-v239-picker-debug" />
-    <link rel="stylesheet" href="/prototypes/companion-minimal-ui.css?v=2026-09-18-v239-picker-debug" />
-    <link rel="stylesheet" href="/prototypes/companion-picker-v4.css?v=2026-09-18-v239-picker-debug" />
+    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-18-v240-slim-startup" />
+    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-18-v240-slim-startup" />
+    <link rel="stylesheet" href="/prototypes/companion-mic-button.css?v=2026-09-18-v240-slim-startup" />
+    <link rel="stylesheet" href="/prototypes/companion-minimal-ui.css?v=2026-09-18-v240-slim-startup" />
+    <link rel="stylesheet" href="/prototypes/companion-picker-v4.css?v=2026-09-18-v240-slim-startup" />
     <noscript>
       <link
         href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap"
@@ -4151,19 +4151,19 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-18-v239-picker-debug",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-18-v240-slim-startup",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-18-v239-picker-debug",
-          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-18-v239-picker-debug"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-18-v240-slim-startup",
+          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-18-v240-slim-startup"
         }
       }
     </script>
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-18-v239-picker-debug"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-18-v240-slim-startup"
     />
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-18-v239-picker-debug"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-18-v239-picker-debug"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-18-v240-slim-startup"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-18-v240-slim-startup"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;
@@ -4656,6 +4656,17 @@
       (async () => {
       try {
       const ami = globalThis.__amojiImport || ((path) => import(path));
+      const bootParams = new URLSearchParams(location.search);
+      const showStartPickerEarly =
+        bootParams.get("autostart") !== "1" && bootParams.get("pick") !== "0";
+      /** @type {ReturnType<import('../amoji-engine/engine/companion/companionCharacterPicker.js').createCompanionStartPicker> | null} */
+      let startPicker = null;
+      if (showStartPickerEarly) {
+        const { bootEarlyStartPicker } = await ami(
+          "../amoji-engine/engine/companion/companionEarlyStartPicker.js",
+        );
+        startPicker = await bootEarlyStartPicker(ami, { params: bootParams });
+      }
       const [
         { createCompanionAvatar, createStubAvatar },
         { createCompanionChat },
@@ -5161,8 +5172,6 @@
       }
       let canvas = document.getElementById("avatar-canvas");
       const orbitHit = document.getElementById("orbit-hit") || canvas;
-      /** @type {ReturnType<typeof createCompanionStartPicker> | null} */
-      let startPicker = null;
       const dismissLoading = () => {
         window.__amojiHideLoading?.();
       };
@@ -6999,72 +7008,71 @@
         applyCharacterSession(picked, { announce: false });
         startPicker?.setSelected?.(picked);
         releaseUnselectedCharacterCache(picked);
-        if (!liteMode) {
-          if (!avatarLoadStarted) {
-            beginAvatarLoad();
-          } else if (picked !== previousId || avatarKind === "loading") {
-            await hotSwapCharacter(picked, { force: true });
-          }
-        }
         startSession({ characterId: picked });
+        if (!liteMode) {
+          const deferAvatar = () => {
+            if (!avatarLoadStarted) {
+              beginAvatarLoad();
+            } else if (picked !== previousId || avatarKind === "loading") {
+              void hotSwapCharacter(picked, { force: true });
+            }
+          };
+          globalThis.__amojiPreload?.scheduleBackground?.(deferAvatar);
+          globalThis.requestAnimationFrame?.(deferAvatar);
+        }
       };
 
-      startPicker = createCompanionStartPicker({
-        root: document.body,
-        isEnglish,
-        selectedId: characterId,
-        onCardTapFx: playCompanionCardSelectFx,
-        onStart: (nextId) => {
-          window.__amojiUnlockAudio?.();
-          dismissLoading();
-          if (window.__amojiStart?.ready) {
-            void beginStartWithCharacter(nextId);
-            return;
-          }
-          window.__amojiStartWithCharacter?.(nextId);
-        },
-      });
-      startPicker.setSelected(characterId);
-      startPicker.enablePicking(true);
       const showStartPicker =
         params.get("autostart") !== "1" && params.get("pick") !== "0";
 
+      if (!startPicker) {
+        startPicker = createCompanionStartPicker({
+          root: document.body,
+          isEnglish,
+          selectedId: characterId,
+          onCardTapFx: playCompanionCardSelectFx,
+          onStart: (nextId) => {
+            window.__amojiUnlockAudio?.();
+            dismissLoading();
+            if (window.__amojiStart?.ready) {
+              void beginStartWithCharacter(nextId);
+              return;
+            }
+            window.__amojiStartWithCharacter?.(nextId);
+          },
+        });
+      } else {
+        startPicker.setSelected(characterId);
+        startPicker.enablePicking(true);
+      }
+
       const syncRosterPreloadUi = () => {
+        globalThis.__amojiPreload?.scheduleRosterPreview?.();
         const roster =
           globalThis.__amojiPreload?.rosterReady ??
           globalThis.__amojiPreload?.ensureRoster?.();
         if (!roster) return;
-        const applyPct = (ratio) => {
-          if (typeof ratio !== "number" || Number.isNaN(ratio)) return;
-          startPicker?.setPreloadProgress?.(
-            Math.max(0, Math.min(100, Math.round(ratio * 100))),
-          );
-        };
-        applyPct(globalThis.__amojiRosterPreloadPct ?? 0);
-        const poll = setInterval(() => {
-          applyPct(globalThis.__amojiRosterPreloadPct);
-        }, 180);
-        roster
-          .then(() => {
-            startPicker?.enablePicking?.(true);
-          })
-          .finally(() => clearInterval(poll));
-        void globalThis.__amojiRosterModelsReady?.then?.(() => {
+        void roster.then(() => {
           startPicker?.setPreloadProgress?.(
             100,
-            isEnglish ? "All companions cached" : "全部同伴已快取",
+            isEnglish
+              ? "More portraits ready in background"
+              : "更多肖像喺背景載入",
           );
         });
       };
 
       if (showStartPicker) {
         startPicker.setPreloadProgress?.(
-          0,
+          100,
           isEnglish
-            ? "Pick anyone to start — roster keeps loading in the background"
-            : "揀一位就可以開始 — 同伴會喺背景繼續載入",
+            ? "Ready — 3D loads after you begin"
+            : "可以揀啦 — 3D 開始後先載入",
         );
-        startPicker.show();
+        startPicker.enablePicking(true);
+        if (!startPicker.element?.classList.contains("is-open")) {
+          startPicker.show();
+        }
       }
       syncRosterPreloadUi();
 
