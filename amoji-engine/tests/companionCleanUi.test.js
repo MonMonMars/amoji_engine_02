@@ -20,8 +20,8 @@ describe("companionCleanUi", () => {
     expect(shouldShowChatBubble("system", { force: true })).toBe(true);
   });
 
-  it("hides starter prompts and uses minimal placeholder", () => {
-    expect(shouldShowStarterPrompts()).toBe(false);
+  it("keeps starter prompts for empty chats and uses minimal placeholder", () => {
+    expect(shouldShowStarterPrompts()).toBe(true);
     expect(cleanComposerPlaceholder(true)).toBe("Message…");
     expect(cleanComposerPlaceholder(false)).toBe("輸入…");
   });

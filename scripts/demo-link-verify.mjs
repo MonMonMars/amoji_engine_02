@@ -141,8 +141,32 @@ async function probePlayEntry(base) {
   }
 }
 
+/** Wait for /play client redirect to land on lite or full shell. */
+async function gotoCompanionEntry(page, url, timeout = 90000) {
+  await page.goto(url, { waitUntil: "domcontentloaded", timeout });
+  await page
+    .waitForFunction(
+      () =>
+        Boolean(
+          window.__amojiBuild &&
+            (window.__amojiLite?.ready ||
+              document.body.classList.contains("conversation-ui") ||
+              window.__amojiModuleBooted ||
+              document.getElementById("start-character-picker") ||
+              document.getElementById("panel-today")),
+        ),
+      { timeout },
+    )
+    .catch(() => null);
+}
+
 async function verifySecretary(page, label) {
-  await page.goto(secretaryUrl, { waitUntil: "domcontentloaded", timeout: 60000 });
+  await gotoCompanionEntry(page, secretaryUrl);
+  await page
+    .waitForFunction(() => window.__amojiLite?.ready === true, {
+      timeout: 45000,
+    })
+    .catch(() => null);
 
   const build = await page.evaluate(() => window.__amojiBuild);
   record(`${label} page loads`, Boolean(build), build);
@@ -177,7 +201,14 @@ async function verifySecretary(page, label) {
       document.getElementById("open-chat-btn")?.click();
     });
   }
-  await page.waitForSelector("#composer:not(.hidden)", { timeout: 15000 });
+  await page
+    .waitForSelector("#composer:not(.hidden)", { timeout: 20000 })
+    .catch(async () => {
+      await page.evaluate(() => {
+        document.querySelector('[data-tab="chat"]')?.click();
+      });
+      await page.waitForSelector("#composer:not(.hidden)", { timeout: 15000 });
+    });
 
   await page.evaluate(() => {
     const input = document.getElementById("input");
@@ -260,7 +291,7 @@ async function verifyBootPaint(page, label) {
 }
 
 async function verifyFullCompanion(page, label) {
-  await page.goto(fullUrl, { waitUntil: "domcontentloaded", timeout: 90000 });
+  await gotoCompanionEntry(page, fullUrl);
 
   await verifyBootPaint(page, label);
 

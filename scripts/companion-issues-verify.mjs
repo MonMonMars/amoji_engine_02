@@ -281,6 +281,17 @@ async function main() {
     await new Promise((r) => setTimeout(r, 3800));
   });
 
+  await page
+    .waitForFunction(
+      () => {
+        const action = String(window.__amojiAvatar?.currentAction || "");
+        return !action || action === "thinking" || action === "idle";
+      },
+      { timeout: 12000 },
+    )
+    .catch(() => null);
+  await page.waitForTimeout(1500);
+
   const afterNova = await page.evaluate(() => {
     const vrm = window.__amojiAvatar?.vrm;
     const bone = (name) => {

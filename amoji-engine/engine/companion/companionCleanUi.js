@@ -39,7 +39,8 @@ export function cleanStatusLine(isEnglish = false) {
 }
 
 export function shouldShowStarterPrompts() {
-  return !COMPANION_CLEAN_UI;
+  /** Empty-chat starter chips stay useful even in clean UI. */
+  return true;
 }
 
 export function shouldShowListenHint() {
