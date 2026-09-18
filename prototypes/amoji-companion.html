@@ -8,9 +8,9 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji · Companion</title>
     <script>
-      window.__amojiBuild = "2026-09-18-v277-unified-app-finish";
+      window.__amojiBuild = "2026-09-18-v278-unified-app-polish";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-18-v277-unified-app-finish"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-18-v278-unified-app-polish"></script>
     <link
       rel="prefetch"
       href="/prototypes/assets/companion-char-nova.png"
@@ -612,11 +612,11 @@
       media="print"
       onload="this.media='all'"
     />
-    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-18-v277-unified-app-finish" />
-    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-18-v277-unified-app-finish" />
-    <link rel="stylesheet" href="/prototypes/companion-mic-button.css?v=2026-09-18-v277-unified-app-finish" />
-    <link rel="stylesheet" href="/prototypes/companion-minimal-ui.css?v=2026-09-18-v277-unified-app-finish" />
-    <link rel="stylesheet" href="/prototypes/companion-picker-v4.css?v=2026-09-18-v277-unified-app-finish" />
+    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-18-v278-unified-app-polish" />
+    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-18-v278-unified-app-polish" />
+    <link rel="stylesheet" href="/prototypes/companion-mic-button.css?v=2026-09-18-v278-unified-app-polish" />
+    <link rel="stylesheet" href="/prototypes/companion-minimal-ui.css?v=2026-09-18-v278-unified-app-polish" />
+    <link rel="stylesheet" href="/prototypes/companion-picker-v4.css?v=2026-09-18-v278-unified-app-polish" />
     <script>
       (function () {
         var params = new URLSearchParams(location.search);
@@ -642,7 +642,7 @@
       })();
     </script>
     <script type="module">
-      import { bootEarlyStartPicker } from "/amoji-engine/engine/companion/companionEarlyStartPicker.js?v=2026-09-18-v277-unified-app-finish";
+      import { bootEarlyStartPicker } from "/amoji-engine/engine/companion/companionEarlyStartPicker.js?v=2026-09-18-v278-unified-app-polish";
       const bootParams = new URLSearchParams(location.search);
       if (bootParams.get("autostart") !== "1" && bootParams.get("pick") !== "0") {
         globalThis.__amojiEarlyStartPickerPromise = bootEarlyStartPicker({
@@ -4347,19 +4347,19 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-18-v277-unified-app-finish",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-18-v278-unified-app-polish",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-18-v277-unified-app-finish",
-          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-18-v277-unified-app-finish"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-18-v278-unified-app-polish",
+          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-18-v278-unified-app-polish"
         }
       }
     </script>
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-18-v277-unified-app-finish"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-18-v278-unified-app-polish"
     />
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-18-v277-unified-app-finish"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-18-v277-unified-app-finish"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-18-v278-unified-app-polish"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-18-v278-unified-app-polish"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;
@@ -4989,11 +4989,7 @@
       const roleRosterProvider = (langCode) =>
         rosterCharactersForRole(langCode, appRole);
       const { createCompanionSecretaryBridge } = secretaryBridgeMod;
-      const { COMPANION_CARE_ENABLED } = featureFlagsMod;
-      window.__amojiCareEnabled = COMPANION_CARE_ENABLED;
-      if (!COMPANION_CARE_ENABLED) {
-        document.body.classList.add("companion-no-care", "companion-care-collapsed");
-      }
+      const { isCompanionCareEnabledForRole } = featureFlagsMod;
       const { talkSpeedButtonTitle, formatTalkSpeedLabel } = talkSpeedMod;
       const { buildSettingsChromeLabels } = settingsChromeMod;
       const {
@@ -5510,6 +5506,13 @@
       let appRole = resolveAppRole(params);
       saveCompanionRole(appRole);
       document.body.classList.add(`companion-role-${appRole}`);
+      let careEnabled = isCompanionCareEnabledForRole(appRole);
+      window.__amojiCareEnabled = careEnabled;
+      const syncCareChrome = () => {
+        document.body.classList.toggle("companion-no-care", !careEnabled);
+        document.body.classList.toggle("companion-care-collapsed", !careEnabled);
+      };
+      syncCareChrome();
       if (!params.get("lang")) {
         const yueHref = buildCompanionHref({
           basePath: location.pathname,
@@ -5866,6 +5869,13 @@
           secretaryBridge.enabled = appRole === "secretary";
         } else if (appRole === "secretary") {
           void initCompanionChrome();
+        }
+        const nextCare = isCompanionCareEnabledForRole(appRole);
+        if (nextCare !== careEnabled) {
+          careEnabled = nextCare;
+          window.__amojiCareEnabled = careEnabled;
+          syncCareChrome();
+          if (careEnabled) void initCompanionChrome();
         }
         const preset = rolePreset(appRole);
         if (!preset.characterIds.includes(characterId)) {
@@ -7578,7 +7588,7 @@
       };
 
       handleCharacterTap = () => {
-        if (!COMPANION_CARE_ENABLED) return;
+        if (!careEnabled) return;
         const now = Date.now();
         if (now - lastTapAt < 1400 || busy) return;
         lastTapAt = now;
@@ -7665,11 +7675,11 @@
         });
         if (appRole === "secretary") {
           const openTab = params.get("tab");
-          if (openTab === "today" || openTab === "tasks") {
+          if (openTab === "today" || openTab === "tasks" || openTab === "me") {
             secretaryBridge.openPanel(openTab);
           }
         }
-        if (!COMPANION_CARE_ENABLED) return;
+        if (!careEnabled) return;
 
         const [treatInteractMod, raisingHubMod, careToolsMod] = await Promise.all([
           ami("../amoji-engine/engine/companion/companionTreatInteract.js"),
@@ -7904,7 +7914,7 @@
           addBubble("user", cleaned, { persist: true });
         }
         lastUserMessage = cleaned;
-        if (COMPANION_CARE_ENABLED) {
+        if (careEnabled) {
           window.__amojiTreats?.applyChat?.();
           raisingHub?.onChat?.();
           raisingHub?.onUserMessage?.(cleaned);
@@ -8265,18 +8275,18 @@
         if (busy || voice.speaking || hasUserMessages(loadChatHistory(characterId))) {
           return Promise.resolve({ ok: false, reason: "skipped-user-active" });
         }
-        const check = COMPANION_CARE_ENABLED ? window.__amojiTreats?.checkIn?.() : null;
-        if (COMPANION_CARE_ENABLED) window.__amojiRaising?.refresh?.();
+        const check = careEnabled ? window.__amojiTreats?.checkIn?.() : null;
+        if (careEnabled) window.__amojiRaising?.refresh?.();
         const greetText = (check && check.line) || greetingLine();
         const mood = check?.mood || "ok";
-        const greetFeel = COMPANION_CARE_ENABLED
+        const greetFeel = careEnabled
           ? mood === "hungry" || mood === "lonely"
             ? "sad"
             : "happy"
           : "neutral";
         avatar.setEmotion(greetFeel);
         setEmotionPill(greetFeel);
-        if (COMPANION_CARE_ENABLED && mood === "hungry") {
+        if (careEnabled && mood === "hungry") {
           avatar.playAction?.("headshake", { emotion: "sad", single: true });
         } else {
           avatar.playGesture?.("nod");
@@ -8290,9 +8300,9 @@
           greetingBubble.textContent = greetText;
         }
         const greetPerf =
-          COMPANION_CARE_ENABLED && mood === "hungry"
+          careEnabled && mood === "hungry"
             ? characterHungryPerformance(characterId)
-            : COMPANION_CARE_ENABLED && mood === "lonely"
+            : careEnabled && mood === "lonely"
               ? characterLonelyPerformance(characterId)
               : characterGreetingPerformance(characterId);
         return voice.speak(greetText, greetPerf).then((spoke) => {
@@ -8595,8 +8605,9 @@
         }
         if (liteLink) {
           liteLink.href = buildCompanionHref({
-            basePath: "/companion",
+            basePath: "/play",
             lang: nextCode,
+            extra: { role: "secretary", pick: "1", automic: "0" },
           });
         }
         input.placeholder = composerPlaceholder();
@@ -8612,7 +8623,7 @@
           "info",
           { force: true },
         );
-        if (COMPANION_CARE_ENABLED) {
+        if (careEnabled) {
           careTools.refreshLabels?.();
           raisingHub.refresh?.();
         }
@@ -8762,19 +8773,19 @@
         window.__amojiModuleBooted = false;
         window.__amojiHideLoading?.();
         window.__amojiShowBootFallback?.(
-          "App modules failed to load — tap reload or use text-only /companion (" +
+          "App modules failed to load — tap reload or open Secretary mode (/play?role=secretary) (" +
             (err?.message || err) +
             ")",
         );
         window.__amojiStaticFallback?.(
-          "App modules failed to load — refresh or use /companion for text-only chat. (" +
+          "App modules failed to load — refresh or use /play?role=secretary. (" +
             (err?.message || err) +
             ")",
         );
         window.__amojiStart.ready = true;
         window.__amojiStart.run = function () {
           window.__amojiShowBootFallback?.(
-            "App modules failed — tap reload below or open /companion for text chat.",
+            "App modules failed — tap reload below or open /play?role=secretary.",
           );
         };
         if (window.__amojiStart.tapped && !window.__amojiStart.sessionStarted) {

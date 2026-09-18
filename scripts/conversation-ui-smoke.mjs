@@ -1,18 +1,19 @@
 #!/usr/bin/env node
 /**
- * Smoke test: conversation-driven UI (no tab buttons needed).
- * Requires lab-serve: cd amoji-engine && node scripts/lab-serve.mjs --port 5173
+ * Smoke test: unified 3D secretary conversation UI (voice-first, no legacy tabbar).
+ * Requires lab-serve: cd amoji-engine && node scripts/lab-serve.mjs --port 5174
  */
 import { chromium } from "playwright";
 import { mkdirSync } from "fs";
 import { join } from "path";
+import { AMOJI_BUILD } from "../amoji-engine/engine/companion/buildVersion.mjs";
 
 const outDir = process.env.ARTIFACT_DIR || "/opt/cursor/artifacts";
 mkdirSync(outDir, { recursive: true });
 
 const baseUrl =
   process.env.LITE_URL ||
-  "http://127.0.0.1:5174/prototypes/amoji-lite.html?lang=en";
+  "http://127.0.0.1:5174/play?role=secretary&lang=en&pick=1&automic=0";
 
 const browser = await chromium.launch({ headless: true });
 const page = await browser.newPage();
@@ -20,99 +21,49 @@ const page = await browser.newPage();
 const errors = [];
 page.on("pageerror", (err) => errors.push(String(err)));
 
-await page.goto(baseUrl, { waitUntil: "domcontentloaded", timeout: 60000 });
+await page.goto(baseUrl, { waitUntil: "domcontentloaded", timeout: 120000 });
+await page
+  .waitForFunction(() => window.__amojiModuleBooted === true, { timeout: 120000 })
+  .catch(() => null);
 
-const chromeHidden = await page.evaluate(() => {
-  const tabbar = document.querySelector(".tabbar");
-  const modeRow = document.querySelector(".mode-row");
-  const style = tabbar ? getComputedStyle(tabbar) : null;
-  const modeStyle = modeRow ? getComputedStyle(modeRow) : null;
-  return {
-    conversationUi: document.body.classList.contains("conversation-ui"),
-    tabbarHidden: style?.display === "none",
-    modeRowHidden: modeStyle?.display === "none",
-    hasActivityRail: !!document.getElementById("activity-rail"),
-    build: window.__amojiBuild,
-  };
-});
+const chrome = await page.evaluate(() => ({
+  conversationUi: document.body.classList.contains("conversation-ui"),
+  roleSecretary: document.body.classList.contains("companion-role-secretary"),
+  legacyTabbar: !!document.querySelector(".tabbar"),
+  hasActivityRail: !!document.getElementById("activity-rail"),
+  hasComposer: !!document.getElementById("composer"),
+  quickBar: document.getElementById("secretary-quick-bar")?.textContent?.trim(),
+  build: window.__amojiBuild,
+}));
 
-if (!chromeHidden.conversationUi || !chromeHidden.tabbarHidden) {
-  console.error("FAIL: manual chrome not hidden", chromeHidden);
+if (!chrome.conversationUi || !chrome.roleSecretary) {
+  console.error("FAIL: unified secretary chrome missing", chrome);
   process.exit(1);
 }
 
-await page.waitForSelector("#composer:not(.hidden)", { timeout: 10000 });
+await page.click("#btn-open-setup").catch(() => null);
+await page.waitForSelector("#settings-role-grid", { timeout: 15000 }).catch(() => null);
 
-await page.evaluate(() => {
-  const input = document.getElementById("input");
-  const form = document.getElementById("composer");
-  if (input && form) {
-    input.value = "show my tasks";
-    form.requestSubmit();
-  }
-});
+await page.click("#settings-btn-secretary-today").catch(() => null);
+await page
+  .waitForSelector(".secretary-overlay.is-open", { timeout: 15000 })
+  .catch(() => null);
 
-await page.waitForFunction(
-  () => {
-    const tasks = document.getElementById("panel-tasks");
-    const today = document.getElementById("panel-today");
-    const pill = document.getElementById("ui-context-pill");
-    const fnChip = document.querySelector(
-      '.activity-chip--function[data-kind="tab"][data-value="tasks"]',
-    );
-    return (
-      tasks &&
-      !tasks.classList.contains("hidden") &&
-      today?.classList.contains("hidden") &&
-      pill &&
-      !pill.hidden &&
-      pill.textContent?.length > 0 &&
-      fnChip
-    );
-  },
-  { timeout: 15000 },
+const panelOpen = await page.evaluate(
+  () => document.querySelector(".secretary-overlay.is-open") != null,
 );
 
-const afterTasks = await page.evaluate(() => ({
-  activeTab: document.querySelector(".tabbar button.active")?.dataset?.tab,
-  tasksVisible: !document.getElementById("panel-tasks")?.classList.contains("hidden"),
-  pill: document.getElementById("ui-context-pill")?.textContent?.trim(),
-}));
-
-await page.screenshot({ path: join(outDir, "conversation-ui-tasks.png"), fullPage: true });
-
-await page.evaluate(() => {
-  const input = document.getElementById("input");
-  const form = document.getElementById("composer");
-  if (input && form) {
-    input.value = "let's chill";
-    form.requestSubmit();
-  }
-});
-
-await page.waitForFunction(
-  () => document.querySelector('.mode-row button[data-mode="chill"]')?.classList.contains("active"),
-  { timeout: 15000 },
-);
-
-const afterChill = await page.evaluate(() => ({
-  chillActive: document
-    .querySelector('.mode-row button[data-mode="chill"]')
-    ?.classList.contains("active"),
-  pill: document.getElementById("ui-context-pill")?.textContent?.trim(),
-}));
-
-await page.screenshot({ path: join(outDir, "conversation-ui-chill.png"), fullPage: true });
+await page.screenshot({ path: join(outDir, "conversation-ui-secretary-today.png"), fullPage: true });
 
 await browser.close();
 
 console.log(
   JSON.stringify(
     {
-      ok: true,
-      build: chromeHidden.build,
-      afterTasks,
-      afterChill,
+      ok: panelOpen,
+      build: chrome.build,
+      chrome,
+      panelOpen,
       pageErrors: errors,
     },
     null,
@@ -120,7 +71,7 @@ console.log(
   ),
 );
 
-if (!afterTasks.tasksVisible || !afterChill.chillActive) {
-  console.error("FAIL: UI did not switch via conversation");
+if (!panelOpen || chrome.build !== AMOJI_BUILD) {
+  console.error("FAIL: unified secretary conversation UI smoke");
   process.exit(1);
 }

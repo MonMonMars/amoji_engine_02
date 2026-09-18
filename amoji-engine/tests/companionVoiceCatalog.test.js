@@ -38,6 +38,10 @@ describe("companionVoiceCatalog", () => {
     expect(third).toBe("zh-HK-HiuGaaiNeural-idol");
   });
 
+  it("defaults companion href to /play entry", () => {
+    expect(buildCompanionHref({ lang: "en" })).toBe("/play?lang=en");
+  });
+
   it("builds href with lang and voice", () => {
     expect(
       buildCompanionHref({

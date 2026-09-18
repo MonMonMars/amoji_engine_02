@@ -176,7 +176,7 @@ export function buildCompanionHref(opts = {}) {
       if (value) q.set(key, value);
     }
   }
-  const base = opts.basePath || "/companion";
+  const base = opts.basePath || "/play";
   const qs = q.toString();
   return qs ? `${base}?${qs}` : base;
 }

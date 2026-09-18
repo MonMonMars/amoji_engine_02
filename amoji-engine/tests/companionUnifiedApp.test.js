@@ -4,6 +4,7 @@ import {
   normalizeUnifiedEntryParams,
   resolveAppRole,
   resolveRoleDefaultCharacter,
+  rolePickBadge,
   rosterCharactersForRole,
 } from "../engine/companion/companionUnifiedApp.js";
 
@@ -16,6 +17,21 @@ describe("companionUnifiedApp", () => {
     expect(params.get("kind")).toBeNull();
     expect(params.get("lite")).toBeNull();
     expect(params.get("tab")).toBe("today");
+  });
+
+  it("maps secretary tabs without explicit role", () => {
+    for (const tab of ["today", "tasks", "me"]) {
+      const params = normalizeUnifiedEntryParams(
+        new URLSearchParams(`tab=${tab}&lang=en`),
+      );
+      expect(params.get("role")).toBe("secretary");
+      expect(params.get("tab")).toBe(tab);
+    }
+  });
+
+  it("returns localized role pick badges", () => {
+    expect(rolePickBadge("secretary", true)).toContain("Secretary");
+    expect(rolePickBadge("boyfriend", false)).toContain("男友");
   });
 
   it("resolves role from url or storage default", () => {

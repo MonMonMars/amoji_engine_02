@@ -239,6 +239,7 @@ export function createCompanionSecretaryBridge(opts = {}) {
         memoryTitle: "Saved memories",
         memoryEmpty: "No saved memories yet — tell me what to remember.",
         chatHint: "Talk or type below — I will capture tasks and memories automatically.",
+        me: "Me",
       }
     : {
         today: "今日",
@@ -256,6 +257,7 @@ export function createCompanionSecretaryBridge(opts = {}) {
         memoryTitle: "已記住嘅資料",
         memoryEmpty: "暫時未有記憶 — 同我講想記住咩。",
         chatHint: "下面講或者打字 — 我會自動記任務同記憶。",
+        me: "我",
       };
 
   const renderTasksList = () => {
@@ -328,7 +330,7 @@ export function createCompanionSecretaryBridge(opts = {}) {
       titleEl.textContent = strings.chat;
       bodyEl.innerHTML = `<p>${strings.chatHint}</p>`;
     } else if (activePanel === "me") {
-      titleEl.textContent = isEnglish ? "Me" : "我";
+      titleEl.textContent = strings.me;
       const facts = readMemoryStore(storage).facts || [];
       bodyEl.innerHTML = `
         <div class="secretary-card">
@@ -394,6 +396,7 @@ export function createCompanionSecretaryBridge(opts = {}) {
     bar.innerHTML = `
       <button type="button" class="secretary-quick-btn" data-secretary-panel="today">${strings.today}</button>
       <button type="button" class="secretary-quick-btn" data-secretary-panel="tasks">${strings.tasks}</button>
+      <button type="button" class="secretary-quick-btn" data-secretary-panel="me">${strings.me}</button>
     `;
     bar.querySelectorAll("[data-secretary-panel]").forEach((btn) => {
       btn.addEventListener("click", () => {
@@ -459,6 +462,7 @@ export function createCompanionSecretaryBridge(opts = {}) {
         addMemoryFact(fact, { storage });
       }
       onToast(strings.memorySaved, "info");
+      if (activePanel === "me") renderPanel();
     }
     if (parsed.preferences?.length) {
       applyPreferenceActions(parsed.preferences, { storage });
@@ -481,7 +485,7 @@ export function createCompanionSecretaryBridge(opts = {}) {
         closePanel();
         return;
       }
-      if (tabId === "today" || tabId === "tasks" || tabId === "me" || tabId === "chat") {
+      if (tabId === "today" || tabId === "tasks" || tabId === "me") {
         openPanel(tabId);
       }
     },
@@ -498,7 +502,9 @@ export function createCompanionSecretaryBridge(opts = {}) {
       renderPanel();
     },
     onContextChange: (ctx) => {
-      if (ctx.tab === "today" || ctx.tab === "tasks") openPanel(ctx.tab);
+      if (ctx.tab === "today" || ctx.tab === "tasks" || ctx.tab === "me") {
+        openPanel(ctx.tab);
+      }
     },
   };
 
