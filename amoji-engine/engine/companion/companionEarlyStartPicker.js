@@ -3,8 +3,13 @@
  */
 import { createCompanionStartPicker } from "./companionCharacterPicker.js";
 import { attachStartPickerModelPreload } from "./companionStartPickerPreload.js";
+import {
+  pickerCopyForRole,
+  resolveAppRole,
+  resolveRoleDefaultCharacter,
+  rosterCharactersForRole,
+} from "./companionUnifiedApp.js";
 import { playCompanionCardTapFx } from "./companionUiGacha.js";
-import { pickerCopy } from "./companionPickerChrome.js";
 
 export const COMPANION_EARLY_START_PICKER_SCHEMA =
   "amoji.companionEarlyStartPicker.v1";
@@ -21,7 +26,13 @@ export async function bootEarlyStartPicker(opts = {}) {
   if (!show) return null;
 
   const isEnglish = params.get("lang") === "en";
-  const selectedId = String(params.get("character") || "nova").toLowerCase();
+  const appRole = resolveAppRole(params);
+  const selectedId = resolveRoleDefaultCharacter(
+    String(params.get("character") || "nova").toLowerCase(),
+    appRole,
+    params,
+  );
+  const roleCopy = pickerCopyForRole(appRole, isEnglish);
 
   const splash = document.getElementById("amoji-boot-splash");
   splash?.setAttribute("aria-busy", "true");
@@ -31,6 +42,8 @@ export async function bootEarlyStartPicker(opts = {}) {
     root: opts.root || document.body,
     isEnglish,
     selectedId,
+    pickerCopy: roleCopy,
+    rosterProvider: (langCode) => rosterCharactersForRole(langCode, appRole),
     onCardTapFx: playCompanionCardTapFx,
     onSelectionChange: () => {
       void preloadJob?.refreshSelectedModel?.();

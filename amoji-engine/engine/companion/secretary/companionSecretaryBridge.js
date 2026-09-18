@@ -10,10 +10,15 @@ import {
 import { createTask, listActiveTasks } from "./taskStore.js";
 import { addMemoryFact } from "./memoryStore.js";
 import {
+  modeLabel,
   persistSecretaryMode,
   readSecretaryMode,
 } from "./modePresets.js";
-import { openUiOverlay, closeUiOverlay } from "../companionUiEffects.js";
+import {
+  readReminderPrefs,
+  requestReminderPermission,
+  startReminderLoop,
+} from "./reminders.js";
 
 export const COMPANION_SECRETARY_BRIDGE_SCHEMA = "amoji.companionSecretaryBridge.v1";
 
@@ -126,10 +131,13 @@ function ensureSecretaryStyles(doc) {
       background: rgba(120, 180, 255, 0.18);
       border-color: rgba(120, 180, 255, 0.45);
     }
-    body.companion-role-secretary .secretary-role-pill {
+    body.companion-role-secretary .secretary-quick-bar {
       display: inline-flex;
     }
-    .secretary-role-pill {
+    .companion-role-pill:not([hidden]) {
+      display: inline-flex;
+    }
+    .secretary-quick-bar {
       display: none;
       align-items: center;
       gap: 6px;
@@ -140,6 +148,31 @@ function ensureSecretaryStyles(doc) {
       color: #dbeafe;
       font-size: 11px;
       font-weight: 600;
+    }
+    .secretary-quick-bar {
+      align-items: center;
+      gap: 6px;
+      margin-left: 6px;
+    }
+    .secretary-quick-btn {
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(255, 255, 255, 0.06);
+      color: #f7f1e8;
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .settings-role-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .settings-role-btn.is-active {
+      border-color: rgba(120, 180, 255, 0.55);
+      background: rgba(120, 180, 255, 0.16);
     }
   `;
   doc.head.appendChild(style);
@@ -152,6 +185,7 @@ function ensureSecretaryStyles(doc) {
  *   storage?: Storage | null,
  *   activityRail?: { startTaskProcess?: () => void, advanceProcess?: (id: string) => void, pulse?: (icon: string, label: string) => void },
  *   onToast?: (msg: string, kind?: string) => void,
+ *   onModeChange?: () => void,
  *   enabled?: boolean,
  * }} [opts]
  */
@@ -161,6 +195,7 @@ export function createCompanionSecretaryBridge(opts = {}) {
   const storage = opts.storage ?? globalThis.localStorage ?? null;
   const activityRail = opts.activityRail || {};
   const onToast = opts.onToast || (() => {});
+  const onModeChange = opts.onModeChange || (() => {});
   let active = opts.enabled !== false;
 
   ensureSecretaryStyles(doc);
@@ -245,6 +280,7 @@ export function createCompanionSecretaryBridge(opts = {}) {
       <div class="secretary-card">
         <h3>${escapeHtml(briefing.headline || strings.today)}</h3>
         <p>${escapeHtml(briefing.summary || "")}</p>
+        ${renderModeRow()}
       </div>
       <div class="secretary-card">
         <h3>${strings.top3}</h3>
@@ -295,6 +331,16 @@ export function createCompanionSecretaryBridge(opts = {}) {
         renderPanel();
       });
     });
+    bodyEl.querySelectorAll("[data-secretary-mode]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const next = btn.getAttribute("data-secretary-mode");
+        if (!next) return;
+        mode = next;
+        persistSecretaryMode(mode, storage);
+        renderPanel();
+        onModeChange();
+      });
+    });
   };
 
   const openPanel = (panelId = "today") => {
@@ -316,6 +362,57 @@ export function createCompanionSecretaryBridge(opts = {}) {
   overlay.querySelectorAll("[data-secretary-close]").forEach((el) => {
     el.addEventListener("click", closePanel);
   });
+
+  const ensureQuickBar = () => {
+    if (doc.getElementById("secretary-quick-bar")) return;
+    const mount = doc.querySelector(".topbar-actions");
+    if (!mount) return;
+    const bar = doc.createElement("div");
+    bar.id = "secretary-quick-bar";
+    bar.className = "secretary-quick-bar";
+    bar.innerHTML = `
+      <button type="button" class="secretary-quick-btn" data-secretary-panel="today">${strings.today}</button>
+      <button type="button" class="secretary-quick-btn" data-secretary-panel="tasks">${strings.tasks}</button>
+    `;
+    bar.querySelectorAll("[data-secretary-panel]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        openPanel(btn.getAttribute("data-secretary-panel") || "today");
+      });
+    });
+    mount.prepend(bar);
+  };
+
+
+  const renderModeRow = () => {
+    const modes = ["work", "life", "chill"];
+    const chips = modes
+      .map(
+        (id) =>
+          `<button type="button" class="secretary-chip${mode === id ? " is-active" : ""}" data-secretary-mode="${id}">${modeLabel(id, isEnglish)}</button>`,
+      )
+      .join("");
+    return `<div class="secretary-chip-row">${chips}</div>`;
+  };
+
+  if (active) {
+    ensureQuickBar();
+    if (readReminderPrefs(storage).enabled) {
+      void requestReminderPermission().then(() => {
+        startReminderLoop({
+          storage,
+          isEn: isEnglish,
+          onFire: (count) => {
+            if (count > 0) {
+              onToast(
+                isEnglish ? `${count} task reminder(s)` : `${count} 個任務提醒`,
+                "info",
+              );
+            }
+          },
+        });
+      });
+    }
+  }
 
   const applyReplyTags = async (rawReply) => {
     if (!active || !rawReply) return null;

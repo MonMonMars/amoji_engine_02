@@ -6,7 +6,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
     <meta http-equiv="Pragma" content="no-cache" />
     <title>Amoji</title>
-    <meta http-equiv="refresh" content="0;url=/companion?lang=yue" />
+    <meta http-equiv="refresh" content="0;url=/play?lang=yue&pick=1&automic=0" />
     <style>
       html,
       body {
@@ -22,7 +22,7 @@
         padding: 1.5rem;
       }
       .card {
-        max-width: 22rem;
+        max-width: 24rem;
         display: flex;
         flex-direction: column;
         gap: 1rem;
@@ -60,20 +60,20 @@
   <body>
     <div class="card">
       <h1>Amoji</h1>
-      <p>粵語動漫同伴 · Cantonese anime companion</p>
+      <p>One 3D app — girlfriend, boyfriend, secretary &amp; pet</p>
       <div class="links">
-        <a href="/app">📱 手機 App · Mobile (Pet & Chase)</a>
-        <a class="secondary" href="/companion?lang=yue">開始傾計 · Lite chat</a>
-        <a class="secondary" href="/companion-full?lang=yue">3D 同伴 · Full avatar</a>
+        <a href="/play?lang=yue&pick=1&automic=0">💗 女朋友 · Girlfriend (粵)</a>
+        <a class="secondary" href="/play?lang=en&role=boyfriend&pick=1&automic=0">💙 Boyfriend (EN)</a>
+        <a class="secondary" href="/play?role=secretary&tab=today&lang=yue&pick=1&automic=0">📋 秘書 · Secretary</a>
+        <a class="secondary" href="/app">📱 Mobile app (Pet &amp; Chase)</a>
         <a class="secondary" href="/voice-emotion-demo">Voice emotion demo (EN)</a>
-        <a class="secondary" href="/companion-full?lang=en&pick=1&automic=0&voice=openai-coral">English companion · Coral voice</a>
       </div>
       <p><a href="/api/health" style="color:#7fd4cf;background:none;padding:0">Status check</a></p>
     </div>
     <script>
       if (!location.search) {
         setTimeout(function () {
-          location.replace("/companion?lang=yue");
+          location.replace("/play?lang=yue&pick=1&automic=0");
         }, 80);
       }
     </script>

@@ -4,6 +4,7 @@ import {
   normalizeUnifiedEntryParams,
   resolveAppRole,
   resolveRoleDefaultCharacter,
+  rosterCharactersForRole,
 } from "../engine/companion/companionUnifiedApp.js";
 
 describe("companionUnifiedApp", () => {
@@ -34,6 +35,13 @@ describe("companionUnifiedApp", () => {
     expect(
       resolveRoleDefaultCharacter("nova", "girlfriend", new URLSearchParams()),
     ).toBe("nova");
+  });
+
+  it("orders roster with role picks first", () => {
+    const roster = rosterCharactersForRole("en", "secretary");
+    expect(roster[0]?.id).toBe("kate");
+    expect(roster.some((c) => c.roleRecommended)).toBe(true);
+    expect(roster.length).toBeGreaterThan(10);
   });
 
   it("merges character, role, and secretary prompts", () => {
