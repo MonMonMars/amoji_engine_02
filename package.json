@@ -11,6 +11,7 @@
     "playwright": "^1.63.0"
   },
   "scripts": {
+    "postinstall": "node amoji-engine/scripts/download-legal-vrm.mjs",
     "inspect:vrm-face": "node scripts/inspect-vrm-face.mjs",
     "smoke:highpoly-face": "node amoji-engine/scripts/highpoly-face-lipsync-smoke.mjs --model kizuna-kamatte.vrm",
     "smoke:kizuna-companion": "node scripts/companion-kizuna-lipsync-smoke.mjs"

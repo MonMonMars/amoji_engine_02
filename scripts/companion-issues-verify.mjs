@@ -274,6 +274,13 @@ async function main() {
     JSON.stringify(petLoop),
   );
 
+  await page.evaluate(async () => {
+    window.__amojiTreats?.setOpen?.(false);
+    window.__amojiAvatar?.setEating?.(false);
+    window.__amojiAvatar?.stopAction?.();
+    await new Promise((r) => setTimeout(r, 3800));
+  });
+
   const afterNova = await page.evaluate(() => {
     const vrm = window.__amojiAvatar?.vrm;
     const bone = (name) => {
@@ -436,6 +443,14 @@ async function main() {
   } else {
     record("camera-orbit-drag", false, "no orbit-hit box");
   }
+
+  await page.evaluate(() => {
+    window.__amojiTreats?.setOpen?.(false);
+    const bd = document.getElementById("treat-sheet-backdrop");
+    bd?.classList.remove("is-open");
+    bd?.setAttribute("hidden", "");
+  });
+  await page.waitForTimeout(450);
 
   await openInSessionCompanionPicker(page);
   record("in-session-picker", true);

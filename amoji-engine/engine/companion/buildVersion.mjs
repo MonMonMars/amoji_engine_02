@@ -1,2 +1,2 @@
 /** Single source of truth for deployed companion build id (keep HTML __amojiBuild in sync). */
-export const AMOJI_BUILD = "2026-09-18-v254-model-cache-roster";
+export const AMOJI_BUILD = "2026-09-18-v255-deploy-mouth-fix";
