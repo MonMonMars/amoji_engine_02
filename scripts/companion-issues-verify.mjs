@@ -9,6 +9,7 @@ import { chromium } from "playwright";
 import { AMOJI_BUILD } from "../amoji-engine/engine/companion/buildVersion.mjs";
 import {
   beginStartPickerSession,
+  openInSessionCompanionPicker,
   switchCompanionInSession,
 } from "./companion-picker-smoke-util.mjs";
 import {
@@ -436,14 +437,11 @@ async function main() {
     record("camera-orbit-drag", false, "no orbit-hit box");
   }
 
-  await page.click("#brand-btn");
-  await page.waitForSelector("#companion-character-picker.is-open", {
-    timeout: 8000,
-  });
+  await openInSessionCompanionPicker(page);
   record("in-session-picker", true);
   try {
     const modelsBefore = loadedModels.length;
-    await switchCompanionInSession(page, "alicia", { openSelector: "#brand-btn" });
+    await switchCompanionInSession(page, "alicia");
     await page.waitForTimeout(4000);
     const switched = loadedModels.slice(modelsBefore).some((u) => /alicia/i.test(u));
     record("switch-character-model", switched, loadedModels.slice(modelsBefore).join(" | "));
