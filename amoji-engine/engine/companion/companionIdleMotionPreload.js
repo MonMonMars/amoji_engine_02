@@ -4,39 +4,19 @@
 import { sampleActionBodyPose } from "./companionActionMotion.js";
 
 export const COMPANION_IDLE_MOTION_PRELOAD_SCHEMA =
-  "amoji.companionIdleMotionPreload.v2";
+  "amoji.companionIdleMotionPreload.v3";
 
 const VRMA_BASE =
   "https://raw.githubusercontent.com/tk256ailab/vrm-viewer/main/VRMA";
 
 import { IDLE_LIFE_CLIP_POOL } from "./companionActionChoreography.js";
-import { ONLINE_CALM_IDLE_ACTION } from "./companionOnlineMotionClips.mjs";
+import {
+  ONLINE_CALM_IDLE_ACTION,
+  resolveOnlineMotionClipFile,
+} from "./companionOnlineMotionClips.mjs";
 
-/** Procedural idle gestures — no network, prime pose samplers at boot. */
-export const BOOT_IDLE_BODY_MOTION_IDS = Object.freeze([
-  "nod",
-  "wave",
-  "thinking",
-  "bow",
-  "shrug",
-  "peace",
-  "stretch",
-  "clap",
-  "dab",
-  "shy",
-  "point",
-  "salute",
-  "thumbsup",
-  "headshake",
-  "laugh",
-  "celebrate",
-]);
-
-/**
- * Shared VRMA stems (~115 KB each) for social clips + calm standing idle.
- * Relax = default calm loop; Thinking = wait/talk; Goodbye = wave; LookAround = dance/walk.
- */
-export const BOOT_IDLE_VRMA_STEMS = Object.freeze([
+/** Full hosted library — prefetch all stems so any idle / reply clip is instant. */
+export const HOSTED_VRMA_STEMS = Object.freeze([
   "Relax",
   "Thinking",
   "Goodbye",
@@ -48,6 +28,47 @@ export const BOOT_IDLE_VRMA_STEMS = Object.freeze([
   "Sad",
   "Sleepy",
   "Jump",
+]);
+
+/**
+ * @param {readonly string[]} actionIds
+ * @returns {string[]}
+ */
+export function uniqueVrmaStemsForActions(actionIds) {
+  const stems = new Set();
+  for (const id of actionIds) {
+    const file = resolveOnlineMotionClipFile(id);
+    if (file) stems.add(file);
+  }
+  return [...stems].sort();
+}
+
+/** VRMA files required for calm idle + idle-life one-shots. */
+export const IDLE_LIFE_VRMA_STEMS = Object.freeze(
+  uniqueVrmaStemsForActions([
+    ONLINE_CALM_IDLE_ACTION,
+    ...IDLE_LIFE_CLIP_POOL,
+  ]),
+);
+
+/** Boot prefetch: entire library + every idle-life stem (deduped). */
+export const BOOT_IDLE_VRMA_STEMS = Object.freeze([
+  ...new Set([...HOSTED_VRMA_STEMS, ...IDLE_LIFE_VRMA_STEMS]),
+]);
+
+/** Procedural fallback — prime samplers for idle-life + common social clips. */
+export const BOOT_IDLE_BODY_MOTION_IDS = Object.freeze([
+  ...new Set([
+    ONLINE_CALM_IDLE_ACTION,
+    ...IDLE_LIFE_CLIP_POOL,
+    "wave",
+    "clap",
+    "celebrate",
+    "point",
+    "salute",
+    "thumbsup",
+    "laugh",
+  ]),
 ]);
 
 /** Warm these clip ids once the avatar is ready (VRMA-first body). */

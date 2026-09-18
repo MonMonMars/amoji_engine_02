@@ -27,7 +27,8 @@ export const COMPANION_WAIT_ACT_SCHEMA = "amoji.companionWaitAct.v1";
 export const IDLE_LIFE_INTERVAL_MS = 2400;
 export const AVATAR_LOAD_IDLE_INTERVAL_MS = 900;
 /** Play a hosted VRMA clip every N idle ticks — procedural beats on the others. */
-export const IDLE_LIFE_CLIP_EVERY_N_TICKS = 2;
+/** Play a hosted idle clip every life tick (procedural beats only on avatar-load). */
+export const IDLE_LIFE_CLIP_EVERY_N_TICKS = 1;
 /** @typedef {'connecting'|'waking'|'searching'|'assembling'|'downloading'|'warming'|'learning'|'installing'|'settling'|'almost'|'ready'|'failed'|'thinking'|'avatar-load'|'character-switch'|'motion-pack'|'idle'} WaitPhase */
 
 export { WAIT_POSES_BY_PHASE, pickWaitPose };

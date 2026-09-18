@@ -27,16 +27,16 @@ describe("companionActionChoreography", () => {
     expect(shouldChainAction("shy")).toBe(false);
   });
 
-  it("keeps default idle life on natural standing clips, not hands-up showcase", () => {
-    expect(IDLE_LIFE_CLIP_POOL.length).toBeGreaterThanOrEqual(4);
-    expect(IDLE_LIFE_CLIP_POOL).toContain("thinking");
-    expect(IDLE_LIFE_CLIP_POOL).toContain("shrug");
+  it("keeps idle life on quiet clips with distinct VRMA files (no loop duplicate)", () => {
+    expect(IDLE_LIFE_CLIP_POOL.length).toBeGreaterThanOrEqual(10);
     expect(IDLE_LIFE_CLIP_POOL).toContain("sleep");
     expect(IDLE_LIFE_CLIP_POOL).toContain("nod");
     expect(IDLE_LIFE_CLIP_POOL).toContain("shy");
+    expect(IDLE_LIFE_CLIP_POOL).toContain("stretch");
+    expect(IDLE_LIFE_CLIP_POOL).not.toContain("thinking");
+    expect(IDLE_LIFE_CLIP_POOL).not.toContain("shrug");
     expect(IDLE_LIFE_CLIP_POOL).not.toContain("walk");
     expect(IDLE_LIFE_CLIP_POOL).not.toContain("jump");
-    expect(IDLE_LIFE_CLIP_POOL).not.toContain("stretch");
     expect(IDLE_LIFE_CLIP_POOL).not.toContain("wave");
     expect(IDLE_LIFE_CLIP_POOL).not.toContain("celebrate");
     expect(IDLE_LIFE_CLIP_POOL).not.toContain("clap");
