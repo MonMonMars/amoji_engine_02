@@ -4773,6 +4773,7 @@
         scenePresetsMod,
         chatPersistenceMod,
         bootChitchatMod,
+        proactiveTalkMod,
         uiEffectsMod,
         talkSpeedMod,
         cleanUiMod,
@@ -4809,6 +4810,7 @@
         ami("../amoji-engine/engine/companion/companionScenePresets.js"),
         ami("../amoji-engine/engine/companion/companionChatPersistence.js"),
         ami("../amoji-engine/engine/companion/companionBootChitchat.mjs"),
+        ami("../amoji-engine/engine/companion/companionProactiveTalk.mjs"),
         ami("../amoji-engine/engine/companion/companionUiEffects.js"),
         ami("../amoji-engine/engine/companion/companionTalkSpeed.js"),
         ami("../amoji-engine/engine/companion/companionCleanUi.js"),
@@ -4862,6 +4864,7 @@
       window.__amojiUiAudio = uiAudio;
       window.__amojiUiSettings = uiSettings;
       const { buildBootChitchatReply, isBootChitchatPhase } = bootChitchatMod;
+      const { createProactiveTalkController } = proactiveTalkMod;
       const { createCompanionStagePreview } = stagePreviewMod;
       window.__amojiModuleBooted = true;
       const { createEmptyAreaCameraReset, shouldResetCameraOnTalkStart } = await ami(
@@ -6389,6 +6392,7 @@
         idleShowcaseTimer = null;
         if (idleRetryTimer) clearTimeout(idleRetryTimer);
         idleRetryTimer = null;
+        proactiveTalk?.pauseIdle?.();
         if (waitAct?.state?.kind === "idle") waitAct?.stop();
       };
 
@@ -6423,9 +6427,55 @@
       const startIdlePerformance = () => {
         if (!canIdleShowcase()) return;
         tickIdleShowcase();
+        proactiveTalk?.resumeIdle?.();
         if (idleShowcaseTimer) return;
         idleShowcaseTimer = setInterval(tickIdleShowcase, 4200);
       };
+
+      /** @type {ReturnType<typeof createProactiveTalkController> | null} */
+      let proactiveTalk = null;
+
+      const canProactiveSpeak = () =>
+        sessionStarted &&
+        !busy &&
+        !liteMode &&
+        !voice?.speaking &&
+        !voice?.assistantOutputActive &&
+        !voice?.micOn &&
+        !isBlockingWaitAct() &&
+        !characterSwitching &&
+        hasPlayableAvatar();
+
+      proactiveTalk = createProactiveTalkController({
+        getCharacterId: () => characterId,
+        getIsEnglish: () => isEnglish,
+        canSpeak: canProactiveSpeak,
+        onSpeak: async (line) => {
+          if (!canProactiveSpeak()) return;
+          stopIdlePerformance();
+          status.speaking();
+          armBargeIn();
+          addBubble("assistant", line, {
+            persist: true,
+            withActions: true,
+          });
+          appendChatHistory(characterId, { role: "assistant", text: line });
+          syncStarterPrompts();
+          avatar.setEmotion?.("happy");
+          setEmotionPill("happy");
+          avatar.playGesture?.("nod");
+          await voice.speak(line, {
+            emotion: "happy",
+            nuance: "curious",
+            mood: "happy",
+          });
+          disarmBargeIn();
+          if (!busy) status.idle();
+          avatar.setEmotion?.("neutral");
+          setEmotionPill("neutral");
+          scheduleIdlePerformance();
+        },
+      });
 
       const autosize = () => {
         input.style.height = "auto";
@@ -6972,6 +7022,7 @@
         if (sessionStarted) {
           restoreCharacterTranscript(characterId);
           warmWaitDialogueBackground();
+          proactiveTalk?.reset?.();
         }
         renderScenePresets();
         if (announce) {
@@ -7531,6 +7582,7 @@
           return;
         }
         busy = true;
+        proactiveTalk?.notifyUserActivity?.();
         voiceGate.resetEchoContext?.();
         stopIdlePerformance();
         sendBtn.disabled = true;
@@ -7811,6 +7863,7 @@
           setEmotionPill("sad");
         } finally {
           disarmBargeIn();
+          const turnAborted = Boolean(activeTurn?.aborted);
           if (activeTurn?.id === turnId) activeTurn = null;
           busy = false;
           sendBtn.disabled = false;
@@ -7842,6 +7895,9 @@
             void runTurn(next, { fromMic: true });
           } else {
             micQueue.length = 0;
+          }
+          if (assistantBubble?.textContent?.trim() && !turnAborted) {
+            proactiveTalk?.notifyAssistantFinished?.();
           }
           scheduleIdlePerformance();
         }
@@ -7947,6 +8003,9 @@
           scheduleIdlePerformance();
           if (waitAct?.isActive?.() && waitAct?.state?.kind === "avatar-load") {
             waitAct?.enableVoice?.();
+          }
+          if (spoke?.ok !== false) {
+            proactiveTalk?.notifyGreetingDone?.();
           }
           return spoke;
         });
