@@ -8,6 +8,7 @@ import {
   SHOWCASE_SEQUENCE_POOL,
 } from "./companionActionChoreography.js";
 import { buildVrmExpressionBlend } from "./companionContentMotion.js";
+import { ONLINE_MOTION_CLIP_FILES } from "./companionOnlineMotionClips.mjs";
 import {
   BUNDLED_MOTION_IDS,
   CLOUD_EXTENSION_MOTIONS,
@@ -180,7 +181,18 @@ export const WAIT_EXPRESSION_BY_PHASE = Object.freeze({
     { emotion: "happy", nuance: "excited" },
     { emotion: "neutral", nuance: "none" },
   ],
-  idle: [{ emotion: "neutral", nuance: "none" }],
+  idle: [
+    { emotion: "neutral", nuance: "none" },
+    { emotion: "happy", nuance: "shy" },
+    { emotion: "thinking", nuance: "curious" },
+    { emotion: "happy", nuance: "none" },
+    { emotion: "thinking", nuance: "none" },
+    { emotion: "surprised", nuance: "curious" },
+    { emotion: "happy", nuance: "love" },
+    { emotion: "sad", nuance: "stress" },
+    { emotion: "happy", nuance: "excited" },
+    { emotion: "neutral", nuance: "curious" },
+  ],
   ready: [
     { emotion: "happy", nuance: "excited" },
     { emotion: "surprised", nuance: "excited" },
@@ -265,11 +277,12 @@ export function collectWaitPreloadExpressionProfiles() {
 
 /** Idle + talk motion ids for targeted boot preload. */
 export function collectIdlePreloadMotionIds() {
-  const ids = new Set(IDLE_LIFE_CLIP_POOL);
+  const ids = new Set(collectWaitPreloadMotionIds());
+  for (const id of IDLE_LIFE_CLIP_POOL) ids.add(id);
   for (const id of IDLE_SHOWCASE_POOL) ids.add(id);
-  for (const poses of Object.values(WAIT_POSES_BY_PHASE)) {
-    for (const id of poses) ids.add(id);
-  }
+  for (const id of Object.keys(ONLINE_MOTION_CLIP_FILES)) ids.add(id);
+  for (const id of Object.keys(CLOUD_EXTENSION_MOTIONS)) ids.add(id);
+  for (const id of Object.keys(PREMIUM_EXTENSION_MOTIONS)) ids.add(id);
   ids.delete("stop");
   ids.delete("none");
   return [...ids];

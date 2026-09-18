@@ -35,7 +35,7 @@ import {
   resolveOrbitDomElement,
 } from "./companionOrbitControls.js";
 import { actionLoops } from "./companionActionMotion.js";
-import { BOOT_IDLE_WARM_CLIP_IDS } from "./companionIdleMotionPreload.js";
+import { BOOT_FULL_LIBRARY_WARM_CLIP_IDS } from "./companionIdleMotionPreload.js";
 import { detectVrmIdleRestRotations } from "./companionArmRestCalibration.js";
 import { createCompanionBodyMotion } from "./companionBodyMotion.js";
 import {
@@ -792,11 +792,27 @@ export async function createVrmAvatar(opts) {
       applyEmotionExpressions(em);
       tickExpressionBlend(0.12);
     }
-    for (const nuance of ["shy", "curious", "excited", "love", "stress"]) {
-      setExpressionTargetFromBlend(
-        buildVrmExpressionBlend("happy", nuance),
-      );
-      tickExpressionBlend(0.12);
+    for (const emotion of [
+      "neutral",
+      "happy",
+      "thinking",
+      "sad",
+      "surprised",
+      "angry",
+    ]) {
+      for (const nuance of [
+        "none",
+        "shy",
+        "curious",
+        "excited",
+        "love",
+        "stress",
+      ]) {
+        setExpressionTargetFromBlend(
+          buildVrmExpressionBlend(emotion, nuance),
+        );
+        tickExpressionBlend(0.12);
+      }
     }
     zeroAllExpressions(expr);
     applyEmotionExpressions("neutral");
@@ -1438,7 +1454,7 @@ export async function createVrmAvatar(opts) {
   applyTalkMouthNow(performance.now());
   renderer.render(scene, camera);
   void motionPlayer.warmClip(ONLINE_CALM_IDLE_ACTION);
-  for (const id of BOOT_IDLE_WARM_CLIP_IDS) {
+  for (const id of BOOT_FULL_LIBRARY_WARM_CLIP_IDS) {
     void motionPlayer.warmClip(id);
   }
   motionTransitionState = planMotionTransition(vrm, motionPlayer, {

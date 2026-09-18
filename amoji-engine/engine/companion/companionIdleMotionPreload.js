@@ -2,15 +2,21 @@
  * Boot-time idle + talk motion warm-up — procedural pose cache + shared VRMA buffers.
  */
 import { sampleActionBodyPose } from "./companionActionMotion.js";
+import { PLAYABLE_ACTIONS } from "./companionActionCatalog.js";
 import {
   IDLE_LIFE_CLIP_POOL,
   IDLE_SHOWCASE_POOL,
 } from "./companionActionChoreography.js";
 import {
   ONLINE_CALM_IDLE_ACTION,
+  ONLINE_MOTION_CLIP_FILES,
   ONLINE_TALK_LOOP_ACTIONS,
   resolveOnlineMotionClipFile,
 } from "./companionOnlineMotionClips.mjs";
+import {
+  CLOUD_EXTENSION_MOTIONS,
+  PREMIUM_EXTENSION_MOTIONS,
+} from "./motionPackData.mjs";
 import {
   TALK_BACKGROUND_LIBRARY_ACTIONS,
   TALK_STYLE_LIBRARY_ACTIONS,
@@ -18,7 +24,22 @@ import {
 import { PRIORITY_REPLY_MOTION_IDS } from "./companionWaitAssets.js";
 
 export const COMPANION_IDLE_MOTION_PRELOAD_SCHEMA =
-  "amoji.companionIdleMotionPreload.v4";
+  "amoji.companionIdleMotionPreload.v5";
+
+/** Every action id mapped in the hosted online VRMA library. */
+export const ONLINE_LIBRARY_ACTION_IDS = Object.freeze([
+  ...new Set([
+    ...Object.keys(ONLINE_MOTION_CLIP_FILES),
+    ...Object.keys(CLOUD_EXTENSION_MOTIONS),
+    ...Object.keys(PREMIUM_EXTENSION_MOTIONS),
+    ...PLAYABLE_ACTIONS,
+  ]),
+]);
+
+/** More sample times along each clip — idle/talk hit these paths constantly. */
+export const IDLE_TALK_BODY_SAMPLE_TIMES = Object.freeze([
+  0, 0.12, 0.25, 0.38, 0.5, 0.62, 0.75, 0.88, 1,
+]);
 
 const VRMA_BASE =
   "https://raw.githubusercontent.com/tk256ailab/vrm-viewer/main/VRMA";
@@ -106,6 +127,16 @@ export const BOOT_IDLE_WARM_CLIP_IDS = Object.freeze([
   ]),
 ]);
 
+/** Full online library — every hosted action id for idle + talk + reply. */
+export const BOOT_FULL_LIBRARY_WARM_CLIP_IDS = Object.freeze([
+  ...new Set([
+    ...BOOT_IDLE_WARM_CLIP_IDS,
+    ...ONLINE_LIBRARY_ACTION_IDS,
+    ...IDLE_SHOWCASE_POOL,
+    ...PRIORITY_REPLY_MOTION_IDS,
+  ]),
+]);
+
 /** @type {Map<string, ArrayBuffer>} */
 const vrmaBuffers = new Map();
 
@@ -122,13 +153,15 @@ export function bootIdleVrmaUrls() {
 /**
  * Prime procedural idle pose math synchronously (no network).
  */
-export function primeBootIdleBodyMotions() {
+export function primeBootIdleBodyMotions(
+  actionIds = BOOT_FULL_LIBRARY_WARM_CLIP_IDS,
+) {
   const warmed = [];
-  for (const id of BOOT_IDLE_BODY_MOTION_IDS) {
-    sampleActionBodyPose(id, 0, 0);
-    sampleActionBodyPose(id, 0.35, 0.2);
-    sampleActionBodyPose(id, 0.7, 0.4);
-    sampleActionBodyPose(id, 1, 0.55);
+  for (const id of actionIds) {
+    for (let i = 0; i < IDLE_TALK_BODY_SAMPLE_TIMES.length; i += 1) {
+      const t = IDLE_TALK_BODY_SAMPLE_TIMES[i];
+      sampleActionBodyPose(id, t, t * 0.55);
+    }
     warmed.push(id);
   }
   return { ok: true, warmed: warmed.length, motions: warmed };
@@ -139,7 +172,10 @@ export function primeBootIdleBodyMotions() {
  * @param {{ warmClip?: (id: string) => unknown } | null | undefined} motionPlayer
  * @param {readonly string[]} [actionIds]
  */
-export function warmMotionClipBatch(motionPlayer, actionIds = BOOT_IDLE_WARM_CLIP_IDS) {
+export function warmMotionClipBatch(
+  motionPlayer,
+  actionIds = BOOT_FULL_LIBRARY_WARM_CLIP_IDS,
+) {
   if (!motionPlayer?.warmClip) return { ok: false, warmed: 0 };
   let warmed = 0;
   for (const id of actionIds) {

@@ -1,10 +1,12 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import {
+  BOOT_FULL_LIBRARY_WARM_CLIP_IDS,
   BOOT_IDLE_BODY_MOTION_IDS,
   BOOT_IDLE_VRMA_STEMS,
   BOOT_IDLE_WARM_CLIP_IDS,
   BOOT_TALK_WARM_CLIP_IDS,
   IDLE_LIFE_VRMA_STEMS,
+  ONLINE_LIBRARY_ACTION_IDS,
   bootIdleVrmaUrls,
   getBootIdleMotionPreloadPromise,
   getPreloadedIdleVrmaBuffer,
@@ -24,6 +26,8 @@ describe("companionIdleMotionPreload", () => {
   it("preloads full VRMA library and idle + talk warm clip ids", () => {
     expect(BOOT_IDLE_BODY_MOTION_IDS.length).toBeGreaterThanOrEqual(40);
     expect(BOOT_IDLE_WARM_CLIP_IDS.length).toBeGreaterThanOrEqual(50);
+    expect(BOOT_FULL_LIBRARY_WARM_CLIP_IDS.length).toBeGreaterThanOrEqual(60);
+    expect(ONLINE_LIBRARY_ACTION_IDS.length).toBeGreaterThanOrEqual(60);
     expect(BOOT_TALK_WARM_CLIP_IDS.length).toBeGreaterThanOrEqual(10);
     expect(BOOT_IDLE_VRMA_STEMS.length).toBe(11);
     expect(bootIdleVrmaUrls()).toHaveLength(BOOT_IDLE_VRMA_STEMS.length);
@@ -48,14 +52,14 @@ describe("companionIdleMotionPreload", () => {
       },
     });
     expect(batch.ok).toBe(true);
-    expect(batch.warmed).toBe(BOOT_IDLE_WARM_CLIP_IDS.length);
-    expect(warmed.length).toBe(BOOT_IDLE_WARM_CLIP_IDS.length);
+    expect(batch.warmed).toBe(BOOT_FULL_LIBRARY_WARM_CLIP_IDS.length);
+    expect(warmed.length).toBe(BOOT_FULL_LIBRARY_WARM_CLIP_IDS.length);
   });
 
   it("primes procedural idle pose samplers synchronously", () => {
     const result = primeBootIdleBodyMotions();
     expect(result.ok).toBe(true);
-    expect(result.warmed).toBe(BOOT_IDLE_BODY_MOTION_IDS.length);
+    expect(result.warmed).toBe(BOOT_FULL_LIBRARY_WARM_CLIP_IDS.length);
   });
 
   it("preloads shared idle VRMA buffers once", async () => {

@@ -3,6 +3,7 @@
  */
 import { normalizeModelCacheKey } from "./companionModelAssets.mjs";
 import {
+  BOOT_FULL_LIBRARY_WARM_CLIP_IDS,
   BOOT_IDLE_WARM_CLIP_IDS,
   getBootIdleMotionPreloadPromise,
   startBootIdleMotionPreload,
@@ -360,7 +361,8 @@ if (typeof globalThis !== "undefined") {
     ensureRosterModels: ensureRosterModelPreloadStarted,
     scheduleMotionExtras: scheduleHeavyMotionExtras,
     getRosterProgress: () => globalThis.__amojiRosterPreloadPct ?? 0,
-    bootIdleMotionIds: BOOT_IDLE_WARM_CLIP_IDS,
+    bootIdleMotionIds: BOOT_FULL_LIBRARY_WARM_CLIP_IDS,
+    bootIdleMotionIdsCore: BOOT_IDLE_WARM_CLIP_IDS,
     ensureIdleMotions: startBootIdleMotionPreload,
     primeIdleBodyMotions: () => {
       void import("./companionIdleMotionPreload.js").then((mod) => {

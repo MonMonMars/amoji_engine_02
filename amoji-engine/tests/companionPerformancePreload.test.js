@@ -37,16 +37,18 @@ describe("companionPerformancePreload", () => {
 
   it("starts motion and expression preload in parallel", async () => {
     const ensureWaitMotions = vi.fn(async () => ({ ok: true }));
-    const ensureExtensionsPack = vi.fn(async () => ({ ok: true }));
+    const ensureFullMotionLibrary = vi.fn(async () => ({ ok: true }));
     const applyExpressionProfile = vi.fn();
     const result = await startPerformancePreload({
       avatar: { applyExpressionProfile, setEmotion: vi.fn() },
-      motionClient: { ensureWaitMotions, ensureExtensionsPack },
+      motionClient: { ensureWaitMotions, ensureFullMotionLibrary },
       maxExpressionProfiles: 3,
     });
     expect(result.poses.warmed).toBeGreaterThan(20);
+    expect(result.idleTalkPoses.warmed).toBeGreaterThanOrEqual(60);
+    expect(result.speechFace.warmed).toBeGreaterThan(20);
     expect(ensureWaitMotions).toHaveBeenCalled();
-    expect(ensureExtensionsPack).toHaveBeenCalled();
+    expect(ensureFullMotionLibrary).toHaveBeenCalled();
     expect(result.expressions.ok).toBe(true);
   });
 
