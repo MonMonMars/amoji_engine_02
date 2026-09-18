@@ -22,7 +22,9 @@ node scripts/demo-link-verify.mjs
 | `2` | Production build behind repo (warnings only) | Say **deploy pending** — give PR link; optional local proof |
 | `1` | Hard failure | Fix before sharing any demo link |
 
-The script checks `/api/health` build id, page load, conversation-ui, activity rail, and voice-nav → tasks. Screenshots land in `/opt/cursor/artifacts/demo-verify-*.png`.
+The script checks `/api/health` build id, boot splash/picker visibility (no black screen), page load, conversation-ui, activity rail, and voice-nav → tasks. Screenshots land in `/opt/cursor/artifacts/demo-verify-*.png`.
+
+Picker-only E2E: `node scripts/companion-picker-verify.mjs` (14+ checks including boot paint + in-session featured row).
 
 **Base URL:** https://temporary-rushing-oxygen-ok5jzhd.vercel.app
 

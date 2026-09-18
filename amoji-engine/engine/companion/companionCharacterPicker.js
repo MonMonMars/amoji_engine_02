@@ -308,6 +308,7 @@ export function createCompanionCharacterPicker(opts = {}) {
   let filterId = "all";
   let query = "";
   let open = false;
+  let unwireFeaturedKeys = () => {};
   let unwireRosterKeys = () => {};
   const copy = pickerCopy(isEnglish);
   const fullList = () => listCompanionCharacters(langCode);
@@ -332,6 +333,7 @@ export function createCompanionCharacterPicker(opts = {}) {
         </button>
       </header>
       ${PICKER_HERO_HTML}
+      ${PICKER_FEATURED_ROW_HTML}
       ${PICKER_TOOLBAR_HTML}
       <div class="picker-roster-wrap">
         <div class="companion-picker-grid" role="listbox"></div>
@@ -351,18 +353,34 @@ export function createCompanionCharacterPicker(opts = {}) {
   const gridEl = shell.querySelector(".companion-picker-grid");
   const footEl = shell.querySelector(".companion-picker-foot");
   const confirmBtn = shell.querySelector(".picker-switch-btn");
+  const featuredWrap = shell.querySelector(".picker-featured-wrap");
+  const featuredLabel = shell.querySelector(".picker-featured-label");
+  const featuredRow = shell.querySelector(".picker-featured-row");
 
   const paintCopy = () => {
     if (titleEl) titleEl.textContent = copy.title;
     if (subEl) subEl.textContent = copy.sub;
     if (footEl) footEl.textContent = copy.footSession;
     if (confirmBtn) confirmBtn.textContent = copy.switch;
+    if (featuredLabel) featuredLabel.textContent = copy.featuredLabel;
   };
 
   const applySelection = (id) => {
     selectedId = id;
-    renderGrid();
-    updatePickerHero(shell, findPickerItem(fullList(), selectedId), isEnglish);
+    renderAll();
+  };
+
+  const renderFeatured = () => {
+    renderPickerFeaturedRow(featuredRow, langCode, {
+      selectedId,
+      roster: listPickerFeatured(fullList()),
+      eagerPreview: true,
+      onCardTapFx: opts.onCardTapFx,
+      onCardClick: applySelection,
+    });
+    if (featuredWrap) {
+      featuredWrap.hidden = !featuredRow?.childElementCount;
+    }
   };
 
   const renderGrid = () => {
@@ -380,6 +398,11 @@ export function createCompanionCharacterPicker(opts = {}) {
     updatePickerHero(shell, findPickerItem(fullList(), selectedId), isEnglish);
   };
 
+  const renderAll = () => {
+    renderFeatured();
+    renderGrid();
+  };
+
   const confirmSelection = () => {
     if (selectedId === opts.selectedId) {
       close();
@@ -388,6 +411,14 @@ export function createCompanionCharacterPicker(opts = {}) {
     opts.onSelect?.(selectedId);
   };
 
+  unwireFeaturedKeys = wirePickerRosterKeyboard(featuredRow, {
+    getSelectedId: () => selectedId,
+    setSelectedId: (id) => {
+      selectedId = id;
+    },
+    onSelect: applySelection,
+    onConfirm: confirmSelection,
+  });
   unwireRosterKeys = wirePickerRosterKeyboard(gridEl, {
     getSelectedId: () => selectedId,
     setSelectedId: (id) => {
@@ -407,7 +438,7 @@ export function createCompanionCharacterPicker(opts = {}) {
     setQuery: (q) => {
       query = q;
     },
-    onChange: renderGrid,
+    onChange: renderAll,
   });
 
   confirmBtn?.addEventListener("click", confirmSelection);
@@ -415,7 +446,7 @@ export function createCompanionCharacterPicker(opts = {}) {
   const openPicker = () => {
     selectedId = opts.selectedId || selectedId;
     paintCopy();
-    renderGrid();
+    renderAll();
     shell.hidden = false;
     open = true;
     openUiOverlay(document, {
@@ -458,12 +489,13 @@ export function createCompanionCharacterPicker(opts = {}) {
     close,
     setSelected(id) {
       selectedId = id;
-      renderGrid();
+      renderAll();
     },
     isOpen() {
       return open;
     },
     destroy() {
+      unwireFeaturedKeys();
       unwireRosterKeys();
       shell.remove();
     },

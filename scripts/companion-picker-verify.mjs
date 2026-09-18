@@ -12,8 +12,11 @@ import { join } from "path";
 import { AMOJI_BUILD } from "../amoji-engine/engine/companion/buildVersion.mjs";
 import {
   beginStartPickerSession,
+  openInSessionCompanionPicker,
   switchCompanionInSession,
 } from "./companion-picker-smoke-util.mjs";
+
+const SESSION_ROOT = "#companion-character-picker";
 
 function parseArg(name, fallback) {
   const idx = process.argv.indexOf(name);
@@ -44,6 +47,40 @@ const errors = [];
 page.on("pageerror", (e) => errors.push(e.message));
 
 await page.goto(url, { waitUntil: "domcontentloaded", timeout: 90000 });
+
+await page
+  .waitForFunction(
+    () => {
+      const splash = document.getElementById("amoji-boot-splash");
+      const picker = document.getElementById("start-character-picker");
+      return Boolean(
+        splash ||
+          (picker &&
+            (picker.classList.contains("is-open") ||
+              !picker.classList.contains("hide"))),
+      );
+    },
+    { timeout: 15000 },
+  )
+  .catch(() => null);
+
+const earlyBoot = await page.evaluate(() => {
+  const canvas = document.getElementById("avatar-canvas");
+  return {
+    splash: Boolean(document.getElementById("amoji-boot-splash")),
+    picker: Boolean(document.getElementById("start-character-picker")),
+    canvasOpacity: canvas ? getComputedStyle(canvas).opacity : null,
+  };
+});
+record("early boot splash or picker", earlyBoot.splash || earlyBoot.picker);
+record(
+  "canvas hidden at boot",
+  earlyBoot.canvasOpacity === "0" ||
+    earlyBoot.canvasOpacity === "0.02" ||
+    earlyBoot.canvasOpacity === "0.04",
+  `opacity=${earlyBoot.canvasOpacity ?? "missing"}`,
+);
+
 await page.waitForFunction(() => window.__amojiModuleBooted === true, {
   timeout: 120000,
 });
@@ -113,7 +150,20 @@ await page.waitForFunction(() => !!document.getElementById("activity-rail"), {
 });
 record("activity rail mounted", true);
 
-await switchCompanionInSession(page, "ember");
+await openInSessionCompanionPicker(page);
+const sessionFeatured = await page.evaluate(() => {
+  const picker = document.getElementById("companion-character-picker");
+  return picker?.querySelectorAll(".picker-featured-row .companion-card").length ?? 0;
+});
+record("in-session featured row (4+)", sessionFeatured >= 4, String(sessionFeatured));
+
+await page.click(`${SESSION_ROOT} [data-character-id="ember"]`);
+await page.click(`${SESSION_ROOT} .picker-switch-btn`);
+await page.waitForFunction(
+  () => !document.getElementById("companion-character-picker")?.classList.contains("is-open"),
+  undefined,
+  { timeout: 120000 },
+);
 record("in-session switch confirm", true);
 
 await page.screenshot({
