@@ -175,6 +175,12 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
   };
 
   const resetActiveAction = () => {
+    if (
+      (activeAction === "eat" || activeAction === "drink") &&
+      emotion === "happy"
+    ) {
+      emotion = "neutral";
+    }
     activeAction = null;
     actionPhase = 0;
     actionElapsed = 0;

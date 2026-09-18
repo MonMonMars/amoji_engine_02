@@ -276,11 +276,12 @@ async function main() {
 
   await page.evaluate(async () => {
     window.__amojiTreats?.setOpen?.(false);
+    await new Promise((r) => setTimeout(r, 4200));
     window.__amojiAvatar?.setEating?.(false);
     window.__amojiAvatar?.setTalking?.(false);
-    window.__amojiAvatar?.setEmotion?.("neutral");
     window.__amojiAvatar?.stopAction?.();
-    await new Promise((r) => setTimeout(r, 3800));
+    window.__amojiAvatar?.setEmotion?.("neutral");
+    await new Promise((r) => setTimeout(r, 600));
   });
 
   await page
