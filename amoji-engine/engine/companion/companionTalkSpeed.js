@@ -4,13 +4,13 @@
 export const COMPANION_TALK_SPEED_SCHEMA = "amoji.companionTalkSpeed.v1";
 export const TALK_SPEED_STORAGE_KEY = "amoji.companionTalkSpeed.v1";
 
-/** Default: half of previous “normal” pace (user request). */
-export const DEFAULT_TALK_SPEED = 0.5;
+/** Default: slower pace so expression + lip sync can load per word (VN / gacha style). */
+export const DEFAULT_TALK_SPEED = 0.45;
 
 /** Cycle order for the topbar speed button. */
-export const TALK_SPEED_PRESETS = Object.freeze([0.5, 0.65, 0.8, 1]);
+export const TALK_SPEED_PRESETS = Object.freeze([0.45, 0.55, 0.7, 0.85, 1]);
 
-const MIN_TALK_SPEED = 0.45;
+const MIN_TALK_SPEED = 0.4;
 const MAX_TALK_SPEED = 1.05;
 
 /**
@@ -69,9 +69,10 @@ export function slowBrowserRate(browserRate, multiplier = DEFAULT_TALK_SPEED) {
  */
 export function formatTalkSpeedLabel(speed, isEnglish = false) {
   const s = normalizeTalkSpeed(speed);
-  if (s === 0.5) return isEnglish ? "½× Slow" : "½× 慢";
-  if (s === 0.65) return isEnglish ? "0.65×" : "0.65×";
-  if (s === 0.8) return isEnglish ? "0.8×" : "0.8×";
+  if (s === 0.45) return isEnglish ? "0.45× Slow" : "0.45× 慢";
+  if (s === 0.55) return isEnglish ? "0.55×" : "0.55×";
+  if (s === 0.7) return isEnglish ? "0.7×" : "0.7×";
+  if (s === 0.85) return isEnglish ? "0.85×" : "0.85×";
   if (s >= 1) return isEnglish ? "1× Normal" : "1× 正常";
   return `${s}×`;
 }

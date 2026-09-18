@@ -1,5 +1,6 @@
 /**
  * Word / speak-unit driven facial expressions — synced to TTS progress.
+ * Timeline is built once per utterance (visual novel / gacha style word hits).
  */
 import {
   buildVrmExpressionBlend,
@@ -10,7 +11,10 @@ import { inferExpressionFromText } from "../face/emotionExpression.js";
 import { inferTalkGestureFromText } from "../face/talkGestures.js";
 import { lipSyncCharWeight } from "./companionViseme.js";
 
-export const COMPANION_SPEECH_FACE_SCHEMA = "amoji.companionSpeechFace.v1";
+export const COMPANION_SPEECH_FACE_SCHEMA = "amoji.companionSpeechFace.v2";
+
+const SPEECH_FACE_CACHE = new Map();
+const SPEECH_FACE_CACHE_MAX = 72;
 
 /**
  * Split spoken text into expression units (CJK char, Latin word, punctuation).
@@ -63,6 +67,30 @@ export function speechFaceUnitScore(unitFace, base = {}) {
   if (nuance !== "none" && nuance !== baseNuance) score += 2;
   if (emotion !== "neutral") score += 1;
   return score;
+}
+
+/**
+ * How fast the avatar should snap expression on this spoken unit (0..1).
+ * Punctuation and high-emotion words snap like VN / Live2D line hits.
+ * @param {string | null | undefined} unit
+ * @param {{ emotion?: string, nuance?: string }} [face]
+ * @param {{ emotion?: string, nuance?: string }} [base]
+ */
+export function speechFaceSnapStrength(unit, face = {}, base = {}) {
+  const raw = String(unit || "").trim();
+  if (!raw) return 0;
+  if (/^[~～]+$/.test(raw)) return 0.82;
+  if (/^[!！]+$/.test(raw)) return 0.92;
+  if (/^[?？]+$/.test(raw)) return 0.78;
+  if (/^[.!?。！？]+$/.test(raw)) return 0.88;
+  if (/^[,，、:：;…]+$/.test(raw)) return 0.55;
+  const score = speechFaceUnitScore(face, base);
+  if (score >= 4) return 0.9;
+  if (score >= 3) return 0.72;
+  if (score >= 2) return 0.58;
+  if (/^哈+$|^(hehe|haha|lol|yay|wow|omg)$/i.test(raw)) return 0.85;
+  if (/^(love|thanks?|sorry|yes|yeah|no|nope)$/i.test(raw)) return 0.68;
+  return 0.28;
 }
 
 /**
@@ -126,17 +154,59 @@ export function buildSpeechExpressionTimeline(text, baseOpts = {}) {
   );
   const total = weights.reduce((sum, w) => sum + w, 0) || 1;
   let acc = 0;
+  const baseEmotion = String(baseOpts.emotion || "neutral").toLowerCase();
+  const baseNuance = String(baseOpts.nuance || "none").toLowerCase();
   return units.map((unit, index) => {
     const start = acc / total;
     acc += weights[index] || 0;
     const analysis = analyzeSpeechWord(unit, baseOpts);
+    const snapStrength = speechFaceSnapStrength(unit, analysis, {
+      emotion: baseEmotion,
+      nuance: baseNuance,
+    });
     return {
       ...analysis,
       index,
       start,
       end: acc / total,
+      snapStrength,
     };
   });
+}
+
+/**
+ * Cache expression timelines per utterance + baseline mood.
+ * @param {string | null | undefined} text
+ * @param {{ emotion?: string, nuance?: string }} [baseOpts]
+ */
+export function buildSpeechExpressionTimelineCached(text, baseOpts = {}) {
+  const key = `${String(text || "")}::${baseOpts.emotion || "neutral"}::${baseOpts.nuance || "none"}`;
+  if (SPEECH_FACE_CACHE.has(key)) return SPEECH_FACE_CACHE.get(key);
+  const timeline = buildSpeechExpressionTimeline(text, baseOpts);
+  if (SPEECH_FACE_CACHE.size >= SPEECH_FACE_CACHE_MAX) {
+    const first = SPEECH_FACE_CACHE.keys().next().value;
+    SPEECH_FACE_CACHE.delete(first);
+  }
+  SPEECH_FACE_CACHE.set(key, timeline);
+  return timeline;
+}
+
+/**
+ * Face mood for the speak unit at playback progress using a prebuilt timeline.
+ * @param {ReturnType<typeof buildSpeechExpressionTimeline>} timeline
+ * @param {number} progress 0..1
+ */
+export function expressionAtTimelineProgress(timeline, progress) {
+  const p = Math.max(0, Math.min(1, Number(progress) || 0));
+  if (!timeline?.length) {
+    return { ...analyzeSpeechWord(""), index: 0, progress: p, snapStrength: 0 };
+  }
+  let idx = 0;
+  for (let i = 0; i < timeline.length; i += 1) {
+    if (timeline[i].start <= p) idx = i;
+    else break;
+  }
+  return { ...timeline[idx], index: idx, progress: p };
 }
 
 /**
@@ -146,17 +216,8 @@ export function buildSpeechExpressionTimeline(text, baseOpts = {}) {
  * @param {{ emotion?: string, nuance?: string }} [baseOpts]
  */
 export function expressionAtAudioProgress(text, progress, baseOpts = {}) {
-  const p = Math.max(0, Math.min(1, Number(progress) || 0));
-  const timeline = buildSpeechExpressionTimeline(text, baseOpts);
-  if (!timeline.length) {
-    return { ...analyzeSpeechWord("", baseOpts), index: 0, progress: p };
-  }
-  let idx = 0;
-  for (let i = 0; i < timeline.length; i += 1) {
-    if (timeline[i].start <= p) idx = i;
-    else break;
-  }
-  return { ...timeline[idx], index: idx, progress: p };
+  const timeline = buildSpeechExpressionTimelineCached(text, baseOpts);
+  return expressionAtTimelineProgress(timeline, progress);
 }
 
 /**
@@ -190,6 +251,7 @@ export function analyzeSpeechChunkFace(chunk, baseOpts = {}) {
   return {
     ...best,
     boundary,
+    snapStrength: speechFaceSnapStrength(best.unit || raw, best, base),
     gesture: null,
   };
 }

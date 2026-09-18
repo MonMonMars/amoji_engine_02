@@ -31,7 +31,10 @@ import {
   buildExpressiveTtsPlan,
   clausePauseMs,
 } from "./companionExpressiveTts.js";
-import { expressionAtAudioProgress } from "./companionSpeechFace.js";
+import {
+  buildSpeechExpressionTimelineCached,
+  expressionAtTimelineProgress,
+} from "./companionSpeechFace.js";
 import { characterGender } from "./companionCharacterCatalog.js";
 import { formatReplyForDisplay } from "./companionActionMotion.js";
 import {
@@ -174,18 +177,22 @@ const withTalkSpeed = (performance = {}) => ({
 
 import {
   buildLipSyncTimeline,
+  buildLipSyncTimelineCached,
   charToViseme,
   estimateLipSyncMsPerChar,
   lipSyncCharWeight,
   visemeAtAudioProgress,
+  visemeAtTimelineProgress,
 } from "./companionViseme.js";
 
 export {
   buildLipSyncTimeline,
+  buildLipSyncTimelineCached,
   charToViseme,
   estimateLipSyncMsPerChar,
   lipSyncCharWeight,
   visemeAtAudioProgress,
+  visemeAtTimelineProgress,
 };
 
 /**
@@ -624,6 +631,7 @@ export function createCompanionVoice(opts = {}) {
         const analyser = bindCloudTtsAnalyser(audio);
         startLipSync(clean, null, {
           durationMs: fallbackMs,
+          speedMultiplier: talkSpeedMultiplier,
           audioLevel: analyser
             ? () => readAnalyserMouthLevel(analyser)
             : undefined,
@@ -862,7 +870,7 @@ export function createCompanionVoice(opts = {}) {
    * Drive mouth shapes locked to audio progress (cloud TTS) or elapsed estimate.
    * @param {string} text
    * @param {SpeechSynthesisUtterance} [utter]
-   * @param {{ durationMs?: number, audioLevel?: () => number, getProgress?: () => number }} [timing]
+   * @param {{ durationMs?: number, audioLevel?: () => number, getProgress?: () => number, speedMultiplier?: number, speakFace?: object }} [timing]
    */
   const startLipSync = (text, utter, timing = {}) => {
     stopMouth({ keepTalking: true, keepMouth: true });
@@ -870,12 +878,22 @@ export function createCompanionVoice(opts = {}) {
     const clean = String(text || "");
     if (!clean) return;
     const speakFace = timing.speakFace || { emotion: "neutral", nuance: "none" };
+    const lipTimeline = buildLipSyncTimelineCached(clean);
+    const faceTimeline = buildSpeechExpressionTimelineCached(clean, speakFace);
+    const speedMult = normalizeTalkSpeed(
+      timing.speedMultiplier ?? talkSpeedMultiplier,
+    );
     let lastSpeakUnit = "";
+    let lastSpeakIndex = -1;
 
     const emitSpeakFace = (progress) => {
-      const face = expressionAtAudioProgress(clean, progress, speakFace);
-      if (!face.unit || face.unit === lastSpeakUnit) return;
+      const face = expressionAtTimelineProgress(faceTimeline, progress);
+      if (!face.unit) return;
+      const sameUnit = face.unit === lastSpeakUnit;
+      const sameIndex = face.index === lastSpeakIndex;
+      if (sameUnit && sameIndex) return;
       lastSpeakUnit = face.unit;
+      lastSpeakIndex = face.index ?? -1;
       opts.onSpeakExpression?.(face);
       opts.onSpeakChunk?.(face.unit, face.index ?? 0);
     };
@@ -903,7 +921,7 @@ export function createCompanionVoice(opts = {}) {
         ? Number(timing.durationMs)
         : Number.isFinite(rate) && rate > 0
           ? (clean.length * estimateLipSyncMsPerChar(clean)) / rate
-          : clean.length * estimateLipSyncMsPerChar(clean);
+          : clean.length * estimateLipSyncMsPerChar(clean, 0, speedMult);
     const audioLevel = timing.audioLevel;
     const startedAt = performance.now();
     const getProgress =
@@ -919,17 +937,16 @@ export function createCompanionVoice(opts = {}) {
     mouthTimer = setInterval(() => {
       if (boundaryWorks) return;
       const progress = getProgress();
-      const sample = visemeAtAudioProgress(
-        clean,
-        progress,
-        audioLevel?.() ?? 0,
-      );
+      const level = audioLevel?.() ?? 0;
+      const sample = visemeAtTimelineProgress(lipTimeline, progress, level);
       opts.onMouth?.(sample.open, sample.shape);
       if (sample.index !== lastIndex) {
         emitSpeakFace(progress);
         lastIndex = sample.index;
+      } else if (level > 0.12) {
+        opts.onMouth?.(sample.open, sample.shape);
       }
-    }, 33);
+    }, 28);
 
     if (!timing.getProgress) {
       mouthTimeouts.push(
@@ -1040,8 +1057,14 @@ export function createCompanionVoice(opts = {}) {
       if (!speakerOn) {
         startLipSync(speakText, null, {
           speakFace: { emotion: perf.emotion, nuance: perf.nuance },
+          speedMultiplier: talkSpeedMultiplier,
         });
-        await sleep(Math.min(4200, 400 + speakText.length * estimateLipSyncMsPerChar(speakText)));
+        await sleep(
+          Math.min(
+            5200,
+            400 + speakText.length * estimateLipSyncMsPerChar(speakText, 0, talkSpeedMultiplier),
+          ),
+        );
         const holdGap = isStreamPlaybackActive();
         stopMouth({ keepTalking: holdGap, keepMouth: holdGap });
         return { ok: true, muted: true };
@@ -1072,8 +1095,14 @@ export function createCompanionVoice(opts = {}) {
       if (!synth) {
         startLipSync(speakText, null, {
           speakFace: { emotion: perf.emotion, nuance: perf.nuance },
+          speedMultiplier: talkSpeedMultiplier,
         });
-        await sleep(Math.min(4800, 450 + speakText.length * estimateLipSyncMsPerChar(speakText)));
+        await sleep(
+          Math.min(
+            5600,
+            450 + speakText.length * estimateLipSyncMsPerChar(speakText, 0, talkSpeedMultiplier),
+          ),
+        );
         const holdGap = isStreamPlaybackActive();
         stopMouth({ keepTalking: holdGap, keepMouth: holdGap });
         return {
@@ -1100,6 +1129,7 @@ export function createCompanionVoice(opts = {}) {
 
       startLipSync(speakText, utter, {
         speakFace: { emotion: perf.emotion, nuance: perf.nuance },
+        speedMultiplier: talkSpeedMultiplier,
       });
 
       const maxMs = browserTtsTimeoutMs(speakText);
