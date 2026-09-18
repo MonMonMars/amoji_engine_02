@@ -19,7 +19,7 @@ import {
 } from "./vrmMotionTransition.js";
 
 export const COMPANION_VRM_MOTION_PLAYER_SCHEMA =
-  "amoji.companionVrmMotionPlayer.v3";
+  "amoji.companionVrmMotionPlayer.v4";
 
 /**
  * @param {{
@@ -65,7 +65,7 @@ export function createVrmMotionPlayer(opts) {
       if (now < stopAtMs) return true;
       try {
         action.stop();
-        action.reset();
+        // Skip reset() — zero-weight stop is enough; reset can leak bind pose.
       } catch {
         /* ignore */
       }
@@ -188,10 +188,14 @@ export function createVrmMotionPlayer(opts) {
       loop ? Infinity : 1,
     );
     nextAction.clampWhenFinished = !loop;
-    nextAction.setEffectiveWeight(1);
+    const crossfadingIn = Boolean(
+      previousAction && previousAction !== nextAction,
+    );
+    // Never expose bind pose at full weight — ramp via crossFade/fadeIn only.
+    nextAction.setEffectiveWeight(crossfadingIn ? 0 : 1);
     nextAction.play();
 
-    if (previousAction && previousAction !== nextAction) {
+    if (crossfadingIn) {
       nextAction.crossFadeFrom(previousAction, transitionSec, true);
       scheduleRetireAction(previousAction, transitionSec);
       crossfadeUntilMs = performance.now() + transitionSec * 1000 + 40;

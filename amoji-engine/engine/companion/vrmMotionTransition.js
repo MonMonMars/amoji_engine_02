@@ -9,7 +9,7 @@ import * as THREE from "three";
 import { VRM_FINGER_BONE_NAMES } from "./companionFingerPose.js";
 import { easeInOutCubic } from "./companionPoseSmoothing.js";
 
-export const VRM_MOTION_TRANSITION_SCHEMA = "amoji.vrmMotionTransition.v4";
+export const VRM_MOTION_TRANSITION_SCHEMA = "amoji.vrmMotionTransition.v5";
 
 /** Default crossfade when switching hosted VRMA clips or entering the library. */
 export const DEFAULT_MOTION_CROSSFADE_SEC = 0.52;
@@ -114,8 +114,14 @@ export function planMotionTransition(vrm, motionPlayer, opts = {}) {
   const durationSec = opts.durationSec ?? DEFAULT_MOTION_CROSSFADE_SEC;
   const playing = Boolean(motionPlayer?.isPlaying?.());
   const forceCapture = Boolean(opts.forceCapture);
+  const nextId = String(opts.nextActionId || "").toLowerCase();
+  const activeId = String(motionPlayer?.activeActionId || "").toLowerCase();
+  const switchingClip = Boolean(nextId && activeId && nextId !== activeId);
 
-  if (!playing || forceCapture) {
+  // Capture whenever entering the library, forced, or switching hosted clips.
+  // Clip-to-clip crossfades alone can flash bind pose for a frame when the
+  // incoming action reset()s — manual A→B slerp hides that gap.
+  if (!playing || forceCapture || switchingClip) {
     const from = captureVrmBoneRotations(vrm);
     const state = createMotionTransitionState(from, durationSec);
     if (state && opts.label) state.label = opts.label;
