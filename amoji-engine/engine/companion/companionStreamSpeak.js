@@ -12,6 +12,15 @@ const PARTIAL_MOOD_RE = /\s*\[mood:\w*$/i;
 const ACTION_TAG_RE = /\s*\[action:\w+\]\s*/gi;
 const PARTIAL_ACTION_RE = /\s*\[action:\w*$/i;
 const SENTENCE_END_RE = /[.!?。！？\n\uFF01\uFF1F]/;
+const COMPLETE_MOOD_TAG_RE = /\[mood:\w+\]/i;
+
+/**
+ * True once the LLM has emitted a complete trailing [mood:…] tag.
+ * @param {string | null | undefined} text
+ */
+export function hasCompleteMoodTag(text) {
+  return COMPLETE_MOOD_TAG_RE.test(String(text || ""));
+}
 
 /**
  * @param {string | null | undefined} text

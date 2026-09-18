@@ -1208,6 +1208,17 @@ export function createCompanionVoice(opts = {}) {
     return next;
   };
 
+  /**
+   * Refresh stream session performance when [mood:…] arrives late in the token stream.
+   * @param {string | ReturnType<typeof normalizeTtsPerformance>} performance
+   */
+  const updateStreamSpeakPerformance = (performance) => {
+    if (!streamSession || streamSession.closed) return false;
+    const perf = normalizeTtsPerformance(performance);
+    streamSession.performance = { ...CHATGPT_STYLE_TTS, ...streamSession.performance, ...perf };
+    return true;
+  };
+
   /** Wait for queued stream segments to finish and end the session. */
   const finishStreamSpeak = async () => {
     const session = streamSession;
@@ -1795,6 +1806,7 @@ export function createCompanionVoice(opts = {}) {
     stopLearnLoop,
     setKeepMicDuringSpeak,
     beginStreamSpeak,
+    updateStreamSpeakPerformance,
     pushStreamSpeak,
     finishStreamSpeak,
     cancelStreamSpeak,

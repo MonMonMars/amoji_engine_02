@@ -104,6 +104,14 @@ describe("companionContentMotion", () => {
     expect(mid.talkStyle).toBeTruthy();
   });
 
+  it("reads [mood] tags while tokens stream in", () => {
+    const beforeMood = analyzeStreamingReply("我陪住你…");
+    expect(beforeMood.emotion).not.toBe("sad");
+    const withMood = analyzeStreamingReply("我陪住你… [mood:sad] [nuance:stress]");
+    expect(withMood.emotion).toBe("sad");
+    expect(withMood.nuance).toBe("stress");
+  });
+
   it("detects speech chunk boundaries for gestures", () => {
     const chunk = analyzeSpeechChunk("好呀！", { emotion: "happy" });
     expect(chunk.boundary).toBe(true);
