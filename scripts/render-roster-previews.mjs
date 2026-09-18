@@ -1,9 +1,18 @@
 #!/usr/bin/env node
 /**
  * Capture roster card preview PNGs from the live 3D stage (skips picker).
- * Usage: node scripts/render-roster-previews.mjs [--url http://127.0.0.1:5174/...] [--ids poly,jennifer]
+ * Usage:
+ *   node scripts/render-roster-previews.mjs [--url http://127.0.0.1:5178/...]
+ *   node scripts/render-roster-previews.mjs --force --ids poly,jennifer
  */
-import { copyFileSync, existsSync, mkdirSync, writeFileSync } from "node:fs";
+import {
+  copyFileSync,
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  statSync,
+  writeFileSync,
+} from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { chromium } from "playwright";
@@ -12,6 +21,10 @@ import { CHARACTER_IDS } from "../amoji-engine/engine/companion/companionCharact
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const outDir = join(root, "prototypes/assets");
+
+/** Known bad captures from an empty/loading canvas (identical byte size). */
+const BLACK_LOADER_BYTES = 333412;
+const MIN_GOOD_BYTES = 360000;
 
 const DEFAULT_TARGETS = [
   "amoji",
@@ -28,13 +41,15 @@ const DEFAULT_TARGETS = [
   "rex",
   "vroidm",
   "vroidf",
-  "robert",
-  "mikel",
+  "mimi",
+  "sora",
 ];
 
-/** Copy existing art when the model share a reference portrait. */
+/** Copy existing art when models share a reference portrait. */
 const COPY_FROM = {
   rex: "kai",
+  sora: "quinn",
+  amoji: "girl-ref",
 };
 
 function parseArg(name, fallback) {
@@ -49,6 +64,60 @@ function previewPath(id) {
   return join(outDir, `companion-char-${id}.png`);
 }
 
+function isBadCapture(filePath) {
+  if (!existsSync(filePath)) return true;
+  const size = statSync(filePath).size;
+  return size <= MIN_GOOD_BYTES || size === BLACK_LOADER_BYTES;
+}
+
+function copyPreview(fromId, toId) {
+  const fromPath =
+    fromId === "girl-ref"
+      ? join(outDir, "companion-girl-ref.png")
+      : previewPath(fromId);
+  const dest = previewPath(toId);
+  copyFileSync(fromPath, dest);
+  return dest;
+}
+
+async function hideUiForCapture(page) {
+  await page.evaluate(() => {
+    document.getElementById("amoji-boot-splash")?.remove();
+    document.getElementById("start-character-picker")?.remove();
+    document.querySelector(".avatar-stage-preview")?.setAttribute("hidden", "");
+    document.querySelector(".stage")?.classList.remove("has-stage-preview");
+    document.body.classList.remove(
+      "companion-picker-open",
+      "companion-start-pending",
+      "settings-open",
+      "scene-sheet-open",
+    );
+    for (const el of document.querySelectorAll("body > *")) {
+      if (el.classList?.contains("stage")) continue;
+      const tag = el.tagName;
+      if (tag === "SCRIPT" || tag === "LINK" || tag === "STYLE") continue;
+      /** @type {HTMLElement} */ (el).style.visibility = "hidden";
+    }
+  });
+}
+
+async function waitForStageReady(page, characterId) {
+  await page.waitForFunction(() => window.__amojiStart?.ready === true, {
+    timeout: 120000,
+  });
+  await page.waitForFunction(
+    (id) =>
+      window.localStorage?.getItem("amoji.companion.characterId") === id &&
+      window.__amojiAvatarKind === "vrm3d" &&
+      Boolean(window.__amojiAvatar?.vrm),
+    characterId,
+    { timeout: 120000 },
+  );
+  await page.waitForTimeout(5000);
+  await hideUiForCapture(page);
+  await page.waitForTimeout(400);
+}
+
 async function captureCharacter(page, characterId, baseUrl) {
   const url = new URL(baseUrl);
   url.searchParams.set("build", AMOJI_BUILD);
@@ -59,32 +128,29 @@ async function captureCharacter(page, characterId, baseUrl) {
   url.searchParams.set("lang", "en");
 
   await page.goto(url.toString(), {
-    waitUntil: "domcontentloaded",
+    waitUntil: "commit",
     timeout: 120000,
   });
-  await page.waitForFunction(
-    () =>
-      window.__amojiAvatarKind === "vrm3d" &&
-      window.__amojiAvatar?.vrm &&
-      window.__amojiStart?.sessionStarted !== false,
-    { timeout: 120000 },
-  );
-  await page.waitForTimeout(3200);
+  await waitForStageReady(page, characterId);
   const out = previewPath(characterId);
   await page.locator("#avatar-canvas").screenshot({ path: out });
+  if (isBadCapture(out)) {
+    throw new Error(`capture too small or black loader (${statSync(out).size} bytes)`);
+  }
   return out;
 }
 
 async function main() {
   mkdirSync(outDir, { recursive: true });
+  const force = process.argv.includes("--force");
   const idsArg = parseArg("--ids", "");
   const targets = idsArg
     ? idsArg.split(",").map((s) => s.trim()).filter(Boolean)
-    : DEFAULT_TARGETS.filter((id) => !existsSync(previewPath(id)));
+    : DEFAULT_TARGETS.filter((id) => force || isBadCapture(previewPath(id)));
 
   const base = parseArg(
     "--url",
-    "http://127.0.0.1:5174/prototypes/amoji-companion.html",
+    "https://temporary-rushing-oxygen-ok5jzhd.vercel.app/prototypes/amoji-companion.html",
   );
 
   const browser = await chromium.launch({ headless: true });
@@ -96,25 +162,38 @@ async function main() {
   const results = [];
   for (const id of targets) {
     const dest = previewPath(id);
-    if (existsSync(dest)) {
+    if (!force && existsSync(dest) && !isBadCapture(dest)) {
       results.push({ id, ok: true, path: dest, skipped: true });
       console.log(`SKIP ${id} (exists)`);
       continue;
     }
     const copyFrom = COPY_FROM[id];
-    if (copyFrom && existsSync(previewPath(copyFrom))) {
-      copyFileSync(previewPath(copyFrom), dest);
-      results.push({ id, ok: true, path: dest, copied: copyFrom });
-      console.log(`COPY ${id} ← ${copyFrom}`);
-      continue;
+    if (copyFrom) {
+      try {
+        copyPreview(copyFrom, id);
+        results.push({ id, ok: true, path: dest, copied: copyFrom });
+        console.log(`COPY ${id} ← ${copyFrom}`);
+        continue;
+      } catch (err) {
+        console.log(`COPY fail ${id} — ${err.message}`);
+      }
     }
-    try {
-      const path = await captureCharacter(page, id, base);
-      results.push({ id, ok: true, path });
-      console.log(`OK   ${id} → ${path}`);
-    } catch (err) {
-      results.push({ id, ok: false, error: String(err?.message || err) });
-      console.log(`FAIL ${id} — ${err?.message || err}`);
+    let lastErr = null;
+    for (let attempt = 1; attempt <= 2; attempt += 1) {
+      try {
+        const path = await captureCharacter(page, id, base);
+        results.push({ id, ok: true, path, attempt });
+        console.log(`OK   ${id} → ${path} (${statSync(path).size} bytes)`);
+        lastErr = null;
+        break;
+      } catch (err) {
+        lastErr = err;
+        console.log(`FAIL ${id} attempt ${attempt} — ${err?.message || err}`);
+        await page.waitForTimeout(1500);
+      }
+    }
+    if (lastErr) {
+      results.push({ id, ok: false, error: String(lastErr?.message || lastErr) });
     }
   }
   await browser.close();
@@ -123,6 +202,12 @@ async function main() {
     join(outDir, "_preview-capture-report.json"),
     JSON.stringify({ build: AMOJI_BUILD, results }, null, 2),
   );
+
+  const missing = CHARACTER_IDS.filter((id) => !existsSync(previewPath(id)));
+  if (missing.length) {
+    console.log(`Missing previews: ${missing.join(", ")}`);
+  }
+
   const failed = results.filter((r) => !r.ok).length;
   process.exit(failed ? 1 : 0);
 }
