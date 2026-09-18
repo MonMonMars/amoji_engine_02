@@ -1101,8 +1101,7 @@ export async function createVrmAvatar(opts) {
       syncLookTarget();
       syncHumanoidPose();
       tickFace(dt, now, activeMotion);
-      const springEligible =
-        !libraryMotion && !activeMotion && !bodyMotion.activeGesture;
+      const springEligible = !libraryMotion && !activeMotion;
       if (springEligible && talking) {
         tickIdleSpringRecenter(
           vrm,
@@ -1231,6 +1230,7 @@ export async function createVrmAvatar(opts) {
   bodyMotion.update(1 / 60);
   syncLookTarget();
   syncHumanoidPose();
+  stabilizeVrmSpringBones(vrm);
   vrm.update(1 / 60);
   applyTalkMouthNow(performance.now());
   renderer.render(scene, camera);

@@ -5,23 +5,30 @@
  * `joints.length` is always undefined, so older tuners skipped every model
  * and left author gravityDir pointing up — which reads as wind from below.
  */
+import * as THREE from "three";
 
-export const VRM_SPRING_STABILITY_SCHEMA = "amoji.vrmSpringStability.v4";
+export const VRM_SPRING_STABILITY_SCHEMA = "amoji.vrmSpringStability.v5";
 
 /** High drag — stops hair/skirt tails from fluttering upward. */
-export const MIN_DRAG_FORCE = 0.985;
+export const MIN_DRAG_FORCE = 0.993;
 /** Strong downward pull — counters VRM files that author gravityDir (0, 1, 0). */
-export const MIN_GRAVITY_POWER = 0.88;
-export const MAX_STIFFNESS = 0.28;
+export const MIN_GRAVITY_POWER = 1.35;
+export const MAX_STIFFNESS = 0.1;
 
 /** Soft reset while standing idle — pulls hair/skirt back without re-capture. */
-export const IDLE_SPRING_RECENTER_SEC = 1.05;
+export const IDLE_SPRING_RECENTER_SEC = 0.42;
 
 /** Head/thinking motion still excites hair/skirt springs — reset a bit sooner. */
-export const TALK_SPRING_RECENTER_SEC = 2.2;
+export const TALK_SPRING_RECENTER_SEC = 0.55;
 
 /** LLM wait pose — procedural head tilt without TTS mouth drive. */
-export const THINK_SPRING_RECENTER_SEC = 1.8;
+export const THINK_SPRING_RECENTER_SEC = 0.65;
+
+/** World-space upward tail velocity (units/s) above which we clamp drift. */
+export const MAX_UPWARD_TAIL_VEL = 0.045;
+
+const _tailWorld = new THREE.Vector3();
+const _prevTailWorld = new THREE.Vector3();
 
 /**
  * @param {unknown} raw
@@ -74,16 +81,8 @@ export function resolveSpringJointSettings(joint) {
  */
 export function tuneSpringJointSettings(settings) {
   if (!settings) return false;
-  const drag = Number(settings.dragForce);
-  settings.dragForce = Math.max(
-    Number.isFinite(drag) ? drag : 0,
-    MIN_DRAG_FORCE,
-  );
-  const gravity = Number(settings.gravityPower);
-  settings.gravityPower = Math.max(
-    Number.isFinite(gravity) ? gravity : 0,
-    MIN_GRAVITY_POWER,
-  );
+  settings.dragForce = MIN_DRAG_FORCE;
+  settings.gravityPower = MIN_GRAVITY_POWER;
   if (typeof settings.stiffness === "number") {
     settings.stiffness = Math.min(settings.stiffness, MAX_STIFFNESS);
   }
@@ -115,6 +114,68 @@ export function stabilizeVrmSpringBones(vrm) {
     if (tuneSpringJoint(joint)) tuned += 1;
   }
   return { ok: true, joints: joints.length, tuned };
+}
+
+/**
+ * After the spring sim step, clamp world-space upward tail velocity so hair
+ * cannot keep drifting up under procedural head/body motion.
+ * @param {object[]} joints
+ * @param {number} dt
+ * @param {{ maxUpVel?: number }} [opts]
+ */
+export function dampUpwardSpringTailDrift(joints, dt, opts = {}) {
+  if (!joints?.length || dt <= 0) return { clamped: 0 };
+  const maxUpVel = opts.maxUpVel ?? MAX_UPWARD_TAIL_VEL;
+  let clamped = 0;
+
+  for (const joint of joints) {
+    const cur = joint?._currentTail;
+    const prev = joint?._prevTail;
+    const centerToWorld = joint?._getMatrixCenterToWorld?.();
+    const worldToCenter = joint?._getMatrixWorldToCenter?.();
+    if (!cur || !prev || !centerToWorld || !worldToCenter) continue;
+
+    _tailWorld.copy(cur).applyMatrix4(centerToWorld);
+    _prevTailWorld.copy(prev).applyMatrix4(centerToWorld);
+    const upVel = (_tailWorld.y - _prevTailWorld.y) / dt;
+    if (upVel <= maxUpVel) continue;
+
+    const allowedY = _prevTailWorld.y + maxUpVel * dt * 0.15;
+    _tailWorld.y = Math.min(_tailWorld.y, allowedY);
+    cur.copy(_tailWorld);
+    cur.applyMatrix4(worldToCenter);
+    prev.copy(_prevTailWorld);
+    prev.applyMatrix4(worldToCenter);
+    clamped += 1;
+  }
+
+  return { clamped };
+}
+
+/**
+ * Wrap springBoneManager.update so tuning + upward drift clamp always run,
+ * including bootstrap vrm.update calls that bypass the avatar frame loop.
+ * @param {import('@pixiv/three-vrm').VRM | null | undefined} vrm
+ */
+export function installVrmSpringBoneGuard(vrm) {
+  const manager = vrm?.springBoneManager;
+  if (!manager || manager.__amojiSpringGuardInstalled) {
+    return { ok: false, reason: manager ? "already-installed" : "no-spring-bones" };
+  }
+  if (typeof manager.update !== "function") {
+    return { ok: false, reason: "no-update" };
+  }
+
+  const nativeUpdate = manager.update.bind(manager);
+  manager.update = (delta) => {
+    if (delta <= 0) return;
+    const joints = getVrmSpringJoints(vrm);
+    for (const joint of joints) tuneSpringJoint(joint);
+    nativeUpdate(delta);
+    dampUpwardSpringTailDrift(joints, delta);
+  };
+  manager.__amojiSpringGuardInstalled = true;
+  return { ok: true };
 }
 
 /**
@@ -213,6 +274,8 @@ export function configureVrmSpringStability(vrm) {
   for (const joint of joints) {
     if (tuneSpringJoint(joint)) tuned += 1;
   }
+
+  installVrmSpringBoneGuard(vrm);
 
   const recentered = recenterVrmSpringBones(vrm, {
     retune: false,

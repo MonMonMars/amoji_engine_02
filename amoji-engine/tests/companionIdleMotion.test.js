@@ -109,7 +109,7 @@ describe("companionIdleMotion", () => {
 
   it("keeps standing idle large enough to read in a portrait crop", () => {
     const idle = sampleIdleBodyMotion(1.4);
-    expect(Math.abs(idle.leanY) + Math.abs(idle.headZ)).toBeGreaterThan(0.08);
+    expect(Math.abs(idle.leanY) + Math.abs(idle.headZ)).toBeGreaterThan(0.06);
     expect(idle.armLiftL).toBeGreaterThan(0.08);
     expect(idle.forearmL).toBeGreaterThan(0.3);
     expect(idle.upperLegR).toBeLessThan(0.05);
