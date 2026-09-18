@@ -5,6 +5,9 @@ import {
   characterAvatarConfig,
   characterGender,
   characterGreeting,
+  characterGreetingPerformance,
+  characterHungryPerformance,
+  characterLonelyPerformance,
   characterNumber,
   characterVoiceLabel,
   COMPANION_CHARACTERS,
@@ -119,5 +122,19 @@ describe("companionCharacterCatalog v225 pre-release roster", () => {
     expect(characterAvatarConfig("sora", "yue").avatarPrefer).toBe("gltf");
     expect(characterAvatarConfig("rex", "yue").modelUrl).toContain("companion-kai.vrm");
     expect(defaultVoiceForCharacter("poly", "yue")).toBe("zh-HK-HiuGaaiNeural-poly");
+  });
+
+  it("keeps hungry lines on the same character voice profile", () => {
+    const base = characterGreetingPerformance("amoji");
+    const hungry = characterHungryPerformance("amoji");
+    expect(hungry.emotion).toBe("sad");
+    expect(hungry.nuance).not.toBe("stress");
+    expect(hungry.talkStyle).toBe("soft");
+    expect(hungry.speechEnergy).toBeLessThan(base.speechEnergy);
+    expect(hungry.speechEnergy).toBeGreaterThan(0.38);
+    const lonely = characterLonelyPerformance("sora");
+    expect(lonely.emotion).toBe("sad");
+    expect(lonely.nuance).toBe("shy");
+    expect(lonely.talkStyle).toBe("soft");
   });
 });

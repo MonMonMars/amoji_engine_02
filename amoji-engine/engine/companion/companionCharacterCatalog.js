@@ -339,6 +339,43 @@ export function characterGreetingPerformance(characterId) {
 }
 
 /**
+ * Hungry / pleading lines — same character voice, gentler delivery (not generic stress TTS).
+ * @param {string} characterId
+ */
+export function characterHungryPerformance(characterId) {
+  const base = characterGreetingPerformance(characterId);
+  const energy = Number.isFinite(base.speechEnergy) ? base.speechEnergy : 0.55;
+  let nuance = String(base.nuance || "none").toLowerCase();
+  if (nuance === "excited") nuance = "curious";
+  if (nuance === "none") nuance = "curious";
+  let talkStyle = String(base.talkStyle || "explain").toLowerCase();
+  if (talkStyle === "celebrate") talkStyle = "soft";
+  return {
+    ...base,
+    emotion: "sad",
+    nuance,
+    talkStyle,
+    speechEnergy: Math.max(0.4, Math.min(0.62, energy * 0.84)),
+  };
+}
+
+/**
+ * Lonely / please-play lines — soft ask while keeping the roster voice identity.
+ * @param {string} characterId
+ */
+export function characterLonelyPerformance(characterId) {
+  const base = characterGreetingPerformance(characterId);
+  const energy = Number.isFinite(base.speechEnergy) ? base.speechEnergy : 0.55;
+  return {
+    ...base,
+    emotion: "sad",
+    nuance: "shy",
+    talkStyle: base.talkStyle === "celebrate" ? "soft" : base.talkStyle || "soft",
+    speechEnergy: Math.max(0.42, Math.min(0.66, energy * 0.9)),
+  };
+}
+
+/**
  * @param {string} characterId
  */
 export function characterProsodyBias(characterId) {
