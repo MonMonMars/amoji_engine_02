@@ -235,7 +235,7 @@ export async function createVrmAvatar(opts) {
 
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(PORTRAIT_FOV, 1, 0.05, 100);
-  camera.position.set(0, 1.28, 2.85);
+  camera.position.set(0, 1.42, 3.35);
 
   scene.add(new THREE.HemisphereLight(0xffe8dc, 0x1a2030, 1.05));
   const key = new THREE.DirectionalLight(0xfff6ee, 1.55);
