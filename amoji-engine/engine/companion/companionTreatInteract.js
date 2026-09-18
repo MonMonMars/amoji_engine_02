@@ -84,11 +84,13 @@ export function startTreatPerformance(avatar, item, opts = {}) {
   const durationMs = Number(opts.durationMs) > 0 ? Number(opts.durationMs) : TREAT_FEED_DURATION_MS;
   avatar?.setEmotion?.("happy");
   avatar?.setEating?.(true);
+  avatar?.attachTreatProp?.(item);
   avatar?.playAction?.(action, { emotion: "happy", loop: true, single: true });
   let stopped = false;
   const stop = () => {
     if (stopped) return;
     stopped = true;
+    avatar?.detachTreatProp?.();
     avatar?.setEating?.(false);
     const current = avatar?.currentAction;
     if (!current || current === action) avatar?.stopAction?.();

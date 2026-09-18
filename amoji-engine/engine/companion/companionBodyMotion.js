@@ -987,6 +987,10 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
     get currentAction() {
       return activeAction;
     },
+    getEatChewSample() {
+      if (activeAction !== "eat" && activeAction !== "drink") return 0;
+      return Math.max(0, Math.min(1, Number(smoothedPose.eatChew) || 0));
+    },
     get queuedActions() {
       return [...actionQueue];
     },
