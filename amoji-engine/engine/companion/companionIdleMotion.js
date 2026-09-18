@@ -6,7 +6,7 @@ import {
   idleBeatEnvelope,
 } from "./companionPoseSmoothing.js";
 
-export const COMPANION_IDLE_MOTION_SCHEMA = "amoji.companionIdleMotion.v2";
+export const COMPANION_IDLE_MOTION_SCHEMA = "amoji.companionIdleMotion.v3";
 
 /** First seconds after avatar is visible — gentle breathe, sway, relaxed arms. */
 export const BOOT_SIMPLE_IDLE_SEC = 10;
@@ -114,16 +114,16 @@ export function sampleIdleBodyMotion(elapsedSec, opts = {}) {
   const rightFree = Math.max(0, shift);
 
   return {
-    headX: (breath * 0.04 + Math.sin(t * 0.5) * 0.024) * energy,
-    headZ: (sway * 0.05 + shift * 0.026) * energy,
-    leanY: (shift * 0.038 + bob * 0.02) * energy,
-    spineX: 0.022 + breath * 0.04 * energy,
-    chestX: -0.01 + breath * 0.028 * energy,
-    hipZ: (0.01 + shift * 0.008) * energy,
-    armLiftL: (0.16 + breath * 0.05 + rightFree * 0.04 + Math.sin(t * 0.8 + 0.4) * 0.06) * energy,
-    armLiftR: (0.12 + breath * 0.045 + leftFree * 0.04 + Math.sin(t * 0.74 + 1.2) * 0.055) * energy,
-    forearmL: (0.38 + Math.max(0, breath) * 0.08 + Math.sin(t * 0.9 + 0.2) * 0.09) * energy,
-    forearmR: (0.32 + Math.max(0, breath) * 0.07 + Math.sin(t * 0.84 + 1.0) * 0.08) * energy,
+    headX: (breath * 0.024 + Math.sin(t * 0.5) * 0.014) * energy,
+    headZ: (sway * 0.03 + shift * 0.016) * energy,
+    leanY: (shift * 0.022 + bob * 0.012) * energy,
+    spineX: 0.018 + breath * 0.026 * energy,
+    chestX: -0.008 + breath * 0.018 * energy,
+    hipZ: (0.008 + shift * 0.005) * energy,
+    armLiftL: (0.16 + breath * 0.035 + rightFree * 0.028 + Math.sin(t * 0.8 + 0.4) * 0.04) * energy,
+    armLiftR: (0.12 + breath * 0.032 + leftFree * 0.028 + Math.sin(t * 0.74 + 1.2) * 0.038) * energy,
+    forearmL: (0.38 + Math.max(0, breath) * 0.055 + Math.sin(t * 0.9 + 0.2) * 0.06) * energy,
+    forearmR: (0.32 + Math.max(0, breath) * 0.05 + Math.sin(t * 0.84 + 1.0) * 0.055) * energy,
     upperLegL: 0.02,
     upperLegR: 0.02,
     lowerLegL: 0.1,

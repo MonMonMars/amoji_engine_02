@@ -14,6 +14,8 @@ import {
   tuneSpringJoint,
   stabilizeVrmSpringBones,
   tickIdleSpringRecenter,
+  installVrmSpringBoneGuard,
+  dampUpwardSpringTailDrift,
 } from "../engine/companion/vrmSpringStability.js";
 
 function makeJoint(overrides = {}) {
@@ -172,5 +174,54 @@ describe("vrmSpringStability", () => {
     expect(
       configureVrmSpringStability({ springBoneManager: { joints: new Set() } }).ok,
     ).toBe(false);
+  });
+
+  it("installVrmSpringBoneGuard wraps manager.update once", () => {
+    const joint = makeJoint();
+    let nativeCalls = 0;
+    const manager = {
+      joints: new Set([joint]),
+      update(delta) {
+        nativeCalls += 1;
+        expect(delta).toBe(1 / 60);
+      },
+      setInitState: () => {},
+      reset: () => {},
+    };
+    const vrm = { springBoneManager: manager };
+    configureVrmSpringStability(vrm);
+    manager.update(1 / 60);
+    expect(nativeCalls).toBe(1);
+    expect(joint.settings.gravityDir.y).toBe(-1);
+    expect(installVrmSpringBoneGuard(vrm).reason).toBe("already-installed");
+  });
+
+  it("dampUpwardSpringTailDrift clamps rising tail velocity", () => {
+    const centerToWorld = {
+      elements: [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1],
+    };
+    const makeTail = (y) => ({
+      x: 0,
+      y,
+      z: 0,
+      copy(v) {
+        this.x = v.x;
+        this.y = v.y;
+        this.z = v.z;
+        return this;
+      },
+      applyMatrix4() {
+        return this;
+      },
+    });
+    const joint = {
+      _currentTail: makeTail(0.2),
+      _prevTail: makeTail(0),
+      _getMatrixCenterToWorld: () => centerToWorld,
+      _getMatrixWorldToCenter: () => centerToWorld,
+    };
+    const result = dampUpwardSpringTailDrift([joint], 1 / 60, { maxUpVel: 0.01 });
+    expect(result.clamped).toBe(1);
+    expect(joint._currentTail.y).toBeLessThan(0.2);
   });
 });
