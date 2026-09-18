@@ -60,16 +60,16 @@ export const ACTION_COMBOS = Object.freeze({
  * (wave=Goodbye, thinking=Thinking, stretch=Relax) crossfaded in the player.
  */
 /**
- * Quiet between-turn idle — subtle standing clips only (no wave/dance/cheer).
- * Calm standing body stays on the hosted Relax loop between one-shots.
+ * Quiet between-turn idle — natural standing life (no wave/clap/cheer/hands-up).
+ * Calm Relax loop runs between one-shots: stroll, jump, blush, think, shrug, sleepy.
  */
 export const IDLE_LIFE_CLIP_POOL = Object.freeze([
-  "stretch",
+  "walk",
+  "jump",
   "shy",
   "thinking",
-  "sleep",
   "shrug",
-  "nod",
+  "sleep",
 ]);
 
 /** Large idle rotation pool — quiet companion moments between turns. */

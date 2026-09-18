@@ -3,6 +3,7 @@ import {
   advanceIdleBeat,
   BOOT_SIMPLE_IDLE_SEC,
   createIdleBeatState,
+  pickProceduralIdleBeat,
   sampleCalmBreathIdle,
   sampleIdleBodyMotion,
   sampleIdleExpressionBlend,
@@ -30,13 +31,13 @@ describe("companionIdleMotion", () => {
   });
 
   it("plays a comb-hair beat that lifts the right arm", () => {
-    vi.spyOn(Math, "random").mockReturnValue(0.45);
+    vi.spyOn(Math, "random").mockReturnValue(0.35);
     const state = createIdleBeatState(0);
     state.nextAt = 0;
     const first = advanceIdleBeat(state, 1.05, 10);
     expect(first.state.beat).toBe("comb");
-    expect(first.overlay.armLiftR).toBeGreaterThan(0.32);
-    expect(first.overlay.forearmR).toBeGreaterThan(0.2);
+    expect(first.overlay.armLiftR).toBeGreaterThan(0.2);
+    expect(first.overlay.forearmR).toBeGreaterThan(0.15);
     vi.restoreAllMocks();
   });
 
@@ -61,7 +62,7 @@ describe("companionIdleMotion", () => {
   });
 
   it("shifts weight without striding the planted legs", () => {
-    vi.spyOn(Math, "random").mockReturnValue(0.6);
+    vi.spyOn(Math, "random").mockReturnValue(0.9);
     const state = createIdleBeatState(0);
     state.nextAt = 0;
     const first = advanceIdleBeat(state, 1.05, 10);
@@ -133,6 +134,23 @@ describe("companionIdleMotion", () => {
     expect(look.duration).toBeGreaterThan(1);
     const comb = startIdleBeat(createIdleBeatState(0), "comb", 10);
     expect(comb.beat).toBe("comb");
+  });
+
+  it("rotates procedural idle beats for wait-act ticks", () => {
+    expect(pickProceduralIdleBeat(1)).toBe("comb");
+    expect(pickProceduralIdleBeat(2)).toBe("breathe");
+    expect(pickProceduralIdleBeat(3)).toBe("cross");
+  });
+
+  it("plays an arm-cross beat without raising both arms high", () => {
+    vi.spyOn(Math, "random").mockReturnValue(0.65);
+    const state = createIdleBeatState(0);
+    state.nextAt = 0;
+    const first = advanceIdleBeat(state, 0.95, 10);
+    expect(first.state.beat).toBe("cross");
+    expect(first.overlay.armLiftL).toBeLessThan(0.3);
+    expect(first.overlay.armLiftR).toBeLessThan(0.3);
+    vi.restoreAllMocks();
   });
 });
 
