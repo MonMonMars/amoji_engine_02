@@ -216,7 +216,7 @@
 .theme-grok-ani .companion-chip__dot:has(canvas) {
   background: transparent;
   box-shadow: none;
-  filter: drop-shadow(0 0 5px hsl(var(--mini-ball-hue, 175) 70% 55% / 0.48));
+  filter: drop-shadow(0 0 7px hsl(var(--mini-ball-hue, 210) 38% 84% / 0.5));
   transform: none;
 }
 
@@ -512,7 +512,8 @@ body.conversation-ui.composer-always-visible.theme-grok-ani .composer .speaker-b
 .theme-grok-ani .emotion-ball {
   width: 5.75rem;
   height: 5.75rem;
-  filter: drop-shadow(0 14px 48px var(--ball-glow-a));
+  filter: drop-shadow(0 10px 32px var(--ball-glow-a))
+    drop-shadow(0 0 22px rgba(255, 255, 255, 0.18));
 }
 
 .theme-grok-ani .emotion-ball__emotion-chip {

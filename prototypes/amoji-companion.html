@@ -8,9 +8,9 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji · Companion</title>
     <script>
-      window.__amojiBuild = "2026-09-18-v203-stream-mood-voice";
+      window.__amojiBuild = "2026-09-18-v204-cloud-emotion-orb";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-18-v203-stream-mood-voice"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-18-v204-cloud-emotion-orb"></script>
     <link
       rel="prefetch"
       href="/prototypes/assets/companion-char-nova.png"
@@ -450,8 +450,8 @@
       media="print"
       onload="this.media='all'"
     />
-    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-18-v203-stream-mood-voice" />
-    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-18-v203-stream-mood-voice" />
+    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-18-v204-cloud-emotion-orb" />
+    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-18-v204-cloud-emotion-orb" />
     <noscript>
       <link
         href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap"
@@ -668,12 +668,17 @@
         flex-shrink: 0;
         overflow: hidden;
         background: radial-gradient(
-          circle at 32% 28%,
-          rgba(255, 255, 255, 0.9),
-          hsl(175 62% 58%) 55%,
-          #123 100%
+          circle at 38% 32%,
+          rgba(255, 255, 255, 0.96) 0%,
+          rgba(255, 255, 255, 0.55) 42%,
+          hsl(210 38% 82% / 0.35) 100%
         );
-        box-shadow: 0 0 12px rgba(94, 234, 212, 0.45);
+        box-shadow: 0 0 14px rgba(255, 255, 255, 0.35);
+      }
+      .companion-chip__dot:has(canvas) {
+        background: transparent;
+        box-shadow: none;
+        filter: drop-shadow(0 0 6px hsl(var(--mini-ball-hue, 210) 45% 78% / 0.42));
       }
       .companion-chip__dot-canvas {
         position: absolute;
@@ -1557,7 +1562,7 @@
         }
       }
 
-      /* ChatGPT-style emotion orb — canvas fluid blob + spectrum HUD */
+      /* ChatGPT-style emotion orb — airy cloud canvas + soft HUD */
       .emotion-ball-stack {
         display: flex;
         flex-direction: column;
@@ -1576,21 +1581,22 @@
       .emotion-ball {
         --ball-level: 0;
         --ball-scale: 1;
-        --ball-hue: 175;
-        --ball-sat: 62%;
-        --ball-light: 58%;
+        --ball-hue: 210;
+        --ball-sat: 38%;
+        --ball-light: 82%;
         --ball-accent: hsl(var(--ball-hue) var(--ball-sat) var(--ball-light));
-        --ball-glow-a: hsl(var(--ball-hue) 70% 62% / 0.72);
-        --ball-glow-b: hsl(calc(var(--ball-hue) + 42) 65% 68% / 0.48);
-        --ball-surface: hsl(var(--ball-hue) 44% 18% / 0.92);
-        --ball-border: hsl(var(--ball-hue) var(--ball-sat) 64% / 0.72);
+        --ball-glow-a: hsl(var(--ball-hue) 42% 88% / 0.55);
+        --ball-glow-b: hsl(calc(var(--ball-hue) + 24) 36% 92% / 0.32);
+        --ball-surface: hsl(var(--ball-hue) 28% 94% / 0.72);
+        --ball-border: hsl(var(--ball-hue) 32% 88% / 0.45);
         --ball-ring-speed: 1.1s;
         position: relative;
         width: 5.5rem;
         height: 5.5rem;
         transform: scale(var(--ball-scale));
-        transition: transform 0.1s ease-out, width 0.35s ease, height 0.35s ease;
-        filter: drop-shadow(0 12px 42px var(--ball-glow-a));
+        transition: transform 0.12s ease-out, width 0.35s ease, height 0.35s ease;
+        filter: drop-shadow(0 8px 28px var(--ball-glow-a))
+          drop-shadow(0 0 18px rgba(255, 255, 255, 0.22));
       }
 
       .emotion-ball__canvas {
@@ -1604,18 +1610,21 @@
 
       .emotion-ball__halo {
         position: absolute;
-        inset: -28%;
+        inset: -36%;
         border-radius: 50%;
         pointer-events: none;
         z-index: 0;
-        background: radial-gradient(
-          circle,
-          var(--ball-glow-a) 0%,
-          var(--ball-glow-b) 38%,
-          transparent 70%
-        );
-        opacity: calc(0.32 + var(--ball-level) * 0.55);
+        background:
+          radial-gradient(
+            circle at 50% 46%,
+            rgba(255, 255, 255, 0.42) 0%,
+            var(--ball-glow-a) 28%,
+            var(--ball-glow-b) 52%,
+            transparent 72%
+          );
+        opacity: calc(0.38 + var(--ball-level) * 0.42);
         animation: emotionBallHalo calc(var(--ball-ring-speed) * 2.4) ease-in-out infinite;
+        filter: blur(6px);
       }
 
       .emotion-ball__hud {
@@ -1643,10 +1652,11 @@
         font-weight: 700;
         letter-spacing: 0.06em;
         text-transform: uppercase;
-        color: #f7f1e8;
-        background: hsl(var(--ball-hue) 42% 14% / 0.82);
-        border: 1px solid hsl(var(--ball-hue) var(--ball-sat) 58% / 0.55);
-        box-shadow: 0 6px 18px hsl(var(--ball-hue) 50% 20% / 0.35);
+        color: rgba(255, 255, 255, 0.92);
+        background: rgba(255, 255, 255, 0.12);
+        border: 1px solid rgba(255, 255, 255, 0.28);
+        box-shadow: 0 4px 16px hsl(var(--ball-hue) 40% 72% / 0.22);
+        backdrop-filter: blur(8px);
       }
 
       .emotion-ball__volume-meter {
@@ -1681,24 +1691,24 @@
         gap: 2px;
         padding: 0 8%;
         z-index: 1;
-        opacity: calc(0.25 + var(--ball-level) * 0.75);
+        opacity: calc(0.08 + var(--ball-level) * 0.22);
         pointer-events: none;
-        mask-image: radial-gradient(circle at 50% 58%, #000 42%, transparent 78%);
+        mask-image: radial-gradient(circle at 50% 58%, #000 38%, transparent 76%);
       }
 
       .emotion-ball.is-idle .emotion-ball__spectrum {
-        opacity: 0.18;
+        opacity: 0.04;
       }
 
       .emotion-ball__bar {
         flex: 1;
-        max-width: 4px;
-        height: calc(0.35rem + var(--bar-level, 0.15) * 1.1rem);
+        max-width: 3px;
+        height: calc(0.2rem + var(--bar-level, 0.15) * 0.65rem);
         border-radius: 999px;
         background: linear-gradient(
           180deg,
-          hsl(calc(var(--ball-hue) + 18) 85% 78% / 0.95),
-          var(--ball-accent)
+          rgba(255, 255, 255, 0.72),
+          hsl(var(--ball-hue) 36% 86% / 0.55)
         );
         transform-origin: center bottom;
         transition: height 0.08s linear;
@@ -3927,19 +3937,19 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-18-v203-stream-mood-voice",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-18-v204-cloud-emotion-orb",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-18-v203-stream-mood-voice",
-          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-18-v203-stream-mood-voice"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-18-v204-cloud-emotion-orb",
+          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-18-v204-cloud-emotion-orb"
         }
       }
     </script>
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-18-v203-stream-mood-voice"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-18-v204-cloud-emotion-orb"
     />
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-18-v203-stream-mood-voice"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-18-v203-stream-mood-voice"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-18-v204-cloud-emotion-orb"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-18-v204-cloud-emotion-orb"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;
