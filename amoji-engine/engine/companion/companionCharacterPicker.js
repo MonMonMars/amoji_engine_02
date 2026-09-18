@@ -1,11 +1,18 @@
 /**
- * Grok Ani–style companion picker — grid sheet + compact start-screen grid.
+ * Gacha / visual-novel companion picker — hero preview, filters, confirm CTA.
  */
 import {
   characterNumber,
-  highPolyFacePickerHint,
   listCompanionCharacters,
 } from "./companionCharacterCatalog.js";
+import {
+  filterPickerCharacters,
+  pickerCopy,
+  pickerFilterButtonsHtml,
+  PICKER_HERO_HTML,
+  PICKER_TOOLBAR_HTML,
+  updatePickerHero,
+} from "./companionPickerChrome.js";
 import {
   PROGRESS_RING_CIRCUMFERENCE,
   PROGRESS_RING_RADIUS,
@@ -14,9 +21,9 @@ import {
 import { closeUiOverlay, openUiOverlay } from "./companionUiEffects.js";
 
 export const COMPANION_CHARACTER_PICKER_SCHEMA =
-  "amoji.companionCharacterPicker.v3";
+  "amoji.companionCharacterPicker.v4";
 
-export const COMPANION_START_PICKER_SCHEMA = "amoji.companionStartPicker.v2";
+export const COMPANION_START_PICKER_SCHEMA = "amoji.companionStartPicker.v3";
 
 export const START_PICKER_PRELOAD_RING_HTML = `
   <div class="start-picker-preload-ring companion-progress-ring" aria-hidden="true">
@@ -107,6 +114,8 @@ function cardNumber(item) {
  *   compact?: boolean,
  *   disabled?: boolean,
  *   eagerPreview?: boolean,
+ *   roster?: ReturnType<typeof listCompanionCharacters>,
+ *   rosterStrip?: boolean,
  *   onCardClick?: (id: string) => void,
  *   onCardTapFx?: (card: HTMLButtonElement, item: ReturnType<typeof listCompanionCharacters>[number]) => void,
  * }} ctx
@@ -114,13 +123,15 @@ function cardNumber(item) {
 export function renderCompanionPickerGrid(gridEl, langCode, ctx = {}) {
   if (!gridEl) return;
   const compact = ctx.compact !== false;
+  const list = ctx.roster || listCompanionCharacters(langCode);
   gridEl.innerHTML = "";
-  const list = listCompanionCharacters(langCode);
+  gridEl.classList.toggle("companion-picker-grid--roster", Boolean(ctx.rosterStrip));
   for (const item of list) {
     gridEl.appendChild(
       createCompanionCardButton(item, {
         selectedId: ctx.selectedId,
         compact,
+        rosterStrip: ctx.rosterStrip,
         eagerPreview: ctx.eagerPreview,
         disabled: ctx.disabled,
         onCardTapFx: ctx.onCardTapFx,
@@ -138,6 +149,7 @@ export function renderCompanionPickerGrid(gridEl, langCode, ctx = {}) {
  * @param {{
  *   selectedId?: string,
  *   compact?: boolean,
+ *   rosterStrip?: boolean,
  *   eagerPreview?: boolean,
  *   disabled?: boolean,
  *   onClick?: (id: string) => void,
@@ -153,7 +165,8 @@ export function createCompanionCardButton(item, ctx = {}) {
     card.setAttribute("aria-disabled", "true");
   }
   card.className = compact
-    ? "companion-card companion-card--compact"
+    ? "companion-card companion-card--compact" +
+      (ctx.rosterStrip ? " companion-card--roster" : "")
     : "companion-card";
   card.dataset.characterId = item.id;
   card.dataset.characterNumber = String(cardNumber(item) || "");
@@ -178,6 +191,55 @@ export function createCompanionCardButton(item, ctx = {}) {
 }
 
 /**
+ * @param {HTMLElement} shell
+ * @param {{
+ *   isEnglish: boolean,
+ *   getFilter: () => string,
+ *   setFilter: (id: string) => void,
+ *   getQuery: () => string,
+ *   setQuery: (q: string) => void,
+ *   onChange: () => void,
+ * }} opts
+ */
+function wirePickerToolbar(shell, opts) {
+  const search = shell.querySelector(".picker-search");
+  const filtersEl = shell.querySelector(".picker-filters");
+  const labels = pickerCopy(opts.isEnglish);
+
+  if (search) {
+    search.placeholder = labels.searchPlaceholder;
+    search.value = opts.getQuery();
+    search.oninput = () => {
+      opts.setQuery(search.value);
+      opts.onChange();
+    };
+  }
+
+  const paintFilters = () => {
+    if (!filtersEl) return;
+    filtersEl.innerHTML = pickerFilterButtonsHtml(opts.isEnglish, opts.getFilter());
+    filtersEl.querySelectorAll("[data-picker-filter]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const id = btn.getAttribute("data-picker-filter");
+        if (!id || id === opts.getFilter()) return;
+        opts.setFilter(id);
+        paintFilters();
+        opts.onChange();
+      });
+    });
+  };
+  paintFilters();
+}
+
+/**
+ * @param {ReturnType<typeof listCompanionCharacters>} list
+ * @param {string | null | undefined} id
+ */
+function findPickerItem(list, id) {
+  return list.find((item) => item.id === id) || list[0] || null;
+}
+
+/**
  * @param {{
  *   root?: HTMLElement | null,
  *   isEnglish?: boolean,
@@ -191,10 +253,14 @@ export function createCompanionCharacterPicker(opts = {}) {
   const isEnglish = Boolean(opts.isEnglish);
   const langCode = isEnglish ? "en" : "yue";
   let selectedId = opts.selectedId || "nova";
+  let filterId = "all";
+  let query = "";
   let open = false;
+  const copy = pickerCopy(isEnglish);
+  const fullList = () => listCompanionCharacters(langCode);
 
   const shell = document.createElement("div");
-  shell.className = "companion-picker";
+  shell.className = "companion-picker companion-picker--v4";
   shell.id = "companion-character-picker";
   shell.hidden = true;
   shell.setAttribute("role", "dialog");
@@ -212,8 +278,15 @@ export function createCompanionCharacterPicker(opts = {}) {
           <svg class="btn-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" aria-hidden="true"><path d="M6.2 6.2 17.8 17.8M17.8 6.2 6.2 17.8" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"/></svg>
         </button>
       </header>
-      <div class="companion-picker-grid" role="listbox"></div>
-      <p class="companion-picker-foot"></p>
+      ${PICKER_HERO_HTML}
+      ${PICKER_TOOLBAR_HTML}
+      <div class="picker-roster-wrap">
+        <div class="companion-picker-grid" role="listbox"></div>
+      </div>
+      <div class="picker-session-actions">
+        <button type="button" class="picker-confirm-btn picker-switch-btn"></button>
+        <p class="companion-picker-foot"></p>
+      </div>
     </div>
   `;
 
@@ -224,40 +297,57 @@ export function createCompanionCharacterPicker(opts = {}) {
   const subEl = shell.querySelector(".companion-picker-sub");
   const gridEl = shell.querySelector(".companion-picker-grid");
   const footEl = shell.querySelector(".companion-picker-foot");
+  const confirmBtn = shell.querySelector(".picker-switch-btn");
 
-  const copy = () => {
-    if (titleEl) {
-      titleEl.textContent = isEnglish ? "Companions" : "同伴";
-    }
-    if (subEl) {
-      subEl.textContent = isEnglish
-        ? "Pick who you want to chat with."
-        : "揀你想同邊個傾偈。";
-    }
-    if (footEl) {
-      footEl.textContent = `${isEnglish ? "Tap a card to switch companion." : "點選角色即可切換同伴。"} ${highPolyFacePickerHint(langCode)}`;
-    }
+  const paintCopy = () => {
+    if (titleEl) titleEl.textContent = copy.title;
+    if (subEl) subEl.textContent = copy.sub;
+    if (footEl) footEl.textContent = copy.footSession;
+    if (confirmBtn) confirmBtn.textContent = copy.switch;
   };
 
   const renderGrid = () => {
+    const filtered = filterPickerCharacters(fullList(), {
+      filter: filterId,
+      query,
+    });
     renderCompanionPickerGrid(gridEl, langCode, {
       selectedId,
-      compact: true,
+      roster: filtered,
       onCardTapFx: opts.onCardTapFx,
       onCardClick: (id) => {
-        if (id === selectedId) {
-          close();
-          return;
-        }
         selectedId = id;
         renderGrid();
-        opts.onSelect?.(id);
+        updatePickerHero(shell, findPickerItem(fullList(), selectedId), isEnglish);
       },
     });
+    updatePickerHero(shell, findPickerItem(fullList(), selectedId), isEnglish);
   };
 
+  wirePickerToolbar(shell, {
+    isEnglish,
+    getFilter: () => filterId,
+    setFilter: (id) => {
+      filterId = id;
+    },
+    getQuery: () => query,
+    setQuery: (q) => {
+      query = q;
+    },
+    onChange: renderGrid,
+  });
+
+  confirmBtn?.addEventListener("click", () => {
+    if (selectedId === opts.selectedId) {
+      close();
+      return;
+    }
+    opts.onSelect?.(selectedId);
+  });
+
   const openPicker = () => {
-    copy();
+    selectedId = opts.selectedId || selectedId;
+    paintCopy();
     renderGrid();
     shell.hidden = false;
     open = true;
@@ -313,12 +403,11 @@ export function createCompanionCharacterPicker(opts = {}) {
 }
 
 /**
- * Full-screen character grid shown before the first chat session starts.
+ * Full-screen character roster before the first chat session.
  * @param {{
  *   root?: HTMLElement | null,
  *   isEnglish?: boolean,
  *   selectedId?: string,
- *   fullPage?: boolean,
  *   onStart?: (id: string) => void,
  *   onCardTapFx?: (card: HTMLButtonElement, item: ReturnType<typeof listCompanionCharacters>[number]) => void,
  * }} opts
@@ -327,13 +416,17 @@ export function createCompanionStartPicker(opts = {}) {
   const isEnglish = Boolean(opts.isEnglish);
   const langCode = isEnglish ? "en" : "yue";
   let selectedId = opts.selectedId || "nova";
+  let filterId = "all";
+  let query = "";
   let starting = false;
   let pickable = true;
   let preloadPct = 0;
   let preloadReady = false;
+  const copy = pickerCopy(isEnglish);
+  const fullList = () => listCompanionCharacters(langCode);
 
   const shell = document.createElement("div");
-  shell.className = "companion-picker companion-picker--start hide";
+  shell.className = "companion-picker companion-picker--start companion-picker--v4 hide";
   shell.id = "start-character-picker";
   shell.setAttribute("role", "dialog");
   shell.setAttribute("aria-modal", "true");
@@ -341,22 +434,27 @@ export function createCompanionStartPicker(opts = {}) {
   shell.setAttribute("aria-label", isEnglish ? "Choose companion" : "揀同伴");
   shell.innerHTML = `
     <div class="companion-picker-backdrop" aria-hidden="true"></div>
-    <div class="companion-picker-sheet">
+    <div class="companion-picker-sheet companion-picker-sheet--start">
       <header class="companion-picker-head">
         <div>
           <h2 class="companion-picker-title"></h2>
           <p class="companion-picker-sub"></p>
         </div>
       </header>
-      <div class="start-picker-preload" aria-live="polite">
-        ${START_PICKER_PRELOAD_RING_HTML}
-        <p class="start-picker-preload-label"></p>
-      </div>
+      ${PICKER_HERO_HTML}
+      ${PICKER_TOOLBAR_HTML}
       <div class="start-picker-grid-wrap">
-        <div class="companion-picker-grid companion-picker-grid--start" role="listbox"></div>
+        <div class="companion-picker-grid companion-picker-grid--start companion-picker-grid--roster" role="listbox"></div>
         <p class="start-picker-scroll-hint" hidden></p>
       </div>
-      <p class="companion-picker-foot"></p>
+      <footer class="picker-footer">
+        <div class="start-picker-preload" aria-live="polite">
+          ${START_PICKER_PRELOAD_RING_HTML}
+          <p class="start-picker-preload-label"></p>
+        </div>
+        <button type="button" class="picker-confirm-btn picker-begin-btn"></button>
+        <p class="companion-picker-foot"></p>
+      </footer>
     </div>
   `;
 
@@ -373,28 +471,21 @@ export function createCompanionStartPicker(opts = {}) {
   const preloadLabel = shell.querySelector(".start-picker-preload-label");
   const gridWrapEl = shell.querySelector(".start-picker-grid-wrap");
   const scrollHintEl = shell.querySelector(".start-picker-scroll-hint");
+  const beginBtn = shell.querySelector(".picker-begin-btn");
 
-  const copy = () => {
-    if (titleEl) {
-      titleEl.textContent = isEnglish ? "Companions" : "同伴";
-    }
-    if (subEl) {
-      subEl.textContent = isEnglish
-        ? "Pick who you want to chat with."
-        : "揀你想同邊個傾偈。";
-    }
+  const paintCopy = () => {
+    if (titleEl) titleEl.textContent = copy.title;
+    if (subEl) subEl.textContent = copy.sub;
     if (footEl) {
       footEl.textContent = starting
-        ? isEnglish
-          ? "Starting…"
-          : "開始中…"
+        ? copy.starting
         : !pickable
-          ? isEnglish
-            ? "Almost ready — pick a companion in a moment"
-            : "快好喇 — 等陣就可以揀同伴"
-          : isEnglish
-            ? `★ picks are gallery pretty-girl models — tap to start, 3D loads in background. ${highPolyFacePickerHint(langCode)}`
-            : `★ 推介係你揀嘅靚女模型 — 點選就可以傾偈，3D 背景載入。${highPolyFacePickerHint(langCode)}`;
+          ? copy.waiting
+          : copy.footStart;
+    }
+    if (beginBtn) {
+      beginBtn.textContent = starting ? copy.starting : copy.begin;
+      beginBtn.disabled = starting || !pickable;
     }
   };
 
@@ -409,34 +500,39 @@ export function createCompanionStartPicker(opts = {}) {
       preloadLabel.textContent =
         clamped >= 100
           ? isEnglish
-            ? "All companions cached"
-            : "全部同伴已快取"
+            ? "Roster ready"
+            : "同伴名單就緒"
           : isEnglish
-            ? `Background loading… ${clamped}%`
-            : `背景載入中… ${clamped}%`;
+            ? `Loading roster… ${clamped}%`
+            : `載入名單… ${clamped}%`;
     }
-    if (preloadEl) {
-      preloadEl.classList.toggle("is-ready", clamped >= 100);
-    }
+    if (preloadEl) preloadEl.classList.toggle("is-ready", clamped >= 100);
   };
 
   const renderScrollHint = () => {
     if (!gridWrapEl || !scrollHintEl || !gridEl) return;
-    const overflow = gridEl.scrollHeight > gridEl.clientHeight + 8;
-    const atBottom =
-      gridEl.scrollTop + gridEl.clientHeight >= gridEl.scrollHeight - 8;
-    scrollHintEl.hidden = !overflow || atBottom;
-    scrollHintEl.textContent = isEnglish
-      ? `Scroll for more companions (${listCompanionCharacters(langCode).length} total)`
-      : `向下滑查看更多同伴（共 ${listCompanionCharacters(langCode).length} 位）`;
+    const overflow = gridEl.scrollWidth > gridEl.clientWidth + 8;
+    const atEnd = gridEl.scrollLeft + gridEl.clientWidth >= gridEl.scrollWidth - 8;
+    scrollHintEl.hidden = !overflow || atEnd;
+    scrollHintEl.textContent = copy.rosterHint(fullList().length);
     gridWrapEl.classList.toggle("has-overflow", overflow);
-    gridWrapEl.classList.toggle("at-bottom", atBottom);
+    gridWrapEl.classList.toggle("at-bottom", atEnd);
+  };
+
+  const scrollSelectedIntoView = () => {
+    const card = gridEl?.querySelector(`[data-character-id="${selectedId}"]`);
+    card?.scrollIntoView?.({ behavior: "smooth", inline: "center", block: "nearest" });
   };
 
   const renderGrid = () => {
+    const filtered = filterPickerCharacters(fullList(), {
+      filter: filterId,
+      query,
+    });
     renderCompanionPickerGrid(gridEl, langCode, {
       selectedId,
-      compact: true,
+      roster: filtered,
+      rosterStrip: true,
       eagerPreview: true,
       disabled: starting || !pickable,
       onCardTapFx: opts.onCardTapFx,
@@ -444,14 +540,34 @@ export function createCompanionStartPicker(opts = {}) {
         if (!pickable || starting) return;
         selectedId = id;
         renderGrid();
-        opts.onStart?.(id);
+        updatePickerHero(shell, findPickerItem(fullList(), selectedId), isEnglish);
+        scrollSelectedIntoView();
       },
     });
     shell.classList.toggle("is-preloading", preloadPct < 100 && !starting);
+    updatePickerHero(shell, findPickerItem(fullList(), selectedId), isEnglish);
     requestAnimationFrame(renderScrollHint);
   };
 
-  copy();
+  wirePickerToolbar(shell, {
+    isEnglish,
+    getFilter: () => filterId,
+    setFilter: (id) => {
+      filterId = id;
+    },
+    getQuery: () => query,
+    setQuery: (q) => {
+      query = q;
+    },
+    onChange: renderGrid,
+  });
+
+  beginBtn?.addEventListener("click", () => {
+    if (!pickable || starting) return;
+    opts.onStart?.(selectedId);
+  });
+
+  paintCopy();
   renderGrid();
   renderPreload();
   gridEl?.addEventListener("scroll", renderScrollHint, { passive: true });
@@ -463,6 +579,7 @@ export function createCompanionStartPicker(opts = {}) {
     setSelected(id) {
       selectedId = id;
       renderGrid();
+      scrollSelectedIntoView();
     },
     setPreloadProgress(pct, label) {
       preloadPct = Number(pct) || 0;
@@ -470,21 +587,21 @@ export function createCompanionStartPicker(opts = {}) {
       const ready = preloadPct >= 100;
       if (ready !== preloadReady) {
         preloadReady = ready;
-        copy();
+        paintCopy();
       }
       renderPreload();
     },
     enablePicking(on = true) {
       pickable = Boolean(on);
       renderGrid();
-      copy();
+      paintCopy();
     },
     setStarting(on) {
       starting = Boolean(on);
       shell.classList.toggle("is-starting", starting);
       shell.setAttribute("aria-busy", starting ? "true" : "false");
       renderGrid();
-      copy();
+      paintCopy();
     },
     show() {
       shell.classList.remove("hide");
@@ -492,6 +609,7 @@ export function createCompanionStartPicker(opts = {}) {
       shell.removeAttribute("aria-hidden");
       shell.removeAttribute("hidden");
       document.body.classList.add("companion-start-pending", "companion-picker-open");
+      scrollSelectedIntoView();
     },
     hide() {
       shell.classList.remove("is-open");

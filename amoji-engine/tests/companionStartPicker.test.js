@@ -2,8 +2,10 @@ import { describe, expect, it } from "vitest";
 import { listCompanionCharacters } from "../engine/companion/companionCharacterCatalog.js";
 import {
   companionCardInnerHtml,
+  createCompanionStartPicker,
   START_PICKER_PRELOAD_RING_HTML,
 } from "../engine/companion/companionCharacterPicker.js";
+import { PICKER_HERO_HTML } from "../engine/companion/companionPickerChrome.js";
 
 describe("companion start picker", () => {
   it("renders compact card html without tagline block", () => {
@@ -51,5 +53,49 @@ describe("companion start picker", () => {
     expect(START_PICKER_PRELOAD_RING_HTML).toContain("companion-progress-ring");
     expect(START_PICKER_PRELOAD_RING_HTML).toContain("companion-progress-ring-fill");
     expect(START_PICKER_PRELOAD_RING_HTML).not.toMatch(/preload-track|preload-fill/);
+  });
+
+  it("v4 start picker includes hero preview and begin CTA", () => {
+    expect(PICKER_HERO_HTML).toContain("picker-hero-name");
+    if (typeof document === "undefined") return;
+    let startedWith = null;
+    const picker = createCompanionStartPicker({
+      isEnglish: true,
+      selectedId: "nova",
+      onStart: (id) => {
+        startedWith = id;
+      },
+    });
+    expect(picker.schema).toBe("amoji.companionStartPicker.v3");
+    expect(picker.element.querySelector(".picker-hero")).toBeTruthy();
+    expect(picker.element.querySelector(".picker-begin-btn")).toBeTruthy();
+    expect(picker.element.classList.contains("companion-picker--v4")).toBe(true);
+    picker.enablePicking(true);
+    picker.setSelected("kizuna");
+    picker.element.querySelector(".picker-begin-btn")?.click();
+    expect(startedWith).toBe("kizuna");
+    picker.destroy();
+  });
+
+  it("card tap selects without starting until begin is pressed", () => {
+    if (typeof document === "undefined") return;
+    let started = false;
+    const picker = createCompanionStartPicker({
+      isEnglish: true,
+      selectedId: "nova",
+      onStart: () => {
+        started = true;
+      },
+    });
+    picker.enablePicking(true);
+    const card = picker.element.querySelector('[data-character-id="ember"]');
+    card?.click();
+    expect(started).toBe(false);
+    expect(
+      picker.element.querySelector('[data-character-id="ember"]')?.classList.contains(
+        "is-selected",
+      ),
+    ).toBe(true);
+    picker.destroy();
   });
 });
