@@ -102,7 +102,7 @@ describe("companionWaitAct", () => {
     wait.stop();
   });
 
-  it("rotates idle beats and subtle library clips every few ticks", () => {
+  it("rotates calm library idle and subtle clips every few ticks", () => {
     vi.useFakeTimers();
     const avatar = {
       playAction: vi.fn(),
@@ -112,7 +112,7 @@ describe("companionWaitAct", () => {
       stopAction: vi.fn(),
       applyExpressionProfile: vi.fn(),
       resetIdleLife: vi.fn(),
-      pulseIdleBeat: vi.fn(),
+      playCalmIdle: vi.fn(),
     };
     const wait = createCompanionWaitAct({
       avatar,
@@ -121,20 +121,20 @@ describe("companionWaitAct", () => {
     });
     wait.start({ kind: "idle", phase: "idle", speak: false });
     expect(avatar.stopAction).toHaveBeenCalled();
-    expect(avatar.pulseIdleBeat).not.toHaveBeenCalled();
+    expect(avatar.playCalmIdle).not.toHaveBeenCalled();
     expect(avatar.playAction).not.toHaveBeenCalled();
 
     vi.advanceTimersByTime(IDLE_LIFE_INTERVAL_MS);
-    expect(avatar.pulseIdleBeat).toHaveBeenCalledWith("look");
+    expect(avatar.playCalmIdle).toHaveBeenCalled();
     expect(avatar.playAction).not.toHaveBeenCalled();
 
     vi.advanceTimersByTime(IDLE_LIFE_INTERVAL_MS);
-    expect(avatar.pulseIdleBeat).toHaveBeenCalledWith("comb");
+    expect(avatar.playCalmIdle.mock.calls.length).toBeGreaterThanOrEqual(2);
     expect(avatar.playAction).not.toHaveBeenCalled();
 
     vi.advanceTimersByTime(IDLE_LIFE_INTERVAL_MS);
     expect(avatar.playAction).toHaveBeenCalledTimes(1);
-    expect(avatar.pulseIdleBeat).toHaveBeenCalledWith("breathe");
+    expect(avatar.playCalmIdle.mock.calls.length).toBeGreaterThanOrEqual(3);
     const [pose, opts] = avatar.playAction.mock.calls[0];
     expect(IDLE_LIFE_CLIP_POOL).toContain(pose);
     expect(opts).toEqual({
@@ -158,14 +158,14 @@ describe("companionWaitAct", () => {
       stopAction: vi.fn(),
       applyExpressionProfile: vi.fn(),
       resetIdleLife: vi.fn(),
-      pulseIdleBeat: vi.fn(),
+      playCalmIdle: vi.fn(),
     };
     const wait = createCompanionWaitAct({ avatar, isEnglish: true });
     wait.start({ kind: "idle", phase: "idle", speak: false });
     avatar.playAction.mockClear();
-    avatar.pulseIdleBeat.mockClear();
+    avatar.playCalmIdle.mockClear();
     expect(wait.nudgePose()).toBe(true);
-    expect(avatar.pulseIdleBeat).toHaveBeenCalled();
+    expect(avatar.playCalmIdle).toHaveBeenCalled();
     expect(avatar.playAction).not.toHaveBeenCalled();
     expect(wait.nudgePose()).toBe(true);
     expect(wait.nudgePose()).toBe(true);
@@ -192,7 +192,7 @@ describe("companionWaitAct", () => {
     wait.stop();
   });
 
-  it("keeps avatar-load on a faster planted idle without library clips", () => {
+  it("keeps avatar-load on calm library idle without one-shot clips", () => {
     vi.useFakeTimers();
     const avatar = {
       playAction: vi.fn(),
@@ -201,7 +201,7 @@ describe("companionWaitAct", () => {
       stopAction: vi.fn(),
       applyExpressionProfile: vi.fn(),
       resetIdleLife: vi.fn(),
-      pulseIdleBeat: vi.fn(),
+      playCalmIdle: vi.fn(),
     };
     const wait = createCompanionWaitAct({ avatar, isEnglish: false });
     wait.start({ kind: "avatar-load", phase: "avatar-load", speak: false });
@@ -209,7 +209,7 @@ describe("companionWaitAct", () => {
     expect(avatar.playAction).not.toHaveBeenCalled();
     vi.advanceTimersByTime(AVATAR_LOAD_IDLE_INTERVAL_MS + 1);
     expect(avatar.playAction).not.toHaveBeenCalled();
-    expect(avatar.pulseIdleBeat).toHaveBeenCalled();
+    expect(avatar.playCalmIdle).toHaveBeenCalled();
     wait.stop();
     vi.useRealTimers();
   });

@@ -1,14 +1,21 @@
 /**
  * Smooth VRMA / pose transitions by slerping normalized humanoid bone rotations.
+ *
+ * Each bone goes from captured pose A (degrees stored as radians internally) to
+ * the live mixer pose B via quaternion slerp — equivalent to smooth Euler blend
+ * without gimbal pops on most humanoid chains.
  */
 import * as THREE from "three";
 import { VRM_FINGER_BONE_NAMES } from "./companionFingerPose.js";
 import { easeInOutCubic } from "./companionPoseSmoothing.js";
 
-export const VRM_MOTION_TRANSITION_SCHEMA = "amoji.vrmMotionTransition.v1";
+export const VRM_MOTION_TRANSITION_SCHEMA = "amoji.vrmMotionTransition.v2";
 
 /** Default crossfade when switching hosted VRMA clips or entering the library. */
 export const DEFAULT_MOTION_CROSSFADE_SEC = 0.48;
+
+export const RAD_TO_DEG = 180 / Math.PI;
+export const DEG_TO_RAD = Math.PI / 180;
 
 /** Bones we blend during transitions (body + fingers). */
 export const VRM_MOTION_TRANSITION_BONES = Object.freeze([
@@ -43,6 +50,7 @@ const _blendedQuat = new THREE.Quaternion();
 /**
  * @typedef {{ x: number, y: number, z: number, order?: string }} BoneRotationSnapshot
  * @typedef {Map<string, BoneRotationSnapshot>} VrmBoneSnapshot
+ * @typedef {{ from: VrmBoneSnapshot, elapsedSec: number, durationSec: number, label?: string }} MotionTransitionState
  */
 
 /**
@@ -71,7 +79,54 @@ export function captureVrmBoneRotations(vrm, boneNames = VRM_MOTION_TRANSITION_B
 }
 
 /**
- * @returns {{ from: VrmBoneSnapshot, elapsedSec: number, durationSec: number } | null}
+ * Same as captureVrmBoneRotations but reports degrees (for debug/UI).
+ * @param {import('@pixiv/three-vrm').VRM | null | undefined} vrm
+ * @param {readonly string[]} [boneNames]
+ */
+export function captureVrmBoneRotationsDegrees(vrm, boneNames = VRM_MOTION_TRANSITION_BONES) {
+  const rad = captureVrmBoneRotations(vrm, boneNames);
+  /** @type {VrmBoneSnapshot} */
+  const deg = new Map();
+  for (const [name, rot] of rad) {
+    deg.set(name, {
+      x: rot.x * RAD_TO_DEG,
+      y: rot.y * RAD_TO_DEG,
+      z: rot.z * RAD_TO_DEG,
+      order: rot.order,
+    });
+  }
+  return deg;
+}
+
+/**
+ * Decide whether we need a manual A→B bone blend before the hosted clip owns the skeleton.
+ * @param {import('@pixiv/three-vrm').VRM | null | undefined} vrm
+ * @param {{ isPlaying?: () => boolean, activeActionId?: string | null } | null | undefined} motionPlayer
+ * @param {{ nextActionId?: string | null, durationSec?: number, label?: string }} [opts]
+ * @returns {MotionTransitionState | null}
+ */
+export function planMotionTransition(vrm, motionPlayer, opts = {}) {
+  const durationSec = opts.durationSec ?? DEFAULT_MOTION_CROSSFADE_SEC;
+  const playing = Boolean(motionPlayer?.isPlaying?.());
+  const currentId = String(motionPlayer?.activeActionId || "").toLowerCase();
+  const nextId = String(opts.nextActionId || "").toLowerCase();
+
+  if (!playing) {
+    const from = captureVrmBoneRotations(vrm);
+    const state = createMotionTransitionState(from, durationSec);
+    if (state && opts.label) state.label = opts.label;
+    return state;
+  }
+
+  if (nextId && currentId && nextId !== currentId) {
+    return null;
+  }
+
+  return null;
+}
+
+/**
+ * @returns {MotionTransitionState | null}
  */
 export function createMotionTransitionState(from, durationSec = DEFAULT_MOTION_CROSSFADE_SEC) {
   if (!from?.size) return null;
@@ -121,19 +176,30 @@ export function blendVrmBoneRotationsFromSnapshot(vrm, fromSnapshot, alpha) {
 /**
  * Advance a transition state and apply the bone blend after the mixer step.
  * @param {import('@pixiv/three-vrm').VRM | null | undefined} vrm
- * @param {{ from: VrmBoneSnapshot, elapsedSec: number, durationSec: number } | null | undefined} state
+ * @param {MotionTransitionState | null | undefined} state
  * @param {number} dt
- * @returns {{ state: typeof state, alpha: number, done: boolean, bones: number }}
+ * @param {{ onSynced?: () => void }} [opts]
  */
-export function tickVrmMotionTransition(vrm, state, dt) {
+export function tickVrmMotionTransition(vrm, state, dt, opts = {}) {
   if (!state?.from?.size) {
     return { state, alpha: 1, done: true, bones: 0 };
   }
   state.elapsedSec += Math.max(0, dt);
   const alpha = Math.min(1, state.elapsedSec / state.durationSec);
   const bones = blendVrmBoneRotationsFromSnapshot(vrm, state.from, alpha);
+  if (bones > 0) {
+    opts.onSynced?.();
+  }
   if (alpha >= 1) {
     return { state: null, alpha: 1, done: true, bones };
   }
   return { state, alpha, done: false, bones };
+}
+
+/**
+ * @param {MotionTransitionState | null | undefined} state
+ */
+export function motionTransitionProgress(state) {
+  if (!state?.durationSec) return 1;
+  return Math.min(1, state.elapsedSec / state.durationSec);
 }

@@ -56,13 +56,12 @@ export const ACTION_COMBOS = Object.freeze({
 });
 
 /**
- * Default idle life — planted breath plus one-shot social clips from the
- * hosted VRMA library (wave=Goodbye, thinking=Thinking, stretch=Relax).
- * Not the huge showcase pool (kungfu/zombie/dance) and not looping Relax.
+ * Default idle life — Relax.vrma calm loop plus one-shot social clips
+ * (wave=Goodbye, thinking=Thinking, stretch=Relax) crossfaded in the player.
  */
 /**
  * Quiet between-turn idle — subtle standing clips only (no wave/dance/cheer).
- * Most idle time stays on procedural planted breath + look/comb beats.
+ * Calm standing body stays on the hosted Relax loop between one-shots.
  */
 export const IDLE_LIFE_CLIP_POOL = Object.freeze([
   "stretch",

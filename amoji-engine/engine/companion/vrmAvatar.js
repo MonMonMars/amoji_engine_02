@@ -60,11 +60,11 @@ import {
 } from "./companionTalkMotionLibrary.mjs";
 import { createVrmMotionPlayer } from "./companionVrmMotionPlayer.js";
 import {
-  captureVrmBoneRotations,
-  createMotionTransitionState,
   DEFAULT_MOTION_CROSSFADE_SEC,
+  planMotionTransition,
   tickVrmMotionTransition,
 } from "./vrmMotionTransition.js";
+import { companionGestureStyle } from "./companionPoseLibrary.js";
 import { sampleIdleExpressionBlend } from "./companionIdleMotion.js";
 import {
   configureVrmSpringStability,
@@ -361,17 +361,18 @@ export async function createVrmAvatar(opts) {
       vrmaAction === ONLINE_CALM_IDLE_ACTION &&
       !vrmaPending
     ) {
-      return true;
+      return Promise.resolve(true);
     }
-    if (!motionPlayer.isPlaying?.()) {
-      motionTransitionState = createMotionTransitionState(
-        captureVrmBoneRotations(vrm),
-        DEFAULT_MOTION_CROSSFADE_SEC,
-      );
-    } else {
-      motionTransitionState = null;
-    }
-    return tryPlayVrmaAction(ONLINE_CALM_IDLE_ACTION, { loop: true });
+    motionTransitionState =
+      planMotionTransition(vrm, motionPlayer, {
+        nextActionId: ONLINE_CALM_IDLE_ACTION,
+        durationSec: DEFAULT_MOTION_CROSSFADE_SEC,
+        label: "calm-idle",
+      }) ?? null;
+    return tryPlayVrmaAction(ONLINE_CALM_IDLE_ACTION, {
+      loop: true,
+      skipTransitionPlan: true,
+    });
   };
 
   const restorePlantedIdle = () => {
@@ -738,7 +739,17 @@ export async function createVrmAvatar(opts) {
 
   const setListening = (on) => bodyMotion.setListening(on);
 
-  const playGesture = (style) => bodyMotion.playGesture(style);
+  const playGesture = (style) => {
+    const key = companionGestureStyle(style);
+    const libraryId =
+      resolveTalkGestureLibraryAction(key) ||
+      (key === "nod" || key === "bow" ? "nod" : key === "point" ? "point" : null);
+    if (libraryId && resolveOnlineMotionClipUrl(libraryId)) {
+      void tryPlayVrmaAction(libraryId, { loop: false });
+      return true;
+    }
+    return bodyMotion.playGesture(style);
+  };
 
   const tryPlayVrmaAction = async (action, opts = {}) => {
     const key = String(action || "").toLowerCase();
@@ -758,14 +769,13 @@ export async function createVrmAvatar(opts) {
     const gen = ++vrmaPlayGen;
     vrmaPending = true;
     vrmaAction = key;
-    const wasLibraryPlaying = motionPlayer.isPlaying?.();
-    if (!wasLibraryPlaying) {
-      motionTransitionState = createMotionTransitionState(
-        captureVrmBoneRotations(vrm),
-        DEFAULT_MOTION_CROSSFADE_SEC,
-      );
-    } else if (motionPlayer.activeActionId !== key) {
-      motionTransitionState = null;
+    if (!opts.skipTransitionPlan) {
+      motionTransitionState =
+        planMotionTransition(vrm, motionPlayer, {
+          nextActionId: key,
+          durationSec: DEFAULT_MOTION_CROSSFADE_SEC,
+          label: key,
+        }) ?? null;
     }
     const ok = await motionPlayer.play(key, {
       loop,
@@ -774,6 +784,7 @@ export async function createVrmAvatar(opts) {
     if (gen !== vrmaPlayGen) return true;
     vrmaPending = false;
     if (!ok) {
+      motionTransitionState = null;
       if (vrmaAction === key) vrmaAction = null;
       return false;
     }
@@ -798,8 +809,9 @@ export async function createVrmAvatar(opts) {
       vrmaPending = false;
       vrmaSequenceQueue = [];
       vrmaSequenceOpts = null;
-      motionPlayer.stop();
+      motionPlayer.stop(DEFAULT_MOTION_CROSSFADE_SEC);
       vrmaAction = null;
+      motionTransitionState = null;
       const ok = bodyMotion.playAction(action, {
         emotion: opts.emotion || emotion,
         loop: opts.loop,
@@ -821,9 +833,17 @@ export async function createVrmAvatar(opts) {
     vrmaSequenceOpts = null;
     vrmaAction = key;
     void tryPlayVrmaAction(key, opts).then((ok) => {
-      if (!ok && !vrmaPending && !motionPlayer.isPlaying?.()) {
-        vrmaAction = null;
-      }
+      if (ok || vrmaPending || motionPlayer.isPlaying?.()) return;
+      vrmaAction = null;
+      motionTransitionState = null;
+      bodyMotion.playAction(key, {
+        emotion: opts.emotion || emotion,
+        loop: opts.loop,
+        single: opts.single ?? !opts.loop,
+        maxMoves: opts.maxMoves,
+      });
+      emotion = bodyMotion.emotion;
+      applyEmotionExpressions(emotion);
     });
     return true;
   };
@@ -1126,7 +1146,9 @@ export async function createVrmAvatar(opts) {
       }
       motionPlayer.update(dt);
       if (motionTransitionState) {
-        const tick = tickVrmMotionTransition(vrm, motionTransitionState, dt);
+        const tick = tickVrmMotionTransition(vrm, motionTransitionState, dt, {
+          onSynced: syncHumanoidPose,
+        });
         motionTransitionState = tick.state;
       }
       if (!libraryMotion) {
@@ -1271,17 +1293,22 @@ export async function createVrmAvatar(opts) {
   void motionPlayer.warmClip("wave");
   void motionPlayer.warmClip("thinking");
   void motionPlayer.warmClip(ONLINE_CALM_IDLE_ACTION);
-  motionTransitionState = createMotionTransitionState(
-    captureVrmBoneRotations(vrm),
-    DEFAULT_MOTION_CROSSFADE_SEC,
-  );
+  motionTransitionState = planMotionTransition(vrm, motionPlayer, {
+    nextActionId: ONLINE_CALM_IDLE_ACTION,
+    durationSec: DEFAULT_MOTION_CROSSFADE_SEC,
+    label: "boot-idle",
+  });
   void playCalmLibraryIdle();
   raf = requestAnimationFrame(frame);
   globalThis.addEventListener?.("resize", resize);
 
   const reactToTap = () => {
     setEmotion("happy");
-    playGesture("nod");
+    if (resolveOnlineMotionClipUrl("nod")) {
+      void tryPlayVrmaAction("nod", { loop: false });
+    } else {
+      playGesture("nod");
+    }
     return emotion;
   };
 
@@ -1406,22 +1433,40 @@ export async function createVrmAvatar(opts) {
     warmMotionClip(actionId) {
       return motionPlayer.warmClip(actionId);
     },
+    playCalmIdle() {
+      return playCalmLibraryIdle();
+    },
     resetIdleLife(now) {
       vrmaPlayGen += 1;
       vrmaPending = false;
-      motionPlayer.stop();
-      vrmaAction = null;
-      return bodyMotion.resetIdleLife?.(now);
+      bodyMotion.resetIdleLife?.(now);
+      void playCalmLibraryIdle();
+      return bodyMotion.emotion;
     },
     pulseIdleBeat(beat, now) {
+      if (motionPlayer.isPlaying?.()) return null;
       return bodyMotion.pulseIdleBeat?.(beat, now);
     },
     resetMotionClock(now) {
       vrmaPlayGen += 1;
       vrmaPending = false;
-      motionPlayer.stop();
-      vrmaAction = null;
-      return bodyMotion.resetMotionClock?.(now);
+      bodyMotion.resetMotionClock?.(now);
+      void playCalmLibraryIdle();
+      return bodyMotion.emotion;
+    },
+    getMotionTransitionProgress() {
+      if (!motionTransitionState) return 1;
+      return Math.min(
+        1,
+        motionTransitionState.elapsedSec / motionTransitionState.durationSec,
+      );
+    },
+    getMotionPlayerStatus() {
+      return motionPlayer.getTransitionStatus?.() || {
+        activeActionId: motionPlayer.activeActionId,
+        crossfading: false,
+        retiringActions: 0,
+      };
     },
     get mouthOpen() {
       return mouthOpen;
