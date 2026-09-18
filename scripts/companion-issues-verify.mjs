@@ -283,13 +283,42 @@ async function main() {
     !["walk", "run", "dance", "moonwalk"].includes(String(afterNova.action || "")),
     String(afterNova.action),
   );
+
+  const restFace = await page.evaluate(async () => {
+    const avatar = window.__amojiAvatar;
+    avatar?.setEating?.(false);
+    avatar?.stopAction?.();
+    avatar?.setEmotion?.("neutral");
+    avatar?.setTalking?.(false);
+    avatar?.setMouthOpen?.(0);
+    await new Promise((r) => setTimeout(r, 900));
+    const vrm = avatar?.vrm;
+    const expr = vrm?.expressionManager;
+    const exprVal = (name) => {
+      try {
+        return Number(expr?.getValue?.(name) ?? 0);
+      } catch {
+        return 0;
+      }
+    };
+    return {
+      emotion: avatar?.emotion || null,
+      blink: Math.max(exprVal("blink"), exprVal("blinkLeft"), exprVal("blinkRight")),
+      aa: exprVal("aa"),
+      oh: exprVal("oh"),
+    };
+  });
   record(
     "rest-emotion-not-happy",
-    afterNova.emotion !== "happy",
-    String(afterNova.emotion),
+    restFace.emotion !== "happy",
+    String(restFace.emotion),
   );
-  record("eyes-open-rest", (pose.blink || 0) < 0.55, String(pose.blink));
-  record("mouth-closed-rest", (pose.aa || 0) < 0.12 && (pose.oh || 0) < 0.12, `aa=${pose.aa} oh=${pose.oh}`);
+  record("eyes-open-rest", (restFace.blink || 0) < 0.55, String(restFace.blink));
+  record(
+    "mouth-closed-rest",
+    (restFace.aa || 0) < 0.12 && (restFace.oh || 0) < 0.12,
+    `aa=${restFace.aa} oh=${restFace.oh}`,
+  );
 
   const talkingPose = await page.evaluate(async () => {
     const avatar = window.__amojiAvatar;
