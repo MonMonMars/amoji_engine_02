@@ -2,13 +2,28 @@ import { registerRoute } from "../router.js";
 import { loadTreatState } from "/amoji-engine/engine/companion/companionTreatStore.js";
 import { loadLocalChaseState } from "/amoji-engine/engine/mobile/companionCloudStorage.js";
 import { resolveBondRank } from "/amoji-engine/engine/companion/companionRaisingUi.js";
+import {
+  getCharacter,
+} from "/amoji-engine/engine/companion/companionCharacterCatalog.js";
+import {
+  loadCompanionRole,
+  roleEmoji,
+  roleLabel,
+  rolePreset,
+} from "/amoji-engine/engine/mobile/companionRolePresets.js";
 
 registerRoute("hub", (ctx) => {
   const en = ctx.isEnglish();
   const session = ctx.getSession();
+  const role = loadCompanionRole();
+  const preset = rolePreset(role);
+  const charId =
+    localStorage.getItem("amoji.mobile.lastCharacterId") || preset.defaultCharacterId;
+  const character = getCharacter(charId);
   const treats = loadTreatState();
   const chase = loadLocalChaseState() || { highScore: 0, streakDays: 0 };
   const bond = resolveBondRank(treats.hearts, en);
+  const charName = en ? character?.name?.en : character?.name?.yue;
 
   const screen = document.createElement("section");
   screen.className = "screen";
@@ -17,7 +32,7 @@ registerRoute("hub", (ctx) => {
     <div class="topbar">
       <div>
         <h1>${en ? "Home" : "主頁"}</h1>
-        <div style="color:var(--muted);font-size:0.82rem">${session?.displayName || "Player"} · ${bond.label}</div>
+        <div style="color:var(--muted);font-size:0.82rem">${roleEmoji(role)} ${roleLabel(role, en)} · ${charName || "—"} · ${bond.label}</div>
       </div>
       <div class="chip">🪙 ${treats.coins}</div>
     </div>

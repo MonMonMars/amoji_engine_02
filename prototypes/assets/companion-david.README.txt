@@ -1,0 +1,6 @@
+companion-david.vrm
+
+Source: https://opensourceavatars.com
+License: CC0 1.0 — ToxSam 100Avatars #047
+Note: Soft male companion — Nomi boyfriend vibe testing
+Downloaded by amoji-engine/scripts/download-legal-vrm.mjs

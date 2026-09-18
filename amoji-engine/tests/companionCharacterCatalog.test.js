@@ -134,7 +134,8 @@ describe("companionCharacterCatalog", () => {
 
   it("cycles characters", () => {
     expect(nextCharacterId("nova")).toBe("kizuna");
-    expect(nextCharacterId("sky")).toBe("rose");
+    expect(nextCharacterId("sky")).toBe("yuki");
+    expect(nextCharacterId("yuki")).toBe("rose");
     expect(nextCharacterId("mimi")).toBe("olivia");
     expect(nextCharacterId("amoji")).toBe("sora");
     expect(nextCharacterId("mikel")).toBe("nova");

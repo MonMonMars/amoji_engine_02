@@ -1,0 +1,5 @@
+companion-vroid-female.vrm
+
+Source: https://github.com/madjin/vrm-samples
+License: VRoid sample (pixiv terms)
+Downloaded by amoji-engine/scripts/download-legal-vrm.mjs

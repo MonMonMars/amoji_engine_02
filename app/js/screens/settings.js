@@ -5,6 +5,14 @@ import {
   saveMobileSettings,
 } from "/amoji-engine/engine/mobile/companionMobileSettings.js";
 import {
+  COMPANION_ROLES,
+  loadCompanionRole,
+  roleEmoji,
+  roleLabel,
+  rolePreset,
+  saveCompanionRole,
+} from "/amoji-engine/engine/mobile/companionRolePresets.js";
+import {
   clearAuthSession,
   loadAuthSession,
 } from "/amoji-engine/engine/mobile/companionMobileAuth.js";
@@ -13,6 +21,7 @@ import { syncToCloud } from "/amoji-engine/engine/mobile/companionCloudStorage.j
 registerRoute("settings", (ctx) => {
   const en = ctx.isEnglish();
   let settings = loadMobileSettings();
+  let companionRole = loadCompanionRole();
   const session = loadAuthSession();
 
   const screen = document.createElement("section");
@@ -26,6 +35,15 @@ registerRoute("settings", (ctx) => {
         <span></span>
       </div>
       <div class="panel">
+        <div class="setting-row">
+          <span>${en ? "Companion role" : "同伴類型"}</span>
+          <select data-setting="companionRole">
+            ${COMPANION_ROLES.map(
+              (r) =>
+                `<option value="${r}" ${companionRole === r ? "selected" : ""}>${roleEmoji(r)} ${roleLabel(r, en)}</option>`,
+            ).join("")}
+          </select>
+        </div>
         <div class="setting-row">
           <span>${en ? "Language" : "語言"}</span>
           <select data-setting="lang">
@@ -82,6 +100,15 @@ registerRoute("settings", (ctx) => {
       input.addEventListener("change", async () => {
         const key = input.getAttribute("data-setting");
         if (!key) return;
+        if (key === "companionRole") {
+          companionRole = saveCompanionRole(input.value);
+          ctx.toast(
+            en
+              ? `${roleLabel(companionRole, true)} · ${rolePreset(companionRole).defaultCharacterId}`
+              : `${roleLabel(companionRole, false)} · ${rolePreset(companionRole).defaultCharacterId}`,
+          );
+          return;
+        }
         if (input instanceof HTMLInputElement && input.type === "checkbox") {
           settings = saveMobileSettings({ ...settings, [key]: input.checked });
         } else {

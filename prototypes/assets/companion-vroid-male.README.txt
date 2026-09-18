@@ -1,0 +1,6 @@
+companion-vroid-male.vrm
+
+Source: https://github.com/madjin/vrm-samples
+License: VRoid sample (pixiv terms)
+Note: Male VRoid proportions — boyfriend / secretary male reference rig
+Downloaded by amoji-engine/scripts/download-legal-vrm.mjs

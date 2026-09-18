@@ -1,0 +1,5 @@
+companion-hugo.vrm
+
+Source: https://opensourceavatars.com
+License: CC0 1.0 — ToxSam 100Avatars #008
+Downloaded by amoji-engine/scripts/download-legal-vrm.mjs

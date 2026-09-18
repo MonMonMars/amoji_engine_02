@@ -1,10 +1,18 @@
 import { registerRoute } from "../router.js";
 import { loadMobileSettings } from "/amoji-engine/engine/mobile/companionMobileSettings.js";
+import {
+  loadCompanionRole,
+  rolePreset,
+} from "/amoji-engine/engine/mobile/companionRolePresets.js";
 
 registerRoute("companion", (ctx) => {
   const en = ctx.isEnglish();
   const settings = loadMobileSettings();
   const lang = settings.lang === "en" ? "en" : "yue";
+  const role = loadCompanionRole();
+  const charId =
+    localStorage.getItem("amoji.mobile.lastCharacterId") ||
+    rolePreset(role).defaultCharacterId;
 
   const screen = document.createElement("section");
   screen.className = "screen";
@@ -18,7 +26,7 @@ registerRoute("companion", (ctx) => {
     <iframe
       class="companion-frame"
       title="Amoji Companion"
-      src="/companion-full?lang=${lang}&mobile=1&voice=openai-coral"
+      src="/companion-full?lang=${lang}&mobile=1&character=${charId}&voice=openai-coral"
       allow="microphone; autoplay"
     ></iframe>
   `;
