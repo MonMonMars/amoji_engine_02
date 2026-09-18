@@ -348,3 +348,43 @@ select {
 .hidden {
   display: none !important;
 }
+
+.role-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+
+.role-card {
+  appearance: none;
+  border: 1px solid var(--line);
+  border-radius: 1rem;
+  padding: 0.85rem;
+  background: var(--card);
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.role-card--active {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px rgba(127, 212, 207, 0.35);
+}
+
+.role-card__emoji {
+  font-size: 1.5rem;
+}
+
+.role-card__title {
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.role-card__desc {
+  color: var(--muted);
+  font-size: 0.72rem;
+  line-height: 1.35;
+}

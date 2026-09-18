@@ -1,0 +1,6 @@
+companion-avatarsample-a.vrm
+
+Source: https://vroid.pixiv.help/hc/en-us/articles/4402394424089
+License: VRoid AvatarSample (pixiv terms — commercial OK, not CC0)
+Note: Industry-standard female VRoid baseline for lip-sync / spring-bone testing
+Downloaded by amoji-engine/scripts/download-legal-vrm.mjs
