@@ -3,6 +3,7 @@ import {
   buildCharacterSystemPrompt,
   CHARACTER_IDS,
   characterAvatarConfig,
+  characterPreviewImage,
   characterGender,
   characterGreeting,
   characterGreetingPerformance,
@@ -49,12 +50,21 @@ describe("companionCharacterCatalog v225 pre-release roster", () => {
   });
 
   it("uses distinct preview portraits for flagship picks", () => {
-    expect(getCharacter("nova").previewImage).toContain("companion-char-nova");
-    expect(getCharacter("kizuna").previewImage).toContain("companion-char-kizuna");
-    expect(getCharacter("alicia").previewImage).toContain("companion-char-alicia");
-    expect(getCharacter("ember").previewImage).toContain("companion-char-ember");
-    expect(getCharacter("chibi").previewImage).toContain("companion-char-chibi");
-    expect(getCharacter("sky").previewImage).toContain("companion-char-sky");
+    expect(getCharacter("nova").previewImage).toBe(characterPreviewImage("nova"));
+    expect(getCharacter("kizuna").previewImage).toBe(characterPreviewImage("kizuna"));
+    expect(getCharacter("alicia").previewImage).toBe(characterPreviewImage("alicia"));
+    expect(getCharacter("ember").previewImage).toBe(characterPreviewImage("ember"));
+    expect(getCharacter("chibi").previewImage).toBe(characterPreviewImage("chibi"));
+    expect(getCharacter("sky").previewImage).toBe(characterPreviewImage("sky"));
+  });
+
+  it("assigns one preview path per roster id including trial references", () => {
+    const paths = CHARACTER_IDS.map((id) => characterPreviewImage(id));
+    expect(new Set(paths).size).toBe(CHARACTER_IDS.length);
+    expect(characterPreviewImage("poly")).toContain("companion-char-poly");
+    expect(characterPreviewImage("jennifer")).toContain("companion-char-jennifer");
+    expect(characterPreviewImage("shiro")).toContain("companion-char-shiro");
+    expect(characterPreviewImage("aesthe")).toContain("companion-char-aesthe");
   });
 
   it("resolves default to nova", () => {
