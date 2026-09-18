@@ -41,6 +41,7 @@ export { WAIT_POSES_BY_PHASE, pickWaitPose };
  *     setThinking?: (on: boolean) => void,
  *     stopAction?: () => void,
  *     resetIdleLife?: (now?: number) => void,
+ *     playCalmIdle?: () => void | Promise<boolean>,
  *     pulseIdleBeat?: (beat: string) => void,
  *   } | null,
  *   voice?: {

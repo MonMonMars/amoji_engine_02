@@ -9,7 +9,7 @@ import * as THREE from "three";
 import { VRM_FINGER_BONE_NAMES } from "./companionFingerPose.js";
 import { easeInOutCubic } from "./companionPoseSmoothing.js";
 
-export const VRM_MOTION_TRANSITION_SCHEMA = "amoji.vrmMotionTransition.v2";
+export const VRM_MOTION_TRANSITION_SCHEMA = "amoji.vrmMotionTransition.v3";
 
 /** Default crossfade when switching hosted VRMA clips or entering the library. */
 export const DEFAULT_MOTION_CROSSFADE_SEC = 0.48;
@@ -202,4 +202,17 @@ export function tickVrmMotionTransition(vrm, state, dt, opts = {}) {
 export function motionTransitionProgress(state) {
   if (!state?.durationSec) return 1;
   return Math.min(1, state.elapsedSec / state.durationSec);
+}
+
+/**
+ * True when a hosted VRMA clip (or crossfade) should own the skeleton this frame.
+ * @param {string | null | undefined} vrmaAction
+ * @param {{ isPlaying?: () => boolean, isCrossfading?: () => boolean } | null | undefined} motionPlayer
+ * @param {boolean} [vrmaPending]
+ */
+export function libraryOwnsVrmBody(vrmaAction, motionPlayer, vrmaPending = false) {
+  if (!vrmaAction) return false;
+  if (vrmaPending) return true;
+  if (motionPlayer?.isCrossfading?.()) return true;
+  return Boolean(motionPlayer?.isPlaying?.());
 }

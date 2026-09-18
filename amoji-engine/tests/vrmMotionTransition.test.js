@@ -6,6 +6,7 @@ import {
   captureVrmBoneRotationsDegrees,
   createMotionTransitionState,
   DEFAULT_MOTION_CROSSFADE_SEC,
+  libraryOwnsVrmBody,
   planMotionTransition,
   RAD_TO_DEG,
   tickVrmMotionTransition,
@@ -102,6 +103,20 @@ describe("vrmMotionTransition", () => {
         { nextActionId: "wiggle" },
       ),
     ).toBeNull();
+  });
+
+  it("libraryOwnsVrmBody covers pending and crossfade", () => {
+    expect(libraryOwnsVrmBody(null, { isPlaying: () => true })).toBe(false);
+    expect(libraryOwnsVrmBody("relax", { isPlaying: () => false }, true)).toBe(true);
+    expect(
+      libraryOwnsVrmBody("wave", {
+        isPlaying: () => false,
+        isCrossfading: () => true,
+      }),
+    ).toBe(true);
+    expect(
+      libraryOwnsVrmBody("relax", { isPlaying: () => true, isCrossfading: () => false }),
+    ).toBe(true);
   });
 
   it("ticks transition state to completion", () => {

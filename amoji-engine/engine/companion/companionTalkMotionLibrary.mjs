@@ -67,7 +67,7 @@ export function resolveTalkLibraryAction(talkStyle, emotion) {
 }
 
 /**
- * Short VRMA accent for procedural talk gestures (nod / point).
+ * Short VRMA accent clips for talk gestures (nod / point) — crossfade in/out.
  * @param {string | null | undefined} gesture
  */
 export function resolveTalkGestureLibraryAction(gesture) {
