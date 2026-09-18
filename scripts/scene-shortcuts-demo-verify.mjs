@@ -76,19 +76,22 @@ await page.waitForFunction(
 record("session started", true);
 
 const ui = await page.evaluate(() => ({
-  chatBtn: !!document.getElementById("btn-toggle-chat"),
-  sceneBtn: !!document.getElementById("btn-open-scene"),
+  chatMenu: !!document.getElementById("settings-btn-chat"),
+  sceneMenu: !!document.getElementById("settings-btn-scene"),
   speakerBtn: !!document.getElementById("settings-btn-speaker"),
   composerSpeakerBtn: !!document.getElementById("btn-speaker"),
   menuBtn: !!document.getElementById("btn-open-setup"),
   composer: !!document.getElementById("input"),
+  legacyChatBtn: !!document.getElementById("btn-toggle-chat"),
+  legacySceneBtn: !!document.getElementById("btn-open-scene"),
 }));
-record("chat shortcut", ui.chatBtn);
-record("scene shortcut", ui.sceneBtn);
+record("chat in menu", ui.chatMenu);
+record("scene in menu", ui.sceneMenu);
 record("speaker in menu", ui.speakerBtn);
 record("composer speaker hidden", !ui.composerSpeakerBtn);
 record("menu shortcut", ui.menuBtn);
 record("composer visible", ui.composer);
+record("legacy topbar removed", !ui.legacyChatBtn && !ui.legacySceneBtn);
 
 const starterVisible = await page.evaluate(() => {
   const el = document.getElementById("starter-prompts");
@@ -96,7 +99,9 @@ const starterVisible = await page.evaluate(() => {
 });
 record("starter prompts visible", starterVisible);
 
-await page.click("#btn-open-scene");
+await page.click("#btn-open-setup");
+await page.waitForSelector("#settings.open", { timeout: 5000 });
+await page.click("#settings-btn-scene");
 await page.waitForSelector("#scene-sheet.open", { timeout: 5000 });
 record("scene sheet opens", true);
 await page.screenshot({
@@ -147,7 +152,9 @@ const statusDotReady = await page.evaluate(() => {
 });
 record("voice status dot ready", statusDotReady);
 
-await page.click("#btn-toggle-chat");
+await page.click("#btn-open-setup");
+await page.waitForSelector("#settings.open", { timeout: 5000 });
+await page.click("#settings-btn-chat");
 await page.waitForTimeout(300);
 const chatHidden = await page.evaluate(() =>
   document.body.classList.contains("chat-panel-hidden"),
