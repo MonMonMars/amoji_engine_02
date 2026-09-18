@@ -16,6 +16,10 @@ export const UI_FX_BUTTON_SELECTOR = [
   ".companion-card",
   ".companion-chip",
   ".treat-card:not(.is-broke)",
+  ".care-tools-toggle",
+  ".care-tools-menu__btn",
+  ".treat-tab",
+  ".treat-sheet-close",
 ].join(", ");
 
 /**

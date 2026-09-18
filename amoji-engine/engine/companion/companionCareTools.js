@@ -3,6 +3,7 @@
  * Snack opens the treat sheet; talk/walk run raising actions then collapse.
  */
 import { ACTIVITY_COMMANDS, activityCommandLabel } from "./companionRaisingUi.js";
+import { markUiFxButtons } from "./companionUiEffects.js";
 
 export const COMPANION_CARE_TOOLS_SCHEMA = "amoji.companionCareTools.v2";
 export const CARE_TOOLS_POS_STORAGE_KEY = "amoji.careToolsPos.v1";
@@ -97,8 +98,9 @@ export function defaultCareToolsPosition(
     minimalChrome === undefined
       ? minimalComposerChromeActive()
       : Boolean(minimalChrome);
-  const clearance = minimal ? 152 : 104;
-  const x = minimal ? margin : vw - stackW - margin;
+  /** Keep above iPhone composer + safe area; right side avoids clipped flyout menu. */
+  const clearance = minimal ? Math.min(196, Math.max(152, Math.round(vh * 0.22))) : 104;
+  const x = vw - stackW - margin;
   return clampCareToolsPosition(
     x,
     vh - stackH - margin - clearance,
@@ -108,6 +110,22 @@ export function defaultCareToolsPosition(
     stackH,
     margin,
   );
+}
+
+/**
+ * @param {number} x
+ * @param {number} y
+ * @param {number} vw
+ * @param {number} vh
+ * @param {number} [stackH]
+ */
+export function careToolsPlacementHints(x, y, vw, vh, stackH = 44) {
+  return {
+    nearLeft: x < vw * 0.34,
+    nearRight: x > vw * 0.66,
+    menuBelow: y < vh * 0.36,
+    nearBottom: y > vh - stackH - Math.max(120, vh * 0.16),
+  };
 }
 
 /**
@@ -121,6 +139,7 @@ export function defaultCareToolsPosition(
  */
 export function createCompanionCareTools(opts = {}) {
   const root = opts.root || document.body;
+  const doc = root.ownerDocument || document;
   const storage = opts.storage ?? globalThis.localStorage;
   const english = () =>
     typeof opts.isEnglish === "function"
@@ -179,7 +198,8 @@ export function createCompanionCareTools(opts = {}) {
         btn.setAttribute("role", "menuitem");
         btn.setAttribute("aria-label", activityCommandLabel(cmd, english()));
         btn.innerHTML = `<span class="care-tools-menu__icon" aria-hidden="true">${cmd.icon}</span>`;
-        btn.addEventListener("click", () => {
+        btn.addEventListener("click", (ev) => {
+          ev.stopPropagation();
           opts.onActivity?.(cmd.kind);
           if (cmd.kind === "snack") openPanel(false);
           else close();
@@ -187,6 +207,7 @@ export function createCompanionCareTools(opts = {}) {
         return btn;
       }),
     );
+    markUiFxButtons(menu, doc);
   };
 
   let menuVisible = false;
@@ -272,9 +293,20 @@ export function createCompanionCareTools(opts = {}) {
   let dragOriginX = 0;
   let dragOriginY = 0;
 
+  const syncStackPlacement = (x, y) => {
+    const vw = globalThis.innerWidth || 390;
+    const vh = globalThis.innerHeight || 844;
+    const hints = careToolsPlacementHints(x, y, vw, vh, stack.offsetHeight || 44);
+    stack.classList.toggle("is-near-left", hints.nearLeft);
+    stack.classList.toggle("is-near-right", hints.nearRight);
+    stack.classList.toggle("is-menu-below", hints.menuBelow);
+    stack.classList.toggle("is-near-bottom", hints.nearBottom);
+  };
+
   const applyStackPosition = (pos) => {
     stack.style.left = `${pos.x}px`;
     stack.style.top = `${pos.y}px`;
+    syncStackPlacement(pos.x, pos.y);
   };
 
   const measureAndClamp = (x, y) => {
@@ -316,7 +348,6 @@ export function createCompanionCareTools(opts = {}) {
     const rect = stack.getBoundingClientRect();
     dragOriginX = rect.left;
     dragOriginY = rect.top;
-    toggle.setPointerCapture?.(ev.pointerId);
   });
 
   toggle.addEventListener("pointermove", (ev) => {
@@ -334,10 +365,10 @@ export function createCompanionCareTools(opts = {}) {
     if (!dragActive) return;
     dragActive = false;
     stack.classList.remove("is-dragging");
-    toggle.releasePointerCapture?.(ev.pointerId);
     if (dragMoved) {
       const rect = stack.getBoundingClientRect();
       saveCareToolsPosition(storage, { x: rect.left, y: rect.top });
+      syncStackPlacement(rect.left, rect.top);
       suppressToggleClick = true;
       ev.preventDefault();
     }
@@ -353,6 +384,7 @@ export function createCompanionCareTools(opts = {}) {
 
   root.appendChild(stack);
   paintMenu();
+  markUiFxButtons(toggle, doc);
   applyBodyState();
   requestAnimationFrame(() => placeStack());
 
