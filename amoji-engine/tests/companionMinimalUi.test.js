@@ -11,11 +11,13 @@ const minimalCss = readFileSync(
 );
 
 describe("companionMinimalUi", () => {
-  it("uses minimal chrome with mic, text field, and menu only", () => {
+  it("uses minimal chrome with mic, text field, character switch, and menu", () => {
     expect(html).toContain("companion-minimal-chrome");
     expect(html).toMatch(/class="composer[^"]*composer-pro/);
     expect(html).toContain('class="composer-settings-btn"');
     expect(html).toContain('id="btn-open-setup"');
+    expect(html).toContain('id="composer-char-btn"');
+    expect(html).toContain('id="brand-btn"');
     expect(html).toContain('class="composer-field"');
     expect(html).not.toContain('id="btn-toggle-chat"');
     expect(html).not.toContain('id="btn-talk-speed"');
@@ -30,8 +32,9 @@ describe("companionMinimalUi", () => {
     expect(html).toContain('id="settings-btn-speaker"');
   });
 
-  it("hides topbar; send visible in text composer, sr-only in voice-only", () => {
-    expect(minimalCss).toMatch(/companion-minimal-chrome \.topbar[\s\S]*display:\s*none/);
+  it("shows companion chip in minimal topbar; send visible in text composer", () => {
+    expect(minimalCss).toMatch(/companion-minimal-chrome \.topbar[\s\S]*display:\s*flex/);
+    expect(minimalCss).toContain("composer-char-btn");
     expect(minimalCss).toMatch(
       /companion-minimal-chrome:not\(\.composer-always-visible\) \.composer \.send[\s\S]*clip:\s*rect/,
     );
