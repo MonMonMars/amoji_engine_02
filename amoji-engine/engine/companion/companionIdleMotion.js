@@ -114,11 +114,11 @@ export function sampleIdleBodyMotion(elapsedSec, opts = {}) {
   const rightFree = Math.max(0, shift);
 
   return {
-    headX: (breath * 0.05 + Math.sin(t * 0.5) * 0.03) * energy,
-    headZ: (sway * 0.07 + shift * 0.035) * energy,
-    leanY: (shift * 0.055 + bob * 0.028) * energy,
-    spineX: 0.028 + breath * 0.055 * energy,
-    chestX: -0.012 + breath * 0.038 * energy,
+    headX: (breath * 0.04 + Math.sin(t * 0.5) * 0.024) * energy,
+    headZ: (sway * 0.05 + shift * 0.026) * energy,
+    leanY: (shift * 0.038 + bob * 0.02) * energy,
+    spineX: 0.022 + breath * 0.04 * energy,
+    chestX: -0.01 + breath * 0.028 * energy,
     hipZ: (0.01 + shift * 0.008) * energy,
     armLiftL: (0.16 + breath * 0.05 + rightFree * 0.04 + Math.sin(t * 0.8 + 0.4) * 0.06) * energy,
     armLiftR: (0.12 + breath * 0.045 + leftFree * 0.04 + Math.sin(t * 0.74 + 1.2) * 0.055) * energy,

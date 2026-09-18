@@ -6,20 +6,22 @@
  * and left author gravityDir pointing up — which reads as wind from below.
  */
 
-export const VRM_SPRING_STABILITY_SCHEMA = "amoji.vrmSpringStability.v3";
+export const VRM_SPRING_STABILITY_SCHEMA = "amoji.vrmSpringStability.v4";
 
-export const MIN_DRAG_FORCE = 0.96;
-export const MIN_GRAVITY_POWER = 0.52;
-export const MAX_STIFFNESS = 0.42;
+/** High drag — stops hair/skirt tails from fluttering upward. */
+export const MIN_DRAG_FORCE = 0.985;
+/** Strong downward pull — counters VRM files that author gravityDir (0, 1, 0). */
+export const MIN_GRAVITY_POWER = 0.88;
+export const MAX_STIFFNESS = 0.28;
 
 /** Soft reset while standing idle — pulls hair/skirt back without re-capture. */
-export const IDLE_SPRING_RECENTER_SEC = 2.4;
+export const IDLE_SPRING_RECENTER_SEC = 1.05;
 
 /** Head/thinking motion still excites hair/skirt springs — reset a bit sooner. */
-export const TALK_SPRING_RECENTER_SEC = 4;
+export const TALK_SPRING_RECENTER_SEC = 2.2;
 
 /** LLM wait pose — procedural head tilt without TTS mouth drive. */
-export const THINK_SPRING_RECENTER_SEC = 3.2;
+export const THINK_SPRING_RECENTER_SEC = 1.8;
 
 /**
  * @param {unknown} raw
@@ -55,26 +57,47 @@ export function forceGravityDirDown(dir) {
 }
 
 /**
+ * @param {object | null | undefined} joint
+ * @returns {object | null}
+ */
+export function resolveSpringJointSettings(joint) {
+  if (!joint || typeof joint !== "object") return null;
+  if (joint.settings && typeof joint.settings === "object") return joint.settings;
+  if ("gravityPower" in joint || "gravityDir" in joint || "dragForce" in joint) {
+    return joint;
+  }
+  return null;
+}
+
+/**
  * @param {object | null | undefined} settings
  */
 export function tuneSpringJointSettings(settings) {
   if (!settings) return false;
-  if (!(settings.dragForce >= MIN_DRAG_FORCE)) {
-    settings.dragForce = MIN_DRAG_FORCE;
-  }
-  if (!(settings.gravityPower >= MIN_GRAVITY_POWER)) {
-    settings.gravityPower = MIN_GRAVITY_POWER;
-  }
-  if (typeof settings.stiffness === "number" && settings.stiffness > MAX_STIFFNESS) {
-    settings.stiffness = MAX_STIFFNESS;
+  const drag = Number(settings.dragForce);
+  settings.dragForce = Math.max(
+    Number.isFinite(drag) ? drag : 0,
+    MIN_DRAG_FORCE,
+  );
+  const gravity = Number(settings.gravityPower);
+  settings.gravityPower = Math.max(
+    Number.isFinite(gravity) ? gravity : 0,
+    MIN_GRAVITY_POWER,
+  );
+  if (typeof settings.stiffness === "number") {
+    settings.stiffness = Math.min(settings.stiffness, MAX_STIFFNESS);
   }
   if (settings.gravityDir) {
-    const y = Number(settings.gravityDir.y) || 0;
-    if (y > -0.85) {
-      forceGravityDirDown(settings.gravityDir);
-    }
+    forceGravityDirDown(settings.gravityDir);
   }
   return true;
+}
+
+/**
+ * @param {object | null | undefined} joint
+ */
+export function tuneSpringJoint(joint) {
+  return tuneSpringJointSettings(resolveSpringJointSettings(joint));
 }
 
 /**
@@ -89,7 +112,7 @@ export function stabilizeVrmSpringBones(vrm) {
   }
   let tuned = 0;
   for (const joint of joints) {
-    if (tuneSpringJointSettings(joint?.settings)) tuned += 1;
+    if (tuneSpringJoint(joint)) tuned += 1;
   }
   return { ok: true, joints: joints.length, tuned };
 }
@@ -121,7 +144,7 @@ export function recenterVrmSpringBones(vrm, opts = {}) {
   let tuned = 0;
   if (opts.retune) {
     for (const joint of joints) {
-      if (tuneSpringJointSettings(joint?.settings)) tuned += 1;
+      if (tuneSpringJoint(joint)) tuned += 1;
     }
   }
 
@@ -188,7 +211,7 @@ export function configureVrmSpringStability(vrm) {
 
   let tuned = 0;
   for (const joint of joints) {
-    if (tuneSpringJointSettings(joint?.settings)) tuned += 1;
+    if (tuneSpringJoint(joint)) tuned += 1;
   }
 
   const recentered = recenterVrmSpringBones(vrm, {

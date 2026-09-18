@@ -453,13 +453,15 @@ export async function createVrmAvatar(opts) {
   bodyMotion.snapToRestPose?.();
   syncHumanoidPose();
   configureVrmSpringStability(vrm);
-  for (let i = 0; i < 18; i += 1) {
+  for (let i = 0; i < 36; i += 1) {
+    stabilizeVrmSpringBones(vrm);
     bodyMotion.update(1 / 60);
     syncHumanoidPose();
     vrm.update(1 / 60);
   }
   bodyMotion.resetMotionClock?.();
   configureVrmSpringStability(vrm);
+  recenterVrmSpringBones(vrm, { retune: true, captureInit: true });
   faceLight.position.set(0.2, 1.55, portraitCameraZSign * 1.4);
   smoothedFrameAnchor.copy(faceAnchor);
   /** @type {{ position: THREE.Vector3, target: THREE.Vector3, fov: number, distance: number }} */
