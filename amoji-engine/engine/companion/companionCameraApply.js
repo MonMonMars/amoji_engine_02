@@ -2,7 +2,12 @@
  * Apply auto-camera blend targets to OrbitControls + PerspectiveCamera.
  */
 import * as THREE from "three";
-import { PORTRAIT_CAMERA_Z_SIGN } from "./companionPortraitFraming.js";
+import {
+  PORTRAIT_CAMERA_Y_LIFT,
+  PORTRAIT_CAMERA_Z_SIGN,
+  PORTRAIT_TARGET_Y_LIFT,
+  PORTRAIT_Z_DISTANCE_MUL,
+} from "./companionPortraitFraming.js";
 
 export const COMPANION_CAMERA_APPLY_SCHEMA = "amoji.companionCameraApply.v2";
 
@@ -18,11 +23,15 @@ export const CAMERA_RESET_LERP_RATE = AUTO_CAMERA_LERP_RATE / 10;
  * @param {number} baseFov
  */
 export function buildPortraitShot(anchor, portraitDist, baseFov, cameraZSign = PORTRAIT_CAMERA_Z_SIGN) {
-  const target = new THREE.Vector3(anchor.x, anchor.y + 0.02, anchor.z);
+  const target = new THREE.Vector3(
+    anchor.x,
+    anchor.y + PORTRAIT_TARGET_Y_LIFT,
+    anchor.z,
+  );
   const position = new THREE.Vector3(
     anchor.x,
-    anchor.y + 0.08,
-    anchor.z + cameraZSign * portraitDist * 1.08,
+    anchor.y + PORTRAIT_CAMERA_Y_LIFT,
+    anchor.z + cameraZSign * portraitDist * PORTRAIT_Z_DISTANCE_MUL,
   );
   return {
     target,
@@ -38,12 +47,16 @@ export function buildPortraitShot(anchor, portraitDist, baseFov, cameraZSign = P
  * @param {number} baseFov
  */
 export function buildTalkCloseShot(anchor, portraitDist, baseFov, cameraZSign = PORTRAIT_CAMERA_Z_SIGN) {
-  const dist = portraitDist * 0.96;
-  const target = new THREE.Vector3(anchor.x, anchor.y + 0.06, anchor.z);
+  const dist = portraitDist * 0.98;
+  const target = new THREE.Vector3(
+    anchor.x,
+    anchor.y + PORTRAIT_TARGET_Y_LIFT,
+    anchor.z,
+  );
   const position = new THREE.Vector3(
     anchor.x,
-    anchor.y + 0.05,
-    anchor.z + cameraZSign * dist,
+    anchor.y + PORTRAIT_CAMERA_Y_LIFT * 0.92,
+    anchor.z + cameraZSign * dist * PORTRAIT_Z_DISTANCE_MUL,
   );
   return {
     target,

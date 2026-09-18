@@ -3,19 +3,25 @@
  */
 import * as THREE from "three";
 
-export const COMPANION_PORTRAIT_FRAMING_SCHEMA = "amoji.companionPortraitFraming.v1";
+export const COMPANION_PORTRAIT_FRAMING_SCHEMA = "amoji.companionPortraitFraming.v2";
 
-/** Chest-level orbit target (ratio from feet to head). */
-export const UPPER_BODY_ANCHOR_RATIO = 0.5;
+/** Upper-chest orbit target (ratio from feet to head). */
+export const UPPER_BODY_ANCHOR_RATIO = 0.56;
 /** How much head height influences anchor (lower = more chest framing). */
-export const HEAD_ANCHOR_BLEND = 0.12;
+export const HEAD_ANCHOR_BLEND = 0.16;
 
 /** Portrait FOV — head + shoulders + torso, legs cropped below waist. */
-export const PORTRAIT_FOV = 32;
+export const PORTRAIT_FOV = 34;
 
-/** Camera distance ≈ 1.52× character height — relaxed first view, not face close-up. */
-export const PORTRAIT_DIST_FACTOR = 1.52;
-export const PORTRAIT_DIST_MIN = 1.28;
+/** Camera distance ≈ factor × character height — default is pulled back, not face close-up. */
+export const PORTRAIT_DIST_FACTOR = 1.82;
+export const PORTRAIT_DIST_MIN = 1.55;
+/** Extra Z pullback applied to portrait shots (buildPortraitShot / initial frame). */
+export const PORTRAIT_Z_DISTANCE_MUL = 1.18;
+/** Camera sits above the orbit anchor (eye-level, not upward from the waist). */
+export const PORTRAIT_CAMERA_Y_LIFT = 0.22;
+/** Orbit target nudge above anchor. */
+export const PORTRAIT_TARGET_Y_LIFT = 0.06;
 
 /**
  * User orbit polar range (radians from +Y). Tight clamps (~18°) made the
@@ -101,10 +107,14 @@ export function facingAlignmentScore(headBone, cameraPosition, humanoid) {
  * @param {import('@pixiv/three-vrm').VRMHumanoid | null | undefined} [humanoid]
  */
 export function detectPortraitCameraZSign(headBone, anchor, portraitDist, humanoid) {
-  const dist = Math.max(portraitDist, PORTRAIT_DIST_MIN) * 1.08;
+  const dist = Math.max(portraitDist, PORTRAIT_DIST_MIN) * PORTRAIT_Z_DISTANCE_MUL;
 
   const scoreForSign = (sign) => {
-    _camPosScratch.set(anchor.x, anchor.y + 0.08, anchor.z + sign * dist);
+    _camPosScratch.set(
+      anchor.x,
+      anchor.y + PORTRAIT_CAMERA_Y_LIFT,
+      anchor.z + sign * dist,
+    );
     if (!headBone) return sign === PORTRAIT_CAMERA_Z_SIGN ? 1 : 0;
     return facingAlignmentScore(headBone, _camPosScratch, humanoid);
   };
@@ -189,11 +199,11 @@ export function applyUpperBodyPortraitFrame(opts) {
   const portraitDist = portraitDistanceForHeight(opts.fittedHeight);
   const cameraZSign = opts.cameraZSign ?? PORTRAIT_CAMERA_Z_SIGN;
   opts.controls.target.copy(opts.anchor);
-  opts.controls.target.y += 0.02;
+  opts.controls.target.y += PORTRAIT_TARGET_Y_LIFT;
   opts.camera.position.set(
     opts.anchor.x,
-    opts.anchor.y + 0.08,
-    opts.anchor.z + cameraZSign * portraitDist * 1.08,
+    opts.anchor.y + PORTRAIT_CAMERA_Y_LIFT,
+    opts.anchor.z + cameraZSign * portraitDist * PORTRAIT_Z_DISTANCE_MUL,
   );
   opts.camera.fov = PORTRAIT_FOV;
   opts.camera.updateProjectionMatrix();
