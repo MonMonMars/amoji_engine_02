@@ -72,11 +72,15 @@ async function main() {
     bubbles: document.querySelectorAll(".msg-row").length,
   }));
 
-  // Try tap
-  const startBtn = await page.$("#start-character-picker .companion-card:not(.hide)");
-  if (startBtn) {
-    await startBtn.click();
+  // Try select + begin
+  try {
+    const { beginStartPickerSession } = await import(
+      "../../scripts/companion-picker-smoke-util.mjs"
+    );
+    await beginStartPickerSession(page);
     await page.waitForTimeout(2500);
+  } catch {
+    /* picker may be hidden with autostart */
   }
 
   const afterTap = await page.evaluate(() => ({

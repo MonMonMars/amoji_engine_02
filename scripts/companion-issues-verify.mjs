@@ -8,6 +8,10 @@ import { writeFileSync, mkdirSync } from "fs";
 import { chromium } from "playwright";
 import { AMOJI_BUILD } from "../amoji-engine/engine/companion/buildVersion.mjs";
 import {
+  beginStartPickerSession,
+  switchCompanionInSession,
+} from "./companion-picker-smoke-util.mjs";
+import {
   needsWebSearch,
   shouldTryWebSearch,
 } from "../amoji-engine/engine/companion/companionWebSearch.mjs";
@@ -109,6 +113,9 @@ async function main() {
     return {
       build: window.__amojiBuild,
       pickerOpen: Boolean(picker && picker.classList.contains("is-open")),
+      hero: Boolean(picker?.querySelector(".picker-hero")),
+      beginBtn: Boolean(picker?.querySelector(".picker-begin-btn")),
+      featuredRow: Boolean(picker?.querySelector(".picker-featured-row")),
       ring: Boolean(ring),
       bar: Boolean(bar),
       chip: Boolean(chip),
@@ -122,6 +129,9 @@ async function main() {
   });
   record("build-id", boot.build === AMOJI_BUILD, `${boot.build} vs ${AMOJI_BUILD}`);
   record("start-picker-open", boot.pickerOpen);
+  record("picker-v4-hero", boot.hero);
+  record("picker-begin-cta", boot.beginBtn);
+  record("picker-featured-row", boot.featuredRow);
   record("loading-ring-not-bar", boot.ring && !boot.bar && !boot.progressBarClass);
   record("character-chip", boot.chip);
   record("orbit-hit", boot.orbit);
@@ -153,10 +163,11 @@ async function main() {
     animations: "disabled",
   });
 
-  const novaCard = page.locator('#start-character-picker [data-character-id="nova"]');
-  await novaCard.waitFor({ timeout: 30000 });
-  await novaCard.scrollIntoViewIfNeeded();
-  await novaCard.click();
+  await beginStartPickerSession(page, {
+    characterId: "nova",
+    cardTimeout: 30000,
+    dismissTimeout: 120000,
+  });
 
   await page.waitForFunction(
     () => window.__amojiAvatarKind === "vrm3d" && window.__amojiAvatar?.vrm,
@@ -430,15 +441,14 @@ async function main() {
     timeout: 8000,
   });
   record("in-session-picker", true);
-  const alicia = page.locator('#companion-character-picker [data-character-id="alicia"]');
-  if (await alicia.count()) {
+  try {
     const modelsBefore = loadedModels.length;
-    await alicia.click();
+    await switchCompanionInSession(page, "alicia", { openSelector: "#brand-btn" });
     await page.waitForTimeout(4000);
     const switched = loadedModels.slice(modelsBefore).some((u) => /alicia/i.test(u));
     record("switch-character-model", switched, loadedModels.slice(modelsBefore).join(" | "));
-  } else {
-    record("switch-character-model", false, "alicia card missing");
+  } catch (err) {
+    record("switch-character-model", false, String(err?.message || err));
   }
 
   await browser.close();

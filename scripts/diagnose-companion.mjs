@@ -3,6 +3,7 @@
  * Playwright diagnostic for amoji-companion loading state.
  */
 import { chromium, devices } from "playwright";
+import { beginStartPickerSession } from "./companion-picker-smoke-util.mjs";
 
 const URL =
   process.env.COMPANION_URL ||

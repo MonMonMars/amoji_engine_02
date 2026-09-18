@@ -590,6 +590,37 @@ body.conversation-ui.theme-grok-ani .companion-chip__dot--legacy {
   border-color: rgba(139, 124, 248, 0.28);
 }
 
+.theme-grok-ani .companion-picker--v4 .picker-hero {
+  border-color: rgba(139, 124, 248, 0.22);
+  background:
+    radial-gradient(
+      ellipse 80% 70% at 18% 20%,
+      rgba(139, 124, 248, 0.2),
+      transparent 62%
+    ),
+    rgba(255, 255, 255, 0.03);
+}
+
+.theme-grok-ani .companion-picker--v4 .picker-filter-chip.is-active {
+  border-color: rgba(94, 234, 212, 0.45);
+  background: rgba(94, 234, 212, 0.12);
+  color: #ecfffb;
+}
+
+.theme-grok-ani .companion-picker--v4 .picker-featured-label {
+  color: rgba(196, 181, 253, 0.78);
+}
+
+.theme-grok-ani .companion-picker--v4 .picker-search {
+  border-color: rgba(139, 124, 248, 0.22);
+  background: rgba(8, 6, 18, 0.72);
+}
+
+.theme-grok-ani .companion-picker--v4 .picker-search:focus {
+  border-color: rgba(94, 234, 212, 0.45);
+  box-shadow: 0 0 0 2px rgba(94, 234, 212, 0.12);
+}
+
 /* —— In-session picker sheet —— */
 .theme-grok-ani .companion-picker-sheet {
   border-color: rgba(255, 255, 255, 0.1);

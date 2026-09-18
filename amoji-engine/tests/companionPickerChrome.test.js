@@ -6,11 +6,15 @@ import {
   isPickerFeatured,
   isPickerHdFace,
   isPickerWarmTone,
+  listPickerFeatured,
   pickerCopy,
   pickerFilterButtonsHtml,
   pickerFilterLabels,
+  PICKER_FEATURED_ROW_HTML,
   PICKER_FILTER_IDS,
   PICKER_HERO_HTML,
+  syncPickerCardTabIndex,
+  wirePickerRosterKeyboard,
 } from "../engine/companion/companionPickerChrome.js";
 
 describe("companionPickerChrome", () => {
@@ -42,6 +46,50 @@ describe("companionPickerChrome", () => {
   it("includes hero preview markup", () => {
     expect(PICKER_HERO_HTML).toContain("picker-hero-portrait");
     expect(PICKER_HERO_HTML).toContain("picker-hero-traits");
+    expect(PICKER_FEATURED_ROW_HTML).toContain("picker-featured-row");
+  });
+
+  it("lists featured banner picks in roster order", () => {
+    const featured = listPickerFeatured(list, 4);
+    expect(featured.length).toBe(4);
+    expect(featured[0].id).toBe("nova");
+    expect(featured[1].id).toBe("kizuna");
+  });
+
+  it("syncs roving tabindex for selected card", () => {
+    if (typeof document === "undefined") return;
+    const root = document.createElement("div");
+    root.innerHTML = `
+      <button class="companion-card" data-character-id="nova"></button>
+      <button class="companion-card" data-character-id="kizuna"></button>
+    `;
+    syncPickerCardTabIndex(root, "kizuna");
+    expect(root.querySelector('[data-character-id="nova"]').tabIndex).toBe(-1);
+    expect(root.querySelector('[data-character-id="kizuna"]').tabIndex).toBe(0);
+  });
+
+  it("moves selection with arrow keys on roster strip", () => {
+    if (typeof document === "undefined") return;
+    const grid = document.createElement("div");
+    grid.innerHTML = `
+      <button class="companion-card" data-character-id="nova" tabindex="0"></button>
+      <button class="companion-card" data-character-id="kizuna" tabindex="-1"></button>
+    `;
+    document.body.appendChild(grid);
+    let selected = "nova";
+    wirePickerRosterKeyboard(grid, {
+      getSelectedId: () => selected,
+      setSelectedId: (id) => {
+        selected = id;
+      },
+    });
+    const nova = grid.querySelector('[data-character-id="nova"]');
+    nova?.focus();
+    nova?.dispatchEvent(
+      new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true }),
+    );
+    expect(selected).toBe("kizuna");
+    grid.remove();
   });
 
   it("flags gallery priority companions as featured", () => {

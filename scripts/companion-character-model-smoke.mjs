@@ -6,6 +6,7 @@
  *   node scripts/companion-character-model-smoke.mjs --url <companion-full-url> --character nova
  */
 import { chromium } from "playwright";
+import { beginStartPickerSession } from "./companion-picker-smoke-util.mjs";
 
 function parseArg(name, fallback) {
   const idx = process.argv.indexOf(name);
@@ -53,11 +54,11 @@ async function main() {
   });
 
   await page.goto(url.toString(), { waitUntil: "domcontentloaded", timeout: 45000 });
-  await page.waitForSelector(
-    `#start-character-picker [data-character-id="${characterId}"]`,
-    { timeout: 20000 },
-  );
-  await page.click(`#start-character-picker [data-character-id="${characterId}"]`);
+  await beginStartPickerSession(page, {
+    characterId,
+    cardTimeout: 20000,
+    dismissTimeout: 60000,
+  });
 
   await page.waitForFunction(
     () => {

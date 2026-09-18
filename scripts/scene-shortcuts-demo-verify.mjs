@@ -6,6 +6,7 @@
  *   node scripts/scene-shortcuts-demo-verify.mjs --url https://temporary-rushing-oxygen-ok5jzhd.vercel.app/companion-full?lang=en
  */
 import { chromium } from "playwright";
+import { beginStartPickerSession } from "./companion-picker-smoke-util.mjs";
 import { mkdirSync } from "fs";
 import { AMOJI_BUILD } from "../amoji-engine/engine/companion/buildVersion.mjs";
 
@@ -51,27 +52,11 @@ record(
   `page=${build} repo=${AMOJI_BUILD}`,
 );
 
-await page.waitForSelector(
-  "#start-character-picker .companion-card:not([disabled])",
-  { timeout: 90000 },
-);
-
-const novaCard = page.locator(
-  '#start-character-picker .companion-card[data-character-id="nova"]',
-);
-if (await novaCard.count()) {
-  await novaCard.first().click();
-} else {
-  await page.click("#start-character-picker .companion-card:not([disabled])");
-}
-
-await page.waitForFunction(
-  () => {
-    const picker = document.getElementById("start-character-picker");
-    return !picker || picker.classList.contains("hide");
-  },
-  { timeout: 60000 },
-);
+await beginStartPickerSession(page, {
+  characterId: "nova",
+  cardTimeout: 90000,
+  dismissTimeout: 60000,
+});
 
 record("session started", true);
 

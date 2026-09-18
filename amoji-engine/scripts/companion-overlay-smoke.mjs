@@ -3,6 +3,7 @@
  * Verify loading overlay dismisses within 8s and chat works without 3D.
  */
 import { chromium } from "playwright-core";
+import { beginStartPickerSession } from "../../scripts/companion-picker-smoke-util.mjs";
 
 const url =
   process.argv.find((a) => a.startsWith("--url="))?.split("=").slice(1).join("=") ||
@@ -36,7 +37,7 @@ async function main() {
 
   const ready = await page.evaluate(() => window.__amojiStart?.ready === true);
 
-  await page.click("#start-character-picker .companion-card");
+  await beginStartPickerSession(page);
   await page.waitForTimeout(500);
   await page.fill("#input", "test");
   await page.click("#send");
