@@ -98,7 +98,7 @@ export function createCompanionWaitAct(opts = {}) {
   };
 
   const playIdleLife = () => {
-    // Relax.vrma calm loop + occasional one-shot social clips (crossfaded).
+    // Thinking.vrma calm loop + occasional one-shot social clips (crossfaded).
     avatarRef?.setThinking?.(false);
     avatarRef?.setEmotion?.("neutral");
     if (poseTick === 0) {

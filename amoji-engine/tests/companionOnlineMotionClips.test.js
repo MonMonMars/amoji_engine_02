@@ -14,7 +14,7 @@ import {
 describe("companionOnlineMotionClips", () => {
   it("maps idle and social gestures onto the hosted VRMA library", () => {
     expect(ONLINE_IDLE_ACTION).toBe("idle");
-    expect(ONLINE_IDLE_CLIP_FILE).toBe("Relax");
+    expect(ONLINE_IDLE_CLIP_FILE).toBe("Thinking");
     expect(ONLINE_MOTION_CLIP_FILES.idle).toBeUndefined();
     expect(ONLINE_MOTION_CLIP_FILES.relax).toBe("Relax");
     expect(ONLINE_MOTION_CLIP_FILES.wave).toBe("Goodbye");
@@ -82,7 +82,8 @@ describe("companionOnlineMotionClips", () => {
     expect(resolveOnlineMotionClipUrl("idle")).toBeNull();
     expect(resolveOnlineMotionClipUrl("relax")).toMatch(/Relax\.vrma$/);
     expect(isOnlineIdleAction("idle")).toBe(true);
-    expect(isOnlineIdleAction("relax")).toBe(true);
+    expect(isOnlineIdleAction("thinking")).toBe(true);
+    expect(isOnlineIdleAction("relax")).toBe(false);
     expect(isOnlineLoopingLibraryAction("relax")).toBe(true);
     expect(isOnlineLoopingLibraryAction("thinking")).toBe(true);
     expect(isOnlineLoopingLibraryAction("wiggle")).toBe(true);

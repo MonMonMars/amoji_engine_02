@@ -8,10 +8,9 @@ import {
 
 export const COMPANION_IDLE_MOTION_SCHEMA = "amoji.companionIdleMotion.v4";
 
-/** Procedural beats between hosted VRMA idle clips (look, hair, breathe, cross). */
+/** Procedural beats between hosted VRMA idle clips (look, breathe, cross — no arms-up). */
 export const PROCEDURAL_IDLE_BEAT_POOL = Object.freeze([
   "look",
-  "comb",
   "breathe",
   "cross",
   "sway",
@@ -182,11 +181,10 @@ export function advanceIdleBeat(state, dt, nowMs) {
 
   if (!beat && nowMs >= nextAt) {
     const roll = Math.random();
-    if (roll < 0.22) beat = "look";
-    else if (roll < 0.4) beat = "comb";
-    else if (roll < 0.58) beat = "breathe";
-    else if (roll < 0.72) beat = "cross";
-    else if (roll < 0.84) beat = "sway";
+    if (roll < 0.24) beat = "look";
+    else if (roll < 0.48) beat = "breathe";
+    else if (roll < 0.64) beat = "cross";
+    else if (roll < 0.8) beat = "sway";
     else beat = "shift";
     phase = 0;
     duration =

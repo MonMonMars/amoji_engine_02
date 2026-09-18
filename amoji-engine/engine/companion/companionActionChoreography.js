@@ -56,20 +56,19 @@ export const ACTION_COMBOS = Object.freeze({
 });
 
 /**
- * Default idle life — Relax.vrma calm loop plus one-shot social clips
- * (wave=Goodbye, thinking=Thinking, stretch=Relax) crossfaded in the player.
+ * Default idle life — Thinking.vrma calm loop plus one-shot social clips
+ * (nod, shrug, shy, sleepy) crossfaded in the player.
  */
 /**
  * Quiet between-turn idle — natural standing life (no wave/clap/cheer/hands-up).
- * Calm Relax loop runs between one-shots: stroll, jump, blush, think, shrug, sleepy.
+ * Calm Thinking loop runs between one-shots: nod, shrug, blush, think, sleepy.
  */
 export const IDLE_LIFE_CLIP_POOL = Object.freeze([
-  "walk",
-  "jump",
-  "shy",
   "thinking",
   "shrug",
+  "shy",
   "sleep",
+  "nod",
 ]);
 
 /** Large idle rotation pool — quiet companion moments between turns. */

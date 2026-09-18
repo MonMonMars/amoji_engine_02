@@ -30,14 +30,14 @@ describe("companionIdleMotion", () => {
     expect(Object.keys(first.overlay).length).toBeGreaterThan(0);
   });
 
-  it("plays a comb-hair beat that lifts the right arm", () => {
+  it("plays a breathe beat without raising arms high", () => {
     vi.spyOn(Math, "random").mockReturnValue(0.35);
     const state = createIdleBeatState(0);
     state.nextAt = 0;
     const first = advanceIdleBeat(state, 1.05, 10);
-    expect(first.state.beat).toBe("comb");
-    expect(first.overlay.armLiftR).toBeGreaterThan(0.2);
-    expect(first.overlay.forearmR).toBeGreaterThan(0.15);
+    expect(first.state.beat).toBe("breathe");
+    expect(first.overlay.armLiftR ?? 0).toBeLessThan(0.12);
+    expect(first.overlay.forearmR ?? 0).toBeLessThan(0.12);
     vi.restoreAllMocks();
   });
 
@@ -128,22 +128,22 @@ describe("companionIdleMotion", () => {
     expect(a.headZ).not.toBe(b.headZ);
   });
 
-  it("can force a look or comb idle-life beat", () => {
+  it("can force a look or breathe idle-life beat", () => {
     const look = startIdleBeat(createIdleBeatState(0), "look", 10);
     expect(look.beat).toBe("look");
     expect(look.duration).toBeGreaterThan(1);
-    const comb = startIdleBeat(createIdleBeatState(0), "comb", 10);
-    expect(comb.beat).toBe("comb");
+    const breathe = startIdleBeat(createIdleBeatState(0), "breathe", 10);
+    expect(breathe.beat).toBe("breathe");
   });
 
   it("rotates procedural idle beats for wait-act ticks", () => {
-    expect(pickProceduralIdleBeat(1)).toBe("comb");
-    expect(pickProceduralIdleBeat(2)).toBe("breathe");
-    expect(pickProceduralIdleBeat(3)).toBe("cross");
+    expect(pickProceduralIdleBeat(1)).toBe("breathe");
+    expect(pickProceduralIdleBeat(2)).toBe("cross");
+    expect(pickProceduralIdleBeat(3)).toBe("sway");
   });
 
   it("plays an arm-cross beat without raising both arms high", () => {
-    vi.spyOn(Math, "random").mockReturnValue(0.65);
+    vi.spyOn(Math, "random").mockReturnValue(0.55);
     const state = createIdleBeatState(0);
     state.nextAt = 0;
     const first = advanceIdleBeat(state, 0.95, 10);
