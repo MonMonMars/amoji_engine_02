@@ -16,6 +16,21 @@ describe("companionCharacterPicker UI", () => {
     expect(grid.textContent).toMatch(/No companions/i);
   });
 
+  it("in-session picker shows featured quick-pick row", () => {
+    if (typeof document === "undefined") return;
+    const picker = createCompanionCharacterPicker({
+      isEnglish: true,
+      selectedId: "nova",
+      onSelect: () => {},
+    });
+    picker.open();
+    const featured = picker.element.querySelectorAll(
+      ".picker-featured-row .companion-card",
+    );
+    expect(featured.length).toBeGreaterThanOrEqual(4);
+    picker.destroy();
+  });
+
   it("in-session picker confirms switch on button click", () => {
     if (typeof document === "undefined") return;
     let switchedTo = null;

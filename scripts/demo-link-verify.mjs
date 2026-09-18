@@ -206,8 +206,63 @@ async function verifySecretary(page, label) {
   });
 }
 
+async function verifyBootPaint(page, label) {
+  await page
+    .waitForFunction(
+      () => {
+        const splash = document.getElementById("amoji-boot-splash");
+        const picker = document.getElementById("start-character-picker");
+        const pickerOpen =
+          picker &&
+          (picker.classList.contains("is-open") ||
+            (!picker.classList.contains("hide") &&
+              picker.getAttribute("aria-hidden") !== "true"));
+        return Boolean(splash || pickerOpen);
+      },
+      { timeout: 15000 },
+    )
+    .catch(() => null);
+
+  const boot = await page.evaluate(() => {
+    const canvas = document.getElementById("avatar-canvas");
+    const splash = document.getElementById("amoji-boot-splash");
+    const picker = document.getElementById("start-character-picker");
+    const pickerOpen =
+      picker &&
+      (picker.classList.contains("is-open") ||
+        (!picker.classList.contains("hide") &&
+          picker.getAttribute("aria-hidden") !== "true"));
+    const canvasOpacity = canvas ? getComputedStyle(canvas).opacity : null;
+    return {
+      splash: Boolean(splash),
+      pickerOpen: Boolean(pickerOpen),
+      canvasOpacity,
+      bodyText: document.body.innerText.replace(/\s+/g, " ").trim().slice(0, 80),
+    };
+  });
+
+  record(
+    `${label} boot splash or picker visible`,
+    boot.splash || boot.pickerOpen,
+    boot.splash ? "splash" : boot.pickerOpen ? "picker" : boot.bodyText,
+  );
+  record(
+    `${label} canvas hidden before avatar`,
+    boot.canvasOpacity === "0" || boot.canvasOpacity === "0.02" || boot.canvasOpacity === "0.04",
+    `opacity=${boot.canvasOpacity ?? "missing"}`,
+    boot.canvasOpacity === "1",
+  );
+
+  await page.screenshot({
+    path: join(outDir, `demo-verify-boot-${label}.png`),
+    fullPage: true,
+  });
+}
+
 async function verifyFullCompanion(page, label) {
   await page.goto(fullUrl, { waitUntil: "domcontentloaded", timeout: 90000 });
+
+  await verifyBootPaint(page, label);
 
   await page
     .waitForFunction(() => window.__amojiModuleBooted === true, {
