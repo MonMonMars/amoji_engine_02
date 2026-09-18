@@ -3,24 +3,35 @@
  *
  * Policy: VRM avatars play hosted VRMA for every catalog action. We do not
  * synthesize body motion in code — custom libraries can be added later.
- * Standing idle stays procedural; continuous talk sway uses hosted VRMA loops
- * (see companionTalkMotionLibrary.mjs).
+ * Calm standing idle loops Relax.vrma; talk sway uses hosted VRMA loops
+ * (see companionTalkMotionLibrary.mjs). Clip switches crossfade in the player.
  *
  * Source: tk256ailab/vrm-viewer (MIT) — 11 clips mapped to ~50+ action ids.
  */
 import { resolveMotionSamplerKey } from "./companionMotionLibrary.js";
 
 export const COMPANION_ONLINE_MOTION_CLIPS_SCHEMA =
-  "amoji.companionOnlineMotionClips.v3";
+  "amoji.companionOnlineMotionClips.v4";
 
-/** Relax.vrma is a stretch, not a rest — standing idle stays clip-free. */
+/** Legacy alias — calm standing uses the Relax VRMA loop. */
 export const ONLINE_IDLE_ACTION = "idle";
 export const ONLINE_IDLE_CLIP_FILE = "Relax";
+/** Default calm idle loop from the hosted motion library. */
+export const ONLINE_CALM_IDLE_ACTION = "relax";
 export const ONLINE_THINKING_ACTION = "thinking";
 
 /** Hosted VRMA clips that loop during talk (Thinking, LookAround, Blush, etc.). */
 export const ONLINE_TALK_LOOP_ACTIONS = Object.freeze(
   new Set(["thinking", "learning", "wiggle", "point", "shy", "shrug"]),
+);
+
+/** Clips that may loop continuously (calm idle + talk background). */
+export const ONLINE_LOOPING_LIBRARY_ACTIONS = Object.freeze(
+  new Set([
+    ONLINE_CALM_IDLE_ACTION,
+    ONLINE_THINKING_ACTION,
+    ...ONLINE_TALK_LOOP_ACTIONS,
+  ]),
 );
 
 /**
@@ -99,15 +110,16 @@ export const ONLINE_MOTION_CLIP_FILES = Object.freeze({
  */
 export function isOnlineIdleAction(actionId) {
   const id = String(actionId || "").toLowerCase();
-  return id === ONLINE_IDLE_ACTION || id === "relax";
+  return id === ONLINE_IDLE_ACTION || id === ONLINE_CALM_IDLE_ACTION;
 }
 
 /**
  * @param {string | null | undefined} actionId
  */
 export function isOnlineLoopingLibraryAction(actionId) {
-  const id = String(actionId || "").toLowerCase();
-  return id === ONLINE_THINKING_ACTION || ONLINE_TALK_LOOP_ACTIONS.has(id);
+  return ONLINE_LOOPING_LIBRARY_ACTIONS.has(
+    String(actionId || "").toLowerCase(),
+  );
 }
 
 /**
