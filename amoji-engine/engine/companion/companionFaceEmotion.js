@@ -40,11 +40,25 @@ export const CHARACTER_FACE_RIG_HINTS = Object.freeze({
   sora: "gltf",
 });
 
+/**
+ * Photoreal ARKit rigs (Nova, Ember) stack viseme presets, jawOpen morphs, and
+ * jaw-bone rotation — cap talk open so the jaw does not drop too far.
+ * @type {Record<string, { talkMouthScale?: number, talkJawScale?: number, talkPulseScale?: number }>}
+ */
+export const CHARACTER_TALK_MOUTH_OVERRIDES = Object.freeze({
+  nova: { talkMouthScale: 0.48, talkJawScale: 0, talkPulseScale: 0.62 },
+  ember: { talkMouthScale: 0.48, talkJawScale: 0, talkPulseScale: 0.62 },
+});
+
 /** @type {Record<FaceRigType, {
  *   presetScale: Record<string, number>,
  *   morphScale: number,
  *   usePresets: boolean,
  *   useMorphFallback: boolean,
+ *   talkMouthScale: number,
+ *   talkJawScale: number,
+ *   talkPulseScale: number,
+ *   skipMorphMouthWhenPresets: boolean,
  *   caps: { idleHappy: number, talkHappy: number, restSurprised: number, talkSurprised: number },
  * }>} */
 export const FACE_PROFILE_TEMPLATES = Object.freeze({
@@ -53,6 +67,10 @@ export const FACE_PROFILE_TEMPLATES = Object.freeze({
     morphScale: 0.38,
     usePresets: true,
     useMorphFallback: true,
+    talkMouthScale: 1,
+    talkJawScale: 1,
+    talkPulseScale: 1,
+    skipMorphMouthWhenPresets: false,
     caps: {
       idleHappy: IDLE_HAPPY_MAX,
       talkHappy: TALK_HAPPY_MAX,
@@ -65,6 +83,10 @@ export const FACE_PROFILE_TEMPLATES = Object.freeze({
     morphScale: 0.62,
     usePresets: true,
     useMorphFallback: true,
+    talkMouthScale: 1,
+    talkJawScale: 1,
+    talkPulseScale: 1,
+    skipMorphMouthWhenPresets: false,
     caps: {
       idleHappy: 0.32,
       talkHappy: 0.58,
@@ -77,6 +99,10 @@ export const FACE_PROFILE_TEMPLATES = Object.freeze({
     morphScale: 1,
     usePresets: true,
     useMorphFallback: true,
+    talkMouthScale: 0.58,
+    talkJawScale: 0,
+    talkPulseScale: 0.72,
+    skipMorphMouthWhenPresets: true,
     caps: {
       idleHappy: 0.28,
       talkHappy: 0.52,
@@ -89,6 +115,10 @@ export const FACE_PROFILE_TEMPLATES = Object.freeze({
     morphScale: 0.78,
     usePresets: true,
     useMorphFallback: true,
+    talkMouthScale: 0.82,
+    talkJawScale: 0.72,
+    talkPulseScale: 0.88,
+    skipMorphMouthWhenPresets: false,
     caps: {
       idleHappy: 0.3,
       talkHappy: 0.54,
@@ -101,6 +131,10 @@ export const FACE_PROFILE_TEMPLATES = Object.freeze({
     morphScale: 0,
     usePresets: false,
     useMorphFallback: false,
+    talkMouthScale: 1,
+    talkJawScale: 1,
+    talkPulseScale: 1,
+    skipMorphMouthWhenPresets: false,
     caps: {
       idleHappy: 0,
       talkHappy: 0,
@@ -113,6 +147,10 @@ export const FACE_PROFILE_TEMPLATES = Object.freeze({
     morphScale: 0,
     usePresets: false,
     useMorphFallback: false,
+    talkMouthScale: 1,
+    talkJawScale: 1,
+    talkPulseScale: 1,
+    skipMorphMouthWhenPresets: false,
     caps: {
       idleHappy: 0,
       talkHappy: 0,
@@ -192,6 +230,10 @@ export function faceProfileTemplate(rigType, presetScaleOverride = {}) {
     morphScale: base.morphScale,
     usePresets: base.usePresets,
     useMorphFallback: base.useMorphFallback,
+    talkMouthScale: base.talkMouthScale,
+    talkJawScale: base.talkJawScale,
+    talkPulseScale: base.talkPulseScale,
+    skipMorphMouthWhenPresets: base.skipMorphMouthWhenPresets,
     caps: { ...base.caps },
   };
 }
@@ -213,14 +255,21 @@ export function faceProfileTemplate(rigType, presetScaleOverride = {}) {
 export function buildModelFaceProfile(opts = {}) {
   const rigType = detectFaceRigType(opts);
   const profile = faceProfileTemplate(rigType, opts.presetScaleOverride);
+  const characterId = opts.characterId ? String(opts.characterId).toLowerCase() : null;
+  const talkOverride = characterId
+    ? CHARACTER_TALK_MOUTH_OVERRIDES[characterId] || null
+    : null;
   return {
     ...profile,
-    characterId: opts.characterId || null,
+    characterId,
     modelUrl: opts.modelUrl || null,
     triangleCount: Number(opts.triangleCount) || 0,
     expressionCount: (opts.expressionNames || listExpressionNames(opts.expr))
       .length,
     morphTargetCount: opts.morphSummary?.morphTargetCount || 0,
+    talkMouthScale: talkOverride?.talkMouthScale ?? profile.talkMouthScale,
+    talkJawScale: talkOverride?.talkJawScale ?? profile.talkJawScale,
+    talkPulseScale: talkOverride?.talkPulseScale ?? profile.talkPulseScale,
   };
 }
 

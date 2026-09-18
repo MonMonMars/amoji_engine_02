@@ -187,12 +187,25 @@ export function capTalkingEmotionWeight(name, weight, opts = {}) {
 }
 
 /**
+ * Scale rendered talk mouth open for photoreal rigs (visemes + morphs stack).
+ * @param {number} open 0..1
+ * @param {{ talkMouthScale?: number } | null | undefined} [profile]
+ */
+export function scaleTalkMouthOpen(open, profile = null) {
+  const v = Math.max(0, Math.min(1, Number(open) || 0));
+  const scale = Math.max(0, Math.min(1, Number(profile?.talkMouthScale ?? 1) || 0));
+  return Math.max(0, Math.min(1, v * scale));
+}
+
+/**
  * Jaw bone open amount in radians. 0 at rest.
  * @param {number} open 0..1
+ * @param {number} [jawScale=1] multiply bone rotation (0 disables jaw bone on ARKit)
  */
-export function talkJawRotationX(open) {
+export function talkJawRotationX(open, jawScale = 1) {
   const v = Math.max(0, Math.min(1, Number(open) || 0));
-  return v * TALK_JAW_OPEN_RAD;
+  const scale = Math.max(0, Math.min(1, Number(jawScale ?? 1) || 0));
+  return v * TALK_JAW_OPEN_RAD * scale;
 }
 
 /**

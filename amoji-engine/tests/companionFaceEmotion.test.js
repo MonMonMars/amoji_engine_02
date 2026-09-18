@@ -8,11 +8,13 @@ import {
   blendGltfFaceTint,
   blendProceduralFaceTargets,
   buildModelFaceProfile,
+  CHARACTER_TALK_MOUTH_OVERRIDES,
   detectFaceRigType,
   faceProfileTemplate,
   resolveFaceExpression,
   resolveTalkEmotionMorphWeights,
 } from "../engine/companion/companionFaceEmotion.js";
+import { scaleTalkMouthOpen } from "../engine/companion/companionFaceRest.js";
 import { inspectVrmBuffer } from "../engine/companion/companionVrmInspect.js";
 
 const assets = join(dirname(fileURLToPath(import.meta.url)), "../../prototypes/assets");
@@ -61,6 +63,20 @@ describe("companionFaceEmotion", () => {
     expect(resolved.rigType).toBe("arkit");
     expect(resolved.morphWeights.smile).toBeGreaterThan(0.3);
     expect(resolved.blend.Happy).toBeLessThan(resolved.baseBlend.Happy);
+  });
+
+  it("caps photoreal Nova and Ember talk mouth open so the jaw does not drop too far", () => {
+    const nova = buildModelFaceProfile({ characterId: "nova" });
+    const ember = buildModelFaceProfile({ characterId: "ember" });
+    const kizuna = buildModelFaceProfile({ characterId: "kizuna" });
+    expect(nova.talkMouthScale).toBe(CHARACTER_TALK_MOUTH_OVERRIDES.nova.talkMouthScale);
+    expect(ember.talkMouthScale).toBe(CHARACTER_TALK_MOUTH_OVERRIDES.ember.talkMouthScale);
+    expect(nova.talkJawScale).toBe(0);
+    expect(ember.talkJawScale).toBe(0);
+    expect(nova.skipMorphMouthWhenPresets).toBe(true);
+    expect(kizuna.talkMouthScale).toBe(1);
+    expect(scaleTalkMouthOpen(0.9, nova)).toBeLessThan(0.5);
+    expect(scaleTalkMouthOpen(0.9, kizuna)).toBeCloseTo(0.9);
   });
 
   it("boosts love nuance morph smile and stress frown", () => {
