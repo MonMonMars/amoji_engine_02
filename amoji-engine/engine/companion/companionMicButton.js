@@ -1,7 +1,22 @@
 /**
  * ChatGPT-style companion mic button — emotion-linked glow, rings, and waveform.
  */
-export const COMPANION_MIC_BUTTON_SCHEMA = "amoji.companionMicButton.v1";
+export const COMPANION_MIC_BUTTON_SCHEMA = "amoji.companionMicButton.v2";
+
+/** ChatGPT inline voice — gray waveform when off, blue when live. */
+export const MIC_BUTTON_CHATGPT_IDLE = Object.freeze({
+  hue: 218,
+  sat: 10,
+  light: 52,
+  ringSpeed: 1,
+});
+
+export const MIC_BUTTON_CHATGPT_LIVE = Object.freeze({
+  hue: 212,
+  sat: 72,
+  light: 50,
+  ringSpeed: 1.05,
+});
 
 /** @typedef {"idle" | "listening" | "speaking" | "disabled"} MicButtonState */
 
@@ -96,6 +111,65 @@ export function resolveMicButtonTheme(opts = {}) {
   };
 }
 
+/**
+ * ChatGPT-style mic chrome: muted gray when off, saturated blue when live.
+ * @param {MicButtonState | string} state
+ * @param {{ emotion?: string, nuance?: string }} [opts]
+ */
+export function resolveMicButtonThemeForState(state, opts = {}) {
+  const key = String(state || "idle").toLowerCase();
+  if (key === "disabled") {
+    const muted = resolveMicButtonTheme({ emotion: "neutral", nuance: "none" });
+    return {
+      ...muted,
+      hue: 218,
+      sat: 8,
+      light: 44,
+      accent: "rgba(255,255,255,0.42)",
+      glowA: "rgba(255,255,255,0.08)",
+      glowB: "rgba(255,255,255,0.04)",
+      surface: "rgba(16, 20, 28, 0.72)",
+      border: "rgba(255,255,255,0.1)",
+    };
+  }
+  if (key === "idle") {
+    const base = MIC_BUTTON_CHATGPT_IDLE;
+    const hue = base.hue;
+    const sat = base.sat;
+    const light = base.light;
+    return {
+      hue,
+      sat,
+      light,
+      ringSpeed: base.ringSpeed,
+      accent: `hsl(${hue} 16% 78%)`,
+      glowA: `hsl(${hue} 18% 72% / 0.12)`,
+      glowB: `hsl(${hue} 12% 68% / 0.06)`,
+      surface: "rgba(16, 20, 28, 0.94)",
+      border: "rgba(255, 255, 255, 0.16)",
+    };
+  }
+  const liveBase = MIC_BUTTON_CHATGPT_LIVE;
+  const emotionTheme = resolveMicButtonTheme(opts);
+  const hue =
+    key === "speaking"
+      ? clamp(emotionTheme.hue * 0.22 + liveBase.hue * 0.78, 198, 228)
+      : liveBase.hue;
+  const sat = key === "speaking" ? clamp(liveBase.sat * 0.72 + emotionTheme.sat * 0.28, 58, 88) : liveBase.sat;
+  const light = liveBase.light;
+  return {
+    hue,
+    sat,
+    light,
+    ringSpeed: liveBase.ringSpeed,
+    accent: `hsl(${hue} ${Math.min(96, sat + 6)}% 68%)`,
+    glowA: `hsl(${hue} ${Math.min(96, sat + 8)}% 58% / 0.62)`,
+    glowB: `hsl(${clamp(hue + 28, 0, 360)} ${Math.max(48, sat - 6)}% 68% / 0.38)`,
+    surface: `hsl(${hue} ${Math.max(36, sat - 12)}% 42% / 0.96)`,
+    border: `hsl(${hue} ${sat}% 62% / 0.88)`,
+  };
+}
+
 /** Mic icon + waveform layers (ChatGPT-inspired). */
 export function companionMicButtonInnerHtml() {
   return `
@@ -150,7 +224,9 @@ export function createCompanionMicButton(el, opts = {}) {
 
   /** @type {MicButtonState} */
   let state = "idle";
-  let theme = resolveMicButtonTheme(opts);
+  let emotion = opts.emotion || "neutral";
+  let nuance = opts.nuance || "none";
+  let theme = resolveMicButtonThemeForState("idle", { emotion, nuance });
 
   const applyTheme = () => {
     el.style.setProperty("--mic-hue", String(theme.hue));
@@ -164,25 +240,34 @@ export function createCompanionMicButton(el, opts = {}) {
     el.style.setProperty("--mic-ring-speed", `${theme.ringSpeed.toFixed(2)}s`);
   };
 
+  const applyStateTheme = () => {
+    theme = resolveMicButtonThemeForState(state, { emotion, nuance });
+    applyTheme();
+  };
+
   const setState = (next) => {
     const allowed = ["idle", "listening", "speaking", "disabled"];
     state = allowed.includes(next) ? next : "idle";
     el.dataset.micState = state;
+    el.dataset.micLive = state === "listening" || state === "speaking" ? "true" : "false";
     el.classList.toggle("mic-live", state === "listening" || state === "speaking");
+    el.classList.toggle("mic-off", state === "idle");
     el.classList.toggle("on", state === "listening" || state === "speaking");
     el.setAttribute("aria-pressed", state === "listening" || state === "speaking" ? "true" : "false");
     const titles = {
-      idle: "Mic on/off — continuous listen; replies when you pause",
-      listening: "Listening — speak naturally",
-      speaking: "Companion speaking — talk to interrupt",
+      idle: "Tap to turn mic on",
+      listening: "Mic on — listening",
+      speaking: "Mic on — companion speaking",
       disabled: "Mic unavailable",
     };
     el.title = titles[state] || titles.idle;
+    applyStateTheme();
   };
 
-  const setEmotion = (emotion, nuance = "none") => {
-    theme = resolveMicButtonTheme({ emotion, nuance });
-    applyTheme();
+  const setEmotion = (nextEmotion, nextNuance = "none") => {
+    emotion = String(nextEmotion || "neutral");
+    nuance = String(nextNuance || "none");
+    applyStateTheme();
   };
 
   const setLevel = (level) => {
@@ -228,7 +313,6 @@ export function createCompanionMicButton(el, opts = {}) {
     setState("listening");
   };
 
-  setEmotion(opts.emotion || "neutral", opts.nuance || "none");
   setState("idle");
 
   return {

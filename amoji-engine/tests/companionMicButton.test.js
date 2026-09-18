@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
   companionMicButtonInnerHtml,
+  MIC_BUTTON_CHATGPT_LIVE,
   resolveMicButtonTheme,
+  resolveMicButtonThemeForState,
   EMOTION_MIC_THEME,
 } from "../engine/companion/companionMicButton.js";
 
@@ -39,5 +41,16 @@ describe("companionMicButton", () => {
     expect(html).toContain("mic-btn__wave");
     expect(html).toContain("mic-btn__icon");
     expect(html).not.toContain("🎤");
+  });
+
+  it("uses muted gray when mic is off and ChatGPT blue when live", () => {
+    const idle = resolveMicButtonThemeForState("idle");
+    const listening = resolveMicButtonThemeForState("listening");
+    const speaking = resolveMicButtonThemeForState("speaking", { emotion: "happy" });
+    expect(idle.sat).toBeLessThan(20);
+    expect(listening.hue).toBe(MIC_BUTTON_CHATGPT_LIVE.hue);
+    expect(listening.sat).toBeGreaterThan(60);
+    expect(speaking.hue).toBeGreaterThanOrEqual(198);
+    expect(speaking.hue).toBeLessThanOrEqual(228);
   });
 });
