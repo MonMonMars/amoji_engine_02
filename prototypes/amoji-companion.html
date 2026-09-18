@@ -8,9 +8,9 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji · Companion</title>
     <script>
-      window.__amojiBuild = "2026-09-18-v205-mic-orb-combined";
+      window.__amojiBuild = "2026-09-18-v206-draggable-care-toggle";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-18-v205-mic-orb-combined"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-18-v206-draggable-care-toggle"></script>
     <link
       rel="prefetch"
       href="/prototypes/assets/companion-char-nova.png"
@@ -99,19 +99,50 @@
         display: none !important;
       }
 
-      .care-tools-toggle {
+      /* Food / leisure only via draggable care toggle — no standalone kitchen FAB */
+      #treat-fab,
+      .treat-fab {
+        display: none !important;
+      }
+
+      #treat-dock {
+        width: 0;
+        height: 0;
+        overflow: hidden;
+        pointer-events: none !important;
+      }
+
+      .care-tools-stack {
         position: fixed;
         z-index: 41;
-        right: max(0.75rem, env(safe-area-inset-right));
-        bottom: calc(6.85rem + env(safe-area-inset-bottom));
-        width: 2.75rem;
-        height: 2.75rem;
+        left: calc(100vw - 3.5rem);
+        top: calc(100vh - 8.5rem);
+        width: 2.85rem;
+        height: 2.85rem;
+        touch-action: none;
+      }
+
+      .care-tools-stack.is-dragging {
+        z-index: 42;
+      }
+
+      .care-tools-stack.is-dragging .care-tools-toggle {
+        cursor: grabbing;
+        transform: scale(1.04);
+      }
+
+      .care-tools-toggle {
+        position: absolute;
+        inset: 0;
+        z-index: 2;
+        width: 100%;
+        height: 100%;
         border-radius: 50%;
         border: 2px solid rgba(255, 255, 255, 0.45);
         background: radial-gradient(circle at 35% 28%, #ffd6e8, #fb7185 55%, #db2777);
         color: #fff;
         font: inherit;
-        cursor: pointer;
+        cursor: grab;
         box-shadow: 0 10px 24px rgba(219, 39, 119, 0.35);
         display: grid;
         place-items: center;
@@ -143,10 +174,11 @@
       }
 
       .care-tools-menu {
-        position: fixed;
-        z-index: 40;
-        right: max(0.65rem, env(safe-area-inset-right));
-        bottom: calc(10.1rem + env(safe-area-inset-bottom));
+        position: absolute;
+        z-index: 1;
+        left: 50%;
+        bottom: calc(100% + 0.45rem);
+        transform: translateX(-50%);
         display: flex;
         align-items: center;
         gap: 0.35rem;
@@ -156,6 +188,12 @@
         border: 1px solid rgba(255, 214, 170, 0.22);
         box-shadow: 0 10px 28px rgba(0, 0, 0, 0.32);
         backdrop-filter: blur(14px);
+        pointer-events: auto;
+        white-space: nowrap;
+      }
+
+      .care-tools-menu[hidden] {
+        display: none !important;
       }
 
       .care-tools-menu__btn {
@@ -450,8 +488,8 @@
       media="print"
       onload="this.media='all'"
     />
-    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-18-v205-mic-orb-combined" />
-    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-18-v205-mic-orb-combined" />
+    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-18-v206-draggable-care-toggle" />
+    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-18-v206-draggable-care-toggle" />
     <noscript>
       <link
         href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap"
@@ -3983,19 +4021,19 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-18-v205-mic-orb-combined",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-18-v206-draggable-care-toggle",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-18-v205-mic-orb-combined",
-          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-18-v205-mic-orb-combined"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-18-v206-draggable-care-toggle",
+          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-18-v206-draggable-care-toggle"
         }
       }
     </script>
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-18-v205-mic-orb-combined"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-18-v206-draggable-care-toggle"
     />
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-18-v205-mic-orb-combined"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-18-v205-mic-orb-combined"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-18-v206-draggable-care-toggle"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-18-v206-draggable-care-toggle"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;
@@ -5021,7 +5059,6 @@
       const brandName = document.getElementById("brand-name");
       const companionChipAvatar = document.getElementById("companion-chip-avatar");
       const companionStatusLine = document.getElementById("companion-status-line");
-      const statusDot = document.getElementById("status-dot");
       const settings = document.getElementById("settings");
       const settingsBackdrop = document.getElementById("settings-backdrop");
       const settingsClose = document.getElementById("settings-close");
