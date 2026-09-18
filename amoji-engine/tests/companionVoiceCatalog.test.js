@@ -76,7 +76,7 @@ describe("companionVoiceCatalog", () => {
   });
 
   it("lists Cantonese voice personas", () => {
-    expect(voicesForLang("yue").length).toBe(23);
+    expect(voicesForLang("yue").length).toBe(30);
     expect(voicesForLang("yue").map((v) => v.id)).toContain(
       "zh-HK-HiuMaanNeural-warm",
     );

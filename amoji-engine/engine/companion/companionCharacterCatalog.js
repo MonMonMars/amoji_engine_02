@@ -58,7 +58,8 @@ export { ROSTER_LOCKED_NUMBERS, TRIAL_CHARACTER_IDS };
 export const COMPANION_CHARACTERS = COMPANION_ROSTER_CHARACTERS;
 
 /**
- * Roster display + preload order. Locked: #1–4, #13–14, #16; trials #5–12, #15.
+ * Roster display + preload order — full pre-release pro catalog (v225).
+ * Flagship: #1–4 Nova/Kizuna/Alicia/Ember; rest are industry reference rigs.
  */
 export const CHARACTER_IDS = ROSTER_CHARACTER_IDS;
 
@@ -77,8 +78,11 @@ export const GALLERY_PRIORITY_IDS = new Set([
   "kizuna",
   "alicia",
   "ember",
+  "chibi",
+  "sky",
   "kate",
   "quinn",
+  "amoji",
 ]);
 
 /** Minimum mesh triangles to treat as high-poly face roster picks. */
@@ -87,6 +91,7 @@ export const HIGH_POLY_FACE_MIN_TRIANGLES = 20000;
 /** @type {ReadonlySet<string>} */
 export const HIGH_POLY_FACE_CHARACTER_IDS = new Set([
   "kizuna",
+  "rex",
   "alicia",
   "ember",
 ]);
@@ -190,13 +195,27 @@ export function resolveCharacterId(opts = {}) {
   /** @type {[string, string][]} */
   const modelMap = [
     ["companion-girl.glb", "sora"],
+    ["companion-girl.vrm", "amoji"],
     ["companion-quinn.glb", "quinn"],
     ["kizuna-kamatte.vrm", "kizuna"],
     ["companion-nova.vrm", "nova"],
     ["companion-alicia.vrm", "alicia"],
     ["companion-ember.vrm", "ember"],
+    ["companion-chibi.vrm", "chibi"],
+    ["companion-sky.vrm", "sky"],
+    ["companion-kai.vrm", "rex"],
+    ["companion-rose.vrm", "rose"],
+    ["companion-robert.vrm", "robert"],
+    ["companion-rabbit.vrm", "mimi"],
+    ["companion-olivia.vrm", "olivia"],
+    ["companion-erika.vrm", "erika"],
+    ["companion-lydia.vrm", "lydia"],
     ["companion-kate.vrm", "kate"],
+    ["companion-mikel.vrm", "mikel"],
+    ["companion-avatarsample-a.vrm", "hina"],
     ["companion-avatarsample-b.vrm", "yuki"],
+    ["companion-avatarsample-c.vrm", "mio"],
+    ["companion-vroid-female.vrm", "vroidf"],
     ["companion-vroid-male.vrm", "vroidm"],
     ["companion-chad.vrm", "chad"],
     ["companion-david.vrm", "david"],
