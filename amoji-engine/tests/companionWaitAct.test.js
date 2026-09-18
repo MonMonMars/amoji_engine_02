@@ -169,6 +169,25 @@ describe("companionWaitAct", () => {
     wait.stop();
   });
 
+  it("enableVoice starts learn loop after avatar-load was silent", () => {
+    const voice = {
+      startLearnLoop: vi.fn(),
+      stopLearnLoop: vi.fn(),
+    };
+    const wait = createCompanionWaitAct({
+      avatar: { setEmotion: vi.fn(), applyExpressionProfile: vi.fn(), resetIdleLife: vi.fn(), pulseIdleBeat: vi.fn() },
+      voice,
+      isEnglish: true,
+    });
+    wait.start({ kind: "avatar-load", phase: "avatar-load", speak: false });
+    expect(voice.startLearnLoop).not.toHaveBeenCalled();
+    expect(wait.enableVoice()).toBe(true);
+    expect(voice.startLearnLoop).toHaveBeenCalledWith(
+      expect.objectContaining({ kind: "avatar-load" }),
+    );
+    wait.stop();
+  });
+
   it("keeps avatar-load on a faster planted idle without library clips", () => {
     vi.useFakeTimers();
     const avatar = {
