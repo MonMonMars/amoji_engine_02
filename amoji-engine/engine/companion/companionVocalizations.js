@@ -349,6 +349,68 @@ export function vocalizationPerformance(type) {
  * OpenAI / Edge instruct hint for vocalization-only lines.
  * @param {string | null | undefined} text
  */
+/**
+ * Merge vocal filler + sentence into one TTS utterance (same voice, one clip).
+ * @param {string | null | undefined} vocalText
+ * @param {string | null | undefined} sentenceText
+ */
+export function mergeVocalIntoSpeech(vocalText, sentenceText) {
+  const vocal = String(vocalText || "").trim();
+  const sentence = String(sentenceText || "").trim();
+  if (!vocal) return sentence;
+  if (!sentence) return vocal;
+  const bridge = /[…\.~～]$/.test(vocal) ? " " : "… ";
+  return `${vocal}${bridge}${sentence}`;
+}
+
+/**
+ * Prefix a sentence with a mood vocal — returns merged text for a single TTS job.
+ * @param {string} sentenceText
+ * @param {Record<string, unknown>} [performance]
+ * @param {{ isEnglish?: boolean }} [opts]
+ */
+export function applyVocalPrefixToSpeech(sentenceText, performance = {}, opts = {}) {
+  const raw = String(sentenceText || "").trim();
+  if (!raw || performance.skipVocalization) {
+    return { text: raw, performance, merged: false };
+  }
+  const vocal = pickPreSentenceVocalization(performance, raw, opts);
+  if (!vocal?.text) {
+    return { text: raw, performance, merged: false };
+  }
+  return {
+    text: mergeVocalIntoSpeech(vocal.text, raw),
+    performance: {
+      ...performance,
+      vocalization: vocal.type,
+      vocalPrefix: vocal.text,
+      skipVocalization: true,
+    },
+    merged: true,
+  };
+}
+
+/**
+ * Poke/tap: playful vocal merged into the tap line (one TTS clip).
+ * @param {string} sentenceText
+ * @param {Record<string, unknown>} [performance]
+ * @param {boolean} [isEnglish]
+ */
+export function applyPokeVocalToSpeech(sentenceText, performance = {}, isEnglish = false) {
+  const raw = String(sentenceText || "").trim();
+  const vocal = pickPokeVocalization(isEnglish);
+  return {
+    text: mergeVocalIntoSpeech(vocal.text, raw),
+    performance: {
+      ...performance,
+      skipVocalization: true,
+      vocalization: vocal.type,
+      vocalPrefix: vocal.text,
+    },
+    merged: true,
+  };
+}
+
 export function vocalizationInstructHint(text) {
   const raw = String(text || "").trim();
   if (!raw) return "";
