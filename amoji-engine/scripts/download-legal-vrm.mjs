@@ -67,6 +67,30 @@ const LEGAL_DOWNLOADS = [
     license: "CC0 1.0 — ToxSam 100Avatars #008",
     source: "https://opensourceavatars.com",
   },
+  {
+    file: "companion-polydancer.vrm",
+    url: "https://arweave.net/jPOg-G0MPH55ZQmamFhT9f8cHn-hjeAQ0mRO5gWeKMQ",
+    license: "CC0 1.0 — ToxSam 100Avatars #021 Polydancer",
+    source: "https://opensourceavatars.com",
+  },
+  {
+    file: "companion-jennifer.vrm",
+    url: "https://arweave.net/LKp1uJLAZFmncdCNSZ8oopU7ZElXTvn4BmM4CUcFclc",
+    license: "CC0 1.0 — ToxSam 100Avatars #052 Jennifer",
+    source: "https://opensourceavatars.com",
+  },
+  {
+    file: "companion-shiro.vrm",
+    url: "https://arweave.net/7skrWhSd_4mrqe-tiqMfCL746xu8UWghRh1dZm7irzM",
+    license: "CC0 1.0 — ToxSam 100Avatars #058 Shiro",
+    source: "https://opensourceavatars.com",
+  },
+  {
+    file: "companion-aesthetica.vrm",
+    url: "https://arweave.net/orNIoMYKafN-EyZRft2No1ZQsPNl3XUcMXhfT2rKQVc",
+    license: "CC0 1.0 — ToxSam 100Avatars #062 Aesthetica",
+    source: "https://opensourceavatars.com",
+  },
 ];
 
 async function downloadOne(entry) {

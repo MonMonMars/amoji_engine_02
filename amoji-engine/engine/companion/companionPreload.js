@@ -1,6 +1,7 @@
 /**
  * Companion preload — minimal boot (chat-first), heavy 3D assets in background.
  */
+import { normalizeModelCacheKey } from "./companionModelAssets.mjs";
 import {
   BOOT_IDLE_WARM_CLIP_IDS,
   getBootIdleMotionPreloadPromise,
@@ -71,7 +72,8 @@ let gltfModulePromise = null;
  * @returns {Promise<ArrayBuffer> | null}
  */
 export function getPreloadedVrmPromise(url = DEFAULT_VRM_URL) {
-  return vrmBuffers.get(url) ?? null;
+  const key = normalizeModelCacheKey(url);
+  return key ? vrmBuffers.get(key) ?? null : null;
 }
 
 /**
@@ -79,9 +81,10 @@ export function getPreloadedVrmPromise(url = DEFAULT_VRM_URL) {
  * @param {typeof fetch} [fetchImpl]
  */
 export function preloadVrmBuffer(url, fetchImpl) {
-  const modelUrl = String(url || "").trim();
-  if (!modelUrl) return Promise.resolve(null);
-  const existing = vrmBuffers.get(modelUrl);
+  const fetchUrl = String(url || "").trim();
+  const cacheKey = normalizeModelCacheKey(fetchUrl);
+  if (!cacheKey) return Promise.resolve(null);
+  const existing = vrmBuffers.get(cacheKey);
   if (existing) return existing;
 
   const fetchFn =
@@ -91,16 +94,16 @@ export function preloadVrmBuffer(url, fetchImpl) {
       : null);
   if (!fetchFn) return Promise.resolve(null);
 
-  const job = fetchFn(modelUrl, { credentials: "same-origin" })
+  const job = fetchFn(fetchUrl, { credentials: "same-origin" })
     .then((res) => {
       if (!res.ok) throw new Error(`VRM preload HTTP ${res.status}`);
       return res.arrayBuffer();
     })
     .catch((err) => {
-      vrmBuffers.delete(modelUrl);
+      vrmBuffers.delete(cacheKey);
       throw err;
     });
-  vrmBuffers.set(modelUrl, job);
+  vrmBuffers.set(cacheKey, job);
   return job;
 }
 
@@ -108,7 +111,7 @@ export function preloadVrmBuffer(url, fetchImpl) {
  * @param {string | null | undefined} keepUrl
  */
 export function releaseVrmPreloadExcept(keepUrl) {
-  const keep = String(keepUrl || "").trim();
+  const keep = normalizeModelCacheKey(keepUrl);
   for (const key of [...vrmBuffers.keys()]) {
     if (!keep || key !== keep) vrmBuffers.delete(key);
   }
@@ -118,7 +121,8 @@ export function releaseVrmPreloadExcept(keepUrl) {
  * @param {string} url
  */
 export function releaseVrmPreload(url) {
-  vrmBuffers.delete(String(url || "").trim());
+  const key = normalizeModelCacheKey(url);
+  if (key) vrmBuffers.delete(key);
 }
 
 /**

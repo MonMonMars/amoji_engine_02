@@ -23,6 +23,9 @@ jobs:
       - name: Sync HTML build version
         run: node scripts/sync-build-version.mjs
 
+      - name: Download legal VRM assets
+        run: node amoji-engine/scripts/download-legal-vrm.mjs
+
       - name: Test
         run: cd amoji-engine && npm test
 

@@ -53,6 +53,11 @@ import {
 } from "./companionCharacterRoster.js";
 
 export { ROSTER_LOCKED_NUMBERS, TRIAL_CHARACTER_IDS };
+export {
+  characterModelFetchUrl,
+  modelFetchUrl,
+  normalizeModelCacheKey,
+} from "./companionModelAssets.mjs";
 
 /** Active roster — see companionCharacterRoster.js */
 export const COMPANION_CHARACTERS = COMPANION_ROSTER_CHARACTERS;
