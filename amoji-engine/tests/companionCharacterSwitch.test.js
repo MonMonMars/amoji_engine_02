@@ -19,10 +19,10 @@ describe("companionCharacterSwitch helpers", () => {
   });
 
   it("switches voice + model config between characters", () => {
-    const amoji = characterAvatarConfig("amoji", "yue");
-    const rex = characterAvatarConfig("rex", "yue");
-    expect(amoji.voiceId).not.toBe(rex.voiceId);
-    expect(amoji.modelUrl).not.toBe(rex.modelUrl);
-    expect(rex.modelUrl).toContain("companion-kai.vrm");
+    const nova = characterAvatarConfig("nova", "yue");
+    const chad = characterAvatarConfig("chad", "yue");
+    expect(nova.voiceId).not.toBe(chad.voiceId);
+    expect(nova.modelUrl).not.toBe(chad.modelUrl);
+    expect(chad.modelUrl).toContain("companion-chad.vrm");
   });
 });

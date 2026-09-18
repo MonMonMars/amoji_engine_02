@@ -137,7 +137,7 @@ export async function pushCloudSave(save, opts = {}) {
  */
 export async function syncFromCloud(opts = {}) {
   const storage = opts.storage ?? globalThis.localStorage;
-  const characterId = opts.characterId || storage?.getItem?.("amoji.mobile.lastCharacterId") || "amoji";
+  const characterId = opts.characterId || storage?.getItem?.("amoji.mobile.lastCharacterId") || "nova";
   const local = loadLocalBundle(characterId, storage);
   const remote = await pullCloudSave(opts);
   if (!remote) return { synced: false, local };
@@ -152,7 +152,7 @@ export async function syncFromCloud(opts = {}) {
  */
 export async function syncToCloud(opts = {}) {
   const storage = opts.storage ?? globalThis.localStorage;
-  const characterId = opts.characterId || storage?.getItem?.("amoji.mobile.lastCharacterId") || "amoji";
+  const characterId = opts.characterId || storage?.getItem?.("amoji.mobile.lastCharacterId") || "nova";
   const local = loadLocalBundle(characterId, storage);
   const save = {
     treats: local.treats,

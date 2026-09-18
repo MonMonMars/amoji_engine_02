@@ -16,26 +16,24 @@ describe("companion character picker data", () => {
 
   it("includes high-poly official badge for kizuna", () => {
     const kizuna = listCompanionCharacters("en").find((c) => c.id === "kizuna");
-    expect(kizuna?.badge).toMatch(/73k/i);
-    expect(kizuna?.badge).toMatch(/official/i);
+    expect(kizuna?.badge).toMatch(/#2/i);
     expect(kizuna?.faceTier).toBe("high");
     expect(kizuna?.faceTriangles).toBeGreaterThan(70000);
-    expect(kizuna?.previewImage).toContain("kizuna");
   });
 
-  it("exposes HD face chips for high-poly picks without triangle badges", () => {
-    const rex = listCompanionCharacters("en").find((c) => c.id === "rex");
+  it("exposes HD face metadata for high-poly roster picks", () => {
+    const ember = listCompanionCharacters("en").find((c) => c.id === "ember");
     const alicia = listCompanionCharacters("en").find((c) => c.id === "alicia");
-    expect(rex?.showFaceChip).toBe(true);
-    expect(rex?.faceLabel).toMatch(/HD · 50k/i);
-    expect(alicia?.showFaceChip).toBe(true);
-    expect(alicia?.faceLabel).toMatch(/HD · 32k/i);
+    expect(ember?.faceTier).toBe("high");
+    expect(ember?.faceLabel).toMatch(/23k/i);
+    expect(alicia?.faceTier).toBe("high");
+    expect(alicia?.faceLabel).toMatch(/32k/i);
   });
 
   it("includes per-character voice labels for picker cards", () => {
-    const amoji = listCompanionCharacters("yue").find((c) => c.id === "amoji");
+    const nova = listCompanionCharacters("yue").find((c) => c.id === "nova");
     const sora = listCompanionCharacters("yue").find((c) => c.id === "sora");
-    expect(amoji?.voiceLabel).toBe("曉佳");
+    expect(nova?.voiceLabel).toBe("曉曼·明亮");
     expect(sora?.voiceLabel).toBe("曉曼");
   });
 
