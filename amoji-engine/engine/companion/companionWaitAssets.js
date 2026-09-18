@@ -263,9 +263,16 @@ export function collectWaitPreloadExpressionProfiles() {
   return [...seen.values()];
 }
 
-/** Idle-only motion ids for targeted boot preload. */
+/** Idle + talk motion ids for targeted boot preload. */
 export function collectIdlePreloadMotionIds() {
-  return [...IDLE_LIFE_CLIP_POOL];
+  const ids = new Set(IDLE_LIFE_CLIP_POOL);
+  for (const id of IDLE_SHOWCASE_POOL) ids.add(id);
+  for (const poses of Object.values(WAIT_POSES_BY_PHASE)) {
+    for (const id of poses) ids.add(id);
+  }
+  ids.delete("stop");
+  ids.delete("none");
+  return [...ids];
 }
 
 /** Unique motion ids used while waiting / idling — install at boot when possible. */

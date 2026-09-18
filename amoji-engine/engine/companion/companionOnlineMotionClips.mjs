@@ -22,7 +22,18 @@ export const ONLINE_THINKING_ACTION = "thinking";
 
 /** Hosted VRMA clips that loop during talk (Thinking, LookAround, Blush, etc.). */
 export const ONLINE_TALK_LOOP_ACTIONS = Object.freeze(
-  new Set(["thinking", "learning", "wiggle", "point", "shy", "shrug"]),
+  new Set([
+    "thinking",
+    "learning",
+    "downloading",
+    "wiggle",
+    "point",
+    "shy",
+    "shrug",
+    "relax",
+    "yoga",
+    "stretch",
+  ]),
 );
 
 /** Clips that may loop continuously (calm idle + talk background). */

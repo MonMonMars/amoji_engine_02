@@ -1,19 +1,27 @@
 /**
- * Boot-time idle motion warm-up — tiny procedural pose cache + a few shared VRMA buffers.
+ * Boot-time idle + talk motion warm-up — procedural pose cache + shared VRMA buffers.
  */
 import { sampleActionBodyPose } from "./companionActionMotion.js";
+import {
+  IDLE_LIFE_CLIP_POOL,
+  IDLE_SHOWCASE_POOL,
+} from "./companionActionChoreography.js";
+import {
+  ONLINE_CALM_IDLE_ACTION,
+  ONLINE_TALK_LOOP_ACTIONS,
+  resolveOnlineMotionClipFile,
+} from "./companionOnlineMotionClips.mjs";
+import {
+  TALK_BACKGROUND_LIBRARY_ACTIONS,
+  TALK_STYLE_LIBRARY_ACTIONS,
+} from "./companionTalkMotionLibrary.mjs";
+import { PRIORITY_REPLY_MOTION_IDS } from "./companionWaitAssets.js";
 
 export const COMPANION_IDLE_MOTION_PRELOAD_SCHEMA =
-  "amoji.companionIdleMotionPreload.v3";
+  "amoji.companionIdleMotionPreload.v4";
 
 const VRMA_BASE =
   "https://raw.githubusercontent.com/tk256ailab/vrm-viewer/main/VRMA";
-
-import { IDLE_LIFE_CLIP_POOL } from "./companionActionChoreography.js";
-import {
-  ONLINE_CALM_IDLE_ACTION,
-  resolveOnlineMotionClipFile,
-} from "./companionOnlineMotionClips.mjs";
 
 /** Full hosted library — prefetch all stems so any idle / reply clip is instant. */
 export const HOSTED_VRMA_STEMS = Object.freeze([
@@ -22,12 +30,12 @@ export const HOSTED_VRMA_STEMS = Object.freeze([
   "Goodbye",
   "LookAround",
   "Clapping",
-  "Blush",
   "Surprised",
   "Angry",
   "Sad",
   "Sleepy",
   "Jump",
+  "Blush",
 ]);
 
 /**
@@ -43,24 +51,41 @@ export function uniqueVrmaStemsForActions(actionIds) {
   return [...stems].sort();
 }
 
+/** Talk-mode loops + style-mapped clips to warm before first speech. */
+export const BOOT_TALK_WARM_CLIP_IDS = Object.freeze([
+  ...new Set([
+    ...ONLINE_TALK_LOOP_ACTIONS,
+    ...TALK_BACKGROUND_LIBRARY_ACTIONS,
+    ...Object.values(TALK_STYLE_LIBRARY_ACTIONS),
+    "nod",
+    "wave",
+    "clap",
+    "celebrate",
+  ]),
+]);
+
 /** VRMA files required for calm idle + idle-life one-shots. */
 export const IDLE_LIFE_VRMA_STEMS = Object.freeze(
   uniqueVrmaStemsForActions([
     ONLINE_CALM_IDLE_ACTION,
     ...IDLE_LIFE_CLIP_POOL,
+    ...BOOT_TALK_WARM_CLIP_IDS,
   ]),
 );
 
-/** Boot prefetch: entire library + every idle-life stem (deduped). */
+/** Boot prefetch: entire library + every idle-life / talk stem (deduped). */
 export const BOOT_IDLE_VRMA_STEMS = Object.freeze([
   ...new Set([...HOSTED_VRMA_STEMS, ...IDLE_LIFE_VRMA_STEMS]),
 ]);
 
-/** Procedural fallback — prime samplers for idle-life + common social clips. */
+/** Procedural fallback — prime samplers for idle-life, showcase, talk, and reply clips. */
 export const BOOT_IDLE_BODY_MOTION_IDS = Object.freeze([
   ...new Set([
     ONLINE_CALM_IDLE_ACTION,
     ...IDLE_LIFE_CLIP_POOL,
+    ...IDLE_SHOWCASE_POOL,
+    ...BOOT_TALK_WARM_CLIP_IDS,
+    ...PRIORITY_REPLY_MOTION_IDS,
     "wave",
     "clap",
     "celebrate",
@@ -77,6 +102,7 @@ export const BOOT_IDLE_WARM_CLIP_IDS = Object.freeze([
     ONLINE_CALM_IDLE_ACTION,
     ...BOOT_IDLE_BODY_MOTION_IDS,
     ...IDLE_LIFE_CLIP_POOL,
+    ...BOOT_TALK_WARM_CLIP_IDS,
   ]),
 ]);
 
@@ -106,6 +132,21 @@ export function primeBootIdleBodyMotions() {
     warmed.push(id);
   }
   return { ok: true, warmed: warmed.length, motions: warmed };
+}
+
+/**
+ * Warm parsed VRMA clips on a motion player (dedupes by URL internally).
+ * @param {{ warmClip?: (id: string) => unknown } | null | undefined} motionPlayer
+ * @param {readonly string[]} [actionIds]
+ */
+export function warmMotionClipBatch(motionPlayer, actionIds = BOOT_IDLE_WARM_CLIP_IDS) {
+  if (!motionPlayer?.warmClip) return { ok: false, warmed: 0 };
+  let warmed = 0;
+  for (const id of actionIds) {
+    void motionPlayer.warmClip(id);
+    warmed += 1;
+  }
+  return { ok: true, warmed };
 }
 
 /**

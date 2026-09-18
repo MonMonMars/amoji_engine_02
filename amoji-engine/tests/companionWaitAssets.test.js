@@ -27,11 +27,10 @@ describe("companionWaitAssets", () => {
     expect(WAIT_POSES_BY_PHASE.idle).toContain("shy");
     expect(WAIT_POSES_BY_PHASE.idle).toContain("stretch");
     expect(WAIT_POSES_BY_PHASE.idle).toContain("bow");
-    expect(WAIT_POSES_BY_PHASE.idle).not.toContain("thinking");
-    expect(WAIT_POSES_BY_PHASE.idle).not.toContain("shrug");
+    expect(WAIT_POSES_BY_PHASE.idle).toContain("thinking");
+    expect(WAIT_POSES_BY_PHASE.idle).toContain("wave");
     expect(WAIT_POSES_BY_PHASE.idle).not.toContain("walk");
     expect(WAIT_POSES_BY_PHASE.idle).not.toContain("jump");
-    expect(WAIT_POSES_BY_PHASE.idle).not.toContain("wave");
     expect(WAIT_POSES_BY_PHASE.idle).not.toContain("celebrate");
     expect(WAIT_POSES_BY_PHASE.idle).not.toContain("spin");
     expect(WAIT_POSES_BY_PHASE.idle).not.toContain("kungfu");
@@ -46,8 +45,13 @@ describe("companionWaitAssets", () => {
     expect(pickWaitPose("avatar-load", 0)).toBe("wave");
   });
 
-  it("preloads the calm idle life pool rather than the kungfu showcase", () => {
-    expect(collectIdlePreloadMotionIds()).toEqual([...IDLE_LIFE_CLIP_POOL]);
+  it("preloads idle life plus showcase and wait poses", () => {
+    const ids = collectIdlePreloadMotionIds();
+    for (const id of IDLE_LIFE_CLIP_POOL) {
+      expect(ids).toContain(id);
+    }
+    expect(ids).toContain("dance");
+    expect(ids.length).toBeGreaterThan(IDLE_LIFE_CLIP_POOL.length);
   });
 
   it("collects expression profiles for boot warm-up", () => {

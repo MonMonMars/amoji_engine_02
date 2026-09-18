@@ -17,10 +17,12 @@ export const TALK_STYLE_LIBRARY_ACTIONS = Object.freeze({
   question: "thinking",
   emphasize: "wiggle",
   celebrate: "wiggle",
-  thinking: "thinking",
+  thinking: "learning",
   nod: "thinking",
   point: "point",
-  listen: "thinking",
+  listen: "relax",
+  wave: "relax",
+  count: "point",
 });
 
 /** Clips that may loop as the background talk track. */
@@ -59,8 +61,11 @@ export function resolveTalkLibraryAction(talkStyle, emotion) {
 
   const emo = String(emotion || "neutral").toLowerCase();
   if (emo === "happy" && resolveOnlineMotionClipUrl("wiggle")) return "wiggle";
-  if (emo === "thinking" && resolveOnlineMotionClipUrl("thinking")) {
-    return "thinking";
+  if (emo === "sad" && resolveOnlineMotionClipUrl("relax")) return "relax";
+  if (emo === "surprised" && resolveOnlineMotionClipUrl("shy")) return "shy";
+  if (emo === "angry" && resolveOnlineMotionClipUrl("shrug")) return "shrug";
+  if (emo === "thinking" && resolveOnlineMotionClipUrl("learning")) {
+    return "learning";
   }
   if (resolveOnlineMotionClipUrl("thinking")) return "thinking";
   return null;

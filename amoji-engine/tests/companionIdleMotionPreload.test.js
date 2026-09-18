@@ -3,6 +3,7 @@ import {
   BOOT_IDLE_BODY_MOTION_IDS,
   BOOT_IDLE_VRMA_STEMS,
   BOOT_IDLE_WARM_CLIP_IDS,
+  BOOT_TALK_WARM_CLIP_IDS,
   IDLE_LIFE_VRMA_STEMS,
   bootIdleVrmaUrls,
   getBootIdleMotionPreloadPromise,
@@ -10,6 +11,7 @@ import {
   primeBootIdleBodyMotions,
   startBootIdleMotionPreload,
   uniqueVrmaStemsForActions,
+  warmMotionClipBatch,
 } from "../engine/companion/companionIdleMotionPreload.js";
 import { IDLE_LIFE_CLIP_POOL } from "../engine/companion/companionActionChoreography.js";
 import { ONLINE_CALM_IDLE_ACTION } from "../engine/companion/companionOnlineMotionClips.mjs";
@@ -19,8 +21,10 @@ describe("companionIdleMotionPreload", () => {
     vi.restoreAllMocks();
   });
 
-  it("preloads full VRMA library and idle-life warm clip ids", () => {
-    expect(BOOT_IDLE_BODY_MOTION_IDS.length).toBeGreaterThanOrEqual(12);
+  it("preloads full VRMA library and idle + talk warm clip ids", () => {
+    expect(BOOT_IDLE_BODY_MOTION_IDS.length).toBeGreaterThanOrEqual(40);
+    expect(BOOT_IDLE_WARM_CLIP_IDS.length).toBeGreaterThanOrEqual(50);
+    expect(BOOT_TALK_WARM_CLIP_IDS.length).toBeGreaterThanOrEqual(10);
     expect(BOOT_IDLE_VRMA_STEMS.length).toBe(11);
     expect(bootIdleVrmaUrls()).toHaveLength(BOOT_IDLE_VRMA_STEMS.length);
     expect(IDLE_LIFE_VRMA_STEMS.length).toBeGreaterThanOrEqual(6);
@@ -28,9 +32,24 @@ describe("companionIdleMotionPreload", () => {
       6,
     );
     expect(BOOT_IDLE_WARM_CLIP_IDS).toContain(ONLINE_CALM_IDLE_ACTION);
+    expect(BOOT_IDLE_WARM_CLIP_IDS).toContain("wiggle");
+    expect(BOOT_IDLE_WARM_CLIP_IDS).toContain("learning");
+    expect(BOOT_TALK_WARM_CLIP_IDS).toContain("relax");
     for (const id of IDLE_LIFE_CLIP_POOL) {
       expect(BOOT_IDLE_WARM_CLIP_IDS).toContain(id);
     }
+  });
+
+  it("warms motion clips in batch via player hook", () => {
+    const warmed = [];
+    const batch = warmMotionClipBatch({
+      warmClip: (id) => {
+        warmed.push(id);
+      },
+    });
+    expect(batch.ok).toBe(true);
+    expect(batch.warmed).toBe(BOOT_IDLE_WARM_CLIP_IDS.length);
+    expect(warmed.length).toBe(BOOT_IDLE_WARM_CLIP_IDS.length);
   });
 
   it("primes procedural idle pose samplers synchronously", () => {
