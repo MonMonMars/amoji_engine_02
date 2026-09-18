@@ -54,12 +54,12 @@ export function roleTagline(role, isEnglish = false) {
   if (isEnglish) {
     if (r === "boyfriend") return "Remembers you · voice · protective romance";
     if (r === "secretary") return "Tasks · drafts · calm productivity";
-    if (r === "pet") return "Feed · play · cozy daily care";
+    if (r === "pet") return "Playful voice · cozy daily companion";
     return "Chat · bond · 3D anime romance";
   }
   if (r === "boyfriend") return "記得你 · 語音 · 可靠浪漫";
   if (r === "secretary") return "任務 · 起草 · 高效秘書";
-  if (r === "pet") return "餵食 · 玩耍 · 治癒陪伴";
+  if (r === "pet") return "可愛語音 · 治癒日常陪伴";
   return "傾偈 · 羈絆 · 3D 動漫戀愛";
 }
 

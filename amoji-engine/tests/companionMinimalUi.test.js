@@ -30,9 +30,14 @@ describe("companionMinimalUi", () => {
     expect(html).toContain('id="settings-btn-speaker"');
   });
 
-  it("hides topbar and send button in minimal chrome css", () => {
+  it("hides topbar; send visible in text composer, sr-only in voice-only", () => {
     expect(minimalCss).toMatch(/companion-minimal-chrome \.topbar[\s\S]*display:\s*none/);
-    expect(minimalCss).toMatch(/companion-minimal-chrome \.composer \.send[\s\S]*clip:\s*rect/);
+    expect(minimalCss).toMatch(
+      /companion-minimal-chrome:not\(\.composer-always-visible\) \.composer \.send[\s\S]*clip:\s*rect/,
+    );
+    expect(minimalCss).toContain(
+      "body.companion-minimal-chrome.conversation-ui.composer-always-visible .composer .send",
+    );
     expect(minimalCss).toContain("grid-template-rows");
   });
 });

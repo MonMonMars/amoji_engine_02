@@ -38,6 +38,17 @@ describe("circular icon centering", () => {
     expect(css).toContain("padding: 0");
   });
 
+  it("shows visible send button in minimal chrome text composer", () => {
+    expect(minimalUi).toContain(
+      "body.companion-minimal-chrome.conversation-ui.composer-always-visible .composer .send",
+    );
+    expect(minimalUi).toMatch(/composer-always-visible \.composer \.send[\s\S]*width: 2\.65rem/);
+    expect(minimalUi).toContain("clip: auto");
+    expect(minimalUi).toContain(
+      "body.companion-minimal-chrome:not(.composer-always-visible) .composer .send",
+    );
+  });
+
   it("keeps composer round buttons centered under conversation-ui overrides", () => {
     const css = block(
       html,
@@ -53,6 +64,7 @@ describe("circular icon centering", () => {
 
   it("uses centered SVG glyphs instead of emoji in round buttons", () => {
     expect(html).toMatch(/id="btn-open-setup"[\s\S]{0,500}<svg class="btn-icon"/);
+    expect(html).toMatch(/id="btn-open-setup"[\s\S]{0,400}M5 7h14M5 12h14M5 17h14/);
     expect(html).toMatch(/id="send"[\s\S]{0,400}<svg class="btn-icon"/);
     expect(html).toContain('id="settings-btn-speaker"');
     expect(html).not.toMatch(/class="composer[^"]*"[\s\S]{0,1200}id="btn-speaker"/);
