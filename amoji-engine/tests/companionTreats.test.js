@@ -112,6 +112,7 @@ describe("companion treats", () => {
     expect(TREAT_FEED_DURATION_MS).toBeGreaterThan(2000);
     stop();
     expect(calls).toContainEqual(["prop-off"]);
-    expect(calls.at(-1)).toEqual(["stop"]);
+    expect(calls).toContainEqual(["emotion", "neutral"]);
+    expect(calls.at(-1)).toEqual(["emotion", "neutral"]);
   });
 });

@@ -94,6 +94,7 @@ export function startTreatPerformance(avatar, item, opts = {}) {
     avatar?.setEating?.(false);
     const current = avatar?.currentAction;
     if (!current || current === action) avatar?.stopAction?.();
+    avatar?.setEmotion?.("neutral");
   };
   const timer = globalThis.setTimeout?.(stop, durationMs);
   return () => {
