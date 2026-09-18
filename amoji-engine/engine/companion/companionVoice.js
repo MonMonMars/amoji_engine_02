@@ -42,6 +42,10 @@ import {
   normalizeTtsPerformance,
   resolveCompanionTtsProsody,
 } from "./companionTtsProsody.js";
+import {
+  pickPokeVocalization,
+  pickPreSentenceVocalization,
+} from "./companionVocalizations.js";
 
 export { formatMicError, MIC_ERROR_MESSAGES, requestMicPermission };
 
@@ -144,7 +148,7 @@ const EMOTION_PROSODY = {
  * @param {ReturnType<typeof normalizeTtsPerformance>} performance
  * @param {string} [lang]
  */
-let activeCharacterId = "amoji";
+let activeCharacterId = "nova";
 
 const resolveSpeakProsody = (text, performance, lang) =>
   resolveCompanionTtsProsody({
@@ -966,6 +970,107 @@ export function createCompanionVoice(opts = {}) {
   };
 
   /**
+   * Short expressive vocal (giggle, um, thinking hum) before a sentence.
+   * @param {string} text
+   * @param {ReturnType<typeof normalizeTtsPerformance>} performance
+   */
+  const speakVocalizationOnce = async (text, performance) => {
+    const clean = cleanSpeakText(text);
+    if (!clean || !speakerOn) return { ok: false, reason: "muted-or-empty" };
+
+    unlockAudioSync();
+    await ensureVoices();
+
+    const preset = cloudVoicePreset();
+    const perf = enrichTtsPerformance(performance, clean);
+    const lang = preset.lang || opts.lang || "zh-HK";
+    const emotion = perf.emotion || "neutral";
+
+    opts.onSpeakExpression?.({
+      unit: clean,
+      emotion,
+      nuance: perf.nuance,
+      talkStyle: perf.talkStyle,
+      speechEnergy: perf.speechEnergy,
+      vocalization: perf.vocalization || true,
+    });
+
+    const vocalEnergy = Math.min(Number(perf.speechEnergy) || 0.5, 0.68);
+
+    if (opts.cloudTtsUrl && (usingCloudTts || opts.preferCloudTts !== false)) {
+      try {
+        const res = await fetchCloudTts(opts.cloudTtsUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(
+            buildCloudTtsRequestBody({
+              text: clean,
+              performance: { ...perf, speechEnergy: vocalEnergy },
+              voice: preset.name,
+              lang,
+              characterId: activeCharacterId,
+            }),
+          ),
+        });
+        if (res.ok) {
+          const blob = await res.blob();
+          return playCloudAudioBlob(blob, clean, emotion, {
+            holdSpeaking: false,
+            nuance: perf.nuance,
+          });
+        }
+      } catch {
+        /* fall through to browser */
+      }
+    }
+
+    if (!synth) {
+      startLipSync(clean, null, {
+        speakFace: { emotion, nuance: perf.nuance },
+      });
+      await sleep(Math.min(900, 180 + clean.length * 95));
+      stopMouth();
+      return { ok: false, reason: "no-tts-for-vocal" };
+    }
+
+    synth.cancel();
+    const browserProsody = resolveSpeakProsody(clean, perf, lang).browser;
+    const utter = new SpeechSynthesisUtterance(clean);
+    if (voice) utter.voice = voice;
+    utter.lang = lang;
+    utter.rate = browserProsody.rate;
+    utter.pitch = browserProsody.pitch;
+    utter.volume = Math.min(0.88, browserProsody.volume * 0.92);
+
+    startLipSync(clean, utter, {
+      speakFace: { emotion, nuance: perf.nuance },
+    });
+
+    const vocalResult = await new Promise((resolve) => {
+      let settled = false;
+      const finish = (result) => {
+        if (settled) return;
+        settled = true;
+        resolve(result);
+      };
+      utter.onend = () => finish({ ok: true, vocal: true });
+      utter.onerror = () => finish({ ok: false, reason: "vocal-tts-error" });
+      try {
+        synth.speak(utter);
+      } catch (err) {
+        finish({ ok: false, reason: err?.message || "vocal-speak-failed" });
+        return;
+      }
+      setTimeout(
+        () => finish({ ok: true, vocal: true, timedOut: true }),
+        2200,
+      );
+    });
+    stopMouth();
+    return vocalResult;
+  };
+
+  /**
    * Core TTS playback (no mic pause/resume — used by stream queue).
    * @param {string} text
    * @param {string | ReturnType<typeof normalizeTtsPerformance>} [performance]
@@ -981,13 +1086,19 @@ export function createCompanionVoice(opts = {}) {
           : { ...CHATGPT_STYLE_TTS, ...performance }
         : { ...CHATGPT_STYLE_TTS, emotion: performance || "neutral" };
     const perf = enrichTtsPerformance(rawPerf, clean);
-    const prosody = resolveSpeakProsody(
-      clean,
-      perf,
-      voice?.lang || opts.lang || "zh-HK",
-    );
+    const langCode = String(voice?.lang || opts.lang || "zh-HK");
+    const isEnglish = langCode.startsWith("en");
+    const prosody = resolveSpeakProsody(clean, perf, langCode);
 
     stopThinkingAudio();
+
+    if (!rawPerf.skipVocalization && speakerOn) {
+      const vocal = pickPreSentenceVocalization(perf, clean, { isEnglish });
+      if (vocal?.text) {
+        await speakVocalizationOnce(vocal.text, vocal.performance);
+        await sleep(vocal.pauseMs ?? 150);
+      }
+    }
     try {
       if (!speakerOn) {
         startLipSync(clean, null, {
@@ -1126,6 +1237,34 @@ export function createCompanionVoice(opts = {}) {
 
   const speak = (text, performance = "neutral") => {
     const next = speakChain.then(() => speakOnce(text, performance));
+    speakChain = next.catch(() => {});
+    return next;
+  };
+
+  /** Poke/tap: playful vocal then line (no double pre-sentence vocal on the line). */
+  const speakPoke = (text, performance = "neutral") => {
+    const next = speakChain.then(async () => {
+      const pauseMic = mustPauseMicForTts();
+      if (pauseMic) pauseCapture();
+      try {
+        const langCode = String(voice?.lang || opts.lang || "zh-HK");
+        const isEnglish = langCode.startsWith("en");
+        if (speakerOn) {
+          const vocal = pickPokeVocalization(isEnglish);
+          if (vocal?.text) {
+            await speakVocalizationOnce(vocal.text, vocal.performance);
+            await sleep(vocal.pauseMs ?? 120);
+          }
+        }
+        const perf =
+          typeof performance === "object" && performance !== null
+            ? { ...performance, skipVocalization: true }
+            : { emotion: performance || "happy", skipVocalization: true };
+        return speakOnceCore(text, perf);
+      } finally {
+        if (pauseMic) resumeCapture();
+      }
+    });
     speakChain = next.catch(() => {});
     return next;
   };
@@ -1737,7 +1876,7 @@ export function createCompanionVoice(opts = {}) {
   };
 
   const setCharacterId = (nextId) => {
-    activeCharacterId = String(nextId || "amoji").toLowerCase();
+    activeCharacterId = String(nextId || "nova").toLowerCase();
     if (!usingCloudTts && synth) {
       const langCode = String(opts.lang || voice?.lang || "zh-HK").startsWith("en")
         ? "en"
@@ -1797,6 +1936,7 @@ export function createCompanionVoice(opts = {}) {
     primeAudio,
     primeMicPermission,
     speak,
+    speakPoke,
     speakThinking,
     startThinkingLoop,
     stopThinkingLoop,

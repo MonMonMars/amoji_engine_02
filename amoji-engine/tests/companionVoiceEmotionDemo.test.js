@@ -6,12 +6,16 @@ import {
 import { rankedEnglishVoicesForEmotion } from "../engine/companion/companionVoiceProfiles.js";
 
 describe("companionVoiceEmotionDemo", () => {
-  it("defines four moods per language", () => {
+  it("defines mood + vocalization demos per language", () => {
     expect(Object.keys(EMOTION_DEMO_LINES.en)).toEqual([
       "happy",
       "sad",
       "surprised",
       "thinking",
+      "giggle",
+      "laugh",
+      "smile",
+      "um",
     ]);
     expect(EMOTION_DEMO_LINES.yue.happy.emotion).toBe("happy");
   });
