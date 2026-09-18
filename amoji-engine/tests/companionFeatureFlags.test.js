@@ -9,8 +9,8 @@ describe("companionFeatureFlags", () => {
     expect(COMPANION_CARE_ENABLED).toBe(false);
   });
 
-  it("enables care automatically in pet mode", () => {
-    expect(isCompanionCareEnabledForRole("pet")).toBe(true);
+  it("keeps care off in all roles until re-enabled", () => {
+    expect(isCompanionCareEnabledForRole("pet")).toBe(false);
     expect(isCompanionCareEnabledForRole("girlfriend")).toBe(false);
     expect(isCompanionCareEnabledForRole("secretary")).toBe(false);
   });

@@ -34,7 +34,7 @@ registerRoute("hub", (ctx) => {
         <h1>${en ? "Home" : "主頁"}</h1>
         <div style="color:var(--muted);font-size:0.82rem">${roleEmoji(role)} ${roleLabel(role, en)} · ${charName || "—"} · ${bond.label}</div>
       </div>
-      <div class="chip">🪙 ${treats.coins}</div>
+      <div class="chip" hidden aria-hidden="true">🪙 ${treats.coins}</div>
     </div>
     <div class="hub-grid">
       <button type="button" class="hub-card" data-go="companion">
@@ -49,13 +49,6 @@ registerRoute("hub", (ctx) => {
         <div>
           <h2 class="hub-card__title">${en ? "Secretary" : "秘書"}</h2>
           <p class="hub-card__desc">${en ? "Tasks · Today · 3D avatar" : "任務 · Today · 3D 同伴"}</p>
-        </div>
-      </button>
-      <button type="button" class="hub-card" data-go="pet">
-        <div class="hub-card__icon">🍰</div>
-        <div>
-          <h2 class="hub-card__title">${en ? "Pet Care" : "寵物照顧"}</h2>
-          <p class="hub-card__desc">${en ? "Feed · play · bond" : "餵食 · 玩耍 · 羈絆"}</p>
         </div>
       </button>
       <button type="button" class="hub-card" data-go="chase">
