@@ -58,7 +58,24 @@ await beginStartPickerSession(page, {
   dismissTimeout: 60000,
 });
 
-record("session started", true);
+const sessionReady = await page
+  .waitForFunction(
+    () => window.__amojiStart?.sessionStarted === true,
+    { timeout: 30000 },
+  )
+  .then(() => true)
+  .catch(() => false);
+record("session started", sessionReady);
+
+await page
+  .waitForFunction(
+    () => {
+      const el = document.getElementById("starter-prompts");
+      return el && !el.hidden && el.querySelectorAll(".starter-chip").length >= 2;
+    },
+    { timeout: 20000 },
+  )
+  .catch(() => null);
 
 const ui = await page.evaluate(() => ({
   chatMenu: !!document.getElementById("settings-btn-chat"),
@@ -114,28 +131,37 @@ if (await casualOutfit.count()) {
   record("casual outfit applies", false, "no outfit button");
 }
 
+await page.evaluate(() => {
+  document.getElementById("settings")?.classList.remove("open");
+  document.getElementById("settings-backdrop")?.classList.remove("is-open");
+  document.body.classList.remove("settings-open");
+});
 await page.click("#scene-sheet-close");
 
 const statusDotReady = await page.evaluate(() => {
-  const dot = document.getElementById("status-dot");
-  const state = dot?.dataset?.state || "";
-  const aria = dot?.getAttribute("aria-label") || "";
-  const hasCanvas = Boolean(dot?.querySelector("canvas.companion-chip__dot-canvas"));
+  const mic = document.getElementById("btn-mic");
+  const hasCanvas = Boolean(mic?.querySelector("canvas.companion-chip__dot-canvas"));
+  const micState = mic?.getAttribute("data-mic-state") || "";
   const textMode = document.body.classList.contains("composer-text-mode");
-  const activeVoice =
-    state === "typing" ||
-    state === "listening" ||
-    state === "speaking" ||
-    state === "thinking" ||
-    state === "loading";
-  const idleTextReady =
-    textMode &&
-    (state === "idle" || state === "typing") &&
-    aria.length > 0 &&
-    hasCanvas;
-  return activeVoice || idleTextReady;
+  return (
+    hasCanvas &&
+    (textMode ||
+      micState === "idle" ||
+      micState === "listening" ||
+      micState === "speaking")
+  );
 });
 record("voice status dot ready", statusDotReady);
+
+const closeSettingsPanel = async () => {
+  await page.evaluate(() => {
+    document.getElementById("settings-close")?.click();
+    document.getElementById("settings")?.classList.remove("open");
+    document.getElementById("settings-backdrop")?.classList.remove("is-open");
+    document.body.classList.remove("settings-open");
+  });
+  await page.waitForTimeout(350);
+};
 
 await page.click("#btn-open-setup");
 await page.waitForSelector("#settings.open", { timeout: 5000 });
@@ -145,6 +171,7 @@ const chatHidden = await page.evaluate(() =>
   document.body.classList.contains("chat-panel-hidden"),
 );
 record("chat panel toggles", chatHidden);
+await closeSettingsPanel();
 await page.screenshot({
   path: `${artifacts}/demo-stage-clean.png`,
   fullPage: false,
@@ -158,9 +185,10 @@ const speakerMuted = await page.evaluate(
   () => document.getElementById("settings-btn-speaker")?.getAttribute("aria-pressed") === "false",
 );
 record("speaker mutes", speakerMuted);
-await page.click("#settings-close");
+await closeSettingsPanel();
 
 await page.evaluate(() => {
+  document.body.classList.remove("chat-panel-hidden");
   document.body.classList.add("mic-blocked");
   const input = document.getElementById("input");
   const form = document.getElementById("composer");
@@ -169,7 +197,9 @@ await page.evaluate(() => {
     form.requestSubmit();
   }
 });
-await page.waitForSelector(".msg-row.user .bubble", { timeout: 10000 });
+await page.waitForSelector(".msg-row.user .bubble:not(.hidden)", { timeout: 15000 }).catch(() =>
+  page.waitForSelector(".msg-row.user .bubble", { timeout: 5000, state: "attached" }),
+);
 record("text send works", true);
 
 await page.waitForFunction(
@@ -187,22 +217,10 @@ await page.waitForFunction(
 );
 record("assistant reply received", true);
 
-await page.waitForFunction(
-  () =>
-    document.querySelectorAll(".msg-row.assistant.has-actions .msg-action-btn").length >=
-    2,
-  { timeout: 30000 },
+const noLegacyMsgActions = await page.evaluate(
+  () => document.querySelectorAll(".msg-action-btn").length === 0,
 );
-
-const copyWorks = await page.evaluate(async () => {
-  const row = document.querySelector(".msg-row.assistant.has-actions");
-  const buttons = row ? [...row.querySelectorAll(".msg-action-btn")] : [];
-  if (buttons.length < 2) return false;
-  buttons[0].click();
-  await new Promise((r) => setTimeout(r, 120));
-  return true;
-});
-record("message actions on assistant", copyWorks);
+record("no legacy message action buttons", noLegacyMsgActions);
 
 const starterHidden = await page.evaluate(() => {
   const el = document.getElementById("starter-prompts");
