@@ -1,16 +1,17 @@
 /**
  * Fast path — show character picker before the heavy companion module graph loads.
  */
+import { createCompanionStartPicker } from "./companionCharacterPicker.js";
+import { playCompanionCardTapFx } from "./companionUiGacha.js";
 import { pickerCopy } from "./companionPickerChrome.js";
 
 export const COMPANION_EARLY_START_PICKER_SCHEMA =
   "amoji.companionEarlyStartPicker.v1";
 
 /**
- * @param {(path: string) => Promise<unknown>} ami
  * @param {{ params?: URLSearchParams, root?: HTMLElement | null }} [opts]
  */
-export async function bootEarlyStartPicker(ami, opts = {}) {
+export async function bootEarlyStartPicker(opts = {}) {
   const params =
     opts.params ||
     new URLSearchParams(globalThis.location?.search || "");
@@ -20,21 +21,15 @@ export async function bootEarlyStartPicker(ami, opts = {}) {
 
   const isEnglish = params.get("lang") === "en";
   const selectedId = String(params.get("character") || "nova").toLowerCase();
-  const copy = pickerCopy(isEnglish);
 
-  const [pickerMod, gachaMod] = await Promise.all([
-    ami("../amoji-engine/engine/companion/companionCharacterPicker.js"),
-    ami("../amoji-engine/engine/companion/companionUiGacha.js"),
-  ]);
-
-  const createCompanionStartPicker = pickerMod.createCompanionStartPicker;
-  const playCompanionCardSelectFx = gachaMod.playCompanionCardSelectFx;
+  const splash = document.getElementById("amoji-boot-splash");
+  splash?.setAttribute("aria-busy", "true");
 
   const picker = createCompanionStartPicker({
     root: opts.root || document.body,
     isEnglish,
     selectedId,
-    onCardTapFx: playCompanionCardSelectFx,
+    onCardTapFx: playCompanionCardTapFx,
     onStart: (nextId) => {
       globalThis.__amojiUnlockAudio?.();
       globalThis.__amojiHideLoading?.();
@@ -59,6 +54,16 @@ export async function bootEarlyStartPicker(ami, opts = {}) {
   );
   picker.show();
   document.body.classList.add("companion-start-pending", "companion-picker-open");
+  await new Promise((resolve) => {
+    requestAnimationFrame(() => requestAnimationFrame(resolve));
+  });
+  splash?.remove();
 
   return picker;
+}
+
+/** @deprecated use bootEarlyStartPicker without ami */
+export async function bootEarlyStartPickerLegacy(ami, opts = {}) {
+  void ami;
+  return bootEarlyStartPicker(opts);
 }

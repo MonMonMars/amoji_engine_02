@@ -9,8 +9,10 @@ describe("companionEarlyStartPicker", () => {
     expect(COMPANION_EARLY_START_PICKER_SCHEMA).toMatch(/earlyStartPicker/i);
   });
 
-  it("boots picker before heavy modules when pick=1", async () => {
+  it("boots picker and removes boot splash when pick=1", async () => {
     if (typeof document === "undefined") return;
+    document.body.innerHTML =
+      '<div id="amoji-boot-splash"><p>Loading</p></div>';
     globalThis.__amojiStart = {
       ready: false,
       run: null,
@@ -21,22 +23,18 @@ describe("companionEarlyStartPicker", () => {
     globalThis.__amojiHideLoading = () => {};
     globalThis.__amojiStartWithCharacter = () => {};
 
-    const ami = (path) =>
-      import(path.replace("../amoji-engine/engine/", "../engine/"));
     const params = new URLSearchParams("lang=en&pick=1&automic=0");
-    const picker = await bootEarlyStartPicker(ami, { params });
+    const picker = await bootEarlyStartPicker({ params });
     expect(picker).toBeTruthy();
     expect(picker.element.querySelector(".picker-begin-btn")).toBeTruthy();
-    expect(document.getElementById("start-character-picker")).toBeTruthy();
+    expect(document.getElementById("amoji-boot-splash")).toBeNull();
     picker.destroy();
     document.body.classList.remove("companion-start-pending", "companion-picker-open");
   });
 
   it("skips when autostart=1", async () => {
-    const ami = (path) =>
-      import(path.replace("../amoji-engine/engine/", "../engine/"));
     const params = new URLSearchParams("autostart=1");
-    const picker = await bootEarlyStartPicker(ami, { params });
+    const picker = await bootEarlyStartPicker({ params });
     expect(picker).toBeNull();
   });
 });
