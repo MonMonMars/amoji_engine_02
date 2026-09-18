@@ -5,6 +5,7 @@ import {
   drawEmotionOrbFrame,
   lerpHue,
   prefersReducedMotion,
+  resolveCloudOrbPalette,
   smoothStep,
 } from "../engine/companion/companionEmotionOrbCanvas.js";
 
@@ -19,7 +20,14 @@ describe("companionEmotionOrbCanvas", () => {
   it("builds spectrum bar levels from volume", () => {
     const levels = buildSpectrumLevels([], 0.8, 1.2, 8);
     expect(levels).toHaveLength(8);
-    expect(levels.every((v) => v >= 0.08 && v <= 1)).toBe(true);
+    expect(levels.every((v) => v >= 0.06 && v <= 0.82)).toBe(true);
+  });
+
+  it("maps gel hues to airy cloud palette", () => {
+    const cloud = resolveCloudOrbPalette(38, 88, 58);
+    expect(cloud.light).toBeGreaterThan(80);
+    expect(cloud.sat).toBeLessThan(50);
+    expect(cloud.mistLight).toBeGreaterThan(cloud.light);
   });
 
   it("draws orb frame without throwing", () => {
