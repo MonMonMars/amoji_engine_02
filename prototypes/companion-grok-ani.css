@@ -460,10 +460,16 @@ body.conversation-ui.theme-grok-ani .companion-chip__dot--legacy {
   display: none !important;
 }
 
-.theme-grok-ani .mic-btn.mini-emotion-ball {
-  background: transparent !important;
-  border-color: rgba(255, 255, 255, 0.22) !important;
-  filter: drop-shadow(0 0 12px hsl(var(--mini-ball-hue, 210) 42% 80% / 0.42));
+.theme-grok-ani .mic-btn.mini-emotion-ball[data-mic-state="idle"],
+.theme-grok-ani .mic-btn.mini-emotion-ball[data-mic-state="disabled"] {
+  background: rgba(16, 20, 28, 0.94) !important;
+  border-color: rgba(255, 255, 255, 0.16) !important;
+  filter: none !important;
+}
+
+.theme-grok-ani .mic-btn.mini-emotion-ball[data-mic-state="listening"],
+.theme-grok-ani .mic-btn.mini-emotion-ball[data-mic-state="speaking"] {
+  filter: drop-shadow(0 0 14px hsl(212 72% 50% / 0.42));
 }
 
 .theme-grok-ani .mic-btn.mini-emotion-ball .companion-chip__dot-canvas {

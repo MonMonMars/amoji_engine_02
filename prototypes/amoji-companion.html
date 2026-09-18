@@ -8,7 +8,7 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji · Companion</title>
     <script>
-      window.__amojiBuild = "2026-09-18-v223-idle-variety";
+      window.__amojiBuild = "2026-09-18-v224-mic-button-states";
     </script>
     <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-18-v212-motion-library-complete"></script>
     <link
@@ -1433,14 +1433,14 @@
           color 0.2s ease;
       }
 
-      /* ChatGPT-style cloud orb lives inside the mic button */
+      /* ChatGPT-style mic: gray waveform when off, blue live orb + bars when on */
       .mic-btn.mini-emotion-ball {
-        background: transparent !important;
-        border-color: rgba(255, 255, 255, 0.2) !important;
-        box-shadow:
-          0 0 0 1px rgba(255, 255, 255, 0.06) inset,
-          0 10px 28px hsl(var(--mini-ball-hue, 210) 38% 72% / 0.22) !important;
-        filter: drop-shadow(0 0 10px hsl(var(--mini-ball-hue, 210) 42% 80% / 0.38));
+        transition:
+          background 0.22s ease,
+          border-color 0.22s ease,
+          box-shadow 0.22s ease,
+          filter 0.22s ease,
+          transform 0.12s ease;
       }
 
       .mic-btn.mini-emotion-ball .companion-chip__dot-canvas {
@@ -1451,19 +1451,104 @@
         height: 100%;
         border-radius: 50%;
         pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.22s ease;
       }
 
       .mic-btn.mini-emotion-ball .mic-btn__aura,
-      .mic-btn.mini-emotion-ball .mic-btn__ring,
-      .mic-btn.mini-emotion-ball .mic-btn__wave,
-      .mic-btn.mini-emotion-ball .mic-btn__icon {
+      .mic-btn.mini-emotion-ball .mic-btn__ring {
         display: none !important;
       }
 
+      .mic-btn.mini-emotion-ball .mic-btn__wave,
+      .mic-btn.mini-emotion-ball .mic-btn__icon {
+        position: relative;
+        z-index: 2;
+      }
+
+      /* Mic OFF — muted circle + static waveform (ChatGPT idle) */
+      .mic-btn.mini-emotion-ball[data-mic-state="idle"],
+      .mic-btn.mini-emotion-ball[data-mic-state="disabled"] {
+        background: rgba(16, 20, 28, 0.94) !important;
+        border-color: rgba(255, 255, 255, 0.16) !important;
+        box-shadow:
+          0 0 0 1px rgba(255, 255, 255, 0.04) inset,
+          0 8px 22px rgba(0, 0, 0, 0.28) !important;
+        filter: none !important;
+        color: rgba(255, 255, 255, 0.72);
+      }
+
+      .mic-btn.mini-emotion-ball[data-mic-state="idle"] .companion-chip__dot-canvas,
+      .mic-btn.mini-emotion-ball[data-mic-state="disabled"] .companion-chip__dot-canvas {
+        opacity: 0;
+      }
+
+      .mic-btn.mini-emotion-ball[data-mic-state="idle"] .mic-btn__icon,
+      .mic-btn.mini-emotion-ball[data-mic-state="disabled"] .mic-btn__icon {
+        display: none !important;
+      }
+
+      .mic-btn.mini-emotion-ball[data-mic-state="idle"] .mic-btn__wave,
+      .mic-btn.mini-emotion-ball[data-mic-state="disabled"] .mic-btn__wave {
+        display: flex !important;
+        opacity: 0.52 !important;
+      }
+
+      .mic-btn.mini-emotion-ball[data-mic-state="idle"] .mic-btn__wave i,
+      .mic-btn.mini-emotion-ball[data-mic-state="disabled"] .mic-btn__wave i {
+        animation: none !important;
+        height: 7px;
+        background: rgba(255, 255, 255, 0.62);
+      }
+
+      .mic-btn.mini-emotion-ball[data-mic-state="idle"] .mic-btn__wave i:nth-child(1),
+      .mic-btn.mini-emotion-ball[data-mic-state="idle"] .mic-btn__wave i:nth-child(5),
+      .mic-btn.mini-emotion-ball[data-mic-state="disabled"] .mic-btn__wave i:nth-child(1),
+      .mic-btn.mini-emotion-ball[data-mic-state="disabled"] .mic-btn__wave i:nth-child(5) {
+        height: 5px;
+      }
+
+      .mic-btn.mini-emotion-ball[data-mic-state="idle"] .mic-btn__wave i:nth-child(3),
+      .mic-btn.mini-emotion-ball[data-mic-state="disabled"] .mic-btn__wave i:nth-child(3) {
+        height: 9px;
+      }
+
+      /* Mic ON — blue live button + animated waveform over cloud orb */
       .mic-btn.mini-emotion-ball[data-mic-state="listening"],
       .mic-btn.mini-emotion-ball[data-mic-state="speaking"] {
-        transform: scale(calc(1 + var(--mic-level) * 0.08));
-        border-color: rgba(255, 255, 255, 0.28) !important;
+        background: var(--mic-surface) !important;
+        border-color: var(--mic-border) !important;
+        box-shadow:
+          0 0 0 1px rgba(255, 255, 255, 0.08) inset,
+          0 0 calc(14px + var(--mic-level, 0) * 16px) var(--mic-glow-a),
+          0 8px 24px rgba(0, 0, 0, 0.32) !important;
+        filter: none !important;
+        color: #fff;
+        transform: scale(calc(1 + var(--mic-level, 0) * 0.08));
+      }
+
+      .mic-btn.mini-emotion-ball[data-mic-state="listening"] .companion-chip__dot-canvas,
+      .mic-btn.mini-emotion-ball[data-mic-state="speaking"] .companion-chip__dot-canvas {
+        opacity: 0.92;
+      }
+
+      .mic-btn.mini-emotion-ball[data-mic-state="listening"] .mic-btn__icon,
+      .mic-btn.mini-emotion-ball[data-mic-state="speaking"] .mic-btn__icon {
+        display: none !important;
+      }
+
+      .mic-btn.mini-emotion-ball[data-mic-state="listening"] .mic-btn__wave,
+      .mic-btn.mini-emotion-ball[data-mic-state="speaking"] .mic-btn__wave {
+        display: flex !important;
+        opacity: calc(0.72 + var(--mic-level, 0) * 0.28) !important;
+        mix-blend-mode: screen;
+      }
+
+      .mic-btn.mini-emotion-ball[data-mic-state="speaking"] {
+        box-shadow:
+          0 0 0 1px rgba(255, 255, 255, 0.08) inset,
+          0 0 calc(10px + var(--mic-level, 0) * 12px) var(--mic-glow-b),
+          0 8px 24px rgba(0, 0, 0, 0.32) !important;
       }
 
       .mic-btn:hover:not(:disabled) {
@@ -1859,7 +1944,7 @@
         padding-top: 0.15rem;
       }
 
-      .stage.mic-mode #btn-mic {
+      .stage.mic-mode #btn-mic:not(.mini-emotion-ball) {
         position: fixed;
         left: 50%;
         bottom: max(5.95rem, calc(env(safe-area-inset-bottom) + 4.75rem));
@@ -1874,13 +1959,13 @@
         z-index: 13;
       }
 
-      .stage.mic-mode #btn-mic .mic-btn__aura,
-      .stage.mic-mode #btn-mic .mic-btn__ring,
-      .stage.mic-mode #btn-mic .mic-btn__wave {
+      .stage.mic-mode #btn-mic:not(.mini-emotion-ball) .mic-btn__aura,
+      .stage.mic-mode #btn-mic:not(.mini-emotion-ball) .mic-btn__ring,
+      .stage.mic-mode #btn-mic:not(.mini-emotion-ball) .mic-btn__wave {
         display: none !important;
       }
 
-      .stage.mic-mode #btn-mic .mic-btn__icon {
+      .stage.mic-mode #btn-mic:not(.mini-emotion-ball) .mic-btn__icon {
         opacity: 0;
       }
 
@@ -2035,14 +2120,14 @@
         z-index: 1;
       }
 
-      body.conversation-ui.composer-always-visible .stage.mic-mode #btn-mic.mini-emotion-ball {
-        background: transparent !important;
-        border: 1px solid rgba(255, 255, 255, 0.2) !important;
+      body.conversation-ui.composer-always-visible .stage.mic-mode #btn-mic.mini-emotion-ball[data-mic-state="idle"] {
+        background: rgba(16, 20, 28, 0.94) !important;
+        border: 1px solid rgba(255, 255, 255, 0.16) !important;
       }
 
       body.conversation-ui.composer-always-visible .stage.mic-mode #btn-mic[data-mic-state="listening"],
       body.conversation-ui.composer-always-visible .stage.mic-mode #btn-mic[data-mic-state="speaking"] {
-        transform: scale(calc(1 + var(--mic-level) * 0.08));
+        transform: scale(calc(1 + var(--mic-level, 0) * 0.08));
       }
 
       body.conversation-ui .topbar {

@@ -184,6 +184,17 @@ describe("companionEmotionBall", () => {
     const idleA = computeMiniEmotionBallFrame({ state: "idle", time: 0 });
     const idleB = computeMiniEmotionBallFrame({ state: "idle", time: 1.08 });
     expect(Math.abs(idleB.volume - idleA.volume)).toBeGreaterThan(0.1);
+    const micOff = computeMiniEmotionBallFrame({ micStandby: true });
+    expect(micOff.volume).toBe(0);
+    expect(micOff.glow).toBe(0);
+    expect(micOff.live).toBe(false);
+    const liveBlue = computeMiniEmotionBallFrame({
+      state: "listening",
+      liveBlue: true,
+      level: 0.2,
+    });
+    expect(liveBlue.hue).toBe(212);
+    expect(liveBlue.sat).toBeGreaterThan(60);
     const thinking = computeMiniEmotionBallFrame({ state: "thinking", time: 0.4 });
     expect(thinking.thinking).toBe(true);
     expect(thinking.volume).toBeGreaterThan(0.15);

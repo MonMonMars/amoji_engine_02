@@ -432,7 +432,33 @@ export function computeMiniEmotionBallFrame(opts = {}) {
   const time = Number(opts.time) || 0;
   const raw = clamp(Number(opts.level) || 0, 0, 1);
   const reducedMotion = Boolean(opts.reducedMotion);
+  const micStandby = Boolean(opts.micStandby);
   const theme = resolveMicButtonTheme({ emotion, nuance });
+
+  if (micStandby) {
+    return {
+      emotion,
+      nuance,
+      state: "idle",
+      theme,
+      hue: 218,
+      sat: 10,
+      light: 52,
+      volume: 0,
+      scale: 1,
+      wobble: 0,
+      squash: 1,
+      spin: 0,
+      glow: 0,
+      bright: 0.84,
+      live: false,
+      thinking: false,
+      loading: false,
+      typing: false,
+      disabled: false,
+      reducedMotion: true,
+    };
+  }
   const speaking = state === "speaking";
   const listening = state === "listening";
   const loading = state === "loading";
@@ -440,6 +466,7 @@ export function computeMiniEmotionBallFrame(opts = {}) {
   const typing = state === "typing";
   const disabled = state === "disabled" || state === "mic-blocked";
   const live = speaking || listening;
+  const liveBlue = Boolean(opts.liveBlue) && listening;
   const breath = reducedMotion ? 0.5 : Math.sin(time * 1.45) * 0.5 + 0.5;
   const thinkWave = reducedMotion
     ? 0.5
@@ -496,14 +523,21 @@ export function computeMiniEmotionBallFrame(opts = {}) {
         ? 0.98 + thinkWave * 0.14
         : 0.94 + breath * 0.1;
 
+  const hue = liveBlue ? 212 : theme.hue;
+  const sat = liveBlue
+    ? Math.max(theme.sat, 62)
+    : disabled
+      ? Math.min(theme.sat, 22)
+      : theme.sat;
+
   return {
     emotion,
     nuance,
     state,
     theme,
-    hue: theme.hue,
-    sat: disabled ? Math.min(theme.sat, 22) : theme.sat,
-    light: disabled ? Math.min(theme.light, 44) : theme.light,
+    hue,
+    sat,
+    light: disabled ? Math.min(theme.light, 44) : liveBlue ? 50 : theme.light,
     volume,
     scale,
     wobble,
@@ -655,6 +689,32 @@ export function createMiniEmotionBall(el, opts = {}) {
   const paint = (timestamp) => {
     if (!startTime) startTime = timestamp;
     const time = (timestamp - startTime) / 1000;
+    const micState = String(el.dataset?.micState || "idle").toLowerCase();
+    const micLive = micState === "listening" || micState === "speaking";
+    if (keepHostRole && !micLive) {
+      displayVolume = smoothStep(displayVolume, 0, 0.35);
+      lastFrame = computeMiniEmotionBallFrame({
+        emotion,
+        nuance,
+        state: "idle",
+        level: 0,
+        micStandby: true,
+      });
+      drawnFrame = lastFrame;
+      applyMiniEmotionBallFrame(el, lastFrame, {
+        isEnglish: isEnglish(),
+        keepHostRole,
+      });
+      if (ctx && canvas) {
+        const dpr = Math.min(3, Math.max(1, globalThis.devicePixelRatio || 1));
+        ctx.setTransform?.(dpr, 0, 0, dpr, 0, 0);
+        ctx.clearRect(0, 0, canvas.width / dpr, canvas.height / dpr);
+      }
+      rafId = typeof globalThis.requestAnimationFrame === "function"
+        ? globalThis.requestAnimationFrame(paint)
+        : 0;
+      return;
+    }
     displayVolume = smoothStep(
       displayVolume,
       targetVolume,
@@ -667,6 +727,7 @@ export function createMiniEmotionBall(el, opts = {}) {
       level: displayVolume,
       time: reducedMotion ? 0 : time,
       reducedMotion,
+      liveBlue: keepHostRole && micState === "listening",
     });
     displayHue = lerpHue(displayHue, lastFrame.hue, 0.22);
     displaySat = smoothStep(displaySat, lastFrame.sat, 0.22);
