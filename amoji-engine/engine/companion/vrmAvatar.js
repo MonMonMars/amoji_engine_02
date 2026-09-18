@@ -987,6 +987,7 @@ export async function createVrmAvatar(opts) {
   const stopAction = () => {
     treatProp.detach();
     const ok = bodyMotion.stopAction();
+    emotion = bodyMotion.emotion;
     applyEmotionExpressions(emotion);
     restorePlantedIdle();
     bodyMotion.resetIdleLife?.();

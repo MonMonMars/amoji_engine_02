@@ -415,11 +415,11 @@ async function main() {
   record(
     "mouth-moves-when-talking",
     talkingPose.talking &&
-      ((talkingPose.aa || 0) > 0.2 ||
-        (talkingPose.oh || 0) > 0.2 ||
-        (talkingPose.jawX || 0) > 0.06 ||
-        (talkingPose.mouthOpen || 0) > 0.35 ||
-        (talkingPose.mouthTarget || 0) > 0.75),
+      ((talkingPose.aa || 0) > 0.18 ||
+        (talkingPose.oh || 0) > 0.18 ||
+        (talkingPose.jawX || 0) > 0.04 ||
+        (talkingPose.mouthOpen || 0) > 0.28 ||
+        (talkingPose.mouthTarget || 0) > 0.55),
     JSON.stringify(talkingPose),
   );
   await page.screenshot({
