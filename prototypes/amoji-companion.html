@@ -8,9 +8,9 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji · Companion</title>
     <script>
-      window.__amojiBuild = "2026-09-18-v246-idle-fix";
+      window.__amojiBuild = "2026-09-18-v248-care-mobile";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-18-v246-idle-fix"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-18-v248-care-mobile"></script>
     <link
       rel="prefetch"
       href="/prototypes/assets/companion-char-nova.png"
@@ -158,12 +158,13 @@
 
       .care-tools-stack {
         position: fixed;
-        z-index: 41;
+        z-index: 11020;
         left: calc(100vw - 3.5rem);
         top: calc(100vh - 8.5rem);
         width: 2.85rem;
         height: 2.85rem;
         touch-action: none;
+        overflow: visible;
       }
 
       .care-tools-stack.is-dragging {
@@ -191,6 +192,12 @@
         display: grid;
         place-items: center;
         transition: transform 0.18s ease, box-shadow 0.18s ease;
+        touch-action: manipulation;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      .care-tools-toggle:active {
+        transform: scale(0.94);
       }
 
       .care-tools-toggle.is-open {
@@ -219,7 +226,7 @@
 
       .care-tools-menu {
         position: absolute;
-        z-index: 1;
+        z-index: 3;
         left: 50%;
         bottom: calc(100% + 0.45rem);
         transform: translateX(-50%);
@@ -234,6 +241,23 @@
         backdrop-filter: blur(14px);
         pointer-events: auto;
         white-space: nowrap;
+        max-width: calc(100vw - 1rem);
+      }
+
+      .care-tools-stack.is-near-left .care-tools-menu {
+        left: 0;
+        transform: none;
+      }
+
+      .care-tools-stack.is-near-right .care-tools-menu {
+        left: auto;
+        right: 0;
+        transform: none;
+      }
+
+      .care-tools-stack.is-menu-below .care-tools-menu {
+        bottom: auto;
+        top: calc(100% + 0.45rem);
       }
 
       .care-tools-menu[hidden] {
@@ -252,11 +276,14 @@
         display: grid;
         place-items: center;
         transition: transform 0.16s ease, border-color 0.16s ease, background 0.16s ease;
+        touch-action: manipulation;
+        -webkit-tap-highlight-color: transparent;
       }
 
       .care-tools-menu__btn:hover,
-      .care-tools-menu__btn:focus-visible {
-        transform: translateY(-1px);
+      .care-tools-menu__btn:focus-visible,
+      .care-tools-menu__btn:active {
+        transform: translateY(-1px) scale(0.96);
         border-color: rgba(127, 212, 207, 0.45);
         background: rgba(127, 212, 207, 0.14);
       }
@@ -532,13 +559,13 @@
       media="print"
       onload="this.media='all'"
     />
-    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-18-v246-idle-fix" />
-    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-18-v246-idle-fix" />
-    <link rel="stylesheet" href="/prototypes/companion-mic-button.css?v=2026-09-18-v246-idle-fix" />
-    <link rel="stylesheet" href="/prototypes/companion-minimal-ui.css?v=2026-09-18-v246-idle-fix" />
-    <link rel="stylesheet" href="/prototypes/companion-picker-v4.css?v=2026-09-18-v246-idle-fix" />
+    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-18-v248-care-mobile" />
+    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-18-v248-care-mobile" />
+    <link rel="stylesheet" href="/prototypes/companion-mic-button.css?v=2026-09-18-v248-care-mobile" />
+    <link rel="stylesheet" href="/prototypes/companion-minimal-ui.css?v=2026-09-18-v248-care-mobile" />
+    <link rel="stylesheet" href="/prototypes/companion-picker-v4.css?v=2026-09-18-v248-care-mobile" />
     <script type="module">
-      import { bootEarlyStartPicker } from "/amoji-engine/engine/companion/companionEarlyStartPicker.js?v=2026-09-18-v246-idle-fix";
+      import { bootEarlyStartPicker } from "/amoji-engine/engine/companion/companionEarlyStartPicker.js?v=2026-09-18-v248-care-mobile";
       const bootParams = new URLSearchParams(location.search);
       if (bootParams.get("autostart") !== "1" && bootParams.get("pick") !== "0") {
         globalThis.__amojiEarlyStartPickerPromise = bootEarlyStartPicker({
@@ -2392,7 +2419,7 @@
 
       .pet-wallet {
         position: fixed;
-        z-index: 36;
+        z-index: 11010;
         right: max(0.65rem, env(safe-area-inset-right));
         top: calc(4.55rem + env(safe-area-inset-top));
         display: flex;
@@ -2459,10 +2486,15 @@
         border: 2px solid #fff;
       }
 
+      body.companion-treat-open .orbit-hit,
+      body.companion-treat-dragging .orbit-hit {
+        pointer-events: none !important;
+      }
+
       .treat-sheet-backdrop {
         position: fixed;
         inset: 0;
-        z-index: 11002;
+        z-index: 11024;
         background: rgba(8, 4, 16, 0.55);
         opacity: 0;
         pointer-events: none;
@@ -2476,12 +2508,12 @@
 
       .treat-sheet {
         position: fixed;
-        z-index: 11003;
+        z-index: 11025;
         left: 50%;
         bottom: 0;
         transform: translate(-50%, 110%);
         width: min(100%, 440px);
-        max-height: min(72dvh, 580px);
+        max-height: min(68dvh, 520px);
         overflow-y: auto;
         padding: 0.45rem 0.95rem calc(1.1rem + env(safe-area-inset-bottom));
         border-radius: 1.5rem 1.5rem 0 0;
@@ -2558,6 +2590,14 @@
         font: inherit;
         font-weight: 800;
         cursor: pointer;
+        touch-action: manipulation;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      .treat-tab:active,
+      .treat-sheet-close:active {
+        transform: scale(0.96);
+        background: rgba(255, 255, 255, 0.12);
       }
 
       .treat-sheet-close {
@@ -2596,14 +2636,23 @@
         background: linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.04));
         color: inherit;
         font: inherit;
-        cursor: grab;
-        touch-action: none;
+        cursor: pointer;
+        touch-action: manipulation;
+        -webkit-tap-highlight-color: transparent;
         box-shadow: 0 8px 18px rgba(0, 0, 0, 0.18);
+      }
+
+      .treat-card--bag {
+        cursor: grab;
       }
 
       .treat-card--shop {
         cursor: pointer;
-        touch-action: manipulation;
+      }
+
+      .treat-card:active:not(.is-broke) {
+        transform: scale(0.97);
+        border-color: rgba(251, 191, 36, 0.55);
       }
 
       .treat-card.is-broke {
@@ -2731,11 +2780,40 @@
 
       .pet-hud {
         position: fixed;
-        z-index: 36;
+        z-index: 11010;
         left: max(0.55rem, env(safe-area-inset-left));
         top: calc(4.5rem + env(safe-area-inset-top));
-        width: 11.2rem;
+        width: min(11.2rem, calc(100vw - 1.1rem));
         pointer-events: none;
+      }
+
+      @media (max-width: 640px) {
+        body.companion-care-open .pet-hud {
+          left: max(0.45rem, env(safe-area-inset-left));
+          right: auto;
+          top: auto;
+          bottom: calc(6.35rem + env(safe-area-inset-bottom));
+          width: min(10.5rem, 48vw);
+        }
+
+        body.companion-care-open .pet-wallet {
+          top: calc(3.35rem + env(safe-area-inset-top));
+          right: max(0.55rem, env(safe-area-inset-right));
+          z-index: 11010;
+        }
+
+        body.companion-care-open .pet-thought {
+          left: max(0.55rem, env(safe-area-inset-left));
+          right: max(0.55rem, env(safe-area-inset-right));
+          bottom: calc(9.6rem + env(safe-area-inset-bottom));
+          max-width: none;
+          z-index: 11010;
+        }
+
+        .care-tools-stack {
+          width: 3rem;
+          height: 3rem;
+        }
       }
 
       .pet-hud-card {
@@ -4212,19 +4290,19 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-18-v246-idle-fix",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-18-v248-care-mobile",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-18-v246-idle-fix",
-          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-18-v246-idle-fix"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-18-v248-care-mobile",
+          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-18-v248-care-mobile"
         }
       }
     </script>
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-18-v246-idle-fix"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-18-v248-care-mobile"
     />
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-18-v246-idle-fix"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-18-v246-idle-fix"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-18-v248-care-mobile"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-18-v248-care-mobile"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;
@@ -7396,8 +7474,9 @@
           mount: document.querySelector(".topbar"),
         });
 
+        const careRoot = document.body;
         treatDock = createCompanionTreatDock({
-        root: document.querySelector(".stage") || document.body,
+        root: careRoot,
         isEnglish: () => isEnglish,
         getAvatar: () => avatar,
         getDropRect: () => {
@@ -7450,7 +7529,7 @@
         window.__amojiTreats = treatDock;
 
         raisingHub = createCompanionRaisingHub({
-        root: document.querySelector(".stage") || document.body,
+        root: careRoot,
         chipGoalEl: document.getElementById("companion-daily-goal"),
         petHudEl: treatDock.hud,
         stageEl: document.querySelector(".stage"),
@@ -7478,7 +7557,7 @@
 
         const { createCompanionCareTools } = careToolsMod;
         careTools = createCompanionCareTools({
-        root: document.querySelector(".stage") || document.body,
+        root: careRoot,
         isEnglish: () => isEnglish,
         onActivity: (kind) => raisingHub.runActivity?.(kind),
         onOpenChange: (open) => {

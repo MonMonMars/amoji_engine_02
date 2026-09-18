@@ -17,7 +17,7 @@ import {
   loadTreatState,
   saveTreatState,
 } from "./companionTreatStore.js";
-import { closeUiOverlay, openUiOverlay } from "./companionUiEffects.js";
+import { closeUiOverlay, markUiFxButtons, openUiOverlay } from "./companionUiEffects.js";
 import {
   applyChatCare,
   applyPetCare,
@@ -124,6 +124,7 @@ function el(tag, className, html) {
  */
 export function createCompanionTreatDock(opts = {}) {
   const root = opts.root || document.body;
+  const doc = root.ownerDocument || document;
   const storage = opts.storage;
   const english = () =>
     typeof opts.isEnglish === "function"
@@ -269,8 +270,8 @@ export function createCompanionTreatDock(opts = {}) {
             ? "Buy food with coins — fridge keeps it until you drag it to her mouth."
             : "用金幣買食物，放雪櫃，拖去佢嘴邊先食到。"
           : english()
-            ? "Drag food onto her mouth. She refuses when she's full."
-            : "拖食物去佢嘴邊。食飽會搖頭唔食。";
+            ? "Tap a snack to feed, or drag it to her mouth. She refuses when full."
+            : "點一下餵佢，或者拖去嘴邊。食飽會搖頭唔食。";
     }
     if (haloHint) {
       haloHint.textContent = english() ? "Drop on her mouth" : "拖去嘴邊";
@@ -364,11 +365,12 @@ export function createCompanionTreatDock(opts = {}) {
         <span class="treat-card-name">${treatDisplayName(item, english())}</span>
         ${itemStatsHtml(item)}
         <span class="treat-card-count">×${bagCount(state, item.id)}</span>
-        <span class="treat-card-give">${english() ? "Drag to mouth" : "拖去嘴邊"}</span>
+        <span class="treat-card-give">${english() ? "Tap to feed" : "點一下餵"}</span>
       `;
       bindBagCard(card, item);
       grid.appendChild(card);
     }
+    markUiFxButtons(grid, doc);
   };
 
   const render = () => {
@@ -376,6 +378,7 @@ export function createCompanionTreatDock(opts = {}) {
     paintTabs();
     paintGrid();
     paintHud();
+    markUiFxButtons(sheet, doc);
   };
 
   const toast = (msg, kind = "info") => opts.onToast?.(msg, kind);
@@ -493,25 +496,16 @@ export function createCompanionTreatDock(opts = {}) {
     let startX = 0;
     let startY = 0;
     let moved = false;
-    const onMove = (ev) => {
-      const dx = ev.clientX - startX;
-      const dy = ev.clientY - startY;
-      if (!moved && dx * dx + dy * dy < 36) return;
-      moved = true;
-      dragging = true;
-      document.body.classList.add("is-treat-dragging");
-      const hot = isDropOnCompanion(ev.clientX, ev.clientY, dropRect());
-      setHalo(hot);
-      moveGhost(ev.clientX, ev.clientY, item.emoji);
-    };
-    const onUp = (ev) => {
-      card.releasePointerCapture?.(ev.pointerId);
+    let dragSession = false;
+    const finishPointer = (ev) => {
       card.removeEventListener("pointermove", onMove);
       card.removeEventListener("pointerup", onUp);
       card.removeEventListener("pointercancel", onUp);
-      const wasDragging = dragging;
+      const wasDragging = dragSession;
+      dragSession = false;
       dragging = false;
       document.body.classList.remove("is-treat-dragging");
+      doc.body?.classList?.remove("companion-treat-dragging");
       setHalo(false);
       if (wasDragging) {
         const hot = isDropOnCompanion(ev.clientX, ev.clientY, dropRect());
@@ -519,16 +513,38 @@ export function createCompanionTreatDock(opts = {}) {
         else hideGhost();
         return;
       }
-      hideGhost();
-      feed(item.id, ev.clientX, ev.clientY);
+      if (!moved) {
+        hideGhost();
+        feed(item.id, ev.clientX, ev.clientY);
+      } else {
+        hideGhost();
+      }
     };
+    const onMove = (ev) => {
+      const dx = ev.clientX - startX;
+      const dy = ev.clientY - startY;
+      if (!moved && dx * dx + dy * dy < 64) return;
+      moved = true;
+      dragSession = true;
+      dragging = true;
+      document.body.classList.add("is-treat-dragging");
+      doc.body?.classList?.add("companion-treat-dragging");
+      const hot = isDropOnCompanion(ev.clientX, ev.clientY, dropRect());
+      setHalo(hot);
+      moveGhost(ev.clientX, ev.clientY, item.emoji);
+    };
+    const onUp = (ev) => finishPointer(ev);
+    card.addEventListener("click", (ev) => {
+      if (moved || dragSession) return;
+      ev.stopPropagation();
+      feed(item.id, ev.clientX, ev.clientY);
+    });
     card.addEventListener("pointerdown", (ev) => {
       if (ev.button != null && ev.button !== 0) return;
-      ev.preventDefault();
       startX = ev.clientX;
       startY = ev.clientY;
       moved = false;
-      card.setPointerCapture?.(ev.pointerId);
+      dragSession = false;
       card.addEventListener("pointermove", onMove);
       card.addEventListener("pointerup", onUp);
       card.addEventListener("pointercancel", onUp);
@@ -540,19 +556,22 @@ export function createCompanionTreatDock(opts = {}) {
     if (wantOpen === open) return;
     open = wantOpen;
     fab.setAttribute("aria-expanded", open ? "true" : "false");
+    doc.body?.classList?.toggle("companion-treat-open", open);
     if (open) {
-      openUiOverlay(document, {
+      openUiOverlay(doc, {
         panel: sheet,
         backdrop,
+        bodyClass: "companion-treat-open",
         panelOpenClass: "is-open",
         backdropOpenClass: "is-open",
       });
       render();
       return;
     }
-    closeUiOverlay(document, {
+    closeUiOverlay(doc, {
       panel: sheet,
       backdrop,
+      bodyClass: "companion-treat-open",
       panelOpenClass: "is-open",
       backdropOpenClass: "is-open",
       hidePanelOnClose: false,

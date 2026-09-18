@@ -69,12 +69,13 @@ describe("idle showcase wiring", () => {
       /createCompanionProgressDock\(\{\s*root:\s*document\.querySelector\("\.stage"\)/,
     );
     expect(html).toMatch(
-      /createCompanionTreatDock\(\{[\s\S]*?root:\s*document\.querySelector\("\.stage"\)/,
+      /createCompanionTreatDock\(\{[\s\S]*?root:\s*careRoot/,
     );
     expect(html).toMatch(/\.companion-toast \{[\s\S]*?z-index:\s*70/);
     expect(html).toMatch(/\.treat-dock \{[\s\S]*?z-index:\s*40/);
     expect(html).toMatch(/\.companion-progress-dock \{[\s\S]*?z-index:\s*9000/);
-    expect(html).toMatch(/\.treat-sheet \{[\s\S]*?z-index:\s*11003/);
+    expect(html).toMatch(/\.treat-sheet \{[\s\S]*?z-index:\s*11025/);
+    expect(html).toMatch(/\.care-tools-stack \{[\s\S]*?z-index:\s*11020/);
     expect(html).toMatch(/const host = document\.querySelector\("\.stage"\) \|\| document\.body/);
     expect(grokCss).not.toMatch(/\.theme-grok-ani \.chat-shell\s*\{[^}]*z-index:\s*90/);
     expect(grokCss).not.toMatch(/\.theme-grok-ani \.chat-shell\s*\{[^}]*isolation:\s*isolate/);
