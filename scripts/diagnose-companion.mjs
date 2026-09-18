@@ -83,12 +83,12 @@ async function diagnose(page, label) {
 
   let clickResult = null;
   try {
-    const start = page.locator("#start-character-picker .companion-card");
-    if (await start.isVisible({ timeout: 500 })) {
-      await beginStartPickerSession(page, { dismissTimeout: 60000 });
+    const beginBtn = page.locator("#start-character-picker .picker-begin-btn");
+    if (await beginBtn.isVisible({ timeout: 5000 })) {
+      await beginStartPickerSession(page, { characterId: "nova", dismissTimeout: 60000 });
       clickResult = "begin-chat";
     } else {
-      clickResult = "not visible";
+      clickResult = "picker begin not visible";
     }
   } catch (e) {
     clickResult = `click failed: ${e.message}`;

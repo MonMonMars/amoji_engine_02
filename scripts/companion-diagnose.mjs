@@ -22,7 +22,10 @@ async function main() {
   page.on("pageerror", (err) => errors.push(String(err)));
 
   await page.goto(url, { waitUntil: "networkidle", timeout: 60000 });
-  await page.waitForSelector("#start-character-picker .companion-card", { timeout: 30000 });
+  await page.waitForSelector(
+    "#start-character-picker.is-open .picker-begin-btn",
+    { timeout: 30000 },
+  );
 
   const preStart = await page.evaluate(() => ({
     build: window.__amojiBuild,
