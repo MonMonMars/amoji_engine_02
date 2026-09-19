@@ -5,6 +5,11 @@
  * Cantonese Edge speakers (zh-HK): 曉佳, 曉曼, 雲龍 — persona profiles extend timbre feel.
  * English adds Hong Kong neural voices: Yan (女), Sam (男).
  */
+import {
+  resolveCharacterRole,
+  roleFunctionBadge,
+} from "./companionCharacterRoles.js";
+import { roleLabel } from "../mobile/companionRolePresets.js";
 import { buildActionPromptFragment } from "./companionActionMotion.js";
 import { buildPerformancePresetPromptFragment } from "./companionLlmPerformancePreset.js";
 import { voiceShortLabel } from "./companionVoiceCatalog.js";
@@ -42,6 +47,7 @@ export const CHARACTER_STORAGE_KEY = "amoji.companion.characterId";
  *   },
  *   prosodyBias?: { rate?: number, pitch?: number, volume?: number },
  *   avatarLabel: { yue: string, en: string },
+ *   companionRole?: import("./companionCharacterRoles.js").CompanionRole,
  * }} CharacterDef */
 
 /** @type {Record<string, CharacterDef>} */
@@ -195,6 +201,7 @@ export function getCharacter(id) {
   const def = COMPANION_CHARACTERS[key] || COMPANION_CHARACTERS.nova;
   return {
     ...def,
+    companionRole: resolveCharacterRole(def.id),
     previewImage: characterPreviewImage(def.id),
   };
 }
@@ -486,6 +493,7 @@ export function listCompanionCharacters(langCode = "yue") {
       faceTier === "high" &&
       faceTriangles >= HIGH_POLY_FACE_MIN_TRIANGLES &&
       !(badge && /\d\s*k/i.test(badge));
+    const companionRole = resolveCharacterRole(id);
     return {
       id,
       number: characterNumber(id),
@@ -494,6 +502,9 @@ export function listCompanionCharacters(langCode = "yue") {
       traits: en ? def.traits.en : def.traits.yue,
       previewImage: characterPreviewImage(id),
       accent: def.accent,
+      companionRole,
+      roleLabel: roleLabel(companionRole, en),
+      roleBadge: roleFunctionBadge(companionRole, en),
       badge,
       faceTier,
       faceTriangles,

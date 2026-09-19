@@ -7,13 +7,14 @@ import { chromium } from "playwright";
 import { mkdirSync } from "fs";
 import { join } from "path";
 import { AMOJI_BUILD } from "../amoji-engine/engine/companion/buildVersion.mjs";
+import { beginStartPickerSession } from "./companion-picker-smoke-util.mjs";
 
 const outDir = process.env.ARTIFACT_DIR || "/opt/cursor/artifacts";
 mkdirSync(outDir, { recursive: true });
 
 const baseUrl =
   process.env.LITE_URL ||
-  "http://127.0.0.1:5174/play?role=secretary&lang=en&pick=1&automic=0";
+  "http://127.0.0.1:5174/play?character=kate&lang=en&pick=1&automic=0";
 
 const browser = await chromium.launch({ headless: true });
 const page = await browser.newPage();
@@ -25,6 +26,18 @@ await page.goto(baseUrl, { waitUntil: "domcontentloaded", timeout: 120000 });
 await page
   .waitForFunction(() => window.__amojiModuleBooted === true, { timeout: 120000 })
   .catch(() => null);
+
+const pickerOpen = await page.evaluate(() => {
+  const picker = document.getElementById("start-character-picker");
+  return Boolean(
+    picker &&
+      !picker.classList.contains("hide") &&
+      picker.getAttribute("aria-hidden") !== "true",
+  );
+});
+if (pickerOpen) {
+  await beginStartPickerSession(page, { characterId: "kate" });
+}
 
 const chrome = await page.evaluate(() => ({
   conversationUi: document.body.classList.contains("conversation-ui"),
@@ -42,7 +55,7 @@ if (!chrome.conversationUi || !chrome.roleSecretary) {
 }
 
 await page.click("#btn-open-setup").catch(() => null);
-await page.waitForSelector("#settings-role-grid", { timeout: 15000 }).catch(() => null);
+await page.waitForSelector("#settings-role-readout", { timeout: 15000 }).catch(() => null);
 
 await page.click("#settings-btn-secretary-today").catch(() => null);
 await page

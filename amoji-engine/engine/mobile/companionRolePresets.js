@@ -74,33 +74,41 @@ export function roleEmoji(role) {
   return "💗";
 }
 
+import {
+  CHARACTER_COMPANION_ROLES,
+  ROLE_DEFAULT_CHARACTER_ID,
+  characterIdsForRole,
+} from "../companion/companionCharacterRoles.js";
+
 /** @type {Record<CompanionRole, { characterIds: string[], defaultCharacterId: string, hubPrimary: string, hubSecondary: string }>} */
 export const ROLE_PRESETS = Object.freeze({
   girlfriend: {
-    characterIds: ["nova", "kizuna", "yuki", "alicia", "ember", "shiro", "jennifer"],
-    defaultCharacterId: "nova",
+    characterIds: characterIdsForRole("girlfriend"),
+    defaultCharacterId: ROLE_DEFAULT_CHARACTER_ID.girlfriend,
     hubPrimary: "companion",
     hubSecondary: "chase",
   },
   boyfriend: {
-    characterIds: ["chad", "david", "hugo", "vroidm"],
-    defaultCharacterId: "chad",
+    characterIds: characterIdsForRole("boyfriend"),
+    defaultCharacterId: ROLE_DEFAULT_CHARACTER_ID.boyfriend,
     hubPrimary: "companion",
     hubSecondary: "chase",
   },
   secretary: {
-    characterIds: ["kate", "nova", "quinn", "vroidm", "sora"],
-    defaultCharacterId: "kate",
+    characterIds: characterIdsForRole("secretary"),
+    defaultCharacterId: ROLE_DEFAULT_CHARACTER_ID.secretary,
     hubPrimary: "companion",
     hubSecondary: "pet",
   },
   pet: {
-    characterIds: ["shiro", "poly", "aesthe", "jennifer"],
-    defaultCharacterId: "shiro",
+    characterIds: characterIdsForRole("pet"),
+    defaultCharacterId: ROLE_DEFAULT_CHARACTER_ID.pet,
     hubPrimary: "pet",
     hubSecondary: "companion",
   },
 });
+
+export { CHARACTER_COMPANION_ROLES, resolveCharacterRole } from "../companion/companionCharacterRoles.js";
 
 /**
  * @param {CompanionRole} role

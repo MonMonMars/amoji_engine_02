@@ -5,6 +5,7 @@ import {
   resolveAppRole,
   resolveRoleDefaultCharacter,
   rolePickBadge,
+  rosterCharactersForPicker,
   rosterCharactersForRole,
 } from "../engine/companion/companionUnifiedApp.js";
 
@@ -31,7 +32,7 @@ describe("companionUnifiedApp", () => {
 
   it("returns localized role pick badges", () => {
     expect(rolePickBadge("secretary", true)).toContain("Secretary");
-    expect(rolePickBadge("boyfriend", false)).toContain("男友");
+    expect(rolePickBadge("boyfriend", false)).toContain("男朋友");
   });
 
   it("resolves role from url or storage default", () => {
@@ -44,6 +45,19 @@ describe("companionUnifiedApp", () => {
     expect(resolveAppRole(new URLSearchParams(""), storage)).toBe("boyfriend");
   });
 
+  it("derives role from selected character when character param is explicit", () => {
+    expect(
+      resolveAppRole(
+        new URLSearchParams("character=kate&role=girlfriend"),
+        null,
+        "kate",
+      ),
+    ).toBe("secretary");
+    expect(
+      resolveAppRole(new URLSearchParams("character=chad"), null, "chad"),
+    ).toBe("boyfriend");
+  });
+
   it("uses role default character when none picked", () => {
     expect(resolveRoleDefaultCharacter("", "secretary", new URLSearchParams())).toBe(
       "kate",
@@ -53,12 +67,13 @@ describe("companionUnifiedApp", () => {
     ).toBe("nova");
   });
 
-  it("orders roster with role picks first", () => {
-    const roster = rosterCharactersForRole("en", "secretary");
-    expect(roster[0]?.id).toBe("kate");
-    expect(roster.some((c) => c.roleRecommended)).toBe(true);
-    expect(roster[0]?.badge).toContain("★");
+  it("lists roster with embedded function labels", () => {
+    const roster = rosterCharactersForPicker("en");
+    expect(roster.every((c) => c.companionRole && c.roleBadge)).toBe(true);
+    expect(roster.some((c) => c.companionRole === "secretary")).toBe(true);
     expect(roster.length).toBeGreaterThan(10);
+    const secretaries = rosterCharactersForRole("en", "secretary");
+    expect(secretaries.every((c) => c.companionRole === "secretary")).toBe(true);
   });
 
   it("merges character, role, and secretary prompts", () => {

@@ -71,6 +71,9 @@ export function companionCardInnerHtml(item, ctx = {}) {
     ? `<span class="companion-card-number" aria-hidden="true">${number}</span>`
     : "";
   const labeledName = number ? `${number} ${item.name}` : item.name;
+  const roleBadge = item.roleBadge
+    ? `<span class="companion-card-role companion-card-role--${item.companionRole || "girlfriend"}${compact ? " companion-card-role--mini" : ""}">${item.roleBadge}</span>`
+    : "";
   const badge = item.badge
     ? `<span class="companion-card-badge${compact ? " companion-card-badge--mini" : ""}">${item.badge}</span>`
     : "";
@@ -93,6 +96,7 @@ export function companionCardInnerHtml(item, ctx = {}) {
       <div class="companion-card-portrait">
         <img src="${item.previewImage}" alt="" ${imgAttrs} />
         ${numberBadge}
+        ${roleBadge}
         ${badge}
         ${faceChip}
         <span class="companion-card-check" aria-hidden="true">✓</span>
@@ -106,6 +110,7 @@ export function companionCardInnerHtml(item, ctx = {}) {
     <div class="companion-card-portrait">
       <img src="${item.previewImage}" alt="" ${imgAttrs} />
       ${numberBadge}
+      ${roleBadge}
       ${badge}
       ${faceChip}
       <span class="companion-card-check" aria-hidden="true">✓</span>

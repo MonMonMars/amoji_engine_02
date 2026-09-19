@@ -57,10 +57,11 @@ export function buildSettingsChromeLabels(isEnglish = false, state = {}) {
     camera: en ? "Reset camera view" : "重置鏡頭視角",
     brain: en ? "Brain" : "大腦",
     liteLink: en ? "Secretary mode" : "秘書模式",
-    roleSection: en ? "Mode" : "模式",
+    roleSection: en ? "Function" : "功能",
     roleHint: en
-      ? "One 3D app — girlfriend, boyfriend, secretary, or pet."
-      : "同一個 3D app — 女朋友、男朋友、秘書或寵物。",
+      ? "Each companion has a built-in role — switch models to change function."
+      : "每位同伴內建功能 — 切換模型就會轉功能。",
+    roleReadout: state.roleReadout || (en ? "Girlfriend" : "女朋友"),
     secretaryToday: en ? "Today briefing" : "今日簡報",
     secretaryTasks: en ? "Task list" : "任務清單",
     labLink: en ? "Voice lab" : "語音實驗室",

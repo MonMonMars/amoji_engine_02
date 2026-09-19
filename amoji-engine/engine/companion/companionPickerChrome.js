@@ -9,9 +9,18 @@ import { wireCompanionPreviewFallback } from "./companionPreviewFallback.js";
 
 export const COMPANION_PICKER_CHROME_SCHEMA = "amoji.companionPickerChrome.v1";
 
-/** @typedef {"all" | "featured" | "hd" | "warm"} PickerFilterId */
+/** @typedef {"all" | "girlfriend" | "boyfriend" | "secretary" | "pet" | "featured" | "hd" | "warm"} PickerFilterId */
 
-export const PICKER_FILTER_IDS = Object.freeze(["all", "featured", "hd", "warm"]);
+export const PICKER_FILTER_IDS = Object.freeze([
+  "all",
+  "girlfriend",
+  "boyfriend",
+  "secretary",
+  "pet",
+  "featured",
+  "hd",
+  "warm",
+]);
 
 /**
  * @param {boolean} [isEnglish]
@@ -20,6 +29,10 @@ export function pickerFilterLabels(isEnglish = false) {
   const en = Boolean(isEnglish);
   return {
     all: en ? "All" : "全部",
+    girlfriend: en ? "Girlfriend" : "女朋友",
+    boyfriend: en ? "Boyfriend" : "男朋友",
+    secretary: en ? "Secretary" : "秘書",
+    pet: en ? "Pet" : "寵物",
     featured: en ? "★ Featured" : "★ 推介",
     hd: en ? "HD Face" : "HD 面",
     warm: en ? "Warm" : "溫柔",
@@ -34,8 +47,8 @@ export function pickerCopy(isEnglish = false) {
   return {
     title: en ? "Choose your companion" : "揀你嘅同伴",
     sub: en
-      ? "Preview their vibe, then begin your story."
-      : "睇吓佢哋嘅感覺，再開始傾偈。",
+      ? "Each model has a role — girlfriend, boyfriend, secretary, or pet."
+      : "每個模型都有功能 — 女朋友、男朋友、秘書或寵物。",
     begin: en ? "Begin chat" : "開始傾偈",
     switch: en ? "Switch companion" : "切換同伴",
     featuredLabel: en ? "★ Featured" : "★ 推介",
@@ -107,7 +120,15 @@ export function filterPickerCharacters(list, opts = {}) {
     .trim()
     .toLowerCase();
   let out = Array.isArray(list) ? [...list] : [];
-  if (filter === "featured") out = out.filter(isPickerFeatured);
+  if (filter === "girlfriend") {
+    out = out.filter((item) => item.companionRole === "girlfriend");
+  } else if (filter === "boyfriend") {
+    out = out.filter((item) => item.companionRole === "boyfriend");
+  } else if (filter === "secretary") {
+    out = out.filter((item) => item.companionRole === "secretary");
+  } else if (filter === "pet") {
+    out = out.filter((item) => item.companionRole === "pet");
+  } else if (filter === "featured") out = out.filter(isPickerFeatured);
   else if (filter === "hd") out = out.filter(isPickerHdFace);
   else if (filter === "warm") out = out.filter(isPickerWarmTone);
   if (q) {

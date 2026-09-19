@@ -39,7 +39,7 @@ export function companionFullDirectUrl(opts = {}) {
  */
 export function companionLiteDirectUrl(opts = {}) {
   const params = new URLSearchParams({
-    role: "secretary",
+    character: "kate",
     pick: "1",
     automic: "0",
   });
@@ -74,7 +74,7 @@ export function companionFullDemoUrl(opts = {}) {
  */
 export function companionLiteDemoUrl(opts = {}) {
   const params = new URLSearchParams({
-    role: "secretary",
+    character: "kate",
     pick: "1",
     automic: "0",
   });

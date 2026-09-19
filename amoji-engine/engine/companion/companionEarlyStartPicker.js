@@ -7,7 +7,7 @@ import {
   pickerCopyForRole,
   resolveAppRole,
   resolveRoleDefaultCharacter,
-  rosterCharactersForRole,
+  rosterCharactersForPicker,
 } from "./companionUnifiedApp.js";
 import { playCompanionCardTapFx } from "./companionUiGacha.js";
 
@@ -43,7 +43,7 @@ export async function bootEarlyStartPicker(opts = {}) {
     isEnglish,
     selectedId,
     pickerCopy: roleCopy,
-    rosterProvider: (langCode) => rosterCharactersForRole(langCode, appRole),
+    rosterProvider: (langCode) => rosterCharactersForPicker(langCode),
     onCardTapFx: playCompanionCardTapFx,
     onSelectionChange: () => {
       void preloadJob?.refreshSelectedModel?.();
