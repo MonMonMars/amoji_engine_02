@@ -170,24 +170,6 @@ async function verifySecretary(page, label) {
     })
     .catch(() => null);
 
-  const pickerOpen = await page.evaluate(() => {
-    const picker = document.getElementById("start-character-picker");
-    return Boolean(
-      picker &&
-        !picker.classList.contains("hide") &&
-        picker.getAttribute("aria-hidden") !== "true",
-    );
-  });
-
-  if (pickerOpen) {
-    await beginStartPickerSession(page, {
-      characterId: "kate",
-      cardTimeout: 90000,
-      dismissTimeout: 120000,
-    });
-    record(`${label} secretary picker begin chat`, true);
-  }
-
   await page
     .waitForSelector("#activity-rail", { state: "attached", timeout: 30000 })
     .catch(() => null);
@@ -319,15 +301,27 @@ async function verifyFullCompanion(page, label) {
       const picker = document.getElementById("start-character-picker");
       return {
         hero: Boolean(picker?.querySelector(".picker-hero")),
+        showcase: picker?.classList.contains("companion-picker--showcase"),
+        heroStage: Boolean(picker?.querySelector(".picker-showcase-stage")),
+        rosterStrip: Boolean(picker?.querySelector(".companion-picker-grid--roster")),
+        stripCards:
+          picker?.querySelectorAll(".companion-card--start-strip").length ?? 0,
         featured: Boolean(picker?.querySelector(".picker-featured-row")),
         begin: Boolean(picker?.querySelector(".picker-begin-btn")),
         filters: Boolean(picker?.querySelector(".picker-filters")),
       };
     });
     record(`${label} picker v4 hero`, pickerChrome.hero);
-    record(`${label} picker featured row`, pickerChrome.featured);
+    record(`${label} picker showcase layout`, pickerChrome.showcase);
+    record(`${label} picker hero stage`, pickerChrome.heroStage);
+    record(
+      `${label} picker roster strip`,
+      pickerChrome.rosterStrip && pickerChrome.stripCards >= 8,
+      String(pickerChrome.stripCards),
+    );
     record(`${label} picker begin CTA`, pickerChrome.begin);
-    record(`${label} picker filters`, pickerChrome.filters);
+    record(`${label} picker no search toolbar`, !pickerChrome.filters);
+    record(`${label} picker no featured row`, !pickerChrome.featured);
     await page.screenshot({
       path: join(outDir, `demo-verify-picker-${label}.png`),
       fullPage: true,
@@ -408,7 +402,7 @@ if (useLocal) {
     baseUrl = `http://127.0.0.1:${port}`;
     record("local static server", true, baseUrl);
   }
-  secretaryUrl = `${baseUrl}/play?character=kate&lang=en&pick=1&automic=0`;
+  secretaryUrl = `${baseUrl}/play?role=secretary&lang=en&pick=0&autostart=1&tab=today`;
   fullUrl = `${baseUrl}/play?lang=en&pick=1&automic=0`;
 } else {
   try {

@@ -51,6 +51,15 @@ export async function beginStartPickerSession(page, opts = {}) {
 
   await page.waitForFunction(
     (id) => {
+      const isVisible = (el) => {
+        if (!el || el.disabled) return false;
+        const style = globalThis.getComputedStyle(el);
+        if (style.display === "none" || style.visibility === "hidden") {
+          return false;
+        }
+        const rect = el.getBoundingClientRect();
+        return rect.width > 1 && rect.height > 1;
+      };
       const featured = document.querySelector(
         `#start-character-picker .picker-featured-row [data-character-id="${id}"]`,
       );
@@ -60,33 +69,20 @@ export async function beginStartPickerSession(page, opts = {}) {
           wrap &&
           (wrap.hidden ||
             globalThis.getComputedStyle(wrap).display === "none");
-        if (!wrapHidden) {
-          const style = globalThis.getComputedStyle(featured);
-          const rect = featured.getBoundingClientRect();
-          if (
-            style.display !== "none" &&
-            style.visibility !== "hidden" &&
-            rect.width > 1 &&
-            rect.height > 1
-          ) {
-            return true;
-          }
-        }
+        if (!wrapHidden && isVisible(featured)) return true;
       }
       const gridCard = document.querySelector(
         `#start-character-picker .companion-picker-grid [data-character-id="${id}"]`,
       );
-      if (gridCard) {
-        const style = globalThis.getComputedStyle(gridCard);
-        const rect = gridCard.getBoundingClientRect();
-        return (
-          style.display !== "none" &&
-          style.visibility !== "hidden" &&
-          rect.width > 1 &&
-          rect.height > 1
+      if (isVisible(gridCard)) return true;
+      const fallback =
+        document.querySelector(
+          "#start-character-picker .companion-picker-grid [data-character-id]:not([disabled])",
+        ) ||
+        document.querySelector(
+          "#start-character-picker [data-character-id]:not([disabled])",
         );
-      }
-      return false;
+      return isVisible(fallback);
     },
     characterId,
     { timeout: cardTimeout },

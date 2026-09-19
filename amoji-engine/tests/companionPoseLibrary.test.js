@@ -34,10 +34,12 @@ describe("companionPoseLibrary clamps", () => {
     expect(clamped.forearmL).toBeLessThanOrEqual(0.7);
   });
 
-  it("adds idle elbow bend on the calibrated flex axis", () => {
-    const bent = withElbowBend({ x: 0.2, y: 0, z: 0.1, flexAxis: "z" }, 0.3);
+  it("adds idle elbow bend on the calibrated flex axis only", () => {
+    const bent = withElbowBend({ x: 0.2, y: 0.05, z: 0.1, flexAxis: "z" }, 0.3);
     expect(bent.z).toBeCloseTo(0.4);
-    expect(bent.x).toBeCloseTo(0.2);
+    expect(bent.x).toBe(0);
+    expect(bent.y).toBe(0);
+    expect(bent.flexAxis).toBe("z");
   });
 
   it("lifts arms toward neutral from T-pose or flipped-Z rest", () => {

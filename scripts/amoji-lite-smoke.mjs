@@ -89,7 +89,14 @@ for (const [label, ctx] of cases) {
     );
   });
   if (pickerOpen) {
-    await page.click('[data-character-id="kate"], .start-picker-card, button[data-begin-chat]').catch(() => null);
+    await page
+      .click(
+        '#start-character-picker [data-character-id="nova"], #start-character-picker .picker-begin-btn, [data-character-id="kate"], button[data-begin-chat]',
+      )
+      .catch(() => null);
+    await page
+      .click("#start-character-picker .picker-begin-btn:not([disabled])")
+      .catch(() => null);
     await page.waitForTimeout(1500);
   }
 
@@ -102,6 +109,7 @@ for (const [label, ctx] of cases) {
     hasCanvas: !!document.getElementById("avatar-canvas"),
     hasComposer: !!document.getElementById("composer"),
     quickBar: !!document.getElementById("secretary-quick-bar"),
+    secretaryMenuSection: !!document.getElementById("settings-secretary-section"),
   }));
 
   const shot = join(outDir, `unified-secretary-${label}.png`);

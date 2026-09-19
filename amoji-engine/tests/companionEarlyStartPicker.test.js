@@ -27,6 +27,9 @@ describe("companionEarlyStartPicker", () => {
     const picker = await bootEarlyStartPicker({ params });
     expect(picker).toBeTruthy();
     expect(picker.element.querySelector(".picker-begin-btn")).toBeTruthy();
+    expect(picker.element.classList.contains("companion-picker--showcase")).toBe(
+      true,
+    );
     expect(document.getElementById("amoji-boot-splash")).toBeNull();
     picker.destroy();
     document.body.classList.remove("companion-start-pending", "companion-picker-open");

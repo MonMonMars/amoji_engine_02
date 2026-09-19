@@ -71,6 +71,10 @@ describe("companionCharacterCatalog v226 curated roster", () => {
     expect(getCharacter("missing").id).toBe("nova");
   });
 
+  it("maps legacy lite secretary id kate to nova", () => {
+    expect(resolveCharacterId({ characterParam: "kate" })).toBe("nova");
+  });
+
   it("maps curated model urls", () => {
     expect(resolveCharacterId({ modelUrl: "/prototypes/assets/companion-kai.vrm" })).toBe("rex");
     expect(resolveCharacterId({ modelUrl: "/prototypes/assets/companion-olivia.vrm" })).toBe(

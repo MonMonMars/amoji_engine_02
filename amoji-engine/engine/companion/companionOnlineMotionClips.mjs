@@ -11,7 +11,7 @@
 import { resolveMotionSamplerKey } from "./companionMotionLibrary.js";
 
 export const COMPANION_ONLINE_MOTION_CLIPS_SCHEMA =
-  "amoji.companionOnlineMotionClips.v5";
+  "amoji.companionOnlineMotionClips.v6";
 
 /** Legacy alias — calm standing is procedural; VRMA id kept for API compat. */
 export const ONLINE_IDLE_ACTION = "idle";
@@ -21,8 +21,21 @@ export const ONLINE_IDLE_CLIP_FILE = "Thinking";
  * Mixamo clips on VRM binds cause blended / twisted limbs.
  */
 export const ONLINE_CALM_IDLE_ACTION = "thinking";
-/** When true, calm stand uses calibrated body rest — not Thinking.vrma. */
+/** When true, VRM body stays on calibrated procedural bones — not hosted Mixamo VRMA. */
 export const CALM_IDLE_USES_PROCEDURAL_BODY = true;
+
+/**
+ * Hosted Mixamo VRMA clips twist/blend VRM normalized bones — skip them for body.
+ * Lip sync and expressions stay procedural; one-shot catalog actions fall back to code.
+ * @param {string | null | undefined} actionId
+ */
+export function hostedVrmaSkipsVrmBody(actionId) {
+  if (!CALM_IDLE_USES_PROCEDURAL_BODY) return false;
+  const id = String(actionId || "").toLowerCase();
+  if (!id || id === "none" || id === "stop") return false;
+  if (PROCEDURAL_PREFERRED_ACTIONS.has(id)) return false;
+  return Boolean(resolveOnlineMotionClipUrl(id));
+}
 export const ONLINE_THINKING_ACTION = "thinking";
 
 /** Hosted VRMA clips that loop during talk (Thinking, LookAround, Blush, etc.). */

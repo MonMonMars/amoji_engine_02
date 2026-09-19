@@ -212,9 +212,17 @@ export function getCharacter(id) {
  *   storage?: Storage | null,
  * }} [opts]
  */
+/** Legacy URL ids → current roster ids (e.g. lite secretary links used `kate`). */
+export const LEGACY_CHARACTER_ALIASES = Object.freeze({
+  kate: "nova",
+});
+
 export function resolveCharacterId(opts = {}) {
   const fromUrl = String(opts.characterParam || "").trim().toLowerCase();
   if (fromUrl && COMPANION_CHARACTERS[fromUrl]) return fromUrl;
+  if (fromUrl && LEGACY_CHARACTER_ALIASES[fromUrl]) {
+    return LEGACY_CHARACTER_ALIASES[fromUrl];
+  }
 
   const model = String(opts.modelUrl || "").toLowerCase();
   /** @type {[string, string][]} */

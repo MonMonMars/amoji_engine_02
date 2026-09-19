@@ -27,11 +27,28 @@ import {
   wireLoadingBar,
 } from "./companionLoadingUi.js";
 import { closeUiOverlay, openUiOverlay } from "./companionUiEffects.js";
+import {
+  applySceneBackground,
+  loadStoredSceneBackground,
+  persistSceneBackground,
+  scenePresetLabel,
+  SCENE_BACKGROUND_PRESETS,
+} from "./companionScenePresets.js";
 
 export const COMPANION_CHARACTER_PICKER_SCHEMA =
   "amoji.companionCharacterPicker.v4";
 
-export const COMPANION_START_PICKER_SCHEMA = "amoji.companionStartPicker.v3";
+export const COMPANION_START_PICKER_SCHEMA = "amoji.companionStartPicker.v8";
+
+export const PICKER_SCENE_SECTION_HTML = `
+  <section class="picker-scene-section" aria-label="Background">
+    <p class="picker-scene-label"></p>
+    <div class="picker-scene-row" role="listbox"></div>
+  </section>
+`.trim();
+
+/** @deprecated Start picker uses the showcase layout (hero stage + roster strip). */
+export const START_PICKER_ROSTER_FIRST_MAX = 12;
 
 export const START_PICKER_PRELOAD_RING_HTML = `
   <div class="start-picker-preload-ring">
@@ -72,9 +89,33 @@ export function companionCardInnerHtml(item, ctx = {}) {
         .slice(0, 2)
         .map((t) => `<span class="companion-card-trait">${t}</span>`)
         .join("");
-  const voiceChip = item.voiceLabel
-    ? `<span class="companion-card-voice">${item.voiceLabel}</span>`
-    : "";
+  const voiceChip =
+    item.voiceLabel && !ctx.startMini
+      ? `<span class="companion-card-voice">${item.voiceLabel}</span>`
+      : "";
+
+  if (compact && ctx.startMini) {
+    return `
+      <div class="companion-card-portrait">
+        <img src="${item.previewImage}" alt="" ${imgAttrs} />
+        <span class="companion-card-check" aria-hidden="true">✓</span>
+      </div>
+    `;
+  }
+
+  if (compact && ctx.startStrip) {
+    const stripRole = item.roleBadge
+      ? `<span class="companion-card-role-strip">${item.roleBadge}</span>`
+      : "";
+    return `
+      <div class="companion-card-portrait">
+        <img src="${item.previewImage}" alt="" ${imgAttrs} />
+        <span class="companion-card-check" aria-hidden="true">✓</span>
+      </div>
+      <span class="companion-card-name">${item.name}</span>
+      ${stripRole}
+    `;
+  }
 
   if (compact) {
     return `
@@ -151,6 +192,8 @@ export function renderCompanionPickerGrid(gridEl, langCode, ctx = {}) {
         compact,
         featured: ctx.featured,
         rosterStrip: ctx.rosterStrip,
+        startMini: ctx.startMini,
+        startStrip: ctx.startStrip,
         eagerPreview: ctx.eagerPreview,
         disabled: ctx.disabled,
         onCardTapFx: ctx.onCardTapFx,
@@ -224,7 +267,9 @@ export function createCompanionCardButton(item, ctx = {}) {
   card.className = compact
     ? "companion-card companion-card--compact" +
       (ctx.featured ? " companion-card--featured" : "") +
-      (ctx.rosterStrip ? " companion-card--roster" : "")
+      (ctx.rosterStrip ? " companion-card--roster" : "") +
+      (ctx.startMini ? " companion-card--start-mini" : "") +
+      (ctx.startStrip ? " companion-card--start-strip" : "")
     : "companion-card";
   card.dataset.characterId = item.id;
   card.dataset.characterNumber = String(cardNumber(item) || "");
@@ -531,6 +576,8 @@ export function createCompanionCharacterPicker(opts = {}) {
  *   isEnglish?: boolean,
  *   selectedId?: string,
  *   onStart?: (id: string) => void,
+ *   onBackgroundChange?: (backgroundId: string) => void,
+ *   atmosphereEl?: HTMLElement | null,
  *   onCardTapFx?: (card: HTMLButtonElement, item: ReturnType<typeof listCompanionCharacters>[number]) => void,
  * }} opts
  */
@@ -540,20 +587,20 @@ export function createCompanionStartPicker(opts = {}) {
   let selectedId = opts.selectedId || "nova";
   const roleRoster =
     typeof opts.rosterProvider === "function" ? opts.rosterProvider : null;
-  let filterId = "all";
-  let query = "";
   let starting = false;
   let pickable = true;
   let preloadPct = 0;
   let preloadReady = false;
-  let unwireFeaturedKeys = () => {};
+  /** @type {ReturnType<typeof setTimeout> | null} */
+  let preloadHideTimer = null;
   let unwireRosterKeys = () => {};
   const copy = { ...pickerCopy(isEnglish), ...(opts.pickerCopy || {}) };
   const fullList = () =>
     roleRoster ? roleRoster(langCode) : listCompanionCharacters(langCode);
 
   const shell = document.createElement("div");
-  shell.className = "companion-picker companion-picker--start companion-picker--v4 hide";
+  shell.className =
+    "companion-picker companion-picker--start companion-picker--v4 companion-picker--showcase hide";
   shell.id = "start-character-picker";
   shell.setAttribute("role", "dialog");
   shell.setAttribute("aria-modal", "true");
@@ -569,18 +616,18 @@ export function createCompanionStartPicker(opts = {}) {
         </div>
       </header>
       <div class="picker-main">
-        <aside class="picker-hero-panel" aria-label="${isEnglish ? "Selected companion preview" : "已選同伴預覽"}">
+        <section class="picker-showcase-stage" aria-label="${isEnglish ? "Selected companion preview" : "已選同伴預覽"}">
           ${PICKER_HERO_HTML}
-        </aside>
-        <section class="picker-roster-panel" aria-label="${isEnglish ? "Companion roster" : "同伴名單"}">
-          ${PICKER_TOOLBAR_HTML}
-          ${PICKER_FEATURED_ROW_HTML}
+        </section>
+        <section class="picker-roster-dock" aria-label="${isEnglish ? "Companion roster" : "同伴名單"}">
+          <p class="picker-roster-dock-label"></p>
           <div class="start-picker-grid-wrap">
-            <div class="companion-picker-grid companion-picker-grid--start" role="listbox"></div>
+            <div class="companion-picker-grid companion-picker-grid--start companion-picker-grid--roster" role="listbox"></div>
             <p class="start-picker-scroll-hint" hidden></p>
           </div>
         </section>
       </div>
+      ${PICKER_SCENE_SECTION_HTML}
       <footer class="picker-footer">
         <div class="start-picker-preload is-loading" aria-live="polite">
           <div class="start-picker-preload-row">
@@ -606,13 +653,68 @@ export function createCompanionStartPicker(opts = {}) {
   const gridWrapEl = shell.querySelector(".start-picker-grid-wrap");
   const scrollHintEl = shell.querySelector(".start-picker-scroll-hint");
   const beginBtn = shell.querySelector(".picker-begin-btn");
-  const featuredWrap = shell.querySelector(".picker-featured-wrap");
-  const featuredLabel = shell.querySelector(".picker-featured-label");
-  const featuredRow = shell.querySelector(".picker-featured-row");
+  const rosterDockLabelEl = shell.querySelector(".picker-roster-dock-label");
+  const sceneSectionEl = shell.querySelector(".picker-scene-section");
+  const sceneLabelEl = shell.querySelector(".picker-scene-label");
+  const sceneRowEl = shell.querySelector(".picker-scene-row");
+  let activeBackgroundId = loadStoredSceneBackground(isEnglish).id;
+
+  const applyPickerBackground = (backgroundId) => {
+    activeBackgroundId = backgroundId;
+    const atmosphere =
+      opts.atmosphereEl || document.querySelector?.(".atmosphere") || null;
+    applySceneBackground(atmosphere, backgroundId);
+    persistSceneBackground(backgroundId);
+    opts.onBackgroundChange?.(backgroundId);
+    renderPickerSceneRow();
+  };
+
+  const renderPickerSceneRow = () => {
+    if (!sceneRowEl) return;
+    sceneRowEl.replaceChildren();
+    for (const preset of SCENE_BACKGROUND_PRESETS) {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className =
+        "picker-scene-chip" + (preset.id === activeBackgroundId ? " is-active" : "");
+      btn.setAttribute("role", "option");
+      btn.setAttribute(
+        "aria-selected",
+        preset.id === activeBackgroundId ? "true" : "false",
+      );
+      btn.title = scenePresetLabel(preset, isEnglish);
+      btn.innerHTML = `
+        <span class="scene-preset__swatch scene-preset__swatch--${preset.id}" aria-hidden="true"></span>
+        <span class="picker-scene-chip__label">${scenePresetLabel(preset, isEnglish)}</span>
+      `.trim();
+      btn.addEventListener("click", () => {
+        if (starting || !pickable) return;
+        applyPickerBackground(preset.id);
+      });
+      sceneRowEl.appendChild(btn);
+    }
+  };
+
+  const syncPickerSceneChrome = () => {
+    if (sceneLabelEl) {
+      sceneLabelEl.textContent = isEnglish ? "Background" : "背景";
+    }
+    renderPickerSceneRow();
+  };
 
   const paintCopy = () => {
     if (titleEl) titleEl.textContent = copy.title;
-    if (subEl) subEl.textContent = copy.sub;
+    if (subEl) {
+      subEl.hidden = false;
+      subEl.textContent = isEnglish
+        ? "Swipe the roster · tap to preview"
+        : "㩒肖像預覽 · 左右滑動揀同伴";
+    }
+    if (rosterDockLabelEl) {
+      rosterDockLabelEl.textContent = isEnglish
+        ? `Companions · ${fullList().length}`
+        : `同伴 · ${fullList().length} 位`;
+    }
     if (footEl) {
       footEl.textContent = starting
         ? copy.starting
@@ -628,7 +730,6 @@ export function createCompanionStartPicker(opts = {}) {
         starting ? copy.starting : copy.begin,
       );
     }
-    if (featuredLabel) featuredLabel.textContent = copy.featuredLabel;
   };
 
   const preloadStatusLabel = (clamped) => {
@@ -638,15 +739,28 @@ export function createCompanionStartPicker(opts = {}) {
     return isEnglish ? `Loading roster… ${clamped}%` : `載入名單… ${clamped}%`;
   };
 
+  const schedulePreloadHide = () => {
+    if (!preloadEl || preloadHideTimer) return;
+    preloadHideTimer = globalThis.setTimeout?.(() => {
+      preloadHideTimer = null;
+      if (preloadEl?.classList.contains("is-ready")) preloadEl.hidden = true;
+    }, 1400);
+  };
+
+  const syncPreloadChrome = (clamped) => {
+    if (!preloadEl) return;
+    const ready = clamped >= 100;
+    preloadEl.hidden = false;
+    preloadEl.classList.toggle("is-ready", ready);
+    preloadEl.classList.toggle("is-loading", clamped > 0 && !ready);
+    if (ready) schedulePreloadHide();
+  };
+
   const renderPreload = () => {
     const clamped = Math.max(0, Math.min(100, Math.round(preloadPct)));
     preloadAnimator.set(clamped, preloadStatusLabel(clamped));
     if (clamped >= 100) preloadAnimator.flush();
-    if (preloadEl) {
-      preloadEl.hidden = false;
-      preloadEl.classList.toggle("is-ready", clamped >= 100);
-      preloadEl.classList.toggle("is-loading", clamped > 0 && clamped < 100);
-    }
+    syncPreloadChrome(clamped);
   };
 
   const renderScrollHint = () => {
@@ -655,6 +769,9 @@ export function createCompanionStartPicker(opts = {}) {
     const overflow = vertical
       ? gridEl.scrollHeight > gridEl.clientHeight + 8
       : gridEl.scrollWidth > gridEl.clientWidth + 8;
+    const atStart = vertical
+      ? gridEl.scrollTop <= 8
+      : gridEl.scrollLeft <= 8;
     const atEnd = vertical
       ? gridEl.scrollTop + gridEl.clientHeight >= gridEl.scrollHeight - 8
       : gridEl.scrollLeft + gridEl.clientWidth >= gridEl.scrollWidth - 8;
@@ -666,12 +783,25 @@ export function createCompanionStartPicker(opts = {}) {
       : copy.rosterHint(fullList().length);
     gridWrapEl.classList.toggle("has-overflow", overflow);
     gridWrapEl.classList.toggle("at-bottom", atEnd);
+    gridWrapEl.classList.toggle("at-end", atEnd);
+    gridWrapEl.classList.toggle("at-start", atStart);
+  };
+
+  const pulseHeroStage = () => {
+    const hero = shell.querySelector(".picker-showcase-stage .picker-hero");
+    if (!hero) return;
+    hero.classList.remove("is-highlight");
+    void hero.offsetWidth;
+    hero.classList.add("is-highlight");
   };
 
   const scrollSelectedIntoView = () => {
     const sel = `[data-character-id="${selectedId}"]`;
-    const card = featuredRow?.querySelector(sel) || gridEl?.querySelector(sel);
-    card?.scrollIntoView?.({ behavior: "smooth", inline: "center", block: "nearest" });
+    gridEl?.querySelector(sel)?.scrollIntoView?.({
+      behavior: "smooth",
+      inline: "center",
+      block: "nearest",
+    });
   };
 
   const beginSession = () => {
@@ -681,61 +811,52 @@ export function createCompanionStartPicker(opts = {}) {
 
   const applySelection = (id) => {
     if (!pickable || starting) return;
+    if (id === selectedId) {
+      scrollSelectedIntoView();
+      return;
+    }
     selectedId = id;
     renderAll();
     scrollSelectedIntoView();
+    pulseHeroStage();
     opts.onSelectionChange?.(id);
   };
 
-  const renderFeatured = () => {
-    renderPickerFeaturedRow(featuredRow, langCode, {
-      selectedId,
-      roster: listPickerFeatured(fullList()),
-      eagerPreview: true,
-      disabled: starting || !pickable,
-      onCardTapFx: opts.onCardTapFx,
-      onCardClick: applySelection,
-    });
-    if (featuredWrap) {
-      featuredWrap.hidden = !featuredRow?.childElementCount;
+  const focusSelectedCard = () => {
+    const card = gridEl?.querySelector(`[data-character-id="${selectedId}"]`);
+    if (!(card instanceof HTMLElement)) return;
+    if (
+      document.activeElement?.closest?.("#start-character-picker .companion-picker-grid") ||
+      card.tabIndex === 0
+    ) {
+      card.focus({ preventScroll: true });
     }
   };
 
   const renderGrid = () => {
-    const filtered = filterPickerCharacters(fullList(), {
-      filter: filterId,
-      query,
-    });
     renderCompanionPickerGrid(gridEl, langCode, {
       selectedId,
-      roster: filtered,
-      rosterStrip: false,
+      roster: fullList(),
+      rosterStrip: true,
       isEnglish,
       eagerPreview: false,
+      startStrip: true,
       disabled: starting || !pickable,
       onCardTapFx: opts.onCardTapFx,
       onCardClick: applySelection,
     });
     shell.classList.toggle("is-preloading", false);
     updatePickerHero(shell, findPickerItem(fullList(), selectedId), isEnglish);
-    requestAnimationFrame(renderScrollHint);
+    requestAnimationFrame(() => {
+      renderScrollHint();
+      focusSelectedCard();
+    });
   };
 
   const renderAll = () => {
-    renderFeatured();
     renderGrid();
   };
 
-  unwireFeaturedKeys();
-  unwireFeaturedKeys = wirePickerRosterKeyboard(featuredRow, {
-    getSelectedId: () => selectedId,
-    setSelectedId: (id) => {
-      selectedId = id;
-    },
-    onSelect: applySelection,
-    onConfirm: beginSession,
-    disabled: () => starting || !pickable,
-  });
   unwireRosterKeys();
   unwireRosterKeys = wirePickerRosterKeyboard(gridEl, {
     getSelectedId: () => selectedId,
@@ -747,24 +868,13 @@ export function createCompanionStartPicker(opts = {}) {
     disabled: () => starting || !pickable,
   });
 
-  wirePickerToolbar(shell, {
-    isEnglish,
-    getFilter: () => filterId,
-    setFilter: (id) => {
-      filterId = id;
-    },
-    getQuery: () => query,
-    setQuery: (q) => {
-      query = q;
-    },
-    onChange: renderAll,
-  });
-
   beginBtn?.addEventListener("click", beginSession);
 
   paintCopy();
   renderAll();
   renderPreload();
+  syncPickerSceneChrome();
+  applyPickerBackground(activeBackgroundId);
   gridEl?.addEventListener("scroll", renderScrollHint, { passive: true });
   globalThis.addEventListener?.("resize", renderScrollHint);
 
@@ -778,6 +888,12 @@ export function createCompanionStartPicker(opts = {}) {
     },
     getSelectedId() {
       return selectedId;
+    },
+    getBackgroundId() {
+      return activeBackgroundId;
+    },
+    setBackgroundId(backgroundId) {
+      applyPickerBackground(backgroundId);
     },
     setPreloadProgress(pct, label) {
       const n = Number(pct);
@@ -793,11 +909,7 @@ export function createCompanionStartPicker(opts = {}) {
         preloadPct,
         label || preloadStatusLabel(preloadPct),
       );
-      if (preloadEl) {
-        preloadEl.hidden = false;
-        preloadEl.classList.toggle("is-ready", ready);
-        preloadEl.classList.toggle("is-loading", preloadPct > 0 && !ready);
-      }
+      syncPreloadChrome(preloadPct);
       if (ready) preloadAnimator.flush();
     },
     enablePicking(on = true) {
@@ -819,6 +931,7 @@ export function createCompanionStartPicker(opts = {}) {
       shell.removeAttribute("hidden");
       document.body.classList.add("companion-start-pending", "companion-picker-open");
       scrollSelectedIntoView();
+      requestAnimationFrame(renderScrollHint);
     },
     hide() {
       shell.classList.remove("is-open");
@@ -832,8 +945,9 @@ export function createCompanionStartPicker(opts = {}) {
       shell.remove();
     },
     destroy() {
+      if (preloadHideTimer) globalThis.clearTimeout?.(preloadHideTimer);
+      preloadHideTimer = null;
       preloadAnimator.destroy();
-      unwireFeaturedKeys();
       unwireRosterKeys();
       document.body.classList.remove("companion-start-pending", "companion-picker-open");
       shell.remove();

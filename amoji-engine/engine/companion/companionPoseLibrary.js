@@ -203,14 +203,13 @@ export const restDirectedDelta = restDirectedLift;
  * @param {number} extra
  */
 export function withElbowBend(restLower, extra = 0) {
-  const axis = restLower?.flexAxis === "y" || restLower?.flexAxis === "z"
-    ? restLower.flexAxis
-    : "x";
+  const axis = restLower?.flexAxis === "z" ? "z" : "x";
+  const base = Number(restLower?.[axis]) || 0;
   return {
-    x: restLower?.x ?? 0,
-    y: restLower?.y ?? 0,
-    z: restLower?.z ?? 0,
-    [axis]: (restLower?.[axis] ?? 0) + extra,
+    x: axis === "x" ? base + extra : 0,
+    y: 0,
+    z: axis === "z" ? base + extra : 0,
+    flexAxis: axis,
   };
 }
 

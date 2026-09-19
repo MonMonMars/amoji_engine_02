@@ -14,7 +14,7 @@ mkdirSync(outDir, { recursive: true });
 
 const baseUrl =
   process.env.LITE_URL ||
-  "http://127.0.0.1:5174/play?character=kate&lang=en&pick=1&automic=0";
+  "http://127.0.0.1:5174/play?role=secretary&lang=en&pick=1&automic=0&tab=today";
 
 const browser = await chromium.launch({ headless: true });
 const page = await browser.newPage();
@@ -36,7 +36,7 @@ const pickerOpen = await page.evaluate(() => {
   );
 });
 if (pickerOpen) {
-  await beginStartPickerSession(page, { characterId: "kate" });
+  await beginStartPickerSession(page, { characterId: "nova" });
 }
 
 const chrome = await page.evaluate(() => ({
@@ -45,7 +45,8 @@ const chrome = await page.evaluate(() => ({
   legacyTabbar: !!document.querySelector(".tabbar"),
   hasActivityRail: !!document.getElementById("activity-rail"),
   hasComposer: !!document.getElementById("composer"),
-  quickBar: document.getElementById("secretary-quick-bar")?.textContent?.trim(),
+  quickBar: document.getElementById("secretary-quick-bar"),
+  secretaryMenu: !document.getElementById("settings-secretary-section")?.hidden,
   build: window.__amojiBuild,
 }));
 
