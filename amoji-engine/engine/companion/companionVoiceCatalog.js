@@ -41,6 +41,14 @@ export function findVoiceEntry(voiceId) {
   return findVoiceProfile(voiceId);
 }
 
+/** @param {string | null | undefined} voiceParam */
+export function isVoiceOutputDisabled(voiceParam) {
+  const v = String(voiceParam || "")
+    .trim()
+    .toLowerCase();
+  return v === "off" || v === "0" || v === "none" || v === "mute";
+}
+
 /**
  * @param {{
  *   lang?: string | null,

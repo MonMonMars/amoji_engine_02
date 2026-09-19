@@ -25,8 +25,7 @@ describe("companionMobileShell", () => {
   });
 
   it("embeds companion with mobile=1 and pick=0 in the app shell", () => {
-    expect(companionScreen).toContain("mobile=1");
-    expect(companionScreen).toContain("pick=0");
+    expect(companionScreen).toContain("buildMobileCompanionPlayPath");
     expect(companionScreen).toContain("/api/health");
   });
 

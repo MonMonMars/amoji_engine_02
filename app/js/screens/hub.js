@@ -5,6 +5,8 @@ import { resolveBondRank } from "/amoji-engine/engine/companion/companionRaising
 import {
   getCharacter,
 } from "/amoji-engine/engine/companion/companionCharacterCatalog.js";
+import { loadMobileSettings } from "/amoji-engine/engine/mobile/companionMobileSettings.js";
+import { buildMobileCompanionPlayPath } from "/amoji-engine/engine/mobile/companionMobilePlayUrl.js";
 import {
   loadCompanionRole,
   roleEmoji,
@@ -12,6 +14,7 @@ import {
   rolePreset,
   saveCompanionRole,
 } from "/amoji-engine/engine/mobile/companionRolePresets.js";
+import { AMOJI_BUILD } from "/amoji-engine/engine/companion/buildVersion.mjs";
 
 registerRoute("hub", (ctx) => {
   const en = ctx.isEnglish();
@@ -25,6 +28,14 @@ registerRoute("hub", (ctx) => {
   const chase = loadLocalChaseState() || { highScore: 0, streakDays: 0 };
   const bond = resolveBondRank(treats.hearts, en);
   const charName = en ? character?.name?.en : character?.name?.yue;
+  const settings = loadMobileSettings();
+  const fullscreenPlay = buildMobileCompanionPlayPath({
+    lang: en ? "en" : "yue",
+    characterId: charId,
+    role,
+    voiceEnabled: settings.voiceEnabled !== false,
+    build: AMOJI_BUILD,
+  });
 
   const screen = document.createElement("section");
   screen.className = "screen";
@@ -76,7 +87,7 @@ registerRoute("hub", (ctx) => {
     </div>
     <div class="stack" style="margin-top:1rem;width:100%">
       <button type="button" class="btn btn-secondary" data-go="settings">${en ? "Settings" : "設定"}</button>
-      <button type="button" class="btn btn-secondary" data-open="/play?pick=0&mobile=1&automic=0&lang=${en ? "en" : "yue"}&character=${charId}&role=${role}">
+      <button type="button" class="btn btn-secondary" data-open="${fullscreenPlay}">
         ${en ? "Open full-screen 3D (browser)" : "全屏 3D 同伴（瀏覽器）"}
       </button>
     </div>

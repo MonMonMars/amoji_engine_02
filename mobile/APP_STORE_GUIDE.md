@@ -14,7 +14,7 @@ Amoji is a hybrid **pet game + anime companion + chase collection** app:
 |------|-------------|
 | **Title → Login** | Guest or Sign in with Apple |
 | **Hub** | Home navigation |
-| **Companion** | Full 3D VRM chat (`/play?mobile=1&pick=0` or hub embed) |
+| **Companion** | Full 3D VRM chat (hub embed; Secretary card opens in-app with `tab=today`) |
 | **Pet Care** | Pou/Tamagotchi-style hunger & hearts |
 | **Chase** | Catch the running girl for coins |
 | **Shop** | IAP coins, Premium subscription, character pack |

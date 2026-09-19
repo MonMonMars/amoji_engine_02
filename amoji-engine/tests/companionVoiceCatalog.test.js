@@ -4,6 +4,7 @@ import {
   cloudVoiceLabel,
   companionLangCode,
   nextVoiceId,
+  isVoiceOutputDisabled,
   resolveVoiceForCharacter,
   resolveVoiceId,
   voiceGenderLabel,
@@ -13,6 +14,11 @@ import {
 } from "../engine/companion/companionVoiceCatalog.js";
 
 describe("companionVoiceCatalog", () => {
+  it("detects voice=off URL tokens", () => {
+    expect(isVoiceOutputDisabled("off")).toBe(true);
+    expect(isVoiceOutputDisabled("openai-coral")).toBe(false);
+  });
+
   it("resolves language codes", () => {
     expect(companionLangCode("en")).toBe("en");
     expect(companionLangCode("yue")).toBe("yue");
