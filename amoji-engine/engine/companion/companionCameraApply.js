@@ -5,8 +5,12 @@ import * as THREE from "three";
 import {
   PORTRAIT_CAMERA_Y_LIFT,
   PORTRAIT_CAMERA_Z_SIGN,
+  PORTRAIT_FOV,
   PORTRAIT_TARGET_Y_LIFT,
   PORTRAIT_Z_DISTANCE_MUL,
+  detectPortraitCameraZSign,
+  facingAlignmentScore,
+  portraitDistanceForHeight,
 } from "./companionPortraitFraming.js";
 
 export const COMPANION_CAMERA_APPLY_SCHEMA = "amoji.companionCameraApply.v2";
@@ -204,4 +208,95 @@ export function lerpCameraTowardShot(
   const targetDelta = controls.target.distanceTo(desired.target);
   const fovDelta = Math.abs(camera.fov - desired.fov);
   return posDelta < 0.004 && targetDelta < 0.004 && fovDelta < 0.08;
+}
+
+/**
+ * Apply a portrait shot to live OrbitControls + camera.
+ * @param {import('three').OrbitControls} controls
+ * @param {import('three').PerspectiveCamera} camera
+ * @param {ReturnType<typeof buildPortraitShot>} shot
+ * @param {{ portraitDist?: number }} [opts]
+ */
+export function applyPortraitShot(controls, camera, shot, opts = {}) {
+  controls.target.copy(shot.target);
+  camera.position.copy(shot.position);
+  camera.fov = shot.fov;
+  camera.updateProjectionMatrix();
+  if (opts.portraitDist != null) {
+    controls.minDistance = opts.portraitDist * 0.55;
+    controls.maxDistance = opts.portraitDist * 3.4;
+  }
+  controls.update();
+  return shot;
+}
+
+/**
+ * Pick model yaw (+0 / +π) and camera Z sign so the portrait faces the user.
+ * @param {{
+ *   model?: import('three').Object3D | null,
+ *   headBone?: import('three').Object3D | null,
+ *   humanoid?: import('@pixiv/three-vrm').VRMHumanoid | null,
+ *   anchor: import('three').Vector3,
+ *   fittedHeight: number,
+ *   baseFov?: number,
+ * }} opts
+ */
+export function resolveFrontPortraitFrame(opts) {
+  const anchor = opts.anchor;
+  const fittedHeight = opts.fittedHeight;
+  const baseFov = opts.baseFov ?? PORTRAIT_FOV;
+  const portraitDist = portraitDistanceForHeight(fittedHeight);
+  const model = opts.model;
+  const headBone = opts.headBone;
+  const humanoid = opts.humanoid;
+  const baseYaw = model?.rotation?.y ?? 0;
+
+  /** @type {{ score: number, yaw: number, zSign: number, shot: ReturnType<typeof buildPortraitShot>, portraitDist: number } | null} */
+  let best = null;
+
+  for (const yawAdd of [0, Math.PI]) {
+    if (model) {
+      model.rotation.y = baseYaw + yawAdd;
+      model.updateMatrixWorld(true);
+    }
+    headBone?.updateMatrixWorld(true);
+    const zSign = detectPortraitCameraZSign(
+      headBone,
+      anchor,
+      portraitDist,
+      humanoid,
+    );
+    for (const sign of [zSign, zSign === 1 ? -1 : 1]) {
+      const shot = buildPortraitShot(anchor, portraitDist, baseFov, sign);
+      const score = headBone
+        ? facingAlignmentScore(headBone, shot.position, humanoid)
+        : sign === PORTRAIT_CAMERA_Z_SIGN
+          ? 1
+          : 0;
+      if (!best || score > best.score) {
+        best = {
+          score,
+          yaw: baseYaw + yawAdd,
+          zSign: sign,
+          shot,
+          portraitDist,
+        };
+      }
+    }
+  }
+
+  if (model && best) {
+    model.rotation.y = best.yaw;
+    model.updateMatrixWorld(true);
+  }
+
+  return (
+    best ?? {
+      score: 0,
+      yaw: baseYaw,
+      zSign: PORTRAIT_CAMERA_Z_SIGN,
+      shot: buildPortraitShot(anchor, portraitDist, baseFov),
+      portraitDist,
+    }
+  );
 }
