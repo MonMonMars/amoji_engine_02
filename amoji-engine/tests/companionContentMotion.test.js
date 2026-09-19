@@ -69,11 +69,11 @@ describe("companionContentMotion", () => {
     expect(blend.Happy ?? 0).toBeGreaterThan(0.5);
   });
 
-  it("keeps untagged rest emotion morph-neutral", () => {
+  it("gives neutral a soft resting smile (not a blank mask)", () => {
     const blend = buildVrmExpressionBlend("neutral", "none");
-    expect(blend.Happy ?? 0).toBe(0);
+    expect(blend.Happy ?? 0).toBeGreaterThan(0.12);
+    expect(blend.Happy ?? 0).toBeLessThan(0.28);
     expect(blend.Relaxed ?? 0).toBe(0);
-    expect(blend.Surprised ?? 0).toBe(0);
   });
 
   it("keeps everyday Cantonese particles on a calm face", () => {
@@ -87,7 +87,7 @@ describe("companionContentMotion", () => {
     const content = analyzeCompanionReply("而家香港大約二十七度，有幾陣雨");
     expect(content.emotion).toBe("neutral");
     expect(content.nuance).toBe("none");
-    expect(content.expressionBlend.Happy ?? 0).toBe(0);
+    expect(content.expressionBlend.Happy ?? 0).toBeLessThan(0.28);
   });
 
   it("infers user worry as stress nuance for thinking pose", () => {

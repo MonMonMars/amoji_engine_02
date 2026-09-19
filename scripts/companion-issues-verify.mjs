@@ -440,6 +440,39 @@ async function main() {
     JSON.stringify(idleLife),
   );
 
+  const idleFace = await page.evaluate(async () => {
+    const avatar = window.__amojiAvatar;
+    avatar?.setTalking?.(false);
+    avatar?.setEmotion?.("neutral");
+    avatar?.stopAction?.();
+    const expr = avatar?.vrm?.expressionManager;
+    const happy = () => {
+      try {
+        return Math.max(
+          Number(expr?.getValue?.("happy") ?? 0),
+          Number(expr?.getValue?.("Happy") ?? 0),
+        );
+      } catch {
+        return 0;
+      }
+    };
+    const samples = [];
+    for (let i = 0; i < 10; i += 1) {
+      samples.push(happy());
+      await new Promise((r) => setTimeout(r, 280));
+    }
+    return {
+      min: Math.min(...samples),
+      max: Math.max(...samples),
+      range: Math.max(...samples) - Math.min(...samples),
+    };
+  });
+  record(
+    "idle-facial-expression",
+    idleFace.max > 0.06 && idleFace.range > 0.008,
+    JSON.stringify(idleFace),
+  );
+
   const restFace = await page.evaluate(async () => {
     const avatar = window.__amojiAvatar;
     const exprVal = (expr, name) => {

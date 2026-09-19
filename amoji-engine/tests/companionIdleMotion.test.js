@@ -22,6 +22,14 @@ describe("companionIdleMotion", () => {
     expect(a.headZ).not.toBe(b.headZ);
   });
 
+  it("animates neutral idle facial overlays", () => {
+    const a = sampleIdleExpressionBlend(0.4, "neutral");
+    const b = sampleIdleExpressionBlend(2.1, "neutral");
+    expect(a.Happy ?? 0).toBeGreaterThan(0.12);
+    expect(b.Happy ?? 0).toBeGreaterThan(0.12);
+    expect(a.Happy).not.toBe(b.Happy);
+  });
+
   it("advances idle beat overlay", () => {
     const state = createIdleBeatState(0);
     state.nextAt = 0;
@@ -65,11 +73,11 @@ describe("companionIdleMotion", () => {
     expect(Math.abs(first.overlay.hipZ || 0) + Math.abs(first.overlay.leanY || 0)).toBeGreaterThan(0.01);
   });
 
-  it("keeps idle rest morph-neutral so jaws stay shut and lids stay open", () => {
+  it("keeps idle rest soft-smile without Relaxed jaw/lid hazards", () => {
     const blend = sampleIdleExpressionBlend(1.2, "neutral");
-    expect(blend.Happy ?? 0).toBe(0);
+    expect(blend.Happy ?? 0).toBeGreaterThan(0.1);
     expect(blend.Relaxed ?? 0).toBe(0);
-    expect(blend.Surprised ?? 0).toBe(0);
+    expect(blend.Surprised ?? 0).toBeLessThan(0.12);
   });
 
   it("keeps Relaxed off so eyelids stay open", () => {
