@@ -312,6 +312,8 @@ async function main() {
     const chipStyle = chip ? getComputedStyle(chip) : null;
     const roleStyle = rolePill ? getComputedStyle(rolePill) : null;
     const nameStyle = sessionName ? getComputedStyle(sessionName) : null;
+    const brandName = document.getElementById("brand-name");
+    const brandStyle = brandName ? getComputedStyle(brandName) : null;
     return {
       minimal: document.body.classList.contains("companion-minimal-chrome"),
       menuVisible: Boolean(menu && getComputedStyle(menu).display !== "none"),
@@ -320,6 +322,10 @@ async function main() {
         nameStyle?.display !== "none" &&
         nameStyle?.visibility !== "hidden" &&
         String(sessionName.textContent || "").trim().length > 0,
+      chipNameVisible:
+        Boolean(brandName) &&
+        brandStyle?.display !== "none" &&
+        String(brandName.textContent || "").trim().length > 0,
       chipHidden:
         !chip ||
         chipStyle?.display === "none" ||
@@ -332,16 +338,16 @@ async function main() {
     };
   });
   record(
-    "topbar-menu-only",
+    "topbar-character-chip",
     topbarChrome.minimal &&
       topbarChrome.menuVisible &&
-      topbarChrome.chipHidden &&
+      !topbarChrome.chipHidden &&
       topbarChrome.roleHidden,
     JSON.stringify(topbarChrome),
   );
   record(
-    "topbar-session-name",
-    topbarChrome.sessionNameVisible,
+    "topbar-chip-name",
+    topbarChrome.chipNameVisible,
     JSON.stringify(topbarChrome),
   );
 

@@ -46,11 +46,11 @@ describe("companionMinimalUi", () => {
     expect(html).toContain('id="settings-btn-speaker"');
   });
 
-  it("shows menu top-right only; send visible in text composer", () => {
+  it("shows character chip top-left + menu top-right; send visible in text composer", () => {
     expect(minimalCss).toMatch(/companion-minimal-chrome \.topbar[\s\S]*display:\s*flex/);
     expect(minimalCss).toMatch(/companion-minimal-chrome \.topbar[\s\S]*justify-content:\s*space-between/);
-    expect(minimalCss).toMatch(/companion-minimal-chrome \.companion-session-name/);
-    expect(minimalCss).toMatch(/companion-minimal-chrome \.topbar \.brand-btn[\s\S]*display:\s*none/);
+    expect(minimalCss).toMatch(/companion-minimal-chrome \.topbar \.brand-btn[\s\S]*display:\s*flex/);
+    expect(minimalCss).toMatch(/companion-minimal-chrome \.companion-session-name[\s\S]*clip:\s*rect/);
     expect(minimalCss).toContain("topbar-setup-btn");
     expect(minimalCss).not.toContain("mic-voice-hud");
     expect(minimalCss).toMatch(
