@@ -35,9 +35,9 @@ function mockAction() {
 }
 
 describe("companionVrmMotionPlayer", () => {
-  it("uses v5 schema and shares crossfade timing with transition module", () => {
+  it("uses v6 schema and shares crossfade timing with transition module", () => {
     expect(COMPANION_VRM_MOTION_PLAYER_SCHEMA).toBe(
-      "amoji.companionVrmMotionPlayer.v5",
+      "amoji.companionVrmMotionPlayer.v6",
     );
     expect(DEFAULT_MOTION_CROSSFADE_SEC).toBeCloseTo(0.6);
     expect(ONLINE_CALM_IDLE_ACTION).toBe("thinking");

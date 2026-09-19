@@ -19,7 +19,7 @@ import {
 } from "./vrmMotionTransition.js";
 
 export const COMPANION_VRM_MOTION_PLAYER_SCHEMA =
-  "amoji.companionVrmMotionPlayer.v5";
+  "amoji.companionVrmMotionPlayer.v6";
 
 /**
  * Ramp a VRMA clip action in from weight 0 (crossfade or fadeIn).
@@ -177,6 +177,39 @@ export function createVrmMotionPlayer(opts) {
     haltAction(false, transitionSec);
   };
 
+  /**
+   * Hard-stop all mixer actions immediately (no fade). Required when the render
+   * loop skips motionPlayer.update() — otherwise crossfaded clips keep bone weight
+   * and blend with procedural body pose.
+   * @param {boolean} [resetPose]
+   */
+  const forceStop = (resetPose = false) => {
+    crossfadeUntilMs = 0;
+    lastTransitionSec = 0;
+    for (const { action } of retiringActions) {
+      try {
+        action.stop();
+        action.reset();
+      } catch {
+        /* ignore */
+      }
+    }
+    retiringActions = [];
+    if (clipAction) {
+      try {
+        clipAction.stop();
+        clipAction.reset();
+      } catch {
+        /* ignore */
+      }
+      clipAction = null;
+    }
+    activeActionId = null;
+    if (resetPose) {
+      vrm.humanoid?.resetNormalizedPose?.();
+    }
+  };
+
   /** Outgoing clip still weighted on the mixer (active or fading out). */
   const getActiveCrossfadeSource = () => {
     if (clipAction) {
@@ -277,6 +310,7 @@ export function createVrmMotionPlayer(opts) {
     play,
     playIdle,
     stop,
+    forceStop,
     update,
     warmClip,
     isAnimating() {
