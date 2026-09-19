@@ -140,7 +140,7 @@ export async function synthesizeOpenAiSpeech(text, opts = {}) {
       voice,
       input: clean,
       speed,
-      instructions: `${instructions}\n\nPace: ${speed}x — unhurried and slow. Take your time on each word. Never rush, clip, or race through the line.`,
+      instructions: `${instructions}\n\nPace: ${speed}x — VERY unhurried and slow. Take your time on each word and syllable. Long pauses between phrases. Never rush, clip, or race through the line.`,
       response_format: "mp3",
     }),
   });

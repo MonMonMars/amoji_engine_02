@@ -73,12 +73,12 @@ const STYLE_EDGE_DELTA = Object.freeze({
 });
 
 const EMOTION_BROWSER_BASE = Object.freeze({
-  neutral: { rate: 0.92, pitch: 1.14, volume: 1 },
-  happy: { rate: 0.94, pitch: 1.28, volume: 1 },
-  thinking: { rate: 0.86, pitch: 1.06, volume: 0.96 },
-  sad: { rate: 0.84, pitch: 0.92, volume: 0.9 },
-  surprised: { rate: 0.96, pitch: 1.32, volume: 1 },
-  angry: { rate: 0.9, pitch: 1, volume: 1 },
+  neutral: { rate: 0.78, pitch: 1.14, volume: 1 },
+  happy: { rate: 0.8, pitch: 1.28, volume: 1 },
+  thinking: { rate: 0.72, pitch: 1.06, volume: 0.96 },
+  sad: { rate: 0.7, pitch: 0.92, volume: 0.9 },
+  surprised: { rate: 0.82, pitch: 1.32, volume: 1 },
+  angry: { rate: 0.76, pitch: 1, volume: 1 },
 });
 
 /**
@@ -215,17 +215,17 @@ export function instructSpeakingSpeed(opts = {}) {
   const speedMultiplier = normalizeTalkSpeed(opts.speedMultiplier);
   let speed =
     emotion === "happy" || emotion === "surprised"
-      ? 0.92
+      ? 0.78
       : emotion === "sad"
-        ? 0.82
+        ? 0.68
         : emotion === "thinking"
-          ? 0.86
+          ? 0.72
           : emotion === "angry"
-            ? 0.9
-            : 0.88;
-  speed += (energy - 0.55) * 0.06;
+            ? 0.76
+            : 0.74;
+  speed += (energy - 0.55) * 0.04;
   speed = applyTalkSpeedMultiplier(speed, speedMultiplier);
-  return Number(Math.max(0.28, Math.min(0.95, speed)).toFixed(2));
+  return Number(Math.max(0.22, Math.min(0.82, speed)).toFixed(2));
 }
 
 /**
@@ -286,11 +286,11 @@ export function buildTtsInstruct(opts = {}) {
         : "親切、有感情、好似傾偈";
 
   const pacing =
-    speedMultiplier <= 0.42
+    speedMultiplier <= 0.32
       ? isEnglish
         ? `Speak at ${speed}x — VERY SLOW. Relaxed VN/gacha pace. Long breath between phrases and words. Never rush or clip syllables.`
         : `用 ${speed}x 好慢講 — 視覺小說節奏，字與字之間留位，句與句之間停一停，絕對唔好急。`
-      : speedMultiplier <= 0.65
+      : speedMultiplier <= 0.55
         ? isEnglish
           ? `Speak at ${speed}x — SLOW, relaxed, unhurried. Longer pauses between phrases. Never rush.`
           : `用 ${speed}x 慢速講 — 放鬆、唔好急，句與句之間留啲位。`
@@ -527,12 +527,12 @@ export function resolveCompanionTtsProsody(opts = {}) {
     EMOTION_BROWSER_BASE[emotion] || EMOTION_BROWSER_BASE.neutral;
   const browserRate = slowBrowserRate(
     Math.max(
-      0.86,
+      0.68,
       Math.min(
-        1.12,
+        0.92,
         browserBase.rate +
-          (edgeRate / 100) * 0.18 +
-          (speechEnergy - 0.5) * 0.06,
+          (edgeRate / 100) * 0.14 +
+          (speechEnergy - 0.5) * 0.04,
       ),
     ),
     speedMultiplier,
