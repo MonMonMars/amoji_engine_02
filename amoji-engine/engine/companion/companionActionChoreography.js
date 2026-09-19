@@ -5,9 +5,10 @@ import { resolveAction } from "./companionActionMotion.js";
 import { actionLoopsFromCatalog, PLAYABLE_ACTIONS } from "./companionActionCatalog.js";
 import { getExtendedActionDef } from "./companionMotionLibrary.js";
 import { getCloudMotionDef } from "./motionPackData.mjs";
+import { normalizeIdleGender } from "./companionIdleGender.js";
 
 export const COMPANION_ACTION_CHOREOGRAPHY_SCHEMA =
-  "amoji.companionActionChoreography.v1";
+  "amoji.companionActionChoreography.v2";
 
 /** @type {Record<string, readonly string[]>} */
 export const ACTION_COMBOS = Object.freeze({
@@ -55,16 +56,11 @@ export const ACTION_COMBOS = Object.freeze({
   jumpjack: ["jumpjack", "jump", "cheer"],
 });
 
-/**
- * Quiet between-turn idle — Thinking.vrma calm loop plus one-shot social clips.
- * Each entry maps to a distinct hosted VRMA (no repeat Thinking/shrug on the loop).
- */
-export const IDLE_LIFE_CLIP_POOL = Object.freeze([
+/** Shared quiet idle clips — safe for any companion. */
+export const IDLE_LIFE_CLIP_POOL_CORE = Object.freeze([
   "nod",
   "bow",
-  "shy",
   "peace",
-  "sleep",
   "stretch",
   "sit",
   "yoga",
@@ -74,18 +70,84 @@ export const IDLE_LIFE_CLIP_POOL = Object.freeze([
   "sad",
   "wave",
   "thinking",
-  "thumbsup",
   "shrug",
   "point",
-  "blush",
   "relax",
   "learning",
   "clap",
-  "salute",
+  "shy",
+  "sleep",
+  "blush",
 ]);
 
-/** Large idle rotation pool — quiet companion moments between turns. */
-export const IDLE_SHOWCASE_POOL = Object.freeze([
+/** Feminine idle rotation — softer, expressive social beats. */
+export const IDLE_LIFE_CLIP_POOL_FEMALE = Object.freeze([
+  ...IDLE_LIFE_CLIP_POOL_CORE,
+  "shy",
+  "sleep",
+  "thumbsup",
+  "blush",
+  "salute",
+  "curtsy",
+  "fingerheart",
+  "photopose",
+  "wiggle",
+  "hug",
+  "dab",
+  "ballet",
+  "dance",
+  "rock",
+  "drink",
+  "moonwalk",
+  "kiss",
+  "celebrate",
+  "spin",
+]);
+
+/** Masculine idle rotation — grounded, confident micro-moves. */
+export const IDLE_LIFE_CLIP_POOL_MALE = Object.freeze([
+  ...IDLE_LIFE_CLIP_POOL_CORE,
+  "thumbsup",
+  "salute",
+  "handshake",
+  "superhero",
+  "sneak",
+  "moonwalk",
+  "pushup",
+  "kungfu",
+  "punch",
+  "highfive",
+  "run",
+  "jump",
+  "cheer",
+  "dab",
+  "celebrate",
+  "sleep",
+]);
+
+/**
+ * Quiet between-turn idle — Thinking.vrma calm loop plus one-shot social clips.
+ * Union of gender pools (legacy import sites).
+ */
+export const IDLE_LIFE_CLIP_POOL = Object.freeze([
+  ...new Set([
+    ...IDLE_LIFE_CLIP_POOL_FEMALE,
+    ...IDLE_LIFE_CLIP_POOL_MALE,
+  ]),
+]);
+
+/**
+ * @param {string | null | undefined} gender
+ * @returns {readonly string[]}
+ */
+export function idleLifeClipPoolForGender(gender) {
+  return normalizeIdleGender(gender) === "male"
+    ? IDLE_LIFE_CLIP_POOL_MALE
+    : IDLE_LIFE_CLIP_POOL_FEMALE;
+}
+
+/** Feminine showcase idle — longer performance pool. */
+export const IDLE_SHOWCASE_POOL_FEMALE = Object.freeze([
   "wave",
   "nod",
   "thinking",
@@ -111,7 +173,6 @@ export const IDLE_SHOWCASE_POOL = Object.freeze([
   "sit",
   "squat",
   "walk",
-  "run",
   "rock",
   "drink",
   "eat",
@@ -119,7 +180,6 @@ export const IDLE_SHOWCASE_POOL = Object.freeze([
   "facepalm",
   "headshake",
   "jump",
-  "kungfu",
   "highfive",
   "curtsy",
   "taiji",
@@ -140,6 +200,76 @@ export const IDLE_SHOWCASE_POOL = Object.freeze([
   "zombie",
   "sneak",
   "jumpjack",
+]);
+
+/** Masculine showcase idle — grounded + athletic beats. */
+export const IDLE_SHOWCASE_POOL_MALE = Object.freeze([
+  "wave",
+  "nod",
+  "thinking",
+  "bow",
+  "clap",
+  "stretch",
+  "peace",
+  "thumbsup",
+  "shrug",
+  "point",
+  "salute",
+  "cheer",
+  "spin",
+  "moonwalk",
+  "dance",
+  "celebrate",
+  "laugh",
+  "yoga",
+  "sit",
+  "squat",
+  "walk",
+  "run",
+  "rock",
+  "drink",
+  "sleep",
+  "facepalm",
+  "headshake",
+  "jump",
+  "kungfu",
+  "punch",
+  "kick",
+  "highfive",
+  "taiji",
+  "breakdance",
+  "tiktokdance",
+  "learning",
+  "hiphop",
+  "macarena",
+  "floss",
+  "superhero",
+  "handshake",
+  "photopose",
+  "pushup",
+  "plank",
+  "zombie",
+  "sneak",
+  "jumpjack",
+  "dab",
+]);
+
+/**
+ * @param {string | null | undefined} gender
+ * @returns {readonly string[]}
+ */
+export function idleShowcasePoolForGender(gender) {
+  return normalizeIdleGender(gender) === "male"
+    ? IDLE_SHOWCASE_POOL_MALE
+    : IDLE_SHOWCASE_POOL_FEMALE;
+}
+
+/** Large idle rotation pool — union of gender showcase sets. */
+export const IDLE_SHOWCASE_POOL = Object.freeze([
+  ...new Set([
+    ...IDLE_SHOWCASE_POOL_FEMALE,
+    ...IDLE_SHOWCASE_POOL_MALE,
+  ]),
 ]);
 
 /** Longer performance when user asks for multiple moves. */
@@ -217,8 +347,18 @@ export function shouldChainAction(actionId) {
  * @param {string | null | undefined} lastMove
  * @param {string[]} [pool]
  */
-export function pickIdleShowcase(lastMove = null, pool = IDLE_SHOWCASE_POOL) {
-  const list = pool.filter(
+export function pickIdleShowcase(
+  lastMove = null,
+  pool = IDLE_SHOWCASE_POOL,
+  gender,
+) {
+  const resolvedPool =
+    pool === IDLE_SHOWCASE_POOL && gender
+      ? idleShowcasePoolForGender(gender)
+      : pool === IDLE_LIFE_CLIP_POOL && gender
+        ? idleLifeClipPoolForGender(gender)
+        : pool;
+  const list = resolvedPool.filter(
     (id) => PLAYABLE_ACTIONS.includes(id) || Boolean(getExtendedActionDef(id)),
   );
   if (!list.length) return "wave";

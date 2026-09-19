@@ -61,7 +61,7 @@ import {
   lockedIdleHipTilt,
 } from "./companionFootLock.js";
 
-export const COMPANION_BODY_SCHEMA = "amoji.companionBody.v1";
+export const COMPANION_BODY_SCHEMA = "amoji.companionBody.v2";
 
 /**
  * @param {import('@pixiv/three-vrm').VRMHumanoid | null | undefined} humanoid
@@ -74,6 +74,8 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
   let armBind = "tpose";
   let emotion = "neutral";
   let nuance = "none";
+  /** @type {"female" | "male"} */
+  let idleGender = "female";
   let thinking = false;
   let listening = false;
   let lastChunkAt = 0;
@@ -116,6 +118,11 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
   const setEmotion = (next) => {
     emotion = String(next || "neutral").toLowerCase();
     return emotion;
+  };
+
+  const setIdleGender = (next) => {
+    idleGender = String(next || "female").toLowerCase() === "male" ? "male" : "female";
+    return idleGender;
   };
 
   const setContentNuance = (next) => {
@@ -754,7 +761,7 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
     smoothedPose = buildBasePose({ listening, emotion, nuance });
     smoothedPose = mergePoses(
       smoothedPose,
-      samplePlantedAliveIdle(elapsed, { listening, emotion }),
+      samplePlantedAliveIdle(elapsed, { listening, emotion, gender: idleGender }),
       0.96,
     );
     smoothedRootMotion = { y: 0, rotY: 0 };
@@ -813,10 +820,10 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
       } else if (!talking) {
         const apose = isAposeBind();
         const idleMotion = apose
-          ? sampleCalmBreathIdle(elapsed, { listening, emotion })
-          : samplePlantedAliveIdle(elapsed, { listening, emotion });
+          ? sampleCalmBreathIdle(elapsed, { listening, emotion, gender: idleGender })
+          : samplePlantedAliveIdle(elapsed, { listening, emotion, gender: idleGender });
         pose = mergePoses(pose, idleMotion, apose ? 0.42 : 0.72);
-        const beat = advanceIdleBeat(idleBeat, dt, now);
+        const beat = advanceIdleBeat(idleBeat, dt, now, { gender: idleGender });
         idleBeat = beat.state;
         if (beat.overlay && Object.keys(beat.overlay).length) {
           let overlay = beat.overlay;
@@ -929,7 +936,10 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
       talkArmBlend,
       bootPhase: false,
       plantFeet,
-      combHair: !talking && !thinking && idleBeat.beat === "comb",
+      combHair:
+        !talking &&
+        !thinking &&
+        (idleBeat.beat === "comb" || idleBeat.beat === "hair"),
     });
     if (plantFeet) {
       const dy = footPlantRootDelta(bone, 0);
@@ -954,7 +964,7 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
     smoothedPose = buildBasePose({ listening, emotion, nuance });
     smoothedPose = mergePoses(
       smoothedPose,
-      samplePlantedAliveIdle(0.2, { listening, emotion }),
+      samplePlantedAliveIdle(0.2, { listening, emotion, gender: idleGender }),
       0.96,
     );
     smoothedRootMotion = { y: 0, rotY: 0 };
@@ -977,13 +987,14 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
   };
 
   const pulseIdleBeat = (beat, now = performance.now()) => {
-    idleBeat = startIdleBeat(idleBeat, beat, now);
+    idleBeat = startIdleBeat(idleBeat, beat, now, idleGender);
     return idleBeat;
   };
 
   return {
     schema: COMPANION_BODY_SCHEMA,
     setEmotion,
+    setIdleGender,
     setContentNuance,
     setThinking,
     setListening,
@@ -1007,6 +1018,9 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
     setFingerFlexAxis,
     get emotion() {
       return emotion;
+    },
+    get idleGender() {
+      return idleGender;
     },
     get nuance() {
       return nuance;
@@ -1043,9 +1057,9 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
       smoothedPose = buildBasePose({ listening, emotion, nuance });
       smoothedPose = mergePoses(
         smoothedPose,
-        sampleCalmBreathIdle(0.2, { listening, emotion }),
-        isAposeBind() ? 0.22 : 0.38,
-      );
+      sampleCalmBreathIdle(0.2, { listening, emotion, gender: idleGender }),
+      isAposeBind() ? 0.22 : 0.38,
+    );
       smoothedRootMotion = { y: 0, rotY: 0 };
       footPlantY = 0;
       applyPose(smoothedPose, 1, {

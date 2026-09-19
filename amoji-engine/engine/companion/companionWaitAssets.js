@@ -4,6 +4,7 @@
 import {
   ACTION_COMBOS,
   IDLE_LIFE_CLIP_POOL,
+  IDLE_LIFE_CLIP_POOL_CORE,
   IDLE_SHOWCASE_POOL,
   SHOWCASE_SEQUENCE_POOL,
 } from "./companionActionChoreography.js";
@@ -71,7 +72,7 @@ export const WAIT_POSES_BY_PHASE = Object.freeze({
     "stretch",
     "nod",
   ],
-  idle: IDLE_LIFE_CLIP_POOL,
+  idle: IDLE_LIFE_CLIP_POOL_CORE,
   ready: ["wave", "celebrate", "nod", "cheer", "dab", "clap"],
 });
 

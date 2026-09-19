@@ -31,24 +31,18 @@ describe("companionIdleMotion", () => {
   });
 
   it("plays a breathe beat without raising arms high", () => {
-    vi.spyOn(Math, "random").mockReturnValue(0.35);
-    const state = createIdleBeatState(0);
-    state.nextAt = 0;
+    const state = startIdleBeat(createIdleBeatState(0), "breathe", 10);
     const first = advanceIdleBeat(state, 1.05, 10);
     expect(first.state.beat).toBe("breathe");
     expect(first.overlay.armLiftR ?? 0).toBeLessThan(0.12);
     expect(first.overlay.forearmR ?? 0).toBeLessThan(0.12);
-    vi.restoreAllMocks();
   });
 
   it("plays a look-around beat that turns the head", () => {
-    vi.spyOn(Math, "random").mockReturnValue(0.2);
-    const state = createIdleBeatState(0);
-    state.nextAt = 0;
+    const state = startIdleBeat(createIdleBeatState(0), "look", 10);
     const first = advanceIdleBeat(state, 0.8, 10);
     expect(first.state.beat).toBe("look");
     expect(Math.abs(first.overlay.headZ)).toBeGreaterThan(0.08);
-    vi.restoreAllMocks();
   });
 
   it("schedules the next idle life beat within about a second", () => {
@@ -62,15 +56,12 @@ describe("companionIdleMotion", () => {
   });
 
   it("shifts weight without striding the planted legs", () => {
-    vi.spyOn(Math, "random").mockReturnValue(0.9);
-    const state = createIdleBeatState(0);
-    state.nextAt = 0;
+    const state = startIdleBeat(createIdleBeatState(0), "shift", 10);
     const first = advanceIdleBeat(state, 1.05, 10);
     expect(first.state.beat).toBe("shift");
     expect(first.overlay.upperLegL ?? 0).toBe(0);
     expect(first.overlay.lowerLegR ?? 0).toBe(0);
     expect(Math.abs(first.overlay.hipZ || 0) + Math.abs(first.overlay.leanY || 0)).toBeGreaterThan(0.01);
-    vi.restoreAllMocks();
   });
 
   it("keeps idle rest morph-neutral so jaws stay shut and lids stay open", () => {
@@ -143,14 +134,11 @@ describe("companionIdleMotion", () => {
   });
 
   it("plays an arm-cross beat without raising both arms high", () => {
-    vi.spyOn(Math, "random").mockReturnValue(0.55);
-    const state = createIdleBeatState(0);
-    state.nextAt = 0;
+    const state = startIdleBeat(createIdleBeatState(0), "cross", 10);
     const first = advanceIdleBeat(state, 0.95, 10);
     expect(first.state.beat).toBe("cross");
     expect(first.overlay.armLiftL).toBeLessThan(0.3);
     expect(first.overlay.armLiftR).toBeLessThan(0.3);
-    vi.restoreAllMocks();
   });
 });
 

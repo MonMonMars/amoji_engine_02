@@ -8,9 +8,9 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji · Companion</title>
     <script>
-      window.__amojiBuild = "2026-09-19-v328-aaa-roster-expand";
+      window.__amojiBuild = "2026-09-19-v329-idle-gender-motion";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-19-v328-aaa-roster-expand"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-19-v329-idle-gender-motion"></script>
     <link
       rel="prefetch"
       href="/prototypes/assets/companion-char-nova.png"
@@ -732,11 +732,11 @@
       media="print"
       onload="this.media='all'"
     />
-    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-19-v328-aaa-roster-expand" />
-    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-19-v328-aaa-roster-expand" />
-    <link rel="stylesheet" href="/prototypes/companion-mic-button.css?v=2026-09-19-v328-aaa-roster-expand" />
-    <link rel="stylesheet" href="/prototypes/companion-minimal-ui.css?v=2026-09-19-v328-aaa-roster-expand" />
-    <link rel="stylesheet" href="/prototypes/companion-picker-v4.css?v=2026-09-19-v328-aaa-roster-expand" />
+    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-19-v329-idle-gender-motion" />
+    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-19-v329-idle-gender-motion" />
+    <link rel="stylesheet" href="/prototypes/companion-mic-button.css?v=2026-09-19-v329-idle-gender-motion" />
+    <link rel="stylesheet" href="/prototypes/companion-minimal-ui.css?v=2026-09-19-v329-idle-gender-motion" />
+    <link rel="stylesheet" href="/prototypes/companion-picker-v4.css?v=2026-09-19-v329-idle-gender-motion" />
     <script>
       (function () {
         var params = new URLSearchParams(location.search);
@@ -762,7 +762,7 @@
       })();
     </script>
     <script type="module">
-      import { bootEarlyStartPicker } from "/amoji-engine/engine/companion/companionEarlyStartPicker.js?v=2026-09-19-v328-aaa-roster-expand";
+      import { bootEarlyStartPicker } from "/amoji-engine/engine/companion/companionEarlyStartPicker.js?v=2026-09-19-v329-idle-gender-motion";
       const bootParams = new URLSearchParams(location.search);
       if (bootParams.get("autostart") !== "1" && bootParams.get("pick") !== "0") {
         globalThis.__amojiEarlyStartPickerPromise = bootEarlyStartPicker({
@@ -4664,19 +4664,19 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-19-v328-aaa-roster-expand",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-19-v329-idle-gender-motion",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-19-v328-aaa-roster-expand",
-          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-19-v328-aaa-roster-expand"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-19-v329-idle-gender-motion",
+          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-19-v329-idle-gender-motion"
         }
       }
     </script>
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-19-v328-aaa-roster-expand"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-19-v329-idle-gender-motion"
     />
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-19-v328-aaa-roster-expand"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-19-v328-aaa-roster-expand"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-19-v329-idle-gender-motion"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-19-v329-idle-gender-motion"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;
@@ -6584,6 +6584,7 @@
             window.__amojiFaceReport = avatar?.getFaceReport?.() || null;
             applySceneEnvironmentToAvatar(activeSceneBgId);
             avatar.setEmotion?.(currentEmotion);
+            avatar.setIdleGender?.(characterGender(characterId, langCode));
             applyOutfitToAvatar(activeSceneOutfitId);
             syncAvatarPerformance();
             stagePreview.hide();
@@ -7075,7 +7076,7 @@
         tickIdleShowcase();
         proactiveTalk?.resumeIdle?.();
         if (idleShowcaseTimer) return;
-        idleShowcaseTimer = setInterval(tickIdleShowcase, 4200);
+        idleShowcaseTimer = setInterval(tickIdleShowcase, 3800);
       };
 
       /** @type {ReturnType<typeof createProactiveTalkController> | null} */
@@ -7590,13 +7591,23 @@
         );
       };
 
+      const syncIdleGenderForCharacter = (id = characterId) => {
+        const gender = characterGender(id, langCode);
+        avatar?.setIdleGender?.(gender);
+        waitAct?.setIdleGenderResolver?.(() =>
+          characterGender(characterId, langCode),
+        );
+      };
+
       waitAct = createCompanionWaitAct({
         avatar,
         voice,
         progress: progressDock,
         isEnglish,
         poseIntervalMs: 4500,
+        getIdleGender: () => characterGender(characterId, langCode),
       });
+      syncIdleGenderForCharacter(characterId);
 
       const warmWaitDialogue = () => {
         if (!hostedOnline) return;
@@ -7676,6 +7687,7 @@
         }
         renderScenePresets();
         syncAppRoleFromCharacter(nextId, { announce: false });
+        syncIdleGenderForCharacter(nextId);
         if (announce) {
           const name = characterDisplayName(characterId, langCode, isEnglish);
           showToast(
@@ -7731,6 +7743,7 @@
           stagePreview.hide();
           stage?.classList.add("avatar-ready");
           applyCharacterSession(nextId, { announce: false });
+          syncIdleGenderForCharacter(nextId);
           raisingHub?.setCharacter?.(nextId);
           switchOverlay.celebrate?.();
           uiAudio?.play?.("success");
