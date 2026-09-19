@@ -102,7 +102,7 @@ describe("companionWaitAct", () => {
     wait.stop();
   });
 
-  it("rotates calm library idle and hosted VRMA idle clips", () => {
+  it("rotates procedural idle beats and showcase clips", () => {
     vi.useFakeTimers();
     const avatar = {
       playAction: vi.fn(),
@@ -127,14 +127,14 @@ describe("companionWaitAct", () => {
     expect(avatar.pulseIdleBeat).not.toHaveBeenCalled();
 
     vi.advanceTimersByTime(IDLE_LIFE_INTERVAL_MS);
-    expect(avatar.playCalmIdle).toHaveBeenCalled();
-    expect(avatar.playAction).toHaveBeenCalledTimes(1);
-    expect(avatar.pulseIdleBeat).not.toHaveBeenCalled();
+    expect(avatar.playCalmIdle).not.toHaveBeenCalled();
+    expect(avatar.playAction).not.toHaveBeenCalled();
+    expect(avatar.pulseIdleBeat).toHaveBeenCalledTimes(1);
 
     vi.advanceTimersByTime(IDLE_LIFE_INTERVAL_MS);
-    expect(avatar.playCalmIdle.mock.calls.length).toBeGreaterThanOrEqual(2);
-    expect(avatar.playAction).toHaveBeenCalledTimes(2);
-    expect(avatar.pulseIdleBeat).not.toHaveBeenCalled();
+    expect(avatar.playCalmIdle).not.toHaveBeenCalled();
+    expect(avatar.playAction).toHaveBeenCalledTimes(1);
+    expect(avatar.pulseIdleBeat).toHaveBeenCalledTimes(1);
     const [pose, opts] = avatar.playAction.mock.calls[0];
     expect(IDLE_LIFE_CLIP_POOL).toContain(pose);
     expect(opts).toEqual({
@@ -167,11 +167,12 @@ describe("companionWaitAct", () => {
     avatar.playCalmIdle.mockClear();
     avatar.pulseIdleBeat.mockClear();
     expect(wait.nudgePose()).toBe(true);
-    expect(avatar.playCalmIdle).toHaveBeenCalled();
-    expect(avatar.playAction).toHaveBeenCalledTimes(1);
-    expect(avatar.pulseIdleBeat).not.toHaveBeenCalled();
+    expect(avatar.playCalmIdle).not.toHaveBeenCalled();
+    expect(avatar.playAction).not.toHaveBeenCalled();
+    expect(avatar.pulseIdleBeat).toHaveBeenCalledTimes(1);
     expect(wait.nudgePose()).toBe(true);
-    expect(avatar.playAction).toHaveBeenCalledTimes(2);
+    expect(avatar.playAction).toHaveBeenCalledTimes(1);
+    expect(avatar.pulseIdleBeat).toHaveBeenCalledTimes(1);
     wait.stop();
   });
 
