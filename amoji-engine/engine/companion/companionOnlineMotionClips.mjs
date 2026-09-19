@@ -11,13 +11,18 @@
 import { resolveMotionSamplerKey } from "./companionMotionLibrary.js";
 
 export const COMPANION_ONLINE_MOTION_CLIPS_SCHEMA =
-  "amoji.companionOnlineMotionClips.v4";
+  "amoji.companionOnlineMotionClips.v5";
 
-/** Legacy alias — calm standing uses the Thinking VRMA loop. */
+/** Legacy alias — calm standing is procedural; VRMA id kept for API compat. */
 export const ONLINE_IDLE_ACTION = "idle";
 export const ONLINE_IDLE_CLIP_FILE = "Thinking";
-/** Default calm idle loop from the hosted motion library. */
+/**
+ * Calm standing idle — procedural planted rest (not hosted VRMA).
+ * Mixamo clips on VRM binds cause blended / twisted limbs.
+ */
 export const ONLINE_CALM_IDLE_ACTION = "thinking";
+/** When true, calm stand uses calibrated body rest — not Thinking.vrma. */
+export const CALM_IDLE_USES_PROCEDURAL_BODY = true;
 export const ONLINE_THINKING_ACTION = "thinking";
 
 /** Hosted VRMA clips that loop during talk (Thinking, LookAround, Blush, etc.). */
