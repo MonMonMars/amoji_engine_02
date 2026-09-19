@@ -122,17 +122,21 @@ async function main() {
   const boot = await page.evaluate(() => {
     const picker = document.getElementById("start-character-picker");
     const ring = picker?.querySelector(".start-picker-preload-ring, .companion-progress-ring");
-    const bar = picker?.querySelector(".start-picker-preload-track");
+    const bar = picker?.querySelector(".amoji-load-bar, .amoji-load-bar__track");
     const chip = document.getElementById("brand-btn");
     const orbit = document.getElementById("orbit-hit");
     const dock = document.querySelector(".companion-progress-dock-inner");
+    const ringStyle = ring ? getComputedStyle(ring) : null;
     return {
       build: window.__amojiBuild,
       pickerOpen: Boolean(picker && picker.classList.contains("is-open")),
-      hero: Boolean(picker?.querySelector(".picker-hero")),
+      showcase: Boolean(picker?.classList.contains("companion-picker--showcase")),
+      heroStage: Boolean(picker?.querySelector(".picker-showcase-stage .picker-hero")),
+      rosterDock: Boolean(picker?.querySelector(".picker-roster-dock")),
       beginBtn: Boolean(picker?.querySelector(".picker-begin-btn")),
       featuredRow: Boolean(picker?.querySelector(".picker-featured-row")),
       ring: Boolean(ring),
+      ringHidden: ringStyle?.display === "none" || ringStyle?.visibility === "hidden",
       bar: Boolean(bar),
       chip: Boolean(chip),
       orbit: Boolean(orbit),
@@ -140,15 +144,23 @@ async function main() {
         ? getComputedStyle(dock).borderRadius.includes("50%") ||
           dock.getBoundingClientRect().width === dock.getBoundingClientRect().height
         : true,
-      progressBarClass: Boolean(document.querySelector(".start-picker-preload-track")),
+      stripCards: picker?.querySelectorAll(".companion-card--start-strip").length || 0,
     };
   });
   record("build-id", boot.build === AMOJI_BUILD, `${boot.build} vs ${AMOJI_BUILD}`);
   record("start-picker-open", boot.pickerOpen);
-  record("picker-v4-hero", boot.hero);
+  record("picker-showcase-layout", boot.showcase && boot.heroStage && boot.rosterDock);
   record("picker-begin-cta", boot.beginBtn);
-  record("picker-featured-row", boot.featuredRow);
-  record("loading-ring-and-bar", boot.ring && boot.bar && boot.progressBarClass);
+  record(
+    "picker-no-featured-row",
+    !boot.featuredRow && boot.stripCards >= 10,
+    `strip=${boot.stripCards}`,
+  );
+  record(
+    "loading-bar-on-showcase",
+    boot.bar && (!boot.ring || boot.ringHidden),
+    boot.ring ? `ringHidden=${boot.ringHidden}` : "no ring",
+  );
   record("character-chip", boot.chip);
   record("orbit-hit", boot.orbit);
   record("progress-dock-circle", boot.dockCircle);
@@ -175,7 +187,7 @@ async function main() {
   );
 
   const rosterPreviews = await page.evaluate(() => {
-    const ids = ["poly", "jennifer", "shiro", "aesthe"];
+    const ids = ["sky", "yuki", "hina", "mio"];
     return ids.map((id) => {
       const card = document.querySelector(
         `#start-character-picker [data-character-id="${id}"]`,

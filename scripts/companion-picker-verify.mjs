@@ -189,6 +189,38 @@ record(
     `visibleOverlap=${layout.visibleOverlap} gridH=${layout.gridH} broken=${layout.brokenImgs}`,
 );
 
+await page.setViewportSize({ width: 390, height: 580 });
+await page.waitForTimeout(200);
+const shortLayout = await page.evaluate(() => {
+  const footer = document.querySelector("#start-character-picker .picker-footer");
+  const wrap = document.querySelector("#start-character-picker .start-picker-grid-wrap");
+  const cards = document.querySelectorAll(
+    "#start-character-picker .companion-picker-grid--start .companion-card",
+  );
+  if (!footer || !wrap || !cards.length) return { ok: false, reason: "missing nodes" };
+  const footerTop = footer.getBoundingClientRect().top;
+  let visibleOverlap = 0;
+  for (const card of cards) {
+    const portrait = card.querySelector(".companion-card-portrait");
+    if (!portrait) continue;
+    const b = portrait.getBoundingClientRect();
+    if (b.top >= footerTop - 1) continue;
+    if (b.bottom > footerTop + 2) visibleOverlap += 1;
+  }
+  return {
+    ok: wrap.getBoundingClientRect().bottom <= footerTop + 2 && visibleOverlap === 0,
+    visibleOverlap,
+    viewportH: window.innerHeight,
+  };
+});
+record(
+  "short viewport no footer overlap",
+  shortLayout.ok,
+  shortLayout.reason ||
+    `overlap=${shortLayout.visibleOverlap} vh=${shortLayout.viewportH}`,
+);
+await page.setViewportSize({ width: 390, height: 844 });
+
 await page.screenshot({
   path: join(outDir, "picker_verify_start.png"),
   fullPage: true,
