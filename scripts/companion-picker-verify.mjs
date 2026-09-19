@@ -113,6 +113,9 @@ const boot = await page.evaluate(() => {
     begin: Boolean(picker?.querySelector(".picker-begin-btn")),
     sceneChips: picker?.querySelectorAll(".picker-scene-chip").length ?? 0,
     sceneSection: Boolean(picker?.querySelector(".picker-scene-section")),
+    sceneInRosterDock: Boolean(
+      picker?.querySelector(".picker-roster-dock .picker-scene-section"),
+    ),
   };
 });
 
