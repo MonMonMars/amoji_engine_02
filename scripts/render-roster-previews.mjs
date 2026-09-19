@@ -34,30 +34,17 @@ const DEFAULT_TARGETS = [
   "kizuna",
   "alicia",
   "ember",
-  "chibi",
-  "kate",
-  "amoji",
-  "poly",
-  "aesthe",
-  "shiro",
-  "jennifer",
+  "sky",
   "yuki",
   "hina",
   "mio",
-  "chad",
-  "david",
-  "hugo",
+  "amoji",
   "rex",
-  "vroidm",
-  "vroidf",
-  "mimi",
-  "sora",
 ];
 
 /** Copy existing art when models share a reference portrait. */
 const COPY_FROM = {
   rex: "kai",
-  sora: "quinn",
   amoji: "girl-ref",
 };
 

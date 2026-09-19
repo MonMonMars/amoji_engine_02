@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
-  CHARACTER_COMPANION_ROLES,
   characterIdsForRole,
+  CHARACTER_COMPANION_ROLES,
   resolveCharacterRole,
-  roleFunctionBadge,
+  ROLE_DEFAULT_CHARACTER_ID,
   validateCharacterRoleCoverage,
 } from "../engine/companion/companionCharacterRoles.js";
 import { ROSTER_CHARACTER_IDS } from "../engine/companion/companionCharacterRoster.js";
@@ -11,27 +11,33 @@ import { ROSTER_CHARACTER_IDS } from "../engine/companion/companionCharacterRost
 describe("companionCharacterRoles", () => {
   it("maps every roster character to a function", () => {
     expect(validateCharacterRoleCoverage()).toEqual([]);
-    expect(Object.keys(CHARACTER_COMPANION_ROLES).length).toBeGreaterThanOrEqual(
-      ROSTER_CHARACTER_IDS.length,
+    expect(Object.keys(CHARACTER_COMPANION_ROLES).sort()).toEqual(
+      [...ROSTER_CHARACTER_IDS].sort(),
     );
   });
 
-  it("resolves embedded function from character id", () => {
-    expect(resolveCharacterRole("nova")).toBe("girlfriend");
-    expect(resolveCharacterRole("chad")).toBe("boyfriend");
-    expect(resolveCharacterRole("kate")).toBe("secretary");
-    expect(resolveCharacterRole("mimi")).toBe("pet");
+  it("keeps rex as the boyfriend pick", () => {
+    expect(resolveCharacterRole("rex")).toBe("boyfriend");
+    expect(characterIdsForRole("boyfriend")).toEqual(["rex"]);
+    expect(ROLE_DEFAULT_CHARACTER_ID.boyfriend).toBe("rex");
   });
 
-  it("groups characters by function", () => {
-    expect(characterIdsForRole("boyfriend")).toContain("rex");
-    expect(characterIdsForRole("secretary")).toContain("rose");
-    expect(characterIdsForRole("pet")).toContain("chibi");
-    expect(characterIdsForRole("girlfriend")).toContain("amoji");
+  it("uses nova for secretary defaults", () => {
+    expect(ROLE_DEFAULT_CHARACTER_ID.secretary).toBe("nova");
+    expect(characterIdsForRole("secretary")).toEqual([]);
   });
 
-  it("labels function badges", () => {
-    expect(roleFunctionBadge("secretary", true)).toBe("Secretary");
-    expect(roleFunctionBadge("pet", false)).toBe("寵物");
+  it("lists girlfriend roster characters", () => {
+    expect(characterIdsForRole("girlfriend")).toEqual([
+      "nova",
+      "kizuna",
+      "alicia",
+      "ember",
+      "sky",
+      "yuki",
+      "hina",
+      "mio",
+      "amoji",
+    ]);
   });
 });

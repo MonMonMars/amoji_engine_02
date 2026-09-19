@@ -2,8 +2,9 @@
  * Demo dialogue pools — starters, proactive lines, boot chitchat, sample scenes.
  * Single source for rich companion demo copy (EN + 粵).
  */
+import { PROACTIVE_NEW_TOPIC_LINES } from "./companionProactiveTopics.mjs";
 
-export const DEMO_DIALOGUE_SCHEMA = "amoji.companionDemoDialogue.v1";
+export const DEMO_DIALOGUE_SCHEMA = "amoji.companionDemoDialogue.v2";
 
 /** @type {Readonly<Record<string, { en: readonly string[], yue: readonly string[] }>>} */
 export const DEMO_STARTER_PROMPTS = Object.freeze({
@@ -97,42 +98,6 @@ export const DEMO_STARTER_PROMPTS = Object.freeze({
       "玩真心話大冒險（輕鬆版）",
     ],
   },
-  sora: {
-    en: [
-      "I need calm advice",
-      "Explain something simply",
-      "How do I unwind?",
-      "Can we talk through my day?",
-      "Help me name my feelings",
-      "What's a gentle question for me?",
-    ],
-    yue: [
-      "我需要啲淡定建議",
-      "用簡單方式解釋件事",
-      "點樣放鬆心情？",
-      "可唔可以同我梳理今日？",
-      "幫我講清楚而家嘅感受",
-      "有咩溫柔問題想問我？",
-    ],
-  },
-  rose: {
-    en: [
-      "What's on my schedule?",
-      "Help me prioritize tasks",
-      "Summarize my day so far",
-      "What should I tackle first?",
-      "Ask me about my goals",
-      "Give me a check-in question",
-    ],
-    yue: [
-      "今日有咩安排？",
-      "幫我排優先次序",
-      "總結我今日到而家",
-      "我應該先做咩？",
-      "問我關於目標嘅問題",
-      "做個 check-in 問我啦",
-    ],
-  },
   rex: {
     en: [
       "What's the move today?",
@@ -158,6 +123,7 @@ export const DEMO_STARTER_PROMPTS = Object.freeze({
       "Ask me about my mood",
       "Let's talk about music",
       "What would you ask a friend?",
+      "Switch topics — what's cool lately?",
     ],
     yue: [
       "今日咩 vibe？",
@@ -165,6 +131,61 @@ export const DEMO_STARTER_PROMPTS = Object.freeze({
       "問我心情點",
       "我哋傾下音樂",
       "你會問朋友咩問題？",
+      "轉 topic — 最近有咩 cool？",
+    ],
+  },
+  yuki: {
+    en: [
+      "How was your day?",
+      "What should we eat tonight?",
+      "Tell me about your weekend plans",
+      "What show are you watching?",
+      "Ask me something sweet",
+      "Start a new topic with me",
+    ],
+    yue: [
+      "今日過成點呀？",
+      "今晚食咩好？",
+      "同我講下週末 plan",
+      "你追緊咩劇？",
+      "問我個 sweet 問題啦",
+      "同我開個新 topic",
+    ],
+  },
+  hina: {
+    en: [
+      "Recommend me a book or song",
+      "What's been on your mind quietly?",
+      "Tell me a small meaningful moment",
+      "Ask me a gentle question",
+      "Let's talk about something new",
+      "What felt calm today?",
+    ],
+    yue: [
+      "推介本書或者首歌俾我",
+      "有咩 quietly 留喺你心入面？",
+      "同我講個 small meaningful moment",
+      "問我個 gentle 問題",
+      "我哋傾啲新嘢啦",
+      "今日有咩 moment 覺得 calm？",
+    ],
+  },
+  mio: {
+    en: [
+      "Help me prioritize today",
+      "What's my top goal this week?",
+      "Ask me about my progress",
+      "Let's plan the next hour",
+      "What decision am I avoiding?",
+      "Give me a direct check-in",
+    ],
+    yue: [
+      "幫我排今日 priority",
+      "今個星期 top goal 係咩？",
+      "問我 progress 點",
+      "一齊 plan 下個鐘",
+      "有咩決定我一直 avoid？",
+      "直接 check-in 問我啦",
     ],
   },
   default: {
@@ -492,46 +513,76 @@ export const DEMO_PROACTIVE_LINES = Object.freeze({
       "如果我哋喺 café，你會第一句同我講咩？",
     ],
   },
-  sora: {
+  sky: {
     en: [
-      "Take your time — but I'm here if you want to talk.",
-      "Is something weighing on you? You can tell me.",
-      "What would feel good to chat about right now?",
-      "Want to unpack your day together?",
-      "Any small win you want to celebrate?",
-      "What's one feeling you haven't named yet today?",
-      "Would a gentle question help you open up?",
-      "What's been quiet in your life lately — worth mentioning?",
+      "What's the vibe today — spill it.",
+      "You seem quiet. Cool topic or real talk?",
+      "Music, style, or food — pick a lane and I'll follow.",
+      "What's something underrated in your day?",
+      "If today had a color, what would it be?",
+      "Want me to throw out a fresh topic?",
     ],
     yue: [
-      "唔使急 — 想傾嘅話我喺度。",
-      "有冇嘢壓住你？可以同我講。",
-      "而家傾咩會舒服啲？",
-      "想唔想一齊梳理下今日？",
-      "有冇小成就想同我分享？",
-      "今日有咩感受你未講出口？",
-      "想唔想我用 gentle 問題幫你打開話題？",
-      "最近生活有咩變化 — 值得提一提？",
+      "今日咩 vibe — 講嚟聽下。",
+      "你好似好靜 — cool topic 定 real talk？",
+      "音樂、style 定 food — 揀一條 lane 我跟。",
+      "今日有咩 underrated 嘅嘢？",
+      "如果今日係一種顏色，會係咩？",
+      "想唔想我丟個 fresh topic？",
     ],
   },
-  rose: {
+  yuki: {
     en: [
-      "What's on your schedule — anything I can help organize?",
-      "Any tasks you want to talk through?",
-      "How's your day going so far?",
-      "Want to plan something together?",
-      "What's the one thing you'd regret not doing today?",
-      "Should we do a quick priorities check-in?",
-      "Any follow-ups you're avoiding?",
+      "Hey~ what's new since we last talked?",
+      "Tell me something cute from your day.",
+      "What are you craving right now — food or fun?",
+      "Weekend plans yet, or still winging it?",
+      "Want to switch to a cozy new topic?",
+      "Who made you smile recently?",
     ],
     yue: [
-      "今日有咩安排 — 有冇我可以幫手整理？",
-      "有冇任務想同我傾清楚？",
-      "今日過到而家點呀？",
-      "想唔想一齊計劃啲嘢？",
-      "今日有咩事唔做會後悔？",
-      "做個優先次序 check-in 好唔好？",
-      "有冇啲 follow-up 你一直拖住？",
+      "喂～上次傾完有咩新嘢？",
+      "同我講件今日 cute 嘅事啦。",
+      "而家最 craving 咩 — 食定玩？",
+      "weekend plan 搞掂未，定係仲 winging it？",
+      "想唔想轉個 cozy 新 topic？",
+      "最近邊個人令你 smile？",
+    ],
+  },
+  hina: {
+    en: [
+      "I'm here — want to wander into a new topic together?",
+      "Any story or song stuck in your head?",
+      "What's been quietly good lately?",
+      "Would a gentle question help us start fresh?",
+      "Tell me about a place that feels like home.",
+      "What's one thing you're grateful for today?",
+    ],
+    yue: [
+      "我喺度 — 想唔想一齊 wander 去個新 topic？",
+      "有咩 story 或者 song 留喺你腦入面？",
+      "最近有咩 quietly 好嘅事？",
+      "gentle 問題可唔可以幫我哋 fresh start？",
+      "同我講一個 feel like home 嘅地方。",
+      "今日有咩一件你 grateful 嘅事？",
+    ],
+  },
+  mio: {
+    en: [
+      "Quick check — what's blocking you right now?",
+      "Want to talk priorities for the rest of today?",
+      "What's one win you haven't claimed yet?",
+      "Any follow-up you've been avoiding?",
+      "Should we pick a fresh practical topic?",
+      "What's the next tiny step on your mind?",
+    ],
+    yue: [
+      "quick check — 而家咩 block 住你？",
+      "想唔想傾今日剩低時間嘅 priority？",
+      "有咩 win 你未 claim？",
+      "有咩 follow-up 你一直 avoid？",
+      "我哋揀個 fresh practical topic 好唔好？",
+      "你心入面 next tiny step 係咩？",
     ],
   },
   rex: {
@@ -667,19 +718,33 @@ export function demoStarterPrompts(characterId, isEnglish = false, max = 8, seed
 /**
  * @param {string} characterId
  * @param {boolean} [isEnglish]
- * @param {{ avoid?: Set<string> }} [opts]
+ * @param {{ avoid?: Set<string>, bucket?: "greeting" | "followup" | "idle" }} [opts]
  */
 export function pickDemoProactiveLine(characterId, isEnglish = false, opts = {}) {
   const id = String(characterId || "nova").toLowerCase();
   const pack = DEMO_PROACTIVE_LINES[id] || DEMO_PROACTIVE_LINES.default;
+  const topics = PROACTIVE_NEW_TOPIC_LINES[id] || PROACTIVE_NEW_TOPIC_LINES.default;
   const lang = isEnglish ? "en" : "yue";
-  const pool = [...(pack[lang] || DEMO_PROACTIVE_LINES.default[lang])];
+  const bucket = opts.bucket || "idle";
+  const base = [...(pack[lang] || DEMO_PROACTIVE_LINES.default[lang])];
+  const fresh = [...(topics[lang] || PROACTIVE_NEW_TOPIC_LINES.default[lang])];
+  /** @type {string[]} */
+  let pool;
+  if (bucket === "followup") {
+    pool = base;
+  } else if (bucket === "greeting") {
+    pool = [...fresh, ...base];
+  } else {
+    pool = [...fresh, ...fresh, ...base];
+  }
   const avoid = opts.avoid || new Set();
   const filtered = pool.filter((line) => !avoid.has(line));
   const choices = filtered.length ? filtered : pool;
   if (!choices.length) return "";
   return choices[Math.floor(Math.random() * choices.length)];
 }
+
+export { PROACTIVE_NEW_TOPIC_LINES };
 
 /**
  * @param {string} message

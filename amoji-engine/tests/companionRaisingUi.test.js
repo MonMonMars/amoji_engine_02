@@ -26,7 +26,7 @@ describe("companionRaisingUi", () => {
   it("picks a stable daily goal per day and character", () => {
     const a = pickDailyGoalDef("nova", "2026-09-17");
     const b = pickDailyGoalDef("nova", "2026-09-17");
-    const c = pickDailyGoalDef("sora", "2026-09-17");
+    const c = pickDailyGoalDef("hina", "2026-09-17");
     expect(a.id).toBe(b.id);
     expect(a.id).toBeTruthy();
     expect(c.id).toBeTruthy();

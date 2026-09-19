@@ -35,7 +35,7 @@ describe("companionProactiveTalk", () => {
     });
 
     ctrl.notifyGreetingDone();
-    await vi.advanceTimersByTimeAsync(11000);
+    await vi.advanceTimersByTimeAsync(9000);
     expect(spoke.length).toBe(1);
 
     ctrl.destroy();

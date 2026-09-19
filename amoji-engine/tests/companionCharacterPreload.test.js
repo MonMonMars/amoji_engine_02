@@ -18,11 +18,11 @@ import { sortModelUrlsForPreload } from "../engine/companion/companionVrmInspect
 describe("companionCharacterPreload", () => {
   it("lists unique VRM + GLB model urls for the full roster", () => {
     const urls = uniqueCharacterModelUrls("en");
-    expect(urls.length).toBeGreaterThanOrEqual(28);
+    expect(urls.length).toBe(10);
     expect(new Set(urls).size).toBe(urls.length);
-    expect(urls.every((u) => /\.(vrm|glb)($|\?)/i.test(u))).toBe(true);
-    expect(urls.some((u) => u.includes("companion-quinn"))).toBe(true);
-    expect(urls.some((u) => u.includes("companion-girl.glb"))).toBe(true);
+    expect(urls.every((u) => /\.vrm($|\?)/i.test(u))).toBe(true);
+    expect(urls.some((u) => u.includes("kizuna-kamatte"))).toBe(true);
+    expect(urls.some((u) => u.includes("companion-olivia"))).toBe(true);
   });
 
   it("preloads Kizuna high-poly model before other roster VRMs", () => {

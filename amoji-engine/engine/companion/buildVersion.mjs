@@ -1,2 +1,2 @@
 /** Single source of truth for deployed companion build id (keep HTML __amojiBuild in sync). */
-export const AMOJI_BUILD = "2026-09-19-v297-talk-speed-1x-normal";
+export const AMOJI_BUILD = "2026-09-19-v298-curated-roster-proactive-topics";

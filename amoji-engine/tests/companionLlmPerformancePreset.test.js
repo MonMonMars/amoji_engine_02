@@ -37,9 +37,9 @@ describe("companionLlmPerformancePreset", () => {
   });
 
   it("embeds preset in character system prompt", () => {
-    const prompt = buildCharacterSystemPrompt("sora", true);
+    const prompt = buildCharacterSystemPrompt("hina", true);
     expect(prompt).toMatch(/PERFORMANCE TAG FORMAT/i);
-    expect(prompt).toMatch(/Sora/i);
+    expect(prompt).toMatch(/Hina/i);
   });
 });
 

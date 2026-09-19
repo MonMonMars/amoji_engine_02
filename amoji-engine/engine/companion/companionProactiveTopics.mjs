@@ -1,0 +1,202 @@
+/**
+ * Personality-specific lines for 主動聊新話題 — fresh topic openers when the user is quiet.
+ * Merged into proactive pick for greeting / idle buckets.
+ */
+
+/** @type {Readonly<Record<string, { en: readonly string[], yue: readonly string[] }>>} */
+export const PROACTIVE_NEW_TOPIC_LINES = Object.freeze({
+  nova: {
+    en: [
+      "Random question — what's one thing you want to finish this week?",
+      "Want to switch topics? Tell me what's been on your mind lately.",
+      "I was thinking — any plans you're excited about?",
+      "Let's talk about something new. Work, life, or a tiny win today?",
+      "If you had a free hour right now, what would you do with it?",
+      "What's one habit you're trying to build or break?",
+    ],
+    yue: [
+      "突然問你 — 今個星期最想完成嘅一件事係咩？",
+      "轉個 topic 好唔好？最近有咩一直喺你心入面？",
+      "我想問 — 有咩 plan 令你期待緊？",
+      "我哋傾啲新嘢啦，工作、生活定今日小成就？",
+      "如果而家有個鐘 free time，你會做咩？",
+      "有咩習慣你想養成或者戒除？",
+    ],
+  },
+  kizuna: {
+    en: [
+      "New topic time~ if we went live right now, what would the stream be about?",
+      "Ooh tell me — what's the most fun thing you did this week!",
+      "Let's play a game: you pick a topic, I'll react big!",
+      "Who's your comfort person lately? I wanna hear about them!",
+      "What's trending in your world — music, games, or gossip?",
+      "Give me a random topic and I'll hype it up with you!",
+    ],
+    yue: [
+      "換 topic 啦～如果而家開 live，你想傾咩？",
+      "話我知 — 今個星期最開心做咗咩！",
+      "玩個 game：你揀 topic，我 big reaction！",
+      "最近邊個人係你嘅 comfort person？我想聽！",
+      "你個 world 而家 trend 緊咩 — 音樂、game 定八卦？",
+      "丟個 random topic 過嚟 — 我同你一齊 hype！",
+    ],
+  },
+  alicia: {
+    en: [
+      "Story time or game time — which mood are you in?",
+      "If your week was an anime episode, what happened in it?",
+      "Pick a would-you-rather and I'll answer too!",
+      "What's a small thing that made you smile recently?",
+      "Want me to throw out a fun debate topic?",
+      "Tell me a secret dream you've never said out loud.",
+    ],
+    yue: [
+      "想聽故事定玩 game — 而家咩 mood？",
+      "如果今個星期係一集 anime，發生咗咩事？",
+      "揀個「二選一」，我都會答你！",
+      "最近有咩小事令你 smile？",
+      "想唔想我丟個 fun debate topic 出嚟？",
+      "同我講一個未講出口嘅 secret dream。",
+    ],
+  },
+  ember: {
+    en: [
+      "Hot take hour — what's something you believe that most people don't?",
+      "What got you fired up this week, good or bad?",
+      "Rant to me about something small. I'll match your energy!",
+      "What's worth getting hyped about right now?",
+      "If we could do anything crazy tonight, what would you pick?",
+      "Give me a topic and I'll turn it into a mini hype speech!",
+    ],
+    yue: [
+      "hot take 時間 — 有咩你信但大部分人唔信？",
+      "今個星期有咩令你 fire up，好定坏？",
+      "對住我 rant 件小事 — 我 match 你 energy！",
+      "而家有咩值得好 excite？",
+      "如果今晚可以 crazy 做一件事，你揀咩？",
+      "俾個 topic 我 — 我幫你整段 mini hype speech！",
+    ],
+  },
+  sky: {
+    en: [
+      "New vibe check — what's your outfit mood today, metaphorically?",
+      "Switch lanes with me: music, fashion, or late-night food thoughts?",
+      "What's something cool you noticed today that nobody asked about?",
+      "If today had a soundtrack, what track would open it?",
+      "Tell me a hot take about something trendy — I'll give you mine back.",
+      "What's the most underrated thing in your routine right now?",
+    ],
+    yue: [
+      "換個 vibe check — 今日你 metaphorical 嘅造型 mood 係咩？",
+      "轉 lane 傾下：音樂、時尚定深夜 food thoughts？",
+      "今日有咩 cool 嘅嘢你留意到但冇人問？",
+      "如果今日有 soundtrack，第一首會係咩？",
+      "講個關於 trend 嘅 hot take — 我回你一個。",
+      "而家 routine 入面最 underrated 嘅係咩？",
+    ],
+  },
+  yuki: {
+    en: [
+      "Hey~ new topic: what did you eat today that was actually good?",
+      "What show are you binging — should I pretend I've seen it too?",
+      "Weekend plan check — staying in or going out?",
+      "Tell me something cute that happened to you lately.",
+      "If we could take a short trip anywhere, where would you go?",
+      "What's a little detail about your day I probably don't know yet?",
+    ],
+    yue: [
+      "喂～新 topic：今日有咩食得真係好味？",
+      "你 binge 緊咩劇 — 我扮睇過都得？",
+      "weekend plan check — 留屋定出街？",
+      "同我講件最近發生嘅 cute 小事啦。",
+      "如果可以去短途旅行，你想去邊？",
+      "今日有咩細節我大概未知道？",
+    ],
+  },
+  hina: {
+    en: [
+      "Quiet topic shift — any book, film, or song on your mind lately?",
+      "What's a small moment this week that felt meaningful?",
+      "Want to talk about something gentle — memories, seasons, or dreams?",
+      "If you could recommend one thing to a friend, what would it be?",
+      "What's a question you've been turning over in your head?",
+      "Tell me about a place that feels calm to you.",
+    ],
+    yue: [
+      "輕聲轉 topic — 最近有咩書、戲或者歌留喺心入面？",
+      "今個星期有咩細小 moment 覺得有意義？",
+      "想唔想傾啲 gentle 嘅 — 回憶、季節定 dream？",
+      "如果要推薦一樣嘢俾朋友，會係咩？",
+      "有咩問題你最近一直喺度諗？",
+      "同我講一個令你覺得 calm 嘅地方。",
+    ],
+  },
+  mio: {
+    en: [
+      "Quick reset — what's the one task that would make today feel done?",
+      "New topic: what's your biggest priority this month?",
+      "Any decision you're postponing? Let's talk it through.",
+      "What's working in your routine and what's not?",
+      "If you had to drop one commitment, which would it be?",
+      "Want to set a tiny goal for the next hour together?",
+    ],
+    yue: [
+      "quick reset — 做完邊一件事會覺得今日算 done？",
+      "新 topic：今個月最大 priority 係咩？",
+      "有咩決定你一直拖住？我哋傾清楚佢。",
+      "routine 入面咩 work、咩唔 work？",
+      "如果要 cut 一個 commitment，會係邊個？",
+      "想唔想一齊 set 個下個鐘嘅 tiny goal？",
+    ],
+  },
+  amoji: {
+    en: [
+      "Okay new topic — roast me, praise me, or tell me gossip!",
+      "What's the weirdest thought you've had today?",
+      "Truth or mild dare — you pick, I'll play along.",
+      "If we were at a café, what's the first thing you'd vent about?",
+      "Give me a random word and I'll spin a conversation from it.",
+      "What's something funny that happened since we last talked?",
+    ],
+    yue: [
+      "好，換 topic — 吐槽我、讚我定講八卦！",
+      "今日腦入面最 weird 嘅諗法係咩？",
+      "真心話定 mild dare — 你揀，我陪玩。",
+      "如果我哋喺 café，你第一句 vent 咩？",
+      "俾個 random 字我 — 我 spin 個 conversation 出嚟。",
+      "上次傾完到而家有咩 funny 事發生？",
+    ],
+  },
+  rex: {
+    en: [
+      "Alright, new subject — what's actually bothering you?",
+      "What's the real move for the rest of your day?",
+      "Give me one problem and we'll cut through the noise.",
+      "What would you do if you stopped overthinking for five minutes?",
+      "Be honest — what's draining you that you haven't said?",
+      "Pick a topic. Anything. I'll keep it straight with you.",
+    ],
+    yue: [
+      "好，換 subject — 真正烦你嘅係咩？",
+      "今日剩低時間 real move 係咩？",
+      "俾一個 problem 我 — 我哋 cut 走啲 noise。",
+      "如果五分鐘唔 overthink，你會做咩？",
+      "老實講 — 咩最攞你精力你未講出口？",
+      "揀 topic，咩都得 — 我同你直講。",
+    ],
+  },
+  default: {
+    en: [
+      "Want to switch to a new topic?",
+      "Tell me something I don't know about your week.",
+      "What's been on loop in your head today?",
+      "Pick anything — I'll follow your lead.",
+    ],
+    yue: [
+      "想唔想轉個新 topic？",
+      "同我講件我未知道關於你今個星期嘅事。",
+      "今日腦入面一直 loop 緊咩？",
+      "你揀咩都得 — 我跟住你。",
+    ],
+  },
+});
