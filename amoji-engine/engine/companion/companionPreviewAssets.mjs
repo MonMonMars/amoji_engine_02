@@ -4,6 +4,17 @@
 import { existsSync, statSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
+import {
+  COMPANION_PREVIEW_FALLBACK,
+  companionPreviewImgOnErrorAttr,
+  wireCompanionPreviewFallback,
+} from "./companionPreviewFallback.js";
+
+export {
+  COMPANION_PREVIEW_FALLBACK,
+  companionPreviewImgOnErrorAttr,
+  wireCompanionPreviewFallback,
+};
 
 const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..");
 

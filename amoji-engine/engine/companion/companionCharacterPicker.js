@@ -6,6 +6,10 @@ import {
   listCompanionCharacters,
 } from "./companionCharacterCatalog.js";
 import {
+  companionPreviewImgOnErrorAttr,
+  wireCompanionPreviewFallback,
+} from "./companionPreviewFallback.js";
+import {
   filterPickerCharacters,
   listPickerFeatured,
   pickerCopy,
@@ -60,8 +64,8 @@ export function companionCardInnerHtml(item, ctx = {}) {
   const compact = Boolean(ctx.compact);
   const eagerPreview = Boolean(ctx.eagerPreview);
   const imgAttrs = eagerPreview
-    ? 'loading="eager" fetchpriority="high" decoding="async"'
-    : 'loading="lazy" decoding="async"';
+    ? `loading="eager" fetchpriority="high" decoding="async" ${companionPreviewImgOnErrorAttr()}`
+    : `loading="lazy" decoding="async" ${companionPreviewImgOnErrorAttr()}`;
   const number = cardNumber(item);
   const numberBadge = number
     ? `<span class="companion-card-number" aria-hidden="true">${number}</span>`
@@ -649,15 +653,27 @@ export function createCompanionStartPicker(opts = {}) {
             ? `Loading roster… ${clamped}%`
             : `載入名單… ${clamped}%`;
     }
-    if (preloadEl) preloadEl.classList.toggle("is-ready", clamped >= 100);
+    if (preloadEl) {
+      preloadEl.hidden = clamped <= 0;
+      preloadEl.classList.toggle("is-ready", clamped >= 100);
+    }
   };
 
   const renderScrollHint = () => {
     if (!gridWrapEl || !scrollHintEl || !gridEl) return;
-    const overflow = gridEl.scrollWidth > gridEl.clientWidth + 8;
-    const atEnd = gridEl.scrollLeft + gridEl.clientWidth >= gridEl.scrollWidth - 8;
+    const vertical = !gridEl.classList.contains("companion-picker-grid--roster");
+    const overflow = vertical
+      ? gridEl.scrollHeight > gridEl.clientHeight + 8
+      : gridEl.scrollWidth > gridEl.clientWidth + 8;
+    const atEnd = vertical
+      ? gridEl.scrollTop + gridEl.clientHeight >= gridEl.scrollHeight - 8
+      : gridEl.scrollLeft + gridEl.clientWidth >= gridEl.scrollWidth - 8;
     scrollHintEl.hidden = !overflow || atEnd;
-    scrollHintEl.textContent = copy.rosterHint(fullList().length);
+    scrollHintEl.textContent = vertical
+      ? isEnglish
+        ? `${fullList().length} companions · scroll for more`
+        : `${fullList().length} 位同伴 · 向下捲動`
+      : copy.rosterHint(fullList().length);
     gridWrapEl.classList.toggle("has-overflow", overflow);
     gridWrapEl.classList.toggle("at-bottom", atEnd);
   };
@@ -866,6 +882,7 @@ export function createCompanionSwitchOverlay(opts = {}) {
       if (ring) ring.style.setProperty("--pct", "0");
       if (pctEl) pctEl.textContent = "0%";
       if (character && portraitEl && nameEl && card) {
+        wireCompanionPreviewFallback(portraitEl);
         portraitEl.src = String(character.previewImage || "");
         portraitEl.alt = String(character.name || "");
         nameEl.textContent = String(character.name || "");

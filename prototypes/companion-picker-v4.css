@@ -37,6 +37,14 @@
     rgba(14, 10, 28, 0.98),
     rgba(6, 4, 14, 0.99)
   );
+  display: grid;
+  grid-template-rows: auto auto auto auto minmax(0, 1fr) auto;
+  overflow: hidden;
+}
+
+.companion-picker--v4.companion-picker--start .companion-picker-sheet > * {
+  min-height: 0;
+  min-width: 0;
 }
 
 .companion-picker--v4.companion-picker--start .companion-picker-backdrop {
@@ -247,8 +255,19 @@
     0 12px 28px color-mix(in srgb, var(--card-accent, #8b7cf8) 32%, transparent);
 }
 
+.companion-picker--v4.companion-picker--start .start-picker-grid-wrap {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
 .companion-picker--v4.companion-picker--start .companion-picker-grid--start {
-  max-height: min(46dvh, 420px);
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: 100%;
+  box-sizing: border-box;
   overflow-y: auto;
   overflow-x: hidden;
   display: grid;
@@ -349,11 +368,7 @@
   scrollbar-width: thin;
 }
 
-.companion-picker--v4.companion-picker--start .companion-picker-grid--start:not(.companion-picker-grid--roster) {
-  max-height: min(42dvh, 360px);
-}
-
-.companion-picker--v4 .companion-picker-grid:not(.companion-picker-grid--roster) {
+.companion-picker--v4 .companion-picker-grid:not(.companion-picker-grid--roster):not(.companion-picker-grid--start) {
   padding: 0 1rem;
   overflow-y: auto;
   flex: 1 1 auto;
@@ -386,6 +401,14 @@
   gap: 0.55rem;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
   background: linear-gradient(180deg, transparent, rgba(0, 0, 0, 0.28));
+}
+
+.companion-picker--v4.companion-picker--start .picker-footer {
+  position: relative;
+  z-index: 3;
+  background: rgba(8, 6, 16, 0.98);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 -10px 28px rgba(0, 0, 0, 0.42);
 }
 
 .companion-picker--v4 .picker-confirm-btn {
@@ -432,6 +455,10 @@
   padding: 0;
   opacity: 1;
   pointer-events: none;
+}
+
+.companion-picker--v4.companion-picker--start .start-picker-preload[hidden] {
+  display: none !important;
 }
 
 .companion-picker--v4 .start-picker-preload-row,
@@ -505,6 +532,74 @@
 
   .companion-picker--v4 .picker-hero-portrait {
     max-width: 8.5rem;
+  }
+}
+
+@media (max-height: 740px) {
+  .companion-picker--v4.companion-picker--start .companion-picker-head {
+    padding-bottom: 0.35rem;
+  }
+
+  .companion-picker--v4.companion-picker--start .companion-picker-title {
+    font-size: 1.05rem;
+  }
+
+  .companion-picker--v4.companion-picker--start .picker-hero {
+    min-height: 0;
+    margin-bottom: 0.45rem;
+    padding: 0.55rem 0.65rem;
+    gap: 0.55rem;
+  }
+
+  .companion-picker--v4.companion-picker--start .picker-hero-name {
+    font-size: 1.05rem;
+  }
+
+  .companion-picker--v4.companion-picker--start .picker-hero-tagline,
+  .companion-picker--v4.companion-picker--start .picker-hero-traits {
+    display: none;
+  }
+
+  .companion-picker--v4.companion-picker--start .picker-featured-wrap {
+    display: none;
+  }
+
+  .companion-picker--v4.companion-picker--start .picker-toolbar {
+    padding-bottom: 0.35rem;
+  }
+}
+
+@media (max-height: 620px) {
+  .companion-picker--v4.companion-picker--start .picker-hero {
+    display: none;
+  }
+
+  .companion-picker--v4.companion-picker--start .picker-filters {
+    display: none;
+  }
+
+  .companion-picker--v4.companion-picker--start .companion-picker-foot {
+    display: none;
+  }
+
+  .companion-picker--v4.companion-picker--start .picker-footer {
+    padding-top: 0.4rem;
+    gap: 0.4rem;
+  }
+
+  .companion-picker--v4.companion-picker--start .companion-picker-grid--start {
+    grid-template-columns: repeat(auto-fill, minmax(4.1rem, 1fr));
+    gap: 0.34rem;
+  }
+
+  .companion-picker--v4.companion-picker--start .companion-card--compact {
+    padding: 0.18rem;
+    gap: 0.12rem;
+  }
+
+  .companion-picker--v4.companion-picker--start .companion-card--compact .companion-card-name {
+    font-size: 0.58rem;
+    line-height: 1.15;
   }
 }
 
