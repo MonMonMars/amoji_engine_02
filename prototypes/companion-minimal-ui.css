@@ -71,9 +71,15 @@ body.companion-minimal-chrome .topbar-setup-btn:focus-visible {
   transform: translateY(-1px);
 }
 
-body.companion-start-pending.companion-minimal-chrome .topbar-setup-btn {
-  opacity: 0;
-  pointer-events: none;
+body.companion-start-pending.companion-minimal-chrome .topbar {
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+body.companion-minimal-chrome #settings-role-readout,
+body.companion-minimal-chrome #settings-role-hint {
+  display: none !important;
 }
 
 body.companion-minimal-chrome .chat-shell {

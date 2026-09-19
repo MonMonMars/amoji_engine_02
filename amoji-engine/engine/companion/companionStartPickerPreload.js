@@ -57,8 +57,8 @@ export function attachStartPickerModelPreload(picker, opts = {}) {
   if (existing) return existing;
 
   const chatFirst = opts.chatFirst !== false && picker.chatFirst !== false;
-  const isEnglish = Boolean(opts.isEnglish ?? picker.isEnglish);
-  const langCode = opts.langCode === "en" ? "en" : "yue";
+  let isEnglish = Boolean(opts.isEnglish ?? picker.isEnglish);
+  let langCode = opts.langCode === "en" ? "en" : "yue";
   const getSelectedId =
     opts.getSelectedId || picker.getSelectedId || (() => "nova");
   const fetchImpl = opts.fetchImpl;
@@ -181,6 +181,10 @@ export function attachStartPickerModelPreload(picker, opts = {}) {
     schema: COMPANION_START_PICKER_PRELOAD_SCHEMA,
     previewPromise,
     refreshSelectedModel,
+    setLocale(nextEnglish, nextLangCode) {
+      isEnglish = Boolean(nextEnglish);
+      langCode = nextLangCode === "en" ? "en" : "yue";
+    },
   };
   activeByPicker.set(picker, handle);
   return handle;
