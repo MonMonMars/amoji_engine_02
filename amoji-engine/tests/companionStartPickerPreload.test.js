@@ -16,8 +16,8 @@ describe("companionStartPickerPreload", () => {
   });
 
   it("includes a linear download bar in start picker markup", () => {
-    expect(START_PICKER_PRELOAD_BAR_HTML).toContain("start-picker-preload-track");
-    expect(START_PICKER_PRELOAD_BAR_HTML).toContain("start-picker-preload-fill");
+    expect(START_PICKER_PRELOAD_BAR_HTML).toContain("amoji-load-bar__track");
+    expect(START_PICKER_PRELOAD_BAR_HTML).toContain("amoji-load-bar__fill");
     expect(START_PICKER_PRELOAD_BAR_HTML).toContain('role="progressbar"');
   });
 
@@ -44,7 +44,8 @@ describe("companionStartPickerPreload", () => {
     await job.previewPromise;
 
     expect(updates.length).toBeGreaterThan(1);
-    expect(updates[0].pct).toBe(0);
+    expect(updates[0].pct).toBeGreaterThanOrEqual(0);
+    expect(updates.some((u) => u.pct > 0 && u.pct < 100)).toBe(true);
     expect(updates[updates.length - 1].pct).toBe(100);
     expect(updates[updates.length - 1].label).toMatch(/ready to chat/i);
     expect(

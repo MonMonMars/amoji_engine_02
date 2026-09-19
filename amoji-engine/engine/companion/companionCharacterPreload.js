@@ -203,7 +203,7 @@ export async function startCharacterRosterPreload(opts = {}) {
   rosterModelsPreloadPromise = (async () => {
     const priorityPreviewResult = await preloadPreviewImages(
       priorityPreviewUrls,
-      (done) => {
+      (done, total) => {
         previewDone = done;
         if (preloadModels) {
           reportCombinedProgress(
@@ -214,7 +214,12 @@ export async function startCharacterRosterPreload(opts = {}) {
             opts.onProgress,
             "",
           );
+          return;
         }
+        const previewTotal = total || priorityPreviewUrls.length || 1;
+        const ratio = previewDone / previewTotal;
+        rosterPreloadProgress = ratio;
+        opts.onProgress?.(ratio, "");
       },
     );
     opts.onPreviewsReady?.();

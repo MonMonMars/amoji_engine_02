@@ -154,7 +154,7 @@ export function attachStartPickerModelPreload(picker, opts = {}) {
     : refreshSelectedModelBlocking;
 
   setPreloading(true);
-  apply(0, previewLabel(0));
+  apply(2, previewLabel(2));
 
   const previewPromise = startCharacterPreviewPreload({
     langCode,
