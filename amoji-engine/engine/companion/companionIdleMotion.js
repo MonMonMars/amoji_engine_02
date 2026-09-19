@@ -5,6 +5,7 @@ import {
   easeInOutSine,
   idleBeatEnvelope,
 } from "./companionPoseSmoothing.js";
+import { REST_NEUTRAL_HAPPY } from "./companionFaceRest.js";
 import {
   idleGenderBodyProfile,
   isIdleBeatAllowedForGender,
@@ -204,7 +205,11 @@ export function sampleIdleExpressionBlend(elapsedSec, emotion = "neutral") {
     blend.Sad = 0.16 + flutter * 0.04;
     blend.Surprised = 0.06 + breath * 0.05;
   } else {
-    blend.Happy = 0.22 + breath * 0.14 + flutter * 0.08;
+    const happyFloor = REST_NEUTRAL_HAPPY * 0.72;
+    blend.Happy = Math.max(
+      happyFloor,
+      0.22 + breath * 0.14 + flutter * 0.08,
+    );
     blend.Surprised = Math.min(0.14, 0.04 + flutter * 0.08);
   }
 
