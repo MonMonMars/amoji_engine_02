@@ -42,6 +42,7 @@ import { actionLoops } from "./companionActionMotion.js";
 import { BOOT_FULL_LIBRARY_WARM_CLIP_IDS } from "./companionIdleMotionPreload.js";
 import { detectVrmIdleRestRotations } from "./companionArmRestCalibration.js";
 import { createCompanionBodyMotion } from "./companionBodyMotion.js";
+import { characterGender } from "./companionCharacterCatalog.js";
 import {
   inferFingerFlexAxis,
 } from "./companionFingerPose.js";
@@ -298,6 +299,9 @@ export async function createVrmAvatar(opts) {
   vrm.humanoid?.resetNormalizedPose?.();
   const bodyMotion = createCompanionBodyMotion(vrm.humanoid);
   bodyMotion.setFingerFlexAxis?.(inferFingerFlexAxis(vrm.humanoid));
+  bodyMotion.setIdleGender?.(
+    characterGender(opts.characterId || "nova", "yue"),
+  );
   const treatProp = createCompanionTreatProp(vrm.humanoid);
   let springIdleState = createIdleSpringRecenterState();
   let springTalkState = createIdleSpringRecenterState();
@@ -1681,6 +1685,14 @@ export async function createVrmAvatar(opts) {
     resetIdleLife(now) {
       clearHostedBodyMotion();
       return bodyMotion.resetIdleLife?.(now);
+    },
+    setIdleGender(gender) {
+      bodyMotion.setIdleGender?.(gender);
+      bodyMotion.resetIdleLife?.();
+      return bodyMotion.idleGender;
+    },
+    getIdleGender() {
+      return bodyMotion.idleGender;
     },
     pulseIdleBeat(beat, now = performance.now()) {
       const key = String(beat || "look");

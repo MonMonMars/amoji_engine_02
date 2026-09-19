@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { IDLE_LIFE_CLIP_POOL } from "../engine/companion/companionActionChoreography.js";
+import { idleLifeClipPoolForGender } from "../engine/companion/companionActionChoreography.js";
 import {
   AVATAR_LOAD_IDLE_INTERVAL_MS,
   createCompanionWaitAct,
@@ -136,7 +136,7 @@ describe("companionWaitAct", () => {
     expect(avatar.playAction).toHaveBeenCalledTimes(1);
     expect(avatar.pulseIdleBeat).toHaveBeenCalledTimes(1);
     const [pose, opts] = avatar.playAction.mock.calls[0];
-    expect(IDLE_LIFE_CLIP_POOL).toContain(pose);
+    expect(idleLifeClipPoolForGender("female")).toContain(pose);
     expect(opts).toEqual({
       emotion: "neutral",
       loop: false,

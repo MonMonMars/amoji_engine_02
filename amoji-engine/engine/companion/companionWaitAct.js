@@ -10,7 +10,7 @@ import {
 } from "./companionLearnDialogue.js";
 import { progressPhaseLabel } from "./companionProgressOverlay.js";
 import {
-  IDLE_LIFE_CLIP_POOL,
+  idleLifeClipPoolForGender,
   pickIdleShowcase,
 } from "./companionActionChoreography.js";
 import { pickProceduralIdleBeat } from "./companionIdleMotion.js";
@@ -21,10 +21,10 @@ import {
   WAIT_POSES_BY_PHASE,
 } from "./companionWaitAssets.js";
 
-export const COMPANION_WAIT_ACT_SCHEMA = "amoji.companionWaitAct.v1";
+export const COMPANION_WAIT_ACT_SCHEMA = "amoji.companionWaitAct.v2";
 
 /** One-shot library clips need room to finish (wave ~1.8s, thinking ~2.4s). */
-export const IDLE_LIFE_INTERVAL_MS = 2400;
+export const IDLE_LIFE_INTERVAL_MS = 2100;
 export const AVATAR_LOAD_IDLE_INTERVAL_MS = 900;
 /** Play a showcase clip every N idle ticks — procedural beats on the others. */
 export const IDLE_LIFE_CLIP_EVERY_N_TICKS = 2;
@@ -58,12 +58,17 @@ export { WAIT_POSES_BY_PHASE, pickWaitPose };
  *     hide?: () => void,
  *   } | null,
  *   isEnglish?: boolean,
+ *   getIdleGender?: () => "female" | "male" | string,
  *   poseIntervalMs?: number,
  *   onPose?: (pose: string, phase: string) => void,
  * }} opts
  */
 export function createCompanionWaitAct(opts = {}) {
   let isEnglish = Boolean(opts.isEnglish);
+  let getIdleGender =
+    typeof opts.getIdleGender === "function"
+      ? opts.getIdleGender
+      : () => "female";
   let poseIntervalMs = opts.poseIntervalMs ?? 3600;
   let avatarRef = opts.avatar || null;
   let voiceRef = opts.voice || null;
@@ -113,14 +118,17 @@ export function createCompanionWaitAct(opts = {}) {
     avatarRef?.setEmotion?.(idleExpression.emotion || "neutral");
     avatarRef?.applyExpressionProfile?.(idleExpression);
 
+    const idleGender = getIdleGender();
+
     if (poseTick % IDLE_LIFE_CLIP_EVERY_N_TICKS !== 0) {
-      const beat = pickProceduralIdleBeat(poseTick);
+      const beat = pickProceduralIdleBeat(poseTick, idleGender);
       avatarRef?.pulseIdleBeat?.(beat);
       opts.onPose?.(`idle-${beat}`, phase);
       return;
     }
 
-    const pose = pickIdleShowcase(lastPoseId, IDLE_LIFE_CLIP_POOL);
+    const lifePool = idleLifeClipPoolForGender(idleGender);
+    const pose = pickIdleShowcase(lastPoseId, lifePool, idleGender);
     lastPoseId = pose;
     avatarRef?.playAction?.(pose, {
       emotion: "neutral",
@@ -337,6 +345,9 @@ export function createCompanionWaitAct(opts = {}) {
     },
     setLocale(nextEnglish) {
       isEnglish = Boolean(nextEnglish);
+    },
+    setIdleGenderResolver(fn) {
+      getIdleGender = typeof fn === "function" ? fn : () => "female";
     },
     stop() {
       if (!active) return;

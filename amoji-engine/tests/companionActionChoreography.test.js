@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   ACTION_COMBOS,
   IDLE_LIFE_CLIP_POOL,
+  IDLE_LIFE_CLIP_POOL_CORE,
+  idleLifeClipPoolForGender,
   buildActionSequence,
   buildShowcaseSequence,
   isShowcaseRequest,
@@ -27,26 +29,23 @@ describe("companionActionChoreography", () => {
     expect(shouldChainAction("shy")).toBe(false);
   });
 
-  it("keeps idle life on quiet clips with expanded variety (no high-energy showcase)", () => {
-    expect(IDLE_LIFE_CLIP_POOL.length).toBeGreaterThanOrEqual(20);
-    expect(IDLE_LIFE_CLIP_POOL).toContain("sleep");
-    expect(IDLE_LIFE_CLIP_POOL).toContain("nod");
-    expect(IDLE_LIFE_CLIP_POOL).toContain("shy");
-    expect(IDLE_LIFE_CLIP_POOL).toContain("stretch");
-    expect(IDLE_LIFE_CLIP_POOL).toContain("thinking");
-    expect(IDLE_LIFE_CLIP_POOL).toContain("wave");
-    expect(IDLE_LIFE_CLIP_POOL).toContain("learning");
-    expect(IDLE_LIFE_CLIP_POOL).not.toContain("walk");
-    expect(IDLE_LIFE_CLIP_POOL).not.toContain("jump");
-    expect(IDLE_LIFE_CLIP_POOL).not.toContain("celebrate");
-    expect(IDLE_LIFE_CLIP_POOL).not.toContain("cheer");
-    expect(IDLE_LIFE_CLIP_POOL).not.toContain("dab");
-    expect(IDLE_LIFE_CLIP_POOL).not.toContain("spin");
-    expect(IDLE_LIFE_CLIP_POOL).not.toContain("kungfu");
-    expect(IDLE_LIFE_CLIP_POOL).not.toContain("zombie");
-    const first = pickIdleShowcase(null, IDLE_LIFE_CLIP_POOL);
-    const second = pickIdleShowcase(first, IDLE_LIFE_CLIP_POOL);
-    expect(IDLE_LIFE_CLIP_POOL).toContain(first);
+  it("keeps idle life on quiet clips with expanded gender pools", () => {
+    const female = idleLifeClipPoolForGender("female");
+    const male = idleLifeClipPoolForGender("male");
+    expect(IDLE_LIFE_CLIP_POOL.length).toBeGreaterThan(female.length);
+    expect(female.length).toBeGreaterThanOrEqual(20);
+    expect(male.length).toBeGreaterThanOrEqual(20);
+    expect(IDLE_LIFE_CLIP_POOL_CORE).toContain("nod");
+    expect(female).toContain("shy");
+    expect(female).toContain("curtsy");
+    expect(male).toContain("handshake");
+    expect(female).not.toContain("walk");
+    expect(female).not.toContain("jump");
+    expect(male).toContain("jump");
+    expect(IDLE_LIFE_CLIP_POOL_CORE).not.toContain("celebrate");
+    const first = pickIdleShowcase(null, female, "female");
+    const second = pickIdleShowcase(first, female, "female");
+    expect(female).toContain(first);
     expect(second).not.toBe(first);
   });
 
