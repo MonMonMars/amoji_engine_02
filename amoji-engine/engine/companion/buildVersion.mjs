@@ -1,2 +1,2 @@
 /** Single source of truth for deployed companion build id (keep HTML __amojiBuild in sync). */
-export const AMOJI_BUILD = "2026-09-19-v356-planted-limbs-clean";
+export const AMOJI_BUILD = "2026-09-19-v357-boot-splash-dismiss";
