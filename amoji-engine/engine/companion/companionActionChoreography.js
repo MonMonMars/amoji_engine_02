@@ -146,6 +146,58 @@ export function idleLifeClipPoolForGender(gender) {
     : IDLE_LIFE_CLIP_POOL_FEMALE;
 }
 
+/** Full-body / stride clips — fine for user-requested showcases, not ambient idle. */
+export const IDLE_LEG_HEAVY_ACTIONS = Object.freeze(
+  new Set([
+    "walk",
+    "run",
+    "moonwalk",
+    "dance",
+    "ballet",
+    "hiphop",
+    "macarena",
+    "floss",
+    "tiktokdance",
+    "breakdance",
+    "kick",
+    "jump",
+    "jumpjack",
+    "spin",
+    "squat",
+    "sit",
+    "yoga",
+    "stretch",
+    "sneak",
+    "zombie",
+    "pushup",
+    "plank",
+    "kungfu",
+    "punch",
+    "taiji",
+    "rock",
+    "celebrate",
+    "sleep",
+    "superhero",
+    "curtsy",
+    "highfive",
+    "handshake",
+    "hug",
+    "dab",
+    "drink",
+    "eat",
+  ]),
+);
+
+/**
+ * In-place idle clips only — keeps feet planted (no stride / moonwalk blend on legs).
+ * @param {string | null | undefined} gender
+ */
+export function idlePlantedLifeClipPoolForGender(gender) {
+  return idleLifeClipPoolForGender(gender).filter(
+    (id) => !IDLE_LEG_HEAVY_ACTIONS.has(id),
+  );
+}
+
 /** Feminine showcase idle — longer performance pool. */
 export const IDLE_SHOWCASE_POOL_FEMALE = Object.freeze([
   "wave",

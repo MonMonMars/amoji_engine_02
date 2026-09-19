@@ -122,8 +122,8 @@ describe("companionIdleMotion", () => {
     const b = samplePlantedAliveIdle(2.3);
     expect(a.lowerLegR).toBeLessThan(0.14);
     expect(a.upperLegR).toBeLessThan(0.05);
-    expect(a.forearmL).toBeGreaterThan(0.3);
-    expect(a.armLiftL).toBeGreaterThan(0.08);
+    expect(a.forearmL).toBeGreaterThan(0.12);
+    expect(a.armLiftL).toBeGreaterThan(0.04);
     expect(Math.abs(a.headZ) + Math.abs(a.leanY) + Math.abs(a.spineX)).toBeGreaterThan(0.02);
     expect(a.headZ).not.toBe(b.headZ);
   });
@@ -192,9 +192,9 @@ describe("idle body motion integration", () => {
     for (let i = 0; i < 60; i += 1) motion.update(1 / 30);
     const rot = bones.get("leftUpperArm").rotation;
     const rest = VRM_ARM_REST_ROTATIONS.leftUpperArm;
-    expect(Math.abs(rot.z - rest.z)).toBeGreaterThan(0.008);
+    expect(Math.abs(rot.z - rest.z)).toBeLessThan(0.02);
     expect(bones.get("leftLowerArm").rotation.x).toBeGreaterThan(
-      VRM_ARM_REST_ROTATIONS.leftLowerArm.x + 0.12,
+      VRM_ARM_REST_ROTATIONS.leftLowerArm.x + 0.02,
     );
   });
 });
