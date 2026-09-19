@@ -457,13 +457,13 @@ export function createCompanionMicButton(el, opts = {}) {
       reset();
       return;
     }
+    if (ctx.speaking || ctx.assistantActive) {
+      setState("speaking");
+      return;
+    }
     if (!ctx.micOn) {
       setState("idle");
       reset();
-      return;
-    }
-    if (ctx.speaking || ctx.assistantActive) {
-      setState("speaking");
       return;
     }
     setState("listening");

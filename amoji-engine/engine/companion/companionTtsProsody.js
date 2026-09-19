@@ -74,12 +74,12 @@ const STYLE_EDGE_DELTA = Object.freeze({
 });
 
 const EMOTION_BROWSER_BASE = Object.freeze({
-  neutral: { rate: 0.78, pitch: 1.14, volume: 1 },
-  happy: { rate: 0.8, pitch: 1.28, volume: 1 },
-  thinking: { rate: 0.72, pitch: 1.06, volume: 0.96 },
-  sad: { rate: 0.7, pitch: 0.92, volume: 0.9 },
-  surprised: { rate: 0.82, pitch: 1.32, volume: 1 },
-  angry: { rate: 0.76, pitch: 1, volume: 1 },
+  neutral: { rate: 0.8, pitch: 1.16, volume: 1 },
+  happy: { rate: 0.84, pitch: 1.34, volume: 1 },
+  thinking: { rate: 0.74, pitch: 1.08, volume: 0.96 },
+  sad: { rate: 0.68, pitch: 0.86, volume: 0.9 },
+  surprised: { rate: 0.86, pitch: 1.38, volume: 1 },
+  angry: { rate: 0.78, pitch: 0.98, volume: 1 },
 });
 
 /**

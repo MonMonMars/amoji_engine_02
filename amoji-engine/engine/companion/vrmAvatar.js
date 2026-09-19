@@ -1209,8 +1209,8 @@ export async function createVrmAvatar(opts) {
       setTalking(true);
     }
     if (mouthTarget > 0.15 && (talking || eating)) {
-      mouthOpen = Math.max(mouthOpen, mouthTarget * 0.62);
-      mouthOpen += (mouthTarget - mouthOpen) * 0.48;
+      mouthOpen = Math.max(mouthOpen, mouthTarget * 0.48);
+      mouthOpen += (mouthTarget - mouthOpen) * 0.38;
     }
     return mouthTarget;
   };
@@ -1249,7 +1249,7 @@ export async function createVrmAvatar(opts) {
       }
     } else {
       applyEmotionExpressions(emotion);
-      if (mouthTarget < 0.15) mouthTarget = Math.max(mouthTarget, 0.38);
+      if (mouthTarget < 0.15) mouthTarget = Math.max(mouthTarget, 0.22);
       syncTalkLibraryMotion(true);
     }
     return talking;
@@ -1333,7 +1333,7 @@ export async function createVrmAvatar(opts) {
       const pulseScale = faceProfile.talkPulseScale ?? 1;
       mouthOpen = Math.max(
         mouthOpen,
-        sampleTalkMouthPulse(now, true) * 0.42 * pulseScale,
+        sampleTalkMouthPulse(now, true) * 0.26 * pulseScale,
       );
     }
     if (eating && !talking) {
@@ -1446,7 +1446,7 @@ export async function createVrmAvatar(opts) {
       if (!libraryMotion || crossfading) {
         bodyMotion.applyHandRestOnly?.({
           talkBlend: crossfading ? 0.22 : talking ? 0.7 : eating ? 0.12 : 0,
-          blendWeight: crossfading ? 0.55 : 1,
+          blendWeight: crossfading ? 0.55 : talking ? 0.72 : 0.28,
           now,
         });
       }

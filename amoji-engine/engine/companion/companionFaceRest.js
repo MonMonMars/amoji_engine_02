@@ -18,9 +18,9 @@ export const TALK_HAPPY_MAX = 0.62;
 export const REST_SURPRISED_MAX = 0.12;
 export const TALK_SURPRISED_MAX = 0.32;
 /** Hard cap on rendered talk mouth open (0..1) before rig-specific scaling. */
-export const TALK_MOUTH_OPEN_MAX = 0.52;
+export const TALK_MOUTH_OPEN_MAX = 0.38;
 /** Max jaw-bone X rotation (radians) at full open. */
-export const TALK_JAW_OPEN_RAD = 0.28;
+export const TALK_JAW_OPEN_RAD = 0.22;
 /** Fallback viseme walk when TTS has not yet named a shape. */
 export const TALK_VISEME_CYCLE = ["aa", "ih", "ou", "ee", "oh"];
 
@@ -147,7 +147,7 @@ export function talkingMouthOpen(talking, visemeOpen, nowMs = 0, eating = false)
   if (!talking) return eat;
   const viseme = mouthVisemeWeight(true, visemeOpen);
   const pulse = sampleTalkMouthPulse(nowMs, true);
-  const raw = Math.max(viseme, pulse * 0.72, eat);
+  const raw = Math.max(viseme, pulse * 0.48, eat);
   return Math.max(0, Math.min(TALK_MOUTH_OPEN_MAX, raw));
 }
 

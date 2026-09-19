@@ -17,6 +17,7 @@ describe("companionMinimalUi", () => {
     expect(html).toContain('id="btn-open-setup"');
     expect(html).toContain("topbar-setup-btn");
     expect(html).toContain('id="brand-btn"');
+    expect(html).toContain('id="companion-session-name"');
     expect(html).toContain('id="companion-status-line"');
     expect(html).not.toContain('id="mic-voice-hud"');
     expect(html).toContain('id="btn-mic"');
@@ -24,6 +25,7 @@ describe("companionMinimalUi", () => {
     expect(html.indexOf('class="composer-field"')).toBeLessThan(
       html.indexOf('id="mic-voice-stack"'),
     );
+    expect(html.indexOf('id="mic-voice-stack"')).toBeLessThan(html.indexOf('id="send"'));
     expect(minimalCss).toMatch(/companion-minimal-chrome \.composer-wrap[\s\S]*width:\s*100%/);
     expect(minimalCss).toMatch(/companion-minimal-chrome \.composer\.composer-pro[\s\S]*width:\s*100%/);
     expect(minimalCss).toMatch(/companion-minimal-chrome \.chat-column[\s\S]*width:\s*100%/);
@@ -46,7 +48,8 @@ describe("companionMinimalUi", () => {
 
   it("shows menu top-right only; send visible in text composer", () => {
     expect(minimalCss).toMatch(/companion-minimal-chrome \.topbar[\s\S]*display:\s*flex/);
-    expect(minimalCss).toMatch(/companion-minimal-chrome \.topbar[\s\S]*justify-content:\s*flex-end/);
+    expect(minimalCss).toMatch(/companion-minimal-chrome \.topbar[\s\S]*justify-content:\s*space-between/);
+    expect(minimalCss).toMatch(/companion-minimal-chrome \.companion-session-name/);
     expect(minimalCss).toMatch(/companion-minimal-chrome \.topbar \.brand-btn[\s\S]*display:\s*none/);
     expect(minimalCss).toContain("topbar-setup-btn");
     expect(minimalCss).not.toContain("mic-voice-hud");

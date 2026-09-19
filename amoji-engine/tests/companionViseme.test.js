@@ -18,7 +18,9 @@ describe("companionViseme", () => {
       shape: "aa",
       open: clampVisemeOpen(0.82),
     });
-    expect(clampVisemeOpen(0.82)).toBeCloseTo(0.82 * VISEME_OPEN_SCALE);
+    expect(clampVisemeOpen(0.82)).toBeCloseTo(
+      Math.min(TALK_MOUTH_OPEN_MAX, 0.82 * VISEME_OPEN_SCALE),
+    );
     expect(charToViseme("i").shape).toBe("ih");
     expect(charToViseme("啊").shape).toBe("aa");
     expect(charToViseme("嗯").open).toBeLessThan(0.3);

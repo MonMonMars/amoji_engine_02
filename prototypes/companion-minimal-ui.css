@@ -11,12 +11,33 @@ body.companion-minimal-chrome .topbar {
   left: 0;
   right: 0;
   z-index: 35;
-  align-items: flex-start;
-  justify-content: flex-end;
+  align-items: center;
+  justify-content: space-between;
   gap: 0.65rem;
-  padding: max(0.65rem, env(safe-area-inset-top)) 0.75rem 0;
+  padding: max(0.65rem, env(safe-area-inset-top))
+    max(0.55rem, env(safe-area-inset-right))
+    0
+    max(0.55rem, env(safe-area-inset-left));
   background: linear-gradient(180deg, rgba(2, 2, 8, 0.62) 0%, transparent 88%);
   pointer-events: none;
+}
+
+body.companion-minimal-chrome .companion-session-name {
+  pointer-events: none;
+  margin: 0;
+  padding: 0.15rem 0 0 0.1rem;
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: calc(100% - 3.5rem);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-display, "Syne", system-ui, sans-serif);
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: rgba(244, 240, 255, 0.94);
+  text-shadow: 0 1px 12px rgba(0, 0, 0, 0.45);
 }
 
 body.companion-minimal-chrome .topbar .brand-btn,
@@ -103,8 +124,8 @@ body.companion-minimal-chrome .chat-column {
   width: 100%;
   max-width: none;
   margin: 0;
-  padding: 0 max(0.5rem, env(safe-area-inset-left, 0px))
-    0 max(0.5rem, env(safe-area-inset-right, 0px));
+  padding: 0 max(0.2rem, env(safe-area-inset-left, 0px))
+    0 max(0.2rem, env(safe-area-inset-right, 0px));
   max-height: min(34vh, 260px);
   min-height: 0;
   overflow: hidden;
@@ -125,11 +146,26 @@ body.companion-minimal-chrome .composer-wrap {
   width: 100%;
   max-width: none;
   margin: 0;
-  padding: 0 max(0.4rem, env(safe-area-inset-left, 0px))
+  padding: 0 max(0.2rem, env(safe-area-inset-left, 0px))
     max(0.65rem, env(safe-area-inset-bottom))
-    max(0.4rem, env(safe-area-inset-right, 0px));
+    max(0.2rem, env(safe-area-inset-right, 0px));
   background: none;
   box-sizing: border-box;
+}
+
+body.companion-minimal-chrome.conversation-ui.composer-always-visible .stage.mic-mode .composer-wrap {
+  width: 100%;
+  max-width: none;
+  padding: 0 max(0.2rem, env(safe-area-inset-left, 0px))
+    max(0.65rem, env(safe-area-inset-bottom))
+    max(0.2rem, env(safe-area-inset-right, 0px));
+  background: none;
+}
+
+body.companion-minimal-chrome.conversation-ui.composer-always-visible .stage.mic-mode .composer {
+  max-width: none !important;
+  width: 100% !important;
+  justify-content: stretch !important;
 }
 
 body.companion-minimal-chrome .composer.composer-pro {
