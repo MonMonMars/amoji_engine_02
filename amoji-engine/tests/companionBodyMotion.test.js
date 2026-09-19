@@ -188,6 +188,23 @@ describe("createCompanionBodyMotion", () => {
     expect(Math.abs(lua.rotation.z)).toBeLessThan(0.35);
   });
 
+  it("routes A-pose idle through applyIdleArms (not static bind rest)", () => {
+    const humanoid = mockHumanoid();
+    const motion = createCompanionBodyMotion(humanoid);
+    motion.setArmBind("apose");
+    motion.setArmRestRotations({
+      leftUpperArm: { x: 0.05, y: 0.06, z: -0.14 },
+      rightUpperArm: { x: 0.04, y: -0.05, z: 0.14 },
+      leftLowerArm: { x: 0.14, y: 0.05, z: 0.05, flexAxis: "x" },
+      rightLowerArm: { x: 0.12, y: -0.04, z: -0.04, flexAxis: "x" },
+    });
+    motion.setTalking(false);
+    motion.pulseIdleBeat("breathe", performance.now());
+    for (let i = 0; i < 90; i += 1) motion.update(1 / 30);
+    const lla = humanoid.bones.get("leftLowerArm");
+    expect(lla.rotation.x).toBeGreaterThan(0.14);
+  });
+
   it("bends the calibrated knee axis at rest", () => {
     const humanoid = mockHumanoid();
     const motion = createCompanionBodyMotion(humanoid);

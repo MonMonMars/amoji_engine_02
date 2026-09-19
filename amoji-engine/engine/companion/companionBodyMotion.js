@@ -668,14 +668,10 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
     } else if (allowArms) {
       applyPointArms(pose, k);
     } else if (idleArms) {
-      if (isAposeBind()) {
-        applyArmRest(pose);
-      } else {
-        applyIdleArms(pose, k, {
-          boot: opts.bootPhase === true,
-          combHair: opts.combHair === true,
-        });
-      }
+      applyIdleArms(pose, k, {
+        boot: opts.bootPhase === true,
+        combHair: opts.combHair === true,
+      });
     } else if (talkArmBlend > 0.01) {
       applyTalkArms(pose, talkArmBlend);
     } else {
@@ -826,10 +822,12 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
         pose.headZ = (pose.headZ || 0) + Math.sin(elapsed * 0.42 + 0.8) * 0.018;
       } else if (!talking) {
         const apose = isAposeBind();
-        const idleMotion = apose
-          ? sampleCalmBreathIdle(elapsed, { listening, emotion, gender: idleGender })
-          : samplePlantedAliveIdle(elapsed, { listening, emotion, gender: idleGender });
-        pose = mergePoses(pose, idleMotion, apose ? 0.58 : 0.84);
+        const idleMotion = samplePlantedAliveIdle(elapsed, {
+          listening,
+          emotion,
+          gender: idleGender,
+        });
+        pose = mergePoses(pose, idleMotion, apose ? 0.8 : 0.9);
         const beat = advanceIdleBeat(idleBeat, dt, now, { gender: idleGender });
         idleBeat = beat.state;
         if (beat.overlay && Object.keys(beat.overlay).length) {
@@ -846,7 +844,7 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
               "lowerLegL",
               "lowerLegR",
             ]) {
-              if (key in overlay) overlay[key] = overlay[key] * 0.55;
+              if (key in overlay) overlay[key] = overlay[key] * 0.78;
             }
           }
           pose = mergePoses(pose, overlay, 1);

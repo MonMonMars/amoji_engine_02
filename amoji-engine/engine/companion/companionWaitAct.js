@@ -113,6 +113,7 @@ export function createCompanionWaitAct(opts = {}) {
       avatarRef?.resetIdleLife?.();
       avatarRef?.setEmotion?.(idleExpression.emotion || "neutral");
       avatarRef?.applyExpressionProfile?.(idleExpression);
+      avatarRef?.pulseIdleBeat?.("breathe");
       opts.onPose?.("idle-stand", phase);
       return;
     }

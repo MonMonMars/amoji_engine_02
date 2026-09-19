@@ -123,17 +123,17 @@ describe("companionWaitAct", () => {
     expect(avatar.stopAction).toHaveBeenCalled();
     expect(avatar.playCalmIdle).not.toHaveBeenCalled();
     expect(avatar.playAction).not.toHaveBeenCalled();
-    expect(avatar.pulseIdleBeat).not.toHaveBeenCalled();
+    expect(avatar.pulseIdleBeat).toHaveBeenCalledTimes(1);
 
     vi.advanceTimersByTime(IDLE_LIFE_INTERVAL_MS);
     expect(avatar.playCalmIdle).not.toHaveBeenCalled();
     expect(avatar.playAction).not.toHaveBeenCalled();
-    expect(avatar.pulseIdleBeat).toHaveBeenCalledTimes(1);
+    expect(avatar.pulseIdleBeat).toHaveBeenCalledTimes(2);
 
     vi.advanceTimersByTime(IDLE_LIFE_INTERVAL_MS);
     expect(avatar.playCalmIdle).not.toHaveBeenCalled();
     expect(avatar.playAction).toHaveBeenCalledTimes(1);
-    expect(avatar.pulseIdleBeat).toHaveBeenCalledTimes(1);
+    expect(avatar.pulseIdleBeat).toHaveBeenCalledTimes(2);
     const [pose, opts] = avatar.playAction.mock.calls[0];
     expect(idleLifeClipPoolForGender("female")).toContain(pose);
     expect(opts).toEqual({
