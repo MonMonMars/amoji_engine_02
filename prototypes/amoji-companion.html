@@ -8,9 +8,9 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji · Companion</title>
     <script>
-      window.__amojiBuild = "2026-09-19-v335-picker-polish-debug";
+      window.__amojiBuild = "2026-09-19-v336-picker-sync-debug";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-19-v335-picker-polish-debug"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-19-v336-picker-sync-debug"></script>
     <link
       rel="prefetch"
       href="/prototypes/assets/companion-char-nova.png"
@@ -732,11 +732,11 @@
       media="print"
       onload="this.media='all'"
     />
-    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-19-v335-picker-polish-debug" />
-    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-19-v335-picker-polish-debug" />
-    <link rel="stylesheet" href="/prototypes/companion-mic-button.css?v=2026-09-19-v335-picker-polish-debug" />
-    <link rel="stylesheet" href="/prototypes/companion-minimal-ui.css?v=2026-09-19-v335-picker-polish-debug" />
-    <link rel="stylesheet" href="/prototypes/companion-picker-v4.css?v=2026-09-19-v335-picker-polish-debug" />
+    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-19-v336-picker-sync-debug" />
+    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-19-v336-picker-sync-debug" />
+    <link rel="stylesheet" href="/prototypes/companion-mic-button.css?v=2026-09-19-v336-picker-sync-debug" />
+    <link rel="stylesheet" href="/prototypes/companion-minimal-ui.css?v=2026-09-19-v336-picker-sync-debug" />
+    <link rel="stylesheet" href="/prototypes/companion-picker-v4.css?v=2026-09-19-v336-picker-sync-debug" />
     <script>
       (function () {
         var params = new URLSearchParams(location.search);
@@ -762,7 +762,7 @@
       })();
     </script>
     <script type="module">
-      import { bootEarlyStartPicker } from "/amoji-engine/engine/companion/companionEarlyStartPicker.js?v=2026-09-19-v335-picker-polish-debug";
+      import { bootEarlyStartPicker } from "/amoji-engine/engine/companion/companionEarlyStartPicker.js?v=2026-09-19-v336-picker-sync-debug";
       const bootParams = new URLSearchParams(location.search);
       if (bootParams.get("autostart") !== "1" && bootParams.get("pick") !== "0") {
         globalThis.__amojiEarlyStartPickerPromise = bootEarlyStartPicker({
@@ -4664,19 +4664,19 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-19-v335-picker-polish-debug",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-19-v336-picker-sync-debug",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-19-v335-picker-polish-debug",
-          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-19-v335-picker-polish-debug"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-19-v336-picker-sync-debug",
+          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-19-v336-picker-sync-debug"
         }
       }
     </script>
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-19-v335-picker-polish-debug"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-19-v336-picker-sync-debug"
     />
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-19-v335-picker-polish-debug"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-19-v335-picker-polish-debug"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-19-v336-picker-sync-debug"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-19-v336-picker-sync-debug"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;
@@ -6213,6 +6213,7 @@
           if (careEnabled) void initCompanionChrome();
         }
         startPicker?.setSelected?.(characterId);
+        syncPickerSessionContext?.();
         const roleHref = buildCompanionHref({
           basePath: location.pathname,
           lang: langCode,
@@ -7760,6 +7761,26 @@
         }
       };
 
+      let syncingPickerBackground = false;
+      const onPickerBackgroundChange = (backgroundId) => {
+        if (syncingPickerBackground) return;
+        syncingPickerBackground = true;
+        activeSceneBgId = backgroundId;
+        applySceneEnvironmentToAvatar(backgroundId);
+        renderScenePresets();
+        startPicker?.setBackgroundId?.(backgroundId, { notify: false });
+        characterPicker?.setBackgroundId?.(backgroundId, { notify: false });
+        syncingPickerBackground = false;
+      };
+      const syncPickerSessionContext = () => {
+        const ctx = {
+          pickerCopy: rolePickerCopy(),
+          rosterProvider: roleRosterProvider,
+        };
+        startPicker?.refreshSessionContext?.(ctx);
+        characterPicker?.refreshSessionContext?.(ctx);
+      };
+
       const characterPicker = createCompanionCharacterPicker({
         isEnglish,
         selectedId: characterId,
@@ -7768,12 +7789,7 @@
         pickerCopy: rolePickerCopy(),
         rosterProvider: roleRosterProvider,
         onCardTapFx: playCompanionCardSelectFx,
-        onBackgroundChange: (backgroundId) => {
-          activeSceneBgId = backgroundId;
-          applySceneEnvironmentToAvatar(backgroundId);
-          renderScenePresets();
-          startPicker?.setBackgroundId?.(backgroundId);
-        },
+        onBackgroundChange: onPickerBackgroundChange,
         onSelect: (nextId) => {
           characterPicker.close();
           void hotSwapCharacter(nextId);
@@ -7846,11 +7862,7 @@
           pickerCopy: rolePickerCopy(),
           rosterProvider: roleRosterProvider,
           onCardTapFx: playCompanionCardSelectFx,
-          onBackgroundChange: (backgroundId) => {
-            activeSceneBgId = backgroundId;
-            applySceneEnvironmentToAvatar(backgroundId);
-            renderScenePresets();
-          },
+          onBackgroundChange: onPickerBackgroundChange,
           onSelectionChange: () => {
             startPickerPreloadJob?.refreshSelectedModel?.();
           },
@@ -7867,6 +7879,13 @@
         ensureStartPickerModelPreload();
       } else {
         startPicker.setSelected(characterId);
+        startPicker.setLocale?.(isEnglish);
+        startPicker.refreshSessionContext?.({
+          pickerCopy: rolePickerCopy(),
+          rosterProvider: roleRosterProvider,
+        });
+        startPicker.setOnBackgroundChange?.(onPickerBackgroundChange);
+        startPicker.setBackgroundId?.(activeSceneBgId, { notify: false });
         startPicker.enablePicking(true);
         ensureStartPickerModelPreload();
       }
@@ -8981,6 +9000,8 @@
         waitAct?.setLocale?.(nextEnglish);
         startPicker?.setLocale?.(nextEnglish);
         characterPicker?.setLocale?.(nextEnglish);
+        syncPickerSessionContext?.();
+        startPickerPreloadJob?.setLocale?.(nextEnglish, nextCode);
         if (orbitHint) {
           orbitHint.textContent = nextEnglish
             ? "Tap character to interact · drag empty space to orbit · double-click to reset"

@@ -34,6 +34,37 @@ describe("companionCharacterPicker UI", () => {
     picker.destroy();
   });
 
+  it("in-session picker hides role badges on roster cards", () => {
+    if (typeof document === "undefined") return;
+    const picker = createCompanionCharacterPicker({
+      isEnglish: true,
+      selectedId: "nova",
+      onSelect: () => {},
+    });
+    picker.open();
+    expect(picker.element.querySelectorAll(".companion-card-role").length).toBe(0);
+    expect(picker.element.querySelectorAll(".companion-card-role-strip").length).toBe(
+      0,
+    );
+    picker.destroy();
+  });
+
+  it("refreshSessionContext updates role-specific picker title", () => {
+    if (typeof document === "undefined") return;
+    const picker = createCompanionCharacterPicker({
+      isEnglish: true,
+      selectedId: "nova",
+      onSelect: () => {},
+    });
+    picker.refreshSessionContext({
+      pickerCopy: { title: "Pick your secretary" },
+    });
+    expect(picker.element.querySelector(".companion-picker-title")?.textContent).toBe(
+      "Pick your secretary",
+    );
+    picker.destroy();
+  });
+
   it("in-session picker shows featured quick-pick row", () => {
     if (typeof document === "undefined") return;
     const picker = createCompanionCharacterPicker({

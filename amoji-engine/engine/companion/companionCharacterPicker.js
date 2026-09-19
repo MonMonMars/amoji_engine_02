@@ -107,13 +107,14 @@ export function wirePickerSceneSection(opts = {}) {
     renderPickerSceneRow();
   };
 
-  const applyPickerBackground = (backgroundId) => {
+  const applyPickerBackground = (backgroundId, syncOpts = {}) => {
+    const notify = syncOpts.notify !== false;
     activeBackgroundId = backgroundId;
     const atmosphere =
       opts.atmosphereEl || document.querySelector?.(".atmosphere") || null;
     applySceneBackground(atmosphere, backgroundId);
     persistSceneBackground(backgroundId);
-    opts.onBackgroundChange?.(backgroundId);
+    if (notify) opts.onBackgroundChange?.(backgroundId);
     renderPickerSceneRow();
   };
 
@@ -124,6 +125,10 @@ export function wirePickerSceneSection(opts = {}) {
     setLocale(nextEnglish) {
       isEnglish = Boolean(nextEnglish);
       syncPickerSceneChrome();
+    },
+    setOnBackgroundChange(handler) {
+      opts.onBackgroundChange =
+        typeof handler === "function" ? handler : undefined;
     },
   };
 }
@@ -154,9 +159,11 @@ export function companionCardInnerHtml(item, ctx = {}) {
     ? `<span class="companion-card-number" aria-hidden="true">${number}</span>`
     : "";
   const labeledName = number ? `${number} ${item.name}` : item.name;
-  const roleBadge = item.roleBadge
-    ? `<span class="companion-card-role companion-card-role--${item.companionRole || "girlfriend"}${compact ? " companion-card-role--mini" : ""}">${item.roleBadge}</span>`
-    : "";
+  const hideRoleChrome = Boolean(ctx.hideRoleStrip || ctx.hideRoleChrome);
+  const roleBadge =
+    !hideRoleChrome && item.roleBadge
+      ? `<span class="companion-card-role companion-card-role--${item.companionRole || "girlfriend"}${compact ? " companion-card-role--mini" : ""}">${item.roleBadge}</span>`
+      : "";
   const badge = item.badge
     ? `<span class="companion-card-badge${compact ? " companion-card-badge--mini" : ""}">${item.badge}</span>`
     : "";
@@ -186,7 +193,7 @@ export function companionCardInnerHtml(item, ctx = {}) {
 
   if (compact && ctx.startStrip) {
     const stripRole =
-      !ctx.hideRoleStrip && item.roleBadge
+      !hideRoleChrome && item.roleBadge
         ? `<span class="companion-card-role-strip">${item.roleBadge}</span>`
         : "";
     const aaaBadge = item.aaaBadge
@@ -283,6 +290,7 @@ export function renderCompanionPickerGrid(gridEl, langCode, ctx = {}) {
         startMini: ctx.startMini,
         startStrip: ctx.startStrip,
         hideRoleStrip: ctx.hideRoleStrip,
+        hideRoleChrome: ctx.hideRoleChrome,
         eagerPreview: ctx.eagerPreview,
         disabled: ctx.disabled,
         onCardTapFx: ctx.onCardTapFx,
@@ -319,6 +327,8 @@ export function renderPickerFeaturedRow(rowEl, langCode, ctx = {}) {
         selectedId: ctx.selectedId,
         compact: true,
         featured: true,
+        hideRoleStrip: ctx.hideRoleStrip,
+        hideRoleChrome: ctx.hideRoleChrome,
         eagerPreview: ctx.eagerPreview,
         disabled: ctx.disabled,
         onCardTapFx: ctx.onCardTapFx,
@@ -466,16 +476,21 @@ export function createCompanionCharacterPicker(opts = {}) {
   /** Live session character — updated by setSelected after hot-swap. */
   let activeCharacterId = opts.selectedId || "nova";
   let selectedId = activeCharacterId;
-  const roleRoster =
+  let rosterProvider =
     typeof opts.rosterProvider === "function" ? opts.rosterProvider : null;
   let filterId = "all";
   let query = "";
   let open = false;
   let unwireFeaturedKeys = () => {};
   let unwireRosterKeys = () => {};
-  const copy = { ...pickerCopy(isEnglish), ...(opts.pickerCopy || {}) };
+  let sessionCopyOverrides = { ...(opts.pickerCopy || {}) };
+  const mergePickerCopy = () => ({
+    ...pickerCopy(isEnglish),
+    ...sessionCopyOverrides,
+  });
+  let copy = mergePickerCopy();
   const fullList = () =>
-    roleRoster ? roleRoster(langCode) : listCompanionCharacters(langCode);
+    rosterProvider ? rosterProvider(langCode) : listCompanionCharacters(langCode);
 
   const shell = document.createElement("div");
   shell.className = "companion-picker companion-picker--v4";
@@ -552,6 +567,7 @@ export function createCompanionCharacterPicker(opts = {}) {
     renderPickerFeaturedRow(featuredRow, langCode, {
       selectedId,
       roster: fullList(),
+      hideRoleStrip: true,
       eagerPreview: true,
       onCardTapFx: opts.onCardTapFx,
       onCardClick: applySelection,
@@ -570,6 +586,7 @@ export function createCompanionCharacterPicker(opts = {}) {
       selectedId,
       roster: filtered,
       isEnglish,
+      hideRoleStrip: true,
       onCardTapFx: opts.onCardTapFx,
       onCardClick: applySelection,
     });
@@ -680,13 +697,27 @@ export function createCompanionCharacterPicker(opts = {}) {
     getBackgroundId() {
       return sceneSection.getBackgroundId();
     },
-    setBackgroundId(backgroundId) {
-      sceneSection.setBackgroundId(backgroundId);
+    setBackgroundId(backgroundId, syncOpts) {
+      sceneSection.setBackgroundId(backgroundId, syncOpts);
+    },
+    setOnBackgroundChange(handler) {
+      sceneSection.setOnBackgroundChange(handler);
+    },
+    refreshSessionContext(ctx = {}) {
+      if (typeof ctx.rosterProvider === "function") {
+        rosterProvider = ctx.rosterProvider;
+      }
+      if (ctx.pickerCopy) {
+        sessionCopyOverrides = { ...ctx.pickerCopy };
+      }
+      copy = mergePickerCopy();
+      paintCopy();
+      renderAll();
     },
     setLocale(nextEnglish) {
       isEnglish = Boolean(nextEnglish);
       langCode = isEnglish ? "en" : "yue";
-      Object.assign(copy, pickerCopy(isEnglish), opts.pickerCopy || {});
+      copy = mergePickerCopy();
       shell.setAttribute(
         "aria-label",
         isEnglish ? "Choose companion" : "揀同伴",
@@ -720,7 +751,7 @@ export function createCompanionStartPicker(opts = {}) {
   let isEnglish = Boolean(opts.isEnglish);
   let langCode = isEnglish ? "en" : "yue";
   let selectedId = opts.selectedId || "nova";
-  const roleRoster =
+  let rosterProvider =
     typeof opts.rosterProvider === "function" ? opts.rosterProvider : null;
   let starting = false;
   let pickable = true;
@@ -729,9 +760,14 @@ export function createCompanionStartPicker(opts = {}) {
   /** @type {ReturnType<typeof setTimeout> | null} */
   let preloadHideTimer = null;
   let unwireRosterKeys = () => {};
-  const copy = { ...pickerCopy(isEnglish), ...(opts.pickerCopy || {}) };
+  let sessionCopyOverrides = { ...(opts.pickerCopy || {}) };
+  const mergePickerCopy = () => ({
+    ...pickerCopy(isEnglish),
+    ...sessionCopyOverrides,
+  });
+  let copy = mergePickerCopy();
   const fullList = () =>
-    roleRoster ? roleRoster(langCode) : listCompanionCharacters(langCode);
+    rosterProvider ? rosterProvider(langCode) : listCompanionCharacters(langCode);
 
   const shell = document.createElement("div");
   shell.className =
@@ -988,13 +1024,28 @@ export function createCompanionStartPicker(opts = {}) {
     getBackgroundId() {
       return sceneSection.getBackgroundId();
     },
-    setBackgroundId(backgroundId) {
-      sceneSection.setBackgroundId(backgroundId);
+    setBackgroundId(backgroundId, syncOpts) {
+      sceneSection.setBackgroundId(backgroundId, syncOpts);
+    },
+    setOnBackgroundChange(handler) {
+      sceneSection.setOnBackgroundChange(handler);
+    },
+    refreshSessionContext(ctx = {}) {
+      if (typeof ctx.rosterProvider === "function") {
+        rosterProvider = ctx.rosterProvider;
+      }
+      if (ctx.pickerCopy) {
+        sessionCopyOverrides = { ...ctx.pickerCopy };
+      }
+      copy = mergePickerCopy();
+      paintCopy();
+      renderAll();
+      renderPreload();
     },
     setLocale(nextEnglish) {
       isEnglish = Boolean(nextEnglish);
       langCode = isEnglish ? "en" : "yue";
-      Object.assign(copy, pickerCopy(isEnglish), opts.pickerCopy || {});
+      copy = mergePickerCopy();
       shell.setAttribute(
         "aria-label",
         isEnglish ? "Choose companion" : "揀同伴",

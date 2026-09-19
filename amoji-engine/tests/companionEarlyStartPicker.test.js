@@ -55,8 +55,9 @@ describe("companionEarlyStartPicker", () => {
     expect(
       picker?.element.querySelector(".companion-picker-title")?.textContent,
     ).toContain("secretary");
-    const novaCard = picker?.element.querySelector('[data-character-id="nova"]');
-    expect(novaCard?.textContent).toContain("Secretary");
+    expect(
+      picker?.element.querySelectorAll(".companion-card-role-strip").length,
+    ).toBe(0);
     picker?.destroy();
     document.body.classList.remove("companion-start-pending", "companion-picker-open");
   });

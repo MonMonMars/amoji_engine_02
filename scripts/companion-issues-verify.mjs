@@ -689,7 +689,20 @@ async function main() {
   record("starter-prompts-visible", starterVisible, String(starterVisible));
 
   await openInSessionCompanionPicker(page);
-  record("in-session-picker", true);
+  const inSessionPicker = await page.evaluate(() => {
+    const picker = document.getElementById("companion-character-picker");
+    return {
+      open: Boolean(picker && !picker.hidden),
+      roleBadges: picker?.querySelectorAll(".companion-card-role").length || 0,
+      roleStrips: picker?.querySelectorAll(".companion-card-role-strip").length || 0,
+    };
+  });
+  record("in-session-picker", inSessionPicker.open);
+  record(
+    "in-session-no-role-chrome",
+    inSessionPicker.roleBadges === 0 && inSessionPicker.roleStrips === 0,
+    `badges=${inSessionPicker.roleBadges} strips=${inSessionPicker.roleStrips}`,
+  );
   try {
     const modelsBefore = loadedModels.length;
     await switchCompanionInSession(page, "alicia");
