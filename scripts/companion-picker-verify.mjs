@@ -168,6 +168,13 @@ const layout = await page.evaluate(() => {
       "#start-character-picker .companion-card--start-strip .companion-card-number",
     ),
   ).map((el) => el.textContent?.trim());
+  let minPortraitW = 999;
+  for (const card of cards) {
+    const portrait = card.querySelector(".companion-card-portrait");
+    if (!portrait) continue;
+    minPortraitW = Math.min(minPortraitW, portrait.getBoundingClientRect().width);
+  }
+  const cardsLargeEnough = Number.isFinite(minPortraitW) && minPortraitW >= 56;
   return {
     ok:
       wrapBottom <= footerTop + 2 &&
@@ -175,9 +182,12 @@ const layout = await page.evaluate(() => {
       brokenImgs === 0 &&
       grid.clientHeight >= 72 &&
       rowGrid &&
-      cards.length >= 10,
+      cards.length >= 10 &&
+      cardsLargeEnough,
     rowGrid,
     columnCount,
+    minPortraitW,
+    cardsLargeEnough,
     cardNumbers,
     visibleOverlap,
     wrapBottom,
@@ -197,9 +207,12 @@ record(
     `visibleOverlap=${layout.visibleOverlap} gridH=${layout.gridH} broken=${layout.brokenImgs}`,
 );
 record(
-  "roster two-row grid (5 cols)",
-  layout.rowGrid && layout.columnCount >= 5,
-  `cols=${layout.columnCount} cards=${layout.cardCount}`,
+  "roster grid with readable cards",
+  layout.rowGrid &&
+    layout.columnCount >= 4 &&
+    layout.cardsLargeEnough &&
+    layout.cardCount >= 10,
+  `cols=${layout.columnCount} cards=${layout.cardCount} minW=${layout.minPortraitW}`,
 );
 record(
   "strip cards numbered 1-10",
