@@ -54,6 +54,8 @@ export function createStubAvatar() {
     getFaceProfile: () => null,
     resetCameraView: noop,
     hitTest: () => false,
+    setSceneEnvironment: noop,
+    playCalmIdle: noop,
   };
 }
 

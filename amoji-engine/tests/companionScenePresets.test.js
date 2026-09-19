@@ -10,6 +10,8 @@ import {
   persistSceneBackground,
   persistSceneOutfit,
   resolveSceneBackgroundId,
+  resolveSceneEnvironment,
+  isOutdoorSceneBackground,
   resolveSceneOutfitId,
   CHAT_PANEL_STORAGE_KEY,
   SCENE_OUTFIT_STORAGE_KEY,
@@ -55,6 +57,28 @@ describe("companionScenePresets", () => {
     const el = { dataset: {} };
     expect(applySceneBackground(el, "aurora")).toBe("aurora");
     expect(el.dataset.sceneBg).toBe("aurora");
+    expect(el.dataset.sceneEnvironment).toBe("outdoor");
+  });
+
+  it("resolves indoor vs outdoor environments", () => {
+    expect(resolveSceneEnvironment("studio")).toBe("indoor");
+    expect(resolveSceneEnvironment("cozy-room")).toBe("indoor");
+    expect(resolveSceneEnvironment("cafe")).toBe("indoor");
+    expect(resolveSceneEnvironment("library")).toBe("indoor");
+    expect(resolveSceneEnvironment("minimal")).toBe("indoor");
+    expect(resolveSceneEnvironment("night-city")).toBe("outdoor");
+    expect(resolveSceneEnvironment("rooftop")).toBe("outdoor");
+    expect(resolveSceneEnvironment("park")).toBe("outdoor");
+    expect(resolveSceneEnvironment("beach")).toBe("outdoor");
+    expect(isOutdoorSceneBackground("sunset")).toBe(true);
+    expect(isOutdoorSceneBackground("cafe")).toBe(false);
+  });
+
+  it("sets indoor environment on applySceneBackground", () => {
+    const el = { dataset: {} };
+    applySceneBackground(el, "library");
+    expect(el.dataset.sceneBg).toBe("library");
+    expect(el.dataset.sceneEnvironment).toBe("indoor");
   });
 
   it("persists chat panel visibility preference", () => {

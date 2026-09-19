@@ -79,8 +79,10 @@ import {
   configureVrmSpringStability,
   createIdleSpringRecenterState,
   recenterVrmSpringBones,
+  setVrmSceneWindMode,
   stabilizeVrmSpringBones,
   tickIdleSpringRecenter,
+  tickOutdoorSceneWind,
   THINK_SPRING_RECENTER_SEC,
   TALK_SPRING_RECENTER_SEC,
 } from "./vrmSpringStability.js";
@@ -313,6 +315,8 @@ export async function createVrmAvatar(opts) {
   const treatProp = createCompanionTreatProp(vrm.humanoid);
   let springIdleState = createIdleSpringRecenterState();
   let springTalkState = createIdleSpringRecenterState();
+  /** @type {"indoor" | "outdoor"} */
+  let sceneEnvironment = "indoor";
   /** @type {ReturnType<typeof createMotionTransitionState>} */
   let motionTransitionState = null;
   /** @type {string | null} */
@@ -540,15 +544,16 @@ export async function createVrmAvatar(opts) {
   bodyMotion.setArmBind?.(idleRest.bind);
   bodyMotion.snapToRestPose?.();
   syncHumanoidPose();
-  configureVrmSpringStability(vrm);
+  configureVrmSpringStability(vrm, sceneEnvironment);
   for (let i = 0; i < 36; i += 1) {
+    tickOutdoorSceneWind(vrm, i / 60);
     stabilizeVrmSpringBones(vrm);
     bodyMotion.update(1 / 60);
     syncHumanoidPose();
     vrm.update(1 / 60);
   }
   bodyMotion.resetMotionClock?.();
-  configureVrmSpringStability(vrm);
+  configureVrmSpringStability(vrm, sceneEnvironment);
   recenterVrmSpringBones(vrm, { retune: true, captureInit: true });
   faceLight.position.set(0.2, 1.55, portraitCameraZSign * 1.4);
   smoothedFrameAnchor.copy(faceAnchor);
@@ -1323,6 +1328,7 @@ export async function createVrmAvatar(opts) {
       syncLookTarget();
       syncHumanoidPose();
       tickFace(dt, now, activeMotion);
+      tickOutdoorSceneWind(vrm, clock.getElapsedTime());
       const springEligible = !libraryMotion && !activeMotion;
       if (springEligible && talking) {
         tickIdleSpringRecenter(
@@ -1606,6 +1612,18 @@ export async function createVrmAvatar(opts) {
     },
     playCalmIdle() {
       return playCalmLibraryIdle();
+    },
+    setSceneEnvironment(mode) {
+      sceneEnvironment = mode === "outdoor" ? "outdoor" : "indoor";
+      setVrmSceneWindMode(sceneEnvironment);
+      configureVrmSpringStability(vrm, sceneEnvironment);
+      if (sceneEnvironment === "indoor") {
+        recenterVrmSpringBones(vrm, { retune: true, captureInit: false });
+      }
+      return sceneEnvironment;
+    },
+    getSceneEnvironment() {
+      return sceneEnvironment;
     },
     resetIdleLife(now) {
       vrmaPlayGen += 1;
