@@ -21,6 +21,7 @@ function mime(p) {
     ".png": "image/png",
     ".webp": "image/webp",
     ".vrm": "application/octet-stream",
+    ".webmanifest": "application/manifest+json",
   };
   return m[extname(p)] || "application/octet-stream";
 }

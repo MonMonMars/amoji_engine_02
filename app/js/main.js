@@ -1,4 +1,5 @@
-import { initRouter, navigate } from "./router.js";
+import { initRouter, navigate, getCurrentScreen } from "./router.js";
+import { initCapacitorBridge } from "./capacitor-bridge.js";
 import {
   loadAuthSession,
   restoreSession,
@@ -66,6 +67,11 @@ initRouter({
   navigate,
   toast,
   baseUrl,
+});
+
+initCapacitorBridge({
+  getScreen: getCurrentScreen,
+  navigate,
 });
 
 async function boot() {

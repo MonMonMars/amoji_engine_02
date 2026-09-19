@@ -17,8 +17,9 @@ import {
   loadAuthSession,
 } from "/amoji-engine/engine/mobile/companionMobileAuth.js";
 import { syncToCloud } from "/amoji-engine/engine/mobile/companionCloudStorage.js";
+import { fetchAppBuild } from "../appBuild.js";
 
-registerRoute("settings", (ctx) => {
+registerRoute("settings", async (ctx) => {
   const en = ctx.isEnglish();
   let settings = loadMobileSettings();
   let companionRole = loadCompanionRole();
@@ -26,6 +27,8 @@ registerRoute("settings", (ctx) => {
 
   const screen = document.createElement("section");
   screen.className = "screen";
+
+  const appBuild = (await fetchAppBuild(ctx.baseUrl)) || "—";
 
   function render() {
     screen.innerHTML = `
@@ -87,7 +90,7 @@ registerRoute("settings", (ctx) => {
       </div>
       <p style="margin-top:1rem;color:var(--muted);font-size:0.75rem;line-height:1.45">
         <a href="/privacy" style="color:var(--accent)">${en ? "Privacy Policy" : "私隱政策"}</a>
-        · Amoji v213-mobile
+        · build ${appBuild}
       </p>
     `;
 
