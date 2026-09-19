@@ -30,6 +30,12 @@ const outDir = join(root, "prototypes/assets");
 const MIN_GOOD_BYTES = MIN_PREVIEW_BYTES;
 
 const DEFAULT_TARGETS = [
+  "nova",
+  "kizuna",
+  "alicia",
+  "ember",
+  "chibi",
+  "kate",
   "amoji",
   "poly",
   "aesthe",
@@ -156,6 +162,12 @@ async function captureCharacter(page, characterId, baseUrl) {
   const png = Buffer.from(dataUrl.slice("data:image/png;base64,".length), "base64");
   writeFileSync(out, png);
   if (isBadCapture(out)) {
+    try {
+      const { unlinkSync } = await import("node:fs");
+      unlinkSync(out);
+    } catch {
+      /* ignore */
+    }
     throw new Error(`capture too small or black loader (${statSync(out).size} bytes)`);
   }
   return out;

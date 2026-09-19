@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { existsSync, statSync } from "node:fs";
 import {
   BLACK_LOADER_BYTES,
+  TINY_BLACK_PREVIEW_BYTES,
   COMPANION_PREVIEW_FALLBACK,
   companionPreviewImgOnErrorAttr,
   companionPreviewPath,
@@ -13,6 +14,7 @@ import { CHARACTER_IDS } from "../engine/companion/companionCharacterCatalog.js"
 describe("companionPreviewAssets", () => {
   it("flags black loader captures", () => {
     expect(BLACK_LOADER_BYTES).toBe(333412);
+    expect(TINY_BLACK_PREVIEW_BYTES).toBe(61136);
     expect(isBadPreviewCapture("/path/missing.png")).toBe(true);
   });
 

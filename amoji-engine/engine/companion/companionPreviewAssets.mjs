@@ -21,6 +21,9 @@ const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..")
 /** Playwright WebGL blank capture signature. */
 export const BLACK_LOADER_BYTES = 333412;
 
+/** Failed headless capture — uniform black canvas at 2×720×960. */
+export const TINY_BLACK_PREVIEW_BYTES = 61136;
+
 /** Minimum bytes for a valid 3D or art portrait PNG. */
 export const MIN_PREVIEW_BYTES = 120000;
 
@@ -38,7 +41,11 @@ export function companionPreviewPath(id, assetsDir = join(repoRoot, "prototypes/
 export function isBadPreviewCapture(filePath) {
   if (!existsSync(filePath)) return true;
   const size = statSync(filePath).size;
-  return size <= MIN_PREVIEW_BYTES || size === BLACK_LOADER_BYTES;
+  return (
+    size <= MIN_PREVIEW_BYTES ||
+    size === BLACK_LOADER_BYTES ||
+    size === TINY_BLACK_PREVIEW_BYTES
+  );
 }
 
 /**
