@@ -1,5 +1,6 @@
 /**
- * Start-picker roster + selected companion model preload with live progress.
+ * Start-picker roster preload — chat-first: preview PNGs block the bar,
+ * selected VRM loads in the background after "Ready to chat".
  */
 import { characterAvatarConfig } from "./companionCharacterCatalog.js";
 import { characterModelFetchUrl } from "./companionModelAssets.mjs";
@@ -7,17 +8,21 @@ import { startCharacterPreviewPreload } from "./companionCharacterPreload.js";
 import {
   getPreloadedVrmPromise,
   preloadVrmBuffer,
+  releaseVrmPreload,
   releaseVrmPreloadExcept,
+  scheduleCompanionBackgroundWork,
 } from "./companionPreload.js";
 
 export const COMPANION_START_PICKER_PRELOAD_SCHEMA =
-  "amoji.companionStartPickerPreload.v1";
+  "amoji.companionStartPickerPreload.v2";
 
-/** @type {WeakMap<object, { refreshSelectedModel: () => Promise<void> }>} */
+/** Picker progress bar reaches 100% when priority preview PNGs are warm. */
+export const PICKER_PREVIEW_PROGRESS_MAX = 100;
+
+const SELECTION_MODEL_DEBOUNCE_MS = 450;
+
+/** @type {WeakMap<object, { refreshSelectedModel: () => void, previewPromise: Promise<unknown> }>} */
 const activeByPicker = new WeakMap();
-
-/** Preview warm-up maps to 0–35% of the picker bar. */
-export const PICKER_PREVIEW_PROGRESS_MAX = 35;
 
 /**
  * @param {number} value 0..1 ratio or 0..100 percent
@@ -37,13 +42,21 @@ export function normalizePickerProgressPct(value) {
  *   getSelectedId?: () => string,
  *   isEnglish?: boolean,
  *   langCode?: "yue" | "en",
+ *   chatFirst?: boolean,
  * }} picker
- * @param {{ isEnglish?: boolean, langCode?: "yue" | "en", getSelectedId?: () => string }} [opts]
+ * @param {{
+ *   isEnglish?: boolean,
+ *   langCode?: "yue" | "en",
+ *   getSelectedId?: () => string,
+ *   fetchImpl?: typeof fetch,
+ *   chatFirst?: boolean,
+ * }} [opts]
  */
 export function attachStartPickerModelPreload(picker, opts = {}) {
   const existing = activeByPicker.get(picker);
   if (existing) return existing;
 
+  const chatFirst = opts.chatFirst !== false && picker.chatFirst !== false;
   const isEnglish = Boolean(opts.isEnglish ?? picker.isEnglish);
   const langCode = opts.langCode === "en" ? "en" : "yue";
   const getSelectedId =
@@ -51,12 +64,15 @@ export function attachStartPickerModelPreload(picker, opts = {}) {
   const fetchImpl = opts.fetchImpl;
 
   let modelJob = 0;
+  /** @type {ReturnType<typeof setTimeout> | null} */
+  let selectionTimer = null;
 
   const previewLabel = (pct) =>
     isEnglish ? `Loading roster… ${pct}%` : `載入名單… ${pct}%`;
   const modelLabel = (pct) =>
     isEnglish ? `Downloading model… ${pct}%` : `下載模型… ${pct}%`;
   const readyLabel = isEnglish ? "Model ready" : "模型就緒";
+  const chatReadyLabel = isEnglish ? "Ready to chat" : "可以開始傾偈";
   const fallbackReady = isEnglish
     ? "Ready — model loads when you begin"
     : "就緒 — 開始後載入模型";
@@ -69,15 +85,19 @@ export function attachStartPickerModelPreload(picker, opts = {}) {
     picker.element?.classList.toggle("is-preloading", Boolean(on));
   };
 
-  const loadSelectedModel = async (characterId) => {
+  /**
+   * @param {string} characterId
+   * @param {{ background?: boolean }} [loadOpts]
+   */
+  const loadSelectedModel = async (characterId, { background = false } = {}) => {
     const job = ++modelJob;
     const id = String(characterId || "nova").toLowerCase();
     const config = characterAvatarConfig(id, langCode);
     const url = String(config.modelUrl || "").trim();
     const fetchUrl = characterModelFetchUrl(id, langCode);
     if (!url || !/\.(vrm|glb)($|\?)/i.test(url)) {
-      if (job !== modelJob) return;
-      apply(100, readyLabel);
+      if (job !== modelJob || background) return;
+      apply(100, chatFirst ? chatReadyLabel : readyLabel);
       setPreloading(false);
       return;
     }
@@ -89,27 +109,49 @@ export function attachStartPickerModelPreload(picker, opts = {}) {
       try {
         await cached;
         if (job !== modelJob) return;
-        apply(100, readyLabel);
-        setPreloading(false);
+        if (!background) {
+          apply(100, chatFirst ? chatReadyLabel : readyLabel);
+          setPreloading(false);
+        }
         return;
       } catch {
         releaseVrmPreload(url);
       }
     }
 
-    apply(PICKER_PREVIEW_PROGRESS_MAX, modelLabel(PICKER_PREVIEW_PROGRESS_MAX));
+    if (!background) {
+      apply(PICKER_PREVIEW_PROGRESS_MAX, modelLabel(PICKER_PREVIEW_PROGRESS_MAX));
+    }
     try {
       await preloadVrmBuffer(fetchUrl, fetchImpl);
       if (job !== modelJob) return;
-      apply(100, readyLabel);
+      if (!background) {
+        apply(100, chatFirst ? chatReadyLabel : readyLabel);
+      }
     } catch {
       if (job !== modelJob) return;
-      apply(100, fallbackReady);
+      if (!background) {
+        apply(100, fallbackReady);
+      }
     }
-    setPreloading(false);
+    if (!background) setPreloading(false);
   };
 
-  const refreshSelectedModel = () => loadSelectedModel(getSelectedId());
+  const refreshSelectedModelBlocking = () =>
+    loadSelectedModel(getSelectedId(), { background: false });
+
+  const scheduleSelectedModelBackground = () => {
+    if (selectionTimer) clearTimeout(selectionTimer);
+    selectionTimer = setTimeout(() => {
+      scheduleCompanionBackgroundWork(() => {
+        void loadSelectedModel(getSelectedId(), { background: true });
+      });
+    }, SELECTION_MODEL_DEBOUNCE_MS);
+  };
+
+  const refreshSelectedModel = chatFirst
+    ? scheduleSelectedModelBackground
+    : refreshSelectedModelBlocking;
 
   setPreloading(true);
   apply(0, previewLabel(0));
@@ -121,8 +163,17 @@ export function attachStartPickerModelPreload(picker, opts = {}) {
       apply(pct, previewLabel(pct));
     },
   }).then(async (result) => {
+    if (chatFirst) {
+      apply(100, chatReadyLabel);
+      setPreloading(false);
+      scheduleCompanionBackgroundWork(() => {
+        void loadSelectedModel(getSelectedId(), { background: true });
+      });
+      return result;
+    }
+
     await result?.modelsLoading;
-    await refreshSelectedModel();
+    await refreshSelectedModelBlocking();
     return result;
   });
 

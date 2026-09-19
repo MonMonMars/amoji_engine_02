@@ -21,7 +21,7 @@ describe("companionStartPickerPreload", () => {
     expect(START_PICKER_PRELOAD_BAR_HTML).toContain('role="progressbar"');
   });
 
-  it("reports preview then selected model progress", async () => {
+  it("reports preview progress then chat-ready without blocking on model download", async () => {
     const fetchImpl = vi.fn(async (url) => ({
       ok: true,
       async arrayBuffer() {
@@ -38,6 +38,7 @@ describe("companionStartPickerPreload", () => {
     const job = attachStartPickerModelPreload(picker, {
       isEnglish: true,
       langCode: "en",
+      chatFirst: true,
       fetchImpl,
     });
     await job.previewPromise;
@@ -45,12 +46,15 @@ describe("companionStartPickerPreload", () => {
     expect(updates.length).toBeGreaterThan(1);
     expect(updates[0].pct).toBe(0);
     expect(updates[updates.length - 1].pct).toBe(100);
+    expect(updates[updates.length - 1].label).toMatch(/ready to chat/i);
     expect(
       updates.some((u) => u.pct <= PICKER_PREVIEW_PROGRESS_MAX && /roster/i.test(u.label || "")),
     ).toBe(true);
     expect(
-      updates.some((u) => /model/i.test(u.label || "")),
-    ).toBe(true);
+      updates.some((u) => /downloading model/i.test(u.label || "")),
+    ).toBe(false);
+
+    await new Promise((resolve) => setTimeout(resolve, 80));
     expect(fetchImpl).toHaveBeenCalled();
   });
 });

@@ -68,8 +68,10 @@ export async function bootEarlyStartPicker(opts = {}) {
   preloadJob = attachStartPickerModelPreload(picker, {
     isEnglish,
     langCode,
+    chatFirst: true,
     getSelectedId: () => picker.getSelectedId?.() || selectedId,
   });
+  globalThis.__amojiStartPickerPreloadJob = preloadJob;
   picker.show();
   void preloadJob.previewPromise;
   document.body.classList.add("companion-start-pending", "companion-picker-open");
