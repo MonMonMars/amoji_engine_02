@@ -38,4 +38,24 @@ describe("companionOutfitApply", () => {
     applyVrmOutfitTint(root, "default");
     expect(mesh.material.color.getHexString()).toBe("ff8844");
   });
+
+  it("does not darken unnamed skin meshes with formal tint", () => {
+    const mesh = {
+      isMesh: true,
+      name: "Mesh_12",
+      material: {
+        color: new THREE.Color("#f5c8b8"),
+        emissive: new THREE.Color("#000000"),
+        emissiveIntensity: 0,
+        metalness: 0,
+        roughness: 0.7,
+        needsUpdate: false,
+        userData: {},
+      },
+    };
+    const root = { traverse(fn) { fn(mesh); } };
+    applyVrmOutfitTint(root, "formal");
+    expect(mesh.material.color.getHexString()).toBe("f5c8b8");
+    expect(mesh.material.emissiveIntensity).toBe(0);
+  });
 });
