@@ -1,9 +1,14 @@
 import { registerRoute } from "../router.js";
 import {
-  fetchIapProducts,
+  fetchIapStoreMeta,
   iapLabel,
   purchaseDevStub,
+  verifyPurchase,
 } from "/amoji-engine/engine/mobile/companionIapCatalog.js";
+import {
+  ensureNativePurchasesConfigured,
+  purchaseNativeStoreProduct,
+} from "/amoji-engine/engine/mobile/companionNativePurchases.js";
 import { loadAuthSession } from "/amoji-engine/engine/mobile/companionMobileAuth.js";
 import { syncFromCloud } from "/amoji-engine/engine/mobile/companionCloudStorage.js";
 
@@ -26,8 +31,14 @@ registerRoute("shop", async (ctx) => {
   screen.querySelector('[data-action="back"]')?.addEventListener("click", () => ctx.navigate("hub"));
 
   let products = [];
+  let revenueCatEnabled = false;
   try {
-    products = await fetchIapProducts({ baseUrl: ctx.baseUrl });
+    const meta = await fetchIapStoreMeta({ baseUrl: ctx.baseUrl });
+    products = meta.products;
+    revenueCatEnabled = Boolean(meta.revenueCat?.enabled && meta.revenueCat?.publicApiKey);
+    if (revenueCatEnabled) {
+      await ensureNativePurchasesConfigured({ baseUrl: ctx.baseUrl });
+    }
   } catch (err) {
     screen.querySelector(".panel").innerHTML = `<p style="margin:0;color:var(--danger)">${err?.message || String(err)}</p>`;
     return screen;
@@ -79,15 +90,20 @@ registerRoute("shop", async (ctx) => {
       }
       btn.setAttribute("disabled", "true");
       try {
-        const rc = globalThis.Capacitor?.Plugins?.Purchases;
-        if (rc?.purchaseProduct) {
-          const result = await rc.purchaseProduct({ productIdentifier: id });
-          const { verifyPurchase } = await import("/amoji-engine/engine/mobile/companionIapCatalog.js");
+        const product = products.find((p) => p.id === id);
+        const nativeReady = await ensureNativePurchasesConfigured({ baseUrl: ctx.baseUrl });
+        if (nativeReady && product?.appleProductId) {
+          const result = await purchaseNativeStoreProduct(product);
+          const tx =
+            result?.transactionIdentifier ||
+            result?.customerInfo?.originalAppUserId ||
+            result?.productIdentifier ||
+            product.appleProductId;
           await verifyPurchase(id, {
             baseUrl: ctx.baseUrl,
-            receipt: result?.transactionIdentifier,
-            transactionId: result?.transactionIdentifier,
-            platform: "ios",
+            receipt: tx,
+            transactionId: tx,
+            platform: globalThis.Capacitor?.getPlatform?.() === "android" ? "android" : "ios",
           });
         } else {
           await purchaseDevStub(id, { baseUrl: ctx.baseUrl });

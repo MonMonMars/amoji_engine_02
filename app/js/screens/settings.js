@@ -18,6 +18,7 @@ import {
 } from "/amoji-engine/engine/mobile/companionMobileAuth.js";
 import { syncToCloud } from "/amoji-engine/engine/mobile/companionCloudStorage.js";
 import { fetchAppBuild } from "../appBuild.js";
+import { registerPushNotificationsIfEnabled } from "/amoji-engine/engine/mobile/companionNativePurchases.js";
 
 registerRoute("settings", async (ctx) => {
   const en = ctx.isEnglish();
@@ -123,6 +124,13 @@ registerRoute("settings", async (ctx) => {
             await pushRemoteSettings(settings, { baseUrl: ctx.baseUrl });
           } catch {
             /* offline */
+          }
+        }
+        if (key === "notifications" && input instanceof HTMLInputElement && input.checked) {
+          try {
+            await registerPushNotificationsIfEnabled({ baseUrl: ctx.baseUrl });
+          } catch {
+            /* native only */
           }
         }
         ctx.toast(en ? "Saved" : "已儲存");

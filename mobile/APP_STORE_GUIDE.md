@@ -50,6 +50,8 @@ Deploy the repo root. Required env vars for production:
 
 Web app entry: **`/app`**
 
+Native boot (`app/js/main.js`) calls `bootNativeShell()` — configures RevenueCat when `REVENUECAT_PUBLIC_API_KEY` is set and registers push if notifications are enabled in Settings.
+
 ---
 
 ## 3. App Store Connect — IAP products

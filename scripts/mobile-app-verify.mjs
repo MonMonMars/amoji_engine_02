@@ -124,6 +124,21 @@ try {
     throw new Error("Secretary hub card missing");
   }
 
+  if (hasPicker) {
+    await pickerCard.click();
+    await page.waitForSelector('[data-screen="companion"]', { timeout: 8000 });
+    const pickIframe = await page.locator(".companion-frame").getAttribute("src");
+    record(
+      "picker-iframe-pick1",
+      Boolean(pickIframe?.includes("pick=1") && pickIframe?.includes("mobile=1")),
+      pickIframe || "",
+    );
+    await page.getByRole("button", { name: "←" }).click();
+    await page.waitForSelector('[data-screen="hub"]', { timeout: 8000 });
+  } else if (deployMatch) {
+    throw new Error("Character picker hub card missing");
+  }
+
   const companionBtn = page.locator('.hub-card[data-go="companion"]').first();
   await companionBtn.click();
   await page.waitForSelector('[data-screen="companion"]', { timeout: 8000 });
