@@ -582,7 +582,7 @@
   -webkit-overflow-scrolling: touch;
   scroll-snap-type: none;
   padding: 0.12rem 0.65rem 0.42rem;
-  max-height: min(17.5rem, 46vh);
+  max-height: min(19.5rem, 50vh);
   flex: none;
   min-height: 0;
   scrollbar-width: thin;

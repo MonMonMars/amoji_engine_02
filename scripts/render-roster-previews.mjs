@@ -40,6 +40,13 @@ const DEFAULT_TARGETS = [
   "mio",
   "amoji",
   "rex",
+  "shiro",
+  "jennifer",
+  "poly",
+  "aesthe",
+  "chad",
+  "david",
+  "hugo",
 ];
 
 /** Copy existing art when models share a reference portrait. */

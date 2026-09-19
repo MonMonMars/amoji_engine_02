@@ -1,5 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
-import { listCompanionCharacters } from "../engine/companion/companionCharacterCatalog.js";
+import {
+  CHARACTER_IDS,
+  listCompanionCharacters,
+} from "../engine/companion/companionCharacterCatalog.js";
 import {
   companionCardInnerHtml,
   createCompanionStartPicker,
@@ -33,7 +36,7 @@ describe("companion start picker", () => {
 
   it("lists enough characters for the start grid", () => {
     const list = listCompanionCharacters("en");
-    expect(list.length).toBe(10);
+    expect(list.length).toBe(CHARACTER_IDS.length);
     const html = companionCardInnerHtml(list[0], {
       compact: true,
       selectedId: list[0].id,
@@ -91,10 +94,10 @@ describe("companion start picker", () => {
     expect(
       picker.element.querySelectorAll(".companion-picker-grid--roster .companion-card")
         .length,
-    ).toBe(10);
+    ).toBe(CHARACTER_IDS.length);
     expect(
       picker.element.querySelectorAll(".companion-card--start-strip").length,
-    ).toBe(10);
+    ).toBe(CHARACTER_IDS.length);
     expect(picker.element.querySelector(".picker-begin-btn")).toBeTruthy();
     expect(picker.element.classList.contains("companion-picker--v4")).toBe(true);
     picker.enablePicking(true);
@@ -179,14 +182,14 @@ describe("companion start picker", () => {
     const grid = picker.element.querySelector(".companion-picker-grid--roster");
     expect(grid?.classList.contains("companion-picker-grid--start")).toBe(true);
     expect(picker.element.querySelector(".picker-roster-dock-label")?.textContent).toContain(
-      "10",
+      String(CHARACTER_IDS.length),
     );
     expect(picker.element.querySelector(".companion-picker-sub")?.textContent).toContain(
       "1–4 flagship",
     );
     expect(
       picker.element.querySelectorAll(".companion-card--start-strip .companion-card-number").length,
-    ).toBe(10);
+    ).toBe(CHARACTER_IDS.length);
     picker.destroy();
   });
 
@@ -198,7 +201,7 @@ describe("companion start picker", () => {
       onStart: () => {},
     });
     expect(picker.element.querySelector(".companion-picker-sub")?.textContent).toContain(
-      "10 位同伴",
+      `${CHARACTER_IDS.length} 位同伴`,
     );
     picker.destroy();
   });

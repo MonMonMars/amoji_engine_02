@@ -14,11 +14,12 @@ import {
   releaseVrmPreloadExcept,
 } from "../engine/companion/companionPreload.js";
 import { sortModelUrlsForPreload } from "../engine/companion/companionVrmInspect.js";
+import { CHARACTER_IDS } from "../engine/companion/companionCharacterCatalog.js";
 
 describe("companionCharacterPreload", () => {
   it("lists unique VRM + GLB model urls for the full roster", () => {
     const urls = uniqueCharacterModelUrls("en");
-    expect(urls.length).toBe(10);
+    expect(urls.length).toBe(CHARACTER_IDS.length);
     expect(new Set(urls).size).toBe(urls.length);
     expect(urls.every((u) => /\.vrm($|\?)/i.test(u))).toBe(true);
     expect(urls.some((u) => u.includes("kizuna-kamatte"))).toBe(true);

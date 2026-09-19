@@ -11,7 +11,7 @@ See also: `amoji-engine/docs/3D_MODEL_INVENTORY.md` (how to read the external mo
 node amoji-engine/scripts/download-legal-vrm.mjs
 ```
 
-## Curated roster (v298 — 10 characters)
+## Curated roster (v328 — 17 characters)
 
 | # | ID | VRM file | License |
 |---|-----|----------|---------|
@@ -25,21 +25,28 @@ node amoji-engine/scripts/download-legal-vrm.mjs
 | 8 | mio | `companion-kate.vrm` | 100Avatars CC0 |
 | 9 | amoji | `companion-girl.vrm` | Project original |
 | 10 | rex | `companion-kai.vrm` | VTubeMe CC BY 4.0 |
+| 11 | shiro | `companion-shiro.vrm` | 100Avatars CC0 |
+| 12 | jennifer | `companion-jennifer.vrm` | 100Avatars CC0 |
+| 13 | poly | `companion-polydancer.vrm` | 100Avatars CC0 |
+| 14 | aesthe | `companion-aesthetica.vrm` | 100Avatars CC0 |
+| 15 | chad | `companion-chad.vrm` | 100Avatars CC0 |
+| 16 | david | `companion-david.vrm` | 100Avatars CC0 |
+| 17 | hugo | `companion-hugo.vrm` | 100Avatars CC0 |
 
 Roster source of truth: `amoji-engine/engine/companion/companionCharacterRoster.js`
 
-## Role → characters (v298)
+## Role → characters (v328)
 
 | Role | Characters in app |
 |------|-------------------|
-| Girlfriend | nova, kizuna, alicia, ember, sky, yuki, hina, mio, amoji |
-| Boyfriend | rex |
+| Girlfriend | nova, kizuna, alicia, ember, sky, yuki, hina, mio, amoji, shiro, jennifer, poly, aesthe |
+| Boyfriend | rex, chad, david, hugo |
 | Secretary (lite UI default) | nova |
 
-## Legacy files (not in v298 picker)
+## Legacy files (not in v328 picker)
 
 Older CC0 / sample files may remain on disk for reference but are **not** in `ROSTER_CHARACTER_IDS`:  
-chad, david, hugo, rose, robert, mimi, chibi, VRoid AvatarSample A/B/C paths, etc.
+rose, robert, mimi, chibi, VRoid AvatarSample A/B/C paths, etc.
 
 ## Per-file license notes
 
