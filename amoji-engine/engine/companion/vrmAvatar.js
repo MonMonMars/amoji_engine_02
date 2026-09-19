@@ -808,7 +808,7 @@ export async function createVrmAvatar(opts) {
     if (!expr) return;
     const snap = expressionSnapBoost;
     expressionSnapBoost = Math.max(0, expressionSnapBoost - dt * 3.6);
-    const talkRate = talking ? 42 + snap * 48 : 16;
+    const talkRate = talking ? 42 + snap * 48 : 26;
     const rate = Math.min(1, dt * talkRate);
     for (const preset of emotionPresetKeys()) {
       if (talking || eating) {
@@ -1313,24 +1313,41 @@ export async function createVrmAvatar(opts) {
     return analysis;
   };
 
-  const tickFace = (dt, now, activeMotion) => {
-    if (!talking && !eating && !activeMotion && !bodyMotion.thinking) {
-      const idleBlend = clampRestFaceBlend(
-        adaptBlendForFaceProfile(
-          sampleIdleExpressionBlend((now - t0) * 0.001, emotion),
-          faceProfile,
-        ),
-        { talking: false, hazards: faceHazards, caps: faceProfile.caps },
-      );
-      for (const [key, weight] of Object.entries(idleBlend)) {
-        const preset = VRM_BLEND_PRESET_MAP[key];
-        if (preset && expr?.getExpression?.(preset)) {
-          expressionTarget[preset] = Math.max(
-            expressionTarget[preset] ?? 0,
-            weight,
-          );
-        }
+  const mergeExpressionBlendIntoTargets = (blend, opts = {}) => {
+    const safe = clampRestFaceBlend(
+      adaptBlendForFaceProfile(blend, faceProfile),
+      {
+        talking: Boolean(opts.talking ?? (talking || eating)),
+        hazards: faceHazards,
+        caps: faceProfile.caps,
+      },
+    );
+    for (const [key, weight] of Object.entries(safe)) {
+      const preset = VRM_BLEND_PRESET_MAP[key];
+      if (preset && expr?.getExpression?.(preset)) {
+        expressionTarget[preset] = Math.max(
+          expressionTarget[preset] ?? 0,
+          weight,
+        );
       }
+    }
+  };
+
+  const tickFace = (dt, now, activeMotion) => {
+    const nuance =
+      bodyMotion.nuance && bodyMotion.nuance !== "none"
+        ? bodyMotion.nuance
+        : "none";
+    mergeExpressionBlendIntoTargets(
+      buildVrmExpressionBlend(emotion, nuance),
+      { talking: talking || eating },
+    );
+
+    if (!talking && !eating && !activeMotion && !bodyMotion.thinking) {
+      mergeExpressionBlendIntoTargets(
+        sampleIdleExpressionBlend((now - t0) * 0.001, emotion),
+        { talking: false },
+      );
     }
 
     mouthOpen += (mouthTarget - mouthOpen) * Math.min(1, dt * (talking || eating ? 52 : 22));

@@ -187,6 +187,7 @@ export function sampleIdleBodyMotion(elapsedSec, opts = {}) {
 export function sampleIdleExpressionBlend(elapsedSec, emotion = "neutral") {
   const t = elapsedSec;
   const flutter = Math.sin(t * 0.29 + 1.8) * 0.5 + 0.5;
+  const breath = Math.sin(t * 0.42 + 0.5) * 0.5 + 0.5;
   const e = String(emotion || "neutral").toLowerCase();
   /** @type {Record<string, number>} */
   const blend = {};
@@ -197,6 +198,14 @@ export function sampleIdleExpressionBlend(elapsedSec, emotion = "neutral") {
     blend.Surprised = 0.08 + flutter * 0.05;
   } else if (e === "angry") {
     blend.Angry = 0.28;
+  } else if (e === "happy") {
+    blend.Happy = 0.42 + breath * 0.12 + flutter * 0.06;
+  } else if (e === "thinking") {
+    blend.Sad = 0.16 + flutter * 0.04;
+    blend.Surprised = 0.06 + breath * 0.05;
+  } else {
+    blend.Happy = 0.16 + breath * 0.1 + flutter * 0.05;
+    blend.Surprised = Math.min(0.1, 0.03 + flutter * 0.05);
   }
 
   return blend;

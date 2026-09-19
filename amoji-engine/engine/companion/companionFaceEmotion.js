@@ -37,7 +37,12 @@ export const CHARACTER_FACE_RIG_HINTS = Object.freeze({
   ember: "arkit",
   nova: "arkit",
   rex: "arkit",
-  sora: "gltf",
+  sora: "vrm1-anime",
+  aria: "vrm1-anime",
+  mei: "vrm1-anime",
+  luna: "vrm1-anime",
+  erika: "vrm1-anime",
+  atlas: "vrm0-standard",
 });
 
 /**
@@ -320,7 +325,9 @@ export function resolveTalkEmotionMorphWeights(
             : 0.24
     : e === "happy"
       ? 0.22
-      : 0;
+      : e === "neutral"
+        ? 0.14
+        : 0;
   let frown = talking
     ? e === "sad"
       ? 0.46

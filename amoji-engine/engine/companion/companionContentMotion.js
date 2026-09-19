@@ -13,6 +13,7 @@ import {
   parseReplyTags,
   resolveAction,
 } from "./companionActionMotion.js";
+import { REST_NEUTRAL_HAPPY } from "./companionFaceRest.js";
 
 /**
  * @param {string} text
@@ -139,6 +140,7 @@ export function buildVrmExpressionBlend(emotion, nuance) {
       blend.Angry = 0.75;
       break;
     default:
+      blend.Happy = REST_NEUTRAL_HAPPY;
       break;
   }
 
