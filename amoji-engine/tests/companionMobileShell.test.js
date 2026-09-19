@@ -30,7 +30,12 @@ describe("companionMobileShell", () => {
   });
 
   it("exposes Pet Care from the mobile hub", () => {
-    expect(hub).toContain('data-go="pet"');
-    expect(hub).toMatch(/Pet Care|寵物照顧/);
+    const layout = readFileSync(
+      join(root, "amoji-engine/engine/mobile/mobileHubLayout.js"),
+      "utf8",
+    );
+    expect(hub).toContain("mobileHubCardDefs");
+    expect(layout).toMatch(/Pet Care|寵物照顧/);
+    expect(layout).toContain('screen: "pet"');
   });
 });

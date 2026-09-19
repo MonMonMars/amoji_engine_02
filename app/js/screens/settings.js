@@ -83,6 +83,7 @@ registerRoute("settings", async (ctx) => {
         <p style="margin:0 0 0.5rem;color:var(--muted);font-size:0.85rem">${en ? "Account" : "帳戶"}</p>
         <p style="margin:0 0 0.75rem">${session?.displayName || (en ? "Not signed in" : "未登入")} · ${session?.provider || "—"}</p>
         <div class="stack">
+          <button type="button" class="btn btn-primary" data-action="pick-character">${en ? "Change 3D character" : "換 3D 角色"}</button>
           <button type="button" class="btn btn-secondary" data-action="sync">${en ? "Sync save to cloud" : "同步雲端存檔"}</button>
           <button type="button" class="btn btn-secondary" data-action="login">${session?.token ? (en ? "Switch account" : "切換帳戶") : (en ? "Sign in" : "登入")}</button>
           <button type="button" class="btn btn-danger" data-action="logout" ${session?.token ? "" : "disabled"}>${en ? "Sign out" : "登出"}</button>
@@ -127,6 +128,10 @@ registerRoute("settings", async (ctx) => {
         ctx.toast(en ? "Saved" : "已儲存");
       });
     }
+
+    screen.querySelector('[data-action="pick-character"]')?.addEventListener("click", () => {
+      ctx.navigate("companion", { pick: "1" });
+    });
 
     screen.querySelector('[data-action="sync"]')?.addEventListener("click", async () => {
       try {

@@ -113,6 +113,9 @@ async function boot() {
     saveCompanionRole(role);
     navigateParams.role = role;
   }
+  if (params.get("pick") === "1") {
+    navigateParams.pick = "1";
+  }
   const screen = params.get("screen");
   const valid = ["title", "login", "hub", "companion", "pet", "chase", "shop", "settings"];
   if (screen && valid.includes(screen)) {
