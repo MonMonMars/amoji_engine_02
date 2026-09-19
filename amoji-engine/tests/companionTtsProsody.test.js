@@ -139,7 +139,7 @@ describe("companionTtsProsody", () => {
     });
     expect(instruct).toMatch(/ChatGPT Advanced Voice/i);
     expect(instruct).toMatch(/Never:/i);
-    expect(instruct).toMatch(/Speak at 0\.|SLOW|VERY SLOW|慢速|好慢/);
+    expect(instruct).toMatch(/Speak at 0\.|normal companion pace|1×|慢速|正常/);
     expect(
       instructSpeakingSpeed({ emotion: "happy", speechEnergy: 0.85, speedMultiplier: 1 }),
     ).toBeGreaterThan(

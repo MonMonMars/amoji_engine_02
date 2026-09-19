@@ -7,6 +7,7 @@ import {
   instructSpeakingSpeed,
   MAX_CLOUD_TTS_CHARS,
 } from "./companionTtsProsody.js";
+import { normalizeTalkSpeed, talkSpeedToDisplay } from "./companionTalkSpeed.js";
 import { resolveOpenAiVoiceFromProfile } from "./companionVoiceProfiles.js";
 
 export const OPENAI_TTS_SCHEMA = "amoji.openaiTts.v2";
@@ -140,7 +141,7 @@ export async function synthesizeOpenAiSpeech(text, opts = {}) {
       voice,
       input: clean,
       speed,
-      instructions: `${instructions}\n\nPace: ${speed}x — VERY unhurried and slow. Take your time on each word and syllable. Long pauses between phrases. Never rush, clip, or race through the line.`,
+      instructions: `${instructions}\n\nPace: ${speed}x (${talkSpeedToDisplay(normalizeTalkSpeed(opts.speedMultiplier))}× user speed) — match the companion talking-speed setting; never rush or clip syllables.`,
       response_format: "mp3",
     }),
   });

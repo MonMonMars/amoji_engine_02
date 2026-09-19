@@ -17,8 +17,8 @@ export function buildSettingsChromeLabels(isEnglish = false, state = {}) {
   const speedLabel = Number.isFinite(speed)
     ? formatTalkSpeedLabel(speed, en)
     : en
-      ? "0.45× Slow"
-      : "0.45× 慢";
+      ? "1× Normal"
+      : "1× 正常";
   const chatVisible = state.chatVisible !== false;
   const speakerOn = state.speakerOn !== false;
 
