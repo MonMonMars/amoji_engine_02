@@ -6,6 +6,7 @@ import {
 } from "./companionCharacterCatalog.js";
 import {
   resolveCharacterRole,
+  roleFunctionBadge,
   ROLE_DEFAULT_CHARACTER_ID,
 } from "./companionCharacterRoles.js";
 import {
@@ -167,6 +168,30 @@ export function rosterCharactersForPicker(langCode = "yue", roleFilter = null) {
   });
 }
 
+/**
+ * When entering via ?role=secretary (etc.), show the role default id with that
+ * function badge on the start-picker strip — without remapping the whole roster.
+ * @param {ReturnType<typeof listCompanionCharacters>} roster
+ * @param {import("../mobile/companionRolePresets.js").CompanionRole | string | null | undefined} sessionRole
+ * @param {boolean} [isEnglish]
+ */
+export function applySessionRoleBadgeOverrides(roster, sessionRole, isEnglish = false) {
+  const role = sessionRole ? normalizeCompanionRole(sessionRole) : null;
+  if (!role) return roster;
+  const defaultId = String(ROLE_DEFAULT_CHARACTER_ID[role] || "").toLowerCase();
+  if (!defaultId) return roster;
+  const en = Boolean(isEnglish);
+  return roster.map((item) => {
+    if (String(item.id || "").toLowerCase() !== defaultId) return item;
+    return {
+      ...item,
+      companionRole: role,
+      roleLabel: roleLabel(role, en),
+      roleBadge: roleFunctionBadge(role, en),
+    };
+  });
+}
+
 /** @deprecated use rosterCharactersForPicker — kept for legacy imports */
 export function rosterCharactersForRole(langCode = "yue", role = "girlfriend") {
   return rosterCharactersForPicker(langCode, role);
@@ -208,18 +233,58 @@ export function resolveSessionRoleFromCharacter(characterId, params) {
 }
 
 /** Unified picker copy — function is shown on each character card. */
-export function pickerCopyForRole(_role, isEnglish = false) {
+export function pickerCopyForRole(role, isEnglish = false) {
+  const r = normalizeCompanionRole(role || "girlfriend");
   const en = Boolean(isEnglish);
+  if (r === "secretary") {
+    return en
+      ? {
+          title: "Choose your secretary",
+          sub: "Swipe the roster · tap to preview",
+          footStart: "Begin — Today, tasks, and chat load in the background.",
+        }
+      : {
+          title: "揀你嘅秘書",
+          sub: "㩒肖像預覽 · 左右滑動揀同伴",
+          footStart: "開始 — Today、任務同傾偈會喺背景載入。",
+        };
+  }
+  if (r === "boyfriend") {
+    return en
+      ? {
+          title: "Choose your boyfriend",
+          sub: "Swipe the roster · tap to preview",
+          footStart: "Begin — your companion loads in the background while you talk.",
+        }
+      : {
+          title: "揀你嘅男朋友",
+          sub: "㩒肖像預覽 · 左右滑動揀同伴",
+          footStart: "開始 — 同伴會喺背景載入。",
+        };
+  }
+  if (r === "pet") {
+    return en
+      ? {
+          title: "Choose your pet",
+          sub: "Swipe the roster · tap to preview",
+          footStart: "Begin — care mode loads in the background.",
+        }
+      : {
+          title: "揀你嘅寵物",
+          sub: "㩒肖像預覽 · 左右滑動揀同伴",
+          footStart: "開始 — 寵物模式會喺背景載入。",
+        };
+  }
   if (en) {
     return {
       title: "Choose your companion",
-      sub: "Each model has a role — girlfriend, boyfriend, secretary, or pet.",
+      sub: "Swipe the roster · tap to preview",
       footStart: "Begin — your companion loads in the background while you talk.",
     };
   }
   return {
     title: "揀你嘅同伴",
-    sub: "每個模型都有功能 — 女朋友、男朋友、秘書或寵物。",
+    sub: "㩒肖像預覽 · 左右滑動揀同伴",
     footStart: "開始 — 同伴會喺背景載入。",
   };
 }

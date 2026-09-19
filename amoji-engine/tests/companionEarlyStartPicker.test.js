@@ -40,4 +40,24 @@ describe("companionEarlyStartPicker", () => {
     const picker = await bootEarlyStartPicker({ params });
     expect(picker).toBeNull();
   });
+
+  it("uses secretary title and badge when role=secretary", async () => {
+    if (typeof document === "undefined") return;
+    document.body.innerHTML =
+      '<div id="amoji-boot-splash"><p>Loading</p></div>';
+    globalThis.__amojiStart = { ready: false, run: null };
+    globalThis.__amojiUnlockAudio = () => {};
+    globalThis.__amojiHideLoading = () => {};
+    globalThis.__amojiStartWithCharacter = () => {};
+
+    const params = new URLSearchParams("lang=en&pick=1&role=secretary&automic=0");
+    const picker = await bootEarlyStartPicker({ params });
+    expect(
+      picker?.element.querySelector(".companion-picker-title")?.textContent,
+    ).toContain("secretary");
+    const novaCard = picker?.element.querySelector('[data-character-id="nova"]');
+    expect(novaCard?.textContent).toContain("Secretary");
+    picker?.destroy();
+    document.body.classList.remove("companion-start-pending", "companion-picker-open");
+  });
 });

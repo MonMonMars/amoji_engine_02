@@ -36,10 +36,9 @@ function record(name, ok, detail = "") {
   console.log(`${ok ? "PASS" : "FAIL"}  ${name}${detail ? ` — ${detail}` : ""}`);
 }
 
-const url = parseArg(
-  "--url",
-  "http://127.0.0.1:5174/play?lang=en&pick=1&automic=0",
-);
+const verifyLang = parseArg("--lang", "en") === "yue" ? "yue" : "en";
+const defaultUrl = `http://127.0.0.1:5174/play?lang=${verifyLang}&pick=1&automic=0`;
+const url = parseArg("--url", defaultUrl);
 
 const browser = await chromium.launch({ headless: true });
 const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
@@ -219,10 +218,27 @@ record(
   shortLayout.reason ||
     `overlap=${shortLayout.visibleOverlap} vh=${shortLayout.viewportH}`,
 );
+await page.setViewportSize({ width: 720, height: 844 });
+await page.waitForTimeout(200);
+const tabletHero = await page.evaluate(() => {
+  const hero = document.querySelector("#start-character-picker .picker-hero");
+  if (!hero) return { ok: false, reason: "no hero" };
+  const style = getComputedStyle(hero);
+  return {
+    ok: style.flexDirection === "row" || style.flexDirection === "row-reverse",
+    flexDirection: style.flexDirection,
+    width: window.innerWidth,
+  };
+});
+record(
+  "tablet hero side-by-side",
+  tabletHero.ok,
+  tabletHero.reason || `${tabletHero.flexDirection} @ ${tabletHero.width}px`,
+);
 await page.setViewportSize({ width: 390, height: 844 });
 
 await page.screenshot({
-  path: join(outDir, "picker_verify_start.png"),
+  path: join(outDir, `picker_verify_start_${verifyLang}.png`),
   fullPage: true,
 });
 

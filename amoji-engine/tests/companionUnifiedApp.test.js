@@ -6,6 +6,8 @@ import {
   resolveSessionRoleFromCharacter,
   resolveRoleDefaultCharacter,
   rolePickBadge,
+  applySessionRoleBadgeOverrides,
+  pickerCopyForRole,
   rosterCharactersForPicker,
   rosterCharactersForRole,
 } from "../engine/companion/companionUnifiedApp.js";
@@ -98,6 +100,24 @@ describe("companionUnifiedApp", () => {
     expect(
       resolveRoleDefaultCharacter("nova", "girlfriend", new URLSearchParams()),
     ).toBe("nova");
+  });
+
+  it("overrides default character badge for secretary entry", () => {
+    const roster = applySessionRoleBadgeOverrides(
+      rosterCharactersForPicker("en"),
+      "secretary",
+      true,
+    );
+    const nova = roster.find((c) => c.id === "nova");
+    expect(nova?.roleBadge).toBe("Secretary");
+    expect(nova?.companionRole).toBe("secretary");
+    expect(roster.find((c) => c.id === "kizuna")?.roleBadge).toBe("Girlfriend");
+  });
+
+  it("uses role-specific picker titles", () => {
+    expect(pickerCopyForRole("secretary", true).title).toContain("secretary");
+    expect(pickerCopyForRole("secretary", false).title).toContain("秘書");
+    expect(pickerCopyForRole("boyfriend", true).title).toContain("boyfriend");
   });
 
   it("lists roster with embedded function labels", () => {
