@@ -29,6 +29,7 @@ import {
 } from "./companionPortraitFraming.js";
 import {
   bindCompanionAvatarPointer,
+  computeAvatarScreenBand,
   collectAvatarPokeMeshes,
   computePokeWaistYFromObject,
 } from "./companionAvatarPointer.js";
@@ -1611,6 +1612,10 @@ export async function createVrmAvatar(opts) {
     controls,
     getPokeMeshes: () => pokeMeshes,
     getPokeWaistY: () => computePokeWaistYFromObject(model),
+    getScreenBand: () => {
+      const r = canvas.getBoundingClientRect();
+      return computeAvatarScreenBand(model, camera, r);
+    },
     onPoke: ({ point }) => {
       reactToTap();
       opts.onCharacterTap?.({ point });
