@@ -8,6 +8,10 @@ import { extname, join as pathJoin } from "node:path";
 import { fileURLToPath } from "node:url";
 import { AMOJI_BUILD } from "../amoji-engine/engine/companion/buildVersion.mjs";
 import { rewriteCompanionServePath, buildPlayRedirectLocation } from "../amoji-engine/engine/companion/companionFreshBoot.js";
+import {
+  corsHeaders,
+  processChatRequest,
+} from "../amoji-engine/engine/companion/chatApiHandler.mjs";
 
 const root = pathJoin(fileURLToPath(new URL(".", import.meta.url)), "..");
 
@@ -24,6 +28,22 @@ function mime(p) {
     ".webmanifest": "application/manifest+json",
   };
   return m[extname(p)] || "application/octet-stream";
+}
+
+function readJsonBody(req) {
+  return new Promise((resolve, reject) => {
+    const chunks = [];
+    req.on("data", (c) => chunks.push(c));
+    req.on("end", () => {
+      try {
+        const raw = Buffer.concat(chunks).toString("utf8") || "{}";
+        resolve(JSON.parse(raw));
+      } catch (err) {
+        reject(err);
+      }
+    });
+    req.on("error", reject);
+  });
 }
 
 /**
@@ -58,6 +78,30 @@ export function startLocalStaticServer(port = 0) {
             build: AMOJI_BUILD,
           }),
         );
+        return;
+      }
+      if (p === "/api/chat" && req.method === "POST") {
+        readJsonBody(req)
+          .then((body) => processChatRequest(body))
+          .then((result) => {
+            const status =
+              result.ok === false && result.error === "empty message" ? 400 : 200;
+            res.writeHead(status, {
+              ...corsHeaders(),
+              "Content-Type": "application/json; charset=utf-8",
+              "Cache-Control": "no-store",
+            });
+            res.end(JSON.stringify(result));
+          })
+          .catch((err) => {
+            res.writeHead(500, {
+              ...corsHeaders(),
+              "Content-Type": "application/json; charset=utf-8",
+            });
+            res.end(
+              JSON.stringify({ ok: false, error: err?.message || String(err) }),
+            );
+          });
         return;
       }
       if (p === "/app") {
