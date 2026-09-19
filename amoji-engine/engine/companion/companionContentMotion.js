@@ -114,6 +114,50 @@ export function inferSpeechEnergy(text, emotion, nuance) {
  * @param {string} nuance
  * @returns {Record<string, number>}
  */
+/**
+ * Merge VRM expression preset weights (max per preset).
+ * @param  {...Record<string, number>} blends
+ */
+export function mergeVrmExpressionBlends(...blends) {
+  /** @type {Record<string, number>} */
+  const out = {};
+  for (const blend of blends) {
+    if (!blend || typeof blend !== "object") continue;
+    for (const [key, weight] of Object.entries(blend)) {
+      const n = Number(weight);
+      if (!Number.isFinite(n) || n <= 0) continue;
+      out[key] = Math.max(out[key] ?? 0, n);
+    }
+  }
+  return out;
+}
+
+/**
+ * Procedural idle face layer on top of base emotion.
+ * At neutral rest the idle layer drives preset weights so Happy/Surprised can
+ * breathe up and down instead of being clamped by Math.max against REST_NEUTRAL_HAPPY.
+ * @param {Record<string, number> | null | undefined} base
+ * @param {Record<string, number> | null | undefined} idle
+ * @param {string} [emotion]
+ */
+export function blendIdleExpressionLayer(base, idle, emotion = "neutral") {
+  const e = String(emotion || "neutral").toLowerCase();
+  const b = { ...(base || {}) };
+  const i = idle || {};
+  if (e === "neutral") {
+    for (const [key, weight] of Object.entries(i)) {
+      const n = Number(weight);
+      if (!Number.isFinite(n) || n <= 0) continue;
+      b[key] = n;
+    }
+    if (!b.Happy && !b.Sad && !b.Surprised && !b.Angry) {
+      b.Happy = REST_NEUTRAL_HAPPY;
+    }
+    return b;
+  }
+  return mergeVrmExpressionBlends(b, i);
+}
+
 export function buildVrmExpressionBlend(emotion, nuance) {
   const e = String(emotion || "neutral").toLowerCase();
   const n = String(nuance || "none").toLowerCase();
