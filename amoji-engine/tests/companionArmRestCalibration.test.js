@@ -297,8 +297,8 @@ describe("companionArmRestCalibration", () => {
     };
     const legs = detectVrmLegRestRotations(vrm);
     expect(legs.leftLowerLeg.flexAxis).toBe("z");
-    expect(Math.abs(legs.leftLowerLeg.z)).toBeGreaterThan(0.2);
-    expect(Math.abs(legs.rightLowerLeg.z)).toBeGreaterThan(0.2);
+    expect(Math.abs(legs.leftLowerLeg.z)).toBeGreaterThan(0.1);
+    expect(Math.abs(legs.rightLowerLeg.z)).toBeGreaterThan(0.1);
     expect(
       Math.abs(Math.abs(legs.rightLowerLeg.z) - Math.abs(legs.leftLowerLeg.z)),
     ).toBeLessThan(0.08);

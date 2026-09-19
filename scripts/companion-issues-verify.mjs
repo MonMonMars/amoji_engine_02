@@ -307,12 +307,19 @@ async function main() {
   const topbarChrome = await page.evaluate(() => {
     const chip = document.getElementById("brand-btn");
     const menu = document.querySelector(".topbar-setup-btn");
+    const sessionName = document.getElementById("companion-session-name");
     const rolePill = document.getElementById("companion-role-pill");
     const chipStyle = chip ? getComputedStyle(chip) : null;
     const roleStyle = rolePill ? getComputedStyle(rolePill) : null;
+    const nameStyle = sessionName ? getComputedStyle(sessionName) : null;
     return {
       minimal: document.body.classList.contains("companion-minimal-chrome"),
       menuVisible: Boolean(menu && getComputedStyle(menu).display !== "none"),
+      sessionNameVisible:
+        Boolean(sessionName) &&
+        nameStyle?.display !== "none" &&
+        nameStyle?.visibility !== "hidden" &&
+        String(sessionName.textContent || "").trim().length > 0,
       chipHidden:
         !chip ||
         chipStyle?.display === "none" ||
@@ -330,6 +337,11 @@ async function main() {
       topbarChrome.menuVisible &&
       topbarChrome.chipHidden &&
       topbarChrome.roleHidden,
+    JSON.stringify(topbarChrome),
+  );
+  record(
+    "topbar-session-name",
+    topbarChrome.sessionNameVisible,
     JSON.stringify(topbarChrome),
   );
 
@@ -363,9 +375,12 @@ async function main() {
   const legsBent =
     Math.abs(pose.leftLowerLegX || 0) > 0.01 ||
     Math.abs(pose.rightLowerLegX || 0) > 0.01;
+  const legsStraight =
+    Math.abs(pose.leftLowerLegX || 0) < 0.16 &&
+    Math.abs(pose.rightLowerLegX || 0) < 0.16;
   record(
-    "idle-legs-bent",
-    legsBent || calmIdle,
+    "idle-legs-straight",
+    legsStraight,
     JSON.stringify({ action: afterNova.action, l: pose.leftLowerLegX, r: pose.rightLowerLegX }),
   );
   record(
@@ -443,7 +458,7 @@ async function main() {
     for (let attempt = 0; attempt < 6; attempt += 1) {
       avatar?.setTalking?.(true);
       avatar?.setMouthShape?.("aa");
-      avatar?.setMouthOpen?.(0.9);
+      avatar?.setMouthOpen?.(0.55);
       await new Promise((r) => setTimeout(r, 350));
       const face = avatar.getFaceDebug?.() || {};
       const vrm = avatar.vrm;
@@ -486,7 +501,8 @@ async function main() {
         (talkingPose.oh || 0) > 0.18 ||
         (talkingPose.jawX || 0) > 0.04 ||
         (talkingPose.mouthOpen || 0) > 0.28 ||
-        (talkingPose.mouthTarget || 0) > 0.55),
+        (talkingPose.mouthTarget || 0) > 0.28) &&
+      (talkingPose.mouthTarget || 0) <= 0.42,
     JSON.stringify(talkingPose),
   );
   await page.screenshot({

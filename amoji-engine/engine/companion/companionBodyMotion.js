@@ -584,10 +584,13 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
     applyBoneRotation("rightLowerArm", withElbowBend(restRl, foreR));
   };
 
-  const legFlexCaps = (planted) => ({
-    upperCap: planted ? 0.035 : 0.72,
-    lowerCap: planted ? 0.16 : 0.78,
-  });
+  const legFlexCaps = (planted) => {
+    const apose = isAposeBind();
+    return {
+      upperCap: planted ? (apose ? 0.02 : 0.035) : 0.72,
+      lowerCap: planted ? 0 : 0.78,
+    };
+  };
 
   const sampleLegFlex = (pose, k, planted = true) => {
     const { upperCap, lowerCap } = legFlexCaps(planted);
@@ -665,10 +668,14 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
     } else if (allowArms) {
       applyPointArms(pose, k);
     } else if (idleArms) {
-      applyIdleArms(pose, k, {
-        boot: opts.bootPhase === true,
-        combHair: opts.combHair === true,
-      });
+      if (isAposeBind()) {
+        applyArmRest(pose);
+      } else {
+        applyIdleArms(pose, k, {
+          boot: opts.bootPhase === true,
+          combHair: opts.combHair === true,
+        });
+      }
     } else if (talkArmBlend > 0.01) {
       applyTalkArms(pose, talkArmBlend);
     } else {
@@ -1065,7 +1072,7 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
       applyPose(smoothedPose, 1, {
         allowArms: false,
         actionArms: false,
-        idleArms: false,
+        idleArms: true,
         talkArmBlend: 0,
         bootPhase: false,
         plantFeet: true,

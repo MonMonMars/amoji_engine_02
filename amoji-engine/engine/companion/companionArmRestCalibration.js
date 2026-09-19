@@ -33,8 +33,8 @@ const LEG_BONES = [
 
 const ELBOW_BEND_TPOSE = 0.92;
 const ELBOW_BEND_APOSE = 0.22;
-const KNEE_BEND_TPOSE = 0.26;
-const KNEE_BEND_APOSE = 0.12;
+const KNEE_BEND_TPOSE = 0.12;
+const KNEE_BEND_APOSE = 0.04;
 /** Hand already dropped this far from shoulder→hip means authored A-pose. */
 const APOSE_DROP_RATIO = 0.28;
 
