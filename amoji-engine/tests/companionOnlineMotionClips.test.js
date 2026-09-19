@@ -18,8 +18,17 @@ describe("companionOnlineMotionClips", () => {
     expect(CALM_IDLE_USES_PROCEDURAL_BODY).toBe(true);
     expect(hostedVrmaSkipsVrmBody("thinking")).toBe(true);
     expect(hostedVrmaSkipsVrmBody("wiggle")).toBe(true);
-    expect(hostedVrmaSkipsVrmBody("eat")).toBe(false);
+    expect(hostedVrmaSkipsVrmBody("eat")).toBe(true);
+    expect(hostedVrmaSkipsVrmBody("wave")).toBe(true);
+    expect(hostedVrmaSkipsVrmBody("clap")).toBe(true);
     expect(hostedVrmaSkipsVrmBody("stop")).toBe(false);
+  });
+
+  it("skips hosted VRMA for every playable catalog action on VRM", async () => {
+    const { PLAYABLE_ACTIONS } = await import("../engine/companion/companionActionCatalog.js");
+    for (const id of PLAYABLE_ACTIONS) {
+      expect(hostedVrmaSkipsVrmBody(id), id).toBe(true);
+    }
   });
 
   it("maps idle and social gestures onto the hosted VRMA library", () => {

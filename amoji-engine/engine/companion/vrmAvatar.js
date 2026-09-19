@@ -426,10 +426,17 @@ export async function createVrmAvatar(opts) {
     vrmaSequenceQueue = [];
     vrmaSequenceOpts = null;
     if (wasLibrary || opts.stopLibrary !== false) {
-      motionPlayer.stop?.(DEFAULT_MOTION_CROSSFADE_SEC);
+      if (CALM_IDLE_USES_PROCEDURAL_BODY) {
+        motionPlayer.forceStop?.(false);
+      } else {
+        motionPlayer.stop?.(DEFAULT_MOTION_CROSSFADE_SEC);
+      }
       motionTransitionState = null;
     }
     vrmaAction = null;
+    if (CALM_IDLE_USES_PROCEDURAL_BODY) {
+      vrm.humanoid?.resetNormalizedPose?.();
+    }
     const rest = detectVrmIdleRestRotations(vrm);
     bodyMotion.setArmRestRotations?.(rest.arms);
     bodyMotion.setLegRestRotations?.(rest.legs);
@@ -873,7 +880,11 @@ export async function createVrmAvatar(opts) {
     const libraryId =
       resolveTalkGestureLibraryAction(key) ||
       (key === "nod" || key === "bow" ? "nod" : key === "point" ? "point" : null);
-    if (libraryId && resolveOnlineMotionClipUrl(libraryId)) {
+    if (
+      libraryId &&
+      resolveOnlineMotionClipUrl(libraryId) &&
+      !hostedVrmaSkipsVrmBody(libraryId)
+    ) {
       void tryPlayVrmaAction(libraryId, { loop: false });
       return true;
     }
@@ -942,7 +953,11 @@ export async function createVrmAvatar(opts) {
       vrmaPending = false;
       vrmaSequenceQueue = [];
       vrmaSequenceOpts = null;
-      motionPlayer.stop(DEFAULT_MOTION_CROSSFADE_SEC);
+      if (CALM_IDLE_USES_PROCEDURAL_BODY) {
+        motionPlayer.forceStop?.(false);
+      } else {
+        motionPlayer.stop(DEFAULT_MOTION_CROSSFADE_SEC);
+      }
       vrmaAction = null;
       motionTransitionState = null;
       const ok = bodyMotion.playAction(action, {
@@ -958,19 +973,18 @@ export async function createVrmAvatar(opts) {
       return ok;
     }
 
-    if (PROCEDURAL_PREFERRED_ACTIONS.has(key)) {
+    const useProceduralBody =
+      PROCEDURAL_PREFERRED_ACTIONS.has(key) ||
+      hostedVrmaSkipsVrmBody(key) ||
+      !resolveOnlineMotionClipUrl(key);
+
+    if (useProceduralBody) {
       vrmaPlayGen += 1;
       vrmaPending = false;
       vrmaSequenceQueue = [];
       vrmaSequenceOpts = null;
-      motionTransitionState =
-        planMotionTransition(vrm, motionPlayer, {
-          nextActionId: key,
-          durationSec: DEFAULT_MOTION_CROSSFADE_SEC,
-          forceCapture: Boolean(motionPlayer.isPlaying?.()),
-          label: `procedural-${key}`,
-        }) ?? null;
-      motionPlayer.stop(DEFAULT_MOTION_CROSSFADE_SEC);
+      motionTransitionState = null;
+      motionPlayer.forceStop?.(false);
       vrmaAction = null;
       const ok = bodyMotion.playAction(action, {
         emotion: opts.emotion || emotion,
@@ -981,10 +995,6 @@ export async function createVrmAvatar(opts) {
       emotion = bodyMotion.emotion;
       applyEmotionExpressions(emotion);
       return ok;
-    }
-
-    if (!resolveOnlineMotionClipUrl(key)) {
-      return false;
     }
 
     vrmaSequenceQueue = [];
@@ -1009,6 +1019,26 @@ export async function createVrmAvatar(opts) {
     const sequence = Array.isArray(actions)
       ? actions.map((id) => String(id || "").toLowerCase()).filter(Boolean)
       : [];
+    if (!sequence.length) return false;
+
+    if (
+      CALM_IDLE_USES_PROCEDURAL_BODY ||
+      sequence.every((id) => hostedVrmaSkipsVrmBody(id))
+    ) {
+      vrmaPlayGen += 1;
+      vrmaPending = false;
+      vrmaSequenceQueue = [];
+      vrmaSequenceOpts = null;
+      motionTransitionState = null;
+      motionPlayer.forceStop?.(false);
+      vrmaAction = null;
+      return bodyMotion.playAction(sequence[0], {
+        emotion: opts.emotion || emotion,
+        loop: opts.loopSequence,
+        loopSequence: opts.loopSequence,
+      });
+    }
+
     const online = sequence.filter((id) => resolveOnlineMotionClipUrl(id));
     if (!online.length) return false;
 
@@ -1315,14 +1345,30 @@ export async function createVrmAvatar(opts) {
   let raf = 0;
   let wasLibraryMotion = false;
 
+  const ensureProceduralBodyOnly = () => {
+    if (!CALM_IDLE_USES_PROCEDURAL_BODY) return;
+    if (
+      vrmaAction ||
+      vrmaPending ||
+      motionPlayer.isPlaying?.() ||
+      motionPlayer.isCrossfading?.()
+    ) {
+      restoreProceduralCalmStand({ stopLibrary: true });
+    }
+    if (motionTransitionState) motionTransitionState = null;
+  };
+
   const frame = () => {
     const dt = clock.getDelta();
     const now = performance.now();
+    ensureProceduralBodyOnly();
     const vrmaPlaying = Boolean(motionPlayer.isPlaying?.());
     if (vrmaAction && !vrmaPlaying && !vrmaPending) {
       restoreAfterVrma();
     }
-    const libraryMotion = libraryOwnsVrmBody(vrmaAction, motionPlayer, vrmaPending);
+    const libraryMotion = CALM_IDLE_USES_PROCEDURAL_BODY
+      ? false
+      : libraryOwnsVrmBody(vrmaAction, motionPlayer, vrmaPending);
     if (libraryMotion && !wasLibraryMotion) {
       bodyMotion.holdForLibraryMotion?.(now);
     }
@@ -1334,12 +1380,14 @@ export async function createVrmAvatar(opts) {
       if (!libraryMotion) {
         bodyMotion.update(dt, { talking, now });
       }
-      motionPlayer.update(dt);
-      if (motionTransitionState) {
-        const tick = tickVrmMotionTransition(vrm, motionTransitionState, dt, {
-          onSynced: syncHumanoidPose,
-        });
-        motionTransitionState = tick.state;
+      if (!CALM_IDLE_USES_PROCEDURAL_BODY) {
+        motionPlayer.update(dt);
+        if (motionTransitionState) {
+          const tick = tickVrmMotionTransition(vrm, motionTransitionState, dt, {
+            onSynced: syncHumanoidPose,
+          });
+          motionTransitionState = tick.state;
+        }
       }
       if (!libraryMotion) {
         const root = bodyMotion.getRootMotion?.() || { y: 0, rotY: 0 };
@@ -1381,8 +1429,9 @@ export async function createVrmAvatar(opts) {
       }
       stabilizeVrmSpringBones(vrm);
       vrm.update(dt);
-      // Fingers last — blend through VRMA crossfades to avoid pops at clip edges.
-      const crossfading = Boolean(motionPlayer.isCrossfading?.());
+      const crossfading =
+        !CALM_IDLE_USES_PROCEDURAL_BODY &&
+        Boolean(motionPlayer.isCrossfading?.());
       if (!libraryMotion || crossfading) {
         bodyMotion.applyHandRestOnly?.({
           talkBlend: crossfading ? 0.22 : talking ? 0.7 : eating ? 0.12 : 0,
@@ -1494,13 +1543,12 @@ export async function createVrmAvatar(opts) {
   bodyMotion.applyHandRestOnly?.({ talkBlend: 0, now: performance.now() });
   applyTalkMouthNow(performance.now());
   renderer.render(scene, camera);
-  for (const id of BOOT_FULL_LIBRARY_WARM_CLIP_IDS) {
-    if (CALM_IDLE_USES_PROCEDURAL_BODY && id === ONLINE_CALM_IDLE_ACTION) {
-      continue;
+  if (!CALM_IDLE_USES_PROCEDURAL_BODY) {
+    for (const id of BOOT_FULL_LIBRARY_WARM_CLIP_IDS) {
+      void motionPlayer.warmClip(id);
     }
-    void motionPlayer.warmClip(id);
   }
-  restoreProceduralCalmStand({ stopLibrary: false });
+  restoreProceduralCalmStand({ stopLibrary: true });
   raf = requestAnimationFrame(frame);
   globalThis.addEventListener?.("resize", resize);
 
@@ -1636,7 +1684,7 @@ export async function createVrmAvatar(opts) {
         String(vrmaAction || "").toLowerCase() === ONLINE_CALM_IDLE_ACTION &&
         !vrmaPending;
       if (motionPlayer.isPlaying?.() && !calmIdleOnly) return null;
-      if (calmIdleOnly) {
+      if (calmIdleOnly && !CALM_IDLE_USES_PROCEDURAL_BODY) {
         motionTransitionState =
           planMotionTransition(vrm, motionPlayer, {
             durationSec: 0.28,
