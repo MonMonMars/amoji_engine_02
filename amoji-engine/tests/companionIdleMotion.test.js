@@ -45,13 +45,14 @@ describe("companionIdleMotion", () => {
     expect(Math.abs(first.overlay.headZ)).toBeGreaterThan(0.08);
   });
 
-  it("schedules the next idle life beat within about a second", () => {
+  it("schedules the next idle life beat after the current beat finishes", () => {
     vi.spyOn(Math, "random").mockReturnValue(0);
     const state = createIdleBeatState(0);
     state.nextAt = 0;
     const first = advanceIdleBeat(state, 0.05, 10);
-    expect(first.state.nextAt).toBeLessThan(10 + 900);
-    expect(first.state.nextAt).toBeGreaterThan(10 + 180);
+    expect(first.state.beat).toBeTruthy();
+    expect(first.state.nextAt).toBeGreaterThan(10 + 1400);
+    expect(first.state.nextAt).toBeLessThan(10 + 2400);
     vi.restoreAllMocks();
   });
 

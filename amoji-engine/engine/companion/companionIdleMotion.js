@@ -76,10 +76,10 @@ export function sampleCalmBreathIdle(elapsedSec, opts = {}) {
   const t = elapsedSec;
   const listening = Boolean(opts.listening);
   const breath = Math.sin(t * 0.85);
-  const amp = listening ? 1.05 : 1;
+  const amp = (listening ? 1.05 : 1) * 1.22;
 
   return {
-    headX: breath * 0.018 * amp * profile.headMul,
+    headX: breath * 0.022 * amp * profile.headMul,
     headZ: 0,
     leanY: 0,
     spineX: (0.028 + breath * 0.022 * amp) * profile.spineMul,
@@ -136,7 +136,7 @@ export function sampleIdleBodyMotion(elapsedSec, opts = {}) {
   const sway = Math.sin(t * 0.58 + 0.4) * profile.swayMul;
   const shift = Math.sin(t * 0.72);
   const bob = Math.sin(t * 0.9 + 0.3);
-  const energy = listening ? 1.08 : 1;
+  const energy = (listening ? 1.08 : 1) * 1.28;
   const leftFree = Math.max(0, -shift);
   const rightFree = Math.max(0, shift);
 
@@ -223,7 +223,8 @@ export function advanceIdleBeat(state, dt, nowMs, opts = {}) {
     beat = pickRandomProceduralIdleBeat(gender);
     phase = 0;
     duration = idleBeatDurationSec(beat);
-    nextAt = nowMs + 220 + Math.random() * 520;
+    nextAt =
+      nowMs + duration * 1000 + 280 + Math.random() * 520;
   }
 
   if (beat) {
@@ -344,7 +345,7 @@ export function createIdleBeatState(nowMs = performance.now()) {
     beat: null,
     phase: 0,
     duration: 0,
-    nextAt: nowMs + 90 + Math.random() * 280,
+    nextAt: nowMs + 40 + Math.random() * 160,
   };
 }
 
