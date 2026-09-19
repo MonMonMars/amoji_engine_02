@@ -76,7 +76,7 @@ export function sampleCalmBreathIdle(elapsedSec, opts = {}) {
   const t = elapsedSec;
   const listening = Boolean(opts.listening);
   const breath = Math.sin(t * 0.85);
-  const amp = (listening ? 1.05 : 1) * 1.22;
+  const amp = (listening ? 1.05 : 1) * 1.55;
 
   return {
     headX: breath * 0.022 * amp * profile.headMul,
@@ -116,10 +116,10 @@ export function samplePlantedAliveIdle(elapsedSec, opts = {}) {
     leanY: life.leanY * 0.5,
     spineX: life.spineX,
     chestX: life.chestX,
-    armLiftL: calm.armLiftL + (life.armLiftL - calm.armLiftL) * 0.12,
-    armLiftR: calm.armLiftR + (life.armLiftR - calm.armLiftR) * 0.12,
-    forearmL: calm.forearmL + (life.forearmL - calm.forearmL) * 0.1,
-    forearmR: calm.forearmR + (life.forearmR - calm.forearmR) * 0.1,
+    armLiftL: calm.armLiftL + (life.armLiftL - calm.armLiftL) * 0.22,
+    armLiftR: calm.armLiftR + (life.armLiftR - calm.armLiftR) * 0.22,
+    forearmL: calm.forearmL + (life.forearmL - calm.forearmL) * 0.42,
+    forearmR: calm.forearmR + (life.forearmR - calm.forearmR) * 0.42,
   };
 }
 
@@ -204,8 +204,8 @@ export function sampleIdleExpressionBlend(elapsedSec, emotion = "neutral") {
     blend.Sad = 0.16 + flutter * 0.04;
     blend.Surprised = 0.06 + breath * 0.05;
   } else {
-    blend.Happy = 0.16 + breath * 0.1 + flutter * 0.05;
-    blend.Surprised = Math.min(0.1, 0.03 + flutter * 0.05);
+    blend.Happy = 0.22 + breath * 0.14 + flutter * 0.08;
+    blend.Surprised = Math.min(0.14, 0.04 + flutter * 0.08);
   }
 
   return blend;

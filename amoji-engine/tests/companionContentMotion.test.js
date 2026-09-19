@@ -4,6 +4,7 @@ import {
   analyzeSpeechChunk,
   analyzeStreamingReply,
   analyzeUserInput,
+  blendIdleExpressionLayer,
   buildVrmExpressionBlend,
   inferActionFromEmotion,
   inferContentNuance,
@@ -12,6 +13,7 @@ import {
   pickNextThinkingPhrase,
   pickThinkingPhrase,
 } from "../engine/companion/companionContentMotion.js";
+import { REST_NEUTRAL_HAPPY } from "../engine/companion/companionFaceRest.js";
 
 describe("companionContentMotion", () => {
   it("parses mood tags", () => {
@@ -69,10 +71,18 @@ describe("companionContentMotion", () => {
     expect(blend.Happy ?? 0).toBeGreaterThan(0.5);
   });
 
+  it("lets neutral idle expression breathe below the rest smile cap", () => {
+    const base = buildVrmExpressionBlend("neutral", "none");
+    const idle = { Happy: 0.18, Surprised: 0.06 };
+    const merged = blendIdleExpressionLayer(base, idle, "neutral");
+    expect(merged.Happy).toBe(0.18);
+    expect(merged.Surprised).toBe(0.06);
+  });
+
   it("gives neutral a soft resting smile (not a blank mask)", () => {
     const blend = buildVrmExpressionBlend("neutral", "none");
     expect(blend.Happy ?? 0).toBeGreaterThan(0.12);
-    expect(blend.Happy ?? 0).toBeLessThan(0.28);
+    expect(blend.Happy ?? 0).toBeLessThanOrEqual(REST_NEUTRAL_HAPPY);
     expect(blend.Relaxed ?? 0).toBe(0);
   });
 
@@ -87,7 +97,9 @@ describe("companionContentMotion", () => {
     const content = analyzeCompanionReply("而家香港大約二十七度，有幾陣雨");
     expect(content.emotion).toBe("neutral");
     expect(content.nuance).toBe("none");
-    expect(content.expressionBlend.Happy ?? 0).toBeLessThan(0.28);
+    expect(content.expressionBlend.Happy ?? 0).toBeLessThanOrEqual(
+      REST_NEUTRAL_HAPPY,
+    );
   });
 
   it("infers user worry as stress nuance for thinking pose", () => {

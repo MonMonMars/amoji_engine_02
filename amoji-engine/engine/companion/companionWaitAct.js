@@ -77,6 +77,8 @@ export function createCompanionWaitAct(opts = {}) {
   let indeterminate = false;
   /** @type {ReturnType<typeof setInterval> | null} */
   let poseTimer = null;
+  /** @type {ReturnType<typeof setTimeout> | null} */
+  let progressSafetyTimer = null;
   /** @type {string | null} */
   let lastPoseId = null;
 
@@ -242,6 +244,19 @@ export function createCompanionWaitAct(opts = {}) {
       indeterminate = Boolean(ctx.indeterminate);
       poseTick = 0;
 
+      if (progressSafetyTimer) clearTimeout(progressSafetyTimer);
+      if (kind !== "idle") {
+        progressSafetyTimer = setTimeout(() => {
+          if (active && kind !== "idle") {
+            opts.progress?.hide?.();
+            active = false;
+            stopPoseRotation();
+            stopWaitVoice();
+            kind = "";
+          }
+        }, 45000);
+      }
+
       const speak = ctx.speak !== false;
       const showProgress = kind !== "idle";
 
@@ -324,6 +339,10 @@ export function createCompanionWaitAct(opts = {}) {
       if (!active) return;
       const stoppingKind = kind;
       active = false;
+      if (progressSafetyTimer) {
+        clearTimeout(progressSafetyTimer);
+        progressSafetyTimer = null;
+      }
       stopPoseRotation();
       stopWaitVoice();
       avatarRef?.setThinking?.(false);

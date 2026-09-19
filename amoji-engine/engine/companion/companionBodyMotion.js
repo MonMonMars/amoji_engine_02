@@ -440,6 +440,22 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
 
   const isAposeBind = () => armBind === "apose";
 
+  /** Planted idle — bind upper arms, living forearms only (no Mixamo Z-twist). */
+  const applyCalmIdleArms = (pose, k) => {
+    const restL = armRestRotations.leftUpperArm;
+    const restR = armRestRotations.rightUpperArm;
+    const restLl = armRestRotations.leftLowerArm;
+    const restRl = armRestRotations.rightLowerArm;
+    const apose = isAposeBind();
+    const foreCap = apose ? 0.32 : 0.48;
+    const foreL = Math.min(foreCap, Math.max(0, (pose.forearmL ?? 0) * k));
+    const foreR = Math.min(foreCap, Math.max(0, (pose.forearmR ?? 0) * k));
+    applyBoneRotation("leftUpperArm", restL);
+    applyBoneRotation("rightUpperArm", restR);
+    applyBoneRotation("leftLowerArm", withElbowBend(restLl, foreL));
+    applyBoneRotation("rightLowerArm", withElbowBend(restRl, foreR));
+  };
+
   const applyIdleArms = (pose, k, opts = {}) => {
     const combHair = opts.combHair === true;
     const safe = clampIdleArmPose(pose);
@@ -683,7 +699,7 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
         combHair: true,
       });
     } else if (idleArms) {
-      applyArmRest(pose);
+      applyCalmIdleArms(pose, k);
     } else if (talkArmBlend > 0.01) {
       applyTalkArms(pose, talkArmBlend);
     } else {
@@ -825,7 +841,7 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
     } else if (!talking && !thinking) {
       const breathe = Math.sin(elapsed * 1.05);
       rootMotion = {
-        y: breathe * 0.004,
+        y: breathe * 0.014,
         rotY: 0,
       };
     } else {
@@ -850,7 +866,7 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
           emotion,
           gender: idleGender,
         });
-        pose = mergePoses(pose, idleMotion, apose ? 0.8 : 0.9);
+        pose = mergePoses(pose, idleMotion, apose ? 0.92 : 0.96);
         const beat = advanceIdleBeat(idleBeat, dt, now, { gender: idleGender });
         idleBeat = beat.state;
         if (beat.overlay && Object.keys(beat.overlay).length) {
@@ -971,6 +987,7 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
         (idleBeat.beat === "comb" || idleBeat.beat === "hair"),
     });
     if (plantFeet) {
+      const breatheY = smoothedRootMotion.y;
       const dy = footPlantRootDelta(bone, 0);
       footPlantY += dy;
       footPlantY = Math.max(
@@ -980,7 +997,7 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
       if (Math.abs(footPlantY) < 0.001) footPlantY = 0;
       smoothedRootMotion = {
         ...smoothedRootMotion,
-        y: footPlantY,
+        y: footPlantY + breatheY,
       };
     } else {
       footPlantY = 0;

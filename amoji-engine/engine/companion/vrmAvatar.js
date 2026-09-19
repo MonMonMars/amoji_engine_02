@@ -47,7 +47,11 @@ import { characterGender } from "./companionCharacterCatalog.js";
 import {
   inferFingerFlexAxis,
 } from "./companionFingerPose.js";
-import { buildVrmExpressionBlend } from "./companionContentMotion.js";
+import {
+  blendIdleExpressionLayer,
+  buildVrmExpressionBlend,
+  mergeVrmExpressionBlends,
+} from "./companionContentMotion.js";
 import {
   adaptBlendForFaceProfile,
   buildModelFaceProfile,
@@ -1337,16 +1341,19 @@ export async function createVrmAvatar(opts) {
       bodyMotion.nuance && bodyMotion.nuance !== "none"
         ? bodyMotion.nuance
         : "none";
-    mergeExpressionBlendIntoTargets(
-      buildVrmExpressionBlend(emotion, nuance),
-      { talking: talking || eating },
-    );
-
+    const baseBlend = buildVrmExpressionBlend(emotion, nuance);
     if (!talking && !eating && !activeMotion && !bodyMotion.thinking) {
-      mergeExpressionBlendIntoTargets(
-        sampleIdleExpressionBlend((now - t0) * 0.001, emotion),
-        { talking: false },
+      setExpressionTargetFromBlend(
+        blendIdleExpressionLayer(
+          baseBlend,
+          sampleIdleExpressionBlend((now - t0) * 0.001, emotion),
+          emotion,
+        ),
       );
+    } else {
+      mergeExpressionBlendIntoTargets(baseBlend, {
+        talking: talking || eating,
+      });
     }
 
     mouthOpen += (mouthTarget - mouthOpen) * Math.min(1, dt * (talking || eating ? 52 : 22));
