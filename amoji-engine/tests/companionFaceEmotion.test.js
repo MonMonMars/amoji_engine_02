@@ -74,9 +74,9 @@ describe("companionFaceEmotion", () => {
     expect(nova.talkJawScale).toBe(0);
     expect(ember.talkJawScale).toBe(0);
     expect(nova.skipMorphMouthWhenPresets).toBe(true);
-    expect(kizuna.talkMouthScale).toBe(1);
+    expect(kizuna.talkMouthScale).toBe(0.52);
     expect(scaleTalkMouthOpen(0.9, nova)).toBeLessThan(0.4);
-    expect(scaleTalkMouthOpen(0.9, kizuna)).toBeCloseTo(0.9);
+    expect(scaleTalkMouthOpen(0.9, kizuna)).toBeCloseTo(0.52 * 0.52);
   });
 
   it("boosts love nuance morph smile and stress frown", () => {

@@ -15,6 +15,7 @@ import {
   sampleTalkMouthPulse,
   TALK_HAPPY_MAX,
   TALK_JAW_OPEN_RAD,
+  TALK_MOUTH_OPEN_MAX,
   TALK_SURPRISED_MAX,
   scaleTalkMouthOpen,
   talkJawRotationX,
@@ -70,14 +71,17 @@ describe("companionFaceRest", () => {
     expect(sampleTalkMouthPulse(120, true)).toBeGreaterThan(0.2);
     expect(sampleTalkMouthPulse(120, true)).toBeLessThanOrEqual(1);
     expect(talkingMouthOpen(false, 0.9, 200)).toBe(0);
-    expect(talkingMouthOpen(true, 0, 200)).toBeGreaterThan(0.15);
-    expect(talkingMouthOpen(true, 0.95, 200)).toBeGreaterThan(0.7);
+    expect(talkingMouthOpen(true, 0, 200)).toBeGreaterThan(0.12);
+    expect(talkingMouthOpen(true, 0.95, 200)).toBeGreaterThan(0.3);
+    expect(talkingMouthOpen(true, 0.95, 200)).toBeLessThanOrEqual(TALK_MOUTH_OPEN_MAX);
     expect(talkJawRotationX(0)).toBe(0);
     expect(talkJawRotationX(1)).toBeCloseTo(TALK_JAW_OPEN_RAD);
     expect(talkJawRotationX(0.5)).toBeGreaterThan(0.1);
     expect(talkJawRotationX(1, 0)).toBe(0);
-    expect(scaleTalkMouthOpen(0.9, { talkMouthScale: 0.38 })).toBeCloseTo(0.342);
-    expect(scaleTalkMouthOpen(0.9, null)).toBeCloseTo(0.9);
+    expect(scaleTalkMouthOpen(0.9, { talkMouthScale: 0.38 })).toBeCloseTo(
+      TALK_MOUTH_OPEN_MAX * 0.38,
+    );
+    expect(scaleTalkMouthOpen(0.9, null)).toBeCloseTo(TALK_MOUTH_OPEN_MAX);
   });
 
   it("pulses the mouth while eating even when not talking", () => {

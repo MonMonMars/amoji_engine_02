@@ -1208,9 +1208,9 @@ export async function createVrmAvatar(opts) {
     if (mouthTarget > MOUTH_CLOSE_EPS && !talking && !eating) {
       setTalking(true);
     }
-    if (mouthTarget > 0.2 && (talking || eating)) {
-      mouthOpen = Math.max(mouthOpen, mouthTarget * 0.82);
-      mouthOpen += (mouthTarget - mouthOpen) * 0.62;
+    if (mouthTarget > 0.15 && (talking || eating)) {
+      mouthOpen = Math.max(mouthOpen, mouthTarget * 0.62);
+      mouthOpen += (mouthTarget - mouthOpen) * 0.48;
     }
     return mouthTarget;
   };
@@ -1249,7 +1249,7 @@ export async function createVrmAvatar(opts) {
       }
     } else {
       applyEmotionExpressions(emotion);
-      if (mouthTarget < 0.2) mouthTarget = Math.max(mouthTarget, 0.55);
+      if (mouthTarget < 0.15) mouthTarget = Math.max(mouthTarget, 0.38);
       syncTalkLibraryMotion(true);
     }
     return talking;
@@ -1333,7 +1333,7 @@ export async function createVrmAvatar(opts) {
       const pulseScale = faceProfile.talkPulseScale ?? 1;
       mouthOpen = Math.max(
         mouthOpen,
-        sampleTalkMouthPulse(now, true) * 0.7 * pulseScale,
+        sampleTalkMouthPulse(now, true) * 0.42 * pulseScale,
       );
     }
     if (eating && !talking) {

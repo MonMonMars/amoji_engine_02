@@ -17,8 +17,10 @@ export const TALK_HAPPY_MAX = 0.62;
 /** Surprised at rest often drops the jaw. */
 export const REST_SURPRISED_MAX = 0.12;
 export const TALK_SURPRISED_MAX = 0.32;
+/** Hard cap on rendered talk mouth open (0..1) before rig-specific scaling. */
+export const TALK_MOUTH_OPEN_MAX = 0.52;
 /** Max jaw-bone X rotation (radians) at full open. */
-export const TALK_JAW_OPEN_RAD = 0.42;
+export const TALK_JAW_OPEN_RAD = 0.28;
 /** Fallback viseme walk when TTS has not yet named a shape. */
 export const TALK_VISEME_CYCLE = ["aa", "ih", "ou", "ee", "oh"];
 
@@ -108,7 +110,7 @@ export function sampleTalkMouthPulse(nowMs, talking) {
   const t = (Number(nowMs) || 0) * 0.001;
   const a = 0.5 + 0.5 * Math.sin(t * Math.PI * 6.2);
   const b = 0.5 + 0.5 * Math.sin(t * Math.PI * 9.1 + 1.1);
-  return 0.22 + a * 0.58 + b * 0.16;
+  return 0.1 + a * 0.28 + b * 0.1;
 }
 
 /**
@@ -145,7 +147,8 @@ export function talkingMouthOpen(talking, visemeOpen, nowMs = 0, eating = false)
   if (!talking) return eat;
   const viseme = mouthVisemeWeight(true, visemeOpen);
   const pulse = sampleTalkMouthPulse(nowMs, true);
-  return Math.max(0, Math.min(1, Math.max(viseme, pulse * 0.88, eat)));
+  const raw = Math.max(viseme, pulse * 0.72, eat);
+  return Math.max(0, Math.min(TALK_MOUTH_OPEN_MAX, raw));
 }
 
 /**
@@ -192,9 +195,9 @@ export function capTalkingEmotionWeight(name, weight, opts = {}) {
  * @param {{ talkMouthScale?: number } | null | undefined} [profile]
  */
 export function scaleTalkMouthOpen(open, profile = null) {
-  const v = Math.max(0, Math.min(1, Number(open) || 0));
+  const v = Math.max(0, Math.min(TALK_MOUTH_OPEN_MAX, Number(open) || 0));
   const scale = Math.max(0, Math.min(1, Number(profile?.talkMouthScale ?? 1) || 0));
-  return Math.max(0, Math.min(1, v * scale));
+  return Math.max(0, Math.min(TALK_MOUTH_OPEN_MAX, v * scale));
 }
 
 /**

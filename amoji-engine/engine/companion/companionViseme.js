@@ -3,6 +3,27 @@
  * CJK uses interjection + common-char tables (VN / gacha style), with audio RMS
  * driving jaw openness so lips stay synced to the waveform.
  */
+import { TALK_MOUTH_OPEN_MAX } from "./companionFaceRest.js";
+
+/** Scale raw char openness before the global talk cap. */
+export const VISEME_OPEN_SCALE = 0.62;
+
+/**
+ * @param {number} open
+ * @returns {number}
+ */
+export function clampVisemeOpen(open) {
+  const v = Math.max(0, Math.min(1, Number(open) || 0));
+  return Math.min(TALK_MOUTH_OPEN_MAX, v * VISEME_OPEN_SCALE);
+}
+
+/**
+ * @param {{ shape: string, open: number }} viseme
+ * @returns {{ shape: string, open: number }}
+ */
+function normalizeViseme(viseme) {
+  return { shape: viseme.shape, open: clampVisemeOpen(viseme.open) };
+}
 
 /** @type {Record<string, { shape: string, open: number }>} */
 const CJK_CHAR_VISEME = {
@@ -126,26 +147,26 @@ const LIP_SYNC_CACHE_MAX = 72;
 export function charToViseme(ch) {
   const raw = String(ch || " ");
   const c = raw.toLowerCase();
-  if (/[\s.,!?;:'"()\-—…]/.test(c)) return { shape: "ee", open: 0.08 };
-  if (/[aeæəàáâãäå]/.test(c)) return { shape: "aa", open: 0.82 };
-  if (/[iɪyìíîï]/.test(c)) return { shape: "ih", open: 0.58 };
-  if (/[oɔòóôõö]/.test(c)) return { shape: "oh", open: 0.72 };
-  if (/[uʊwùúûü]/.test(c)) return { shape: "ou", open: 0.68 };
-  if (/[eɛèéêë]/.test(c)) return { shape: "ee", open: 0.62 };
-  if (/[mbp]/.test(c)) return { shape: "ee", open: 0.12 };
-  if (/[fv]/.test(c)) return { shape: "ih", open: 0.22 };
+  if (/[\s.,!?;:'"()\-—…]/.test(c)) return normalizeViseme({ shape: "ee", open: 0.08 });
+  if (/[aeæəàáâãäå]/.test(c)) return normalizeViseme({ shape: "aa", open: 0.82 });
+  if (/[iɪyìíîï]/.test(c)) return normalizeViseme({ shape: "ih", open: 0.58 });
+  if (/[oɔòóôõö]/.test(c)) return normalizeViseme({ shape: "oh", open: 0.72 });
+  if (/[uʊwùúûü]/.test(c)) return normalizeViseme({ shape: "ou", open: 0.68 });
+  if (/[eɛèéêë]/.test(c)) return normalizeViseme({ shape: "ee", open: 0.62 });
+  if (/[mbp]/.test(c)) return normalizeViseme({ shape: "ee", open: 0.12 });
+  if (/[fv]/.test(c)) return normalizeViseme({ shape: "ih", open: 0.22 });
   if (/[\u4e00-\u9fff\u3400-\u4dbf]/.test(raw)) {
     const mapped = CJK_CHAR_VISEME[raw];
-    if (mapped) return { ...mapped };
+    if (mapped) return normalizeViseme(mapped);
     const code = raw.codePointAt(0) || 0;
     const idx =
       (code % 997) +
       Math.floor(code / 997) +
       (code & 0xf) +
       Math.floor((code >> 4) & 0xf);
-    return { ...CJK_VOWEL_RING[idx % CJK_VOWEL_RING.length] };
+    return normalizeViseme(CJK_VOWEL_RING[idx % CJK_VOWEL_RING.length]);
   }
-  return { shape: "aa", open: 0.45 };
+  return normalizeViseme({ shape: "aa", open: 0.45 });
 }
 
 /**
@@ -218,14 +239,14 @@ export function buildLipSyncTimelineCached(text) {
  */
 export function blendVisemeWithAudioLevel(viseme, audioLevel = 0) {
   const level = Math.max(0, Math.min(1, Number(audioLevel) || 0));
-  const baseOpen = Math.max(0, Math.min(1, Number(viseme.open) || 0));
+  const baseOpen = Math.max(0, Math.min(TALK_MOUTH_OPEN_MAX, Number(viseme.open) || 0));
   if (level < 0.06) {
-    return { shape: viseme.shape, open: baseOpen * 0.94 };
+    return { shape: viseme.shape, open: baseOpen * 0.88 };
   }
-  const rmsOpen = level * 0.92;
+  const rmsOpen = level * 0.68;
   const open = Math.min(
-    1,
-    Math.max(baseOpen * 0.38 + rmsOpen * 0.78, baseOpen * 0.55),
+    TALK_MOUTH_OPEN_MAX,
+    Math.max(baseOpen * 0.42 + rmsOpen * 0.58, baseOpen * 0.48),
   );
   return { shape: viseme.shape, open };
 }
