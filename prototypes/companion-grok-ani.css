@@ -488,7 +488,8 @@ body.theme-grok-ani.ui-fx-enabled .ui-fx-btn:hover:not(:disabled) {
 }
 
 .theme-grok-ani .stage.mic-mode .composer {
-  max-width: 240px;
+  max-width: none;
+  width: 100%;
   border-color: rgba(139, 124, 248, 0.28);
   box-shadow: 0 0 0 1px rgba(139, 124, 248, 0.12) inset;
 }
