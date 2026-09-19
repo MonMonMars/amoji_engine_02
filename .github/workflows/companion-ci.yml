@@ -41,3 +41,35 @@ jobs:
 
       - name: Local companion + mobile smoke
         run: node scripts/run-companion-smoke.mjs
+
+  companion-e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: unit-and-smoke
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            amoji-engine/package-lock.json
+
+      - name: Install root deps (Playwright)
+        run: npm ci
+
+      - name: Install amoji-engine deps
+        run: cd amoji-engine && npm ci
+
+      - name: Sync build + VRM assets
+        run: |
+          node scripts/sync-build-version.mjs
+          node amoji-engine/scripts/download-legal-vrm.mjs
+
+      - name: Install Playwright Chromium
+        run: npx playwright install chromium --with-deps
+
+      - name: Full companion issues verify (local)
+        run: FULL_SMOKE=1 node scripts/run-companion-smoke.mjs

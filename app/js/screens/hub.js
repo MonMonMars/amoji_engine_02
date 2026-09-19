@@ -75,6 +75,9 @@ registerRoute("hub", (ctx) => {
     </div>
     <div class="stack" style="margin-top:1rem;width:100%">
       <button type="button" class="btn btn-secondary" data-go="settings">${en ? "Settings" : "設定"}</button>
+      <button type="button" class="btn btn-secondary" data-open="/play?pick=0&mobile=1&automic=0&lang=${en ? "en" : "yue"}&character=${charId}&role=${role}">
+        ${en ? "Open full-screen 3D (browser)" : "全屏 3D 同伴（瀏覽器）"}
+      </button>
     </div>
   `;
 

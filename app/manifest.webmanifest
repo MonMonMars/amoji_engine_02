@@ -1,0 +1,20 @@
+{
+  "name": "Amoji",
+  "short_name": "Amoji",
+  "description": "Anime companion, pet care, and chase — chat in 3D.",
+  "start_url": "/app",
+  "scope": "/app",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#070a12",
+  "theme_color": "#070a12",
+  "lang": "zh-Hant",
+  "icons": [
+    {
+      "src": "/prototypes/assets/companion-girl-ref.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
