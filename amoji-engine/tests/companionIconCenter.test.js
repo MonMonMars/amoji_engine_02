@@ -42,7 +42,7 @@ describe("circular icon centering", () => {
     expect(minimalUi).toContain(
       "body.companion-minimal-chrome.conversation-ui.composer-always-visible .composer .send",
     );
-    expect(minimalUi).toMatch(/composer-always-visible \.composer \.send[\s\S]*width: 2\.65rem/);
+    expect(minimalUi).toMatch(/composer-always-visible \.composer \.send[\s\S]*width: 2\.5rem/);
     expect(minimalUi).toContain("clip: auto");
     expect(minimalUi).toContain(
       "body.companion-minimal-chrome:not(.composer-always-visible) .composer .send",

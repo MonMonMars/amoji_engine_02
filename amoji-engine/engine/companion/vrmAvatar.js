@@ -345,7 +345,7 @@ export async function createVrmAvatar(opts) {
         vrmaAction &&
         (motionPlayer.isPlaying?.() || motionPlayer.isCrossfading?.() || vrmaPending)
       ) {
-        restoreProceduralCalmStand({ stopLibrary: true });
+        clearHostedBodyMotion();
       }
       return true;
     }
@@ -369,7 +369,7 @@ export async function createVrmAvatar(opts) {
         vrmaAction &&
         (motionPlayer.isPlaying?.() || motionPlayer.isCrossfading?.() || vrmaPending)
       ) {
-        restoreProceduralCalmStand({ stopLibrary: true });
+        clearHostedBodyMotion();
       }
       return false;
     }
@@ -1555,7 +1555,7 @@ export async function createVrmAvatar(opts) {
       void motionPlayer.warmClip(id);
     }
   }
-  restoreProceduralCalmStand({ stopLibrary: true });
+  restoreProceduralCalmStand();
   raf = requestAnimationFrame(frame);
   globalThis.addEventListener?.("resize", resize);
 

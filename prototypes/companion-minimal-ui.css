@@ -92,9 +92,11 @@ body.companion-minimal-chrome .chat-shell {
 }
 
 body.companion-minimal-chrome .chat-column {
-  width: min(680px, calc(100% - 1.5rem));
-  margin: 0 auto;
-  padding: 0 0.75rem;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0 max(0.5rem, env(safe-area-inset-left, 0px))
+    0 max(0.5rem, env(safe-area-inset-right, 0px));
   max-height: min(34vh, 260px);
   min-height: 0;
   overflow: hidden;
@@ -115,9 +117,9 @@ body.companion-minimal-chrome .composer-wrap {
   width: 100%;
   max-width: none;
   margin: 0;
-  padding: 0 max(0.5rem, env(safe-area-inset-left, 0px))
-    max(0.75rem, env(safe-area-inset-bottom))
-    max(0.5rem, env(safe-area-inset-right, 0px));
+  padding: 0 max(0.4rem, env(safe-area-inset-left, 0px))
+    max(0.65rem, env(safe-area-inset-bottom))
+    max(0.4rem, env(safe-area-inset-right, 0px));
   background: none;
   box-sizing: border-box;
 }
@@ -125,11 +127,11 @@ body.companion-minimal-chrome .composer-wrap {
 body.companion-minimal-chrome .composer.composer-pro {
   display: flex;
   align-items: center;
-  gap: 0.45rem;
+  gap: 0.35rem;
   width: 100%;
   max-width: none;
   margin: 0;
-  padding: 0.4rem 0.45rem 0.4rem 0.65rem;
+  padding: 0.35rem 0.35rem 0.35rem 0.55rem;
   border-radius: 1.75rem;
   border: 1px solid rgba(255, 255, 255, 0.14);
   background: rgba(8, 6, 18, 0.78);
@@ -149,7 +151,7 @@ body.companion-minimal-chrome .composer-field textarea {
   width: 100%;
   min-height: 2.45rem;
   max-height: 5.5rem;
-  padding: 0.55rem 0.15rem 0.55rem 0;
+  padding: 0.55rem 0.05rem 0.55rem 0;
   border: none;
   background: transparent;
   color: var(--ink, #f4f0ff);
@@ -180,8 +182,8 @@ body.companion-minimal-chrome:not(.composer-always-visible) .composer .send {
 body.companion-minimal-chrome.conversation-ui.composer-always-visible .composer .send {
   position: static;
   flex-shrink: 0;
-  width: 2.65rem;
-  height: 2.65rem;
+  width: 2.5rem;
+  height: 2.5rem;
   margin: 0;
   padding: 0;
   overflow: visible;
@@ -209,19 +211,19 @@ body.companion-minimal-chrome .mic-voice-stack {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-width: 2.75rem;
+  min-width: 2.5rem;
 }
 
 body.companion-minimal-chrome .composer #btn-mic {
-  width: 2.75rem;
-  height: 2.75rem;
+  width: 2.5rem;
+  height: 2.5rem;
   flex-shrink: 0;
 }
 
 body.companion-minimal-chrome.conversation-ui.composer-always-visible .composer #btn-mic,
 body.companion-minimal-chrome.conversation-ui.composer-always-visible .stage.mic-mode #btn-mic {
-  width: 2.85rem;
-  height: 2.85rem;
+  width: 2.55rem;
+  height: 2.55rem;
 }
 
 body.companion-minimal-chrome .settings {
