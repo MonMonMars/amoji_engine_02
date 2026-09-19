@@ -1,7 +1,7 @@
 /**
  * ChatGPT-style companion mic button — emotion-linked glow, rings, and waveform.
  */
-export const COMPANION_MIC_BUTTON_SCHEMA = "amoji.companionMicButton.v4";
+export const COMPANION_MIC_BUTTON_SCHEMA = "amoji.companionMicButton.v5";
 
 const EMOTION_HUD_LABEL = Object.freeze({
   neutral: { en: "Neutral", yue: "平靜" },
@@ -19,12 +19,13 @@ const STATE_HUD_LABEL = Object.freeze({
   disabled: { en: "Off", yue: "停用" },
 });
 
-/** ChatGPT inline voice — gray waveform when off, blue when live. */
+/** ChatGPT inline voice — grey mic icon when off, blue cloud orb when live. */
 export const MIC_BUTTON_CHATGPT_IDLE = Object.freeze({
   hue: 218,
   sat: 10,
   light: 52,
   ringSpeed: 1,
+  iconColor: "hsl(218 8% 62% / 0.88)",
 });
 
 export const MIC_BUTTON_CHATGPT_LIVE = Object.freeze({
@@ -156,6 +157,7 @@ export function resolveMicButtonThemeForState(state, opts = {}) {
       glowB: "rgba(255,255,255,0.04)",
       surface: "rgba(16, 20, 28, 0.72)",
       border: "rgba(255,255,255,0.1)",
+      iconColor: "hsl(218 6% 52% / 0.55)",
     };
   }
   if (key === "idle") {
@@ -173,6 +175,7 @@ export function resolveMicButtonThemeForState(state, opts = {}) {
       glowB: `hsl(${hue} 12% 68% / 0.06)`,
       surface: "rgba(16, 20, 28, 0.94)",
       border: "rgba(255, 255, 255, 0.16)",
+      iconColor: base.iconColor,
     };
   }
   const liveBase = MIC_BUTTON_CHATGPT_LIVE;
@@ -194,6 +197,16 @@ export function resolveMicButtonThemeForState(state, opts = {}) {
     surface: `hsl(${hue} ${Math.max(36, sat - 12)}% 42% / 0.96)`,
     border: `hsl(${hue} ${sat}% 62% / 0.88)`,
   };
+}
+
+/**
+ * Mic chrome: grey icon when off, ChatGPT cloud orb when live.
+ * @param {MicButtonState | string} state
+ * @returns {"icon" | "cloud"}
+ */
+export function micButtonVisualForState(state) {
+  const key = String(state || "idle").toLowerCase();
+  return key === "listening" || key === "speaking" ? "cloud" : "icon";
 }
 
 /**
@@ -365,6 +378,12 @@ export function createCompanionMicButton(el, opts = {}) {
     el.style.setProperty("--mic-surface", theme.surface);
     el.style.setProperty("--mic-border", theme.border);
     el.style.setProperty("--mic-ring-speed", `${theme.ringSpeed.toFixed(2)}s`);
+    if (theme.iconColor) {
+      el.style.setProperty("--mic-icon-color", theme.iconColor);
+    } else {
+      el.style.removeProperty("--mic-icon-color");
+    }
+    el.dataset.micVisual = micButtonVisualForState(state);
   };
 
   const applyStateTheme = () => {

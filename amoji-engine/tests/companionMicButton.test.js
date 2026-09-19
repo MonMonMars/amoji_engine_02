@@ -3,7 +3,9 @@ import {
   companionMicButtonInnerHtml,
   createCompanionMicButton,
   micHudEmotionLabel,
+  micButtonVisualForState,
   MIC_BUTTON_CHATGPT_LIVE,
+  MIC_BUTTON_CHATGPT_IDLE,
   resolveMicButtonTheme,
   resolveMicButtonThemeForState,
   syncMicButtonGlow,
@@ -103,9 +105,29 @@ describe("companionMicButton", () => {
     const listening = resolveMicButtonThemeForState("listening");
     const speaking = resolveMicButtonThemeForState("speaking", { emotion: "happy" });
     expect(idle.sat).toBeLessThan(20);
+    expect(idle.iconColor).toBe(MIC_BUTTON_CHATGPT_IDLE.iconColor);
     expect(listening.hue).toBe(MIC_BUTTON_CHATGPT_LIVE.hue);
     expect(listening.sat).toBeGreaterThan(60);
     expect(speaking.hue).toBeGreaterThanOrEqual(198);
     expect(speaking.hue).toBeLessThanOrEqual(228);
+  });
+
+  it("maps mic chrome to grey icon off and cloud orb on", () => {
+    expect(micButtonVisualForState("idle")).toBe("icon");
+    expect(micButtonVisualForState("disabled")).toBe("icon");
+    expect(micButtonVisualForState("listening")).toBe("cloud");
+    expect(micButtonVisualForState("speaking")).toBe("cloud");
+  });
+
+  it("sets data-mic-visual and grey icon color when idle", () => {
+    if (typeof document === "undefined") return;
+    const el = document.createElement("button");
+    const ui = createCompanionMicButton(el);
+    expect(el.dataset.micVisual).toBe("icon");
+    expect(el.style.getPropertyValue("--mic-icon-color")).toContain("hsl(");
+    expect(el.querySelector(".mic-btn__icon")).toBeTruthy();
+    ui.setState("listening");
+    expect(el.dataset.micVisual).toBe("cloud");
+    expect(el.style.getPropertyValue("--mic-icon-color")).toBe("");
   });
 });

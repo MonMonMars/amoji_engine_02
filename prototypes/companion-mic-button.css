@@ -1,11 +1,13 @@
 /**
  * Shared ChatGPT-style mic button layers (companion + secretary lite).
+ * Off = grey mic icon · On = blue cloud orb (canvas on .mini-emotion-ball).
  */
 .mic-btn {
   --mic-glow-inset: 8px;
   --mic-glow-intensity: 0.35;
   --mic-halo-scale: 1;
   --mic-shape-radius: 50%;
+  --mic-icon-color: hsl(218 8% 62% / 0.88);
   position: relative;
   display: inline-flex;
   align-items: center;
@@ -122,33 +124,32 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  color: var(--mic-icon-color, hsl(218 8% 62% / 0.88));
 }
 
+/* Off — grey mic icon */
 .mic-btn[data-mic-state="idle"] .mic-btn__icon,
 .mic-btn[data-mic-state="disabled"] .mic-btn__icon {
-  display: none;
+  display: flex;
 }
 
 .mic-btn[data-mic-state="idle"] .mic-btn__wave,
 .mic-btn[data-mic-state="disabled"] .mic-btn__wave {
-  display: flex;
-  opacity: 0.52;
+  display: none;
 }
 
-.mic-btn[data-mic-state="idle"] .mic-btn__wave i,
-.mic-btn[data-mic-state="disabled"] .mic-btn__wave i {
-  animation: none;
-  height: 7px;
-  background: rgba(255, 255, 255, 0.62);
+.mic-btn[data-mic-state="disabled"] .mic-btn__icon {
+  opacity: 0.55;
+}
+
+/* On — cloud orb (canvas) replaces icon */
+.mic-btn[data-mic-state="listening"] .mic-btn__icon,
+.mic-btn[data-mic-state="speaking"] .mic-btn__icon {
+  display: none;
 }
 
 .mic-btn[data-mic-state="listening"] .mic-btn__wave,
 .mic-btn[data-mic-state="speaking"] .mic-btn__wave {
-  display: flex;
-}
-
-.mic-btn[data-mic-state="listening"] .mic-btn__icon,
-.mic-btn[data-mic-state="speaking"] .mic-btn__icon {
   display: none;
 }
 
@@ -164,6 +165,28 @@
   filter: none;
   color: #fff;
   transform: scale(calc(var(--mic-halo-scale, 1) + var(--mic-level, 0) * 0.06));
+}
+
+.mic-btn.mini-emotion-ball[data-mic-state="listening"],
+.mic-btn.mini-emotion-ball[data-mic-state="speaking"] {
+  background: rgba(10, 14, 22, 0.42) !important;
+}
+
+.mic-btn.mini-emotion-ball .companion-chip__dot-canvas {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.22s ease;
+}
+
+.mic-btn.mini-emotion-ball[data-mic-state="listening"] .companion-chip__dot-canvas,
+.mic-btn.mini-emotion-ball[data-mic-state="speaking"] .companion-chip__dot-canvas {
+  opacity: 1;
 }
 
 @keyframes micHaloPulse {
