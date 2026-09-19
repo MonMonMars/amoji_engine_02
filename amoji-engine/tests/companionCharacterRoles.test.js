@@ -19,7 +19,7 @@ describe("companionCharacterRoles", () => {
   it("keeps rex as the default boyfriend pick", () => {
     expect(resolveCharacterRole("rex")).toBe("boyfriend");
     expect(resolveCharacterRole("chad")).toBe("boyfriend");
-    expect(characterIdsForRole("boyfriend")).toEqual(["rex", "chad", "david", "hugo"]);
+    expect(characterIdsForRole("boyfriend")).toEqual(["atlas", "rex", "chad", "david", "hugo"]);
     expect(ROLE_DEFAULT_CHARACTER_ID.boyfriend).toBe("rex");
   });
 
@@ -34,6 +34,11 @@ describe("companionCharacterRoles", () => {
       "kizuna",
       "alicia",
       "ember",
+      "sora",
+      "aria",
+      "mei",
+      "luna",
+      "erika",
       "sky",
       "yuki",
       "hina",

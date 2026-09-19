@@ -99,6 +99,12 @@ export const GALLERY_PRIORITY_IDS = new Set([
   "kizuna",
   "alicia",
   "ember",
+  "sora",
+  "aria",
+  "mei",
+  "luna",
+  "atlas",
+  "erika",
   "sky",
   "yuki",
   "hina",
@@ -122,6 +128,7 @@ export const HIGH_POLY_FACE_CHARACTER_IDS = new Set([
   "kizuna",
   "rex",
   "alicia",
+  "erika",
   "ember",
 ]);
 
@@ -274,6 +281,12 @@ export function resolveCharacterId(opts = {}) {
     ["companion-chad.vrm", "chad"],
     ["companion-david.vrm", "david"],
     ["companion-hugo.vrm", "hugo"],
+    ["companion-avatarsample-a.vrm", "aria"],
+    ["companion-avatarsample-b.vrm", "mei"],
+    ["companion-avatarsample-c.vrm", "sora"],
+    ["companion-vroid-female.vrm", "luna"],
+    ["companion-vroid-male.vrm", "atlas"],
+    ["companion-erika.vrm", "erika"],
   ];
   for (const [needle, id] of modelMap) {
     if (model.includes(needle)) return id;
