@@ -1017,6 +1017,17 @@
   padding: 0 1rem 0.35rem;
 }
 
+.companion-picker--v4:not(.companion-picker--start) .picker-roster-panel .picker-scene-section {
+  flex-shrink: 0;
+  padding: 0.42rem 1rem 0.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.companion-picker--v4:not(.companion-picker--start) .picker-roster-panel .picker-scene-label {
+  margin-bottom: 0.34rem;
+}
+
 @media (min-width: 640px) {
   .companion-picker--v4 .picker-main {
     flex-direction: row;

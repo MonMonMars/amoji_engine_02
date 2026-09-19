@@ -132,11 +132,18 @@ record("no search toolbar", !boot.toolbar);
 record("no filter chips", boot.filters === 0, String(boot.filters));
 record("no featured row", boot.featured === 0, String(boot.featured));
 record("begin CTA", boot.begin);
-record("background row on start picker", boot.sceneSection && boot.sceneChips >= 8, String(boot.sceneChips));
+record(
+  "background row on start picker",
+  boot.sceneSection && boot.sceneInRosterDock && boot.sceneChips >= 8,
+  String(boot.sceneChips),
+);
 
 const layout = await page.evaluate(() => {
   const footer = document.querySelector("#start-character-picker .picker-footer");
   const wrap = document.querySelector("#start-character-picker .start-picker-grid-wrap");
+  const scene = document.querySelector(
+    "#start-character-picker .picker-roster-dock .picker-scene-section",
+  );
   const grid = document.querySelector("#start-character-picker .companion-picker-grid--start");
   const begin = document.querySelector("#start-character-picker .picker-begin-btn");
   const cards = document.querySelectorAll(
@@ -151,6 +158,8 @@ const layout = await page.evaluate(() => {
   const footerTop = footer.getBoundingClientRect().top;
   const wrapBottom = wrap.getBoundingClientRect().bottom;
   const gridBottom = grid.getBoundingClientRect().bottom;
+  const sceneTop = scene?.getBoundingClientRect().top ?? gridBottom;
+  const sceneBottom = scene?.getBoundingClientRect().bottom ?? wrapBottom;
   let visibleOverlap = 0;
   for (const card of cards) {
     const portrait = card.querySelector(".companion-card-portrait");
@@ -180,13 +189,15 @@ const layout = await page.evaluate(() => {
   const cardsLargeEnough = Number.isFinite(minPortraitW) && minPortraitW >= 56;
   return {
     ok:
-      wrapBottom <= footerTop + 2 &&
+      sceneBottom <= footerTop + 2 &&
+      gridBottom <= sceneTop + 4 &&
       visibleOverlap === 0 &&
       brokenImgs === 0 &&
       grid.clientHeight >= 72 &&
       rowGrid &&
       cards.length >= 17 &&
-      cardsLargeEnough,
+      cardsLargeEnough &&
+      Boolean(scene),
     rowGrid,
     columnCount,
     minPortraitW,
@@ -195,6 +206,8 @@ const layout = await page.evaluate(() => {
     visibleOverlap,
     wrapBottom,
     gridBottom,
+    sceneTop,
+    sceneBottom,
     footerTop,
     beginTop,
     gridH: grid.clientHeight,
@@ -336,6 +349,18 @@ const sessionFeatured = await page.evaluate(() => {
   return picker?.querySelectorAll(".picker-featured-row .companion-card").length ?? 0;
 });
 record("in-session featured row (4+)", sessionFeatured >= 4, String(sessionFeatured));
+const sessionScene = await page.evaluate(() => {
+  const picker = document.getElementById("companion-character-picker");
+  return {
+    section: Boolean(picker?.querySelector(".picker-roster-panel .picker-scene-section")),
+    chips: picker?.querySelectorAll(".picker-scene-chip").length ?? 0,
+  };
+});
+record(
+  "in-session background row",
+  sessionScene.section && sessionScene.chips >= 8,
+  String(sessionScene.chips),
+);
 
 await page.click(`${SESSION_ROOT} [data-character-id="ember"]`);
 await page.click(`${SESSION_ROOT} .picker-switch-btn`);

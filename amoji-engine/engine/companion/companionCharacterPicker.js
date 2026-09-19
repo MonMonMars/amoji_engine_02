@@ -36,9 +36,9 @@ import {
 } from "./companionScenePresets.js";
 
 export const COMPANION_CHARACTER_PICKER_SCHEMA =
-  "amoji.companionCharacterPicker.v4";
+  "amoji.companionCharacterPicker.v5";
 
-export const COMPANION_START_PICKER_SCHEMA = "amoji.companionStartPicker.v8";
+export const COMPANION_START_PICKER_SCHEMA = "amoji.companionStartPicker.v9";
 
 export const PICKER_SCENE_SECTION_HTML = `
   <section class="picker-scene-section" aria-label="Background">
@@ -46,6 +46,79 @@ export const PICKER_SCENE_SECTION_HTML = `
     <div class="picker-scene-row" role="listbox"></div>
   </section>
 `.trim();
+
+/**
+ * Background swatches shared by start + in-session pickers.
+ * @param {{
+ *   root?: ParentNode | null,
+ *   sceneRowEl?: HTMLElement | null,
+ *   sceneLabelEl?: HTMLElement | null,
+ *   isEnglish?: boolean,
+ *   atmosphereEl?: HTMLElement | null,
+ *   initialBackgroundId?: string,
+ *   onBackgroundChange?: (id: string) => void,
+ *   canInteract?: () => boolean,
+ * }} opts
+ */
+export function wirePickerSceneSection(opts = {}) {
+  const isEnglish = Boolean(opts.isEnglish);
+  const sceneRowEl =
+    opts.sceneRowEl || opts.root?.querySelector?.(".picker-scene-row") || null;
+  const sceneLabelEl =
+    opts.sceneLabelEl || opts.root?.querySelector?.(".picker-scene-label") || null;
+  const canInteract = opts.canInteract || (() => true);
+  let activeBackgroundId =
+    opts.initialBackgroundId || loadStoredSceneBackground(isEnglish).id;
+
+  const renderPickerSceneRow = () => {
+    if (!sceneRowEl) return;
+    sceneRowEl.replaceChildren();
+    for (const preset of SCENE_BACKGROUND_PRESETS) {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className =
+        "picker-scene-chip" + (preset.id === activeBackgroundId ? " is-active" : "");
+      btn.setAttribute("role", "option");
+      btn.setAttribute(
+        "aria-selected",
+        preset.id === activeBackgroundId ? "true" : "false",
+      );
+      btn.title = scenePresetLabel(preset, isEnglish);
+      btn.innerHTML = `
+        <span class="scene-preset__swatch scene-preset__swatch--${preset.id}" aria-hidden="true"></span>
+        <span class="picker-scene-chip__label">${scenePresetLabel(preset, isEnglish)}</span>
+      `.trim();
+      btn.addEventListener("click", () => {
+        if (!canInteract()) return;
+        applyPickerBackground(preset.id);
+      });
+      sceneRowEl.appendChild(btn);
+    }
+  };
+
+  const syncPickerSceneChrome = () => {
+    if (sceneLabelEl) {
+      sceneLabelEl.textContent = isEnglish ? "Background" : "背景";
+    }
+    renderPickerSceneRow();
+  };
+
+  const applyPickerBackground = (backgroundId) => {
+    activeBackgroundId = backgroundId;
+    const atmosphere =
+      opts.atmosphereEl || document.querySelector?.(".atmosphere") || null;
+    applySceneBackground(atmosphere, backgroundId);
+    persistSceneBackground(backgroundId);
+    opts.onBackgroundChange?.(backgroundId);
+    renderPickerSceneRow();
+  };
+
+  return {
+    getBackgroundId: () => activeBackgroundId,
+    setBackgroundId: applyPickerBackground,
+    sync: syncPickerSceneChrome,
+  };
+}
 
 /** @deprecated Start picker uses the showcase layout (hero stage + roster strip). */
 export const START_PICKER_ROSTER_FIRST_MAX = 12;
@@ -356,6 +429,9 @@ function findPickerItem(list, id) {
  *   onSelect?: (id: string) => void,
  *   onClose?: () => void,
  *   onCardTapFx?: (card: HTMLButtonElement, item: ReturnType<typeof listCompanionCharacters>[number]) => void,
+ *   atmosphereEl?: HTMLElement | null,
+ *   backgroundId?: string,
+ *   onBackgroundChange?: (backgroundId: string) => void,
  * }} opts
  */
 export function createCompanionCharacterPicker(opts = {}) {
@@ -404,6 +480,7 @@ export function createCompanionCharacterPicker(opts = {}) {
           <div class="picker-roster-wrap">
             <div class="companion-picker-grid" role="listbox"></div>
           </div>
+          ${PICKER_SCENE_SECTION_HTML}
         </section>
       </div>
       <div class="picker-session-actions">
@@ -424,6 +501,13 @@ export function createCompanionCharacterPicker(opts = {}) {
   const featuredWrap = shell.querySelector(".picker-featured-wrap");
   const featuredLabel = shell.querySelector(".picker-featured-label");
   const featuredRow = shell.querySelector(".picker-featured-row");
+  const sceneSection = wirePickerSceneSection({
+    root: shell,
+    isEnglish,
+    atmosphereEl: opts.atmosphereEl,
+    initialBackgroundId: opts.backgroundId,
+    onBackgroundChange: opts.onBackgroundChange,
+  });
 
   const paintCopy = () => {
     if (titleEl) titleEl.textContent = copy.title;
@@ -514,6 +598,7 @@ export function createCompanionCharacterPicker(opts = {}) {
   const openPicker = () => {
     selectedId = activeCharacterId;
     paintCopy();
+    sceneSection.sync();
     renderAll();
     shell.hidden = false;
     open = true;
@@ -565,6 +650,12 @@ export function createCompanionCharacterPicker(opts = {}) {
     },
     isOpen() {
       return open;
+    },
+    getBackgroundId() {
+      return sceneSection.getBackgroundId();
+    },
+    setBackgroundId(backgroundId) {
+      sceneSection.setBackgroundId(backgroundId);
     },
     destroy() {
       unwireFeaturedKeys();
@@ -659,53 +750,13 @@ export function createCompanionStartPicker(opts = {}) {
   const scrollHintEl = shell.querySelector(".start-picker-scroll-hint");
   const beginBtn = shell.querySelector(".picker-begin-btn");
   const rosterDockLabelEl = shell.querySelector(".picker-roster-dock-label");
-  const sceneSectionEl = shell.querySelector(".picker-scene-section");
-  const sceneLabelEl = shell.querySelector(".picker-scene-label");
-  const sceneRowEl = shell.querySelector(".picker-scene-row");
-  let activeBackgroundId = loadStoredSceneBackground(isEnglish).id;
-
-  const applyPickerBackground = (backgroundId) => {
-    activeBackgroundId = backgroundId;
-    const atmosphere =
-      opts.atmosphereEl || document.querySelector?.(".atmosphere") || null;
-    applySceneBackground(atmosphere, backgroundId);
-    persistSceneBackground(backgroundId);
-    opts.onBackgroundChange?.(backgroundId);
-    renderPickerSceneRow();
-  };
-
-  const renderPickerSceneRow = () => {
-    if (!sceneRowEl) return;
-    sceneRowEl.replaceChildren();
-    for (const preset of SCENE_BACKGROUND_PRESETS) {
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.className =
-        "picker-scene-chip" + (preset.id === activeBackgroundId ? " is-active" : "");
-      btn.setAttribute("role", "option");
-      btn.setAttribute(
-        "aria-selected",
-        preset.id === activeBackgroundId ? "true" : "false",
-      );
-      btn.title = scenePresetLabel(preset, isEnglish);
-      btn.innerHTML = `
-        <span class="scene-preset__swatch scene-preset__swatch--${preset.id}" aria-hidden="true"></span>
-        <span class="picker-scene-chip__label">${scenePresetLabel(preset, isEnglish)}</span>
-      `.trim();
-      btn.addEventListener("click", () => {
-        if (starting || !pickable) return;
-        applyPickerBackground(preset.id);
-      });
-      sceneRowEl.appendChild(btn);
-    }
-  };
-
-  const syncPickerSceneChrome = () => {
-    if (sceneLabelEl) {
-      sceneLabelEl.textContent = isEnglish ? "Background" : "背景";
-    }
-    renderPickerSceneRow();
-  };
+  const sceneSection = wirePickerSceneSection({
+    root: shell,
+    isEnglish,
+    atmosphereEl: opts.atmosphereEl,
+    onBackgroundChange: opts.onBackgroundChange,
+    canInteract: () => !starting && pickable,
+  });
 
   const paintCopy = () => {
     if (titleEl) titleEl.textContent = copy.title;
@@ -878,8 +929,8 @@ export function createCompanionStartPicker(opts = {}) {
   paintCopy();
   renderAll();
   renderPreload();
-  syncPickerSceneChrome();
-  applyPickerBackground(activeBackgroundId);
+  sceneSection.sync();
+  sceneSection.setBackgroundId(sceneSection.getBackgroundId());
   gridEl?.addEventListener("scroll", renderScrollHint, { passive: true });
   globalThis.addEventListener?.("resize", renderScrollHint);
 
@@ -895,10 +946,10 @@ export function createCompanionStartPicker(opts = {}) {
       return selectedId;
     },
     getBackgroundId() {
-      return activeBackgroundId;
+      return sceneSection.getBackgroundId();
     },
     setBackgroundId(backgroundId) {
-      applyPickerBackground(backgroundId);
+      sceneSection.setBackgroundId(backgroundId);
     },
     setPreloadProgress(pct, label) {
       const n = Number(pct);

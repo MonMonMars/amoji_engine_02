@@ -3,6 +3,7 @@ import {
   createCompanionCharacterPicker,
   renderCompanionPickerGrid,
 } from "../engine/companion/companionCharacterPicker.js";
+import { SCENE_BACKGROUND_PRESETS } from "../engine/companion/companionScenePresets.js";
 
 describe("companionCharacterPicker UI", () => {
   it("shows empty state when filter matches nothing", () => {
@@ -14,6 +15,23 @@ describe("companionCharacterPicker UI", () => {
     });
     expect(grid.querySelector(".picker-empty")).toBeTruthy();
     expect(grid.textContent).toMatch(/No companions/i);
+  });
+
+  it("in-session picker shows background row below the roster grid", () => {
+    if (typeof document === "undefined") return;
+    const picker = createCompanionCharacterPicker({
+      isEnglish: true,
+      selectedId: "nova",
+      onSelect: () => {},
+    });
+    picker.open();
+    expect(
+      picker.element.querySelector(".picker-roster-panel .picker-scene-section"),
+    ).toBeTruthy();
+    expect(picker.element.querySelectorAll(".picker-scene-chip").length).toBe(
+      SCENE_BACKGROUND_PRESETS.length,
+    );
+    picker.destroy();
   });
 
   it("in-session picker shows featured quick-pick row", () => {
