@@ -1,6 +1,10 @@
 import { registerRoute } from "../router.js";
 import { loadTreatState } from "/amoji-engine/engine/companion/companionTreatStore.js";
-import { loadLocalChaseState } from "/amoji-engine/engine/mobile/companionCloudStorage.js";
+import {
+  loadLocalChaseState,
+  syncFromCloud,
+  syncToCloud,
+} from "/amoji-engine/engine/mobile/companionCloudStorage.js";
 import { resolveBondRank } from "/amoji-engine/engine/companion/companionRaisingUi.js";
 import { getCharacter } from "/amoji-engine/engine/companion/companionCharacterCatalog.js";
 import { loadMobileSettings } from "/amoji-engine/engine/mobile/companionMobileSettings.js";
@@ -10,6 +14,8 @@ import {
   orderHubCardsForRole,
   renderMobileHubCard,
 } from "/amoji-engine/engine/mobile/mobileHubLayout.js";
+import { tryClaimPremiumDailyCoins } from "/amoji-engine/engine/mobile/companionMobileDailyBonus.js";
+import { restoreSession } from "/amoji-engine/engine/mobile/companionMobileAuth.js";
 import {
   loadCompanionRole,
   roleEmoji,
@@ -19,14 +25,42 @@ import {
 } from "/amoji-engine/engine/mobile/companionRolePresets.js";
 import { AMOJI_BUILD } from "/amoji-engine/engine/companion/buildVersion.mjs";
 
-registerRoute("hub", (ctx) => {
+registerRoute("hub", async (ctx) => {
   const en = ctx.isEnglish();
+
+  try {
+    const restored = await restoreSession({ baseUrl: ctx.baseUrl });
+    if (restored) ctx.setSession(restored);
+  } catch {
+    /* offline */
+  }
+  try {
+    await syncFromCloud({ baseUrl: ctx.baseUrl });
+  } catch {
+    /* offline */
+  }
+
   const role = loadCompanionRole();
   const preset = rolePreset(role);
   const charId =
     localStorage.getItem("amoji.mobile.lastCharacterId") || preset.defaultCharacterId;
   const character = getCharacter(charId);
-  const treats = loadTreatState();
+  let treats = loadTreatState();
+  const entitlements = ctx.getSession()?.entitlements;
+  const premium = Boolean(entitlements?.premium);
+  const bonus = tryClaimPremiumDailyCoins(entitlements, treats);
+  if (bonus.claimed) {
+    treats = bonus.state;
+    ctx.toast(
+      en ? `Premium daily +${bonus.amount} coins` : `Premium 每日 +${bonus.amount} 金幣`,
+    );
+    try {
+      await syncToCloud({ baseUrl: ctx.baseUrl });
+    } catch {
+      /* offline */
+    }
+  }
+
   const chase = loadLocalChaseState() || { highScore: 0, streakDays: 0 };
   const bond = resolveBondRank(treats.hearts, en);
   const charName = en ? character?.name?.en : character?.name?.yue;
@@ -57,7 +91,10 @@ registerRoute("hub", (ctx) => {
         <h1>${en ? "Home" : "主頁"}</h1>
         <div data-hub-subtitle style="color:var(--muted);font-size:0.82rem">${roleEmoji(role)} ${roleLabel(role, en)} · ${charName || "—"} · ${bond.label}</div>
       </div>
-      <button type="button" class="chip chip--button" data-go="shop" title="${en ? "Coins · Shop" : "金幣 · 商店"}">🪙 ${treats.coins}</button>
+      <div style="display:flex;gap:0.35rem;align-items:center;flex-wrap:wrap;justify-content:flex-end">
+        ${premium ? `<span class="chip chip--premium">${en ? "Premium" : "Premium"} ✨</span>` : ""}
+        <button type="button" class="chip chip--button" data-go="shop" title="${en ? "Coins · Shop" : "金幣 · 商店"}">🪙 ${treats.coins}</button>
+      </div>
     </div>
     <div class="hub-grid">
       ${hubCards.map(renderMobileHubCard).join("\n")}

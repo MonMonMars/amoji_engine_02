@@ -2,7 +2,7 @@
 
 **App ID:** `com.amoji.companion`  
 **Primary market:** Apple App Store  
-**Shell:** Capacitor 6 (`mobile/`)
+**Shell:** Capacitor 6 (`mobile/`) — includes `@capacitor-community/apple-sign-in` + `@revenuecat/purchases-capacitor`
 
 ---
 
