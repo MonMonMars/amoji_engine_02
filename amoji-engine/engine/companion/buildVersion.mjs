@@ -1,2 +1,2 @@
 /** Single source of truth for deployed companion build id (keep HTML __amojiBuild in sync). */
-export const AMOJI_BUILD = "2026-09-19-v353-idle-motion-visible";
+export const AMOJI_BUILD = "2026-09-19-v354-idle-lookat-unlock";

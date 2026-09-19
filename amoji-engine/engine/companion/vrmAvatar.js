@@ -83,6 +83,7 @@ import {
   idleBeatDurationSec,
   sampleIdleExpressionBlend,
 } from "./companionIdleMotion.js";
+import { resolveVrmLookAtAutoUpdate } from "./companionVrmLookAt.js";
 import {
   configureVrmSpringStability,
   createIdleSpringRecenterState,
@@ -1414,7 +1415,13 @@ export async function createVrmAvatar(opts) {
         model.rotation.y = baseModelRotY;
       }
       if (vrm.lookAt) {
-        vrm.lookAt.autoUpdate = !activeMotion;
+        vrm.lookAt.autoUpdate = resolveVrmLookAtAutoUpdate({
+          talking,
+          listening: bodyMotion.listening,
+          thinking: bodyMotion.thinking,
+          activeMotion,
+          currentAction: bodyMotion.currentAction,
+        });
       }
       syncLookTarget();
       syncHumanoidPose();
