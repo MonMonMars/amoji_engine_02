@@ -8,9 +8,10 @@ import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { VRMLoaderPlugin, VRMExpressionPresetName } from "@pixiv/three-vrm";
 import {
   applyAutoCameraFrame,
-  buildPortraitShot,
+  applyPortraitShot,
   CAMERA_RESET_LERP_RATE,
   lerpCameraTowardShot,
+  resolveFrontPortraitFrame,
 } from "./companionCameraApply.js";
 import {
   createCompanionCameraDirector,
@@ -21,11 +22,9 @@ import {
   smoothFrameAnchor,
 } from "./companionCameraFollow.js";
 import {
+  PORTRAIT_CAMERA_Z_SIGN,
   PORTRAIT_FOV,
-  applyUpperBodyPortraitFrame,
   applyUserOrbitLimits,
-  detectPortraitCameraZSign,
-  isHeadFacingCamera,
   portraitDistanceForHeight,
 } from "./companionPortraitFraming.js";
 import {
@@ -173,32 +172,6 @@ async function loadVrmGltf(loader, modelUrl, onProgress) {
       onProgress?.(event.loaded / event.total, "model");
     }
   });
-}
-
-/** Grok Ani–style framing: upper body visible, not extreme face close-up. */
-function frameFaceCamera({
-  vrm,
-  model,
-  camera,
-  controls,
-  fitted,
-  cameraZSign: cameraZSignOverride,
-}) {
-  const fittedSize = fitted.getSize(new THREE.Vector3());
-  const anchor = computeVrmFrameAnchor(vrm, model);
-  const head = vrm.humanoid?.getNormalizedBoneNode?.("head");
-  const distGuess = portraitDistanceForHeight(fittedSize.y);
-  const cameraZSign =
-    cameraZSignOverride ??
-    detectPortraitCameraZSign(head, anchor, distGuess, vrm.humanoid);
-  const portraitDist = applyUpperBodyPortraitFrame({
-    camera,
-    controls,
-    anchor,
-    fittedHeight: fittedSize.y,
-    cameraZSign,
-  });
-  return { face: anchor, portraitDist, cameraZSign };
 }
 
 /**
@@ -518,35 +491,27 @@ export async function createVrmAvatar(opts) {
 
   const frameAnchor = new THREE.Vector3();
   const smoothedFrameAnchor = new THREE.Vector3();
-  const fitted = new THREE.Box3().setFromObject(model);
-  let {
-    face: faceAnchor,
-    portraitDist,
-    cameraZSign: portraitCameraZSign,
-  } = frameFaceCamera({
-    vrm,
-    model,
-    camera,
-    controls,
-    fitted,
-  });
   const headBone = vrm.humanoid?.getNormalizedBoneNode?.("head");
-  if (!isHeadFacingCamera(headBone, camera, vrm.humanoid)) {
-    model.rotation.y += Math.PI;
-    vrm.humanoid?.resetNormalizedPose?.();
-    const refitted = new THREE.Box3().setFromObject(model);
-    const reframed = frameFaceCamera({
-      vrm,
-      model,
-      camera,
-      controls,
-      fitted: refitted,
-    });
-    faceAnchor = reframed.face;
-    portraitDist = reframed.portraitDist;
-    portraitCameraZSign = reframed.cameraZSign;
-    baseModelRotY = model.rotation.y;
-  }
+  let faceAnchor = computeVrmFrameAnchor(vrm, model);
+  let portraitDist = portraitDistanceForHeight(
+    new THREE.Box3().setFromObject(model).getSize(new THREE.Vector3()).y,
+  );
+  let portraitCameraZSign = PORTRAIT_CAMERA_Z_SIGN;
+  /** @type {{ position: THREE.Vector3, target: THREE.Vector3, fov: number, distance: number }} */
+  const portraitCamera = {
+    position: camera.position.clone(),
+    target: controls.target.clone(),
+    fov: camera.fov,
+    distance: portraitDist,
+  };
+  const defaultPortrait = {
+    position: camera.position.clone(),
+    target: controls.target.clone(),
+    fov: camera.fov,
+    distance: portraitDist,
+  };
+  /** @type {(() => import('./companionCameraApply.js').ReturnType<typeof resolveFrontPortraitFrame>) | null} */
+  let applyDefaultPortraitFrame = null;
 
   const idleRest = detectVrmIdleRestRotations(vrm);
   bodyMotion.setArmRestRotations?.(idleRest.arms);
@@ -565,21 +530,6 @@ export async function createVrmAvatar(opts) {
   bodyMotion.resetMotionClock?.();
   configureVrmSpringStability(vrm, sceneEnvironment);
   recenterVrmSpringBones(vrm, { retune: true, captureInit: true });
-  faceLight.position.set(0.2, 1.55, portraitCameraZSign * 1.4);
-  smoothedFrameAnchor.copy(faceAnchor);
-  /** @type {{ position: THREE.Vector3, target: THREE.Vector3, fov: number, distance: number }} */
-  const portraitCamera = {
-    position: camera.position.clone(),
-    target: controls.target.clone(),
-    fov: camera.fov,
-    distance: portraitDist,
-  };
-  const defaultPortrait = {
-    position: camera.position.clone(),
-    target: controls.target.clone(),
-    fov: camera.fov,
-    distance: portraitDist,
-  };
   const syncPortraitFromControls = () => {
     portraitCamera.position.copy(camera.position);
     portraitCamera.target.copy(controls.target);
@@ -622,6 +572,44 @@ export async function createVrmAvatar(opts) {
     controls.addEventListener?.("change", syncLookTarget);
   }
   guardLookAtLids(vrm);
+
+  applyDefaultPortraitFrame = () => {
+    vrm.scene?.updateMatrixWorld?.(true);
+    headBone?.updateMatrixWorld?.(true);
+    const fittedNow = new THREE.Box3().setFromObject(model);
+    const fittedHeight = fittedNow.getSize(new THREE.Vector3()).y;
+    faceAnchor = computeVrmFrameAnchor(vrm, model);
+    const resolved = resolveFrontPortraitFrame({
+      model,
+      headBone,
+      humanoid: vrm.humanoid,
+      anchor: faceAnchor,
+      fittedHeight,
+      baseFov: PORTRAIT_FOV,
+    });
+    portraitDist = resolved.portraitDist;
+    portraitCameraZSign = resolved.zSign;
+    baseModelRotY = model.rotation.y;
+    applyUserOrbitLimits(controls);
+    applyPortraitShot(controls, camera, resolved.shot, { portraitDist });
+    faceLight.position.set(0.2, 1.55, portraitCameraZSign * 1.4);
+    smoothedFrameAnchor.copy(faceAnchor);
+    defaultPortrait.position.copy(camera.position);
+    defaultPortrait.target.copy(controls.target);
+    defaultPortrait.fov = camera.fov;
+    defaultPortrait.distance = portraitDist;
+    portraitCamera.position.copy(camera.position);
+    portraitCamera.target.copy(controls.target);
+    portraitCamera.fov = camera.fov;
+    portraitCamera.distance = portraitDist;
+    cameraResetAnim = null;
+    cameraDirector.resetDialogue();
+    cameraDirector.holdUserFraming(false);
+    cameraDirector.setUserOrbiting(false);
+    syncLookTarget();
+    return resolved;
+  };
+  applyDefaultPortraitFrame();
 
   controls.addEventListener?.("start", () => {
     cameraDirector.setUserOrbiting(true);
@@ -1493,27 +1481,7 @@ export async function createVrmAvatar(opts) {
   };
 
   const resetCameraView = () => {
-    const fittedNow = new THREE.Box3().setFromObject(model);
-    const fittedSize = fittedNow.getSize(new THREE.Vector3());
-    portraitDist = portraitDistanceForHeight(fittedSize.y);
-    const anchor = computeVrmFrameAnchor(vrm, model);
-    applyUserOrbitLimits(controls);
-    controls.minDistance = portraitDist * 0.55;
-    controls.maxDistance = portraitDist * 3.4;
-    const desired = buildPortraitShot(
-      anchor,
-      portraitDist,
-      PORTRAIT_FOV,
-      portraitCameraZSign,
-    );
-    cameraResetAnim = {
-      target: desired.target.clone(),
-      position: desired.position.clone(),
-      fov: desired.fov,
-    };
-    cameraDirector.resetDialogue();
-    cameraDirector.holdUserFraming(false);
-    cameraDirector.setUserOrbiting(false);
+    applyDefaultPortraitFrame?.();
   };
 
   canvas.style.touchAction = "none";

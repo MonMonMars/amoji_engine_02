@@ -17,12 +17,12 @@ import {
   smoothFrameAnchor,
 } from "./companionCameraFollow.js";
 import {
-  PORTRAIT_CAMERA_Z_SIGN,
+  applyPortraitShot,
+  resolveFrontPortraitFrame,
+} from "./companionCameraApply.js";
+import {
   PORTRAIT_FOV,
-  applyUpperBodyPortraitFrame,
   applyUserOrbitLimits,
-  detectPortraitCameraZSign,
-  isHeadFacingCamera,
   portraitDistanceForHeight,
 } from "./companionPortraitFraming.js";
 import {
@@ -203,36 +203,19 @@ export async function createGltfAvatar(opts) {
     if (/head|face|neck/i.test(obj.name) && obj.isBone) headBone = obj;
   });
   const anchor = computeGltfFrameAnchor(model, headBone);
-  let portraitCameraZSign = detectPortraitCameraZSign(
+  const resolved = resolveFrontPortraitFrame({
+    model,
     headBone,
     anchor,
-    portraitDistanceForHeight(fittedSize.y),
-  );
-  applyUpperBodyPortraitFrame({
-    camera,
-    controls,
-    anchor,
     fittedHeight: fittedSize.y,
-    cameraZSign: portraitCameraZSign,
+    baseFov: PORTRAIT_FOV,
   });
-  if (!isHeadFacingCamera(headBone, camera)) {
-    model.rotation.y += Math.PI;
-    baseModelRotY = model.rotation.y;
-    const refitted = new THREE.Box3().setFromObject(model);
-    const refAnchor = computeGltfFrameAnchor(model, headBone);
-    portraitCameraZSign = detectPortraitCameraZSign(
-      headBone,
-      refAnchor,
-      portraitDistanceForHeight(refitted.getSize(new THREE.Vector3()).y),
-    );
-    applyUpperBodyPortraitFrame({
-      camera,
-      controls,
-      anchor: refAnchor,
-      fittedHeight: refitted.getSize(new THREE.Vector3()).y,
-      cameraZSign: portraitCameraZSign,
-    });
-  }
+  const portraitCameraZSign = resolved.zSign;
+  baseModelRotY = model.rotation.y;
+  applyUserOrbitLimits(controls);
+  applyPortraitShot(controls, camera, resolved.shot, {
+    portraitDist: resolved.portraitDist,
+  });
   faceLight.position.set(0.2, 1.55, portraitCameraZSign * 1.4);
 
   /** @type {THREE.AnimationMixer | null} */
