@@ -94,6 +94,11 @@ import {
 } from "./vrmSpringStability.js";
 import { applyVrmOutfitTint } from "./companionOutfitApply.js";
 import {
+  hemisphereIntensityForScene,
+  rendererExposureForScene,
+  syncCameraRelativeStageLights,
+} from "./companionStageLighting.js";
+import {
   countMeshTriangles,
   summarizeMorphTargets,
 } from "./companionMeshStats.js";
@@ -222,7 +227,8 @@ export async function createVrmAvatar(opts) {
   const camera = new THREE.PerspectiveCamera(PORTRAIT_FOV, 1, 0.05, 100);
   camera.position.set(0, 1.42, 3.35);
 
-  scene.add(new THREE.HemisphereLight(0xffe8dc, 0x1a2030, 1.05));
+  const hemi = new THREE.HemisphereLight(0xffe8dc, 0x1a2030, 1.05);
+  scene.add(hemi);
   const key = new THREE.DirectionalLight(0xfff6ee, 1.55);
   key.position.set(2.2, 4.2, 3.5);
   key.castShadow = true;
@@ -297,6 +303,7 @@ export async function createVrmAvatar(opts) {
   let springTalkState = createIdleSpringRecenterState();
   /** @type {"indoor" | "outdoor"} */
   let sceneEnvironment = "indoor";
+  let sceneBackgroundId = null;
   /** @type {ReturnType<typeof createMotionTransitionState>} */
   let motionTransitionState = null;
   /** @type {string | null} */
@@ -613,7 +620,6 @@ export async function createVrmAvatar(opts) {
     baseModelRotY = model.rotation.y;
     applyUserOrbitLimits(controls);
     applyPortraitShot(controls, camera, resolved.shot, { portraitDist });
-    faceLight.position.set(0.2, 1.55, portraitCameraZSign * 1.4);
     smoothedFrameAnchor.copy(faceAnchor);
     defaultPortrait.position.copy(camera.position);
     defaultPortrait.target.copy(controls.target);
@@ -1460,6 +1466,15 @@ export async function createVrmAvatar(opts) {
     // Keep model scale fixed — uniform scale breathing disturbs spring-bone hair/skirt.
     model.scale.setScalar(scale);
 
+    syncCameraRelativeStageLights({
+      camera,
+      anchor: smoothedFrameAnchor,
+      key,
+      fill,
+      rim,
+      faceLight,
+      portraitCameraZSign,
+    });
     faceLight.intensity = 0.55 + (talking ? 0.2 : 0) + Math.sin((now - t0) * 0.002) * 0.05;
     renderer.render(scene, camera);
     raf = requestAnimationFrame(frame);
@@ -1586,13 +1601,23 @@ export async function createVrmAvatar(opts) {
     playCalmIdle() {
       return playCalmLibraryIdle();
     },
-    setSceneEnvironment(mode) {
+    setSceneEnvironment(mode, backgroundId = null) {
       sceneEnvironment = mode === "outdoor" ? "outdoor" : "indoor";
+      if (backgroundId != null) {
+        sceneBackgroundId = String(backgroundId || "").toLowerCase() || null;
+      }
       setVrmSceneWindMode(sceneEnvironment);
       configureVrmSpringStability(vrm, sceneEnvironment);
       if (sceneEnvironment === "indoor") {
         recenterVrmSpringBones(vrm, { retune: true, captureInit: false });
       }
+      if ("toneMappingExposure" in renderer) {
+        renderer.toneMappingExposure = rendererExposureForScene(
+          sceneEnvironment,
+          sceneBackgroundId,
+        );
+      }
+      hemi.intensity = hemisphereIntensityForScene(sceneEnvironment, sceneBackgroundId);
       return sceneEnvironment;
     },
     getSceneEnvironment() {

@@ -25,6 +25,7 @@ import {
   applyUserOrbitLimits,
   portraitDistanceForHeight,
 } from "./companionPortraitFraming.js";
+import { syncCameraRelativeStageLights } from "./companionStageLighting.js";
 import {
   bindOrbitControlSession,
   bindOrbitTouchGuard,
@@ -216,8 +217,6 @@ export async function createGltfAvatar(opts) {
   applyPortraitShot(controls, camera, resolved.shot, {
     portraitDist: resolved.portraitDist,
   });
-  faceLight.position.set(0.2, 1.55, portraitCameraZSign * 1.4);
-
   /** @type {THREE.AnimationMixer | null} */
   let mixer = null;
   /** @type {THREE.AnimationAction | null} */
@@ -517,6 +516,15 @@ export async function createGltfAvatar(opts) {
     controls.enabled = true;
     controls.update();
 
+    syncCameraRelativeStageLights({
+      camera,
+      anchor: smoothedFrameAnchor,
+      key,
+      fill,
+      rim,
+      faceLight,
+      portraitCameraZSign,
+    });
     faceLight.intensity = 0.55 + (talking || eating ? 0.2 : 0) + Math.sin((now - t0) * 0.002) * 0.05;
     if (eating && !talking) {
       setMouthOpen(sampleEatMouthPulse(now, true));

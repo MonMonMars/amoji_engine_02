@@ -36,11 +36,15 @@ export function applyVrmOutfitTint(root, outfitId) {
   root.traverse((obj) => {
     if (!obj.isMesh || !obj.material) return;
     const name = String(obj.name || "").toLowerCase();
-    const isClothing =
-      /cloth|shirt|pant|skirt|dress|jacket|coat|body|torso|top|bottom|outfit|wear/.test(
-        name,
-      ) || /hair|face|skin|head/.test(name) === false;
-    if (!isClothing && id !== "default") return;
+    const isSkinOrFace = /hair|face|skin|head|eye|brow|lash|teeth|mouth|tongue|nail/.test(
+      name,
+    );
+    const isClothing = /cloth|shirt|pant|skirt|dress|jacket|coat|torso|top|bottom|outfit|wear|uniform|suit|vest|hoodie|shoe|boot|sock|glove|belt|accessory|acc_/.test(
+      name,
+    );
+    if (isSkinOrFace || !isClothing) {
+      if (id !== "default") return;
+    }
 
     const mats = Array.isArray(obj.material) ? obj.material : [obj.material];
     for (const mat of mats) {
