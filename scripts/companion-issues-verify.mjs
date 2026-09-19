@@ -145,6 +145,11 @@ async function main() {
           dock.getBoundingClientRect().width === dock.getBoundingClientRect().height
         : true,
       stripCards: picker?.querySelectorAll(".companion-card--start-strip").length || 0,
+      sceneInRosterDock: Boolean(
+        picker?.querySelector(".picker-roster-dock .picker-scene-section"),
+      ),
+      roleStripCount:
+        picker?.querySelectorAll(".companion-card-role-strip").length || 0,
     };
   });
   record("build-id", boot.build === AMOJI_BUILD, `${boot.build} vs ${AMOJI_BUILD}`);
@@ -162,6 +167,12 @@ async function main() {
     boot.ring ? `ringHidden=${boot.ringHidden}` : "no ring",
   );
   record("character-chip", boot.chip);
+  record("picker-scene-in-roster-dock", boot.sceneInRosterDock);
+  record(
+    "picker-no-role-strip",
+    boot.roleStripCount === 0,
+    `strips=${boot.roleStripCount}`,
+  );
   record("orbit-hit", boot.orbit);
   record("progress-dock-circle", boot.dockCircle);
 
@@ -292,6 +303,35 @@ async function main() {
       },
     };
   });
+
+  const topbarChrome = await page.evaluate(() => {
+    const chip = document.getElementById("brand-btn");
+    const menu = document.querySelector(".topbar-setup-btn");
+    const rolePill = document.getElementById("companion-role-pill");
+    const chipStyle = chip ? getComputedStyle(chip) : null;
+    const roleStyle = rolePill ? getComputedStyle(rolePill) : null;
+    return {
+      minimal: document.body.classList.contains("companion-minimal-chrome"),
+      menuVisible: Boolean(menu && getComputedStyle(menu).display !== "none"),
+      chipHidden:
+        !chip ||
+        chipStyle?.display === "none" ||
+        chipStyle?.visibility === "hidden",
+      roleHidden:
+        !rolePill ||
+        roleStyle?.display === "none" ||
+        roleStyle?.visibility === "hidden" ||
+        rolePill.hidden,
+    };
+  });
+  record(
+    "topbar-menu-only",
+    topbarChrome.minimal &&
+      topbarChrome.menuVisible &&
+      topbarChrome.chipHidden &&
+      topbarChrome.roleHidden,
+    JSON.stringify(topbarChrome),
+  );
 
   record("selected-model-nova", afterNova.character === "nova", afterNova.character);
   record(
