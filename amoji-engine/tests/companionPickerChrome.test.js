@@ -37,9 +37,9 @@ describe("companionPickerChrome", () => {
   it("provides bilingual copy for hero + confirm CTA", () => {
     const en = pickerCopy(true);
     const yue = pickerCopy(false);
-    expect(en.begin).toBe("Begin chat");
+    expect(en.begin).toBe("Start");
     expect(en.switch).toBe("Switch companion");
-    expect(yue.begin).toBe("開始傾偈");
+    expect(yue.begin).toBe("開始");
     expect(yue.switch).toBe("切換同伴");
     expect(en.searchPlaceholder).toMatch(/Search/i);
     expect(yue.searchPlaceholder).toMatch(/搜尋/);

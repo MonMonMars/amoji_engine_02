@@ -1,0 +1,85 @@
+/**
+ * Start picker — 4-row layout: hero · horizontal roster · backgrounds · start CTA.
+ * Images use object-fit: contain (full picture, no crop).
+ */
+
+.companion-picker--stacked-layout.companion-picker--start .companion-picker-sheet {
+  grid-template-rows: auto minmax(0, 1fr) auto;
+}
+
+.companion-picker--stacked-layout .picker-main--stacked {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.companion-picker--stacked-layout .picker-showcase-stage {
+  flex: unset;
+  min-height: 0;
+  align-items: stretch;
+  justify-content: center;
+  padding: 0.25rem 0.85rem 0.35rem;
+}
+
+.companion-picker--stacked-layout .picker-hero {
+  width: 100%;
+  max-width: none;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 0.85rem;
+  text-align: left;
+  padding: 0.45rem 0.65rem 0.5rem;
+}
+
+.companion-picker--stacked-layout .picker-hero-portrait {
+  flex: 0 0 min(44%, 10.5rem);
+  width: min(44%, 10.5rem);
+  max-width: 10.5rem;
+  height: min(36vh, 13.5rem);
+  max-height: 13.5rem;
+  aspect-ratio: unset;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.companion-picker--stacked-layout .picker-hero-portrait img {
+  object-fit: contain !important;
+  object-position: center !important;
+  width: auto !important;
+  height: auto !important;
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.companion-picker--stacked-layout .picker-hero-meta {
+  flex: 1 1 auto;
+  align-items: flex-start;
+  max-width: none;
+  min-width: 0;
+}
+
+.companion-picker--stacked-layout .picker-hero-traits {
+  justify-content: flex-start;
+}
+
+.companion-picker--stacked-layout .picker-roster-row {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 0.35rem 0 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.12), rgba(0, 0, 0, 0.28));
+}
+
+.companion-picker--stacked-layout .picker-background-row {
+  flex-shrink: 0;
+}
+
+.companion-picker--stacked-layout .picker-footer {
+  flex-shrink: 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
