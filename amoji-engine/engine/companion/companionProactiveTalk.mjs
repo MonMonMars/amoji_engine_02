@@ -13,11 +13,11 @@ export const PROACTIVE_TALK_SCHEMA = "amoji.companionProactiveTalk.v2";
 export const CHARACTER_PROACTIVE_LINES = DEMO_PROACTIVE_LINES;
 
 /** First nudge after greeting if user stays quiet. */
-export const PROACTIVE_GREETING_FOLLOWUP_MS = 11000;
+export const PROACTIVE_GREETING_FOLLOWUP_MS = 9000;
 /** Nudge after assistant finishes speaking. */
-export const PROACTIVE_AFTER_REPLY_MS = 22000;
+export const PROACTIVE_AFTER_REPLY_MS = 18000;
 /** Periodic idle conversation starter. */
-export const PROACTIVE_IDLE_INTERVAL_MS = 48000;
+export const PROACTIVE_IDLE_INTERVAL_MS = 38000;
 /** Minimum gap between any two proactive lines. */
 export const PROACTIVE_SPEAK_COOLDOWN_MS = 32000;
 

@@ -35,9 +35,9 @@ describe("companion character picker data", () => {
 
   it("includes per-character voice labels for picker cards", () => {
     const nova = listCompanionCharacters("yue").find((c) => c.id === "nova");
-    const sora = listCompanionCharacters("yue").find((c) => c.id === "sora");
+    const hina = listCompanionCharacters("yue").find((c) => c.id === "hina");
     expect(nova?.voiceLabel).toBe("曉曼·明亮");
-    expect(sora?.voiceLabel).toBe("曉曼");
+    expect(hina?.voiceLabel).toBeTruthy();
   });
 
   it("numbers picker cards in roster order", () => {

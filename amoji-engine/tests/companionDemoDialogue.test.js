@@ -8,6 +8,7 @@ import {
   demoStarterPrompts,
   pickDemoProactiveLine,
   pickTutorialStarterPrompts,
+  PROACTIVE_NEW_TOPIC_LINES,
   TUTORIAL_STARTER_PROMPTS,
 } from "../engine/companion/companionDemoDialogue.mjs";
 
@@ -50,6 +51,21 @@ describe("companionDemoDialogue", () => {
       avoid: new Set([a]),
     });
     expect(a).not.toBe(b);
+  });
+
+  it("prefers fresh topic openers when idle", () => {
+    expect(PROACTIVE_NEW_TOPIC_LINES.sky.en.length).toBeGreaterThanOrEqual(6);
+    const idle = pickDemoProactiveLine("mio", true, { bucket: "idle" });
+    expect(idle.length).toBeGreaterThan(5);
+    const follow = pickDemoProactiveLine("mio", true, { bucket: "followup" });
+    expect(follow.length).toBeGreaterThan(5);
+  });
+
+  it("has starter and proactive pools for all curated characters", () => {
+    for (const id of ["sky", "yuki", "hina", "mio"]) {
+      expect(demoStarterPrompts(id, true).length).toBeGreaterThanOrEqual(5);
+      expect(pickDemoProactiveLine(id, true)).toBeTruthy();
+    }
   });
 
   it("handles boot demo replies in English", () => {

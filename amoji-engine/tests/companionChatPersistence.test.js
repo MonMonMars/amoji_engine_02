@@ -68,9 +68,9 @@ describe("companionChatPersistence", () => {
   });
 
   it("clears character history", () => {
-    appendChatHistory("sora", { role: "user", text: "test" }, storage);
-    clearChatHistory("sora", storage);
-    expect(loadChatHistory("sora", storage)).toHaveLength(0);
+    appendChatHistory("mio", { role: "user", text: "test" }, storage);
+    clearChatHistory("mio", storage);
+    expect(loadChatHistory("mio", storage)).toHaveLength(0);
   });
 
   it("returns tutorial starter prompts with feature copy", () => {

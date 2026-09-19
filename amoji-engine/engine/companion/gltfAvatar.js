@@ -258,7 +258,7 @@ export async function createGltfAvatar(opts) {
   let nuance = "none";
   const faceProfile = buildModelFaceProfile({
     avatarKind: "gltf",
-    characterId: opts.characterId || "sora",
+    characterId: opts.characterId || "amoji",
   });
   let mouthOpen = 0;
   let talking = false;

@@ -25,7 +25,7 @@ import {
   TRIAL_CHARACTER_IDS,
 } from "../engine/companion/companionCharacterCatalog.js";
 
-describe("companionCharacterCatalog v225 pre-release roster", () => {
+describe("companionCharacterCatalog v226 curated roster", () => {
   it("keeps flagship roster numbers 1–4", () => {
     expect(characterNumber("nova")).toBe(1);
     expect(characterNumber("kizuna")).toBe(2);
@@ -34,37 +34,36 @@ describe("companionCharacterCatalog v225 pre-release roster", () => {
     expect(ROSTER_LOCKED_NUMBERS).toEqual([1, 2, 3, 4]);
   });
 
-  it("exposes the full AAA + pro-reference catalog", () => {
-    expect(CHARACTER_IDS.length).toBe(30);
-    expect(CHARACTER_IDS).toContain("amoji");
-    expect(CHARACTER_IDS).toContain("rex");
-    expect(CHARACTER_IDS).toContain("rose");
-    expect(CHARACTER_IDS).toContain("chibi");
-    expect(CHARACTER_IDS).toContain("sky");
-    expect(CHARACTER_IDS).toContain("hina");
-    expect(CHARACTER_IDS).toContain("mio");
-    expect(CHARACTER_IDS).toContain("vroidf");
-    expect(CHARACTER_IDS).toContain("poly");
+  it("exposes the curated AAA catalog of ten characters", () => {
+    expect(CHARACTER_IDS.length).toBe(10);
+    expect(CHARACTER_IDS).toEqual([
+      "nova",
+      "kizuna",
+      "alicia",
+      "ember",
+      "sky",
+      "yuki",
+      "hina",
+      "mio",
+      "amoji",
+      "rex",
+    ]);
     expect(Object.keys(COMPANION_CHARACTERS).sort()).toEqual([...CHARACTER_IDS].sort());
-    expect(TRIAL_CHARACTER_IDS.length).toBeGreaterThanOrEqual(10);
+    expect(TRIAL_CHARACTER_IDS).toEqual(["yuki", "hina", "mio"]);
   });
 
   it("uses distinct preview portraits for flagship picks", () => {
     expect(getCharacter("nova").previewImage).toBe(characterPreviewImage("nova"));
     expect(getCharacter("kizuna").previewImage).toBe(characterPreviewImage("kizuna"));
-    expect(getCharacter("alicia").previewImage).toBe(characterPreviewImage("alicia"));
-    expect(getCharacter("ember").previewImage).toBe(characterPreviewImage("ember"));
-    expect(getCharacter("chibi").previewImage).toBe(characterPreviewImage("chibi"));
     expect(getCharacter("sky").previewImage).toBe(characterPreviewImage("sky"));
+    expect(getCharacter("yuki").modelUrl).toContain("companion-olivia.vrm");
+    expect(getCharacter("hina").modelUrl).toContain("companion-lydia.vrm");
+    expect(getCharacter("mio").modelUrl).toContain("companion-kate.vrm");
   });
 
-  it("assigns one preview path per roster id including trial references", () => {
+  it("assigns one preview path per roster id", () => {
     const paths = CHARACTER_IDS.map((id) => characterPreviewImage(id));
     expect(new Set(paths).size).toBe(CHARACTER_IDS.length);
-    expect(characterPreviewImage("poly")).toContain("companion-char-poly");
-    expect(characterPreviewImage("jennifer")).toContain("companion-char-jennifer");
-    expect(characterPreviewImage("shiro")).toContain("companion-char-shiro");
-    expect(characterPreviewImage("aesthe")).toContain("companion-char-aesthe");
   });
 
   it("resolves default to nova", () => {
@@ -72,18 +71,14 @@ describe("companionCharacterCatalog v225 pre-release roster", () => {
     expect(getCharacter("missing").id).toBe("nova");
   });
 
-  it("maps pro-reference model urls", () => {
-    expect(resolveCharacterId({ modelUrl: "/prototypes/assets/companion-chad.vrm" })).toBe(
-      "chad",
-    );
+  it("maps curated model urls", () => {
     expect(resolveCharacterId({ modelUrl: "/prototypes/assets/companion-kai.vrm" })).toBe("rex");
-    expect(resolveCharacterId({ modelUrl: "/prototypes/assets/companion-avatarsample-a.vrm" })).toBe(
-      "hina",
+    expect(resolveCharacterId({ modelUrl: "/prototypes/assets/companion-olivia.vrm" })).toBe(
+      "yuki",
     );
-    expect(resolveCharacterId({ modelUrl: "/prototypes/assets/companion-vroid-female.vrm" })).toBe(
-      "vroidf",
-    );
-    expect(resolveCharacterId({ modelUrl: "/prototypes/assets/companion-girl.glb" })).toBe("sora");
+    expect(resolveCharacterId({ modelUrl: "/prototypes/assets/companion-lydia.vrm" })).toBe("hina");
+    expect(resolveCharacterId({ modelUrl: "/prototypes/assets/companion-kate.vrm" })).toBe("mio");
+    expect(resolveCharacterId({ modelUrl: "/prototypes/assets/companion-girl.vrm" })).toBe("amoji");
   });
 
   it("assigns distinct voices per roster character", () => {
@@ -105,33 +100,33 @@ describe("companionCharacterCatalog v225 pre-release roster", () => {
 
   it("cycles roster in order", () => {
     expect(nextCharacterId("nova")).toBe("kizuna");
-    expect(nextCharacterId("ember")).toBe("chibi");
+    expect(nextCharacterId("ember")).toBe("sky");
     expect(nextCharacterId("sky")).toBe("yuki");
-    expect(nextCharacterId("jennifer")).toBe("nova");
+    expect(nextCharacterId("rex")).toBe("nova");
   });
 
   it("lists picker metadata with roster numbers", () => {
     const list = listCompanionCharacters("yue");
     expect(list[0]).toMatchObject({ id: "nova", number: 1 });
-    expect(list.find((c) => c.id === "rex")?.number).toBeGreaterThan(0);
-    expect(list.find((c) => c.id === "rose")?.previewImage).toContain("companion-char-rose");
-    expect(GALLERY_PRIORITY_IDS.has("chibi")).toBe(true);
+    expect(list.find((c) => c.id === "rex")?.number).toBe(10);
+    expect(list.find((c) => c.id === "amoji")?.number).toBe(9);
     expect(GALLERY_PRIORITY_IDS.has("amoji")).toBe(true);
+    expect(GALLERY_PRIORITY_IDS.has("rex")).toBe(true);
   });
 
   it("builds character-specific prompts", () => {
     expect(buildCharacterSystemPrompt("nova", false)).toContain("諾娃");
     expect(buildCharacterSystemPrompt("rex", true)).toMatch(/Rex|烈/i);
-    expect(characterGreeting("kate", true)).toMatch(/Kate/i);
-    expect(characterGender("chad", "yue")).toBe("male");
-    expect(characterGender("rose", "yue")).toBe("female");
-    expect(characterVoiceLabel("kate", "yue", false)).toBe("曉曼·俐落");
+    expect(buildCharacterSystemPrompt("mio", true)).toMatch(/Mio|go-getter/i);
+    expect(characterGreeting("yuki", true)).toMatch(/Yuki/i);
+    expect(characterGender("rex", "yue")).toBe("male");
+    expect(characterGender("hina", "yue")).toBe("female");
+    expect(characterVoiceLabel("yuki", "yue", false)).toBeTruthy();
   });
 
   it("exposes avatar config per character", () => {
-    expect(characterAvatarConfig("sora", "yue").avatarPrefer).toBe("gltf");
     expect(characterAvatarConfig("rex", "yue").modelUrl).toContain("companion-kai.vrm");
-    expect(defaultVoiceForCharacter("poly", "yue")).toBe("zh-HK-HiuGaaiNeural-poly");
+    expect(defaultVoiceForCharacter("yuki", "yue")).toBe("zh-HK-HiuMaanNeural-yuki");
   });
 
   it("keeps hungry lines on the same character voice profile", () => {
@@ -142,7 +137,7 @@ describe("companionCharacterCatalog v225 pre-release roster", () => {
     expect(hungry.talkStyle).toBe("soft");
     expect(hungry.speechEnergy).toBeLessThan(base.speechEnergy);
     expect(hungry.speechEnergy).toBeGreaterThan(0.38);
-    const lonely = characterLonelyPerformance("sora");
+    const lonely = characterLonelyPerformance("hina");
     expect(lonely.emotion).toBe("sad");
     expect(lonely.nuance).toBe("shy");
     expect(lonely.talkStyle).toBe("soft");

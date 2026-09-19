@@ -107,7 +107,7 @@ export function initAmojiSecretaryLite(doc = document) {
   });
   globalThis.__amojiUiAudio = uiAudio;
   globalThis.__amojiUiSettings = uiSettings;
-  const secretaryCharacterId = "rose";
+  const secretaryCharacterId = "nova";
   let voiceId = resolveVoiceForCharacter(secretaryCharacterId, langCode);
   if (params.has("voice")) {
     params.delete("voice");
@@ -442,7 +442,7 @@ export function initAmojiSecretaryLite(doc = document) {
       const plan = buildExpressiveTtsPlan(
         text,
         { ...perf, voiceId },
-        "rose",
+        "nova",
         isEn ? "en-US" : "zh-HK",
         voiceId,
       );
@@ -465,7 +465,7 @@ export function initAmojiSecretaryLite(doc = document) {
               },
               lang: isEn ? "en" : "yue",
               voice: voiceId,
-              characterId: "rose",
+              characterId: "nova",
             }),
           ),
         });

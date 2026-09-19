@@ -48,19 +48,19 @@ describe("companionUnifiedApp", () => {
   it("derives role from selected character when character param is explicit", () => {
     expect(
       resolveAppRole(
-        new URLSearchParams("character=kate&role=girlfriend"),
+        new URLSearchParams("character=mio&role=girlfriend"),
         null,
-        "kate",
+        "mio",
       ),
-    ).toBe("secretary");
+    ).toBe("girlfriend");
     expect(
-      resolveAppRole(new URLSearchParams("character=chad"), null, "chad"),
+      resolveAppRole(new URLSearchParams("character=rex"), null, "rex"),
     ).toBe("boyfriend");
   });
 
   it("uses role default character when none picked", () => {
     expect(resolveRoleDefaultCharacter("", "secretary", new URLSearchParams())).toBe(
-      "kate",
+      "nova",
     );
     expect(
       resolveRoleDefaultCharacter("nova", "girlfriend", new URLSearchParams()),
@@ -70,8 +70,8 @@ describe("companionUnifiedApp", () => {
   it("lists roster with embedded function labels", () => {
     const roster = rosterCharactersForPicker("en");
     expect(roster.every((c) => c.companionRole && c.roleBadge)).toBe(true);
-    expect(roster.some((c) => c.companionRole === "secretary")).toBe(true);
-    expect(roster.length).toBeGreaterThan(10);
+    expect(roster.some((c) => c.companionRole === "boyfriend")).toBe(true);
+    expect(roster.length).toBe(10);
     const secretaries = rosterCharactersForRole("en", "secretary");
     expect(secretaries.every((c) => c.companionRole === "secretary")).toBe(true);
   });

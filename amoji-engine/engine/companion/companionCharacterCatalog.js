@@ -69,8 +69,8 @@ export {
 export const COMPANION_CHARACTERS = COMPANION_ROSTER_CHARACTERS;
 
 /**
- * Roster display + preload order — full pre-release pro catalog (v225).
- * Flagship: #1–4 Nova/Kizuna/Alicia/Ember; rest are industry reference rigs.
+ * Roster display + preload order — curated AAA catalog (v226).
+ * Flagship: #1–4 Nova/Kizuna/Alicia/Ember; #5–10 Sky/Yuki/Hina/Mio/Amoji/Rex.
  */
 export const CHARACTER_IDS = ROSTER_CHARACTER_IDS;
 
@@ -98,11 +98,9 @@ export const GALLERY_PRIORITY_IDS = new Set([
   "kizuna",
   "alicia",
   "ember",
-  "chibi",
   "sky",
-  "kate",
-  "quinn",
   "amoji",
+  "rex",
 ]);
 
 /** Minimum mesh triangles to treat as high-poly face roster picks. */
@@ -221,42 +219,22 @@ export function resolveCharacterId(opts = {}) {
   const model = String(opts.modelUrl || "").toLowerCase();
   /** @type {[string, string][]} */
   const modelMap = [
-    ["companion-girl.glb", "sora"],
     ["companion-girl.vrm", "amoji"],
-    ["companion-quinn.glb", "quinn"],
     ["kizuna-kamatte.vrm", "kizuna"],
     ["companion-nova.vrm", "nova"],
     ["companion-alicia.vrm", "alicia"],
     ["companion-ember.vrm", "ember"],
-    ["companion-chibi.vrm", "chibi"],
     ["companion-sky.vrm", "sky"],
     ["companion-kai.vrm", "rex"],
-    ["companion-rose.vrm", "rose"],
-    ["companion-robert.vrm", "robert"],
-    ["companion-rabbit.vrm", "mimi"],
-    ["companion-olivia.vrm", "olivia"],
-    ["companion-erika.vrm", "erika"],
-    ["companion-lydia.vrm", "lydia"],
-    ["companion-kate.vrm", "kate"],
-    ["companion-mikel.vrm", "mikel"],
-    ["companion-avatarsample-a.vrm", "hina"],
-    ["companion-avatarsample-b.vrm", "yuki"],
-    ["companion-avatarsample-c.vrm", "mio"],
-    ["companion-vroid-female.vrm", "vroidf"],
-    ["companion-vroid-male.vrm", "vroidm"],
-    ["companion-chad.vrm", "chad"],
-    ["companion-david.vrm", "david"],
-    ["companion-hugo.vrm", "hugo"],
-    ["companion-polydancer.vrm", "poly"],
-    ["companion-aesthetica.vrm", "aesthe"],
-    ["companion-shiro.vrm", "shiro"],
-    ["companion-jennifer.vrm", "jennifer"],
+    ["companion-olivia.vrm", "yuki"],
+    ["companion-lydia.vrm", "hina"],
+    ["companion-kate.vrm", "mio"],
   ];
   for (const [needle, id] of modelMap) {
     if (model.includes(needle)) return id;
   }
   if (opts.avatarPrefer === "gltf" && model.includes(".glb")) {
-    return "sora";
+    return "amoji";
   }
 
   const storage = opts.storage ?? globalThis.localStorage ?? null;

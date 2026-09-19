@@ -45,7 +45,7 @@ describe("companionTtsProsody", () => {
       talkStyle: "thinking",
       speechEnergy: 0.45,
       text: "嗯，我明白你的意思，讓我慢慢整理一下。",
-      characterId: "sora",
+      characterId: "hina",
       speedMultiplier: 1,
     });
     const hype = resolveCompanionTtsProsody({
