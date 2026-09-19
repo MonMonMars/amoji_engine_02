@@ -48,6 +48,7 @@ import {
   resolveTalkEmotionMorphWeights,
 } from "./companionFaceEmotion.js";
 import {
+  CALM_IDLE_USES_PROCEDURAL_BODY,
   isOnlineIdleAction,
   isOnlineLoopingLibraryAction,
   ONLINE_CALM_IDLE_ACTION,
@@ -408,7 +409,40 @@ export async function createVrmAvatar(opts) {
     void resumeCalmStand();
   };
 
+  const restoreProceduralCalmStand = (opts = {}) => {
+    const wasLibrary = Boolean(
+      vrmaAction &&
+        (motionPlayer.isPlaying?.() ||
+          motionPlayer.isCrossfading?.() ||
+          vrmaPending),
+    );
+    vrmaPlayGen += 1;
+    vrmaPending = false;
+    vrmaSequenceQueue = [];
+    vrmaSequenceOpts = null;
+    if (wasLibrary || opts.stopLibrary !== false) {
+      motionPlayer.stop?.(DEFAULT_MOTION_CROSSFADE_SEC);
+      motionTransitionState = null;
+    }
+    vrmaAction = null;
+    const rest = detectVrmIdleRestRotations(vrm);
+    bodyMotion.setArmRestRotations?.(rest.arms);
+    bodyMotion.setLegRestRotations?.(rest.legs);
+    bodyMotion.setArmBind?.(rest.bind);
+    bodyMotion.snapToRestPose?.();
+    bodyMotion.resetIdleLife?.();
+    syncHumanoidPose();
+    syncSpringsAfterPose();
+    springIdleState = createIdleSpringRecenterState();
+    springTalkState = createIdleSpringRecenterState();
+    return true;
+  };
+
   const playCalmLibraryIdle = (opts = {}) => {
+    if (CALM_IDLE_USES_PROCEDURAL_BODY) {
+      restoreProceduralCalmStand(opts);
+      return Promise.resolve(true);
+    }
     if (
       motionPlayer.isPlaying?.() &&
       vrmaAction === ONLINE_CALM_IDLE_ACTION &&
@@ -431,35 +465,7 @@ export async function createVrmAvatar(opts) {
   };
 
   const restorePlantedIdle = () => {
-    const fromLibrary = Boolean(
-      motionPlayer.activeActionId &&
-        (motionPlayer.isPlaying?.() || motionPlayer.isCrossfading?.()),
-    );
-    if (fromLibrary) {
-      motionTransitionState =
-        planMotionTransition(vrm, motionPlayer, {
-          nextActionId: ONLINE_CALM_IDLE_ACTION,
-          durationSec: DEFAULT_MOTION_CROSSFADE_SEC + 0.08,
-          forceCapture: true,
-          label: "calm-idle-restore",
-        }) ?? motionTransitionState;
-    }
-    vrmaPlayGen += 1;
-    vrmaPending = false;
-    vrmaSequenceQueue = [];
-    vrmaSequenceOpts = null;
-    bodyMotion.holdForLibraryMotion?.();
-    if (!fromLibrary) {
-      const rest = detectVrmIdleRestRotations(vrm);
-      bodyMotion.setArmRestRotations?.(rest.arms);
-      bodyMotion.setLegRestRotations?.(rest.legs);
-      bodyMotion.setArmBind?.(rest.bind);
-      syncHumanoidPose();
-    }
-    void playCalmLibraryIdle({ skipTransitionPlan: true });
-    syncSpringsAfterPose();
-    springIdleState = createIdleSpringRecenterState();
-    springTalkState = createIdleSpringRecenterState();
+    restoreProceduralCalmStand({ stopLibrary: true });
   };
 
   const resumeCalmStand = async () => {
@@ -1459,16 +1465,13 @@ export async function createVrmAvatar(opts) {
   bodyMotion.applyHandRestOnly?.({ talkBlend: 0, now: performance.now() });
   applyTalkMouthNow(performance.now());
   renderer.render(scene, camera);
-  void motionPlayer.warmClip(ONLINE_CALM_IDLE_ACTION);
   for (const id of BOOT_FULL_LIBRARY_WARM_CLIP_IDS) {
+    if (CALM_IDLE_USES_PROCEDURAL_BODY && id === ONLINE_CALM_IDLE_ACTION) {
+      continue;
+    }
     void motionPlayer.warmClip(id);
   }
-  motionTransitionState = planMotionTransition(vrm, motionPlayer, {
-    nextActionId: ONLINE_CALM_IDLE_ACTION,
-    durationSec: DEFAULT_MOTION_CROSSFADE_SEC,
-    label: "boot-idle",
-  });
-  void playCalmLibraryIdle();
+  restoreProceduralCalmStand({ stopLibrary: false });
   raf = requestAnimationFrame(frame);
   globalThis.addEventListener?.("resize", resize);
 

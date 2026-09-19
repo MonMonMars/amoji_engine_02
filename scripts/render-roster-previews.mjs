@@ -114,7 +114,14 @@ async function waitForStageReady(page, characterId) {
     characterId,
     { timeout: 120000 },
   );
-  await page.waitForTimeout(5000);
+  await page
+    .waitForFunction(
+      () => document.querySelector(".stage.avatar-ready") != null,
+      undefined,
+      { timeout: 90000 },
+    )
+    .catch(() => null);
+  await page.waitForTimeout(8000);
   await hideUiForCapture(page);
   await page.waitForTimeout(400);
 }

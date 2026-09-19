@@ -15,7 +15,7 @@ import {
 } from "./companionPoseLibrary.js";
 
 export const COMPANION_ARM_REST_CALIBRATION_SCHEMA =
-  "amoji.companionArmRestCalibration.v2";
+  "amoji.companionArmRestCalibration.v3";
 
 const ARM_BONES = [
   "leftUpperArm",
@@ -36,7 +36,7 @@ const ELBOW_BEND_APOSE = 0.22;
 const KNEE_BEND_TPOSE = 0.26;
 const KNEE_BEND_APOSE = 0.12;
 /** Hand already dropped this far from shoulder→hip means authored A-pose. */
-const APOSE_DROP_RATIO = 0.36;
+const APOSE_DROP_RATIO = 0.28;
 
 const scratchA = new THREE.Vector3();
 const scratchB = new THREE.Vector3();

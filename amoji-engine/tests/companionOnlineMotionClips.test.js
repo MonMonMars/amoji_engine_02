@@ -6,12 +6,17 @@ import {
   ONLINE_IDLE_ACTION,
   ONLINE_IDLE_CLIP_FILE,
   ONLINE_MOTION_CLIP_FILES,
+  CALM_IDLE_USES_PROCEDURAL_BODY,
   PROCEDURAL_PREFERRED_ACTIONS,
   resolveOnlineMotionClipFile,
   resolveOnlineMotionClipUrl,
 } from "../engine/companion/companionOnlineMotionClips.mjs";
 
 describe("companionOnlineMotionClips", () => {
+  it("uses procedural body for calm stand (hosted VRMA clashes with VRM binds)", () => {
+    expect(CALM_IDLE_USES_PROCEDURAL_BODY).toBe(true);
+  });
+
   it("maps idle and social gestures onto the hosted VRMA library", () => {
     expect(ONLINE_IDLE_ACTION).toBe("idle");
     expect(ONLINE_IDLE_CLIP_FILE).toBe("Thinking");

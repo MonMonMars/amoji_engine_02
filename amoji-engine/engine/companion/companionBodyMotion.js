@@ -22,6 +22,7 @@ import {
 } from "./companionActionMotion.js";
 import { buildCharacterSystemPrompt } from "./companionCharacterCatalog.js";
 import {
+  sampleCalmBreathIdle,
   samplePlantedAliveIdle,
   advanceIdleBeat,
   createIdleBeatState,
@@ -810,8 +811,11 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
         pose.headX = (pose.headX || 0) + Math.sin(elapsed * 0.55) * 0.024;
         pose.headZ = (pose.headZ || 0) + Math.sin(elapsed * 0.42 + 0.8) * 0.018;
       } else if (!talking) {
-        const idleMotion = samplePlantedAliveIdle(elapsed, { listening, emotion });
-        pose = mergePoses(pose, idleMotion, 0.96);
+        const apose = isAposeBind();
+        const idleMotion = apose
+          ? sampleCalmBreathIdle(elapsed, { listening, emotion })
+          : samplePlantedAliveIdle(elapsed, { listening, emotion });
+        pose = mergePoses(pose, idleMotion, apose ? 0.42 : 0.72);
         const beat = advanceIdleBeat(idleBeat, dt, now);
         idleBeat = beat.state;
         if (beat.overlay && Object.keys(beat.overlay).length) {
@@ -875,7 +879,13 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
     }
     if (talking && !activeGesture && !activeAction) {
       talkArmBlend = 0.72 + energy * 0.28;
-    } else if (!talking && !thinking && !activeGesture && !activeAction) {
+    } else if (
+      !talking &&
+      !thinking &&
+      !activeGesture &&
+      !activeAction &&
+      !isAposeBind()
+    ) {
       idleArms = true;
     }
     if (activeGesture) {
@@ -1039,15 +1049,15 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
       smoothedPose = buildBasePose({ listening, emotion, nuance });
       smoothedPose = mergePoses(
         smoothedPose,
-        samplePlantedAliveIdle(0.2, { listening, emotion }),
-        0.96,
+        sampleCalmBreathIdle(0.2, { listening, emotion }),
+        isAposeBind() ? 0.22 : 0.38,
       );
       smoothedRootMotion = { y: 0, rotY: 0 };
       footPlantY = 0;
       applyPose(smoothedPose, 1, {
         allowArms: false,
         actionArms: false,
-        idleArms: true,
+        idleArms: false,
         talkArmBlend: 0,
         bootPhase: false,
         plantFeet: true,
