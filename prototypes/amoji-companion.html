@@ -8,9 +8,9 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji · Companion</title>
     <script>
-      window.__amojiBuild = "2026-09-19-v285-slower-talk";
+      window.__amojiBuild = "2026-09-19-v286-chat-first-load";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-19-v285-slower-talk"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-19-v286-chat-first-load"></script>
     <link
       rel="prefetch"
       href="/prototypes/assets/companion-char-nova.png"
@@ -616,11 +616,11 @@
       media="print"
       onload="this.media='all'"
     />
-    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-19-v285-slower-talk" />
-    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-19-v285-slower-talk" />
-    <link rel="stylesheet" href="/prototypes/companion-mic-button.css?v=2026-09-19-v285-slower-talk" />
-    <link rel="stylesheet" href="/prototypes/companion-minimal-ui.css?v=2026-09-19-v285-slower-talk" />
-    <link rel="stylesheet" href="/prototypes/companion-picker-v4.css?v=2026-09-19-v285-slower-talk" />
+    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-19-v286-chat-first-load" />
+    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-19-v286-chat-first-load" />
+    <link rel="stylesheet" href="/prototypes/companion-mic-button.css?v=2026-09-19-v286-chat-first-load" />
+    <link rel="stylesheet" href="/prototypes/companion-minimal-ui.css?v=2026-09-19-v286-chat-first-load" />
+    <link rel="stylesheet" href="/prototypes/companion-picker-v4.css?v=2026-09-19-v286-chat-first-load" />
     <script>
       (function () {
         var params = new URLSearchParams(location.search);
@@ -646,7 +646,7 @@
       })();
     </script>
     <script type="module">
-      import { bootEarlyStartPicker } from "/amoji-engine/engine/companion/companionEarlyStartPicker.js?v=2026-09-19-v285-slower-talk";
+      import { bootEarlyStartPicker } from "/amoji-engine/engine/companion/companionEarlyStartPicker.js?v=2026-09-19-v286-chat-first-load";
       const bootParams = new URLSearchParams(location.search);
       if (bootParams.get("autostart") !== "1" && bootParams.get("pick") !== "0") {
         globalThis.__amojiEarlyStartPickerPromise = bootEarlyStartPicker({
@@ -4351,19 +4351,19 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-19-v285-slower-talk",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-19-v286-chat-first-load",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-19-v285-slower-talk",
-          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-19-v285-slower-talk"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-19-v286-chat-first-load",
+          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-19-v286-chat-first-load"
         }
       }
     </script>
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-19-v285-slower-talk"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-19-v286-chat-first-load"
     />
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-19-v285-slower-talk"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-19-v285-slower-talk"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-19-v286-chat-first-load"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-19-v286-chat-first-load"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;
@@ -6157,6 +6157,23 @@
         }, 450);
       };
 
+      /** Defer 3D so chat + first voice-out win the network. */
+      const AVATAR_LOAD_DEFER_MS = 3200;
+
+      const scheduleDeferredAvatarLoad = () => {
+        if (liteMode || avatarLoadStarted) return avatarLoadPromise;
+        const run = () => {
+          if (!sessionStarted || avatarLoadStarted) return;
+          beginAvatarLoad();
+        };
+        if (typeof globalThis.requestIdleCallback === "function") {
+          globalThis.requestIdleCallback(run, { timeout: AVATAR_LOAD_DEFER_MS });
+        } else {
+          globalThis.setTimeout(run, AVATAR_LOAD_DEFER_MS);
+        }
+        return avatarLoadPromise;
+      };
+
       const beginAvatarLoad = () => {
         if (avatarLoadStarted) return avatarLoadPromise;
         avatarLoadStarted = true;
@@ -7279,6 +7296,10 @@
       };
       syncCharacterVoice();
       updateLangPill();
+      void voice.ensureVoices().then(() => voice.primeAudio?.().catch(() => {}));
+      if (hostedOnline) {
+        globalThis.__amojiPreload?.scheduleBackground?.(warmWaitDialogueBackground);
+      }
 
       const {
         createCompanionCharacterPicker,
@@ -7430,15 +7451,12 @@
         const pickedPreview = getCharacter(picked)?.previewImage;
         if (pickedPreview) stagePreview.show(pickedPreview);
         startSession({ characterId: picked });
-        if (!liteMode) {
-          const deferAvatar = () => {
-            if (!avatarLoadStarted) {
-              beginAvatarLoad();
-            } else if (picked !== previousId || avatarKind === "loading") {
-              void hotSwapCharacter(picked, { force: true });
-            }
-          };
-          globalThis.requestAnimationFrame?.(deferAvatar);
+        if (
+          !liteMode &&
+          avatarLoadStarted &&
+          (picked !== previousId || avatarKind === "loading")
+        ) {
+          void hotSwapCharacter(picked, { force: true });
         }
       };
 
@@ -7447,15 +7465,18 @@
 
       const { attachStartPickerModelPreload } = startPickerPreloadMod;
       /** @type {ReturnType<typeof attachStartPickerModelPreload> | null} */
-      let startPickerPreloadJob = null;
+      let startPickerPreloadJob =
+        globalThis.__amojiStartPickerPreloadJob || null;
       const ensureStartPickerModelPreload = () => {
         if (!startPicker || startPickerPreloadJob) return startPickerPreloadJob;
         startPickerPreloadJob = attachStartPickerModelPreload(startPicker, {
           isEnglish,
           langCode,
+          chatFirst: true,
           getSelectedId: () =>
             startPicker?.getSelectedId?.() || characterId,
         });
+        globalThis.__amojiStartPickerPreloadJob = startPickerPreloadJob;
         void startPickerPreloadJob.previewPromise;
         return startPickerPreloadJob;
       };
@@ -8291,14 +8312,12 @@
           input.focus();
         }
         globalThis.__amojiPreload?.scheduleBackground?.(() => {
-          void prefetchBasicMotionPack();
+          warmWaitDialogueBackground();
+          void prefetchBasicMotionPack({ coupled: true });
           warmMotionLibraryBackground();
           void initCompanionChrome?.();
         });
-        setTimeout(() => {
-          if (!voiceWarmScheduled) scheduleVoiceWarmAfterFirstSpeak();
-        }, 45000);
-        if (!liteMode && !avatarLoadStarted) beginAvatarLoad();
+        if (!liteMode && !avatarLoadStarted) scheduleDeferredAvatarLoad();
         syncEmotionBall();
         updateEmotionBallVisibility();
 
@@ -8479,6 +8498,7 @@
 
         void voice.ensureVoices().then(() => {
           setVoicePill(voiceGenderLabel(voiceId, langCode, isEnglish));
+          return voice.primeAudio?.().catch(() => {});
         });
         const returning = loadChatHistory(characterId).length > 0;
         if (returning) {
@@ -8489,8 +8509,6 @@
           requestMicAsync();
           syncStarterPrompts();
         } else {
-          void speakGreetingAsync();
-          void voice.primeAudio?.().catch(() => {});
           if (!greetingBubble) {
             greetingBubble = addBubble("assistant", greetingLine(), {
               persist: false,
@@ -8501,6 +8519,7 @@
             persist: false,
           });
           syncStarterPrompts();
+          void speakGreetingAsync();
         }
       };
 
