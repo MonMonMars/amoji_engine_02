@@ -44,6 +44,13 @@ registerRoute("hub", (ctx) => {
           <p class="hub-card__desc">${en ? "Unified 3D app · chat & voice" : "統一 3D app · 傾偈同語音"}</p>
         </div>
       </button>
+      <button type="button" class="hub-card" data-go="pet">
+        <div class="hub-card__icon">🐾</div>
+        <div>
+          <h2 class="hub-card__title">${en ? "Pet Care" : "寵物照顧"}</h2>
+          <p class="hub-card__desc">${en ? "Feed, pet, and mood meters" : "餵食、摸摸、心情條"}</p>
+        </div>
+      </button>
       <button type="button" class="hub-card" data-open="/play?role=secretary&pick=1&automic=0&lang=${en ? "en" : "yue"}">
         <div class="hub-card__icon">📋</div>
         <div>

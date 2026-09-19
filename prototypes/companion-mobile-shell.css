@@ -1,0 +1,40 @@
+/**
+ * Embedded in Capacitor / mobile app iframe (?mobile=1&pick=0).
+ * Full viewport 3D + edge-to-edge composer; no duplicate app chrome.
+ */
+
+body.companion-mobile-shell {
+  min-height: 100dvh;
+  overscroll-behavior: none;
+}
+
+body.companion-mobile-shell .stage {
+  min-height: 100dvh;
+}
+
+body.companion-mobile-shell.companion-minimal-chrome .topbar {
+  padding-top: max(0.5rem, env(safe-area-inset-top));
+}
+
+body.companion-mobile-shell.companion-minimal-chrome .companion-session-name {
+  font-size: 1rem;
+}
+
+body.companion-mobile-shell.companion-minimal-chrome .chat-column,
+body.companion-mobile-shell.companion-minimal-chrome .composer-wrap {
+  padding-left: max(0.12rem, env(safe-area-inset-left));
+  padding-right: max(0.12rem, env(safe-area-inset-right));
+}
+
+body.companion-mobile-shell.companion-minimal-chrome .composer-wrap {
+  padding-bottom: max(0.55rem, env(safe-area-inset-bottom));
+}
+
+body.companion-mobile-shell.companion-minimal-chrome .composer.composer-pro {
+  border-radius: 1.65rem;
+}
+
+body.companion-mobile-shell .starter-prompts:not([hidden]) {
+  padding-left: max(0.35rem, env(safe-area-inset-left));
+  padding-right: max(0.35rem, env(safe-area-inset-right));
+}

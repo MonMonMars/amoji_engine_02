@@ -329,6 +329,21 @@ select {
   width: 100%;
 }
 
+.screen--companion-embed {
+  padding: 0.35rem 0 0;
+  gap: 0;
+}
+
+.screen--companion-embed .topbar--embed {
+  padding: 0.35rem 0.85rem 0.45rem;
+  margin: 0;
+}
+
+.screen--companion-embed .companion-frame {
+  min-height: calc(100dvh - 3.25rem - var(--safe-top) - var(--safe-bottom));
+  border-radius: 0;
+}
+
 .toast {
   position: fixed;
   left: 50%;
