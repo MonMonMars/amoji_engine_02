@@ -3,13 +3,15 @@
  */
 import {
   DEMO_STARTER_PROMPTS,
-  demoStarterPrompts,
+  pickTutorialStarterPrompts,
 } from "./companionDemoDialogue.mjs";
+import { loadAuthSession } from "../mobile/companionMobileAuth.js";
 
 export const CHAT_HISTORY_SCHEMA = "amoji.companion.chatHistory.v1";
 export const CHAT_HISTORY_MAX = 40;
 export const CHAT_DOM_MAX = 20;
-export const STARTER_PROMPT_COUNT = 6;
+export const STARTER_PROMPT_COUNT = 8;
+export const TUTORIAL_VISIT_STORAGE_KEY = "amoji.companion.tutorialVisit.v1";
 
 /** @typedef {{ id: string, role: "user" | "assistant", text: string, ts: number }} ChatMessage */
 
@@ -127,11 +129,42 @@ export function clearChatHistory(characterId, storage = globalThis.localStorage)
 }
 
 /**
+ * Stable per-browser visit id — rotates when storage is cleared; combined with auth userId when logged in.
+ * @param {Storage | null | undefined} [storage]
+ */
+export function resolveTutorialSeed(storage = globalThis.localStorage) {
+  const auth = loadAuthSession(storage);
+  let visit = "";
+  try {
+    visit = storage?.getItem?.(TUTORIAL_VISIT_STORAGE_KEY) || "";
+  } catch {
+    visit = "";
+  }
+  if (!visit) {
+    visit = `visit:${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+    try {
+      storage?.setItem?.(TUTORIAL_VISIT_STORAGE_KEY, visit);
+    } catch {
+      /* private mode */
+    }
+  }
+  if (auth?.userId) return `user:${auth.userId}|${visit}`;
+  return visit;
+}
+
+/**
  * @param {string} characterId
  * @param {boolean} [isEnglish]
+ * @param {{ storage?: Storage | null, seed?: string, max?: number, detailed?: boolean }} [opts]
  */
-export function starterPromptsForCharacter(characterId, isEnglish = false) {
-  return demoStarterPrompts(characterId, isEnglish, STARTER_PROMPT_COUNT);
+export function starterPromptsForCharacter(characterId, isEnglish = false, opts = {}) {
+  const storage = opts.storage ?? globalThis.localStorage;
+  const seed = opts.seed ?? resolveTutorialSeed(storage);
+  const detailed = pickTutorialStarterPrompts(characterId, isEnglish, {
+    max: opts.max ?? STARTER_PROMPT_COUNT,
+    seed,
+  });
+  return opts.detailed ? detailed : detailed.map((p) => p.text);
 }
 
 /**
