@@ -5,7 +5,12 @@ import {
   restoreSession,
   saveAuthSession,
 } from "/amoji-engine/engine/mobile/companionMobileAuth.js";
-import { loadMobileSettings } from "/amoji-engine/engine/mobile/companionMobileSettings.js";
+import {
+  loadMobileSettings,
+  pullRemoteSettings,
+  saveMobileSettings,
+} from "/amoji-engine/engine/mobile/companionMobileSettings.js";
+import { syncFromCloud } from "/amoji-engine/engine/mobile/companionCloudStorage.js";
 import {
   normalizeCompanionRole,
   saveCompanionRole,
@@ -84,6 +89,20 @@ async function boot() {
     if (restored) session = restored;
   } catch {
     /* offline boot */
+  }
+
+  if (session?.token) {
+    try {
+      const remoteSettings = await pullRemoteSettings({ baseUrl });
+      if (remoteSettings) saveMobileSettings(remoteSettings);
+    } catch {
+      /* offline */
+    }
+    try {
+      await syncFromCloud({ baseUrl });
+    } catch {
+      /* offline */
+    }
   }
 
   const params = new URLSearchParams(location.search);

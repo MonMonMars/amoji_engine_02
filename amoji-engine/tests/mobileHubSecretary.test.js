@@ -18,12 +18,18 @@ describe("mobile hub secretary", () => {
   it("companion embed honors navigate params role", () => {
     const companion = readFileSync(join(root, "app/js/screens/companion.js"), "utf8");
     expect(companion).toContain("params?.role");
-    expect(companion).toContain("tab=today");
+    expect(companion).toContain("buildMobileCompanionPlayPath");
   });
 
   it("supports ?screen=companion&role= deep link on boot", () => {
     const main = readFileSync(join(root, "app/js/main.js"), "utf8");
     expect(main).toContain('params.get("role")');
     expect(main).toContain("saveCompanionRole");
+  });
+
+  it("pulls remote settings and cloud save on boot when signed in", () => {
+    const main = readFileSync(join(root, "app/js/main.js"), "utf8");
+    expect(main).toContain("pullRemoteSettings");
+    expect(main).toContain("syncFromCloud");
   });
 });

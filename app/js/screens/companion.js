@@ -1,5 +1,6 @@
 import { registerRoute } from "../router.js";
 import { loadMobileSettings } from "/amoji-engine/engine/mobile/companionMobileSettings.js";
+import { buildMobileCompanionPlayPath } from "/amoji-engine/engine/mobile/companionMobilePlayUrl.js";
 import {
   loadCompanionRole,
   normalizeCompanionRole,
@@ -19,18 +20,22 @@ registerRoute("companion", async (ctx) => {
   const charId =
     localStorage.getItem("amoji.mobile.lastCharacterId") ||
     rolePreset(role).defaultCharacterId;
-  const secretaryTab = role === "secretary" ? "&tab=today" : "";
-
-  let buildQs = "";
+  let deployedBuild = null;
   try {
     const res = await fetch(`${ctx.baseUrl}/api/health`, { cache: "no-store" });
     const data = await res.json();
-    if (data?.build) {
-      buildQs = `&build=${encodeURIComponent(String(data.build))}`;
-    }
+    if (data?.build) deployedBuild = String(data.build);
   } catch {
     /* offline / local */
   }
+
+  const playPath = buildMobileCompanionPlayPath({
+    lang,
+    characterId: charId,
+    role,
+    voiceEnabled: settings.voiceEnabled !== false,
+    build: deployedBuild,
+  });
 
   const screen = document.createElement("section");
   screen.className = "screen screen--companion-embed";
@@ -44,7 +49,7 @@ registerRoute("companion", async (ctx) => {
     <iframe
       class="companion-frame"
       title="Amoji ${roleLabel(role, en)}"
-      src="/play?lang=${lang}&mobile=1&character=${charId}&role=${role}&pick=0&automic=0&voice=openai-coral${secretaryTab}${buildQs}"
+      src="${playPath}"
       allow="microphone; autoplay"
     ></iframe>
   `;
