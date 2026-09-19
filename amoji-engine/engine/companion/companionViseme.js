@@ -158,7 +158,7 @@ export function estimateLipSyncMsPerChar(text, durationMs, speedMultiplier = 1) 
   const clean = String(text || "");
   const len = Math.max(1, clean.length);
   const ms = Number(durationMs);
-  const speed = Math.max(0.4, Math.min(1.05, Number(speedMultiplier) || 1));
+  const speed = Math.max(0.24, Math.min(1.05, Number(speedMultiplier) || 1));
   if (Number.isFinite(ms) && ms > 0) {
     return Math.max(24, Math.min(320, (ms / len) / speed));
   }

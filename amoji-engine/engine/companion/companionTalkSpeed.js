@@ -2,17 +2,21 @@
  * User-adjustable companion talking speed — applies to cloud + browser TTS.
  */
 export const COMPANION_TALK_SPEED_SCHEMA = "amoji.companionTalkSpeed.v1";
-export const TALK_SPEED_STORAGE_KEY = "amoji.companionTalkSpeed.v2";
-const LEGACY_TALK_SPEED_KEY = "amoji.companionTalkSpeed.v1";
+export const TALK_SPEED_STORAGE_KEY = "amoji.companionTalkSpeed.v3";
+const LEGACY_TALK_SPEED_KEY = "amoji.companionTalkSpeed.v2";
+const LEGACY_TALK_SPEED_KEY_V1 = "amoji.companionTalkSpeed.v1";
 
 /** Default: very slow pace so expression + lip sync can load per word (VN / gacha style). */
-export const DEFAULT_TALK_SPEED = 0.38;
+export const DEFAULT_TALK_SPEED = 0.28;
 
 /** Cycle order for the topbar speed button. */
-export const TALK_SPEED_PRESETS = Object.freeze([0.38, 0.48, 0.6, 0.75, 0.9]);
+export const TALK_SPEED_PRESETS = Object.freeze([0.28, 0.38, 0.48, 0.6, 0.75]);
 
-const MIN_TALK_SPEED = 0.32;
-const MAX_TALK_SPEED = 1.05;
+const MIN_TALK_SPEED = 0.24;
+const MAX_TALK_SPEED = 0.95;
+
+/** Scale stored v2 speeds down to the slower v3 default curve. */
+const LEGACY_V2_TO_V3_SCALE = 0.737;
 
 /**
  * @param {unknown} value
@@ -50,7 +54,7 @@ export function applyTalkSpeedMultiplier(baseSpeed, multiplier = DEFAULT_TALK_SP
  */
 export function slowEdgeRatePercent(edgeRatePercent, multiplier = DEFAULT_TALK_SPEED) {
   const mult = normalizeTalkSpeed(multiplier);
-  const shift = (1 - mult) * 52;
+  const shift = (1 - mult) * 72;
   return edgeRatePercent - shift;
 }
 
@@ -61,7 +65,7 @@ export function slowEdgeRatePercent(edgeRatePercent, multiplier = DEFAULT_TALK_S
 export function slowBrowserRate(browserRate, multiplier = DEFAULT_TALK_SPEED) {
   const mult = normalizeTalkSpeed(multiplier);
   const base = Number.isFinite(browserRate) ? browserRate : 1;
-  return Number(Math.max(0.42, Math.min(1.08, base * mult)).toFixed(3));
+  return Number(Math.max(0.28, Math.min(0.92, base * mult)).toFixed(3));
 }
 
 /**
@@ -70,11 +74,11 @@ export function slowBrowserRate(browserRate, multiplier = DEFAULT_TALK_SPEED) {
  */
 export function formatTalkSpeedLabel(speed, isEnglish = false) {
   const s = normalizeTalkSpeed(speed);
+  if (s <= 0.3) return isEnglish ? "0.28× Slow" : "0.28× 慢";
   if (s <= 0.4) return isEnglish ? "0.38× Slow" : "0.38× 慢";
   if (s === 0.48) return isEnglish ? "0.48×" : "0.48×";
   if (s === 0.6) return isEnglish ? "0.6×" : "0.6×";
-  if (s === 0.75) return isEnglish ? "0.75×" : "0.75×";
-  if (s >= 0.9) return isEnglish ? "0.9× Normal" : "0.9× 正常";
+  if (s >= 0.75) return isEnglish ? "0.75× Normal" : "0.75× 正常";
   return `${s}×`;
 }
 
@@ -104,7 +108,18 @@ export function loadTalkSpeed(storage = globalThis.localStorage) {
     const legacy = storage?.getItem?.(LEGACY_TALK_SPEED_KEY);
     if (legacy != null && legacy !== "") {
       const parsed = JSON.parse(legacy);
-      const scaled = normalizeTalkSpeed(Number(parsed) * 0.84);
+      const scaled = normalizeTalkSpeed(Number(parsed) * LEGACY_V2_TO_V3_SCALE);
+      saveTalkSpeed(scaled, storage);
+      return scaled;
+    }
+  } catch {
+    /* ignore */
+  }
+  try {
+    const legacyV1 = storage?.getItem?.(LEGACY_TALK_SPEED_KEY_V1);
+    if (legacyV1 != null && legacyV1 !== "") {
+      const parsed = JSON.parse(legacyV1);
+      const scaled = normalizeTalkSpeed(Number(parsed) * 0.62);
       saveTalkSpeed(scaled, storage);
       return scaled;
     }

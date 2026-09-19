@@ -18,14 +18,14 @@ import {
 
 describe("companionTalkSpeed", () => {
   it("defaults to slow speed for expression loading", () => {
-    expect(DEFAULT_TALK_SPEED).toBe(0.38);
-    expect(normalizeTalkSpeed(undefined)).toBe(0.38);
+    expect(DEFAULT_TALK_SPEED).toBe(0.28);
+    expect(normalizeTalkSpeed(undefined)).toBe(0.28);
   });
 
   it("cycles through presets", () => {
-    expect(cycleTalkSpeed(0.38)).toBe(0.48);
-    expect(cycleTalkSpeed(0.9)).toBe(0.38);
-    expect(TALK_SPEED_PRESETS).toEqual([0.38, 0.48, 0.6, 0.75, 0.9]);
+    expect(cycleTalkSpeed(0.28)).toBe(0.38);
+    expect(cycleTalkSpeed(0.75)).toBe(0.28);
+    expect(TALK_SPEED_PRESETS).toEqual([0.28, 0.38, 0.48, 0.6, 0.75]);
   });
 
   it("halves instruct speaking speed at default multiplier", () => {
@@ -60,8 +60,8 @@ describe("companionTalkSpeed", () => {
   });
 
   it("formats labels for the speed button", () => {
-    expect(formatTalkSpeedLabel(0.38, true)).toMatch(/Slow/);
-    expect(formatTalkSpeedLabel(0.9, false)).toMatch(/正常/);
+    expect(formatTalkSpeedLabel(0.28, true)).toMatch(/Slow/);
+    expect(formatTalkSpeedLabel(0.75, false)).toMatch(/正常/);
   });
 
   it("persists speed in storage", () => {
@@ -82,11 +82,11 @@ describe("companionTalkSpeed", () => {
   it("includes speedMultiplier on cloud TTS body", () => {
     const body = buildCloudTtsRequestBody({
       text: "Hello",
-      performance: { emotion: "neutral", speedMultiplier: 0.38 },
+      performance: { emotion: "neutral", speedMultiplier: 0.28 },
       voice: "en-US-JennyNeural",
       lang: "en-US",
     });
-    expect(body.speedMultiplier).toBe(0.38);
-    expect(body.speed).toBeLessThan(0.55);
+    expect(body.speedMultiplier).toBe(0.28);
+    expect(body.speed).toBeLessThan(0.45);
   });
 });

@@ -398,7 +398,12 @@ export function characterLonelyPerformance(characterId) {
  */
 export function characterProsodyBias(characterId) {
   const def = getCharacter(characterId);
-  return def.prosodyBias || { rate: 0, pitch: 0, volume: 0 };
+  const bias = def.prosodyBias || { rate: 0, pitch: 0, volume: 0 };
+  return {
+    rate: Math.round((bias.rate || 0) * 0.55),
+    pitch: bias.pitch || 0,
+    volume: bias.volume || 0,
+  };
 }
 
 /**
