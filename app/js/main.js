@@ -11,6 +11,7 @@ import {
   saveMobileSettings,
 } from "/amoji-engine/engine/mobile/companionMobileSettings.js";
 import { syncFromCloud } from "/amoji-engine/engine/mobile/companionCloudStorage.js";
+import { bootNativeShell } from "/amoji-engine/engine/mobile/companionNativePurchases.js";
 import {
   normalizeCompanionRole,
   saveCompanionRole,
@@ -103,6 +104,12 @@ async function boot() {
     } catch {
       /* offline */
     }
+  }
+
+  try {
+    await bootNativeShell({ baseUrl });
+  } catch {
+    /* browser / missing native plugins */
   }
 
   const params = new URLSearchParams(location.search);

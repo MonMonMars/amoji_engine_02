@@ -8,12 +8,20 @@ export const COMPANION_IAP_CATALOG_SCHEMA = "amoji.companionIapCatalog.v1";
 /**
  * @param {{ baseUrl?: string }} [opts]
  */
-export async function fetchIapProducts(opts = {}) {
+export async function fetchIapStoreMeta(opts = {}) {
   const data = await apiFetch("/api/iap/products", {
     method: "GET",
     baseUrl: opts.baseUrl,
   });
-  return data?.products || [];
+  return {
+    products: data?.products || [],
+    revenueCat: data?.revenueCat || { enabled: false, publicApiKey: null },
+  };
+}
+
+export async function fetchIapProducts(opts = {}) {
+  const meta = await fetchIapStoreMeta(opts);
+  return meta.products;
 }
 
 /**
