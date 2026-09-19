@@ -7,22 +7,24 @@
 import {
   DEMO_CONVERSATION_SCENES,
   DEMO_PROACTIVE_LINES,
-  DEMO_STARTER_PROMPTS,
-  demoStarterPrompts,
+  pickTutorialStarterPrompts,
+  TUTORIAL_STARTER_PROMPTS,
 } from "../amoji-engine/engine/companion/companionDemoDialogue.mjs";
 
 const characterId = process.argv[2] || "nova";
 
 console.log(`\n=== Demo dialogue — ${characterId} ===\n`);
 
-console.log("Starter prompts (EN):");
-for (const line of demoStarterPrompts(characterId, true)) {
-  console.log(`  • ${line}`);
+console.log(`Tutorial pool (${TUTORIAL_STARTER_PROMPTS.length} prompts across feature categories)`);
+
+console.log("\nStarter chips (EN):");
+for (const chip of pickTutorialStarterPrompts(characterId, true, { max: 8, seed: "showcase" })) {
+  console.log(`  • [${chip.cat}] ${chip.text}`);
 }
 
-console.log("\nStarter prompts (粵):");
-for (const line of demoStarterPrompts(characterId, false)) {
-  console.log(`  • ${line}`);
+console.log("\nStarter chips (粵):");
+for (const chip of pickTutorialStarterPrompts(characterId, false, { max: 8, seed: "showcase" })) {
+  console.log(`  • [${chip.cat}] ${chip.text}`);
 }
 
 const proactive =

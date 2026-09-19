@@ -187,6 +187,193 @@ export const DEMO_STARTER_PROMPTS = Object.freeze({
   },
 });
 
+/**
+ * Tutorial starter chips — showcase companion features (voice, poke, camera, scene, etc.).
+ * Each entry: { cat, en, yue } — picked across categories so every empty chat teaches the app.
+ * @type {ReadonlyArray<{ cat: string, en: string, yue: string }>}
+ */
+export const TUTORIAL_STARTER_PROMPTS = Object.freeze([
+  /* intro / capabilities */
+  { cat: "intro", en: "What can you do?", yue: "你可以做咩？" },
+  { cat: "intro", en: "Show me your features", yue: "展示你有咩功能" },
+  { cat: "intro", en: "How do I use this app?", yue: "點樣用呢個 app？" },
+  { cat: "intro", en: "Give me a quick tour", yue: "帶我快速睇一圈" },
+  { cat: "intro", en: "What makes you special?", yue: "你有咩特別？" },
+  { cat: "intro", en: "Teach me something new", yue: "教我用啲新嘢" },
+  /* voice / mic */
+  { cat: "voice", en: "How does voice chat work?", yue: "語音傾偈點用？" },
+  { cat: "voice", en: "Hold the mic and listen to me", yue: "按住 mic 聽我講" },
+  { cat: "voice", en: "Can you hear me if I speak?", yue: "我講嘢你聽到嘛？" },
+  { cat: "voice", en: "Switch to voice mode", yue: "轉做語音模式" },
+  { cat: "voice", en: "Read this aloud after I type", yue: "我打完字你讀出嚟" },
+  { cat: "voice", en: "What does the mic button do?", yue: "mic 掣做咩用？" },
+  /* text chat */
+  { cat: "chat", en: "Let's chat by text", yue: "我哋用文字傾" },
+  { cat: "chat", en: "Reply in short bubbles", yue: "用短句回覆我" },
+  { cat: "chat", en: "Remember what I say", yue: "記住我講嘅嘢" },
+  { cat: "chat", en: "Ask me a follow-up question", yue: "追問我一個問題" },
+  { cat: "chat", en: "Summarize our chat so far", yue: "總結我哋傾過嘅內容" },
+  { cat: "chat", en: "Keep the conversation going", yue: "繼續同我傾落去" },
+  /* poke / tap body */
+  { cat: "poke", en: "What happens if I tap you?", yue: "撳你會點呀？" },
+  { cat: "poke", en: "Poke my avatar on the head", yue: "戳下我個頭像" },
+  { cat: "poke", en: "React when I touch your body", yue: "我摸你身體時 react 下" },
+  { cat: "poke", en: "Show a poke reaction", yue: "做個被戳 reaction" },
+  { cat: "poke", en: "Can I interact by tapping?", yue: "可唔可以撳嚟互動？" },
+  { cat: "poke", en: "Surprise me with a tap response", yue: "被撳時 surprise 我" },
+  /* camera / orbit */
+  { cat: "camera", en: "How do I orbit the camera?", yue: "點樣 orbit 鏡頭？" },
+  { cat: "camera", en: "Drag empty space to look around", yue: "拖空白位轉角度" },
+  { cat: "camera", en: "Reset camera to front view", yue: "重置鏡頭做正面" },
+  { cat: "camera", en: "Double-click to reset the view", yue: "雙擊空白重置視角" },
+  { cat: "camera", en: "Show me from the front", yue: "正面影俾我睇" },
+  { cat: "camera", en: "Spin around and strike a pose", yue: "轉一圈擺個 pose" },
+  /* scene / outfit */
+  { cat: "scene", en: "Change the background scene", yue: "換個背景 scene" },
+  { cat: "scene", en: "Try a new outfit look", yue: "試吓新造型" },
+  { cat: "scene", en: "Open scene settings for me", yue: "幫我開 scene 設定" },
+  { cat: "scene", en: "Pick a cozy background vibe", yue: "揀個 cozy 背景 vibe" },
+  { cat: "scene", en: "What scenes can I choose?", yue: "有咩 scene 可以揀？" },
+  { cat: "scene", en: "Match the mood with a new backdrop", yue: "換 backdrop 配合 mood" },
+  /* motions / emotions */
+  { cat: "motion", en: "Wave at me", yue: "同我揮手" },
+  { cat: "motion", en: "Do a happy dance", yue: "開心跳個舞" },
+  { cat: "motion", en: "Show an emotion on your face", yue: "面上 show 個表情" },
+  { cat: "motion", en: "Use a mood tag in your reply", yue: "回覆加 mood tag" },
+  { cat: "motion", en: "Play an idle animation", yue: "播 idle 動畫" },
+  { cat: "motion", en: "React with body language", yue: "用 body language react" },
+  /* menu / settings */
+  { cat: "menu", en: "Where is the menu?", yue: "menu 喺邊？" },
+  { cat: "menu", en: "Mute or unmute your voice", yue: "mute 定 unmute 把聲" },
+  { cat: "menu", en: "Hide the chat panel", yue: "收起 chat panel" },
+  { cat: "menu", en: "Open settings for me", yue: "幫我開 settings" },
+  { cat: "menu", en: "What shortcuts are in the menu?", yue: "menu 有咩 shortcuts？" },
+  { cat: "menu", en: "Toggle speaker from settings", yue: "喺 settings  toggle 喇叭" },
+  /* character switch */
+  { cat: "character", en: "How do I switch characters?", yue: "點樣換角色？" },
+  { cat: "character", en: "Tell me about other companions", yue: "講下其他 companion" },
+  { cat: "character", en: "Who else can I talk to?", yue: "仲可以同邊個傾？" },
+  { cat: "character", en: "Compare yourself to another character", yue: "同第二個角色 compare 下" },
+  { cat: "character", en: "What is your personality?", yue: "你性格係點？" },
+  { cat: "character", en: "Introduce yourself properly", yue: "正式自我介紹" },
+  /* secretary / planning (Rose-style but universal tutorial) */
+  { cat: "secretary", en: "Help me plan my day", yue: "幫我計劃今日" },
+  { cat: "secretary", en: "What's on my schedule?", yue: "今日有咩 schedule？" },
+  { cat: "secretary", en: "Prioritize my tasks", yue: "幫我排 task 優先次序" },
+  { cat: "secretary", en: "Give me a gentle check-in", yue: "gentle check-in 問下我" },
+  { cat: "secretary", en: "Remind me what to focus on", yue: "提醒我要專心咩" },
+  { cat: "secretary", en: "Organize my thoughts", yue: "幫我整理思路" },
+]);
+
+/** Category order for tutorial chips — one pick per group when possible. */
+export const TUTORIAL_STARTER_CATEGORY_ORDER = Object.freeze([
+  "intro",
+  "voice",
+  "chat",
+  "poke",
+  "camera",
+  "scene",
+  "motion",
+  "menu",
+  "character",
+  "secretary",
+]);
+
+/**
+ * @param {string} text
+ */
+export function hashTutorialSeed(text) {
+  let h = 2166136261;
+  const s = String(text || "");
+  for (let i = 0; i < s.length; i += 1) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+}
+
+/**
+ * @param {number} seed
+ */
+export function createTutorialRng(seed) {
+  let state = seed >>> 0;
+  return () => {
+    state = (state + 0x6d2b79f5) | 0;
+    let t = Math.imul(state ^ (state >>> 15), 1 | state);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+/**
+ * @template T
+ * @param {T[]} items
+ * @param {() => number} rng
+ */
+export function shuffleWithRng(items, rng) {
+  const out = [...items];
+  for (let i = out.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(rng() * (i + 1));
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
+}
+
+/**
+ * Pick tutorial + personality starter chips. Seed with character + login session for variety.
+ *
+ * @param {string} characterId
+ * @param {boolean} [isEnglish]
+ * @param {{ max?: number, seed?: string }} [opts]
+ * @returns {{ text: string, cat: string, tutorial: boolean }[]}
+ */
+export function pickTutorialStarterPrompts(characterId, isEnglish = false, opts = {}) {
+  const max = Math.max(1, opts.max ?? 8);
+  const lang = isEnglish ? "en" : "yue";
+  const id = String(characterId || "nova").toLowerCase();
+  const dayBucket = Math.floor(Date.now() / 86400000);
+  const seedStr = `${opts.seed || "guest"}|${id}|${lang}|${dayBucket}`;
+  const rng = createTutorialRng(hashTutorialSeed(seedStr));
+
+  /** @type {{ text: string, cat: string, tutorial: boolean }[]} */
+  const picked = [];
+  const used = new Set();
+
+  const pushText = (text, cat, tutorial) => {
+    const t = String(text || "").trim();
+    if (!t || used.has(t)) return false;
+    used.add(t);
+    picked.push({ text: t, cat, tutorial });
+    return true;
+  };
+
+  for (const cat of TUTORIAL_STARTER_CATEGORY_ORDER) {
+    if (picked.length >= max) break;
+    const pool = TUTORIAL_STARTER_PROMPTS.filter((p) => p.cat === cat);
+    if (!pool.length) continue;
+    for (const item of shuffleWithRng(pool, rng)) {
+      if (pushText(item[lang], cat, true)) break;
+    }
+  }
+
+  const personalityPack = DEMO_STARTER_PROMPTS[id] || DEMO_STARTER_PROMPTS.default;
+  const personalityPool = shuffleWithRng([...(personalityPack[lang] || [])], rng);
+  for (const text of personalityPool) {
+    if (picked.length >= max) break;
+    pushText(text, "personality", false);
+  }
+
+  if (picked.length < max) {
+    const filler = shuffleWithRng([...TUTORIAL_STARTER_PROMPTS], rng);
+    for (const item of filler) {
+      if (picked.length >= max) break;
+      pushText(item[lang], item.cat, true);
+    }
+  }
+
+  return picked.slice(0, max);
+}
+
 /** @type {Readonly<Record<string, { en: readonly string[], yue: readonly string[] }>>} */
 export const DEMO_PROACTIVE_LINES = Object.freeze({
   nova: {
@@ -473,11 +660,8 @@ export const DEMO_CONVERSATION_SCENES = Object.freeze([
  * @param {boolean} [isEnglish]
  * @param {number} [max]
  */
-export function demoStarterPrompts(characterId, isEnglish = false, max = 6) {
-  const id = String(characterId || "nova").toLowerCase();
-  const pack = DEMO_STARTER_PROMPTS[id] || DEMO_STARTER_PROMPTS.default;
-  const lang = isEnglish ? "en" : "yue";
-  return [...(pack[lang] || DEMO_STARTER_PROMPTS.default[lang])].slice(0, max);
+export function demoStarterPrompts(characterId, isEnglish = false, max = 8, seed = "demo") {
+  return pickTutorialStarterPrompts(characterId, isEnglish, { max, seed }).map((p) => p.text);
 }
 
 /**

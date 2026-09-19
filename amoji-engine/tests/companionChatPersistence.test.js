@@ -5,10 +5,13 @@ import {
   clearChatHistory,
   hasUserMessages,
   loadChatHistory,
+  resolveTutorialSeed,
   saveChatHistory,
   starterPromptsForCharacter,
   trimChatHistory,
+  TUTORIAL_VISIT_STORAGE_KEY,
 } from "../engine/companion/companionChatPersistence.js";
+import { AUTH_STORAGE_KEY } from "../engine/mobile/companionMobileAuth.js";
 
 function createStorage() {
   /** @type {Map<string, string>} */
@@ -70,11 +73,34 @@ describe("companionChatPersistence", () => {
     expect(loadChatHistory("sora", storage)).toHaveLength(0);
   });
 
-  it("returns character starter prompts", () => {
-    expect(starterPromptsForCharacter("nova", true)).toHaveLength(6);
-    expect(starterPromptsForCharacter("nova", true)[0]).toMatch(/today/i);
-    expect(starterPromptsForCharacter("alicia", true)).toHaveLength(6);
-    expect(starterPromptsForCharacter("unknown", false)).toHaveLength(6);
+  it("returns tutorial starter prompts with feature copy", () => {
+    const prompts = starterPromptsForCharacter("nova", true, { storage, seed: "test-seed" });
+    expect(prompts).toHaveLength(8);
+    expect(prompts.some((p) => /voice|mic|tap|camera|scene|menu/i.test(p))).toBe(true);
+    const detailed = starterPromptsForCharacter("alicia", true, {
+      storage,
+      seed: "test-seed",
+      detailed: true,
+    });
+    expect(detailed).toHaveLength(8);
+    expect(detailed[0]).toMatchObject({ text: expect.any(String), cat: expect.any(String) });
+  });
+
+  it("changes starter prompts when character or login seed changes", () => {
+    const nova = starterPromptsForCharacter("nova", true, { storage, seed: "user:1|visit-a" });
+    const kizuna = starterPromptsForCharacter("kizuna", true, { storage, seed: "user:1|visit-a" });
+    const novaLoggedOut = starterPromptsForCharacter("nova", true, { storage, seed: "visit-only" });
+    expect(nova.join("|")).not.toBe(kizuna.join("|"));
+    expect(nova.join("|")).not.toBe(novaLoggedOut.join("|"));
+  });
+
+  it("includes auth user id in tutorial seed when logged in", () => {
+    storage.setItem(TUTORIAL_VISIT_STORAGE_KEY, "visit:abc");
+    storage.setItem(
+      AUTH_STORAGE_KEY,
+      JSON.stringify({ token: "t", userId: "user-42", provider: "guest" }),
+    );
+    expect(resolveTutorialSeed(storage)).toBe("user:user-42|visit:abc");
   });
 
   it("detects user messages in history", () => {

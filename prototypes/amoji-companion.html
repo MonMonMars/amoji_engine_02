@@ -8,7 +8,7 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji · Companion</title>
     <script>
-      window.__amojiBuild = "2026-09-19-v295-front-camera-reset";
+      window.__amojiBuild = "2026-09-19-v296-tutorial-starter-dialogues";
     </script>
     <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-19-v295-front-camera-reset"></script>
     <link
@@ -1263,11 +1263,26 @@
 
       .starter-prompts {
         display: flex;
-        flex-wrap: wrap;
-        gap: 0.4rem;
+        flex-direction: column;
+        gap: 0.35rem;
         padding: 0 0.15rem 0.45rem;
         width: min(720px, 100%);
         margin: 0 auto;
+      }
+
+      .starter-prompts__label {
+        margin: 0;
+        font-size: 0.68rem;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: rgba(127, 212, 207, 0.72);
+        padding: 0 0.2rem;
+      }
+
+      .starter-prompts__chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.4rem;
       }
 
       .starter-prompts[hidden] {
@@ -1288,6 +1303,31 @@
       .starter-chip:hover {
         border-color: rgba(127, 212, 207, 0.45);
         background: rgba(127, 212, 207, 0.14);
+      }
+
+      .starter-chip--tutorial {
+        border-color: rgba(255, 196, 120, 0.28);
+        background: rgba(255, 196, 120, 0.1);
+      }
+
+      .starter-chip--tutorial:hover {
+        border-color: rgba(255, 196, 120, 0.5);
+        background: rgba(255, 196, 120, 0.16);
+      }
+
+      body.companion-clean-ui .starter-prompts:not([hidden]) {
+        display: flex !important;
+        padding: 0 0.35rem 0.55rem;
+      }
+
+      body.companion-clean-ui .starter-prompts__label {
+        color: rgba(180, 220, 255, 0.62);
+      }
+
+      body.companion-clean-ui .starter-chip {
+        font-size: 0.74rem;
+        padding: 0.32rem 0.65rem;
+        backdrop-filter: blur(6px);
       }
 
       .llm-switcher-wrap {
@@ -2404,7 +2444,6 @@
       body.companion-clean-ui .listen-hint,
       body.companion-clean-ui .companion-chip__goal,
       body.companion-clean-ui .emotion-ball__caption,
-      body.companion-clean-ui .starter-prompts,
       body.companion-clean-ui .avatar-load-pill,
       body.companion-clean-ui .ui-context-pill,
       body.companion-clean-ui .treat-sheet-hint,
@@ -5014,7 +5053,7 @@
           <div class="transcript" id="transcript" aria-live="polite"></div>
         </div>
         <div class="composer-wrap">
-          <div class="starter-prompts" id="starter-prompts" hidden aria-label="Suggested prompts"></div>
+          <div class="starter-prompts" id="starter-prompts" hidden aria-label="Tutorial prompts"></div>
           <div class="listen-hint" id="listen-hint" aria-live="polite" hidden></div>
           <!-- Full emotion ball stack retired — mini orb on #btn-mic is canonical in conversation UI -->
           <div class="emotion-ball-stack is-hidden" id="emotion-ball-stack" aria-hidden="true" hidden>
@@ -6800,17 +6839,28 @@
         }
         starterPromptsEl.hidden = false;
         starterPromptsEl.replaceChildren();
-        for (const prompt of starterPromptsForCharacter(characterId, isEnglish)) {
+        const label = document.createElement("p");
+        label.className = "starter-prompts__label";
+        label.textContent = isEnglish ? "Tutorial · try these" : "教學 · 試下呢啲";
+        starterPromptsEl.appendChild(label);
+        const chipsWrap = document.createElement("div");
+        chipsWrap.className = "starter-prompts__chips";
+        starterPromptsEl.appendChild(chipsWrap);
+        for (const chip of starterPromptsForCharacter(characterId, isEnglish, {
+          detailed: true,
+        })) {
           const btn = document.createElement("button");
           btn.type = "button";
           btn.className = "starter-chip";
-          btn.textContent = prompt;
+          if (chip.tutorial) btn.classList.add("starter-chip--tutorial");
+          btn.dataset.starterCat = chip.cat;
+          btn.textContent = chip.text;
           btn.addEventListener("click", () => {
             input.value = "";
             autosize();
-            void runTurn(prompt);
+            void runTurn(chip.text);
           });
-          starterPromptsEl.appendChild(btn);
+          chipsWrap.appendChild(btn);
         }
       };
 
