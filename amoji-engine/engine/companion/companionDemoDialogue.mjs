@@ -3,6 +3,7 @@
  * Single source for rich companion demo copy (EN + 粵).
  */
 import { PROACTIVE_NEW_TOPIC_LINES } from "./companionProactiveTopics.mjs";
+import { filterCareDialogueLines } from "./companionCareDialogue.js";
 
 export const DEMO_DIALOGUE_SCHEMA = "amoji.companionDemoDialogue.v2";
 
@@ -362,7 +363,7 @@ export function pickTutorialStarterPrompts(characterId, isEnglish = false, opts 
 
   const pushText = (text, cat, tutorial) => {
     const t = String(text || "").trim();
-    if (!t || used.has(t)) return false;
+    if (!t || used.has(t) || filterCareDialogueLines([t]).length === 0) return false;
     used.add(t);
     picked.push({ text: t, cat, tutorial });
     return true;
@@ -738,8 +739,9 @@ export function pickDemoProactiveLine(characterId, isEnglish = false, opts = {})
     pool = [...fresh, ...fresh, ...base];
   }
   const avoid = opts.avoid || new Set();
-  const filtered = pool.filter((line) => !avoid.has(line));
-  const choices = filtered.length ? filtered : pool;
+  const careSafe = filterCareDialogueLines(pool);
+  const filtered = careSafe.filter((line) => !avoid.has(line));
+  const choices = filtered.length ? filtered : careSafe.length ? careSafe : pool;
   if (!choices.length) return "";
   return choices[Math.floor(Math.random() * choices.length)];
 }

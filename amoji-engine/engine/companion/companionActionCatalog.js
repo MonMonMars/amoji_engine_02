@@ -2,6 +2,7 @@
  * Companion action catalog — keywords, aliases, durations, LLM prompt helpers.
  * Inspired by common avatar expression libraries (wave, nod, bow, dance, clap, etc.).
  */
+import { careDisabledActionIds } from "./companionCareDialogue.js";
 
 /** @typedef {{ duration: number, loops: boolean, emotion?: string, keywords: RegExp[], aliases?: string[] }} ActionDef */
 
@@ -398,7 +399,8 @@ export function actionLoopsFromCatalog(actionId) {
  * @param {boolean} [isEnglish]
  */
 export function buildActionPromptFragment(isEnglish = false) {
-  const list = PLAYABLE_ACTIONS.join(", ");
+  const blocked = new Set(careDisabledActionIds());
+  const list = PLAYABLE_ACTIONS.filter((id) => !blocked.has(id)).join(", ");
   const extensions =
     "breakdance, taiji, highfive, curtsy, tiktokdance, ballet, hiphop, macarena, floss, wiggle, superhero, handshake, fingerheart, photopose, pushup, plank, zombie, sneak, jumpjack";
   const showcase =

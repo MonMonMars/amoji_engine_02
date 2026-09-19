@@ -11,6 +11,7 @@ import {
 } from "./companionCharacterRoles.js";
 import { roleLabel } from "../mobile/companionRolePresets.js";
 import { buildActionPromptFragment } from "./companionActionMotion.js";
+import { buildCareDisabledPromptFragment } from "./companionCareDialogue.js";
 import { buildPerformancePresetPromptFragment } from "./companionLlmPerformancePreset.js";
 import { voiceShortLabel } from "./companionVoiceCatalog.js";
 import { findVoiceProfile } from "./companionVoiceProfiles.js";
@@ -306,7 +307,10 @@ export function buildCharacterSystemPrompt(characterId, isEnglish = false) {
     ...rules,
     buildPerformancePresetPromptFragment(def, isEnglish),
     buildActionPromptFragment(isEnglish),
-  ].join(" ");
+    buildCareDisabledPromptFragment(isEnglish),
+  ]
+    .filter(Boolean)
+    .join(" ");
 }
 
 /**
