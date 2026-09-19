@@ -320,6 +320,7 @@ export async function createVrmAvatar(opts) {
   let idleBeatRestoreTimer = null;
 
   const scheduleCalmIdleAfterBeat = (beat, now = performance.now()) => {
+    if (CALM_IDLE_USES_PROCEDURAL_BODY) return;
     if (idleBeatRestoreTimer) clearTimeout(idleBeatRestoreTimer);
     const durationMs = idleBeatDurationSec(beat) * 1000 + 260;
     idleBeatRestoreTimer = setTimeout(() => {
@@ -414,26 +415,35 @@ export async function createVrmAvatar(opts) {
     void resumeCalmStand();
   };
 
-  const restoreProceduralCalmStand = (opts = {}) => {
-    const wasLibrary = Boolean(
-      vrmaAction &&
-        (motionPlayer.isPlaying?.() ||
-          motionPlayer.isCrossfading?.() ||
-          vrmaPending),
+  /** Drop hosted VRMA body weight without resetting procedural idle life. */
+  const clearHostedBodyMotion = () => {
+    const hadHosted = Boolean(
+      vrmaAction ||
+        vrmaPending ||
+        motionPlayer.isPlaying?.() ||
+        motionPlayer.isCrossfading?.(),
     );
+    if (!hadHosted) {
+      vrmaAction = null;
+      vrmaPending = false;
+      return false;
+    }
     vrmaPlayGen += 1;
     vrmaPending = false;
     vrmaSequenceQueue = [];
     vrmaSequenceOpts = null;
-    if (wasLibrary || opts.stopLibrary !== false) {
-      if (CALM_IDLE_USES_PROCEDURAL_BODY) {
-        motionPlayer.forceStop?.(false);
-      } else {
-        motionPlayer.stop?.(DEFAULT_MOTION_CROSSFADE_SEC);
-      }
-      motionTransitionState = null;
+    if (CALM_IDLE_USES_PROCEDURAL_BODY) {
+      motionPlayer.forceStop?.(false);
+    } else {
+      motionPlayer.stop?.(DEFAULT_MOTION_CROSSFADE_SEC);
     }
+    motionTransitionState = null;
     vrmaAction = null;
+    return true;
+  };
+
+  const restoreProceduralCalmStand = (opts = {}) => {
+    clearHostedBodyMotion();
     if (CALM_IDLE_USES_PROCEDURAL_BODY) {
       vrm.humanoid?.resetNormalizedPose?.();
     }
@@ -442,7 +452,9 @@ export async function createVrmAvatar(opts) {
     bodyMotion.setLegRestRotations?.(rest.legs);
     bodyMotion.setArmBind?.(rest.bind);
     bodyMotion.snapToRestPose?.();
-    bodyMotion.resetIdleLife?.();
+    if (opts.resetIdleLife !== false) {
+      bodyMotion.resetIdleLife?.();
+    }
     syncHumanoidPose();
     syncSpringsAfterPose();
     springIdleState = createIdleSpringRecenterState();
@@ -452,7 +464,10 @@ export async function createVrmAvatar(opts) {
 
   const playCalmLibraryIdle = (opts = {}) => {
     if (CALM_IDLE_USES_PROCEDURAL_BODY) {
-      restoreProceduralCalmStand(opts);
+      clearHostedBodyMotion();
+      if (opts.full === true) {
+        restoreProceduralCalmStand({ resetIdleLife: false });
+      }
       return Promise.resolve(true);
     }
     if (
@@ -477,7 +492,7 @@ export async function createVrmAvatar(opts) {
   };
 
   const restorePlantedIdle = () => {
-    restoreProceduralCalmStand({ stopLibrary: true });
+    clearHostedBodyMotion();
   };
 
   const resumeCalmStand = async () => {
@@ -1065,8 +1080,7 @@ export async function createVrmAvatar(opts) {
     const ok = bodyMotion.stopAction();
     emotion = bodyMotion.emotion;
     applyEmotionExpressions(emotion);
-    restorePlantedIdle();
-    bodyMotion.resetIdleLife?.();
+    restoreProceduralCalmStand();
     return ok;
   };
   const attachTreatProp = (item) => treatProp.attach(item);
@@ -1347,14 +1361,7 @@ export async function createVrmAvatar(opts) {
 
   const ensureProceduralBodyOnly = () => {
     if (!CALM_IDLE_USES_PROCEDURAL_BODY) return;
-    if (
-      vrmaAction ||
-      vrmaPending ||
-      motionPlayer.isPlaying?.() ||
-      motionPlayer.isCrossfading?.()
-    ) {
-      restoreProceduralCalmStand({ stopLibrary: true });
-    }
+    clearHostedBodyMotion();
     if (motionTransitionState) motionTransitionState = null;
   };
 
@@ -1672,11 +1679,8 @@ export async function createVrmAvatar(opts) {
       return sceneEnvironment;
     },
     resetIdleLife(now) {
-      vrmaPlayGen += 1;
-      vrmaPending = false;
-      bodyMotion.resetIdleLife?.(now);
-      void playCalmLibraryIdle();
-      return bodyMotion.emotion;
+      clearHostedBodyMotion();
+      return bodyMotion.resetIdleLife?.(now);
     },
     pulseIdleBeat(beat, now = performance.now()) {
       const key = String(beat || "look");
@@ -1700,11 +1704,8 @@ export async function createVrmAvatar(opts) {
       return state;
     },
     resetMotionClock(now) {
-      vrmaPlayGen += 1;
-      vrmaPending = false;
-      bodyMotion.resetMotionClock?.(now);
-      void playCalmLibraryIdle();
-      return bodyMotion.emotion;
+      clearHostedBodyMotion();
+      return bodyMotion.resetMotionClock?.(now);
     },
     getMotionTransitionProgress() {
       if (!motionTransitionState) return 1;

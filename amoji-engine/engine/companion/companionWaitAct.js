@@ -26,9 +26,8 @@ export const COMPANION_WAIT_ACT_SCHEMA = "amoji.companionWaitAct.v1";
 /** One-shot library clips need room to finish (wave ~1.8s, thinking ~2.4s). */
 export const IDLE_LIFE_INTERVAL_MS = 2400;
 export const AVATAR_LOAD_IDLE_INTERVAL_MS = 900;
-/** Play a hosted VRMA clip every N idle ticks — procedural beats on the others. */
-/** Play a hosted idle clip every life tick (procedural beats only on avatar-load). */
-export const IDLE_LIFE_CLIP_EVERY_N_TICKS = 1;
+/** Play a showcase clip every N idle ticks — procedural beats on the others. */
+export const IDLE_LIFE_CLIP_EVERY_N_TICKS = 2;
 /** @typedef {'connecting'|'waking'|'searching'|'assembling'|'downloading'|'warming'|'learning'|'installing'|'settling'|'almost'|'ready'|'failed'|'thinking'|'avatar-load'|'character-switch'|'motion-pack'|'idle'} WaitPhase */
 
 export { WAIT_POSES_BY_PHASE, pickWaitPose };
@@ -113,7 +112,6 @@ export function createCompanionWaitAct(opts = {}) {
 
     avatarRef?.setEmotion?.(idleExpression.emotion || "neutral");
     avatarRef?.applyExpressionProfile?.(idleExpression);
-    avatarRef?.playCalmIdle?.();
 
     if (poseTick % IDLE_LIFE_CLIP_EVERY_N_TICKS !== 0) {
       const beat = pickProceduralIdleBeat(poseTick);
