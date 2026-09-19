@@ -29,6 +29,10 @@ import {
   portraitDistanceForHeight,
 } from "./companionPortraitFraming.js";
 import {
+  bindCompanionAvatarPointer,
+  collectAvatarPokeMeshes,
+} from "./companionAvatarPointer.js";
+import {
   bindOrbitControlSession,
   bindOrbitTouchGuard,
   configureCompanionOrbitControls,
@@ -584,12 +588,11 @@ export async function createVrmAvatar(opts) {
   };
   const cameraDirector = createCompanionCameraDirector();
   cameraDirector.resetBootGrace();
-  const raycaster = new THREE.Raycaster();
-  const pointer = new THREE.Vector2();
-  /** @type {{ x: number, y: number } | null} */
-  let pointerDown = null;
+  const pokeMeshes = collectAvatarPokeMeshes(model);
   /** @type {{ target: THREE.Vector3, position: THREE.Vector3, fov: number } | null} */
   let cameraResetAnim = null;
+  /** @type {ReturnType<typeof bindCompanionAvatarPointer> | null} */
+  let avatarPointer = null;
 
   // Look toward the camera in azimuth, but at eye height so lookDown
   // blendshapes cannot shut the lids on models that bind eyelids to pitch.
@@ -1385,9 +1388,8 @@ export async function createVrmAvatar(opts) {
       cameraDirector.setCurrentAction(activeMotion);
       const camState = cameraDirector.update(dt);
       applyUserOrbitLimits(controls);
-      controls.enabled = true;
       const userOwnsCamera =
-        Boolean(pointerDown) ||
+        Boolean(avatarPointer?.isPointerActive?.()) ||
         camState.userOrbiting ||
         camState.userFramingHeld;
       const vrmaOwnsBody = Boolean(vrmaAction || vrmaPending);
@@ -1530,43 +1532,16 @@ export async function createVrmAvatar(opts) {
       cameraDirector.holdUserFraming(true);
     },
   );
-  orbitSurface.addEventListener("pointerdown", (e) => {
-    if (e.button !== 0 && e.pointerType === "mouse") return;
-    pointerDown = { x: e.clientX, y: e.clientY };
-    cameraDirector.setUserOrbiting(true);
-    orbitSurface.style.cursor = "grabbing";
-  });
-  orbitSurface.addEventListener("pointercancel", () => {
-    orbitSurface.style.cursor = "grab";
-    pointerDown = null;
-  });
-  orbitSurface.addEventListener("pointerup", (e) => {
-    orbitSurface.style.cursor = "grab";
-    if (!pointerDown) return;
-    const dx = e.clientX - pointerDown.x;
-    const dy = e.clientY - pointerDown.y;
-    pointerDown = null;
-    if (dx * dx + dy * dy > 256) return;
-
-    const rect = canvas.getBoundingClientRect();
-    pointer.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-    pointer.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
-    raycaster.setFromCamera(pointer, camera);
-    const hits = raycaster.intersectObject(model, true);
-    if (!hits.length) return;
-
-    orbitSurface.style.cursor = "pointer";
-    reactToTap();
-    opts.onCharacterTap?.({ point: hits[0].point });
-  });
-  orbitSurface.addEventListener("pointermove", (e) => {
-    if (pointerDown) return;
-    const rect = canvas.getBoundingClientRect();
-    pointer.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-    pointer.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
-    raycaster.setFromCamera(pointer, camera);
-    const hits = raycaster.intersectObject(model, true);
-    orbitSurface.style.cursor = hits.length ? "pointer" : "grab";
+  avatarPointer = bindCompanionAvatarPointer({
+    surface: orbitSurface,
+    rectElement: canvas,
+    camera,
+    controls,
+    getPokeMeshes: () => pokeMeshes,
+    onPoke: ({ point }) => {
+      reactToTap();
+      opts.onCharacterTap?.({ point });
+    },
   });
 
   const setOutfitPreset = (outfitId) => {
@@ -1731,16 +1706,13 @@ export async function createVrmAvatar(opts) {
     resize,
     resetCameraView,
     hitTest(clientX, clientY) {
-      const rect = canvas.getBoundingClientRect();
-      if (!rect.width || !rect.height) return false;
-      pointer.x = ((clientX - rect.left) / rect.width) * 2 - 1;
-      pointer.y = -((clientY - rect.top) / rect.height) * 2 + 1;
-      raycaster.setFromCamera(pointer, camera);
-      return raycaster.intersectObject(model, true).length > 0;
+      return Boolean(avatarPointer?.hitTest?.(clientX, clientY));
     },
     dispose() {
       cancelAnimationFrame(raf);
       globalThis.removeEventListener?.("resize", resize);
+      avatarPointer?.destroy?.();
+      avatarPointer = null;
       unbindOrbitGuard();
       unbindOrbitSession();
       controls.dispose();
