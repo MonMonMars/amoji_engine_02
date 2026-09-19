@@ -109,7 +109,12 @@ describe("companion start picker", () => {
     const stripHtml = companionCardInnerHtml(item, { compact: true, startStrip: true });
     expect(stripHtml).toContain("companion-card-portrait");
     expect(stripHtml).toContain("companion-card-name");
+    expect(stripHtml).toContain("companion-card-number");
     expect(stripHtml).toContain(item.name);
+    const sky = listCompanionCharacters("en").find((c) => c.id === "sky");
+    const skyStrip = companionCardInnerHtml(sky, { compact: true, startStrip: true });
+    expect(skyStrip).toContain(">5<");
+    expect(skyStrip).toContain("companion-card-aaa");
     const miniHtml = companionCardInnerHtml(item, { compact: true, startMini: true });
     expect(miniHtml).not.toContain("companion-card-name");
     if (typeof document === "undefined") return;

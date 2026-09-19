@@ -14,7 +14,9 @@ import {
   COMPANION_CHARACTERS,
   defaultVoiceForCharacter,
   getCharacter,
+  aaaRosterBadge,
   GALLERY_PRIORITY_IDS,
+  isAaaRosterCharacter,
   HIGH_POLY_FACE_CHARACTER_IDS,
   isHighPolyFaceCharacter,
   listCompanionCharacters,
@@ -116,6 +118,12 @@ describe("companionCharacterCatalog v226 curated roster", () => {
     expect(list.find((c) => c.id === "amoji")?.number).toBe(9);
     expect(GALLERY_PRIORITY_IDS.has("amoji")).toBe(true);
     expect(GALLERY_PRIORITY_IDS.has("rex")).toBe(true);
+    expect(GALLERY_PRIORITY_IDS.has("yuki")).toBe(true);
+    expect(GALLERY_PRIORITY_IDS.size).toBe(10);
+    expect(isAaaRosterCharacter("sky")).toBe(true);
+    expect(isAaaRosterCharacter("nova")).toBe(false);
+    expect(aaaRosterBadge("yuki", true)).toBe("AAA Pro");
+    expect(aaaRosterBadge("sky", true)).toBe("AAA");
   });
 
   it("builds character-specific prompts", () => {

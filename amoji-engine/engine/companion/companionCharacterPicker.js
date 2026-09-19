@@ -107,12 +107,17 @@ export function companionCardInnerHtml(item, ctx = {}) {
     const stripRole = item.roleBadge
       ? `<span class="companion-card-role-strip">${item.roleBadge}</span>`
       : "";
+    const aaaBadge = item.aaaBadge
+      ? `<span class="companion-card-aaa">${item.aaaBadge}</span>`
+      : "";
     return `
       <div class="companion-card-portrait">
         <img src="${item.previewImage}" alt="" ${imgAttrs} />
+        ${numberBadge}
+        ${aaaBadge}
         <span class="companion-card-check" aria-hidden="true">✓</span>
       </div>
-      <span class="companion-card-name">${item.name}</span>
+      <span class="companion-card-name">${labeledName}</span>
       ${stripRole}
     `;
   }
@@ -436,7 +441,7 @@ export function createCompanionCharacterPicker(opts = {}) {
   const renderFeatured = () => {
     renderPickerFeaturedRow(featuredRow, langCode, {
       selectedId,
-      roster: listPickerFeatured(fullList()),
+      roster: fullList(),
       eagerPreview: true,
       onCardTapFx: opts.onCardTapFx,
       onCardClick: applySelection,
@@ -707,13 +712,13 @@ export function createCompanionStartPicker(opts = {}) {
     if (subEl) {
       subEl.hidden = false;
       subEl.textContent = isEnglish
-        ? "Swipe the roster · tap to preview"
-        : "㩒肖像預覽 · 左右滑動揀同伴";
+        ? "All 10 companions · 1–4 flagship · 5–10 AAA · tap to preview"
+        : "10 位同伴 · 1–4 旗艦 · 5–10 AAA · 㩒肖像預覽";
     }
     if (rosterDockLabelEl) {
       rosterDockLabelEl.textContent = isEnglish
-        ? `Companions · ${fullList().length}`
-        : `同伴 · ${fullList().length} 位`;
+        ? `Roster · ${fullList().length} (swipe row 2 for AAA 5–10)`
+        : `名單 · ${fullList().length} 位（5–10 為 AAA 擴展）`;
     }
     if (footEl) {
       footEl.textContent = starting
