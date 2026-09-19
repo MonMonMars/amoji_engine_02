@@ -3,9 +3,44 @@
  */
 import * as THREE from "three";
 
-export const COMPANION_AVATAR_POINTER_SCHEMA = "amoji.companionAvatarPointer.v1";
+export const COMPANION_AVATAR_POINTER_SCHEMA = "amoji.companionAvatarPointer.v2";
 
 export const AVATAR_TAP_MOVE_PX = 16;
+
+/** World Y cutoff — hits below this ratio (feet→head) count as empty space for orbit. */
+export const POKE_WAIST_HEIGHT_RATIO = 0.48;
+
+const _pokeBoxScratch = new THREE.Box3();
+const _pokeSizeScratch = new THREE.Vector3();
+
+/**
+ * Waist-line world Y from an avatar bounding box (poke above, orbit below).
+ * @param {import('three').Box3 | null | undefined} fitted
+ */
+export function computePokeWaistWorldY(fitted) {
+  if (!fitted || fitted.isEmpty()) return null;
+  const size = fitted.getSize(_pokeSizeScratch);
+  return fitted.min.y + size.y * POKE_WAIST_HEIGHT_RATIO;
+}
+
+/**
+ * @param {import('three').Object3D | null | undefined} root
+ */
+export function computePokeWaistYFromObject(root) {
+  if (!root) return null;
+  _pokeBoxScratch.setFromObject(root);
+  return computePokeWaistWorldY(_pokeBoxScratch);
+}
+
+/**
+ * @param {import('three').Intersection | null | undefined} hit
+ * @param {number | null | undefined} waistY
+ */
+export function isPokeHitAboveWaist(hit, waistY) {
+  if (!hit?.point) return false;
+  if (waistY == null || !Number.isFinite(waistY)) return true;
+  return hit.point.y >= waistY - 1e-4;
+}
 
 /**
  * Meshes that receive poke / hit-test (full body, not props).
@@ -40,6 +75,7 @@ export function clientToNormalizedPointer(clientX, clientY, rect) {
  *   rectElement?: HTMLElement,
  *   camera: import('three').Camera,
  *   getPokeMeshes: () => import('three').Object3D[],
+ *   getPokeWaistY?: () => number | null,
  *   controls?: { enabled?: boolean } | null,
  *   onPoke?: (info: { point: import('three').Vector3, object: import('three').Object3D }) => void,
  *   movePx?: number,
@@ -78,7 +114,16 @@ export function bindCompanionAvatarPointer(opts) {
     return raycaster.intersectObjects(meshes, false);
   };
 
-  const hitCharacter = (clientX, clientY) => raycastAt(clientX, clientY)[0] || null;
+  const pickPokeHit = (clientX, clientY) => {
+    const hits = raycastAt(clientX, clientY);
+    const waistY = opts.getPokeWaistY?.() ?? null;
+    for (const hit of hits) {
+      if (isPokeHitAboveWaist(hit, waistY)) return hit;
+    }
+    return null;
+  };
+
+  const hitCharacter = (clientX, clientY) => pickPokeHit(clientX, clientY);
 
   const setControlsEnabled = (on) => {
     if (opts.controls) opts.controls.enabled = Boolean(on);
