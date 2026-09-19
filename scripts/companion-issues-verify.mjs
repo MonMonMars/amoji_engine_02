@@ -484,13 +484,13 @@ async function main() {
     };
     /** @type {{ emotion: string | null, blink: number, aa: number, oh: number, happy: number }} */
     let snapshot = { emotion: null, blink: 0, aa: 0, oh: 0, happy: 0 };
-    for (let attempt = 0; attempt < 8; attempt += 1) {
+    for (let attempt = 0; attempt < 14; attempt += 1) {
       avatar?.setEating?.(false);
       avatar?.stopAction?.();
       avatar?.setEmotion?.("neutral");
       avatar?.setTalking?.(false);
       avatar?.setMouthOpen?.(0);
-      await new Promise((r) => setTimeout(r, 380));
+      await new Promise((r) => setTimeout(r, 280));
       const vrm = avatar?.vrm;
       const expr = vrm?.expressionManager;
       snapshot = {
@@ -507,7 +507,8 @@ async function main() {
       if (
         snapshot.emotion !== "happy" &&
         snapshot.aa < 0.12 &&
-        snapshot.oh < 0.15
+        snapshot.oh < 0.15 &&
+        snapshot.blink < 0.55
       ) {
         break;
       }
