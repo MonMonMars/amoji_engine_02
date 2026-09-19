@@ -9,6 +9,7 @@ import {
   resolveRoleDefaultCharacter,
   rosterCharactersForPicker,
 } from "./companionUnifiedApp.js";
+import { wireLoadingBar } from "./companionLoadingUi.js";
 import { playCompanionCardTapFx } from "./companionUiGacha.js";
 
 export const COMPANION_EARLY_START_PICKER_SCHEMA =
@@ -36,6 +37,21 @@ export async function bootEarlyStartPicker(opts = {}) {
 
   const splash = document.getElementById("amoji-boot-splash");
   splash?.setAttribute("aria-busy", "true");
+  const splashLoad = wireLoadingBar(splash);
+  splashLoad.set(8, isEnglish ? "Preparing companions" : "準備同伴名單");
+  let splashPct = 8;
+  const splashTimer = globalThis.setInterval?.(() => {
+    if (!document.getElementById("amoji-boot-splash")) {
+      globalThis.clearInterval?.(splashTimer);
+      splashLoad.destroy();
+      return;
+    }
+    splashPct = Math.min(92, splashPct + 4 + Math.random() * 6);
+    splashLoad.set(
+      splashPct,
+      isEnglish ? `Loading roster… ${Math.round(splashPct)}%` : `載入名單… ${Math.round(splashPct)}%`,
+    );
+  }, 220);
 
   let preloadJob = null;
   const picker = createCompanionStartPicker({
@@ -78,7 +94,10 @@ export async function bootEarlyStartPicker(opts = {}) {
   await new Promise((resolve) => {
     requestAnimationFrame(() => requestAnimationFrame(resolve));
   });
+  globalThis.clearInterval?.(splashTimer);
+  splashLoad.flush();
   splash?.remove();
+  splashLoad.destroy();
 
   return picker;
 }

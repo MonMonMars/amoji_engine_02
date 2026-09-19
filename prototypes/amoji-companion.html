@@ -8,9 +8,9 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji · Companion</title>
     <script>
-      window.__amojiBuild = "2026-09-19-v291-idle-pose-fix";
+      window.__amojiBuild = "2026-09-19-v292-loading-picker-ui";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-19-v291-idle-pose-fix"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-19-v292-loading-picker-ui"></script>
     <link
       rel="prefetch"
       href="/prototypes/assets/companion-char-nova.png"
@@ -73,6 +73,16 @@
         margin: 0;
         font-size: 0.78rem;
         color: rgba(247, 241, 232, 0.62);
+      }
+
+      #amoji-boot-splash .boot-load-bar {
+        width: min(18rem, 88vw);
+        margin-top: 0.85rem;
+      }
+
+      #amoji-boot-splash .boot-load-bar .amoji-load-bar__meta {
+        justify-content: center;
+        gap: 0.45rem;
       }
       .topbar {
         position: absolute;
@@ -616,11 +626,11 @@
       media="print"
       onload="this.media='all'"
     />
-    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-19-v291-idle-pose-fix" />
-    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-19-v291-idle-pose-fix" />
-    <link rel="stylesheet" href="/prototypes/companion-mic-button.css?v=2026-09-19-v291-idle-pose-fix" />
-    <link rel="stylesheet" href="/prototypes/companion-minimal-ui.css?v=2026-09-19-v291-idle-pose-fix" />
-    <link rel="stylesheet" href="/prototypes/companion-picker-v4.css?v=2026-09-19-v291-idle-pose-fix" />
+    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-19-v292-loading-picker-ui" />
+    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-19-v292-loading-picker-ui" />
+    <link rel="stylesheet" href="/prototypes/companion-mic-button.css?v=2026-09-19-v292-loading-picker-ui" />
+    <link rel="stylesheet" href="/prototypes/companion-minimal-ui.css?v=2026-09-19-v292-loading-picker-ui" />
+    <link rel="stylesheet" href="/prototypes/companion-picker-v4.css?v=2026-09-19-v292-loading-picker-ui" />
     <script>
       (function () {
         var params = new URLSearchParams(location.search);
@@ -646,7 +656,7 @@
       })();
     </script>
     <script type="module">
-      import { bootEarlyStartPicker } from "/amoji-engine/engine/companion/companionEarlyStartPicker.js?v=2026-09-19-v291-idle-pose-fix";
+      import { bootEarlyStartPicker } from "/amoji-engine/engine/companion/companionEarlyStartPicker.js?v=2026-09-19-v292-loading-picker-ui";
       const bootParams = new URLSearchParams(location.search);
       if (bootParams.get("autostart") !== "1" && bootParams.get("pick") !== "0") {
         globalThis.__amojiEarlyStartPickerPromise = bootEarlyStartPicker({
@@ -4177,16 +4187,21 @@
       }
 
       .companion-card--compact .companion-card-check {
-        width: 1.1rem;
-        height: 1.1rem;
-        font-size: 0.62rem;
-        right: 0.28rem;
-        bottom: 0.28rem;
+        width: 1.15rem;
+        height: 1.15rem;
+        font-size: 0.58rem;
+        top: 0.22rem;
+        right: 0.22rem;
+        bottom: auto;
+        z-index: 3;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
       }
 
       .companion-card-badge--mini {
-        top: 0.28rem;
-        left: 0.28rem;
+        top: auto;
+        bottom: 0.22rem;
+        right: 0.22rem;
+        left: auto;
         padding: 0.1rem 0.28rem;
         font-size: 0.5rem;
       }
@@ -4272,10 +4287,15 @@
       }
 
       .companion-card-role--mini {
-        top: 0.28rem;
-        right: 0.28rem;
+        top: 0.22rem;
+        left: 0.22rem;
+        right: auto;
         padding: 0.1rem 0.28rem;
         font-size: 0.5rem;
+        max-width: calc(100% - 1.5rem);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
       }
 
       .companion-card-role--girlfriend {
@@ -4536,19 +4556,19 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-19-v291-idle-pose-fix",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-19-v292-loading-picker-ui",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-19-v291-idle-pose-fix",
-          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-19-v291-idle-pose-fix"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-19-v292-loading-picker-ui",
+          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-19-v292-loading-picker-ui"
         }
       }
     </script>
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-19-v291-idle-pose-fix"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-19-v292-loading-picker-ui"
     />
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-19-v291-idle-pose-fix"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-19-v291-idle-pose-fix"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-19-v292-loading-picker-ui"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-19-v292-loading-picker-ui"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;
@@ -4756,7 +4776,17 @@
     <!-- amoji-build: 2026-09-14-v37-companion-picker — Grok Ani–style character grid -->
     <div id="amoji-boot-splash" aria-live="polite" aria-busy="true">
       <h1>Choose your companion</h1>
-      <p>Loading roster…</p>
+      <p class="boot-load-status">Loading roster…</p>
+      <div class="boot-load-bar amoji-load-bar is-loading" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="8">
+        <div class="amoji-load-bar__track">
+          <div class="amoji-load-bar__fill" style="width: 8%"></div>
+          <div class="amoji-load-bar__shine" aria-hidden="true"></div>
+        </div>
+        <div class="amoji-load-bar__meta">
+          <span class="amoji-load-bar__pct">8%</span>
+          <span class="amoji-load-bar__label">Preparing companions</span>
+        </div>
+      </div>
     </div>
     <noscript>
       <div

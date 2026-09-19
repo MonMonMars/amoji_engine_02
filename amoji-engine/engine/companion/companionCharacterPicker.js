@@ -22,10 +22,10 @@ import {
   wirePickerRosterKeyboard,
 } from "./companionPickerChrome.js";
 import {
-  PROGRESS_RING_CIRCUMFERENCE,
-  PROGRESS_RING_RADIUS,
-  progressRingOffset,
-} from "./companionProgressOverlay.js";
+  LOADING_BAR_HTML,
+  LOADING_RING_HTML,
+  wireLoadingBar,
+} from "./companionLoadingUi.js";
 import { closeUiOverlay, openUiOverlay } from "./companionUiEffects.js";
 
 export const COMPANION_CHARACTER_PICKER_SCHEMA =
@@ -34,27 +34,12 @@ export const COMPANION_CHARACTER_PICKER_SCHEMA =
 export const COMPANION_START_PICKER_SCHEMA = "amoji.companionStartPicker.v3";
 
 export const START_PICKER_PRELOAD_RING_HTML = `
-  <div class="start-picker-preload-ring companion-progress-ring" aria-hidden="true">
-    <svg class="companion-progress-ring-svg" viewBox="0 0 36 36">
-      <circle class="companion-progress-ring-track" cx="18" cy="18" r="${PROGRESS_RING_RADIUS}" />
-      <circle class="companion-progress-ring-fill" cx="18" cy="18" r="${PROGRESS_RING_RADIUS}" />
-    </svg>
-    <span class="start-picker-preload-pct">0%</span>
+  <div class="start-picker-preload-ring">
+    ${LOADING_RING_HTML}
   </div>
 `.trim();
 
-export const START_PICKER_PRELOAD_BAR_HTML = `
-  <div
-    class="start-picker-preload-track"
-    role="progressbar"
-    aria-valuemin="0"
-    aria-valuemax="100"
-    aria-valuenow="0"
-    aria-label="Download progress"
-  >
-    <div class="start-picker-preload-fill"></div>
-  </div>
-`.trim();
+export const START_PICKER_PRELOAD_BAR_HTML = LOADING_BAR_HTML;
 
 /**
  * @param {ReturnType<typeof listCompanionCharacters>[number]} item
@@ -78,8 +63,8 @@ export function companionCardInnerHtml(item, ctx = {}) {
     ? `<span class="companion-card-badge${compact ? " companion-card-badge--mini" : ""}">${item.badge}</span>`
     : "";
   const faceChip =
-    item.showFaceChip && item.faceLabel
-      ? `<span class="companion-card-face${compact ? " companion-card-face--mini" : ""}">${item.faceLabel}</span>`
+    !compact && item.showFaceChip && item.faceLabel
+      ? `<span class="companion-card-face">${item.faceLabel}</span>`
       : "";
   const traits = compact
     ? ""
@@ -359,11 +344,17 @@ export function createCompanionCharacterPicker(opts = {}) {
           <svg class="btn-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" aria-hidden="true"><path d="M6.2 6.2 17.8 17.8M17.8 6.2 6.2 17.8" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"/></svg>
         </button>
       </header>
-      ${PICKER_HERO_HTML}
-      ${PICKER_FEATURED_ROW_HTML}
-      ${PICKER_TOOLBAR_HTML}
-      <div class="picker-roster-wrap">
-        <div class="companion-picker-grid" role="listbox"></div>
+      <div class="picker-main">
+        <aside class="picker-hero-panel">
+          ${PICKER_HERO_HTML}
+        </aside>
+        <section class="picker-roster-panel">
+          ${PICKER_TOOLBAR_HTML}
+          ${PICKER_FEATURED_ROW_HTML}
+          <div class="picker-roster-wrap">
+            <div class="companion-picker-grid" role="listbox"></div>
+          </div>
+        </section>
       </div>
       <div class="picker-session-actions">
         <button type="button" class="picker-confirm-btn picker-switch-btn"></button>
@@ -577,20 +568,25 @@ export function createCompanionStartPicker(opts = {}) {
           <p class="companion-picker-sub"></p>
         </div>
       </header>
-      ${PICKER_HERO_HTML}
-      ${PICKER_FEATURED_ROW_HTML}
-      ${PICKER_TOOLBAR_HTML}
-      <div class="start-picker-grid-wrap">
-        <div class="companion-picker-grid companion-picker-grid--start" role="listbox"></div>
-        <p class="start-picker-scroll-hint" hidden></p>
+      <div class="picker-main">
+        <aside class="picker-hero-panel" aria-label="${isEnglish ? "Selected companion preview" : "已選同伴預覽"}">
+          ${PICKER_HERO_HTML}
+        </aside>
+        <section class="picker-roster-panel" aria-label="${isEnglish ? "Companion roster" : "同伴名單"}">
+          ${PICKER_TOOLBAR_HTML}
+          ${PICKER_FEATURED_ROW_HTML}
+          <div class="start-picker-grid-wrap">
+            <div class="companion-picker-grid companion-picker-grid--start" role="listbox"></div>
+            <p class="start-picker-scroll-hint" hidden></p>
+          </div>
+        </section>
       </div>
       <footer class="picker-footer">
-        <div class="start-picker-preload" aria-live="polite">
+        <div class="start-picker-preload is-loading" aria-live="polite">
           <div class="start-picker-preload-row">
             ${START_PICKER_PRELOAD_RING_HTML}
-            <p class="start-picker-preload-label"></p>
+            ${START_PICKER_PRELOAD_BAR_HTML}
           </div>
-          ${START_PICKER_PRELOAD_BAR_HTML}
         </div>
         <button type="button" class="picker-confirm-btn picker-begin-btn"></button>
         <p class="companion-picker-foot"></p>
@@ -606,11 +602,7 @@ export function createCompanionStartPicker(opts = {}) {
   const gridEl = shell.querySelector(".companion-picker-grid");
   const footEl = shell.querySelector(".companion-picker-foot");
   const preloadEl = shell.querySelector(".start-picker-preload");
-  const preloadFill = shell.querySelector(".companion-progress-ring-fill");
-  const preloadBarFill = shell.querySelector(".start-picker-preload-fill");
-  const preloadTrack = shell.querySelector(".start-picker-preload-track");
-  const preloadPctEl = shell.querySelector(".start-picker-preload-pct");
-  const preloadLabel = shell.querySelector(".start-picker-preload-label");
+  const preloadAnimator = wireLoadingBar(preloadEl);
   const gridWrapEl = shell.querySelector(".start-picker-grid-wrap");
   const scrollHintEl = shell.querySelector(".start-picker-scroll-hint");
   const beginBtn = shell.querySelector(".picker-begin-btn");
@@ -639,28 +631,21 @@ export function createCompanionStartPicker(opts = {}) {
     if (featuredLabel) featuredLabel.textContent = copy.featuredLabel;
   };
 
+  const preloadStatusLabel = (clamped) => {
+    if (clamped >= 100) {
+      return isEnglish ? "Roster ready" : "同伴名單就緒";
+    }
+    return isEnglish ? `Loading roster… ${clamped}%` : `載入名單… ${clamped}%`;
+  };
+
   const renderPreload = () => {
     const clamped = Math.max(0, Math.min(100, Math.round(preloadPct)));
-    if (preloadFill) {
-      preloadFill.setAttribute("stroke-dasharray", String(PROGRESS_RING_CIRCUMFERENCE));
-      preloadFill.style.strokeDashoffset = String(progressRingOffset(clamped));
-    }
-    if (preloadBarFill) preloadBarFill.style.width = `${clamped}%`;
-    if (preloadTrack) preloadTrack.setAttribute("aria-valuenow", String(clamped));
-    if (preloadPctEl) preloadPctEl.textContent = `${clamped}%`;
-    if (preloadLabel) {
-      preloadLabel.textContent =
-        clamped >= 100
-          ? isEnglish
-            ? "Roster ready"
-            : "同伴名單就緒"
-          : isEnglish
-            ? `Loading roster… ${clamped}%`
-            : `載入名單… ${clamped}%`;
-    }
+    preloadAnimator.set(clamped, preloadStatusLabel(clamped));
+    if (clamped >= 100) preloadAnimator.flush();
     if (preloadEl) {
-      preloadEl.hidden = clamped <= 0;
+      preloadEl.hidden = false;
       preloadEl.classList.toggle("is-ready", clamped >= 100);
+      preloadEl.classList.toggle("is-loading", clamped > 0 && clamped < 100);
     }
   };
 
@@ -799,13 +784,21 @@ export function createCompanionStartPicker(opts = {}) {
       preloadPct =
         Number.isFinite(n) && n > 0 && n <= 1 ? Math.round(n * 100) : Math.round(n) || 0;
       preloadPct = Math.max(0, Math.min(100, preloadPct));
-      if (label && preloadLabel) preloadLabel.textContent = label;
       const ready = preloadPct >= 100;
       if (ready !== preloadReady) {
         preloadReady = ready;
         paintCopy();
       }
-      renderPreload();
+      preloadAnimator.set(
+        preloadPct,
+        label || preloadStatusLabel(preloadPct),
+      );
+      if (preloadEl) {
+        preloadEl.hidden = false;
+        preloadEl.classList.toggle("is-ready", ready);
+        preloadEl.classList.toggle("is-loading", preloadPct > 0 && !ready);
+      }
+      if (ready) preloadAnimator.flush();
     },
     enablePicking(on = true) {
       pickable = Boolean(on);
@@ -839,6 +832,7 @@ export function createCompanionStartPicker(opts = {}) {
       shell.remove();
     },
     destroy() {
+      preloadAnimator.destroy();
       unwireFeaturedKeys();
       unwireRosterKeys();
       document.body.classList.remove("companion-start-pending", "companion-picker-open");
