@@ -99,6 +99,9 @@ export const GALLERY_PRIORITY_IDS = new Set([
   "alicia",
   "ember",
   "sky",
+  "yuki",
+  "hina",
+  "mio",
   "amoji",
   "rex",
 ]);
@@ -113,6 +116,25 @@ export const HIGH_POLY_FACE_CHARACTER_IDS = new Set([
   "alicia",
   "ember",
 ]);
+
+/** Roster picks 5–10 — expanded AAA catalog beyond flagship 1–4. */
+export function isAaaRosterCharacter(id) {
+  const n = characterNumber(id);
+  return Number.isFinite(n) && n >= 5;
+}
+
+/**
+ * @param {string | null | undefined} id
+ * @param {boolean} [en]
+ */
+export function aaaRosterBadge(id, en = false) {
+  const key = String(id || "").toLowerCase();
+  if (!isAaaRosterCharacter(key)) return null;
+  if (TRIAL_CHARACTER_IDS.includes(key)) {
+    return en ? "AAA Pro" : "AAA 專業";
+  }
+  return en ? "AAA" : "AAA";
+}
 
 /**
  * @param {number} triangles
@@ -480,9 +502,11 @@ export function listCompanionCharacters(langCode = "yue") {
       faceTriangles >= HIGH_POLY_FACE_MIN_TRIANGLES &&
       !(badge && /\d\s*k/i.test(badge));
     const companionRole = resolveCharacterRole(id);
+    const aaaBadge = aaaRosterBadge(id, en);
     return {
       id,
       number: characterNumber(id),
+      aaaBadge,
       name: en ? def.name.en : def.name.yue,
       tagline: en ? def.tagline.en : def.tagline.yue,
       traits: en ? def.traits.en : def.traits.yue,

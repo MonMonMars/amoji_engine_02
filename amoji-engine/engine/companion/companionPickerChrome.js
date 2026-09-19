@@ -51,7 +51,7 @@ export function pickerCopy(isEnglish = false) {
       : "每個模型都有功能 — 女朋友、男朋友、秘書或寵物。",
     begin: en ? "Begin chat" : "開始傾偈",
     switch: en ? "Switch companion" : "切換同伴",
-    featuredLabel: en ? "★ Featured" : "★ 推介",
+    featuredLabel: en ? "All companions · 1–10" : "全部同伴 · 1–10",
     searchPlaceholder: en ? "Search by name…" : "搜尋名字…",
     rosterHint: (total) =>
       en ? `${total} companions · swipe to browse` : `${total} 位同伴 · 滑動瀏覽`,
@@ -104,7 +104,7 @@ export function isPickerWarmTone(item) {
  * @param {ReturnType<import("./companionCharacterCatalog.js").listCompanionCharacters>} list
  * @param {number} [limit]
  */
-export function listPickerFeatured(list, limit = 4) {
+export function listPickerFeatured(list, limit = 10) {
   const out = [];
   for (const item of Array.isArray(list) ? list : []) {
     if (!isPickerFeatured(item)) continue;

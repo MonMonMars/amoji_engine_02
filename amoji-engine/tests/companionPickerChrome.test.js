@@ -65,6 +65,12 @@ describe("companionPickerChrome", () => {
     expect(featured[1].id).toBe("kizuna");
   });
 
+  it("defaults featured banner to the full ten-character roster", () => {
+    expect(listPickerFeatured(list).length).toBe(10);
+    expect(listPickerFeatured(list).map((c) => c.id)).toContain("yuki");
+    expect(listPickerFeatured(list).map((c) => c.id)).toContain("rex");
+  });
+
   it("syncs roving tabindex for selected card", () => {
     if (typeof document === "undefined") return;
     const root = document.createElement("div");
@@ -108,7 +114,7 @@ describe("companionPickerChrome", () => {
     expect(isPickerFeatured(kizuna)).toBe(true);
     const featured = filterPickerCharacters(list, { filter: "featured" });
     expect(featured.map((c) => c.id)).toContain("nova");
-    expect(featured.length).toBeGreaterThanOrEqual(4);
+    expect(featured.length).toBe(10);
   });
 
   it("filters HD face roster picks", () => {
