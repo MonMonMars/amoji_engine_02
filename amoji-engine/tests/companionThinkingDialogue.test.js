@@ -10,6 +10,8 @@ import { pickPreSentenceVocalization } from "../engine/companion/companionVocali
 describe("companionThinkingDialogue", () => {
   it("uses natural English fillers, not meta thinking lines", () => {
     expect(THINKING_PHRASES_EN).toContain("Let me see…");
+    expect(THINKING_PHRASES_EN).toContain("Let me think. Um…..");
+    expect(THINKING_PHRASES_EN).toContain("Um……");
     expect(THINKING_PHRASES_EN).toContain("Let me search online…");
     expect(THINKING_PHRASES_EN).not.toContain("Still thinking…");
     expect(THINKING_PHRASES_EN.join(" ")).not.toMatch(/I am thinking|working on an answer/i);
@@ -18,6 +20,7 @@ describe("companionThinkingDialogue", () => {
   it("detects natural filler phrases", () => {
     expect(isNaturalFillerPhrase("Let me see…")).toBe(true);
     expect(isNaturalFillerPhrase("Um…")).toBe(true);
+    expect(isNaturalFillerPhrase("Let me think. Um…..")).toBe(true);
     expect(isNaturalFillerPhrase("I am thinking about that")).toBe(false);
   });
 

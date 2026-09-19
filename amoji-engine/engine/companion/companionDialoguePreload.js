@@ -1,11 +1,11 @@
 /**
  * Pre-synthesize wait-time dialogue for faster first spoken filler.
  */
-import { LEARN_DIALOGUE, LOADING_WAIT_WORDS } from "./companionLearnDialogue.js";
+import { LEARN_DIALOGUE } from "./companionLearnDialogue.js";
 import {
   THINKING_PHRASES_EN,
   THINKING_PHRASES_YUE,
-} from "./companionContentMotion.js";
+} from "./companionThinkingDialogue.js";
 
 export const COMPANION_DIALOGUE_PRELOAD_SCHEMA = "amoji.companionDialoguePreload.v1";
 
@@ -45,41 +45,9 @@ export function collectIdleDialoguePhrases(isEnglish = false) {
  * @param {number} [perPhase]
  */
 export function collectWaitDialoguePhrases(isEnglish = false, perPhase = 2) {
-  const phases = [
-    "avatar-load",
-    "connecting",
-    "waking",
-    "searching",
-    "assembling",
-    "downloading",
-    "warming",
-    "learning",
-    "installing",
-    "settling",
-    "almost",
-    "thinking-wait",
-  ];
-  /** @type {string[]} */
-  const phrases = [];
-  for (const phase of phases) {
-    const bucket = LEARN_DIALOGUE[phase];
-    const list = isEnglish ? bucket?.en : bucket?.yue;
-    if (!list?.length) continue;
-    for (let i = 0; i < Math.min(perPhase, list.length); i += 1) {
-      phrases.push(list[i]);
-    }
-    const words = LOADING_WAIT_WORDS[phase];
-    const wordList = isEnglish ? words?.en : words?.yue;
-    if (wordList?.length) {
-      phrases.push(wordList[0]);
-    }
-  }
-  phrases.push(...collectIdleDialoguePhrases(isEnglish));
   const thinking = isEnglish ? THINKING_PHRASES_EN : THINKING_PHRASES_YUE;
-  for (let i = 0; i < Math.min(3, thinking.length); i += 1) {
-    phrases.push(thinking[i]);
-  }
-  return [...new Set(phrases.filter(Boolean))];
+  const idle = collectIdleDialoguePhrases(isEnglish).slice(0, perPhase);
+  return [...new Set([...thinking, ...idle].filter(Boolean))];
 }
 
 /**

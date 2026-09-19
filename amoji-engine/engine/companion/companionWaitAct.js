@@ -3,8 +3,6 @@
  */
 import {
   isLoadingWaitKind,
-  LEARN_SPEAK_INTERVAL_MS,
-  LEARN_SPEAK_MIN_PROGRESS,
   learnPhaseForProgress,
   resolveWaitDialoguePhase,
 } from "./companionLearnDialogue.js";
@@ -28,6 +26,8 @@ export const IDLE_LIFE_INTERVAL_MS = 2100;
 export const AVATAR_LOAD_IDLE_INTERVAL_MS = 900;
 /** Play a showcase clip every N idle ticks — procedural beats on the others. */
 export const IDLE_LIFE_CLIP_EVERY_N_TICKS = 2;
+/** Thinking fillers while any load / download wait is active. */
+export const LOADING_THINKING_VOICE_INTERVAL_MS = 4800;
 /** @typedef {'connecting'|'waking'|'searching'|'assembling'|'downloading'|'warming'|'learning'|'installing'|'settling'|'almost'|'ready'|'failed'|'thinking'|'avatar-load'|'character-switch'|'motion-pack'|'idle'} WaitPhase */
 
 export { WAIT_POSES_BY_PHASE, pickWaitPose };
@@ -81,9 +81,11 @@ export function createCompanionWaitAct(opts = {}) {
   let indeterminate = false;
   /** @type {ReturnType<typeof setInterval> | null} */
   let poseTimer = null;
-  let lastAnnouncedPct = -1;
   /** @type {string | null} */
   let lastPoseId = null;
+
+  const usesThinkingVoice = (waitKind = kind) =>
+    waitKind === "thinking" || isLoadingWaitKind(waitKind);
 
   const playAvatarLoadIdle = () => {
     // Hosted Relax loop when the avatar is ready; expressions only while loading.
@@ -205,41 +207,29 @@ export function createCompanionWaitAct(opts = {}) {
 
   const startWaitVoice = (speak) => {
     if (!speak) return;
-    if (kind === "thinking") {
-      voiceRef?.startThinkingLoop?.({ isEnglish, intervalMs: 5200 });
-      return;
-    }
-    if (
-      kind === "motion" ||
-      kind === "download" ||
-      kind === "motion-pack" ||
-      kind === "avatar-load" ||
-      kind === "idle"
-    ) {
+    if (kind === "idle") {
       voiceRef?.startLearnLoop?.({
         isEnglish,
         kind,
-        phase: resolveWaitDialoguePhase(kind, phase, progress),
-        progress,
-        intervalMs: isLoadingWaitKind(kind) ? LEARN_SPEAK_INTERVAL_MS : 2600,
+        phase: "idle",
+        progress: 0,
+        intervalMs: 5600,
+      });
+      return;
+    }
+    if (usesThinkingVoice()) {
+      voiceRef?.stopLearnLoop?.();
+      voiceRef?.startThinkingLoop?.({
+        isEnglish,
+        intervalMs:
+          kind === "thinking" ? 5200 : LOADING_THINKING_VOICE_INTERVAL_MS,
       });
     }
   };
 
   const stopWaitVoice = () => {
     voiceRef?.stopLearnLoop?.();
-    if (kind === "thinking") voiceRef?.stopThinkingLoop?.();
-  };
-
-  const maybeAnnounceProgress = () => {
-    if (progress < LEARN_SPEAK_MIN_PROGRESS) return;
-    const pct = Math.round(progress * 100);
-    if (pct - lastAnnouncedPct < 18) return;
-    lastAnnouncedPct = pct;
-    voiceRef?.updateLearnLoop?.({
-      phase: resolveWaitDialoguePhase(kind, phase, progress),
-      progress,
-    });
+    voiceRef?.stopThinkingLoop?.();
   };
 
   return {
@@ -268,7 +258,6 @@ export function createCompanionWaitAct(opts = {}) {
       progress = ctx.progress ?? 0;
       indeterminate = Boolean(ctx.indeterminate);
       poseTick = 0;
-      lastAnnouncedPct = -1;
 
       const speak = ctx.speak !== false;
       const showProgress = kind !== "idle";
@@ -322,12 +311,11 @@ export function createCompanionWaitAct(opts = {}) {
       }
       if (ctx.indeterminate != null) indeterminate = Boolean(ctx.indeterminate);
       syncProgressUi(ctx.label);
-      voiceRef?.updateLearnLoop?.({
-        phase: resolveWaitDialoguePhase(kind, phase, progress),
-        progress,
-      });
-      if (kind === "motion" || kind === "download" || kind === "motion-pack") {
-        maybeAnnounceProgress();
+      if (kind === "idle") {
+        voiceRef?.updateLearnLoop?.({
+          phase: resolveWaitDialoguePhase(kind, phase, progress),
+          progress,
+        });
       }
     },
     setAvatar(next) {
