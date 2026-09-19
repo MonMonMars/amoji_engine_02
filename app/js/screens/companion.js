@@ -55,6 +55,10 @@ registerRoute("companion", async (ctx) => {
         <span class="companion-embed-spinner" aria-hidden="true"></span>
         <span>${en ? "Loading 3D companion…" : "載入 3D 同伴…"}</span>
       </div>
+      <div class="companion-embed-error" id="companion-error">
+        <p style="margin:0">${en ? "3D companion failed to load." : "3D 同伴載入失敗。"}</p>
+        <button type="button" class="btn btn-primary" data-action="retry">${en ? "Retry" : "重試"}</button>
+      </div>
       <iframe
         class="companion-frame"
         title="Amoji ${roleLabel(role, en)}"
@@ -66,9 +70,26 @@ registerRoute("companion", async (ctx) => {
 
   const iframe = screen.querySelector(".companion-frame");
   const loading = screen.querySelector("#companion-loading");
+  const errorPanel = screen.querySelector("#companion-error");
   const hideLoading = () => loading?.classList.add("hidden");
+  const showError = () => {
+    hideLoading();
+    errorPanel?.classList.add("is-visible");
+  };
   iframe?.addEventListener("load", hideLoading, { once: true });
-  setTimeout(hideLoading, 45000);
+  const failTimer = setTimeout(showError, 55000);
+  iframe?.addEventListener(
+    "load",
+    () => {
+      clearTimeout(failTimer);
+    },
+    { once: true },
+  );
+  screen.querySelector('[data-action="retry"]')?.addEventListener("click", () => {
+    errorPanel?.classList.remove("is-visible");
+    loading?.classList.remove("hidden");
+    if (iframe) iframe.src = playPath;
+  });
 
   screen.querySelector('[data-action="back"]')?.addEventListener("click", () => ctx.navigate("hub"));
   return screen;

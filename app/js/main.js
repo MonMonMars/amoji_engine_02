@@ -13,6 +13,7 @@ import {
 import { syncFromCloud } from "/amoji-engine/engine/mobile/companionCloudStorage.js";
 import { bootNativeShell } from "/amoji-engine/engine/mobile/companionNativePurchases.js";
 import { hapticTap } from "/amoji-engine/engine/mobile/companionMobileHaptics.js";
+import { mountConnectivityBanner } from "/amoji-engine/engine/mobile/companionMobileConnectivity.js";
 import {
   normalizeCompanionRole,
   saveCompanionRole,
@@ -91,6 +92,8 @@ initCapacitorBridge({
 });
 
 async function boot() {
+  mountConnectivityBanner();
+
   try {
     const restored = await restoreSession({ baseUrl });
     if (restored) session = restored;
