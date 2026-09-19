@@ -4,6 +4,8 @@ import {
   IDLE_LIFE_CLIP_POOL,
   IDLE_LIFE_CLIP_POOL_CORE,
   idleLifeClipPoolForGender,
+  idlePlantedLifeClipPoolForGender,
+  IDLE_LEG_HEAVY_ACTIONS,
   buildActionSequence,
   buildShowcaseSequence,
   isShowcaseRequest,
@@ -27,6 +29,17 @@ describe("companionActionChoreography", () => {
     expect(shouldChainAction("dance")).toBe(true);
     expect(shouldChainAction("wave")).toBe(true);
     expect(shouldChainAction("shy")).toBe(false);
+  });
+
+  it("filters stride and full-body clips from planted ambient idle pool", () => {
+    const planted = idlePlantedLifeClipPoolForGender("female");
+    for (const id of IDLE_LEG_HEAVY_ACTIONS) {
+      if (idleLifeClipPoolForGender("female").includes(id)) {
+        expect(planted).not.toContain(id);
+      }
+    }
+    expect(planted).toContain("nod");
+    expect(planted).not.toContain("moonwalk");
   });
 
   it("keeps idle life on quiet clips with expanded gender pools", () => {

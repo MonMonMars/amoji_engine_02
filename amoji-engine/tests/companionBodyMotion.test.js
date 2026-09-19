@@ -61,9 +61,11 @@ describe("createCompanionBodyMotion", () => {
       motion.update(1 / 30);
       motion.applyHandRestOnly({ talkBlend: 0 });
     }
+    const head = humanoid.bones.get("head").rotation;
+    expect(Math.abs(head.x) + Math.abs(head.z)).toBeGreaterThan(0.008);
     const rot = humanoid.bones.get("leftUpperArm").rotation;
     const rest = VRM_ARM_REST_ROTATIONS.leftUpperArm;
-    expect(Math.abs(rot.z - rest.z)).toBeGreaterThan(0.008);
+    expect(Math.abs(rot.z - rest.z)).toBeLessThan(0.02);
     const leftKnee = humanoid.bones.get("leftLowerLeg").rotation.x;
     const rightKnee = humanoid.bones.get("rightLowerLeg").rotation.x;
     expect(leftKnee).toBeGreaterThan(0.18);
@@ -188,7 +190,7 @@ describe("createCompanionBodyMotion", () => {
     expect(Math.abs(lua.rotation.z)).toBeLessThan(0.35);
   });
 
-  it("routes A-pose idle through applyIdleArms (not static bind rest)", () => {
+  it("keeps A-pose idle arms on calibrated rest (not procedural lift blend)", () => {
     const humanoid = mockHumanoid();
     const motion = createCompanionBodyMotion(humanoid);
     motion.setArmBind("apose");
@@ -201,8 +203,8 @@ describe("createCompanionBodyMotion", () => {
     motion.setTalking(false);
     motion.pulseIdleBeat("breathe", performance.now());
     for (let i = 0; i < 90; i += 1) motion.update(1 / 30);
-    const lla = humanoid.bones.get("leftLowerArm");
-    expect(lla.rotation.x).toBeGreaterThan(0.14);
+    const lua = humanoid.bones.get("leftUpperArm");
+    expect(Math.abs(lua.rotation.z)).toBeLessThan(0.22);
   });
 
   it("bends the calibrated knee axis at rest", () => {

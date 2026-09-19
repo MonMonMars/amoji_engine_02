@@ -101,7 +101,7 @@ describe("companionWaitAct", () => {
     wait.stop();
   });
 
-  it("rotates procedural idle beats and showcase clips", () => {
+  it("rotates procedural idle beats only (no full-body showcase clips)", () => {
     vi.useFakeTimers();
     const avatar = {
       playAction: vi.fn(),
@@ -132,15 +132,8 @@ describe("companionWaitAct", () => {
 
     vi.advanceTimersByTime(IDLE_LIFE_INTERVAL_MS);
     expect(avatar.playCalmIdle).not.toHaveBeenCalled();
-    expect(avatar.playAction).toHaveBeenCalledTimes(1);
-    expect(avatar.pulseIdleBeat).toHaveBeenCalledTimes(2);
-    const [pose, opts] = avatar.playAction.mock.calls[0];
-    expect(idleLifeClipPoolForGender("female")).toContain(pose);
-    expect(opts).toEqual({
-      emotion: "neutral",
-      loop: false,
-      single: true,
-    });
+    expect(avatar.playAction).not.toHaveBeenCalled();
+    expect(avatar.pulseIdleBeat).toHaveBeenCalledTimes(3);
     expect(avatar.setThinking.mock.calls.every(([on]) => on === false)).toBe(
       true,
     );
@@ -149,7 +142,7 @@ describe("companionWaitAct", () => {
     vi.useRealTimers();
   });
 
-  it("nudgePose advances idle beats and clips on demand", () => {
+  it("nudgePose advances procedural idle beats on demand", () => {
     const avatar = {
       playAction: vi.fn(),
       setEmotion: vi.fn(),
@@ -170,8 +163,8 @@ describe("companionWaitAct", () => {
     expect(avatar.playAction).not.toHaveBeenCalled();
     expect(avatar.pulseIdleBeat).toHaveBeenCalledTimes(1);
     expect(wait.nudgePose()).toBe(true);
-    expect(avatar.playAction).toHaveBeenCalledTimes(1);
-    expect(avatar.pulseIdleBeat).toHaveBeenCalledTimes(1);
+    expect(avatar.playAction).not.toHaveBeenCalled();
+    expect(avatar.pulseIdleBeat).toHaveBeenCalledTimes(2);
     wait.stop();
   });
 

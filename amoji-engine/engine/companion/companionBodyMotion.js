@@ -592,7 +592,10 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
     };
   };
 
-  const sampleLegFlex = (pose, k, planted = true) => {
+  const sampleLegFlex = (pose, k, planted = true, strictRest = false) => {
+    if (strictRest && planted) {
+      return { upperL: 0, upperR: 0, lowerL: 0, lowerR: 0 };
+    }
     const { upperCap, lowerCap } = legFlexCaps(planted);
     return {
       upperL: Math.min(upperCap, (pose.upperLegL ?? REST_POSE.upperLegL ?? 0) * k),
@@ -608,16 +611,23 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
     const restLL = legRestRotations.leftLowerLeg;
     const restLR = legRestRotations.rightLowerLeg;
     const planted = opts.plantFeet !== false;
-    const { upperL, upperR, lowerL, lowerR } = sampleLegFlex(pose, k, planted);
+    const strictRest = opts.strictRest === true;
+    const { upperL, upperR, lowerL, lowerR } = sampleLegFlex(
+      pose,
+      k,
+      planted,
+      strictRest,
+    );
     const leftUpper = withElbowBend(restUL, upperL);
     const rightUpper = withElbowBend(restUR, upperR);
+    const hipTwist = strictRest ? 0 : (pose.hipZ ?? 0) * 0.04 * k;
     applyBoneRotation("leftUpperLeg", {
       ...leftUpper,
-      z: (leftUpper.z ?? 0) + (pose.hipZ ?? 0) * 0.04 * k,
+      z: (leftUpper.z ?? 0) + hipTwist,
     });
     applyBoneRotation("rightUpperLeg", {
       ...rightUpper,
-      z: (rightUpper.z ?? 0) - (pose.hipZ ?? 0) * 0.04 * k,
+      z: (rightUpper.z ?? 0) - hipTwist,
     });
     applyBoneRotation("leftLowerLeg", withElbowBend(restLL, lowerL));
     applyBoneRotation("rightLowerLeg", withElbowBend(restLR, lowerR));
@@ -629,8 +639,8 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
     applyBoneRotation(name, rot);
   };
 
-  const applyFootLock = (pose = REST_POSE, k = 1, planted = true) => {
-    const flex = sampleLegFlex(pose, k, planted);
+  const applyFootLock = (pose = REST_POSE, k = 1, planted = true, strictRest = false) => {
+    const flex = sampleLegFlex(pose, k, planted, strictRest);
     applyLockedFootRotations(applyBoneRotation, VRM_FOOT_REST_ROTATIONS, {
       leftUpper: flex.upperL,
       rightUpper: flex.upperR,
@@ -644,12 +654,12 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
     });
   };
 
-  const applyHandAndFootRest = (pose = REST_POSE, k = 1, talkBlend = 0) => {
+  const applyHandAndFootRest = (pose = REST_POSE, k = 1, talkBlend = 0, footOpts = {}) => {
     if (talkBlend <= 0.08) {
       applyBoneRotation("leftHand", VRM_HAND_REST_ROTATIONS.leftHand);
       applyBoneRotation("rightHand", VRM_HAND_REST_ROTATIONS.rightHand);
     }
-    applyFootLock(pose, k, true);
+    applyFootLock(pose, k, true, footOpts.strictRest === true);
   };
 
   const applyPose = (pose, intensity = 1, opts = {}) => {
@@ -667,11 +677,13 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
       applyActionArms(pose, k);
     } else if (allowArms) {
       applyPointArms(pose, k);
-    } else if (idleArms) {
+    } else if (idleArms && opts.combHair === true) {
       applyIdleArms(pose, k, {
         boot: opts.bootPhase === true,
-        combHair: opts.combHair === true,
+        combHair: true,
       });
+    } else if (idleArms) {
+      applyArmRest(pose);
     } else if (talkArmBlend > 0.01) {
       applyTalkArms(pose, talkArmBlend);
     } else {
@@ -726,8 +738,13 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
         ? lockedIdleHipTilt(pose.hipZ || 0, k)
         : (pose.hipZ || 0) * k;
     }
-    applyLegPose(pose, k, { plantFeet: opts.plantFeet !== false });
-    applyHandAndFootRest(pose, k, talkArmBlend);
+    applyLegPose(pose, k, {
+      plantFeet: opts.plantFeet !== false,
+      strictRest: opts.strictLegRest === true,
+    });
+    applyHandAndFootRest(pose, k, talkArmBlend, {
+      strictRest: opts.strictLegRest === true,
+    });
     humanoid.update?.();
   };
 
@@ -807,10 +824,9 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
       }
     } else if (!talking && !thinking) {
       const breathe = Math.sin(elapsed * 1.05);
-      const sway = Math.sin(elapsed * 0.52 + 0.6);
       rootMotion = {
-        y: breathe * 0.006,
-        rotY: sway * 0.042,
+        y: breathe * 0.004,
+        rotY: 0,
       };
     } else {
       rootMotion = { y: 0, rotY: 0 };
@@ -838,19 +854,18 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
         const beat = advanceIdleBeat(idleBeat, dt, now, { gender: idleGender });
         idleBeat = beat.state;
         if (beat.overlay && Object.keys(beat.overlay).length) {
-          let overlay = beat.overlay;
+          let overlay = { ...beat.overlay };
+          for (const key of [
+            "upperLegL",
+            "upperLegR",
+            "lowerLegL",
+            "lowerLegR",
+            "hipZ",
+          ]) {
+            delete overlay[key];
+          }
           if (isAposeBind()) {
-            overlay = { ...beat.overlay };
-            for (const key of [
-              "armLiftL",
-              "armLiftR",
-              "forearmL",
-              "forearmR",
-              "upperLegL",
-              "upperLegR",
-              "lowerLegL",
-              "lowerLegR",
-            ]) {
+            for (const key of ["armLiftL", "armLiftR", "forearmL", "forearmR"]) {
               if (key in overlay) overlay[key] = overlay[key] * 0.78;
             }
           }
@@ -940,6 +955,7 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
       }
     }
     const plantFeet = !activeAction;
+    const strictLegRest = plantFeet && !activeAction && !talking;
     applyPose(smoothedPose, 1, {
       allowArms,
       actionArms,
@@ -948,6 +964,7 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
       talkArmBlend,
       bootPhase: false,
       plantFeet,
+      strictLegRest,
       combHair:
         !talking &&
         !thinking &&
@@ -988,6 +1005,7 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
       talkArmBlend: 0,
       bootPhase: false,
       plantFeet: true,
+      strictLegRest: true,
     });
     applyHandRestOnly({ talkBlend: 0, now });
     return smoothedPose;
@@ -1081,6 +1099,7 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
         talkArmBlend: 0,
         bootPhase: false,
         plantFeet: true,
+        strictLegRest: true,
       });
       applyHandRestOnly({ talkBlend: 0, now: performance.now() });
       return smoothedPose;

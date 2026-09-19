@@ -116,10 +116,10 @@ export function samplePlantedAliveIdle(elapsedSec, opts = {}) {
     leanY: life.leanY * 0.5,
     spineX: life.spineX,
     chestX: life.chestX,
-    armLiftL: life.armLiftL,
-    armLiftR: life.armLiftR,
-    forearmL: life.forearmL,
-    forearmR: life.forearmR,
+    armLiftL: calm.armLiftL + (life.armLiftL - calm.armLiftL) * 0.12,
+    armLiftR: calm.armLiftR + (life.armLiftR - calm.armLiftR) * 0.12,
+    forearmL: calm.forearmL + (life.forearmL - calm.forearmL) * 0.1,
+    forearmR: calm.forearmR + (life.forearmR - calm.forearmR) * 0.1,
   };
 }
 

@@ -7,10 +7,6 @@ import {
   resolveWaitDialoguePhase,
 } from "./companionLearnDialogue.js";
 import { progressPhaseLabel } from "./companionProgressOverlay.js";
-import {
-  idleLifeClipPoolForGender,
-  pickIdleShowcase,
-} from "./companionActionChoreography.js";
 import { pickProceduralIdleBeat } from "./companionIdleMotion.js";
 import {
   pickWaitEmotion,
@@ -24,8 +20,8 @@ export const COMPANION_WAIT_ACT_SCHEMA = "amoji.companionWaitAct.v2";
 /** One-shot library clips need room to finish (wave ~1.8s, thinking ~2.4s). */
 export const IDLE_LIFE_INTERVAL_MS = 2100;
 export const AVATAR_LOAD_IDLE_INTERVAL_MS = 900;
-/** Play a showcase clip every N idle ticks — procedural beats on the others. */
-export const IDLE_LIFE_CLIP_EVERY_N_TICKS = 2;
+/** Ambient idle uses procedural beats only (no full-body playAction — avoids limb blend). */
+export const IDLE_LIFE_CLIP_EVERY_N_TICKS = 0;
 /** Thinking fillers while any load / download wait is active. */
 export const LOADING_THINKING_VOICE_INTERVAL_MS = 4800;
 /** @typedef {'connecting'|'waking'|'searching'|'assembling'|'downloading'|'warming'|'learning'|'installing'|'settling'|'almost'|'ready'|'failed'|'thinking'|'avatar-load'|'character-switch'|'motion-pack'|'idle'} WaitPhase */
@@ -122,23 +118,9 @@ export function createCompanionWaitAct(opts = {}) {
     avatarRef?.applyExpressionProfile?.(idleExpression);
 
     const idleGender = getIdleGender();
-
-    if (poseTick % IDLE_LIFE_CLIP_EVERY_N_TICKS !== 0) {
-      const beat = pickProceduralIdleBeat(poseTick, idleGender);
-      avatarRef?.pulseIdleBeat?.(beat);
-      opts.onPose?.(`idle-${beat}`, phase);
-      return;
-    }
-
-    const lifePool = idleLifeClipPoolForGender(idleGender);
-    const pose = pickIdleShowcase(lastPoseId, lifePool, idleGender);
-    lastPoseId = pose;
-    avatarRef?.playAction?.(pose, {
-      emotion: "neutral",
-      loop: false,
-      single: true,
-    });
-    opts.onPose?.(pose, phase);
+    const beat = pickProceduralIdleBeat(poseTick, idleGender);
+    avatarRef?.pulseIdleBeat?.(beat);
+    opts.onPose?.(`idle-${beat}`, phase);
   };
 
   const playPose = () => {

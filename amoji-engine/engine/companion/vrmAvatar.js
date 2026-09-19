@@ -440,7 +440,7 @@ export async function createVrmAvatar(opts) {
     vrmaSequenceQueue = [];
     vrmaSequenceOpts = null;
     if (CALM_IDLE_USES_PROCEDURAL_BODY) {
-      motionPlayer.forceStop?.(false);
+      motionPlayer.forceStop?.(true);
     } else {
       motionPlayer.stop?.(DEFAULT_MOTION_CROSSFADE_SEC);
     }
@@ -503,8 +503,7 @@ export async function createVrmAvatar(opts) {
   };
 
   const resumeCalmStand = async () => {
-    restorePlantedIdle();
-    bodyMotion.resetIdleLife?.();
+    restoreProceduralCalmStand({ resetIdleLife: true });
     return false;
   };
 
@@ -543,7 +542,7 @@ export async function createVrmAvatar(opts) {
 
   bodyMotion.setActionCompleteHandler?.(({ sequenceDone, next }) => {
     if (!sequenceDone || next) return;
-    restorePlantedIdle();
+    restoreProceduralCalmStand({ resetIdleLife: false });
   });
 
   const frameAnchor = new THREE.Vector3();
