@@ -21,6 +21,7 @@ import {
   normalizeTalkSpeed,
   slowBrowserRate,
   slowEdgeRatePercent,
+  talkSpeedToDisplay,
 } from "./companionTalkSpeed.js";
 
 export const COMPANION_TTS_PROSODY_SCHEMA = "amoji.companionTtsProsody.v4";
@@ -285,20 +286,25 @@ export function buildTtsInstruct(opts = {}) {
         ? "Friendly, playful, emotionally present"
         : "親切、有感情、好似傾偈";
 
+  const displaySpeed = talkSpeedToDisplay(speedMultiplier);
   const pacing =
-    speedMultiplier <= 0.32
+    displaySpeed <= 0.9
       ? isEnglish
-        ? `Speak at ${speed}x — VERY SLOW. Relaxed VN/gacha pace. Long breath between phrases and words. Never rush or clip syllables.`
-        : `用 ${speed}x 好慢講 — 視覺小說節奏，字與字之間留位，句與句之間停一停，絕對唔好急。`
-      : speedMultiplier <= 0.55
+        ? `Speak at ${speed}x (${displaySpeed}×) — slower than normal. Relaxed VN/gacha pace. Long breath between phrases and words. Never rush or clip syllables.`
+        : `用 ${speed}x（${displaySpeed}×）慢過正常 — 視覺小說節奏，字與字之間留位，句與句之間停一停，絕對唔好急。`
+      : displaySpeed <= 1.08
         ? isEnglish
-          ? `Speak at ${speed}x — SLOW, relaxed, unhurried. Longer pauses between phrases. Never rush.`
-          : `用 ${speed}x 慢速講 — 放鬆、唔好急，句與句之間留啲位。`
-        : energy > 0.75
-          ? `Speak at ${speed}x — warm pace. Lift pitch on exclamations; still unhurried.`
-          : energy < 0.38
-            ? `Speak at ${speed}x — calm and unhurried, still vary pitch naturally.`
-            : `Speak at ${speed}x — gentle everyday pace, like a friend on a video call. Never rushed.`;
+          ? `Speak at ${speed}x (1× normal companion pace). Relaxed VN/gacha rhythm — unhurried, with natural pauses between phrases. Never rush or clip syllables.`
+          : `用 ${speed}x（1× 正常同伴節奏）— 視覺小說節奏，放鬆、唔好急，句與句之間留啲位。`
+        : displaySpeed <= 1.85
+          ? isEnglish
+            ? `Speak at ${speed}x (${displaySpeed}×) — a bit quicker than normal, still clear and expressive.`
+            : `用 ${speed}x（${displaySpeed}×）— 比正常快少少，仍然清楚有感情。`
+          : energy > 0.75
+            ? `Speak at ${speed}x (${displaySpeed}×) — warm, lively pace. Lift pitch on exclamations; still clear.`
+            : energy < 0.38
+              ? `Speak at ${speed}x (${displaySpeed}×) — calm and unhurried, still vary pitch naturally.`
+              : `Speak at ${speed}x (${displaySpeed}×) — faster companion pace, like an excited friend on a video call. Never mumble.`;
 
   const emotionLine =
     emotion === "happy"

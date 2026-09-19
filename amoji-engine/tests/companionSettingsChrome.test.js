@@ -16,7 +16,7 @@ describe("companionSettingsChrome", () => {
     expect(labels.background).toBe("Background: Sunset");
     expect(labels.camera).toBe("Reset camera view");
     expect(labels.companionSection).toBe("Companion");
-    expect(labels.talkSpeed).toContain("0.45");
+    expect(labels.talkSpeed).toContain("1.6");
   });
 
   it("builds Cantonese settings labels", () => {

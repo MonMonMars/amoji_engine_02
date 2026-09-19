@@ -8,7 +8,7 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji · Companion</title>
     <script>
-      window.__amojiBuild = "2026-09-19-v296-tutorial-starter-dialogues";
+      window.__amojiBuild = "2026-09-19-v297-talk-speed-1x-normal";
     </script>
     <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-19-v295-front-camera-reset"></script>
     <link
@@ -7433,7 +7433,9 @@
           settingsBtnTalkSpeed.title = talkSpeedButtonTitle(speed, isEnglish);
           settingsBtnTalkSpeed.setAttribute(
             "aria-label",
-            isEnglish ? `Talking speed ${speed}×` : `講嘢速度 ${speed}×`,
+            isEnglish
+              ? `Talking speed ${formatTalkSpeedLabel(speed, true)}`
+              : `講嘢速度 ${formatTalkSpeedLabel(speed, false)}`,
           );
         }
       };

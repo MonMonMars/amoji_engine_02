@@ -1,19 +1,37 @@
 /**
  * User-adjustable companion talking speed — applies to cloud + browser TTS.
+ *
+ * Internal scale keeps legacy TTS math (0.28 = the established VN/gacha pace).
+ * UI shows relative 1× where that same 0.28 internal value is "Normal".
  */
 export const COMPANION_TALK_SPEED_SCHEMA = "amoji.companionTalkSpeed.v1";
 export const TALK_SPEED_STORAGE_KEY = "amoji.companionTalkSpeed.v3";
 const LEGACY_TALK_SPEED_KEY = "amoji.companionTalkSpeed.v2";
 const LEGACY_TALK_SPEED_KEY_V1 = "amoji.companionTalkSpeed.v1";
 
-/** Default: very slow pace so expression + lip sync can load per word (VN / gacha style). */
-export const DEFAULT_TALK_SPEED = 0.28;
-
-/** Cycle order for the topbar speed button. */
-export const TALK_SPEED_PRESETS = Object.freeze([0.28, 0.38, 0.48, 0.6, 0.75]);
-
 const MIN_TALK_SPEED = 0.24;
 const MAX_TALK_SPEED = 0.95;
+
+/** Internal value that maps to user-facing 1× Normal. */
+export const NORMAL_TALK_SPEED_ONE_X = 0.28;
+
+/** Default: established companion pace (displayed as 1× Normal). */
+export const DEFAULT_TALK_SPEED = NORMAL_TALK_SPEED_ONE_X;
+
+/** User-facing speed steps relative to 1× Normal. */
+export const TALK_SPEED_DISPLAY_PRESETS = Object.freeze([0.85, 1, 1.35, 1.7, 2.1, 2.7]);
+
+/** Internal cycle order for the settings speed button. */
+export const TALK_SPEED_PRESETS = Object.freeze(
+  TALK_SPEED_DISPLAY_PRESETS.map((display) =>
+    Number(
+      Math.max(
+        MIN_TALK_SPEED,
+        Math.min(MAX_TALK_SPEED, display * NORMAL_TALK_SPEED_ONE_X),
+      ).toFixed(2),
+    ),
+  ),
+);
 
 /** Scale stored v2 speeds down to the slower v3 default curve. */
 const LEGACY_V2_TO_V3_SCALE = 0.737;
@@ -29,12 +47,57 @@ export function normalizeTalkSpeed(value, fallback = DEFAULT_TALK_SPEED) {
 }
 
 /**
+ * Convert stored internal speed to user-facing multiplier (1× = normal).
+ * @param {number} internalSpeed
+ */
+export function talkSpeedToDisplay(internalSpeed) {
+  const internal = normalizeTalkSpeed(internalSpeed);
+  return Number((internal / NORMAL_TALK_SPEED_ONE_X).toFixed(2));
+}
+
+/**
+ * Convert user-facing multiplier to stored internal speed.
+ * @param {number} displayMultiplier
+ */
+export function talkSpeedFromDisplay(displayMultiplier) {
+  const display = Number(displayMultiplier);
+  if (!Number.isFinite(display) || display <= 0) return DEFAULT_TALK_SPEED;
+  return normalizeTalkSpeed(display * NORMAL_TALK_SPEED_ONE_X);
+}
+
+/**
+ * @param {number} displayMultiplier
+ * @param {boolean} [isEnglish]
+ */
+export function formatTalkSpeedDisplayLabel(displayMultiplier, isEnglish = false) {
+  const display = Number(displayMultiplier);
+  if (!Number.isFinite(display)) {
+    return isEnglish ? "1× Normal" : "1× 正常";
+  }
+  const rounded = Math.round(display * 100) / 100;
+  const num =
+    Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1).replace(/\.0$/, "");
+  if (rounded <= 0.88) return isEnglish ? `${num}× Slow` : `${num}× 慢`;
+  if (rounded <= 1.05) return isEnglish ? `${num}× Normal` : `${num}× 正常`;
+  if (rounded >= 2.65) return isEnglish ? `${num}× Fast` : `${num}× 快`;
+  return `${num}×`;
+}
+
+/**
  * @param {number} current
  */
 export function cycleTalkSpeed(current = DEFAULT_TALK_SPEED) {
   const speed = normalizeTalkSpeed(current);
-  const idx = TALK_SPEED_PRESETS.indexOf(speed);
-  const nextIdx = idx >= 0 ? (idx + 1) % TALK_SPEED_PRESETS.length : 0;
+  let bestIdx = 0;
+  let bestDist = Infinity;
+  for (let i = 0; i < TALK_SPEED_PRESETS.length; i += 1) {
+    const dist = Math.abs(TALK_SPEED_PRESETS[i] - speed);
+    if (dist < bestDist) {
+      bestDist = dist;
+      bestIdx = i;
+    }
+  }
+  const nextIdx = (bestIdx + 1) % TALK_SPEED_PRESETS.length;
   return TALK_SPEED_PRESETS[nextIdx];
 }
 
@@ -69,17 +132,11 @@ export function slowBrowserRate(browserRate, multiplier = DEFAULT_TALK_SPEED) {
 }
 
 /**
- * @param {number} speed
+ * @param {number} speed Internal stored speed (0.28 = 1× Normal).
  * @param {boolean} [isEnglish]
  */
 export function formatTalkSpeedLabel(speed, isEnglish = false) {
-  const s = normalizeTalkSpeed(speed);
-  if (s <= 0.3) return isEnglish ? "0.28× Slow" : "0.28× 慢";
-  if (s <= 0.4) return isEnglish ? "0.38× Slow" : "0.38× 慢";
-  if (s === 0.48) return isEnglish ? "0.48×" : "0.48×";
-  if (s === 0.6) return isEnglish ? "0.6×" : "0.6×";
-  if (s >= 0.75) return isEnglish ? "0.75× Normal" : "0.75× 正常";
-  return `${s}×`;
+  return formatTalkSpeedDisplayLabel(talkSpeedToDisplay(speed), isEnglish);
 }
 
 /**
