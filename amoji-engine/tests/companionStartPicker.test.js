@@ -169,7 +169,7 @@ describe("companion start picker", () => {
     expect(stripHtml).toContain(item.roleBadge || "Girlfriend");
   });
 
-  it("showcase roster strip uses horizontal scroll classes and subtitle copy", () => {
+  it("showcase roster uses two-row grid copy and numbered strip cards", () => {
     if (typeof document === "undefined") return;
     const picker = createCompanionStartPicker({
       isEnglish: true,
@@ -179,11 +179,14 @@ describe("companion start picker", () => {
     const grid = picker.element.querySelector(".companion-picker-grid--roster");
     expect(grid?.classList.contains("companion-picker-grid--start")).toBe(true);
     expect(picker.element.querySelector(".picker-roster-dock-label")?.textContent).toContain(
-      "Companions · 10",
+      "10",
     );
     expect(picker.element.querySelector(".companion-picker-sub")?.textContent).toContain(
-      "Swipe the roster",
+      "1–4 flagship",
     );
+    expect(
+      picker.element.querySelectorAll(".companion-card--start-strip .companion-card-number").length,
+    ).toBe(10);
     picker.destroy();
   });
 
@@ -195,7 +198,7 @@ describe("companion start picker", () => {
       onStart: () => {},
     });
     expect(picker.element.querySelector(".companion-picker-sub")?.textContent).toContain(
-      "左右滑動",
+      "10 位同伴",
     );
     picker.destroy();
   });

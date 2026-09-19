@@ -122,7 +122,7 @@ record("showcase start layout", boot.showcaseLayout);
 record("hero stage section", boot.heroStage);
 record("hero preview", boot.hero);
 record("roster dock", boot.rosterDock);
-record("horizontal roster strip", boot.horizontalRoster);
+record("roster grid class", boot.horizontalRoster);
 record("full roster grid (10)", boot.roster === 10, String(boot.roster));
 record("strip roster cards", boot.stripCards >= 8, String(boot.stripCards));
 record("no search toolbar", !boot.toolbar);
@@ -161,15 +161,24 @@ const layout = await page.evaluate(() => {
     (img) => !img.complete || img.naturalWidth === 0,
   ).length;
   const gridStyle = getComputedStyle(grid);
-  const horizontalStrip = gridStyle.gridAutoFlow === "column";
+  const columnCount = gridStyle.gridTemplateColumns.split(" ").filter(Boolean).length;
+  const rowGrid = gridStyle.gridAutoFlow !== "column" && columnCount >= 4;
+  const cardNumbers = Array.from(
+    document.querySelectorAll(
+      "#start-character-picker .companion-card--start-strip .companion-card-number",
+    ),
+  ).map((el) => el.textContent?.trim());
   return {
     ok:
       wrapBottom <= footerTop + 2 &&
       visibleOverlap === 0 &&
       brokenImgs === 0 &&
       grid.clientHeight >= 72 &&
-      horizontalStrip,
-    horizontalStrip,
+      rowGrid &&
+      cards.length >= 10,
+    rowGrid,
+    columnCount,
+    cardNumbers,
     visibleOverlap,
     wrapBottom,
     gridBottom,
@@ -186,6 +195,18 @@ record(
   layout.ok,
   layout.reason ||
     `visibleOverlap=${layout.visibleOverlap} gridH=${layout.gridH} broken=${layout.brokenImgs}`,
+);
+record(
+  "roster two-row grid (5 cols)",
+  layout.rowGrid && layout.columnCount >= 5,
+  `cols=${layout.columnCount} cards=${layout.cardCount}`,
+);
+record(
+  "strip cards numbered 1-10",
+  Array.isArray(layout.cardNumbers) &&
+    layout.cardNumbers.includes("10") &&
+    layout.cardNumbers.includes("5"),
+  JSON.stringify(layout.cardNumbers),
 );
 
 await page.setViewportSize({ width: 390, height: 580 });
