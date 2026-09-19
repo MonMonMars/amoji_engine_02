@@ -57,7 +57,7 @@ registerRoute("hub", (ctx) => {
         <h1>${en ? "Home" : "主頁"}</h1>
         <div data-hub-subtitle style="color:var(--muted);font-size:0.82rem">${roleEmoji(role)} ${roleLabel(role, en)} · ${charName || "—"} · ${bond.label}</div>
       </div>
-      <div class="chip" title="${en ? "Coins" : "金幣"}">🪙 ${treats.coins}</div>
+      <button type="button" class="chip chip--button" data-go="shop" title="${en ? "Coins · Shop" : "金幣 · 商店"}">🪙 ${treats.coins}</button>
     </div>
     <div class="hub-grid">
       ${hubCards.map(renderMobileHubCard).join("\n")}

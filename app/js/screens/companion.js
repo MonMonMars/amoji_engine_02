@@ -50,13 +50,25 @@ registerRoute("companion", async (ctx) => {
       <h1>${pick === "1" ? (en ? "Pick character" : "選角色") : roleLabel(role, en)}</h1>
       <span></span>
     </div>
-    <iframe
-      class="companion-frame"
-      title="Amoji ${roleLabel(role, en)}"
-      src="${playPath}"
-      allow="microphone; autoplay"
-    ></iframe>
+    <div class="companion-embed-wrap">
+      <div class="companion-embed-loading" id="companion-loading" aria-live="polite">
+        <span class="companion-embed-spinner" aria-hidden="true"></span>
+        <span>${en ? "Loading 3D companion…" : "載入 3D 同伴…"}</span>
+      </div>
+      <iframe
+        class="companion-frame"
+        title="Amoji ${roleLabel(role, en)}"
+        src="${playPath}"
+        allow="microphone; autoplay"
+      ></iframe>
+    </div>
   `;
+
+  const iframe = screen.querySelector(".companion-frame");
+  const loading = screen.querySelector("#companion-loading");
+  const hideLoading = () => loading?.classList.add("hidden");
+  iframe?.addEventListener("load", hideLoading, { once: true });
+  setTimeout(hideLoading, 45000);
 
   screen.querySelector('[data-action="back"]')?.addEventListener("click", () => ctx.navigate("hub"));
   return screen;

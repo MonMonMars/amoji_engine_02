@@ -12,6 +12,7 @@ import {
 } from "/amoji-engine/engine/mobile/companionMobileSettings.js";
 import { syncFromCloud } from "/amoji-engine/engine/mobile/companionCloudStorage.js";
 import { bootNativeShell } from "/amoji-engine/engine/mobile/companionNativePurchases.js";
+import { hapticTap } from "/amoji-engine/engine/mobile/companionMobileHaptics.js";
 import {
   normalizeCompanionRole,
   saveCompanionRole,
@@ -66,22 +67,27 @@ if (!root) throw new Error("#app-root missing");
 
 const baseUrl = location.origin.replace(/\/$/, "");
 
+const navigateWithHaptics = async (name, params) => {
+  await hapticTap("light");
+  return navigate(name, params);
+};
+
 initRouter({
   root,
   isEnglish,
   getSession: () => session,
   setSession: (patch) => {
     session = { ...session, ...patch };
-    if (patch.token) saveAuthSession(/** @type {Record<string, unknown>} */ (session));
+    if (session?.token) saveAuthSession(/** @type {Record<string, unknown>} */ (session));
   },
-  navigate,
+  navigate: navigateWithHaptics,
   toast,
   baseUrl,
 });
 
 initCapacitorBridge({
   getScreen: getCurrentScreen,
-  navigate,
+  navigate: navigateWithHaptics,
 });
 
 async function boot() {

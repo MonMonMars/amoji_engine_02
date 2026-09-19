@@ -1,7 +1,12 @@
 /**
  * Client-side IAP helpers — product fetch + purchase verify (RevenueCat / dev stub).
  */
-import { apiFetch, authHeaders, loadAuthSession } from "./companionMobileAuth.js";
+import {
+  apiFetch,
+  authHeaders,
+  loadAuthSession,
+  saveAuthSession,
+} from "./companionMobileAuth.js";
 
 export const COMPANION_IAP_CATALOG_SCHEMA = "amoji.companionIapCatalog.v1";
 
@@ -35,11 +40,27 @@ export async function fetchIapProducts(opts = {}) {
  *   token?: string,
  * }} [opts]
  */
+/**
+ * @param {Record<string, unknown> | null | undefined} entitlements
+ * @param {Pick<Storage, "getItem" | "setItem"> | null | undefined} [storage]
+ */
+export function mergeSessionEntitlements(entitlements, storage = globalThis.localStorage) {
+  if (!entitlements || typeof entitlements !== "object") return null;
+  const session = loadAuthSession(storage);
+  if (!session?.token) return null;
+  const next = {
+    ...session,
+    entitlements: { ...(session.entitlements || {}), ...entitlements },
+  };
+  saveAuthSession(next, storage);
+  return next;
+}
+
 export async function verifyPurchase(productId, opts = {}) {
   const session = loadAuthSession(opts.storage);
   const token = opts.token || session?.token;
   if (!token) throw new Error("Sign in required for purchases");
-  return apiFetch("/api/iap/verify", {
+  const result = await apiFetch("/api/iap/verify", {
     method: "POST",
     baseUrl: opts.baseUrl,
     headers: authHeaders(token),
@@ -50,6 +71,8 @@ export async function verifyPurchase(productId, opts = {}) {
       transactionId: opts.transactionId,
     }),
   });
+  mergeSessionEntitlements(result?.entitlements, opts.storage);
+  return result;
 }
 
 /**

@@ -109,6 +109,10 @@ registerRoute("shop", async (ctx) => {
           await purchaseDevStub(id, { baseUrl: ctx.baseUrl });
         }
         await syncFromCloud({ baseUrl: ctx.baseUrl });
+        const session = loadAuthSession();
+        if (session?.entitlements) {
+          ctx.setSession({ entitlements: session.entitlements });
+        }
         ctx.toast(en ? "Purchase complete!" : "購買成功！");
         ctx.navigate("hub");
       } catch (err) {

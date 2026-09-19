@@ -77,6 +77,9 @@ try {
 
   record("hub-loaded", true);
 
+  const coinsChip = page.locator(".chip--button[data-go='shop']");
+  record("hub-coins-shop", (await coinsChip.count()) > 0);
+
   const petCard = page.locator('.hub-card[data-go="pet"]');
   const hasPet = (await petCard.count()) > 0;
   record(
