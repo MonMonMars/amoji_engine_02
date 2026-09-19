@@ -5,6 +5,9 @@ import {
   bindCompanionAvatarPointer,
   clientToNormalizedPointer,
   collectAvatarPokeMeshes,
+  computePokeWaistWorldY,
+  isPokeHitAboveWaist,
+  POKE_WAIST_HEIGHT_RATIO,
 } from "../engine/companion/companionAvatarPointer.js";
 
 describe("companionAvatarPointer", () => {
@@ -90,6 +93,71 @@ describe("companionAvatarPointer", () => {
     );
     expect(onPoke).toHaveBeenCalledTimes(1);
     expect(controls.enabled).toBe(true);
+    pointer.destroy();
+  });
+
+  it("computes waist Y from avatar bounds", () => {
+    const box = new THREE.Box3(new THREE.Vector3(0, 0, 0), new THREE.Vector3(1, 2, 1));
+    expect(computePokeWaistWorldY(box)).toBeCloseTo(2 * POKE_WAIST_HEIGHT_RATIO);
+    expect(isPokeHitAboveWaist({ point: new THREE.Vector3(0, 1.1, 0) }, 1)).toBe(true);
+    expect(isPokeHitAboveWaist({ point: new THREE.Vector3(0, 0.8, 0) }, 1)).toBe(false);
+  });
+
+  it("treats below-waist body hits as empty space for orbit", () => {
+    if (typeof document === "undefined") return;
+    const mesh = new THREE.Mesh(new THREE.BoxGeometry(1, 2, 0.4));
+    mesh.position.set(0, 1, 0);
+    const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
+    camera.position.set(0, 1.2, 2.4);
+    camera.lookAt(0, 1.1, 0);
+    const surface = document.createElement("div");
+    const rectElement = {
+      getBoundingClientRect: () => ({
+        left: 0,
+        top: 0,
+        width: 400,
+        height: 600,
+        right: 400,
+        bottom: 600,
+        x: 0,
+        y: 0,
+        toJSON: () => ({}),
+      }),
+    };
+    const controls = { enabled: true };
+    const onPoke = vi.fn();
+    const waistY = computePokeWaistWorldY(
+      new THREE.Box3(new THREE.Vector3(-0.5, 0, -0.2), new THREE.Vector3(0.5, 2, 0.2)),
+    );
+    const pointer = bindCompanionAvatarPointer({
+      surface,
+      rectElement,
+      camera,
+      controls,
+      getPokeMeshes: () => [mesh],
+      getPokeWaistY: () => waistY,
+      onPoke,
+    });
+
+    surface.dispatchEvent(
+      new PointerEvent("pointerdown", {
+        clientX: 200,
+        clientY: 520,
+        button: 0,
+        bubbles: true,
+      }),
+    );
+    expect(controls.enabled).toBe(true);
+    expect(pointer.isCharacterSession()).toBe(false);
+    surface.dispatchEvent(
+      new PointerEvent("pointerup", {
+        clientX: 200,
+        clientY: 520,
+        button: 0,
+        bubbles: true,
+      }),
+    );
+    expect(onPoke).not.toHaveBeenCalled();
     pointer.destroy();
   });
 

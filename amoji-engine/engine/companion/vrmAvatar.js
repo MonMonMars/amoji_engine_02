@@ -30,6 +30,7 @@ import {
 import {
   bindCompanionAvatarPointer,
   collectAvatarPokeMeshes,
+  computePokeWaistYFromObject,
 } from "./companionAvatarPointer.js";
 import {
   bindOrbitControlSession,
@@ -1531,6 +1532,7 @@ export async function createVrmAvatar(opts) {
     camera,
     controls,
     getPokeMeshes: () => pokeMeshes,
+    getPokeWaistY: () => computePokeWaistYFromObject(model),
     onPoke: ({ point }) => {
       reactToTap();
       opts.onCharacterTap?.({ point });
