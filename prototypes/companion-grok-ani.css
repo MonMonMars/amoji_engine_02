@@ -442,9 +442,9 @@ body.theme-grok-ani.ui-fx-enabled .ui-fx-btn:hover:not(:disabled) {
 .theme-grok-ani .composer-wrap {
   width: 100%;
   max-width: none;
-  padding: 0 max(0.5rem, env(safe-area-inset-left, 0px))
-    max(0.85rem, env(safe-area-inset-bottom))
-    max(0.5rem, env(safe-area-inset-right, 0px));
+  padding: 0 max(0.4rem, env(safe-area-inset-left, 0px))
+    max(0.65rem, env(safe-area-inset-bottom))
+    max(0.4rem, env(safe-area-inset-right, 0px));
   background: linear-gradient(180deg, transparent, rgba(2, 2, 8, 0.72) 40%);
   box-sizing: border-box;
 }
@@ -453,7 +453,8 @@ body.theme-grok-ani.ui-fx-enabled .ui-fx-btn:hover:not(:disabled) {
   width: 100%;
   max-width: none;
   border-radius: 2rem;
-  padding: 0.45rem 0.5rem 0.45rem 0.65rem;
+  padding: 0.35rem 0.35rem 0.35rem 0.55rem;
+  gap: 0.35rem;
   border: 1px solid rgba(255, 255, 255, 0.12);
   background: rgba(8, 6, 18, 0.72);
   box-shadow:
@@ -493,7 +494,8 @@ body.theme-grok-ani.ui-fx-enabled .ui-fx-btn:hover:not(:disabled) {
 }
 
 body.conversation-ui.composer-always-visible.theme-grok-ani .stage.mic-mode .composer {
-  max-width: min(720px, 100%);
+  max-width: none;
+  width: 100%;
 }
 
 body.conversation-ui.composer-always-visible.theme-grok-ani .stage.mic-mode #btn-mic,

@@ -8,9 +8,9 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji · Companion</title>
     <script>
-      window.__amojiBuild = "2026-09-19-v320-idle-poses-restored";
+      window.__amojiBuild = "2026-09-19-v321-composer-full-bleed";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-19-v320-idle-poses-restored"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-19-v321-composer-full-bleed"></script>
     <link
       rel="prefetch"
       href="/prototypes/assets/companion-char-nova.png"
@@ -635,7 +635,12 @@
         position: relative;
         flex-shrink: 0;
         z-index: 3;
-        padding: 0 1rem max(1rem, env(safe-area-inset-bottom));
+        width: 100%;
+        max-width: none;
+        box-sizing: border-box;
+        padding: 0 max(0.4rem, env(safe-area-inset-left, 0px))
+          max(0.75rem, env(safe-area-inset-bottom))
+          max(0.4rem, env(safe-area-inset-right, 0px));
         pointer-events: auto;
         touch-action: manipulation;
       }
@@ -714,11 +719,11 @@
       media="print"
       onload="this.media='all'"
     />
-    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-19-v320-idle-poses-restored" />
-    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-19-v320-idle-poses-restored" />
-    <link rel="stylesheet" href="/prototypes/companion-mic-button.css?v=2026-09-19-v320-idle-poses-restored" />
-    <link rel="stylesheet" href="/prototypes/companion-minimal-ui.css?v=2026-09-19-v320-idle-poses-restored" />
-    <link rel="stylesheet" href="/prototypes/companion-picker-v4.css?v=2026-09-19-v320-idle-poses-restored" />
+    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-19-v321-composer-full-bleed" />
+    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-19-v321-composer-full-bleed" />
+    <link rel="stylesheet" href="/prototypes/companion-mic-button.css?v=2026-09-19-v321-composer-full-bleed" />
+    <link rel="stylesheet" href="/prototypes/companion-minimal-ui.css?v=2026-09-19-v321-composer-full-bleed" />
+    <link rel="stylesheet" href="/prototypes/companion-picker-v4.css?v=2026-09-19-v321-composer-full-bleed" />
     <script>
       (function () {
         var params = new URLSearchParams(location.search);
@@ -744,7 +749,7 @@
       })();
     </script>
     <script type="module">
-      import { bootEarlyStartPicker } from "/amoji-engine/engine/companion/companionEarlyStartPicker.js?v=2026-09-19-v320-idle-poses-restored";
+      import { bootEarlyStartPicker } from "/amoji-engine/engine/companion/companionEarlyStartPicker.js?v=2026-09-19-v321-composer-full-bleed";
       const bootParams = new URLSearchParams(location.search);
       if (bootParams.get("autostart") !== "1" && bootParams.get("pick") !== "0") {
         globalThis.__amojiEarlyStartPickerPromise = bootEarlyStartPicker({
@@ -1246,9 +1251,11 @@
         flex: 0 0 auto;
         display: flex;
         flex-direction: column;
-        width: min(680px, 100%);
-        margin: 0 auto;
-        padding: 0 1rem 0.15rem;
+        width: 100%;
+        max-width: none;
+        margin: 0;
+        padding: 0 max(0.4rem, env(safe-area-inset-left, 0px))
+          0.15rem max(0.4rem, env(safe-area-inset-right, 0px));
         max-height: min(36vh, 300px);
         min-height: 0;
         pointer-events: none;
@@ -1354,8 +1361,9 @@
         flex-direction: column;
         gap: 0.35rem;
         padding: 0 0.15rem 0.45rem;
-        width: min(720px, 100%);
-        margin: 0 auto;
+        width: 100%;
+        max-width: none;
+        margin: 0;
       }
 
       .starter-prompts__label {
@@ -1505,7 +1513,12 @@
         position: relative;
         flex-shrink: 0;
         pointer-events: auto;
-        padding: 0 1rem max(0.75rem, env(safe-area-inset-bottom));
+        width: 100%;
+        max-width: none;
+        box-sizing: border-box;
+        padding: 0 max(0.4rem, env(safe-area-inset-left, 0px))
+          max(0.75rem, env(safe-area-inset-bottom))
+          max(0.4rem, env(safe-area-inset-right, 0px));
         background: linear-gradient(180deg, transparent, rgba(5, 7, 12, 0.94) 35%);
         z-index: 3;
         touch-action: manipulation;
@@ -1643,17 +1656,19 @@
 
       .composer {
         display: flex;
-        gap: 0.45rem;
+        gap: 0.35rem;
         align-items: flex-end;
-        padding: 0.45rem;
+        padding: 0.35rem 0.35rem 0.35rem 0.55rem;
         border-radius: 1.6rem;
         background: var(--glass-strong);
         border: 1px solid var(--line);
         box-shadow: var(--shadow);
         backdrop-filter: blur(22px);
         -webkit-backdrop-filter: blur(22px);
-        width: min(720px, 100%);
-        margin: 0 auto;
+        width: 100%;
+        max-width: none;
+        margin: 0;
+        box-sizing: border-box;
       }
 
       .icon-btn {
@@ -2516,13 +2531,19 @@
         max-width: none;
         width: 100%;
         justify-content: stretch;
-        gap: 0.45rem;
-        padding: 0.45rem 0.5rem 0.45rem 0.65rem;
+        gap: 0.35rem;
+        padding: 0.35rem 0.35rem 0.35rem 0.55rem;
       }
 
       body.conversation-ui.composer-always-visible .composer-field {
-        flex: 1 1 auto;
+        flex: 1 1 0%;
         min-width: 0;
+        width: auto;
+      }
+
+      body.conversation-ui.composer-always-visible .composer-field textarea {
+        width: 100%;
+        box-sizing: border-box;
       }
 
       body.conversation-ui.composer-always-visible .stage.mic-mode .composer textarea {
@@ -2606,8 +2627,8 @@
       }
 
       body.conversation-ui.composer-always-visible .composer #btn-mic {
-        width: 2.85rem;
-        height: 2.85rem;
+        width: 2.55rem;
+        height: 2.55rem;
         flex-shrink: 0;
       }
 
@@ -4644,19 +4665,19 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-19-v320-idle-poses-restored",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-19-v321-composer-full-bleed",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-19-v320-idle-poses-restored",
-          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-19-v320-idle-poses-restored"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-19-v321-composer-full-bleed",
+          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-19-v321-composer-full-bleed"
         }
       }
     </script>
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-19-v320-idle-poses-restored"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-19-v321-composer-full-bleed"
     />
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-19-v320-idle-poses-restored"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-19-v320-idle-poses-restored"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-19-v321-composer-full-bleed"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-19-v321-composer-full-bleed"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;
