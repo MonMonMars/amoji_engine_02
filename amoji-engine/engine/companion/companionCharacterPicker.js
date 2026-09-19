@@ -36,9 +36,9 @@ import {
 } from "./companionScenePresets.js";
 
 export const COMPANION_CHARACTER_PICKER_SCHEMA =
-  "amoji.companionCharacterPicker.v5";
+  "amoji.companionCharacterPicker.v6";
 
-export const COMPANION_START_PICKER_SCHEMA = "amoji.companionStartPicker.v9";
+export const COMPANION_START_PICKER_SCHEMA = "amoji.companionStartPicker.v10";
 
 export const PICKER_SCENE_SECTION_HTML = `
   <section class="picker-scene-section" aria-label="Background">
@@ -61,7 +61,7 @@ export const PICKER_SCENE_SECTION_HTML = `
  * }} opts
  */
 export function wirePickerSceneSection(opts = {}) {
-  const isEnglish = Boolean(opts.isEnglish);
+  let isEnglish = Boolean(opts.isEnglish);
   const sceneRowEl =
     opts.sceneRowEl || opts.root?.querySelector?.(".picker-scene-row") || null;
   const sceneLabelEl =
@@ -97,6 +97,10 @@ export function wirePickerSceneSection(opts = {}) {
   };
 
   const syncPickerSceneChrome = () => {
+    const sectionEl = opts.root?.querySelector?.(".picker-scene-section");
+    if (sectionEl) {
+      sectionEl.setAttribute("aria-label", isEnglish ? "Background" : "背景");
+    }
     if (sceneLabelEl) {
       sceneLabelEl.textContent = isEnglish ? "Background" : "背景";
     }
@@ -117,6 +121,10 @@ export function wirePickerSceneSection(opts = {}) {
     getBackgroundId: () => activeBackgroundId,
     setBackgroundId: applyPickerBackground,
     sync: syncPickerSceneChrome,
+    setLocale(nextEnglish) {
+      isEnglish = Boolean(nextEnglish);
+      syncPickerSceneChrome();
+    },
   };
 }
 
@@ -177,9 +185,10 @@ export function companionCardInnerHtml(item, ctx = {}) {
   }
 
   if (compact && ctx.startStrip) {
-    const stripRole = item.roleBadge
-      ? `<span class="companion-card-role-strip">${item.roleBadge}</span>`
-      : "";
+    const stripRole =
+      !ctx.hideRoleStrip && item.roleBadge
+        ? `<span class="companion-card-role-strip">${item.roleBadge}</span>`
+        : "";
     const aaaBadge = item.aaaBadge
       ? `<span class="companion-card-aaa">${item.aaaBadge}</span>`
       : "";
@@ -246,6 +255,7 @@ function cardNumber(item) {
  *   eagerPreview?: boolean,
  *   roster?: ReturnType<typeof listCompanionCharacters>,
  *   rosterStrip?: boolean,
+ *   hideRoleStrip?: boolean,
  *   isEnglish?: boolean,
  *   onCardClick?: (id: string) => void,
  *   onCardTapFx?: (card: HTMLButtonElement, item: ReturnType<typeof listCompanionCharacters>[number]) => void,
@@ -272,6 +282,7 @@ export function renderCompanionPickerGrid(gridEl, langCode, ctx = {}) {
         rosterStrip: ctx.rosterStrip,
         startMini: ctx.startMini,
         startStrip: ctx.startStrip,
+        hideRoleStrip: ctx.hideRoleStrip,
         eagerPreview: ctx.eagerPreview,
         disabled: ctx.disabled,
         onCardTapFx: ctx.onCardTapFx,
@@ -386,10 +397,13 @@ export function createCompanionCardButton(item, ctx = {}) {
 function wirePickerToolbar(shell, opts) {
   const search = shell.querySelector(".picker-search");
   const filtersEl = shell.querySelector(".picker-filters");
-  const labels = pickerCopy(opts.isEnglish);
+  const resolveEnglish = () =>
+    typeof opts.getIsEnglish === "function"
+      ? Boolean(opts.getIsEnglish())
+      : Boolean(opts.isEnglish);
 
   if (search) {
-    search.placeholder = labels.searchPlaceholder;
+    search.placeholder = pickerCopy(resolveEnglish()).searchPlaceholder;
     search.value = opts.getQuery();
     search.oninput = () => {
       opts.setQuery(search.value);
@@ -399,7 +413,10 @@ function wirePickerToolbar(shell, opts) {
 
   const paintFilters = () => {
     if (!filtersEl) return;
-    filtersEl.innerHTML = pickerFilterButtonsHtml(opts.isEnglish, opts.getFilter());
+    filtersEl.innerHTML = pickerFilterButtonsHtml(
+      resolveEnglish(),
+      opts.getFilter(),
+    );
     filtersEl.querySelectorAll("[data-picker-filter]").forEach((btn) => {
       btn.addEventListener("click", () => {
         const id = btn.getAttribute("data-picker-filter");
@@ -411,6 +428,15 @@ function wirePickerToolbar(shell, opts) {
     });
   };
   paintFilters();
+
+  return {
+    syncLocale() {
+      if (search) {
+        search.placeholder = pickerCopy(resolveEnglish()).searchPlaceholder;
+      }
+      paintFilters();
+    },
+  };
 }
 
 /**
@@ -435,8 +461,8 @@ function findPickerItem(list, id) {
  * }} opts
  */
 export function createCompanionCharacterPicker(opts = {}) {
-  const isEnglish = Boolean(opts.isEnglish);
-  const langCode = isEnglish ? "en" : "yue";
+  let isEnglish = Boolean(opts.isEnglish);
+  let langCode = isEnglish ? "en" : "yue";
   /** Live session character — updated by setSelected after hot-swap. */
   let activeCharacterId = opts.selectedId || "nova";
   let selectedId = activeCharacterId;
@@ -580,8 +606,8 @@ export function createCompanionCharacterPicker(opts = {}) {
     onConfirm: confirmSelection,
   });
 
-  wirePickerToolbar(shell, {
-    isEnglish,
+  const toolbar = wirePickerToolbar(shell, {
+    getIsEnglish: () => isEnglish,
     getFilter: () => filterId,
     setFilter: (id) => {
       filterId = id;
@@ -657,6 +683,19 @@ export function createCompanionCharacterPicker(opts = {}) {
     setBackgroundId(backgroundId) {
       sceneSection.setBackgroundId(backgroundId);
     },
+    setLocale(nextEnglish) {
+      isEnglish = Boolean(nextEnglish);
+      langCode = isEnglish ? "en" : "yue";
+      Object.assign(copy, pickerCopy(isEnglish), opts.pickerCopy || {});
+      shell.setAttribute(
+        "aria-label",
+        isEnglish ? "Choose companion" : "揀同伴",
+      );
+      sceneSection.setLocale(isEnglish);
+      toolbar.syncLocale?.();
+      paintCopy();
+      renderAll();
+    },
     destroy() {
       unwireFeaturedKeys();
       unwireRosterKeys();
@@ -678,8 +717,8 @@ export function createCompanionCharacterPicker(opts = {}) {
  * }} opts
  */
 export function createCompanionStartPicker(opts = {}) {
-  const isEnglish = Boolean(opts.isEnglish);
-  const langCode = isEnglish ? "en" : "yue";
+  let isEnglish = Boolean(opts.isEnglish);
+  let langCode = isEnglish ? "en" : "yue";
   let selectedId = opts.selectedId || "nova";
   const roleRoster =
     typeof opts.rosterProvider === "function" ? opts.rosterProvider : null;
@@ -897,6 +936,7 @@ export function createCompanionStartPicker(opts = {}) {
       isEnglish,
       eagerPreview: false,
       startStrip: true,
+      hideRoleStrip: true,
       disabled: starting || !pickable,
       onCardTapFx: opts.onCardTapFx,
       onCardClick: applySelection,
@@ -950,6 +990,31 @@ export function createCompanionStartPicker(opts = {}) {
     },
     setBackgroundId(backgroundId) {
       sceneSection.setBackgroundId(backgroundId);
+    },
+    setLocale(nextEnglish) {
+      isEnglish = Boolean(nextEnglish);
+      langCode = isEnglish ? "en" : "yue";
+      Object.assign(copy, pickerCopy(isEnglish), opts.pickerCopy || {});
+      shell.setAttribute(
+        "aria-label",
+        isEnglish ? "Choose companion" : "揀同伴",
+      );
+      shell
+        .querySelector(".picker-showcase-stage")
+        ?.setAttribute(
+          "aria-label",
+          isEnglish ? "Selected companion preview" : "已選同伴預覽",
+        );
+      shell
+        .querySelector(".picker-roster-dock")
+        ?.setAttribute(
+          "aria-label",
+          isEnglish ? "Companion roster" : "同伴名單",
+        );
+      sceneSection.setLocale(isEnglish);
+      paintCopy();
+      renderAll();
+      renderPreload();
     },
     setPreloadProgress(pct, label) {
       const n = Number(pct);

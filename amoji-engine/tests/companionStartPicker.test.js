@@ -167,7 +167,18 @@ describe("companion start picker", () => {
     picker.destroy();
   });
 
-  it("start strip cards include embedded role label under the name", () => {
+  it("start strip cards omit role strip on the start picker", () => {
+    const item = listCompanionCharacters("en")[0];
+    const stripHtml = companionCardInnerHtml(item, {
+      compact: true,
+      startStrip: true,
+      hideRoleStrip: true,
+    });
+    expect(stripHtml).not.toContain("companion-card-role-strip");
+    expect(stripHtml).toContain(item.name);
+  });
+
+  it("start strip cards can show role strip when not hidden", () => {
     const item = listCompanionCharacters("en")[0];
     const stripHtml = companionCardInnerHtml(item, { compact: true, startStrip: true });
     expect(stripHtml).toContain("companion-card-role-strip");
@@ -192,6 +203,25 @@ describe("companion start picker", () => {
     expect(
       picker.element.querySelectorAll(".companion-card--start-strip .companion-card-number").length,
     ).toBe(CHARACTER_IDS.length);
+    expect(picker.element.querySelectorAll(".companion-card-role-strip").length).toBe(0);
+    picker.destroy();
+  });
+
+  it("setLocale refreshes background labels and roster copy", () => {
+    if (typeof document === "undefined") return;
+    const picker = createCompanionStartPicker({
+      isEnglish: true,
+      selectedId: "nova",
+      onStart: () => {},
+    });
+    picker.setLocale(false);
+    expect(
+      picker.element.querySelector(".picker-scene-section")?.getAttribute("aria-label"),
+    ).toBe("背景");
+    expect(picker.element.querySelector(".picker-scene-label")?.textContent).toBe("背景");
+    expect(picker.element.querySelector(".picker-roster-dock-label")?.textContent).toContain(
+      "名單",
+    );
     picker.destroy();
   });
 
