@@ -4,14 +4,21 @@ import {
   buildLipSyncTimeline,
   buildLipSyncTimelineCached,
   charToViseme,
+  clampVisemeOpen,
   estimateLipSyncMsPerChar,
+  VISEME_OPEN_SCALE,
   visemeAtAudioProgress,
   visemeAtTimelineProgress,
 } from "../engine/companion/companionViseme.js";
+import { TALK_MOUTH_OPEN_MAX } from "../engine/companion/companionFaceRest.js";
 
 describe("companionViseme", () => {
   it("maps vowels and CJK interjections to viseme shapes", () => {
-    expect(charToViseme("a")).toEqual({ shape: "aa", open: 0.82 });
+    expect(charToViseme("a")).toEqual({
+      shape: "aa",
+      open: clampVisemeOpen(0.82),
+    });
+    expect(clampVisemeOpen(0.82)).toBeCloseTo(0.82 * VISEME_OPEN_SCALE);
     expect(charToViseme("i").shape).toBe("ih");
     expect(charToViseme("啊").shape).toBe("aa");
     expect(charToViseme("嗯").open).toBeLessThan(0.3);
@@ -44,6 +51,7 @@ describe("companionViseme", () => {
     const quiet = blendVisemeWithAudioLevel({ shape: "aa", open: 0.5 }, 0);
     const loud = blendVisemeWithAudioLevel({ shape: "aa", open: 0.5 }, 0.8);
     expect(loud.open).toBeGreaterThan(quiet.open);
+    expect(loud.open).toBeLessThanOrEqual(TALK_MOUTH_OPEN_MAX);
   });
 
   it("slows lip sync estimate when talk speed is lower", () => {

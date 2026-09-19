@@ -123,7 +123,7 @@ describe("companionVoice", () => {
     expect(mid.index).toBe(1);
     expect(end.open).toBeLessThan(0.1);
     expect(end.index).toBe(3);
-    expect(mid.open).toBeGreaterThan(0.5);
+    expect(mid.open).toBeGreaterThan(0.35);
   });
 
   it("reads playback progress from audio.currentTime", () => {
