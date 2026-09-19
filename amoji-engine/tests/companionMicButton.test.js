@@ -2,9 +2,11 @@ import { describe, expect, it } from "vitest";
 import {
   companionMicButtonInnerHtml,
   createCompanionMicButton,
+  micHudEmotionLabel,
   MIC_BUTTON_CHATGPT_LIVE,
   resolveMicButtonTheme,
   resolveMicButtonThemeForState,
+  syncMicVoiceHud,
   EMOTION_MIC_THEME,
 } from "../engine/companion/companionMicButton.js";
 
@@ -58,6 +60,28 @@ describe("companionMicButton", () => {
     expect(el.querySelector(".mic-btn__halo")).toBeTruthy();
     expect(el.querySelector(".mic-btn__ring--c")).toBeTruthy();
     expect(el.querySelectorAll(".mic-btn__wave i").length).toBe(7);
+  });
+
+  it("syncs external mic voice HUD with emotion and volume", () => {
+    if (typeof document === "undefined") return;
+    const hud = document.createElement("div");
+    hud.className = "mic-voice-hud";
+    hud.innerHTML = `
+      <span data-mic-emotion-chip>Ready</span>
+      <span class="mic-voice-hud__meter"><span data-mic-volume-fill></span></span>
+    `;
+    syncMicVoiceHud(hud, {
+      state: "listening",
+      emotion: "happy",
+      level: 0.62,
+      isEnglish: true,
+      live: true,
+    });
+    expect(hud.classList.contains("is-live")).toBe(true);
+    expect(hud.querySelector("[data-mic-emotion-chip]")?.textContent).toBe(
+      micHudEmotionLabel("happy", true),
+    );
+    expect(hud.querySelector("[data-mic-volume-fill]")?.style.width).toBe("62.0%");
   });
 
   it("uses muted gray when mic is off and ChatGPT blue when live", () => {

@@ -20,6 +20,7 @@ describe("top-left companion chip", () => {
 
   it("opens the character picker from the brand chip", () => {
     expect(html).toContain('id="brand-btn"');
+    expect(html).toContain('id="companion-status-line"');
     expect(html).toContain('aria-haspopup="dialog"');
     expect(html).toContain('brandBtn?.addEventListener("click"');
     expect(html).toContain("openCharacterPicker()");
