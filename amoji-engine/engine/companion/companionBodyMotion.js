@@ -452,9 +452,9 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
     const foreCap = apose ? (opts.boot ? 0.34 : 0.28) : opts.boot ? 0.7 : 0.62;
     const liftMinL = apose ? 0.05 : 0.12;
     const liftMinR = apose ? 0.04 : 0.08;
-    const foreMinL = apose ? 0.1 : 0.32;
-    const foreMinR = apose ? 0.08 : 0.26;
-    const foreScale = apose ? 0.42 : 1;
+    const foreMinL = apose ? 0.04 : 0.32;
+    const foreMinR = apose ? 0.03 : 0.26;
+    const foreScale = apose ? 0.28 : 1;
     const liftL = Math.min(liftCap, Math.max(liftMinL, safe.armLiftL ?? REST_POSE.armLiftL) * k);
     const liftR = Math.min(liftCap, Math.max(liftMinR, safe.armLiftR ?? REST_POSE.armLiftR) * k);
     const foreL = Math.min(
@@ -822,7 +822,7 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
         const idleMotion = apose
           ? sampleCalmBreathIdle(elapsed, { listening, emotion, gender: idleGender })
           : samplePlantedAliveIdle(elapsed, { listening, emotion, gender: idleGender });
-        pose = mergePoses(pose, idleMotion, apose ? 0.42 : 0.72);
+        pose = mergePoses(pose, idleMotion, apose ? 0.58 : 0.84);
         const beat = advanceIdleBeat(idleBeat, dt, now, { gender: idleGender });
         idleBeat = beat.state;
         if (beat.overlay && Object.keys(beat.overlay).length) {

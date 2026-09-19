@@ -60,8 +60,8 @@ export function sampleSimpleBootIdleMotion(elapsedSec, opts = {}) {
       Math.max(0, Math.sin(t * 0.58 + 0.9) * 0.04) * pulse,
     upperLegL: profile.legSpread,
     upperLegR: profile.legSpread,
-    lowerLegL: 0.1,
-    lowerLegR: 0.1,
+    lowerLegL: 0.02,
+    lowerLegR: 0.02,
   };
 }
 
@@ -91,8 +91,8 @@ export function sampleCalmBreathIdle(elapsedSec, opts = {}) {
     forearmR: profile.forearmBaseR * 0.42,
     upperLegL: profile.legSpread,
     upperLegR: profile.legSpread,
-    lowerLegL: 0.1,
-    lowerLegR: 0.1,
+    lowerLegL: 0.02,
+    lowerLegR: 0.02,
   };
 }
 
@@ -174,8 +174,8 @@ export function sampleIdleBodyMotion(elapsedSec, opts = {}) {
       energy,
     upperLegL: profile.legSpread,
     upperLegR: profile.legSpread,
-    lowerLegL: 0.1,
-    lowerLegR: 0.1,
+    lowerLegL: 0.02,
+    lowerLegR: 0.02,
   };
 }
 

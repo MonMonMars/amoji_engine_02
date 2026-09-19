@@ -1052,6 +1052,14 @@ export function createCompanionVoice(opts = {}) {
     }
 
     const prosody = resolveSpeakProsody(speakText, perf, langCode);
+    opts.onSpeakProsody?.({
+      emotion: prosody.emotion,
+      nuance: prosody.nuance,
+      talkStyle: prosody.talkStyle,
+      speechEnergy: prosody.speechEnergy,
+      browser: prosody.browser,
+      instruct: prosody.instruct,
+    });
 
     try {
       if (!speakerOn) {

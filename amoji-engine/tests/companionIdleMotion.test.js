@@ -94,8 +94,8 @@ describe("companionIdleMotion", () => {
     expect(a.leanY).toBe(0);
     expect(a.headZ).toBe(0);
     expect(a.forearmL).toBeGreaterThan(0.12);
-    expect(a.lowerLegR).toBeGreaterThan(0.08);
-    expect(a.lowerLegR).toBeLessThan(0.14);
+    expect(a.lowerLegR).toBeGreaterThan(0.01);
+    expect(a.lowerLegR).toBeLessThan(0.06);
     expect(a.spineX).not.toBe(b.spineX);
   });
 

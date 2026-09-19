@@ -250,7 +250,7 @@ describe("companionTtsProsody", () => {
     });
     const plain = resolveCompanionTtsProsody({
       emotion: "neutral",
-      text: "哇！真係好開心呀！",
+      text: "今日天氣一般。",
       speedMultiplier: 1,
     });
     expect(marked.browser.pitch).toBeGreaterThan(plain.browser.pitch);

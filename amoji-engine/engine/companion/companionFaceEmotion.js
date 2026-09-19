@@ -46,8 +46,8 @@ export const CHARACTER_FACE_RIG_HINTS = Object.freeze({
  * @type {Record<string, { talkMouthScale?: number, talkJawScale?: number, talkPulseScale?: number }>}
  */
 export const CHARACTER_TALK_MOUTH_OVERRIDES = Object.freeze({
-  nova: { talkMouthScale: 0.38, talkJawScale: 0, talkPulseScale: 0.55 },
-  ember: { talkMouthScale: 0.38, talkJawScale: 0, talkPulseScale: 0.55 },
+  nova: { talkMouthScale: 0.32, talkJawScale: 0, talkPulseScale: 0.42 },
+  ember: { talkMouthScale: 0.32, talkJawScale: 0, talkPulseScale: 0.42 },
 });
 
 /** @type {Record<FaceRigType, {

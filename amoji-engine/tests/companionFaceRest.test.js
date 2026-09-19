@@ -71,7 +71,7 @@ describe("companionFaceRest", () => {
     expect(sampleTalkMouthPulse(120, true)).toBeGreaterThan(0.2);
     expect(sampleTalkMouthPulse(120, true)).toBeLessThanOrEqual(1);
     expect(talkingMouthOpen(false, 0.9, 200)).toBe(0);
-    expect(talkingMouthOpen(true, 0, 200)).toBeGreaterThan(0.12);
+    expect(talkingMouthOpen(true, 0, 200)).toBeGreaterThan(0.08);
     expect(talkingMouthOpen(true, 0.95, 200)).toBeGreaterThan(0.3);
     expect(talkingMouthOpen(true, 0.95, 200)).toBeLessThanOrEqual(TALK_MOUTH_OPEN_MAX);
     expect(talkJawRotationX(0)).toBe(0);

@@ -6,7 +6,7 @@
 import { TALK_MOUTH_OPEN_MAX } from "./companionFaceRest.js";
 
 /** Scale raw char openness before the global talk cap. */
-export const VISEME_OPEN_SCALE = 0.62;
+export const VISEME_OPEN_SCALE = 0.52;
 
 /**
  * @param {number} open

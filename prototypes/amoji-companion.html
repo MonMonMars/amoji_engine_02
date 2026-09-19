@@ -8,9 +8,9 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji · Companion</title>
     <script>
-      window.__amojiBuild = "2026-09-19-v337-picker-stacked-bg";
+      window.__amojiBuild = "2026-09-19-v338-session-ui-avatar-voice";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-19-v337-picker-stacked-bg"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-19-v338-session-ui-avatar-voice"></script>
     <link
       rel="prefetch"
       href="/prototypes/assets/companion-char-nova.png"
@@ -710,12 +710,12 @@
       media="print"
       onload="this.media='all'"
     />
-    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-19-v337-picker-stacked-bg" />
-    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-19-v337-picker-stacked-bg" />
-    <link rel="stylesheet" href="/prototypes/companion-mic-button.css?v=2026-09-19-v337-picker-stacked-bg" />
-    <link rel="stylesheet" href="/prototypes/companion-minimal-ui.css?v=2026-09-19-v337-picker-stacked-bg" />
-    <link rel="stylesheet" href="/prototypes/companion-picker-v4.css?v=2026-09-19-v337-picker-stacked-bg" />
-    <link rel="stylesheet" href="/prototypes/companion-picker-stacked-layout.css?v=2026-09-19-v337-picker-stacked-bg" />
+    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-19-v338-session-ui-avatar-voice" />
+    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-19-v338-session-ui-avatar-voice" />
+    <link rel="stylesheet" href="/prototypes/companion-mic-button.css?v=2026-09-19-v338-session-ui-avatar-voice" />
+    <link rel="stylesheet" href="/prototypes/companion-minimal-ui.css?v=2026-09-19-v338-session-ui-avatar-voice" />
+    <link rel="stylesheet" href="/prototypes/companion-picker-v4.css?v=2026-09-19-v338-session-ui-avatar-voice" />
+    <link rel="stylesheet" href="/prototypes/companion-picker-stacked-layout.css?v=2026-09-19-v338-session-ui-avatar-voice" />
     <script>
       (function () {
         var params = new URLSearchParams(location.search);
@@ -741,7 +741,7 @@
       })();
     </script>
     <script type="module">
-      import { bootEarlyStartPicker } from "/amoji-engine/engine/companion/companionEarlyStartPicker.js?v=2026-09-19-v337-picker-stacked-bg";
+      import { bootEarlyStartPicker } from "/amoji-engine/engine/companion/companionEarlyStartPicker.js?v=2026-09-19-v338-session-ui-avatar-voice";
       const bootParams = new URLSearchParams(location.search);
       if (bootParams.get("autostart") !== "1" && bootParams.get("pick") !== "0") {
         globalThis.__amojiEarlyStartPickerPromise = bootEarlyStartPicker({
@@ -4796,19 +4796,19 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-19-v337-picker-stacked-bg",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-19-v338-session-ui-avatar-voice",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-19-v337-picker-stacked-bg",
-          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-19-v337-picker-stacked-bg"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-19-v338-session-ui-avatar-voice",
+          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-19-v338-session-ui-avatar-voice"
         }
       }
     </script>
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-19-v337-picker-stacked-bg"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-19-v338-session-ui-avatar-voice"
     />
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-19-v337-picker-stacked-bg"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-19-v337-picker-stacked-bg"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-19-v338-session-ui-avatar-voice"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-19-v338-session-ui-avatar-voice"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;
@@ -5092,6 +5092,9 @@
           <span class="companion-chip__dot companion-chip__dot--legacy" id="status-dot" hidden aria-hidden="true"></span>
           <span class="companion-chip__caret" aria-hidden="true"></span>
         </button>
+        <p class="companion-session-name" id="companion-session-name" aria-live="polite">
+          Amoji
+        </p>
         <div class="meta topbar-actions">
           <button
             type="button"
@@ -5278,17 +5281,6 @@
                 aria-label="Message"
               ></textarea>
             </div>
-            <button class="send" id="send" type="submit" aria-label="Send">
-              <svg class="btn-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" aria-hidden="true">
-                <path
-                  d="M12 18.5V5.5M6.7 11 12 5.5 17.3 11"
-                  stroke="currentColor"
-                  stroke-width="2.15"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                />
-              </svg>
-            </button>
             <div class="mic-voice-stack" id="mic-voice-stack">
               <button
                 type="button"
@@ -5326,6 +5318,17 @@
                 </span>
               </button>
             </div>
+            <button class="send" id="send" type="submit" aria-label="Send">
+              <svg class="btn-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" aria-hidden="true">
+                <path
+                  d="M12 18.5V5.5M6.7 11 12 5.5 17.3 11"
+                  stroke="currentColor"
+                  stroke-width="2.15"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </button>
           </form>
         </div>
       </div>
@@ -5842,7 +5845,11 @@
           nuance: content.nuance || "none",
           blend: content.expressionBlend,
         }) ?? avatar.setEmotion?.(content.emotion || "neutral");
-        setEmotionPill(content.emotion || "neutral", content.action || null);
+        setEmotionPill(
+          content.emotion || "neutral",
+          content.action || null,
+          content.nuance || "none",
+        );
         avatar.setTalkStyle?.(content.talkStyle);
         avatar.setTalkEnergy?.(content.speechEnergy);
         if (content.action === "stop") {
@@ -5958,6 +5965,7 @@
       const statusPill = document.getElementById("status-pill");
       const brandBtn = document.getElementById("brand-btn");
       const brandName = document.getElementById("brand-name");
+      const companionSessionName = document.getElementById("companion-session-name");
       const companionChipAvatar = document.getElementById("companion-chip-avatar");
       const companionStatusLine = document.getElementById("companion-status-line");
       const settings = document.getElementById("settings");
@@ -6896,6 +6904,10 @@
         const def = getCharacter(characterId);
         const name = characterDisplayName(characterId, langCode, isEnglish);
         if (brandName) brandName.textContent = name;
+        if (companionSessionName) {
+          companionSessionName.textContent = name;
+          companionSessionName.title = name;
+        }
         if (companionChipAvatar && def?.previewImage) {
           companionChipAvatar.src = def.previewImage;
           companionChipAvatar.alt = name;
@@ -6983,9 +6995,11 @@
         }
         modePill.innerHTML = `LLM · <strong>${mode}</strong>`;
       };
-      const setEmotionPill = (emotion, action = null) => {
+      const setEmotionPill = (emotion, action = null, nuanceOverride = null) => {
         currentEmotion = emotion;
-        micUi.setEmotion(emotion, speakContent?.nuance || "none");
+        const nuance =
+          nuanceOverride || speakContent?.nuance || "none";
+        micUi.setEmotion(emotion, nuance);
         emotionBall.setEmotion(emotion, speakContent?.nuance || "none");
         syncEmotionBall();
         const actionLabel =
@@ -7447,6 +7461,24 @@
         onAssistantOutputChange: (active) => {
           if (active) armBargeIn();
           else disarmBargeIn();
+          syncMicBtn();
+        },
+        onSpeakProsody: (pack) => {
+          if (!pack) return;
+          speakContent = {
+            ...speakContent,
+            emotion: pack.emotion || speakContent?.emotion || "neutral",
+            nuance: pack.nuance || speakContent?.nuance || "none",
+            talkStyle: pack.talkStyle || speakContent?.talkStyle,
+            speechEnergy: pack.speechEnergy ?? speakContent?.speechEnergy,
+          };
+          setEmotionPill(
+            speakContent.emotion,
+            null,
+            speakContent.nuance,
+          );
+          avatar.setTalkStyle?.(speakContent.talkStyle);
+          avatar.setTalkEnergy?.(speakContent.speechEnergy);
           syncMicBtn();
         },
         onMouth: (open, shape) => {
@@ -8797,6 +8829,8 @@
         if (!liteMode && !avatarLoadStarted) scheduleDeferredAvatarLoad();
         syncEmotionBall();
         updateEmotionBallVisibility();
+        scheduleIdlePerformance();
+        avatar?.pulseIdleBeat?.("look");
 
         if (fromTimeout) {
           showToast("Session ready — avatar or voice may still be loading", "info");

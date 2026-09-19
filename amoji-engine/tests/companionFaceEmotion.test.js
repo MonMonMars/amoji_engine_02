@@ -14,7 +14,10 @@ import {
   resolveFaceExpression,
   resolveTalkEmotionMorphWeights,
 } from "../engine/companion/companionFaceEmotion.js";
-import { scaleTalkMouthOpen } from "../engine/companion/companionFaceRest.js";
+import {
+  scaleTalkMouthOpen,
+  TALK_MOUTH_OPEN_MAX,
+} from "../engine/companion/companionFaceRest.js";
 import { inspectVrmBuffer } from "../engine/companion/companionVrmInspect.js";
 
 const assets = join(dirname(fileURLToPath(import.meta.url)), "../../prototypes/assets");
@@ -76,7 +79,7 @@ describe("companionFaceEmotion", () => {
     expect(nova.skipMorphMouthWhenPresets).toBe(true);
     expect(kizuna.talkMouthScale).toBe(0.52);
     expect(scaleTalkMouthOpen(0.9, nova)).toBeLessThan(0.4);
-    expect(scaleTalkMouthOpen(0.9, kizuna)).toBeCloseTo(0.52 * 0.52);
+    expect(scaleTalkMouthOpen(0.9, kizuna)).toBeCloseTo(TALK_MOUTH_OPEN_MAX * 0.52);
   });
 
   it("boosts love nuance morph smile and stress frown", () => {
