@@ -1,0 +1,43 @@
+name: Companion CI
+
+on:
+  push:
+    branches: [main, "cursor/**"]
+  pull_request:
+    branches: [main]
+
+jobs:
+  unit-and-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            amoji-engine/package-lock.json
+
+      - name: Install root deps (Playwright)
+        run: npm ci
+
+      - name: Install amoji-engine deps
+        run: cd amoji-engine && npm ci
+
+      - name: Sync build version in HTML
+        run: node scripts/sync-build-version.mjs
+
+      - name: Download legal VRM assets
+        run: node amoji-engine/scripts/download-legal-vrm.mjs
+
+      - name: Unit tests
+        run: cd amoji-engine && npm test
+
+      - name: Install Playwright Chromium
+        run: npx playwright install chromium --with-deps
+
+      - name: Local companion + mobile smoke
+        run: node scripts/run-companion-smoke.mjs
