@@ -6,6 +6,10 @@ import {
   saveAuthSession,
 } from "/amoji-engine/engine/mobile/companionMobileAuth.js";
 import { loadMobileSettings } from "/amoji-engine/engine/mobile/companionMobileSettings.js";
+import {
+  normalizeCompanionRole,
+  saveCompanionRole,
+} from "/amoji-engine/engine/mobile/companionRolePresets.js";
 
 import "./screens/title.js";
 import "./screens/login.js";
@@ -83,10 +87,20 @@ async function boot() {
   }
 
   const params = new URLSearchParams(location.search);
+  const roleParam = params.get("role");
+  const navigateParams = {};
+  if (roleParam) {
+    const role = normalizeCompanionRole(roleParam);
+    saveCompanionRole(role);
+    navigateParams.role = role;
+  }
   const screen = params.get("screen");
   const valid = ["title", "login", "hub", "companion", "pet", "chase", "shop", "settings"];
   if (screen && valid.includes(screen)) {
-    await navigate(/** @type {import("./router.js").ScreenName} */ (screen));
+    await navigate(
+      /** @type {import("./router.js").ScreenName} */ (screen),
+      navigateParams,
+    );
     return;
   }
   if (session?.token) {

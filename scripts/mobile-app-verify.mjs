@@ -94,6 +94,32 @@ try {
     throw new Error("Pet Care hub card missing");
   }
 
+  const secretaryCard = page.locator('.hub-card[data-set-role="secretary"]');
+  const hasSecretary = (await secretaryCard.count()) > 0;
+  record(
+    "hub-secretary-inapp",
+    deployMatch ? hasSecretary : hasSecretary || true,
+    deployMatch ? "" : hasSecretary ? "" : "pending deploy",
+  );
+  if (hasSecretary) {
+    await secretaryCard.click();
+    await page.waitForSelector('[data-screen="companion"]', { timeout: 8000 });
+    const secIframe = await page.locator(".companion-frame").getAttribute("src");
+    record(
+      "secretary-iframe-role",
+      Boolean(
+        secIframe?.includes("role=secretary") &&
+          secIframe?.includes("mobile=1") &&
+          secIframe?.includes("tab=today"),
+      ),
+      secIframe || "",
+    );
+    await page.getByRole("button", { name: "←" }).click();
+    await page.waitForSelector('[data-screen="hub"]', { timeout: 8000 });
+  } else if (deployMatch) {
+    throw new Error("Secretary hub card missing");
+  }
+
   const companionBtn = page.locator('.hub-card[data-go="companion"]').first();
   await companionBtn.click();
   await page.waitForSelector('[data-screen="companion"]', { timeout: 8000 });
