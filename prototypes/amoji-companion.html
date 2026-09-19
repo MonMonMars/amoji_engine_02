@@ -8,9 +8,9 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji · Companion</title>
     <script>
-      window.__amojiBuild = "2026-09-19-v293-preview-restore";
+      window.__amojiBuild = "2026-09-19-v294-body-poke-orbit";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-19-v293-preview-restore"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-19-v294-body-poke-orbit"></script>
     <link
       rel="prefetch"
       href="/prototypes/assets/companion-char-nova.png"
@@ -626,11 +626,11 @@
       media="print"
       onload="this.media='all'"
     />
-    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-19-v293-preview-restore" />
-    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-19-v293-preview-restore" />
-    <link rel="stylesheet" href="/prototypes/companion-mic-button.css?v=2026-09-19-v293-preview-restore" />
-    <link rel="stylesheet" href="/prototypes/companion-minimal-ui.css?v=2026-09-19-v293-preview-restore" />
-    <link rel="stylesheet" href="/prototypes/companion-picker-v4.css?v=2026-09-19-v293-preview-restore" />
+    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-19-v294-body-poke-orbit" />
+    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-19-v294-body-poke-orbit" />
+    <link rel="stylesheet" href="/prototypes/companion-mic-button.css?v=2026-09-19-v294-body-poke-orbit" />
+    <link rel="stylesheet" href="/prototypes/companion-minimal-ui.css?v=2026-09-19-v294-body-poke-orbit" />
+    <link rel="stylesheet" href="/prototypes/companion-picker-v4.css?v=2026-09-19-v294-body-poke-orbit" />
     <script>
       (function () {
         var params = new URLSearchParams(location.search);
@@ -656,7 +656,7 @@
       })();
     </script>
     <script type="module">
-      import { bootEarlyStartPicker } from "/amoji-engine/engine/companion/companionEarlyStartPicker.js?v=2026-09-19-v293-preview-restore";
+      import { bootEarlyStartPicker } from "/amoji-engine/engine/companion/companionEarlyStartPicker.js?v=2026-09-19-v294-body-poke-orbit";
       const bootParams = new URLSearchParams(location.search);
       if (bootParams.get("autostart") !== "1" && bootParams.get("pick") !== "0") {
         globalThis.__amojiEarlyStartPickerPromise = bootEarlyStartPicker({
@@ -4556,19 +4556,19 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-19-v293-preview-restore",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-19-v294-body-poke-orbit",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-19-v293-preview-restore",
-          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-19-v293-preview-restore"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-19-v294-body-poke-orbit",
+          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-19-v294-body-poke-orbit"
         }
       }
     </script>
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-19-v293-preview-restore"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-19-v294-body-poke-orbit"
     />
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-19-v293-preview-restore"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-19-v293-preview-restore"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-19-v294-body-poke-orbit"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-19-v294-body-poke-orbit"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;
@@ -4817,12 +4817,12 @@
     </div>
     <div class="stage">
       <div class="atmosphere" aria-hidden="true"></div>
-      <canvas id="avatar-canvas" aria-label="Amoji companion — drag to orbit"></canvas>
+      <canvas id="avatar-canvas" aria-label="Amoji companion — tap character to interact, drag empty space to orbit"></canvas>
       <div
         class="orbit-hit"
         id="orbit-hit"
         aria-hidden="true"
-        title="Drag to rotate camera"
+        title="Tap character to interact · drag empty space to orbit"
       ></div>
       <div class="orbit-hint hide" id="orbit-hint" hidden aria-hidden="true"></div>
       <header class="topbar">
@@ -6687,8 +6687,8 @@
         orbitHint.removeAttribute("aria-hidden");
         orbitHint.classList.remove("hide");
         orbitHint.textContent = isEnglish
-          ? "Drag to orbit · double-click empty space to reset"
-          : "拖曳旋轉 · 雙擊空白處重置視角";
+          ? "Tap character to interact · drag empty space to orbit · double-click to reset"
+          : "點角色互動 · 拖曳空白處旋轉 · 雙擊重置視角";
       }
       let talkingCameraLatched = false;
       const orbitSurface = orbitHit || canvas;
@@ -7835,12 +7835,13 @@
       };
 
       handleCharacterTap = () => {
-        if (!careEnabled) return;
         const now = Date.now();
         if (now - lastTapAt < 1400 || busy) return;
         lastTapAt = now;
-        window.__amojiTreats?.applyPet?.();
-        raisingHub?.onPet?.();
+        if (careEnabled) {
+          window.__amojiTreats?.applyPet?.();
+          raisingHub?.onPet?.();
+        }
         avatar.reactToTap?.();
         const line = pickTapLine();
         addBubble("assistant", line);
@@ -8845,8 +8846,8 @@
         waitAct?.setLocale?.(nextEnglish);
         if (orbitHint) {
           orbitHint.textContent = nextEnglish
-            ? "Drag to orbit · double-click empty space to reset"
-            : "拖曳旋轉 · 雙擊空白處重置視角";
+            ? "Tap character to interact · drag empty space to orbit · double-click to reset"
+            : "點角色互動 · 拖曳空白處旋轉 · 雙擊重置視角";
         }
         if (liteLink) {
           liteLink.href = buildCompanionHref({
