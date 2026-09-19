@@ -6,17 +6,117 @@ const START_ROOT = "#start-character-picker";
 const SESSION_ROOT = "#companion-character-picker";
 
 /**
+ * @param {Element | null | undefined} el
+ */
+function isDomVisible(el) {
+  if (!el || el.disabled) return false;
+  const style = globalThis.getComputedStyle?.(el);
+  if (!style || style.display === "none" || style.visibility === "hidden") {
+    return false;
+  }
+  const rect = el.getBoundingClientRect();
+  return rect.width > 1 && rect.height > 1;
+}
+
+/**
+ * Pick a visible character card on the start picker (featured row or main grid).
+ * @param {string} [characterId]
+ * @returns {string | null} CSS selector
+ */
+export function resolveVisibleStartPickerCardSelector(characterId = "nova") {
+  if (typeof document === "undefined") return null;
+  const id = String(characterId || "nova").toLowerCase();
+  const candidates = [
+    `${START_ROOT} .picker-featured-row [data-character-id="${id}"]:not([disabled])`,
+    `${START_ROOT} .companion-picker-grid [data-character-id="${id}"]:not([disabled])`,
+    `${START_ROOT} [data-character-id="${id}"]:not([disabled])`,
+    `${START_ROOT} .companion-picker-grid [data-character-id]:not([disabled])`,
+    `${START_ROOT} [data-character-id]:not([disabled])`,
+  ];
+  for (const sel of candidates) {
+    const el = document.querySelector(sel);
+    if (isDomVisible(el)) return sel;
+  }
+  return null;
+}
+
+/**
  * @param {import("playwright").Page} page
  * @param {{ characterId?: string, cardTimeout?: number, dismissTimeout?: number }} [opts]
  */
 export async function beginStartPickerSession(page, opts = {}) {
   const cardTimeout = opts.cardTimeout ?? 90000;
   const dismissTimeout = opts.dismissTimeout ?? 60000;
-  const cardSel = opts.characterId
-    ? `${START_ROOT} [data-character-id="${opts.characterId}"]:not([disabled])`
-    : `${START_ROOT} .picker-featured-row [data-character-id="nova"]:not([disabled])`;
+  const characterId = String(opts.characterId || "nova").toLowerCase();
 
-  await page.waitForSelector(cardSel, { timeout: cardTimeout });
+  await page.waitForFunction(
+    (id) => {
+      const featured = document.querySelector(
+        `#start-character-picker .picker-featured-row [data-character-id="${id}"]`,
+      );
+      if (featured) {
+        const wrap = featured.closest(".picker-featured-wrap");
+        const wrapHidden =
+          wrap &&
+          (wrap.hidden ||
+            globalThis.getComputedStyle(wrap).display === "none");
+        if (!wrapHidden) {
+          const style = globalThis.getComputedStyle(featured);
+          const rect = featured.getBoundingClientRect();
+          if (
+            style.display !== "none" &&
+            style.visibility !== "hidden" &&
+            rect.width > 1 &&
+            rect.height > 1
+          ) {
+            return true;
+          }
+        }
+      }
+      const gridCard = document.querySelector(
+        `#start-character-picker .companion-picker-grid [data-character-id="${id}"]`,
+      );
+      if (gridCard) {
+        const style = globalThis.getComputedStyle(gridCard);
+        const rect = gridCard.getBoundingClientRect();
+        return (
+          style.display !== "none" &&
+          style.visibility !== "hidden" &&
+          rect.width > 1 &&
+          rect.height > 1
+        );
+      }
+      return false;
+    },
+    characterId,
+    { timeout: cardTimeout },
+  );
+
+  const cardSel = await page.evaluate((id) => {
+    const isVisible = (el) => {
+      if (!el || el.disabled) return false;
+      const style = globalThis.getComputedStyle(el);
+      if (style.display === "none" || style.visibility === "hidden") return false;
+      const rect = el.getBoundingClientRect();
+      return rect.width > 1 && rect.height > 1;
+    };
+    const pick = (sel) => {
+      const el = document.querySelector(sel);
+      return isVisible(el) ? sel : null;
+    };
+    return (
+      pick(`#start-character-picker .picker-featured-row [data-character-id="${id}"]:not([disabled])`) ||
+      pick(`#start-character-picker .companion-picker-grid [data-character-id="${id}"]:not([disabled])`) ||
+      pick(`#start-character-picker [data-character-id="${id}"]:not([disabled])`) ||
+      pick(`#start-character-picker .companion-picker-grid [data-character-id]:not([disabled])`) ||
+      pick(`#start-character-picker [data-character-id]:not([disabled])`)
+    );
+  }, characterId);
+
+  if (!cardSel) {
+    throw new Error(`No visible start-picker card for ${characterId}`);
+  }
+
   await page.evaluate((sel) => {
     const card = document.querySelector(sel);
     card?.scrollIntoView?.({ block: "center", inline: "center" });
