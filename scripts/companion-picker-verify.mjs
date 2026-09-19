@@ -109,6 +109,59 @@ record("roster strip", boot.roster >= 8, String(boot.roster));
 record("filter chips", boot.filters >= 4, String(boot.filters));
 record("begin CTA", boot.begin);
 
+const layout = await page.evaluate(() => {
+  const footer = document.querySelector("#start-character-picker .picker-footer");
+  const wrap = document.querySelector("#start-character-picker .start-picker-grid-wrap");
+  const grid = document.querySelector("#start-character-picker .companion-picker-grid--start");
+  const begin = document.querySelector("#start-character-picker .picker-begin-btn");
+  const cards = document.querySelectorAll(
+    "#start-character-picker .companion-picker-grid--start .companion-card",
+  );
+  const imgs = document.querySelectorAll(
+    "#start-character-picker .companion-card-portrait img",
+  );
+  if (!footer || !wrap || !grid || !cards.length) {
+    return { ok: false, reason: "missing footer, grid, or cards" };
+  }
+  const footerTop = footer.getBoundingClientRect().top;
+  const wrapBottom = wrap.getBoundingClientRect().bottom;
+  const gridBottom = grid.getBoundingClientRect().bottom;
+  let visibleOverlap = 0;
+  for (const card of cards) {
+    const portrait = card.querySelector(".companion-card-portrait");
+    if (!portrait) continue;
+    const b = portrait.getBoundingClientRect();
+    if (b.top >= footerTop - 1) continue;
+    if (b.bottom > footerTop + 2) visibleOverlap += 1;
+  }
+  const beginTop = begin?.getBoundingClientRect().top ?? footerTop;
+  const brokenImgs = Array.from(imgs).filter(
+    (img) => !img.complete || img.naturalWidth === 0,
+  ).length;
+  return {
+    ok:
+      wrapBottom <= footerTop + 2 &&
+      visibleOverlap === 0 &&
+      brokenImgs === 0 &&
+      grid.clientHeight >= 72,
+    visibleOverlap,
+    wrapBottom,
+    gridBottom,
+    footerTop,
+    beginTop,
+    gridH: grid.clientHeight,
+    brokenImgs,
+    cardCount: cards.length,
+    imgCount: imgs.length,
+  };
+});
+record(
+  "begin btn not over thumbnails",
+  layout.ok,
+  layout.reason ||
+    `visibleOverlap=${layout.visibleOverlap} gridH=${layout.gridH} broken=${layout.brokenImgs}`,
+);
+
 await page.screenshot({
   path: join(outDir, "picker_verify_start.png"),
   fullPage: true,

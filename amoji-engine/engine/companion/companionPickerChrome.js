@@ -5,6 +5,7 @@ import {
   GALLERY_PRIORITY_IDS,
   HIGH_POLY_FACE_MIN_TRIANGLES,
 } from "./companionCharacterCatalog.js";
+import { wireCompanionPreviewFallback } from "./companionPreviewFallback.js";
 
 export const COMPANION_PICKER_CHROME_SCHEMA = "amoji.companionPickerChrome.v1";
 
@@ -150,6 +151,7 @@ export function updatePickerHero(root, item, isEnglish = false) {
   const accent = item?.accent || "#8b7cf8";
   hero.style.setProperty("--hero-accent", accent);
   if (img) {
+    wireCompanionPreviewFallback(img);
     if (item?.previewImage) {
       const nextSrc = item.previewImage;
       const currentSrc = img.getAttribute("src") || "";
