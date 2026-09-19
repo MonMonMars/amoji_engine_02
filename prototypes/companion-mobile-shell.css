@@ -16,8 +16,8 @@ body.companion-mobile-shell.companion-minimal-chrome .topbar {
   padding-top: max(0.5rem, env(safe-area-inset-top));
 }
 
-body.companion-mobile-shell.companion-minimal-chrome .companion-session-name {
-  font-size: 1rem;
+body.companion-mobile-shell.companion-minimal-chrome .topbar .companion-chip {
+  max-width: min(68vw, 15.5rem);
 }
 
 body.companion-mobile-shell.companion-minimal-chrome .chat-column,

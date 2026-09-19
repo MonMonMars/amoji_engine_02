@@ -22,27 +22,39 @@ body.companion-minimal-chrome .topbar {
   pointer-events: none;
 }
 
+/* Plain session label hidden — use tappable companion chip (avatar + name) for picker. */
 body.companion-minimal-chrome .companion-session-name {
-  pointer-events: none;
-  margin: 0;
-  padding: 0.15rem 0 0 0.1rem;
-  flex: 1 1 auto;
-  min-width: 0;
-  max-width: calc(100% - 3.5rem);
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
   overflow: hidden;
-  text-overflow: ellipsis;
+  clip: rect(0, 0, 0, 0);
   white-space: nowrap;
-  font-family: var(--font-display, "Syne", system-ui, sans-serif);
-  font-size: 1.05rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  color: rgba(244, 240, 255, 0.94);
-  text-shadow: 0 1px 12px rgba(0, 0, 0, 0.45);
+  border: 0;
 }
 
 body.companion-minimal-chrome .topbar .brand-btn,
 body.companion-minimal-chrome .topbar .companion-chip {
-  display: none !important;
+  pointer-events: auto;
+  display: flex !important;
+  flex-shrink: 1;
+  min-width: 0;
+  max-width: min(72vw, 17rem);
+  margin-right: 0.35rem;
+}
+
+body.companion-minimal-chrome .topbar .companion-chip__status,
+body.companion-minimal-chrome .topbar .companion-chip__goal {
+  display: none;
+}
+
+body.companion-minimal-chrome .topbar .companion-chip__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 9.5rem;
 }
 
 body.companion-minimal-chrome .topbar .topbar-setup-btn {
