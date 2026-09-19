@@ -149,7 +149,9 @@ describe("companion start picker", () => {
       selectedId: "nova",
       onStart: () => {},
     });
-    expect(picker.element.querySelector(".picker-scene-section")).toBeTruthy();
+    expect(
+      picker.element.querySelector(".picker-roster-dock .picker-scene-section"),
+    ).toBeTruthy();
     expect(picker.element.querySelectorAll(".picker-scene-chip").length).toBe(
       SCENE_BACKGROUND_PRESETS.length,
     );

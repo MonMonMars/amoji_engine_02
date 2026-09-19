@@ -38,7 +38,7 @@
     rgba(6, 4, 14, 0.99)
   );
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto auto;
+  grid-template-rows: auto minmax(0, 1fr) auto;
   overflow: hidden;
 }
 
@@ -502,7 +502,9 @@
 
 .companion-picker--v4.companion-picker--start.companion-picker--showcase .picker-roster-dock {
   flex: 0 0 auto;
-  padding: 0.42rem 0 0.12rem;
+  display: flex;
+  flex-direction: column;
+  padding: 0.42rem 0 0;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
   background: linear-gradient(
     180deg,
@@ -701,13 +703,16 @@
   color: rgba(244, 240, 255, 0.5);
 }
 
-.companion-picker--v4.companion-picker--start.companion-picker--showcase .picker-scene-section {
-  padding: 0.38rem 1rem 0.28rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+.companion-picker--v4.companion-picker--start.companion-picker--showcase .picker-roster-dock .picker-scene-section {
+  flex-shrink: 0;
+  margin-top: 0.08rem;
+  padding: 0.42rem 1.15rem 0.55rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.22);
 }
 
-.companion-picker--v4.companion-picker--start.companion-picker--showcase .picker-scene-label {
-  margin-bottom: 0.32rem;
+.companion-picker--v4.companion-picker--start.companion-picker--showcase .picker-roster-dock .picker-scene-label {
+  margin-bottom: 0.34rem;
   font-size: 0.6rem;
 }
 

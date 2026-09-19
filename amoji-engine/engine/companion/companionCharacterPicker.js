@@ -630,9 +630,9 @@ export function createCompanionStartPicker(opts = {}) {
             <div class="companion-picker-grid companion-picker-grid--start companion-picker-grid--roster" role="listbox"></div>
             <p class="start-picker-scroll-hint" hidden></p>
           </div>
+          ${PICKER_SCENE_SECTION_HTML}
         </section>
       </div>
-      ${PICKER_SCENE_SECTION_HTML}
       <footer class="picker-footer">
         <div class="start-picker-preload is-loading" aria-live="polite">
           <div class="start-picker-preload-row">
