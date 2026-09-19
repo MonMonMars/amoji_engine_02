@@ -32,6 +32,19 @@ body.companion-mobile-shell.companion-minimal-chrome .composer-wrap {
 
 body.companion-mobile-shell.companion-minimal-chrome .composer.composer-pro {
   border-radius: 1.65rem;
+  width: 100%;
+  max-width: none;
+}
+
+body.companion-mobile-shell.companion-minimal-chrome .stage.mic-mode .composer {
+  width: 100%;
+  max-width: none;
+  justify-content: stretch;
+}
+
+body.companion-mobile-shell.companion-minimal-chrome .composer-field {
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 body.companion-mobile-shell .starter-prompts:not([hidden]) {

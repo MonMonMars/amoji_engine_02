@@ -31,7 +31,8 @@ describe("companionMinimalUi", () => {
     expect(minimalCss).toMatch(/companion-minimal-chrome \.chat-column[\s\S]*width:\s*100%/);
     expect(minimalCss).not.toMatch(/companion-minimal-chrome \.chat-column[\s\S]*680px/);
     expect(html).toMatch(/\.composer \{[\s\S]*width:\s*100%/);
-    expect(html).not.toMatch(/\.composer \{[\s\S]{0,220}min\(720px/);
+    expect(html).not.toMatch(/\.stage\.mic-mode \.composer[\s\S]*max-width:\s*220px/);
+    expect(minimalCss).toMatch(/companion-minimal-chrome \.composer\.composer-pro[\s\S]*max-width:\s*none/);
     expect(html).not.toContain('id="composer-char-btn"');
     expect(html).not.toContain('id="btn-toggle-chat"');
     expect(html).not.toContain('id="btn-talk-speed"');
