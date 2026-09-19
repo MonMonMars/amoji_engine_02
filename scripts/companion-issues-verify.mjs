@@ -497,6 +497,20 @@ async function main() {
       careOff.flag && !careOff.hud && !careOff.dock && !careOff.careTools,
       JSON.stringify(careOff),
     );
+
+    const greetProbe = await page.evaluate(async () => {
+      const checkIn = window.__amojiTreats?.checkIn?.();
+      return {
+        checkInLine: checkIn?.line || "",
+        checkInMood: checkIn?.mood || "",
+      };
+    });
+    record(
+      "care-disabled-no-hungry-greet",
+      !/hungry|肚餓|snack|有冇嘢食/i.test(greetProbe.checkInLine) &&
+        greetProbe.checkInMood !== "hungry",
+      JSON.stringify(greetProbe),
+    );
   }
 
   if (COMPANION_CARE_ENABLED) {

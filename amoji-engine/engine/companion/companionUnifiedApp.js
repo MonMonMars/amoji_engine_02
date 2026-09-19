@@ -19,6 +19,7 @@ import {
   saveCompanionRole,
 } from "../mobile/companionRolePresets.js";
 import { buildSecretaryPromptExtras } from "./secretary/secretaryPromptFragments.js";
+import { buildCareDisabledPetRoleFragment } from "./companionCareDialogue.js";
 
 export const COMPANION_UNIFIED_APP_SCHEMA = "amoji.companionUnifiedApp.v1";
 
@@ -111,12 +112,9 @@ export function resolveRoleDefaultCharacter(characterId, role, params) {
 export function buildUnifiedSessionPrompt(opts) {
   const role = normalizeCompanionRole(opts.role);
   const isEnglish = Boolean(opts.isEnglish);
-  const parts = [
-    opts.characterPrompt,
-    rolePromptFragment(role, isEnglish),
-    opts.uiRules || "",
-    opts.motionExtra || "",
-  ];
+  const rolePart =
+    buildCareDisabledPetRoleFragment(role, isEnglish) || rolePromptFragment(role, isEnglish);
+  const parts = [opts.characterPrompt, rolePart, opts.uiRules || "", opts.motionExtra || ""];
   if (role === "secretary") {
     parts.push(buildSecretaryPromptExtras(isEnglish, { storage: opts.storage }));
   }
