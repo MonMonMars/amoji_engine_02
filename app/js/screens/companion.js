@@ -2,15 +2,20 @@ import { registerRoute } from "../router.js";
 import { loadMobileSettings } from "/amoji-engine/engine/mobile/companionMobileSettings.js";
 import {
   loadCompanionRole,
+  normalizeCompanionRole,
   roleLabel,
   rolePreset,
+  saveCompanionRole,
 } from "/amoji-engine/engine/mobile/companionRolePresets.js";
 
 registerRoute("companion", async (ctx) => {
   const en = ctx.isEnglish();
   const settings = loadMobileSettings();
   const lang = settings.lang === "en" ? "en" : "yue";
-  const role = loadCompanionRole();
+  const paramRole =
+    typeof ctx.params?.role === "string" ? normalizeCompanionRole(ctx.params.role) : null;
+  const role = paramRole || loadCompanionRole();
+  if (paramRole) saveCompanionRole(paramRole);
   const charId =
     localStorage.getItem("amoji.mobile.lastCharacterId") ||
     rolePreset(role).defaultCharacterId;

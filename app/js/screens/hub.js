@@ -10,6 +10,7 @@ import {
   roleEmoji,
   roleLabel,
   rolePreset,
+  saveCompanionRole,
 } from "/amoji-engine/engine/mobile/companionRolePresets.js";
 
 registerRoute("hub", (ctx) => {
@@ -51,11 +52,11 @@ registerRoute("hub", (ctx) => {
           <p class="hub-card__desc">${en ? "Feed, pet, and mood meters" : "餵食、摸摸、心情條"}</p>
         </div>
       </button>
-      <button type="button" class="hub-card" data-open="/play?role=secretary&pick=1&automic=0&lang=${en ? "en" : "yue"}">
+      <button type="button" class="hub-card" data-go="companion" data-set-role="secretary">
         <div class="hub-card__icon">📋</div>
         <div>
           <h2 class="hub-card__title">${en ? "Secretary" : "秘書"}</h2>
-          <p class="hub-card__desc">${en ? "Tasks · Today · 3D avatar" : "任務 · Today · 3D 同伴"}</p>
+          <p class="hub-card__desc">${en ? "Tasks · Today · in-app 3D" : "任務 · Today · App 內 3D"}</p>
         </div>
       </button>
       <button type="button" class="hub-card" data-go="chase">
@@ -84,7 +85,14 @@ registerRoute("hub", (ctx) => {
   for (const btn of screen.querySelectorAll("[data-go]")) {
     btn.addEventListener("click", () => {
       const target = btn.getAttribute("data-go");
-      if (target) ctx.navigate(/** @type {import("../router.js").ScreenName} */ (target));
+      const setRole = btn.getAttribute("data-set-role");
+      if (setRole) saveCompanionRole(setRole);
+      if (target) {
+        ctx.navigate(
+          /** @type {import("../router.js").ScreenName} */ (target),
+          setRole ? { role: setRole } : {},
+        );
+      }
     });
   }
   for (const btn of screen.querySelectorAll("[data-open]")) {
