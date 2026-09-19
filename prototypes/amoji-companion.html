@@ -8,9 +8,9 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji · Companion</title>
     <script>
-      window.__amojiBuild = "2026-09-19-v333-picker-bg-lower";
+      window.__amojiBuild = "2026-09-19-v334-picker-details-complete";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-19-v333-picker-bg-lower"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-19-v334-picker-details-complete"></script>
     <link
       rel="prefetch"
       href="/prototypes/assets/companion-char-nova.png"
@@ -732,11 +732,11 @@
       media="print"
       onload="this.media='all'"
     />
-    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-19-v333-picker-bg-lower" />
-    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-19-v333-picker-bg-lower" />
-    <link rel="stylesheet" href="/prototypes/companion-mic-button.css?v=2026-09-19-v333-picker-bg-lower" />
-    <link rel="stylesheet" href="/prototypes/companion-minimal-ui.css?v=2026-09-19-v333-picker-bg-lower" />
-    <link rel="stylesheet" href="/prototypes/companion-picker-v4.css?v=2026-09-19-v333-picker-bg-lower" />
+    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-19-v334-picker-details-complete" />
+    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-19-v334-picker-details-complete" />
+    <link rel="stylesheet" href="/prototypes/companion-mic-button.css?v=2026-09-19-v334-picker-details-complete" />
+    <link rel="stylesheet" href="/prototypes/companion-minimal-ui.css?v=2026-09-19-v334-picker-details-complete" />
+    <link rel="stylesheet" href="/prototypes/companion-picker-v4.css?v=2026-09-19-v334-picker-details-complete" />
     <script>
       (function () {
         var params = new URLSearchParams(location.search);
@@ -762,7 +762,7 @@
       })();
     </script>
     <script type="module">
-      import { bootEarlyStartPicker } from "/amoji-engine/engine/companion/companionEarlyStartPicker.js?v=2026-09-19-v333-picker-bg-lower";
+      import { bootEarlyStartPicker } from "/amoji-engine/engine/companion/companionEarlyStartPicker.js?v=2026-09-19-v334-picker-details-complete";
       const bootParams = new URLSearchParams(location.search);
       if (bootParams.get("autostart") !== "1" && bootParams.get("pick") !== "0") {
         globalThis.__amojiEarlyStartPickerPromise = bootEarlyStartPicker({
@@ -4664,19 +4664,19 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-19-v333-picker-bg-lower",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-19-v334-picker-details-complete",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-19-v333-picker-bg-lower",
-          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-19-v333-picker-bg-lower"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-19-v334-picker-details-complete",
+          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-19-v334-picker-details-complete"
         }
       }
     </script>
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-19-v333-picker-bg-lower"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-19-v334-picker-details-complete"
     />
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-19-v333-picker-bg-lower"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-19-v333-picker-bg-lower"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-19-v334-picker-details-complete"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-19-v334-picker-details-complete"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;
@@ -7763,9 +7763,17 @@
       const characterPicker = createCompanionCharacterPicker({
         isEnglish,
         selectedId: characterId,
+        atmosphereEl,
+        backgroundId: activeSceneBgId,
         pickerCopy: rolePickerCopy(),
         rosterProvider: roleRosterProvider,
         onCardTapFx: playCompanionCardSelectFx,
+        onBackgroundChange: (backgroundId) => {
+          activeSceneBgId = backgroundId;
+          applySceneEnvironmentToAvatar(backgroundId);
+          renderScenePresets();
+          startPicker?.setBackgroundId?.(backgroundId);
+        },
         onSelect: (nextId) => {
           characterPicker.close();
           void hotSwapCharacter(nextId);
@@ -7873,6 +7881,7 @@
 
       const openCharacterPicker = () => {
         characterPicker.setSelected(characterId);
+        characterPicker.setBackgroundId?.(activeSceneBgId);
         characterPicker.open();
         brandBtn?.setAttribute("aria-expanded", "true");
       };
