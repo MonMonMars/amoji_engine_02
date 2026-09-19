@@ -1,6 +1,9 @@
 # Amoji VRM Asset Manifest
 
-Legal sources only. **Never** commit models ripped from Replika, Nomi, iBoy, or other commercial apps.
+Legal sources only. **Never** commit models ripped from Replika, Nomi, iBoy, or other commercial apps.  
+**Do not ship** Fab/Sketchfab fan rips of FF7, Genshin, Hololive, RE, etc. without explicit IP license.
+
+See also: `amoji-engine/docs/3D_MODEL_INVENTORY.md` (how to read the external model inventory).
 
 ## Download test models
 
@@ -8,30 +11,41 @@ Legal sources only. **Never** commit models ripped from Replika, Nomi, iBoy, or 
 node amoji-engine/scripts/download-legal-vrm.mjs
 ```
 
-## Role → recommended characters
+## Curated roster (v298 — 10 characters)
 
-| Role | Characters | Test VRM |
-|------|------------|----------|
-| Girlfriend | amoji, kizuna, yuki | `companion-avatarsample-b.vrm` |
-| Boyfriend | chad, david, hugo, rex | `companion-chad.vrm`, `companion-david.vrm` |
-| Secretary | rose, robert, nova | `companion-rose.vrm`, `companion-robert.vrm` |
-| Pet | mimi, chibi | `companion-rabbit.vrm` |
+| # | ID | VRM file | License |
+|---|-----|----------|---------|
+| 1 | nova | `companion-nova.vrm` | VTubeMe CC BY 4.0 |
+| 2 | kizuna | `kizuna-kamatte.vrm` | Kizuna AI official |
+| 3 | alicia | `companion-alicia.vrm` | Alicia Solid / UniVRM |
+| 4 | ember | `companion-ember.vrm` | VTubeMe CC BY 4.0 |
+| 5 | sky | `companion-sky.vrm` | VTubeMe CC BY 4.0 |
+| 6 | yuki | `companion-olivia.vrm` | 100Avatars CC0 |
+| 7 | hina | `companion-lydia.vrm` | 100Avatars CC0 |
+| 8 | mio | `companion-kate.vrm` | 100Avatars CC0 |
+| 9 | amoji | `companion-girl.vrm` | Project original |
+| 10 | rex | `companion-kai.vrm` | VTubeMe CC BY 4.0 |
 
-## New downloads (v214)
+Roster source of truth: `amoji-engine/engine/companion/companionCharacterRoster.js`
 
-| File | License | Source |
-|------|---------|--------|
-| `companion-avatarsample-a.vrm` | VRoid AvatarSample | [pixiv terms](https://vroid.pixiv.help/hc/en-us/articles/4402394424089) |
-| `companion-avatarsample-b.vrm` | VRoid AvatarSample | [VRoid Hub](https://hub.vroid.com/en/characters/7939147878897061040/models/2292219474373673889) |
-| `companion-avatarsample-c.vrm` | VRoid AvatarSample | pixiv |
-| `companion-vroid-male.vrm` | VRoid sample | [madjin/vrm-samples](https://github.com/madjin/vrm-samples) |
-| `companion-vroid-female.vrm` | VRoid sample | madjin/vrm-samples |
-| `companion-chad.vrm` | CC0 | [100Avatars #079](https://opensourceavatars.com) |
-| `companion-david.vrm` | CC0 | 100Avatars #047 |
-| `companion-hugo.vrm` | CC0 | 100Avatars #008 |
+## Role → characters (v298)
 
-## Existing roster (see `*.README.txt` per file)
+| Role | Characters in app |
+|------|-------------------|
+| Girlfriend | nova, kizuna, alicia, ember, sky, yuki, hina, mio, amoji |
+| Boyfriend | rex |
+| Secretary (lite UI default) | nova |
 
-- **CC0:** Robert, Rose, Rabbit, Olivia, Erika, Lydia, Kate, Mikel, Chibi (100Avatars / Xmas Chibis)
-- **CC BY 4.0:** Kai, Sky, Nova, Ember (VTubeMe — attribution required)
-- **Special:** Kizuna Kamatte (official), Alicia Solid (niconico terms), companion-girl (project)
+## Legacy files (not in v298 picker)
+
+Older CC0 / sample files may remain on disk for reference but are **not** in `ROSTER_CHARACTER_IDS`:  
+chad, david, hugo, rose, robert, mimi, chibi, VRoid AvatarSample A/B/C paths, etc.
+
+## Per-file license notes
+
+Each committed VRM should have a matching `*.README.txt` in this folder.
+
+## Inventory platform notes
+
+- **Sketchfab FREE** listings require a **free Sketchfab login** to download — not a broken link.
+- **PAID store** rows in the external inventory open Fab/CGTrader/etc. product pages; exact price requires store login.
