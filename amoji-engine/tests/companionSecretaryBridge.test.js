@@ -35,15 +35,33 @@ describe("companionSecretaryBridge", () => {
     expect(document.querySelector(".secretary-overlay")?.hidden).toBe(false);
   });
 
-  it("adds Me button to secretary quick bar", () => {
-    createCompanionSecretaryBridge({
+  it("wires secretary tools into the unified settings menu section", () => {
+    document.body.insertAdjacentHTML(
+      "beforeend",
+      `
+      <div id="settings-secretary-section" class="settings-secretary-section" hidden>
+        <div class="settings-row settings-secretary-nav">
+          <button type="button" id="settings-btn-secretary-today">Today</button>
+          <button type="button" id="settings-btn-secretary-tasks">Tasks</button>
+          <button type="button" id="settings-btn-secretary-memory">Memories</button>
+        </div>
+        <div id="settings-secretary-mode-row"></div>
+      </div>
+    `,
+    );
+    const bridge = createCompanionSecretaryBridge({
       doc: document,
       isEnglish: true,
       storage,
     });
-    const bar = document.getElementById("secretary-quick-bar");
-    expect(bar?.textContent).toContain("Me");
-    expect(bar?.querySelector('[data-secretary-panel="me"]')).toBeTruthy();
+    bridge.syncSettingsMenu();
+    const section = document.getElementById("settings-secretary-section");
+    expect(section?.hidden).toBe(false);
+    expect(document.getElementById("settings-btn-secretary-memory")).toBeTruthy();
+    expect(
+      document.querySelectorAll("#settings-secretary-mode-row .secretary-chip").length,
+    ).toBe(3);
+    expect(document.getElementById("secretary-quick-bar")).toBeNull();
   });
 
   it("re-renders Me panel after memory tags", async () => {

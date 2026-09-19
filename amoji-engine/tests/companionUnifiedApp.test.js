@@ -3,6 +3,7 @@ import {
   buildUnifiedSessionPrompt,
   normalizeUnifiedEntryParams,
   resolveAppRole,
+  resolveSessionRoleFromCharacter,
   resolveRoleDefaultCharacter,
   rolePickBadge,
   rosterCharactersForPicker,
@@ -56,6 +57,38 @@ describe("companionUnifiedApp", () => {
     expect(
       resolveAppRole(new URLSearchParams("character=rex"), null, "rex"),
     ).toBe("boyfriend");
+  });
+
+  it("honors secretary role for legacy kate alias and default nova", () => {
+    expect(
+      resolveAppRole(
+        new URLSearchParams("character=kate&tab=today&lang=en"),
+        null,
+        "nova",
+      ),
+    ).toBe("secretary");
+    expect(
+      resolveAppRole(
+        new URLSearchParams("character=nova&role=secretary&lang=en"),
+        null,
+        "nova",
+      ),
+    ).toBe("secretary");
+  });
+
+  it("honors ?role=secretary for the secretary default character id", () => {
+    expect(
+      resolveSessionRoleFromCharacter(
+        "nova",
+        new URLSearchParams("role=secretary&lang=en"),
+      ),
+    ).toBe("secretary");
+    expect(
+      resolveSessionRoleFromCharacter(
+        "ember",
+        new URLSearchParams("role=secretary&lang=en"),
+      ),
+    ).toBe("girlfriend");
   });
 
   it("uses role default character when none picked", () => {

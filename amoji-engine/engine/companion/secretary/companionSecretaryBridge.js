@@ -131,38 +131,26 @@ function ensureSecretaryStyles(doc) {
       background: rgba(120, 180, 255, 0.18);
       border-color: rgba(120, 180, 255, 0.45);
     }
-    body.companion-role-secretary .secretary-quick-bar {
-      display: inline-flex;
+    .settings-secretary-section {
+      display: grid;
+      gap: 8px;
+      margin-bottom: 4px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
     }
-    .companion-role-pill:not([hidden]) {
-      display: inline-flex;
+    .settings-secretary-section[hidden] {
+      display: none !important;
     }
-    .secretary-quick-bar {
-      display: none;
-      align-items: center;
-      gap: 6px;
-      padding: 4px 10px;
-      border-radius: 999px;
-      background: rgba(120, 180, 255, 0.14);
-      border: 1px solid rgba(120, 180, 255, 0.28);
-      color: #dbeafe;
-      font-size: 11px;
-      font-weight: 600;
+    .settings-secretary-nav .btn-secondary {
+      flex: 1 1 calc(33.333% - 0.35rem);
+      min-width: 0;
+      font-size: 0.72rem;
+      padding: 0.5rem 0.45rem;
     }
-    .secretary-quick-bar {
-      align-items: center;
-      gap: 6px;
-      margin-left: 6px;
-    }
-    .secretary-quick-btn {
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      background: rgba(255, 255, 255, 0.06);
-      color: #f7f1e8;
-      border-radius: 999px;
-      padding: 4px 10px;
-      font-size: 11px;
-      font-weight: 600;
-      cursor: pointer;
+    .settings-secretary-mode-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
     }
     .settings-role-grid {
       display: grid;
@@ -361,6 +349,7 @@ export function createCompanionSecretaryBridge(opts = {}) {
         mode = next;
         persistSecretaryMode(mode, storage);
         renderPanel();
+        syncSettingsModeRow();
         onModeChange();
       });
     });
@@ -386,27 +375,6 @@ export function createCompanionSecretaryBridge(opts = {}) {
     el.addEventListener("click", closePanel);
   });
 
-  const ensureQuickBar = () => {
-    if (doc.getElementById("secretary-quick-bar")) return;
-    const mount = doc.querySelector(".topbar-actions");
-    if (!mount) return;
-    const bar = doc.createElement("div");
-    bar.id = "secretary-quick-bar";
-    bar.className = "secretary-quick-bar";
-    bar.innerHTML = `
-      <button type="button" class="secretary-quick-btn" data-secretary-panel="today">${strings.today}</button>
-      <button type="button" class="secretary-quick-btn" data-secretary-panel="tasks">${strings.tasks}</button>
-      <button type="button" class="secretary-quick-btn" data-secretary-panel="me">${strings.me}</button>
-    `;
-    bar.querySelectorAll("[data-secretary-panel]").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        openPanel(btn.getAttribute("data-secretary-panel") || "today");
-      });
-    });
-    mount.prepend(bar);
-  };
-
-
   const renderModeRow = () => {
     const modes = ["work", "life", "chill"];
     const chips = modes
@@ -418,8 +386,53 @@ export function createCompanionSecretaryBridge(opts = {}) {
     return `<div class="secretary-chip-row">${chips}</div>`;
   };
 
+  const syncSettingsModeRow = () => {
+    const modeRow = doc.getElementById("settings-secretary-mode-row");
+    if (!modeRow) return;
+    const modes = ["work", "life", "chill"];
+    modeRow.innerHTML = modes
+      .map(
+        (id) =>
+          `<button type="button" class="secretary-chip${mode === id ? " is-active" : ""}" data-settings-secretary-mode="${id}">${modeLabel(id, isEnglish)}</button>`,
+      )
+      .join("");
+    modeRow.querySelectorAll("[data-settings-secretary-mode]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const next = btn.getAttribute("data-settings-secretary-mode");
+        if (!next || next === mode) return;
+        mode = next;
+        persistSecretaryMode(mode, storage);
+        syncSettingsModeRow();
+        if (activePanel === "today") renderPanel();
+        onModeChange();
+      });
+    });
+  };
+
+  const syncSettingsMenu = () => {
+    const section = doc.getElementById("settings-secretary-section");
+    const modeLabel = doc.getElementById("settings-secretary-mode-label");
+    const title = doc.getElementById("settings-secretary-title");
+    if (section) section.hidden = !active;
+    if (title) {
+      title.textContent = isEnglish ? "Secretary" : "秘書";
+    }
+    if (modeLabel) {
+      modeLabel.textContent = isEnglish ? "Focus mode" : "專注模式";
+    }
+    const btnToday = doc.getElementById("settings-btn-secretary-today");
+    const btnTasks = doc.getElementById("settings-btn-secretary-tasks");
+    const btnMemory = doc.getElementById("settings-btn-secretary-memory");
+    if (btnToday) btnToday.textContent = isEnglish ? "Today" : "今日";
+    if (btnTasks) btnTasks.textContent = isEnglish ? "Tasks" : "任務";
+    if (btnMemory) btnMemory.textContent = isEnglish ? "Memories" : "記憶";
+    const liteLink = doc.getElementById("lite-link");
+    if (liteLink) liteLink.hidden = active;
+    syncSettingsModeRow();
+  };
+
   if (active) {
-    ensureQuickBar();
+    syncSettingsMenu();
     if (readReminderPrefs(storage).enabled) {
       void requestReminderPermission().then(() => {
         startReminderLoop({
@@ -494,6 +507,7 @@ export function createCompanionSecretaryBridge(opts = {}) {
       mode = nextMode;
       persistSecretaryMode(mode, storage);
       renderPanel();
+      syncSettingsModeRow();
     },
     setTaskFilter: (filterId) => {
       if (!["all", "work", "life", "personal"].includes(filterId)) return;
@@ -514,7 +528,9 @@ export function createCompanionSecretaryBridge(opts = {}) {
     },
     set enabled(next) {
       active = Boolean(next);
+      syncSettingsMenu();
     },
+    syncSettingsMenu,
     uiHandlers,
     applyReplyTags,
     openPanel,

@@ -418,7 +418,7 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
     const restLl = armRestRotations.leftLowerArm;
     const restRl = armRestRotations.rightLowerArm;
     const apose = isAposeBind();
-    const foreScale = apose ? 0.38 : 1;
+    const foreScale = apose ? 0.14 : 1;
     applyBoneRotation("leftUpperArm", restL);
     applyBoneRotation("rightUpperArm", restR);
     applyBoneRotation(
@@ -879,13 +879,7 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
     }
     if (talking && !activeGesture && !activeAction) {
       talkArmBlend = 0.72 + energy * 0.28;
-    } else if (
-      !talking &&
-      !thinking &&
-      !activeGesture &&
-      !activeAction &&
-      !isAposeBind()
-    ) {
+    } else if (!talking && !thinking && !activeGesture && !activeAction) {
       idleArms = true;
     }
     if (activeGesture) {

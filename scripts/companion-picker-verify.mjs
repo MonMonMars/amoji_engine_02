@@ -81,33 +81,56 @@ record(
   `opacity=${earlyBoot.canvasOpacity ?? "missing"}`,
 );
 
-await page.waitForFunction(() => window.__amojiModuleBooted === true, {
-  timeout: 120000,
-});
+await page.waitForFunction(
+  () => {
+    if (window.__amojiModuleBooted === true) return true;
+    const btn = document.querySelector("#start-character-picker .picker-begin-btn");
+    return Boolean(btn && !btn.disabled);
+  },
+  { timeout: 120000 },
+);
 await page.waitForSelector("#start-character-picker .picker-begin-btn:not([disabled])", {
   timeout: 90000,
 });
 
 const boot = await page.evaluate(() => {
   const picker = document.getElementById("start-character-picker");
+  const showcaseLayout = picker?.classList.contains("companion-picker--showcase");
   return {
     build: window.__amojiBuild,
     open: Boolean(picker && !picker.classList.contains("hide")),
+    showcaseLayout,
+    heroStage: Boolean(picker?.querySelector(".picker-showcase-stage")),
     hero: Boolean(picker?.querySelector(".picker-hero-name")),
     featured: picker?.querySelectorAll(".picker-featured-row .companion-card").length ?? 0,
     roster: picker?.querySelectorAll(".companion-picker-grid .companion-card").length ?? 0,
+    stripCards: picker?.querySelectorAll(".companion-card--start-strip").length ?? 0,
+    rosterDock: Boolean(picker?.querySelector(".picker-roster-dock")),
+    horizontalRoster: Boolean(
+      picker?.querySelector(".companion-picker-grid--roster"),
+    ),
     filters: picker?.querySelectorAll(".picker-filter-chip").length ?? 0,
+    toolbar: Boolean(picker?.querySelector(".picker-toolbar")),
     begin: Boolean(picker?.querySelector(".picker-begin-btn")),
+    sceneChips: picker?.querySelectorAll(".picker-scene-chip").length ?? 0,
+    sceneSection: Boolean(picker?.querySelector(".picker-scene-section")),
   };
 });
 
 record("build matches repo", boot.build === AMOJI_BUILD, `${boot.build}`);
 record("start picker open", boot.open);
+record("showcase start layout", boot.showcaseLayout);
+record("hero stage section", boot.heroStage);
 record("hero preview", boot.hero);
-record("featured row (4+)", boot.featured >= 4, String(boot.featured));
-record("roster strip", boot.roster >= 8, String(boot.roster));
-record("filter chips", boot.filters >= 4, String(boot.filters));
+record("roster dock", boot.rosterDock);
+record("horizontal roster strip", boot.horizontalRoster);
+record("full roster grid (10)", boot.roster === 10, String(boot.roster));
+record("strip roster cards", boot.stripCards >= 8, String(boot.stripCards));
+record("no search toolbar", !boot.toolbar);
+record("no filter chips", boot.filters === 0, String(boot.filters));
+record("no featured row", boot.featured === 0, String(boot.featured));
 record("begin CTA", boot.begin);
+record("background row on start picker", boot.sceneSection && boot.sceneChips >= 8, String(boot.sceneChips));
 
 const layout = await page.evaluate(() => {
   const footer = document.querySelector("#start-character-picker .picker-footer");
@@ -138,12 +161,16 @@ const layout = await page.evaluate(() => {
   const brokenImgs = Array.from(imgs).filter(
     (img) => !img.complete || img.naturalWidth === 0,
   ).length;
+  const gridStyle = getComputedStyle(grid);
+  const horizontalStrip = gridStyle.gridAutoFlow === "column";
   return {
     ok:
       wrapBottom <= footerTop + 2 &&
       visibleOverlap === 0 &&
       brokenImgs === 0 &&
-      grid.clientHeight >= 72,
+      grid.clientHeight >= 72 &&
+      horizontalStrip,
+    horizontalStrip,
     visibleOverlap,
     wrapBottom,
     gridBottom,
@@ -182,13 +209,24 @@ const heroUpdated = await page
   .catch(() => false);
 record("hero updates on select", heroUpdated);
 
-await page.fill("#start-character-picker .picker-search", "zzznope");
-await page.waitForSelector("#start-character-picker .picker-empty", {
-  timeout: 5000,
-});
-record("empty filter state", true);
-
-await page.fill("#start-character-picker .picker-search", "");
+if (boot.showcaseLayout || boot.stripCards > 0) {
+  await page.click('#start-character-picker [data-character-id="ember"]');
+  const emberSelected = await page.evaluate(() =>
+    document
+      .querySelector('#start-character-picker [data-character-id="ember"]')
+      ?.classList.contains("is-selected"),
+  );
+  record("strip selection updates card", emberSelected);
+} else if (boot.toolbar) {
+  await page.fill("#start-character-picker .picker-search", "zzznope");
+  await page.waitForSelector("#start-character-picker .picker-empty", {
+    timeout: 5000,
+  });
+  record("empty filter state", true);
+  await page.fill("#start-character-picker .picker-search", "");
+} else {
+  record("grid selection path", false, "no showcase strip or search toolbar");
+}
 await beginStartPickerSession(page, {
   characterId: "nova",
   dismissTimeout: 120000,

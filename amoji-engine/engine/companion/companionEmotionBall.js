@@ -566,9 +566,19 @@ export function applyMiniEmotionBallFrame(el, frame, opts = {}) {
   el.dataset.state = frame.state;
   el.dataset.emotion = frame.emotion;
   const bg = `hsl(${frame.hue} ${frame.sat}% ${frame.light}%)`;
-  const shadow = `0 0 ${frame.glow}px hsl(${frame.hue} ${frame.sat}% ${frame.light}% / ${0.4 + frame.volume * 0.5}), 0 0 ${frame.glow * 1.8}px hsl(${frame.hue} ${Math.max(40, frame.sat - 8)}% ${Math.min(72, frame.light + 8)}% / ${0.2 + frame.volume * 0.28})`;
+  const shadow = keepHostRole
+    ? "none"
+    : `0 0 ${frame.glow}px hsl(${frame.hue} ${frame.sat}% ${frame.light}% / ${0.4 + frame.volume * 0.5}), 0 0 ${frame.glow * 1.8}px hsl(${frame.hue} ${Math.max(40, frame.sat - 8)}% ${Math.min(72, frame.light + 8)}% / ${0.2 + frame.volume * 0.28})`;
   el.style.setProperty("--mini-ball-bg", bg);
   el.style.setProperty("--mini-ball-shadow", shadow);
+  if (keepHostRole) {
+    el.style.setProperty(
+      "--mini-ball-inset",
+      `inset 0 0 ${(4 + frame.volume * 14).toFixed(1)}px hsl(${frame.hue} ${frame.sat}% ${frame.light}% / ${(0.28 + frame.volume * 0.42).toFixed(2)})`,
+    );
+  } else {
+    el.style.removeProperty("--mini-ball-inset");
+  }
   const hasCanvas = Boolean(el.querySelector?.("canvas"));
   el.style.setProperty(
     "--mini-ball-scale",

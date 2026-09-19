@@ -2,11 +2,15 @@
  * Shared ChatGPT-style mic button layers (companion + secretary lite).
  */
 .mic-btn {
+  --mic-glow-inset: 8px;
+  --mic-glow-intensity: 0.35;
+  --mic-halo-scale: 1;
+  --mic-shape-radius: 50%;
   position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 999px;
+  border-radius: var(--mic-shape-radius, 999px);
   border: 1px solid rgba(255, 255, 255, 0.14);
   background: rgba(16, 20, 28, 0.94);
   color: rgba(255, 255, 255, 0.78);
@@ -34,10 +38,36 @@
   transition: opacity 0.28s ease;
 }
 
-.mic-btn[data-mic-state="listening"] .mic-btn__halo,
-.mic-btn[data-mic-state="speaking"] .mic-btn__halo {
-  opacity: calc(0.42 + var(--mic-level, 0) * 0.48);
-  animation: micHaloPulse calc(var(--mic-ring-speed, 1s) * 1.35) ease-out infinite;
+.mic-btn.mic-glow-inset .mic-btn__halo {
+  display: none;
+}
+
+.mic-btn.mic-glow-inset[data-mic-state="listening"] .mic-btn__aura,
+.mic-btn.mic-glow-inset[data-mic-state="speaking"] .mic-btn__aura {
+  opacity: calc(var(--mic-glow-intensity, 0.45) + var(--mic-level, 0) * 0.35);
+  background: radial-gradient(
+    circle at 50% 42%,
+    var(--mic-glow-a, hsl(212 80% 58% / 0.55)) 0%,
+    var(--mic-glow-b, hsl(212 70% 68% / 0.2)) 52%,
+    transparent 72%
+  );
+  animation: micAuraPulse calc(var(--mic-ring-speed, 1s) * 1.2) ease-in-out infinite;
+}
+
+.mic-btn.mic-glow-inset[data-mic-pulse="soft"] .mic-btn__aura {
+  animation-duration: calc(var(--mic-ring-speed, 1s) * 1.85);
+}
+
+@keyframes micAuraPulse {
+  0%,
+  100% {
+    opacity: calc(var(--mic-glow-intensity, 0.4) + var(--mic-level, 0) * 0.25);
+    transform: scale(0.94);
+  }
+  50% {
+    opacity: calc(var(--mic-glow-intensity, 0.55) + var(--mic-level, 0) * 0.4);
+    transform: scale(1.02);
+  }
 }
 
 .mic-btn.mic-state-flash {
@@ -127,10 +157,13 @@
   background: var(--mic-surface, hsl(212 36% 42% / 0.96));
   border-color: var(--mic-border, hsl(212 72% 62% / 0.88));
   box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.08) inset,
-    0 0 calc(14px + var(--mic-level, 0) * 16px) var(--mic-glow-a, hsl(212 80% 58% / 0.62)),
-    0 8px 24px rgba(0, 0, 0, 0.32);
+    inset 0 0 var(--mic-glow-inset, calc(8px + var(--mic-level, 0) * 18px)) var(--mic-glow-a, hsl(212 80% 58% / 0.62)),
+    inset 0 0 calc(var(--mic-glow-inset, 8px) * 0.55) var(--mic-glow-b, hsl(212 70% 68% / 0.38)),
+    var(--mini-ball-inset, inset 0 0 0 transparent),
+    0 0 0 1px rgba(255, 255, 255, 0.08) inset;
+  filter: none;
   color: #fff;
+  transform: scale(calc(var(--mic-halo-scale, 1) + var(--mic-level, 0) * 0.06));
 }
 
 @keyframes micHaloPulse {

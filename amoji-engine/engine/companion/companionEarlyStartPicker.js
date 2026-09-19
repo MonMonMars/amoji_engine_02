@@ -13,7 +13,7 @@ import { wireLoadingBar } from "./companionLoadingUi.js";
 import { playCompanionCardTapFx } from "./companionUiGacha.js";
 
 export const COMPANION_EARLY_START_PICKER_SCHEMA =
-  "amoji.companionEarlyStartPicker.v1";
+  "amoji.companionEarlyStartPicker.v2";
 
 /**
  * @param {{ params?: URLSearchParams, root?: HTMLElement | null }} [opts]
@@ -54,10 +54,12 @@ export async function bootEarlyStartPicker(opts = {}) {
   }, 220);
 
   let preloadJob = null;
+  const atmosphereEl = document.querySelector(".atmosphere");
   const picker = createCompanionStartPicker({
     root: opts.root || document.body,
     isEnglish,
     selectedId,
+    atmosphereEl,
     pickerCopy: roleCopy,
     rosterProvider: (langCode) => rosterCharactersForPicker(langCode),
     onCardTapFx: playCompanionCardTapFx,

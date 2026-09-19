@@ -52,6 +52,7 @@ import {
 } from "./companionFaceEmotion.js";
 import {
   CALM_IDLE_USES_PROCEDURAL_BODY,
+  hostedVrmaSkipsVrmBody,
   isOnlineIdleAction,
   isOnlineLoopingLibraryAction,
   ONLINE_CALM_IDLE_ACTION,
@@ -330,6 +331,15 @@ export async function createVrmAvatar(opts) {
 
   const syncThinkingLibraryMotion = () => {
     if (talking || eating || !bodyMotion.thinking) return false;
+    if (hostedVrmaSkipsVrmBody("thinking")) {
+      if (
+        vrmaAction &&
+        (motionPlayer.isPlaying?.() || motionPlayer.isCrossfading?.() || vrmaPending)
+      ) {
+        restoreProceduralCalmStand({ stopLibrary: true });
+      }
+      return true;
+    }
     if (
       vrmaAction === "thinking" &&
       (motionPlayer.isAnimating?.() || motionPlayer.isPlaying?.())
@@ -342,6 +352,16 @@ export async function createVrmAvatar(opts) {
   const syncTalkLibraryMotion = (force = false) => {
     if (!talking || eating) {
       talkLibraryAction = null;
+      return false;
+    }
+    if (hostedVrmaSkipsVrmBody("thinking")) {
+      talkLibraryAction = null;
+      if (
+        vrmaAction &&
+        (motionPlayer.isPlaying?.() || motionPlayer.isCrossfading?.() || vrmaPending)
+      ) {
+        restoreProceduralCalmStand({ stopLibrary: true });
+      }
       return false;
     }
     const desired = resolveTalkLibraryAction(bodyMotion.talkStyle, emotion);
@@ -857,6 +877,7 @@ export async function createVrmAvatar(opts) {
     const key = String(action || "").toLowerCase();
     if (!key || key === "none" || key === "stop") return false;
     if (!resolveOnlineMotionClipUrl(key)) return false;
+    if (hostedVrmaSkipsVrmBody(key)) return false;
 
     const loop = Boolean(
       opts.loop ??
@@ -1215,8 +1236,10 @@ export async function createVrmAvatar(opts) {
     }
     if (talking && analysis?.gesture) {
       const accent = resolveTalkGestureLibraryAction(analysis.gesture);
-      if (accent && resolveOnlineMotionClipUrl(accent)) {
+      if (accent && !hostedVrmaSkipsVrmBody(accent) && resolveOnlineMotionClipUrl(accent)) {
         void tryPlayVrmaAction(accent, { loop: false });
+      } else if (analysis.gesture) {
+        bodyMotion.playGesture?.(analysis.gesture);
       }
     }
     if (
@@ -1468,7 +1491,9 @@ export async function createVrmAvatar(opts) {
   const reactToTap = () => {
     setEmotion("happy");
     setTalkStyle("celebrate");
-    if (resolveOnlineMotionClipUrl("laugh")) {
+    if (hostedVrmaSkipsVrmBody("laugh")) {
+      playGesture("celebrate");
+    } else if (resolveOnlineMotionClipUrl("laugh")) {
       void tryPlayVrmaAction("laugh", { loop: false });
     } else if (resolveOnlineMotionClipUrl("clap")) {
       void tryPlayVrmaAction("clap", { loop: false });

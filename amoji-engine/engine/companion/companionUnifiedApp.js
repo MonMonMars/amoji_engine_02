@@ -4,7 +4,10 @@
 import {
   listCompanionCharacters,
 } from "./companionCharacterCatalog.js";
-import { resolveCharacterRole } from "./companionCharacterRoles.js";
+import {
+  resolveCharacterRole,
+  ROLE_DEFAULT_CHARACTER_ID,
+} from "./companionCharacterRoles.js";
 import {
   loadCompanionRole,
   normalizeCompanionRole,
@@ -67,7 +70,9 @@ export function resolveAppRole(
     normalized.get("character") ||
     normalized.get("vrm") ||
     normalized.get("model3d");
-  if (explicitChar && cid) return resolveCharacterRole(cid);
+  if (explicitChar && cid) {
+    return resolveSessionRoleFromCharacter(cid, normalized);
+  }
   if (cid && !normalized.get("role")) return resolveCharacterRole(cid);
   const fromUrl = normalized.get("role");
   if (fromUrl) return normalizeCompanionRole(fromUrl);
@@ -183,6 +188,23 @@ export function rolePickBadge(role, isEnglish = false) {
   if (r === "boyfriend") return "★ 男朋友";
   if (r === "pet") return "★ 寵物";
   return "★ 女朋友";
+}
+
+/**
+ * Session role after a character is selected — honors explicit ?role= when the
+ * picked id is that role's default companion (e.g. ?role=secretary + nova).
+ * @param {string | null | undefined} characterId
+ * @param {URLSearchParams | null | undefined} [params]
+ */
+export function resolveSessionRoleFromCharacter(characterId, params) {
+  const charKey = String(characterId || "").toLowerCase();
+  const urlRole = params?.get?.("role");
+  const urlRoleKey = urlRole ? normalizeCompanionRole(urlRole) : null;
+  const roleDefaultId = urlRoleKey
+    ? String(ROLE_DEFAULT_CHARACTER_ID[urlRoleKey] || "").toLowerCase()
+    : "";
+  if (urlRoleKey && charKey && charKey === roleDefaultId) return urlRoleKey;
+  return resolveCharacterRole(characterId);
 }
 
 /** Unified picker copy — function is shown on each character card. */

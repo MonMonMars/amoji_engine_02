@@ -90,8 +90,8 @@ describe("companionIdleMotion", () => {
   it("samples simple boot idle with relaxed forearms", () => {
     const boot = sampleSimpleBootIdleMotion(1.2);
     expect(BOOT_SIMPLE_IDLE_SEC).toBeGreaterThan(3);
-    expect(boot.forearmL).toBeGreaterThan(0.32);
-    expect(boot.forearmR).toBeGreaterThan(0.28);
+    expect(boot.forearmL).toBeGreaterThan(0.12);
+    expect(boot.forearmR).toBeGreaterThan(0.08);
     expect(boot.armLiftL).toBeGreaterThan(0.12);
     expect(boot.upperLegR).toBeLessThan(0.05);
     expect(boot.lowerLegR).toBeLessThan(0.14);
@@ -102,7 +102,7 @@ describe("companionIdleMotion", () => {
     const b = sampleCalmBreathIdle(2.1);
     expect(a.leanY).toBe(0);
     expect(a.headZ).toBe(0);
-    expect(a.forearmL).toBeGreaterThan(0.32);
+    expect(a.forearmL).toBeGreaterThan(0.12);
     expect(a.lowerLegR).toBeGreaterThan(0.08);
     expect(a.lowerLegR).toBeLessThan(0.14);
     expect(a.spineX).not.toBe(b.spineX);

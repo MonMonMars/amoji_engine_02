@@ -169,6 +169,7 @@ export function updatePickerHero(root, item, isEnglish = false) {
   const name = hero.querySelector(".picker-hero-name");
   const tagline = hero.querySelector(".picker-hero-tagline");
   const traitsEl = hero.querySelector(".picker-hero-traits");
+  const voiceEl = hero.querySelector(".picker-hero-voice");
   const accent = item?.accent || "#8b7cf8";
   hero.style.setProperty("--hero-accent", accent);
   if (img) {
@@ -206,8 +207,15 @@ export function updatePickerHero(root, item, isEnglish = false) {
       chip.textContent = trait;
       traitsEl.appendChild(chip);
     }
+    traitsEl.hidden = !(item?.traits?.length);
+  }
+  if (voiceEl) {
+    const voice = item?.voiceLabel ? String(item.voiceLabel) : "";
+    voiceEl.textContent = voice;
+    voiceEl.hidden = !voice;
   }
   hero.classList.toggle("is-empty", !item);
+  hero.classList.toggle("has-selection", Boolean(item));
 }
 
 /**
@@ -233,6 +241,7 @@ export const PICKER_HERO_HTML = `
       <p class="picker-hero-kicker"></p>
       <h3 class="picker-hero-name"></h3>
       <p class="picker-hero-tagline"></p>
+      <p class="picker-hero-voice"></p>
       <div class="picker-hero-traits"></div>
     </div>
   </section>

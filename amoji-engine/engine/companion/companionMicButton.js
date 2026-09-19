@@ -1,7 +1,7 @@
 /**
  * ChatGPT-style companion mic button — emotion-linked glow, rings, and waveform.
  */
-export const COMPANION_MIC_BUTTON_SCHEMA = "amoji.companionMicButton.v3";
+export const COMPANION_MIC_BUTTON_SCHEMA = "amoji.companionMicButton.v4";
 
 const EMOTION_HUD_LABEL = Object.freeze({
   neutral: { en: "Neutral", yue: "平靜" },
@@ -52,6 +52,16 @@ export const NUANCE_MIC_DELTA = Object.freeze({
   excited: { hue: -6, sat: 12, ringSpeed: 1.28 },
   love: { hue: -18, sat: 10, ringSpeed: 0.95 },
   stress: { hue: 6, sat: -8, ringSpeed: 1.18 },
+});
+
+/** Border-radius presets — shape language on the mic orb. */
+export const EMOTION_MIC_SHAPE = Object.freeze({
+  neutral: "50%",
+  happy: "50%",
+  thinking: "44%",
+  sad: "48%",
+  surprised: "46%",
+  angry: "38%",
 });
 
 /**
@@ -241,7 +251,8 @@ export function companionMicButtonInnerHtml() {
 }
 
 /**
- * @param {HTMLElement | null} hudRoot
+ * Encode voice state on the mic button itself — glow size/color/speed/shape (no external HUD).
+ * @param {HTMLElement | null} el
  * @param {{
  *   state?: string,
  *   emotion?: string,
@@ -250,32 +261,51 @@ export function companionMicButtonInnerHtml() {
  *   live?: boolean,
  * }} [opts]
  */
-export function syncMicVoiceHud(hudRoot, opts = {}) {
-  if (!hudRoot) return;
+export function syncMicButtonGlow(el, opts = {}) {
+  if (!el) return;
   const state = String(opts.state || "idle").toLowerCase();
   const live =
-    opts.live ??
-    (state === "listening" || state === "speaking");
+    opts.live ?? (state === "listening" || state === "speaking");
   const emotion = normalizeEmotionThemeKey(opts.emotion);
   const level = clamp(Number(opts.level) || 0, 0, 1);
   const isEnglish = Boolean(opts.isEnglish);
-  hudRoot.classList.toggle("is-live", live);
-  hudRoot.dataset.state = state;
-  hudRoot.dataset.emotion = emotion;
-  const chip =
-    hudRoot.querySelector?.("[data-mic-emotion-chip]") ||
-    hudRoot.querySelector?.(".mic-btn__emotion-chip");
-  const fill =
-    hudRoot.querySelector?.("[data-mic-volume-fill]") ||
-    hudRoot.querySelector?.(".mic-btn__volume-fill");
-  if (chip) {
-    chip.textContent = live
-      ? micHudEmotionLabel(emotion, isEnglish)
-      : micHudStateLabel(state, isEnglish);
+
+  el.classList.toggle("mic-live", live);
+  el.dataset.micEmotion = emotion;
+  if (live) el.dataset.micLive = "true";
+  else el.removeAttribute("data-mic-live");
+
+  const shape = EMOTION_MIC_SHAPE[emotion] || EMOTION_MIC_SHAPE.neutral;
+  el.style.setProperty("--mic-shape-radius", shape);
+
+  const insetGlow = live ? 6 + level * 22 : 2 + level * 4;
+  const glowIntensity = live ? 0.42 + level * 0.52 : 0.1 + level * 0.12;
+  const haloScale = live ? 1 + level * 0.1 : 1;
+  el.style.setProperty("--mic-glow-inset", `${insetGlow.toFixed(1)}px`);
+  el.style.setProperty("--mic-glow-intensity", glowIntensity.toFixed(3));
+  el.style.setProperty("--mic-halo-scale", haloScale.toFixed(3));
+  el.classList.toggle("mic-glow-inset", true);
+
+  if (state === "speaking") {
+    el.dataset.micPulse = "soft";
+  } else if (state === "listening") {
+    el.dataset.micPulse = "active";
+  } else {
+    el.removeAttribute("data-mic-pulse");
   }
-  if (fill) {
-    const width = live ? Math.max(0.08, level) * 100 : 0;
-    fill.style.width = `${width.toFixed(1)}%`;
+
+  const ariaLabel = live
+    ? `${micHudStateLabel(state, isEnglish)} — ${micHudEmotionLabel(emotion, isEnglish)}`
+    : micHudStateLabel(state, isEnglish);
+  el.setAttribute("aria-label", ariaLabel);
+}
+
+/**
+ * @deprecated External HUD removed — use syncMicButtonGlow on the mic button.
+ */
+export function syncMicVoiceHud(hudRoot, opts = {}) {
+  if (hudRoot?.classList?.contains("mic-btn")) {
+    syncMicButtonGlow(hudRoot, opts);
   }
 }
 
@@ -314,13 +344,10 @@ export function createCompanionMicButton(el, opts = {}) {
   let emotion = opts.emotion || "neutral";
   let nuance = opts.nuance || "none";
   let hudLevel = 0;
-  /** @type {HTMLElement | null} */
-  let hudRoot = opts.hudRoot || null;
   let theme = resolveMicButtonThemeForState("idle", { emotion, nuance });
 
   const syncHud = () => {
-    if (!hudRoot) return;
-    syncMicVoiceHud(hudRoot, {
+    syncMicButtonGlow(el, {
       state,
       emotion,
       level: hudLevel,
@@ -363,13 +390,6 @@ export function createCompanionMicButton(el, opts = {}) {
     el.classList.toggle("mic-off", state === "idle");
     el.classList.toggle("on", state === "listening" || state === "speaking");
     el.setAttribute("aria-pressed", state === "listening" || state === "speaking" ? "true" : "false");
-    const titles = {
-      idle: "Tap to turn mic on",
-      listening: "Mic on — listening",
-      speaking: "Mic on — companion speaking",
-      disabled: "Mic unavailable",
-    };
-    el.title = titles[state] || titles.idle;
     applyStateTheme();
     syncHud();
   };
@@ -440,8 +460,7 @@ export function createCompanionMicButton(el, opts = {}) {
     sync,
     reset,
     syncHud,
-    setHudRoot(next) {
-      hudRoot = next || null;
+    setHudRoot() {
       syncHud();
     },
     setOnStateChange(fn) {
