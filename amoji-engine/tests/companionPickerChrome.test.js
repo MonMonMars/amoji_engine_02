@@ -22,7 +22,16 @@ describe("companionPickerChrome", () => {
 
   it("exports schema and filter ids", () => {
     expect(COMPANION_PICKER_CHROME_SCHEMA).toBe("amoji.companionPickerChrome.v1");
-    expect(PICKER_FILTER_IDS).toEqual(["all", "featured", "hd", "warm"]);
+    expect(PICKER_FILTER_IDS).toEqual([
+      "all",
+      "girlfriend",
+      "boyfriend",
+      "secretary",
+      "pet",
+      "featured",
+      "hd",
+      "warm",
+    ]);
   });
 
   it("provides bilingual copy for hero + confirm CTA", () => {

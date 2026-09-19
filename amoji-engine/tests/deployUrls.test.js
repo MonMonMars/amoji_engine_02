@@ -34,7 +34,7 @@ describe("deployUrls", () => {
     expect(full).toContain("build=test-build");
     const lite = companionLiteDirectUrl({ lang: "yue", build: "test-build" });
     expect(lite).toContain("/play?");
-    expect(lite).toContain("role=secretary");
+    expect(lite).toContain("character=kate");
     expect(lite).toContain("lang=yue");
   });
 
@@ -42,6 +42,6 @@ describe("deployUrls", () => {
     const url = secretaryDemoUrl({ build: "test-build", lang: "yue" });
     expect(url).toContain("tab=today");
     expect(url).toContain("/play");
-    expect(url).toContain("role=secretary");
+    expect(url).toContain("character=kate");
   });
 });

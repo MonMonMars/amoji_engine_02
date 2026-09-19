@@ -4,6 +4,7 @@
 import {
   listCompanionCharacters,
 } from "./companionCharacterCatalog.js";
+import { resolveCharacterRole } from "./companionCharacterRoles.js";
 import {
   loadCompanionRole,
   normalizeCompanionRole,
@@ -46,12 +47,31 @@ export function normalizeUnifiedEntryParams(params) {
  * @param {URLSearchParams | null | undefined} params
  * @param {Pick<Storage, "getItem"> | null | undefined} [storage]
  */
-export function resolveAppRole(params, storage = globalThis.localStorage) {
+/**
+ * Resolve session role — character selection is the source of truth when a
+ * companion id is known; legacy ?role= links still work without ?character=.
+ * @param {URLSearchParams | null | undefined} params
+ * @param {Pick<Storage, "getItem"> | null | undefined} [storage]
+ * @param {string | null | undefined} [characterId]
+ */
+export function resolveAppRole(
+  params,
+  storage = globalThis.localStorage,
+  characterId = null,
+) {
   const normalized = normalizeUnifiedEntryParams(
     params || new URLSearchParams(""),
   );
+  const cid = String(characterId || "").toLowerCase();
+  const explicitChar =
+    normalized.get("character") ||
+    normalized.get("vrm") ||
+    normalized.get("model3d");
+  if (explicitChar && cid) return resolveCharacterRole(cid);
+  if (cid && !normalized.get("role")) return resolveCharacterRole(cid);
   const fromUrl = normalized.get("role");
   if (fromUrl) return normalizeCompanionRole(fromUrl);
+  if (cid) return resolveCharacterRole(cid);
   return loadCompanionRole(storage);
 }
 
@@ -116,27 +136,35 @@ export function roleModeHint(role, isEnglish = false) {
  * @param {"yue" | "en"} langCode
  * @param {import("../mobile/companionRolePresets.js").CompanionRole} role
  */
-export function rosterCharactersForRole(langCode = "yue", role = "girlfriend") {
-  const preset = rolePreset(role);
+const ROLE_PICKER_ORDER = Object.freeze({
+  girlfriend: 0,
+  boyfriend: 1,
+  secretary: 2,
+  pet: 3,
+});
+
+/**
+ * Full roster for character picker — each card carries its embedded function label.
+ * @param {"yue" | "en"} langCode
+ * @param {import("../mobile/companionRolePresets.js").CompanionRole} [roleFilter]
+ */
+export function rosterCharactersForPicker(langCode = "yue", roleFilter = null) {
   const all = listCompanionCharacters(langCode);
-  const recommended = new Set(preset.characterIds);
-  const badge = rolePickBadge(role, langCode === "en");
-  const picks = [];
-  const rest = [];
-  for (const item of all) {
-    if (recommended.has(item.id)) {
-      picks.push({
-        ...item,
-        roleRecommended: true,
-        badge,
-      });
-    } else rest.push({ ...item, roleRecommended: false });
-  }
-  picks.sort(
-    (a, b) =>
-      preset.characterIds.indexOf(a.id) - preset.characterIds.indexOf(b.id),
-  );
-  return [...picks, ...rest];
+  const filter = roleFilter ? normalizeCompanionRole(roleFilter) : null;
+  const filtered = filter
+    ? all.filter((item) => item.companionRole === filter)
+    : all;
+  return [...filtered].sort((a, b) => {
+    const ra = ROLE_PICKER_ORDER[a.companionRole] ?? 9;
+    const rb = ROLE_PICKER_ORDER[b.companionRole] ?? 9;
+    if (ra !== rb) return ra - rb;
+    return (a.number || 0) - (b.number || 0);
+  });
+}
+
+/** @deprecated use rosterCharactersForPicker — kept for legacy imports */
+export function rosterCharactersForRole(langCode = "yue", role = "girlfriend") {
+  return rosterCharactersForPicker(langCode, role);
 }
 
 /**
@@ -147,74 +175,30 @@ export function rolePickBadge(role, isEnglish = false) {
   const r = normalizeCompanionRole(role);
   if (isEnglish) {
     if (r === "secretary") return "★ Secretary";
-    if (r === "boyfriend") return "★ BF pick";
+    if (r === "boyfriend") return "★ Boyfriend";
     if (r === "pet") return "★ Pet";
-    return "★ GF pick";
+    return "★ Girlfriend";
   }
   if (r === "secretary") return "★ 秘書";
-  if (r === "boyfriend") return "★ 男友";
+  if (r === "boyfriend") return "★ 男朋友";
   if (r === "pet") return "★ 寵物";
-  return "★ 女友";
+  return "★ 女朋友";
 }
 
-export function pickerCopyForRole(role, isEnglish = false) {
-  const r = normalizeCompanionRole(role);
+/** Unified picker copy — function is shown on each character card. */
+export function pickerCopyForRole(_role, isEnglish = false) {
   const en = Boolean(isEnglish);
-  const label = roleLabel(r, en);
-  const tagline = roleTagline(r, en);
   if (en) {
-    if (r === "secretary") {
-      return {
-        title: "Choose your secretary",
-        sub: "3D companion + Today tasks — voice-first productivity.",
-        footStart: "Begin — your 3D secretary loads while you talk.",
-      };
-    }
-    if (r === "boyfriend") {
-      return {
-        title: "Choose your boyfriend",
-        sub: "3D anime companion — protective romance & voice chat.",
-        footStart: "Begin — he loads in the background while you talk.",
-      };
-    }
-    if (r === "pet") {
-      return {
-        title: "Choose your pet companion",
-        sub: "Cozy 3D pet — playful voice and daily care.",
-        footStart: "Begin — your pet loads while you talk.",
-      };
-    }
     return {
-      title: "Choose your girlfriend",
-      sub: "3D anime romance — expressive voice & motion.",
-      footStart: "Begin — she loads in the background while you talk.",
-    };
-  }
-  if (r === "secretary") {
-    return {
-      title: "揀你嘅秘書",
-      sub: "3D 同伴 + Today 任務 — 語音優先秘書模式。",
-      footStart: "開始 — 3D 秘書會喺背景載入。",
-    };
-  }
-  if (r === "boyfriend") {
-    return {
-      title: "揀你嘅男朋友",
-      sub: "3D 動漫同伴 — 可靠浪漫同語音傾偈。",
-      footStart: "開始 — 佢會喺背景載入。",
-    };
-  }
-  if (r === "pet") {
-    return {
-      title: "揀你嘅寵物同伴",
-      sub: "治癒 3D 寵物 — 可愛語音同日常陪伴。",
-      footStart: "開始 — 寵物會喺背景載入。",
+      title: "Choose your companion",
+      sub: "Each model has a role — girlfriend, boyfriend, secretary, or pet.",
+      footStart: "Begin — your companion loads in the background while you talk.",
     };
   }
   return {
-    title: "揀你嘅女朋友",
-    sub: "3D 動漫戀愛 — 表情豐富語音同動作。",
-    footStart: "開始 — 佢會喺背景載入。",
+    title: "揀你嘅同伴",
+    sub: "每個模型都有功能 — 女朋友、男朋友、秘書或寵物。",
+    footStart: "開始 — 同伴會喺背景載入。",
   };
 }
 

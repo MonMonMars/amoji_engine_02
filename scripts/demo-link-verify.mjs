@@ -181,6 +181,7 @@ async function verifySecretary(page, label) {
 
   if (pickerOpen) {
     await beginStartPickerSession(page, {
+      characterId: "kate",
       cardTimeout: 90000,
       dismissTimeout: 120000,
     });
@@ -205,7 +206,8 @@ async function verifySecretary(page, label) {
   const state = await page.evaluate(() => ({
     conversationUi: document.body.classList.contains("conversation-ui"),
     roleSecretary: document.body.classList.contains("companion-role-secretary"),
-    roleGrid: !!document.getElementById("settings-role-grid"),
+    roleReadout: !!document.getElementById("settings-role-readout"),
+    companionPicker: !!document.getElementById("settings-btn-companions"),
     hasActivityRail: !!document.getElementById("activity-rail"),
     hasCanvas: !!document.getElementById("avatar-canvas"),
     hasComposer: !!document.getElementById("composer"),
@@ -213,15 +215,15 @@ async function verifySecretary(page, label) {
 
   record(`${label} conversation-ui`, state.conversationUi);
   record(`${label} unified secretary role`, state.roleSecretary);
-  record(`${label} mode switcher`, state.roleGrid);
+  record(`${label} character function readout`, state.roleReadout);
   record(`${label} 3D canvas`, state.hasCanvas);
   record(`${label} activity rail`, state.hasActivityRail);
 
   await page.click("#btn-open-setup").catch(() => null);
   await page
-    .waitForSelector("#settings-role-grid", { timeout: 15000 })
+    .waitForSelector("#settings-role-readout", { timeout: 15000 })
     .catch(() => null);
-  record(`${label} unified mode menu`, state.roleGrid);
+  record(`${label} companion function menu`, state.roleReadout && state.companionPicker);
 
   await page.click("#settings-btn-secretary-today").catch(() => null);
   await page
@@ -406,7 +408,7 @@ if (useLocal) {
     baseUrl = `http://127.0.0.1:${port}`;
     record("local static server", true, baseUrl);
   }
-    secretaryUrl = `${baseUrl}/play?role=secretary&lang=en`;
+  secretaryUrl = `${baseUrl}/play?character=kate&lang=en&pick=1&automic=0`;
   fullUrl = `${baseUrl}/play?lang=en&pick=1&automic=0`;
 } else {
   try {

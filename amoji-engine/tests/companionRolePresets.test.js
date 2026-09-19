@@ -23,8 +23,10 @@ describe("companionRolePresets", () => {
 
   it("recommends characters per role", () => {
     expect(isCharacterRecommendedForRole("boyfriend", "chad")).toBe(true);
+    expect(isCharacterRecommendedForRole("boyfriend", "rex")).toBe(true);
     expect(isCharacterRecommendedForRole("boyfriend", "rose")).toBe(false);
-    expect(isCharacterRecommendedForRole("pet", "shiro")).toBe(true);
+    expect(isCharacterRecommendedForRole("pet", "mimi")).toBe(true);
+    expect(isCharacterRecommendedForRole("secretary", "rose")).toBe(true);
   });
 
   it("includes prompt fragments for all roles", () => {
