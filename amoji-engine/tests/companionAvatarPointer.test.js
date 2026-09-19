@@ -5,7 +5,9 @@ import {
   bindCompanionAvatarPointer,
   clientToNormalizedPointer,
   collectAvatarPokeMeshes,
+  computeAvatarScreenBand,
   computePokeWaistWorldY,
+  isClientInCharacterOrbitBand,
   isPokeHitAboveWaist,
   POKE_WAIST_HEIGHT_RATIO,
 } from "../engine/companion/companionAvatarPointer.js";
@@ -94,6 +96,30 @@ describe("companionAvatarPointer", () => {
     expect(onPoke).toHaveBeenCalledTimes(1);
     expect(controls.enabled).toBe(true);
     pointer.destroy();
+  });
+
+  it("maps lower screen band on avatar footprint to orbit", () => {
+    const root = new THREE.Mesh(new THREE.BoxGeometry(1, 2, 0.4));
+    root.position.set(0, 1, 0);
+    const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
+    camera.position.set(0, 1.2, 2.4);
+    camera.lookAt(0, 1.1, 0);
+    camera.updateMatrixWorld(true);
+    const rect = {
+      left: 0,
+      top: 0,
+      width: 400,
+      height: 600,
+      right: 400,
+      bottom: 600,
+      x: 0,
+      y: 0,
+      toJSON: () => ({}),
+    };
+    const band = computeAvatarScreenBand(root, camera, rect);
+    expect(band?.height).toBeGreaterThan(40);
+    expect(isClientInCharacterOrbitBand(band.bottom - 2, band)).toBe(true);
+    expect(isClientInCharacterOrbitBand(band.top + 2, band)).toBe(false);
   });
 
   it("computes waist Y from avatar bounds", () => {

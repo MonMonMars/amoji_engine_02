@@ -8,7 +8,10 @@ export const COMPANION_AVATAR_POINTER_SCHEMA = "amoji.companionAvatarPointer.v2"
 export const AVATAR_TAP_MOVE_PX = 16;
 
 /** World Y cutoff — hits below this ratio (feet→head) count as empty space for orbit. */
-export const POKE_WAIST_HEIGHT_RATIO = 0.48;
+export const POKE_WAIST_HEIGHT_RATIO = 0.58;
+
+/** Screen band — only the top fraction of the avatar footprint accepts poke (rest = orbit). */
+export const POKE_SCREEN_UPPER_BODY_RATIO = 0.52;
 
 const _pokeBoxScratch = new THREE.Box3();
 const _pokeSizeScratch = new THREE.Vector3();
@@ -40,6 +43,55 @@ export function isPokeHitAboveWaist(hit, waistY) {
   if (!hit?.point) return false;
   if (waistY == null || !Number.isFinite(waistY)) return true;
   return hit.point.y >= waistY - 1e-4;
+}
+
+const _bandBox = new THREE.Box3();
+const _bandCorner = new THREE.Vector3();
+
+/**
+ * Project avatar bounds to screen pixels (for lower-body = orbit routing).
+ * @param {import('three').Object3D | null | undefined} root
+ * @param {import('three').Camera} camera
+ * @param {DOMRect | null | undefined} rect
+ */
+export function computeAvatarScreenBand(root, camera, rect) {
+  if (!root || !rect?.width || !rect?.height) return null;
+  _bandBox.setFromObject(root);
+  if (_bandBox.isEmpty()) return null;
+
+  const xs = [_bandBox.min.x, _bandBox.max.x];
+  const ys = [_bandBox.min.y, _bandBox.max.y];
+  const zs = [_bandBox.min.z, _bandBox.max.z];
+  let minSy = Infinity;
+  let maxSy = -Infinity;
+  for (const x of xs) {
+    for (const y of ys) {
+      for (const z of zs) {
+        _bandCorner.set(x, y, z).project(camera);
+        const sy = rect.top + ((1 - _bandCorner.y) / 2) * rect.height;
+        minSy = Math.min(minSy, sy);
+        maxSy = Math.max(maxSy, sy);
+      }
+    }
+  }
+  if (!Number.isFinite(minSy) || !Number.isFinite(maxSy)) return null;
+  return { top: minSy, bottom: maxSy, height: Math.max(0, maxSy - minSy) };
+}
+
+/**
+ * True when the touch is on the lower part of the character (camera orbit zone).
+ * @param {number} clientY
+ * @param {{ top: number, height: number } | null | undefined} band
+ * @param {number} [upperBodyRatio]
+ */
+export function isClientInCharacterOrbitBand(
+  clientY,
+  band,
+  upperBodyRatio = POKE_SCREEN_UPPER_BODY_RATIO,
+) {
+  if (!band || band.height <= 0 || !Number.isFinite(clientY)) return false;
+  const pokeCutoff = band.top + band.height * upperBodyRatio;
+  return clientY >= pokeCutoff - 0.5;
 }
 
 /**
@@ -76,6 +128,7 @@ export function clientToNormalizedPointer(clientX, clientY, rect) {
  *   camera: import('three').Camera,
  *   getPokeMeshes: () => import('three').Object3D[],
  *   getPokeWaistY?: () => number | null,
+ *   getScreenBand?: () => { top: number, bottom: number, height: number } | null,
  *   controls?: { enabled?: boolean } | null,
  *   onPoke?: (info: { point: import('three').Vector3, object: import('three').Object3D }) => void,
  *   movePx?: number,
@@ -115,6 +168,8 @@ export function bindCompanionAvatarPointer(opts) {
   };
 
   const pickPokeHit = (clientX, clientY) => {
+    const band = opts.getScreenBand?.() ?? null;
+    if (isClientInCharacterOrbitBand(clientY, band)) return null;
     const hits = raycastAt(clientX, clientY);
     const waistY = opts.getPokeWaistY?.() ?? null;
     for (const hit of hits) {
@@ -160,7 +215,13 @@ export function bindCompanionAvatarPointer(opts) {
       dragged = true;
     }
     if (session === "character") {
-      setCursor("pointer");
+      if (dragged && !pickPokeHit(e.clientX, e.clientY)) {
+        session = "empty";
+        setControlsEnabled(true);
+        setCursor("grabbing");
+      } else {
+        setCursor("pointer");
+      }
       return;
     }
     const hit = hitCharacter(e.clientX, e.clientY);
