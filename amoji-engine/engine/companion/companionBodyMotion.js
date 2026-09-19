@@ -805,6 +805,13 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
       if (!actionLoop && actionElapsed >= actionDuration) {
         finishActionStep();
       }
+    } else if (!talking && !thinking) {
+      const breathe = Math.sin(elapsed * 1.05);
+      const sway = Math.sin(elapsed * 0.52 + 0.6);
+      rootMotion = {
+        y: breathe * 0.006,
+        rotY: sway * 0.042,
+      };
     } else {
       rootMotion = { y: 0, rotY: 0 };
     }

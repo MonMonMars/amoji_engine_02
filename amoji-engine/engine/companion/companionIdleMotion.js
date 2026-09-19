@@ -136,7 +136,7 @@ export function sampleIdleBodyMotion(elapsedSec, opts = {}) {
   const sway = Math.sin(t * 0.58 + 0.4) * profile.swayMul;
   const shift = Math.sin(t * 0.72);
   const bob = Math.sin(t * 0.9 + 0.3);
-  const energy = (listening ? 1.08 : 1) * 1.28;
+  const energy = (listening ? 1.08 : 1) * 1.55;
   const leftFree = Math.max(0, -shift);
   const rightFree = Math.max(0, shift);
 

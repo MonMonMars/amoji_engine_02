@@ -401,6 +401,45 @@ async function main() {
     String(afterNova.action),
   );
 
+  const idleLife = await page.evaluate(async () => {
+    const avatar = window.__amojiAvatar;
+    avatar?.setTalking?.(false);
+    avatar?.setListening?.(false);
+    avatar?.setThinking?.(false);
+    avatar?.stopAction?.();
+    const vrm = avatar?.vrm;
+    const boneX = (name) =>
+      Number(vrm?.humanoid?.getNormalizedBoneNode?.(name)?.rotation?.x) || 0;
+    const samples = [];
+    for (let i = 0; i < 12; i += 1) {
+      samples.push({
+        headX: boneX("head"),
+        spineX: boneX("spine"),
+        modelY: Number(avatar?.vrm?.scene?.position?.y) || 0,
+        modelRotY: Number(avatar?.vrm?.scene?.rotation?.y) || 0,
+      });
+      await new Promise((r) => setTimeout(r, 280));
+    }
+    const range = (key) =>
+      Math.max(...samples.map((s) => s[key])) - Math.min(...samples.map((s) => s[key]));
+    return {
+      headRange: range("headX"),
+      spineRange: range("spineX"),
+      modelYRange: range("modelY"),
+      modelRotRange: range("modelRotY"),
+    };
+  });
+  record(
+    "idle-head-spine-life",
+    idleLife.headRange > 0.012 || idleLife.spineRange > 0.012,
+    JSON.stringify(idleLife),
+  );
+  record(
+    "idle-root-sway",
+    idleLife.modelRotRange > 0.018 || idleLife.modelYRange > 0.002,
+    JSON.stringify(idleLife),
+  );
+
   const restFace = await page.evaluate(async () => {
     const avatar = window.__amojiAvatar;
     const exprVal = (expr, name) => {
