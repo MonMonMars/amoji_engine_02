@@ -145,8 +145,8 @@ async function main() {
           dock.getBoundingClientRect().width === dock.getBoundingClientRect().height
         : true,
       stripCards: picker?.querySelectorAll(".companion-card--start-strip").length || 0,
-      sceneInRosterDock: Boolean(
-        picker?.querySelector(".picker-roster-dock .picker-scene-section"),
+      sceneInBackgroundRow: Boolean(
+        picker?.querySelector(".picker-background-row .picker-scene-section"),
       ),
       roleStripCount:
         picker?.querySelectorAll(".companion-card-role-strip").length || 0,
@@ -167,7 +167,7 @@ async function main() {
     boot.ring ? `ringHidden=${boot.ringHidden}` : "no ring",
   );
   record("character-chip", boot.chip);
-  record("picker-scene-in-roster-dock", boot.sceneInRosterDock);
+  record("picker-scene-background-row", boot.sceneInBackgroundRow);
   record(
     "picker-no-role-strip",
     boot.roleStripCount === 0,

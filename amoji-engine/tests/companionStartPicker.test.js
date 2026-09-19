@@ -150,7 +150,7 @@ describe("companion start picker", () => {
       onStart: () => {},
     });
     expect(
-      picker.element.querySelector(".picker-roster-dock .picker-scene-section"),
+      picker.element.querySelector(".picker-background-row .picker-scene-section"),
     ).toBeTruthy();
     expect(picker.element.querySelectorAll(".picker-scene-chip").length).toBe(
       SCENE_BACKGROUND_PRESETS.length,

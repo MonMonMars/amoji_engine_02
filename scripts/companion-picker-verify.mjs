@@ -113,9 +113,10 @@ const boot = await page.evaluate(() => {
     begin: Boolean(picker?.querySelector(".picker-begin-btn")),
     sceneChips: picker?.querySelectorAll(".picker-scene-chip").length ?? 0,
     sceneSection: Boolean(picker?.querySelector(".picker-scene-section")),
-    sceneInRosterDock: Boolean(
-      picker?.querySelector(".picker-roster-dock .picker-scene-section"),
+    sceneInBackgroundRow: Boolean(
+      picker?.querySelector(".picker-background-row .picker-scene-section"),
     ),
+    stackedLayout: Boolean(picker?.classList.contains("companion-picker--stacked-layout")),
   };
 });
 
@@ -132,9 +133,10 @@ record("no search toolbar", !boot.toolbar);
 record("no filter chips", boot.filters === 0, String(boot.filters));
 record("no featured row", boot.featured === 0, String(boot.featured));
 record("begin CTA", boot.begin);
+record("stacked start layout", boot.stackedLayout);
 record(
   "background row on start picker",
-  boot.sceneSection && boot.sceneInRosterDock && boot.sceneChips >= 8,
+  boot.sceneSection && boot.sceneInBackgroundRow && boot.sceneChips >= 18,
   String(boot.sceneChips),
 );
 
@@ -142,7 +144,7 @@ const layout = await page.evaluate(() => {
   const footer = document.querySelector("#start-character-picker .picker-footer");
   const wrap = document.querySelector("#start-character-picker .start-picker-grid-wrap");
   const scene = document.querySelector(
-    "#start-character-picker .picker-roster-dock .picker-scene-section",
+    "#start-character-picker .picker-background-row .picker-scene-section",
   );
   const grid = document.querySelector("#start-character-picker .companion-picker-grid--start");
   const begin = document.querySelector("#start-character-picker .picker-begin-btn");
@@ -174,7 +176,10 @@ const layout = await page.evaluate(() => {
   ).length;
   const gridStyle = getComputedStyle(grid);
   const columnCount = gridStyle.gridTemplateColumns.split(" ").filter(Boolean).length;
-  const rowGrid = gridStyle.gridAutoFlow !== "column" && columnCount >= 4;
+  const horizontalRoster =
+    gridStyle.gridAutoFlow === "column" ||
+    gridStyle.overflowX === "auto" ||
+    grid.scrollWidth > grid.clientWidth + 4;
   const cardNumbers = Array.from(
     document.querySelectorAll(
       "#start-character-picker .companion-card--start-strip .companion-card-number",
@@ -194,11 +199,11 @@ const layout = await page.evaluate(() => {
       visibleOverlap === 0 &&
       brokenImgs === 0 &&
       grid.clientHeight >= 72 &&
-      rowGrid &&
+      horizontalRoster &&
       cards.length >= 17 &&
       cardsLargeEnough &&
       Boolean(scene),
-    rowGrid,
+    horizontalRoster,
     columnCount,
     minPortraitW,
     cardsLargeEnough,
@@ -223,12 +228,11 @@ record(
     `visibleOverlap=${layout.visibleOverlap} gridH=${layout.gridH} broken=${layout.brokenImgs}`,
 );
 record(
-  "roster grid with readable cards",
-  layout.rowGrid &&
-    layout.columnCount >= 4 &&
+  "horizontal roster with readable cards",
+  layout.horizontalRoster &&
     layout.cardsLargeEnough &&
     layout.cardCount >= 17,
-  `cols=${layout.columnCount} cards=${layout.cardCount} minW=${layout.minPortraitW}`,
+  `flow=${layout.horizontalRoster} cards=${layout.cardCount} minW=${layout.minPortraitW}`,
 );
 record(
   "strip cards numbered 1-17",

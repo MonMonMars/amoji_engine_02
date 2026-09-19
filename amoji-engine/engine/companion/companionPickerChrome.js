@@ -51,7 +51,7 @@ export function pickerCopy(isEnglish = false) {
     sub: en
       ? "Each model has a role — girlfriend, boyfriend, secretary, or pet."
       : "每個模型都有功能 — 女朋友、男朋友、秘書或寵物。",
-    begin: en ? "Begin chat" : "開始傾偈",
+    begin: en ? "Start" : "開始",
     switch: en ? "Switch companion" : "切換同伴",
     featuredLabel: en
       ? `All companions · 1–${CHARACTER_IDS.length}`

@@ -1,7 +1,7 @@
 /**
  * Scene presets — background swatches and per-character outfit wardrobe.
  */
-export const COMPANION_SCENE_PRESETS_SCHEMA = "amoji.companionScenePresets.v2";
+export const COMPANION_SCENE_PRESETS_SCHEMA = "amoji.companionScenePresets.v3";
 
 export const SCENE_STORAGE_KEY = "amoji.companion.scenePreset";
 export const CHAT_PANEL_STORAGE_KEY = "amoji.companion.chatPanelVisible";
@@ -24,11 +24,22 @@ export const SCENE_BACKGROUND_PRESETS = Object.freeze([
   { id: "beach", labelEn: "Beach", labelYue: "海灘", environment: "outdoor" },
   { id: "sunset", labelEn: "Sunset", labelYue: "黃昏", environment: "outdoor" },
   { id: "aurora", labelEn: "Aurora", labelYue: "極光", environment: "outdoor" },
+  { id: "rain-street", labelEn: "Rainy street", labelYue: "雨夜街道", environment: "outdoor" },
+  { id: "cherry-blossom", labelEn: "Cherry blossom", labelYue: "櫻花", environment: "outdoor" },
+  { id: "mountain", labelEn: "Mountain view", labelYue: "山景", environment: "outdoor" },
+  { id: "harbor", labelEn: "Harbor", labelYue: "海港", environment: "outdoor" },
+  { id: "meadow", labelEn: "Meadow", labelYue: "草原", environment: "outdoor" },
   { id: "studio", labelEn: "Studio", labelYue: "影樓", environment: "indoor" },
   { id: "cozy-room", labelEn: "Cozy room", labelYue: "溫馨房間", environment: "indoor" },
   { id: "cafe", labelEn: "Café", labelYue: "咖啡室", environment: "indoor" },
   { id: "library", labelEn: "Library", labelYue: "圖書館", environment: "indoor" },
   { id: "minimal", labelEn: "Minimal dark", labelYue: "深色簡約", environment: "indoor" },
+  { id: "bedroom", labelEn: "Bedroom", labelYue: "睡房", environment: "indoor" },
+  { id: "office", labelEn: "Office", labelYue: "辦公室", environment: "indoor" },
+  { id: "classroom", labelEn: "Classroom", labelYue: "課室", environment: "indoor" },
+  { id: "greenhouse", labelEn: "Greenhouse", labelYue: "玻璃花房", environment: "indoor" },
+  { id: "loft", labelEn: "Loft", labelYue: "複式 loft", environment: "indoor" },
+  { id: "kitchen", labelEn: "Kitchen", labelYue: "廚房", environment: "indoor" },
 ]);
 
 /** @type {ReadonlyArray<{ id: string, labelEn: string, labelYue: string, swatch?: string, characters?: string[] }>} */

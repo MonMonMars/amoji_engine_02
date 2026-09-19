@@ -16,6 +16,7 @@ import {
   CHAT_PANEL_STORAGE_KEY,
   SCENE_OUTFIT_STORAGE_KEY,
   SCENE_STORAGE_KEY,
+  SCENE_BACKGROUND_PRESETS,
 } from "../engine/companion/companionScenePresets.js";
 
 function createStorage() {
@@ -58,6 +59,14 @@ describe("companionScenePresets", () => {
     expect(applySceneBackground(el, "aurora")).toBe("aurora");
     expect(el.dataset.sceneBg).toBe("aurora");
     expect(el.dataset.sceneEnvironment).toBe("outdoor");
+  });
+
+  it("lists indoor and outdoor background presets", () => {
+    expect(SCENE_BACKGROUND_PRESETS.length).toBeGreaterThanOrEqual(20);
+    const outdoor = SCENE_BACKGROUND_PRESETS.filter((p) => p.environment === "outdoor");
+    const indoor = SCENE_BACKGROUND_PRESETS.filter((p) => p.environment === "indoor");
+    expect(outdoor.length).toBeGreaterThanOrEqual(10);
+    expect(indoor.length).toBeGreaterThanOrEqual(10);
   });
 
   it("resolves indoor vs outdoor environments", () => {

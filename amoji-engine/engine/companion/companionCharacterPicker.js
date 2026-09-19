@@ -771,7 +771,7 @@ export function createCompanionStartPicker(opts = {}) {
 
   const shell = document.createElement("div");
   shell.className =
-    "companion-picker companion-picker--start companion-picker--v4 companion-picker--showcase hide";
+    "companion-picker companion-picker--start companion-picker--v4 companion-picker--showcase companion-picker--stacked-layout hide";
   shell.id = "start-character-picker";
   shell.setAttribute("role", "dialog");
   shell.setAttribute("aria-modal", "true");
@@ -786,18 +786,20 @@ export function createCompanionStartPicker(opts = {}) {
           <p class="companion-picker-sub"></p>
         </div>
       </header>
-      <div class="picker-main">
+      <div class="picker-main picker-main--stacked">
         <section class="picker-showcase-stage" aria-label="${isEnglish ? "Selected companion preview" : "已選同伴預覽"}">
           ${PICKER_HERO_HTML}
         </section>
-        <section class="picker-roster-dock" aria-label="${isEnglish ? "Companion roster" : "同伴名單"}">
+        <section class="picker-roster-row picker-roster-dock" aria-label="${isEnglish ? "Companion roster" : "同伴名單"}">
           <p class="picker-roster-dock-label"></p>
           <div class="start-picker-grid-wrap">
             <div class="companion-picker-grid companion-picker-grid--start companion-picker-grid--roster" role="listbox"></div>
-            <p class="start-picker-scroll-hint" hidden></p>
           </div>
-          ${PICKER_SCENE_SECTION_HTML}
+          <p class="start-picker-scroll-hint" hidden></p>
         </section>
+        <div class="picker-background-row">
+          ${PICKER_SCENE_SECTION_HTML}
+        </div>
       </div>
       <footer class="picker-footer">
         <div class="start-picker-preload is-loading" aria-live="polite">
@@ -1057,7 +1059,7 @@ export function createCompanionStartPicker(opts = {}) {
           isEnglish ? "Selected companion preview" : "已選同伴預覽",
         );
       shell
-        .querySelector(".picker-roster-dock")
+        .querySelector(".picker-roster-row, .picker-roster-dock")
         ?.setAttribute(
           "aria-label",
           isEnglish ? "Companion roster" : "同伴名單",
