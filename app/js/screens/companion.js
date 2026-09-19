@@ -29,12 +29,16 @@ registerRoute("companion", async (ctx) => {
     /* offline / local */
   }
 
+  const pick =
+    ctx.params?.pick === "1" || ctx.params?.pick === 1 ? "1" : "0";
+
   const playPath = buildMobileCompanionPlayPath({
     lang,
     characterId: charId,
     role,
     voiceEnabled: settings.voiceEnabled !== false,
     build: deployedBuild,
+    pick,
   });
 
   const screen = document.createElement("section");
@@ -43,7 +47,7 @@ registerRoute("companion", async (ctx) => {
   screen.innerHTML = `
     <div class="topbar topbar--embed">
       <button type="button" class="btn btn-secondary" data-action="back">←</button>
-      <h1>${roleLabel(role, en)}</h1>
+      <h1>${pick === "1" ? (en ? "Pick character" : "選角色") : roleLabel(role, en)}</h1>
       <span></span>
     </div>
     <iframe

@@ -94,6 +94,10 @@ try {
     throw new Error("Pet Care hub card missing");
   }
 
+  const pickerCard = page.locator('.hub-card[data-pick="1"]');
+  const hasPicker = (await pickerCard.count()) > 0;
+  record("hub-character-picker", hasPicker);
+
   const secretaryCard = page.locator('.hub-card[data-set-role="secretary"]');
   const hasSecretary = (await secretaryCard.count()) > 0;
   record(

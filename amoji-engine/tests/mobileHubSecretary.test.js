@@ -8,11 +8,13 @@ const root = join(dirname(fileURLToPath(import.meta.url)), "../..");
 describe("mobile hub secretary", () => {
   it("opens secretary inside the app shell (not external /play picker)", () => {
     const hub = readFileSync(join(root, "app/js/screens/hub.js"), "utf8");
-    expect(hub).toContain('data-set-role="secretary"');
-    expect(hub).toContain('data-go="companion"');
-    expect(hub).not.toMatch(
-      /data-open="\/play\?role=secretary/,
+    const layout = readFileSync(
+      join(root, "amoji-engine/engine/mobile/mobileHubLayout.js"),
+      "utf8",
     );
+    expect(layout).toContain('setRole: "secretary"');
+    expect(hub).toContain("renderMobileHubCard");
+    expect(hub).not.toMatch(/data-open="\/play\?role=secretary/);
   });
 
   it("companion embed honors navigate params role", () => {
