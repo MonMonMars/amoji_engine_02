@@ -31,9 +31,10 @@ describe("companionDialoguePreload", () => {
     expect(en.some((p) => /hanging out|ready/i.test(p))).toBe(true);
   });
 
-  it("includes idle lines in wait dialogue preload bundle", () => {
+  it("prefers thinking fillers for loading voice preload", () => {
     const phrases = collectWaitDialoguePhrases(false, 3);
-    expect(phrases.filter((p) => p.includes("等緊你")).length).toBeGreaterThanOrEqual(1);
-    expect(phrases.length).toBeGreaterThanOrEqual(30);
+    expect(phrases.some((p) => p.includes("嗯"))).toBe(true);
+    expect(phrases.some((p) => p.includes("等我"))).toBe(true);
+    expect(phrases.length).toBeGreaterThanOrEqual(12);
   });
 });

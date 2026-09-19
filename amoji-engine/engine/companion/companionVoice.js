@@ -1457,6 +1457,7 @@ export function createCompanionVoice(opts = {}) {
 
   const startThinkingLoop = ({ isEnglish = false, intervalMs = 5200 } = {}) => {
     stopThinkingLoop();
+    stopLearnLoop();
     thinkingLoopActive = true;
     thinkingActive = true;
     syncAssistantOutput();

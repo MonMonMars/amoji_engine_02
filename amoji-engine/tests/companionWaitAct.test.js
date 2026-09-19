@@ -22,8 +22,8 @@ describe("companionWaitAct", () => {
       setThinking: vi.fn(),
     };
     const voice = {
-      startLearnLoop: vi.fn(),
-      updateLearnLoop: vi.fn(),
+      startThinkingLoop: vi.fn(),
+      stopThinkingLoop: vi.fn(),
       stopLearnLoop: vi.fn(),
     };
     const progress = {
@@ -47,19 +47,18 @@ describe("companionWaitAct", () => {
     });
     expect(progress.show).toHaveBeenCalled();
     expect(avatar.playAction).toHaveBeenCalled();
-    expect(voice.startLearnLoop).toHaveBeenCalledWith(
+    expect(voice.startThinkingLoop).toHaveBeenCalledWith(
       expect.objectContaining({
-        kind: "motion",
-        progress: 0.2,
+        isEnglish: true,
       }),
     );
 
     wait.update({ progress: 0.55, phase: "learning" });
     expect(progress.update).toHaveBeenCalled();
-    expect(voice.updateLearnLoop).toHaveBeenCalled();
 
     wait.stop();
     expect(progress.hide).toHaveBeenCalled();
+    expect(voice.stopThinkingLoop).toHaveBeenCalled();
     expect(voice.stopLearnLoop).toHaveBeenCalled();
     expect(wait.isActive()).toBe(false);
   });
@@ -176,9 +175,10 @@ describe("companionWaitAct", () => {
     wait.stop();
   });
 
-  it("enableVoice starts learn loop after avatar-load was silent", () => {
+  it("enableVoice starts thinking loop after avatar-load was silent", () => {
     const voice = {
-      startLearnLoop: vi.fn(),
+      startThinkingLoop: vi.fn(),
+      stopThinkingLoop: vi.fn(),
       stopLearnLoop: vi.fn(),
     };
     const wait = createCompanionWaitAct({
@@ -187,11 +187,26 @@ describe("companionWaitAct", () => {
       isEnglish: true,
     });
     wait.start({ kind: "avatar-load", phase: "avatar-load", speak: false });
-    expect(voice.startLearnLoop).not.toHaveBeenCalled();
+    expect(voice.startThinkingLoop).not.toHaveBeenCalled();
     expect(wait.enableVoice()).toBe(true);
-    expect(voice.startLearnLoop).toHaveBeenCalledWith(
-      expect.objectContaining({ kind: "avatar-load" }),
+    expect(voice.startThinkingLoop).toHaveBeenCalledWith(
+      expect.objectContaining({ isEnglish: true }),
     );
+    wait.stop();
+  });
+
+  it("uses thinking voice for motion-pack and avatar-load waits", () => {
+    const voice = {
+      startThinkingLoop: vi.fn(),
+      stopThinkingLoop: vi.fn(),
+      stopLearnLoop: vi.fn(),
+    };
+    const wait = createCompanionWaitAct({ voice, isEnglish: false });
+    wait.start({ kind: "motion-pack", phase: "connecting", progress: 0 });
+    expect(voice.startThinkingLoop).toHaveBeenCalled();
+    wait.stop();
+    wait.start({ kind: "avatar-load", phase: "avatar-load", progress: 0.1 });
+    expect(voice.startThinkingLoop).toHaveBeenCalledTimes(2);
     wait.stop();
   });
 

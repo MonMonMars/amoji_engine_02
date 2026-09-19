@@ -7,7 +7,9 @@ export const COMPANION_THINKING_DIALOGUE_SCHEMA = "amoji.companionThinkingDialog
 /** @type {readonly string[]} */
 export const THINKING_PHRASES_YUE = Object.freeze([
   "嗯…",
+  "嗯……",
   "唔…",
+  "等我諗下。嗯……",
   "等我睇下…",
   "等我諗下…",
   "等我查下…",
@@ -20,7 +22,9 @@ export const THINKING_PHRASES_YUE = Object.freeze([
 /** @type {readonly string[]} */
 export const THINKING_PHRASES_EN = Object.freeze([
   "Um…",
+  "Um……",
   "Hmm…",
+  "Let me think. Um…..",
   "Let me see…",
   "Let me think…",
   "Let me check…",
@@ -33,7 +37,7 @@ export const THINKING_PHRASES_EN = Object.freeze([
 
 /** Lines that already sound like a natural pause — skip extra vocal prefix. */
 export const NATURAL_FILLER_RE =
-  /^(um+|uh+|hmm+|嗯+|唔+|let me (think|see|check|look|search)|give me a (sec|moment)|one sec|hang on|okay,? um|等我|let me look that up|let me search online)/i;
+  /^(um+|uh+|hmm+|嗯+|唔+|let me (think|see|check|look|search)|give me a (sec|moment)|one sec|hang on|okay,? um|等我|let me look that up|let me search online|let me think\.?\s*um)/i;
 
 /** Meta / robotic thinking lines we never speak. */
 export const ROBOTIC_THINKING_RE =
