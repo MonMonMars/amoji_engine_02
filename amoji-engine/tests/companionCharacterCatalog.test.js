@@ -27,7 +27,9 @@ import {
   TRIAL_CHARACTER_IDS,
 } from "../engine/companion/companionCharacterCatalog.js";
 
-describe("companionCharacterCatalog v226 curated roster", () => {
+const ROSTER_SIZE = CHARACTER_IDS.length;
+
+describe("companionCharacterCatalog v328 curated roster", () => {
   it("keeps flagship roster numbers 1–4", () => {
     expect(characterNumber("nova")).toBe(1);
     expect(characterNumber("kizuna")).toBe(2);
@@ -36,8 +38,8 @@ describe("companionCharacterCatalog v226 curated roster", () => {
     expect(ROSTER_LOCKED_NUMBERS).toEqual([1, 2, 3, 4]);
   });
 
-  it("exposes the curated AAA catalog of ten characters", () => {
-    expect(CHARACTER_IDS.length).toBe(10);
+  it("exposes the expanded AAA catalog", () => {
+    expect(ROSTER_SIZE).toBe(17);
     expect(CHARACTER_IDS).toEqual([
       "nova",
       "kizuna",
@@ -49,6 +51,13 @@ describe("companionCharacterCatalog v226 curated roster", () => {
       "mio",
       "amoji",
       "rex",
+      "shiro",
+      "jennifer",
+      "poly",
+      "aesthe",
+      "chad",
+      "david",
+      "hugo",
     ]);
     expect(Object.keys(COMPANION_CHARACTERS).sort()).toEqual([...CHARACTER_IDS].sort());
     expect(TRIAL_CHARACTER_IDS).toEqual(["yuki", "hina", "mio"]);
@@ -61,6 +70,8 @@ describe("companionCharacterCatalog v226 curated roster", () => {
     expect(getCharacter("yuki").modelUrl).toContain("companion-olivia.vrm");
     expect(getCharacter("hina").modelUrl).toContain("companion-lydia.vrm");
     expect(getCharacter("mio").modelUrl).toContain("companion-kate.vrm");
+    expect(getCharacter("shiro").modelUrl).toContain("companion-shiro.vrm");
+    expect(getCharacter("poly").modelUrl).toContain("companion-polydancer.vrm");
   });
 
   it("assigns one preview path per roster id", () => {
@@ -85,6 +96,10 @@ describe("companionCharacterCatalog v226 curated roster", () => {
     expect(resolveCharacterId({ modelUrl: "/prototypes/assets/companion-lydia.vrm" })).toBe("hina");
     expect(resolveCharacterId({ modelUrl: "/prototypes/assets/companion-kate.vrm" })).toBe("mio");
     expect(resolveCharacterId({ modelUrl: "/prototypes/assets/companion-girl.vrm" })).toBe("amoji");
+    expect(resolveCharacterId({ modelUrl: "/prototypes/assets/companion-shiro.vrm" })).toBe(
+      "shiro",
+    );
+    expect(resolveCharacterId({ modelUrl: "/prototypes/assets/companion-chad.vrm" })).toBe("chad");
   });
 
   it("assigns distinct voices per roster character", () => {
@@ -108,7 +123,7 @@ describe("companionCharacterCatalog v226 curated roster", () => {
     expect(nextCharacterId("nova")).toBe("kizuna");
     expect(nextCharacterId("ember")).toBe("sky");
     expect(nextCharacterId("sky")).toBe("yuki");
-    expect(nextCharacterId("rex")).toBe("nova");
+    expect(nextCharacterId("hugo")).toBe("nova");
   });
 
   it("lists picker metadata with roster numbers", () => {
@@ -116,29 +131,35 @@ describe("companionCharacterCatalog v226 curated roster", () => {
     expect(list[0]).toMatchObject({ id: "nova", number: 1 });
     expect(list.find((c) => c.id === "rex")?.number).toBe(10);
     expect(list.find((c) => c.id === "amoji")?.number).toBe(9);
+    expect(list.find((c) => c.id === "hugo")?.number).toBe(17);
     expect(GALLERY_PRIORITY_IDS.has("amoji")).toBe(true);
-    expect(GALLERY_PRIORITY_IDS.has("rex")).toBe(true);
-    expect(GALLERY_PRIORITY_IDS.has("yuki")).toBe(true);
-    expect(GALLERY_PRIORITY_IDS.size).toBe(10);
+    expect(GALLERY_PRIORITY_IDS.has("shiro")).toBe(true);
+    expect(GALLERY_PRIORITY_IDS.has("hugo")).toBe(true);
+    expect(GALLERY_PRIORITY_IDS.size).toBe(ROSTER_SIZE);
     expect(isAaaRosterCharacter("sky")).toBe(true);
     expect(isAaaRosterCharacter("nova")).toBe(false);
     expect(aaaRosterBadge("yuki", true)).toBe("AAA Pro");
     expect(aaaRosterBadge("sky", true)).toBe("AAA");
+    expect(aaaRosterBadge("shiro", true)).toBe("AAA");
   });
 
   it("builds character-specific prompts", () => {
     expect(buildCharacterSystemPrompt("nova", false)).toContain("諾娃");
     expect(buildCharacterSystemPrompt("rex", true)).toMatch(/Rex|烈/i);
     expect(buildCharacterSystemPrompt("mio", true)).toMatch(/Mio|go-getter/i);
+    expect(buildCharacterSystemPrompt("shiro", true)).toMatch(/Shiro/i);
     expect(characterGreeting("yuki", true)).toMatch(/Yuki/i);
     expect(characterGender("rex", "yue")).toBe("male");
+    expect(characterGender("chad", "yue")).toBe("male");
     expect(characterGender("hina", "yue")).toBe("female");
     expect(characterVoiceLabel("yuki", "yue", false)).toBeTruthy();
   });
 
   it("exposes avatar config per character", () => {
     expect(characterAvatarConfig("rex", "yue").modelUrl).toContain("companion-kai.vrm");
+    expect(characterAvatarConfig("david", "yue").modelUrl).toContain("companion-david.vrm");
     expect(defaultVoiceForCharacter("yuki", "yue")).toBe("zh-HK-HiuMaanNeural-yuki");
+    expect(defaultVoiceForCharacter("jennifer", "yue")).toBe("zh-HK-HiuMaanNeural-jennifer");
   });
 
   it("keeps hungry lines on the same character voice profile", () => {

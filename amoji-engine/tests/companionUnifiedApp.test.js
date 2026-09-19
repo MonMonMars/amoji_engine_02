@@ -124,7 +124,7 @@ describe("companionUnifiedApp", () => {
     const roster = rosterCharactersForPicker("en");
     expect(roster.every((c) => c.companionRole && c.roleBadge)).toBe(true);
     expect(roster.some((c) => c.companionRole === "boyfriend")).toBe(true);
-    expect(roster.length).toBe(10);
+    expect(roster.length).toBeGreaterThanOrEqual(17);
     const secretaries = rosterCharactersForRole("en", "secretary");
     expect(secretaries.every((c) => c.companionRole === "secretary")).toBe(true);
   });

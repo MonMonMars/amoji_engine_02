@@ -21,6 +21,13 @@ export const CHARACTER_COMPANION_ROLES = Object.freeze({
   mio: "girlfriend",
   amoji: "girlfriend",
   rex: "boyfriend",
+  shiro: "girlfriend",
+  jennifer: "girlfriend",
+  poly: "girlfriend",
+  aesthe: "girlfriend",
+  chad: "boyfriend",
+  david: "boyfriend",
+  hugo: "boyfriend",
 });
 
 /** @type {Readonly<Record<CompanionRole, string>>} */

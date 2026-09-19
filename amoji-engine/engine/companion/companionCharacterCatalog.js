@@ -71,7 +71,7 @@ export const COMPANION_CHARACTERS = COMPANION_ROSTER_CHARACTERS;
 
 /**
  * Roster display + preload order — curated AAA catalog (v226).
- * Flagship: #1–4 Nova/Kizuna/Alicia/Ember; #5–10 Sky/Yuki/Hina/Mio/Amoji/Rex.
+ * Flagship: #1–4 Nova/Kizuna/Alicia/Ember; #5–17 expanded AAA catalog.
  */
 export const CHARACTER_IDS = ROSTER_CHARACTER_IDS;
 
@@ -105,6 +105,13 @@ export const GALLERY_PRIORITY_IDS = new Set([
   "mio",
   "amoji",
   "rex",
+  "shiro",
+  "jennifer",
+  "poly",
+  "aesthe",
+  "chad",
+  "david",
+  "hugo",
 ]);
 
 /** Minimum mesh triangles to treat as high-poly face roster picks. */
@@ -118,7 +125,7 @@ export const HIGH_POLY_FACE_CHARACTER_IDS = new Set([
   "ember",
 ]);
 
-/** Roster picks 5–10 — expanded AAA catalog beyond flagship 1–4. */
+/** Roster picks 5+ — expanded AAA catalog beyond flagship 1–4. */
 export function isAaaRosterCharacter(id) {
   const n = characterNumber(id);
   return Number.isFinite(n) && n >= 5;
@@ -260,6 +267,13 @@ export function resolveCharacterId(opts = {}) {
     ["companion-olivia.vrm", "yuki"],
     ["companion-lydia.vrm", "hina"],
     ["companion-kate.vrm", "mio"],
+    ["companion-shiro.vrm", "shiro"],
+    ["companion-jennifer.vrm", "jennifer"],
+    ["companion-polydancer.vrm", "poly"],
+    ["companion-aesthetica.vrm", "aesthe"],
+    ["companion-chad.vrm", "chad"],
+    ["companion-david.vrm", "david"],
+    ["companion-hugo.vrm", "hugo"],
   ];
   for (const [needle, id] of modelMap) {
     if (model.includes(needle)) return id;

@@ -153,7 +153,7 @@ async function main() {
   record("picker-begin-cta", boot.beginBtn);
   record(
     "picker-no-featured-row",
-    !boot.featuredRow && boot.stripCards >= 10,
+    !boot.featuredRow && boot.stripCards >= 17,
     `strip=${boot.stripCards}`,
   );
   record(

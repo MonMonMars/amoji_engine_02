@@ -712,13 +712,13 @@ export function createCompanionStartPicker(opts = {}) {
     if (subEl) {
       subEl.hidden = false;
       subEl.textContent = isEnglish
-        ? "All 10 companions · 1–4 flagship · 5–10 AAA · tap to preview"
-        : "10 位同伴 · 1–4 旗艦 · 5–10 AAA · 㩒肖像預覽";
+        ? `All ${fullList().length} companions · 1–4 flagship · 5+ AAA · tap to preview`
+        : `${fullList().length} 位同伴 · 1–4 旗艦 · 5+ AAA · 㩒肖像預覽`;
     }
     if (rosterDockLabelEl) {
       rosterDockLabelEl.textContent = isEnglish
-        ? `Roster · ${fullList().length} (swipe row 2 for AAA 5–10)`
-        : `名單 · ${fullList().length} 位（5–10 為 AAA 擴展）`;
+        ? `Roster · ${fullList().length} (scroll for AAA 5+)`
+        : `名單 · ${fullList().length} 位（5+ 為 AAA 擴展，可捲動）`;
     }
     if (footEl) {
       footEl.textContent = starting

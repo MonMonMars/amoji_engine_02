@@ -123,7 +123,7 @@ record("hero stage section", boot.heroStage);
 record("hero preview", boot.hero);
 record("roster dock", boot.rosterDock);
 record("roster grid class", boot.horizontalRoster);
-record("full roster grid (10)", boot.roster === 10, String(boot.roster));
+record("full roster grid (17)", boot.roster === 17, String(boot.roster));
 record("strip roster cards", boot.stripCards >= 8, String(boot.stripCards));
 record("no search toolbar", !boot.toolbar);
 record("no filter chips", boot.filters === 0, String(boot.filters));
@@ -182,7 +182,7 @@ const layout = await page.evaluate(() => {
       brokenImgs === 0 &&
       grid.clientHeight >= 72 &&
       rowGrid &&
-      cards.length >= 10 &&
+      cards.length >= 17 &&
       cardsLargeEnough,
     rowGrid,
     columnCount,
@@ -211,13 +211,13 @@ record(
   layout.rowGrid &&
     layout.columnCount >= 4 &&
     layout.cardsLargeEnough &&
-    layout.cardCount >= 10,
+    layout.cardCount >= 17,
   `cols=${layout.columnCount} cards=${layout.cardCount} minW=${layout.minPortraitW}`,
 );
 record(
-  "strip cards numbered 1-10",
+  "strip cards numbered 1-17",
   Array.isArray(layout.cardNumbers) &&
-    layout.cardNumbers.includes("10") &&
+    layout.cardNumbers.includes("17") &&
     layout.cardNumbers.includes("5"),
   JSON.stringify(layout.cardNumbers),
 );

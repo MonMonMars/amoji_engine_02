@@ -65,8 +65,8 @@ describe("companionPickerChrome", () => {
     expect(featured[1].id).toBe("kizuna");
   });
 
-  it("defaults featured banner to the full ten-character roster", () => {
-    expect(listPickerFeatured(list).length).toBe(10);
+  it("defaults featured banner to the full roster", () => {
+    expect(listPickerFeatured(list).length).toBe(list.length);
     expect(listPickerFeatured(list).map((c) => c.id)).toContain("yuki");
     expect(listPickerFeatured(list).map((c) => c.id)).toContain("rex");
   });
@@ -114,7 +114,7 @@ describe("companionPickerChrome", () => {
     expect(isPickerFeatured(kizuna)).toBe(true);
     const featured = filterPickerCharacters(list, { filter: "featured" });
     expect(featured.map((c) => c.id)).toContain("nova");
-    expect(featured.length).toBe(10);
+    expect(featured.length).toBe(list.length);
   });
 
   it("filters HD face roster picks", () => {
