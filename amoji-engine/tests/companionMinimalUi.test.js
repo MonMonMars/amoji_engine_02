@@ -11,7 +11,7 @@ const minimalCss = readFileSync(
 );
 
 describe("companionMinimalUi", () => {
-  it("uses minimal chrome with mic, text field, top-left chip, and top-right menu", () => {
+  it("uses minimal chrome with mic, text field, and top-right menu only", () => {
     expect(html).toContain("companion-minimal-chrome");
     expect(html).toMatch(/class="composer[^"]*composer-pro/);
     expect(html).toContain('id="btn-open-setup"');
@@ -44,8 +44,10 @@ describe("companionMinimalUi", () => {
     expect(html).toContain('id="settings-btn-speaker"');
   });
 
-  it("shows companion chip top-left and menu top-right; send visible in text composer", () => {
+  it("shows menu top-right only; send visible in text composer", () => {
     expect(minimalCss).toMatch(/companion-minimal-chrome \.topbar[\s\S]*display:\s*flex/);
+    expect(minimalCss).toMatch(/companion-minimal-chrome \.topbar[\s\S]*justify-content:\s*flex-end/);
+    expect(minimalCss).toMatch(/companion-minimal-chrome \.topbar \.brand-btn[\s\S]*display:\s*none/);
     expect(minimalCss).toContain("topbar-setup-btn");
     expect(minimalCss).not.toContain("mic-voice-hud");
     expect(minimalCss).toMatch(

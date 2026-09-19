@@ -12,7 +12,7 @@ body.companion-minimal-chrome .topbar {
   right: 0;
   z-index: 35;
   align-items: flex-start;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 0.65rem;
   padding: max(0.65rem, env(safe-area-inset-top)) 0.75rem 0;
   background: linear-gradient(180deg, rgba(2, 2, 8, 0.62) 0%, transparent 88%);
@@ -20,7 +20,10 @@ body.companion-minimal-chrome .topbar {
 }
 
 body.companion-minimal-chrome .topbar .brand-btn,
-body.companion-minimal-chrome .topbar .companion-chip,
+body.companion-minimal-chrome .topbar .companion-chip {
+  display: none !important;
+}
+
 body.companion-minimal-chrome .topbar .topbar-setup-btn {
   pointer-events: auto;
 }
@@ -68,7 +71,6 @@ body.companion-minimal-chrome .topbar-setup-btn:focus-visible {
   transform: translateY(-1px);
 }
 
-body.companion-start-pending.companion-minimal-chrome .topbar .brand-btn,
 body.companion-start-pending.companion-minimal-chrome .topbar-setup-btn {
   opacity: 0;
   pointer-events: none;
