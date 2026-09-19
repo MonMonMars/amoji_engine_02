@@ -217,6 +217,9 @@ export function createCompanionEmotionBall(el, opts = {}) {
         sat: theme.sat,
         light: theme.light,
         state,
+        emotion,
+        live: state === "listening" || state === "speaking",
+        face: true,
       });
     }
     rafId = globalThis.requestAnimationFrame(renderFrame);
@@ -683,7 +686,7 @@ export function createMiniEmotionBall(el, opts = {}) {
 
   const resizeCanvas = () => {
     if (!canvas || !ctx) return;
-    const dpr = Math.min(3, Math.max(1, globalThis.devicePixelRatio || 1));
+    const dpr = Math.min(4, Math.max(2, globalThis.devicePixelRatio || 1));
     const rect =
       canvas.getBoundingClientRect?.() ||
       el.getBoundingClientRect?.() ||
@@ -768,11 +771,14 @@ export function createMiniEmotionBall(el, opts = {}) {
         sat: drawn.sat,
         light: drawn.light,
         state: drawState,
+        emotion: drawn.emotion,
         compact: true,
         wobble: drawn.wobble,
         squash: drawn.squash,
         spin: drawn.spin,
         reducedMotion,
+        live: drawn.live,
+        face: true,
       });
     }
     rafId = typeof globalThis.requestAnimationFrame === "function"
