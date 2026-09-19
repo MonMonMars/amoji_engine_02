@@ -12,22 +12,64 @@ body.companion-minimal-chrome .topbar {
   right: 0;
   z-index: 35;
   align-items: flex-start;
-  justify-content: flex-start;
+  justify-content: space-between;
+  gap: 0.65rem;
   padding: max(0.65rem, env(safe-area-inset-top)) 0.75rem 0;
   background: linear-gradient(180deg, rgba(2, 2, 8, 0.62) 0%, transparent 88%);
   pointer-events: none;
 }
 
 body.companion-minimal-chrome .topbar .brand-btn,
-body.companion-minimal-chrome .topbar .companion-chip {
+body.companion-minimal-chrome .topbar .companion-chip,
+body.companion-minimal-chrome .topbar .topbar-setup-btn {
   pointer-events: auto;
 }
 
 body.companion-minimal-chrome .topbar-actions {
+  display: flex !important;
+  align-items: center;
+  justify-content: flex-end;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+body.companion-minimal-chrome .topbar-actions .pill,
+body.companion-minimal-chrome .topbar-actions .avatar-load-pill,
+body.companion-minimal-chrome .topbar-actions .companion-role-pill,
+body.companion-minimal-chrome .topbar-actions .ui-context-pill {
   display: none !important;
 }
 
-body.companion-start-pending.companion-minimal-chrome .topbar .brand-btn {
+body.companion-minimal-chrome .topbar-setup-btn {
+  width: 2.55rem;
+  height: 2.55rem;
+  padding: 0;
+  line-height: 0;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(244, 240, 255, 0.88);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  transition:
+    border-color 0.18s ease,
+    background 0.18s ease,
+    transform 0.15s ease;
+}
+
+body.companion-minimal-chrome .topbar-setup-btn:hover,
+body.companion-minimal-chrome .topbar-setup-btn:focus-visible {
+  border-color: rgba(139, 124, 248, 0.48);
+  background: rgba(139, 124, 248, 0.14);
+  transform: translateY(-1px);
+}
+
+body.companion-start-pending.companion-minimal-chrome .topbar .brand-btn,
+body.companion-start-pending.companion-minimal-chrome .topbar-setup-btn {
   opacity: 0;
   pointer-events: none;
 }
@@ -158,77 +200,70 @@ body.companion-minimal-chrome.conversation-ui.composer-always-visible .composer 
   cursor: not-allowed;
 }
 
-body.companion-minimal-chrome .composer-char-btn {
+body.companion-minimal-chrome .mic-voice-stack {
   flex-shrink: 0;
-  width: 2.55rem;
-  height: 2.55rem;
-  padding: 0;
-  border-radius: 999px;
-  border: 2px solid rgba(139, 124, 248, 0.45);
-  background: rgba(255, 255, 255, 0.06);
-  cursor: pointer;
-  overflow: hidden;
-  display: inline-flex;
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  line-height: 0;
-  transition:
-    border-color 0.18s ease,
-    transform 0.15s ease,
-    box-shadow 0.18s ease;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.28);
-}
-
-body.companion-minimal-chrome .composer-char-btn:hover,
-body.companion-minimal-chrome .composer-char-btn:focus-visible {
-  border-color: rgba(127, 212, 207, 0.65);
-  transform: translateY(-1px);
-}
-
-body.companion-minimal-chrome .composer-char-btn__avatar {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center top;
-  border-radius: 999px;
-}
-
-body.companion-start-pending.companion-minimal-chrome .composer-char-btn {
-  opacity: 0;
-  pointer-events: none;
-}
-
-body.companion-minimal-chrome .composer-settings-btn {
-  flex-shrink: 0;
-  width: 2.55rem;
-  height: 2.55rem;
-  padding: 0;
-  line-height: 0;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(255, 255, 255, 0.06);
-  color: rgba(244, 240, 255, 0.88);
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition:
-    border-color 0.18s ease,
-    background 0.18s ease,
-    transform 0.15s ease;
-}
-
-body.companion-minimal-chrome .composer-settings-btn:hover,
-body.companion-minimal-chrome .composer-settings-btn:focus-visible {
-  border-color: rgba(139, 124, 248, 0.48);
-  background: rgba(139, 124, 248, 0.14);
-  transform: translateY(-1px);
+  gap: 0.28rem;
+  min-width: 3.5rem;
 }
 
 body.companion-minimal-chrome .composer #btn-mic {
   width: 3.5rem;
   height: 3.5rem;
   flex-shrink: 0;
+}
+
+body.companion-minimal-chrome .mic-voice-hud {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.18rem;
+  width: min(4.6rem, 100%);
+  opacity: 0.72;
+  transition: opacity 0.22s ease;
+  pointer-events: none;
+}
+
+body.companion-minimal-chrome .mic-voice-hud.is-live {
+  opacity: 1;
+}
+
+body.companion-minimal-chrome .mic-voice-hud__emotion {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 3.4rem;
+  padding: 0.1rem 0.42rem;
+  border-radius: 999px;
+  font-size: 0.52rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.92);
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  white-space: nowrap;
+}
+
+body.companion-minimal-chrome .mic-voice-hud__meter {
+  display: block;
+  width: 100%;
+  height: 3px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  overflow: hidden;
+}
+
+body.companion-minimal-chrome .mic-voice-hud__fill {
+  display: block;
+  height: 100%;
+  width: 0%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #8b7cf8, #5eead4);
+  box-shadow: 0 0 10px rgba(139, 124, 248, 0.45);
+  transition: width 0.08s linear;
 }
 
 body.companion-minimal-chrome.conversation-ui.composer-always-visible .composer #btn-mic,
