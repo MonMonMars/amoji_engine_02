@@ -34,6 +34,12 @@ const DEFAULT_TARGETS = [
   "kizuna",
   "alicia",
   "ember",
+  "sora",
+  "aria",
+  "mei",
+  "luna",
+  "atlas",
+  "erika",
   "sky",
   "yuki",
   "hina",
@@ -53,6 +59,8 @@ const DEFAULT_TARGETS = [
 const COPY_FROM = {
   rex: "kai",
   amoji: "girl-ref",
+  luna: "vroidf",
+  atlas: "vroidm",
 };
 
 function parseArg(name, fallback) {

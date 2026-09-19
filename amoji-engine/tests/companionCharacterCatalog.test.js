@@ -29,7 +29,7 @@ import {
 
 const ROSTER_SIZE = CHARACTER_IDS.length;
 
-describe("companionCharacterCatalog v328 curated roster", () => {
+describe("companionCharacterCatalog v352 AAA roster", () => {
   it("keeps flagship roster numbers 1–4", () => {
     expect(characterNumber("nova")).toBe(1);
     expect(characterNumber("kizuna")).toBe(2);
@@ -39,12 +39,18 @@ describe("companionCharacterCatalog v328 curated roster", () => {
   });
 
   it("exposes the expanded AAA catalog", () => {
-    expect(ROSTER_SIZE).toBe(17);
+    expect(ROSTER_SIZE).toBe(23);
     expect(CHARACTER_IDS).toEqual([
       "nova",
       "kizuna",
       "alicia",
       "ember",
+      "sora",
+      "aria",
+      "mei",
+      "luna",
+      "atlas",
+      "erika",
       "sky",
       "yuki",
       "hina",
@@ -100,6 +106,13 @@ describe("companionCharacterCatalog v328 curated roster", () => {
       "shiro",
     );
     expect(resolveCharacterId({ modelUrl: "/prototypes/assets/companion-chad.vrm" })).toBe("chad");
+    expect(resolveCharacterId({ modelUrl: "/prototypes/assets/companion-avatarsample-c.vrm" })).toBe(
+      "sora",
+    );
+    expect(resolveCharacterId({ modelUrl: "/prototypes/assets/companion-vroid-male.vrm" })).toBe(
+      "atlas",
+    );
+    expect(resolveCharacterId({ modelUrl: "/prototypes/assets/companion-erika.vrm" })).toBe("erika");
   });
 
   it("assigns distinct voices per roster character", () => {
@@ -111,17 +124,19 @@ describe("companionCharacterCatalog v328 curated roster", () => {
     expect([...HIGH_POLY_FACE_CHARACTER_IDS].sort()).toEqual([
       "alicia",
       "ember",
+      "erika",
       "kizuna",
       "rex",
     ]);
     const hd = listHighPolyFaceCharacters("en");
-    expect(hd.map((c) => c.id)).toEqual(["kizuna", "rex", "alicia", "ember"]);
+    expect(hd.map((c) => c.id)).toEqual(["kizuna", "rex", "alicia", "erika", "ember"]);
     expect(isHighPolyFaceCharacter("nova")).toBe(false);
   });
 
   it("cycles roster in order", () => {
     expect(nextCharacterId("nova")).toBe("kizuna");
-    expect(nextCharacterId("ember")).toBe("sky");
+    expect(nextCharacterId("ember")).toBe("sora");
+    expect(nextCharacterId("erika")).toBe("sky");
     expect(nextCharacterId("sky")).toBe("yuki");
     expect(nextCharacterId("hugo")).toBe("nova");
   });
@@ -129,9 +144,11 @@ describe("companionCharacterCatalog v328 curated roster", () => {
   it("lists picker metadata with roster numbers", () => {
     const list = listCompanionCharacters("yue");
     expect(list[0]).toMatchObject({ id: "nova", number: 1 });
-    expect(list.find((c) => c.id === "rex")?.number).toBe(10);
-    expect(list.find((c) => c.id === "amoji")?.number).toBe(9);
-    expect(list.find((c) => c.id === "hugo")?.number).toBe(17);
+    expect(list.find((c) => c.id === "rex")?.number).toBe(16);
+    expect(list.find((c) => c.id === "amoji")?.number).toBe(15);
+    expect(list.find((c) => c.id === "sora")?.number).toBe(5);
+    expect(list.find((c) => c.id === "atlas")?.number).toBe(9);
+    expect(list.find((c) => c.id === "hugo")?.number).toBe(23);
     expect(GALLERY_PRIORITY_IDS.has("amoji")).toBe(true);
     expect(GALLERY_PRIORITY_IDS.has("shiro")).toBe(true);
     expect(GALLERY_PRIORITY_IDS.has("hugo")).toBe(true);
