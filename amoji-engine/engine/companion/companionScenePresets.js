@@ -1,19 +1,34 @@
 /**
- * Scene presets — background swatches and per-character outfit wardrobe (v1).
+ * Scene presets — background swatches and per-character outfit wardrobe.
  */
-export const COMPANION_SCENE_PRESETS_SCHEMA = "amoji.companionScenePresets.v1";
+export const COMPANION_SCENE_PRESETS_SCHEMA = "amoji.companionScenePresets.v2";
 
 export const SCENE_STORAGE_KEY = "amoji.companion.scenePreset";
 export const CHAT_PANEL_STORAGE_KEY = "amoji.companion.chatPanelVisible";
 export const SCENE_OUTFIT_STORAGE_KEY = "amoji.companion.sceneOutfit";
 
-/** @type {ReadonlyArray<{ id: string, labelEn: string, labelYue: string }>} */
+/** @typedef {"indoor" | "outdoor"} SceneEnvironment */
+
+/**
+ * @type {ReadonlyArray<{
+ *   id: string,
+ *   labelEn: string,
+ *   labelYue: string,
+ *   environment: SceneEnvironment,
+ * }>}
+ */
 export const SCENE_BACKGROUND_PRESETS = Object.freeze([
-  { id: "night-city", labelEn: "Night city", labelYue: "夜景" },
-  { id: "studio", labelEn: "Studio", labelYue: "影樓" },
-  { id: "sunset", labelEn: "Sunset", labelYue: "黃昏" },
-  { id: "minimal", labelEn: "Minimal dark", labelYue: "深色簡約" },
-  { id: "aurora", labelEn: "Aurora", labelYue: "極光" },
+  { id: "night-city", labelEn: "Night city", labelYue: "夜景", environment: "outdoor" },
+  { id: "rooftop", labelEn: "Rooftop", labelYue: "天台", environment: "outdoor" },
+  { id: "park", labelEn: "Park", labelYue: "公園", environment: "outdoor" },
+  { id: "beach", labelEn: "Beach", labelYue: "海灘", environment: "outdoor" },
+  { id: "sunset", labelEn: "Sunset", labelYue: "黃昏", environment: "outdoor" },
+  { id: "aurora", labelEn: "Aurora", labelYue: "極光", environment: "outdoor" },
+  { id: "studio", labelEn: "Studio", labelYue: "影樓", environment: "indoor" },
+  { id: "cozy-room", labelEn: "Cozy room", labelYue: "溫馨房間", environment: "indoor" },
+  { id: "cafe", labelEn: "Café", labelYue: "咖啡室", environment: "indoor" },
+  { id: "library", labelEn: "Library", labelYue: "圖書館", environment: "indoor" },
+  { id: "minimal", labelEn: "Minimal dark", labelYue: "深色簡約", environment: "indoor" },
 ]);
 
 /** @type {ReadonlyArray<{ id: string, labelEn: string, labelYue: string, swatch?: string, characters?: string[] }>} */
@@ -33,19 +48,42 @@ export const SCENE_OUTFIT_PRESETS = Object.freeze([
   },
 ]);
 
+const LEGACY_BACKGROUND_ALIASES = Object.freeze({
+  "night-city": "night-city",
+});
+
 /**
  * @param {string | null | undefined} id
  */
 export function resolveSceneBackgroundId(id) {
   const key = String(id || "").toLowerCase();
-  if (SCENE_BACKGROUND_PRESETS.some((p) => p.id === key)) return key;
+  const aliased = LEGACY_BACKGROUND_ALIASES[key] || key;
+  if (SCENE_BACKGROUND_PRESETS.some((p) => p.id === aliased)) return aliased;
   return SCENE_BACKGROUND_PRESETS[0].id;
+}
+
+/**
+ * @param {string | null | undefined} backgroundId
+ * @returns {SceneEnvironment}
+ */
+export function resolveSceneEnvironment(backgroundId) {
+  const id = resolveSceneBackgroundId(backgroundId);
+  const preset = SCENE_BACKGROUND_PRESETS.find((p) => p.id === id);
+  return preset?.environment === "outdoor" ? "outdoor" : "indoor";
+}
+
+/**
+ * @param {string | null | undefined} backgroundId
+ */
+export function isOutdoorSceneBackground(backgroundId) {
+  return resolveSceneEnvironment(backgroundId) === "outdoor";
 }
 
 /**
  * @param {boolean} [isEnglish]
  */
 export function loadStoredSceneBackground(isEnglish = false) {
+  void isEnglish;
   try {
     const raw = localStorage.getItem(SCENE_STORAGE_KEY);
     if (!raw) return SCENE_BACKGROUND_PRESETS[0];
@@ -75,9 +113,12 @@ export function persistSceneBackground(backgroundId) {
  * @param {string} backgroundId
  */
 export function applySceneBackground(atmosphereEl, backgroundId) {
-  if (!atmosphereEl) return resolveSceneBackgroundId(backgroundId);
   const id = resolveSceneBackgroundId(backgroundId);
-  atmosphereEl.dataset.sceneBg = id;
+  const environment = resolveSceneEnvironment(id);
+  if (atmosphereEl) {
+    atmosphereEl.dataset.sceneBg = id;
+    atmosphereEl.dataset.sceneEnvironment = environment;
+  }
   return id;
 }
 

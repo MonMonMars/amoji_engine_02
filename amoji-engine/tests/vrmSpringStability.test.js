@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, beforeEach } from "vitest";
 import {
   collectSpringJoints,
   configureVrmSpringStability,
@@ -9,6 +9,11 @@ import {
   MIN_DRAG_FORCE,
   MIN_GRAVITY_POWER,
   MAX_STIFFNESS,
+  OUTDOOR_DRAG_FORCE,
+  OUTDOOR_GRAVITY_POWER,
+  setVrmSceneWindMode,
+  getVrmSceneWindMode,
+  tickOutdoorSceneWind,
   recenterVrmSpringBones,
   resolveSpringJointSettings,
   tuneSpringJoint,
@@ -61,6 +66,10 @@ function makeManager(joints, hooks = {}) {
 }
 
 describe("vrmSpringStability", () => {
+  beforeEach(() => {
+    setVrmSceneWindMode("indoor");
+  });
+
   it("collects joints from a Set (three-vrm 3.x API)", () => {
     const a = { settings: {} };
     const b = { settings: {} };
@@ -167,6 +176,33 @@ describe("vrmSpringStability", () => {
     expect(
       getVrmSpringJoints({ springBoneManager: { joints: new Set([joint]) } }),
     ).toEqual([joint]);
+  });
+
+  it("switches indoor vs outdoor spring tuning", () => {
+    const joint = makeJoint();
+    setVrmSceneWindMode("indoor");
+    tuneSpringJoint(joint);
+    expect(joint.settings.dragForce).toBeGreaterThanOrEqual(MIN_DRAG_FORCE);
+    expect(joint.settings.gravityDir.y).toBe(-1);
+
+    setVrmSceneWindMode("outdoor");
+    tuneSpringJoint(joint);
+    expect(joint.settings.dragForce).toBe(OUTDOOR_DRAG_FORCE);
+    expect(joint.settings.gravityPower).toBe(OUTDOOR_GRAVITY_POWER);
+    expect(getVrmSceneWindMode()).toBe("outdoor");
+  });
+
+  it("tickOutdoorSceneWind only animates gravity outdoors", () => {
+    const joint = makeJoint();
+    const vrm = { springBoneManager: { joints: new Set([joint]) } };
+    setVrmSceneWindMode("indoor");
+    expect(tickOutdoorSceneWind(vrm, 1.2).active).toBe(false);
+
+    setVrmSceneWindMode("outdoor");
+    const result = tickOutdoorSceneWind(vrm, 1.2);
+    expect(result.active).toBe(true);
+    expect(joint.settings.gravityDir.y).toBe(-1);
+    expect(Math.abs(joint.settings.gravityDir.x)).toBeGreaterThan(0);
   });
 
   it("fails open without spring bones", () => {

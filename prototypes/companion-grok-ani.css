@@ -37,6 +37,18 @@
   pointer-events: none;
 }
 
+.theme-grok-ani .atmosphere::after {
+  opacity: 0.24;
+}
+
+.theme-grok-ani .atmosphere[data-scene-environment="indoor"]::after {
+  opacity: 0.05;
+}
+
+.theme-grok-ani .atmosphere[data-scene-environment="outdoor"]::after {
+  opacity: 0.34;
+}
+
 .theme-grok-ani .atmosphere[data-scene-bg="night-city"] {
   background:
     radial-gradient(ellipse 90% 70% at 50% 18%, rgba(139, 124, 248, 0.18), transparent 58%),
@@ -44,6 +56,42 @@
     radial-gradient(ellipse 50% 40% at 12% 68%, rgba(244, 114, 182, 0.08), transparent 50%),
     linear-gradient(180deg, rgba(3, 3, 10, 0.15) 0%, rgba(3, 3, 10, 0.42) 48%, rgba(2, 2, 8, 0.88) 100%),
     url("/prototypes/assets/companion-bg-anime.png") center 20% / cover no-repeat;
+}
+
+.theme-grok-ani .atmosphere[data-scene-bg="rooftop"] {
+  background:
+    linear-gradient(180deg, rgba(12, 16, 28, 0.1) 0%, rgba(6, 8, 14, 0.82) 100%),
+    radial-gradient(ellipse 100% 70% at 50% 15%, #5b7c9a 0%, #2a3548 45%, #0a0e16 100%);
+}
+
+.theme-grok-ani .atmosphere[data-scene-bg="park"] {
+  background:
+    linear-gradient(180deg, rgba(18, 32, 22, 0.08) 0%, rgba(8, 12, 10, 0.78) 100%),
+    radial-gradient(ellipse 90% 65% at 50% 20%, #6b9a6e 0%, #3d5c42 48%, #121a14 100%);
+}
+
+.theme-grok-ani .atmosphere[data-scene-bg="beach"] {
+  background:
+    linear-gradient(180deg, rgba(40, 28, 18, 0.06) 0%, rgba(10, 14, 22, 0.75) 100%),
+    radial-gradient(ellipse 100% 75% at 50% 18%, #7ec8e3 0%, #4a8fb8 38%, #1a2838 100%);
+}
+
+.theme-grok-ani .atmosphere[data-scene-bg="cozy-room"] {
+  background:
+    linear-gradient(180deg, rgba(28, 18, 14, 0.12) 0%, rgba(10, 8, 12, 0.88) 100%),
+    radial-gradient(ellipse 85% 70% at 50% 38%, #8b6f5c 0%, #4a3a32 52%, #141018 100%);
+}
+
+.theme-grok-ani .atmosphere[data-scene-bg="cafe"] {
+  background:
+    linear-gradient(180deg, rgba(22, 16, 12, 0.1) 0%, rgba(8, 6, 10, 0.85) 100%),
+    radial-gradient(ellipse 90% 65% at 50% 35%, #a08060 0%, #5c4838 50%, #120e0c 100%);
+}
+
+.theme-grok-ani .atmosphere[data-scene-bg="library"] {
+  background:
+    linear-gradient(180deg, rgba(16, 20, 18, 0.15) 0%, rgba(6, 8, 10, 0.9) 100%),
+    radial-gradient(ellipse 88% 68% at 50% 32%, #5a6b58 0%, #2e3830 55%, #0a0c0e 100%);
 }
 
 .theme-grok-ani .atmosphere[data-scene-bg="studio"] {

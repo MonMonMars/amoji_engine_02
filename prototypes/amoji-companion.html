@@ -8,9 +8,9 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji · Companion</title>
     <script>
-      window.__amojiBuild = "2026-09-19-v288-topbar-mic-hud";
+      window.__amojiBuild = "2026-09-19-v289-scene-wind-idle";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-19-v288-topbar-mic-hud"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-19-v289-scene-wind-idle"></script>
     <link
       rel="prefetch"
       href="/prototypes/assets/companion-char-nova.png"
@@ -616,11 +616,11 @@
       media="print"
       onload="this.media='all'"
     />
-    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-19-v288-topbar-mic-hud" />
-    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-19-v288-topbar-mic-hud" />
-    <link rel="stylesheet" href="/prototypes/companion-mic-button.css?v=2026-09-19-v288-topbar-mic-hud" />
-    <link rel="stylesheet" href="/prototypes/companion-minimal-ui.css?v=2026-09-19-v288-topbar-mic-hud" />
-    <link rel="stylesheet" href="/prototypes/companion-picker-v4.css?v=2026-09-19-v288-topbar-mic-hud" />
+    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-19-v289-scene-wind-idle" />
+    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-19-v289-scene-wind-idle" />
+    <link rel="stylesheet" href="/prototypes/companion-mic-button.css?v=2026-09-19-v289-scene-wind-idle" />
+    <link rel="stylesheet" href="/prototypes/companion-minimal-ui.css?v=2026-09-19-v289-scene-wind-idle" />
+    <link rel="stylesheet" href="/prototypes/companion-picker-v4.css?v=2026-09-19-v289-scene-wind-idle" />
     <script>
       (function () {
         var params = new URLSearchParams(location.search);
@@ -646,7 +646,7 @@
       })();
     </script>
     <script type="module">
-      import { bootEarlyStartPicker } from "/amoji-engine/engine/companion/companionEarlyStartPicker.js?v=2026-09-19-v288-topbar-mic-hud";
+      import { bootEarlyStartPicker } from "/amoji-engine/engine/companion/companionEarlyStartPicker.js?v=2026-09-19-v289-scene-wind-idle";
       const bootParams = new URLSearchParams(location.search);
       if (bootParams.get("autostart") !== "1" && bootParams.get("pick") !== "0") {
         globalThis.__amojiEarlyStartPickerPromise = bootEarlyStartPicker({
@@ -726,6 +726,50 @@
         opacity: 0.28;
         pointer-events: none;
         mix-blend-mode: soft-light;
+      }
+
+      .atmosphere[data-scene-environment="indoor"]::after {
+        opacity: 0.06;
+      }
+
+      .atmosphere[data-scene-environment="outdoor"]::after {
+        opacity: 0.32;
+      }
+
+      .atmosphere[data-scene-bg="rooftop"] {
+        background:
+          linear-gradient(180deg, rgba(12, 16, 28, 0.12) 0%, rgba(6, 8, 14, 0.82) 100%),
+          radial-gradient(ellipse 100% 70% at 50% 15%, #5b7c9a 0%, #2a3548 45%, #0a0e16 100%);
+      }
+
+      .atmosphere[data-scene-bg="park"] {
+        background:
+          linear-gradient(180deg, rgba(18, 32, 22, 0.1) 0%, rgba(8, 12, 10, 0.78) 100%),
+          radial-gradient(ellipse 90% 65% at 50% 20%, #6b9a6e 0%, #3d5c42 48%, #121a14 100%);
+      }
+
+      .atmosphere[data-scene-bg="beach"] {
+        background:
+          linear-gradient(180deg, rgba(40, 28, 18, 0.08) 0%, rgba(10, 14, 22, 0.75) 100%),
+          radial-gradient(ellipse 100% 75% at 50% 18%, #7ec8e3 0%, #4a8fb8 38%, #1a2838 100%);
+      }
+
+      .atmosphere[data-scene-bg="cozy-room"] {
+        background:
+          linear-gradient(180deg, rgba(28, 18, 14, 0.15) 0%, rgba(10, 8, 12, 0.88) 100%),
+          radial-gradient(ellipse 85% 70% at 50% 38%, #8b6f5c 0%, #4a3a32 52%, #141018 100%);
+      }
+
+      .atmosphere[data-scene-bg="cafe"] {
+        background:
+          linear-gradient(180deg, rgba(22, 16, 12, 0.12) 0%, rgba(8, 6, 10, 0.85) 100%),
+          radial-gradient(ellipse 90% 65% at 50% 35%, #a08060 0%, #5c4838 50%, #120e0c 100%);
+      }
+
+      .atmosphere[data-scene-bg="library"] {
+        background:
+          linear-gradient(180deg, rgba(16, 20, 18, 0.18) 0%, rgba(6, 8, 10, 0.9) 100%),
+          radial-gradient(ellipse 88% 68% at 50% 32%, #5a6b58 0%, #2e3830 55%, #0a0c0e 100%);
       }
 
       .atmosphere[data-scene-bg="studio"] {
@@ -3385,6 +3429,30 @@
           url("/prototypes/assets/companion-bg-anime.png") center / cover no-repeat;
       }
 
+      .scene-preset__swatch--rooftop {
+        background: radial-gradient(ellipse at 50% 25%, #6b8aa8, #1a2430 70%);
+      }
+
+      .scene-preset__swatch--park {
+        background: radial-gradient(ellipse at 50% 28%, #7cb87f, #2d4a32 68%);
+      }
+
+      .scene-preset__swatch--beach {
+        background: radial-gradient(ellipse at 50% 22%, #8fd4ef, #3a6f94 65%);
+      }
+
+      .scene-preset__swatch--cozy-room {
+        background: radial-gradient(ellipse at 50% 35%, #a88872, #3d3028 68%);
+      }
+
+      .scene-preset__swatch--cafe {
+        background: radial-gradient(ellipse at 50% 32%, #b89878, #4a3828 68%);
+      }
+
+      .scene-preset__swatch--library {
+        background: radial-gradient(ellipse at 50% 30%, #6a7d68, #2a342c 68%);
+      }
+
       .scene-preset__swatch--studio {
         background: radial-gradient(ellipse at 50% 30%, #6b7280, #1f2937 70%);
       }
@@ -4418,19 +4486,19 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-19-v288-topbar-mic-hud",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-19-v289-scene-wind-idle",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-19-v288-topbar-mic-hud",
-          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-19-v288-topbar-mic-hud"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-19-v289-scene-wind-idle",
+          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-19-v289-scene-wind-idle"
         }
       }
     </script>
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-19-v288-topbar-mic-hud"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-19-v289-scene-wind-idle"
     />
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-19-v288-topbar-mic-hud"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-19-v288-topbar-mic-hud"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-19-v289-scene-wind-idle"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-19-v289-scene-wind-idle"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;
@@ -5148,6 +5216,7 @@
         loadStoredSceneBackground,
         persistSceneBackground,
         applySceneBackground,
+        resolveSceneEnvironment,
         scenePresetLabel,
         loadChatPanelVisible,
         persistChatPanelVisible,
@@ -6065,8 +6134,15 @@
         syncSceneSettingsLabel();
       };
 
+      const applySceneEnvironmentToAvatar = (backgroundId = activeSceneBgId) => {
+        const env = resolveSceneEnvironment(backgroundId);
+        avatar?.setSceneEnvironment?.(env);
+        return env;
+      };
+
       const selectSceneBackground = (backgroundId) => {
         activeSceneBgId = applySceneBackground(atmosphereEl, backgroundId);
+        applySceneEnvironmentToAvatar(activeSceneBgId);
         persistSceneBackground(activeSceneBgId);
         renderScenePresets();
         uiAudio?.play?.("select");
@@ -6216,8 +6292,8 @@
         }, 450);
       };
 
-      /** Defer 3D so chat + first voice-out win the network. */
-      const AVATAR_LOAD_DEFER_MS = 3200;
+      /** Defer 3D briefly so chat + first voice-out win the network. */
+      const AVATAR_LOAD_DEFER_MS = 1000;
 
       const scheduleDeferredAvatarLoad = () => {
         if (liteMode || avatarLoadStarted) return avatarLoadPromise;
@@ -6311,6 +6387,7 @@
             window.__amojiAvatarKind = avatarKind;
             window.__amojiAvatar = avatar;
             window.__amojiFaceReport = avatar?.getFaceReport?.() || null;
+            applySceneEnvironmentToAvatar(activeSceneBgId);
             avatar.setEmotion?.(currentEmotion);
             applyOutfitToAvatar(activeSceneOutfitId);
             syncAvatarPerformance();
@@ -6379,8 +6456,9 @@
               avatarKind === "gltf3d" ||
               avatarKind === "webgl3d"
             ) {
-              avatar?.stopAction?.();
-              avatar?.setEmotion?.("neutral");
+              avatar?.playCalmIdle?.();
+              syncAvatarPerformance();
+              avatar?.setEmotion?.(currentEmotion || "neutral");
             }
             stopIdlePerformance();
             scheduleIdlePerformance();
