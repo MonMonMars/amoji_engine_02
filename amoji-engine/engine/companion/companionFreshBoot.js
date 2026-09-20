@@ -440,7 +440,19 @@ export async function checkForAppUpdate(pageBuild, opts = {}) {
   const search = globalThis.location?.search || "";
   const sticky = isStickyCompanionBookmark(path);
   const forceNewOpen = Boolean(opts.forceNewOpen);
-  void purgeStaleBrowserCaches();
+  const buildMatches = !shouldReloadForBuild(embedded, serverBuild);
+  if (
+    buildMatches &&
+    (pathSatisfiesBuild(path, serverBuild, search) ||
+      isCompanionOpenPath(path) ||
+      isStickyCompanionBookmark(path))
+  ) {
+    if (serverBuild) globalThis.__amojiActiveBuild = serverBuild;
+    return { reloaded: false, serverBuild, pageBuild: embedded };
+  }
+  if (opts.purgeCaches !== false) {
+    void purgeStaleBrowserCaches();
+  }
   const kind = companionKindFromPath(path);
   const bootPath = serverBuild
     ? await resolveCompanionBootPath(serverBuild, kind, {
@@ -449,7 +461,6 @@ export async function checkForAppUpdate(pageBuild, opts = {}) {
         forceNewOpen,
       })
     : path;
-  const buildMatches = !shouldReloadForBuild(embedded, serverBuild);
   const alreadyOnTarget =
     Boolean(serverBuild) &&
     path === bootPath &&
@@ -561,21 +572,19 @@ export function runEarlyFreshBootCheck(pageBuild) {
  */
 export function startAppUpdateWatcher(opts = {}) {
   const intervalMs = opts.intervalMs ?? 180_000;
-  const run = () => {
-    void purgeStaleBrowserCaches();
-    void checkForAppUpdate(undefined, opts);
+  const run = (runOpts = {}) => {
+    void checkForAppUpdate(undefined, { ...opts, ...runOpts });
   };
-  run();
+  run({ purgeCaches: false });
   if (typeof document !== "undefined") {
     document.addEventListener("visibilitychange", () => {
-      if (!document.hidden) run();
+      if (!document.hidden) run({ purgeCaches: false });
     });
   }
   if (typeof globalThis.addEventListener === "function") {
     globalThis.addEventListener("pageshow", (ev) => {
       if (ev?.persisted) {
-        void purgeStaleBrowserCaches();
-        void checkForAppUpdate(undefined, { ...opts, forceNewOpen: true });
+        run({ purgeCaches: false, forceNewOpen: false });
       }
     });
   }

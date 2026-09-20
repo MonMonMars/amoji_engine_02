@@ -77,7 +77,10 @@ export function createSmoothProgressAnimator(paint, opts = {}) {
       display = Math.min(99, display + creepPerFrame);
     }
     apply();
-    if (display < target || (target < 100 && display < 99 && elapsed <= minVisibleMs + 1200)) {
+    const creepWindow = minVisibleMs + 4200;
+    if (display < target) {
+      raf = globalThis.requestAnimationFrame?.(tick) ?? null;
+    } else if (target < 100 && display < 99 && elapsed <= creepWindow) {
       raf = globalThis.requestAnimationFrame?.(tick) ?? null;
     } else {
       raf = null;

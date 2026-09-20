@@ -20,6 +20,8 @@ export const COMPANION_START_PICKER_PRELOAD_SCHEMA =
 export const PICKER_PREVIEW_PROGRESS_MAX = 100;
 
 const SELECTION_MODEL_DEBOUNCE_MS = 450;
+/** Never block the picker on slow CDN preview PNGs. */
+const PICKER_PREVIEW_TIMEOUT_MS = 14_000;
 
 /** @type {WeakMap<object, { refreshSelectedModel: () => void, previewPromise: Promise<unknown> }>} */
 const activeByPicker = new WeakMap();
@@ -156,13 +158,23 @@ export function attachStartPickerModelPreload(picker, opts = {}) {
   setPreloading(true);
   apply(2, previewLabel(2));
 
-  const previewPromise = startCharacterPreviewPreload({
+  const previewLoad = startCharacterPreviewPreload({
     langCode,
     onProgress: (ratio) => {
       const pct = Math.round(ratio * PICKER_PREVIEW_PROGRESS_MAX);
       apply(pct, previewLabel(pct));
     },
-  }).then(async (result) => {
+  });
+  const previewPromise = Promise.race([
+    previewLoad,
+    new Promise((resolve) => {
+      globalThis.setTimeout?.(() => resolve({ ok: true, timedOut: true }), PICKER_PREVIEW_TIMEOUT_MS);
+    }),
+  ]).then(async (result) => {
+    if (result?.timedOut) {
+      apply(100, chatFirst ? chatReadyLabel : readyLabel);
+      setPreloading(false);
+    }
     if (chatFirst) {
       apply(100, chatReadyLabel);
       setPreloading(false);

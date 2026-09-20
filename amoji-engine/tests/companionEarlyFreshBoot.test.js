@@ -13,22 +13,16 @@ const earlyBoot = readFileSync(
 );
 
 describe("companionEarlyFreshBoot", () => {
-  it("purges Cache Storage on every open, not only after health succeeds", () => {
-    const purgeIdx = earlyBoot.indexOf("function purgeCaches()");
-    const immediateIdx = earlyBoot.search(/purgeCaches\(\);\s*\n\s*probeServerBuild\(/);
-    const healthIdx = earlyBoot.indexOf('fetch("/api/health"');
-    expect(purgeIdx).toBeGreaterThan(0);
-    expect(immediateIdx).toBeGreaterThan(purgeIdx);
-    expect(healthIdx).toBeGreaterThan(purgeIdx);
-    expect(immediateIdx).toBeGreaterThan(healthIdx);
+  it("does not purge caches on every tab focus (picker assets stay warm)", () => {
+    expect(earlyBoot).not.toMatch(/visibilitychange/);
   });
 
-  it("re-purges when iOS restores a BFCache page", () => {
+  it("does not force a new /n/ stamp on BFCache restore when build already matches", () => {
     expect(earlyBoot).toMatch(/addEventListener\("pageshow"/);
     expect(earlyBoot).toMatch(/ev\.persisted/);
-    expect(earlyBoot).toMatch(/\/n\/" \+ stamp/);
-    expect(earlyBoot).toMatch(/isStickyPath/);
-    expect(earlyBoot).toMatch(/forceNewOpen/);
+    expect(earlyBoot).toMatch(/probeServerBuild\(false\)/);
+    expect(earlyBoot).not.toMatch(/probeServerBuild\(true\)/);
+    expect(earlyBoot).toMatch(/REDIRECT_GUARD|redirectGuardAllows/);
   });
 });
 
