@@ -206,12 +206,24 @@ export function withElbowBend(restLower, extra = 0) {
   const axis = restLower?.flexAxis === "z" ? "z" : "x";
   const base = Number(restLower?.[axis]) || 0;
   return {
-    x: axis === "x" ? base + extra : 0,
-    y: 0,
-    z: axis === "z" ? base + extra : 0,
+    x: axis === "x" ? base + extra : (restLower?.x ?? 0),
+    y: restLower?.y ?? 0,
+    z: axis === "z" ? base + extra : (restLower?.z ?? 0),
     flexAxis: axis,
   };
 }
+
+/** Procedural channels — not copied from REST_POSE so calibrated bind is not doubled. */
+export const POSE_LIMB_BLEND_KEYS = Object.freeze([
+  "armLiftL",
+  "armLiftR",
+  "forearmL",
+  "forearmR",
+  "upperLegL",
+  "upperLegR",
+  "lowerLegL",
+  "lowerLegR",
+]);
 
 /**
  * Looser limits while speaking so ChatGPT-style talk gestures read on camera.
@@ -295,6 +307,9 @@ export function buildBasePose(opts = {}) {
   const base = opts.listening ? { ...LISTENING_POSE } : { ...REST_POSE };
   /** @type {Record<string, number>} */
   const out = { ...base };
+  for (const key of POSE_LIMB_BLEND_KEYS) {
+    delete out[key];
+  }
   for (const [key, val] of Object.entries(face)) {
     if (Number(val) !== 0) {
       out[key] = (out[key] ?? 0) + Number(val);

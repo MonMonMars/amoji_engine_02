@@ -447,12 +447,25 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
     const restLl = armRestRotations.leftLowerArm;
     const restRl = armRestRotations.rightLowerArm;
     const apose = isAposeBind();
-    const foreCap = apose ? 0.44 : 0.62;
-    const liftCap = apose ? 0.05 : 0.1;
-    const foreL = Math.min(foreCap, Math.max(0, (pose.forearmL ?? 0) * k));
-    const foreR = Math.min(foreCap, Math.max(0, (pose.forearmR ?? 0) * k));
-    const liftL = Math.min(liftCap, Math.max(0, (pose.armLiftL ?? 0) * k * 0.28));
-    const liftR = Math.min(liftCap, Math.max(0, (pose.armLiftR ?? 0) * k * 0.28));
+    const foreScale = apose ? 0.1 : 1;
+    const foreCap = apose ? 0.09 : 0.62;
+    const liftCap = apose ? 0.025 : 0.1;
+    const foreL = Math.min(
+      foreCap,
+      Math.max(0, (pose.forearmL ?? 0) * k * foreScale),
+    );
+    const foreR = Math.min(
+      foreCap,
+      Math.max(0, (pose.forearmR ?? 0) * k * foreScale),
+    );
+    const liftL = Math.min(
+      liftCap,
+      Math.max(0, (pose.armLiftL ?? 0) * k * 0.28 * (apose ? 0.35 : 1)),
+    );
+    const liftR = Math.min(
+      liftCap,
+      Math.max(0, (pose.armLiftR ?? 0) * k * 0.28 * (apose ? 0.35 : 1)),
+    );
     applyBoneRotation("leftUpperArm", {
       x: restL.x,
       y: restL.y + liftL * 0.04,
@@ -639,6 +652,13 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
     const restLR = legRestRotations.rightLowerLeg;
     const planted = opts.plantFeet !== false;
     const strictRest = opts.strictRest === true;
+    if (strictRest && planted) {
+      applyBoneRotation("leftUpperLeg", restUL);
+      applyBoneRotation("rightUpperLeg", restUR);
+      applyBoneRotation("leftLowerLeg", restLL);
+      applyBoneRotation("rightLowerLeg", restLR);
+      return;
+    }
     const { upperL, upperR, lowerL, lowerR } = sampleLegFlex(
       pose,
       k,
@@ -863,7 +883,7 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
           emotion: thinking ? "neutral" : emotion,
           gender: idleGender,
         });
-        pose = mergePoses(pose, idleMotion, apose ? 0.94 : 0.98);
+        pose = mergePoses(pose, idleMotion, apose ? 0.88 : 0.96);
         if (thinking) {
           const thinkMotion = sampleBodyTalkMotion(elapsed, {
             style: companionGestureStyle("thinking"),
@@ -886,9 +906,26 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
           ]) {
             delete overlay[key];
           }
-          if (isAposeBind()) {
-            for (const key of ["armLiftL", "armLiftR", "forearmL", "forearmR"]) {
-              if (key in overlay) overlay[key] = overlay[key] * 0.78;
+          const beatKey = idleBeat.beat;
+          const allowBeatArms =
+            beatKey === "comb" || beatKey === "hair" || beatKey === "chin";
+          if (!allowBeatArms) {
+            for (const key of [
+              "armLiftL",
+              "armLiftR",
+              "forearmL",
+              "forearmR",
+            ]) {
+              delete overlay[key];
+            }
+          } else if (isAposeBind()) {
+            for (const key of [
+              "armLiftL",
+              "armLiftR",
+              "forearmL",
+              "forearmR",
+            ]) {
+              if (key in overlay) overlay[key] = overlay[key] * 0.72;
             }
           }
           pose = mergePoses(pose, overlay, 1);
@@ -1110,7 +1147,7 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
       smoothedPose = mergePoses(
         smoothedPose,
       sampleCalmBreathIdle(0.2, { listening, emotion, gender: idleGender }),
-      isAposeBind() ? 0.22 : 0.38,
+      isAposeBind() ? 0.22 : 0.48,
     );
       smoothedRootMotion = { y: 0, rotY: 0 };
       footPlantY = 0;
