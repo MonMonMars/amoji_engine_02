@@ -15,6 +15,11 @@ import { playCompanionCardTapFx } from "./companionUiGacha.js";
 import { CHARACTER_IDS } from "./companionCharacterCatalog.js";
 import { ROSTER_SCHEMA } from "./companionCharacterRoster.js";
 import { AMOJI_BUILD } from "./buildVersion.mjs";
+import {
+  titleScreenKicker,
+  titleScreenLogo,
+  titleScreenTagline,
+} from "./companionTitleScreen.js";
 
 export const COMPANION_EARLY_START_PICKER_SCHEMA =
   "amoji.companionEarlyStartPicker.v2";
@@ -41,6 +46,14 @@ export async function bootEarlyStartPicker(opts = {}) {
 
   const splash = document.getElementById("amoji-boot-splash");
   splash?.setAttribute("aria-busy", "true");
+  const kickerEl = splash?.querySelector?.(".title-screen-kicker");
+  const logoEl = splash?.querySelector?.(".title-screen-logo");
+  const taglineEl =
+    splash?.querySelector?.(".title-screen-tagline") ||
+    splash?.querySelector?.(".boot-load-status");
+  if (kickerEl) kickerEl.textContent = titleScreenKicker(isEnglish);
+  if (logoEl) logoEl.textContent = titleScreenLogo(isEnglish);
+  if (taglineEl) taglineEl.textContent = titleScreenTagline(isEnglish);
   const splashLoad = wireLoadingBar(splash);
   splashLoad.set(8, isEnglish ? "Preparing companions" : "準備同伴名單");
   let splashPct = 8;
