@@ -469,6 +469,21 @@ export function createCompanionChat(opts = {}) {
     clearHistory() {
       history.length = 0;
     },
+    /**
+     * Replace in-memory turn history (e.g. hydrate from persisted storage without showing UI).
+     * @param {{ role: string, content?: string, text?: string }[]} entries
+     */
+    setHistory(entries = []) {
+      history.length = 0;
+      if (!Array.isArray(entries)) return history.slice();
+      for (const entry of entries) {
+        const rawRole = String(entry?.role || "").toLowerCase();
+        if (rawRole !== "user" && rawRole !== "assistant") continue;
+        const content = String(entry.content ?? entry.text ?? "").trim();
+        if (content) history.push({ role: rawRole, content });
+      }
+      return history.slice();
+    },
     setSystemPrompt(next) {
       systemPrompt = String(next || CANTONESE_COMPANION_PROMPT);
       return systemPrompt;

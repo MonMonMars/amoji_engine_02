@@ -129,6 +129,18 @@ export function clearChatHistory(characterId, storage = globalThis.localStorage)
 }
 
 /**
+ * Messages for createCompanionChat().setHistory — keeps LLM context without rendering transcript.
+ * @param {string} characterId
+ * @param {Storage | null | undefined} [storage]
+ */
+export function storedChatForLlm(characterId, storage = globalThis.localStorage) {
+  return loadChatHistory(characterId, storage).map((m) => ({
+    role: m.role,
+    content: m.text,
+  }));
+}
+
+/**
  * Stable per-browser visit id — rotates when storage is cleared; combined with auth userId when logged in.
  * @param {Storage | null | undefined} [storage]
  */
