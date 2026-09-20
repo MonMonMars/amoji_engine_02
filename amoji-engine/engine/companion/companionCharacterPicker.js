@@ -34,6 +34,7 @@ import {
   scenePresetLabel,
   SCENE_BACKGROUND_PRESETS,
 } from "./companionScenePresets.js";
+import { wireScrollAffordances } from "./companionScrollAffordances.js";
 
 export const COMPANION_CHARACTER_PICKER_SCHEMA =
   "amoji.companionCharacterPicker.v6";
@@ -94,6 +95,11 @@ export function wirePickerSceneSection(opts = {}) {
       });
       sceneRowEl.appendChild(btn);
     }
+    wireScrollAffordances(sceneRowEl, {
+      labels: isEnglish
+        ? { prev: "Previous backgrounds", next: "More backgrounds" }
+        : { prev: "上一個背景", next: "更多背景" },
+    });
   };
 
   const syncPickerSceneChrome = () => {
@@ -302,6 +308,13 @@ export function renderCompanionPickerGrid(gridEl, langCode, ctx = {}) {
     );
   }
   syncPickerCardTabIndex(gridEl, ctx.selectedId);
+  if (ctx.rosterStrip || ctx.startStrip) {
+    wireScrollAffordances(gridEl, {
+      labels: ctx.isEnglish
+        ? { prev: "Previous companions", next: "More companions" }
+        : { prev: "上一個同伴", next: "更多同伴" },
+    });
+  }
 }
 
 /**
@@ -312,6 +325,7 @@ export function renderCompanionPickerGrid(gridEl, langCode, ctx = {}) {
  *   disabled?: boolean,
  *   eagerPreview?: boolean,
  *   roster?: ReturnType<typeof listCompanionCharacters>,
+ *   isEnglish?: boolean,
  *   onCardClick?: (id: string) => void,
  *   onCardTapFx?: (card: HTMLButtonElement, item: ReturnType<typeof listCompanionCharacters>[number]) => void,
  * }} ctx

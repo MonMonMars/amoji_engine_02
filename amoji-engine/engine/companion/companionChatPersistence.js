@@ -10,7 +10,7 @@ import { loadAuthSession } from "../mobile/companionMobileAuth.js";
 export const CHAT_HISTORY_SCHEMA = "amoji.companion.chatHistory.v1";
 export const CHAT_HISTORY_MAX = 40;
 export const CHAT_DOM_MAX = 20;
-export const STARTER_PROMPT_COUNT = 8;
+export const STARTER_PROMPT_COUNT = 4;
 export const TUTORIAL_VISIT_STORAGE_KEY = "amoji.companion.tutorialVisit.v1";
 
 /** @typedef {{ id: string, role: "user" | "assistant", text: string, ts: number }} ChatMessage */

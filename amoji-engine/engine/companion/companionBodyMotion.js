@@ -850,11 +850,7 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
         finishActionStep();
       }
     } else if (!talking) {
-      const breathe = Math.sin(elapsed * 0.88);
-      rootMotion = {
-        y: breathe * 0.026,
-        rotY: 0,
-      };
+      rootMotion = { y: 0, rotY: 0 };
     } else {
       rootMotion = { y: 0, rotY: 0 };
     }
@@ -997,7 +993,6 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
         (idleBeat.beat === "comb" || idleBeat.beat === "hair"),
     });
     if (plantFeet) {
-      const breatheY = smoothedRootMotion.y;
       const dy = footPlantRootDelta(bone, 0);
       footPlantY += dy;
       footPlantY = Math.max(
@@ -1007,7 +1002,7 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
       if (Math.abs(footPlantY) < 0.001) footPlantY = 0;
       smoothedRootMotion = {
         ...smoothedRootMotion,
-        y: footPlantY + breatheY,
+        y: !talking && !activeAction ? 0 : footPlantY,
       };
     } else {
       footPlantY = 0;

@@ -112,7 +112,7 @@ describe("createCompanionBodyMotion", () => {
     );
   });
 
-  it("plants root Y so a floating foot comes back to the floor", () => {
+  it("keeps idle root Y planted without vertical bob", () => {
     const humanoid = mockHumanoid();
     humanoid.bones.get("leftFoot").getWorldPosition = (v) => {
       v.y = 0.05;
@@ -124,6 +124,22 @@ describe("createCompanionBodyMotion", () => {
     };
     const motion = createCompanionBodyMotion(humanoid);
     motion.setTalking(false);
+    motion.update(1 / 30);
+    expect(motion.getRootMotion().y).toBe(0);
+  });
+
+  it("plants root Y while talking so a floating foot comes back to the floor", () => {
+    const humanoid = mockHumanoid();
+    humanoid.bones.get("leftFoot").getWorldPosition = (v) => {
+      v.y = 0.05;
+      return v;
+    };
+    humanoid.bones.get("rightFoot").getWorldPosition = (v) => {
+      v.y = 0.02;
+      return v;
+    };
+    const motion = createCompanionBodyMotion(humanoid);
+    motion.setTalking(true);
     motion.update(1 / 30);
     expect(motion.getRootMotion().y).toBeCloseTo(-0.02);
   });
