@@ -31,7 +31,7 @@ export {
   proceduralIdleBeatPoolForGender,
 } from "./companionIdleGender.js";
 
-export const COMPANION_IDLE_MOTION_SCHEMA = "amoji.companionIdleMotion.v8";
+export const COMPANION_IDLE_MOTION_SCHEMA = "amoji.companionIdleMotion.v9-limb-blend";
 
 /** First seconds after avatar is visible — gentle breathe, sway, relaxed arms. */
 export const BOOT_SIMPLE_IDLE_SEC = 10;
@@ -145,25 +145,30 @@ export function mergePlantedAliveIdleIntoPose(base, elapsedSec, opts = {}) {
   const snap = opts.snap === true;
   const legFree = omitPoseKeys(idle, PLANTED_IDLE_LEG_KEYS);
 
-  if (bind === "apose") {
-    const bodyOnly = omitPoseKeys(legFree, [
-      ...PLANTED_IDLE_ARM_LIFT_KEYS,
-      "forearmL",
-      "forearmR",
-    ]);
-    const bodyWeight = snap ? 0.38 : 0.96;
-    let pose = mergePoses(base, bodyOnly, bodyWeight);
+  // Never merge upper-arm lift into pose channels at full weight — calibrated
+  // rest already dropped T-pose / A-pose arms; applyCalmIdleArms adds forearm life only.
+  const bodyOnly = omitPoseKeys(legFree, [
+    ...PLANTED_IDLE_ARM_LIFT_KEYS,
+    "forearmL",
+    "forearmR",
+  ]);
+  const bodyWeight = snap ? 0.38 : bind === "apose" ? 0.96 : 0.9;
+  let pose = mergePoses(base, bodyOnly, bodyWeight);
+  const foreWeight = snap ? 0.22 : bind === "apose" ? 0.42 : 0.36;
+  pose = mergePoses(
+    pose,
+    { forearmL: idle.forearmL, forearmR: idle.forearmR },
+    foreWeight,
+  );
+  if (bind === "tpose") {
+    const liftWeight = snap ? 0.12 : 0.26;
     pose = mergePoses(
       pose,
-      { forearmL: idle.forearmL, forearmR: idle.forearmR },
-      snap ? 0.22 : 0.42,
+      { armLiftL: idle.armLiftL, armLiftR: idle.armLiftR },
+      liftWeight,
     );
-    return pose;
   }
-
-  const weight = snap ? 0.48 : Number(opts.weight ?? 0.96);
-  const tposeIdle = omitPoseKeys(idle, PLANTED_IDLE_LEG_KEYS);
-  return mergePoses(base, tposeIdle, weight);
+  return pose;
 }
 
 /**
