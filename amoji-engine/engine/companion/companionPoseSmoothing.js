@@ -1,8 +1,11 @@
 /**
  * Pose interpolation — damped channels so idle beats and action transitions read smoothly.
  */
+import { POSE_LIMB_BLEND_KEYS } from "./companionPoseLibrary.js";
 
 export const COMPANION_POSE_SMOOTHING_SCHEMA = "amoji.companionPoseSmoothing.v1";
+
+const LIMB_BLEND_KEY_SET = new Set(POSE_LIMB_BLEND_KEYS);
 
 /**
  * Abstract pose channels → normalized humanoid bones in companionBodyMotion.
@@ -74,7 +77,12 @@ export function dampPose(current, target, dt, rate = 11) {
   const out = { ...current };
   for (const key of POSE_CHANNELS) {
     const a = Number(current[key] ?? 0);
-    const b = Number(target[key] ?? a);
+    const hasTarget = Object.prototype.hasOwnProperty.call(target, key);
+    const b = hasTarget
+      ? Number(target[key] ?? 0)
+      : LIMB_BLEND_KEY_SET.has(key)
+        ? 0
+        : a;
     out[key] = a + (b - a) * k;
   }
   return out;

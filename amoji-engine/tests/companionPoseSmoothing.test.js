@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   actionMotionEnvelope,
+  dampPose,
   POSE_CHANNELS,
   poseDampingRate,
 } from "../engine/companion/companionPoseSmoothing.js";

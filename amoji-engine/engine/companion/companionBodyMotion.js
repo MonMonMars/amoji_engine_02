@@ -22,8 +22,7 @@ import {
 } from "./companionActionMotion.js";
 import { buildCharacterSystemPrompt } from "./companionCharacterCatalog.js";
 import {
-  sampleCalmBreathIdle,
-  samplePlantedAliveIdle,
+  mergePlantedAliveIdleIntoPose,
   advanceIdleBeat,
   createIdleBeatState,
   startIdleBeat,
@@ -447,9 +446,8 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
     const restLl = armRestRotations.leftLowerArm;
     const restRl = armRestRotations.rightLowerArm;
     const apose = isAposeBind();
-    const foreScale = apose ? 0.1 : 1;
-    const foreCap = apose ? 0.09 : 0.62;
-    const liftCap = apose ? 0.025 : 0.1;
+    const foreScale = apose ? 0.08 : 1;
+    const foreCap = apose ? 0.07 : 0.62;
     const foreL = Math.min(
       foreCap,
       Math.max(0, (pose.forearmL ?? 0) * k * foreScale),
@@ -458,23 +456,31 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
       foreCap,
       Math.max(0, (pose.forearmR ?? 0) * k * foreScale),
     );
+    if (apose) {
+      applyBoneRotation("leftUpperArm", restL);
+      applyBoneRotation("rightUpperArm", restR);
+      applyBoneRotation("leftLowerArm", withElbowBend(restLl, foreL));
+      applyBoneRotation("rightLowerArm", withElbowBend(restRl, foreR));
+      return;
+    }
+    const liftCap = 0.1;
     const liftL = Math.min(
       liftCap,
-      Math.max(0, (pose.armLiftL ?? 0) * k * 0.28 * (apose ? 0.35 : 1)),
+      Math.max(0, (pose.armLiftL ?? 0) * k * 0.28),
     );
     const liftR = Math.min(
       liftCap,
-      Math.max(0, (pose.armLiftR ?? 0) * k * 0.28 * (apose ? 0.35 : 1)),
+      Math.max(0, (pose.armLiftR ?? 0) * k * 0.28),
     );
     applyBoneRotation("leftUpperArm", {
       x: restL.x,
       y: restL.y + liftL * 0.04,
-      z: restDirectedLift(restL.z, liftL * (apose ? 0.1 : 0.22), 1),
+      z: restDirectedLift(restL.z, liftL * 0.22, 1),
     });
     applyBoneRotation("rightUpperArm", {
       x: restR.x,
       y: restR.y - liftR * 0.04,
-      z: restDirectedLift(restR.z, liftR * (apose ? 0.1 : 0.22), -1),
+      z: restDirectedLift(restR.z, liftR * 0.22, -1),
     });
     applyBoneRotation("leftLowerArm", withElbowBend(restLl, foreL));
     applyBoneRotation("rightLowerArm", withElbowBend(restRl, foreR));
@@ -826,11 +832,12 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
   const holdForLibraryMotion = (now = performance.now()) => {
     const elapsed = (now - t0) * 0.001;
     smoothedPose = buildBasePose({ listening, emotion, nuance });
-    smoothedPose = mergePoses(
-      smoothedPose,
-      samplePlantedAliveIdle(elapsed, { listening, emotion, gender: idleGender }),
-      0.96,
-    );
+    smoothedPose = mergePlantedAliveIdleIntoPose(smoothedPose, elapsed, {
+      listening,
+      emotion,
+      gender: idleGender,
+      bind: armBind,
+    });
     smoothedRootMotion = { y: 0, rotY: 0 };
     footPlantY = 0;
     return smoothedPose;
@@ -877,13 +884,12 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
 
     if (!activeAction) {
       if (!talking) {
-        const apose = isAposeBind();
-        const idleMotion = samplePlantedAliveIdle(elapsed, {
+        pose = mergePlantedAliveIdleIntoPose(pose, elapsed, {
           listening,
           emotion: thinking ? "neutral" : emotion,
           gender: idleGender,
+          bind: armBind,
         });
-        pose = mergePoses(pose, idleMotion, apose ? 0.88 : 0.96);
         if (thinking) {
           const thinkMotion = sampleBodyTalkMotion(elapsed, {
             style: companionGestureStyle("thinking"),
@@ -1015,6 +1021,17 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
     }
     const plantFeet = !activeAction;
     const strictLegRest = plantFeet && !activeAction && !talking && !activeGesture;
+    if (strictLegRest) {
+      for (const key of [
+        "upperLegL",
+        "upperLegR",
+        "lowerLegL",
+        "lowerLegR",
+      ]) {
+        smoothedPose[key] = 0;
+        pose[key] = 0;
+      }
+    }
     applyPose(smoothedPose, 1, {
       allowArms,
       actionArms,
@@ -1050,11 +1067,12 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
   const resetMotionClock = (now = performance.now()) => {
     t0 = now;
     smoothedPose = buildBasePose({ listening, emotion, nuance });
-    smoothedPose = mergePoses(
-      smoothedPose,
-      samplePlantedAliveIdle(0.2, { listening, emotion, gender: idleGender }),
-      0.96,
-    );
+    smoothedPose = mergePlantedAliveIdleIntoPose(smoothedPose, 0.2, {
+      listening,
+      emotion,
+      gender: idleGender,
+      bind: armBind,
+    });
     smoothedRootMotion = { y: 0, rotY: 0 };
     footPlantY = 0;
     applyPose(smoothedPose, 1, {
@@ -1144,11 +1162,13 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
     },
     snapToRestPose() {
       smoothedPose = buildBasePose({ listening, emotion, nuance });
-      smoothedPose = mergePoses(
-        smoothedPose,
-      sampleCalmBreathIdle(0.2, { listening, emotion, gender: idleGender }),
-      isAposeBind() ? 0.22 : 0.48,
-    );
+      smoothedPose = mergePlantedAliveIdleIntoPose(smoothedPose, 0.2, {
+        listening,
+        emotion,
+        gender: idleGender,
+        bind: armBind,
+        snap: true,
+      });
       smoothedRootMotion = { y: 0, rotY: 0 };
       footPlantY = 0;
       applyPose(smoothedPose, 1, {
