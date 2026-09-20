@@ -168,13 +168,18 @@ const VRM_BLEND_PRESET_MAP = {
  * @param {string} modelUrl
  * @param {(ratio: number, label?: string) => void} [onProgress]
  */
-async function loadVrmGltf(loader, modelUrl, onProgress) {
-  // Only use a prefetch buffer for the exact model URL — never fall back to the
-  // default boot preload (companion-girl.vrm) or the wrong character appears.
-  const preload =
+async function loadVrmGltf(loader, modelUrl, onProgress, characterId) {
+  const { modelPathMatchesCharacterId } = await import("./companionModelAssets.mjs");
+  const id = String(characterId || "").trim().toLowerCase();
+
+  // Only use a prefetch buffer when it belongs to this character's roster path.
+  let preload =
     globalThis.__amojiPreload?.getVrm?.(modelUrl) ??
     globalThis.__amojiPreload?.getVrm?.(modelUrl.split("?")[0]) ??
     null;
+  if (preload && id && !modelPathMatchesCharacterId(modelUrl, id)) {
+    preload = null;
+  }
   if (preload) {
     try {
       const buffer = await preload;
@@ -216,6 +221,15 @@ export async function createVrmAvatar(opts) {
     }
     modelUrl =
       coerceCanonicalModelFetchUrl(modelUrl, opts.characterId) || modelUrl;
+    const { modelPathMatchesCharacterId, characterModelFetchUrl } =
+      await import("./companionModelAssets.mjs");
+    if (
+      opts.characterId &&
+      modelUrl &&
+      !modelPathMatchesCharacterId(modelUrl, opts.characterId)
+    ) {
+      modelUrl = characterModelFetchUrl(opts.characterId);
+    }
   } catch {
     if (!modelUrl) {
       modelUrl = "/prototypes/assets/companion-nova.vrm";
@@ -290,7 +304,14 @@ export async function createVrmAvatar(opts) {
 
   const loader = new GLTFLoader();
   loader.register((parser) => new VRMLoaderPlugin(parser));
-  const gltf = await loadVrmGltf(loader, modelUrl, opts.onProgress);
+  const loadedModelUrl = modelUrl;
+  const loadedCharacterId = String(opts.characterId || "nova").toLowerCase();
+  const gltf = await loadVrmGltf(
+    loader,
+    modelUrl,
+    opts.onProgress,
+    loadedCharacterId,
+  );
   opts.onProgress?.(1, "model");
   const vrm = gltf.userData.vrm;
   if (!vrm) throw new Error("VRM data missing from model");
@@ -1701,6 +1722,8 @@ export async function createVrmAvatar(opts) {
     schema: VRM_AVATAR_SCHEMA,
     kind: "vrm",
     vrm,
+    getLoadedModelUrl: () => loadedModelUrl,
+    getLoadedCharacterId: () => loadedCharacterId,
     setOutfitPreset,
     setEmotion,
     applyExpressionProfile,

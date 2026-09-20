@@ -404,6 +404,20 @@ async function main() {
   );
 
   record("selected-model-nova", afterNova.character === "nova", afterNova.character);
+  const loadedModelAudit = await page.evaluate(() => ({
+    characterId: window.__amojiLoadedCharacterId,
+    modelUrl: window.__amojiLoadedModelUrl,
+    storageId: window.localStorage?.getItem("amoji.companion.characterId"),
+  }));
+  record(
+    "loaded-vrm-matches-nova",
+    Boolean(
+      loadedModelAudit.modelUrl &&
+        /companion-nova\.vrm/i.test(loadedModelAudit.modelUrl) &&
+        loadedModelAudit.storageId === "nova",
+    ),
+    JSON.stringify(loadedModelAudit),
+  );
   record(
     "nova-vrm-requested",
     loadedModels.some((u) => /companion-nova\.vrm/i.test(u)),

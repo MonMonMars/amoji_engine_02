@@ -6,7 +6,7 @@ import {
   AMOJI_MODEL_REVISION,
   isRetiredModelUrl,
 } from "./companionCharacterMigration.mjs";
-import { rosterModelUrl } from "./rosterVrmAssets.mjs";
+import { rosterModelUrl, rosterVrmBasename } from "./rosterVrmAssets.mjs";
 import { normalizeLegacyRosterCharacterId } from "./companionLegacyRosterIds.js";
 
 export const COMPANION_MODEL_ASSETS_SCHEMA = "amoji.companionModelAssets.v1";
@@ -68,4 +68,43 @@ export function coerceCanonicalModelFetchUrl(url, characterId) {
   if (!raw || !isRetiredModelUrl(raw)) return raw;
   const id = normalizeLegacyRosterCharacterId(characterId);
   return modelFetchUrl(rosterModelUrl(id));
+}
+
+/**
+ * Canonical on-disk basename for a roster character (`companion-<id>.vrm`).
+ * @param {string | null | undefined} characterId
+ */
+export function expectedModelBasenameForCharacter(characterId) {
+  const id = normalizeLegacyRosterCharacterId(characterId);
+  return rosterVrmBasename(id);
+}
+
+/**
+ * True when fetch URL resolves to the roster VRM for this character id.
+ * @param {string | null | undefined} url
+ * @param {string | null | undefined} characterId
+ */
+export function modelPathMatchesCharacterId(url, characterId) {
+  const id = normalizeLegacyRosterCharacterId(characterId);
+  if (!id) return false;
+  const key = normalizeModelCacheKey(url).toLowerCase();
+  if (!key) return false;
+  const expected = rosterVrmBasename(id).toLowerCase();
+  if (key.endsWith(`/${expected}`) || key.endsWith(expected)) return true;
+  return false;
+}
+
+/**
+ * @param {string | null | undefined} url
+ * @param {string | null | undefined} characterId
+ */
+export function assertModelUrlForCharacter(url, characterId) {
+  const id = normalizeLegacyRosterCharacterId(characterId);
+  const ok = modelPathMatchesCharacterId(url, id);
+  return {
+    ok,
+    characterId: id,
+    url: normalizeModelCacheKey(url),
+    expectedBasename: expectedModelBasenameForCharacter(id),
+  };
 }

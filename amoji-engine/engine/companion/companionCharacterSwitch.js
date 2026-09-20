@@ -8,7 +8,10 @@ import {
   characterTapLines,
   persistCharacterId,
 } from "./companionCharacterCatalog.js";
-import { characterModelFetchUrl } from "./companionModelAssets.mjs";
+import {
+  assertModelUrlForCharacter,
+  characterModelFetchUrl,
+} from "./companionModelAssets.mjs";
 import { releaseVrmPreloadExcept } from "./companionPreload.js";
 
 export const COMPANION_CHARACTER_SWITCH_SCHEMA =
@@ -42,7 +45,7 @@ export async function switchCompanionCharacter(opts) {
   const isEnglish = langCode === "en";
   const config = characterAvatarConfig(characterId, langCode);
   const modelFetchUrl = characterModelFetchUrl(characterId, langCode);
-  releaseVrmPreloadExcept(config.modelUrl);
+  releaseVrmPreloadExcept(modelFetchUrl);
 
   const emit = (pct, label) => onProgress?.(pct, label);
 
@@ -79,6 +82,14 @@ export async function switchCompanionCharacter(opts) {
   loaded.avatar.resize?.();
   onStagePreview?.(null);
 
+  const loadedUrl =
+    loaded.avatar?.getLoadedModelUrl?.() || modelFetchUrl;
+  const match = assertModelUrlForCharacter(loadedUrl, characterId);
+  if (!match.ok) {
+    throw new Error(
+      `model-mismatch: expected ${match.expectedBasename} got ${match.url}`,
+    );
+  }
   persistCharacterId(characterId);
 
   const url = new URL(globalThis.location?.href || "/");
