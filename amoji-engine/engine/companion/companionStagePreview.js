@@ -1,7 +1,7 @@
 /**
  * Character portrait overlay on the 3D stage while models load or switch.
  */
-export const COMPANION_STAGE_PREVIEW_SCHEMA = "amoji.companionStagePreview.v1";
+export const COMPANION_STAGE_PREVIEW_SCHEMA = "amoji.companionStagePreview.v2";
 
 /**
  * @param {HTMLElement | null | undefined} stageEl
@@ -20,10 +20,11 @@ export function createCompanionStagePreview(stageEl) {
     show(url) {
       const src = String(url || "").trim();
       if (!src) return false;
-      img.src = src;
-      img.hidden = false;
-      stage?.classList.add("has-stage-preview");
-      return true;
+      /** Portrait overlay disabled — chat/UI stay primary while 3D loads in background. */
+      img.hidden = true;
+      img.removeAttribute("src");
+      stage?.classList.remove("has-stage-preview");
+      return false;
     },
     hide() {
       img.hidden = true;

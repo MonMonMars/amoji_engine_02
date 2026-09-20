@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   clampProgressPct,
+  createCompanionCenterLoadRing,
   PROGRESS_RING_CIRCUMFERENCE,
   progressPhaseLabel,
   progressRingOffset,
@@ -25,5 +26,15 @@ describe("companionProgressOverlay", () => {
     expect(progressRingOffset(0)).toBeCloseTo(PROGRESS_RING_CIRCUMFERENCE, 4);
     expect(progressRingOffset(100)).toBe(0);
     expect(progressRingOffset(50)).toBeCloseTo(PROGRESS_RING_CIRCUMFERENCE * 0.5, 4);
+  });
+
+  it("creates a borderless center load ring", () => {
+    if (typeof document === "undefined") return;
+    const ring = createCompanionCenterLoadRing({ root: document.body });
+    ring.show({ progress: 40, label: "Loading model" });
+    expect(ring.element.classList.contains("is-visible")).toBe(true);
+    expect(ring.element.querySelector(".companion-center-load-ring-fill")).toBeTruthy();
+    ring.hide();
+    ring.destroy();
   });
 });
