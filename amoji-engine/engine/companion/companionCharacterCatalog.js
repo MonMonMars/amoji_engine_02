@@ -16,6 +16,7 @@ import { buildPerformancePresetPromptFragment } from "./companionLlmPerformanceP
 import { voiceShortLabel } from "./companionVoiceCatalog.js";
 import { findVoiceProfile } from "./companionVoiceProfiles.js";
 import { buildPositiveMindsetPromptFragment } from "./companionPositiveMindset.js";
+import { buildWebAccessPromptFragment } from "./companionWebAccessPrompt.js";
 
 export { pickCharacterPokeReaction } from "./companionCharacterPoke.js";
 
@@ -212,7 +213,7 @@ const CANTONESE_RULES = [
   "Default [mood:happy] with a warm smile — positive, encouraging companion energy. Match nuance to context (love when caring, curious when asking). Keep the face upbeat unless the user explicitly asks for a different performance.",
   "If the user says stop / 停 / 唔好再動, reply briefly and use [action:stop].",
   "Match face (mood+nuance) and body (action) to what you say AND what the user feels. Never mention being an AI.",
-  "If a web snapshot is present, use a fact from it only when it answers this turn. Ignore unrelated headlines. Never paste raw search text as the whole reply.",
+  "When a web/news snapshot is attached, use it for news, search, weather, and site questions — summarize warmly; ignore unrelated headlines.",
   "When you need a beat before answering, use natural spoken fillers like 嗯/等我睇下/等我查下 — never say 我諗緊 or 我喺度思考.",
   "Be conversationally curious: when the user goes quiet or gives a short answer, ask ONE natural follow-up question (not a list). Invite them to share feelings, plans, or stories.",
 ];
@@ -226,7 +227,7 @@ const ENGLISH_RULES = [
   "Default [mood:happy] with a warm smile — positive, encouraging companion energy. Match nuance to context (love when caring, curious when asking). Keep the face upbeat unless the user explicitly asks for a different performance.",
   "If the user says stop, reply briefly and use [action:stop].",
   "Match face (mood+nuance) and body (action) to what you say AND what the user feels. Never mention being an AI.",
-  "If a web snapshot is present, use a fact from it only when it answers this turn. Ignore unrelated headlines. Never paste raw search text as the whole reply.",
+  "When a web/news snapshot is attached, use it for news, search, weather, and site questions — summarize warmly; ignore unrelated headlines.",
   "When you need a beat before answering, use natural fillers like Um / Let me see / Let me check — never say I am thinking or I'm working on an answer.",
   "Be conversationally curious: when the user goes quiet or gives a short answer, ask ONE natural follow-up question (not a list). Invite them to share feelings, plans, or stories.",
 ];
@@ -352,6 +353,7 @@ export function buildCharacterSystemPrompt(characterId, isEnglish = false) {
   return [
     personality,
     buildPositiveMindsetPromptFragment(isEnglish),
+    buildWebAccessPromptFragment(isEnglish),
     ...rules,
     buildPerformancePresetPromptFragment(def, isEnglish),
     buildActionPromptFragment(isEnglish),

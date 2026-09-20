@@ -19,7 +19,7 @@ import {
   shouldTryWebSearch,
 } from "./companionWebSearch.mjs";
 
-export const CHAT_API_HANDLER_SCHEMA = "amoji.chatApiHandler.v2";
+export const CHAT_API_HANDLER_SCHEMA = "amoji.chatApiHandler.v3";
 
 /** OpenRouter treats omitted max_tokens as the full context window and 402s low-credit keys. */
 export const CLOUD_CHAT_MAX_TOKENS = 1024;
@@ -222,9 +222,9 @@ export async function processChatRequest(body) {
   );
 
   const webInstruction = webContext
-    ? "Answer as the companion in the user's language. Use the snapshot only when it directly answers this turn. Ignore unrelated headlines. Do not recite raw search text."
+    ? "Answer as the companion in the user's language. The snapshot may include Google/search results, Google News headlines, Wikipedia, weather, or a website excerpt — use what answers THIS turn. Summarize; do not recite raw search text."
     : webSearched
-      ? "Live lookup returned nothing useful. If they asked for a current fact, say you could not check online, then keep chatting. Otherwise ignore the failed search."
+      ? "Live web/news lookup returned nothing useful. If they asked for news, search, or a current fact, say you could not reach the web this turn and offer to retry. Otherwise chat normally."
       : "";
 
   const systemWithWeb = [
