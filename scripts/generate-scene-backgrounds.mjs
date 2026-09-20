@@ -20,20 +20,24 @@ const PNG_SCENE_IDS = new Set(["night-city"]);
 const ART_Q = `?v=${encodeURIComponent(PICKER_SCENE_ART_REVISION)}`;
 
 const overlayDefault =
-  "linear-gradient(180deg, rgba(7, 10, 16, 0.08) 0%, rgba(7, 10, 16, 0.28) 52%, rgba(5, 7, 12, 0.58) 100%)";
+  "linear-gradient(180deg, rgba(7, 10, 16, 0.02) 0%, rgba(7, 10, 16, 0.12) 55%, rgba(5, 7, 12, 0.38) 100%)";
 const overlayScene =
-  "linear-gradient(180deg, rgba(7, 10, 16, 0.04) 0%, rgba(5, 7, 12, 0.18) 50%, rgba(3, 5, 10, 0.48) 100%)";
+  "linear-gradient(180deg, rgba(7, 10, 16, 0.01) 0%, rgba(5, 7, 12, 0.1) 52%, rgba(3, 5, 10, 0.32) 100%)";
 const overlayGrok =
-  "linear-gradient(180deg, rgba(3, 3, 10, 0.04) 0%, rgba(2, 2, 8, 0.22) 48%, rgba(2, 2, 8, 0.62) 100%)";
+  "linear-gradient(180deg, rgba(3, 3, 10, 0.02) 0%, rgba(2, 2, 8, 0.14) 48%, rgba(2, 2, 8, 0.42) 100%)";
 
 /** @param {string} presetId */
 function sceneArtFile(presetId) {
   if (PNG_SCENE_IDS.has(presetId)) return `${ANIME_PNG}${ART_Q}`;
   const pngPath = join(outDir, `${presetId}.png`);
+  const svgPath = join(outDir, `${presetId}.svg`);
   if (existsSync(pngPath)) {
     return `/prototypes/assets/scene-bg/${presetId}.png${ART_Q}`;
   }
-  return `/prototypes/assets/scene-bg/${presetId}.svg${ART_Q}`;
+  if (existsSync(svgPath)) {
+    return `/prototypes/assets/scene-bg/${presetId}.svg${ART_Q}`;
+  }
+  return `${ANIME_PNG}${ART_Q}`;
 }
 
 /** @param {string} presetId */
@@ -42,9 +46,33 @@ function sceneArtUrl(presetId) {
 }
 
 /** @param {string} presetId */
+function atmosphereArtLayers(presetId) {
+  const layers = [sceneArtUrl(presetId)];
+  const svgPath = join(outDir, `${presetId}.svg`);
+  const pngPath = join(outDir, `${presetId}.png`);
+  if (existsSync(pngPath) && existsSync(svgPath) && !PNG_SCENE_IDS.has(presetId)) {
+    layers.push(`url("/prototypes/assets/scene-bg/${presetId}.svg${ART_Q}")`);
+  }
+  return layers.join(",\n    ");
+}
+
+/** @param {string} presetId */
 function atmosphereLayers(presetId) {
   const overlay = PNG_SCENE_IDS.has(presetId) || presetId === "__default__" ? overlayDefault : overlayScene;
-  return `${overlay},\n    ${sceneArtUrl(presetId === "__default__" ? "night-city" : presetId)} !important;`;
+  const id = presetId === "__default__" ? "night-city" : presetId;
+  return `${overlay},\n    ${atmosphereArtLayers(id)} !important;`;
+}
+
+/** @param {string} presetId */
+function atmosphereSizeLayers(presetId) {
+  const id = presetId === "__default__" ? "night-city" : presetId;
+  const svgPath = join(outDir, `${id}.svg`);
+  const pngPath = join(outDir, `${id}.png`);
+  let layers = 2;
+  if (existsSync(pngPath) && existsSync(svgPath) && !PNG_SCENE_IDS.has(id)) {
+    layers = 3;
+  }
+  return `${Array(layers).fill("cover").join(", ")} !important`;
 }
 
 const W = 960;
@@ -79,7 +107,7 @@ const lines = [
   "  background-color: #070a10 !important;",
   "  background-image:",
   `    ${atmosphereLayers("__default__")}`,
-  "  background-size: cover, cover !important;",
+  `  background-size: ${atmosphereSizeLayers("__default__")};`,
   "  background-position: center, center !important;",
   "  background-repeat: no-repeat !important;",
   "}",
@@ -92,7 +120,7 @@ for (const preset of SCENE_BACKGROUND_PRESETS) {
     `.atmosphere[data-scene-bg="${preset.id}"] {`,
     "  background-image:",
     `    ${atmosphereLayers(preset.id)}`,
-    "  background-size: cover, cover !important;",
+    `  background-size: ${atmosphereSizeLayers(preset.id)};`,
     "  background-position: center, center !important;",
     "}",
     "",

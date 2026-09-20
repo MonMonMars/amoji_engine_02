@@ -29,8 +29,17 @@
   content: "";
   position: absolute;
   inset: 0;
-  background: radial-gradient(ellipse 85% 70% at 50% 42%, transparent 42%, rgba(0, 0, 0, 0.48) 100%);
+  background: radial-gradient(
+    ellipse 88% 72% at 50% 40%,
+    transparent 48%,
+    rgba(0, 0, 0, 0.28) 100%
+  );
   pointer-events: none;
+  opacity: 0.85;
+}
+
+.theme-grok-ani .atmosphere[data-scene-bg]::before {
+  opacity: 0.55;
 }
 
 .theme-grok-ani .atmosphere::after {

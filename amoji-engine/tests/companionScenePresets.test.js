@@ -43,13 +43,14 @@ describe("companionScenePresets", () => {
   });
 
   it("resolves unknown background to default", () => {
-    expect(resolveSceneBackgroundId("unknown")).toBe("night-city");
+    expect(resolveSceneBackgroundId("unknown")).toBe("cozy-room");
     expect(resolveSceneBackgroundId("studio")).toBe("studio");
+    expect(resolveSceneBackgroundId("minimal")).toBe("cozy-room");
   });
 
-  it("defaults new users to indoor studio (not outdoor night city)", () => {
+  it("defaults new users to cozy-room anime interior", () => {
     const loaded = loadStoredSceneBackground(true);
-    expect(loaded.id).toBe("studio");
+    expect(loaded.id).toBe("cozy-room");
     expect(loaded.environment).toBe("indoor");
   });
 
@@ -80,7 +81,7 @@ describe("companionScenePresets", () => {
     expect(resolveSceneEnvironment("cozy-room")).toBe("indoor");
     expect(resolveSceneEnvironment("cafe")).toBe("indoor");
     expect(resolveSceneEnvironment("library")).toBe("indoor");
-    expect(resolveSceneEnvironment("minimal")).toBe("indoor");
+    expect(resolveSceneBackgroundId("minimal")).toBe("cozy-room");
     expect(resolveSceneEnvironment("night-city")).toBe("outdoor");
     expect(resolveSceneEnvironment("rooftop")).toBe("outdoor");
     expect(resolveSceneEnvironment("park")).toBe("outdoor");
