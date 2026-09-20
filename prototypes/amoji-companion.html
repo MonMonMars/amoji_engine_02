@@ -8,9 +8,9 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji · Companion</title>
     <script>
-      window.__amojiBuild = "2026-09-20-v422-roster-legacy-fix";
+      window.__amojiBuild = "2026-09-20-v423-anime-scene-bg";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-20-v422-roster-legacy-fix"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-20-v423-anime-scene-bg"></script>
     <link
       rel="prefetch"
       href="/prototypes/assets/companion-char-nova.png"
@@ -690,22 +690,22 @@
       media="print"
       onload="this.media='all'"
     />
-    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-20-v422-roster-legacy-fix" />
-    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-20-v422-roster-legacy-fix" />
-    <link rel="stylesheet" href="/prototypes/companion-mic-button.css?v=2026-09-20-v422-roster-legacy-fix" />
-    <link rel="stylesheet" href="/prototypes/companion-title-screen.css?v=2026-09-20-v422-roster-legacy-fix" />
-    <link rel="stylesheet" href="/prototypes/companion-minimal-ui.css?v=2026-09-20-v422-roster-legacy-fix" />
-    <link rel="stylesheet" href="/prototypes/companion-settings-ui.css?v=2026-09-20-v422-roster-legacy-fix" />
-    <link rel="stylesheet" href="/prototypes/companion-mobile-shell.css?v=2026-09-20-v422-roster-legacy-fix" />
-    <link rel="stylesheet" href="/prototypes/companion-picker-v4.css?v=2026-09-20-v422-roster-legacy-fix" />
-    <link rel="stylesheet" href="/prototypes/companion-picker-stacked-layout.css?v=2026-09-20-v422-roster-legacy-fix" />
-    <link rel="stylesheet" href="/prototypes/companion-picker-aaa-theme.css?v=2026-09-20-v422-roster-legacy-fix" />
-    <link rel="stylesheet" href="/prototypes/companion-responsive-layout.css?v=2026-09-20-v422-roster-legacy-fix" />
-    <link rel="stylesheet" href="/prototypes/companion-app-width.css?v=2026-09-20-v422-roster-legacy-fix" />
-    <link rel="stylesheet" href="/prototypes/companion-scroll-affordances.css?v=2026-09-20-v422-roster-legacy-fix" />
+    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-20-v423-anime-scene-bg" />
+    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-20-v423-anime-scene-bg" />
+    <link rel="stylesheet" href="/prototypes/companion-mic-button.css?v=2026-09-20-v423-anime-scene-bg" />
+    <link rel="stylesheet" href="/prototypes/companion-title-screen.css?v=2026-09-20-v423-anime-scene-bg" />
+    <link rel="stylesheet" href="/prototypes/companion-minimal-ui.css?v=2026-09-20-v423-anime-scene-bg" />
+    <link rel="stylesheet" href="/prototypes/companion-settings-ui.css?v=2026-09-20-v423-anime-scene-bg" />
+    <link rel="stylesheet" href="/prototypes/companion-mobile-shell.css?v=2026-09-20-v423-anime-scene-bg" />
+    <link rel="stylesheet" href="/prototypes/companion-picker-v4.css?v=2026-09-20-v423-anime-scene-bg" />
+    <link rel="stylesheet" href="/prototypes/companion-picker-stacked-layout.css?v=2026-09-20-v423-anime-scene-bg" />
+    <link rel="stylesheet" href="/prototypes/companion-picker-aaa-theme.css?v=2026-09-20-v423-anime-scene-bg" />
+    <link rel="stylesheet" href="/prototypes/companion-responsive-layout.css?v=2026-09-20-v423-anime-scene-bg" />
+    <link rel="stylesheet" href="/prototypes/companion-app-width.css?v=2026-09-20-v423-anime-scene-bg" />
+    <link rel="stylesheet" href="/prototypes/companion-scroll-affordances.css?v=2026-09-20-v423-anime-scene-bg" />
     <link
       rel="stylesheet"
-      href="/prototypes/companion-scene-backgrounds.css?v=2026-09-20-v422-roster-legacy-fix"
+      href="/prototypes/companion-scene-backgrounds.css?v=2026-09-20-v423-anime-scene-bg"
     />
     <script>
       (function () {
@@ -732,7 +732,7 @@
       })();
     </script>
     <script type="module">
-      import { bootEarlyStartPicker } from "/amoji-engine/engine/companion/companionEarlyStartPicker.js?v=2026-09-20-v422-roster-legacy-fix";
+      import { bootEarlyStartPicker } from "/amoji-engine/engine/companion/companionEarlyStartPicker.js?v=2026-09-20-v423-anime-scene-bg";
       const bootParams = new URLSearchParams(location.search);
       if (bootParams.get("autostart") !== "1" && bootParams.get("pick") !== "0") {
         globalThis.__amojiEarlyStartPickerPromise = bootEarlyStartPicker({
@@ -3498,98 +3498,7 @@
         border: 1px solid rgba(255, 255, 255, 0.08);
       }
 
-      .scene-preset__swatch--night-city {
-        background:
-          linear-gradient(180deg, rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.45)),
-          url("/prototypes/assets/companion-bg-anime.png") center / cover no-repeat;
-      }
-
-      .scene-preset__swatch--rooftop {
-        background: radial-gradient(ellipse at 50% 25%, #6b8aa8, #1a2430 70%);
-      }
-
-      .scene-preset__swatch--park {
-        background: radial-gradient(ellipse at 50% 28%, #7cb87f, #2d4a32 68%);
-      }
-
-      .scene-preset__swatch--beach {
-        background: radial-gradient(ellipse at 50% 22%, #8fd4ef, #3a6f94 65%);
-      }
-
-      .scene-preset__swatch--cozy-room {
-        background: radial-gradient(ellipse at 50% 35%, #a88872, #3d3028 68%);
-      }
-
-      .scene-preset__swatch--cafe {
-        background: radial-gradient(ellipse at 50% 32%, #b89878, #4a3828 68%);
-      }
-
-      .scene-preset__swatch--library {
-        background: radial-gradient(ellipse at 50% 30%, #6a7d68, #2a342c 68%);
-      }
-
-      .scene-preset__swatch--studio {
-        background: radial-gradient(ellipse at 50% 30%, #6b7280, #1f2937 70%);
-      }
-
-      .scene-preset__swatch--sunset {
-        background: radial-gradient(ellipse at 50% 25%, #fb923c, #7c3aed 65%);
-      }
-
-      .scene-preset__swatch--minimal {
-        background: linear-gradient(180deg, #111827, #030712);
-      }
-
-      .scene-preset__swatch--aurora {
-        background:
-          radial-gradient(ellipse at 30% 30%, rgba(94, 234, 212, 0.75), transparent 55%),
-          radial-gradient(ellipse at 70% 35%, rgba(167, 139, 250, 0.65), transparent 50%),
-          #060810;
-      }
-
-      .scene-preset__swatch--rain-street {
-        background: radial-gradient(ellipse at 50% 28%, #5a7898, #182028 68%);
-      }
-
-      .scene-preset__swatch--cherry-blossom {
-        background: radial-gradient(ellipse at 50% 26%, #f0a8c8, #6a4868 68%);
-      }
-
-      .scene-preset__swatch--mountain {
-        background: radial-gradient(ellipse at 50% 22%, #98b8d8, #384858 68%);
-      }
-
-      .scene-preset__swatch--harbor {
-        background: radial-gradient(ellipse at 50% 30%, #68a0c8, #284860 68%);
-      }
-
-      .scene-preset__swatch--meadow {
-        background: radial-gradient(ellipse at 50% 24%, #a8d878, #486838 68%);
-      }
-
-      .scene-preset__swatch--bedroom {
-        background: radial-gradient(ellipse at 50% 32%, #a898b8, #484058 68%);
-      }
-
-      .scene-preset__swatch--office {
-        background: radial-gradient(ellipse at 50% 30%, #7888a0, #384050 68%);
-      }
-
-      .scene-preset__swatch--classroom {
-        background: radial-gradient(ellipse at 50% 30%, #c8b888, #585840 68%);
-      }
-
-      .scene-preset__swatch--greenhouse {
-        background: radial-gradient(ellipse at 50% 28%, #88c898, #386848 68%);
-      }
-
-      .scene-preset__swatch--loft {
-        background: radial-gradient(ellipse at 50% 32%, #c8a888, #685040 68%);
-      }
-
-      .scene-preset__swatch--kitchen {
-        background: radial-gradient(ellipse at 50% 32%, #d8b898, #786048 68%);
-      }
+      /* Scene swatch art: companion-scene-backgrounds.css (anime PNG per preset). */
 
       .scene-preset__swatch--outfit-default {
         background: linear-gradient(135deg, #d8c8bc, #9f8f84);
@@ -4706,19 +4615,19 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-20-v422-roster-legacy-fix",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-20-v423-anime-scene-bg",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-20-v422-roster-legacy-fix",
-          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-20-v422-roster-legacy-fix"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-20-v423-anime-scene-bg",
+          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-20-v423-anime-scene-bg"
         }
       }
     </script>
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-20-v422-roster-legacy-fix"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-20-v423-anime-scene-bg"
     />
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-20-v422-roster-legacy-fix"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-20-v422-roster-legacy-fix"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-20-v423-anime-scene-bg"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-20-v423-anime-scene-bg"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;
@@ -6371,7 +6280,10 @@
         void refreshCompanionShop();
       });
 
-      let activeSceneBgId = loadStoredSceneBackground(isEnglish).id;
+      let activeSceneBgId = applySceneBackground(
+        atmosphereEl,
+        loadStoredSceneBackground(isEnglish).id,
+      );
       let activeSceneOutfitId = loadStoredSceneOutfit(characterId);
       /** @type {(outfitId: string) => void} */
       let applyOutfitToAvatar = () => {};

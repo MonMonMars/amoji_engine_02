@@ -1,10 +1,16 @@
 /**
  * Scene presets — background swatches and per-character outfit wardrobe.
  */
-export const COMPANION_SCENE_PRESETS_SCHEMA = "amoji.companionScenePresets.v6-default-indoor";
+export const COMPANION_SCENE_PRESETS_SCHEMA =
+  "amoji.companionScenePresets.v7-anime-bg-default";
 
-/** First-run default — indoor studio avoids outdoor spring breeze on new users. */
-export const DEFAULT_SCENE_BACKGROUND_ID = "studio";
+/** First-run default — warm anime interior (not flat gray studio). */
+export const DEFAULT_SCENE_BACKGROUND_ID = "cozy-room";
+
+/** Retired flat / single-color presets → rich anime replacement. */
+export const LEGACY_FLAT_SCENE_BACKGROUND_IDS = Object.freeze({
+  minimal: "cozy-room",
+});
 
 export const SCENE_STORAGE_KEY = "amoji.companion.scenePreset";
 export const CHAT_PANEL_STORAGE_KEY = "amoji.companion.chatPanelVisible";
@@ -36,7 +42,6 @@ export const SCENE_BACKGROUND_PRESETS = Object.freeze([
   { id: "cozy-room", labelEn: "Cozy room", labelYue: "溫馨房間", environment: "indoor" },
   { id: "cafe", labelEn: "Café", labelYue: "咖啡室", environment: "indoor" },
   { id: "library", labelEn: "Library", labelYue: "圖書館", environment: "indoor" },
-  { id: "minimal", labelEn: "Minimal dark", labelYue: "深色簡約", environment: "indoor" },
   { id: "bedroom", labelEn: "Bedroom", labelYue: "睡房", environment: "indoor" },
   { id: "office", labelEn: "Office", labelYue: "辦公室", environment: "indoor" },
   { id: "classroom", labelEn: "Classroom", labelYue: "課室", environment: "indoor" },
@@ -71,9 +76,12 @@ const LEGACY_BACKGROUND_ALIASES = Object.freeze({
  */
 export function resolveSceneBackgroundId(id) {
   const key = String(id || "").toLowerCase();
-  const aliased = LEGACY_BACKGROUND_ALIASES[key] || key;
-  if (SCENE_BACKGROUND_PRESETS.some((p) => p.id === aliased)) return aliased;
-  return SCENE_BACKGROUND_PRESETS[0].id;
+  const legacyFlat =
+    LEGACY_FLAT_SCENE_BACKGROUND_IDS[key] ||
+    LEGACY_FLAT_SCENE_BACKGROUND_IDS[LEGACY_BACKGROUND_ALIASES[key] || ""];
+  const normalized = legacyFlat || LEGACY_BACKGROUND_ALIASES[key] || key;
+  if (SCENE_BACKGROUND_PRESETS.some((p) => p.id === normalized)) return normalized;
+  return DEFAULT_SCENE_BACKGROUND_ID;
 }
 
 /**
@@ -107,7 +115,14 @@ export function loadStoredSceneBackground(isEnglish = false) {
       );
     }
     const parsed = JSON.parse(raw);
-    const id = resolveSceneBackgroundId(parsed?.backgroundId);
+    let id = resolveSceneBackgroundId(parsed?.backgroundId);
+    if (
+      parsed?.schema !== COMPANION_SCENE_PRESETS_SCHEMA &&
+      LEGACY_FLAT_SCENE_BACKGROUND_IDS[parsed?.backgroundId]
+    ) {
+      id = resolveSceneBackgroundId(parsed?.backgroundId);
+      persistSceneBackground(id);
+    }
     const preset = SCENE_BACKGROUND_PRESETS.find((p) => p.id === id);
     return (
       preset ||
