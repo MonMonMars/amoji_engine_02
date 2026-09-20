@@ -2,10 +2,12 @@ import { describe, expect, it } from "vitest";
 import { inferActionFromCatalogText } from "../engine/companion/companionActionCatalog.js";
 import { localCompanionReply } from "../engine/companion/companionLocalReply.mjs";
 import {
+  extractHttpUrls,
   extractSearchQuery,
   fetchWebContextForChat,
   needsWebSearch,
   parseDuckDuckGoHtml,
+  parseGoogleNewsRss,
   searchWeb,
   shouldTryWebSearch,
   weatherLocation,
@@ -21,6 +23,10 @@ describe("companionWebSearch", () => {
     expect(needsWebSearch("今日點呀？")).toBe(false);
     expect(needsWebSearch("how are you")).toBe(false);
     expect(needsWebSearch("show me kung fu")).toBe(false);
+    expect(needsWebSearch("What's in the news about AI today?")).toBe(true);
+    expect(needsWebSearch("今日有咩頭條新聞？")).toBe(true);
+    expect(needsWebSearch("read https://example.com/article")).toBe(true);
+    expect(extractHttpUrls("see https://example.com/foo and https://bbc.com/news")).toHaveLength(2);
     expect(shouldTryWebSearch("what is AI?")).toBe(true);
     expect(shouldTryWebSearch("香港人口幾多")).toBe(true);
     expect(shouldTryWebSearch("hello", { basicMode: true })).toBe(false);
@@ -55,6 +61,12 @@ describe("companionWebSearch", () => {
     expect(result.ok).toBe(true);
     expect(result.summary).toContain("Hong Kong");
     expect(result.source).toBe("duckduckgo");
+  });
+
+  it("parses Google News RSS items", () => {
+    const xml = `<?xml version="1.0"?><rss><channel><item><title>AI headline</title><description>Summary here.</description></item></channel></rss>`;
+    expect(parseGoogleNewsRss(xml)).toContain("AI headline");
+    expect(parseGoogleNewsRss(xml)).toContain("Summary here");
   });
 
   it("parses DuckDuckGo HTML snippets", () => {

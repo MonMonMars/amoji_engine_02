@@ -12,6 +12,7 @@ import {
   corsHeaders,
   processChatRequest,
 } from "../amoji-engine/engine/companion/chatApiHandler.mjs";
+import { searchWeb } from "../amoji-engine/engine/companion/companionWebSearch.mjs";
 
 const root = pathJoin(fileURLToPath(new URL(".", import.meta.url)), "..");
 
@@ -78,6 +79,39 @@ export function startLocalStaticServer(port = 0) {
             build: AMOJI_BUILD,
           }),
         );
+        return;
+      }
+      if (p === "/api/search" && req.method === "POST") {
+        readJsonBody(req)
+          .then(async (body) => {
+            const query = String(body.query || body.message || "").trim();
+            if (!query) {
+              return { ok: false, error: "empty query", status: 400 };
+            }
+            const result = await searchWeb(query, fetch);
+            return {
+              ok: result.ok,
+              summary: result.summary,
+              source: result.source,
+              status: 200,
+            };
+          })
+          .then((result) => {
+            const status = result.status || (result.ok === false && result.error ? 400 : 200);
+            res.writeHead(status, {
+              ...corsHeaders(),
+              "Content-Type": "application/json; charset=utf-8",
+              "Cache-Control": "no-store",
+            });
+            res.end(JSON.stringify(result));
+          })
+          .catch((err) => {
+            res.writeHead(500, {
+              ...corsHeaders(),
+              "Content-Type": "application/json; charset=utf-8",
+            });
+            res.end(JSON.stringify({ ok: false, error: err?.message || String(err) }));
+          });
         return;
       }
       if (p === "/api/chat" && req.method === "POST") {

@@ -1,17 +1,23 @@
 /**
- * Live web snapshots for companion LLM — weather, DuckDuckGo, Wikipedia.
+ * Live web snapshots for companion LLM — news, search, weather, sites, Wikipedia.
  */
-export const COMPANION_WEB_SEARCH_SCHEMA = "amoji.companionWebSearch.v1";
+export const COMPANION_WEB_SEARCH_SCHEMA = "amoji.companionWebSearch.v2";
 
 const SEARCH_UA = "AmojiCompanion/1.0 (web-search)";
-const SEARCH_TIMEOUT_MS = 7000;
+const SEARCH_TIMEOUT_MS = 9000;
+const URL_FETCH_MAX_CHARS = 2400;
 
 /** Live / lookup facts only — not greetings, 今日點呀, or generic 咩/how questions. */
 const LIVE_FACT_RE =
   /天氣|天气|weather|溫度|温度|气温|幾度|几度|下雨|雨不雨|forecast|觀測|观测|天文台|新聞|新闻|\bnews\b|headline|breaking|股價|股价|\bstock\b|比分|\bscore\b|幾錢|几錢|價格|价格|\bprices?\b|\bcost\b|匯率|汇率|最新消息/i;
 
 const LOOKUP_RE =
-  /搜(?:索|尋|一下)?|查下|查詢|查询|\bgoogle\b|網上查|网上查|\bwiki\b|百科|\blookup\b|look\s*up|\bsearch(?:\s+for)?\b|tell me about|介紹一下|介绍一下|什麼是|什么是|係咩嚟|係乜嚟/i;
+  /搜(?:索|尋|一下)?|查下|查詢|查询|\bgoogle\b|網上查|网上查|\bwiki\b|百科|\blookup\b|look\s*up|\bsearch(?:\s+for)?\b|tell me about|介紹一下|介绍一下|什麼是|什么是|係咩嚟|係乜嚟|上網|上网|browse|open\s+(the\s+)?(web|site|page|link)|read\s+(this|the)\s+(page|site|article)/i;
+
+const NEWS_RE =
+  /新聞|新闻|頭條|头条|時事|时事|快訊|快讯|breaking|headlines?|top\s+stories|world\s+news|local\s+news|latest\s+news|current\s+events|what(?:'s|\s+is)\s+happening|recent\s+news|今日.*(新聞|新闻)|報章|报章|媒體|媒体/i;
+
+const HTTP_URL_RE = /https?:\/\/[^\s<>"')\]}]+/gi;
 
 const DEFINE_EN_RE =
   /\b(?:who\s+is|who'?s|what\s+is|what'?s|what\s+are|how\s+many|how\s+much|where\s+is|when\s+is|what\s+time)\b/i;
@@ -63,12 +69,24 @@ const LATIN_STOP = new Set([
 /**
  * @param {string | null | undefined} message
  */
+/**
+ * @param {string | null | undefined} message
+ * @returns {string[]}
+ */
+export function extractHttpUrls(message) {
+  const text = String(message || "");
+  const urls = text.match(HTTP_URL_RE) || [];
+  return [...new Set(urls.map((u) => u.replace(/[.,;:!?)]+$/, "")))].slice(0, 3);
+}
+
 export function needsWebSearch(message) {
   const text = String(message || "").trim();
   if (!text) return false;
+  if (extractHttpUrls(text).length) return true;
   return (
     WEATHER_RE.test(text) ||
     LIVE_FACT_RE.test(text) ||
+    NEWS_RE.test(text) ||
     LOOKUP_RE.test(text) ||
     DEFINE_EN_RE.test(text) ||
     CANTONESE_FACT_RE.test(text)
@@ -316,6 +334,121 @@ async function searchDuckDuckGoHtml(query, fetchImpl) {
   return { summary, source: "duckduckgo-html" };
 }
 
+/**
+ * @param {string} xml
+ */
+export function parseGoogleNewsRss(xml) {
+  const lines = [];
+  const items = String(xml || "").match(/<item[\s\S]*?<\/item>/gi) || [];
+  for (const block of items.slice(0, 8)) {
+    const title = decodeHtml(
+      block.match(/<title>([\s\S]*?)<\/title>/i)?.[1] || "",
+    );
+    const desc = decodeHtml(
+      block.match(/<description>([\s\S]*?)<\/description>/i)?.[1] || "",
+    );
+    const line = [title, desc].filter(Boolean).join(" — ");
+    if (line) lines.push(line);
+  }
+  return lines.join(" ").replace(/\s+/g, " ").trim().slice(0, 1600);
+}
+
+async function searchGoogleNews(query, fetchImpl) {
+  const q = extractSearchQuery(query) || query;
+  const zh = /[\u4e00-\u9fff]/.test(q);
+  const hl = zh ? "zh-HK" : "en-US";
+  const gl = zh ? "HK" : "US";
+  const ceid = zh ? "HK:zh-HK" : "US:en";
+  const packed = await fetchText(
+    fetchImpl,
+    `https://news.google.com/rss/search?q=${encodeURIComponent(q)}&hl=${hl}&gl=${gl}&ceid=${ceid}`,
+    { headers: { Accept: "application/rss+xml, application/xml, text/xml, */*" } },
+  );
+  const summary = parseGoogleNewsRss(packed.text);
+  if (!summary) return null;
+  return { summary, source: "google-news-rss" };
+}
+
+/**
+ * Google Programmable Search (optional — set GOOGLE_CSE_API_KEY + GOOGLE_CSE_ID on server).
+ * @param {string} query
+ * @param {typeof fetch} fetchImpl
+ */
+async function searchGoogleCustomSearch(query, fetchImpl) {
+  const key =
+    (typeof process !== "undefined" && process.env?.GOOGLE_CSE_API_KEY) ||
+    (typeof process !== "undefined" && process.env?.GOOGLE_SEARCH_API_KEY) ||
+    "";
+  const cx =
+    (typeof process !== "undefined" && process.env?.GOOGLE_CSE_ID) ||
+    (typeof process !== "undefined" && process.env?.GOOGLE_SEARCH_CX) ||
+    "";
+  if (!key || !cx) return null;
+  const packed = await fetchText(
+    fetchImpl,
+    `https://www.googleapis.com/customsearch/v1?key=${encodeURIComponent(key)}&cx=${encodeURIComponent(cx)}&q=${encodeURIComponent(query)}&num=5`,
+  );
+  const items = packed.json?.items;
+  if (!Array.isArray(items) || !items.length) return null;
+  const summary = items
+    .slice(0, 5)
+    .map((it) => {
+      const title = decodeHtml(String(it.title || ""));
+      const snip = decodeHtml(String(it.snippet || ""));
+      return [title, snip].filter(Boolean).join(" — ");
+    })
+    .join(" ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 1600);
+  if (!summary) return null;
+  return { summary, source: "google-cse" };
+}
+
+/**
+ * @param {string} url
+ * @param {typeof fetch} fetchImpl
+ */
+export async function fetchPublicUrlSnapshot(url, fetchImpl = fetch) {
+  const raw = String(url || "").trim();
+  if (!/^https?:\/\//i.test(raw)) return null;
+  let parsed;
+  try {
+    parsed = new URL(raw);
+  } catch {
+    return null;
+  }
+  if (/^(localhost|127\.|0\.0\.0\.0|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/i.test(parsed.hostname)) {
+    return null;
+  }
+  const packed = await fetchText(fetchImpl, raw, {
+    headers: { Accept: "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8" },
+  });
+  if (!packed.ok || !packed.text) return null;
+  const html = packed.text.slice(0, 120_000);
+  const title = decodeHtml(html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1] || "");
+  const metaDesc = decodeHtml(
+    html.match(/<meta[^>]+name=["']description["'][^>]+content=["']([^"']+)["']/i)?.[1] ||
+      html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+name=["']description["']/i)?.[1] ||
+      "",
+  );
+  const bodyText = decodeHtml(
+    html
+      .replace(/<script[\s\S]*?<\/script>/gi, " ")
+      .replace(/<style[\s\S]*?<\/style>/gi, " ")
+      .replace(/<[^>]+>/g, " "),
+  )
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, URL_FETCH_MAX_CHARS);
+  const summary = [`Page: ${parsed.hostname}`, title, metaDesc, bodyText]
+    .filter(Boolean)
+    .join(" — ")
+    .slice(0, URL_FETCH_MAX_CHARS);
+  if (summary.length < 24) return null;
+  return { summary, source: `url:${parsed.hostname}` };
+}
+
 async function searchWikipedia(query, fetchImpl, lang) {
   const open = await fetchText(
     fetchImpl,
@@ -341,28 +474,53 @@ async function searchWikipedia(query, fetchImpl, lang) {
  */
 export async function searchWeb(query, fetchImpl = fetch) {
   const q = extractSearchQuery(query);
-  if (!q) return { ok: false, summary: "", source: null };
+  if (!q && !extractHttpUrls(query).length) {
+    return { ok: false, summary: "", source: null };
+  }
 
   /** @type {Promise<({ summary: string, source: string } | null)>[]} */
   const jobs = [];
-  if (WEATHER_RE.test(q)) {
-    jobs.push(searchWttr(q, fetchImpl).catch(() => null));
+  for (const url of extractHttpUrls(query)) {
+    jobs.push(fetchPublicUrlSnapshot(url, fetchImpl).catch(() => null));
   }
-  jobs.push(searchDuckDuckGoInstant(q, fetchImpl).catch(() => null));
-  jobs.push(searchDuckDuckGoHtml(q, fetchImpl).catch(() => null));
-  const langs = /[\u4e00-\u9fff]/.test(q) ? ["zh", "en"] : ["en", "zh"];
-  jobs.push(searchWikipedia(q, fetchImpl, langs[0]).catch(() => null));
+  const searchQ = q || query;
+  if (WEATHER_RE.test(searchQ)) {
+    jobs.push(searchWttr(searchQ, fetchImpl).catch(() => null));
+  }
+  if (NEWS_RE.test(searchQ) || NEWS_RE.test(query)) {
+    jobs.push(searchGoogleNews(searchQ, fetchImpl).catch(() => null));
+  }
+  jobs.push(searchGoogleCustomSearch(searchQ, fetchImpl).catch(() => null));
+  jobs.push(searchDuckDuckGoInstant(searchQ, fetchImpl).catch(() => null));
+  jobs.push(searchDuckDuckGoHtml(searchQ, fetchImpl).catch(() => null));
+  const langs = /[\u4e00-\u9fff]/.test(searchQ) ? ["zh", "en"] : ["en", "zh"];
+  jobs.push(searchWikipedia(searchQ, fetchImpl, langs[0]).catch(() => null));
 
   const settled = (await Promise.all(jobs)).filter(Boolean);
   const ordered = [
+    ...settled.filter((hit) => hit.source?.startsWith("url:")),
+    ...settled.filter((hit) => hit.source === "google-cse"),
+    ...settled.filter((hit) => hit.source === "google-news-rss"),
     ...settled.filter((hit) => hit.source === "wttr"),
-    ...settled.filter((hit) => hit.source !== "wttr"),
+    ...settled.filter(
+      (hit) =>
+        hit.source !== "wttr" &&
+        hit.source !== "google-news-rss" &&
+        hit.source !== "google-cse" &&
+        !hit.source?.startsWith("url:"),
+    ),
   ];
   const parts = [];
   let source = null;
   for (const hit of ordered) {
     if (!hit?.summary) continue;
-    if (!snapshotLooksUseful(q, hit.summary, hit.source)) continue;
+    const skipUsefulness =
+      hit.source?.startsWith("url:") ||
+      hit.source === "google-news-rss" ||
+      hit.source === "google-cse";
+    if (!skipUsefulness && !snapshotLooksUseful(query, hit.summary, hit.source)) {
+      continue;
+    }
     if (!source) source = hit.source;
     if (!parts.includes(hit.summary)) parts.push(hit.summary);
     if (hit.source === "wttr") break;
@@ -419,11 +577,14 @@ function packWebContext(message, result) {
   if (!result?.ok || !result.summary) {
     return { searched: true, context: "", source: result?.source || null };
   }
-  if (!snapshotLooksUseful(message, result.summary, result.source)) {
+  if (
+    !result.source?.startsWith("url:") &&
+    !snapshotLooksUseful(message, result.summary, result.source)
+  ) {
     return { searched: true, context: "", source: result.source || null };
   }
   const context = [
-    "Optional web snapshot. Use a fact only if it answers THIS user turn. If unrelated, ignore it and chat normally. Never paste the snapshot as the whole reply:",
+    "Live web / news snapshot (search, Google News, or page excerpt). Summarize relevant facts for THIS turn in your own words. Cite source briefly when useful. Do not paste raw text:",
     result.summary,
   ].join("\n");
   return { searched: true, context, source: result.source };
