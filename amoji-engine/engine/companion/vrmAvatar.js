@@ -598,7 +598,8 @@ export async function createVrmAvatar(opts) {
   };
   const cameraDirector = createCompanionCameraDirector();
   cameraDirector.resetBootGrace();
-  const pokeMeshes = collectAvatarPokeMeshes(model);
+  const refreshPokeMeshes = () => collectAvatarPokeMeshes(model);
+  let pokeMeshes = refreshPokeMeshes();
   /** @type {{ target: THREE.Vector3, position: THREE.Vector3, fov: number } | null} */
   let cameraResetAnim = null;
   /** @type {ReturnType<typeof bindCompanionAvatarPointer> | null} */
@@ -1184,8 +1185,15 @@ export async function createVrmAvatar(opts) {
 
   const applyTalkMouthNow = (now = performance.now()) => {
     softenTalkMouthOverrides(expr, talking || eating);
-    let open = talkingMouthOpen(talking, mouthOpen, now, eating);
-    if (!talking && !eating) {
+    const voiceDrivingMouth =
+      mouthTarget > MOUTH_CLOSE_EPS || mouthOpen > MOUTH_CLOSE_EPS;
+    let open = talkingMouthOpen(
+      talking || voiceDrivingMouth,
+      mouthOpen,
+      now,
+      eating,
+    );
+    if (!talking && !eating && !voiceDrivingMouth) {
       open = 0;
       if (mouthOpen < MOUTH_CLOSE_EPS) mouthOpen = 0;
       if (mouthTarget < MOUTH_CLOSE_EPS) mouthTarget = 0;
@@ -1650,7 +1658,10 @@ export async function createVrmAvatar(opts) {
     rectElement: canvas,
     camera,
     controls,
-    getPokeMeshes: () => pokeMeshes,
+    getPokeMeshes: () => {
+      if (!pokeMeshes.length) pokeMeshes = refreshPokeMeshes();
+      return pokeMeshes.length ? pokeMeshes : refreshPokeMeshes();
+    },
     getPokeWaistY: () => computePokeWaistYFromObject(model),
     getScreenBand: () => {
       const r = canvas.getBoundingClientRect();

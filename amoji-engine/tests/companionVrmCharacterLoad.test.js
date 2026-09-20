@@ -19,7 +19,7 @@ describe("vrmAvatar boot clock", () => {
 
   it("writes viseme morphs after expressionManager.update so Happy cannot freeze the jaw", () => {
     const start = vrmSource.indexOf("const applyTalkMouthNow");
-    const fn = vrmSource.slice(start, start + 900);
+    const fn = vrmSource.slice(start, start + 1200);
     const updateAt = fn.indexOf("expr?.update");
     const morphAt = fn.indexOf("applyMorphMouthOpen");
     const emotionAt = fn.indexOf("applyTalkEmotionMorphs");
