@@ -91,6 +91,15 @@
 
 .companion-picker--aaa-theme .picker-showcase-stage {
   padding: 0.25rem 1rem 0.15rem;
+  overflow: hidden;
+}
+
+.companion-picker--aaa-theme.companion-picker--stacked-layout.companion-picker--start .picker-hero-portrait {
+  width: min(32vw, 7.25rem) !important;
+  max-width: 7.25rem !important;
+  max-height: min(22vh, 8.25rem) !important;
+  aspect-ratio: 3 / 4;
+  flex: 0 0 auto;
 }
 
 .companion-picker--aaa-theme.companion-picker--stacked-layout .picker-hero {
@@ -150,8 +159,8 @@
   display: block;
   width: 100%;
   height: 100%;
-  min-height: 100%;
-  object-fit: cover;
+  max-height: 100%;
+  object-fit: contain;
   object-position: center top;
   border-radius: 0.92rem;
   background: #120a1e;
@@ -241,9 +250,21 @@
 }
 
 .companion-picker--aaa-theme .companion-card--start-strip .companion-card-portrait {
+  height: 3.85rem;
+  max-height: 3.85rem;
+  overflow: hidden;
   border-radius: 0.78rem;
   background: radial-gradient(ellipse at 50% 20%, rgba(139, 124, 248, 0.12), rgba(0, 0, 0, 0.35));
   border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.companion-picker--aaa-theme .companion-card--start-strip .companion-card-portrait img {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  object-fit: contain !important;
+  object-position: center top !important;
 }
 
 .companion-picker--aaa-theme .companion-card--start-strip .companion-card-name {
@@ -270,9 +291,16 @@
   color: #fff8ef;
 }
 
+.companion-picker--aaa-theme .picker-background-row {
+  position: relative;
+  z-index: 8;
+  flex-shrink: 0;
+}
+
 .companion-picker--aaa-theme .picker-background-row .picker-scene-section {
-  background: rgba(0, 0, 0, 0.38);
+  background: rgba(0, 0, 0, 0.55);
   border-top: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.35);
 }
 
 .companion-picker--aaa-theme .picker-scene-label {

@@ -91,3 +91,61 @@
   flex-shrink: 0;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
+
+/* Start picker: grid rows so background row is never squeezed off-screen */
+.companion-picker--stacked-layout.companion-picker--start .picker-main--stacked {
+  display: grid !important;
+  grid-template-rows: minmax(0, auto) auto auto;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.companion-picker--stacked-layout.companion-picker--start .picker-showcase-stage {
+  flex: 0 1 auto !important;
+  max-height: min(30vh, 10.5rem);
+  overflow: hidden;
+}
+
+.companion-picker--stacked-layout.companion-picker--start .picker-roster-row {
+  flex-shrink: 0;
+  max-height: min(7.5rem, 22vh);
+  overflow: hidden;
+}
+
+.companion-picker--stacked-layout.companion-picker--start .start-picker-grid-wrap {
+  max-height: min(6.75rem, 20vh);
+  overflow: hidden;
+}
+
+.companion-picker--stacked-layout.companion-picker--start .picker-background-row {
+  position: relative;
+  z-index: 6;
+  flex-shrink: 0;
+  isolation: isolate;
+}
+
+.companion-picker--stacked-layout .picker-hero-portrait {
+  max-height: min(24vh, 8.75rem);
+  overflow: hidden;
+}
+
+.companion-picker--stacked-layout .companion-card--start-strip .companion-card-portrait {
+  height: 3.85rem;
+  max-height: 3.85rem;
+  aspect-ratio: 3 / 4;
+  overflow: hidden;
+}
+
+.companion-picker--stacked-layout .companion-card--start-strip .companion-card-portrait img {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  object-fit: contain !important;
+  object-position: center top !important;
+}
+
+.companion-picker--stacked-layout .companion-card--start-strip.is-selected {
+  transform: translateY(-2px) scale(1.02);
+}

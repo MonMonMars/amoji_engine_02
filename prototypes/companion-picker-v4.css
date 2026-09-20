@@ -881,10 +881,12 @@
   }
 
   .companion-picker--v4.companion-picker--start.companion-picker--showcase .companion-picker-grid--start.companion-picker-grid--roster {
-    grid-template-columns: repeat(4, minmax(4.35rem, 1fr)) !important;
+    grid-template-columns: unset !important;
+    grid-auto-flow: column !important;
+    grid-auto-columns: minmax(3.85rem, 4.25rem) !important;
     gap: 0.42rem;
     padding-bottom: 0.32rem;
-    max-height: min(16rem, 44vh);
+    max-height: none;
   }
 }
 
