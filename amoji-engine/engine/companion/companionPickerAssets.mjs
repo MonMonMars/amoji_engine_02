@@ -6,7 +6,7 @@ import { AMOJI_BUILD } from "./buildVersion.mjs";
 export const COMPANION_PICKER_ASSETS_SCHEMA = "amoji.companionPickerAssets.v1";
 
 /** Bump when picker-aaa-bg.png or companion-bg-anime.png changes. */
-export const PICKER_SCENE_ART_REVISION = "picker-anime-v407-beautiful-bg";
+export const PICKER_SCENE_ART_REVISION = "picker-anime-v411-hq-scene-png";
 
 export const PICKER_AAA_BG_PATH = "/prototypes/assets/picker-aaa-bg.png";
 export const COMPANION_ANIME_BG_PATH = "/prototypes/assets/companion-bg-anime.png";

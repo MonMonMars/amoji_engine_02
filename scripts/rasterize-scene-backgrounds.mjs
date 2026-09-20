@@ -3,7 +3,7 @@
  * Rasterize scene SVG art to 1920×1080 PNG for crisp companion backgrounds.
  * Requires: playwright (repo root). Run after generate-scene-backgrounds.mjs
  */
-import { mkdirSync, readFileSync, writeFileSync, existsSync } from "node:fs";
+import { mkdirSync, readFileSync, existsSync, copyFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { chromium } from "playwright";
@@ -40,4 +40,17 @@ for (const preset of SCENE_BACKGROUND_PRESETS) {
 }
 
 await browser.close();
+
+const assetsDir = join(root, "../prototypes/assets");
+const nightCityPng = join(pngDir, "night-city.png");
+const pickerSrc = join(pngDir, "rain-street.png");
+if (existsSync(nightCityPng)) {
+  copyFileSync(nightCityPng, join(assetsDir, "companion-bg-anime.png"));
+  console.log("companion-bg-anime.png ← night-city");
+}
+if (existsSync(pickerSrc)) {
+  copyFileSync(pickerSrc, join(assetsDir, "picker-aaa-bg.png"));
+  console.log("picker-aaa-bg.png ← rain-street");
+}
+
 console.log(`\n✅ ${written} PNG scene backgrounds → ${pngDir}`);
