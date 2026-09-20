@@ -109,13 +109,32 @@
 
 .companion-picker--stacked-layout.companion-picker--start .picker-roster-row {
   flex-shrink: 0;
-  max-height: min(7.5rem, 22vh);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  max-height: min(7.75rem, 22vh);
   overflow: hidden;
+  contain: layout paint;
+}
+
+.companion-picker--stacked-layout.companion-picker--start .picker-roster-dock-label {
+  flex: 0 0 auto;
+  margin: 0 0 0.15rem;
+  line-height: 1.15;
+  font-size: 0.66rem;
 }
 
 .companion-picker--stacked-layout.companion-picker--start .start-picker-grid-wrap {
-  max-height: min(6.75rem, 20vh);
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: 4.35rem;
   overflow: hidden;
+}
+
+.companion-picker--stacked-layout.companion-picker--start .companion-picker-grid--start {
+  max-height: 100%;
+  overflow-y: hidden;
+  align-items: stretch;
 }
 
 .companion-picker--stacked-layout.companion-picker--start .picker-background-row {
@@ -131,8 +150,8 @@
 }
 
 .companion-picker--stacked-layout .companion-card--start-strip .companion-card-portrait {
-  height: 3.85rem;
-  max-height: 3.85rem;
+  height: 3.15rem;
+  max-height: 3.15rem;
   aspect-ratio: 3 / 4;
   overflow: hidden;
 }

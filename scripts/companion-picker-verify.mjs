@@ -151,6 +151,59 @@ record(
   String(boot.sceneChips),
 );
 
+const pickerChrome = await page.evaluate(() => {
+  const tb = document.querySelector(".topbar");
+  const comp = document.querySelector(".composer-wrap");
+  const tbs = tb ? getComputedStyle(tb) : null;
+  const cs = comp ? getComputedStyle(comp) : null;
+  const atm = document.querySelector(".atmosphere");
+  const bg = atm ? getComputedStyle(atm).backgroundImage : "";
+  const arrows = document.querySelectorAll(
+    "#start-character-picker .scroll-affordance-btn",
+  ).length;
+  const stage = document.querySelector(".stage");
+  const stageW = stage?.getBoundingClientRect().width ?? 0;
+  return {
+    topbarHidden:
+      !tb ||
+      (tbs.visibility === "hidden" && Number(tbs.opacity) <= 0.01) ||
+      tbs.display === "none",
+    composerHidden:
+      !comp ||
+      (cs.visibility === "hidden" && Number(cs.opacity) <= 0.01) ||
+      Number(cs.zIndex) <= 1,
+    atmosphereUsesPng: /\.png/i.test(bg),
+    scrollArrows: arrows,
+    stageMaxWidthOk: stageW <= 520 && stageW >= 280,
+    bodyPickerOpen: document.body.classList.contains("companion-picker-open"),
+  };
+});
+record(
+  "topbar hidden during start picker",
+  pickerChrome.bodyPickerOpen && pickerChrome.topbarHidden,
+  JSON.stringify(pickerChrome),
+);
+record(
+  "composer hidden during start picker",
+  pickerChrome.bodyPickerOpen && pickerChrome.composerHidden,
+  JSON.stringify(pickerChrome),
+);
+record(
+  "scene atmosphere uses PNG art",
+  pickerChrome.atmosphereUsesPng,
+  String(pickerChrome.atmosphereUsesPng),
+);
+record(
+  "roster scroll arrows wired",
+  pickerChrome.scrollArrows >= 2,
+  String(pickerChrome.scrollArrows),
+);
+record(
+  "unified app max width on stage",
+  pickerChrome.stageMaxWidthOk,
+  String(pickerChrome.stageMaxWidthOk),
+);
+
 const layout = await page.evaluate((minRoster) => {
   const footer = document.querySelector("#start-character-picker .picker-footer");
   const wrap = document.querySelector("#start-character-picker .start-picker-grid-wrap");
@@ -206,7 +259,7 @@ const layout = await page.evaluate((minRoster) => {
   return {
     ok:
       sceneBottom <= footerTop + 2 &&
-      gridBottom <= sceneTop + 4 &&
+      wrapBottom <= sceneTop + 4 &&
       visibleOverlap === 0 &&
       brokenImgs === 0 &&
       grid.clientHeight >= 72 &&

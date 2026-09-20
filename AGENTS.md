@@ -9,10 +9,17 @@ After completing code changes (commit, push, or PR), **always** end your summary
 **Never paste demo links without running the verifier first:**
 
 ```bash
-# 1. Local — must pass before every delivery
-LOCAL=1 node scripts/demo-link-verify.mjs
+# Full gate (unit tests + demo + picker + reported-issues) — run before every user delivery
+npm run verify:pre-delivery
 
-# 2. Production — run after merge/deploy; must pass before calling links "live"
+# After merge/deploy — same gate against production
+npm run verify:pre-delivery:prod
+```
+
+Quick checks only:
+
+```bash
+LOCAL=1 node scripts/demo-link-verify.mjs
 node scripts/demo-link-verify.mjs
 ```
 

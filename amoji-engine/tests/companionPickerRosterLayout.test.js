@@ -24,6 +24,6 @@ describe("companionPickerRosterLayout", () => {
 
   it("reserves a dedicated background row in stacked start picker", () => {
     expect(stackedCss).toMatch(/\.picker-background-row[\s\S]*z-index:\s*6/);
-    expect(stackedCss).toMatch(/companion-card-portrait[\s\S]*max-height:\s*3\.85rem/);
+    expect(stackedCss).toMatch(/companion-card-portrait[\s\S]*max-height:\s*3\.15rem/);
   });
 });

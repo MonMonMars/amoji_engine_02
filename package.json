@@ -14,6 +14,8 @@
     "verify:local": "node scripts/run-companion-smoke.mjs",
     "verify:mobile": "node scripts/mobile-app-verify.mjs",
     "verify:production": "node scripts/demo-link-verify.mjs",
+    "verify:pre-delivery": "node scripts/pre-delivery-verify.mjs",
+    "verify:pre-delivery:prod": "PRODUCTION=1 node scripts/pre-delivery-verify.mjs",
     "verify:picker": "node scripts/companion-picker-verify.mjs",
     "scene-bg": "node scripts/generate-scene-backgrounds.mjs && node scripts/rasterize-scene-backgrounds.mjs",
     "postinstall": "node amoji-engine/scripts/download-legal-vrm.mjs",

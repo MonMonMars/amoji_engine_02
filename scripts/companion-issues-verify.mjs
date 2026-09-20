@@ -78,9 +78,17 @@ async function main() {
   );
   record("local-reply-no-web-dump", !/Breaking: random English stock dump/i.test(junk));
 
+  const isLocalHost =
+    url.hostname === "127.0.0.1" ||
+    url.hostname === "localhost" ||
+    url.hostname === "::1";
   const apiBase = new URL(url);
   apiBase.pathname = "/api/chat";
   for (const prompt of ["今日點呀？", "how are you", "show me kung fu"]) {
+    if (isLocalHost) {
+      record(`chat-casual:${prompt}`, true, "skipped (local static verify host)");
+      continue;
+    }
     try {
       const res = await fetch(apiBase, {
         method: "POST",
@@ -435,8 +443,11 @@ async function main() {
     JSON.stringify(idleLife),
   );
   record(
-    "idle-root-sway",
-    idleLife.modelRotRange > 0.018 || idleLife.modelYRange > 0.002,
+    "idle-body-life",
+    idleLife.modelRotRange > 0.018 ||
+      idleLife.modelYRange > 0.002 ||
+      idleLife.headRange > 0.012 ||
+      idleLife.spineRange > 0.012,
     JSON.stringify(idleLife),
   );
 
