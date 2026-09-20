@@ -10,6 +10,9 @@ import { chromium } from "playwright";
 import { mkdirSync } from "fs";
 import { join } from "path";
 import { AMOJI_BUILD } from "../amoji-engine/engine/companion/buildVersion.mjs";
+import { CHARACTER_IDS } from "../amoji-engine/engine/companion/companionCharacterCatalog.js";
+
+const ROSTER_SIZE = CHARACTER_IDS.length;
 import {
   beginStartPickerSession,
   openInSessionCompanionPicker,
@@ -127,8 +130,16 @@ record("hero stage section", boot.heroStage);
 record("hero preview", boot.hero);
 record("roster dock", boot.rosterDock);
 record("roster grid class", boot.horizontalRoster);
-record("full roster grid (17)", boot.roster === 17, String(boot.roster));
-record("strip roster cards", boot.stripCards >= 8, String(boot.stripCards));
+record(
+  `full roster grid (${ROSTER_SIZE})`,
+  boot.roster === ROSTER_SIZE,
+  String(boot.roster),
+);
+record(
+  "strip roster cards",
+  boot.stripCards >= Math.min(8, ROSTER_SIZE),
+  String(boot.stripCards),
+);
 record("no search toolbar", !boot.toolbar);
 record("no filter chips", boot.filters === 0, String(boot.filters));
 record("no featured row", boot.featured === 0, String(boot.featured));
@@ -200,7 +211,7 @@ const layout = await page.evaluate(() => {
       brokenImgs === 0 &&
       grid.clientHeight >= 72 &&
       horizontalRoster &&
-      cards.length >= 17 &&
+      cards.length >= ROSTER_SIZE &&
       cardsLargeEnough &&
       Boolean(scene),
     horizontalRoster,
@@ -231,13 +242,13 @@ record(
   "horizontal roster with readable cards",
   layout.horizontalRoster &&
     layout.cardsLargeEnough &&
-    layout.cardCount >= 17,
+    layout.cardCount >= ROSTER_SIZE,
   `flow=${layout.horizontalRoster} cards=${layout.cardCount} minW=${layout.minPortraitW}`,
 );
 record(
-  "strip cards numbered 1-17",
+  `strip cards numbered 1-${ROSTER_SIZE}`,
   Array.isArray(layout.cardNumbers) &&
-    layout.cardNumbers.includes("17") &&
+    layout.cardNumbers.includes(String(ROSTER_SIZE)) &&
     layout.cardNumbers.includes("5"),
   JSON.stringify(layout.cardNumbers),
 );
