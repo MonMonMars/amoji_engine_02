@@ -44,6 +44,24 @@
     <stop offset="40%" stop-color="#e8e0f0"/>
     <stop offset="100%" stop-color="#e8e0f000"/>
   </radialGradient>
+  <linearGradient id="wallWarm" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0%" stop-color="#fff0e4"/>
+    <stop offset="45%" stop-color="#e8c8b0"/>
+    <stop offset="100%" stop-color="#c8a088"/>
+  </linearGradient>
+  <linearGradient id="wallCool" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#eef2f8"/>
+    <stop offset="100%" stop-color="#b8c0d0"/>
+  </linearGradient>
+  <linearGradient id="floorWood" x1="0" y1="0.6" x2="0" y2="1">
+    <stop offset="0%" stop-color="#a88870"/>
+    <stop offset="100%" stop-color="#685040"/>
+  </linearGradient>
+  <radialGradient id="lampGlow" cx="0.5" cy="0.5" r="0.5">
+    <stop offset="0%" stop-color="#fff8e0"/>
+    <stop offset="70%" stop-color="#ffd898" stop-opacity="0.35"/>
+    <stop offset="100%" stop-color="#ffd898" stop-opacity="0"/>
+  </radialGradient>
 </defs>
   <rect width="960" height="540" fill="url(#skySunset)"/>
   <polygon points="691.1999999999999,43.2 1299.9135179251016,-178.99777923113248 1308.3121532859423,-154.4779964153514" fill="#ffd0a0" opacity="0.04"/><polygon points="691.1999999999999,43.2 1315.723540845097,-129.64197097436255 1322.1358239634828,-104.52943525080205" fill="#ffd0a0" opacity="0.04"/><polygon points="691.1999999999999,43.2 1327.5387443559912,-79.18056394477235 1331.9236585025553,-53.635909842892275" fill="#ffd0a0" opacity="0.04"/><polygon points="691.1999999999999,43.2 1335.2835514759395,-27.936338942489257 1337.613048164125,-2.1229650747212148" fill="#ffd0a0" opacity="0.04"/><polygon points="691.1999999999999,43.2 1338.9084218693438,23.762915868782834 1339.1676002699992,49.67989200054002" fill="#ffd0a0" opacity="0.04"/><polygon points="691.1999999999999,43.2 1338.390168735938,75.58650168739959 1336.577370991772,101.44129988031119" fill="#ffd0a0" opacity="0.04"/><polygon points="691.1999999999999,43.2 1333.7321071271826,127.20292441756226 1329.8589289573952,152.83016219541344" fill="#ffd0a0" opacity="0.04"/><polygon points="691.1999999999999,43.2 1324.964032741248,178.2820151002726 1319.0552492684978,203.51776559693093" fill="#ffd0a0" opacity="0.04"/><polygon points="691.1999999999999,43.2 1312.1420313322278,228.4970418679335 1304.2354386063948,253.1798823998747" fill="#ffd0a0" opacity="0.04"/>

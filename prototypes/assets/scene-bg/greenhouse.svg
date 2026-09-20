@@ -44,6 +44,24 @@
     <stop offset="40%" stop-color="#e8e0f0"/>
     <stop offset="100%" stop-color="#e8e0f000"/>
   </radialGradient>
+  <linearGradient id="wallWarm" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0%" stop-color="#fff0e4"/>
+    <stop offset="45%" stop-color="#e8c8b0"/>
+    <stop offset="100%" stop-color="#c8a088"/>
+  </linearGradient>
+  <linearGradient id="wallCool" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#eef2f8"/>
+    <stop offset="100%" stop-color="#b8c0d0"/>
+  </linearGradient>
+  <linearGradient id="floorWood" x1="0" y1="0.6" x2="0" y2="1">
+    <stop offset="0%" stop-color="#a88870"/>
+    <stop offset="100%" stop-color="#685040"/>
+  </linearGradient>
+  <radialGradient id="lampGlow" cx="0.5" cy="0.5" r="0.5">
+    <stop offset="0%" stop-color="#fff8e0"/>
+    <stop offset="70%" stop-color="#ffd898" stop-opacity="0.35"/>
+    <stop offset="100%" stop-color="#ffd898" stop-opacity="0"/>
+  </radialGradient>
 </defs>
   <rect width="960" height="540" fill="#88c898"/>
   <line x1="0" y1="0" x2="0" y2="540" stroke="#fff" stroke-width="2" opacity="0.25"/><line x1="100" y1="0" x2="100" y2="540" stroke="#fff" stroke-width="2" opacity="0.25"/><line x1="200" y1="0" x2="200" y2="540" stroke="#fff" stroke-width="2" opacity="0.25"/><line x1="300" y1="0" x2="300" y2="540" stroke="#fff" stroke-width="2" opacity="0.25"/><line x1="400" y1="0" x2="400" y2="540" stroke="#fff" stroke-width="2" opacity="0.25"/><line x1="500" y1="0" x2="500" y2="540" stroke="#fff" stroke-width="2" opacity="0.25"/><line x1="600" y1="0" x2="600" y2="540" stroke="#fff" stroke-width="2" opacity="0.25"/><line x1="700" y1="0" x2="700" y2="540" stroke="#fff" stroke-width="2" opacity="0.25"/><line x1="800" y1="0" x2="800" y2="540" stroke="#fff" stroke-width="2" opacity="0.25"/><line x1="900" y1="0" x2="900" y2="540" stroke="#fff" stroke-width="2" opacity="0.25"/>

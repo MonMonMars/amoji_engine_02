@@ -44,6 +44,24 @@
     <stop offset="40%" stop-color="#e8e0f0"/>
     <stop offset="100%" stop-color="#e8e0f000"/>
   </radialGradient>
+  <linearGradient id="wallWarm" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0%" stop-color="#fff0e4"/>
+    <stop offset="45%" stop-color="#e8c8b0"/>
+    <stop offset="100%" stop-color="#c8a088"/>
+  </linearGradient>
+  <linearGradient id="wallCool" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#eef2f8"/>
+    <stop offset="100%" stop-color="#b8c0d0"/>
+  </linearGradient>
+  <linearGradient id="floorWood" x1="0" y1="0.6" x2="0" y2="1">
+    <stop offset="0%" stop-color="#a88870"/>
+    <stop offset="100%" stop-color="#685040"/>
+  </linearGradient>
+  <radialGradient id="lampGlow" cx="0.5" cy="0.5" r="0.5">
+    <stop offset="0%" stop-color="#fff8e0"/>
+    <stop offset="70%" stop-color="#ffd898" stop-opacity="0.35"/>
+    <stop offset="100%" stop-color="#ffd898" stop-opacity="0"/>
+  </radialGradient>
 </defs>
   <rect width="960" height="540" fill="url(#skyDay)"/>
   <ellipse cx="0" cy="43.2" rx="144" ry="33.6" fill="#fff" opacity="0.06"/><ellipse cx="60" cy="35.2" rx="108" ry="26.4" fill="#fff" opacity="0.05"/><ellipse cx="489.6" cy="75.60000000000001" rx="192" ry="44.800000000000004" fill="#fff" opacity="0.09"/><ellipse cx="549.6" cy="67.60000000000001" rx="144" ry="35.2" fill="#fff" opacity="0.05"/><ellipse cx="211.2" cy="108" rx="240" ry="56" fill="#fff" opacity="0.12"/><ellipse cx="271.2" cy="100" rx="180" ry="44" fill="#fff" opacity="0.05"/><ellipse cx="700.8" cy="140.4" rx="144" ry="33.6" fill="#fff" opacity="0.06"/><ellipse cx="760.8" cy="132.4" rx="108" ry="26.4" fill="#fff" opacity="0.05"/><ellipse cx="422.4" cy="43.2" rx="192" ry="44.800000000000004" fill="#fff" opacity="0.09"/><ellipse cx="482.4" cy="35.2" rx="144" ry="35.2" fill="#fff" opacity="0.05"/><ellipse cx="144" cy="75.60000000000001" rx="240" ry="56" fill="#fff" opacity="0.12"/><ellipse cx="204" cy="67.60000000000001" rx="180" ry="44" fill="#fff" opacity="0.05"/><ellipse cx="633.6" cy="108" rx="144" ry="33.6" fill="#fff" opacity="0.06"/><ellipse cx="693.6" cy="100" rx="108" ry="26.4" fill="#fff" opacity="0.05"/><ellipse cx="355.2" cy="140.4" rx="192" ry="44.800000000000004" fill="#fff" opacity="0.09"/><ellipse cx="415.2" cy="132.4" rx="144" ry="35.2" fill="#fff" opacity="0.05"/><ellipse cx="76.8" cy="43.2" rx="240" ry="56" fill="#fff" opacity="0.12"/><ellipse cx="136.8" cy="35.2" rx="180" ry="44" fill="#fff" opacity="0.05"/><ellipse cx="566.4" cy="75.60000000000001" rx="144" ry="33.6" fill="#fff" opacity="0.06"/><ellipse cx="626.4" cy="67.60000000000001" rx="108" ry="26.4" fill="#fff" opacity="0.05"/><ellipse cx="288" cy="108" rx="192" ry="44.800000000000004" fill="#fff" opacity="0.09"/><ellipse cx="348" cy="100" rx="144" ry="35.2" fill="#fff" opacity="0.05"/><ellipse cx="9.6" cy="140.4" rx="240" ry="56" fill="#fff" opacity="0.12"/><ellipse cx="69.6" cy="132.4" rx="180" ry="44" fill="#fff" opacity="0.05"/>
