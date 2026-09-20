@@ -33,6 +33,20 @@ describe("companionUnifiedApp", () => {
     }
   });
 
+  it("injects LLM context database when characterId is provided", () => {
+    const prompt = buildUnifiedSessionPrompt({
+      characterPrompt: "You are Nova.",
+      role: "girlfriend",
+      isEnglish: true,
+      characterId: "nova",
+      langCode: "en",
+      menuState: { companionName: "Nova" },
+    });
+    expect(prompt).toContain("LLM CONTEXT DATABASE");
+    expect(prompt).toContain("USER MENU");
+    expect(prompt).toContain("ACTIVE 3D CHARACTER");
+  });
+
   it("returns localized role pick badges", () => {
     expect(rolePickBadge("secretary", true)).toContain("Secretary");
     expect(rolePickBadge("boyfriend", false)).toContain("男朋友");

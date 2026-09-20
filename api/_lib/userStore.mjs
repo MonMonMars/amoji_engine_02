@@ -150,6 +150,7 @@ export function defaultSave() {
     chase: null,
     characters: {},
     lastCharacterId: "nova",
+    llmContextDb: null,
   };
 }
 
@@ -185,6 +186,12 @@ export function mergeSave(current, incoming) {
   const next = { ...base, ...(incoming || {}) };
   if (incoming?.characters && typeof incoming.characters === "object") {
     next.characters = { ...(base.characters || {}), ...incoming.characters };
+  }
+  if (incoming?.llmContextDb && typeof incoming.llmContextDb === "object") {
+    next.llmContextDb = {
+      ...(base.llmContextDb || {}),
+      ...incoming.llmContextDb,
+    };
   }
   return next;
 }

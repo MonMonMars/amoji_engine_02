@@ -8,9 +8,9 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji · Companion</title>
     <script>
-      window.__amojiBuild = "2026-09-20-v377-composer-file-attach";
+      window.__amojiBuild = "2026-09-20-v378-llm-context-database";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-20-v377-composer-file-attach"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-20-v378-llm-context-database"></script>
     <link
       rel="prefetch"
       href="/prototypes/assets/companion-char-nova.png"
@@ -722,13 +722,13 @@
       media="print"
       onload="this.media='all'"
     />
-    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-20-v377-composer-file-attach" />
-    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-20-v377-composer-file-attach" />
-    <link rel="stylesheet" href="/prototypes/companion-mic-button.css?v=2026-09-20-v377-composer-file-attach" />
-    <link rel="stylesheet" href="/prototypes/companion-minimal-ui.css?v=2026-09-20-v377-composer-file-attach" />
-    <link rel="stylesheet" href="/prototypes/companion-mobile-shell.css?v=2026-09-20-v377-composer-file-attach" />
-    <link rel="stylesheet" href="/prototypes/companion-picker-v4.css?v=2026-09-20-v377-composer-file-attach" />
-    <link rel="stylesheet" href="/prototypes/companion-picker-stacked-layout.css?v=2026-09-20-v377-composer-file-attach" />
+    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-20-v378-llm-context-database" />
+    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-20-v378-llm-context-database" />
+    <link rel="stylesheet" href="/prototypes/companion-mic-button.css?v=2026-09-20-v378-llm-context-database" />
+    <link rel="stylesheet" href="/prototypes/companion-minimal-ui.css?v=2026-09-20-v378-llm-context-database" />
+    <link rel="stylesheet" href="/prototypes/companion-mobile-shell.css?v=2026-09-20-v378-llm-context-database" />
+    <link rel="stylesheet" href="/prototypes/companion-picker-v4.css?v=2026-09-20-v378-llm-context-database" />
+    <link rel="stylesheet" href="/prototypes/companion-picker-stacked-layout.css?v=2026-09-20-v378-llm-context-database" />
     <script>
       (function () {
         var params = new URLSearchParams(location.search);
@@ -754,7 +754,7 @@
       })();
     </script>
     <script type="module">
-      import { bootEarlyStartPicker } from "/amoji-engine/engine/companion/companionEarlyStartPicker.js?v=2026-09-20-v377-composer-file-attach";
+      import { bootEarlyStartPicker } from "/amoji-engine/engine/companion/companionEarlyStartPicker.js?v=2026-09-20-v378-llm-context-database";
       const bootParams = new URLSearchParams(location.search);
       if (bootParams.get("autostart") !== "1" && bootParams.get("pick") !== "0") {
         globalThis.__amojiEarlyStartPickerPromise = bootEarlyStartPicker({
@@ -4862,24 +4862,24 @@
     </style>
     <link
       rel="stylesheet"
-      href="/prototypes/companion-scene-backgrounds.css?v=2026-09-20-v377-composer-file-attach"
+      href="/prototypes/companion-scene-backgrounds.css?v=2026-09-20-v378-llm-context-database"
     />
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-20-v377-composer-file-attach",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-20-v378-llm-context-database",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-20-v377-composer-file-attach",
-          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-20-v377-composer-file-attach"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-20-v378-llm-context-database",
+          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-20-v378-llm-context-database"
         }
       }
     </script>
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-20-v377-composer-file-attach"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-20-v378-llm-context-database"
     />
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-20-v377-composer-file-attach"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-20-v377-composer-file-attach"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-20-v378-llm-context-database"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-20-v378-llm-context-database"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;
@@ -5502,6 +5502,8 @@
         secretaryBridgeMod,
         characterRolesMod,
         composerAttachmentsMod,
+        llmContextDbMod,
+        llmContextDbClientMod,
       ] = await Promise.all([
         ami("../amoji-engine/engine/companion/createAvatar.js"),
         ami("../amoji-engine/engine/companion/chatLlm.js"),
@@ -5545,6 +5547,8 @@
         ami("../amoji-engine/engine/companion/secretary/companionSecretaryBridge.js"),
         ami("../amoji-engine/engine/companion/companionCharacterRoles.js"),
         ami("../amoji-engine/engine/companion/companionComposerAttachments.js"),
+        ami("../amoji-engine/engine/companion/companionLlmContextDb.js"),
+        ami("../amoji-engine/engine/companion/companionLlmContextDbClient.js"),
       ]);
       const {
         buildUnifiedSessionPrompt,
@@ -6393,19 +6397,40 @@
 
       const composerPlaceholder = () => cleanComposerPlaceholder(isEnglish);
 
-      const syncSettingsChrome = () => {
+      const { refreshLlmContextDb } = llmContextDbMod;
+      const { pushLlmContextDbToCloud, pullLlmContextDbFromCloud } =
+        llmContextDbClientMod;
+
+      const llmContextMenuState = () => {
         const preset =
           SCENE_BACKGROUND_PRESETS.find((p) => p.id === activeSceneBgId) ||
           SCENE_BACKGROUND_PRESETS[0];
-        const bgLabel = scenePresetLabel(preset, isEnglish);
-        const labels = buildSettingsChromeLabels(isEnglish, {
+        return {
           companionName: characterDisplayName(characterId, langCode, isEnglish),
-          backgroundLabel: bgLabel,
+          backgroundLabel: scenePresetLabel(preset, isEnglish),
           speed: voice?.getTalkSpeed?.(),
           chatVisible: !document.body.classList.contains("chat-panel-hidden"),
           speakerOn: voice?.speakerOn !== false,
           roleReadout: `${roleLabel(appRole, isEnglish)} · ${characterDisplayName(characterId, langCode, isEnglish)}`,
+        };
+      };
+
+      const syncLlmContextDbAndPrompt = () => {
+        refreshLlmContextDb({
+          characterId,
+          langCode,
+          isEnglish,
+          role: appRole,
+          storage: localStorage,
+          menuState: llmContextMenuState(),
+          chatMessages: loadChatHistory(characterId),
         });
+        chat.setSystemPrompt?.(buildSessionSystemPrompt(characterId, isEnglish));
+        void pushLlmContextDbToCloud({ storage: localStorage });
+      };
+
+      const syncSettingsChrome = () => {
+        const labels = buildSettingsChromeLabels(isEnglish, llmContextMenuState());
         if (settingsPageTitle) settingsPageTitle.textContent = labels.menuTitle;
         if (settingsClose) settingsClose.setAttribute("aria-label", labels.closeAria);
         const sessionTitle = document.getElementById("settings-session-title");
@@ -6995,6 +7020,9 @@
           characterPrompt: buildCharacterSystemPrompt(charId, english),
           role: appRole,
           isEnglish: english,
+          characterId: charId,
+          langCode,
+          menuState: llmContextMenuState(),
           uiRules: buildUiIntentPromptFragment(english, {
             surface: appRole === "secretary" ? "secretary" : "companion",
           }),
@@ -9043,6 +9071,7 @@
           if (assistantBubble?.textContent?.trim() && !turnAborted) {
             proactiveTalk?.notifyAssistantFinished?.();
           }
+          if (!turnAborted) syncLlmContextDbAndPrompt();
           scheduleIdlePerformance();
         }
       };
@@ -9092,6 +9121,9 @@
         updateEmotionBallVisibility();
         scheduleIdlePerformance();
         avatar?.pulseIdleBeat?.("look");
+        void pullLlmContextDbFromCloud({ storage: localStorage }).finally(() => {
+          syncLlmContextDbAndPrompt();
+        });
 
         if (fromTimeout) {
           showToast("Session ready — avatar or voice may still be loading", "info");
