@@ -106,7 +106,7 @@ export function dampRootMotion(current, target, dt, rate = 9) {
 export function poseDampingRate(actionActive, talking) {
   if (actionActive) return 12.8;
   if (talking) return 13.8;
-  return 10.2;
+  return 15.4;
 }
 
 /**

@@ -20,7 +20,10 @@ describe("companionPoseSmoothing", () => {
     expect(actionMotionEnvelope(1, 2, 0.4, 0.4, true)).toBeGreaterThan(0.5);
   });
 
-  it("keeps damping rates softer for idle", () => {
-    expect(poseDampingRate(false, false)).toBeLessThan(poseDampingRate(true, true));
+  it("uses responsive idle damping for visible breathing", () => {
+    expect(poseDampingRate(false, false)).toBeGreaterThan(14);
+    expect(poseDampingRate(false, false)).toBeGreaterThan(
+      poseDampingRate(true, false),
+    );
   });
 });
