@@ -23,6 +23,7 @@ import {
   MIN_PREVIEW_BYTES,
   isBadPreviewCapture,
 } from "../amoji-engine/engine/companion/companionPreviewAssets.mjs";
+import { waitForPageFn } from "./playwrightPageUtil.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const outDir = join(root, "prototypes/assets");
@@ -111,7 +112,7 @@ async function hideUiForCapture(page) {
 }
 
 async function waitForStageReady(page, characterId) {
-  await page.waitForFunction(() => window.__amojiStart?.ready === true, {
+  await waitForPageFn(page, () => window.__amojiStart?.ready === true, {
     timeout: 120000,
   });
   await page.waitForFunction(

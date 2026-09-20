@@ -41,6 +41,10 @@ try {
   if (process.env.FULL_SMOKE === "1") {
     const issuesUrl = `${base}/prototypes/amoji-companion.html?lang=yue&automic=0&build=${encodeURIComponent(AMOJI_BUILD)}`;
     await runNode("scripts/companion-issues-verify.mjs", {}, ["--url", issuesUrl]);
+    await runNode("scripts/scene-shortcuts-demo-verify.mjs", {}, [
+      "--url",
+      `${base}/prototypes/amoji-companion.html?lang=en&automic=0&pick=1&build=${encodeURIComponent(AMOJI_BUILD)}`,
+    ]);
   }
 } finally {
   await host.close();

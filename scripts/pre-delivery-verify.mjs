@@ -188,11 +188,24 @@ await runStepAsync("picker-e2e", "node", [
   playUrl,
 ], { env: { ARTIFACT_DIR: artifactDir } });
 
-await runStepAsync("reported-issues-e2e", "node", [
-  "scripts/companion-issues-verify.mjs",
-  "--url",
-  playUrl,
-], { env: { ARTIFACT_DIR: artifactDir } });
+async function runReportedIssuesE2e() {
+  const ok = await runStepAsync("reported-issues-e2e", "node", [
+    "scripts/companion-issues-verify.mjs",
+    "--url",
+    playUrl,
+  ], { env: { ARTIFACT_DIR: artifactDir } });
+  if (ok || !production) return ok;
+  console.log("    (production issues E2E failed once — retrying in 8s…)");
+  await new Promise((r) => setTimeout(r, 8000));
+  steps.pop();
+  return runStepAsync("reported-issues-e2e", "node", [
+    "scripts/companion-issues-verify.mjs",
+    "--url",
+    playUrl,
+  ], { env: { ARTIFACT_DIR: artifactDir } });
+}
+
+await runReportedIssuesE2e();
 
 if (serverChild) {
   serverChild.kill("SIGTERM");

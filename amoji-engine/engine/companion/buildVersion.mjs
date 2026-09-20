@@ -1,2 +1,2 @@
 /** Single source of truth for deployed companion build id (keep HTML __amojiBuild in sync). */
-export const AMOJI_BUILD = "2026-09-20-v434-playwright-wait-fix";
+export const AMOJI_BUILD = "2026-09-20-v435-e2e-hardening";

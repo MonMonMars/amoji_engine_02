@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { chromium } from "playwright";
 import { beginStartPickerSession } from "./companion-picker-smoke-util.mjs";
+import { waitForPageFn } from "./playwrightPageUtil.mjs";
 
 async function test(label, url) {
   const browser = await chromium.launch({ headless: true });
@@ -8,11 +9,9 @@ async function test(label, url) {
   const errors = [];
   page.on("pageerror", (e) => errors.push(e.message));
   await page.goto(url, { waitUntil: "domcontentloaded", timeout: 90000 });
-  await page
-    .waitForFunction(() => window.__amojiModuleBooted === true, {
-      timeout: 120000,
-    })
-    .catch(() => {});
+  await waitForPageFn(page, () => window.__amojiModuleBooted === true, {
+    timeout: 120000,
+  }).catch(() => {});
 
   const hasBegin = await page.locator("#start-character-picker .picker-begin-btn").count();
   if (hasBegin) {
