@@ -12,7 +12,10 @@ import {
 } from "./companionUnifiedApp.js";
 import { wireLoadingBar } from "./companionLoadingUi.js";
 import { playCompanionCardTapFx } from "./companionUiGacha.js";
-import { CHARACTER_IDS } from "./companionCharacterCatalog.js";
+import {
+  CHARACTER_IDS,
+  migrateLegacyCharacterStorage,
+} from "./companionCharacterCatalog.js";
 import { ROSTER_SCHEMA } from "./companionCharacterRoster.js";
 import { AMOJI_BUILD } from "./buildVersion.mjs";
 import {
@@ -36,6 +39,7 @@ export async function bootEarlyStartPicker(opts = {}) {
   if (!show) return null;
 
   const isEnglish = params.get("lang") === "en";
+  migrateLegacyCharacterStorage(globalThis.localStorage);
   const appRole = resolveAppRole(params);
   const selectedId = resolveRoleDefaultCharacter(
     String(params.get("character") || "nova").toLowerCase(),
