@@ -95,7 +95,7 @@ describe("createCompanionBodyMotion", () => {
     expect(rightArmX).toBeLessThan(VRM_ARM_REST_ROTATIONS.rightUpperArm.x + 0.08);
   });
 
-  it("combs hair by raising the right arm without kicking the legs forward", () => {
+  it("hair idle beat nudges the right arm without kicking the legs forward", () => {
     const humanoid = mockHumanoid();
     const motion = createCompanionBodyMotion(humanoid);
     motion.setIdleGender("female");
@@ -104,9 +104,9 @@ describe("createCompanionBodyMotion", () => {
     motion.pulseIdleBeat("hair", t0);
     for (let i = 0; i < 24; i += 1) motion.update(1 / 30, { now: t0 + i * 33 });
     const restR = VRM_ARM_REST_ROTATIONS.rightUpperArm;
-    expect(humanoid.bones.get("rightUpperArm").rotation.z).toBeLessThan(
-      restR.z - 0.4,
-    );
+    const z = humanoid.bones.get("rightUpperArm").rotation.z;
+    expect(z).toBeLessThan(restR.z);
+    expect(z).toBeGreaterThan(restR.z - 0.18);
     expect(humanoid.bones.get("leftUpperLeg").rotation.x).toBeLessThan(
       VRM_LEG_REST_ROTATIONS.leftUpperLeg.x + 0.05,
     );

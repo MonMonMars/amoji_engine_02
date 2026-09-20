@@ -296,8 +296,8 @@ export function advanceIdleBeat(state, dt, nowMs, opts = {}) {
         overlay.leanY = wave * 0.05 * env;
         break;
       case "comb":
-        overlay.armLiftR = 0.46 * wave * env;
-        overlay.forearmR = 0.42 * wave * env;
+        overlay.armLiftR = 0.22 * wave * env;
+        overlay.forearmR = 0.2 * wave * env;
         overlay.headZ = 0.12 * wave * env;
         overlay.headX = -0.06 * wave * env;
         overlay.leanY = 0.04 * wave * env;
@@ -346,7 +346,7 @@ export function advanceIdleBeat(state, dt, nowMs, opts = {}) {
         overlay.forearmL = 0.08 + wave * 0.06 * env;
         break;
       case "hair":
-        overlay.armLiftR = 0.38 * wave * env;
+        overlay.armLiftR = 0.2 * wave * env;
         overlay.forearmR = 0.34 * wave * env;
         overlay.headZ = 0.1 * wave * env;
         overlay.headX = -0.05 * wave * env;
