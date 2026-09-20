@@ -7,10 +7,10 @@
  */
 import * as THREE from "three";
 
-export const VRM_SPRING_STABILITY_SCHEMA = "amoji.vrmSpringStability.v7";
+export const VRM_SPRING_STABILITY_SCHEMA = "amoji.vrmSpringStability.v8";
 
 /** High drag — stops hair/skirt tails from fluttering upward indoors. */
-export const MIN_DRAG_FORCE = 0.993;
+export const MIN_DRAG_FORCE = 0.996;
 /** Strong downward pull — counters VRM files that author gravityDir (0, 1, 0). */
 export const MIN_GRAVITY_POWER = 1.35;
 export const MAX_STIFFNESS = 0.1;
@@ -22,10 +22,10 @@ export const OUTDOOR_GRAVITY_POWER = 0.92;
 export const OUTDOOR_MAX_STIFFNESS = 0.22;
 
 /** Side breeze only (world ±X) — no ±Z “from behind” gusts that flicker on camera. */
-export const OUTDOOR_WIND_SIDE_AMP = 0.1;
+export const OUTDOOR_WIND_SIDE_AMP = 0.06;
 
 /** Outdoors, avoid periodic spring resets — they read as hair “shaking”. */
-export const OUTDOOR_IDLE_SPRING_RECENTER_SEC = 8;
+export const OUTDOOR_IDLE_SPRING_RECENTER_SEC = 12;
 
 /** @type {"indoor" | "outdoor"} */
 let activeSceneWindMode = "indoor";
@@ -33,14 +33,14 @@ let activeSceneWindMode = "indoor";
 /** Updated each frame before spring sim — used by the spring-bone guard. */
 let outdoorWindTimeSec = 0;
 
-/** Soft reset while standing idle — pulls hair/skirt back without re-capture. */
-export const IDLE_SPRING_RECENTER_SEC = 0.42;
+/** Soft reset while standing idle — infrequent; drift clamp handles most flutter. */
+export const IDLE_SPRING_RECENTER_SEC = 4.5;
 
 /** Head/thinking motion still excites hair/skirt springs — reset a bit sooner. */
-export const TALK_SPRING_RECENTER_SEC = 0.55;
+export const TALK_SPRING_RECENTER_SEC = 1.85;
 
 /** LLM wait pose — procedural head tilt without TTS mouth drive. */
-export const THINK_SPRING_RECENTER_SEC = 0.65;
+export const THINK_SPRING_RECENTER_SEC = 2.2;
 
 /** World-space upward tail velocity (units/s) above which we clamp drift. */
 export const MAX_UPWARD_TAIL_VEL = 0.045;

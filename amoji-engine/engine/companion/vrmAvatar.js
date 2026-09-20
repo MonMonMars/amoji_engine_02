@@ -1395,7 +1395,16 @@ export async function createVrmAvatar(opts) {
 
   const ensureProceduralBodyOnly = () => {
     if (!CALM_IDLE_USES_PROCEDURAL_BODY) return;
-    clearHostedBodyMotion();
+    if (
+      vrmaAction ||
+      vrmaPending ||
+      motionPlayer.isPlaying?.() ||
+      motionPlayer.isCrossfading?.()
+    ) {
+      clearHostedBodyMotion();
+    } else {
+      motionPlayer.forceStop?.(false);
+    }
     if (motionTransitionState) motionTransitionState = null;
   };
 
@@ -1479,7 +1488,7 @@ export async function createVrmAvatar(opts) {
       const crossfading =
         !CALM_IDLE_USES_PROCEDURAL_BODY &&
         Boolean(motionPlayer.isCrossfading?.());
-      if (!libraryMotion || crossfading) {
+      if (talking || eating || crossfading) {
         bodyMotion.applyHandRestOnly?.({
           talkBlend: crossfading ? 0.22 : talking ? 0.7 : eating ? 0.12 : 0,
           blendWeight: crossfading ? 0.55 : talking ? 0.72 : 0.28,

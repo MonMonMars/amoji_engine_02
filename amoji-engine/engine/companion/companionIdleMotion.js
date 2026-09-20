@@ -25,7 +25,7 @@ export {
   proceduralIdleBeatPoolForGender,
 } from "./companionIdleGender.js";
 
-export const COMPANION_IDLE_MOTION_SCHEMA = "amoji.companionIdleMotion.v6";
+export const COMPANION_IDLE_MOTION_SCHEMA = "amoji.companionIdleMotion.v7";
 
 /** First seconds after avatar is visible — gentle breathe, sway, relaxed arms. */
 export const BOOT_SIMPLE_IDLE_SEC = 10;
@@ -76,16 +76,17 @@ export function sampleCalmBreathIdle(elapsedSec, opts = {}) {
   const profile = idleGenderBodyProfile(opts.gender);
   const t = elapsedSec;
   const listening = Boolean(opts.listening);
-  const breath = Math.sin(t * 0.85);
-  const amp = (listening ? 1.08 : 1) * 1.85;
+  const breath = Math.sin(t * 0.72);
+  const breathSlow = Math.sin(t * 0.38 + 0.6) * 0.35;
+  const amp = (listening ? 1.08 : 1) * 2.35;
 
   return {
-    headX: breath * 0.022 * amp * profile.headMul,
+    headX: (breath * 0.028 + breathSlow * 0.012) * amp * profile.headMul,
     headZ: 0,
-    leanY: 0,
-    spineX: (0.028 + breath * 0.022 * amp) * profile.spineMul,
-    chestX: (-0.012 + breath * 0.018 * amp) * profile.chestMul,
-    hipZ: 0.006 * profile.hipMul,
+    leanY: breathSlow * 0.008 * profile.leanMul,
+    spineX: (0.034 + breath * 0.032 * amp) * profile.spineMul,
+    chestX: (-0.014 + breath * 0.028 * amp) * profile.chestMul,
+    hipZ: 0.004 * profile.hipMul,
     armLiftL: profile.armLiftBaseL,
     armLiftR: profile.armLiftBaseR,
     forearmL: profile.forearmBaseL * 0.42,
@@ -106,21 +107,22 @@ export function sampleCalmBreathIdle(elapsedSec, opts = {}) {
 export function samplePlantedAliveIdle(elapsedSec, opts = {}) {
   const calm = sampleCalmBreathIdle(elapsedSec, opts);
   const life = sampleIdleBodyMotion(elapsedSec, opts);
+  const breath = Math.sin(elapsedSec * 0.88);
   return {
     upperLegL: calm.upperLegL,
     upperLegR: calm.upperLegR,
     lowerLegL: calm.lowerLegL,
     lowerLegR: calm.lowerLegR,
-    hipZ: calm.hipZ + (life.hipZ - calm.hipZ) * 0.48,
-    headX: life.headX * 0.96,
-    headZ: life.headZ * 0.9,
-    leanY: life.leanY * 0.76,
-    spineX: life.spineX,
-    chestX: life.chestX,
-    armLiftL: calm.armLiftL + (life.armLiftL - calm.armLiftL) * 0.42,
-    armLiftR: calm.armLiftR + (life.armLiftR - calm.armLiftR) * 0.42,
-    forearmL: calm.forearmL + (life.forearmL - calm.forearmL) * 0.62,
-    forearmR: calm.forearmR + (life.forearmR - calm.forearmR) * 0.62,
+    hipZ: calm.hipZ,
+    headX: calm.headX + life.headX * 0.2,
+    headZ: life.headZ * 0.42,
+    leanY: calm.leanY + life.leanY * 0.32,
+    spineX: calm.spineX,
+    chestX: calm.chestX,
+    armLiftL: calm.armLiftL + breath * 0.014,
+    armLiftR: calm.armLiftR + breath * 0.012,
+    forearmL: calm.forearmL + Math.max(0, breath) * 0.034,
+    forearmR: calm.forearmR + Math.max(0, breath) * 0.03,
   };
 }
 

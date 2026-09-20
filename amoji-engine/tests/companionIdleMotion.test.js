@@ -100,7 +100,7 @@ describe("companionIdleMotion", () => {
   it("samples a planted calm-breath idle without limb sway", () => {
     const a = sampleCalmBreathIdle(0.4);
     const b = sampleCalmBreathIdle(2.1);
-    expect(a.leanY).toBe(0);
+    expect(Math.abs(a.leanY)).toBeLessThan(0.012);
     expect(a.headZ).toBe(0);
     expect(a.forearmL).toBeGreaterThan(0.12);
     expect(a.lowerLegR).toBeGreaterThan(0.01);

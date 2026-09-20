@@ -61,7 +61,7 @@ import {
   lockedIdleHipTilt,
 } from "./companionFootLock.js";
 
-export const COMPANION_BODY_SCHEMA = "amoji.companionBody.v2";
+export const COMPANION_BODY_SCHEMA = "amoji.companionBody.v3";
 
 /**
  * @param {import('@pixiv/three-vrm').VRMHumanoid | null | undefined} humanoid
@@ -850,11 +850,10 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
         finishActionStep();
       }
     } else if (!talking) {
-      const breathe = Math.sin(elapsed * 1.05);
-      const sway = Math.sin(elapsed * 0.38 + 0.55);
+      const breathe = Math.sin(elapsed * 0.88);
       rootMotion = {
-        y: breathe * 0.034,
-        rotY: sway * 0.026,
+        y: breathe * 0.026,
+        rotY: 0,
       };
     } else {
       rootMotion = { y: 0, rotY: 0 };
@@ -982,7 +981,7 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
       }
     }
     const plantFeet = !activeAction;
-    const strictLegRest = plantFeet && !activeAction && !talking;
+    const strictLegRest = plantFeet && !activeAction && !talking && !activeGesture;
     applyPose(smoothedPose, 1, {
       allowArms,
       actionArms,
