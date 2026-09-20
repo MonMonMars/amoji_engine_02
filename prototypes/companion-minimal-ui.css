@@ -206,9 +206,133 @@ body.companion-minimal-chrome.conversation-ui.composer-always-visible .stage.mic
   margin-right: auto !important;
 }
 
+body.companion-minimal-chrome .composer .composer-attach-btn {
+  display: inline-flex !important;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 2.35rem;
+  height: 2.35rem;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: rgba(228, 220, 255, 0.72);
+  cursor: pointer;
+  transition:
+    color 0.15s ease,
+    background 0.15s ease,
+    transform 0.15s ease;
+}
+
+body.companion-minimal-chrome .composer .composer-attach-btn:hover,
+body.companion-minimal-chrome .composer .composer-attach-btn:focus-visible {
+  color: rgba(244, 240, 255, 0.95);
+  background: rgba(139, 124, 248, 0.14);
+  transform: translateY(-1px);
+}
+
+body.companion-minimal-chrome .composer-attachments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  padding: 0 0 0.35rem;
+}
+
+body.companion-minimal-chrome .composer-attach-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  max-width: min(100%, 14rem);
+  padding: 0.2rem 0.35rem 0.2rem 0.2rem;
+  border-radius: 0.65rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  font-size: 0.72rem;
+  color: rgba(244, 240, 255, 0.88);
+}
+
+body.companion-minimal-chrome .composer-attach-chip__thumb {
+  width: 2rem;
+  height: 2rem;
+  object-fit: cover;
+  border-radius: 0.45rem;
+  flex-shrink: 0;
+}
+
+body.companion-minimal-chrome .composer-attach-chip__icon {
+  width: 2rem;
+  height: 2rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 1rem;
+}
+
+body.companion-minimal-chrome .composer-attach-chip__meta {
+  display: grid;
+  gap: 0.05rem;
+  min-width: 0;
+}
+
+body.companion-minimal-chrome .composer-attach-chip__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+body.companion-minimal-chrome .composer-attach-chip__size {
+  color: rgba(228, 220, 255, 0.52);
+  font-size: 0.65rem;
+}
+
+body.companion-minimal-chrome .composer-attach-chip__remove {
+  flex-shrink: 0;
+  width: 1.35rem;
+  height: 1.35rem;
+  border: none;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(244, 240, 255, 0.82);
+  cursor: pointer;
+  font-size: 0.95rem;
+  line-height: 1;
+}
+
+body.companion-minimal-chrome .bubble-attachments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.35rem;
+}
+
+body.companion-minimal-chrome .bubble-attachment__img {
+  max-width: min(12rem, 100%);
+  max-height: 8rem;
+  border-radius: 0.55rem;
+  object-fit: cover;
+}
+
+body.companion-minimal-chrome .bubble-attachment__label {
+  display: inline-block;
+  padding: 0.25rem 0.45rem;
+  border-radius: 0.45rem;
+  background: rgba(255, 255, 255, 0.08);
+  font-size: 0.78rem;
+}
+
+body.companion-minimal-chrome .bubble-user-text {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
 body.companion-minimal-chrome .composer.composer-pro {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   gap: 0.35rem;
   width: min(100%, 36rem);
   max-width: min(100%, 36rem);

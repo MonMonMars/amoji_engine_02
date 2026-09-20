@@ -22,9 +22,14 @@ describe("companionMinimalUi", () => {
     expect(html).not.toContain('id="mic-voice-hud"');
     expect(html).toContain('id="btn-mic"');
     expect(html).toContain('class="composer-field"');
+    expect(html).toContain('id="btn-attach"');
+    expect(html).toContain('id="composer-file-input"');
+    expect(html).toContain('id="composer-attachments"');
+    expect(html.indexOf('id="btn-attach"')).toBeLessThan(html.indexOf('class="composer-field"'));
     expect(html.indexOf('class="composer-field"')).toBeLessThan(
       html.indexOf('id="mic-voice-stack"'),
     );
+    expect(minimalCss).toMatch(/composer-attach-btn[\s\S]*display:\s*inline-flex/);
     expect(html.indexOf('id="mic-voice-stack"')).toBeLessThan(html.indexOf('id="send"'));
     expect(minimalCss).toMatch(/companion-minimal-chrome \.composer-wrap[\s\S]*width:\s*100%/);
     expect(minimalCss).toMatch(/companion-minimal-chrome \.composer\.composer-pro[\s\S]*36rem/);
