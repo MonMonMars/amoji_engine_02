@@ -9,6 +9,7 @@ import {
 } from "@pixiv/three-vrm-animation";
 import { getPreloadedIdleVrmaBuffer } from "./companionIdleMotionPreload.js";
 import {
+  hostedVrmaSkipsVrmBody,
   isOnlineLoopingLibraryAction,
   ONLINE_CALM_IDLE_ACTION,
   resolveOnlineMotionClipUrl,
@@ -240,6 +241,7 @@ export function createVrmMotionPlayer(opts) {
    */
   const play = async (actionId, playOpts = {}) => {
     const id = String(actionId || "").toLowerCase();
+    if (hostedVrmaSkipsVrmBody(id)) return false;
     const url = resolveClipUrl(id);
     if (!url) return false;
 

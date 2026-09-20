@@ -419,6 +419,69 @@ await page.waitForFunction(
 );
 record("session started", true);
 
+await page
+  .waitForFunction(
+    () => window.__amojiAvatarKind === "vrm3d" && window.__amojiAvatar?.vrm,
+    undefined,
+    { timeout: 120000 },
+  )
+  .catch(() => null);
+await page.waitForTimeout(2500);
+
+const idleLimbs = await page.evaluate(async () => {
+  const avatar = window.__amojiAvatar;
+  avatar?.setTalking?.(false);
+  avatar?.stopAction?.();
+  const vrm = avatar?.vrm;
+  const bone = (name) => {
+    const node = vrm?.humanoid?.getNormalizedBoneNode?.(name);
+    if (!node) return null;
+    return {
+      x: Number(node.rotation?.x) || 0,
+      y: Number(node.rotation?.y) || 0,
+      z: Number(node.rotation?.z) || 0,
+    };
+  };
+  await new Promise((r) => setTimeout(r, 800));
+  const leftFoot = bone("leftFoot");
+  const rightFoot = bone("rightFoot");
+  const leftUpperArm = bone("leftUpperArm");
+  const rightUpperArm = bone("rightUpperArm");
+  const leftLowerLeg = bone("leftLowerLeg");
+  const rightLowerLeg = bone("rightLowerLeg");
+  const footDy =
+    leftFoot && rightFoot ? Math.abs(leftFoot.y - rightFoot.y) : null;
+  const armsForward =
+    leftUpperArm &&
+    rightUpperArm &&
+    leftUpperArm.x > 0.55 &&
+    rightUpperArm.x > 0.55;
+  const legsStride =
+    leftLowerLeg &&
+    rightLowerLeg &&
+    Math.abs(leftLowerLeg.x - rightLowerLeg.x) > 0.35;
+  const vrmaPlaying = Boolean(
+    avatar?.getMotionStatus?.()?.animating ||
+      avatar?.getMotionStatus?.()?.libraryOwnsBody,
+  );
+  return {
+    footDy,
+    armsForward,
+    legsStride,
+    vrmaPlaying,
+    leftUpperArmZ: leftUpperArm?.z,
+    rightUpperArmZ: rightUpperArm?.z,
+  };
+});
+record(
+  "idle limbs planted (no VRMA body blend)",
+  !idleLimbs.vrmaPlaying &&
+    !idleLimbs.armsForward &&
+    !idleLimbs.legsStride &&
+    (idleLimbs.footDy == null || idleLimbs.footDy < 0.12),
+  JSON.stringify(idleLimbs),
+);
+
 await page.waitForFunction(() => !!document.getElementById("activity-rail"), {
   timeout: 30000,
 });

@@ -405,17 +405,31 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
     "rightLowerArm",
   ];
 
+  const LOWER_LIMB_BONES = new Set([
+    "leftLowerArm",
+    "rightLowerArm",
+    "leftLowerLeg",
+    "rightLowerLeg",
+  ]);
+
   const applyBoneRotation = (name, rot) => {
     const b = bone(name);
     if (!b || !rot) return;
+    let x = rot.x ?? 0;
+    let y = rot.y ?? 0;
+    let z = rot.z ?? 0;
+    // Y on elbow/knee hinges twists the mesh off the calibrated flex axis.
+    if (LOWER_LIMB_BONES.has(name) && rot.flexAxis !== "y") {
+      y = 0;
+    }
     if (typeof b.rotation.set === "function") {
       b.rotation.order = "XYZ";
-      b.rotation.set(rot.x ?? 0, rot.y ?? 0, rot.z ?? 0);
+      b.rotation.set(x, y, z);
       return;
     }
-    b.rotation.x = rot.x ?? 0;
-    b.rotation.y = rot.y ?? 0;
-    b.rotation.z = rot.z ?? 0;
+    b.rotation.x = x;
+    b.rotation.y = y;
+    b.rotation.z = z;
   };
 
   const applyArmRest = (pose = REST_POSE) => {
@@ -730,11 +744,6 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
       applyActionArms(pose, k);
     } else if (allowArms) {
       applyPointArms(pose, k);
-    } else if (idleArms && opts.combHair === true) {
-      applyIdleArms(pose, k, {
-        boot: opts.bootPhase === true,
-        combHair: true,
-      });
     } else if (idleArms) {
       applyCalmIdleArms(pose, k);
     } else if (talkArmBlend > 0.01) {
@@ -1041,10 +1050,6 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
       bootPhase: false,
       plantFeet,
       strictLegRest,
-      combHair:
-        !talking &&
-        !thinking &&
-        (idleBeat.beat === "comb" || idleBeat.beat === "hair"),
     });
     if (plantFeet) {
       const dy = footPlantRootDelta(bone, 0);

@@ -309,6 +309,11 @@ export async function createVrmAvatar(opts) {
   bodyMotion.setIdleGender?.(
     characterGender(opts.characterId || "nova", "yue"),
   );
+  const bootIdleRest = detectVrmIdleRestRotations(vrm);
+  bodyMotion.setArmRestRotations?.(bootIdleRest.arms);
+  bodyMotion.setLegRestRotations?.(bootIdleRest.legs);
+  bodyMotion.setArmBind?.(bootIdleRest.bind);
+  bodyMotion.snapToRestPose?.();
   const treatProp = createCompanionTreatProp(vrm.humanoid);
   let springIdleState = createIdleSpringRecenterState();
   let springTalkState = createIdleSpringRecenterState();
@@ -503,7 +508,7 @@ export async function createVrmAvatar(opts) {
   };
 
   const restorePlantedIdle = () => {
-    clearHostedBodyMotion();
+    restoreProceduralCalmStand({ resetIdleLife: false });
   };
 
   const resumeCalmStand = async () => {
@@ -1410,8 +1415,6 @@ export async function createVrmAvatar(opts) {
       motionPlayer.isCrossfading?.()
     ) {
       clearHostedBodyMotion();
-    } else {
-      motionPlayer.forceStop?.(false);
     }
     if (motionTransitionState) motionTransitionState = null;
   };
