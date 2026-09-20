@@ -288,6 +288,47 @@
     0 0 24px rgba(139, 124, 248, 0.22);
 }
 
+/* Persona-style diagonal selection slash */
+.companion-picker--aaa-theme .companion-card--start-strip.is-selected::after {
+  content: "";
+  position: absolute;
+  inset: -15%;
+  pointer-events: none;
+  z-index: 3;
+  background: linear-gradient(
+    118deg,
+    transparent 42%,
+    rgba(255, 255, 255, 0.55) 49.5%,
+    rgba(232, 74, 111, 0.55) 50.5%,
+    transparent 58%
+  );
+  animation: picker-aaa-select-slash 0.42s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.companion-picker--aaa-theme .companion-card--start-strip {
+  position: relative;
+  overflow: hidden;
+}
+
+.companion-picker--aaa-theme .picker-hero-name {
+  transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.companion-picker--aaa-theme .picker-showcase-stage:has(.companion-card--start-strip.is-selected) .picker-hero-name {
+  transform: translateX(2px);
+}
+
+@keyframes picker-aaa-select-slash {
+  from {
+    transform: translateX(-35%) skewX(-6deg);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(8%) skewX(-6deg);
+    opacity: 1;
+  }
+}
+
 .companion-picker--aaa-theme .companion-card--start-strip .companion-card-number {
   background: rgba(0, 0, 0, 0.55);
   border: 1px solid rgba(232, 200, 114, 0.45);
@@ -395,6 +436,11 @@
   .companion-picker--aaa-theme .picker-confirm-btn::after {
     animation: none;
     display: none;
+  }
+
+  .companion-picker--aaa-theme .companion-card--start-strip.is-selected::after {
+    animation: none;
+    opacity: 0.35;
   }
 }
 

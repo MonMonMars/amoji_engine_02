@@ -1,0 +1,358 @@
+/**
+ * In-session shell — patterns from Atlus (Persona / Metaphor) + NieR-style HUD clarity.
+ * - Menus as “main event”: gold type, bracket frames, skewed section bands
+ * - Selection: diagonal slash + brush glow (not flat rectangles)
+ * - Readability: high contrast labels, limited palette, one primary accent
+ *
+ * Enabled with body.companion-jp-aaa-ui (see companionUiEffects.js).
+ */
+
+body.companion-jp-aaa-ui {
+  --jp-aaa-gold: #e8c872;
+  --jp-aaa-gold-soft: rgba(232, 200, 114, 0.38);
+  --jp-aaa-crimson: #e84a6f;
+  --jp-aaa-ink: #f8f4ff;
+  --jp-aaa-panel: rgba(8, 5, 18, 0.92);
+  --jp-aaa-line: rgba(232, 200, 114, 0.16);
+  --jp-aaa-grid: rgba(255, 255, 255, 0.04);
+  --font-display: "Syne", system-ui, sans-serif;
+}
+
+/* —— NieR-ish convex monitor grid on composer —— */
+body.companion-jp-aaa-ui .composer {
+  position: relative;
+  isolation: isolate;
+  border-radius: 1.15rem;
+  border: 1px solid var(--jp-aaa-line);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(0, 0, 0, 0.35)),
+    repeating-linear-gradient(
+      0deg,
+      var(--jp-aaa-grid) 0,
+      var(--jp-aaa-grid) 1px,
+      transparent 1px,
+      transparent 6px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      var(--jp-aaa-grid) 0,
+      var(--jp-aaa-grid) 1px,
+      transparent 1px,
+      transparent 6px
+    ),
+    rgba(6, 4, 14, 0.72);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.04) inset,
+    0 12px 32px rgba(0, 0, 0, 0.42);
+}
+
+body.companion-jp-aaa-ui .composer::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse 120% 80% at 50% 0%,
+    rgba(139, 124, 248, 0.08),
+    transparent 55%
+  );
+  z-index: 0;
+}
+
+body.companion-jp-aaa-ui .composer > * {
+  position: relative;
+  z-index: 1;
+}
+
+body.companion-jp-aaa-ui .composer .send {
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  background: linear-gradient(180deg, #fff1c9 0%, var(--jp-aaa-gold) 45%, #c9983a 100%);
+  color: #1a1208;
+  border: none;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+}
+
+/* —— Top companion chip — crown bracket frame —— */
+body.companion-jp-aaa-ui.companion-minimal-chrome .topbar .companion-chip {
+  position: relative;
+  border-radius: 0.65rem;
+  border: 1px solid var(--jp-aaa-gold-soft);
+  background: linear-gradient(135deg, rgba(232, 200, 114, 0.12), rgba(8, 5, 18, 0.65));
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.35);
+}
+
+body.companion-jp-aaa-ui.companion-minimal-chrome .topbar .companion-chip::before,
+body.companion-jp-aaa-ui.companion-minimal-chrome .topbar .companion-chip::after {
+  content: "";
+  position: absolute;
+  width: 0.55rem;
+  height: 0.55rem;
+  border: 2px solid var(--jp-aaa-gold);
+  pointer-events: none;
+  opacity: 0.85;
+}
+
+body.companion-jp-aaa-ui.companion-minimal-chrome .topbar .companion-chip::before {
+  top: 0.2rem;
+  left: 0.25rem;
+  border-right: none;
+  border-bottom: none;
+}
+
+body.companion-jp-aaa-ui.companion-minimal-chrome .topbar .companion-chip::after {
+  bottom: 0.2rem;
+  right: 0.25rem;
+  border-left: none;
+  border-top: none;
+}
+
+body.companion-jp-aaa-ui.companion-minimal-chrome .topbar .companion-chip__name {
+  font-family: var(--font-display);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+body.companion-jp-aaa-ui.companion-minimal-chrome .topbar-setup-btn {
+  border-color: var(--jp-aaa-gold-soft);
+  background: rgba(8, 5, 18, 0.55);
+}
+
+/* —— Starter prompts — numbered command list —— */
+body.companion-jp-aaa-ui .starter-prompts__label {
+  font-family: var(--font-display);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--jp-aaa-gold-soft);
+}
+
+body.companion-jp-aaa-ui .starter-chip {
+  position: relative;
+  overflow: hidden;
+  border-radius: 0.35rem 0.85rem 0.85rem 0.35rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: linear-gradient(90deg, rgba(232, 200, 114, 0.14), rgba(8, 5, 18, 0.55));
+  padding-left: 1.05rem;
+  font-weight: 600;
+  transition:
+    transform 0.16s ease,
+    border-color 0.16s ease,
+    box-shadow 0.16s ease;
+}
+
+body.companion-jp-aaa-ui .starter-chip::before {
+  content: "▸";
+  position: absolute;
+  left: 0.45rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--jp-aaa-gold);
+  font-size: 0.72rem;
+}
+
+body.companion-jp-aaa-ui .starter-chip:hover,
+body.companion-jp-aaa-ui .starter-chip:focus-visible {
+  border-color: var(--jp-aaa-gold-soft);
+  box-shadow: 0 0 18px rgba(232, 200, 114, 0.12);
+  transform: translateX(2px);
+}
+
+body.companion-jp-aaa-ui .starter-chip:active {
+  transform: scale(0.98);
+}
+
+/* —— Settings — JRPG command menu —— */
+body.companion-jp-aaa-ui .settings {
+  border: 1px solid var(--jp-aaa-line);
+  background: var(--jp-aaa-panel);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.03) inset,
+    0 28px 64px rgba(0, 0, 0, 0.55);
+}
+
+body.companion-jp-aaa-ui .settings-head {
+  position: relative;
+  border-bottom: none;
+  padding-bottom: 1rem;
+  background: linear-gradient(
+    105deg,
+    rgba(232, 200, 114, 0.18) 0%,
+    transparent 42%,
+    rgba(232, 74, 111, 0.12) 100%
+  );
+}
+
+body.companion-jp-aaa-ui .settings-head::after {
+  content: "";
+  position: absolute;
+  left: 1rem;
+  right: 1rem;
+  bottom: 0;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--jp-aaa-gold) 15%,
+    var(--jp-aaa-crimson) 50%,
+    var(--jp-aaa-gold) 85%,
+    transparent
+  );
+  transform: skewX(-12deg);
+  opacity: 0.75;
+}
+
+body.companion-jp-aaa-ui .settings-page-title {
+  font-family: var(--font-display);
+  font-weight: 850;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  background: linear-gradient(180deg, #fff8ef, var(--jp-aaa-gold));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+body.companion-jp-aaa-ui .settings-card {
+  border-radius: 0.85rem;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(0, 0, 0, 0.22));
+}
+
+body.companion-jp-aaa-ui .settings-card-title {
+  color: var(--jp-aaa-gold-soft);
+  letter-spacing: 0.12em;
+}
+
+body.companion-jp-aaa-ui .settings-action-list .btn-secondary,
+body.companion-jp-aaa-ui .settings-row .btn-secondary {
+  position: relative;
+  text-align: left;
+  border-radius: 0.55rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.28);
+  font-weight: 650;
+  padding-right: 2rem;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    transform 0.12s ease;
+}
+
+body.companion-jp-aaa-ui .settings-action-list .btn-secondary::after,
+body.companion-jp-aaa-ui .settings-row .btn-secondary::after {
+  content: "›";
+  position: absolute;
+  right: 0.85rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1.25rem;
+  color: var(--jp-aaa-gold);
+  opacity: 0.85;
+}
+
+body.companion-jp-aaa-ui .settings-action-list .btn-secondary:hover,
+body.companion-jp-aaa-ui .settings-row .btn-secondary:hover,
+body.companion-jp-aaa-ui .settings-action-list .btn-secondary:focus-visible,
+body.companion-jp-aaa-ui .settings-row .btn-secondary:focus-visible {
+  border-color: var(--jp-aaa-gold-soft);
+  background: linear-gradient(90deg, rgba(232, 74, 111, 0.14), rgba(232, 200, 114, 0.1));
+  transform: translateX(3px);
+}
+
+body.companion-jp-aaa-ui .settings-action--primary {
+  border-color: rgba(232, 200, 114, 0.35);
+  background: linear-gradient(90deg, rgba(232, 200, 114, 0.16), rgba(139, 124, 248, 0.12));
+}
+
+/* —— Scene sheet —— */
+body.companion-jp-aaa-ui .scene-sheet {
+  border: 1px solid var(--jp-aaa-line);
+  background: var(--jp-aaa-panel);
+}
+
+body.companion-jp-aaa-ui .scene-sheet-title {
+  font-family: var(--font-display);
+  font-weight: 850;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--jp-aaa-ink);
+}
+
+body.companion-jp-aaa-ui .scene-preset {
+  border-radius: 0.75rem;
+  overflow: hidden;
+}
+
+body.companion-jp-aaa-ui .scene-preset.is-active {
+  border-color: var(--jp-aaa-gold);
+  box-shadow:
+    0 0 0 1px rgba(232, 200, 114, 0.35) inset,
+    0 0 20px rgba(232, 74, 111, 0.18);
+}
+
+body.companion-jp-aaa-ui.ui-fx-enabled .scene-preset.is-active.ui-fx-btn::before {
+  content: "";
+  position: absolute;
+  inset: -20%;
+  background: linear-gradient(
+    115deg,
+    transparent 40%,
+    rgba(255, 255, 255, 0.35) 48%,
+    rgba(232, 74, 111, 0.25) 52%,
+    transparent 60%
+  );
+  transform: translateX(-30%) skewX(-8deg);
+  animation: jp-aaa-brush-select 0.55s var(--ui-fx-ease-out, ease) forwards;
+  pointer-events: none;
+  z-index: 2;
+}
+
+@keyframes jp-aaa-brush-select {
+  from {
+    transform: translateX(-120%) skewX(-8deg);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(10%) skewX(-8deg);
+    opacity: 1;
+  }
+}
+
+/* —— Chat bubbles — subtle panel frame —— */
+body.companion-jp-aaa-ui .bubble.assistant {
+  border-left: 3px solid rgba(232, 200, 114, 0.45);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.07), rgba(8, 5, 18, 0.55));
+}
+
+body.companion-jp-aaa-ui .bubble.user {
+  border-right: 3px solid rgba(127, 212, 207, 0.45);
+}
+
+/* —— Title screen — stronger “Press Start” energy —— */
+body.companion-jp-aaa-ui .title-screen-logo {
+  letter-spacing: 0.08em;
+  text-shadow:
+    0 0 24px rgba(232, 74, 111, 0.35),
+    0 4px 16px rgba(0, 0, 0, 0.55);
+}
+
+body.companion-jp-aaa-ui .title-screen-kicker {
+  letter-spacing: 0.18em;
+  color: var(--jp-aaa-gold);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body.companion-jp-aaa-ui.ui-fx-enabled .scene-preset.is-active.ui-fx-btn::before {
+    animation: none;
+    display: none;
+  }
+
+  body.companion-jp-aaa-ui .starter-chip:hover,
+  body.companion-jp-aaa-ui .settings-action-list .btn-secondary:hover {
+    transform: none;
+  }
+}

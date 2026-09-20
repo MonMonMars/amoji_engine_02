@@ -73,6 +73,21 @@ node scripts/sync-build-version.mjs
 
 Companion loads `prototypes/companion-scene-backgrounds.css` (linked in `amoji-companion.html` head).
 
+## Japanese AAA UI (reference + implementation)
+
+Design cues we follow (Atlus Persona / Metaphor, Platinum NieR):
+
+| Pattern | In Amoji |
+|---------|----------|
+| Menus as polished “main event” | AAA picker + gold **Menu** sheet (`companion-picker-aaa-theme.css`, `companion-jp-aaa-shell.css`) |
+| Bold display type + gold accent | Syne + gradient titles, `--jp-aaa-gold` |
+| Distinct layout per surface | Picker showcase vs settings list vs scene grid |
+| Animated selection (brush / slash) | Roster card `picker-aaa-select-slash`; scene chip `jp-aaa-brush-select` |
+| Readable HUD (NieR-style) | Composer grid texture; bracket frame on companion chip |
+| Reduced motion | `prefers-reduced-motion` disables slash/brush animations |
+
+Body class: `companion-jp-aaa-ui` (default on `amoji-companion.html`, reinforced by `initCompanionUiEffects`).
+
 ## Character picker
 
 - Start picker: fixed hero row + horizontal roster with scroll arrows (`companionScrollAffordances.js`).
