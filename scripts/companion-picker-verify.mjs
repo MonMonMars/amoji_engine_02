@@ -348,6 +348,15 @@ await page.waitForFunction(() => !!document.getElementById("activity-rail"), {
 record("activity rail mounted", true);
 
 await openInSessionCompanionPicker(page);
+const sessionAaa = await page.evaluate(() => {
+  const picker = document.getElementById("companion-character-picker");
+  return {
+    aaa: picker?.classList.contains("companion-picker--aaa-theme"),
+    session: picker?.classList.contains("companion-picker--session"),
+  };
+});
+record("in-session AAA theme", sessionAaa.aaa && sessionAaa.session);
+
 const sessionFeatured = await page.evaluate(() => {
   const picker = document.getElementById("companion-character-picker");
   return picker?.querySelectorAll(".picker-featured-row .companion-card").length ?? 0;
