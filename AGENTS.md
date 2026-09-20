@@ -66,6 +66,13 @@ node scripts/sync-build-version.mjs
 
 Companion loads `prototypes/companion-scene-backgrounds.css` (linked in `amoji-companion.html` head).
 
+## Character picker
+
+- Start picker: fixed hero row + horizontal roster with scroll arrows (`companionScrollAffordances.js`).
+- Shared page width: `--amoji-app-max-width` in `prototypes/companion-app-width.css`.
+- Legacy stored ids migrate via `migrateLegacyCharacterStorage()` on boot.
+- Verifier: `npm run verify:picker` (14+ checks).
+
 ## Payments & security (IAP)
 
 - **Catalog / verify:** `/api/iap/products`, `/api/iap/verify`, RevenueCat `/api/iap/webhook`

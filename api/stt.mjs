@@ -1,6 +1,14 @@
 import { processSttRequest } from "../amoji-engine/engine/companion/sttHandler.mjs";
+import { applyApiProtection } from "./_lib/security.mjs";
 
 export default async function handler(req, res) {
+  const guard = applyApiProtection(req, res, {
+    rateLimit: { key: "stt-api", max: 40, windowMs: 60_000 },
+  });
+  if (!guard.ok) {
+    res.status(guard.status || 429).json({ ok: false, error: guard.error });
+    return;
+  }
   const result = await processSttRequest({
     method: req.method,
     body:
