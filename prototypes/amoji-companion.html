@@ -8,9 +8,9 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji · Companion</title>
     <script>
-      window.__amojiBuild = "2026-09-20-v391-picker-anime-bg";
+      window.__amojiBuild = "2026-09-20-v392-picker-roster-fit";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-20-v391-picker-anime-bg"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-20-v392-picker-roster-fit"></script>
     <link
       rel="prefetch"
       href="/prototypes/assets/companion-char-nova.png"
@@ -683,18 +683,18 @@
       media="print"
       onload="this.media='all'"
     />
-    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-20-v391-picker-anime-bg" />
-    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-20-v391-picker-anime-bg" />
-    <link rel="stylesheet" href="/prototypes/companion-mic-button.css?v=2026-09-20-v391-picker-anime-bg" />
-    <link rel="stylesheet" href="/prototypes/companion-title-screen.css?v=2026-09-20-v391-picker-anime-bg" />
-    <link rel="stylesheet" href="/prototypes/companion-minimal-ui.css?v=2026-09-20-v391-picker-anime-bg" />
-    <link rel="stylesheet" href="/prototypes/companion-settings-ui.css?v=2026-09-20-v391-picker-anime-bg" />
-    <link rel="stylesheet" href="/prototypes/companion-mobile-shell.css?v=2026-09-20-v391-picker-anime-bg" />
-    <link rel="stylesheet" href="/prototypes/companion-picker-v4.css?v=2026-09-20-v391-picker-anime-bg" />
-    <link rel="stylesheet" href="/prototypes/companion-picker-stacked-layout.css?v=2026-09-20-v391-picker-anime-bg" />
-    <link rel="stylesheet" href="/prototypes/companion-picker-aaa-theme.css?v=2026-09-20-v391-picker-anime-bg" />
-    <link rel="stylesheet" href="/prototypes/companion-responsive-layout.css?v=2026-09-20-v391-picker-anime-bg" />
-    <link rel="stylesheet" href="/prototypes/companion-scroll-affordances.css?v=2026-09-20-v391-picker-anime-bg" />
+    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-20-v392-picker-roster-fit" />
+    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-20-v392-picker-roster-fit" />
+    <link rel="stylesheet" href="/prototypes/companion-mic-button.css?v=2026-09-20-v392-picker-roster-fit" />
+    <link rel="stylesheet" href="/prototypes/companion-title-screen.css?v=2026-09-20-v392-picker-roster-fit" />
+    <link rel="stylesheet" href="/prototypes/companion-minimal-ui.css?v=2026-09-20-v392-picker-roster-fit" />
+    <link rel="stylesheet" href="/prototypes/companion-settings-ui.css?v=2026-09-20-v392-picker-roster-fit" />
+    <link rel="stylesheet" href="/prototypes/companion-mobile-shell.css?v=2026-09-20-v392-picker-roster-fit" />
+    <link rel="stylesheet" href="/prototypes/companion-picker-v4.css?v=2026-09-20-v392-picker-roster-fit" />
+    <link rel="stylesheet" href="/prototypes/companion-picker-stacked-layout.css?v=2026-09-20-v392-picker-roster-fit" />
+    <link rel="stylesheet" href="/prototypes/companion-picker-aaa-theme.css?v=2026-09-20-v392-picker-roster-fit" />
+    <link rel="stylesheet" href="/prototypes/companion-responsive-layout.css?v=2026-09-20-v392-picker-roster-fit" />
+    <link rel="stylesheet" href="/prototypes/companion-scroll-affordances.css?v=2026-09-20-v392-picker-roster-fit" />
     <script>
       (function () {
         var params = new URLSearchParams(location.search);
@@ -720,7 +720,7 @@
       })();
     </script>
     <script type="module">
-      import { bootEarlyStartPicker } from "/amoji-engine/engine/companion/companionEarlyStartPicker.js?v=2026-09-20-v391-picker-anime-bg";
+      import { bootEarlyStartPicker } from "/amoji-engine/engine/companion/companionEarlyStartPicker.js?v=2026-09-20-v392-picker-roster-fit";
       const bootParams = new URLSearchParams(location.search);
       if (bootParams.get("autostart") !== "1" && bootParams.get("pick") !== "0") {
         globalThis.__amojiEarlyStartPickerPromise = bootEarlyStartPicker({
@@ -4318,8 +4318,10 @@
       @media (max-height: 620px) {
         .companion-picker--v4.companion-picker--start.companion-picker--showcase
           .companion-picker-grid--start.companion-picker-grid--roster {
-          grid-template-columns: repeat(4, minmax(0, 1fr));
-          max-height: min(13.5rem, 36vh);
+          grid-template-columns: unset !important;
+          grid-auto-flow: column !important;
+          grid-auto-columns: minmax(3.85rem, 4.25rem) !important;
+          max-height: none;
         }
       }
 
@@ -4805,24 +4807,24 @@
     </style>
     <link
       rel="stylesheet"
-      href="/prototypes/companion-scene-backgrounds.css?v=2026-09-20-v391-picker-anime-bg"
+      href="/prototypes/companion-scene-backgrounds.css?v=2026-09-20-v392-picker-roster-fit"
     />
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-20-v391-picker-anime-bg",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-20-v392-picker-roster-fit",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-20-v391-picker-anime-bg",
-          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-20-v391-picker-anime-bg"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-20-v392-picker-roster-fit",
+          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-20-v392-picker-roster-fit"
         }
       }
     </script>
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-20-v391-picker-anime-bg"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-20-v392-picker-roster-fit"
     />
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-20-v391-picker-anime-bg"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-20-v391-picker-anime-bg"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-20-v392-picker-roster-fit"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-20-v392-picker-roster-fit"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;
