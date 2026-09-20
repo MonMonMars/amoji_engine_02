@@ -21,6 +21,8 @@ describe("companionSettingsChrome", () => {
     expect(labels.rosterModelsHint).toMatch(/Sakura|Celeste|VTuber/i);
     expect(labels.rosterDetailsSummary).toBe("View full 3D roster");
     expect(labels.modelLabel).toContain("LLM");
+    expect(labels.experienceMode).toBe("Experience mode");
+    expect(labels.experienceHint).toMatch(/one app/i);
   });
 
   it("builds Cantonese settings labels", () => {
