@@ -16,6 +16,7 @@ import { readFileSync, statSync } from "fs";
 import { extname, join as pathJoin } from "path";
 import { fileURLToPath } from "url";
 import { AMOJI_BUILD } from "../amoji-engine/engine/companion/buildVersion.mjs";
+import { waitForPageFn } from "./playwrightPageUtil.mjs";
 import {
   companionFullDemoUrl,
   companionFullDirectUrl,
@@ -153,31 +154,28 @@ async function probePlayEntry(base) {
 /** Wait for /play client redirect to land on lite or full shell. */
 async function gotoCompanionEntry(page, url, timeout = 90000) {
   await page.goto(url, { waitUntil: "domcontentloaded", timeout });
-  await page
-    .waitForFunction(
-      () =>
-        Boolean(
-          window.__amojiBuild &&
-            (window.__amojiLite?.ready ||
-              document.body.classList.contains("conversation-ui") ||
-              window.__amojiModuleBooted ||
-              document.getElementById("start-character-picker") ||
-              document.getElementById("panel-today")),
-        ),
-      { timeout },
-    )
-    .catch(() => null);
+  await waitForPageFn(
+    page,
+    () =>
+      Boolean(
+        window.__amojiBuild &&
+          (window.__amojiLite?.ready ||
+            document.body.classList.contains("conversation-ui") ||
+            window.__amojiModuleBooted ||
+            document.getElementById("start-character-picker") ||
+            document.getElementById("panel-today")),
+      ),
+    { timeout },
+  ).catch(() => null);
 }
 
 async function verifySecretary(page, label) {
   await gotoCompanionEntry(page, secretaryUrl);
   await verifyBootPaint(page, `${label} secretary`);
 
-  await page
-    .waitForFunction(() => window.__amojiModuleBooted === true, {
-      timeout: 120000,
-    })
-    .catch(() => null);
+  await waitForPageFn(page, () => window.__amojiModuleBooted === true, {
+    timeout: 120000,
+  }).catch(() => null);
 
   await page
     .waitForSelector("#activity-rail", { state: "attached", timeout: 30000 })
@@ -233,21 +231,20 @@ async function verifySecretary(page, label) {
 }
 
 async function verifyBootPaint(page, label) {
-  await page
-    .waitForFunction(
-      () => {
-        const splash = document.getElementById("amoji-boot-splash");
-        const picker = document.getElementById("start-character-picker");
-        const pickerOpen =
-          picker &&
-          (picker.classList.contains("is-open") ||
-            (!picker.classList.contains("hide") &&
-              picker.getAttribute("aria-hidden") !== "true"));
-        return Boolean(splash || pickerOpen);
-      },
-      { timeout: 15000 },
-    )
-    .catch(() => null);
+  await waitForPageFn(
+    page,
+    () => {
+      const splash = document.getElementById("amoji-boot-splash");
+      const picker = document.getElementById("start-character-picker");
+      const pickerOpen =
+        picker &&
+        (picker.classList.contains("is-open") ||
+          (!picker.classList.contains("hide") &&
+            picker.getAttribute("aria-hidden") !== "true"));
+      return Boolean(splash || pickerOpen);
+    },
+    { timeout: 15000 },
+  ).catch(() => null);
 
   const boot = await page.evaluate(() => {
     const canvas = document.getElementById("avatar-canvas");
@@ -290,11 +287,9 @@ async function verifyFullCompanion(page, label) {
 
   await verifyBootPaint(page, label);
 
-  await page
-    .waitForFunction(() => window.__amojiModuleBooted === true, {
-      timeout: 120000,
-    })
-    .catch(() => null);
+  await waitForPageFn(page, () => window.__amojiModuleBooted === true, {
+    timeout: 120000,
+  }).catch(() => null);
 
   const pickerOpen = await page.evaluate(() => {
     const picker = document.getElementById("start-character-picker");
