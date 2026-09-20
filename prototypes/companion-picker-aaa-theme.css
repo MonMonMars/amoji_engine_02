@@ -11,15 +11,16 @@
 }
 
 .companion-picker--aaa-theme .companion-picker-backdrop {
-  background: rgba(2, 4, 12, 0.55);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
+  background: rgba(2, 4, 12, 0.28);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
 }
 
+.companion-picker--aaa-theme.companion-picker--v4.companion-picker--start .companion-picker-sheet,
 .companion-picker--aaa-theme.companion-picker--start .companion-picker-sheet {
   position: relative;
   isolation: isolate;
-  background: #06040e;
+  background: transparent !important;
   border: none;
   box-shadow:
     0 0 0 1px rgba(232, 200, 114, 0.12) inset,
@@ -38,8 +39,12 @@
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(180deg, rgba(6, 4, 14, 0.35) 0%, rgba(6, 4, 14, 0.72) 55%, rgba(4, 3, 10, 0.94) 100%),
-    url("/prototypes/assets/picker-aaa-bg.png") center top / cover no-repeat;
+    linear-gradient(180deg, rgba(6, 4, 14, 0.22) 0%, rgba(6, 4, 14, 0.52) 55%, rgba(4, 3, 10, 0.82) 100%),
+    var(
+      --picker-aaa-bg-image,
+      url("/prototypes/assets/picker-aaa-bg.png")
+    )
+    center top / cover no-repeat;
 }
 
 .companion-picker--aaa-theme .picker-aaa-vignette {
@@ -381,9 +386,13 @@
   z-index: 0;
   pointer-events: none;
   background:
-    linear-gradient(180deg, rgba(8, 4, 16, 0.4), rgba(6, 4, 14, 0.92)),
-    url("/prototypes/assets/picker-aaa-bg.png") center top / cover no-repeat;
-  opacity: 0.55;
+    linear-gradient(180deg, rgba(8, 4, 16, 0.35), rgba(6, 4, 14, 0.88)),
+    var(
+      --picker-aaa-bg-image,
+      url("/prototypes/assets/picker-aaa-bg.png")
+    )
+    center top / cover no-repeat;
+  opacity: 0.72;
 }
 
 .companion-picker--aaa-theme.companion-picker--session .companion-picker-sheet > * {

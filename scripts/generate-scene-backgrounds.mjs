@@ -8,6 +8,7 @@ import { writeFileSync, mkdirSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { SCENE_BACKGROUND_PRESETS } from "../amoji-engine/engine/companion/companionScenePresets.js";
+import { PICKER_SCENE_ART_REVISION } from "../amoji-engine/engine/companion/companionPickerAssets.mjs";
 import { SCENE_ANIME_ART } from "./scene-bg-anime-art.mjs";
 
 const root = dirname(fileURLToPath(import.meta.url));
@@ -16,6 +17,7 @@ mkdirSync(outDir, { recursive: true });
 
 const ANIME_PNG = "/prototypes/assets/companion-bg-anime.png";
 const PNG_SCENE_IDS = new Set(["night-city"]);
+const ART_Q = `?v=${encodeURIComponent(PICKER_SCENE_ART_REVISION)}`;
 
 const overlayDefault =
   "linear-gradient(180deg, rgba(7, 10, 16, 0.25) 0%, rgba(7, 10, 16, 0.55) 55%, rgba(5, 7, 12, 0.82) 100%)";
@@ -26,8 +28,8 @@ const overlayGrok =
 
 /** @param {string} presetId */
 function sceneArtUrl(presetId) {
-  if (PNG_SCENE_IDS.has(presetId)) return `url("${ANIME_PNG}")`;
-  return `url("/prototypes/assets/scene-bg/${presetId}.svg")`;
+  if (PNG_SCENE_IDS.has(presetId)) return `url("${ANIME_PNG}${ART_Q}")`;
+  return `url("/prototypes/assets/scene-bg/${presetId}.svg${ART_Q}")`;
 }
 
 /** @param {string} presetId */

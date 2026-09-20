@@ -35,6 +35,7 @@ import {
   SCENE_BACKGROUND_PRESETS,
 } from "./companionScenePresets.js";
 import { wireScrollAffordances } from "./companionScrollAffordances.js";
+import { applyPickerAaaBackgroundArt } from "./companionPickerAssets.mjs";
 
 export const COMPANION_CHARACTER_PICKER_SCHEMA =
   "amoji.companionCharacterPicker.v6";
@@ -548,6 +549,7 @@ export function createCompanionCharacterPicker(opts = {}) {
 
   const mount = opts.root || document.body;
   mount.appendChild(shell);
+  applyPickerAaaBackgroundArt(shell);
 
   const titleEl = shell.querySelector(".companion-picker-title");
   const subEl = shell.querySelector(".companion-picker-sub");
@@ -881,6 +883,7 @@ export function createCompanionStartPicker(opts = {}) {
 
   const mount = opts.root || document.body;
   mount.appendChild(shell);
+  applyPickerAaaBackgroundArt(shell);
 
   const titleEl = shell.querySelector(".companion-picker-title");
   const subEl = shell.querySelector(".companion-picker-sub");
