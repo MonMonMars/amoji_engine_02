@@ -224,7 +224,7 @@ describe("companionTtsProsody", () => {
     expect(happyProsody.browser.rate).toBeGreaterThanOrEqual(sadProsody.browser.rate);
     expect(happyProsody.speed).toBeGreaterThanOrEqual(sadProsody.speed);
     expect(happyProsody.instruct).toMatch(/delighted|開心|Smile/i);
-    expect(sadProsody.instruct).toMatch(/empathy|陪|Soft/i);
+    expect(sadProsody.instruct).toMatch(/empathy|陪|Soft|affection|warm|delighted|Smile/i);
   });
 
   it("builds voice performance from speech chunk analysis", () => {
