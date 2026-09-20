@@ -55,6 +55,15 @@ function mime(p) {
 
 async function probeLocalServer(port = localPort) {
   try {
+    const health = await fetch(`http://127.0.0.1:${port}/api/health`, {
+      signal: AbortSignal.timeout(2000),
+    });
+    if (health.ok) {
+      const j = await health.json();
+      if (j.build === AMOJI_BUILD) {
+        return `http://127.0.0.1:${port}`;
+      }
+    }
     const res = await fetch(`http://127.0.0.1:${port}/prototypes/amoji-lite.html`, {
       signal: AbortSignal.timeout(2000),
     });
@@ -387,20 +396,24 @@ let deployedBuild = AMOJI_BUILD;
 let playEntryOk = true;
 
 if (useLocal) {
-  const existing = process.env.LITE_URL
-    ? null
-    : await probeLocalServer(localPort);
-  if (process.env.LITE_URL) {
+  const verifyBase = String(process.env.VERIFY_BASE_URL || "").trim();
+  if (verifyBase) {
+    baseUrl = verifyBase.replace(/\/$/, "");
+    record("local reuse (VERIFY_BASE_URL)", true, baseUrl);
+  } else if (process.env.LITE_URL) {
     baseUrl = process.env.LITE_URL.replace(/\/companion.*$/, "");
     record("local reuse (LITE_URL)", true, process.env.LITE_URL);
-  } else if (existing) {
-    baseUrl = existing;
-    record("local reuse (lab-serve)", true, baseUrl);
   } else {
-    const { srv, port } = await startLocalServer();
-    localSrv = srv;
-    baseUrl = `http://127.0.0.1:${port}`;
-    record("local static server", true, baseUrl);
+    const existing = await probeLocalServer(localPort);
+    if (existing) {
+      baseUrl = existing;
+      record("local reuse (lab-serve)", true, baseUrl);
+    } else {
+      const { srv, port } = await startLocalServer(localPort);
+      localSrv = srv;
+      baseUrl = `http://127.0.0.1:${port}`;
+      record("local static server", true, baseUrl);
+    }
   }
   secretaryUrl = `${baseUrl}/play?role=secretary&lang=en&pick=0&autostart=1&tab=today`;
   fullUrl = `${baseUrl}/play?lang=en&pick=1&automic=0`;
