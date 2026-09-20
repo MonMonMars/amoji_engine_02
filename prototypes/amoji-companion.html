@@ -5200,8 +5200,9 @@
           <section class="settings-card">
             <header class="settings-card-head">
               <h3 class="settings-card-title" id="settings-companion-title">Companion</h3>
-              <p class="settings-card-sub" id="settings-role-hint">3D character models — not the LLM model under Brain.</p>
+              <p class="settings-card-sub" id="settings-role-hint">Each character sets voice and personality; core features are the same.</p>
             </header>
+            <p class="settings-character-function" id="settings-character-function-readout" aria-live="polite"></p>
             <div class="settings-action-list">
               <button type="button" class="btn-secondary settings-action--primary" id="settings-btn-companions">Switch 3D companion</button>
             </div>
@@ -5215,15 +5216,7 @@
           <section class="settings-card">
             <header class="settings-card-head">
               <h3 class="settings-card-title" id="settings-session-title">Session</h3>
-              <p class="settings-card-sub" id="settings-mode-hint">Girlfriend, boyfriend, secretary, and pet — one app.</p>
             </header>
-            <div
-              class="settings-mode-grid"
-              id="settings-mode-grid"
-              role="radiogroup"
-              aria-labelledby="settings-mode-hint"
-            ></div>
-            <p class="settings-mode-readout" id="settings-mode-readout" aria-live="polite"></p>
             <div class="settings-action-list">
               <button type="button" class="btn-secondary" id="settings-btn-lang">Language</button>
               <button type="button" class="btn-secondary" id="settings-btn-chat">Chat: visible</button>
@@ -5522,7 +5515,6 @@
         llmContextDbMod,
         llmContextDbClientMod,
         localePrefsMod,
-        sessionModeMod,
       ] = await Promise.all([
         ami("../amoji-engine/engine/companion/createAvatar.js"),
         ami("../amoji-engine/engine/companion/chatLlm.js"),
@@ -5569,7 +5561,6 @@
         ami("../amoji-engine/engine/companion/companionLlmContextDb.js"),
         ami("../amoji-engine/engine/companion/companionLlmContextDbClient.js"),
         ami("../amoji-engine/engine/companion/companionLocalePrefs.js"),
-        ami("../amoji-engine/engine/companion/companionSessionMode.js"),
       ]);
       const {
         buildUnifiedSessionPrompt,
@@ -5590,25 +5581,25 @@
         resolveCompanionLang,
         saveCompanionLang,
       } = localePrefsMod;
-      const {
-        persistUserSessionMode,
-        loadSessionModeOverride,
-        renderSessionModeMenu,
-        formatActiveModeSummary,
-        buildSessionHref,
-      } = sessionModeMod;
       const { resolveCharacterRole } = characterRolesMod;
       const rolePickerCopy = () => pickerCopyForRole(appRole, isEnglish);
-      const roleRosterProvider = (langCode) =>
-        applySessionRoleBadgeOverrides(
-          rosterCharactersForPicker(langCode),
-          appRole,
+      const roleRosterProvider = (langCode) => {
+        const roster = rosterCharactersForPicker(langCode);
+        const urlRole = params.get("role");
+        if (!urlRole) return roster;
+        return applySessionRoleBadgeOverrides(
+          roster,
+          urlRole,
           langCode === "en",
         );
+      };
       const { createCompanionSecretaryBridge } = secretaryBridgeMod;
       const { isCompanionCareEnabledForRole } = featureFlagsMod;
       const { talkSpeedButtonTitle, formatTalkSpeedLabel } = talkSpeedMod;
-      const { buildSettingsChromeLabels } = settingsChromeMod;
+      const {
+        buildSettingsChromeLabels,
+        buildCharacterFunctionReadout,
+      } = settingsChromeMod;
       const {
         cleanComposerPlaceholder,
         shouldShowChatBubble,
@@ -5714,6 +5705,7 @@
       const { hasAnyClientCloudKey, inferKeyProvider } = keysMod;
       const {
         buildCompanionHref,
+        buildSessionHref,
         cloudVoiceLabel,
         companionLangCode,
         findVoiceEntry,
@@ -6197,9 +6189,9 @@
       const emotionBallEl = document.getElementById("emotion-ball");
       const atmosphereEl = document.querySelector(".atmosphere");
       const settingsBtnLang = document.getElementById("settings-btn-lang");
-      const settingsModeGrid = document.getElementById("settings-mode-grid");
-      const settingsModeReadout = document.getElementById("settings-mode-readout");
-      const settingsModeHint = document.getElementById("settings-mode-hint");
+      const settingsCharacterFunctionReadout = document.getElementById(
+        "settings-character-function-readout",
+      );
       const settingsVoiceNote = document.getElementById("settings-voice-note");
       const settingsBtnSpeaker = document.getElementById("settings-btn-speaker");
       const settingsSfxVolume = document.getElementById("settings-sfx-volume");
@@ -6237,8 +6229,8 @@
           buildSessionHref({
             basePath: location.pathname,
             lang: langCode,
-            role: params.get("role") || appRole,
-            character: params.get("character"),
+            character: params.get("character") || undefined,
+            extra: params.get("role") ? { role: params.get("role") } : {},
           }),
         );
         params.set("lang", langCode === "en" ? "en" : "yue");
@@ -6358,25 +6350,25 @@
       });
       characterId = resolveRoleDefaultCharacter(characterId, appRole, params);
       appRole = resolveAppRole(params, localStorage, characterId);
-      if (params.get("role")) {
-        persistUserSessionMode(appRole, localStorage);
-      } else if (!loadSessionModeOverride(localStorage)) {
-        saveCompanionRole(appRole);
-      }
+      saveCompanionRole(appRole);
       for (const role of COMPANION_ROLES) {
         document.body.classList.remove(`companion-role-${role}`);
       }
       document.body.classList.add(`companion-role-${appRole}`);
       persistCharacterId(characterId);
       if (!params.get("character")) {
+        const bootExtra = { ...(params.get("tab") ? { tab: params.get("tab") } : {}) };
+        if (appRole !== resolveCharacterRole(characterId)) {
+          bootExtra.role = appRole;
+        }
         history.replaceState(
           null,
           "",
           buildSessionHref({
             basePath: location.pathname,
             lang: langCode,
-            role: appRole,
             character: characterId,
+            extra: bootExtra,
           }),
         );
         params.set("character", characterId);
@@ -6533,15 +6525,14 @@
         if (settingsBtnCamera) settingsBtnCamera.textContent = labels.camera;
         if (settingsSoundTitle) settingsSoundTitle.textContent = labels.soundEffects;
         if (settingsHapticsLabel) settingsHapticsLabel.textContent = labels.haptics;
-        const liteLinkEl = document.getElementById("lite-link");
         const labLinkEl = document.getElementById("lab-link");
-        if (settingsModeHint) {
-          settingsModeHint.textContent = labels.experienceHint;
+        if (settingsCharacterFunctionReadout) {
+          settingsCharacterFunctionReadout.textContent =
+            buildCharacterFunctionReadout(isEnglish, {
+              companionName: characterDisplayName(characterId, langCode, isEnglish),
+              companionRole: resolveCharacterRole(characterId),
+            });
         }
-        if (settingsModeReadout) {
-          settingsModeReadout.textContent = formatActiveModeSummary(appRole, isEnglish);
-        }
-        syncSessionModeMenu();
         if (labLinkEl) labLinkEl.textContent = labels.labLink;
         if (btnListOllama) btnListOllama.textContent = labels.listOllama;
         if (btnSaveLlm) btnSaveLlm.textContent = labels.saveLlm;
@@ -6591,11 +6582,15 @@
         }
       };
 
-      const syncSessionModeMenu = () => {
-        renderSessionModeMenu(settingsModeGrid, {
-          activeRole: appRole,
-          isEnglish,
-          onSelect: (nextRole) => applyAppMode(nextRole),
+      const sessionHrefForState = () => {
+        const charRole = resolveCharacterRole(characterId);
+        const extra = { ...(params.get("tab") ? { tab: params.get("tab") } : {}) };
+        if (appRole !== charRole) extra.role = appRole;
+        return buildSessionHref({
+          basePath: location.pathname,
+          lang: langCode,
+          character: characterId,
+          extra,
         });
       };
 
@@ -6621,47 +6616,22 @@
           if (careEnabled) void initCompanionChrome();
         }
         syncPickerSessionContext?.();
-        params.set("role", appRole);
-        history.replaceState(
-          null,
-          "",
-          buildSessionHref({
-            basePath: location.pathname,
-            lang: langCode,
-            role: appRole,
-            character: characterId,
-            extra: params.get("tab") ? { tab: params.get("tab") } : {},
-          }),
-        );
+        if (appRole !== resolveCharacterRole(characterId)) {
+          params.set("role", appRole);
+        } else {
+          params.delete("role");
+        }
+        history.replaceState(null, "", sessionHrefForState());
         syncSettingsChrome();
       };
 
-      const applyAppMode = (nextRole) => {
-        const role = normalizeCompanionRole(nextRole);
-        if (role === appRole) return;
-        appRole = persistUserSessionMode(role, localStorage);
-        applyAppRoleEffects();
-        showToast(
-          isEnglish
-            ? `${roleLabel(appRole, true)} mode`
-            : `${roleLabel(appRole, false)}模式`,
-          "info",
-        );
-        uiAudio?.play?.("toggle-on");
-        uiAudio?.haptic?.("light");
-      };
-
       const syncAppRoleFromCharacter = (charId = characterId, { announce = false } = {}) => {
-        if (loadSessionModeOverride(localStorage)) {
-          applyAppRoleEffects();
-          return;
-        }
         const nextRole = resolveSessionRoleFromCharacter(charId, params);
         appRole = nextRole;
         saveCompanionRole(appRole);
         startPicker?.setSelected?.(characterId);
         applyAppRoleEffects();
-        if (announce && !loadSessionModeOverride(localStorage)) {
+        if (announce) {
           const name = characterDisplayName(charId, langCode, isEnglish);
           showToast(
             isEnglish
@@ -8755,9 +8725,6 @@
         switchLanguage: async (lang) => {
           applyLanguage(lang === "en" ? "en" : "yue");
         },
-        switchAppMode: async (role) => {
-          applyAppMode(role);
-        },
         setMic: async (on) => {
           if (on && !voice.micOn) btnMic?.click();
           if (!on && voice.micOn) btnMic?.click();
@@ -9526,13 +9493,7 @@
         history.replaceState(
           null,
           "",
-          buildSessionHref({
-            basePath: location.pathname,
-            lang: nextCode,
-            role: appRole,
-            character: characterId,
-            extra: params.get("tab") ? { tab: params.get("tab") } : {},
-          }),
+          sessionHrefForState(),
         );
         params.set("lang", nextCode === "en" ? "en" : "yue");
         showToast(

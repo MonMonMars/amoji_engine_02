@@ -128,10 +128,10 @@ describe("companionUnifiedApp", () => {
     expect(roster.find((c) => c.id === "kizuna")?.roleBadge).toBe("Girlfriend");
   });
 
-  it("uses role-specific picker titles", () => {
-    expect(pickerCopyForRole("secretary", true).title).toContain("secretary");
-    expect(pickerCopyForRole("secretary", false).title).toContain("秘書");
-    expect(pickerCopyForRole("boyfriend", true).title).toContain("boyfriend");
+  it("uses unified picker titles regardless of role param", () => {
+    expect(pickerCopyForRole("secretary", true).title).toBe("Choose your companion");
+    expect(pickerCopyForRole("boyfriend", false).title).toBe("揀你嘅同伴");
+    expect(pickerCopyForRole("secretary", true).sub).toMatch(/personality/i);
   });
 
   it("lists roster with embedded function labels", () => {

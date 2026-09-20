@@ -6,6 +6,10 @@ import {
   CHARACTER_IDS,
   listCompanionCharacters,
 } from "./companionCharacterCatalog.js";
+import {
+  normalizeCompanionRole,
+  roleLabel,
+} from "../mobile/companionRolePresets.js";
 
 export const COMPANION_SETTINGS_CHROME_SCHEMA = "amoji.companionSettingsChrome.v1";
 
@@ -30,10 +34,6 @@ export function buildSettingsChromeLabels(isEnglish = false, state = {}) {
     menuTitle: en ? "Menu" : "選單",
     closeAria: en ? "Close menu" : "關閉選單",
     session: en ? "Session" : "連線",
-    experienceMode: en ? "Experience mode" : "體驗模式",
-    experienceHint: en
-      ? "Girlfriend, boyfriend, secretary, and pet — one app."
-      : "女朋友、男朋友、秘書、寵物 — 同一個 App。",
     language: en ? "Language: English" : "語言：粵語",
     languageSwitchTitle: en ? "Switch to Cantonese (粵語)" : "Switch to English",
     chat: en
@@ -67,8 +67,8 @@ export function buildSettingsChromeLabels(isEnglish = false, state = {}) {
     liteLink: en ? "Secretary mode" : "秘書模式",
     roleSection: en ? "Function" : "功能",
     roleHint: en
-      ? "3D character models (not the LLM below) — tap Switch companion for the full roster."
-      : "3D 角色模型（唔係下面 LLM）— 按「切換同伴」睇完整名單。",
+      ? "Each character sets their label (girlfriend, boyfriend, secretary, pet), voice, and personality. Chat, 3D, and menu features are the same for all."
+      : "每個角色有自己嘅標籤（女朋友、男朋友、秘書、寵物）、語音同性格。傾偈、3D 同選單功能全部一樣。",
     rosterModelsHint: buildRosterModelsHint(en),
     rosterDetailsSummary: en ? "View full 3D roster" : "睇完整 3D 名單",
     roleReadout: state.roleReadout || (en ? "Girlfriend" : "女朋友"),
@@ -90,6 +90,20 @@ export function buildSettingsChromeLabels(isEnglish = false, state = {}) {
  * Short readout for settings — 23-model roster + AAA names (#5–10).
  * @param {boolean} [isEnglish]
  */
+/**
+ * @param {boolean} [isEnglish]
+ * @param {{ companionName?: string, companionRole?: string }} [state]
+ */
+export function buildCharacterFunctionReadout(isEnglish = false, state = {}) {
+  const en = Boolean(isEnglish);
+  const name = state.companionName || (en ? "Companion" : "同伴");
+  const role = roleLabel(normalizeCompanionRole(state.companionRole), en);
+  if (en) {
+    return `${name} · ${role} — same features; unique voice & personality.`;
+  }
+  return `${name} · ${role} — 功能相同；語音同性格唔同。`;
+}
+
 export function buildRosterModelsHint(isEnglish = false) {
   const en = Boolean(isEnglish);
   const lang = en ? "en" : "yue";

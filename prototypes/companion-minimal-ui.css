@@ -110,8 +110,7 @@ body.companion-start-pending.companion-minimal-chrome .topbar {
   pointer-events: none !important;
 }
 
-body.companion-minimal-chrome #settings-role-readout,
-body.companion-minimal-chrome #settings-role-hint {
+body.companion-minimal-chrome #settings-role-readout {
   display: none !important;
 }
 
