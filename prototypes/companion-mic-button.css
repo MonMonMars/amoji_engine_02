@@ -6,6 +6,7 @@
   --mic-glow-inset: 8px;
   --mic-glow-intensity: 0.35;
   --mic-halo-scale: 1;
+  --mic-orb-scale: 1;
   --mic-shape-radius: 50%;
   --mic-icon-color: hsl(218 8% 62% / 0.88);
   position: relative;
@@ -21,10 +22,12 @@
   isolation: isolate;
   -webkit-tap-highlight-color: transparent;
   transition:
-    transform 0.18s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.1s cubic-bezier(0.22, 1, 0.36, 1),
     box-shadow 0.22s ease,
     border-color 0.18s ease,
     background 0.18s ease;
+  transform: scale(var(--mic-orb-scale, 1));
+  transform-origin: center center;
 }
 
 .mic-btn__halo {
@@ -164,7 +167,6 @@
     0 0 0 1px rgba(255, 255, 255, 0.08) inset;
   filter: none;
   color: #fff;
-  transform: scale(calc(var(--mic-halo-scale, 1) + var(--mic-level, 0) * 0.06));
 }
 
 .mic-btn.mini-emotion-ball[data-mic-state="listening"],

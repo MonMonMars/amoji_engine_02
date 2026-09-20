@@ -505,10 +505,11 @@ function drawMagicBallEmotionOrb(ctx, width, height, opts) {
   const cx = width / 2;
   const cy = height / 2;
   const size = Math.min(width, height);
+  const volumeSize = 0.62 + volume * 0.38;
   const breath = reduced
     ? 1
-    : 1 + volume * 0.12 + Math.sin(time * 1.35) * 0.022;
-  const sphereR = size * 0.44 * breath;
+    : 1 + Math.sin(time * 1.35) * 0.012 * (1 - volume * 0.65);
+  const sphereR = size * 0.5 * volumeSize * breath;
   const spin = reduced ? 0 : Number(opts.spin) || 0;
   const drift = reduced
     ? { x: 0, y: 0 }

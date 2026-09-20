@@ -6,6 +6,9 @@ import {
   micButtonVisualForState,
   MIC_BUTTON_CHATGPT_LIVE,
   MIC_BUTTON_CHATGPT_IDLE,
+  micOrbScaleFromLevel,
+  MIC_ORB_SCALE_MIN,
+  MIC_ORB_SCALE_MAX,
   resolveMicButtonTheme,
   resolveMicButtonThemeForState,
   syncMicButtonGlow,
@@ -14,6 +17,15 @@ import {
 } from "../engine/companion/companionMicButton.js";
 
 describe("companionMicButton", () => {
+  it("scales the live orb down for quiet and up for loud volume", () => {
+    expect(micOrbScaleFromLevel(0, { live: true })).toBe(MIC_ORB_SCALE_MIN);
+    expect(micOrbScaleFromLevel(1, { live: true })).toBe(MIC_ORB_SCALE_MAX);
+    expect(micOrbScaleFromLevel(0.5, { live: true })).toBeGreaterThan(
+      MIC_ORB_SCALE_MIN,
+    );
+    expect(micOrbScaleFromLevel(0.8, { live: false })).toBe(1);
+  });
+
   it("maps emotions to distinct accent hues", () => {
     const happy = resolveMicButtonTheme({ emotion: "happy" });
     const sad = resolveMicButtonTheme({ emotion: "sad" });
@@ -82,7 +94,9 @@ describe("companionMicButton", () => {
     expect(btn.getAttribute("aria-label")).toContain(micHudEmotionLabel("happy", true));
     expect(btn.style.getPropertyValue("--mic-glow-inset")).toBeTruthy();
     expect(btn.classList.contains("mic-glow-inset")).toBe(true);
-    expect(Number(btn.style.getPropertyValue("--mic-halo-scale"))).toBeGreaterThan(1);
+    expect(Number(btn.style.getPropertyValue("--mic-orb-scale"))).toBeGreaterThan(
+      1,
+    );
   });
 
   it("syncMicVoiceHud delegates to mic button when passed the button", () => {
