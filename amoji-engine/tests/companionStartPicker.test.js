@@ -242,6 +242,27 @@ describe("companion start picker", () => {
     picker.destroy();
   });
 
+  it("syncFromSession skips roster rebuild when id and locale unchanged", () => {
+    if (typeof document === "undefined") return;
+    const picker = createCompanionStartPicker({
+      isEnglish: true,
+      selectedId: "nova",
+      onStart: () => {},
+    });
+    const grid = picker.element.querySelector(".companion-picker-grid");
+    const beforeHtml = grid?.innerHTML;
+    picker.syncFromSession({
+      selectedId: "nova",
+      isEnglish: true,
+      pickerCopy: { title: "Choose your companion" },
+    });
+    expect(picker.element.querySelector(".companion-picker-title")?.textContent).toBe(
+      "Choose your companion",
+    );
+    expect(grid?.innerHTML).toBe(beforeHtml);
+    picker.destroy();
+  });
+
   it("skips re-render when selecting the same strip card twice", () => {
     if (typeof document === "undefined") return;
     let changes = 0;
