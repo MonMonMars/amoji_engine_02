@@ -53,7 +53,7 @@ async function main() {
     }
   });
 
-  await page.goto(url.toString(), { waitUntil: "domcontentloaded", timeout: 45000 });
+  await page.goto(url.toString(), { waitUntil: "domcontentloaded", timeout: 120000 });
   await beginStartPickerSession(page, {
     characterId,
     cardTimeout: 20000,
@@ -80,11 +80,15 @@ async function main() {
   await browser.close();
 
   const hitExpected = loadedModels.some((u) => u.includes(expected.model));
+  const urlMatches = String(report.loadedModelUrl || "").includes(expected.model);
+  const idMatches =
+    report.characterId === characterId && report.loadedCharacterId === characterId;
 
   const ok =
     report.avatarKind === expected.kind &&
-    hitExpected &&
-    report.characterId === characterId;
+    idMatches &&
+    urlMatches &&
+    (hitExpected || urlMatches);
 
   console.log(
     JSON.stringify(

@@ -102,3 +102,38 @@ Companion loads `prototypes/companion-scene-backgrounds.css` (linked in `amoji-c
 
 - Unit tests: `cd amoji-engine && npm test`
 - Local full companion: `cd amoji-engine && node scripts/lab-serve.mjs` → http://127.0.0.1:5173/play
+
+### Verify scripts (root `package.json`)
+
+| Script | What it covers |
+|--------|----------------|
+| `npm run verify:pre-delivery` | Unit tests + local demo + picker E2E + reported-issues E2E (49 checks) |
+| `npm run verify:pre-delivery:prod` | Same gate against live Vercel (issues E2E retries once on flake) |
+| `npm run verify:production` | Production demo-link only |
+| `npm run verify:picker` | Picker v4 + in-session switch |
+| `npm run verify:scene-shortcuts` | Menu scene/chat/speaker + text chat reply |
+| `npm run verify:roster-models` | 7 characters on **production** (use `LOCAL=1` for static server) |
+| `npm run verify:mobile` | `/app` hub + iframe `/play` shells |
+| `npm run verify:local` | Mobile smoke (+ issues E2E when `FULL_SMOKE=1`) |
+
+CI (`Companion CI`): unit tests + `run-companion-smoke.mjs`; E2E job runs `FULL_SMOKE=1` (issues + scene-shortcuts).
+
+Artifacts: `/opt/cursor/artifacts/` (`issues_verify_report.json`, `pre-delivery-verify.json`, screenshots).
+
+### Playwright E2E
+
+Always pass page-function options as the **third** argument. Use `waitForPageFn(page, fn, { timeout })` from `scripts/playwrightPageUtil.mjs` — never `page.waitForFunction(fn, { timeout })` (that passes `{ timeout }` as data and caps at 30s).
+
+### 3D model vs picker selection
+
+- Canonical fetch path: `companion-<characterId>.vrm` (`companionModelAssets.mjs`, `rosterVrmAssets.mjs`).
+- Runtime exposes `window.__amojiLoadedModelUrl` and `window.__amojiLoadedCharacterId` after boot/switch.
+- Some roster ids **share identical VRM bytes** (legacy alias slots). Unit test `rosterVrmUniqueness.test.js` lists allowed duplicate groups. Card PNGs can still differ; mesh may match a sibling id — fix by unique VRM per id or re-render previews from the loaded model.
+
+### Cursor Cloud specific instructions
+
+- Before claiming a fix is live: `npm run verify:pre-delivery` locally, then `npm run verify:pre-delivery:prod` after deploy.
+- Production base: `https://temporary-rushing-oxygen-ok5jzhd.vercel.app` — confirm `/api/health` `build` matches `AMOJI_BUILD` in `buildVersion.mjs`.
+- Share user links as `/play?build=<AMOJI_BUILD>&pick=1&automic=0&lang=en&_cb=<timestamp>` (bookmark `/play` for cache-safe entry).
+- VRM assets: `npm run postinstall` or `node amoji-engine/scripts/download-legal-vrm.mjs` if `.vrm` files missing in CI/cloud VM.
+- Long E2E: use tmux for verify servers; `scripts/companion-verify-server.mjs` or `local-static-server.mjs` for local `/play` routes.

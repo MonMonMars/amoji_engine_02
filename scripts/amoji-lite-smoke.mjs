@@ -10,6 +10,7 @@ import { readFileSync, statSync } from "fs";
 import { extname } from "path";
 import { AMOJI_BUILD } from "../amoji-engine/engine/companion/buildVersion.mjs";
 import { buildPlayRedirectLocation } from "../amoji-engine/engine/companion/companionFreshBoot.js";
+import { waitForPageFn } from "./playwrightPageUtil.mjs";
 
 const outDir = process.env.ARTIFACT_DIR || "/opt/cursor/artifacts";
 mkdirSync(outDir, { recursive: true });
@@ -74,11 +75,13 @@ for (const [label, ctx] of cases) {
 
   const t0 = Date.now();
   await page.goto(baseUrl, { waitUntil: "domcontentloaded", timeout: 120000 });
-  await page
-    .waitForFunction(() => window.__amojiModuleBooted === true || document.getElementById("start-character-picker"), {
-      timeout: 120000,
-    })
-    .catch(() => null);
+  await waitForPageFn(
+    page,
+    () =>
+      window.__amojiModuleBooted === true ||
+      Boolean(document.getElementById("start-character-picker")),
+    { timeout: 120000 },
+  ).catch(() => null);
 
   const pickerOpen = await page.evaluate(() => {
     const picker = document.getElementById("start-character-picker");

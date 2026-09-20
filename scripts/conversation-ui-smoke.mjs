@@ -8,6 +8,7 @@ import { mkdirSync } from "fs";
 import { join } from "path";
 import { AMOJI_BUILD } from "../amoji-engine/engine/companion/buildVersion.mjs";
 import { beginStartPickerSession } from "./companion-picker-smoke-util.mjs";
+import { waitForPageFn } from "./playwrightPageUtil.mjs";
 
 const outDir = process.env.ARTIFACT_DIR || "/opt/cursor/artifacts";
 mkdirSync(outDir, { recursive: true });
@@ -23,9 +24,9 @@ const errors = [];
 page.on("pageerror", (err) => errors.push(String(err)));
 
 await page.goto(baseUrl, { waitUntil: "domcontentloaded", timeout: 120000 });
-await page
-  .waitForFunction(() => window.__amojiModuleBooted === true, { timeout: 120000 })
-  .catch(() => null);
+await waitForPageFn(page, () => window.__amojiModuleBooted === true, {
+  timeout: 120000,
+}).catch(() => null);
 
 const pickerOpen = await page.evaluate(() => {
   const picker = document.getElementById("start-character-picker");

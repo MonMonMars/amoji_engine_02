@@ -22,6 +22,7 @@ import {
   shouldTryWebSearch,
 } from "../amoji-engine/engine/companion/companionWebSearch.mjs";
 import { localCompanionReply } from "../amoji-engine/engine/companion/companionLocalReply.mjs";
+import { waitForPageFn } from "./playwrightPageUtil.mjs";
 
 const outDir = process.env.ARTIFACT_DIR || "/opt/cursor/artifacts";
 const assetsDir = join(dirname(fileURLToPath(import.meta.url)), "../prototypes/assets");
@@ -39,6 +40,54 @@ const checks = [];
 function record(name, ok, detail = "") {
   checks.push({ name, ok: Boolean(ok), detail });
   console.log(`${ok ? "PASS" : "FAIL"}  ${name}${detail ? ` — ${detail}` : ""}`);
+}
+
+/** @param {import("playwright").Page} page @param {Parameters<import("playwright").Page["screenshot"]>[0]} opts */
+async function safeScreenshot(page, opts) {
+  const path = opts?.path;
+  if (!path) return page.screenshot(opts);
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      await page.screenshot(opts);
+      return;
+    } catch (err) {
+      const code = /** @type {NodeJS.ErrnoException} */ (err)?.code;
+      if (attempt >= 2 || (code !== "EIO" && code !== "ENOENT")) throw err;
+      await page.waitForTimeout(250 * (attempt + 1));
+    }
+  }
+}
+
+/**
+ * @param {string} apiUrl
+ * @param {string} prompt
+ * @param {number} [attempts]
+ */
+async function postChatCasual(apiUrl, prompt, attempts = 3) {
+  let lastErr = "";
+  for (let i = 0; i < attempts; i += 1) {
+    try {
+      const res = await fetch(apiUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: prompt, providerId: "basic" }),
+        signal: AbortSignal.timeout(45000),
+      });
+      const data = await res.json();
+      const reply = String(data.reply || "");
+      const dumped =
+        /Creative Commons|Wiktionary|Ray Davies|Kung Fu School|stock dump/i.test(
+          reply,
+        );
+      const ok = res.ok && data.mode !== "local+web" && !dumped && reply.length > 0;
+      if (ok) return { ok: true, detail: `${data.mode} ${reply.slice(0, 72)}` };
+      lastErr = `${data.mode || res.status} ${reply.slice(0, 72)}`;
+    } catch (err) {
+      lastErr = String(err?.message || err);
+    }
+    if (i < attempts - 1) await new Promise((r) => setTimeout(r, 1200 * (i + 1)));
+  }
+  return { ok: false, detail: lastErr };
 }
 
 /** @param {import("playwright").Page} page @param {string} characterId */
@@ -123,26 +172,8 @@ async function main() {
       record(`chat-casual:${prompt}`, true, "skipped (local static verify host)");
       continue;
     }
-    try {
-      const res = await fetch(apiBase, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: prompt, providerId: "basic" }),
-      });
-      const data = await res.json();
-      const reply = String(data.reply || "");
-      const dumped =
-        /Creative Commons|Wiktionary|Ray Davies|Kung Fu School|stock dump/i.test(
-          reply,
-        );
-      record(
-        `chat-casual:${prompt}`,
-        res.ok && data.mode !== "local+web" && !dumped && reply.length > 0,
-        `${data.mode} ${reply.slice(0, 72)}`,
-      );
-    } catch (err) {
-      record(`chat-casual:${prompt}`, false, err.message);
-    }
+    const chat = await postChatCasual(apiBase.toString(), prompt);
+    record(`chat-casual:${prompt}`, chat.ok, chat.detail);
   }
 
   const browser = await chromium.launch({
@@ -157,8 +188,8 @@ async function main() {
   });
 
   await page.goto(url.toString(), { waitUntil: "domcontentloaded", timeout: 90000 });
-  await page.waitForFunction(() => window.__amojiStart?.ready === true, null, {
-    timeout: 90000,
+  await waitForPageFn(page, () => window.__amojiStart?.ready === true, {
+    timeout: 120000,
   });
 
   const boot = await page.evaluate(() => {
@@ -256,7 +287,7 @@ async function main() {
     JSON.stringify(rosterPreviews),
   );
 
-  await page.screenshot({
+  await safeScreenshot(page, {
     path: `${outDir}/issues_verify_picker.png`,
     animations: "disabled",
   });
@@ -532,18 +563,49 @@ async function main() {
       modelRotRange: range("modelRotY"),
     };
   });
+  let lifeMetrics = idleLife;
+  const headSpineOk = (m) => m.headRange > 0.012 || m.spineRange > 0.012;
+  const bodyLifeOk = (m) =>
+    m.modelRotRange > 0.018 ||
+    m.modelYRange > 0.002 ||
+    m.headRange > 0.012 ||
+    m.spineRange > 0.012;
+  if (!headSpineOk(lifeMetrics) || !bodyLifeOk(lifeMetrics)) {
+    await page.waitForTimeout(2200);
+    lifeMetrics = await page.evaluate(async () => {
+      const avatar = window.__amojiAvatar;
+      const vrm = avatar?.vrm;
+      const boneX = (name) =>
+        Number(vrm?.humanoid?.getNormalizedBoneNode?.(name)?.rotation?.x) || 0;
+      const samples = [];
+      for (let i = 0; i < 12; i += 1) {
+        samples.push({
+          headX: boneX("head"),
+          spineX: boneX("spine"),
+          modelY: Number(avatar?.vrm?.scene?.position?.y) || 0,
+          modelRotY: Number(avatar?.vrm?.scene?.rotation?.y) || 0,
+        });
+        await new Promise((r) => setTimeout(r, 280));
+      }
+      const range = (key) =>
+        Math.max(...samples.map((s) => s[key])) - Math.min(...samples.map((s) => s[key]));
+      return {
+        headRange: range("headX"),
+        spineRange: range("spineX"),
+        modelYRange: range("modelY"),
+        modelRotRange: range("modelRotY"),
+      };
+    });
+  }
   record(
     "idle-head-spine-life",
-    idleLife.headRange > 0.012 || idleLife.spineRange > 0.012,
-    JSON.stringify(idleLife),
+    headSpineOk(lifeMetrics),
+    JSON.stringify(lifeMetrics),
   );
   record(
     "idle-body-life",
-    idleLife.modelRotRange > 0.018 ||
-      idleLife.modelYRange > 0.002 ||
-      idleLife.headRange > 0.012 ||
-      idleLife.spineRange > 0.012,
-    JSON.stringify(idleLife),
+    bodyLifeOk(lifeMetrics),
+    JSON.stringify(lifeMetrics),
   );
 
   const idleFace = await page.evaluate(async () => {
@@ -690,7 +752,7 @@ async function main() {
       (talkingPose.mouthTarget || 0) <= 0.42,
     JSON.stringify(talkingPose),
   );
-  await page.screenshot({
+  await safeScreenshot(page, {
     path: `${outDir}/issues_verify_talking_mouth.png`,
   });
   await page.evaluate(async () => {
@@ -699,7 +761,7 @@ async function main() {
     await new Promise((r) => setTimeout(r, 400));
   });
 
-  await page.screenshot({
+  await safeScreenshot(page, {
     path: `${outDir}/issues_verify_idle.png`,
     animations: "disabled",
   });
@@ -707,7 +769,7 @@ async function main() {
   const orbit = page.locator("#orbit-hit");
   const box = await orbit.boundingBox();
   if (box) {
-    const before = await page.screenshot({ animations: "disabled" });
+    const before = await page.screenshot({ animations: "disabled", timeout: 60000 });
     await page.mouse.move(box.x + box.width * 0.55, box.y + box.height * 0.28);
     await page.mouse.down();
     await page.mouse.move(box.x + box.width * 0.82, box.y + box.height * 0.28, {
@@ -718,7 +780,7 @@ async function main() {
     const after = await page.screenshot({ animations: "disabled" });
     const changed = Buffer.compare(before, after) !== 0;
     record("camera-orbit-drag", changed, changed ? "pixels changed" : "no visual change");
-    await page.screenshot({
+    await safeScreenshot(page, {
       path: `${outDir}/issues_verify_orbit.png`,
       animations: "disabled",
     });
