@@ -445,16 +445,6 @@ body.companion-minimal-chrome .settings {
   border-radius: 1.35rem 1.35rem 0 0;
 }
 
-body.companion-minimal-chrome .settings-head {
-  margin-bottom: 0.35rem;
-}
-
-body.companion-minimal-chrome .settings .btn-secondary {
-  width: 100%;
-  text-align: left;
-  justify-content: flex-start;
-}
-
 body.companion-minimal-chrome .care-tools-stack {
   z-index: 10040;
 }

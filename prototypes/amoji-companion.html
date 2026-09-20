@@ -8,9 +8,9 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji · Companion</title>
     <script>
-      window.__amojiBuild = "2026-09-20-v378-llm-context-database";
+      window.__amojiBuild = "2026-09-20-v379-settings-menu";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-20-v378-llm-context-database"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-20-v379-settings-menu"></script>
     <link
       rel="prefetch"
       href="/prototypes/assets/companion-char-nova.png"
@@ -722,13 +722,14 @@
       media="print"
       onload="this.media='all'"
     />
-    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-20-v378-llm-context-database" />
-    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-20-v378-llm-context-database" />
-    <link rel="stylesheet" href="/prototypes/companion-mic-button.css?v=2026-09-20-v378-llm-context-database" />
-    <link rel="stylesheet" href="/prototypes/companion-minimal-ui.css?v=2026-09-20-v378-llm-context-database" />
-    <link rel="stylesheet" href="/prototypes/companion-mobile-shell.css?v=2026-09-20-v378-llm-context-database" />
-    <link rel="stylesheet" href="/prototypes/companion-picker-v4.css?v=2026-09-20-v378-llm-context-database" />
-    <link rel="stylesheet" href="/prototypes/companion-picker-stacked-layout.css?v=2026-09-20-v378-llm-context-database" />
+    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-20-v379-settings-menu" />
+    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-20-v379-settings-menu" />
+    <link rel="stylesheet" href="/prototypes/companion-mic-button.css?v=2026-09-20-v379-settings-menu" />
+    <link rel="stylesheet" href="/prototypes/companion-minimal-ui.css?v=2026-09-20-v379-settings-menu" />
+    <link rel="stylesheet" href="/prototypes/companion-settings-ui.css?v=2026-09-20-v379-settings-menu" />
+    <link rel="stylesheet" href="/prototypes/companion-mobile-shell.css?v=2026-09-20-v379-settings-menu" />
+    <link rel="stylesheet" href="/prototypes/companion-picker-v4.css?v=2026-09-20-v379-settings-menu" />
+    <link rel="stylesheet" href="/prototypes/companion-picker-stacked-layout.css?v=2026-09-20-v379-settings-menu" />
     <script>
       (function () {
         var params = new URLSearchParams(location.search);
@@ -754,7 +755,7 @@
       })();
     </script>
     <script type="module">
-      import { bootEarlyStartPicker } from "/amoji-engine/engine/companion/companionEarlyStartPicker.js?v=2026-09-20-v378-llm-context-database";
+      import { bootEarlyStartPicker } from "/amoji-engine/engine/companion/companionEarlyStartPicker.js?v=2026-09-20-v379-settings-menu";
       const bootParams = new URLSearchParams(location.search);
       if (bootParams.get("autostart") !== "1" && bootParams.get("pick") !== "0") {
         globalThis.__amojiEarlyStartPickerPromise = bootEarlyStartPicker({
@@ -3621,9 +3622,6 @@
         overflow: hidden;
       }
 
-      .settings .settings-section-title:not(:first-of-type) {
-        margin-top: 0.65rem;
-      }
 
       .scene-preset__swatch {
         display: block;
@@ -3939,19 +3937,12 @@
         left: 50%;
         bottom: 0;
         transform: translate(-50%, 110%);
-        width: min(100%, 440px);
-        max-height: min(88dvh, 720px);
-        overflow-y: auto;
-        padding: 0.85rem 0.95rem calc(1rem + env(safe-area-inset-bottom));
         border-radius: 1.25rem 1.25rem 0 0;
         background: var(--glass-strong);
         border: 1px solid var(--line);
         border-bottom: none;
         backdrop-filter: blur(22px);
         -webkit-backdrop-filter: blur(22px);
-        display: flex;
-        gap: 0.55rem;
-        flex-direction: column;
         box-shadow: var(--shadow);
         transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
       }
@@ -3965,9 +3956,6 @@
         align-items: center;
         justify-content: space-between;
         gap: 0.75rem;
-        margin-bottom: 0.15rem;
-        padding-bottom: 0.35rem;
-        border-bottom: 1px solid var(--line);
       }
 
       .settings-page-title {
@@ -4012,25 +4000,6 @@
         }
       }
 
-      .settings-section-title {
-        margin: 0.15rem 0 0;
-        font-size: 0.68rem;
-        font-weight: 700;
-        letter-spacing: 0.06em;
-        text-transform: uppercase;
-        color: rgba(247, 241, 232, 0.55);
-      }
-
-      .settings-row {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.45rem;
-      }
-
-      .settings-row .btn-secondary {
-        flex: 1 1 calc(50% - 0.25rem);
-        min-width: 7.5rem;
-      }
 
       .settings-range {
         display: grid;
@@ -4138,16 +4107,6 @@
         border: 1px solid var(--line);
       }
 
-      .settings-hint {
-        margin: 0;
-        font-size: 0.68rem;
-        color: var(--muted);
-        line-height: 1.45;
-      }
-
-      .settings-hint code {
-        font-size: 0.66rem;
-      }
 
       .gear,
       .key-btn {
@@ -4862,24 +4821,24 @@
     </style>
     <link
       rel="stylesheet"
-      href="/prototypes/companion-scene-backgrounds.css?v=2026-09-20-v378-llm-context-database"
+      href="/prototypes/companion-scene-backgrounds.css?v=2026-09-20-v379-settings-menu"
     />
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-20-v378-llm-context-database",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-20-v379-settings-menu",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-20-v378-llm-context-database",
-          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-20-v378-llm-context-database"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-20-v379-settings-menu",
+          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-20-v379-settings-menu"
         }
       }
     </script>
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-20-v378-llm-context-database"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-20-v379-settings-menu"
     />
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-20-v378-llm-context-database"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-20-v378-llm-context-database"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-20-v379-settings-menu"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-20-v379-settings-menu"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;
@@ -5223,100 +5182,150 @@
             </svg>
           </button>
         </header>
-        <div id="settings-secretary-section" class="settings-secretary-section" hidden>
-          <p class="settings-section-title" id="settings-secretary-title">Secretary</p>
-          <div class="settings-row settings-secretary-nav">
-            <button type="button" class="btn-secondary" id="settings-btn-secretary-today">Today</button>
-            <button type="button" class="btn-secondary" id="settings-btn-secretary-tasks">Tasks</button>
-            <button type="button" class="btn-secondary" id="settings-btn-secretary-memory">Memories</button>
-          </div>
-          <p class="settings-hint" id="settings-secretary-mode-label">Focus mode</p>
-          <div class="settings-secretary-mode-row" id="settings-secretary-mode-row" role="group" aria-labelledby="settings-secretary-mode-label"></div>
-        </div>
-        <p class="settings-section-title" id="settings-session-title">Session</p>
-        <p class="settings-section-title" id="settings-companion-title">Companion</p>
-        <button type="button" class="btn-secondary" id="settings-btn-companions">Switch 3D companion</button>
-        <p class="settings-role-readout" id="settings-role-readout" aria-live="polite">Girlfriend</p>
-        <p class="settings-hint" id="settings-role-hint">3D character models — not the LLM model under Brain.</p>
-        <p class="settings-hint" id="settings-roster-hint" aria-live="polite"></p>
-        <button type="button" class="btn-secondary" id="settings-btn-lang">Language</button>
-        <button type="button" class="btn-secondary" id="settings-btn-chat">Chat: visible</button>
-        <button type="button" class="btn-secondary" id="settings-btn-talk-speed">
-          <span id="settings-talk-speed-label">Talking speed: 0.45×</span>
-        </button>
-        <p class="settings-section-title" id="settings-look-title">Look &amp; scene</p>
-        <button type="button" class="btn-secondary" id="settings-btn-scene">Look &amp; scene</button>
-        <p class="settings-hint" id="settings-outfit-hint">Outfits: default, casual, formal — saved per companion.</p>
-        <p class="settings-section-title" id="settings-voice-title">Voice</p>
-        <p class="settings-hint settings-voice-note" id="settings-voice-note" aria-live="polite"></p>
-        <div class="settings-row">
-          <button type="button" class="btn-secondary" id="settings-btn-speaker">Speaker: on</button>
-        </div>
-        <p class="settings-section-title" id="settings-sound-title">Sound effects</p>
-        <label class="settings-range" id="settings-sfx-volume-wrap">
-          <span id="settings-sfx-volume-label">UI sounds: 42%</span>
-          <input
-            type="range"
-            id="settings-sfx-volume"
-            min="0"
-            max="100"
-            step="5"
-            value="42"
-            aria-labelledby="settings-sfx-volume-label"
-          />
-        </label>
-        <label class="settings-toggle" id="settings-haptics-wrap">
-          <input type="checkbox" id="settings-haptics" checked />
-          <span id="settings-haptics-label">Haptic feedback</span>
-        </label>
-        <p class="settings-section-title" id="settings-advanced-title">Advanced</p>
-        <button type="button" class="btn-secondary" id="settings-btn-camera">Reset camera view</button>
-        <div class="settings-links">
-          <a id="lite-link" href="/play?role=secretary">Secretary mode</a>
-          <a id="lab-link" href="/prototypes/realtime-voice-lab.html">Voice lab</a>
-        </div>
-        <p class="settings-section-title" id="settings-brain-title">Brain</p>
-        <div class="llm-switcher-wrap settings-llm-panel" id="llm-switcher-wrap"></div>
-        <div id="settings-local">
-          <label id="settings-llm-url-label">
-            LLM base URL (OpenAI-compatible)
-            <input id="api-url" placeholder="http://127.0.0.1:11434/v1 or leave blank for lab proxy" />
-          </label>
-          <label id="settings-model-label">
-            Model
-            <input id="api-model" placeholder="qwen3:4b" />
-          </label>
-          <label id="settings-api-key-label">
-            API key (optional — Ollama needs none)
-            <input id="api-key" type="password" placeholder="sk-… only for OpenAI/Groq" autocomplete="off" />
-          </label>
-          <p class="settings-hint" id="settings-ollama-hint">
-            <strong>Ollama:</strong> <code>ollama serve</code> on your PC (e.g. D:\Ollama). Tap
-            <strong>Qwen4</strong> / <strong>Qwen8</strong> below. URL:
-            <code>http://localhost:11434/v1</code> · key: <code>ollama</code> · model:
-            <code>qwen3:4b</code>
-          </p>
-          <button type="button" class="btn-secondary" id="btn-list-ollama">List Ollama models</button>
-          <p class="settings-hint" id="ollama-model-list"></p>
-          <button type="button" id="btn-save-llm">Save LLM</button>
-        </div>
-        <div id="settings-cloud" hidden>
-          <p class="settings-hint" id="settings-cloud-hint">
-            <strong>Smart brain</strong> — get a free key on your phone, paste here. Stays in
-            this browser only.
-          </p>
-          <label id="settings-cloud-key-label">
-            Free API key
-            <input id="cloud-api-key" type="password" placeholder="sk-or-… (OpenRouter — recommended)" autocomplete="off" />
-          </label>
-          <p class="settings-hint" id="settings-cloud-recommend-hint">
-            <strong>Recommended:</strong>
-            <a href="https://openrouter.ai/keys" target="_blank" rel="noopener">OpenRouter</a>
-            (free Gemma/Llama, email signup) ·
-            <a href="https://console.groq.com/keys" target="_blank" rel="noopener">Groq</a>
-            (if site is up)
-          </p>
-          <button type="button" id="btn-save-cloud-key">Save key &amp; connect</button>
+        <div class="settings-body">
+          <section id="settings-secretary-section" class="settings-card settings-secretary-section" hidden>
+            <header class="settings-card-head">
+              <h3 class="settings-card-title" id="settings-secretary-title">Secretary</h3>
+            </header>
+            <div class="settings-row settings-secretary-nav">
+              <button type="button" class="btn-secondary" id="settings-btn-secretary-today">Today</button>
+              <button type="button" class="btn-secondary" id="settings-btn-secretary-tasks">Tasks</button>
+              <button type="button" class="btn-secondary" id="settings-btn-secretary-memory">Memories</button>
+            </div>
+            <p class="settings-hint" id="settings-secretary-mode-label">Focus mode</p>
+            <div class="settings-secretary-mode-row" id="settings-secretary-mode-row" role="group" aria-labelledby="settings-secretary-mode-label"></div>
+          </section>
+
+          <section class="settings-card">
+            <header class="settings-card-head">
+              <h3 class="settings-card-title" id="settings-companion-title">Companion</h3>
+              <p class="settings-card-sub" id="settings-role-hint">3D character models — not the LLM model under Brain.</p>
+            </header>
+            <div class="settings-action-list">
+              <button type="button" class="btn-secondary settings-action--primary" id="settings-btn-companions">Switch 3D companion</button>
+            </div>
+            <details class="settings-details" id="settings-roster-details">
+              <summary id="settings-roster-summary">View full 3D roster</summary>
+              <p class="settings-hint" id="settings-roster-hint" aria-live="polite"></p>
+            </details>
+            <p class="settings-role-readout" id="settings-role-readout" aria-live="polite" hidden>Girlfriend</p>
+          </section>
+
+          <section class="settings-card">
+            <header class="settings-card-head">
+              <h3 class="settings-card-title" id="settings-session-title">Session</h3>
+            </header>
+            <div class="settings-action-list">
+              <button type="button" class="btn-secondary" id="settings-btn-lang">Language</button>
+              <button type="button" class="btn-secondary" id="settings-btn-chat">Chat: visible</button>
+              <button type="button" class="btn-secondary" id="settings-btn-talk-speed">
+                <span id="settings-talk-speed-label">Talking speed: 0.45×</span>
+              </button>
+            </div>
+          </section>
+
+          <section class="settings-card">
+            <header class="settings-card-head">
+              <h3 class="settings-card-title" id="settings-look-title">Look &amp; scene</h3>
+              <p class="settings-card-sub" id="settings-outfit-hint">Outfits: default, casual, formal — saved per companion.</p>
+            </header>
+            <div class="settings-action-list">
+              <button type="button" class="btn-secondary" id="settings-btn-scene">Look &amp; scene</button>
+            </div>
+          </section>
+
+          <section class="settings-card">
+            <header class="settings-card-head">
+              <h3 class="settings-card-title" id="settings-voice-title">Voice</h3>
+            </header>
+            <p class="settings-hint settings-voice-note" id="settings-voice-note" aria-live="polite"></p>
+            <div class="settings-action-list">
+              <button type="button" class="btn-secondary" id="settings-btn-speaker">Speaker: on</button>
+            </div>
+          </section>
+
+          <section class="settings-card">
+            <header class="settings-card-head">
+              <h3 class="settings-card-title" id="settings-sound-title">Sound effects</h3>
+            </header>
+            <label class="settings-range" id="settings-sfx-volume-wrap">
+              <span id="settings-sfx-volume-label">UI sounds: 42%</span>
+              <input
+                type="range"
+                id="settings-sfx-volume"
+                min="0"
+                max="100"
+                step="5"
+                value="42"
+                aria-labelledby="settings-sfx-volume-label"
+              />
+            </label>
+            <label class="settings-toggle" id="settings-haptics-wrap">
+              <input type="checkbox" id="settings-haptics" checked />
+              <span id="settings-haptics-label">Haptic feedback</span>
+            </label>
+          </section>
+
+          <section class="settings-card">
+            <header class="settings-card-head">
+              <h3 class="settings-card-title" id="settings-advanced-title">Advanced</h3>
+            </header>
+            <div class="settings-action-list">
+              <button type="button" class="btn-secondary" id="settings-btn-camera">Reset camera view</button>
+            </div>
+            <div class="settings-links">
+              <a id="lite-link" href="/play?role=secretary">Secretary mode</a>
+              <a id="lab-link" href="/prototypes/realtime-voice-lab.html">Voice lab</a>
+            </div>
+          </section>
+
+          <section class="settings-card settings-card--brain">
+            <header class="settings-card-head">
+              <h3 class="settings-card-title" id="settings-brain-title">Brain</h3>
+            </header>
+            <div class="llm-switcher-wrap settings-llm-panel" id="llm-switcher-wrap"></div>
+            <div id="settings-local" class="settings-brain-fields">
+              <label id="settings-llm-url-label">
+                LLM base URL (OpenAI-compatible)
+                <input id="api-url" placeholder="http://127.0.0.1:11434/v1 or leave blank for lab proxy" />
+              </label>
+              <label id="settings-model-label">
+                Model
+                <input id="api-model" placeholder="qwen3:4b" />
+              </label>
+              <label id="settings-api-key-label">
+                API key (optional — Ollama needs none)
+                <input id="api-key" type="password" placeholder="sk-… only for OpenAI/Groq" autocomplete="off" />
+              </label>
+              <p class="settings-hint" id="settings-ollama-hint">
+                <strong>Ollama:</strong> <code>ollama serve</code> on your PC (e.g. D:\Ollama). Tap
+                <strong>Qwen4</strong> / <strong>Qwen8</strong> below. URL:
+                <code>http://localhost:11434/v1</code> · key: <code>ollama</code> · model:
+                <code>qwen3:4b</code>
+              </p>
+              <button type="button" class="btn-secondary" id="btn-list-ollama">List Ollama models</button>
+              <p class="settings-hint" id="ollama-model-list"></p>
+              <button type="button" id="btn-save-llm">Save LLM</button>
+            </div>
+            <div id="settings-cloud" class="settings-brain-fields" hidden>
+              <p class="settings-hint" id="settings-cloud-hint">
+                <strong>Smart brain</strong> — get a free key on your phone, paste here. Stays in
+                this browser only.
+              </p>
+              <label id="settings-cloud-key-label">
+                Free API key
+                <input id="cloud-api-key" type="password" placeholder="sk-or-… (OpenRouter — recommended)" autocomplete="off" />
+              </label>
+              <p class="settings-hint" id="settings-cloud-recommend-hint">
+                <strong>Recommended:</strong>
+                <a href="https://openrouter.ai/keys" target="_blank" rel="noopener">OpenRouter</a>
+                (free Gemma/Llama, email signup) ·
+                <a href="https://console.groq.com/keys" target="_blank" rel="noopener">Groq</a>
+                (if site is up)
+              </p>
+              <button type="button" id="btn-save-cloud-key">Save key &amp; connect</button>
+            </div>
+          </section>
         </div>
       </div>
 
@@ -6472,6 +6481,10 @@
         const rosterHint = document.getElementById("settings-roster-hint");
         if (rosterHint && labels.rosterModelsHint) {
           rosterHint.textContent = labels.rosterModelsHint;
+        }
+        const rosterSummary = document.getElementById("settings-roster-summary");
+        if (rosterSummary && labels.rosterDetailsSummary) {
+          rosterSummary.textContent = labels.rosterDetailsSummary;
         }
         if (settingsBtnSpeaker) {
           settingsBtnSpeaker.textContent = labels.speaker;

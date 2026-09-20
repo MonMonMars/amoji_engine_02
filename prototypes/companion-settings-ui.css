@@ -1,0 +1,314 @@
+/**
+ * Setup / settings sheet — card layout, readable actions, grouped controls.
+ */
+
+.settings {
+  width: min(100%, 480px);
+  max-height: min(90dvh, 780px);
+  padding: 0;
+  gap: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.settings.open {
+  display: flex;
+}
+
+.settings-head {
+  flex-shrink: 0;
+  margin: 0;
+  padding: 1rem 1.1rem 0.85rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.settings-page-title {
+  font-size: 1.15rem;
+}
+
+.settings-close {
+  width: 2.25rem;
+  height: 2.25rem;
+}
+
+.settings-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0.85rem 1rem calc(1.1rem + env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.settings-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  padding: 0.85rem 0.9rem;
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.settings-card--brain {
+  gap: 0.75rem;
+}
+
+.settings-card-head {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.settings-card-title,
+.settings-section-title {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(247, 241, 232, 0.62);
+}
+
+.settings-card-sub,
+.settings-hint {
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.55;
+  color: rgba(247, 241, 232, 0.58);
+}
+
+.settings-hint code {
+  font-size: 0.74rem;
+}
+
+.settings-role-readout {
+  margin: 0;
+  padding: 0.55rem 0.75rem;
+  border-radius: 0.7rem;
+  font-size: 0.86rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.settings-action-list {
+  display: flex;
+  flex-direction: column;
+  border-radius: 0.85rem;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.settings-action-list > .btn-secondary,
+.settings-action-list > .settings-action,
+.settings-row > .btn-secondary {
+  width: 100%;
+  min-height: 2.85rem;
+  margin: 0;
+  padding: 0.7rem 0.95rem;
+  border: 0;
+  border-radius: 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  background: transparent;
+  color: var(--ink);
+  font-size: 0.86rem;
+  font-weight: 600;
+  line-height: 1.35;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
+  cursor: pointer;
+  transition:
+    background 0.16s ease,
+    border-color 0.16s ease;
+}
+
+.settings-action-list > *:last-child,
+.settings-row > .btn-secondary:last-child {
+  border-bottom: none;
+}
+
+.settings-action-list > .btn-secondary:hover,
+.settings-action-list > .settings-action:hover,
+.settings-row > .btn-secondary:hover {
+  background: rgba(127, 212, 207, 0.1);
+}
+
+.settings-action-list > .btn-secondary[aria-pressed="true"],
+.settings-action-list > .btn-secondary.is-active {
+  background: rgba(127, 212, 207, 0.14);
+  color: #dff8f6;
+}
+
+.settings-action--primary {
+  border-color: rgba(127, 212, 207, 0.35) !important;
+  background: rgba(127, 212, 207, 0.12) !important;
+  font-weight: 700;
+}
+
+.settings-row {
+  display: flex;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  gap: 0;
+  border-radius: 0.85rem;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.settings-row .btn-secondary {
+  flex: none;
+  min-width: 0;
+}
+
+.settings-secretary-section {
+  gap: 0.65rem;
+  margin: 0;
+  padding: 0.85rem 0.9rem;
+  border-bottom: none;
+  border-radius: 1rem;
+  background: rgba(120, 180, 255, 0.06);
+  border: 1px solid rgba(120, 180, 255, 0.16);
+}
+
+.settings-secretary-nav .btn-secondary {
+  font-size: 0.8rem;
+  padding: 0.65rem 0.5rem;
+  text-align: center;
+  justify-content: center;
+}
+
+@media (min-width: 360px) {
+  .settings-secretary-nav {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .settings-secretary-nav .btn-secondary {
+    flex: 1 1 calc(33.333% - 0.35rem);
+    min-width: 5.5rem;
+  }
+}
+
+.settings-secretary-mode-row {
+  gap: 0.45rem;
+}
+
+.settings-details {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.settings-details > summary {
+  cursor: pointer;
+  font-weight: 650;
+  color: rgba(247, 241, 232, 0.72);
+  list-style: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.15rem 0;
+}
+
+.settings-details > summary::-webkit-details-marker {
+  display: none;
+}
+
+.settings-details > summary::after {
+  content: "›";
+  opacity: 0.55;
+  transform: rotate(90deg);
+  transition: transform 0.18s ease;
+}
+
+.settings-details[open] > summary::after {
+  transform: rotate(-90deg);
+}
+
+.settings-details .settings-hint {
+  margin-top: 0.45rem;
+  padding-top: 0.45rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.settings-range {
+  margin: 0;
+  font-size: 0.82rem;
+  gap: 0.45rem;
+}
+
+.settings-toggle {
+  margin: 0;
+  font-size: 0.82rem;
+  min-height: 2.5rem;
+}
+
+.settings-llm-panel {
+  margin: 0;
+  padding: 0;
+  border-top: none;
+}
+
+.settings-links {
+  margin: 0;
+  gap: 0.5rem;
+}
+
+.settings-links a {
+  font-size: 0.78rem;
+  padding: 0.45rem 0.75rem;
+}
+
+.settings label {
+  font-size: 0.78rem;
+  gap: 0.4rem;
+}
+
+.settings input {
+  padding: 0.65rem 0.75rem;
+  font-size: 0.86rem;
+}
+
+.settings button:not(.btn-secondary):not(.settings-close) {
+  width: 100%;
+  min-height: 2.85rem;
+  padding: 0.7rem 1rem;
+  font-size: 0.88rem;
+}
+
+.settings .btn-secondary:not(.settings-action-list .btn-secondary):not(.settings-row .btn-secondary) {
+  width: 100%;
+  min-height: 2.85rem;
+  padding: 0.7rem 0.95rem;
+  font-size: 0.86rem;
+  font-weight: 600;
+  text-align: left;
+}
+
+.settings-voice-note {
+  padding: 0.5rem 0.65rem;
+  border-radius: 0.65rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.settings-brain-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+@media (min-width: 720px) {
+  .settings {
+    width: min(100%, 520px);
+    max-height: min(86vh, 760px);
+  }
+}

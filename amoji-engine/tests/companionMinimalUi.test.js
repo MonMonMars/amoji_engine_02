@@ -55,6 +55,19 @@ describe("companionMinimalUi", () => {
     expect(html).toContain('id="settings-btn-speaker"');
   });
 
+  it("uses card-based settings layout for readable menu sections", () => {
+    expect(html).toContain('class="settings-body"');
+    expect(html).toContain('class="settings-card"');
+    expect(html).toContain('class="settings-action-list"');
+    expect(html).toContain('id="settings-roster-details"');
+    const settingsCss = readFileSync(
+      join(root, "prototypes/companion-settings-ui.css"),
+      "utf8",
+    );
+    expect(settingsCss).toMatch(/settings-action-list[\s\S]*min-height:\s*2\.85rem/);
+    expect(settingsCss).toMatch(/settings-body[\s\S]*overflow-y:\s*auto/);
+  });
+
   it("shows character chip top-left + menu top-right; send visible in text composer", () => {
     expect(minimalCss).toMatch(/companion-minimal-chrome \.topbar[\s\S]*display:\s*flex/);
     expect(minimalCss).toMatch(/companion-minimal-chrome \.topbar[\s\S]*justify-content:\s*space-between/);
