@@ -257,10 +257,13 @@ async function main() {
   const bootIntegrity = await page.evaluate(() => {
     const el = document.querySelector(".atmosphere");
     const bg = el ? getComputedStyle(el).backgroundImage : "";
-    const joints = window.__amojiAvatar?.vrm?.springBoneManager?.joints;
+    const manager = window.__amojiAvatar?.vrm?.springBoneManager;
+    const raw = manager?.joints || manager?._joints || manager?._sortedJoints;
     let maxY = -Infinity;
     let count = 0;
-    if (joints && typeof joints[Symbol.iterator] === "function") {
+    const joints =
+      raw && typeof raw[Symbol.iterator] === "function" ? [...raw] : [];
+    if (joints.length) {
       for (const joint of joints) {
         const dir = joint?.settings?.gravityDir;
         if (!dir) continue;

@@ -42,6 +42,7 @@ export async function bootEarlyStartPicker(opts = {}) {
   if (!show) return null;
 
   const isEnglish = params.get("lang") === "en";
+  repairCompanionSessionBoot();
   migrateLegacyCharacterStorage(globalThis.localStorage);
   migrateLegacyCharacterUrlParam();
   const appRole = resolveAppRole(params);
