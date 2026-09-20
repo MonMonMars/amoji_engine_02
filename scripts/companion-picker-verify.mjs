@@ -187,7 +187,7 @@ const pickerChrome = await page.evaluate(() => {
       Number(cs.zIndex) <= 1,
     atmosphereUsesPng: /\.png/i.test(bg),
     scrollArrows: arrows,
-    stageMaxWidthOk: stageW <= 520 && stageW >= 280,
+    stageMaxWidthOk: stageW <= window.innerWidth + 2 && stageW >= 280,
     bodyPickerOpen: document.body.classList.contains("companion-picker-open"),
   };
 });

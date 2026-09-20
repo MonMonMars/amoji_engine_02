@@ -20,11 +20,14 @@
 .companion-picker--aaa-theme.companion-picker--start .companion-picker-sheet {
   position: relative;
   isolation: isolate;
+  width: 100%;
+  max-width: none;
+  height: 100dvh;
+  max-height: 100dvh;
+  border-radius: 0;
   background: transparent !important;
   border: none;
-  box-shadow:
-    0 0 0 1px rgba(232, 200, 114, 0.12) inset,
-    0 -24px 80px rgba(0, 0, 0, 0.65);
+  box-shadow: none;
 }
 
 .companion-picker--aaa-theme .picker-aaa-layers {
