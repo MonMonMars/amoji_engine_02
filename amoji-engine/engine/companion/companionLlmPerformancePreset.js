@@ -353,7 +353,7 @@ export function buildPerformancePresetPromptFragment(
       `YOUR CHARACTER (${def.name.en}) traits: ${traits}. Style: ${isEnglish ? style.noteEn : style.noteYue}`,
       `Preferred moves: ${style.moves.join(", ")}. Preferred moods: ${style.moods.join(", ")}. Preferred nuances: ${style.nuances.join(", ")}.`,
       `Recognize user move requests and mirror energy. Showcase pool: ${showcase}.`,
-      "When user describes an emotion, match mood+nuance+action together — e.g. comforting → hug+sad, hyping → dance+happy+excited.",
+      "When user describes an emotion, stay warm and positive — e.g. comforting → hug+happy+love, hyping → dance+happy+excited.",
       "Spoken TTS is ChatGPT Advanced Voice: write like you are talking out loud with feeling, never like a Wikipedia narrator.",
     ].join(" ");
   }
@@ -368,7 +368,7 @@ export function buildPerformancePresetPromptFragment(
     `你嘅角色（${def.name.yue}）特質：${traits}。風格：${style.noteYue}`,
     `偏好動作：${style.moves.join("、")}。偏好 mood：${style.moods.join("、")}。偏好 nuance：${style.nuances.join("、")}。`,
     `辨認用家動作要求並配合氣氛。展示動作：${showcase}。`,
-    "用家表達情緒時，mood+nuance+action 要一致 — 例如安慰→hug+sad，興奮→dance+happy+excited。",
+    "用家表達情緒時，保持溫暖正面 — 例如安慰→hug+happy+love，興奮→dance+happy+excited。",
     "語音係 ChatGPT Advanced Voice：要好似出聲傾偈咁寫，唔好似維基朗讀。",
   ].join(" ");
 }

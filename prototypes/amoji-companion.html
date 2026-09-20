@@ -8,9 +8,9 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji · Companion</title>
     <script>
-      window.__amojiBuild = "2026-09-20-v366-poke-gestures";
+      window.__amojiBuild = "2026-09-20-v367-positive-mindset";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-20-v366-poke-gestures"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-20-v367-positive-mindset"></script>
     <link
       rel="prefetch"
       href="/prototypes/assets/companion-char-nova.png"
@@ -710,13 +710,13 @@
       media="print"
       onload="this.media='all'"
     />
-    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-20-v366-poke-gestures" />
-    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-20-v366-poke-gestures" />
-    <link rel="stylesheet" href="/prototypes/companion-mic-button.css?v=2026-09-20-v366-poke-gestures" />
-    <link rel="stylesheet" href="/prototypes/companion-minimal-ui.css?v=2026-09-20-v366-poke-gestures" />
-    <link rel="stylesheet" href="/prototypes/companion-mobile-shell.css?v=2026-09-20-v366-poke-gestures" />
-    <link rel="stylesheet" href="/prototypes/companion-picker-v4.css?v=2026-09-20-v366-poke-gestures" />
-    <link rel="stylesheet" href="/prototypes/companion-picker-stacked-layout.css?v=2026-09-20-v366-poke-gestures" />
+    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-20-v367-positive-mindset" />
+    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-20-v367-positive-mindset" />
+    <link rel="stylesheet" href="/prototypes/companion-mic-button.css?v=2026-09-20-v367-positive-mindset" />
+    <link rel="stylesheet" href="/prototypes/companion-minimal-ui.css?v=2026-09-20-v367-positive-mindset" />
+    <link rel="stylesheet" href="/prototypes/companion-mobile-shell.css?v=2026-09-20-v367-positive-mindset" />
+    <link rel="stylesheet" href="/prototypes/companion-picker-v4.css?v=2026-09-20-v367-positive-mindset" />
+    <link rel="stylesheet" href="/prototypes/companion-picker-stacked-layout.css?v=2026-09-20-v367-positive-mindset" />
     <script>
       (function () {
         var params = new URLSearchParams(location.search);
@@ -742,7 +742,7 @@
       })();
     </script>
     <script type="module">
-      import { bootEarlyStartPicker } from "/amoji-engine/engine/companion/companionEarlyStartPicker.js?v=2026-09-20-v366-poke-gestures";
+      import { bootEarlyStartPicker } from "/amoji-engine/engine/companion/companionEarlyStartPicker.js?v=2026-09-20-v367-positive-mindset";
       const bootParams = new URLSearchParams(location.search);
       if (bootParams.get("autostart") !== "1" && bootParams.get("pick") !== "0") {
         globalThis.__amojiEarlyStartPickerPromise = bootEarlyStartPicker({
@@ -4793,24 +4793,24 @@
     </style>
     <link
       rel="stylesheet"
-      href="/prototypes/companion-scene-backgrounds.css?v=2026-09-20-v366-poke-gestures"
+      href="/prototypes/companion-scene-backgrounds.css?v=2026-09-20-v367-positive-mindset"
     />
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-20-v366-poke-gestures",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-20-v367-positive-mindset",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-20-v366-poke-gestures",
-          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-20-v366-poke-gestures"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-20-v367-positive-mindset",
+          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-20-v367-positive-mindset"
         }
       }
     </script>
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-20-v366-poke-gestures"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-20-v367-positive-mindset"
     />
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-20-v366-poke-gestures"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-20-v366-poke-gestures"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-20-v367-positive-mindset"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-20-v367-positive-mindset"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;
@@ -5930,7 +5930,7 @@
           abortActiveTurn("user-stop");
         }
         status.listening();
-        setEmotionPill("neutral");
+        setEmotionPill("happy");
         return true;
       };
 
@@ -6597,7 +6597,7 @@
       applyOutfitToAvatar = (outfitId) => {
         avatar?.setOutfitPreset?.(outfitId);
       };
-      let currentEmotion = "neutral";
+      let currentEmotion = "happy";
       /** @type {HTMLElement | null} */
       /** @type {HTMLElement | null} */
       let greetingBubble = null;
@@ -7280,7 +7280,7 @@
           disarmBargeIn();
           if (!busy) status.idle();
           avatar.setEmotion?.("neutral");
-          setEmotionPill("neutral");
+          setEmotionPill("happy");
           scheduleIdlePerformance();
         },
       });
@@ -8206,7 +8206,7 @@
         avatar.setListening?.(voice.micOn);
         if (voice.micOn) status.listening();
         else status.idle();
-        setEmotionPill("neutral");
+        setEmotionPill("happy");
         return true;
       };
 
@@ -8238,7 +8238,7 @@
           disarmBargeIn();
           if (!busy) {
             avatar.setEmotion?.("neutral");
-            setEmotionPill("neutral");
+            setEmotionPill("happy");
           }
           if (!busy && !voice.micOn) status.idle();
         });
@@ -8317,7 +8317,7 @@
             if (!busy && !voice.micOn) status.idle();
             if (!avatar?.talking && !avatar?.eating) {
               avatar.setEmotion?.("neutral");
-              setEmotionPill("neutral");
+              setEmotionPill("happy");
             }
           });
         },
@@ -8918,7 +8918,7 @@
           syncListenPose();
           disarmBargeIn();
           avatar.setEmotion?.("neutral");
-          setEmotionPill("neutral");
+          setEmotionPill("happy");
           scheduleIdlePerformance();
           if (waitAct?.isActive?.() && waitAct?.state?.kind === "avatar-load") {
             waitAct?.enableVoice?.();
@@ -8973,8 +8973,8 @@
             syncMicBtn();
             if (micOk) {
               status.listening();
-              avatar.setEmotion("neutral");
-              setEmotionPill("neutral");
+              avatar.setEmotion("happy");
+              setEmotionPill("happy");
               syncListenPose();
               if (!conversationUi) {
                 input.placeholder =
@@ -9099,8 +9099,8 @@
         document.getElementById("cloud-api-key")?.focus();
       };
 
-      avatar.setEmotion("neutral");
-      setEmotionPill("neutral");
+      avatar.setEmotion("happy");
+      setEmotionPill("happy");
 
       window.addEventListener("keydown", (ev) => {
         if (ev.key !== "Escape") return;
@@ -9302,8 +9302,8 @@
                 : "隨時打字 — 或者講完停一停"
               : "Listening… speak, pause → she replies, then listens again";
           if (!busy) {
-            avatar.setEmotion("neutral");
-            setEmotionPill("neutral");
+            avatar.setEmotion("happy");
+            setEmotionPill("happy");
             syncListenPose();
             status.listening();
           }

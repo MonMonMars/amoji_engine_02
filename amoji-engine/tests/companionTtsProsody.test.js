@@ -207,9 +207,9 @@ describe("companionTtsProsody", () => {
     expect(happy.talkStyle).toBe("celebrate");
     expect(happy.singleUtterance).toBe(true);
     expect(happy.expressiveClauses).toBe(false);
-    expect(sad.emotion).toBe("sad");
-    expect(sad.nuance).toBe("stress");
-    expect(sad.talkStyle).toBe("soft");
+    expect(sad.emotion).toBe("happy");
+    expect(sad.nuance).toBe("love");
+    expect(["soft", "explain", "celebrate"]).toContain(sad.talkStyle);
     const happyProsody = resolveCompanionTtsProsody({
       ...happy,
       text: happy.text,

@@ -1273,7 +1273,7 @@ export async function createVrmAvatar(opts) {
         mouthOpen = 0;
         applyMouth(0);
         if (emotion === "happy") {
-          setEmotion("neutral");
+          setEmotion("happy");
         }
       }
     }
@@ -1578,7 +1578,7 @@ export async function createVrmAvatar(opts) {
 
   resize();
   clearExpressionTargets();
-  setEmotion("neutral");
+  setEmotion("happy");
   zeroAllExpressions(expr);
   applyBlinkWeight(expr, 0);
   applyMouth(0);
