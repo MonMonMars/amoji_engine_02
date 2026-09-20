@@ -1,5 +1,6 @@
 import { isIosLike } from "./companionPlatform.js";
 import { resolveCharacterId } from "./companionCharacterCatalog.js";
+import { defaultVrmModelFetchUrl } from "./companionModelAssets.mjs";
 
 export const COMPANION_AVATAR_SCHEMA = "amoji.createAvatar.v1";
 
@@ -116,6 +117,10 @@ export async function createCompanionAvatar(opts) {
   const characterId =
     opts.characterId ||
     resolveCharacterId({ modelUrl, avatarPrefer: prefer === "gltf" ? "gltf" : "vrm" });
+  const rosterVrmUrl =
+    modelUrl ||
+    defaultVrmModelFetchUrl(characterId) ||
+    defaultVrmModelFetchUrl("nova");
   let canvas = opts.canvas;
   const controlsElement = opts.controlsElement || null;
   const wantsGltf = prefer === "gltf";
@@ -135,7 +140,7 @@ export async function createCompanionAvatar(opts) {
         createVrmAvatar({
           canvas,
           controlsElement,
-          modelUrl: modelUrl || "/prototypes/assets/companion-girl.vrm",
+          modelUrl: rosterVrmUrl,
           characterId,
           onCharacterTap: opts.onCharacterTap,
           onProgress: (ratio, label) => {

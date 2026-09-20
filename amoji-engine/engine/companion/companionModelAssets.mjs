@@ -49,6 +49,16 @@ export function characterModelFetchUrl(characterId, langCode = "yue", buildId) {
 }
 
 /**
+ * Default VRM fetch path when callers omit modelUrl (never legacy companion-girl).
+ * @param {string | null | undefined} characterId
+ * @param {string | null | undefined} [buildId]
+ */
+export function defaultVrmModelFetchUrl(characterId, buildId) {
+  const id = normalizeLegacyRosterCharacterId(characterId);
+  return characterModelFetchUrl(id, "yue", buildId);
+}
+
+/**
  * Never fetch retired VRM basenames — map to canonical roster path.
  * @param {string | null | undefined} url
  * @param {string | null | undefined} [characterId]

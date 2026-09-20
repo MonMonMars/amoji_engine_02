@@ -1,52 +1,13 @@
-import { describe, expect, it, vi } from "vitest";
-import {
-  characterModelFetchUrl,
-  modelFetchUrl,
-  normalizeModelCacheKey,
-} from "../engine/companion/companionModelAssets.mjs";
-import {
-  getPreloadedVrmPromise,
-  preloadVrmBuffer,
-  releaseVrmPreloadExcept,
-} from "../engine/companion/companionPreload.js";
+import { describe, expect, it } from "vitest";
+import { AMOJI_MODEL_REVISION } from "../engine/companion/companionCharacterMigration.mjs";
+import { defaultVrmModelFetchUrl } from "../engine/companion/companionModelAssets.mjs";
 
 describe("companionModelAssets", () => {
-  it("normalizes cache keys without query string", () => {
-    expect(normalizeModelCacheKey("/a/model.vrm?v=1")).toBe("/a/model.vrm");
-    expect(normalizeModelCacheKey("/a/model.vrm")).toBe("/a/model.vrm");
-  });
-
-  it("adds build cache-bust to fetch urls", () => {
-    const url = modelFetchUrl("/prototypes/assets/companion-nova.vrm", "test-build");
-    expect(url).toContain("companion-nova.vrm");
-    expect(url).toContain("v=test-build");
-  });
-
-  it("characterModelFetchUrl resolves roster paths", () => {
-    const url = characterModelFetchUrl("rex", "en", "b1");
-    expect(url).toContain("companion-rex.vrm");
-    expect(url).toContain("v=b1");
-  });
-});
-
-describe("companionPreload model cache keys", () => {
-  it("releaseVrmPreloadExcept keeps canonical path when fetch url has query", async () => {
-    const fetchImpl = vi.fn(async () => ({
-      ok: true,
-      async arrayBuffer() {
-        return new Uint8Array([1, 2, 3]).buffer;
-      },
-    }));
-    await preloadVrmBuffer(
-      "/prototypes/assets/companion-nova.vrm?v=old",
-      fetchImpl,
-    );
-    await preloadVrmBuffer(
-      "/prototypes/assets/companion-robert.vrm?v=old",
-      fetchImpl,
-    );
-    releaseVrmPreloadExcept("/prototypes/assets/companion-robert.vrm");
-    expect(getPreloadedVrmPromise("/prototypes/assets/companion-robert.vrm?v=new")).toBeTruthy();
-    expect(getPreloadedVrmPromise("/prototypes/assets/companion-nova.vrm")).toBeNull();
+  it("defaultVrmModelFetchUrl uses roster id paths (not legacy girl sample)", () => {
+    const yuki = defaultVrmModelFetchUrl("olivia");
+    expect(yuki).toContain("/prototypes/assets/companion-yuki.vrm");
+    expect(yuki).toContain(AMOJI_MODEL_REVISION);
+    expect(yuki).not.toContain("companion-girl");
+    expect(yuki).not.toContain("companion-olivia");
   });
 });

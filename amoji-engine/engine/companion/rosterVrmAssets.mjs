@@ -47,6 +47,23 @@ export const LEGACY_VRM_BASENAME_ALIASES = Object.freeze({
   "companion-avatarsample-c.vrm": "yume",
 });
 
+/** Upstream VRM sources (refreshed on deploy when REFRESH_ROSTER_VRM=1). */
+export const ROSTER_VRM_SOURCE_URLS = Object.freeze({
+  alicia:
+    "https://raw.githubusercontent.com/vrm-c/UniVRM/master/Tests/Models/Alicia_vrm-0.51/AliciaSolid_vrm-0.51.vrm",
+  amoji:
+    "https://raw.githubusercontent.com/pixiv/three-vrm/dev/packages/three-vrm/examples/models/VRM1_Constraint_Twist_Sample.vrm",
+  sakura: "https://arweave.net/Ea1KXujzJatQgCFSMzGOzp_UtHqB1pyia--U3AtkMAY",
+  yume: "https://arweave.net/GZkfa0SNnrBWluRL_pXpakg7T3K3d4l87__wR4mD3UM",
+  yuki: "https://arweave.net/MgsNlTetzAoVEC6E-lswj65vp7StkOZXXd5OjjqzYZI",
+  hina: "https://arweave.net/x48D7v037irPQYG7e0vZLDV1E3x5-KookbP9-vaXvYE",
+  mio: "https://arweave.net/1q4IQwLQXJVS0JGSpeXlRdazmZYdwJbmLbTv7o0s5Y8",
+  nana: "https://gateway.pinata.cloud/ipfs/QmSpb8jZRtwDhpp7zjpfvU47GZyapmh8GvQApmzTxFcaLz/Avatar10_Neutral.vrm",
+  robert: "https://arweave.net/gwG7w4bY-A5c3R6A6GOz3xBCgbPvkFQmqPIDtvnNsYI",
+  mikel: "https://arweave.net/-eJyDjujQRvakRImdvulg-1dKQkPwMeQv-55IbKqLh4",
+  mimi: "https://arweave.net/RymRtrmhHx_f9ZDvtvIQb1noTHvILdjoTg5G7L2DR-8",
+});
+
 /**
  * @type {{ id: string, url?: string, copyFrom?: string, minBytes?: number }[]}
  */
@@ -59,7 +76,7 @@ export const ROSTER_VRM_DOWNLOADS = [
   { id: "kizuna", copyFrom: "kizuna-kamatte.vrm", minBytes: 1_000_000 },
   {
     id: "alicia",
-    copyFrom: "companion-alicia.vrm",
+    url: ROSTER_VRM_SOURCE_URLS.alicia,
     minBytes: 500_000,
   },
   {
@@ -67,7 +84,7 @@ export const ROSTER_VRM_DOWNLOADS = [
     url: "https://vtubeme.com/media/free/ember/model.vrm",
     minBytes: 400_000,
   },
-  { id: "sakura", copyFrom: "companion-rose.vrm", minBytes: 100_000 },
+  { id: "sakura", url: ROSTER_VRM_SOURCE_URLS.sakura, minBytes: 100_000 },
   {
     id: "celeste",
     url: "https://raw.githubusercontent.com/madjin/vrm-samples/master/vroid/stable/AvatarSample_A.vrm",
@@ -88,22 +105,22 @@ export const ROSTER_VRM_DOWNLOADS = [
     url: "https://raw.githubusercontent.com/madjin/vrm-samples/master/vroid/masc_vroid.vrm",
     minBytes: 500_000,
   },
-  { id: "yume", copyFrom: "companion-erika.vrm", minBytes: 100_000 },
+  { id: "yume", url: ROSTER_VRM_SOURCE_URLS.yume, minBytes: 100_000 },
   {
     id: "sky",
     url: "https://vtubeme.com/media/free/sky/model.vrm",
     minBytes: 400_000,
   },
-  { id: "yuki", copyFrom: "companion-olivia.vrm", minBytes: 100_000 },
-  { id: "hina", copyFrom: "companion-lydia.vrm", minBytes: 100_000 },
-  { id: "mio", copyFrom: "companion-kate.vrm", minBytes: 100_000 },
-  { id: "amoji", copyFrom: "companion-girl.vrm", minBytes: 500_000 },
+  { id: "yuki", url: ROSTER_VRM_SOURCE_URLS.yuki, minBytes: 100_000 },
+  { id: "hina", url: ROSTER_VRM_SOURCE_URLS.hina, minBytes: 100_000 },
+  { id: "mio", url: ROSTER_VRM_SOURCE_URLS.mio, minBytes: 100_000 },
+  { id: "amoji", url: ROSTER_VRM_SOURCE_URLS.amoji, minBytes: 500_000 },
   {
     id: "rex",
     url: "https://vtubeme.com/media/free/kai/model.vrm",
     minBytes: 400_000,
   },
-  { id: "nana", copyFrom: "companion-chibi.vrm", minBytes: 100_000 },
+  { id: "nana", url: ROSTER_VRM_SOURCE_URLS.nana, minBytes: 100_000 },
   {
     id: "sumi",
     url: "https://arweave.net/LKp1uJLAZFmncdCNSZ8oopU7ZElXTvn4BmM4CUcFclc",
@@ -119,9 +136,9 @@ export const ROSTER_VRM_DOWNLOADS = [
     url: "https://arweave.net/orNIoMYKafN-EyZRft2No1ZQsPNl3XUcMXhfT2rKQVc",
     minBytes: 100_000,
   },
-  { id: "robert", copyFrom: "companion-robert.vrm", minBytes: 100_000 },
-  { id: "mikel", copyFrom: "companion-mikel.vrm", minBytes: 100_000 },
-  { id: "mimi", copyFrom: "companion-rabbit.vrm", minBytes: 100_000 },
+  { id: "robert", url: ROSTER_VRM_SOURCE_URLS.robert, minBytes: 100_000 },
+  { id: "mikel", url: ROSTER_VRM_SOURCE_URLS.mikel, minBytes: 100_000 },
+  { id: "mimi", url: ROSTER_VRM_SOURCE_URLS.mimi, minBytes: 100_000 },
 ];
 
 export function rosterDownloadIds() {

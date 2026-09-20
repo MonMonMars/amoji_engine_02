@@ -204,15 +204,21 @@ export async function createVrmAvatar(opts) {
     canvas,
     controlsElement: opts.controlsElement,
   });
-  let modelUrl = opts.modelUrl || "/prototypes/assets/companion-girl.vrm";
+  let modelUrl = opts.modelUrl || "";
   try {
-    const { coerceCanonicalModelFetchUrl } = await import(
-      "./companionModelAssets.mjs"
-    );
+    const { coerceCanonicalModelFetchUrl, defaultVrmModelFetchUrl } =
+      await import("./companionModelAssets.mjs");
+    if (!modelUrl) {
+      modelUrl =
+        defaultVrmModelFetchUrl(opts.characterId) ||
+        defaultVrmModelFetchUrl("nova");
+    }
     modelUrl =
       coerceCanonicalModelFetchUrl(modelUrl, opts.characterId) || modelUrl;
   } catch {
-    /* ignore */
+    if (!modelUrl) {
+      modelUrl = "/prototypes/assets/companion-nova.vrm";
+    }
   }
 
   let renderer;

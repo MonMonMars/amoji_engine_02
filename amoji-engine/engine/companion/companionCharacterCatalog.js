@@ -77,6 +77,7 @@ export { LEGACY_CHARACTER_ALIASES };
 export { ROSTER_LOCKED_NUMBERS, TRIAL_CHARACTER_IDS };
 export {
   characterModelFetchUrl,
+  defaultVrmModelFetchUrl,
   modelFetchUrl,
   normalizeModelCacheKey,
 } from "./companionModelAssets.mjs";
