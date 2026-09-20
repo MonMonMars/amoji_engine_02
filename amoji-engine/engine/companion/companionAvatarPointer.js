@@ -1,23 +1,25 @@
 /**
- * Stage pointer routing — tap character to poke, drag empty space to orbit.
+ * Stage pointer routing — quick tap on full body = poke; drag / pinch = camera orbit only.
  */
 import * as THREE from "three";
 
-export const COMPANION_AVATAR_POINTER_SCHEMA = "amoji.companionAvatarPointer.v2";
+export const COMPANION_AVATAR_POINTER_SCHEMA = "amoji.companionAvatarPointer.v3";
 
-export const AVATAR_TAP_MOVE_PX = 16;
+export const AVATAR_TAP_MOVE_PX = 14;
+/** Fast tap — longer presses count as drag / orbit, not poke. */
+export const AVATAR_TAP_MAX_MS = 320;
 
-/** World Y cutoff — hits below this ratio (feet→head) count as empty space for orbit. */
+/** @deprecated kept for tests — full-body poke no longer uses waist cutoff */
 export const POKE_WAIST_HEIGHT_RATIO = 0.58;
 
-/** Screen band — only the top fraction of the avatar footprint accepts poke (rest = orbit). */
+/** @deprecated kept for tests — full-body poke no longer uses screen band */
 export const POKE_SCREEN_UPPER_BODY_RATIO = 0.52;
 
 const _pokeBoxScratch = new THREE.Box3();
 const _pokeSizeScratch = new THREE.Vector3();
 
 /**
- * Waist-line world Y from an avatar bounding box (poke above, orbit below).
+ * Waist-line world Y from an avatar bounding box (legacy helpers / tests).
  * @param {import('three').Box3 | null | undefined} fitted
  */
 export function computePokeWaistWorldY(fitted) {
@@ -49,7 +51,7 @@ const _bandBox = new THREE.Box3();
 const _bandCorner = new THREE.Vector3();
 
 /**
- * Project avatar bounds to screen pixels (for lower-body = orbit routing).
+ * Project avatar bounds to screen pixels (legacy / diagnostics).
  * @param {import('three').Object3D | null | undefined} root
  * @param {import('three').Camera} camera
  * @param {DOMRect | null | undefined} rect
@@ -79,10 +81,7 @@ export function computeAvatarScreenBand(root, camera, rect) {
 }
 
 /**
- * True when the touch is on the lower part of the character (camera orbit zone).
- * @param {number} clientY
- * @param {{ top: number, height: number } | null | undefined} band
- * @param {number} [upperBodyRatio]
+ * @deprecated Full-body poke — band no longer blocks poke (drag still orbits).
  */
 export function isClientInCharacterOrbitBand(
   clientY,
@@ -132,6 +131,7 @@ export function clientToNormalizedPointer(clientX, clientY, rect) {
  *   controls?: { enabled?: boolean } | null,
  *   onPoke?: (info: { point: import('three').Vector3, object: import('three').Object3D }) => void,
  *   movePx?: number,
+ *   tapMaxMs?: number,
  * }} opts
  */
 export function bindCompanionAvatarPointer(opts) {
@@ -140,15 +140,19 @@ export function bindCompanionAvatarPointer(opts) {
   const camera = opts.camera;
   const movePx = opts.movePx ?? AVATAR_TAP_MOVE_PX;
   const moveSq = movePx * movePx;
+  const tapMaxMs = opts.tapMaxMs ?? AVATAR_TAP_MAX_MS;
   const raycaster = new THREE.Raycaster();
   const pointer = new THREE.Vector2();
 
-  /** @type {"none" | "character" | "empty"} */
-  let session = "none";
   let pointerActive = false;
+  let downOnCharacter = false;
   let downX = 0;
   let downY = 0;
+  let downAt = 0;
   let dragged = false;
+  /** @type {Set<number>} */
+  const activePointers = new Set();
+  let gestureHadMultiTouch = false;
 
   const rect = () => rectEl.getBoundingClientRect();
 
@@ -168,21 +172,11 @@ export function bindCompanionAvatarPointer(opts) {
   };
 
   const pickPokeHit = (clientX, clientY) => {
-    const band = opts.getScreenBand?.() ?? null;
-    if (isClientInCharacterOrbitBand(clientY, band)) return null;
     const hits = raycastAt(clientX, clientY);
-    const waistY = opts.getPokeWaistY?.() ?? null;
-    for (const hit of hits) {
-      if (isPokeHitAboveWaist(hit, waistY)) return hit;
-    }
-    return null;
+    return hits[0] || null;
   };
 
   const hitCharacter = (clientX, clientY) => pickPokeHit(clientX, clientY);
-
-  const setControlsEnabled = (on) => {
-    if (opts.controls) opts.controls.enabled = Boolean(on);
-  };
 
   const setCursor = (kind) => {
     if (!surface?.style) return;
@@ -192,61 +186,61 @@ export function bindCompanionAvatarPointer(opts) {
 
   const onPointerDown = (e) => {
     if (e.button !== 0 && e.pointerType === "mouse") return;
+    activePointers.add(e.pointerId);
+    if (activePointers.size > 1) gestureHadMultiTouch = true;
     pointerActive = true;
     downX = e.clientX;
     downY = e.clientY;
+    downAt = typeof performance !== "undefined" ? performance.now() : Date.now();
     dragged = false;
-    const hit = hitCharacter(e.clientX, e.clientY);
-    if (hit) {
-      session = "character";
-      setControlsEnabled(false);
-      setCursor("pointer");
-    } else {
-      session = "empty";
-      setControlsEnabled(true);
-      setCursor("grabbing");
-    }
+    downOnCharacter = Boolean(hitCharacter(e.clientX, e.clientY));
+    setCursor(downOnCharacter ? "pointer" : "grabbing");
   };
 
   const onPointerMove = (e) => {
     const dx = e.clientX - downX;
     const dy = e.clientY - downY;
-    if (session !== "none" && dx * dx + dy * dy > moveSq) {
+    if (pointerActive && dx * dx + dy * dy > moveSq) {
       dragged = true;
     }
-    if (session === "character") {
-      if (dragged && !pickPokeHit(e.clientX, e.clientY)) {
-        session = "empty";
-        setControlsEnabled(true);
-        setCursor("grabbing");
-      } else {
-        setCursor("pointer");
-      }
+    if (!pointerActive) return;
+    if (dragged) {
+      setCursor("grabbing");
       return;
     }
     const hit = hitCharacter(e.clientX, e.clientY);
-    setCursor(hit ? "pointer" : session === "empty" && dragged ? "grabbing" : "grab");
+    setCursor(hit ? "pointer" : "grab");
   };
 
   const onPointerUp = (e) => {
+    activePointers.delete(e.pointerId);
     const dx = e.clientX - downX;
     const dy = e.clientY - downY;
-    const wasCharacter = session === "character";
-    session = "none";
-    pointerActive = false;
-    setControlsEnabled(true);
+    const elapsed =
+      (typeof performance !== "undefined" ? performance.now() : Date.now()) - downAt;
+    const wasCharacter = downOnCharacter;
+    const hadMulti = gestureHadMultiTouch;
+    if (activePointers.size === 0) {
+      gestureHadMultiTouch = false;
+    }
+    pointerActive = activePointers.size > 0;
+    downOnCharacter = false;
     setCursor("grab");
+
+    if (hadMulti || activePointers.size > 0) return;
     if (!wasCharacter || dragged || dx * dx + dy * dy > moveSq) return;
+    if (elapsed > tapMaxMs) return;
     const hit = hitCharacter(e.clientX, e.clientY);
     if (!hit) return;
     opts.onPoke?.({ point: hit.point, object: hit.object });
   };
 
-  const onPointerCancel = () => {
-    session = "none";
-    pointerActive = false;
+  const onPointerCancel = (e) => {
+    if (e?.pointerId != null) activePointers.delete(e.pointerId);
+    if (activePointers.size === 0) gestureHadMultiTouch = false;
+    pointerActive = activePointers.size > 0;
+    downOnCharacter = false;
     dragged = false;
-    setControlsEnabled(true);
     setCursor("grab");
   };
 
@@ -263,7 +257,7 @@ export function bindCompanionAvatarPointer(opts) {
       return pointerActive;
     },
     isCharacterSession() {
-      return session === "character";
+      return downOnCharacter;
     },
     raycastAt,
     destroy() {

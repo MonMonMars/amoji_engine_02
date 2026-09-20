@@ -1216,6 +1216,50 @@ export function createCompanionVoice(opts = {}) {
     return next;
   };
 
+  /** Poke/tap: quick blip then follow-up phrase — two TTS clips, same voice chain. */
+  const speakPokeSequence = (blip, followUp, performance = "neutral") => {
+    const next = speakChain.then(async () => {
+      const pauseMic = mustPauseMicForTts();
+      if (pauseMic) pauseCapture();
+      try {
+        const basePerf =
+          typeof performance === "object" && performance !== null
+            ? performance
+            : { emotion: performance || "happy" };
+        const blipText = String(blip || "").trim();
+        const followText = String(followUp || "").trim();
+        if (!blipText && !followText) return { ok: false, reason: "empty-poke" };
+        if (blipText) {
+          await speakOnceCore(blipText, {
+            ...basePerf,
+            pokeBlip: true,
+            pokeReaction: true,
+            skipVocalization: true,
+            speechEnergy: 0.88,
+            talkStyle: "celebrate",
+          });
+        }
+        if (followText) {
+          await new Promise((r) => setTimeout(r, blipText ? 220 : 0));
+          return speakOnceCore(followText, {
+            ...basePerf,
+            pokeFollowUp: true,
+            pokeReaction: true,
+            skipVocalization: true,
+            nuance: "shy",
+            speechEnergy: 0.8,
+            talkStyle: "soft",
+          });
+        }
+        return { ok: true };
+      } finally {
+        if (pauseMic) resumeCapture();
+      }
+    });
+    speakChain = next.catch(() => {});
+    return next;
+  };
+
   /** Poke/tap: playful vocal merged into tap line — one voice, one TTS clip. */
   const speakPoke = (text, performance = "neutral") => {
     const next = speakChain.then(async () => {
@@ -1924,6 +1968,7 @@ export function createCompanionVoice(opts = {}) {
     primeMicPermission,
     speak,
     speakPoke,
+    speakPokeSequence,
     getTalkSpeed,
     setTalkSpeed,
     cycleTalkSpeed: cycleTalkSpeedSetting,

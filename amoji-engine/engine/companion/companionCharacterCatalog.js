@@ -16,6 +16,8 @@ import { buildPerformancePresetPromptFragment } from "./companionLlmPerformanceP
 import { voiceShortLabel } from "./companionVoiceCatalog.js";
 import { findVoiceProfile } from "./companionVoiceProfiles.js";
 
+export { pickCharacterPokeReaction } from "./companionCharacterPoke.js";
+
 export const CHARACTER_STORAGE_KEY = "amoji.companion.characterId";
 
 /** @typedef {{

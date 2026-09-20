@@ -35,7 +35,7 @@ describe("companionOrbitControls", () => {
     expect(controls.enabled).toBe(true);
     expect(controls.enableRotate).toBe(true);
     expect(controls.enableZoom).toBe(true);
-    expect(controls.enablePan).toBe(false);
+    expect(controls.enablePan).toBe(true);
     expect(controls.minPolarAngle).toBe(ORBIT_MIN_POLAR);
     expect(controls.maxPolarAngle).toBe(ORBIT_MAX_POLAR);
     expect(controls.mouseButtons.LEFT).toBe(THREE.MOUSE.ROTATE);
@@ -71,8 +71,8 @@ describe("companionOrbitControls", () => {
     expect(html).toMatch(/\.orbit-hit\s*\{[^}]*background:\s*rgba\(0,\s*0,\s*0,\s*0\.01\);/);
     expect(html).toContain("controlsElement: orbitHit");
     expect(html).toContain("createEmptyAreaCameraReset");
-    expect(html).toContain("Tap character to interact");
-    expect(html).toContain("double-click to reset");
+    expect(html).toContain("Quick tap body to poke");
+    expect(html).toContain("double-click empty to reset");
     expect(html).not.toMatch(/\.chat-shell\s*\{[^}]*z-index:\s*6;/);
     expect(html).toMatch(/\.chat-shell\s*\{[^}]*z-index:\s*10050;/);
     expect(html).toMatch(/\.composer-wrap\s*\{[^}]*z-index:\s*3;/);
