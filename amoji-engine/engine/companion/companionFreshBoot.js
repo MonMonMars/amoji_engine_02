@@ -181,11 +181,10 @@ export function buildPlayRedirectLocation(search, opts = {}) {
     if (!params.get("automic")) params.set("automic", "0");
   }
   const build = opts.build ?? AMOJI_BUILD;
-  const path =
-    opts.stamp != null
-      ? companionOpenPath("full", opts.stamp)
-      : companionBuildPath(build, "full");
-  const stamp = opts.stamp ?? path.split("/")[2] ?? String(Date.now());
+  const stamp =
+    opts.stamp ??
+    `${Date.now()}${String(Math.floor(Math.random() * 1000)).padStart(3, "0")}`;
+  const path = companionOpenPath("full", stamp);
   params.set("build", build);
   params.set("_cb", String(stamp));
   return `${path}?${params.toString()}`;

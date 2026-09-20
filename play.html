@@ -37,11 +37,16 @@
           if (!params.get("pick")) params.set("pick", "1");
           if (!params.get("automic")) params.set("automic", "0");
         }
-        var fallbackPath = "/companion-full";
 
-        function go(path) {
+        function mintStamp() {
+          return String(Date.now()) + String(Math.floor(Math.random() * 1000)).padStart(3, "0");
+        }
+
+        function goFresh(stamp, build) {
+          if (build) params.set("build", build);
+          params.set("_cb", stamp);
           var qs = params.toString();
-          location.replace(path + (qs ? "?" + qs : ""));
+          location.replace("/n/" + stamp + "/full" + (qs ? "?" + qs : ""));
         }
 
         fetch("/api/health", { cache: "no-store" })
@@ -49,24 +54,10 @@
             return r.ok ? r.json() : null;
           })
           .then(function (health) {
-            var build = health && health.build;
-            if (build) params.set("build", build);
-            params.set("_cb", String(Date.now()));
-            if (!build) {
-              go(fallbackPath);
-              return;
-            }
-            var pinnedPath = "/c/" + encodeURIComponent(build) + "/full";
-            var qs = params.toString();
-            var suffix = qs ? "?" + qs : "";
-            return fetch(pinnedPath + suffix, { method: "HEAD", cache: "no-store" }).then(
-              function (r) {
-                go(r && r.ok ? pinnedPath : fallbackPath);
-              },
-            );
+            goFresh(mintStamp(), (health && health.build) || "");
           })
           .catch(function () {
-            go(fallbackPath);
+            goFresh(mintStamp(), "");
           });
       })();
     </script>

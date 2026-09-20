@@ -440,6 +440,27 @@ if (useLocal) {
     playEntryOk ? "ok" : "404 — using /companion-full fallback",
     !playEntryOk,
   );
+  try {
+    const playRes = await fetch(`${baseUrl}/play?lang=en&pick=1`, {
+      redirect: "manual",
+      cache: "no-store",
+      signal: AbortSignal.timeout(8000),
+    });
+    const loc = playRes.headers.get("location") || "";
+    const freshPath = /\/n\/\d+\/full/i.test(loc);
+    record(
+      "production /play → /n/ fresh path",
+      (playRes.status === 303 || playRes.status === 307) && freshPath,
+      `${playRes.status} ${loc.slice(0, 120)}`,
+      !freshPath,
+    );
+  } catch (err) {
+    record(
+      "production /play → /n/ fresh path",
+      false,
+      err?.message || String(err),
+    );
+  }
   if (playEntryOk) {
     secretaryUrl = secretaryDemoUrl({ build: AMOJI_BUILD, lang: "en" });
     fullUrl = companionFullDemoUrl({ build: AMOJI_BUILD, lang: "en" });
