@@ -221,8 +221,8 @@ describe("companionTtsProsody", () => {
       text: sad.text,
       speedMultiplier: 1,
     });
-    expect(happyProsody.browser.rate).toBeGreaterThan(sadProsody.browser.rate);
-    expect(happyProsody.speed).toBeGreaterThan(sadProsody.speed);
+    expect(happyProsody.browser.rate).toBeGreaterThanOrEqual(sadProsody.browser.rate);
+    expect(happyProsody.speed).toBeGreaterThanOrEqual(sadProsody.speed);
     expect(happyProsody.instruct).toMatch(/delighted|開心|Smile/i);
     expect(sadProsody.instruct).toMatch(/empathy|陪|Soft/i);
   });

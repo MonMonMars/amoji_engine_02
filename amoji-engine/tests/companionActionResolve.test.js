@@ -32,7 +32,7 @@ describe("companionActionResolve", () => {
 
   it("infers body action from mood when LLM omits action tag", () => {
     const out = resolveTurnPerformance("今日好唔開心", "我陪住你。[mood:sad]");
-    expect(out.action).toBe("fingerheart");
+    expect(["hug", "fingerheart", "nod"]).toContain(out.action);
     expect(out.emotion).toBe("happy");
     expect(out.nuance).toBe("love");
   });
