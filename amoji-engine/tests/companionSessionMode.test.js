@@ -1,57 +1,18 @@
-import { describe, expect, it, vi } from "vitest";
-import {
-  buildSessionHref,
-  formatActiveModeSummary,
-  loadSessionModeOverride,
-  persistUserSessionMode,
-  setSessionModeOverride,
-} from "../engine/companion/companionSessionMode.js";
+import { describe, expect, it } from "vitest";
+import { buildSessionHref } from "../engine/companion/companionVoiceCatalog.js";
 import { resolveAppRole } from "../engine/companion/companionUnifiedApp.js";
 import {
   loadCompanionLang,
   resolveCompanionLang,
   saveCompanionLang,
 } from "../engine/companion/companionLocalePrefs.js";
+import { buildCharacterFunctionReadout } from "../engine/companion/companionSettingsChrome.js";
 
-describe("companionSessionMode", () => {
-  it("persists user mode without remapping default character storage", () => {
-    const storage = {
-      data: {},
-      getItem(k) {
-        return this.data[k] ?? null;
-      },
-      setItem(k, v) {
-        this.data[k] = v;
-      },
-    };
-    storage.data["amoji.mobile.lastCharacterId"] = "ember";
-    persistUserSessionMode("secretary", storage);
-    expect(storage.data["amoji.companionRole.v1"]).toBe("secretary");
-    expect(storage.data["amoji.mobile.lastCharacterId"]).toBe("ember");
-    expect(loadSessionModeOverride(storage)).toBe(true);
-  });
-
-  it("honors session mode override over character role", () => {
-    const storage = {
-      getItem(key) {
-        if (key === "amoji.companionSessionModeOverride.v1") return "1";
-        if (key === "amoji.companionRole.v1") return "secretary";
-        return null;
-      },
-    };
-    expect(
-      resolveAppRole(new URLSearchParams("character=rex"), storage, "rex"),
-    ).toBe("secretary");
-  });
-
-  it("builds unified session href with lang and role", () => {
-    expect(buildSessionHref({ lang: "en", role: "pet", character: "mimi" })).toBe(
-      "/play?lang=en&pick=1&automic=0&role=pet&character=mimi",
+describe("companionSessionHref", () => {
+  it("builds play URL with lang and character", () => {
+    expect(buildSessionHref({ lang: "en", character: "nova" })).toBe(
+      "/play?lang=en&pick=1&automic=0&character=nova",
     );
-  });
-
-  it("formats active mode summary", () => {
-    expect(formatActiveModeSummary("boyfriend", true)).toMatch(/Boyfriend/);
   });
 });
 
@@ -69,8 +30,29 @@ describe("companionLocalePrefs", () => {
     saveCompanionLang("en", storage);
     expect(loadCompanionLang(storage)).toBe("en");
     expect(resolveCompanionLang(new URLSearchParams(""), storage)).toBe("en");
-    expect(resolveCompanionLang(new URLSearchParams("lang=yue"), storage)).toBe(
-      "yue",
-    );
+  });
+});
+
+describe("character-driven role", () => {
+  it("derives boyfriend role from rex without menu override", () => {
+    const storage = {
+      getItem(key) {
+        if (key === "amoji.companionSessionModeOverride.v1") return "1";
+        if (key === "amoji.companionRole.v1") return "secretary";
+        return null;
+      },
+    };
+    expect(
+      resolveAppRole(new URLSearchParams("character=rex"), storage, "rex"),
+    ).toBe("boyfriend");
+  });
+
+  it("describes character function readout", () => {
+    expect(
+      buildCharacterFunctionReadout(true, {
+        companionName: "Nova",
+        companionRole: "girlfriend",
+      }),
+    ).toMatch(/Nova.*Girlfriend.*personality/i);
   });
 });

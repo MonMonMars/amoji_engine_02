@@ -200,6 +200,27 @@ export function buildCompanionHref(opts = {}) {
 }
 
 /**
+ * Play URL with language + character; role is omitted unless passed in extra (legacy links).
+ * @param {{
+ *   basePath?: string,
+ *   lang?: string | null,
+ *   character?: string | null,
+ *   extra?: Record<string, string>,
+ * }} [opts]
+ */
+export function buildSessionHref(opts = {}) {
+  const extra = { pick: "1", automic: "0", ...(opts.extra || {}) };
+  if (opts.character) {
+    extra.character = String(opts.character).toLowerCase();
+  }
+  return buildCompanionHref({
+    basePath: opts.basePath || "/play",
+    lang: opts.lang,
+    extra,
+  });
+}
+
+/**
  * @param {string} voiceId
  * @param {Storage | null | undefined} [storage]
  */

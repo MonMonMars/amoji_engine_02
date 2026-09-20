@@ -20,7 +20,6 @@ import {
 } from "../mobile/companionRolePresets.js";
 import { buildSecretaryPromptExtras } from "./secretary/secretaryPromptFragments.js";
 import { buildCareDisabledPetRoleFragment } from "./companionCareDialogue.js";
-import { loadSessionModeOverride } from "./companionSessionMode.js";
 import {
   buildLlmContextDatabaseFragment,
   refreshLlmContextDb,
@@ -77,13 +76,12 @@ export function resolveAppRole(
     normalized.get("character") ||
     normalized.get("vrm") ||
     normalized.get("model3d");
-  const fromUrl = normalized.get("role");
-  if (fromUrl) return normalizeCompanionRole(fromUrl);
-  if (loadSessionModeOverride(storage)) return loadCompanionRole(storage);
   if (explicitChar && cid) {
     return resolveSessionRoleFromCharacter(cid, normalized);
   }
   if (cid && !normalized.get("role")) return resolveCharacterRole(cid);
+  const fromUrl = normalized.get("role");
+  if (fromUrl) return normalizeCompanionRole(fromUrl);
   if (cid) return resolveCharacterRole(cid);
   return loadCompanionRole(storage);
 }
@@ -256,59 +254,20 @@ export function resolveSessionRoleFromCharacter(characterId, params) {
   return resolveCharacterRole(characterId);
 }
 
-/** Unified picker copy — function is shown on each character card. */
-export function pickerCopyForRole(role, isEnglish = false) {
-  const r = normalizeCompanionRole(role || "girlfriend");
+/** Unified picker copy — role/personality come from each character card. */
+export function pickerCopyForRole(_role, isEnglish = false) {
+  void _role;
   const en = Boolean(isEnglish);
-  if (r === "secretary") {
-    return en
-      ? {
-          title: "Choose your secretary",
-          sub: "Swipe the roster · tap to preview",
-          footStart: "Begin — Today, tasks, and chat load in the background.",
-        }
-      : {
-          title: "揀你嘅秘書",
-          sub: "㩒肖像預覽 · 左右滑動揀同伴",
-          footStart: "開始 — Today、任務同傾偈會喺背景載入。",
-        };
-  }
-  if (r === "boyfriend") {
-    return en
-      ? {
-          title: "Choose your boyfriend",
-          sub: "Swipe the roster · tap to preview",
-          footStart: "Begin — your companion loads in the background while you talk.",
-        }
-      : {
-          title: "揀你嘅男朋友",
-          sub: "㩒肖像預覽 · 左右滑動揀同伴",
-          footStart: "開始 — 同伴會喺背景載入。",
-        };
-  }
-  if (r === "pet") {
-    return en
-      ? {
-          title: "Choose your pet",
-          sub: "Swipe the roster · tap to preview",
-          footStart: "Begin — care mode loads in the background.",
-        }
-      : {
-          title: "揀你嘅寵物",
-          sub: "㩒肖像預覽 · 左右滑動揀同伴",
-          footStart: "開始 — 寵物模式會喺背景載入。",
-        };
-  }
   if (en) {
     return {
       title: "Choose your companion",
-      sub: "Swipe the roster · tap to preview",
+      sub: "Same app for everyone — pick a character for their voice & personality",
       footStart: "Begin — your companion loads in the background while you talk.",
     };
   }
   return {
     title: "揀你嘅同伴",
-    sub: "㩒肖像預覽 · 左右滑動揀同伴",
+    sub: "同一個 App — 揀角色就有佢嘅語音同性格",
     footStart: "開始 — 同伴會喺背景載入。",
   };
 }
