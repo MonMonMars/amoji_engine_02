@@ -2,7 +2,7 @@
  * Curated companion roster v352 — flagship + AAA VRoid game-quality catalog.
  * #1–4 flagship · #5–10 VRoid AvatarSample / industry rigs · #11+ expanded catalog.
  */
-export const ROSTER_SCHEMA = "amoji.companionRoster.v352";
+export const ROSTER_SCHEMA = "amoji.companionRoster.v360";
 /** Flagship picks (Nova, Kizuna, Alicia, Ember) */
 export const ROSTER_LOCKED_NUMBERS = Object.freeze([1, 2, 3, 4]);
 

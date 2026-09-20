@@ -153,7 +153,9 @@ export function pickerHeroKicker(item, isEnglish = false) {
   if (!item) return isEnglish ? "Select a companion" : "揀一位同伴";
   const parts = [];
   if (item.number) parts.push(isEnglish ? `#${item.number}` : `#${item.number}`);
+  if (item.aaaBadge) parts.push(String(item.aaaBadge));
   if (item.badge) parts.push(String(item.badge));
+  if (item.avatarLabel) parts.push(String(item.avatarLabel));
   if (item.faceLabel) parts.push(String(item.faceLabel));
   return parts.join(" · ") || (isEnglish ? "Companion" : "同伴");
 }
@@ -174,6 +176,7 @@ export function updatePickerHero(root, item, isEnglish = false) {
   const tagline = hero.querySelector(".picker-hero-tagline");
   const traitsEl = hero.querySelector(".picker-hero-traits");
   const voiceEl = hero.querySelector(".picker-hero-voice");
+  const modelEl = hero.querySelector(".picker-hero-model");
   const accent = item?.accent || "#8b7cf8";
   hero.style.setProperty("--hero-accent", accent);
   if (img) {
@@ -213,6 +216,15 @@ export function updatePickerHero(root, item, isEnglish = false) {
     }
     traitsEl.hidden = !(item?.traits?.length);
   }
+  if (modelEl) {
+    const modelLine = item?.avatarLabel
+      ? isEnglish
+        ? `3D model: ${item.avatarLabel}`
+        : `3D 模型：${item.avatarLabel}`
+      : "";
+    modelEl.textContent = modelLine;
+    modelEl.hidden = !modelLine;
+  }
   if (voiceEl) {
     const voice = item?.voiceLabel ? String(item.voiceLabel) : "";
     voiceEl.textContent = voice;
@@ -245,6 +257,7 @@ export const PICKER_HERO_HTML = `
       <p class="picker-hero-kicker"></p>
       <h3 class="picker-hero-name"></h3>
       <p class="picker-hero-tagline"></p>
+      <p class="picker-hero-model"></p>
       <p class="picker-hero-voice"></p>
       <div class="picker-hero-traits"></div>
     </div>

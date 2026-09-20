@@ -8,9 +8,9 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji · Companion</title>
     <script>
-      window.__amojiBuild = "2026-09-19-v359-local-chat-ci-b";
+      window.__amojiBuild = "2026-09-20-v360-roster-models-ui";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-19-v359-local-chat-ci-b"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-20-v360-roster-models-ui"></script>
     <link
       rel="prefetch"
       href="/prototypes/assets/companion-char-nova.png"
@@ -710,13 +710,13 @@
       media="print"
       onload="this.media='all'"
     />
-    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-19-v359-local-chat-ci-b" />
-    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-19-v359-local-chat-ci-b" />
-    <link rel="stylesheet" href="/prototypes/companion-mic-button.css?v=2026-09-19-v359-local-chat-ci-b" />
-    <link rel="stylesheet" href="/prototypes/companion-minimal-ui.css?v=2026-09-19-v359-local-chat-ci-b" />
-    <link rel="stylesheet" href="/prototypes/companion-mobile-shell.css?v=2026-09-19-v359-local-chat-ci-b" />
-    <link rel="stylesheet" href="/prototypes/companion-picker-v4.css?v=2026-09-19-v359-local-chat-ci-b" />
-    <link rel="stylesheet" href="/prototypes/companion-picker-stacked-layout.css?v=2026-09-19-v359-local-chat-ci-b" />
+    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-20-v360-roster-models-ui" />
+    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-20-v360-roster-models-ui" />
+    <link rel="stylesheet" href="/prototypes/companion-mic-button.css?v=2026-09-20-v360-roster-models-ui" />
+    <link rel="stylesheet" href="/prototypes/companion-minimal-ui.css?v=2026-09-20-v360-roster-models-ui" />
+    <link rel="stylesheet" href="/prototypes/companion-mobile-shell.css?v=2026-09-20-v360-roster-models-ui" />
+    <link rel="stylesheet" href="/prototypes/companion-picker-v4.css?v=2026-09-20-v360-roster-models-ui" />
+    <link rel="stylesheet" href="/prototypes/companion-picker-stacked-layout.css?v=2026-09-20-v360-roster-models-ui" />
     <script>
       (function () {
         var params = new URLSearchParams(location.search);
@@ -742,7 +742,7 @@
       })();
     </script>
     <script type="module">
-      import { bootEarlyStartPicker } from "/amoji-engine/engine/companion/companionEarlyStartPicker.js?v=2026-09-19-v359-local-chat-ci-b";
+      import { bootEarlyStartPicker } from "/amoji-engine/engine/companion/companionEarlyStartPicker.js?v=2026-09-20-v360-roster-models-ui";
       const bootParams = new URLSearchParams(location.search);
       if (bootParams.get("autostart") !== "1" && bootParams.get("pick") !== "0") {
         globalThis.__amojiEarlyStartPickerPromise = bootEarlyStartPicker({
@@ -4803,19 +4803,19 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-19-v359-local-chat-ci-b",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-20-v360-roster-models-ui",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-19-v359-local-chat-ci-b",
-          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-19-v359-local-chat-ci-b"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-20-v360-roster-models-ui",
+          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-20-v360-roster-models-ui"
         }
       }
     </script>
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-19-v359-local-chat-ci-b"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-20-v360-roster-models-ui"
     />
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-19-v359-local-chat-ci-b"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-19-v359-local-chat-ci-b"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-20-v360-roster-models-ui"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-20-v360-roster-models-ui"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;
@@ -5164,9 +5164,10 @@
         </div>
         <p class="settings-section-title" id="settings-session-title">Session</p>
         <p class="settings-section-title" id="settings-companion-title">Companion</p>
-        <button type="button" class="btn-secondary" id="settings-btn-companions">Switch companion</button>
+        <button type="button" class="btn-secondary" id="settings-btn-companions">Switch 3D companion</button>
         <p class="settings-role-readout" id="settings-role-readout" aria-live="polite">Girlfriend</p>
-        <p class="settings-hint" id="settings-role-hint">Each companion has a built-in role — pick the model you want.</p>
+        <p class="settings-hint" id="settings-role-hint">3D character models — not the LLM model under Brain.</p>
+        <p class="settings-hint" id="settings-roster-hint" aria-live="polite"></p>
         <button type="button" class="btn-secondary" id="settings-btn-lang">Language</button>
         <button type="button" class="btn-secondary" id="settings-btn-chat">Chat: visible</button>
         <button type="button" class="btn-secondary" id="settings-btn-talk-speed">
@@ -6276,7 +6277,14 @@
           settingsBtnScene.textContent = labels.lookScene;
           settingsBtnScene.title = labels.background;
         }
-        if (settingsBtnCompanions) settingsBtnCompanions.textContent = labels.companion;
+        if (settingsBtnCompanions) {
+          settingsBtnCompanions.textContent =
+            labels.switchCompanion || labels.companion;
+        }
+        const rosterHint = document.getElementById("settings-roster-hint");
+        if (rosterHint && labels.rosterModelsHint) {
+          rosterHint.textContent = labels.rosterModelsHint;
+        }
         if (settingsBtnSpeaker) {
           settingsBtnSpeaker.textContent = labels.speaker;
           settingsBtnSpeaker.setAttribute(

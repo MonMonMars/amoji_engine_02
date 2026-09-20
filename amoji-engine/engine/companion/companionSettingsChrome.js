@@ -2,6 +2,10 @@
  * Settings menu copy — synced labels for minimal companion chrome.
  */
 import { formatTalkSpeedLabel } from "./companionTalkSpeed.js";
+import {
+  CHARACTER_IDS,
+  listCompanionCharacters,
+} from "./companionCharacterCatalog.js";
 
 export const COMPANION_SETTINGS_CHROME_SCHEMA = "amoji.companionSettingsChrome.v1";
 
@@ -59,18 +63,38 @@ export function buildSettingsChromeLabels(isEnglish = false, state = {}) {
     liteLink: en ? "Secretary mode" : "秘書模式",
     roleSection: en ? "Function" : "功能",
     roleHint: en
-      ? "Each companion has a built-in role — switch models to change function."
-      : "每位同伴內建功能 — 切換模型就會轉功能。",
+      ? "3D character models (not the LLM below) — tap Switch companion for the full roster."
+      : "3D 角色模型（唔係下面 LLM）— 按「切換同伴」睇完整名單。",
+    rosterModelsHint: buildRosterModelsHint(en),
     roleReadout: state.roleReadout || (en ? "Girlfriend" : "女朋友"),
     secretaryToday: en ? "Today briefing" : "今日簡報",
     secretaryTasks: en ? "Task list" : "任務清單",
     labLink: en ? "Voice lab" : "語音實驗室",
-    listOllama: en ? "List Ollama models" : "列出 Ollama 模型",
+    listOllama: en ? "List Ollama LLM models" : "列出 Ollama LLM 模型",
+    switchCompanion: en ? "Switch 3D companion" : "切換 3D 同伴",
     saveLlm: en ? "Save LLM" : "儲存 LLM",
     saveCloudKey: en ? "Save key & connect" : "儲存 key 並連線",
     llmUrlLabel: en ? "LLM base URL (OpenAI-compatible)" : "LLM 網址（OpenAI 相容）",
-    modelLabel: en ? "Model" : "模型",
+    modelLabel: en ? "LLM model (text brain)" : "LLM 模型（文字大腦）",
     apiKeyLabel: en ? "API key (optional — Ollama needs none)" : "API key（可選 — Ollama 唔需要）",
     cloudKeyLabel: en ? "Free API key" : "免費 API key",
   };
+}
+
+/**
+ * Short readout for settings — 23-model roster + AAA names (#5–10).
+ * @param {boolean} [isEnglish]
+ */
+export function buildRosterModelsHint(isEnglish = false) {
+  const en = Boolean(isEnglish);
+  const lang = en ? "en" : "yue";
+  const total = CHARACTER_IDS.length;
+  const aaaNames = listCompanionCharacters(lang)
+    .filter((item) => (item.number || 0) >= 5 && (item.number || 0) <= 10)
+    .map((item) => item.name)
+    .join(en ? ", " : "、");
+  if (en) {
+    return `${total} 3D VRM models in roster · #5–10 AAA VRoid: ${aaaNames}. Scroll the start picker strip or tap Switch companion.`;
+  }
+  return `名單共 ${total} 個 3D VRM · #5–10 AAA VRoid：${aaaNames}。開始畫面橫向捲動名單，或按「切換同伴」。`;
 }

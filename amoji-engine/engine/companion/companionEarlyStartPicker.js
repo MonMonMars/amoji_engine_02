@@ -12,6 +12,9 @@ import {
 } from "./companionUnifiedApp.js";
 import { wireLoadingBar } from "./companionLoadingUi.js";
 import { playCompanionCardTapFx } from "./companionUiGacha.js";
+import { CHARACTER_IDS } from "./companionCharacterCatalog.js";
+import { ROSTER_SCHEMA } from "./companionCharacterRoster.js";
+import { AMOJI_BUILD } from "./buildVersion.mjs";
 
 export const COMPANION_EARLY_START_PICKER_SCHEMA =
   "amoji.companionEarlyStartPicker.v2";
@@ -85,6 +88,14 @@ export async function bootEarlyStartPicker(opts = {}) {
       globalThis.__amojiStartWithCharacter?.(nextId);
     },
   });
+
+  globalThis.__amojiRosterMeta = {
+    schema: ROSTER_SCHEMA,
+    build: AMOJI_BUILD,
+    count: CHARACTER_IDS.length,
+    ids: [...CHARACTER_IDS],
+    aaa: CHARACTER_IDS.filter((_, i) => i >= 4 && i <= 9),
+  };
 
   picker.setSelected(selectedId);
   picker.enablePicking(true);

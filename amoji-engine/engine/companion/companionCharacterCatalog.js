@@ -538,6 +538,7 @@ export function listCompanionCharacters(langCode = "yue") {
       id,
       number: characterNumber(id),
       aaaBadge,
+      avatarLabel: en ? def.avatarLabel?.en : def.avatarLabel?.yue,
       name: en ? def.name.en : def.name.yue,
       tagline: en ? def.tagline.en : def.tagline.yue,
       traits: en ? def.traits.en : def.traits.yue,

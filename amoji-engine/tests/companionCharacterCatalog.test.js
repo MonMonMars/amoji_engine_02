@@ -29,7 +29,7 @@ import {
 
 const ROSTER_SIZE = CHARACTER_IDS.length;
 
-describe("companionCharacterCatalog v352 AAA roster", () => {
+describe("companionCharacterCatalog v360 AAA roster", () => {
   it("keeps flagship roster numbers 1–4", () => {
     expect(characterNumber("nova")).toBe(1);
     expect(characterNumber("kizuna")).toBe(2);
@@ -139,6 +139,11 @@ describe("companionCharacterCatalog v352 AAA roster", () => {
     expect(nextCharacterId("erika")).toBe("sky");
     expect(nextCharacterId("sky")).toBe("yuki");
     expect(nextCharacterId("hugo")).toBe("nova");
+  });
+
+  it("exposes avatarLabel on picker list items", () => {
+    const sora = listCompanionCharacters("en").find((c) => c.id === "sora");
+    expect(sora?.avatarLabel).toMatch(/VRoid/i);
   });
 
   it("lists picker metadata with roster numbers", () => {
