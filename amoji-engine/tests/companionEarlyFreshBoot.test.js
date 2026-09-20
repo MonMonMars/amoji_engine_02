@@ -13,11 +13,12 @@ const earlyBoot = readFileSync(
 );
 
 describe("companionEarlyFreshBoot", () => {
-  it("redirects sticky cached pathnames to /play without health fetch", () => {
-    expect(earlyBoot).not.toMatch(/fetch\s*\(\s*["']\/api\/health/);
+  it("redirects sticky cached pathnames to /play and can refresh stale builds", () => {
+    expect(earlyBoot).toMatch(/fetch\s*\(\s*["']\/api\/health/);
     expect(earlyBoot).toMatch(/companion-full/);
     expect(earlyBoot).toMatch(/location\.replace\("\/play"/);
     expect(earlyBoot).toMatch(/__amojiActiveBuild/);
+    expect(earlyBoot).toMatch(/paintAtmosphereEarly/);
   });
 });
 

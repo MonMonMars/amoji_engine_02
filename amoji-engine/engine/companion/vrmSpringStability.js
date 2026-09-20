@@ -45,7 +45,7 @@ export const TALK_SPRING_RECENTER_SEC = 1.85;
 export const THINK_SPRING_RECENTER_SEC = 2.2;
 
 /** World-space upward tail velocity (units/s) above which we clamp drift. */
-export const MAX_UPWARD_TAIL_VEL = 0.014;
+export const MAX_UPWARD_TAIL_VEL = 0.009;
 
 const _tailWorld = new THREE.Vector3();
 const _prevTailWorld = new THREE.Vector3();
