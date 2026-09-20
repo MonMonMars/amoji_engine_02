@@ -4,7 +4,7 @@
 import * as THREE from "three";
 import { applyUserOrbitLimits } from "./companionPortraitFraming.js";
 
-export const COMPANION_ORBIT_CONTROLS_SCHEMA = "amoji.companionOrbitControls.v1";
+export const COMPANION_ORBIT_CONTROLS_SCHEMA = "amoji.companionOrbitControls.v2";
 
 /**
  * @param {{
@@ -41,10 +41,14 @@ export function configureCompanionOrbitControls(controls) {
     MIDDLE: THREE.MOUSE.DOLLY,
     RIGHT: THREE.MOUSE.ROTATE,
   };
+  /* One finger = orbit rotate (character or empty). Two fingers = zoom + vertical pan only. */
   controls.touches = {
     ONE: THREE.TOUCH.ROTATE,
     TWO: THREE.TOUCH.DOLLY_PAN,
   };
+  controls.enablePan = true;
+  controls.screenSpacePanning = true;
+  controls.panSpeed = 0.55;
   return controls;
 }
 

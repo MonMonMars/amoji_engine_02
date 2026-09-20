@@ -8,9 +8,9 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji · Companion</title>
     <script>
-      window.__amojiBuild = "2026-09-20-v365-wind-spring-fix";
+      window.__amojiBuild = "2026-09-20-v366-poke-gestures";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-20-v365-wind-spring-fix"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-20-v366-poke-gestures"></script>
     <link
       rel="prefetch"
       href="/prototypes/assets/companion-char-nova.png"
@@ -710,13 +710,13 @@
       media="print"
       onload="this.media='all'"
     />
-    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-20-v365-wind-spring-fix" />
-    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-20-v365-wind-spring-fix" />
-    <link rel="stylesheet" href="/prototypes/companion-mic-button.css?v=2026-09-20-v365-wind-spring-fix" />
-    <link rel="stylesheet" href="/prototypes/companion-minimal-ui.css?v=2026-09-20-v365-wind-spring-fix" />
-    <link rel="stylesheet" href="/prototypes/companion-mobile-shell.css?v=2026-09-20-v365-wind-spring-fix" />
-    <link rel="stylesheet" href="/prototypes/companion-picker-v4.css?v=2026-09-20-v365-wind-spring-fix" />
-    <link rel="stylesheet" href="/prototypes/companion-picker-stacked-layout.css?v=2026-09-20-v365-wind-spring-fix" />
+    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-20-v366-poke-gestures" />
+    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-20-v366-poke-gestures" />
+    <link rel="stylesheet" href="/prototypes/companion-mic-button.css?v=2026-09-20-v366-poke-gestures" />
+    <link rel="stylesheet" href="/prototypes/companion-minimal-ui.css?v=2026-09-20-v366-poke-gestures" />
+    <link rel="stylesheet" href="/prototypes/companion-mobile-shell.css?v=2026-09-20-v366-poke-gestures" />
+    <link rel="stylesheet" href="/prototypes/companion-picker-v4.css?v=2026-09-20-v366-poke-gestures" />
+    <link rel="stylesheet" href="/prototypes/companion-picker-stacked-layout.css?v=2026-09-20-v366-poke-gestures" />
     <script>
       (function () {
         var params = new URLSearchParams(location.search);
@@ -742,7 +742,7 @@
       })();
     </script>
     <script type="module">
-      import { bootEarlyStartPicker } from "/amoji-engine/engine/companion/companionEarlyStartPicker.js?v=2026-09-20-v365-wind-spring-fix";
+      import { bootEarlyStartPicker } from "/amoji-engine/engine/companion/companionEarlyStartPicker.js?v=2026-09-20-v366-poke-gestures";
       const bootParams = new URLSearchParams(location.search);
       if (bootParams.get("autostart") !== "1" && bootParams.get("pick") !== "0") {
         globalThis.__amojiEarlyStartPickerPromise = bootEarlyStartPicker({
@@ -4793,24 +4793,24 @@
     </style>
     <link
       rel="stylesheet"
-      href="/prototypes/companion-scene-backgrounds.css?v=2026-09-20-v365-wind-spring-fix"
+      href="/prototypes/companion-scene-backgrounds.css?v=2026-09-20-v366-poke-gestures"
     />
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-20-v365-wind-spring-fix",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-20-v366-poke-gestures",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-20-v365-wind-spring-fix",
-          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-20-v365-wind-spring-fix"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-20-v366-poke-gestures",
+          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-20-v366-poke-gestures"
         }
       }
     </script>
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-20-v365-wind-spring-fix"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-20-v366-poke-gestures"
     />
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-20-v365-wind-spring-fix"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-20-v365-wind-spring-fix"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-20-v366-poke-gestures"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-20-v366-poke-gestures"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;
@@ -5064,12 +5064,12 @@
     </div>
     <div class="stage">
       <div class="atmosphere" aria-hidden="true"></div>
-      <canvas id="avatar-canvas" aria-label="Amoji companion — tap character to interact, drag empty space to orbit"></canvas>
+      <canvas id="avatar-canvas" aria-label="Amoji companion — quick tap body to poke, drag to rotate, pinch to zoom"></canvas>
       <div
         class="orbit-hit"
         id="orbit-hit"
         aria-hidden="true"
-        title="Tap character to interact · drag empty space to orbit"
+        title="Quick tap body to poke · drag to rotate · pinch to zoom"
       ></div>
       <div class="orbit-hint hide" id="orbit-hint" hidden aria-hidden="true"></div>
       <header class="topbar">
@@ -5533,7 +5533,7 @@
         characterGreetingPerformance,
         characterHungryPerformance,
         characterLonelyPerformance,
-        characterTapLines,
+        pickCharacterPokeReaction,
         characterGender,
         characterVoiceLabel,
         defaultVoiceForCharacter,
@@ -6586,10 +6586,6 @@
         document.getElementById("api-model").value = stored.model;
       }
 
-      const pickTapLine = () => {
-        const lines = characterTapLines(characterId, isEnglish);
-        return lines[Math.floor(Math.random() * lines.length)];
-      };
       let lastTapAt = 0;
       /** @type {(() => void) | null} */
       let handleCharacterTap = null;
@@ -6986,8 +6982,8 @@
         orbitHint.removeAttribute("aria-hidden");
         orbitHint.classList.remove("hide");
         orbitHint.textContent = isEnglish
-          ? "Tap character to interact · drag empty space to orbit · double-click to reset"
-          : "點角色互動 · 拖曳空白處旋轉 · 雙擊重置視角";
+          ? "Quick tap body to poke · drag to rotate · pinch to zoom · double-click empty to reset"
+          : "快啲點身體戳一下 · 拖曳旋轉 · 雙指縮放 · 雙擊空白重置";
       }
       let talkingCameraLatched = false;
       const orbitSurface = orbitHit || canvas;
@@ -8223,8 +8219,8 @@
           raisingHub?.onPet?.();
         }
         avatar.reactToTap?.();
-        const line = pickTapLine();
-        addBubble("assistant", line);
+        const { blip, followUp } = pickCharacterPokeReaction(characterId, isEnglish);
+        addBubble("assistant", followUp ? `${blip} ${followUp}` : blip);
         avatar.setEmotion("happy");
         setEmotionPill("happy");
         avatar.setTalkStyle?.("celebrate");
@@ -8232,7 +8228,7 @@
         speakEmotion = "happy";
         status.speaking();
         armBargeIn();
-        void voice.speakPoke(line, {
+        void voice.speakPokeSequence(blip, followUp, {
           emotion: "happy",
           nuance: "shy",
           talkStyle: "celebrate",
@@ -9202,8 +9198,8 @@
         startPickerPreloadJob?.setLocale?.(nextEnglish, nextCode);
         if (orbitHint) {
           orbitHint.textContent = nextEnglish
-            ? "Tap character to interact · drag empty space to orbit · double-click to reset"
-            : "點角色互動 · 拖曳空白處旋轉 · 雙擊重置視角";
+          ? "Quick tap body to poke · drag to rotate · pinch to zoom · double-click empty to reset"
+          : "快啲點身體戳一下 · 拖曳旋轉 · 雙指縮放 · 雙擊空白重置";
         }
         if (liteLink) {
           liteLink.href = buildCompanionHref({
