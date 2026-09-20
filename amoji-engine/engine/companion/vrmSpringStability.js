@@ -7,21 +7,23 @@
  */
 import * as THREE from "three";
 
-export const VRM_SPRING_STABILITY_SCHEMA = "amoji.vrmSpringStability.v8";
+export const VRM_SPRING_STABILITY_SCHEMA = "amoji.vrmSpringStability.v10";
 
 /** High drag — stops hair/skirt tails from fluttering upward indoors. */
-export const MIN_DRAG_FORCE = 0.996;
+export const MIN_DRAG_FORCE = 0.9985;
 /** Strong downward pull — counters VRM files that author gravityDir (0, 1, 0). */
-export const MIN_GRAVITY_POWER = 1.35;
-export const MAX_STIFFNESS = 0.1;
+export const MIN_GRAVITY_POWER = 2.05;
+export const MAX_STIFFNESS = 0.085;
 
-/** Outdoor breeze — lighter drag so hair/cloth can move with wind. */
-export const OUTDOOR_DRAG_FORCE = 0.78;
-/** Strong enough downward pull so hair never reads as “wind from below”. */
-export const OUTDOOR_GRAVITY_POWER = 0.92;
-export const OUTDOOR_MAX_STIFFNESS = 0.22;
+/**
+ * Outdoor — same downward pull + drag as indoor (saved night-city users saw
+ * weak outdoor tuning and “wind from below” for days).
+ */
+export const OUTDOOR_DRAG_FORCE = MIN_DRAG_FORCE;
+export const OUTDOOR_GRAVITY_POWER = MIN_GRAVITY_POWER;
+export const OUTDOOR_MAX_STIFFNESS = 0.16;
 
-/** Side breeze only (world ±X) — no ±Z “from behind” gusts that flicker on camera. */
+/** @deprecated Outdoor gravity no longer tilts — kept for tests. */
 export const OUTDOOR_WIND_SIDE_AMP = 0.06;
 
 /** Outdoors, avoid periodic spring resets — they read as hair “shaking”. */
@@ -43,7 +45,7 @@ export const TALK_SPRING_RECENTER_SEC = 1.85;
 export const THINK_SPRING_RECENTER_SEC = 2.2;
 
 /** World-space upward tail velocity (units/s) above which we clamp drift. */
-export const MAX_UPWARD_TAIL_VEL = 0.045;
+export const MAX_UPWARD_TAIL_VEL = 0.014;
 
 const _tailWorld = new THREE.Vector3();
 const _prevTailWorld = new THREE.Vector3();
@@ -115,18 +117,17 @@ export function setVrmSceneWindMode(mode) {
  */
 export function tuneSpringJointSettings(settings, mode = activeSceneWindMode) {
   if (!settings) return false;
-  if (mode === "outdoor") {
-    settings.dragForce = OUTDOOR_DRAG_FORCE;
-    settings.gravityPower = OUTDOOR_GRAVITY_POWER;
-    if (typeof settings.stiffness === "number") {
-      settings.stiffness = Math.min(settings.stiffness, OUTDOOR_MAX_STIFFNESS);
-    }
-  } else {
-    settings.dragForce = MIN_DRAG_FORCE;
-    settings.gravityPower = MIN_GRAVITY_POWER;
-    if (typeof settings.stiffness === "number") {
-      settings.stiffness = Math.min(settings.stiffness, MAX_STIFFNESS);
-    }
+  const minPower =
+    mode === "outdoor" ? OUTDOOR_GRAVITY_POWER : MIN_GRAVITY_POWER;
+  settings.dragForce =
+    mode === "outdoor" ? OUTDOOR_DRAG_FORCE : MIN_DRAG_FORCE;
+  settings.gravityPower = Math.max(
+    minPower,
+    Math.abs(Number(settings.gravityPower) || 0),
+  );
+  if (typeof settings.stiffness === "number") {
+    const cap = mode === "outdoor" ? OUTDOOR_MAX_STIFFNESS : MAX_STIFFNESS;
+    settings.stiffness = Math.min(Math.max(0, settings.stiffness), cap);
   }
   if (settings.gravityDir) {
     forceGravityDirDown(settings.gravityDir);
@@ -148,22 +149,10 @@ export function setOutdoorWindTimeSec(timeSec) {
  * @param {number} [jointIndex]
  */
 export function applyOutdoorSpringWindToGravityDir(dir, timeSec, jointIndex = 0) {
+  void timeSec;
+  void jointIndex;
   if (!dir) return dir;
-  const t = timeSec + jointIndex * 0.17;
-  const side =
-    Math.sin(t * 0.32) * OUTDOOR_WIND_SIDE_AMP +
-    Math.sin(t * 0.17 + 0.9) * OUTDOOR_WIND_SIDE_AMP * 0.35;
-  const y = -1;
-  const len = Math.hypot(side, y) || 1;
-  const x = side / len;
-  const yn = y / len;
-  if (typeof dir.set === "function") {
-    dir.set(x, yn, 0);
-  } else {
-    dir.x = x;
-    dir.y = yn;
-    dir.z = 0;
-  }
+  forceGravityDirDown(dir);
   return dir;
 }
 
@@ -180,6 +169,12 @@ export function tuneSpringJoint(joint) {
  * @param {import('@pixiv/three-vrm').VRM | null | undefined} vrm
  */
 export function stabilizeVrmSpringBones(vrm) {
+  const manager = vrm?.springBoneManager;
+  const guardPending = manager && !manager.__amojiSpringGuardInstalled;
+  ensureVrmSpringBoneGuard(vrm);
+  if (guardPending && manager?.__amojiSpringGuardInstalled) {
+    recenterVrmSpringBones(vrm, { retune: true, captureInit: false });
+  }
   const joints = getVrmSpringJoints(vrm);
   if (!joints.length) {
     return { ok: false, reason: "no-spring-bones", joints: 0, tuned: 0 };
@@ -203,11 +198,10 @@ export function tickOutdoorSceneWind(vrm, timeSec) {
   const joints = getVrmSpringJoints(vrm);
   if (!joints.length) return { active: false, joints: 0 };
   let tuned = 0;
-  joints.forEach((joint, index) => {
+  joints.forEach((joint) => {
     const settings = resolveSpringJointSettings(joint);
     if (!settings?.gravityDir) return;
-    forceGravityDirDown(settings.gravityDir);
-    applyOutdoorSpringWindToGravityDir(settings.gravityDir, timeSec, index);
+    tuneSpringJointSettings(settings, "outdoor");
     tuned += 1;
   });
   return { active: true, joints: tuned };
@@ -254,34 +248,39 @@ export function dampUpwardSpringTailDrift(joints, dt, opts = {}) {
  * including bootstrap vrm.update calls that bypass the avatar frame loop.
  * @param {import('@pixiv/three-vrm').VRM | null | undefined} vrm
  */
+export function ensureVrmSpringBoneGuard(vrm) {
+  return installVrmSpringBoneGuard(vrm);
+}
+
 export function installVrmSpringBoneGuard(vrm) {
   const manager = vrm?.springBoneManager;
-  if (!manager || manager.__amojiSpringGuardInstalled) {
-    return { ok: false, reason: manager ? "already-installed" : "no-spring-bones" };
+  if (!manager) {
+    return { ok: false, reason: "no-spring-bones" };
+  }
+  if (manager.__amojiSpringGuardInstalled) {
+    return { ok: true, reason: "already-installed" };
   }
   if (typeof manager.update !== "function") {
     return { ok: false, reason: "no-update" };
+  }
+  if (!getVrmSpringJoints(vrm).length) {
+    return { ok: false, reason: "no-joints-yet" };
   }
 
   const nativeUpdate = manager.update.bind(manager);
   manager.update = (delta) => {
     if (delta <= 0) return;
     const joints = getVrmSpringJoints(vrm);
-    joints.forEach((joint, index) => {
+    joints.forEach((joint) => {
       const settings = resolveSpringJointSettings(joint);
       tuneSpringJointSettings(settings, activeSceneWindMode);
-      if (activeSceneWindMode === "outdoor" && settings?.gravityDir) {
-        applyOutdoorSpringWindToGravityDir(
-          settings.gravityDir,
-          outdoorWindTimeSec,
-          index,
-        );
-      }
     });
     nativeUpdate(delta);
     dampUpwardSpringTailDrift(joints, delta, {
-      maxUpVel:
-        activeSceneWindMode === "outdoor" ? MAX_UPWARD_TAIL_VEL * 1.15 : MAX_UPWARD_TAIL_VEL,
+      maxUpVel: MAX_UPWARD_TAIL_VEL,
+    });
+    dampUpwardSpringTailDrift(joints, delta, {
+      maxUpVel: MAX_UPWARD_TAIL_VEL * 0.65,
     });
   };
   manager.__amojiSpringGuardInstalled = true;
@@ -295,9 +294,12 @@ export function installVrmSpringBoneGuard(vrm) {
 export function getVrmSpringJoints(vrm) {
   const manager = vrm?.springBoneManager;
   if (!manager) return [];
-  return collectSpringJoints(
-    manager.joints || manager.springBones || manager._joints,
-  );
+  const raw =
+    manager.joints ||
+    manager._joints ||
+    manager.springBones ||
+    manager._sortedJoints;
+  return collectSpringJoints(raw);
 }
 
 /**
@@ -391,7 +393,7 @@ export function configureVrmSpringStability(vrm, mode = activeSceneWindMode) {
     if (tuneSpringJointSettings(settings, mode)) tuned += 1;
   }
 
-  installVrmSpringBoneGuard(vrm);
+  ensureVrmSpringBoneGuard(vrm);
 
   const recentered = recenterVrmSpringBones(vrm, {
     retune: false,
