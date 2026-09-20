@@ -1,7 +1,25 @@
 /**
  * ChatGPT-style companion mic button — emotion-linked glow, rings, and waveform.
  */
-export const COMPANION_MIC_BUTTON_SCHEMA = "amoji.companionMicButton.v5";
+export const COMPANION_MIC_BUTTON_SCHEMA = "amoji.companionMicButton.v6-volume-orb";
+
+/** Mic orb diameter: quiet → smaller, loud → larger (live states only). */
+export const MIC_ORB_SCALE_MIN = 0.78;
+export const MIC_ORB_SCALE_MAX = 1.32;
+
+/**
+ * @param {number} level 0..1
+ * @param {{ live?: boolean }} [opts]
+ */
+export function micOrbScaleFromLevel(level, opts = {}) {
+  const live = opts.live !== false;
+  const clamped = clamp(Number(level) || 0, 0, 1);
+  if (!live) return 1;
+  return (
+    MIC_ORB_SCALE_MIN +
+    clamped * (MIC_ORB_SCALE_MAX - MIC_ORB_SCALE_MIN)
+  );
+}
 
 const EMOTION_HUD_LABEL = Object.freeze({
   neutral: { en: "Neutral", yue: "平靜" },
@@ -293,10 +311,11 @@ export function syncMicButtonGlow(el, opts = {}) {
 
   const insetGlow = live ? 6 + level * 22 : 2 + level * 4;
   const glowIntensity = live ? 0.42 + level * 0.52 : 0.1 + level * 0.12;
-  const haloScale = live ? 1 + level * 0.1 : 1;
+  const orbScale = micOrbScaleFromLevel(level, { live });
   el.style.setProperty("--mic-glow-inset", `${insetGlow.toFixed(1)}px`);
   el.style.setProperty("--mic-glow-intensity", glowIntensity.toFixed(3));
-  el.style.setProperty("--mic-halo-scale", haloScale.toFixed(3));
+  el.style.setProperty("--mic-halo-scale", orbScale.toFixed(3));
+  el.style.setProperty("--mic-orb-scale", orbScale.toFixed(3));
   el.classList.toggle("mic-glow-inset", true);
 
   if (state === "speaking") {
@@ -424,6 +443,7 @@ export function createCompanionMicButton(el, opts = {}) {
     if (state !== "listening" && state !== "speaking") {
       el.style.removeProperty("--mic-level");
       el.style.removeProperty("--mic-bounce");
+      el.style.removeProperty("--mic-orb-scale");
       hudLevel = 0;
       syncHud();
       return;
@@ -433,12 +453,17 @@ export function createCompanionMicButton(el, opts = {}) {
     const bouncePx = 3 + clamped * 12;
     el.style.setProperty("--mic-level", clamped.toFixed(3));
     el.style.setProperty("--mic-bounce", `${bouncePx.toFixed(2)}px`);
+    el.style.setProperty(
+      "--mic-orb-scale",
+      micOrbScaleFromLevel(clamped, { live: true }).toFixed(3),
+    );
     syncHud();
   };
 
   const reset = () => {
     el.style.removeProperty("--mic-level");
     el.style.removeProperty("--mic-bounce");
+    el.style.removeProperty("--mic-orb-scale");
     hudLevel = 0;
     syncHud();
   };

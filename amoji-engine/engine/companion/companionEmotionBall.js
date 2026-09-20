@@ -3,6 +3,7 @@
  */
 import {
   normalizeEmotionThemeKey,
+  micOrbScaleFromLevel,
   resolveMicButtonTheme,
 } from "./companionMicButton.js";
 import {
@@ -488,9 +489,9 @@ export function computeMiniEmotionBallFrame(opts = {}) {
   const scale = disabled
     ? 1
     : live
-      ? 1.02 + volume * 0.16
+      ? micOrbScaleFromLevel(volume, { live: true })
       : thinking
-        ? 1.03 + volume * 0.08
+        ? 1.02 + volume * 0.1
         : 1.01 + volume * 0.06;
   const wobble = reducedMotion
     ? 0.012
@@ -594,10 +595,14 @@ export function applyMiniEmotionBallFrame(el, frame, opts = {}) {
     el.style.removeProperty("--mini-ball-inset");
   }
   const hasCanvas = Boolean(el.querySelector?.("canvas"));
-  el.style.setProperty(
-    "--mini-ball-scale",
-    hasCanvas ? "1" : frame.scale.toFixed(3),
-  );
+  const orbScale = keepHostRole
+    ? micOrbScaleFromLevel(frame.volume, { live: frame.live })
+    : frame.scale;
+  el.style.setProperty("--mini-ball-scale", orbScale.toFixed(3));
+  if (keepHostRole) {
+    el.style.setProperty("--mic-level", frame.volume.toFixed(3));
+    el.style.setProperty("--mic-orb-scale", orbScale.toFixed(3));
+  }
   el.style.setProperty("--mini-ball-bright", frame.bright.toFixed(3));
   el.style.setProperty("--mini-ball-wobble", frame.wobble.toFixed(3));
   el.style.setProperty("--mini-ball-hue", String(Math.round(frame.hue)));
