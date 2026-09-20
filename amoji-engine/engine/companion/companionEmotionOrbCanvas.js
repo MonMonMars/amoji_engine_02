@@ -3,7 +3,7 @@
  * emotion tint, and an optional robot-face read (eyes + mouth) for mic / HUD display.
  */
 export const COMPANION_EMOTION_ORB_CANVAS_SCHEMA =
-  "amoji.companionEmotionOrbCanvas.v3";
+  "amoji.companionEmotionOrbCanvas.v4";
 
 /**
  * @param {number} value
@@ -484,6 +484,237 @@ function buildCloudPuffSpecs(time, volume, state, compact, emotion) {
 }
 
 /**
+ * Perfect-circle magic orb for mic button — glass sphere, inner swirl, specular shine.
+ * @param {CanvasRenderingContext2D} ctx
+ * @param {number} width
+ * @param {number} height
+ * @param {Parameters<typeof drawCloudEmotionOrb>[3]} opts
+ */
+function drawMagicBallEmotionOrb(ctx, width, height, opts) {
+  const volume = clamp(Number(opts.volume) || 0, 0, 1);
+  const state = String(opts.state || "idle");
+  const emotion = normalizeOrbEmotion(opts.emotion);
+  const reduced = Boolean(opts.reducedMotion);
+  const time = reduced ? 0 : Number(opts.time) || 0;
+  const live =
+    Boolean(opts.live) || state === "speaking" || state === "listening";
+  const palette = resolveCloudOrbPalette(opts.hue, opts.sat, opts.light, {
+    live,
+    emotion,
+  });
+  const cx = width / 2;
+  const cy = height / 2;
+  const size = Math.min(width, height);
+  const breath = reduced
+    ? 1
+    : 1 + volume * 0.12 + Math.sin(time * 1.35) * 0.022;
+  const sphereR = size * 0.44 * breath;
+  const spin = reduced ? 0 : Number(opts.spin) || 0;
+  const drift = reduced
+    ? { x: 0, y: 0 }
+    : {
+        x: Math.sin(time * 0.62) * sphereR * 0.012,
+        y: Math.cos(time * 0.54) * sphereR * 0.01,
+      };
+  const sx = cx + drift.x;
+  const sy = cy + drift.y;
+
+  ctx.clearRect(0, 0, width, height);
+  ctx.save();
+
+  ctx.beginPath();
+  ctx.arc(cx, cy, size * 0.5, 0, Math.PI * 2);
+  ctx.clip();
+
+  const outerGlow = ctx.createRadialGradient(
+    sx,
+    sy,
+    sphereR * 0.05,
+    sx,
+    sy,
+    sphereR * 2.4,
+  );
+  outerGlow.addColorStop(
+    0,
+    `hsla(${palette.hue}, ${palette.mistSat}%, ${palette.mistLight}%, ${0.22 + volume * 0.24})`,
+  );
+  outerGlow.addColorStop(
+    0.45,
+    `hsla(${palette.hue}, ${palette.sat}%, ${palette.light}%, ${0.12 + volume * 0.16})`,
+  );
+  outerGlow.addColorStop(1, "hsla(0, 0%, 100%, 0)");
+  ctx.fillStyle = outerGlow;
+  ctx.beginPath();
+  ctx.arc(sx, sy, sphereR * 2.4, 0, Math.PI * 2);
+  ctx.fill();
+
+  const bodyGrad = ctx.createRadialGradient(
+    sx - sphereR * 0.28,
+    sy - sphereR * 0.32,
+    sphereR * 0.04,
+    sx + sphereR * 0.08,
+    sy + sphereR * 0.12,
+    sphereR * 1.05,
+  );
+  bodyGrad.addColorStop(
+    0,
+    `hsla(${palette.hue}, ${Math.min(99, palette.coreSat + 6)}%, ${Math.min(99, palette.coreLight + 6)}%, 0.72)`,
+  );
+  bodyGrad.addColorStop(
+    0.38,
+    `hsla(${palette.hue}, ${palette.sat}%, ${palette.light}%, ${0.52 + volume * 0.28})`,
+  );
+  bodyGrad.addColorStop(
+    0.72,
+    `hsla(${palette.hue}, ${palette.shadowSat}%, ${palette.shadowLight}%, ${0.38 + volume * 0.14})`,
+  );
+  bodyGrad.addColorStop(
+    1,
+    `hsla(${palette.hue}, ${palette.mistSat}%, ${Math.max(18, palette.mistLight - 18)}%, 0.22)`,
+  );
+  ctx.fillStyle = bodyGrad;
+  ctx.beginPath();
+  ctx.arc(sx, sy, sphereR * 0.96, 0, Math.PI * 2);
+  ctx.fill();
+
+  const rimGrad = ctx.createRadialGradient(
+    sx,
+    sy,
+    sphereR * 0.72,
+    sx,
+    sy,
+    sphereR * 1.02,
+  );
+  rimGrad.addColorStop(0, "hsla(0, 0%, 100%, 0)");
+  rimGrad.addColorStop(
+    0.82,
+    `hsla(${palette.hue}, ${palette.shadowSat}%, ${palette.shadowLight}%, ${0.08 + volume * 0.1})`,
+  );
+  rimGrad.addColorStop(
+    1,
+    `hsla(${palette.hue}, ${palette.shadowSat}%, ${Math.max(22, palette.shadowLight - 12)}%, ${0.28 + volume * 0.12})`,
+  );
+  ctx.fillStyle = rimGrad;
+  ctx.beginPath();
+  ctx.arc(sx, sy, sphereR * 0.98, 0, Math.PI * 2);
+  ctx.fill();
+
+  drawInnerSwirlLayers(ctx, sx, sy, sphereR * 0.92, palette, {
+    time,
+    volume,
+    spin,
+    reducedMotion: reduced,
+  });
+
+  const prevComposite = ctx.globalCompositeOperation;
+  ctx.globalCompositeOperation = "screen";
+  drawSoftCloudPuff(
+    ctx,
+    sx - sphereR * 0.12,
+    sy - sphereR * 0.08,
+    sphereR * (0.38 + volume * 0.08),
+    palette.hue + 8,
+    palette.accentSat,
+    palette.accentLight,
+    0.16 + volume * 0.12,
+  );
+  ctx.globalCompositeOperation = prevComposite || "source-over";
+
+  drawCloudWhiteCore(
+    ctx,
+    sx,
+    sy,
+    sphereR * (0.62 + volume * 0.1),
+    0.42 + volume * 0.28,
+    drift,
+  );
+
+  const specX = sx - sphereR * 0.22;
+  const specY = sy - sphereR * 0.28;
+  const specG = ctx.createRadialGradient(
+    specX,
+    specY,
+    0,
+    specX,
+    specY,
+    sphereR * 0.38,
+  );
+  specG.addColorStop(0, `rgba(255,255,255,${0.82 + volume * 0.12})`);
+  specG.addColorStop(0.35, `rgba(255,255,255,${0.28 + volume * 0.18})`);
+  specG.addColorStop(1, "rgba(255,255,255,0)");
+  ctx.fillStyle = specG;
+  ctx.beginPath();
+  ctx.arc(specX, specY, sphereR * 0.34, 0, Math.PI * 2);
+  ctx.fill();
+
+  if (!reduced) {
+    ctx.save();
+    ctx.translate(sx, sy);
+    ctx.rotate(time * 0.85 + spin);
+    ctx.strokeStyle = `rgba(255,255,255,${0.14 + volume * 0.22})`;
+    ctx.lineWidth = Math.max(0.65, sphereR * 0.045);
+    ctx.lineCap = "round";
+    for (let band = 0; band < 2; band += 1) {
+      const start = band * Math.PI + 0.35;
+      ctx.beginPath();
+      ctx.arc(0, 0, sphereR * (0.58 + band * 0.12), start, start + Math.PI * 0.42);
+      ctx.stroke();
+    }
+    ctx.restore();
+
+    for (let i = 0; i < 3; i += 1) {
+      const sparkleAngle = time * (1.1 + i * 0.15) + spin + i * 2.1;
+      const dist = sphereR * (0.32 + (i % 2) * 0.14);
+      const px = sx + Math.cos(sparkleAngle) * dist;
+      const py = sy + Math.sin(sparkleAngle) * dist * 0.88;
+      const twinkle = 0.35 + Math.sin(time * 3.2 + i * 1.7) * 0.25;
+      ctx.fillStyle = `rgba(255,255,255,${(0.12 + volume * 0.2) * twinkle})`;
+      ctx.beginPath();
+      ctx.arc(px, py, sphereR * 0.035, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  if (
+    (state === "thinking" || state === "loading") &&
+    !reduced
+  ) {
+    const orbit = sphereR * (state === "loading" ? 0.28 : 0.34);
+    const ox = sx + Math.cos(time * (state === "loading" ? 1.05 : 1.65) + spin) * orbit;
+    const oy = sy + Math.sin(time * (state === "loading" ? 1.05 : 1.65) + spin) * orbit;
+    ctx.fillStyle = `rgba(255,255,255,${0.28 + volume * 0.2})`;
+    ctx.beginPath();
+    ctx.arc(ox, oy, sphereR * 0.06, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  if (
+    !reduced &&
+    volume > 0.05 &&
+    (state === "speaking" || state === "listening")
+  ) {
+    const incoming = state === "listening";
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(sx, sy, sphereR * 0.98, 0, Math.PI * 2);
+    ctx.clip();
+    for (let r = 0; r < 3; r += 1) {
+      const phase = ((time * 1.55 + r * 0.34) % 1);
+      const t = incoming ? 1 - phase : phase;
+      const rippleR = sphereR * (0.92 + t * 0.38);
+      ctx.strokeStyle = `rgba(255,255,255,${(1 - t) * volume * 0.28})`;
+      ctx.lineWidth = 0.75;
+      ctx.beginPath();
+      ctx.arc(sx, sy, rippleR, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  ctx.restore();
+}
+
+/**
  * ChatGPT-style layered cloud orb with robot-face overlay.
  * @param {CanvasRenderingContext2D} ctx
  * @param {number} width
@@ -497,6 +728,7 @@ function buildCloudPuffSpecs(time, volume, state, compact, emotion) {
  *   state: string,
  *   emotion?: string,
  *   compact?: boolean,
+ *   magicBall?: boolean,
  *   wobble?: number,
  *   squash?: number,
  *   spin?: number,
@@ -506,6 +738,10 @@ function buildCloudPuffSpecs(time, volume, state, compact, emotion) {
  * }} opts
  */
 function drawCloudEmotionOrb(ctx, width, height, opts) {
+  if (Boolean(opts.magicBall)) {
+    drawMagicBallEmotionOrb(ctx, width, height, opts);
+    return;
+  }
   const volume = clamp(Number(opts.volume) || 0, 0, 1);
   const state = String(opts.state || "idle");
   const emotion = normalizeOrbEmotion(opts.emotion);
