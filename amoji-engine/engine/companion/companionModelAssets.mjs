@@ -2,6 +2,7 @@
  * Model URL helpers — cache keys, deploy cache-bust, roster fetch paths.
  */
 import { AMOJI_BUILD } from "./buildVersion.mjs";
+import { AMOJI_MODEL_REVISION } from "./companionCharacterMigration.mjs";
 import { COMPANION_ROSTER_CHARACTERS } from "./companionCharacterRoster.js";
 
 export const COMPANION_MODEL_ASSETS_SCHEMA = "amoji.companionModelAssets.v1";
@@ -27,8 +28,9 @@ export function modelFetchUrl(baseUrl, buildId) {
   const bust = String(
     buildId ?? globalThis.__amojiBuild ?? AMOJI_BUILD ?? "",
   ).trim();
-  if (!bust) return path;
-  return `${path}?v=${encodeURIComponent(bust)}`;
+  const tag = [bust, AMOJI_MODEL_REVISION].filter(Boolean).join("-");
+  if (!tag) return path;
+  return `${path}?v=${encodeURIComponent(tag)}`;
 }
 
 /**

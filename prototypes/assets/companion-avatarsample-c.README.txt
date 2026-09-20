@@ -1,5 +1,0 @@
-companion-avatarsample-c.vrm
-
-Source: https://vroid.pixiv.help/hc/en-us/articles/4402394424089
-License: VRoid AvatarSample (pixiv terms — commercial OK, not CC0)
-Downloaded by amoji-engine/scripts/download-legal-vrm.mjs

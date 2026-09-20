@@ -29,42 +29,21 @@ See also: `amoji-engine/docs/3D_MODEL_INVENTORY.md` (how to read the external mo
 node amoji-engine/scripts/download-legal-vrm.mjs
 ```
 
-## Curated roster (v328 — 17 characters)
+## Curated roster (v363 — 23 characters)
 
-| # | ID | VRM file | License |
-|---|-----|----------|---------|
-| 1 | nova | `companion-nova.vrm` | VTubeMe CC BY 4.0 |
-| 2 | kizuna | `kizuna-kamatte.vrm` | Kizuna AI official |
-| 3 | alicia | `companion-alicia.vrm` | Alicia Solid / UniVRM |
-| 4 | ember | `companion-ember.vrm` | VTubeMe CC BY 4.0 |
-| 5 | sky | `companion-sky.vrm` | VTubeMe CC BY 4.0 |
-| 6 | yuki | `companion-olivia.vrm` | 100Avatars CC0 |
-| 7 | hina | `companion-lydia.vrm` | 100Avatars CC0 |
-| 8 | mio | `companion-kate.vrm` | 100Avatars CC0 |
-| 9 | amoji | `companion-girl.vrm` | Project original |
-| 10 | rex | `companion-kai.vrm` | VTubeMe CC BY 4.0 |
-| 11 | shiro | `companion-shiro.vrm` | 100Avatars CC0 |
-| 12 | jennifer | `companion-jennifer.vrm` | 100Avatars CC0 |
-| 13 | poly | `companion-polydancer.vrm` | 100Avatars CC0 |
-| 14 | aesthe | `companion-aesthetica.vrm` | 100Avatars CC0 |
-| 15 | chad | `companion-chad.vrm` | 100Avatars CC0 |
-| 16 | david | `companion-david.vrm` | 100Avatars CC0 |
-| 17 | hugo | `companion-hugo.vrm` | 100Avatars CC0 |
+See `amoji-engine/docs/3D_MODEL_INVENTORY.md` for the full id → VRM mapping.
 
 Roster source of truth: `amoji-engine/engine/companion/companionCharacterRoster.js`
 
-## Role → characters (v328)
+## Retired VRM files (removed from deploy)
 
-| Role | Characters in app |
-|------|-------------------|
-| Girlfriend | nova, kizuna, alicia, ember, sky, yuki, hina, mio, amoji, shiro, jennifer, poly, aesthe |
-| Boyfriend | rex, chad, david, hugo |
-| Secretary (lite UI default) | nova |
+These basenames are **deleted** on install/CI (`download-legal-vrm.mjs` prune step).  
+Legacy ids redirect in app code (e.g. `shiro` → **nana** uses `companion-chibi.vrm`, `chad` → **robert** uses `companion-robert.vrm`):
 
-## Legacy files (not in v328 picker)
+- `companion-chad.vrm`, `companion-david.vrm`, `companion-hugo.vrm`, `companion-shiro.vrm`
+- `companion-avatarsample-c.vrm` (yume uses `companion-erika.vrm`)
 
-Older CC0 / sample files may remain on disk for reference but are **not** in `ROSTER_CHARACTER_IDS`:  
-rose, robert, mimi, chibi, VRoid AvatarSample A/B/C paths, etc.
+Deep links must use `?character=<id>` only — `vrm` / `model3d` URL params are stripped at boot.
 
 ## Per-file license notes
 
