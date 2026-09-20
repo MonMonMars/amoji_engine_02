@@ -3,6 +3,7 @@ import {
   appendChatHistory,
   chatHistoryStorageKey,
   clearChatHistory,
+  storedChatForLlm,
   hasUserMessages,
   loadChatHistory,
   resolveTutorialSeed,
@@ -71,6 +72,15 @@ describe("companionChatPersistence", () => {
     appendChatHistory("mio", { role: "user", text: "test" }, storage);
     clearChatHistory("mio", storage);
     expect(loadChatHistory("mio", storage)).toHaveLength(0);
+  });
+
+  it("maps stored transcript to LLM history entries", () => {
+    appendChatHistory("nova", { role: "user", text: "Hi" }, storage);
+    appendChatHistory("nova", { role: "assistant", text: "Hello" }, storage);
+    expect(storedChatForLlm("nova", storage)).toEqual([
+      { role: "user", content: "Hi" },
+      { role: "assistant", content: "Hello" },
+    ]);
   });
 
   it("returns tutorial starter prompts with feature copy", () => {
