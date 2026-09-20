@@ -2,7 +2,7 @@
  * Explicit camera reset — empty-area double-click/tap, or talk start.
  * Orbit drags and single taps must not snap the view back.
  */
-export const COMPANION_CAMERA_RESET_SCHEMA = "amoji.companionCameraReset.v1";
+export const COMPANION_CAMERA_RESET_SCHEMA = "amoji.companionCameraReset.v2";
 
 export const EMPTY_AREA_DOUBLE_TAP_MS = 420;
 export const EMPTY_AREA_TAP_MOVE_PX = 14;
@@ -87,6 +87,13 @@ export function createEmptyAreaCameraReset(opts = {}) {
       return false;
     },
     onDblClick(ev) {
+      if (dragged) return false;
+      if (!isEmpty(ev.clientX, ev.clientY)) return false;
+      return fireReset();
+    },
+    onClick(ev) {
+      const detail = Number(ev?.detail) || 0;
+      if (detail < 2) return false;
       if (dragged) return false;
       if (!isEmpty(ev.clientX, ev.clientY)) return false;
       return fireReset();

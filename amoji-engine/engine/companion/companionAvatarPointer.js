@@ -3,11 +3,13 @@
  */
 import * as THREE from "three";
 
-export const COMPANION_AVATAR_POINTER_SCHEMA = "amoji.companionAvatarPointer.v3";
+export const COMPANION_AVATAR_POINTER_SCHEMA = "amoji.companionAvatarPointer.v4";
 
 export const AVATAR_TAP_MOVE_PX = 14;
 /** Fast tap — longer presses count as drag / orbit, not poke. */
 export const AVATAR_TAP_MAX_MS = 320;
+/** Second tap within this window on the same character = multi-click poke. */
+export const CHARACTER_MULTI_CLICK_MS = 420;
 
 /** @deprecated kept for tests — full-body poke no longer uses waist cutoff */
 export const POKE_WAIST_HEIGHT_RATIO = 0.58;
@@ -129,9 +131,14 @@ export function clientToNormalizedPointer(clientX, clientY, rect) {
  *   getPokeWaistY?: () => number | null,
  *   getScreenBand?: () => { top: number, bottom: number, height: number } | null,
  *   controls?: { enabled?: boolean } | null,
- *   onPoke?: (info: { point: import('three').Vector3, object: import('three').Object3D }) => void,
+ *   onPoke?: (info: {
+ *     point: import('three').Vector3,
+ *     object: import('three').Object3D,
+ *     multiClick?: boolean,
+ *   }) => void,
  *   movePx?: number,
  *   tapMaxMs?: number,
+ *   multiClickMs?: number,
  * }} opts
  */
 export function bindCompanionAvatarPointer(opts) {
@@ -141,6 +148,8 @@ export function bindCompanionAvatarPointer(opts) {
   const movePx = opts.movePx ?? AVATAR_TAP_MOVE_PX;
   const moveSq = movePx * movePx;
   const tapMaxMs = opts.tapMaxMs ?? AVATAR_TAP_MAX_MS;
+  const multiClickMs = opts.multiClickMs ?? CHARACTER_MULTI_CLICK_MS;
+  const multiClickMoveSq = moveSq * 9;
   const raycaster = new THREE.Raycaster();
   const pointer = new THREE.Vector2();
 
@@ -153,8 +162,13 @@ export function bindCompanionAvatarPointer(opts) {
   /** @type {Set<number>} */
   const activePointers = new Set();
   let gestureHadMultiTouch = false;
+  let sessionDragged = false;
+  /** @type {{ at: number, x: number, y: number } | null} */
+  let pendingCharacterTap = null;
 
   const rect = () => rectEl.getBoundingClientRect();
+  const nowMs = () =>
+    typeof performance !== "undefined" ? performance.now() : Date.now();
 
   const pokeMeshes = () => {
     const list = opts.getPokeMeshes?.() || [];
@@ -184,6 +198,14 @@ export function bindCompanionAvatarPointer(opts) {
       kind === "pointer" ? "pointer" : kind === "grabbing" ? "grabbing" : "grab";
   };
 
+  const emitPoke = (hit, multiClick = false) => {
+    opts.onPoke?.({
+      point: hit.point,
+      object: hit.object,
+      multiClick,
+    });
+  };
+
   const onPointerDown = (e) => {
     if (e.button !== 0 && e.pointerType === "mouse") return;
     activePointers.add(e.pointerId);
@@ -191,8 +213,9 @@ export function bindCompanionAvatarPointer(opts) {
     pointerActive = true;
     downX = e.clientX;
     downY = e.clientY;
-    downAt = typeof performance !== "undefined" ? performance.now() : Date.now();
+    downAt = nowMs();
     dragged = false;
+    sessionDragged = false;
     downOnCharacter = Boolean(hitCharacter(e.clientX, e.clientY));
     setCursor(downOnCharacter ? "pointer" : "grabbing");
   };
@@ -202,6 +225,7 @@ export function bindCompanionAvatarPointer(opts) {
     const dy = e.clientY - downY;
     if (pointerActive && dx * dx + dy * dy > moveSq) {
       dragged = true;
+      sessionDragged = true;
     }
     if (!pointerActive) return;
     if (dragged) {
@@ -216,8 +240,7 @@ export function bindCompanionAvatarPointer(opts) {
     activePointers.delete(e.pointerId);
     const dx = e.clientX - downX;
     const dy = e.clientY - downY;
-    const elapsed =
-      (typeof performance !== "undefined" ? performance.now() : Date.now()) - downAt;
+    const elapsed = nowMs() - downAt;
     const wasCharacter = downOnCharacter;
     const hadMulti = gestureHadMultiTouch;
     if (activePointers.size === 0) {
@@ -228,11 +251,30 @@ export function bindCompanionAvatarPointer(opts) {
     setCursor("grab");
 
     if (hadMulti || activePointers.size > 0) return;
-    if (!wasCharacter || dragged || dx * dx + dy * dy > moveSq) return;
+    if (!wasCharacter || dragged || dx * dx + dy * dy > moveSq) {
+      if (dragged || dx * dx + dy * dy > moveSq) pendingCharacterTap = null;
+      return;
+    }
     if (elapsed > tapMaxMs) return;
     const hit = hitCharacter(e.clientX, e.clientY);
     if (!hit) return;
-    opts.onPoke?.({ point: hit.point, object: hit.object });
+
+    const tapNow = nowMs();
+    const prev = pendingCharacterTap;
+    let multiClick = false;
+    if (prev) {
+      const dt = tapNow - prev.at;
+      const tdx = e.clientX - prev.x;
+      const tdy = e.clientY - prev.y;
+      if (dt >= 40 && dt < multiClickMs && tdx * tdx + tdy * tdy <= multiClickMoveSq) {
+        multiClick = true;
+        pendingCharacterTap = null;
+      }
+    }
+    if (!multiClick) {
+      pendingCharacterTap = { at: tapNow, x: e.clientX, y: e.clientY };
+    }
+    emitPoke(hit, multiClick);
   };
 
   const onPointerCancel = (e) => {
@@ -248,7 +290,6 @@ export function bindCompanionAvatarPointer(opts) {
   surface.addEventListener("pointermove", onPointerMove);
   surface.addEventListener("pointerup", onPointerUp);
   surface.addEventListener("pointercancel", onPointerCancel);
-
   return {
     hitTest(clientX, clientY) {
       return Boolean(hitCharacter(clientX, clientY));

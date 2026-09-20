@@ -5064,12 +5064,12 @@
     </div>
     <div class="stage">
       <div class="atmosphere" aria-hidden="true"></div>
-      <canvas id="avatar-canvas" aria-label="Amoji companion — quick tap body to poke, drag to rotate, pinch to zoom"></canvas>
+      <canvas id="avatar-canvas" aria-label="Amoji companion — tap or multi-click body to poke, multi-click empty to reset camera, drag to rotate, pinch to zoom"></canvas>
       <div
         class="orbit-hit"
         id="orbit-hit"
         aria-hidden="true"
-        title="Quick tap body to poke · drag to rotate · pinch to zoom"
+        title="Tap or multi-click body to poke · multi-click empty to reset · drag to rotate · pinch to zoom"
       ></div>
       <div class="orbit-hint hide" id="orbit-hint" hidden aria-hidden="true"></div>
       <header class="topbar">
@@ -6687,7 +6687,7 @@
           characterId: loadForCharacterId,
           modelUrl: modelUrlForLoad || undefined,
           prefer: preferForLoad,
-          onCharacterTap: () => handleCharacterTap?.(),
+          onCharacterTap: (info) => handleCharacterTap?.(info),
           onProgress: (pct, _label) => {
             const rounded = Math.round(pct);
             const loadLabel = isEnglish
@@ -6982,8 +6982,8 @@
         orbitHint.removeAttribute("aria-hidden");
         orbitHint.classList.remove("hide");
         orbitHint.textContent = isEnglish
-          ? "Quick tap body to poke · drag to rotate · pinch to zoom · double-click empty to reset"
-          : "快啲點身體戳一下 · 拖曳旋轉 · 雙指縮放 · 雙擊空白重置";
+          ? "Tap or multi-click body to poke · drag to rotate · pinch to zoom · multi-click empty to reset"
+          : "點或多下點身體戳一下 · 拖曳旋轉 · 雙指縮放 · 多下點空白重置";
       }
       let talkingCameraLatched = false;
       const orbitSurface = orbitHit || canvas;
@@ -7005,6 +7005,9 @@
       });
       orbitSurface.addEventListener("dblclick", (ev) => {
         emptyAreaCameraReset.onDblClick(ev);
+      });
+      orbitSurface.addEventListener("click", (ev) => {
+        emptyAreaCameraReset.onClick(ev);
       });
       orbitSurface.addEventListener(
         "pointerdown",
@@ -7907,7 +7910,7 @@
               else stagePreview.hide();
             },
             onProgress: (pct, label) => switchOverlay.update(pct, label),
-            onCharacterTap: () => handleCharacterTap?.(),
+            onCharacterTap: (info) => handleCharacterTap?.(info),
           });
           if (swapEpoch !== avatarEpoch) {
             result.avatar?.dispose?.();
@@ -8210,9 +8213,11 @@
         return true;
       };
 
-      handleCharacterTap = () => {
+      handleCharacterTap = (info = {}) => {
         const now = Date.now();
-        if (now - lastTapAt < 1400 || busy) return;
+        const multiClick = Boolean(info?.multiClick);
+        const minGap = multiClick ? 320 : 1400;
+        if (now - lastTapAt < minGap || busy) return;
         lastTapAt = now;
         if (careEnabled) {
           window.__amojiTreats?.applyPet?.();
@@ -9198,8 +9203,8 @@
         startPickerPreloadJob?.setLocale?.(nextEnglish, nextCode);
         if (orbitHint) {
           orbitHint.textContent = nextEnglish
-          ? "Quick tap body to poke · drag to rotate · pinch to zoom · double-click empty to reset"
-          : "快啲點身體戳一下 · 拖曳旋轉 · 雙指縮放 · 雙擊空白重置";
+          ? "Tap or multi-click body to poke · drag to rotate · pinch to zoom · multi-click empty to reset"
+          : "點或多下點身體戳一下 · 拖曳旋轉 · 雙指縮放 · 多下點空白重置";
         }
         if (liteLink) {
           liteLink.href = buildCompanionHref({
