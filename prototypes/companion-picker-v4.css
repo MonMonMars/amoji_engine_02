@@ -1712,17 +1712,18 @@
 
 @media (min-width: 720px) {
   .companion-picker--v4.companion-picker--start .companion-picker-sheet {
-    width: min(100%, 680px);
-    height: auto;
-    max-height: min(94dvh, 860px);
-    margin: auto auto 0;
-    border-radius: 1.5rem 1.5rem 0 0;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    width: 100%;
+    max-width: none;
+    height: 100dvh;
+    max-height: 100dvh;
+    margin: 0;
+    border-radius: 0;
+    border: none;
   }
 
   .companion-picker--v4.companion-picker--start {
-    align-items: flex-end;
-    justify-content: center;
+    align-items: stretch;
+    justify-content: stretch;
   }
 
   .companion-picker--v4.companion-picker--start .picker-hero {

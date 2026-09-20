@@ -102,8 +102,9 @@
 }
 
 .companion-picker--stacked-layout.companion-picker--start .picker-showcase-stage {
-  flex: 0 0 auto !important;
-  max-height: min(38vh, 14rem);
+  flex: 1 1 auto !important;
+  min-height: min(26vh, 11rem);
+  max-height: min(52vh, 28rem);
   overflow: hidden;
 }
 

@@ -20,6 +20,23 @@ body.companion-minimal-chrome .stage {
   right: 0;
 }
 
+/* Start picker: full viewport (not a bottom sheet). In-session picker keeps max width above. */
+.companion-picker.companion-picker--start.is-open,
+.companion-picker.companion-picker--start {
+  align-items: stretch;
+  justify-content: stretch;
+}
+
+.companion-picker.companion-picker--start.is-open .companion-picker-sheet,
+.companion-picker.companion-picker--start .companion-picker-sheet {
+  width: 100%;
+  max-width: none;
+  height: 100dvh;
+  max-height: 100dvh;
+  margin: 0;
+  border-radius: 0;
+}
+
 .companion-picker.is-open .companion-picker-backdrop {
   inset: 0;
 }
@@ -62,10 +79,11 @@ body.companion-picker-open .composer-wrap {
 }
 
 .companion-picker--stacked-layout.companion-picker--start .picker-showcase-stage {
-  flex: 0 0 auto;
+  flex: 1 1 auto;
   position: relative;
   z-index: 2;
-  max-height: min(38vh, 14rem);
+  min-height: min(28vh, 12rem);
+  max-height: min(52vh, 28rem);
   overflow: hidden;
   display: flex;
   align-items: center;

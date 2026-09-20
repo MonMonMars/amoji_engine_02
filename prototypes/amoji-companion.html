@@ -312,8 +312,8 @@
         inset: 0;
         z-index: 12000;
         pointer-events: auto;
-        align-items: flex-end;
-        justify-content: center;
+        align-items: stretch;
+        justify-content: stretch;
         transition: opacity 0.45s ease;
       }
 
@@ -337,6 +337,12 @@
 
       .companion-picker--start .companion-picker-sheet {
         transform: translateY(0);
+        width: 100%;
+        max-width: none;
+        margin: 0;
+        border-radius: 0;
+        border-left: none;
+        border-right: none;
         max-height: 100dvh;
         height: 100dvh;
         min-height: 0;
@@ -4080,6 +4086,11 @@
         align-items: flex-end;
         justify-content: center;
         pointer-events: none;
+      }
+
+      .companion-picker.companion-picker--start {
+        align-items: stretch;
+        justify-content: stretch;
       }
 
       .companion-picker[hidden] {
