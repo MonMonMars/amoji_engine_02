@@ -1,6 +1,52 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" width="960" height="540">
-<rect width="960" height="540" fill="#0a0c12"/>
-    <rect x="144" y="108" width="672" height="297" fill="#121820" stroke="#2a3540" stroke-width="2"/>
-    <line x1="144" y1="243" x2="816" y2="243" stroke="#2a3540"/>
+<defs>
+  <linearGradient id="skyTop" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#1a1048"/>
+    <stop offset="35%" stop-color="#3d2878"/>
+    <stop offset="68%" stop-color="#284868"/>
+    <stop offset="100%" stop-color="#0c1420"/>
+  </linearGradient>
+  <linearGradient id="skyDay" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#7ec8ff"/>
+    <stop offset="45%" stop-color="#a8d8f8"/>
+    <stop offset="78%" stop-color="#e8c878"/>
+    <stop offset="100%" stop-color="#88b868"/>
+  </linearGradient>
+  <linearGradient id="skySunset" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#ff6b4a"/>
+    <stop offset="28%" stop-color="#d84888"/>
+    <stop offset="55%" stop-color="#683878"/>
+    <stop offset="100%" stop-color="#120818"/>
+  </linearGradient>
+  <linearGradient id="haze" x1="0" y1="0.4" x2="0" y2="1">
+    <stop offset="0%" stop-color="#fff" stop-opacity="0"/>
+    <stop offset="100%" stop-color="#c8d8f0" stop-opacity="0.22"/>
+  </linearGradient>
+  <filter id="softGlow" x="-40%" y="-40%" width="180%" height="180%">
+    <feGaussianBlur stdDeviation="4" result="b"/>
+    <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+  <filter id="neonGlow" x="-60%" y="-60%" width="220%" height="220%">
+    <feGaussianBlur stdDeviation="6" result="b"/>
+    <feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+  <filter id="paintSoft" x="-2%" y="-2%" width="104%" height="104%">
+    <feGaussianBlur stdDeviation="0.6"/>
+  </filter>
+  <radialGradient id="sunDisc" cx="0.5" cy="0.5" r="0.5">
+    <stop offset="0%" stop-color="#fff8e8"/>
+    <stop offset="55%" stop-color="#ffd080"/>
+    <stop offset="100%" stop-color="#ff904000"/>
+  </radialGradient>
+  <radialGradient id="moonGlow" cx="0.5" cy="0.5" r="0.5">
+    <stop offset="0%" stop-color="#fffef8"/>
+    <stop offset="40%" stop-color="#e8e0f0"/>
+    <stop offset="100%" stop-color="#e8e0f000"/>
+  </radialGradient>
+</defs>
+  <rect width="960" height="540" fill="#070a10"/>
+  <rect x="115.19999999999999" y="97.2" width="729.6" height="313.2" fill="#101820" stroke="#2a3848" stroke-width="2"/>
+  <line x1="115.19999999999999" y1="97.2" x2="844.8" y2="97.2" stroke="#1a2838" stroke-width="1"/><line x1="115.19999999999999" y1="147.2" x2="844.8" y2="147.2" stroke="#1a2838" stroke-width="1"/><line x1="115.19999999999999" y1="197.2" x2="844.8" y2="197.2" stroke="#1a2838" stroke-width="1"/><line x1="115.19999999999999" y1="247.2" x2="844.8" y2="247.2" stroke="#1a2838" stroke-width="1"/><line x1="115.19999999999999" y1="297.2" x2="844.8" y2="297.2" stroke="#1a2838" stroke-width="1"/>
+  <ellipse cx="480" cy="243" rx="180" ry="100" fill="#88a8ff" opacity="0.06" filter="url(#softGlow)"/>
 </svg>

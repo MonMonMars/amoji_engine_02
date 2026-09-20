@@ -1,8 +1,62 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" width="960" height="540">
-<defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#88b8e0"/><stop offset="100%" stop-color="#486878"/></linearGradient></defs>
-    <rect width="960" height="540" fill="url(#sky)"/>
-    <rect x="0" y="313.2" width="960" height="226.79999999999998" fill="#2a5878"/>
-    <path d="M80 313.2 L110 243 L140 313.2Z" fill="#1a2838"/><path d="M260 313.2 L290 243 L320 313.2Z" fill="#1a2838"/><path d="M440 313.2 L470 243 L500 313.2Z" fill="#1a2838"/><path d="M620 313.2 L650 243 L680 313.2Z" fill="#1a2838"/>
-    <rect x="0" y="421.2" width="960" height="118.8" fill="#182028"/>
+<defs>
+  <linearGradient id="skyTop" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#1a1048"/>
+    <stop offset="35%" stop-color="#3d2878"/>
+    <stop offset="68%" stop-color="#284868"/>
+    <stop offset="100%" stop-color="#0c1420"/>
+  </linearGradient>
+  <linearGradient id="skyDay" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#7ec8ff"/>
+    <stop offset="45%" stop-color="#a8d8f8"/>
+    <stop offset="78%" stop-color="#e8c878"/>
+    <stop offset="100%" stop-color="#88b868"/>
+  </linearGradient>
+  <linearGradient id="skySunset" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#ff6b4a"/>
+    <stop offset="28%" stop-color="#d84888"/>
+    <stop offset="55%" stop-color="#683878"/>
+    <stop offset="100%" stop-color="#120818"/>
+  </linearGradient>
+  <linearGradient id="haze" x1="0" y1="0.4" x2="0" y2="1">
+    <stop offset="0%" stop-color="#fff" stop-opacity="0"/>
+    <stop offset="100%" stop-color="#c8d8f0" stop-opacity="0.22"/>
+  </linearGradient>
+  <filter id="softGlow" x="-40%" y="-40%" width="180%" height="180%">
+    <feGaussianBlur stdDeviation="4" result="b"/>
+    <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+  <filter id="neonGlow" x="-60%" y="-60%" width="220%" height="220%">
+    <feGaussianBlur stdDeviation="6" result="b"/>
+    <feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+  <filter id="paintSoft" x="-2%" y="-2%" width="104%" height="104%">
+    <feGaussianBlur stdDeviation="0.6"/>
+  </filter>
+  <radialGradient id="sunDisc" cx="0.5" cy="0.5" r="0.5">
+    <stop offset="0%" stop-color="#fff8e8"/>
+    <stop offset="55%" stop-color="#ffd080"/>
+    <stop offset="100%" stop-color="#ff904000"/>
+  </radialGradient>
+  <radialGradient id="moonGlow" cx="0.5" cy="0.5" r="0.5">
+    <stop offset="0%" stop-color="#fffef8"/>
+    <stop offset="40%" stop-color="#e8e0f0"/>
+    <stop offset="100%" stop-color="#e8e0f000"/>
+  </radialGradient>
+</defs>
+  <rect width="960" height="540" fill="url(#skyDay)"/>
+  <polygon points="0,388.8 211.2,205.2 403.2,388.8" fill="#384858" opacity="0.85"/>
+  <polygon points="268.8,388.8 499.20000000000005,172.8 748.8000000000001,388.8" fill="#506878" opacity="0.9"/>
+  <polygon points="528,388.8 748.8000000000001,216 960,388.8" fill="#3a4858"/>
+  <polygon points="460.79999999999995,205.2 499.20000000000005,172.8 537.6,205.2" fill="#fff" opacity="0.75"/>
+  <rect x="0" y="297" width="960" height="243" fill="#286888"/>
+  <path d="M60 297 L100 205.2 L140 297Z" fill="#1a2838"/>
+  <rect x="85" y="259.2" width="30" height="12" fill="#283848"/><path d="M240 297 L280 205.2 L320 297Z" fill="#1a2838"/>
+  <rect x="265" y="259.2" width="30" height="12" fill="#283848"/><path d="M420 297 L460 205.2 L500 297Z" fill="#1a2838"/>
+  <rect x="445" y="259.2" width="30" height="12" fill="#283848"/><path d="M600 297 L640 205.2 L680 297Z" fill="#1a2838"/>
+  <rect x="625" y="259.2" width="30" height="12" fill="#283848"/><path d="M780 297 L820 205.2 L860 297Z" fill="#1a2838"/>
+  <rect x="805" y="259.2" width="30" height="12" fill="#283848"/>
+  <ellipse cx="288" cy="334.8" rx="120" ry="18" fill="#fff" opacity="0.08"/>
+  <rect x="0" y="421.2" width="960" height="118.8" fill="#182028"/>
 </svg>
