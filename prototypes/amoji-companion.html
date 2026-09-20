@@ -590,14 +590,14 @@
         width: 100%;
         max-width: none;
         box-sizing: border-box;
-        padding: 0 max(0.4rem, env(safe-area-inset-left, 0px))
+        padding: 0 max(0.55rem, env(safe-area-inset-right, 0px))
           max(0.75rem, env(safe-area-inset-bottom))
-          max(0.4rem, env(safe-area-inset-right, 0px));
+          max(0.55rem, env(safe-area-inset-left, 0px));
         pointer-events: auto;
         touch-action: manipulation;
         display: flex;
         flex-direction: column;
-        align-items: center;
+        align-items: stretch;
       }
       .composer {
         display: flex;
@@ -1314,11 +1314,12 @@
         width: 100%;
         max-width: none;
         margin: 0;
-        padding: 0 max(0.4rem, env(safe-area-inset-left, 0px))
-          0.15rem max(0.4rem, env(safe-area-inset-right, 0px));
+        padding: 0 max(0.55rem, env(safe-area-inset-right, 0px)) 0.15rem
+          max(0.55rem, env(safe-area-inset-left, 0px));
         max-height: min(36vh, 300px);
         min-height: 0;
         pointer-events: none;
+        box-sizing: border-box;
       }
 
       .transcript {
@@ -1334,7 +1335,7 @@
         flex-direction: column;
         justify-content: flex-end;
         gap: 0.55rem;
-        padding: 0.35rem 0.15rem 0.5rem;
+        padding: 0.35rem 0 0.5rem;
         scrollbar-width: thin;
         scroll-behavior: smooth;
         scroll-padding-bottom: 0.5rem;
@@ -1437,11 +1438,17 @@
 
       .starter-prompts__chips {
         display: flex;
+        flex-direction: column;
         flex-wrap: nowrap;
-        gap: 0.4rem;
-        overflow-x: auto;
-        overflow-y: hidden;
-        padding: 0.1rem 0.15rem 0.35rem;
+        align-items: stretch;
+        gap: 0.35rem;
+        overflow-x: hidden;
+        overflow-y: auto;
+        max-height: min(38vh, 240px);
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+        padding: 0.1rem 0 0.35rem;
         scroll-behavior: smooth;
         -webkit-overflow-scrolling: touch;
         scrollbar-width: thin;
@@ -1455,11 +1462,16 @@
         border: 1px solid rgba(127, 212, 207, 0.22);
         background: rgba(127, 212, 207, 0.08);
         color: var(--ink);
-        border-radius: 999px;
-        padding: 0.35rem 0.7rem;
+        border-radius: 0.72rem;
+        padding: 0.42rem 0.72rem;
         font-size: 0.78rem;
         cursor: pointer;
-        white-space: nowrap;
+        white-space: normal;
+        text-align: start;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+        line-height: 1.35;
       }
 
       .starter-chip:hover {
@@ -1582,12 +1594,13 @@
         width: 100%;
         max-width: none;
         box-sizing: border-box;
-        padding: 0 max(0.4rem, env(safe-area-inset-left, 0px))
+        padding: 0 max(0.55rem, env(safe-area-inset-right, 0px))
           max(0.75rem, env(safe-area-inset-bottom))
-          max(0.4rem, env(safe-area-inset-right, 0px));
+          max(0.55rem, env(safe-area-inset-left, 0px));
         background: linear-gradient(180deg, transparent, rgba(5, 7, 12, 0.94) 35%);
         z-index: 3;
         touch-action: manipulation;
+        align-items: stretch;
       }
 
       /* Mic mode — tall caption strip: ~5 lines, fade up / clear down */
@@ -7365,11 +7378,6 @@
           });
           chipsWrap.appendChild(btn);
         }
-        scrollAffordancesMod.wireScrollAffordances(chipsWrap, {
-          labels: isEnglish
-            ? { prev: "Previous suggestions", next: "More suggestions" }
-            : { prev: "上一個建議", next: "更多建議" },
-        });
       };
 
       const hydrateChatLlmFromStorage = (charId) => {
