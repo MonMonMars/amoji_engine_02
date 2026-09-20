@@ -27,7 +27,10 @@ describe("companionMinimalUi", () => {
     );
     expect(html.indexOf('id="mic-voice-stack"')).toBeLessThan(html.indexOf('id="send"'));
     expect(minimalCss).toMatch(/companion-minimal-chrome \.composer-wrap[\s\S]*width:\s*100%/);
-    expect(minimalCss).toMatch(/companion-minimal-chrome \.composer\.composer-pro[\s\S]*width:\s*100%/);
+    expect(minimalCss).toMatch(/companion-minimal-chrome \.composer\.composer-pro[\s\S]*36rem/);
+    expect(minimalCss).toMatch(/composer-field textarea[\s\S]*overflow-y:\s*auto/);
+    expect(minimalCss).toMatch(/composer-field textarea[\s\S]*height:\s*5\.25rem/);
+    expect(html).not.toMatch(/scrollHeight,\s*120/);
     expect(minimalCss).toMatch(/companion-minimal-chrome \.chat-column[\s\S]*width:\s*100%/);
     expect(minimalCss).not.toMatch(/companion-minimal-chrome \.chat-column[\s\S]*680px/);
     expect(html).toMatch(/\.composer \{[\s\S]*width:\s*100%/);
