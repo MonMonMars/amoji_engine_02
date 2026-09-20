@@ -17,6 +17,58 @@ describe("companionCharacterPicker UI", () => {
     expect(grid.textContent).toMatch(/No companions/i);
   });
 
+  it("in-session picker uses AAA session presentation classes", () => {
+    if (typeof document === "undefined") return;
+    const picker = createCompanionCharacterPicker({
+      isEnglish: true,
+      selectedId: "nova",
+      onSelect: () => {},
+    });
+    expect(picker.element.classList.contains("companion-picker--aaa-theme")).toBe(true);
+    expect(picker.element.classList.contains("companion-picker--session")).toBe(true);
+    picker.destroy();
+  });
+
+  it("syncFromSession updates copy without rebuilding roster while closed", () => {
+    if (typeof document === "undefined") return;
+    const picker = createCompanionCharacterPicker({
+      isEnglish: true,
+      selectedId: "nova",
+      onSelect: () => {},
+    });
+    picker.open();
+    const grid = picker.element.querySelector(".companion-picker-grid");
+    const beforeHtml = grid?.innerHTML;
+    picker.close();
+    picker.syncFromSession({
+      selectedId: "nova",
+      isEnglish: true,
+      pickerCopy: { title: "Switch companion" },
+    });
+    expect(picker.element.querySelector(".companion-picker-title")?.textContent).toBe(
+      "Switch companion",
+    );
+    expect(grid?.innerHTML).toBe(beforeHtml);
+    picker.destroy();
+  });
+
+  it("setSelected while closed does not rebuild grid DOM", () => {
+    if (typeof document === "undefined") return;
+    const picker = createCompanionCharacterPicker({
+      isEnglish: true,
+      selectedId: "nova",
+      onSelect: () => {},
+    });
+    picker.open();
+    const grid = picker.element.querySelector(".companion-picker-grid");
+    const beforeHtml = grid?.innerHTML;
+    picker.close();
+    picker.setSelected("nova");
+    expect(grid?.innerHTML).toBe(beforeHtml);
+    expect(picker.getActiveCharacterId()).toBe("nova");
+    picker.destroy();
+  });
+
   it("in-session picker shows background row below the roster grid", () => {
     if (typeof document === "undefined") return;
     const picker = createCompanionCharacterPicker({

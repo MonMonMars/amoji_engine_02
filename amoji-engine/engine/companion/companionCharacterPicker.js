@@ -493,7 +493,8 @@ export function createCompanionCharacterPicker(opts = {}) {
     rosterProvider ? rosterProvider(langCode) : listCompanionCharacters(langCode);
 
   const shell = document.createElement("div");
-  shell.className = "companion-picker companion-picker--v4";
+  shell.className =
+    "companion-picker companion-picker--v4 companion-picker--aaa-theme companion-picker--session hide";
   shell.id = "companion-character-picker";
   shell.hidden = true;
   shell.setAttribute("role", "dialog");
@@ -685,6 +686,11 @@ export function createCompanionCharacterPicker(opts = {}) {
     close,
     setSelected(id) {
       activeCharacterId = id;
+      if (!open) {
+        selectedId = id;
+        return;
+      }
+      if (id === selectedId) return;
       selectedId = id;
       renderAll();
     },
@@ -712,7 +718,47 @@ export function createCompanionCharacterPicker(opts = {}) {
       }
       copy = mergePickerCopy();
       paintCopy();
-      if (ctx.rerenderRoster) renderAll();
+      if (ctx.rerenderRoster) {
+        renderAll();
+      } else {
+        updatePickerHero(shell, findPickerItem(fullList(), selectedId), isEnglish);
+      }
+    },
+    syncFromSession(ctx = {}) {
+      const nextId = String(ctx.selectedId ?? activeCharacterId).toLowerCase();
+      const nextEnglish = ctx.isEnglish ?? isEnglish;
+      const localeChanged = Boolean(nextEnglish) !== isEnglish;
+      const idChanged = nextId !== activeCharacterId;
+      if (typeof ctx.rosterProvider === "function") {
+        rosterProvider = ctx.rosterProvider;
+      }
+      if (ctx.pickerCopy) {
+        sessionCopyOverrides = { ...ctx.pickerCopy };
+      }
+      activeCharacterId = nextId;
+      if (!open || idChanged) selectedId = nextId;
+      if (localeChanged) {
+        isEnglish = Boolean(nextEnglish);
+        langCode = isEnglish ? "en" : "yue";
+        shell.setAttribute(
+          "aria-label",
+          isEnglish ? "Choose companion" : "揀同伴",
+        );
+        sceneSection.setLocale(isEnglish);
+        toolbar.syncLocale?.();
+      }
+      copy = mergePickerCopy();
+      paintCopy();
+      if (ctx.backgroundId != null) {
+        sceneSection.setBackgroundId(ctx.backgroundId, { notify: false });
+      }
+      const rerender =
+        Boolean(ctx.rerenderRoster) || localeChanged || (open && idChanged);
+      if (rerender) {
+        renderAll();
+      } else if (open) {
+        updatePickerHero(shell, findPickerItem(fullList(), selectedId), isEnglish);
+      }
     },
     setLocale(nextEnglish) {
       isEnglish = Boolean(nextEnglish);
@@ -846,8 +892,8 @@ export function createCompanionStartPicker(opts = {}) {
     if (subEl) {
       subEl.hidden = false;
       subEl.textContent = isEnglish
-        ? `${fullList().length} companions · swipe roster · tap portrait to preview`
-        : `${fullList().length} 位同伴 · 橫向滑動名單 · 㩒肖像預覽`;
+        ? `${fullList().length} companions · swipe roster · unique voice & personality`
+        : `${fullList().length} 位同伴 · 橫向滑動名單 · 各自語音同性格`;
     }
     if (rosterDockLabelEl) {
       rosterDockLabelEl.textContent = isEnglish
@@ -1030,9 +1076,58 @@ export function createCompanionStartPicker(opts = {}) {
     schema: COMPANION_START_PICKER_SCHEMA,
     element: shell,
     setSelected(id) {
+      if (id === selectedId) {
+        scrollSelectedIntoView();
+        return;
+      }
       selectedId = id;
       renderAll();
       scrollSelectedIntoView();
+    },
+    syncFromSession(opts = {}) {
+      const nextId = String(opts.selectedId ?? selectedId).toLowerCase();
+      const nextEnglish = opts.isEnglish ?? isEnglish;
+      const localeChanged = Boolean(nextEnglish) !== isEnglish;
+      const idChanged = nextId !== selectedId;
+      if (typeof opts.rosterProvider === "function") {
+        rosterProvider = opts.rosterProvider;
+      }
+      if (opts.pickerCopy) {
+        sessionCopyOverrides = { ...opts.pickerCopy };
+      }
+      if (localeChanged) {
+        isEnglish = Boolean(nextEnglish);
+        langCode = isEnglish ? "en" : "yue";
+        shell.setAttribute(
+          "aria-label",
+          isEnglish ? "Choose companion" : "揀同伴",
+        );
+        shell
+          .querySelector(".picker-showcase-stage")
+          ?.setAttribute(
+            "aria-label",
+            isEnglish ? "Selected companion preview" : "已選同伴預覽",
+          );
+        shell
+          .querySelector(".picker-roster-row, .picker-roster-dock")
+          ?.setAttribute(
+            "aria-label",
+            isEnglish ? "Companion roster" : "同伴名單",
+          );
+        sceneSection.setLocale(isEnglish);
+      }
+      selectedId = nextId;
+      copy = mergePickerCopy();
+      paintCopy();
+      const rerender =
+        Boolean(opts.rerenderRoster) || localeChanged || idChanged;
+      if (rerender) {
+        renderAll();
+        renderPreload();
+      } else {
+        updatePickerHero(shell, findPickerItem(fullList(), selectedId), isEnglish);
+      }
+      if (idChanged || opts.scrollIntoView) scrollSelectedIntoView();
     },
     getSelectedId() {
       return selectedId;
