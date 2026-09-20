@@ -42,11 +42,11 @@ describe("companionPreload model cache keys", () => {
       fetchImpl,
     );
     await preloadVrmBuffer(
-      "/prototypes/assets/companion-chad.vrm?v=old",
+      "/prototypes/assets/companion-robert.vrm?v=old",
       fetchImpl,
     );
-    releaseVrmPreloadExcept("/prototypes/assets/companion-chad.vrm");
-    expect(getPreloadedVrmPromise("/prototypes/assets/companion-chad.vrm?v=new")).toBeTruthy();
+    releaseVrmPreloadExcept("/prototypes/assets/companion-robert.vrm");
+    expect(getPreloadedVrmPromise("/prototypes/assets/companion-robert.vrm?v=new")).toBeTruthy();
     expect(getPreloadedVrmPromise("/prototypes/assets/companion-nova.vrm")).toBeNull();
   });
 });

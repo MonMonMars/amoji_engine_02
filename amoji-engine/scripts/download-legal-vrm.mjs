@@ -8,6 +8,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { RETIRED_VRM_BASENAMES } from "../engine/companion/companionCharacterMigration.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ASSETS = path.resolve(__dirname, "../../prototypes/assets");
@@ -29,12 +30,6 @@ const LEGAL_DOWNLOADS = [
     note: "Most common VRoid reference model used by VRM companion apps (Ami-style)",
   },
   {
-    file: "companion-avatarsample-c.vrm",
-    url: "https://raw.githubusercontent.com/madjin/vrm-samples/master/vroid/stable/AvatarSample_C.vrm",
-    license: "VRoid AvatarSample (pixiv terms — commercial OK, not CC0)",
-    source: "https://vroid.pixiv.help/hc/en-us/articles/4402394424089",
-  },
-  {
     file: "companion-vroid-male.vrm",
     url: "https://raw.githubusercontent.com/madjin/vrm-samples/master/vroid/masc_vroid.vrm",
     license: "VRoid sample (pixiv terms)",
@@ -48,26 +43,6 @@ const LEGAL_DOWNLOADS = [
     source: "https://github.com/madjin/vrm-samples",
   },
   {
-    file: "companion-chad.vrm",
-    url: "https://arweave.net/s15TxeRcxamOZ0qDfjME1Bl2Ku7Vs4IQs8RthpxYjOQ",
-    license: "CC0 1.0 — ToxSam 100Avatars #079",
-    source: "https://opensourceavatars.com",
-    note: "Confident male — iBoy / Replika boyfriend archetype testing",
-  },
-  {
-    file: "companion-david.vrm",
-    url: "https://arweave.net/H3cBhsOEoiQ8XZiwG31SyCUtiDewBZRccxIDztyHfSY",
-    license: "CC0 1.0 — ToxSam 100Avatars #047",
-    source: "https://opensourceavatars.com",
-    note: "Soft male companion — Nomi boyfriend vibe testing",
-  },
-  {
-    file: "companion-hugo.vrm",
-    url: "https://arweave.net/iYaEdMdq8faogyRdgF4plnZIq40oOERENie94XmEdvQ",
-    license: "CC0 1.0 — ToxSam 100Avatars #008",
-    source: "https://opensourceavatars.com",
-  },
-  {
     file: "companion-polydancer.vrm",
     url: "https://arweave.net/jPOg-G0MPH55ZQmamFhT9f8cHn-hjeAQ0mRO5gWeKMQ",
     license: "CC0 1.0 — ToxSam 100Avatars #021 Polydancer",
@@ -77,12 +52,6 @@ const LEGAL_DOWNLOADS = [
     file: "companion-jennifer.vrm",
     url: "https://arweave.net/LKp1uJLAZFmncdCNSZ8oopU7ZElXTvn4BmM4CUcFclc",
     license: "CC0 1.0 — ToxSam 100Avatars #052 Jennifer",
-    source: "https://opensourceavatars.com",
-  },
-  {
-    file: "companion-shiro.vrm",
-    url: "https://arweave.net/7skrWhSd_4mrqe-tiqMfCL746xu8UWghRh1dZm7irzM",
-    license: "CC0 1.0 — ToxSam 100Avatars #058 Shiro",
     source: "https://opensourceavatars.com",
   },
   {
@@ -115,8 +84,26 @@ async function downloadOne(entry) {
   return { file: entry.file, bytes: buf.length };
 }
 
+async function pruneRetiredModels() {
+  for (const file of RETIRED_VRM_BASENAMES) {
+    const dest = path.join(ASSETS, file);
+    try {
+      await fs.unlink(dest);
+      console.log("removed retired", file);
+    } catch {
+      /* already gone */
+    }
+    try {
+      await fs.unlink(dest.replace(/\.vrm$/, ".README.txt"));
+    } catch {
+      /* ignore */
+    }
+  }
+}
+
 async function main() {
   await fs.mkdir(ASSETS, { recursive: true });
+  await pruneRetiredModels();
   const results = [];
   for (const entry of LEGAL_DOWNLOADS) {
     results.push(await downloadOne(entry));

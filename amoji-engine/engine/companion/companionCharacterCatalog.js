@@ -268,11 +268,24 @@ export const LEGACY_CHARACTER_ALIASES = Object.freeze({
   hugo: "mimi",
 });
 
+/**
+ * @param {string | null | undefined} id
+ */
+export function normalizeRosterCharacterId(id) {
+  const key = String(id || "nova").trim().toLowerCase();
+  if (COMPANION_CHARACTERS[key]) return key;
+  const mapped = LEGACY_CHARACTER_ALIASES[key];
+  if (mapped && COMPANION_CHARACTERS[mapped]) return mapped;
+  return "nova";
+}
+
 export function resolveCharacterId(opts = {}) {
   const fromUrl = String(opts.characterParam || "").trim().toLowerCase();
-  if (fromUrl && COMPANION_CHARACTERS[fromUrl]) return fromUrl;
+  if (fromUrl && COMPANION_CHARACTERS[fromUrl]) {
+    return normalizeRosterCharacterId(fromUrl);
+  }
   if (fromUrl && LEGACY_CHARACTER_ALIASES[fromUrl]) {
-    return LEGACY_CHARACTER_ALIASES[fromUrl];
+    return normalizeRosterCharacterId(LEGACY_CHARACTER_ALIASES[fromUrl]);
   }
 
   const model = String(opts.modelUrl || "").toLowerCase();
@@ -294,6 +307,7 @@ export function resolveCharacterId(opts = {}) {
     ["companion-chad.vrm", "robert"],
     ["companion-david.vrm", "mikel"],
     ["companion-hugo.vrm", "mimi"],
+    ["companion-shiro.vrm", "nana"],
     ["companion-rose.vrm", "sakura"],
     ["companion-chibi.vrm", "nana"],
     ["companion-robert.vrm", "robert"],
@@ -307,7 +321,7 @@ export function resolveCharacterId(opts = {}) {
     ["companion-erika.vrm", "yume"],
   ];
   for (const [needle, id] of modelMap) {
-    if (model.includes(needle)) return id;
+    if (model.includes(needle)) return normalizeRosterCharacterId(id);
   }
   if (opts.avatarPrefer === "gltf" && model.includes(".glb")) {
     return "amoji";
@@ -315,9 +329,11 @@ export function resolveCharacterId(opts = {}) {
 
   const storage = opts.storage ?? globalThis.localStorage ?? null;
   const stored = storage?.getItem(CHARACTER_STORAGE_KEY) || "";
-  if (stored && COMPANION_CHARACTERS[stored]) return stored;
+  if (stored && COMPANION_CHARACTERS[stored]) {
+    return normalizeRosterCharacterId(stored);
+  }
   if (stored && LEGACY_CHARACTER_ALIASES[stored]) {
-    return LEGACY_CHARACTER_ALIASES[stored];
+    return normalizeRosterCharacterId(LEGACY_CHARACTER_ALIASES[stored]);
   }
 
   return "nova";
@@ -503,8 +519,9 @@ export function nextCharacterId(currentId) {
  * @param {Storage | null | undefined} [storage]
  */
 export function persistCharacterId(characterId, storage = globalThis.localStorage) {
+  const id = normalizeRosterCharacterId(characterId);
   try {
-    storage?.setItem(CHARACTER_STORAGE_KEY, characterId);
+    storage?.setItem(CHARACTER_STORAGE_KEY, id);
   } catch {
     /* ignore */
   }
@@ -596,12 +613,6 @@ export function buildCharacterCompanionHref(opts = {}) {
   const q = new URLSearchParams();
   q.set("lang", langCode === "en" ? "en" : "yue");
   q.set("character", def.id);
-  if (def.avatarPrefer === "gltf") {
-    q.set("avatar", "gltf");
-    q.set("model3d", def.modelUrl);
-  } else {
-    q.set("vrm", def.modelUrl);
-  }
   if (opts.extra) {
     for (const [key, value] of Object.entries(opts.extra)) {
       if (value) q.set(key, value);
