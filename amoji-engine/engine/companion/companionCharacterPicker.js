@@ -498,6 +498,10 @@ export function createCompanionCharacterPicker(opts = {}) {
   let open = false;
   let unwireFeaturedKeys = () => {};
   let unwireRosterKeys = () => {};
+  /** @type {(() => void) | null} */
+  let unwireFeaturedScroll = null;
+  /** @type {(() => void) | null} */
+  let unwireGridScroll = null;
   let sessionCopyOverrides = { ...(opts.pickerCopy || {}) };
   const mergePickerCopy = () => ({
     ...pickerCopy(isEnglish),
@@ -580,6 +584,11 @@ export function createCompanionCharacterPicker(opts = {}) {
     renderAll();
   };
 
+  const scrollLabels = () =>
+    isEnglish
+      ? { prev: "Previous", next: "More" }
+      : { prev: "上一頁", next: "更多" };
+
   const renderFeatured = () => {
     renderPickerFeaturedRow(featuredRow, langCode, {
       selectedId,
@@ -592,6 +601,13 @@ export function createCompanionCharacterPicker(opts = {}) {
     if (featuredWrap) {
       featuredWrap.hidden = !featuredRow?.childElementCount;
     }
+    unwireFeaturedScroll?.();
+    unwireFeaturedScroll = featuredRow
+      ? wireScrollAffordances(featuredRow, {
+          axis: "x",
+          labels: scrollLabels(),
+        })
+      : null;
   };
 
   const renderGrid = () => {
@@ -607,6 +623,13 @@ export function createCompanionCharacterPicker(opts = {}) {
       onCardTapFx: opts.onCardTapFx,
       onCardClick: applySelection,
     });
+    unwireGridScroll?.();
+    unwireGridScroll = gridEl
+      ? wireScrollAffordances(gridEl, {
+          axis: "x",
+          labels: scrollLabels(),
+        })
+      : null;
     updatePickerHero(shell, findPickerItem(fullList(), selectedId), isEnglish);
   };
 
