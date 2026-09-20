@@ -749,7 +749,7 @@ async function main() {
         (talkingPose.jawX || 0) > 0.04 ||
         (talkingPose.mouthOpen || 0) > 0.28 ||
         (talkingPose.mouthTarget || 0) > 0.28) &&
-      (talkingPose.mouthTarget || 0) <= 0.42,
+      (talkingPose.mouthTarget || 0) <= 0.48,
     JSON.stringify(talkingPose),
   );
   await safeScreenshot(page, {

@@ -1220,7 +1220,11 @@ export async function createVrmAvatar(opts) {
       for (const preset of mouthPresets) expr.setValue(preset, 0);
       if (open > 0) {
         const preset = shapeToPreset(shape) || mouthPresets[0];
-        if (preset) expr.setValue(preset, open);
+        if (preset) {
+          const floor =
+            talking || eating ? Math.min(TALK_MOUTH_OPEN_MAX, 0.18) : 0;
+          expr.setValue(preset, Math.max(open, floor));
+        }
       }
     }
     return { open, shape };
@@ -1268,9 +1272,9 @@ export async function createVrmAvatar(opts) {
     if (mouthTarget > MOUTH_CLOSE_EPS && !talking && !eating) {
       setTalking(true);
     }
-    if (mouthTarget > 0.15 && (talking || eating)) {
-      mouthOpen = Math.max(mouthOpen, mouthTarget * 0.48);
-      mouthOpen += (mouthTarget - mouthOpen) * 0.38;
+    if (mouthTarget > MOUTH_CLOSE_EPS && (talking || eating)) {
+      mouthOpen = Math.max(mouthOpen, mouthTarget * 0.62);
+      mouthOpen += (mouthTarget - mouthOpen) * 0.55;
     }
     return mouthTarget;
   };

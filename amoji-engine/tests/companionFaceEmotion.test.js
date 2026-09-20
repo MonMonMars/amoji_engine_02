@@ -74,8 +74,8 @@ describe("companionFaceEmotion", () => {
     const kizuna = buildModelFaceProfile({ characterId: "kizuna" });
     expect(nova.talkMouthScale).toBe(CHARACTER_TALK_MOUTH_OVERRIDES.nova.talkMouthScale);
     expect(ember.talkMouthScale).toBe(CHARACTER_TALK_MOUTH_OVERRIDES.ember.talkMouthScale);
-    expect(nova.talkJawScale).toBe(0);
-    expect(ember.talkJawScale).toBe(0);
+    expect(nova.talkJawScale).toBe(0.38);
+    expect(ember.talkJawScale).toBe(0.38);
     expect(nova.skipMorphMouthWhenPresets).toBe(true);
     expect(kizuna.talkMouthScale).toBe(0.52);
     expect(scaleTalkMouthOpen(0.9, nova)).toBeLessThan(0.4);
