@@ -20,6 +20,7 @@ import {
 } from "./companionCharacterCatalog.js";
 import { ROSTER_SCHEMA } from "./companionCharacterRoster.js";
 import { AMOJI_BUILD } from "./buildVersion.mjs";
+import { repairCompanionSessionBoot } from "./companionBootRepair.js";
 import {
   titleScreenKicker,
   titleScreenLogo,

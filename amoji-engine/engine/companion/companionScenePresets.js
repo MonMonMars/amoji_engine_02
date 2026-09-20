@@ -1,6 +1,11 @@
 /**
  * Scene presets — background swatches and per-character outfit wardrobe.
  */
+import {
+  COMPANION_ANIME_BG_PATH,
+  pickerArtFetchUrl,
+} from "./companionPickerAssets.mjs";
+
 export const COMPANION_SCENE_PRESETS_SCHEMA =
   "amoji.companionScenePresets.v7-anime-bg-default";
 
@@ -147,6 +152,45 @@ export function persistSceneBackground(backgroundId) {
     JSON.stringify({ backgroundId: id, schema: COMPANION_SCENE_PRESETS_SCHEMA }),
   );
   return id;
+}
+
+/**
+ * @param {Pick<Storage, "getItem" | "setItem"> | null | undefined} [storage]
+ */
+export function migrateLegacySceneStorage(storage = globalThis.localStorage) {
+  try {
+    const raw = storage?.getItem?.(SCENE_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    const id = resolveSceneBackgroundId(parsed?.backgroundId);
+    if (
+      parsed?.schema !== COMPANION_SCENE_PRESETS_SCHEMA ||
+      String(parsed?.backgroundId || "").toLowerCase() !== id
+    ) {
+      storage?.setItem?.(
+        SCENE_STORAGE_KEY,
+        JSON.stringify({
+          backgroundId: id,
+          schema: COMPANION_SCENE_PRESETS_SCHEMA,
+        }),
+      );
+    }
+    return id;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Cache-busted art URL for inline / repair bootstrapping.
+ * @param {string | null | undefined} backgroundId
+ */
+export function sceneBackgroundImageUrl(backgroundId) {
+  const id = resolveSceneBackgroundId(backgroundId);
+  if (id === "night-city") {
+    return pickerArtFetchUrl(COMPANION_ANIME_BG_PATH);
+  }
+  return pickerArtFetchUrl(`/prototypes/assets/scene-bg/${id}.png`);
 }
 
 /**

@@ -240,6 +240,39 @@ async function main() {
   );
   await page.waitForTimeout(3500);
 
+  const bootIntegrity = await page.evaluate(() => {
+    const el = document.querySelector(".atmosphere");
+    const bg = el ? getComputedStyle(el).backgroundImage : "";
+    const joints = window.__amojiAvatar?.vrm?.springBoneManager?.joints;
+    let maxY = -Infinity;
+    let count = 0;
+    if (joints && typeof joints[Symbol.iterator] === "function") {
+      for (const joint of joints) {
+        const dir = joint?.settings?.gravityDir;
+        if (!dir) continue;
+        count += 1;
+        maxY = Math.max(maxY, Number(dir.y) || 0);
+      }
+    }
+    return {
+      sceneBg: el?.dataset?.sceneBg || null,
+      hasAnimeBg: /scene-bg|companion-bg-anime/.test(bg),
+      springOk: count > 0 && maxY < -0.5,
+      springCount: count,
+      maxGravityY: maxY,
+    };
+  });
+  record(
+    "anime-scene-background-visible",
+    bootIntegrity.hasAnimeBg,
+    JSON.stringify(bootIntegrity),
+  );
+  record(
+    "spring-gravity-down",
+    bootIntegrity.springOk,
+    JSON.stringify(bootIntegrity),
+  );
+
   await page
     .waitForFunction(
       () => {
