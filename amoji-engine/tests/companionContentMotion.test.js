@@ -43,9 +43,9 @@ describe("companionContentMotion", () => {
     expect(content.expressionBlend.Happy).toBeGreaterThan(0.35);
   });
 
-  it("maps curious questions to question style", () => {
+  it("maps curious questions to question style with upbeat face", () => {
     const content = analyzeCompanionReply("好奇喎，點解會咁？", "thinking");
-    expect(content.emotion).toBe("thinking");
+    expect(content.emotion).toBe("happy");
     expect(content.nuance).toBe("curious");
     expect(content.talkStyle).toBe("question");
   });
@@ -58,11 +58,11 @@ describe("companionContentMotion", () => {
     expect(blend.Relaxed ?? 0).toBe(0);
   });
 
-  it("does not use Relaxed or Surprised for thinking", () => {
+  it("keeps thinking mood warm with a visible smile", () => {
     const blend = buildVrmExpressionBlend("thinking", "curious");
     expect(blend.Relaxed ?? 0).toBe(0);
-    expect(blend.Surprised ?? 0).toBe(0);
-    expect(blend.Sad ?? 0).toBeGreaterThan(0.1);
+    expect(blend.Happy ?? 0).toBeGreaterThan(0.35);
+    expect(blend.Sad ?? 0).toBeLessThan(0.15);
   });
 
   it("adds curious brow lift without thinking jaw hazards", () => {
@@ -93,13 +93,10 @@ describe("companionContentMotion", () => {
     expect(content.expressionBlend.Surprised ?? 0).toBe(0);
   });
 
-  it("does not smile at factual untagged replies", () => {
+  it("keeps a gentle smile on factual untagged replies", () => {
     const content = analyzeCompanionReply("而家香港大約二十七度，有幾陣雨");
-    expect(content.emotion).toBe("neutral");
-    expect(content.nuance).toBe("none");
-    expect(content.expressionBlend.Happy ?? 0).toBeLessThanOrEqual(
-      REST_NEUTRAL_HAPPY,
-    );
+    expect(content.emotion).toBe("happy");
+    expect(content.expressionBlend.Happy ?? 0).toBeGreaterThan(0.2);
   });
 
   it("infers user worry as stress nuance for thinking pose", () => {
@@ -108,9 +105,9 @@ describe("companionContentMotion", () => {
     expect(input.expressionBlend).toBeTruthy();
   });
 
-  it("streams partial reply into thinking then happy emotion", () => {
+  it("streams partial reply into upbeat idle then happy emotion", () => {
     const early = analyzeStreamingReply("");
-    expect(early.emotion).toBe("thinking");
+    expect(early.emotion).toBe("happy");
     const mid = analyzeStreamingReply("哈哈好開心");
     expect(mid.emotion).toBe("happy");
     expect(mid.talkStyle).toBeTruthy();
@@ -120,8 +117,8 @@ describe("companionContentMotion", () => {
     const beforeMood = analyzeStreamingReply("我陪住你…");
     expect(beforeMood.emotion).not.toBe("sad");
     const withMood = analyzeStreamingReply("我陪住你… [mood:sad] [nuance:stress]");
-    expect(withMood.emotion).toBe("sad");
-    expect(withMood.nuance).toBe("stress");
+    expect(withMood.emotion).toBe("happy");
+    expect(withMood.nuance).toBe("love");
   });
 
   it("detects speech chunk boundaries for gestures", () => {

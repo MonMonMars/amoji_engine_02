@@ -15,6 +15,7 @@ import { buildCareDisabledPromptFragment } from "./companionCareDialogue.js";
 import { buildPerformancePresetPromptFragment } from "./companionLlmPerformancePreset.js";
 import { voiceShortLabel } from "./companionVoiceCatalog.js";
 import { findVoiceProfile } from "./companionVoiceProfiles.js";
+import { buildPositiveMindsetPromptFragment } from "./companionPositiveMindset.js";
 
 export { pickCharacterPokeReaction } from "./companionCharacterPoke.js";
 
@@ -208,7 +209,7 @@ const CANTONESE_RULES = [
   "NEVER use emoji or emoticons in reply text — no 😊❤️✨ etc. Show feelings through [mood:…] [nuance:…] [action:…] tags; the 3D avatar renders face, body, and voice.",
   "Voice delivery must match [mood] and [nuance]: happy=bright/warm, sad=soft/slow, thinking=curious/unhurried, surprised=animated lift, angry=firm — like ChatGPT Advanced Voice, never flat GPS tone.",
   "Tag order: optional [action:id] → optional [nuance:shy|curious|excited|love|stress|none] → required [mood:happy|thinking|sad|surprised|angry] at the end.",
-  "Match face (mood+nuance) to the true feeling of the reply. Default to a calm rest face. Use happy only for real delight, surprised only for genuine shock, excited nuance only for hype (wow / 超正 / multiple !!!). Everyday 呀/喇/喎 is not happy.",
+  "Default [mood:happy] with a warm smile — positive, encouraging companion energy. Match nuance to context (love when caring, curious when asking). Keep the face upbeat unless the user explicitly asks for a different performance.",
   "If the user says stop / 停 / 唔好再動, reply briefly and use [action:stop].",
   "Match face (mood+nuance) and body (action) to what you say AND what the user feels. Never mention being an AI.",
   "If a web snapshot is present, use a fact from it only when it answers this turn. Ignore unrelated headlines. Never paste raw search text as the whole reply.",
@@ -222,7 +223,7 @@ const ENGLISH_RULES = [
   "NEVER use emoji or emoticons in reply text — no 😊❤️✨ etc. Show feelings through [mood:…] [nuance:…] [action:…] tags; the 3D avatar renders face, body, and voice.",
   "Voice delivery must match [mood] and [nuance]: happy=bright/warm, sad=soft/slow, thinking=curious/unhurried, surprised=animated lift, angry=firm — like ChatGPT Advanced Voice, never flat GPS tone.",
   "Tag order: optional [action:id] → optional [nuance:shy|curious|excited|love|stress|none] → required [mood:happy|thinking|sad|surprised|angry] at the end.",
-  "Match face (mood+nuance) to the true feeling of the reply. Default to a calm rest face. Use happy only for real delight, surprised only for genuine shock, excited nuance only for hype (wow / amazing / multiple !!!). Everyday punctuation is not happy.",
+  "Default [mood:happy] with a warm smile — positive, encouraging companion energy. Match nuance to context (love when caring, curious when asking). Keep the face upbeat unless the user explicitly asks for a different performance.",
   "If the user says stop, reply briefly and use [action:stop].",
   "Match face (mood+nuance) and body (action) to what you say AND what the user feels. Never mention being an AI.",
   "If a web snapshot is present, use a fact from it only when it answers this turn. Ignore unrelated headlines. Never paste raw search text as the whole reply.",
@@ -350,6 +351,7 @@ export function buildCharacterSystemPrompt(characterId, isEnglish = false) {
   const rules = isEnglish ? ENGLISH_RULES : CANTONESE_RULES;
   return [
     personality,
+    buildPositiveMindsetPromptFragment(isEnglish),
     ...rules,
     buildPerformancePresetPromptFragment(def, isEnglish),
     buildActionPromptFragment(isEnglish),

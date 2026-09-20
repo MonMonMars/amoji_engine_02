@@ -14,6 +14,7 @@ import {
   resolveAction,
 } from "./companionActionMotion.js";
 import { REST_NEUTRAL_HAPPY } from "./companionFaceRest.js";
+import { normalizeCompanionPresenceEmotion } from "./companionPositiveMindset.js";
 
 /**
  * @param {string} text
@@ -31,7 +32,7 @@ export {
   stripEmojiFromText,
 } from "./companionActionMotion.js";
 
-export const COMPANION_CONTENT_MOTION_SCHEMA = "amoji.companionContentMotion.v1";
+export const COMPANION_CONTENT_MOTION_SCHEMA = "amoji.companionContentMotion.v2";
 
 /** Grok Ani–style nuance labels (subset mapped to VRM-safe motion). */
 export const CONTENT_NUANCES = Object.freeze([
@@ -170,18 +171,20 @@ export function buildVrmExpressionBlend(emotion, nuance) {
       blend.Happy = 0.72;
       break;
     case "thinking":
-      // Pensive brow — avoids Relaxed/Surprised presets that droop lids or drop the jaw.
-      blend.Sad = 0.2;
+      blend.Happy = Math.max(blend.Happy ?? 0, 0.44);
+      blend.Sad = 0.06;
       break;
     case "sad":
-      blend.Sad = 0.68;
+      blend.Happy = Math.max(blend.Happy ?? 0, 0.52);
+      blend.Sad = 0.12;
       break;
     case "surprised":
       blend.Surprised = 0.52;
       blend.Happy = 0.28;
       break;
     case "angry":
-      blend.Angry = 0.75;
+      blend.Happy = Math.max(blend.Happy ?? 0, 0.4);
+      blend.Angry = 0.18;
       break;
     default:
       blend.Happy = REST_NEUTRAL_HAPPY;
@@ -206,8 +209,8 @@ export function buildVrmExpressionBlend(emotion, nuance) {
       blend.Happy = Math.max(blend.Happy ?? 0.52, 0.64);
       break;
     case "stress":
-      blend.Sad = Math.max(blend.Sad ?? 0, 0.3);
-      blend.Angry = Math.max(blend.Angry ?? 0, 0.16);
+      blend.Happy = Math.max(blend.Happy ?? 0, 0.36);
+      blend.Sad = Math.max(blend.Sad ?? 0, 0.08);
       break;
     default:
       break;
@@ -254,18 +257,19 @@ export function analyzeStreamingReply(partialText) {
   const visible = tagged.reply.trim();
   if (!visible && !tagged.emotion) {
     return {
-      emotion: "thinking",
-      nuance: "none",
+      emotion: "happy",
+      nuance: "curious",
       talkStyle: "thinking",
-      expressionBlend: buildVrmExpressionBlend("thinking", "none"),
-      speechEnergy: 0.28,
+      expressionBlend: buildVrmExpressionBlend("happy", "curious"),
+      speechEnergy: 0.34,
     };
   }
-  const emotion =
+  const rawEmotion =
     tagged.emotion ||
     inferExpressionFromText(visible) ||
-    "thinking";
-  const nuance = tagged.nuance || inferContentNuance(visible);
+    "happy";
+  const nuanceRaw = tagged.nuance || inferContentNuance(visible);
+  const { emotion, nuance } = normalizeCompanionPresenceEmotion(rawEmotion, nuanceRaw);
   const talkStyle = inferTalkGestureFromText(visible, { emotion });
   const action = tagged.action || null;
   return {
@@ -351,8 +355,9 @@ export function analyzeCompanionReply(text, moodHint = null) {
   const reply = tagged.reply;
   const inferred = inferExpressionFromText(reply);
   const inferredMood = inferred && inferred !== "neutral" ? inferred : null;
-  const emotion = tagged.emotion || inferredMood || moodHint || "neutral";
-  const nuance = tagged.nuance || inferContentNuance(reply);
+  const rawEmotion = tagged.emotion || inferredMood || moodHint || "happy";
+  const nuanceRaw = tagged.nuance || inferContentNuance(reply);
+  const { emotion, nuance } = normalizeCompanionPresenceEmotion(rawEmotion, nuanceRaw);
   const talkStyle = inferTalkGestureFromText(reply, { emotion });
   const gesture = inferOneShotGesture(reply, emotion, nuance);
   const action = inferActionFromReply(String(text || ""), tagged.action);

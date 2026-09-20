@@ -7,13 +7,13 @@
  * Fcl_EYE_Close morphs are left at file defaults unless we zero them.
  */
 
-export const COMPANION_FACE_REST_SCHEMA = "amoji.companionFaceRest.v7";
+export const COMPANION_FACE_REST_SCHEMA = "amoji.companionFaceRest.v8";
 
 export const MOUTH_CLOSE_EPS = 0.035;
 /** Subtle performance smile at rest — hazard filter still blocks jaw-baking presets. */
 export const IDLE_HAPPY_MAX = 0.36;
 /** Default neutral companion face — soft life, not a blank mask. */
-export const REST_NEUTRAL_HAPPY = 0.28;
+export const REST_NEUTRAL_HAPPY = 0.38;
 /** Talk smile is visible; visemes still write last so the jaw can move. */
 export const TALK_HAPPY_MAX = 0.62;
 /** Surprised at rest often drops the jaw. */
