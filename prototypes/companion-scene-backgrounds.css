@@ -1,11 +1,11 @@
 /** Auto-generated scene background art — run: node scripts/generate-scene-backgrounds.mjs */
-/* build: dev */
+/* build: 2026-09-20-v364-scene-anime-art */
 
 .atmosphere {
   background-color: #070a10 !important;
   background-image:
-    linear-gradient(180deg, rgba(7, 10, 16, 0.1) 0%, rgba(5, 7, 12, 0.42) 55%, rgba(3, 5, 10, 0.75) 100%),
-    url("/prototypes/assets/scene-bg/night-city.svg") !important;
+    linear-gradient(180deg, rgba(7, 10, 16, 0.25) 0%, rgba(7, 10, 16, 0.55) 55%, rgba(5, 7, 12, 0.82) 100%),
+    url("/prototypes/assets/companion-bg-anime.png") !important;
   background-size: cover, cover !important;
   background-position: center, center !important;
   background-repeat: no-repeat !important;
@@ -13,8 +13,8 @@
 
 .atmosphere[data-scene-bg="night-city"] {
   background-image:
-    linear-gradient(180deg, rgba(7, 10, 16, 0.1) 0%, rgba(5, 7, 12, 0.42) 55%, rgba(3, 5, 10, 0.75) 100%),
-    url("/prototypes/assets/scene-bg/night-city.svg") !important;
+    linear-gradient(180deg, rgba(7, 10, 16, 0.25) 0%, rgba(7, 10, 16, 0.55) 55%, rgba(5, 7, 12, 0.82) 100%),
+    url("/prototypes/assets/companion-bg-anime.png") !important;
   background-size: cover, cover !important;
   background-position: center, center !important;
 }
@@ -22,7 +22,7 @@
 .scene-preset__swatch--night-city {
   background-image:
     linear-gradient(180deg, rgba(0, 0, 0, 0.08), rgba(0, 0, 0, 0.38)),
-    url("/prototypes/assets/scene-bg/night-city.svg");
+    url("/prototypes/assets/companion-bg-anime.png");
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -30,7 +30,7 @@
 
 .atmosphere[data-scene-bg="rooftop"] {
   background-image:
-    linear-gradient(180deg, rgba(7, 10, 16, 0.1) 0%, rgba(5, 7, 12, 0.42) 55%, rgba(3, 5, 10, 0.75) 100%),
+    linear-gradient(180deg, rgba(7, 10, 16, 0.12) 0%, rgba(5, 7, 12, 0.38) 55%, rgba(3, 5, 10, 0.72) 100%),
     url("/prototypes/assets/scene-bg/rooftop.svg") !important;
   background-size: cover, cover !important;
   background-position: center, center !important;
@@ -47,7 +47,7 @@
 
 .atmosphere[data-scene-bg="park"] {
   background-image:
-    linear-gradient(180deg, rgba(7, 10, 16, 0.1) 0%, rgba(5, 7, 12, 0.42) 55%, rgba(3, 5, 10, 0.75) 100%),
+    linear-gradient(180deg, rgba(7, 10, 16, 0.12) 0%, rgba(5, 7, 12, 0.38) 55%, rgba(3, 5, 10, 0.72) 100%),
     url("/prototypes/assets/scene-bg/park.svg") !important;
   background-size: cover, cover !important;
   background-position: center, center !important;
@@ -64,7 +64,7 @@
 
 .atmosphere[data-scene-bg="beach"] {
   background-image:
-    linear-gradient(180deg, rgba(7, 10, 16, 0.1) 0%, rgba(5, 7, 12, 0.42) 55%, rgba(3, 5, 10, 0.75) 100%),
+    linear-gradient(180deg, rgba(7, 10, 16, 0.12) 0%, rgba(5, 7, 12, 0.38) 55%, rgba(3, 5, 10, 0.72) 100%),
     url("/prototypes/assets/scene-bg/beach.svg") !important;
   background-size: cover, cover !important;
   background-position: center, center !important;
@@ -81,7 +81,7 @@
 
 .atmosphere[data-scene-bg="sunset"] {
   background-image:
-    linear-gradient(180deg, rgba(7, 10, 16, 0.1) 0%, rgba(5, 7, 12, 0.42) 55%, rgba(3, 5, 10, 0.75) 100%),
+    linear-gradient(180deg, rgba(7, 10, 16, 0.12) 0%, rgba(5, 7, 12, 0.38) 55%, rgba(3, 5, 10, 0.72) 100%),
     url("/prototypes/assets/scene-bg/sunset.svg") !important;
   background-size: cover, cover !important;
   background-position: center, center !important;
@@ -98,7 +98,7 @@
 
 .atmosphere[data-scene-bg="aurora"] {
   background-image:
-    linear-gradient(180deg, rgba(7, 10, 16, 0.1) 0%, rgba(5, 7, 12, 0.42) 55%, rgba(3, 5, 10, 0.75) 100%),
+    linear-gradient(180deg, rgba(7, 10, 16, 0.12) 0%, rgba(5, 7, 12, 0.38) 55%, rgba(3, 5, 10, 0.72) 100%),
     url("/prototypes/assets/scene-bg/aurora.svg") !important;
   background-size: cover, cover !important;
   background-position: center, center !important;
@@ -115,7 +115,7 @@
 
 .atmosphere[data-scene-bg="rain-street"] {
   background-image:
-    linear-gradient(180deg, rgba(7, 10, 16, 0.1) 0%, rgba(5, 7, 12, 0.42) 55%, rgba(3, 5, 10, 0.75) 100%),
+    linear-gradient(180deg, rgba(7, 10, 16, 0.12) 0%, rgba(5, 7, 12, 0.38) 55%, rgba(3, 5, 10, 0.72) 100%),
     url("/prototypes/assets/scene-bg/rain-street.svg") !important;
   background-size: cover, cover !important;
   background-position: center, center !important;
@@ -132,7 +132,7 @@
 
 .atmosphere[data-scene-bg="cherry-blossom"] {
   background-image:
-    linear-gradient(180deg, rgba(7, 10, 16, 0.1) 0%, rgba(5, 7, 12, 0.42) 55%, rgba(3, 5, 10, 0.75) 100%),
+    linear-gradient(180deg, rgba(7, 10, 16, 0.12) 0%, rgba(5, 7, 12, 0.38) 55%, rgba(3, 5, 10, 0.72) 100%),
     url("/prototypes/assets/scene-bg/cherry-blossom.svg") !important;
   background-size: cover, cover !important;
   background-position: center, center !important;
@@ -149,7 +149,7 @@
 
 .atmosphere[data-scene-bg="mountain"] {
   background-image:
-    linear-gradient(180deg, rgba(7, 10, 16, 0.1) 0%, rgba(5, 7, 12, 0.42) 55%, rgba(3, 5, 10, 0.75) 100%),
+    linear-gradient(180deg, rgba(7, 10, 16, 0.12) 0%, rgba(5, 7, 12, 0.38) 55%, rgba(3, 5, 10, 0.72) 100%),
     url("/prototypes/assets/scene-bg/mountain.svg") !important;
   background-size: cover, cover !important;
   background-position: center, center !important;
@@ -166,7 +166,7 @@
 
 .atmosphere[data-scene-bg="harbor"] {
   background-image:
-    linear-gradient(180deg, rgba(7, 10, 16, 0.1) 0%, rgba(5, 7, 12, 0.42) 55%, rgba(3, 5, 10, 0.75) 100%),
+    linear-gradient(180deg, rgba(7, 10, 16, 0.12) 0%, rgba(5, 7, 12, 0.38) 55%, rgba(3, 5, 10, 0.72) 100%),
     url("/prototypes/assets/scene-bg/harbor.svg") !important;
   background-size: cover, cover !important;
   background-position: center, center !important;
@@ -183,7 +183,7 @@
 
 .atmosphere[data-scene-bg="meadow"] {
   background-image:
-    linear-gradient(180deg, rgba(7, 10, 16, 0.1) 0%, rgba(5, 7, 12, 0.42) 55%, rgba(3, 5, 10, 0.75) 100%),
+    linear-gradient(180deg, rgba(7, 10, 16, 0.12) 0%, rgba(5, 7, 12, 0.38) 55%, rgba(3, 5, 10, 0.72) 100%),
     url("/prototypes/assets/scene-bg/meadow.svg") !important;
   background-size: cover, cover !important;
   background-position: center, center !important;
@@ -200,7 +200,7 @@
 
 .atmosphere[data-scene-bg="studio"] {
   background-image:
-    linear-gradient(180deg, rgba(7, 10, 16, 0.1) 0%, rgba(5, 7, 12, 0.42) 55%, rgba(3, 5, 10, 0.75) 100%),
+    linear-gradient(180deg, rgba(7, 10, 16, 0.12) 0%, rgba(5, 7, 12, 0.38) 55%, rgba(3, 5, 10, 0.72) 100%),
     url("/prototypes/assets/scene-bg/studio.svg") !important;
   background-size: cover, cover !important;
   background-position: center, center !important;
@@ -217,7 +217,7 @@
 
 .atmosphere[data-scene-bg="cozy-room"] {
   background-image:
-    linear-gradient(180deg, rgba(7, 10, 16, 0.1) 0%, rgba(5, 7, 12, 0.42) 55%, rgba(3, 5, 10, 0.75) 100%),
+    linear-gradient(180deg, rgba(7, 10, 16, 0.12) 0%, rgba(5, 7, 12, 0.38) 55%, rgba(3, 5, 10, 0.72) 100%),
     url("/prototypes/assets/scene-bg/cozy-room.svg") !important;
   background-size: cover, cover !important;
   background-position: center, center !important;
@@ -234,7 +234,7 @@
 
 .atmosphere[data-scene-bg="cafe"] {
   background-image:
-    linear-gradient(180deg, rgba(7, 10, 16, 0.1) 0%, rgba(5, 7, 12, 0.42) 55%, rgba(3, 5, 10, 0.75) 100%),
+    linear-gradient(180deg, rgba(7, 10, 16, 0.12) 0%, rgba(5, 7, 12, 0.38) 55%, rgba(3, 5, 10, 0.72) 100%),
     url("/prototypes/assets/scene-bg/cafe.svg") !important;
   background-size: cover, cover !important;
   background-position: center, center !important;
@@ -251,7 +251,7 @@
 
 .atmosphere[data-scene-bg="library"] {
   background-image:
-    linear-gradient(180deg, rgba(7, 10, 16, 0.1) 0%, rgba(5, 7, 12, 0.42) 55%, rgba(3, 5, 10, 0.75) 100%),
+    linear-gradient(180deg, rgba(7, 10, 16, 0.12) 0%, rgba(5, 7, 12, 0.38) 55%, rgba(3, 5, 10, 0.72) 100%),
     url("/prototypes/assets/scene-bg/library.svg") !important;
   background-size: cover, cover !important;
   background-position: center, center !important;
@@ -268,7 +268,7 @@
 
 .atmosphere[data-scene-bg="minimal"] {
   background-image:
-    linear-gradient(180deg, rgba(7, 10, 16, 0.1) 0%, rgba(5, 7, 12, 0.42) 55%, rgba(3, 5, 10, 0.75) 100%),
+    linear-gradient(180deg, rgba(7, 10, 16, 0.12) 0%, rgba(5, 7, 12, 0.38) 55%, rgba(3, 5, 10, 0.72) 100%),
     url("/prototypes/assets/scene-bg/minimal.svg") !important;
   background-size: cover, cover !important;
   background-position: center, center !important;
@@ -285,7 +285,7 @@
 
 .atmosphere[data-scene-bg="bedroom"] {
   background-image:
-    linear-gradient(180deg, rgba(7, 10, 16, 0.1) 0%, rgba(5, 7, 12, 0.42) 55%, rgba(3, 5, 10, 0.75) 100%),
+    linear-gradient(180deg, rgba(7, 10, 16, 0.12) 0%, rgba(5, 7, 12, 0.38) 55%, rgba(3, 5, 10, 0.72) 100%),
     url("/prototypes/assets/scene-bg/bedroom.svg") !important;
   background-size: cover, cover !important;
   background-position: center, center !important;
@@ -302,7 +302,7 @@
 
 .atmosphere[data-scene-bg="office"] {
   background-image:
-    linear-gradient(180deg, rgba(7, 10, 16, 0.1) 0%, rgba(5, 7, 12, 0.42) 55%, rgba(3, 5, 10, 0.75) 100%),
+    linear-gradient(180deg, rgba(7, 10, 16, 0.12) 0%, rgba(5, 7, 12, 0.38) 55%, rgba(3, 5, 10, 0.72) 100%),
     url("/prototypes/assets/scene-bg/office.svg") !important;
   background-size: cover, cover !important;
   background-position: center, center !important;
@@ -319,7 +319,7 @@
 
 .atmosphere[data-scene-bg="classroom"] {
   background-image:
-    linear-gradient(180deg, rgba(7, 10, 16, 0.1) 0%, rgba(5, 7, 12, 0.42) 55%, rgba(3, 5, 10, 0.75) 100%),
+    linear-gradient(180deg, rgba(7, 10, 16, 0.12) 0%, rgba(5, 7, 12, 0.38) 55%, rgba(3, 5, 10, 0.72) 100%),
     url("/prototypes/assets/scene-bg/classroom.svg") !important;
   background-size: cover, cover !important;
   background-position: center, center !important;
@@ -336,7 +336,7 @@
 
 .atmosphere[data-scene-bg="greenhouse"] {
   background-image:
-    linear-gradient(180deg, rgba(7, 10, 16, 0.1) 0%, rgba(5, 7, 12, 0.42) 55%, rgba(3, 5, 10, 0.75) 100%),
+    linear-gradient(180deg, rgba(7, 10, 16, 0.12) 0%, rgba(5, 7, 12, 0.38) 55%, rgba(3, 5, 10, 0.72) 100%),
     url("/prototypes/assets/scene-bg/greenhouse.svg") !important;
   background-size: cover, cover !important;
   background-position: center, center !important;
@@ -353,7 +353,7 @@
 
 .atmosphere[data-scene-bg="loft"] {
   background-image:
-    linear-gradient(180deg, rgba(7, 10, 16, 0.1) 0%, rgba(5, 7, 12, 0.42) 55%, rgba(3, 5, 10, 0.75) 100%),
+    linear-gradient(180deg, rgba(7, 10, 16, 0.12) 0%, rgba(5, 7, 12, 0.38) 55%, rgba(3, 5, 10, 0.72) 100%),
     url("/prototypes/assets/scene-bg/loft.svg") !important;
   background-size: cover, cover !important;
   background-position: center, center !important;
@@ -370,7 +370,7 @@
 
 .atmosphere[data-scene-bg="kitchen"] {
   background-image:
-    linear-gradient(180deg, rgba(7, 10, 16, 0.1) 0%, rgba(5, 7, 12, 0.42) 55%, rgba(3, 5, 10, 0.75) 100%),
+    linear-gradient(180deg, rgba(7, 10, 16, 0.12) 0%, rgba(5, 7, 12, 0.38) 55%, rgba(3, 5, 10, 0.72) 100%),
     url("/prototypes/assets/scene-bg/kitchen.svg") !important;
   background-size: cover, cover !important;
   background-position: center, center !important;
@@ -385,8 +385,134 @@
   background-repeat: no-repeat;
 }
 
-.theme-grok-ani .atmosphere {
+.theme-grok-ani .atmosphere[data-scene-bg="night-city"] {
   background-image:
-    linear-gradient(180deg, rgba(3, 3, 10, 0.1) 0%, rgba(2, 2, 8, 0.42) 48%, rgba(2, 2, 8, 0.82) 100%),
-    var(--scene-bg-art);
+    linear-gradient(180deg, rgba(3, 3, 10, 0.08) 0%, rgba(2, 2, 8, 0.38) 48%, rgba(2, 2, 8, 0.78) 100%),
+    url("/prototypes/assets/companion-bg-anime.png") center 20% / cover no-repeat !important;
+}
+
+.theme-grok-ani .atmosphere[data-scene-bg="rooftop"] {
+  background-image:
+    linear-gradient(180deg, rgba(3, 3, 10, 0.08) 0%, rgba(2, 2, 8, 0.38) 48%, rgba(2, 2, 8, 0.78) 100%),
+    url("/prototypes/assets/scene-bg/rooftop.svg") !important;
+}
+
+.theme-grok-ani .atmosphere[data-scene-bg="park"] {
+  background-image:
+    linear-gradient(180deg, rgba(3, 3, 10, 0.08) 0%, rgba(2, 2, 8, 0.38) 48%, rgba(2, 2, 8, 0.78) 100%),
+    url("/prototypes/assets/scene-bg/park.svg") !important;
+}
+
+.theme-grok-ani .atmosphere[data-scene-bg="beach"] {
+  background-image:
+    linear-gradient(180deg, rgba(3, 3, 10, 0.08) 0%, rgba(2, 2, 8, 0.38) 48%, rgba(2, 2, 8, 0.78) 100%),
+    url("/prototypes/assets/scene-bg/beach.svg") !important;
+}
+
+.theme-grok-ani .atmosphere[data-scene-bg="sunset"] {
+  background-image:
+    linear-gradient(180deg, rgba(3, 3, 10, 0.08) 0%, rgba(2, 2, 8, 0.38) 48%, rgba(2, 2, 8, 0.78) 100%),
+    url("/prototypes/assets/scene-bg/sunset.svg") !important;
+}
+
+.theme-grok-ani .atmosphere[data-scene-bg="aurora"] {
+  background-image:
+    linear-gradient(180deg, rgba(3, 3, 10, 0.08) 0%, rgba(2, 2, 8, 0.38) 48%, rgba(2, 2, 8, 0.78) 100%),
+    url("/prototypes/assets/scene-bg/aurora.svg") !important;
+}
+
+.theme-grok-ani .atmosphere[data-scene-bg="rain-street"] {
+  background-image:
+    linear-gradient(180deg, rgba(3, 3, 10, 0.08) 0%, rgba(2, 2, 8, 0.38) 48%, rgba(2, 2, 8, 0.78) 100%),
+    url("/prototypes/assets/scene-bg/rain-street.svg") !important;
+}
+
+.theme-grok-ani .atmosphere[data-scene-bg="cherry-blossom"] {
+  background-image:
+    linear-gradient(180deg, rgba(3, 3, 10, 0.08) 0%, rgba(2, 2, 8, 0.38) 48%, rgba(2, 2, 8, 0.78) 100%),
+    url("/prototypes/assets/scene-bg/cherry-blossom.svg") !important;
+}
+
+.theme-grok-ani .atmosphere[data-scene-bg="mountain"] {
+  background-image:
+    linear-gradient(180deg, rgba(3, 3, 10, 0.08) 0%, rgba(2, 2, 8, 0.38) 48%, rgba(2, 2, 8, 0.78) 100%),
+    url("/prototypes/assets/scene-bg/mountain.svg") !important;
+}
+
+.theme-grok-ani .atmosphere[data-scene-bg="harbor"] {
+  background-image:
+    linear-gradient(180deg, rgba(3, 3, 10, 0.08) 0%, rgba(2, 2, 8, 0.38) 48%, rgba(2, 2, 8, 0.78) 100%),
+    url("/prototypes/assets/scene-bg/harbor.svg") !important;
+}
+
+.theme-grok-ani .atmosphere[data-scene-bg="meadow"] {
+  background-image:
+    linear-gradient(180deg, rgba(3, 3, 10, 0.08) 0%, rgba(2, 2, 8, 0.38) 48%, rgba(2, 2, 8, 0.78) 100%),
+    url("/prototypes/assets/scene-bg/meadow.svg") !important;
+}
+
+.theme-grok-ani .atmosphere[data-scene-bg="studio"] {
+  background-image:
+    linear-gradient(180deg, rgba(3, 3, 10, 0.08) 0%, rgba(2, 2, 8, 0.38) 48%, rgba(2, 2, 8, 0.78) 100%),
+    url("/prototypes/assets/scene-bg/studio.svg") !important;
+}
+
+.theme-grok-ani .atmosphere[data-scene-bg="cozy-room"] {
+  background-image:
+    linear-gradient(180deg, rgba(3, 3, 10, 0.08) 0%, rgba(2, 2, 8, 0.38) 48%, rgba(2, 2, 8, 0.78) 100%),
+    url("/prototypes/assets/scene-bg/cozy-room.svg") !important;
+}
+
+.theme-grok-ani .atmosphere[data-scene-bg="cafe"] {
+  background-image:
+    linear-gradient(180deg, rgba(3, 3, 10, 0.08) 0%, rgba(2, 2, 8, 0.38) 48%, rgba(2, 2, 8, 0.78) 100%),
+    url("/prototypes/assets/scene-bg/cafe.svg") !important;
+}
+
+.theme-grok-ani .atmosphere[data-scene-bg="library"] {
+  background-image:
+    linear-gradient(180deg, rgba(3, 3, 10, 0.08) 0%, rgba(2, 2, 8, 0.38) 48%, rgba(2, 2, 8, 0.78) 100%),
+    url("/prototypes/assets/scene-bg/library.svg") !important;
+}
+
+.theme-grok-ani .atmosphere[data-scene-bg="minimal"] {
+  background-image:
+    linear-gradient(180deg, rgba(3, 3, 10, 0.08) 0%, rgba(2, 2, 8, 0.38) 48%, rgba(2, 2, 8, 0.78) 100%),
+    url("/prototypes/assets/scene-bg/minimal.svg") !important;
+}
+
+.theme-grok-ani .atmosphere[data-scene-bg="bedroom"] {
+  background-image:
+    linear-gradient(180deg, rgba(3, 3, 10, 0.08) 0%, rgba(2, 2, 8, 0.38) 48%, rgba(2, 2, 8, 0.78) 100%),
+    url("/prototypes/assets/scene-bg/bedroom.svg") !important;
+}
+
+.theme-grok-ani .atmosphere[data-scene-bg="office"] {
+  background-image:
+    linear-gradient(180deg, rgba(3, 3, 10, 0.08) 0%, rgba(2, 2, 8, 0.38) 48%, rgba(2, 2, 8, 0.78) 100%),
+    url("/prototypes/assets/scene-bg/office.svg") !important;
+}
+
+.theme-grok-ani .atmosphere[data-scene-bg="classroom"] {
+  background-image:
+    linear-gradient(180deg, rgba(3, 3, 10, 0.08) 0%, rgba(2, 2, 8, 0.38) 48%, rgba(2, 2, 8, 0.78) 100%),
+    url("/prototypes/assets/scene-bg/classroom.svg") !important;
+}
+
+.theme-grok-ani .atmosphere[data-scene-bg="greenhouse"] {
+  background-image:
+    linear-gradient(180deg, rgba(3, 3, 10, 0.08) 0%, rgba(2, 2, 8, 0.38) 48%, rgba(2, 2, 8, 0.78) 100%),
+    url("/prototypes/assets/scene-bg/greenhouse.svg") !important;
+}
+
+.theme-grok-ani .atmosphere[data-scene-bg="loft"] {
+  background-image:
+    linear-gradient(180deg, rgba(3, 3, 10, 0.08) 0%, rgba(2, 2, 8, 0.38) 48%, rgba(2, 2, 8, 0.78) 100%),
+    url("/prototypes/assets/scene-bg/loft.svg") !important;
+}
+
+.theme-grok-ani .atmosphere[data-scene-bg="kitchen"] {
+  background-image:
+    linear-gradient(180deg, rgba(3, 3, 10, 0.08) 0%, rgba(2, 2, 8, 0.38) 48%, rgba(2, 2, 8, 0.78) 100%),
+    url("/prototypes/assets/scene-bg/kitchen.svg") !important;
 }

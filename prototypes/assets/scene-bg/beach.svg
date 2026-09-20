@@ -1,8 +1,57 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" width="960" height="540">
-<defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#6ec8ff"/><stop offset="55%" stop-color="#4aa8e8"/><stop offset="100%" stop-color="#f0d898"/></linearGradient></defs>
-    <rect width="960" height="540" fill="url(#sky)"/>
-    <rect x="0" y="334.8" width="960" height="205.2" fill="#e8c878"/>
-    <path d="M0 313.2 Q240 291.6 480 313.2 T960 302.40000000000003 L960 351 L0 351Z" fill="#3a98c8" opacity="0.85"/>
-    <ellipse cx="816" cy="64.8" rx="50" ry="50" fill="#fff8e0" opacity="0.9"/>
+<defs>
+  <linearGradient id="skyTop" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#1a1048"/>
+    <stop offset="35%" stop-color="#3d2878"/>
+    <stop offset="68%" stop-color="#284868"/>
+    <stop offset="100%" stop-color="#0c1420"/>
+  </linearGradient>
+  <linearGradient id="skyDay" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#7ec8ff"/>
+    <stop offset="45%" stop-color="#a8d8f8"/>
+    <stop offset="78%" stop-color="#e8c878"/>
+    <stop offset="100%" stop-color="#88b868"/>
+  </linearGradient>
+  <linearGradient id="skySunset" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#ff6b4a"/>
+    <stop offset="28%" stop-color="#d84888"/>
+    <stop offset="55%" stop-color="#683878"/>
+    <stop offset="100%" stop-color="#120818"/>
+  </linearGradient>
+  <linearGradient id="haze" x1="0" y1="0.4" x2="0" y2="1">
+    <stop offset="0%" stop-color="#fff" stop-opacity="0"/>
+    <stop offset="100%" stop-color="#c8d8f0" stop-opacity="0.22"/>
+  </linearGradient>
+  <filter id="softGlow" x="-40%" y="-40%" width="180%" height="180%">
+    <feGaussianBlur stdDeviation="4" result="b"/>
+    <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+  <filter id="neonGlow" x="-60%" y="-60%" width="220%" height="220%">
+    <feGaussianBlur stdDeviation="6" result="b"/>
+    <feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+  <filter id="paintSoft" x="-2%" y="-2%" width="104%" height="104%">
+    <feGaussianBlur stdDeviation="0.6"/>
+  </filter>
+  <radialGradient id="sunDisc" cx="0.5" cy="0.5" r="0.5">
+    <stop offset="0%" stop-color="#fff8e8"/>
+    <stop offset="55%" stop-color="#ffd080"/>
+    <stop offset="100%" stop-color="#ff904000"/>
+  </radialGradient>
+  <radialGradient id="moonGlow" cx="0.5" cy="0.5" r="0.5">
+    <stop offset="0%" stop-color="#fffef8"/>
+    <stop offset="40%" stop-color="#e8e0f0"/>
+    <stop offset="100%" stop-color="#e8e0f000"/>
+  </radialGradient>
+</defs>
+  <rect width="960" height="540" fill="url(#skyDay)"/>
+  <ellipse cx="0" cy="43.2" rx="144" ry="33.6" fill="#fff" opacity="0.06"/><ellipse cx="60" cy="35.2" rx="108" ry="26.4" fill="#fff" opacity="0.05"/><ellipse cx="489.6" cy="75.60000000000001" rx="192" ry="44.800000000000004" fill="#fff" opacity="0.09"/><ellipse cx="549.6" cy="67.60000000000001" rx="144" ry="35.2" fill="#fff" opacity="0.05"/><ellipse cx="211.2" cy="108" rx="240" ry="56" fill="#fff" opacity="0.12"/><ellipse cx="271.2" cy="100" rx="180" ry="44" fill="#fff" opacity="0.05"/><ellipse cx="700.8" cy="140.4" rx="144" ry="33.6" fill="#fff" opacity="0.06"/><ellipse cx="760.8" cy="132.4" rx="108" ry="26.4" fill="#fff" opacity="0.05"/><ellipse cx="422.4" cy="43.2" rx="192" ry="44.800000000000004" fill="#fff" opacity="0.09"/><ellipse cx="482.4" cy="35.2" rx="144" ry="35.2" fill="#fff" opacity="0.05"/><ellipse cx="144" cy="75.60000000000001" rx="240" ry="56" fill="#fff" opacity="0.12"/><ellipse cx="204" cy="67.60000000000001" rx="180" ry="44" fill="#fff" opacity="0.05"/><ellipse cx="633.6" cy="108" rx="144" ry="33.6" fill="#fff" opacity="0.06"/><ellipse cx="693.6" cy="100" rx="108" ry="26.4" fill="#fff" opacity="0.05"/><ellipse cx="355.2" cy="140.4" rx="192" ry="44.800000000000004" fill="#fff" opacity="0.09"/><ellipse cx="415.2" cy="132.4" rx="144" ry="35.2" fill="#fff" opacity="0.05"/><ellipse cx="76.8" cy="43.2" rx="240" ry="56" fill="#fff" opacity="0.12"/><ellipse cx="136.8" cy="35.2" rx="180" ry="44" fill="#fff" opacity="0.05"/><ellipse cx="566.4" cy="75.60000000000001" rx="144" ry="33.6" fill="#fff" opacity="0.06"/><ellipse cx="626.4" cy="67.60000000000001" rx="108" ry="26.4" fill="#fff" opacity="0.05"/><ellipse cx="288" cy="108" rx="192" ry="44.800000000000004" fill="#fff" opacity="0.09"/><ellipse cx="348" cy="100" rx="144" ry="35.2" fill="#fff" opacity="0.05"/><ellipse cx="9.6" cy="140.4" rx="240" ry="56" fill="#fff" opacity="0.12"/><ellipse cx="69.6" cy="132.4" rx="180" ry="44" fill="#fff" opacity="0.05"/>
+  <circle cx="844.8" cy="54" r="48" fill="url(#sunDisc)"/>
+  <polygon points="691.1999999999999,43.2 1299.9135179251016,-178.99777923113248 1308.3121532859423,-154.4779964153514" fill="#fff8e8" opacity="0.04"/><polygon points="691.1999999999999,43.2 1315.723540845097,-129.64197097436255 1322.1358239634828,-104.52943525080205" fill="#fff8e8" opacity="0.04"/><polygon points="691.1999999999999,43.2 1327.5387443559912,-79.18056394477235 1331.9236585025553,-53.635909842892275" fill="#fff8e8" opacity="0.04"/><polygon points="691.1999999999999,43.2 1335.2835514759395,-27.936338942489257 1337.613048164125,-2.1229650747212148" fill="#fff8e8" opacity="0.04"/><polygon points="691.1999999999999,43.2 1338.9084218693438,23.762915868782834 1339.1676002699992,49.67989200054002" fill="#fff8e8" opacity="0.04"/><polygon points="691.1999999999999,43.2 1338.390168735938,75.58650168739959 1336.577370991772,101.44129988031119" fill="#fff8e8" opacity="0.04"/><polygon points="691.1999999999999,43.2 1333.7321071271826,127.20292441756226 1329.8589289573952,152.83016219541344" fill="#fff8e8" opacity="0.04"/><polygon points="691.1999999999999,43.2 1324.964032741248,178.2820151002726 1319.0552492684978,203.51776559693093" fill="#fff8e8" opacity="0.04"/><polygon points="691.1999999999999,43.2 1312.1420313322278,228.4970418679335 1304.2354386063948,253.1798823998747" fill="#fff8e8" opacity="0.04"/>
+  <rect x="0" y="313.2" width="960" height="226.79999999999998" fill="#e8c878"/>
+  <path d="M0 302.40000000000003 Q192 280.8 432 297 T960 286.2 L960 334.8 L0 345.6Z" fill="#2898c8"/>
+  <path d="M0 313.2 Q288 291.6 576 307.79999999999995 T960 302.40000000000003 L960 324 L0 329.4Z" fill="#48b8e8" opacity="0.55"/>
+  <ellipse cx="144" cy="291.6" rx="28" ry="8" fill="#fff" opacity="0.25"/><ellipse cx="284" cy="291.6" rx="28" ry="8" fill="#fff" opacity="0.25"/><ellipse cx="424" cy="291.6" rx="28" ry="8" fill="#fff" opacity="0.25"/><ellipse cx="564" cy="291.6" rx="28" ry="8" fill="#fff" opacity="0.25"/><ellipse cx="704" cy="291.6" rx="28" ry="8" fill="#fff" opacity="0.25"/><ellipse cx="844" cy="291.6" rx="28" ry="8" fill="#fff" opacity="0.25"/>
+  <ellipse cx="115.19999999999999" cy="367.20000000000005" rx="90" ry="25" fill="#d8b868" opacity="0.5"/>
 </svg>

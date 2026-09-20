@@ -1,8 +1,60 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" width="960" height="540">
-<rect width="960" height="540" fill="#e8e8f0"/>
-    <rect x="0" y="405" width="960" height="135" fill="#888898" opacity="0.35"/>
-    <rect x="528" y="64.8" width="336" height="189" fill="#87ceeb" opacity="0.9"/>
-    <rect x="528" y="64.8" width="336" height="189" fill="none" stroke="#888898" stroke-width="4"/>
-    <rect x="0" y="0" width="960" height="43.2" fill="#000" opacity="0.15"/>
+<defs>
+  <linearGradient id="skyTop" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#1a1048"/>
+    <stop offset="35%" stop-color="#3d2878"/>
+    <stop offset="68%" stop-color="#284868"/>
+    <stop offset="100%" stop-color="#0c1420"/>
+  </linearGradient>
+  <linearGradient id="skyDay" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#7ec8ff"/>
+    <stop offset="45%" stop-color="#a8d8f8"/>
+    <stop offset="78%" stop-color="#e8c878"/>
+    <stop offset="100%" stop-color="#88b868"/>
+  </linearGradient>
+  <linearGradient id="skySunset" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#ff6b4a"/>
+    <stop offset="28%" stop-color="#d84888"/>
+    <stop offset="55%" stop-color="#683878"/>
+    <stop offset="100%" stop-color="#120818"/>
+  </linearGradient>
+  <linearGradient id="haze" x1="0" y1="0.4" x2="0" y2="1">
+    <stop offset="0%" stop-color="#fff" stop-opacity="0"/>
+    <stop offset="100%" stop-color="#c8d8f0" stop-opacity="0.22"/>
+  </linearGradient>
+  <filter id="softGlow" x="-40%" y="-40%" width="180%" height="180%">
+    <feGaussianBlur stdDeviation="4" result="b"/>
+    <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+  <filter id="neonGlow" x="-60%" y="-60%" width="220%" height="220%">
+    <feGaussianBlur stdDeviation="6" result="b"/>
+    <feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+  <filter id="paintSoft" x="-2%" y="-2%" width="104%" height="104%">
+    <feGaussianBlur stdDeviation="0.6"/>
+  </filter>
+  <radialGradient id="sunDisc" cx="0.5" cy="0.5" r="0.5">
+    <stop offset="0%" stop-color="#fff8e8"/>
+    <stop offset="55%" stop-color="#ffd080"/>
+    <stop offset="100%" stop-color="#ff904000"/>
+  </radialGradient>
+  <radialGradient id="moonGlow" cx="0.5" cy="0.5" r="0.5">
+    <stop offset="0%" stop-color="#fffef8"/>
+    <stop offset="40%" stop-color="#e8e0f0"/>
+    <stop offset="100%" stop-color="#e8e0f000"/>
+  </radialGradient>
+</defs>
+  <rect width="960" height="540" fill="#e8e8f0"/>
+  <polygon points="0,297 0,540 960,540 960,297 816,334.8 144,334.8" fill="#c8c8d0" opacity="0.9"/>
+  <line x1="0" y1="540" x2="144" y2="334.8" stroke="#000" stroke-opacity="0.12" stroke-width="1"/><line x1="68.57142857142857" y1="540" x2="192" y2="334.8" stroke="#000" stroke-opacity="0.12" stroke-width="1"/><line x1="137.14285714285714" y1="540" x2="240" y2="334.8" stroke="#000" stroke-opacity="0.12" stroke-width="1"/><line x1="205.7142857142857" y1="540" x2="288" y2="334.8" stroke="#000" stroke-opacity="0.12" stroke-width="1"/><line x1="274.2857142857143" y1="540" x2="336" y2="334.8" stroke="#000" stroke-opacity="0.12" stroke-width="1"/><line x1="342.8571428571429" y1="540" x2="384" y2="334.8" stroke="#000" stroke-opacity="0.12" stroke-width="1"/><line x1="411.4285714285714" y1="540" x2="432" y2="334.8" stroke="#000" stroke-opacity="0.12" stroke-width="1"/><line x1="480" y1="540" x2="480" y2="334.8" stroke="#000" stroke-opacity="0.12" stroke-width="1"/><line x1="548.5714285714286" y1="540" x2="528" y2="334.8" stroke="#000" stroke-opacity="0.12" stroke-width="1"/><line x1="617.1428571428572" y1="540" x2="576" y2="334.8" stroke="#000" stroke-opacity="0.12" stroke-width="1"/><line x1="685.7142857142858" y1="540" x2="624" y2="334.8" stroke="#000" stroke-opacity="0.12" stroke-width="1"/><line x1="754.2857142857142" y1="540" x2="672" y2="334.8" stroke="#000" stroke-opacity="0.12" stroke-width="1"/><line x1="822.8571428571428" y1="540" x2="720" y2="334.8" stroke="#000" stroke-opacity="0.12" stroke-width="1"/><line x1="891.4285714285714" y1="540" x2="768" y2="334.8" stroke="#000" stroke-opacity="0.12" stroke-width="1"/>
+  <rect x="0" y="0" width="960" height="297" fill="#000" opacity="0.08"/>
+  <rect x="499.20000000000005" y="54" width="384" height="205.2" fill="#87ceeb"/>
+      <rect x="499.20000000000005" y="54" width="384" height="205.2" fill="url(#skyTop)" opacity="0.85"/>
+      <rect x="518.4000000000001" y="118.8" width="12" height="18" fill="#ffe8a8" opacity="0.5"/><rect x="540.4000000000001" y="118.8" width="12" height="18" fill="#ffe8a8" opacity="0.5"/><rect x="562.4000000000001" y="118.8" width="12" height="18" fill="#ffe8a8" opacity="0.5"/><rect x="584.4000000000001" y="118.8" width="12" height="18" fill="#ffe8a8" opacity="0.5"/><rect x="518.4000000000001" y="118.8" width="12" height="18" fill="#ffe8a8" opacity="0.5"/><rect x="540.4000000000001" y="118.8" width="12" height="18" fill="#ffe8a8" opacity="0.5"/><rect x="562.4000000000001" y="118.8" width="12" height="18" fill="#ffe8a8" opacity="0.5"/><rect x="584.4000000000001" y="118.8" width="12" height="18" fill="#ffe8a8" opacity="0.5"/>
+      <rect x="480" y="43.2" width="422.4" height="226.79999999999998" fill="none" stroke="#686878" stroke-width="5"/>
+      <path d="M691.1999999999999 43.2 L691.1999999999999 270 M499.20000000000005 156.6 L883.2 156.6" stroke="#686878" stroke-width="2"/>
+  <ellipse cx="720" cy="189" rx="120" ry="80" fill="#ffe8c8" opacity="0.12" filter="url(#softGlow)"/>
+  <rect x="144" y="334.8" width="336" height="8" fill="#686878" opacity="0.5"/>
+  <rect x="0" y="475.2" width="960" height="64.8" fill="#000" opacity="0.2"/>
 </svg>
