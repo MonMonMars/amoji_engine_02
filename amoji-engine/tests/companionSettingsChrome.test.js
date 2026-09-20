@@ -19,6 +19,7 @@ describe("companionSettingsChrome", () => {
     expect(labels.talkSpeed).toContain("1.6");
     expect(labels.rosterModelsHint).toMatch(/23/);
     expect(labels.rosterModelsHint).toMatch(/Sakura|Celeste|VTuber/i);
+    expect(labels.rosterDetailsSummary).toBe("View full 3D roster");
     expect(labels.modelLabel).toContain("LLM");
   });
 

@@ -66,6 +66,7 @@ export function buildSettingsChromeLabels(isEnglish = false, state = {}) {
       ? "3D character models (not the LLM below) — tap Switch companion for the full roster."
       : "3D 角色模型（唔係下面 LLM）— 按「切換同伴」睇完整名單。",
     rosterModelsHint: buildRosterModelsHint(en),
+    rosterDetailsSummary: en ? "View full 3D roster" : "睇完整 3D 名單",
     roleReadout: state.roleReadout || (en ? "Girlfriend" : "女朋友"),
     secretaryToday: en ? "Today briefing" : "今日簡報",
     secretaryTasks: en ? "Task list" : "任務清單",
@@ -94,7 +95,7 @@ export function buildRosterModelsHint(isEnglish = false) {
     .map((item) => item.name)
     .join(en ? ", " : "、");
   if (en) {
-    return `${total} 3D VRM models · #5–10 VTuber & AAA: ${aaaNames}. Scroll the start picker or tap Switch companion.`;
+    return `${total} VRM models including VTuber & AAA picks (${aaaNames}). Use Switch companion or the start picker.`;
   }
-  return `名單共 ${total} 個 3D VRM · #5–10 VTuber／AAA：${aaaNames}。開始畫面橫向捲動名單，或按「切換同伴」。`;
+  return `共 ${total} 個 VRM，包括 VTuber／AAA（${aaaNames}）。按「切換同伴」或開始畫面揀。`;
 }
