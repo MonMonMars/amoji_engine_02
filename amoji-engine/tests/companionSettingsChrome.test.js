@@ -18,7 +18,7 @@ describe("companionSettingsChrome", () => {
     expect(labels.companionSection).toBe("Companion");
     expect(labels.talkSpeed).toContain("1.6");
     expect(labels.rosterModelsHint).toMatch(/23/);
-    expect(labels.rosterModelsHint).toMatch(/Sora|Aria/);
+    expect(labels.rosterModelsHint).toMatch(/Sakura|Celeste|VTuber/i);
     expect(labels.modelLabel).toContain("LLM");
   });
 

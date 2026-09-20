@@ -99,25 +99,25 @@ export const GALLERY_PRIORITY_IDS = new Set([
   "kizuna",
   "alicia",
   "ember",
-  "sora",
-  "aria",
+  "sakura",
+  "celeste",
   "mei",
   "luna",
   "atlas",
-  "erika",
+  "yume",
   "sky",
   "yuki",
   "hina",
   "mio",
   "amoji",
   "rex",
-  "shiro",
-  "jennifer",
-  "poly",
-  "aesthe",
-  "chad",
-  "david",
-  "hugo",
+  "nana",
+  "sumi",
+  "lumi",
+  "vera",
+  "robert",
+  "mikel",
+  "mimi",
 ]);
 
 /** Minimum mesh triangles to treat as high-poly face roster picks. */
@@ -128,7 +128,7 @@ export const HIGH_POLY_FACE_CHARACTER_IDS = new Set([
   "kizuna",
   "rex",
   "alicia",
-  "erika",
+  "yume",
   "ember",
 ]);
 
@@ -252,6 +252,16 @@ export function getCharacter(id) {
 /** Legacy URL ids → current roster ids (e.g. lite secretary links used `kate`). */
 export const LEGACY_CHARACTER_ALIASES = Object.freeze({
   kate: "nova",
+  sora: "sakura",
+  aria: "celeste",
+  erika: "yume",
+  shiro: "nana",
+  jennifer: "sumi",
+  poly: "lumi",
+  aesthe: "vera",
+  chad: "robert",
+  david: "mikel",
+  hugo: "mimi",
 });
 
 export function resolveCharacterId(opts = {}) {
@@ -274,19 +284,23 @@ export function resolveCharacterId(opts = {}) {
     ["companion-olivia.vrm", "yuki"],
     ["companion-lydia.vrm", "hina"],
     ["companion-kate.vrm", "mio"],
-    ["companion-shiro.vrm", "shiro"],
-    ["companion-jennifer.vrm", "jennifer"],
-    ["companion-polydancer.vrm", "poly"],
-    ["companion-aesthetica.vrm", "aesthe"],
-    ["companion-chad.vrm", "chad"],
-    ["companion-david.vrm", "david"],
-    ["companion-hugo.vrm", "hugo"],
-    ["companion-avatarsample-a.vrm", "aria"],
+    ["companion-jennifer.vrm", "sumi"],
+    ["companion-polydancer.vrm", "lumi"],
+    ["companion-aesthetica.vrm", "vera"],
+    ["companion-chad.vrm", "robert"],
+    ["companion-david.vrm", "mikel"],
+    ["companion-hugo.vrm", "mimi"],
+    ["companion-rose.vrm", "sakura"],
+    ["companion-chibi.vrm", "nana"],
+    ["companion-robert.vrm", "robert"],
+    ["companion-mikel.vrm", "mikel"],
+    ["companion-rabbit.vrm", "mimi"],
+    ["companion-avatarsample-a.vrm", "celeste"],
     ["companion-avatarsample-b.vrm", "mei"],
-    ["companion-avatarsample-c.vrm", "sora"],
+    ["companion-avatarsample-c.vrm", "yume"],
     ["companion-vroid-female.vrm", "luna"],
     ["companion-vroid-male.vrm", "atlas"],
-    ["companion-erika.vrm", "erika"],
+    ["companion-erika.vrm", "yume"],
   ];
   for (const [needle, id] of modelMap) {
     if (model.includes(needle)) return id;
@@ -298,6 +312,9 @@ export function resolveCharacterId(opts = {}) {
   const storage = opts.storage ?? globalThis.localStorage ?? null;
   const stored = storage?.getItem(CHARACTER_STORAGE_KEY) || "";
   if (stored && COMPANION_CHARACTERS[stored]) return stored;
+  if (stored && LEGACY_CHARACTER_ALIASES[stored]) {
+    return LEGACY_CHARACTER_ALIASES[stored];
+  }
 
   return "nova";
 }
