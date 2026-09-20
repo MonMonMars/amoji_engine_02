@@ -107,7 +107,6 @@ export function sampleCalmBreathIdle(elapsedSec, opts = {}) {
 export function samplePlantedAliveIdle(elapsedSec, opts = {}) {
   const calm = sampleCalmBreathIdle(elapsedSec, opts);
   const life = sampleIdleBodyMotion(elapsedSec, opts);
-  const breath = Math.sin(elapsedSec * 0.88);
   return {
     upperLegL: calm.upperLegL,
     upperLegR: calm.upperLegR,
@@ -119,10 +118,10 @@ export function samplePlantedAliveIdle(elapsedSec, opts = {}) {
     leanY: calm.leanY + life.leanY * 0.18,
     spineX: calm.spineX,
     chestX: calm.chestX,
-    armLiftL: calm.armLiftL + breath * 0.014,
-    armLiftR: calm.armLiftR + breath * 0.012,
-    forearmL: calm.forearmL + Math.max(0, breath) * 0.034,
-    forearmR: calm.forearmR + Math.max(0, breath) * 0.03,
+    armLiftL: calm.armLiftL,
+    armLiftR: calm.armLiftR,
+    forearmL: calm.forearmL,
+    forearmR: calm.forearmR,
   };
 }
 

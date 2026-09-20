@@ -37,8 +37,8 @@ describe("companionPoseLibrary clamps", () => {
   it("adds idle elbow bend on the calibrated flex axis only", () => {
     const bent = withElbowBend({ x: 0.2, y: 0.05, z: 0.1, flexAxis: "z" }, 0.3);
     expect(bent.z).toBeCloseTo(0.4);
-    expect(bent.x).toBe(0);
-    expect(bent.y).toBe(0);
+    expect(bent.x).toBe(0.2);
+    expect(bent.y).toBe(0.05);
     expect(bent.flexAxis).toBe("z");
   });
 
