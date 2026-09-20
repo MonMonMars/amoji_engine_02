@@ -13,6 +13,7 @@ import {
   TALK_SPEED_DISPLAY_PRESETS,
   TALK_SPEED_PRESETS,
   talkSpeedFromDisplay,
+  talkSpeedPlaybackRatio,
   talkSpeedToDisplay,
 } from "../engine/companion/companionTalkSpeed.js";
 import {
@@ -34,50 +35,72 @@ describe("companionTalkSpeed", () => {
 
   it("maps display multipliers to internal storage", () => {
     expect(talkSpeedFromDisplay(1)).toBe(0.28);
-    expect(talkSpeedFromDisplay(1.35)).toBe(0.38);
-    expect(talkSpeedToDisplay(0.75)).toBeCloseTo(2.68, 2);
-    expect(formatTalkSpeedDisplayLabel(2.7, true)).toMatch(/Fast/);
+    expect(talkSpeedFromDisplay(1.5)).toBe(0.42);
+    expect(talkSpeedFromDisplay(2)).toBe(0.56);
+    expect(talkSpeedFromDisplay(0.5)).toBe(0.14);
+    expect(talkSpeedToDisplay(0.42)).toBe(1.5);
+    expect(formatTalkSpeedDisplayLabel(2, true)).toBe("2×");
+    expect(formatTalkSpeedDisplayLabel(0.5, true)).toBe("0.5×");
   });
 
-  it("cycles through relative presets from 1× Normal", () => {
-    expect(TALK_SPEED_DISPLAY_PRESETS[1]).toBe(1);
-    expect(TALK_SPEED_PRESETS[1]).toBe(0.28);
-    expect(cycleTalkSpeed(0.28)).toBe(0.38);
-    expect(cycleTalkSpeed(0.76)).toBe(0.24);
-    expect(TALK_SPEED_PRESETS).toEqual([
-      0.24, 0.28, 0.38, 0.48, 0.59, 0.76,
-    ]);
+  it("cycles through 0.5×–2× presets relative to 1× Normal", () => {
+    expect(TALK_SPEED_DISPLAY_PRESETS).toEqual([0.5, 0.75, 1, 1.5, 2]);
+    expect(TALK_SPEED_PRESETS[2]).toBe(0.28);
+    expect(cycleTalkSpeed(0.28)).toBe(0.42);
+    expect(cycleTalkSpeed(0.56)).toBe(0.14);
+    expect(TALK_SPEED_PRESETS).toEqual([0.14, 0.21, 0.28, 0.42, 0.56]);
   });
 
-  it("halves instruct speaking speed at default multiplier", () => {
+  it("scales instruct speaking speed linearly vs default 1×", () => {
     const normal = instructSpeakingSpeed({
       emotion: "neutral",
       speechEnergy: 0.68,
-      speedMultiplier: 1,
+      speedMultiplier: 0.28,
     });
     const slow = instructSpeakingSpeed({
       emotion: "neutral",
       speechEnergy: 0.68,
-      speedMultiplier: 0.5,
+      speedMultiplier: 0.14,
+    });
+    const fast = instructSpeakingSpeed({
+      emotion: "neutral",
+      speechEnergy: 0.68,
+      speedMultiplier: 0.56,
     });
     expect(slow).toBeLessThan(normal);
+    expect(fast).toBeGreaterThan(normal);
     expect(slow).toBeCloseTo(normal * 0.5, 1);
+    expect(fast).toBeCloseTo(normal * 2, 1);
   });
 
-  it("slows browser and cloud prosody", () => {
+  it("slows browser and cloud prosody relative to 1×", () => {
     const fast = resolveCompanionTtsProsody({
       emotion: "happy",
       text: "Hello!",
-      speedMultiplier: 1,
+      speedMultiplier: 0.56,
+    });
+    const normal = resolveCompanionTtsProsody({
+      emotion: "happy",
+      text: "Hello!",
+      speedMultiplier: 0.28,
     });
     const slow = resolveCompanionTtsProsody({
       emotion: "happy",
       text: "Hello!",
-      speedMultiplier: 0.5,
+      speedMultiplier: 0.14,
     });
-    expect(slow.browser.rate).toBeLessThan(fast.browser.rate);
-    expect(slow.speed).toBeLessThan(fast.speed);
-    expect(slowBrowserRate(1, 0.5)).toBeLessThanOrEqual(0.52);
+    expect(slow.browser.rate).toBeLessThan(normal.browser.rate);
+    expect(fast.browser.rate).toBeGreaterThan(normal.browser.rate);
+    expect(slow.speed).toBeLessThan(normal.speed);
+    expect(slowBrowserRate(0.8, 0.14)).toBeLessThan(slowBrowserRate(0.8, 0.28));
+    expect(slowBrowserRate(0.8, 0.56)).toBeGreaterThan(slowBrowserRate(0.8, 0.28));
+  });
+
+  it("maps stored speed to lip-sync playback ratio", () => {
+    expect(talkSpeedPlaybackRatio(0.28)).toBe(1);
+    expect(talkSpeedPlaybackRatio(0.14)).toBe(0.5);
+    expect(talkSpeedPlaybackRatio(0.56)).toBe(2);
+    expect(talkSpeedPlaybackRatio(1)).toBe(1);
   });
 
   it("describes default pace as normal in TTS instructions", () => {
@@ -102,9 +125,9 @@ describe("companionTalkSpeed", () => {
         return this.value;
       },
     };
-    saveTalkSpeed(0.8, storage);
-    expect(loadTalkSpeed(storage)).toBe(0.8);
-    expect(formatTalkSpeedLabel(0.8, true)).toMatch(/Fast/);
+    saveTalkSpeed(0.42, storage);
+    expect(loadTalkSpeed(storage)).toBe(0.42);
+    expect(formatTalkSpeedLabel(0.42, true)).toBe("1.5×");
   });
 
   it("includes speedMultiplier on cloud TTS body", () => {

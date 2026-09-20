@@ -1,2 +1,2 @@
 /** Single source of truth for deployed companion build id (keep HTML __amojiBuild in sync). */
-export const AMOJI_BUILD = "2026-09-20-v393-limb-rest-bind";
+export const AMOJI_BUILD = "2026-09-20-v394-talk-speed-presets";

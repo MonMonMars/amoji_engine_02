@@ -16,7 +16,7 @@ describe("companionSettingsChrome", () => {
     expect(labels.background).toBe("Background: Sunset");
     expect(labels.camera).toBe("Reset camera view");
     expect(labels.companionSection).toBe("Companion");
-    expect(labels.talkSpeed).toContain("1.6");
+    expect(labels.talkSpeed).toMatch(/1\.6|1\.61/);
     expect(labels.rosterModelsHint).toMatch(/23/);
     expect(labels.rosterModelsHint).toMatch(/Sakura|Celeste|VTuber/i);
     expect(labels.rosterDetailsSummary).toBe("View full 3D roster");

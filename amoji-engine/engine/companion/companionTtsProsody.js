@@ -226,7 +226,7 @@ export function instructSpeakingSpeed(opts = {}) {
             : 0.74;
   speed += (energy - 0.55) * 0.04;
   speed = applyTalkSpeedMultiplier(speed, speedMultiplier);
-  return Number(Math.max(0.22, Math.min(0.82, speed)).toFixed(2));
+  return Number(Math.max(0.1, Math.min(0.82, speed)).toFixed(2));
 }
 
 /**

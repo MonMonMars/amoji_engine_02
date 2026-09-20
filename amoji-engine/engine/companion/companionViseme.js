@@ -4,6 +4,7 @@
  * driving jaw openness so lips stay synced to the waveform.
  */
 import { TALK_MOUTH_OPEN_MAX } from "./companionFaceRest.js";
+import { talkSpeedPlaybackRatio } from "./companionTalkSpeed.js";
 
 /** Scale raw char openness before the global talk cap. */
 export const VISEME_OPEN_SCALE = 0.52;
@@ -173,13 +174,13 @@ export function charToViseme(ch) {
  * Match mouth-walk speed to real audio (or CJK vs Latin speech rate).
  * @param {string} text
  * @param {number} [durationMs]
- * @param {number} [speedMultiplier] 0.45..1 — slower talk stretches lip sync
+ * @param {number} [speedMultiplier] internal stored speed or legacy ratio (1 = default pace)
  */
 export function estimateLipSyncMsPerChar(text, durationMs, speedMultiplier = 1) {
   const clean = String(text || "");
   const len = Math.max(1, clean.length);
   const ms = Number(durationMs);
-  const speed = Math.max(0.24, Math.min(1.05, Number(speedMultiplier) || 1));
+  const speed = talkSpeedPlaybackRatio(speedMultiplier);
   if (Number.isFinite(ms) && ms > 0) {
     return Math.max(24, Math.min(320, (ms / len) / speed));
   }
