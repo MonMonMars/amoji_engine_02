@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import * as THREE from "three";
 import {
   AVATAR_TAP_MOVE_PX,
+  CHARACTER_MULTI_CLICK_MS,
   bindCompanionAvatarPointer,
   clientToNormalizedPointer,
   collectAvatarPokeMeshes,
@@ -237,6 +238,65 @@ describe("companionAvatarPointer", () => {
     );
     expect(onPoke).not.toHaveBeenCalled();
     pointer.destroy();
+  });
+
+  it("pokes on character double-tap / multi-click within the window", () => {
+    if (typeof document === "undefined") return;
+    const mesh = new THREE.Mesh(new THREE.BoxGeometry(1, 2, 0.4));
+    mesh.position.set(0, 1, 0);
+    const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
+    camera.position.set(0, 1.2, 2.4);
+    camera.lookAt(0, 1.1, 0);
+    const surface = document.createElement("div");
+    const rectElement = {
+      getBoundingClientRect: () => ({
+        left: 0,
+        top: 0,
+        width: 400,
+        height: 600,
+        right: 400,
+        bottom: 600,
+        x: 0,
+        y: 0,
+        toJSON: () => ({}),
+      }),
+    };
+    const onPoke = vi.fn();
+    let now = 5000;
+    vi.spyOn(performance, "now").mockImplementation(() => now);
+    const pointer = bindCompanionAvatarPointer({
+      surface,
+      rectElement,
+      camera,
+      getPokeMeshes: () => [mesh],
+      onPoke,
+      multiClickMs: CHARACTER_MULTI_CLICK_MS,
+    });
+    const tap = (x, y, advanceMs = 0) => {
+      now += advanceMs;
+      surface.dispatchEvent(
+        new PointerEvent("pointerdown", {
+          clientX: x,
+          clientY: y,
+          button: 0,
+          bubbles: true,
+        }),
+      );
+      surface.dispatchEvent(
+        new PointerEvent("pointerup", {
+          clientX: x,
+          clientY: y,
+          button: 0,
+          bubbles: true,
+        }),
+      );
+    };
+    tap(200, 220, 0);
+    tap(201, 221, 180);
+    expect(onPoke).toHaveBeenCalledTimes(2);
+    expect(onPoke.mock.calls[1][0].multiClick).toBe(true);
+    pointer.destroy();
+    vi.restoreAllMocks();
   });
 
   it("keeps orbit enabled when pointerdown misses the character", () => {

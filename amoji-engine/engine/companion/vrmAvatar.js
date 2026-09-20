@@ -1647,9 +1647,9 @@ export async function createVrmAvatar(opts) {
       const r = canvas.getBoundingClientRect();
       return computeAvatarScreenBand(model, camera, r);
     },
-    onPoke: ({ point }) => {
+    onPoke: ({ point, multiClick }) => {
       reactToTap();
-      opts.onCharacterTap?.({ point });
+      opts.onCharacterTap?.({ point, multiClick: Boolean(multiClick) });
     },
   });
 

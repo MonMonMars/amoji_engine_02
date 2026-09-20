@@ -65,6 +65,31 @@ describe("companionCameraReset", () => {
     expect(reset).not.toHaveBeenCalled();
   });
 
+  it("resets on multi-click (detail >= 2) of empty space", () => {
+    const reset = vi.fn();
+    const helper = createEmptyAreaCameraReset({
+      hitTest: () => false,
+      reset,
+    });
+    helper.onPointerDown(pointer(8, 8));
+    expect(
+      helper.onClick({ clientX: 8, clientY: 8, detail: 2, button: 0 }),
+    ).toBe(true);
+    expect(reset).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not reset multi-click when the character is hit", () => {
+    const reset = vi.fn();
+    const helper = createEmptyAreaCameraReset({
+      hitTest: (x) => x > 50,
+      reset,
+    });
+    expect(
+      helper.onClick({ clientX: 120, clientY: 120, detail: 3, button: 0 }),
+    ).toBe(false);
+    expect(reset).not.toHaveBeenCalled();
+  });
+
   it("resets on dblclick of empty space", () => {
     const reset = vi.fn();
     const helper = createEmptyAreaCameraReset({
