@@ -8,9 +8,9 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji · Companion</title>
     <script>
-      window.__amojiBuild = "2026-09-20-v372-idle-breath-stable-springs";
+      window.__amojiBuild = "2026-09-20-v373-composer-focus-guard";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-20-v372-idle-breath-stable-springs"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-20-v373-composer-focus-guard"></script>
     <link
       rel="prefetch"
       href="/prototypes/assets/companion-char-nova.png"
@@ -722,13 +722,13 @@
       media="print"
       onload="this.media='all'"
     />
-    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-20-v372-idle-breath-stable-springs" />
-    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-20-v372-idle-breath-stable-springs" />
-    <link rel="stylesheet" href="/prototypes/companion-mic-button.css?v=2026-09-20-v372-idle-breath-stable-springs" />
-    <link rel="stylesheet" href="/prototypes/companion-minimal-ui.css?v=2026-09-20-v372-idle-breath-stable-springs" />
-    <link rel="stylesheet" href="/prototypes/companion-mobile-shell.css?v=2026-09-20-v372-idle-breath-stable-springs" />
-    <link rel="stylesheet" href="/prototypes/companion-picker-v4.css?v=2026-09-20-v372-idle-breath-stable-springs" />
-    <link rel="stylesheet" href="/prototypes/companion-picker-stacked-layout.css?v=2026-09-20-v372-idle-breath-stable-springs" />
+    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-20-v373-composer-focus-guard" />
+    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-20-v373-composer-focus-guard" />
+    <link rel="stylesheet" href="/prototypes/companion-mic-button.css?v=2026-09-20-v373-composer-focus-guard" />
+    <link rel="stylesheet" href="/prototypes/companion-minimal-ui.css?v=2026-09-20-v373-composer-focus-guard" />
+    <link rel="stylesheet" href="/prototypes/companion-mobile-shell.css?v=2026-09-20-v373-composer-focus-guard" />
+    <link rel="stylesheet" href="/prototypes/companion-picker-v4.css?v=2026-09-20-v373-composer-focus-guard" />
+    <link rel="stylesheet" href="/prototypes/companion-picker-stacked-layout.css?v=2026-09-20-v373-composer-focus-guard" />
     <script>
       (function () {
         var params = new URLSearchParams(location.search);
@@ -754,7 +754,7 @@
       })();
     </script>
     <script type="module">
-      import { bootEarlyStartPicker } from "/amoji-engine/engine/companion/companionEarlyStartPicker.js?v=2026-09-20-v372-idle-breath-stable-springs";
+      import { bootEarlyStartPicker } from "/amoji-engine/engine/companion/companionEarlyStartPicker.js?v=2026-09-20-v373-composer-focus-guard";
       const bootParams = new URLSearchParams(location.search);
       if (bootParams.get("autostart") !== "1" && bootParams.get("pick") !== "0") {
         globalThis.__amojiEarlyStartPickerPromise = bootEarlyStartPicker({
@@ -4818,24 +4818,24 @@
     </style>
     <link
       rel="stylesheet"
-      href="/prototypes/companion-scene-backgrounds.css?v=2026-09-20-v372-idle-breath-stable-springs"
+      href="/prototypes/companion-scene-backgrounds.css?v=2026-09-20-v373-composer-focus-guard"
     />
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-20-v372-idle-breath-stable-springs",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-20-v373-composer-focus-guard",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-20-v372-idle-breath-stable-springs",
-          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-20-v372-idle-breath-stable-springs"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-20-v373-composer-focus-guard",
+          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-20-v373-composer-focus-guard"
         }
       }
     </script>
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-20-v372-idle-breath-stable-springs"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-20-v373-composer-focus-guard"
     />
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-20-v372-idle-breath-stable-springs"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-20-v372-idle-breath-stable-springs"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-20-v373-composer-focus-guard"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-20-v373-composer-focus-guard"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;
@@ -5089,7 +5089,7 @@
     </div>
     <div class="stage">
       <div class="atmosphere" aria-hidden="true"></div>
-      <canvas id="avatar-canvas" aria-label="Amoji companion — tap or multi-click body to poke, multi-click empty to reset camera, drag to rotate, pinch to zoom"></canvas>
+      <canvas id="avatar-canvas" tabindex="-1" aria-label="Amoji companion — tap or multi-click body to poke, multi-click empty to reset camera, drag to rotate, pinch to zoom"></canvas>
       <div
         class="orbit-hit"
         id="orbit-hit"
@@ -5544,6 +5544,9 @@
       const { createEmptyAreaCameraReset, shouldResetCameraOnTalkStart } = await ami(
         "../amoji-engine/engine/companion/companionCameraReset.js",
       );
+      const { bindCompanionComposerFocusGuard } = await ami(
+        "../amoji-engine/engine/companion/companionComposerFocus.js",
+      );
       const {
         createCompanionVoice,
         formatMicError,
@@ -5993,6 +5996,12 @@
       const starterPromptsEl = document.getElementById("starter-prompts");
       const form = document.getElementById("composer");
       const input = document.getElementById("input");
+      const avatarCanvasEl = document.getElementById("avatar-canvas");
+      const composerFocus = bindCompanionComposerFocusGuard({
+        input,
+        composerRoot: form,
+        focusFallback: avatarCanvasEl,
+      });
       const sendBtn = document.getElementById("send");
       const modePill = document.getElementById("mode-pill");
       const emotionPill = document.getElementById("emotion-pill");
@@ -6150,7 +6159,6 @@
         document.body.classList.toggle("composer-text-mode", textMode);
         updateEmotionBallVisibility();
         syncListenHint();
-        if (textMode) input.focus();
       };
 
       const updateEmotionBallVisibility = () => {
@@ -8825,7 +8833,7 @@
             avatar.setEmotion?.(holdEmotion);
             setEmotionPill(holdEmotion);
             status.idle();
-            input.focus();
+            composerFocus.blurComposer();
           }
           syncListenPose();
           if (micQueue.length && voice.micOn) {
@@ -8873,9 +8881,8 @@
         if (!busy && !voice.micOn && !voice.speaking) status.idle();
         if (conversationUi) {
           setComposerInputMode("text");
-        } else {
-          input.focus();
         }
+        composerFocus.blurComposer();
         globalThis.__amojiPreload?.scheduleBackground?.(() => {
           warmWaitDialogueBackground();
           void prefetchBasicMotionPack({ coupled: true });
@@ -8976,7 +8983,6 @@
             if (conversationUi) {
               document.body.classList.add("mic-blocked");
               setComposerInputMode("text");
-              input.focus();
             }
             addBubble(
               "system",
@@ -8996,7 +9002,6 @@
             } else if (conversationUi) {
               document.body.classList.add("mic-blocked");
               setComposerInputMode("text");
-              input.focus();
             }
             syncMicBtn();
             if (micOk) {
@@ -9383,7 +9388,7 @@
         abortActiveTurn("hotkey-barge");
       });
 
-      input.focus();
+      composerFocus.blurComposer();
 
       window.__amojiStart.ready = true;
       dismissLoading();
