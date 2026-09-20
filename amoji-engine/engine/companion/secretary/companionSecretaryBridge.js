@@ -356,16 +356,17 @@ export function createCompanionSecretaryBridge(opts = {}) {
   };
 
   const openPanel = (panelId = "today") => {
+    if (!active) return;
     activePanel = panelId;
     renderPanel();
     overlay.hidden = false;
     requestAnimationFrame(() => overlay.classList.add("is-open"));
-    doc.body.classList.add("secretary-panel-open");
+    doc.body?.classList?.add("secretary-panel-open");
   };
 
   const closePanel = () => {
     overlay.classList.remove("is-open");
-    doc.body.classList.remove("secretary-panel-open");
+    doc.body?.classList?.remove("secretary-panel-open");
     setTimeout(() => {
       if (!overlay.classList.contains("is-open")) overlay.hidden = true;
     }, 280);

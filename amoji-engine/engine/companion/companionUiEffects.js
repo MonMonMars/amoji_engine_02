@@ -197,7 +197,7 @@ export function openUiOverlay(doc, cfg) {
     panelOpenClass = "open",
     backdropOpenClass = "is-open",
   } = cfg;
-  if (!panel) return;
+  if (!panel || !doc.body) return;
 
   panel.removeAttribute("hidden");
   backdrop?.removeAttribute("hidden");

@@ -151,7 +151,7 @@ record(
   String(boot.sceneChips),
 );
 
-const layout = await page.evaluate(() => {
+const layout = await page.evaluate((minRoster) => {
   const footer = document.querySelector("#start-character-picker .picker-footer");
   const wrap = document.querySelector("#start-character-picker .start-picker-grid-wrap");
   const scene = document.querySelector(
@@ -211,7 +211,7 @@ const layout = await page.evaluate(() => {
       brokenImgs === 0 &&
       grid.clientHeight >= 72 &&
       horizontalRoster &&
-      cards.length >= ROSTER_SIZE &&
+      cards.length >= minRoster &&
       cardsLargeEnough &&
       Boolean(scene),
     horizontalRoster,
@@ -231,7 +231,7 @@ const layout = await page.evaluate(() => {
     cardCount: cards.length,
     imgCount: imgs.length,
   };
-});
+}, ROSTER_SIZE);
 record(
   "begin btn not over thumbnails",
   layout.ok,
