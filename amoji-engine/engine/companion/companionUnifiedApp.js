@@ -20,6 +20,7 @@ import {
 } from "../mobile/companionRolePresets.js";
 import { buildSecretaryPromptExtras } from "./secretary/secretaryPromptFragments.js";
 import { buildCareDisabledPetRoleFragment } from "./companionCareDialogue.js";
+import { loadSessionModeOverride } from "./companionSessionMode.js";
 import {
   buildLlmContextDatabaseFragment,
   refreshLlmContextDb,
@@ -76,12 +77,13 @@ export function resolveAppRole(
     normalized.get("character") ||
     normalized.get("vrm") ||
     normalized.get("model3d");
+  const fromUrl = normalized.get("role");
+  if (fromUrl) return normalizeCompanionRole(fromUrl);
+  if (loadSessionModeOverride(storage)) return loadCompanionRole(storage);
   if (explicitChar && cid) {
     return resolveSessionRoleFromCharacter(cid, normalized);
   }
   if (cid && !normalized.get("role")) return resolveCharacterRole(cid);
-  const fromUrl = normalized.get("role");
-  if (fromUrl) return normalizeCompanionRole(fromUrl);
   if (cid) return resolveCharacterRole(cid);
   return loadCompanionRole(storage);
 }

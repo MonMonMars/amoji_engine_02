@@ -162,11 +162,26 @@ export function loadCompanionRole(storage = globalThis.localStorage) {
  * @param {CompanionRole} role
  * @param {Pick<Storage, "setItem"> | null | undefined} storage
  */
-export function saveCompanionRole(role, storage = globalThis.localStorage) {
+/**
+ * @param {CompanionRole} role
+ * @param {Pick<Storage, "setItem"> | null | undefined} [storage]
+ * @param {{ touchDefaultCharacter?: boolean }} [opts]
+ */
+export function saveCompanionRole(
+  role,
+  storage = globalThis.localStorage,
+  opts = {},
+) {
   const next = normalizeCompanionRole(role);
+  const touchDefault = opts.touchDefaultCharacter !== false;
   try {
     storage?.setItem?.(ROLE_STORAGE_KEY, next);
-    storage?.setItem?.("amoji.mobile.lastCharacterId", rolePreset(next).defaultCharacterId);
+    if (touchDefault) {
+      storage?.setItem?.(
+        "amoji.mobile.lastCharacterId",
+        rolePreset(next).defaultCharacterId,
+      );
+    }
   } catch {
     /* ignore */
   }

@@ -30,6 +30,10 @@ export function buildSettingsChromeLabels(isEnglish = false, state = {}) {
     menuTitle: en ? "Menu" : "選單",
     closeAria: en ? "Close menu" : "關閉選單",
     session: en ? "Session" : "連線",
+    experienceMode: en ? "Experience mode" : "體驗模式",
+    experienceHint: en
+      ? "Girlfriend, boyfriend, secretary, and pet — one app."
+      : "女朋友、男朋友、秘書、寵物 — 同一個 App。",
     language: en ? "Language: English" : "語言：粵語",
     languageSwitchTitle: en ? "Switch to Cantonese (粵語)" : "Switch to English",
     chat: en
