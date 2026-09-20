@@ -25,6 +25,8 @@
     { "source": "/api/auth/session", "destination": "/api/auth/session.mjs" },
     { "source": "/api/user/save", "destination": "/api/user/save.mjs" },
     { "source": "/api/user/settings", "destination": "/api/user/settings.mjs" },
+    { "source": "/admin", "destination": "/prototypes/amoji-admin.html" },
+    { "source": "/admin/", "destination": "/prototypes/amoji-admin.html" },
     { "source": "/api/iap/products", "destination": "/api/iap/products.mjs" },
     { "source": "/api/iap/verify", "destination": "/api/iap/verify.mjs" },
     { "source": "/api/iap/webhook", "destination": "/api/iap/webhook.mjs" },
