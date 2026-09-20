@@ -4,13 +4,14 @@
  * Internal scale keeps legacy TTS math (0.28 = the established VN/gacha pace).
  * UI shows relative 1× where that same 0.28 internal value is "Normal".
  */
-export const COMPANION_TALK_SPEED_SCHEMA = "amoji.companionTalkSpeed.v1";
-export const TALK_SPEED_STORAGE_KEY = "amoji.companionTalkSpeed.v3";
+export const COMPANION_TALK_SPEED_SCHEMA = "amoji.companionTalkSpeed.v2";
+export const TALK_SPEED_STORAGE_KEY = "amoji.companionTalkSpeed.v4";
 const LEGACY_TALK_SPEED_KEY = "amoji.companionTalkSpeed.v2";
 const LEGACY_TALK_SPEED_KEY_V1 = "amoji.companionTalkSpeed.v1";
 
-const MIN_TALK_SPEED = 0.24;
-const MAX_TALK_SPEED = 0.95;
+/** Internal stored speed = display ratio × {@link NORMAL_TALK_SPEED_ONE_X}. */
+const MIN_TALK_SPEED = 0.14;
+const MAX_TALK_SPEED = 0.56;
 
 /** Internal value that maps to user-facing 1× Normal. */
 export const NORMAL_TALK_SPEED_ONE_X = 0.28;
@@ -18,8 +19,8 @@ export const NORMAL_TALK_SPEED_ONE_X = 0.28;
 /** Default: established companion pace (displayed as 1× Normal). */
 export const DEFAULT_TALK_SPEED = NORMAL_TALK_SPEED_ONE_X;
 
-/** User-facing speed steps relative to 1× Normal. */
-export const TALK_SPEED_DISPLAY_PRESETS = Object.freeze([0.85, 1, 1.35, 1.7, 2.1, 2.7]);
+/** User-facing speed steps relative to today's default 1× pace. */
+export const TALK_SPEED_DISPLAY_PRESETS = Object.freeze([0.5, 0.75, 1, 1.5, 2]);
 
 /** Internal cycle order for the settings speed button. */
 export const TALK_SPEED_PRESETS = Object.freeze(
@@ -76,10 +77,10 @@ export function formatTalkSpeedDisplayLabel(displayMultiplier, isEnglish = false
   }
   const rounded = Math.round(display * 100) / 100;
   const num =
-    Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1).replace(/\.0$/, "");
-  if (rounded <= 0.88) return isEnglish ? `${num}× Slow` : `${num}× 慢`;
-  if (rounded <= 1.05) return isEnglish ? `${num}× Normal` : `${num}× 正常`;
-  if (rounded >= 2.65) return isEnglish ? `${num}× Fast` : `${num}× 快`;
+    Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(2).replace(/\.?0+$/, "");
+  if (rounded >= 0.98 && rounded <= 1.02) {
+    return isEnglish ? "1× Normal" : "1× 正常";
+  }
   return `${num}×`;
 }
 
@@ -106,9 +107,24 @@ export function cycleTalkSpeed(current = DEFAULT_TALK_SPEED) {
  * @param {number} [multiplier]
  */
 export function applyTalkSpeedMultiplier(baseSpeed, multiplier = DEFAULT_TALK_SPEED) {
-  const mult = normalizeTalkSpeed(multiplier);
+  const internal = normalizeTalkSpeed(multiplier);
+  const display = internal / NORMAL_TALK_SPEED_ONE_X;
   const base = Number.isFinite(baseSpeed) ? baseSpeed : 1;
-  return Number(Math.max(MIN_TALK_SPEED, Math.min(MAX_TALK_SPEED, base * mult)).toFixed(2));
+  const atOneX = base * NORMAL_TALK_SPEED_ONE_X;
+  return Number(Math.max(0.1, Math.min(1.64, atOneX * display)).toFixed(2));
+}
+
+/**
+ * Playback ratio for lip sync / duration (1 = current default talk pace).
+ * @param {number} [internalOrRatio]
+ */
+export function talkSpeedPlaybackRatio(internalOrRatio = DEFAULT_TALK_SPEED) {
+  const n = Number(internalOrRatio);
+  if (!Number.isFinite(n)) return 1;
+  if (n >= MIN_TALK_SPEED - 0.001 && n <= MAX_TALK_SPEED + 0.001) {
+    return talkSpeedToDisplay(normalizeTalkSpeed(n));
+  }
+  return Math.max(0.25, Math.min(2.5, n));
 }
 
 /**
@@ -116,9 +132,10 @@ export function applyTalkSpeedMultiplier(baseSpeed, multiplier = DEFAULT_TALK_SP
  * @param {number} [multiplier]
  */
 export function slowEdgeRatePercent(edgeRatePercent, multiplier = DEFAULT_TALK_SPEED) {
-  const mult = normalizeTalkSpeed(multiplier);
-  const shift = (1 - mult) * 72;
-  return edgeRatePercent - shift;
+  const internal = normalizeTalkSpeed(multiplier);
+  const display = Math.max(0.25, internal / NORMAL_TALK_SPEED_ONE_X);
+  const shiftAtOneX = (1 - NORMAL_TALK_SPEED_ONE_X) * 72;
+  return edgeRatePercent - shiftAtOneX / display;
 }
 
 /**
@@ -126,9 +143,13 @@ export function slowEdgeRatePercent(edgeRatePercent, multiplier = DEFAULT_TALK_S
  * @param {number} [multiplier]
  */
 export function slowBrowserRate(browserRate, multiplier = DEFAULT_TALK_SPEED) {
-  const mult = normalizeTalkSpeed(multiplier);
+  const internal = normalizeTalkSpeed(multiplier);
+  const display = internal / NORMAL_TALK_SPEED_ONE_X;
   const base = Number.isFinite(browserRate) ? browserRate : 1;
-  return Number(Math.max(0.28, Math.min(0.92, base * mult)).toFixed(3));
+  const atOneX = Number(
+    Math.max(0.28, Math.min(0.92, base * NORMAL_TALK_SPEED_ONE_X)).toFixed(3),
+  );
+  return Number(Math.max(0.14, Math.min(0.92, atOneX * display)).toFixed(3));
 }
 
 /**
@@ -160,6 +181,16 @@ export function loadTalkSpeed(storage = globalThis.localStorage) {
     }
   } catch {
     /* fall through to legacy */
+  }
+  try {
+    const legacyV3 = storage?.getItem?.("amoji.companionTalkSpeed.v3");
+    if (legacyV3 != null && legacyV3 !== "") {
+      const parsed = normalizeTalkSpeed(JSON.parse(legacyV3));
+      saveTalkSpeed(parsed, storage);
+      return parsed;
+    }
+  } catch {
+    /* ignore */
   }
   try {
     const legacy = storage?.getItem?.(LEGACY_TALK_SPEED_KEY);
