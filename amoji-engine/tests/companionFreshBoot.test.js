@@ -96,7 +96,7 @@ describe("companionFreshBoot", () => {
     expect(spec).not.toContain("/amoji-engine/engine/amoji-engine/");
   });
 
-  it("redirects with cache-bust params when health build is newer", async () => {
+  it("does not auto-reload when health build is newer (picker-stable policy)", async () => {
     const replace = vi.fn();
     const fetchImpl = vi.fn(async () => ({
       ok: true,
@@ -111,12 +111,9 @@ describe("companionFreshBoot", () => {
     const result = await checkForAppUpdate("2026-09-14-v39-body-rig-actions", {
       fetchImpl,
     });
-    expect(result.reloaded).toBe(true);
-    expect(replace).toHaveBeenCalledTimes(1);
-    const nextUrl = replace.mock.calls[0][0];
-    expect(nextUrl).toMatch(/\/n\/\d+\/full/);
-    expect(nextUrl).toContain("build=2026-09-15-v69-demo-fresh");
-    expect(nextUrl).toContain("_cb=");
+    expect(result.reloaded).toBe(false);
+    expect(result.skipped).toBe(true);
+    expect(replace).not.toHaveBeenCalled();
   });
 
   it("does not reload when page build is newer and already on unique path", async () => {
@@ -300,7 +297,7 @@ describe("companionFreshBoot", () => {
     expect(replace).not.toHaveBeenCalled();
   });
 
-  it("mints a /play redirect onto a new /n/<stamp> path", () => {
+  it("routes /play to stable /c/<build>/full (optional /n/ stamp override)", () => {
     const loc = buildPlayRedirectLocation("?lang=en&pick=1", {
       build: "v159",
       stamp: 1726550000123,
@@ -311,11 +308,15 @@ describe("companionFreshBoot", () => {
     expect(companionOpenPath("lite", 99)).toBe("/n/99/lite");
     expect(isCompanionOpenPath("/n/99/full")).toBe(true);
     expect(isStickyCompanionBookmark("/companion-full")).toBe(true);
-    const a = buildPlayRedirectLocation("?lang=yue", { build: "v159", stamp: 1 });
-    const b = buildPlayRedirectLocation("?lang=yue", { build: "v159", stamp: 2 });
-    expect(a).not.toBe(b);
-    expect(a).toContain("/n/1/full");
-    expect(b).toContain("/n/2/full");
+    const stable = buildPlayRedirectLocation("?lang=yue", { build: "v159" });
+    expect(stable).toContain("/c/v159/full");
+    expect(stable).toContain("build=v159");
+    expect(stable).toContain("pick=1");
+    const stamped = buildPlayRedirectLocation("?lang=yue", {
+      build: "v159",
+      stamp: 2,
+    });
+    expect(stamped).toContain("/n/2/full");
   });
 
   it("keeps an existing per-open path instead of minting another stamp", async () => {

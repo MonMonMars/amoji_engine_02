@@ -33,17 +33,15 @@
         if (params.get("tab") === "today" && !params.get("role")) {
           params.set("role", "secretary");
         }
-        var stamp =
-          String(Date.now()) +
-          String(Math.floor(Math.random() * 1000)).padStart(3, "0");
-        params.set("_cb", stamp);
-        var qs = params.toString();
-        var suffix = qs ? "?" + qs : "";
-        var openPath = "/n/" + stamp + "/full";
+        if (params.get("autostart") !== "1" && params.get("pick") !== "0") {
+          if (!params.get("pick")) params.set("pick", "1");
+          if (!params.get("automic")) params.set("automic", "0");
+        }
         var fallbackPath = "/companion-full";
 
         function go(path) {
-          location.replace(path + suffix);
+          var qs = params.toString();
+          location.replace(path + (qs ? "?" + qs : ""));
         }
 
         fetch("/api/health", { cache: "no-store" })
@@ -51,14 +49,21 @@
             return r.ok ? r.json() : null;
           })
           .then(function (health) {
-            if (health && health.build) params.set("build", health.build);
-            qs = params.toString();
-            suffix = qs ? "?" + qs : "";
-            return fetch(openPath + suffix, { method: "HEAD", cache: "no-store" });
-          })
-          .then(function (r) {
-            if (r && r.ok) go(openPath);
-            else go(fallbackPath);
+            var build = health && health.build;
+            if (build) params.set("build", build);
+            params.set("_cb", String(Date.now()));
+            if (!build) {
+              go(fallbackPath);
+              return;
+            }
+            var pinnedPath = "/c/" + encodeURIComponent(build) + "/full";
+            var qs = params.toString();
+            var suffix = qs ? "?" + qs : "";
+            return fetch(pinnedPath + suffix, { method: "HEAD", cache: "no-store" }).then(
+              function (r) {
+                go(r && r.ok ? pinnedPath : fallbackPath);
+              },
+            );
           })
           .catch(function () {
             go(fallbackPath);
