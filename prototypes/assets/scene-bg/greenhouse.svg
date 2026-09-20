@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" width="960" height="540">
+<rect width="960" height="540" fill="#88c898"/>
+    <line x1="0" y1="0" x2="0" y2="540" stroke="#fff" stroke-width="2" opacity="0.3"/><line x1="100" y1="0" x2="100" y2="540" stroke="#fff" stroke-width="2" opacity="0.3"/><line x1="200" y1="0" x2="200" y2="540" stroke="#fff" stroke-width="2" opacity="0.3"/><line x1="300" y1="0" x2="300" y2="540" stroke="#fff" stroke-width="2" opacity="0.3"/><line x1="400" y1="0" x2="400" y2="540" stroke="#fff" stroke-width="2" opacity="0.3"/><line x1="500" y1="0" x2="500" y2="540" stroke="#fff" stroke-width="2" opacity="0.3"/><line x1="600" y1="0" x2="600" y2="540" stroke="#fff" stroke-width="2" opacity="0.3"/><line x1="700" y1="0" x2="700" y2="540" stroke="#fff" stroke-width="2" opacity="0.3"/>
+    <rect x="0" y="324" width="960" height="216" fill="#48a858"/>
+    <ellipse cx="60" cy="405" rx="40" ry="25" fill="#68c878"/><ellipse cx="180" cy="405" rx="40" ry="25" fill="#68c878"/><ellipse cx="300" cy="405" rx="40" ry="25" fill="#68c878"/><ellipse cx="420" cy="405" rx="40" ry="25" fill="#68c878"/><ellipse cx="540" cy="405" rx="40" ry="25" fill="#68c878"/><ellipse cx="660" cy="405" rx="40" ry="25" fill="#68c878"/>
+</svg>
