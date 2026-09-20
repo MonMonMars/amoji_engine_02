@@ -20,7 +20,7 @@ export const TALK_HAPPY_MAX = 0.62;
 export const REST_SURPRISED_MAX = 0.12;
 export const TALK_SURPRISED_MAX = 0.32;
 /** Hard cap on rendered talk mouth open (0..1) before rig-specific scaling. */
-export const TALK_MOUTH_OPEN_MAX = 0.38;
+export const TALK_MOUTH_OPEN_MAX = 0.45;
 /** Max jaw-bone X rotation (radians) at full open. */
 export const TALK_JAW_OPEN_RAD = 0.22;
 /** Fallback viseme walk when TTS has not yet named a shape. */

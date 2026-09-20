@@ -835,9 +835,14 @@ export function createCompanionVoice(opts = {}) {
       }
       return last;
     } finally {
-      speaking = false;
+      const streamActive = isStreamPlaybackActive();
+      if (!streamActive) {
+        speaking = false;
+        stopMouth();
+      } else {
+        stopMouth({ keepTalking: true, keepMouth: false });
+      }
       syncAssistantOutput();
-      stopMouth();
     }
   };
 
@@ -1145,8 +1150,10 @@ export function createCompanionVoice(opts = {}) {
       const finishSpeak = (result) => {
         if (settled) return result;
         settled = true;
-        speaking = false;
         const holdGap = isStreamPlaybackActive();
+        if (!holdGap) {
+          speaking = false;
+        }
         stopMouth({ keepTalking: holdGap, keepMouth: holdGap });
         return result;
       };
