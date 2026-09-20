@@ -822,6 +822,8 @@ export function createCompanionStartPicker(opts = {}) {
   /** @type {ReturnType<typeof setTimeout> | null} */
   let preloadHideTimer = null;
   let unwireRosterKeys = () => {};
+  /** @type {(() => void) | null} */
+  let unwireRosterScroll = null;
   let sessionCopyOverrides = { ...(opts.pickerCopy || {}) };
   const mergePickerCopy = () => ({
     ...pickerCopy(isEnglish),
@@ -1006,11 +1008,14 @@ export function createCompanionStartPicker(opts = {}) {
   };
 
   const scrollSelectedIntoView = () => {
-    const sel = `[data-character-id="${selectedId}"]`;
-    gridEl?.querySelector(sel)?.scrollIntoView?.({
+    if (!gridEl) return;
+    const card = gridEl.querySelector(`[data-character-id="${selectedId}"]`);
+    if (!(card instanceof HTMLElement)) return;
+    const targetLeft =
+      card.offsetLeft - (gridEl.clientWidth - card.clientWidth) / 2;
+    gridEl.scrollTo({
+      left: Math.max(0, targetLeft),
       behavior: "smooth",
-      inline: "center",
-      block: "nearest",
     });
   };
 
@@ -1055,6 +1060,13 @@ export function createCompanionStartPicker(opts = {}) {
       disabled: starting || !pickable,
       onCardTapFx: opts.onCardTapFx,
       onCardClick: applySelection,
+    });
+    unwireRosterScroll?.();
+    unwireRosterScroll = wireScrollAffordances(gridEl, {
+      axis: "x",
+      labels: isEnglish
+        ? { prev: "Previous companions", next: "More companions" }
+        : { prev: "上一個同伴", next: "更多同伴" },
     });
     shell.classList.toggle("is-preloading", false);
     updatePickerHero(shell, findPickerItem(fullList(), selectedId), isEnglish);

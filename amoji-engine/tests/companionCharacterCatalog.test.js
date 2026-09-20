@@ -103,8 +103,8 @@ describe("companionCharacterCatalog v363 VTuber roster", () => {
     expect(resolveCharacterId({ characterParam: "hugo" })).toBe("mimi");
   });
 
-  it("maps legacy lite secretary id kate to nova", () => {
-    expect(resolveCharacterId({ characterParam: "kate" })).toBe("nova");
+  it("maps legacy id kate to mio (companion-kate.vrm roster slot)", () => {
+    expect(resolveCharacterId({ characterParam: "kate" })).toBe("mio");
   });
 
   it("maps curated model urls", () => {

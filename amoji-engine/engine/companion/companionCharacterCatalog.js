@@ -66,6 +66,7 @@ import {
   LEGACY_VRM_BASENAME_ALIASES,
   rosterVrmBasename,
 } from "./rosterVrmAssets.mjs";
+import { AMOJI_MODEL_REVISION } from "./companionCharacterMigration.mjs";
 
 export { ROSTER_LOCKED_NUMBERS, TRIAL_CHARACTER_IDS };
 export {
@@ -98,7 +99,8 @@ export function characterNumber(id) {
  */
 export function characterPreviewImage(id) {
   const key = String(id || "nova").toLowerCase();
-  return `/prototypes/assets/companion-char-${key}.png`;
+  const bust = encodeURIComponent(AMOJI_MODEL_REVISION);
+  return `/prototypes/assets/companion-char-${key}.png?v=${bust}`;
 }
 
 /** @type {ReadonlySet<string>} */
@@ -259,17 +261,28 @@ export function getCharacter(id) {
  */
 /** Legacy URL ids → current roster ids (e.g. lite secretary links used `kate`). */
 export const LEGACY_CHARACTER_ALIASES = Object.freeze({
-  kate: "nova",
+  kate: "mio",
+  olivia: "yuki",
+  lydia: "hina",
+  erika: "yume",
+  rose: "sakura",
   sora: "sakura",
   aria: "celeste",
-  erika: "yume",
+  chibi: "nana",
   shiro: "nana",
   jennifer: "sumi",
   poly: "lumi",
+  polydancer: "lumi",
   aesthe: "vera",
+  aesthetica: "vera",
   chad: "robert",
   david: "mikel",
   hugo: "mimi",
+  rabbit: "mimi",
+  quinn: "mimi",
+  kai: "rex",
+  girl: "amoji",
+  amoji_girl: "amoji",
 });
 
 /**
@@ -281,6 +294,22 @@ export function normalizeRosterCharacterId(id) {
   const mapped = LEGACY_CHARACTER_ALIASES[key];
   if (mapped && COMPANION_CHARACTERS[mapped]) return mapped;
   return "nova";
+}
+
+/**
+ * Rewrite stored legacy ids to current roster ids (keeps user selection).
+ * @param {Pick<Storage, "getItem" | "setItem"> | null | undefined} [storage]
+ */
+export function migrateLegacyCharacterStorage(storage = globalThis.localStorage) {
+  try {
+    const raw = storage?.getItem?.(CHARACTER_STORAGE_KEY);
+    if (!raw) return null;
+    const next = normalizeRosterCharacterId(raw);
+    if (next !== raw) storage?.setItem?.(CHARACTER_STORAGE_KEY, next);
+    return next;
+  } catch {
+    return null;
+  }
 }
 
 export function resolveCharacterId(opts = {}) {

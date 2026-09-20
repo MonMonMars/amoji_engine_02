@@ -1,0 +1,96 @@
+/**
+ * Shared max width for companion + picker + mobile shell — one column to control layout.
+ */
+:root {
+  --amoji-app-max-width: 480px;
+}
+
+body.companion-minimal-chrome .stage {
+  max-width: min(100vw, var(--amoji-app-max-width));
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.companion-picker.is-open .companion-picker-sheet {
+  width: min(100%, var(--amoji-app-max-width));
+  max-width: var(--amoji-app-max-width);
+  margin-left: auto;
+  margin-right: auto;
+  left: 0;
+  right: 0;
+}
+
+.companion-picker.is-open .companion-picker-backdrop {
+  inset: 0;
+}
+
+body.companion-picker-open .topbar,
+body.companion-picker-open .activity-rail,
+body.companion-picker-open .chat-shell,
+body.companion-picker-open .orbit-hint,
+body.companion-picker-open .pet-hud,
+body.companion-picker-open .treat-dock {
+  visibility: hidden !important;
+  pointer-events: none !important;
+  opacity: 0 !important;
+}
+
+body.companion-picker-open.companion-start-pending .composer-wrap,
+body.companion-picker-open .composer-wrap {
+  visibility: hidden !important;
+  pointer-events: none !important;
+  opacity: 0 !important;
+  z-index: 0 !important;
+}
+
+.companion-picker--start .companion-picker-head {
+  padding: 0.45rem 0.85rem 0.2rem;
+}
+
+.companion-picker--start .companion-picker-title {
+  font-size: 1.05rem;
+}
+
+.companion-picker--start .companion-picker-sub {
+  font-size: 0.68rem;
+  line-height: 1.3;
+  max-width: 18rem;
+}
+
+.companion-picker--stacked-layout.companion-picker--start .picker-main--stacked {
+  overflow: hidden;
+}
+
+.companion-picker--stacked-layout.companion-picker--start .picker-showcase-stage {
+  flex: 0 0 auto;
+  position: relative;
+  z-index: 2;
+  max-height: min(38vh, 14rem);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.companion-picker--stacked-layout.companion-picker--start .picker-roster-row {
+  flex: 0 0 auto;
+  min-height: 0;
+}
+
+.companion-picker--stacked-layout.companion-picker--start .start-picker-grid-wrap.scroll-affordance-host {
+  padding: 0 2.1rem;
+}
+
+.companion-picker--stacked-layout.companion-picker--start .scroll-affordance-btn--prev {
+  left: 0.05rem;
+}
+
+.companion-picker--stacked-layout.companion-picker--start .scroll-affordance-btn--next {
+  right: 0.05rem;
+}
+
+#app-root .screen {
+  max-width: var(--amoji-app-max-width);
+  margin-left: auto;
+  margin-right: auto;
+}

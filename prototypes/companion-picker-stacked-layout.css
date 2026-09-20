@@ -94,16 +94,16 @@
 
 /* Start picker: grid rows so background row is never squeezed off-screen */
 .companion-picker--stacked-layout.companion-picker--start .picker-main--stacked {
-  display: grid !important;
-  grid-template-rows: minmax(0, auto) auto auto;
+  display: flex !important;
+  flex-direction: column;
   flex: 1 1 auto;
   min-height: 0;
   overflow: hidden;
 }
 
 .companion-picker--stacked-layout.companion-picker--start .picker-showcase-stage {
-  flex: 0 1 auto !important;
-  max-height: min(30vh, 10.5rem);
+  flex: 0 0 auto !important;
+  max-height: min(38vh, 14rem);
   overflow: hidden;
 }
 
