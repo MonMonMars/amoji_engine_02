@@ -439,7 +439,7 @@ export async function checkForAppUpdate(pageBuild, opts = {}) {
   const path = globalThis.location?.pathname || "";
   const search = globalThis.location?.search || "";
   const sticky = isStickyCompanionBookmark(path);
-  const forceNewOpen = Boolean(opts.forceNewOpen || sticky);
+  const forceNewOpen = Boolean(opts.forceNewOpen);
   void purgeStaleBrowserCaches();
   const kind = companionKindFromPath(path);
   const bootPath = serverBuild
@@ -449,20 +449,31 @@ export async function checkForAppUpdate(pageBuild, opts = {}) {
         forceNewOpen,
       })
     : path;
+  const buildMatches = !shouldReloadForBuild(embedded, serverBuild);
   const alreadyOnTarget =
     Boolean(serverBuild) &&
     path === bootPath &&
     pathSatisfiesBuild(path, serverBuild, search);
-  if (!shouldReloadForBuild(embedded, serverBuild) && alreadyOnTarget) {
+  if (buildMatches && alreadyOnTarget) {
     if (serverBuild) globalThis.__amojiActiveBuild = serverBuild;
     return { reloaded: false, serverBuild, pageBuild: embedded };
   }
   if (
-    !shouldReloadForBuild(embedded, serverBuild) &&
-    !sticky &&
-    pathSatisfiesBuild(path, serverBuild, search)
+    buildMatches &&
+    (pathSatisfiesBuild(path, serverBuild, search) ||
+      isCompanionOpenPath(path) ||
+      isStickyCompanionBookmark(path))
   ) {
     if (serverBuild) globalThis.__amojiActiveBuild = serverBuild;
+    try {
+      const url = new URL(globalThis.location.href);
+      if (url.searchParams.get("build") !== serverBuild) {
+        url.searchParams.set("build", serverBuild);
+        globalThis.history?.replaceState?.(null, "", url.toString());
+      }
+    } catch {
+      /* ignore */
+    }
     return { reloaded: false, serverBuild, pageBuild: embedded };
   }
 

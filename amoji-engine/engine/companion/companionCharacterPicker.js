@@ -712,7 +712,7 @@ export function createCompanionCharacterPicker(opts = {}) {
       }
       copy = mergePickerCopy();
       paintCopy();
-      renderAll();
+      if (ctx.rerenderRoster) renderAll();
     },
     setLocale(nextEnglish) {
       isEnglish = Boolean(nextEnglish);
@@ -1055,8 +1055,8 @@ export function createCompanionStartPicker(opts = {}) {
       }
       copy = mergePickerCopy();
       paintCopy();
-      renderAll();
-      renderPreload();
+      updatePickerHero(shell, findPickerItem(fullList(), selectedId), isEnglish);
+      if (ctx.rerenderRoster) renderAll();
     },
     setLocale(nextEnglish) {
       isEnglish = Boolean(nextEnglish);
