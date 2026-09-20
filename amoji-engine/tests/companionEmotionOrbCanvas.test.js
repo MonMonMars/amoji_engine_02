@@ -144,6 +144,27 @@ describe("companionEmotionOrbCanvas", () => {
     expect(ctx.ops).toContain("restore");
   });
 
+  it("draws mic magic ball as a circular sphere with ripples", () => {
+    const ctx = mockOrbCtx();
+    drawEmotionOrbFrame(ctx, 48, 48, {
+      time: 0.6,
+      volume: 0.75,
+      hue: 212,
+      sat: 72,
+      light: 50,
+      state: "listening",
+      emotion: "happy",
+      compact: true,
+      magicBall: true,
+      live: true,
+      face: false,
+    });
+    expect(ctx.ops).toContain("clip");
+    expect(ctx.ops.filter((o) => o === "arc").length).toBeGreaterThanOrEqual(4);
+    expect(ctx.ops).toContain("stroke");
+    expect(ctx.ops).not.toContain("ellipse");
+  });
+
   it("draws standalone robot face layer", () => {
     const ctx = mockOrbCtx();
     drawOrbRobotFace(ctx, 24, 24, 20, {

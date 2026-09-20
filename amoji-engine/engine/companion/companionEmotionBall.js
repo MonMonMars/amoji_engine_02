@@ -426,6 +426,7 @@ export function miniEmotionBallLabel(frame, isEnglish = false) {
  *   level?: number,
  *   time?: number,
  *   reducedMotion?: boolean,
+ *   magicBall?: boolean,
  * }} [opts]
  */
 export function computeMiniEmotionBallFrame(opts = {}) {
@@ -436,6 +437,7 @@ export function computeMiniEmotionBallFrame(opts = {}) {
   const raw = clamp(Number(opts.level) || 0, 0, 1);
   const reducedMotion = Boolean(opts.reducedMotion);
   const micStandby = Boolean(opts.micStandby);
+  const magicBall = Boolean(opts.magicBall);
   const theme = resolveMicButtonTheme({ emotion, nuance });
 
   if (micStandby) {
@@ -526,6 +528,15 @@ export function computeMiniEmotionBallFrame(opts = {}) {
         ? 0.98 + thinkWave * 0.14
         : 0.94 + breath * 0.1;
 
+  let outWobble = wobble;
+  let outSquash = squash;
+  let outScale = scale;
+  if (magicBall) {
+    outWobble = reducedMotion ? 0.008 : 0.012 + volume * 0.012;
+    outSquash = 1 + (squash - 1) * 0.12;
+    outScale = 1 + (scale - 1) * 0.65;
+  }
+
   const hue = liveBlue ? 212 : theme.hue;
   const sat = liveBlue
     ? Math.max(theme.sat, 62)
@@ -542,9 +553,9 @@ export function computeMiniEmotionBallFrame(opts = {}) {
     sat,
     light: disabled ? Math.min(theme.light, 44) : liveBlue ? 50 : theme.light,
     volume,
-    scale,
-    wobble,
-    squash,
+    scale: outScale,
+    wobble: outWobble,
+    squash: outSquash,
     spin,
     glow,
     bright,
@@ -712,6 +723,7 @@ export function createMiniEmotionBall(el, opts = {}) {
         state: "idle",
         level: 0,
         micStandby: true,
+        magicBall: keepHostRole,
       });
       drawnFrame = lastFrame;
       applyMiniEmotionBallFrame(el, lastFrame, {
@@ -741,6 +753,7 @@ export function createMiniEmotionBall(el, opts = {}) {
       time: reducedMotion ? 0 : time,
       reducedMotion,
       liveBlue: keepHostRole && micState === "listening",
+      magicBall: keepHostRole,
     });
     displayHue = lerpHue(displayHue, lastFrame.hue, 0.22);
     displaySat = smoothStep(displaySat, lastFrame.sat, 0.22);
@@ -773,12 +786,13 @@ export function createMiniEmotionBall(el, opts = {}) {
         state: drawState,
         emotion: drawn.emotion,
         compact: true,
+        magicBall: keepHostRole,
         wobble: drawn.wobble,
         squash: drawn.squash,
         spin: drawn.spin,
         reducedMotion,
         live: drawn.live,
-        face: true,
+        face: !keepHostRole,
       });
     }
     rafId = typeof globalThis.requestAnimationFrame === "function"
