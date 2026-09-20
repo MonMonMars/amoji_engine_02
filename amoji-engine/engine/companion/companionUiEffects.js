@@ -292,6 +292,7 @@ export function switchUiTabPanel(doc, cfg) {
   if (!nextPanel) return nextId;
 
   for (const tab of tabs) {
+    if (!tab?.classList) continue;
     tab.classList.toggle("active", tab.dataset.tab === nextId);
   }
 
@@ -315,11 +316,17 @@ export function switchUiTabPanel(doc, cfg) {
     nextPanel.classList.add("ui-tab-entering");
     scheduleFrame(doc, () => {
       scheduleFrame(doc, () => {
+        if (typeof nextPanel.isConnected === "boolean" && !nextPanel.isConnected) {
+          return;
+        }
         nextPanel.classList.remove("ui-tab-entering");
         nextPanel.classList.add("ui-tab-active");
       });
     });
     viewOf(doc).setTimeout(() => {
+      if (typeof nextPanel.isConnected === "boolean" && !nextPanel.isConnected) {
+        return;
+      }
       nextPanel.classList.remove("ui-tab-active");
     }, durationMs);
   };
@@ -328,6 +335,13 @@ export function switchUiTabPanel(doc, cfg) {
     currentPanel.classList.add("ui-tab-leaving");
     currentPanel.classList.remove("ui-tab-active");
     viewOf(doc).setTimeout(() => {
+      if (
+        typeof currentPanel.isConnected === "boolean" &&
+        !currentPanel.isConnected
+      ) {
+        revealNext();
+        return;
+      }
       currentPanel.classList.add("hidden");
       currentPanel.classList.remove("ui-tab-leaving");
       revealNext();

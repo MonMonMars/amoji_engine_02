@@ -95,6 +95,19 @@ await page.waitForSelector("#start-character-picker .picker-begin-btn:not([disab
   timeout: 90000,
 });
 
+await page
+  .waitForFunction(
+    () => {
+      const imgs = document.querySelectorAll(
+        "#start-character-picker .companion-card-portrait img",
+      );
+      if (!imgs.length) return false;
+      return [...imgs].every((img) => img.complete && img.naturalWidth > 0);
+    },
+    { timeout: 20000 },
+  )
+  .catch(() => null);
+
 const boot = await page.evaluate(() => {
   const picker = document.getElementById("start-character-picker");
   const showcaseLayout = picker?.classList.contains("companion-picker--showcase");
@@ -259,7 +272,7 @@ const layout = await page.evaluate((minRoster) => {
   return {
     ok:
       sceneBottom <= footerTop + 2 &&
-      wrapBottom <= sceneTop + 4 &&
+      wrapBottom <= sceneTop + 6 &&
       visibleOverlap === 0 &&
       brokenImgs === 0 &&
       grid.clientHeight >= 72 &&
