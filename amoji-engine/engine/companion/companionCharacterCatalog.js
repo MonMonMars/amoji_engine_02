@@ -67,6 +67,12 @@ import {
   rosterVrmBasename,
 } from "./rosterVrmAssets.mjs";
 import { AMOJI_MODEL_REVISION } from "./companionCharacterMigration.mjs";
+import {
+  LEGACY_CHARACTER_ALIASES,
+  normalizeLegacyRosterCharacterId,
+} from "./companionLegacyRosterIds.js";
+
+export { LEGACY_CHARACTER_ALIASES };
 
 export { ROSTER_LOCKED_NUMBERS, TRIAL_CHARACTER_IDS };
 export {
@@ -242,7 +248,7 @@ const ENGLISH_RULES = [
  * @param {string | null | undefined} id
  */
 export function getCharacter(id) {
-  const key = String(id || "nova").toLowerCase();
+  const key = normalizeRosterCharacterId(id);
   const def = COMPANION_CHARACTERS[key] || COMPANION_CHARACTERS.nova;
   return {
     ...def,
@@ -259,41 +265,11 @@ export function getCharacter(id) {
  *   storage?: Storage | null,
  * }} [opts]
  */
-/** Legacy URL ids → current roster ids (e.g. lite secretary links used `kate`). */
-export const LEGACY_CHARACTER_ALIASES = Object.freeze({
-  kate: "mio",
-  olivia: "yuki",
-  lydia: "hina",
-  erika: "yume",
-  rose: "sakura",
-  sora: "sakura",
-  aria: "celeste",
-  chibi: "nana",
-  shiro: "nana",
-  jennifer: "sumi",
-  poly: "lumi",
-  polydancer: "lumi",
-  aesthe: "vera",
-  aesthetica: "vera",
-  chad: "robert",
-  david: "mikel",
-  hugo: "mimi",
-  rabbit: "mimi",
-  quinn: "mimi",
-  kai: "rex",
-  girl: "amoji",
-  amoji_girl: "amoji",
-});
-
 /**
  * @param {string | null | undefined} id
  */
 export function normalizeRosterCharacterId(id) {
-  const key = String(id || "nova").trim().toLowerCase();
-  if (COMPANION_CHARACTERS[key]) return key;
-  const mapped = LEGACY_CHARACTER_ALIASES[key];
-  if (mapped && COMPANION_CHARACTERS[mapped]) return mapped;
-  return "nova";
+  return normalizeLegacyRosterCharacterId(id);
 }
 
 /**
@@ -310,6 +286,32 @@ export function migrateLegacyCharacterStorage(storage = globalThis.localStorage)
   } catch {
     return null;
   }
+}
+
+/**
+ * Rewrite ?character= legacy ids in the URL so bookmarks show the new roster id.
+ * @returns {string | null} canonical id if the URL was updated
+ */
+export function migrateLegacyCharacterUrlParam(
+  locationLike = globalThis.location,
+) {
+  if (!locationLike?.searchParams) return null;
+  const raw = String(locationLike.searchParams.get("character") || "").trim();
+  if (!raw) return null;
+  const next = normalizeRosterCharacterId(raw);
+  if (next === raw.toLowerCase()) return next;
+  try {
+    const url = new URL(locationLike.href);
+    url.searchParams.set("character", next);
+    globalThis.history?.replaceState?.(
+      {},
+      "",
+      `${url.pathname}${url.search}${url.hash}`,
+    );
+  } catch {
+    /* ignore */
+  }
+  return next;
 }
 
 export function resolveCharacterId(opts = {}) {

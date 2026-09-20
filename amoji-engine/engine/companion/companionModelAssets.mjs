@@ -2,8 +2,12 @@
  * Model URL helpers — cache keys, deploy cache-bust, roster fetch paths.
  */
 import { AMOJI_BUILD } from "./buildVersion.mjs";
-import { AMOJI_MODEL_REVISION } from "./companionCharacterMigration.mjs";
-import { COMPANION_ROSTER_CHARACTERS } from "./companionCharacterRoster.js";
+import {
+  AMOJI_MODEL_REVISION,
+  isRetiredModelUrl,
+} from "./companionCharacterMigration.mjs";
+import { rosterModelUrl } from "./rosterVrmAssets.mjs";
+import { normalizeLegacyRosterCharacterId } from "./companionLegacyRosterIds.js";
 
 export const COMPANION_MODEL_ASSETS_SCHEMA = "amoji.companionModelAssets.v1";
 
@@ -40,7 +44,18 @@ export function modelFetchUrl(baseUrl, buildId) {
  */
 export function characterModelFetchUrl(characterId, langCode = "yue", buildId) {
   void langCode;
-  const id = String(characterId || "nova").toLowerCase();
-  const def = COMPANION_ROSTER_CHARACTERS[id] || COMPANION_ROSTER_CHARACTERS.nova;
-  return modelFetchUrl(def.modelUrl, buildId);
+  const id = normalizeLegacyRosterCharacterId(characterId);
+  return modelFetchUrl(rosterModelUrl(id), buildId);
+}
+
+/**
+ * Never fetch retired VRM basenames — map to canonical roster path.
+ * @param {string | null | undefined} url
+ * @param {string | null | undefined} [characterId]
+ */
+export function coerceCanonicalModelFetchUrl(url, characterId) {
+  const raw = String(url || "").trim();
+  if (!raw || !isRetiredModelUrl(raw)) return raw;
+  const id = normalizeLegacyRosterCharacterId(characterId);
+  return modelFetchUrl(rosterModelUrl(id));
 }

@@ -101,6 +101,9 @@ describe("companionCharacterCatalog v363 VTuber roster", () => {
     expect(LEGACY_CHARACTER_ALIASES.chad).toBe("robert");
     expect(resolveCharacterId({ characterParam: "sora" })).toBe("sakura");
     expect(resolveCharacterId({ characterParam: "hugo" })).toBe("mimi");
+    expect(getCharacter("chad").id).toBe("robert");
+    expect(getCharacter("olivia").id).toBe("yuki");
+    expect(getCharacter("kate").name.en).toBe(getCharacter("mio").name.en);
   });
 
   it("maps legacy id kate to mio (companion-kate.vrm roster slot)", () => {

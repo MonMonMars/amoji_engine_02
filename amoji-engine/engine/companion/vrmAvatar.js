@@ -204,7 +204,16 @@ export async function createVrmAvatar(opts) {
     canvas,
     controlsElement: opts.controlsElement,
   });
-  const modelUrl = opts.modelUrl || "/prototypes/assets/companion-girl.vrm";
+  let modelUrl = opts.modelUrl || "/prototypes/assets/companion-girl.vrm";
+  try {
+    const { coerceCanonicalModelFetchUrl } = await import(
+      "./companionModelAssets.mjs"
+    );
+    modelUrl =
+      coerceCanonicalModelFetchUrl(modelUrl, opts.characterId) || modelUrl;
+  } catch {
+    /* ignore */
+  }
 
   let renderer;
   try {
