@@ -482,6 +482,27 @@ record(
   JSON.stringify(idleLimbs),
 );
 
+const springGravity = await page.evaluate(() => {
+  const joints = window.__amojiAvatar?.vrm?.springBoneManager?.joints;
+  if (!joints || typeof joints[Symbol.iterator] !== "function") {
+    return { ok: false, reason: "no-joints" };
+  }
+  let count = 0;
+  let maxY = -Infinity;
+  for (const joint of joints) {
+    const dir = joint?.settings?.gravityDir;
+    if (!dir) continue;
+    count += 1;
+    maxY = Math.max(maxY, Number(dir.y) || 0);
+  }
+  return { ok: count > 0 && maxY < -0.5, count, maxY };
+});
+record(
+  "spring gravity points down (no wind from below)",
+  springGravity.ok,
+  JSON.stringify(springGravity),
+);
+
 await page.waitForFunction(() => !!document.getElementById("activity-rail"), {
   timeout: 30000,
 });

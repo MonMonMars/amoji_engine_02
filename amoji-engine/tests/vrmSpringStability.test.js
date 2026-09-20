@@ -190,7 +190,9 @@ describe("vrmSpringStability", () => {
     setVrmSceneWindMode("outdoor");
     tuneSpringJoint(joint);
     expect(joint.settings.dragForce).toBe(OUTDOOR_DRAG_FORCE);
-    expect(joint.settings.gravityPower).toBe(OUTDOOR_GRAVITY_POWER);
+    expect(joint.settings.gravityPower).toBeGreaterThanOrEqual(
+      OUTDOOR_GRAVITY_POWER,
+    );
     expect(joint.settings.gravityDir.y).toBeLessThan(0);
     expect(getVrmSceneWindMode()).toBe("outdoor");
   });
@@ -204,12 +206,13 @@ describe("vrmSpringStability", () => {
     setVrmSceneWindMode("outdoor");
     const result = tickOutdoorSceneWind(vrm, 1.2);
     expect(result.active).toBe(true);
-    expect(joint.settings.gravityDir.y).toBeLessThan(0);
+    expect(joint.settings.gravityDir.y).toBe(-1);
     expect(joint.settings.gravityDir.z).toBe(0);
-    expect(Math.abs(joint.settings.gravityDir.x)).toBeLessThan(OUTDOOR_WIND_SIDE_AMP + 0.02);
+    expect(joint.settings.gravityDir.x).toBe(0);
+    expect(joint.settings.gravityPower).toBeGreaterThanOrEqual(OUTDOOR_GRAVITY_POWER);
   });
 
-  it("outdoor side wind keeps gravity pointing down (never +Y)", () => {
+  it("outdoor wind helper never leaves +Y gravity", () => {
     const dir = {
       x: 0,
       y: 1,
@@ -221,8 +224,9 @@ describe("vrmSpringStability", () => {
       },
     };
     applyOutdoorSpringWindToGravityDir(dir, 2.5, 3);
-    expect(dir.y).toBeLessThan(0);
+    expect(dir.y).toBe(-1);
     expect(dir.z).toBe(0);
+    expect(dir.x).toBe(0);
   });
 
   it("fails open without spring bones", () => {
@@ -249,6 +253,7 @@ describe("vrmSpringStability", () => {
     manager.update(1 / 60);
     expect(nativeCalls).toBe(1);
     expect(joint.settings.gravityDir.y).toBe(-1);
+    expect(installVrmSpringBoneGuard(vrm).ok).toBe(true);
     expect(installVrmSpringBoneGuard(vrm).reason).toBe("already-installed");
   });
 

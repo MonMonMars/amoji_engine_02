@@ -309,17 +309,18 @@ export async function createVrmAvatar(opts) {
   bodyMotion.setIdleGender?.(
     characterGender(opts.characterId || "nova", "yue"),
   );
+  /** @type {"indoor" | "outdoor"} */
+  let sceneEnvironment = "indoor";
+  let sceneBackgroundId = null;
   const bootIdleRest = detectVrmIdleRestRotations(vrm);
   bodyMotion.setArmRestRotations?.(bootIdleRest.arms);
   bodyMotion.setLegRestRotations?.(bootIdleRest.legs);
   bodyMotion.setArmBind?.(bootIdleRest.bind);
   bodyMotion.snapToRestPose?.();
+  configureVrmSpringStability(vrm, sceneEnvironment);
   const treatProp = createCompanionTreatProp(vrm.humanoid);
   let springIdleState = createIdleSpringRecenterState();
   let springTalkState = createIdleSpringRecenterState();
-  /** @type {"indoor" | "outdoor"} */
-  let sceneEnvironment = "indoor";
-  let sceneBackgroundId = null;
   /** @type {ReturnType<typeof createMotionTransitionState>} */
   let motionTransitionState = null;
   /** @type {string | null} */

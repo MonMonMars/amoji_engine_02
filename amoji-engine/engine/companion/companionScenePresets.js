@@ -1,7 +1,10 @@
 /**
  * Scene presets — background swatches and per-character outfit wardrobe.
  */
-export const COMPANION_SCENE_PRESETS_SCHEMA = "amoji.companionScenePresets.v5-png";
+export const COMPANION_SCENE_PRESETS_SCHEMA = "amoji.companionScenePresets.v6-default-indoor";
+
+/** First-run default — indoor studio avoids outdoor spring breeze on new users. */
+export const DEFAULT_SCENE_BACKGROUND_ID = "studio";
 
 export const SCENE_STORAGE_KEY = "amoji.companion.scenePreset";
 export const CHAT_PANEL_STORAGE_KEY = "amoji.companion.chatPanelVisible";
@@ -97,13 +100,25 @@ export function loadStoredSceneBackground(isEnglish = false) {
   void isEnglish;
   try {
     const raw = localStorage.getItem(SCENE_STORAGE_KEY);
-    if (!raw) return SCENE_BACKGROUND_PRESETS[0];
+    if (!raw) {
+      return (
+        SCENE_BACKGROUND_PRESETS.find((p) => p.id === DEFAULT_SCENE_BACKGROUND_ID) ||
+        SCENE_BACKGROUND_PRESETS[0]
+      );
+    }
     const parsed = JSON.parse(raw);
     const id = resolveSceneBackgroundId(parsed?.backgroundId);
     const preset = SCENE_BACKGROUND_PRESETS.find((p) => p.id === id);
-    return preset || SCENE_BACKGROUND_PRESETS[0];
+    return (
+      preset ||
+      SCENE_BACKGROUND_PRESETS.find((p) => p.id === DEFAULT_SCENE_BACKGROUND_ID) ||
+      SCENE_BACKGROUND_PRESETS[0]
+    );
   } catch {
-    return SCENE_BACKGROUND_PRESETS[0];
+    return (
+      SCENE_BACKGROUND_PRESETS.find((p) => p.id === DEFAULT_SCENE_BACKGROUND_ID) ||
+      SCENE_BACKGROUND_PRESETS[0]
+    );
   }
 }
 

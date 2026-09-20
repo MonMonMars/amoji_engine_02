@@ -47,6 +47,12 @@ describe("companionScenePresets", () => {
     expect(resolveSceneBackgroundId("studio")).toBe("studio");
   });
 
+  it("defaults new users to indoor studio (not outdoor night city)", () => {
+    const loaded = loadStoredSceneBackground(true);
+    expect(loaded.id).toBe("studio");
+    expect(loaded.environment).toBe("indoor");
+  });
+
   it("persists and loads background choice", () => {
     persistSceneBackground("sunset");
     const loaded = loadStoredSceneBackground(true);
