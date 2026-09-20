@@ -24,7 +24,7 @@ describe("companionModelAssets", () => {
 
   it("characterModelFetchUrl resolves roster paths", () => {
     const url = characterModelFetchUrl("rex", "en", "b1");
-    expect(url).toContain("companion-kai.vrm");
+    expect(url).toContain("companion-rex.vrm");
     expect(url).toContain("v=b1");
   });
 });

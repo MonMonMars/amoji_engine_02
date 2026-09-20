@@ -12,8 +12,8 @@ const assets = join(dirname(fileURLToPath(import.meta.url)), "../../prototypes/a
 describe("companionVrmInspect", () => {
   it("reports Kizuna as highest triangle count in roster", () => {
     const kizuna = inspectVrmBuffer(
-      readFileSync(join(assets, "kizuna-kamatte.vrm")),
-      "kizuna-kamatte.vrm",
+      readFileSync(join(assets, "companion-kizuna.vrm")),
+      "companion-kizuna.vrm",
     );
     const nova = inspectVrmBuffer(
       readFileSync(join(assets, "companion-nova.vrm")),
@@ -33,12 +33,12 @@ describe("companionVrmInspect", () => {
   it("prioritizes high-poly face models in preload order", () => {
     const sorted = sortModelUrlsForPreload([
       "/prototypes/assets/companion-chibi.vrm",
-      "/prototypes/assets/kizuna-kamatte.vrm",
+      "/prototypes/assets/companion-kizuna.vrm",
       "/prototypes/assets/companion-nova.vrm",
       "/prototypes/assets/companion-alicia.vrm",
       "/prototypes/assets/companion-ember.vrm",
     ]);
-    expect(sorted[0]).toContain("kizuna-kamatte");
+    expect(sorted[0]).toContain("companion-kizuna");
     expect(sorted[1]).toContain("companion-alicia");
     expect(sorted[2]).toContain("companion-ember");
     expect(sorted[3]).toContain("companion-nova");

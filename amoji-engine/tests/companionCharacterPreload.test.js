@@ -22,13 +22,13 @@ describe("companionCharacterPreload", () => {
     expect(urls.length).toBe(CHARACTER_IDS.length);
     expect(new Set(urls).size).toBe(urls.length);
     expect(urls.every((u) => /\.vrm($|\?)/i.test(u))).toBe(true);
-    expect(urls.some((u) => u.includes("kizuna-kamatte"))).toBe(true);
-    expect(urls.some((u) => u.includes("companion-olivia"))).toBe(true);
+    expect(urls.some((u) => u.includes("companion-kizuna"))).toBe(true);
+    expect(urls.some((u) => u.includes("companion-yuki"))).toBe(true);
   });
 
   it("preloads Kizuna high-poly model before other roster VRMs", () => {
     const urls = sortModelUrlsForPreload(uniqueCharacterModelUrls("en"));
-    expect(urls[0]).toContain("kizuna-kamatte.vrm");
+    expect(urls[0]).toContain("companion-kizuna.vrm");
   });
 
   it("preloads preview images only by default (no roster VRM download)", async () => {
