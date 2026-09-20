@@ -11,7 +11,7 @@ import {
 
 export const COMPANION_PRELOAD_SCHEMA = "amoji.companionPreload.v2";
 
-export const DEFAULT_VRM_URL = "/prototypes/assets/companion-girl.vrm";
+export const DEFAULT_VRM_URL = "/prototypes/assets/companion-nova.vrm";
 export const DEFAULT_MOTIONS_BASIC_URL = "/api/motions?pack=basic";
 export const DEFAULT_MOTIONS_EXTENSIONS_URL = "/api/motions?pack=extensions";
 export const DEFAULT_MOTIONS_PREMIUM_URL = "/api/motions?pack=premium";

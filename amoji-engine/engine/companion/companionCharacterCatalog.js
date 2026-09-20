@@ -62,6 +62,10 @@ import {
   TRIAL_CHARACTER_IDS,
   ROSTER_LOCKED_NUMBERS,
 } from "./companionCharacterRoster.js";
+import {
+  LEGACY_VRM_BASENAME_ALIASES,
+  rosterVrmBasename,
+} from "./rosterVrmAssets.mjs";
 
 export { ROSTER_LOCKED_NUMBERS, TRIAL_CHARACTER_IDS };
 export {
@@ -289,39 +293,13 @@ export function resolveCharacterId(opts = {}) {
   }
 
   const model = String(opts.modelUrl || "").toLowerCase();
-  /** @type {[string, string][]} */
-  const modelMap = [
-    ["companion-girl.vrm", "amoji"],
-    ["kizuna-kamatte.vrm", "kizuna"],
-    ["companion-nova.vrm", "nova"],
-    ["companion-alicia.vrm", "alicia"],
-    ["companion-ember.vrm", "ember"],
-    ["companion-sky.vrm", "sky"],
-    ["companion-kai.vrm", "rex"],
-    ["companion-olivia.vrm", "yuki"],
-    ["companion-lydia.vrm", "hina"],
-    ["companion-kate.vrm", "mio"],
-    ["companion-jennifer.vrm", "sumi"],
-    ["companion-polydancer.vrm", "lumi"],
-    ["companion-aesthetica.vrm", "vera"],
-    ["companion-chad.vrm", "robert"],
-    ["companion-david.vrm", "mikel"],
-    ["companion-hugo.vrm", "mimi"],
-    ["companion-shiro.vrm", "nana"],
-    ["companion-rose.vrm", "sakura"],
-    ["companion-chibi.vrm", "nana"],
-    ["companion-robert.vrm", "robert"],
-    ["companion-mikel.vrm", "mikel"],
-    ["companion-rabbit.vrm", "mimi"],
-    ["companion-avatarsample-a.vrm", "celeste"],
-    ["companion-avatarsample-b.vrm", "mei"],
-    ["companion-avatarsample-c.vrm", "yume"],
-    ["companion-vroid-female.vrm", "luna"],
-    ["companion-vroid-male.vrm", "atlas"],
-    ["companion-erika.vrm", "yume"],
-  ];
-  for (const [needle, id] of modelMap) {
-    if (model.includes(needle)) return normalizeRosterCharacterId(id);
+  for (const id of CHARACTER_IDS) {
+    if (model.includes(rosterVrmBasename(id))) {
+      return normalizeRosterCharacterId(id);
+    }
+  }
+  for (const [basename, id] of Object.entries(LEGACY_VRM_BASENAME_ALIASES)) {
+    if (model.includes(basename)) return normalizeRosterCharacterId(id);
   }
   if (opts.avatarPrefer === "gltf" && model.includes(".glb")) {
     return "amoji";

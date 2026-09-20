@@ -117,8 +117,8 @@ export function inspectVrmBuffer(buffer, fileName = "model.vrm") {
 
 /** Model URLs to prefetch first (high-poly face flagship). */
 export const HIGH_POLY_FACE_MODEL_HINTS = [
-  "/prototypes/assets/kizuna-kamatte.vrm",
-  "/prototypes/assets/companion-kai.vrm",
+  "/prototypes/assets/companion-kizuna.vrm",
+  "/prototypes/assets/companion-rex.vrm",
   "/prototypes/assets/companion-alicia.vrm",
   "/prototypes/assets/companion-ember.vrm",
   "/prototypes/assets/companion-nova.vrm",

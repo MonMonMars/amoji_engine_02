@@ -23,7 +23,7 @@ describe("companionPreload", () => {
   it("heavy boot starts parallel VRM and motion pack fetches", async () => {
     const vrmBytes = new Uint8Array([1, 2, 3]).buffer;
     const fetchImpl = vi.fn(async (url) => {
-      if (String(url).includes("companion-girl.vrm")) {
+      if (String(url).includes("companion-nova.vrm")) {
         return {
           ok: true,
           arrayBuffer: async () => vrmBytes,

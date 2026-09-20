@@ -77,11 +77,12 @@ describe("companionCharacterCatalog v363 VTuber roster", () => {
     expect(getCharacter("nova").previewImage).toBe(characterPreviewImage("nova"));
     expect(getCharacter("kizuna").previewImage).toBe(characterPreviewImage("kizuna"));
     expect(getCharacter("sky").previewImage).toBe(characterPreviewImage("sky"));
-    expect(getCharacter("yuki").modelUrl).toContain("companion-olivia.vrm");
-    expect(getCharacter("hina").modelUrl).toContain("companion-lydia.vrm");
-    expect(getCharacter("mio").modelUrl).toContain("companion-kate.vrm");
-    expect(getCharacter("nana").modelUrl).toContain("companion-chibi.vrm");
-    expect(getCharacter("lumi").modelUrl).toContain("companion-polydancer.vrm");
+    expect(getCharacter("yuki").modelUrl).toContain("companion-yuki.vrm");
+    expect(getCharacter("hina").modelUrl).toContain("companion-hina.vrm");
+    expect(getCharacter("mio").modelUrl).toContain("companion-mio.vrm");
+    expect(getCharacter("nana").modelUrl).toContain("companion-nana.vrm");
+    expect(getCharacter("lumi").modelUrl).toContain("companion-lumi.vrm");
+    expect(getCharacter("sakura").modelUrl).toContain("companion-sakura.vrm");
   });
 
   it("assigns one preview path per roster id", () => {
@@ -107,14 +108,17 @@ describe("companionCharacterCatalog v363 VTuber roster", () => {
   });
 
   it("maps curated model urls", () => {
-    expect(resolveCharacterId({ modelUrl: "/prototypes/assets/companion-kai.vrm" })).toBe("rex");
-    expect(resolveCharacterId({ modelUrl: "/prototypes/assets/companion-olivia.vrm" })).toBe(
+    expect(resolveCharacterId({ modelUrl: "/prototypes/assets/companion-rex.vrm" })).toBe("rex");
+    expect(resolveCharacterId({ modelUrl: "/prototypes/assets/companion-yuki.vrm" })).toBe(
       "yuki",
     );
     expect(resolveCharacterId({ modelUrl: "/prototypes/assets/companion-lydia.vrm" })).toBe("hina");
-    expect(resolveCharacterId({ modelUrl: "/prototypes/assets/companion-kate.vrm" })).toBe("mio");
-    expect(resolveCharacterId({ modelUrl: "/prototypes/assets/companion-girl.vrm" })).toBe("amoji");
-    expect(resolveCharacterId({ modelUrl: "/prototypes/assets/companion-chibi.vrm" })).toBe("nana");
+    expect(resolveCharacterId({ modelUrl: "/prototypes/assets/companion-mio.vrm" })).toBe("mio");
+    expect(resolveCharacterId({ modelUrl: "/prototypes/assets/companion-amoji.vrm" })).toBe(
+      "amoji",
+    );
+    expect(resolveCharacterId({ modelUrl: "/prototypes/assets/companion-nana.vrm" })).toBe("nana");
+    expect(resolveCharacterId({ modelUrl: "/prototypes/assets/companion-kai.vrm" })).toBe("rex");
     expect(resolveCharacterId({ modelUrl: "/prototypes/assets/companion-robert.vrm" })).toBe(
       "robert",
     );
@@ -211,7 +215,7 @@ describe("companionCharacterCatalog v363 VTuber roster", () => {
   });
 
   it("exposes avatar config per character", () => {
-    expect(characterAvatarConfig("rex", "yue").modelUrl).toContain("companion-kai.vrm");
+    expect(characterAvatarConfig("rex", "yue").modelUrl).toContain("companion-rex.vrm");
     expect(characterAvatarConfig("mikel", "yue").modelUrl).toContain("companion-mikel.vrm");
     expect(characterGreetingPerformance("sakura").emotion).toBe("happy");
     expect(characterHungryPerformance("mimi").emotion).toBeTruthy();

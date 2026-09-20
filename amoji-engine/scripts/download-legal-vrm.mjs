@@ -1,87 +1,79 @@
 #!/usr/bin/env node
 /**
- * Download legally usable VRM test models into prototypes/assets/.
- * Sources: VRoid AvatarSample (via madjin/vrm-samples mirror), ToxSam 100Avatars CC0.
- *
- * Do NOT use this script to rip assets from commercial companion apps.
+ * Refresh roster VRM files — one `companion-<id>.vrm` per picker character.
+ * Sources: VTubeMe CC-BY, VRoid samples, ToxSam CC0 (see rosterVrmAssets.mjs).
  */
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { RETIRED_VRM_BASENAMES } from "../engine/companion/companionCharacterMigration.mjs";
+import {
+  ROSTER_VRM_DOWNLOADS,
+  rosterVrmBasename,
+  assertRosterDownloadCoverage,
+} from "../engine/companion/rosterVrmAssets.mjs";
+import { ROSTER_CHARACTER_IDS } from "../engine/companion/companionCharacterRoster.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ASSETS = path.resolve(__dirname, "../../prototypes/assets");
+const FORCE = process.env.REFRESH_ROSTER_VRM === "1" || process.env.CI === "true";
 
-/** @type {{ file: string, url: string, license: string, source: string, note?: string }[]} */
-const LEGAL_DOWNLOADS = [
-  {
-    file: "companion-avatarsample-a.vrm",
-    url: "https://raw.githubusercontent.com/madjin/vrm-samples/master/vroid/stable/AvatarSample_A.vrm",
-    license: "VRoid AvatarSample (pixiv terms — commercial OK, not CC0)",
-    source: "https://vroid.pixiv.help/hc/en-us/articles/4402394424089",
-    note: "Industry-standard female VRoid baseline for lip-sync / spring-bone testing",
-  },
-  {
-    file: "companion-avatarsample-b.vrm",
-    url: "https://raw.githubusercontent.com/madjin/vrm-samples/master/vroid/stable/AvatarSample_B.vrm",
-    license: "VRoid AvatarSample (pixiv terms — commercial OK, not CC0)",
-    source: "https://hub.vroid.com/en/characters/7939147878897061040/models/2292219474373673889",
-    note: "Most common VRoid reference model used by VRM companion apps (Ami-style)",
-  },
-  {
-    file: "companion-vroid-male.vrm",
-    url: "https://raw.githubusercontent.com/madjin/vrm-samples/master/vroid/masc_vroid.vrm",
-    license: "VRoid sample (pixiv terms)",
-    source: "https://github.com/madjin/vrm-samples",
-    note: "Male VRoid proportions — boyfriend / secretary male reference rig",
-  },
-  {
-    file: "companion-vroid-female.vrm",
-    url: "https://raw.githubusercontent.com/madjin/vrm-samples/master/vroid/fem_vroid.vrm",
-    license: "VRoid sample (pixiv terms)",
-    source: "https://github.com/madjin/vrm-samples",
-  },
-  {
-    file: "companion-polydancer.vrm",
-    url: "https://arweave.net/jPOg-G0MPH55ZQmamFhT9f8cHn-hjeAQ0mRO5gWeKMQ",
-    license: "CC0 1.0 — ToxSam 100Avatars #021 Polydancer",
-    source: "https://opensourceavatars.com",
-  },
-  {
-    file: "companion-jennifer.vrm",
-    url: "https://arweave.net/LKp1uJLAZFmncdCNSZ8oopU7ZElXTvn4BmM4CUcFclc",
-    license: "CC0 1.0 — ToxSam 100Avatars #052 Jennifer",
-    source: "https://opensourceavatars.com",
-  },
-  {
-    file: "companion-aesthetica.vrm",
-    url: "https://arweave.net/orNIoMYKafN-EyZRft2No1ZQsPNl3XUcMXhfT2rKQVc",
-    license: "CC0 1.0 — ToxSam 100Avatars #062 Aesthetica",
-    source: "https://opensourceavatars.com",
-  },
-];
+assertRosterDownloadCoverage(ROSTER_CHARACTER_IDS);
 
-async function downloadOne(entry) {
-  const dest = path.join(ASSETS, entry.file);
-  try {
-    const stat = await fs.stat(dest);
-    if (stat.size > 100_000) {
-      console.log("skip (exists)", entry.file, `${Math.round(stat.size / 1024)}KB`);
-      return { file: entry.file, skipped: true };
-    }
-  } catch {
-    /* download */
-  }
-  console.log("fetch", entry.file);
-  const res = await fetch(entry.url);
-  if (!res.ok) throw new Error(`${entry.file}: HTTP ${res.status}`);
-  const buf = Buffer.from(await res.arrayBuffer());
+/**
+ * @param {string} destName
+ * @param {Buffer} buf
+ */
+async function writeVrm(destName, buf) {
+  const dest = path.join(ASSETS, destName);
   await fs.writeFile(dest, buf);
-  const readme = `${entry.file}\n\nSource: ${entry.source}\nLicense: ${entry.license}\n${entry.note ? `Note: ${entry.note}\n` : ""}Downloaded by amoji-engine/scripts/download-legal-vrm.mjs\n`;
-  await fs.writeFile(dest.replace(/\.vrm$/, ".README.txt"), readme);
-  console.log("saved", entry.file, `${Math.round(buf.length / 1024)}KB`);
-  return { file: entry.file, bytes: buf.length };
+  console.log("saved", destName, `${Math.round(buf.length / 1024)}KB`);
+}
+
+/**
+ * @param {{ id: string, url?: string, copyFrom?: string, minBytes?: number }} entry
+ */
+async function syncRosterEntry(entry) {
+  const outName = rosterVrmBasename(entry.id);
+  const dest = path.join(ASSETS, outName);
+  const minBytes = entry.minBytes ?? 80_000;
+
+  if (!FORCE) {
+    try {
+      const stat = await fs.stat(dest);
+      if (stat.size >= minBytes) {
+        console.log("skip (exists)", outName, `${Math.round(stat.size / 1024)}KB`);
+        return { id: entry.id, skipped: true };
+      }
+    } catch {
+      /* fetch or copy */
+    }
+  }
+
+  if (entry.url) {
+    console.log("fetch", outName, entry.url);
+    const res = await fetch(entry.url);
+    if (!res.ok) throw new Error(`${outName}: HTTP ${res.status} ${entry.url}`);
+    const buf = Buffer.from(await res.arrayBuffer());
+    if (buf.length < minBytes) {
+      throw new Error(`${outName}: downloaded ${buf.length} bytes (< ${minBytes})`);
+    }
+    await writeVrm(outName, buf);
+    return { id: entry.id, bytes: buf.length };
+  }
+
+  if (entry.copyFrom) {
+    const src = path.join(ASSETS, entry.copyFrom);
+    const buf = await fs.readFile(src);
+    if (buf.length < minBytes) {
+      throw new Error(`${entry.copyFrom}: only ${buf.length} bytes`);
+    }
+    await writeVrm(outName, buf);
+    console.log("copied", entry.copyFrom, "→", outName);
+    return { id: entry.id, copied: entry.copyFrom, bytes: buf.length };
+  }
+
+  throw new Error(`roster entry ${entry.id} needs url or copyFrom`);
 }
 
 async function pruneRetiredModels() {
@@ -105,10 +97,10 @@ async function main() {
   await fs.mkdir(ASSETS, { recursive: true });
   await pruneRetiredModels();
   const results = [];
-  for (const entry of LEGAL_DOWNLOADS) {
-    results.push(await downloadOne(entry));
+  for (const entry of ROSTER_VRM_DOWNLOADS) {
+    results.push(await syncRosterEntry(entry));
   }
-  console.log("done", results.length, "models");
+  console.log("roster vrm sync done", results.length, "characters");
 }
 
 main().catch((err) => {

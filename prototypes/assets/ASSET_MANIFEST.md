@@ -30,9 +30,17 @@ See also: `amoji-engine/docs/3D_MODEL_INVENTORY.md` (how to read the external mo
 node amoji-engine/scripts/download-legal-vrm.mjs
 ```
 
-## Curated roster (v363 — 23 characters)
+## Curated roster (v401 — 23 characters)
 
-See `amoji-engine/docs/3D_MODEL_INVENTORY.md` for the full id → VRM mapping.
+On-disk VRMs are **`companion-<characterId>.vrm`** (matches picker id — e.g. `companion-sakura.vrm`).
+
+Refresh after license/source updates:
+
+```bash
+REFRESH_ROSTER_VRM=1 node amoji-engine/scripts/download-legal-vrm.mjs
+```
+
+See `amoji-engine/docs/3D_MODEL_INVENTORY.md` for sources.
 
 Roster source of truth: `amoji-engine/engine/companion/companionCharacterRoster.js`
 

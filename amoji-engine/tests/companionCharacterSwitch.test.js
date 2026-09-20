@@ -12,7 +12,7 @@ describe("companionCharacterSwitch helpers", () => {
     const prompt = buildCharacterSystemPrompt(id, true);
     const lines = characterTapLines(id, true);
 
-    expect(config.modelUrl).toContain("kizuna-kamatte.vrm");
+    expect(config.modelUrl).toContain("companion-kizuna.vrm");
     expect(config.avatarPrefer).toBe("vrm");
     expect(prompt).toMatch(/Kizuna/i);
     expect(lines.some((l) => /Kizuna|believe/i.test(l))).toBe(true);
@@ -23,6 +23,6 @@ describe("companionCharacterSwitch helpers", () => {
     const rex = characterAvatarConfig("rex", "yue");
     expect(nova.voiceId).not.toBe(rex.voiceId);
     expect(nova.modelUrl).not.toBe(rex.modelUrl);
-    expect(rex.modelUrl).toContain("companion-kai.vrm");
+    expect(rex.modelUrl).toContain("companion-rex.vrm");
   });
 });
