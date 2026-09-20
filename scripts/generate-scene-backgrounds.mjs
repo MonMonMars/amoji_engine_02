@@ -20,11 +20,11 @@ const PNG_SCENE_IDS = new Set(["night-city"]);
 const ART_Q = `?v=${encodeURIComponent(PICKER_SCENE_ART_REVISION)}`;
 
 const overlayDefault =
-  "linear-gradient(180deg, rgba(7, 10, 16, 0.25) 0%, rgba(7, 10, 16, 0.55) 55%, rgba(5, 7, 12, 0.82) 100%)";
+  "linear-gradient(180deg, rgba(7, 10, 16, 0.08) 0%, rgba(7, 10, 16, 0.28) 52%, rgba(5, 7, 12, 0.58) 100%)";
 const overlayScene =
-  "linear-gradient(180deg, rgba(7, 10, 16, 0.12) 0%, rgba(5, 7, 12, 0.38) 55%, rgba(3, 5, 10, 0.72) 100%)";
+  "linear-gradient(180deg, rgba(7, 10, 16, 0.04) 0%, rgba(5, 7, 12, 0.18) 50%, rgba(3, 5, 10, 0.48) 100%)";
 const overlayGrok =
-  "linear-gradient(180deg, rgba(3, 3, 10, 0.08) 0%, rgba(2, 2, 8, 0.38) 48%, rgba(2, 2, 8, 0.78) 100%)";
+  "linear-gradient(180deg, rgba(3, 3, 10, 0.04) 0%, rgba(2, 2, 8, 0.22) 48%, rgba(2, 2, 8, 0.62) 100%)";
 
 /** @param {string} presetId */
 function sceneArtFile(presetId) {

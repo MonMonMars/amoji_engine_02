@@ -1,7 +1,7 @@
 /**
  * Scene presets — background swatches and per-character outfit wardrobe.
  */
-export const COMPANION_SCENE_PRESETS_SCHEMA = "amoji.companionScenePresets.v4-art";
+export const COMPANION_SCENE_PRESETS_SCHEMA = "amoji.companionScenePresets.v5-png";
 
 export const SCENE_STORAGE_KEY = "amoji.companion.scenePreset";
 export const CHAT_PANEL_STORAGE_KEY = "amoji.companion.chatPanelVisible";

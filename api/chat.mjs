@@ -2,6 +2,7 @@ import {
   corsHeaders,
   processChatRequest,
 } from "../amoji-engine/engine/companion/chatApiHandler.mjs";
+import { applyApiProtection } from "./_lib/security.mjs";
 
 export default async function handler(req, res) {
   for (const [key, value] of Object.entries(corsHeaders())) {
@@ -9,6 +10,13 @@ export default async function handler(req, res) {
   }
   if (req.method === "OPTIONS") {
     res.status(204).end();
+    return;
+  }
+  const guard = applyApiProtection(req, res, {
+    rateLimit: { key: "chat-api", max: 45, windowMs: 60_000 },
+  });
+  if (!guard.ok) {
+    res.status(guard.status || 429).json({ ok: false, error: guard.error });
     return;
   }
   if (req.method !== "POST") {

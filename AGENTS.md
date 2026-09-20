@@ -55,6 +55,17 @@ Programmatic helper: `formatDemoLinkBlock()` in `amoji-engine/engine/companion/d
 
 **Cache bust:** Bookmark `/play` (not `/companion-full`). Each visit 303s to a unique `/n/<stamp>/full` pathname, sends `Clear-Site-Data: "cache"` on the HTML document only (never `"storage"`, so keys survive), and the page purges Cache Storage on open plus BFCache `pageshow`. Query `?build=` is a fallback only. Before deploy, run `node scripts/sync-build-version.mjs` so HTML `?v=` tags match `AMOJI_BUILD`.
 
+## Scene backgrounds
+
+Regenerate all 22 anime scene PNGs + CSS after editing `scripts/scene-bg-anime-art.mjs`:
+
+```bash
+npm run scene-bg
+node scripts/sync-build-version.mjs
+```
+
+Companion loads `prototypes/companion-scene-backgrounds.css` (linked in `amoji-companion.html` head).
+
 ## Payments & security (IAP)
 
 - **Catalog / verify:** `/api/iap/products`, `/api/iap/verify`, RevenueCat `/api/iap/webhook`
