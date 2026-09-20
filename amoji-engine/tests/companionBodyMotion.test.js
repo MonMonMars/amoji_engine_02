@@ -217,10 +217,14 @@ describe("createCompanionBodyMotion", () => {
       rightLowerArm: { x: 0.12, y: -0.04, z: -0.04, flexAxis: "x" },
     });
     motion.setTalking(false);
-    motion.pulseIdleBeat("breathe", performance.now());
+    motion.resetIdleLife(performance.now());
     for (let i = 0; i < 90; i += 1) motion.update(1 / 30);
     const lua = humanoid.bones.get("leftUpperArm");
     expect(Math.abs(lua.rotation.z)).toBeLessThan(0.22);
+    const head = humanoid.bones.get("head");
+    expect(Math.abs(head.rotation.x) + Math.abs(head.rotation.z)).toBeGreaterThan(
+      0.012,
+    );
   });
 
   it("bends the calibrated knee axis at rest", () => {

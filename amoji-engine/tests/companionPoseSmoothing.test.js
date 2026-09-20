@@ -27,4 +27,13 @@ describe("companionPoseSmoothing", () => {
       poseDampingRate(true, false),
     );
   });
+
+  it("decays missing limb channels toward zero instead of holding stale flex", () => {
+    const current = { forearmL: 0.42, headX: 0.02 };
+    const target = { headX: 0.01 };
+    const next = dampPose(current, target, 1 / 30, 20);
+    expect(next.forearmL).toBeLessThan(0.42);
+    expect(next.forearmL).toBeGreaterThan(0);
+    expect(next.headX).toBeLessThan(0.02);
+  });
 });
