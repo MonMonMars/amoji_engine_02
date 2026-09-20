@@ -788,6 +788,15 @@ async function main() {
     JSON.stringify(sceneOverlay),
   );
 
+  await page.evaluate(() => {
+    document.getElementById("scene-sheet-close")?.click();
+    const bd = document.getElementById("scene-sheet-backdrop");
+    bd?.classList.remove("is-open");
+    bd?.setAttribute("hidden", "");
+    document.body.classList.remove("scene-sheet-open");
+  });
+  await page.waitForTimeout(350);
+
   const starterVisible = await page.evaluate(() => {
     const chips = document.querySelectorAll("#starter-prompts .starter-chip");
     return chips.length >= 4;
