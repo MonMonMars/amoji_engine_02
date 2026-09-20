@@ -8,9 +8,9 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji · Companion</title>
     <script>
-      window.__amojiBuild = "2026-09-20-v376-fresh-transcript-session";
+      window.__amojiBuild = "2026-09-20-v377-composer-file-attach";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-20-v376-fresh-transcript-session"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-20-v377-composer-file-attach"></script>
     <link
       rel="prefetch"
       href="/prototypes/assets/companion-char-nova.png"
@@ -722,13 +722,13 @@
       media="print"
       onload="this.media='all'"
     />
-    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-20-v376-fresh-transcript-session" />
-    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-20-v376-fresh-transcript-session" />
-    <link rel="stylesheet" href="/prototypes/companion-mic-button.css?v=2026-09-20-v376-fresh-transcript-session" />
-    <link rel="stylesheet" href="/prototypes/companion-minimal-ui.css?v=2026-09-20-v376-fresh-transcript-session" />
-    <link rel="stylesheet" href="/prototypes/companion-mobile-shell.css?v=2026-09-20-v376-fresh-transcript-session" />
-    <link rel="stylesheet" href="/prototypes/companion-picker-v4.css?v=2026-09-20-v376-fresh-transcript-session" />
-    <link rel="stylesheet" href="/prototypes/companion-picker-stacked-layout.css?v=2026-09-20-v376-fresh-transcript-session" />
+    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-20-v377-composer-file-attach" />
+    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-20-v377-composer-file-attach" />
+    <link rel="stylesheet" href="/prototypes/companion-mic-button.css?v=2026-09-20-v377-composer-file-attach" />
+    <link rel="stylesheet" href="/prototypes/companion-minimal-ui.css?v=2026-09-20-v377-composer-file-attach" />
+    <link rel="stylesheet" href="/prototypes/companion-mobile-shell.css?v=2026-09-20-v377-composer-file-attach" />
+    <link rel="stylesheet" href="/prototypes/companion-picker-v4.css?v=2026-09-20-v377-composer-file-attach" />
+    <link rel="stylesheet" href="/prototypes/companion-picker-stacked-layout.css?v=2026-09-20-v377-composer-file-attach" />
     <script>
       (function () {
         var params = new URLSearchParams(location.search);
@@ -754,7 +754,7 @@
       })();
     </script>
     <script type="module">
-      import { bootEarlyStartPicker } from "/amoji-engine/engine/companion/companionEarlyStartPicker.js?v=2026-09-20-v376-fresh-transcript-session";
+      import { bootEarlyStartPicker } from "/amoji-engine/engine/companion/companionEarlyStartPicker.js?v=2026-09-20-v377-composer-file-attach";
       const bootParams = new URLSearchParams(location.search);
       if (bootParams.get("autostart") !== "1" && bootParams.get("pick") !== "0") {
         globalThis.__amojiEarlyStartPickerPromise = bootEarlyStartPicker({
@@ -4101,7 +4101,7 @@
         display: none !important;
       }
 
-      .composer.composer-minimal .icon-btn:not(.mic-btn) {
+      .composer.composer-minimal .icon-btn:not(.mic-btn):not(.composer-attach-btn) {
         display: none !important;
       }
 
@@ -4862,24 +4862,24 @@
     </style>
     <link
       rel="stylesheet"
-      href="/prototypes/companion-scene-backgrounds.css?v=2026-09-20-v376-fresh-transcript-session"
+      href="/prototypes/companion-scene-backgrounds.css?v=2026-09-20-v377-composer-file-attach"
     />
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-20-v376-fresh-transcript-session",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-20-v377-composer-file-attach",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-20-v376-fresh-transcript-session",
-          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-20-v376-fresh-transcript-session"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-20-v377-composer-file-attach",
+          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-20-v377-composer-file-attach"
         }
       }
     </script>
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-20-v376-fresh-transcript-session"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-20-v377-composer-file-attach"
     />
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-20-v376-fresh-transcript-session"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-20-v376-fresh-transcript-session"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-20-v377-composer-file-attach"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-20-v377-composer-file-attach"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;
@@ -5356,7 +5356,34 @@
             <p class="emotion-ball__caption" id="emotion-ball-caption" hidden>Ready · neutral</p>
           </div>
           <form class="composer composer-minimal composer-pro" id="composer">
+            <input
+              type="file"
+              id="composer-file-input"
+              class="composer-file-input"
+              multiple
+              accept="image/*,.txt,.md,.markdown,.json,.csv,.pdf,.doc,.docx,.zip"
+              hidden
+              tabindex="-1"
+              aria-hidden="true"
+            />
+            <button
+              type="button"
+              class="icon-btn composer-attach-btn"
+              id="btn-attach"
+              aria-label="Add files"
+              title="Add files"
+            >
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" aria-hidden="true">
+                <path
+                  d="M12 5v14M5 12h14"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                />
+              </svg>
+            </button>
             <div class="composer-field">
+              <div class="composer-attachments" id="composer-attachments" hidden></div>
               <textarea
                 id="input"
                 rows="3"
@@ -5474,6 +5501,7 @@
         unifiedAppMod,
         secretaryBridgeMod,
         characterRolesMod,
+        composerAttachmentsMod,
       ] = await Promise.all([
         ami("../amoji-engine/engine/companion/createAvatar.js"),
         ami("../amoji-engine/engine/companion/chatLlm.js"),
@@ -5516,6 +5544,7 @@
         ami("../amoji-engine/engine/companion/companionUnifiedApp.js"),
         ami("../amoji-engine/engine/companion/secretary/companionSecretaryBridge.js"),
         ami("../amoji-engine/engine/companion/companionCharacterRoles.js"),
+        ami("../amoji-engine/engine/companion/companionComposerAttachments.js"),
       ]);
       const {
         buildUnifiedSessionPrompt,
@@ -5641,7 +5670,6 @@
       const {
         appendChatHistory,
         CHAT_DOM_MAX,
-        hasUserMessages,
         loadChatHistory,
         saveChatHistory,
         starterPromptsForCharacter,
@@ -6082,6 +6110,12 @@
 
       const transcript = document.getElementById("transcript");
       const starterPromptsEl = document.getElementById("starter-prompts");
+      const {
+        buildChatTurnText,
+        buildUserBubbleContent,
+        createComposerAttachmentController,
+      } = composerAttachmentsMod;
+
       const form = document.getElementById("composer");
       const input = document.getElementById("input");
       const avatarCanvasEl = document.getElementById("avatar-canvas");
@@ -6091,6 +6125,11 @@
         focusFallback: avatarCanvasEl,
       });
       const sendBtn = document.getElementById("send");
+      const attachBtn = document.getElementById("btn-attach");
+      const composerFileInput = document.getElementById("composer-file-input");
+      const composerAttachmentsEl = document.getElementById("composer-attachments");
+      /** @type {ReturnType<typeof createComposerAttachmentController> | null} */
+      let composerAttachments = null;
       const modePill = document.getElementById("mode-pill");
       const emotionPill = document.getElementById("emotion-pill");
       const statusPill = document.getElementById("status-pill");
@@ -6176,6 +6215,14 @@
       if (conversationUi) {
         document.body.classList.add("composer-text-mode", "composer-always-visible");
       }
+
+      composerAttachments = createComposerAttachmentController({
+        attachBtn,
+        fileInput: composerFileInput,
+        stripEl: composerAttachmentsEl,
+        isEnglish: () => isEnglish,
+        onError: (msg) => showToast(msg, "error"),
+      });
 
       const micUi = createCompanionMicButton(btnMic, {
         emotion: "neutral",
@@ -7310,6 +7357,34 @@
         return el;
       };
 
+      const addUserBubbleWithAttachments = (
+        text,
+        attachments,
+        { persist = true } = {},
+      ) => {
+        const list = attachments || [];
+        const trimmed = String(text || "").trim();
+        if (!trimmed && !list.length) return null;
+        if (!shouldShowChatBubble("user")) return null;
+        const row = document.createElement("div");
+        row.className = "msg-row user";
+        const el = document.createElement("div");
+        el.className = "bubble user";
+        el.appendChild(buildUserBubbleContent(document, trimmed, list));
+        row.appendChild(el);
+        transcript.appendChild(row);
+        trimTranscriptHistory();
+        scrollTranscript(true);
+        if (persist) {
+          const storedText = buildChatTurnText(trimmed, list, isEnglish);
+          if (storedText.trim()) {
+            appendChatHistory(characterId, { role: "user", text: storedText });
+          }
+        }
+        syncStarterPrompts();
+        return el;
+      };
+
       const showThinking = (bubble) => {
         bubble.classList.add("thinking");
         bubble.innerHTML =
@@ -8010,6 +8085,7 @@
         applyActiveSceneOutfit();
         if (sessionStarted) {
           chat.abort?.();
+          composerAttachments?.clear?.();
           hydrateChatLlmFromStorage(characterId);
           resetTranscriptDisplay({ speakGreeting: true });
           warmWaitDialogueBackground();
@@ -8616,11 +8692,16 @@
         updateUiContextPill(applied);
       };
 
-      const runTurn = async (text, { fromMic = false, skipUserBubble = false } = {}) => {
+      const runTurn = async (
+        text,
+        { fromMic = false, skipUserBubble = false, attachments = [] } = {},
+      ) => {
+        const attachmentList = attachments || [];
         const cleaned = String(text || "").trim();
-        if (!cleaned) return;
-        if (handleUserStopCommand(cleaned)) return;
-        void applyConversationUi(cleaned, null);
+        if (!cleaned && !attachmentList.length) return;
+        const llmText = buildChatTurnText(cleaned, attachmentList, isEnglish);
+        if (cleaned && handleUserStopCommand(cleaned)) return;
+        void applyConversationUi(cleaned || llmText, null);
         activityRail.pulse("🎤", isEnglish ? "Heard" : "聽到");
         if (busy) {
           if (phaseAEnabled && fromMic) {
@@ -8653,9 +8734,13 @@
         if (keepMicForBarge) armBargeIn();
         interim.clear();
         if (!skipUserBubble) {
-          addBubble("user", cleaned, { persist: true });
+          if (attachmentList.length) {
+            addUserBubbleWithAttachments(cleaned, attachmentList, { persist: true });
+          } else {
+            addBubble("user", cleaned, { persist: true });
+          }
         }
-        lastUserMessage = cleaned;
+        lastUserMessage = llmText;
         if (careEnabled) {
           window.__amojiTreats?.applyChat?.();
           raisingHub?.onChat?.();
@@ -8805,7 +8890,7 @@
             return;
           }
 
-          const result = await chat.reply(cleaned, {
+          const result = await chat.reply(llmText, {
             onToken: (_chunk, full) => {
               if (activeTurn?.aborted) return;
               if (!gotToken) {
@@ -9450,8 +9535,9 @@
 
       form.addEventListener("submit", async (ev) => {
         ev.preventDefault();
+        const attachments = composerAttachments?.consume?.() || [];
         const text = input.value.trim();
-        if (!text) return;
+        if (!text && !attachments.length) return;
         unlockAudioSync();
         uiAudio?.unlock?.();
         uiAudio?.play?.("send");
@@ -9471,7 +9557,7 @@
             });
           }
         }
-        await runTurn(text);
+        await runTurn(text, { attachments });
       });
 
       input.addEventListener("keydown", (ev) => {
