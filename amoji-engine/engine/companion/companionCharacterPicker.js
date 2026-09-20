@@ -792,6 +792,7 @@ export function createCompanionStartPicker(opts = {}) {
         </section>
         <section class="picker-roster-row picker-roster-dock" aria-label="${isEnglish ? "Companion roster" : "同伴名單"}">
           <p class="picker-roster-dock-label"></p>
+          <p class="picker-roster-aaa-banner" hidden></p>
           <div class="start-picker-grid-wrap">
             <div class="companion-picker-grid companion-picker-grid--start companion-picker-grid--roster" role="listbox"></div>
           </div>
@@ -827,6 +828,7 @@ export function createCompanionStartPicker(opts = {}) {
   const scrollHintEl = shell.querySelector(".start-picker-scroll-hint");
   const beginBtn = shell.querySelector(".picker-begin-btn");
   const rosterDockLabelEl = shell.querySelector(".picker-roster-dock-label");
+  const rosterAaaBannerEl = shell.querySelector(".picker-roster-aaa-banner");
   const sceneSection = wirePickerSceneSection({
     root: shell,
     isEnglish,
@@ -845,8 +847,16 @@ export function createCompanionStartPicker(opts = {}) {
     }
     if (rosterDockLabelEl) {
       rosterDockLabelEl.textContent = isEnglish
-        ? `Roster · ${fullList().length} (scroll for AAA 5+)`
-        : `名單 · ${fullList().length} 位（5+ 為 AAA 擴展，可捲動）`;
+        ? `3D models · ${fullList().length} characters`
+        : `3D 模型 · 共 ${fullList().length} 位`;
+    }
+    if (rosterAaaBannerEl) {
+      const aaa = fullList().filter((item) => (item.number || 0) >= 5 && (item.number || 0) <= 10);
+      const names = aaa.map((item) => item.name).join(isEnglish ? ", " : "、");
+      rosterAaaBannerEl.textContent = isEnglish
+        ? `#5–10 AAA: ${names} — swipe right →`
+        : `#5–10 AAA：${names} — 向右滑 →`;
+      rosterAaaBannerEl.hidden = aaa.length === 0;
     }
     if (footEl) {
       footEl.textContent = starting

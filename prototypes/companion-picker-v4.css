@@ -523,6 +523,21 @@
   color: rgba(255, 255, 255, 0.46);
 }
 
+.companion-picker--v4.companion-picker--start.companion-picker--showcase .picker-roster-aaa-banner {
+  margin: 0 0 0.35rem;
+  padding: 0.28rem 1.15rem;
+  font-size: 0.68rem;
+  line-height: 1.35;
+  font-weight: 600;
+  color: rgba(167, 243, 208, 0.92);
+  background: linear-gradient(
+    90deg,
+    rgba(16, 185, 129, 0.12),
+    rgba(16, 185, 129, 0.02)
+  );
+  border-left: 3px solid rgba(52, 211, 153, 0.75);
+}
+
 .companion-picker--v4.companion-picker--start.companion-picker--showcase .start-picker-grid-wrap {
   position: relative;
   flex: 0 0 auto;

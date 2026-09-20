@@ -17,6 +17,9 @@ describe("companionSettingsChrome", () => {
     expect(labels.camera).toBe("Reset camera view");
     expect(labels.companionSection).toBe("Companion");
     expect(labels.talkSpeed).toContain("1.6");
+    expect(labels.rosterModelsHint).toMatch(/23/);
+    expect(labels.rosterModelsHint).toMatch(/Sora|Aria/);
+    expect(labels.modelLabel).toContain("LLM");
   });
 
   it("builds Cantonese settings labels", () => {

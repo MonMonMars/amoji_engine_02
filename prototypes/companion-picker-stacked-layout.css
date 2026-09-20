@@ -66,6 +66,14 @@
   justify-content: flex-start;
 }
 
+.companion-picker--stacked-layout .picker-hero-model {
+  margin: 0.15rem 0 0;
+  font-size: 0.72rem;
+  line-height: 1.35;
+  color: rgba(167, 243, 208, 0.88);
+  font-weight: 600;
+}
+
 .companion-picker--stacked-layout .picker-roster-row {
   flex-shrink: 0;
   display: flex;

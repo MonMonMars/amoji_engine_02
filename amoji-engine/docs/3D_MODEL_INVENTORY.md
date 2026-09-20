@@ -43,22 +43,38 @@ Examples: MetaHuman (Unreal), Mixamo, some Unreal free packs, VTubeMe free VRMs,
 | **A–E** | Bases, realistic faces, VRM/VRChat, chibi | **Yes** if license allows commercial use |
 | **F–R** | Fantasy, pets, tools, Mixamo, VRoid | Motions/tools yes; characters case-by-case |
 
-## What we ship today (v298 curated roster)
+## What we ship today (v360 curated roster — 23 characters)
 
-Ten characters — legal/industry refs only:
+In the app: **start picker** horizontal strip or **Menu → Switch 3D companion**.  
+Settings **Brain → LLM model** is the **text AI**, not these 3D files.
 
-| # | ID | Model source |
-|---|-----|--------------|
-| 1 | nova | VTubeMe CC BY 4.0 |
+| # | ID | 3D model source |
+|---|-----|-----------------|
+| 1 | nova | VTubeMe photoreal VRM |
 | 2 | kizuna | Kizuna AI official VRM |
 | 3 | alicia | Alicia Solid / UniVRM |
-| 4 | ember | VTubeMe CC BY 4.0 |
-| 5 | sky | VTubeMe CC BY 4.0 |
-| 6 | yuki | 100Avatars CC0 (Olivia rig) |
-| 7 | hina | 100Avatars CC0 (Lydia rig) |
-| 8 | mio | 100Avatars CC0 (Kate rig) |
-| 9 | amoji | Project original |
-| 10 | rex | VTubeMe CC BY 4.0 (Kai rig) |
+| 4 | ember | VTubeMe expressive VRM |
+| 5 | sora | VRoid AvatarSample C |
+| 6 | aria | VRoid AvatarSample A |
+| 7 | mei | VRoid AvatarSample B |
+| 8 | luna | VRoid Pro female |
+| 9 | atlas | VRoid Pro male |
+| 10 | erika | Industry VRM |
+| 11 | sky | VTubeMe CC BY 4.0 |
+| 12 | yuki | 100Avatars CC0 (Olivia) |
+| 13 | hina | 100Avatars CC0 (Lydia) |
+| 14 | mio | 100Avatars CC0 (Kate) |
+| 15 | amoji | Project original |
+| 16 | rex | VTubeMe Kai |
+| 17 | shiro | 100Avatars CC0 |
+| 18 | jennifer | 100Avatars CC0 |
+| 19 | poly | 100Avatars CC0 Polydancer |
+| 20 | aesthe | 100Avatars CC0 Aesthetica |
+| 21 | chad | 100Avatars CC0 |
+| 22 | david | 100Avatars CC0 |
+| 23 | hugo | 100Avatars CC0 |
+
+**#5–10** are the **AAA VRoid catalog** slots (legal industry references — not Fab fan rips from inventory Q/S).
 
 ## Safe upgrade paths from inventory
 
@@ -78,10 +94,4 @@ Only when:
 1. You are **purchasing** a specific model for production, or
 2. You need to compare two **paid** bases with similar tris/rig quality
 
-Otherwise: filter by **license + VRM/ARKit + face morph count**, not price alone.
-
-## Related repo files
-
-- `prototypes/assets/ASSET_MANIFEST.md` — committed legal assets
-- `prototypes/assets/*.README.txt` — per-file license notes
-- `amoji-engine/engine/companion/companionCharacterRoster.js` — live roster
+Otherwise use **FREE / CC0 / official / YES** rows first.
