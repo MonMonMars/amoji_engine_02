@@ -39,4 +39,13 @@ describe("amoji-companion module boot", () => {
       destructure.indexOf("proactiveTalkMod"),
     );
   });
+
+  it("declares isEnglish before scroll affordance wiring", () => {
+    const html = readFileSync(htmlPath, "utf8");
+    const isEnglishDecl = html.indexOf("let isEnglish = langCode === \"en\"");
+    const wireScroll = html.indexOf("scrollAffordancesMod.wireScrollAffordances");
+    expect(isEnglishDecl).toBeGreaterThan(-1);
+    expect(wireScroll).toBeGreaterThan(-1);
+    expect(isEnglishDecl).toBeLessThan(wireScroll);
+  });
 });
