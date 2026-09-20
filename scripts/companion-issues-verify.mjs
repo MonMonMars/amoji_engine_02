@@ -41,6 +41,40 @@ function record(name, ok, detail = "") {
   console.log(`${ok ? "PASS" : "FAIL"}  ${name}${detail ? ` — ${detail}` : ""}`);
 }
 
+/** @param {import("playwright").Page} page @param {string} characterId */
+async function waitForSessionCharacter(page, characterId, timeout = 120000) {
+  const id = String(characterId || "").toLowerCase();
+  await page.waitForFunction(
+    (cid) => {
+      const storage = window.localStorage?.getItem("amoji.companion.characterId");
+      const loadedId = window.__amojiLoadedCharacterId;
+      const url = String(window.__amojiLoadedModelUrl || "");
+      return (
+        storage === cid &&
+        loadedId === cid &&
+        Boolean(window.__amojiAvatar?.vrm) &&
+        new RegExp(`companion-${cid}\\.vrm`, "i").test(url)
+      );
+    },
+    id,
+    { timeout },
+  );
+}
+
+/** @param {import("playwright").Page} page @param {string} characterId */
+async function readLoadedCharacterAudit(page, characterId) {
+  const id = String(characterId || "").toLowerCase();
+  return page.evaluate((cid) => {
+    const url = String(window.__amojiLoadedModelUrl || "");
+    return {
+      characterId: window.__amojiLoadedCharacterId,
+      modelUrl: window.__amojiLoadedModelUrl,
+      storageId: window.localStorage?.getItem("amoji.companion.characterId"),
+      urlMatches: new RegExp(`companion-${cid}\\.vrm`, "i").test(url),
+    };
+  }, id);
+}
+
 async function main() {
   const base = parseArg(
     "--url",
@@ -250,6 +284,7 @@ async function main() {
         if (typeof raw.length === "number") return raw.length > 0;
         return typeof raw[Symbol.iterator] === "function";
       },
+      undefined,
       { timeout: 90000 },
     )
     .catch(() => null);
@@ -291,6 +326,7 @@ async function main() {
         const feel = String(pill?.textContent || "").toLowerCase();
         return feel.includes("neutral") || !feel.includes("happy");
       },
+      undefined,
       { timeout: 25000 },
     )
     .catch(() => null);
@@ -307,6 +343,7 @@ async function main() {
           action === "shy";
         return calm && Boolean(window.__amojiAvatar?.vrm);
       },
+      undefined,
       { timeout: 20000 },
     )
     .catch(() => null);
@@ -879,22 +916,19 @@ async function main() {
   try {
     const modelsBefore = loadedModels.length;
     await switchCompanionInSession(page, "alicia");
-    await page.waitForFunction(
-      () =>
-        window.localStorage?.getItem("amoji.companion.characterId") === "alicia" &&
-        window.__amojiAvatar?.vrm,
-      { timeout: 120000 },
+    await waitForSessionCharacter(page, "alicia");
+    const aliciaAudit = await readLoadedCharacterAudit(page, "alicia");
+    const aliciaNetwork = loadedModels.slice(modelsBefore).some((u) => /alicia/i.test(u));
+    record(
+      "switch-character-model",
+      aliciaAudit.urlMatches &&
+        aliciaAudit.storageId === "alicia" &&
+        aliciaAudit.characterId === "alicia",
+      JSON.stringify({ audit: aliciaAudit, network: aliciaNetwork, requests: loadedModels.slice(modelsBefore) }),
     );
-    const switched = loadedModels.slice(modelsBefore).some((u) => /alicia/i.test(u));
-    record("switch-character-model", switched, loadedModels.slice(modelsBefore).join(" | "));
 
     await switchCompanionInSession(page, "ember");
-    await page.waitForFunction(
-      () =>
-        window.localStorage?.getItem("amoji.companion.characterId") === "ember" &&
-        window.__amojiAvatar?.vrm,
-      { timeout: 120000 },
-    );
+    await waitForSessionCharacter(page, "ember");
     const emberMouth = await page.evaluate(async () => {
       window.__amojiAvatar.setTalking(true);
       window.__amojiAvatar.setMouthOpen(0.9);
@@ -919,17 +953,22 @@ async function main() {
 
     const beforeNova = loadedModels.length;
     await switchCompanionInSession(page, "nova");
-    const roundTrip = await page.waitForFunction(
-      () =>
-        window.localStorage?.getItem("amoji.companion.characterId") === "nova" &&
-        window.__amojiAvatar?.vrm,
-      { timeout: 120000 },
-    ).then(() => true).catch(() => false);
-    const novaReloaded = loadedModels.slice(beforeNova).some((u) => /nova\.vrm/i.test(u));
+    let roundTrip = false;
+    try {
+      await waitForSessionCharacter(page, "nova");
+      roundTrip = true;
+    } catch {
+      roundTrip = false;
+    }
+    const novaAudit = await readLoadedCharacterAudit(page, "nova");
+    const novaNetwork = loadedModels.slice(beforeNova).some((u) => /nova\.vrm/i.test(u));
     record(
       "switch-round-trip-nova",
-      roundTrip && novaReloaded,
-      JSON.stringify({ roundTrip, novaReloaded }),
+      roundTrip &&
+        novaAudit.urlMatches &&
+        novaAudit.storageId === "nova" &&
+        novaAudit.characterId === "nova",
+      JSON.stringify({ roundTrip, audit: novaAudit, network: novaNetwork }),
     );
   } catch (err) {
     record("switch-character-model", false, String(err?.message || err));
