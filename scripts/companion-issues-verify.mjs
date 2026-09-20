@@ -257,26 +257,20 @@ async function main() {
   const bootIntegrity = await page.evaluate(() => {
     const el = document.querySelector(".atmosphere");
     const bg = el ? getComputedStyle(el).backgroundImage : "";
-    const manager = window.__amojiAvatar?.vrm?.springBoneManager;
-    const raw = manager?.joints || manager?._joints || manager?._sortedJoints;
-    let maxY = -Infinity;
-    let count = 0;
-    const joints =
-      raw && typeof raw[Symbol.iterator] === "function" ? [...raw] : [];
-    if (joints.length) {
-      for (const joint of joints) {
-        const dir = joint?.settings?.gravityDir;
-        if (!dir) continue;
-        count += 1;
-        maxY = Math.max(maxY, Number(dir.y) || 0);
-      }
-    }
+    const spring =
+      window.__amojiAvatar?.auditSpringGravity?.({ tune: true }) || {
+        ok: false,
+        count: 0,
+        maxY: null,
+        reason: "no-audit",
+      };
     return {
       sceneBg: el?.dataset?.sceneBg || null,
       hasAnimeBg: /scene-bg|companion-bg-anime/.test(bg),
-      springOk: count > 0 && maxY < -0.5,
-      springCount: count,
-      maxGravityY: maxY,
+      springOk: spring.ok,
+      springCount: spring.count,
+      maxGravityY: spring.maxY,
+      springReason: spring.reason,
     };
   });
   record(

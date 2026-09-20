@@ -1,6 +1,7 @@
 import { describe, expect, it, beforeEach } from "vitest";
 import {
   collectSpringJoints,
+  auditVrmSpringGravity,
   configureVrmSpringStability,
   createIdleSpringRecenterState,
   forceGravityDirDown,
@@ -234,6 +235,26 @@ describe("vrmSpringStability", () => {
     expect(
       configureVrmSpringStability({ springBoneManager: { joints: new Set() } }).ok,
     ).toBe(false);
+  });
+
+  it("auditVrmSpringGravity passes when model has no spring joints", () => {
+    expect(auditVrmSpringGravity(null).ok).toBe(true);
+    expect(auditVrmSpringGravity(null).reason).toBe("no-spring-bones");
+    expect(
+      auditVrmSpringGravity({ springBoneManager: { joints: new Set() } }, { tune: false })
+        .ok,
+    ).toBe(true);
+  });
+
+  it("auditVrmSpringGravity requires downward gravity when joints exist", () => {
+    const joint = makeJoint();
+    joint.settings.gravityDir.y = 1;
+    const vrm = { springBoneManager: { joints: new Set([joint]) } };
+    const bad = auditVrmSpringGravity(vrm, { tune: false });
+    expect(bad.ok).toBe(false);
+    const good = auditVrmSpringGravity(vrm, { tune: true });
+    expect(good.ok).toBe(true);
+    expect(good.maxY).toBeLessThan(-0.5);
   });
 
   it("installVrmSpringBoneGuard wraps manager.update once", () => {
