@@ -1,5 +1,15 @@
 # Amoji VRM Asset Manifest
 
+## Character picker UI (v380)
+
+| File | Use |
+|------|-----|
+| `picker-aaa-bg.png` | Full-screen start picker cinematic background |
+| `picker-hero-frame.png` | Hero portrait gold frame overlay |
+| `picker-roster-plate.png` | Horizontal roster dock glass panel |
+
+Styles: `prototypes/companion-picker-aaa-theme.css`
+
 Legal sources only. **Never** commit models ripped from Replika, Nomi, iBoy, or other commercial apps.  
 **Do not ship** Fab/Sketchfab fan rips of FF7, Genshin, Hololive, RE, etc. without explicit IP license.
 
