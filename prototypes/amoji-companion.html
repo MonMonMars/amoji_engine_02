@@ -1022,18 +1022,7 @@
       }
 
       .avatar-stage-preview {
-        position: absolute;
-        inset: 0;
-        z-index: 2;
-        width: 100%;
-        height: 100%;
-        object-fit: contain;
-        object-position: center 18%;
-        pointer-events: none;
-        user-select: none;
-        opacity: 1;
-        transition: opacity 0.28s ease;
-        filter: drop-shadow(0 18px 42px rgba(0, 0, 0, 0.35));
+        display: none !important;
       }
 
       .avatar-stage-preview[hidden] {
@@ -4803,6 +4792,61 @@
         }
       }
 
+      .companion-center-load-ring {
+        position: fixed;
+        left: 50%;
+        top: 50%;
+        z-index: 8500;
+        width: 2.85rem;
+        height: 2.85rem;
+        margin: 0;
+        padding: 0;
+        border: none;
+        background: none;
+        box-shadow: none;
+        pointer-events: none;
+        transform: translate(-50%, -50%);
+        opacity: 0;
+        transition: opacity 0.24s ease;
+      }
+
+      .companion-center-load-ring.is-visible {
+        opacity: 1;
+      }
+
+      .companion-center-load-ring[hidden] {
+        display: none !important;
+      }
+
+      .companion-center-load-ring-svg {
+        width: 100%;
+        height: 100%;
+        transform: rotate(-90deg);
+      }
+
+      .companion-center-load-ring-track {
+        fill: none;
+        stroke: rgba(255, 255, 255, 0.16);
+        stroke-width: 2.8;
+      }
+
+      .companion-center-load-ring-fill {
+        fill: none;
+        stroke: var(--accent, #7fd4cf);
+        stroke-width: 2.8;
+        stroke-linecap: round;
+        transition: stroke-dashoffset 0.22s ease;
+      }
+
+      .companion-center-load-ring.is-indeterminate .companion-center-load-ring-svg {
+        animation: companion-progress-spin 0.95s linear infinite;
+      }
+
+      .companion-center-load-ring.is-indeterminate .companion-center-load-ring-fill {
+        stroke-dasharray: 22 75;
+        stroke-dashoffset: 0;
+      }
+
       .companion-progress-pct {
         position: absolute;
         inset: 0;
@@ -4868,6 +4912,13 @@
           document.querySelectorAll(".avatar-loading").forEach(function (el) {
             el.remove();
           });
+          if (
+            window.__amojiModuleBooted ||
+            window.__amojiStart?.ready ||
+            window.__amojiStart?.sessionStarted
+          ) {
+            document.getElementById("amoji-boot-splash")?.remove();
+          }
           var picker = document.getElementById("start-character-picker");
           var pickerOpen =
             picker &&
@@ -5647,7 +5698,8 @@
 
       const hostedOnline = isHostedCompanion();
       const stagePreview = createCompanionStagePreview(document.querySelector(".stage"));
-      const { createCompanionProgressDock } = progressOverlayMod;
+      const { createCompanionCenterLoadRing, createCompanionProgressDock } =
+        progressOverlayMod;
       const { createCompanionWaitAct } = waitActMod;
       const {
         buildActionSequence,
@@ -5660,6 +5712,41 @@
       const progressDock = createCompanionProgressDock({
         root: document.body,
       });
+      const centerLoadRing = createCompanionCenterLoadRing({
+        root: document.querySelector(".stage") || document.body,
+      });
+      /** @type {ReturnType<typeof createCompanionWaitAct> | null} */
+      let waitActRef = null;
+      const waitActProgress = {
+        show(ctx = {}) {
+          if (waitActRef?.state?.kind === "avatar-load") {
+            centerLoadRing.show({
+              ...ctx,
+              indeterminate:
+                ctx.indeterminate ??
+                (Number(ctx.progress) || 0) < (ctx.progress != null && ctx.progress <= 1 ? 0.04 : 4),
+            });
+            return;
+          }
+          progressDock.show(ctx);
+        },
+        update(ctx = {}) {
+          if (waitActRef?.state?.kind === "avatar-load") {
+            centerLoadRing.update({
+              ...ctx,
+              indeterminate:
+                ctx.indeterminate ??
+                (Number(ctx.progress) || 0) < (ctx.progress != null && ctx.progress <= 1 ? 0.04 : 4),
+            });
+            return;
+          }
+          progressDock.update(ctx);
+        },
+        hide() {
+          centerLoadRing.hide();
+          progressDock.hide();
+        },
+      };
       /** @type {ReturnType<typeof createCompanionWaitAct> | null} */
       let waitAct = null;
       /** @type {Map<string, Promise<unknown>>} */
@@ -6670,8 +6757,8 @@
         }, 450);
       };
 
-      /** Defer 3D briefly so chat + first voice-out win the network. */
-      const AVATAR_LOAD_DEFER_MS = 1000;
+      /** Defer 3D so chat, composer, and mic chrome win first paint + network. */
+      const AVATAR_LOAD_DEFER_MS = 2800;
 
       const scheduleDeferredAvatarLoad = () => {
         if (liteMode || avatarLoadStarted) return avatarLoadPromise;
@@ -6704,7 +6791,13 @@
         globalThis.__amojiPreload?.startHeavy?.({
           modelUrl: modelUrlForLoad,
         });
-        showAvatarLoadPill();
+        centerLoadRing.show({
+          progress: 0,
+          indeterminate: true,
+          label: isEnglish
+            ? "Loading 3D companion model…"
+            : "載入 3D 同伴模型…",
+        });
         waitAct?.start({
           kind: "avatar-load",
           phase: "avatar-load",
@@ -6713,7 +6806,6 @@
             ? "Loading 3D companion model…"
             : "載入 3D 同伴模型…",
         });
-        stagePreview.show(getCharacter(loadForCharacterId)?.previewImage);
         avatarLoadPromise = createCompanionAvatar({
           canvas,
           controlsElement: orbitHit,
@@ -6726,6 +6818,11 @@
             const loadLabel = isEnglish
               ? `Loading 3D model… ${rounded}%`
               : `載入 3D 模型… ${rounded}%`;
+            centerLoadRing.update({
+              progress: pct,
+              indeterminate: pct < 4,
+              label: loadLabel,
+            });
             waitAct?.update({
               phase: "avatar-load",
               progress: pct / 100,
@@ -6827,6 +6924,7 @@
             return { avatar, kind: avatarKind };
           })
           .finally(() => {
+            centerLoadRing.hide();
             hideAvatarLoadPill();
             if (waitAct?.state?.kind === "avatar-load") waitAct?.stop();
             if (
@@ -7819,11 +7917,12 @@
       waitAct = createCompanionWaitAct({
         avatar,
         voice,
-        progress: progressDock,
+        progress: waitActProgress,
         isEnglish,
         poseIntervalMs: 4500,
         getIdleGender: () => characterGender(characterId, langCode),
       });
+      waitActRef = waitAct;
       syncIdleGenderForCharacter(characterId);
 
       const warmWaitDialogue = () => {
@@ -7873,10 +7972,8 @@
       const {
         createCompanionCharacterPicker,
         createCompanionStartPicker,
-        createCompanionSwitchOverlay,
       } = characterPickerMod;
       const { switchCompanionCharacter } = characterSwitchMod;
-      const switchOverlay = createCompanionSwitchOverlay({ root: document.body });
       let characterSwitching = false;
 
       const applyCharacterSession = (nextId, { announce = true } = {}) => {
@@ -7924,10 +8021,11 @@
         characterSwitching = true;
         const swapEpoch = ++avatarEpoch;
         const name = characterDisplayName(nextId, langCode, isEnglish);
-        switchOverlay.show(
-          isEnglish ? `Loading ${name}…` : `載入 ${name} 中…`,
-          getCharacter(nextId),
-        );
+        centerLoadRing.show({
+          progress: 0,
+          indeterminate: true,
+          label: isEnglish ? `Loading ${name}…` : `載入 ${name} 中…`,
+        });
         try {
           const result = await switchCompanionCharacter({
             canvas,
@@ -7936,11 +8034,13 @@
             langCode,
             currentAvatar: avatarKind !== "loading" ? avatar : null,
             previewImageUrl: getCharacter(nextId)?.previewImage,
-            onStagePreview: (url) => {
-              if (url) stagePreview.show(url);
-              else stagePreview.hide();
-            },
-            onProgress: (pct, label) => switchOverlay.update(pct, label),
+            onStagePreview: () => {},
+            onProgress: (pct, label) =>
+              centerLoadRing.update({
+                progress: pct,
+                indeterminate: pct < 4,
+                label,
+              }),
             onCharacterTap: (info) => handleCharacterTap?.(info),
           });
           if (swapEpoch !== avatarEpoch) {
@@ -7962,7 +8062,6 @@
           applyCharacterSession(nextId, { announce: false });
           syncIdleGenderForCharacter(nextId);
           raisingHub?.setCharacter?.(nextId);
-          switchOverlay.celebrate?.();
           uiAudio?.play?.("success");
           uiAudio?.haptic?.("medium");
           spawnUiRingBurst(canvas, { hue: 212 });
@@ -7981,7 +8080,7 @@
             "error",
           );
         } finally {
-          switchOverlay.hide();
+          centerLoadRing.hide();
           characterSwitching = false;
         }
       };
@@ -8045,8 +8144,6 @@
         applyCharacterSession(picked, { announce: false });
         startPicker?.setSelected?.(picked);
         releaseUnselectedCharacterCache(picked);
-        const pickedPreview = getCharacter(picked)?.previewImage;
-        if (pickedPreview) stagePreview.show(pickedPreview);
         startSession({ characterId: picked });
         if (
           !liteMode &&

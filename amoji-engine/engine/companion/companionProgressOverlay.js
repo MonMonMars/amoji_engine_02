@@ -2,7 +2,7 @@
  * Progress dock + centered overlay for downloads, avatar load, and other waits.
  */
 export const COMPANION_PROGRESS_OVERLAY_SCHEMA =
-  "amoji.companionProgressOverlay.v1";
+  "amoji.companionProgressOverlay.v2";
 
 /**
  * @param {number | null | undefined} value 0..1 or 0..100
@@ -26,6 +26,101 @@ export const PROGRESS_RING_CIRCUMFERENCE = 2 * Math.PI * PROGRESS_RING_RADIUS;
 export function progressRingOffset(pct, circumference = PROGRESS_RING_CIRCUMFERENCE) {
   const clamped = Math.max(0, Math.min(100, pct));
   return circumference * (1 - clamped / 100);
+}
+
+/**
+ * Shared ring paint for dock + center loaders.
+ * @param {{
+ *   fillEl: SVGCircleElement | null,
+ *   pctEl?: HTMLElement | null,
+ *   ringEl?: HTMLElement | null,
+ *   hostEl?: HTMLElement | null,
+ * }} parts
+ */
+function applyProgressRingState(parts, ctx = {}) {
+  const indeterminate = Boolean(ctx.indeterminate);
+  const pct = clampProgressPct(ctx.progress);
+  if (parts.pctEl) {
+    parts.pctEl.textContent = indeterminate ? "" : `${pct}%`;
+  }
+  if (parts.fillEl) {
+    parts.fillEl.style.strokeDashoffset = indeterminate
+      ? ""
+      : String(progressRingOffset(pct));
+  }
+  parts.ringEl?.classList.toggle("is-indeterminate", indeterminate);
+  const hint = [ctx.phase, ctx.label].filter(Boolean).join(" — ");
+  if (parts.hostEl) {
+    parts.hostEl.title = hint;
+    parts.hostEl.setAttribute(
+      "aria-label",
+      hint || (indeterminate ? "Loading" : `Loading ${pct}%`),
+    );
+    parts.hostEl.setAttribute("aria-valuemin", "0");
+    parts.hostEl.setAttribute("aria-valuemax", "100");
+    parts.hostEl.setAttribute(
+      "aria-valuenow",
+      indeterminate ? "0" : String(pct),
+    );
+  }
+}
+
+/**
+ * Center-screen load ring — no card, border, or portrait (3D model loads in background).
+ * @param {{ root?: HTMLElement | null }} [opts]
+ */
+export function createCompanionCenterLoadRing(opts = {}) {
+  const root = opts.root || document.body;
+  const el = document.createElement("div");
+  el.className = "companion-center-load-ring";
+  el.hidden = true;
+  el.setAttribute("role", "progressbar");
+  el.setAttribute("aria-live", "polite");
+  el.innerHTML = `
+    <svg class="companion-center-load-ring-svg" viewBox="0 0 36 36" aria-hidden="true">
+      <circle class="companion-center-load-ring-track" cx="18" cy="18" r="${PROGRESS_RING_RADIUS}" />
+      <circle class="companion-center-load-ring-fill" cx="18" cy="18" r="${PROGRESS_RING_RADIUS}" />
+    </svg>
+  `;
+  root.appendChild(el);
+
+  const ringEl = el;
+  const fillEl = el.querySelector(".companion-center-load-ring-fill");
+  if (fillEl) {
+    fillEl.setAttribute("stroke-dasharray", String(PROGRESS_RING_CIRCUMFERENCE));
+    fillEl.setAttribute("stroke-dashoffset", String(PROGRESS_RING_CIRCUMFERENCE));
+  }
+
+  const paint = (ctx = {}) => {
+    applyProgressRingState(
+      { fillEl, ringEl, hostEl: el },
+      ctx,
+    );
+  };
+
+  return {
+    schema: COMPANION_PROGRESS_OVERLAY_SCHEMA,
+    element: el,
+    show(ctx = {}) {
+      el.hidden = false;
+      el.classList.add("is-visible");
+      paint(ctx);
+    },
+    update(ctx = {}) {
+      if (el.hidden) this.show(ctx);
+      else paint(ctx);
+    },
+    hide() {
+      el.classList.remove("is-visible", "is-indeterminate");
+      el.hidden = true;
+    },
+    isVisible() {
+      return !el.hidden;
+    },
+    destroy() {
+      el.remove();
+    },
+  };
 }
 
 /**
@@ -71,19 +166,11 @@ export function createCompanionProgressDock(opts = {}) {
   } = {}) => {
     indeterminate = Boolean(indet);
     const pct = clampProgressPct(progress);
-    if (pctEl) pctEl.textContent = indeterminate ? "…" : `${pct}%`;
-    if (fillEl) {
-      fillEl.style.strokeDashoffset = indeterminate
-        ? ""
-        : String(progressRingOffset(pct));
-    }
-    ringEl?.classList.toggle("is-indeterminate", indeterminate);
-    const hint = [phase, label].filter(Boolean).join(" — ");
-    if (innerEl) innerEl.title = hint;
-    el.setAttribute(
-      "aria-label",
-      hint || (indeterminate ? "Loading" : `Loading ${pct}%`),
+    applyProgressRingState(
+      { fillEl, pctEl, ringEl, hostEl: el },
+      { progress: pct, label, phase, indeterminate },
     );
+    if (innerEl) innerEl.title = [phase, label].filter(Boolean).join(" — ");
     el.dataset.pct = indeterminate ? "" : String(pct);
   };
 
