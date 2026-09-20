@@ -453,15 +453,15 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
 
   const isAposeBind = () => armBind === "apose";
 
-  /** Planted idle — bind upper arms, living forearms only (no Mixamo Z-twist). */
+  /** Planted idle — upper arms stay on calibrated rest; forearms carry micro-life. */
   const applyCalmIdleArms = (pose, k) => {
     const restL = armRestRotations.leftUpperArm;
     const restR = armRestRotations.rightUpperArm;
     const restLl = armRestRotations.leftLowerArm;
     const restRl = armRestRotations.rightLowerArm;
     const apose = isAposeBind();
-    const foreScale = apose ? 0.38 : 1;
-    const foreCap = apose ? 0.22 : 0.62;
+    const foreScale = apose ? 0.38 : 0.72;
+    const foreCap = apose ? 0.22 : 0.48;
     const foreL = Math.min(
       foreCap,
       Math.max(0, (pose.forearmL ?? 0) * k * foreScale),
@@ -470,31 +470,24 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
       foreCap,
       Math.max(0, (pose.forearmR ?? 0) * k * foreScale),
     );
-    if (apose) {
-      applyBoneRotation("leftUpperArm", restL);
-      applyBoneRotation("rightUpperArm", restR);
-      applyBoneRotation("leftLowerArm", withElbowBend(restLl, foreL));
-      applyBoneRotation("rightLowerArm", withElbowBend(restRl, foreR));
-      return;
-    }
-    const liftCap = 0.1;
+    const liftCap = apose ? 0.06 : 0.08;
     const liftL = Math.min(
       liftCap,
-      Math.max(0, (pose.armLiftL ?? 0) * k * 0.28),
+      Math.max(0, (pose.armLiftL ?? 0) * k * (apose ? 0.18 : 0.22)),
     );
     const liftR = Math.min(
       liftCap,
-      Math.max(0, (pose.armLiftR ?? 0) * k * 0.28),
+      Math.max(0, (pose.armLiftR ?? 0) * k * (apose ? 0.18 : 0.22)),
     );
     applyBoneRotation("leftUpperArm", {
       x: restL.x,
-      y: restL.y + liftL * 0.04,
-      z: restDirectedLift(restL.z, liftL * 0.22, 1),
+      y: restL.y,
+      z: restDirectedLift(restL.z, liftL * 0.35, 1),
     });
     applyBoneRotation("rightUpperArm", {
       x: restR.x,
-      y: restR.y - liftR * 0.04,
-      z: restDirectedLift(restR.z, liftR * 0.22, -1),
+      y: restR.y,
+      z: restDirectedLift(restR.z, liftR * 0.35, -1),
     });
     applyBoneRotation("leftLowerArm", withElbowBend(restLl, foreL));
     applyBoneRotation("rightLowerArm", withElbowBend(restRl, foreR));
@@ -626,19 +619,22 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
     const restR = armRestRotations.rightUpperArm;
     const restLl = armRestRotations.leftLowerArm;
     const restRl = armRestRotations.rightLowerArm;
-    const liftL = Math.min(0.4, (safe.armLiftL ?? 0) * k);
-    const liftR = Math.min(0.4, (safe.armLiftR ?? 0) * k);
-    const foreL = Math.min(0.34, (safe.forearmL ?? 0) * k);
-    const foreR = Math.min(0.34, (safe.forearmR ?? 0) * k);
+    const apose = isAposeBind();
+    const liftCap = apose ? 0.28 : 0.4;
+    const liftMul = apose ? 0.62 : 0.92;
+    const liftL = Math.min(liftCap, (safe.armLiftL ?? 0) * k);
+    const liftR = Math.min(liftCap, (safe.armLiftR ?? 0) * k);
+    const foreL = Math.min(apose ? 0.26 : 0.34, (safe.forearmL ?? 0) * k);
+    const foreR = Math.min(apose ? 0.26 : 0.34, (safe.forearmR ?? 0) * k);
     applyBoneRotation("leftUpperArm", {
       x: restL.x + Math.sin(talkTime * 3.2) * 0.05 * k,
       y: restL.y,
-      z: restDirectedLift(restL.z, liftL * 0.92, 1),
+      z: restDirectedLift(restL.z, liftL * liftMul, 1),
     });
     applyBoneRotation("rightUpperArm", {
       x: restR.x + Math.sin(talkTime * 3.2 + 1.1) * 0.05 * k,
       y: restR.y,
-      z: restDirectedLift(restR.z, liftR * 0.92, -1),
+      z: restDirectedLift(restR.z, liftR * liftMul, -1),
     });
     applyBoneRotation("leftLowerArm", withElbowBend(restLl, foreL));
     applyBoneRotation("rightLowerArm", withElbowBend(restRl, foreR));
@@ -986,7 +982,7 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
       actionArms = true;
     }
     if (talking && !activeGesture && !activeAction) {
-      talkArmBlend = 0.72 + energy * 0.28;
+      talkArmBlend = (isAposeBind() ? 0.58 : 0.68) + energy * 0.24;
     } else if (!talking && !activeGesture && !activeAction) {
       idleArms = true;
     }

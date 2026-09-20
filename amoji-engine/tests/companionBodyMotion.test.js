@@ -239,6 +239,6 @@ describe("createCompanionBodyMotion", () => {
     motion.setTalking(false);
     motion.snapToRestPose();
     expect(humanoid.bones.get("rightLowerLeg").rotation.z).toBeGreaterThan(0.45);
-    expect(humanoid.bones.get("leftLowerArm").rotation.x).toBeGreaterThan(0.7);
+    expect(humanoid.bones.get("leftLowerArm").rotation.x).toBeGreaterThan(0.64);
   });
 });

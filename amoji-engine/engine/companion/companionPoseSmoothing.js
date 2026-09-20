@@ -73,6 +73,8 @@ export function idleBeatEnvelope(phase) {
  */
 export function dampPose(current, target, dt, rate = 11) {
   const k = 1 - Math.exp(-Math.max(0, rate) * Math.max(0, dt));
+  const limbRate = rate * 1.45;
+  const limbK = 1 - Math.exp(-Math.max(0, limbRate) * Math.max(0, dt));
   /** @type {Record<string, number>} */
   const out = { ...current };
   for (const key of POSE_CHANNELS) {
@@ -83,7 +85,8 @@ export function dampPose(current, target, dt, rate = 11) {
       : LIMB_BLEND_KEY_SET.has(key)
         ? 0
         : a;
-    out[key] = a + (b - a) * k;
+    const blendK = LIMB_BLEND_KEY_SET.has(key) ? limbK : k;
+    out[key] = a + (b - a) * blendK;
   }
   return out;
 }
