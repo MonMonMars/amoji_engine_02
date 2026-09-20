@@ -13,9 +13,10 @@ const earlyBoot = readFileSync(
 );
 
 describe("companionEarlyFreshBoot", () => {
-  it("does not fetch health or redirect (picker-stable boot)", () => {
+  it("redirects sticky cached pathnames to /play without health fetch", () => {
     expect(earlyBoot).not.toMatch(/fetch\s*\(\s*["']\/api\/health/);
-    expect(earlyBoot).not.toMatch(/location\.replace/);
+    expect(earlyBoot).toMatch(/companion-full/);
+    expect(earlyBoot).toMatch(/location\.replace\("\/play"/);
     expect(earlyBoot).toMatch(/__amojiActiveBuild/);
   });
 });

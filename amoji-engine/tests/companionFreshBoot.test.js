@@ -297,7 +297,7 @@ describe("companionFreshBoot", () => {
     expect(replace).not.toHaveBeenCalled();
   });
 
-  it("routes /play to stable /c/<build>/full (optional /n/ stamp override)", () => {
+  it("routes /play to fresh /n/<stamp>/full every time (iOS cache bust)", () => {
     const loc = buildPlayRedirectLocation("?lang=en&pick=1", {
       build: "v159",
       stamp: 1726550000123,
@@ -308,10 +308,11 @@ describe("companionFreshBoot", () => {
     expect(companionOpenPath("lite", 99)).toBe("/n/99/lite");
     expect(isCompanionOpenPath("/n/99/full")).toBe(true);
     expect(isStickyCompanionBookmark("/companion-full")).toBe(true);
-    const stable = buildPlayRedirectLocation("?lang=yue", { build: "v159" });
-    expect(stable).toContain("/c/v159/full");
-    expect(stable).toContain("build=v159");
-    expect(stable).toContain("pick=1");
+    const fresh = buildPlayRedirectLocation("?lang=yue", { build: "v159" });
+    expect(fresh).toMatch(/\/n\/\d+\/full\?/);
+    expect(fresh).toContain("build=v159");
+    expect(fresh).toContain("pick=1");
+    expect(fresh).not.toContain("/c/v159/full");
     const stamped = buildPlayRedirectLocation("?lang=yue", {
       build: "v159",
       stamp: 2,
