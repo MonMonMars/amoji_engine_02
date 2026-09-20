@@ -55,6 +55,13 @@ Programmatic helper: `formatDemoLinkBlock()` in `amoji-engine/engine/companion/d
 
 **Cache bust:** Bookmark `/play` (not `/companion-full`). Each visit 303s to a unique `/n/<stamp>/full` pathname, sends `Clear-Site-Data: "cache"` on the HTML document only (never `"storage"`, so keys survive), and the page purges Cache Storage on open plus BFCache `pageshow`. Query `?build=` is a fallback only. Before deploy, run `node scripts/sync-build-version.mjs` so HTML `?v=` tags match `AMOJI_BUILD`.
 
+## Payments & security (IAP)
+
+- **Catalog / verify:** `/api/iap/products`, `/api/iap/verify`, RevenueCat `/api/iap/webhook`
+- **Web card checkout (optional):** set `STRIPE_SECRET_KEY` + `AMOJI_PUBLIC_URL`; companion Menu → **Shop & services** uses `/api/iap/checkout` and return URL `?iap=success&session_id=…` → `/api/iap/stripe-confirm`
+- **Production:** set `AMOJI_AUTH_SECRET`, `REVENUECAT_WEBHOOK_SECRET`, keep `AMOJI_IAP_DEV=0`; optional `AMOJI_ALLOWED_ORIGINS` (comma list) to restrict POST IAP from unknown sites
+- **Audit:** `AMOJI_SECURITY_AUDIT=1` logs `[amoji-security]` JSON lines for blocked origins, rate limits, and fulfilled purchases
+
 ## Testing
 
 - Unit tests: `cd amoji-engine && npm test`

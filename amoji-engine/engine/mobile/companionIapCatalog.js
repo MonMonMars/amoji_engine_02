@@ -20,6 +20,7 @@ export async function fetchIapStoreMeta(opts = {}) {
   });
   return {
     products: data?.products || [],
+    payments: data?.payments || { stripe: false, devVerify: false },
     revenueCat: data?.revenueCat || { enabled: false, publicApiKey: null },
   };
 }

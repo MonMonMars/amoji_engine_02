@@ -8,9 +8,17 @@ import {
   readJsonBody,
   requireMethod,
 } from "../_lib/http.mjs";
+import { applyApiProtection } from "../_lib/security.mjs";
 
 async function handleGuest(req, res) {
   if (!requireMethod(req, res, "POST")) return;
+  const guard = applyApiProtection(req, res, {
+    rateLimit: { key: "auth-guest", max: 30, windowMs: 60_000 },
+  });
+  if (!guard.ok) {
+    json(res, guard.status || 429, { ok: false, error: guard.error });
+    return;
+  }
   const body = readJsonBody(req);
   const session = createGuestSession(body?.deviceId || body?.guestToken || "");
   await getUserRecord(session.userId);

@@ -1,11 +1,21 @@
 import { verifySession } from "../_lib/auth.mjs";
-import { IAP_CATALOG_SCHEMA, IAP_PRODUCTS, applyProductGrants, findProduct } from "../_lib/iapCatalog.mjs";
+import { IAP_CATALOG_SCHEMA, IAP_PRODUCTS } from "../_lib/iapCatalog.mjs";
+import { fulfillProductPurchase, resolveProduct } from "../_lib/iapFulfillment.mjs";
 import {
-  getUserRecord,
-  mergeEntitlements,
-  mergeSave,
-  patchUserRecord,
-} from "../_lib/userStore.mjs";
+  applyApiProtection,
+  assertPurchaseReceiptAllowed,
+  auditSecurityEvent,
+  isReceiptAlreadyFulfilled,
+  isReceiptReplay,
+  receiptFingerprint,
+  validateProductionSecrets,
+} from "../_lib/security.mjs";
+import { getUserRecord } from "../_lib/userStore.mjs";
+import {
+  createCheckoutSession,
+  retrieveCheckoutSession,
+  stripeEnabled,
+} from "../_lib/stripeCheckout.mjs";
 import {
   applyCors,
   bearerToken,
@@ -15,12 +25,18 @@ import {
   requireMethod,
 } from "../_lib/http.mjs";
 
+validateProductionSecrets().forEach((w) => auditSecurityEvent("config_warning", { missing: w }));
+
 async function handleProducts(_req, res) {
   if (!requireMethod(_req, res, "GET")) return;
   json(res, 200, {
     ok: true,
     schema: IAP_CATALOG_SCHEMA,
     products: IAP_PRODUCTS,
+    payments: {
+      stripe: stripeEnabled(),
+      devVerify: process.env.AMOJI_IAP_DEV === "1",
+    },
     revenueCat: {
       enabled: Boolean(process.env.REVENUECAT_PUBLIC_API_KEY),
       publicApiKey: process.env.REVENUECAT_PUBLIC_API_KEY || null,
@@ -31,6 +47,15 @@ async function handleProducts(_req, res) {
 
 async function handleVerify(req, res) {
   if (!requireMethod(req, res, "POST")) return;
+  const guard = applyApiProtection(req, res, {
+    requireOrigin: true,
+    rateLimit: { key: "iap-verify", max: 20, windowMs: 60_000 },
+  });
+  if (!guard.ok) {
+    json(res, guard.status || 403, { ok: false, error: guard.error, retryAfterMs: guard.retryAfterMs });
+    return;
+  }
+
   const token = bearerToken(req);
   const payload = verifySession(token);
   if (!payload) {
@@ -40,7 +65,7 @@ async function handleVerify(req, res) {
 
   const body = readJsonBody(req);
   const productId = body?.productId || body?.sku || "";
-  const product = findProduct(productId);
+  const product = resolveProduct(productId);
   if (!product) {
     json(res, 400, { ok: false, error: "Unknown product" });
     return;
@@ -48,27 +73,44 @@ async function handleVerify(req, res) {
 
   const platform = body?.platform || "ios";
   const receipt = body?.receipt || body?.purchaseToken || body?.transactionId || "";
-  if (!receipt && process.env.AMOJI_IAP_DEV !== "1") {
-    json(res, 400, { ok: false, error: "Missing purchase receipt" });
+  const receiptCheck = assertPurchaseReceiptAllowed(receipt);
+  if (!receiptCheck.ok) {
+    auditSecurityEvent("purchase_rejected", { userId: payload.sub, reason: receiptCheck.error });
+    json(res, 400, { ok: false, error: receiptCheck.error });
     return;
   }
 
-  const record = await getUserRecord(payload.sub);
-  let entitlements = applyProductGrants(record.entitlements || {}, product);
-  entitlements = mergeEntitlements(record.entitlements, entitlements);
-
-  let save = record.save;
-  if (typeof product.grants?.coins === "number") {
-    const treats = save?.treats && typeof save.treats === "object" ? save.treats : { coins: 80, bag: {} };
-    save = mergeSave(save, {
-      treats: {
-        ...treats,
-        coins: (Number(treats.coins) || 0) + product.grants.coins,
-      },
+  const fingerprint = receiptFingerprint(receipt, product.id, payload.sub);
+  if (isReceiptReplay(fingerprint, payload.sub)) {
+    auditSecurityEvent("receipt_replay", { userId: payload.sub, productId: product.id });
+    json(res, 409, { ok: false, error: "Receipt already used by another account" });
+    return;
+  }
+  if (isReceiptAlreadyFulfilled(fingerprint, payload.sub)) {
+    const record = await getUserRecord(payload.sub);
+    json(res, 200, {
+      ok: true,
+      verified: true,
+      alreadyFulfilled: true,
+      platform,
+      productId: product.id,
+      entitlements: record.entitlements,
+      save: record.save,
     });
+    return;
   }
 
-  const next = await patchUserRecord(payload.sub, { entitlements, save });
+  const next = await fulfillProductPurchase(payload.sub, product, {
+    receipt,
+    source: `verify:${platform}`,
+  });
+
+  auditSecurityEvent("purchase_fulfilled", {
+    userId: payload.sub,
+    productId: product.id,
+    platform,
+  });
+
   json(res, 200, {
     ok: true,
     verified: true,
@@ -80,12 +122,166 @@ async function handleVerify(req, res) {
   });
 }
 
+async function handleCheckout(req, res) {
+  if (!requireMethod(req, res, "POST")) return;
+  const guard = applyApiProtection(req, res, {
+    requireOrigin: true,
+    rateLimit: { key: "iap-checkout", max: 15, windowMs: 60_000 },
+  });
+  if (!guard.ok) {
+    json(res, guard.status || 403, { ok: false, error: guard.error });
+    return;
+  }
+  if (!stripeEnabled()) {
+    json(res, 503, { ok: false, error: "Web checkout not configured (set STRIPE_SECRET_KEY)" });
+    return;
+  }
+
+  const token = bearerToken(req);
+  const payload = verifySession(token);
+  if (!payload) {
+    json(res, 401, { ok: false, error: "Unauthorized" });
+    return;
+  }
+
+  const body = readJsonBody(req);
+  const productId = body?.productId || "";
+  const product = resolveProduct(productId);
+  if (!product) {
+    json(res, 400, { ok: false, error: "Unknown product" });
+    return;
+  }
+
+  const origin = body?.returnOrigin || body?.origin || "";
+  const base = String(origin || process.env.AMOJI_PUBLIC_URL || "https://temporary-rushing-oxygen-ok5jzhd.vercel.app").replace(
+    /\/$/,
+    "",
+  );
+  const returnPath = body?.returnPath || "/play";
+  const successUrl = `${base}${returnPath}?iap=success&session_id={CHECKOUT_SESSION_ID}`;
+  const cancelUrl = `${base}${returnPath}?iap=cancel`;
+
+  const session = await createCheckoutSession({
+    productId: product.id,
+    userId: payload.sub,
+    priceUsd: product.priceUsd,
+    titleEn: product.title?.en || product.id,
+    successUrl,
+    cancelUrl,
+  });
+
+  json(res, 200, {
+    ok: true,
+    checkoutUrl: session.url,
+    sessionId: session.id,
+    productId: product.id,
+  });
+}
+
+async function handleStripeConfirm(req, res) {
+  if (!requireMethod(req, res, "POST")) return;
+  const guard = applyApiProtection(req, res, {
+    requireOrigin: true,
+    rateLimit: { key: "iap-stripe-confirm", max: 20, windowMs: 60_000 },
+  });
+  if (!guard.ok) {
+    json(res, guard.status || 403, { ok: false, error: guard.error });
+    return;
+  }
+  if (!stripeEnabled()) {
+    json(res, 503, { ok: false, error: "Stripe not configured" });
+    return;
+  }
+
+  const token = bearerToken(req);
+  const payload = verifySession(token);
+  if (!payload) {
+    json(res, 401, { ok: false, error: "Unauthorized" });
+    return;
+  }
+
+  const body = readJsonBody(req);
+  const sessionId = body?.sessionId || body?.session_id || "";
+  if (!sessionId) {
+    json(res, 400, { ok: false, error: "Missing sessionId" });
+    return;
+  }
+
+  const session = await retrieveCheckoutSession(sessionId);
+  if (session.payment_status !== "paid" && session.status !== "complete") {
+    json(res, 402, { ok: false, error: "Payment not completed" });
+    return;
+  }
+
+  const metaUser = session.metadata?.userId || session.client_reference_id || "";
+  if (metaUser && metaUser !== payload.sub) {
+    auditSecurityEvent("stripe_user_mismatch", { expected: payload.sub, got: metaUser });
+    json(res, 403, { ok: false, error: "Checkout session does not match signed-in user" });
+    return;
+  }
+
+  const productId = session.metadata?.productId || "";
+  const product = resolveProduct(productId);
+  if (!product) {
+    json(res, 400, { ok: false, error: "Unknown product in session" });
+    return;
+  }
+
+  const receipt = `stripe_${sessionId}`;
+  const fingerprint = receiptFingerprint(receipt, product.id, payload.sub);
+  if (isReceiptAlreadyFulfilled(fingerprint, payload.sub)) {
+    const record = await getUserRecord(payload.sub);
+    json(res, 200, {
+      ok: true,
+      verified: true,
+      alreadyFulfilled: true,
+      productId: product.id,
+      entitlements: record.entitlements,
+      save: record.save,
+    });
+    return;
+  }
+  if (isReceiptReplay(fingerprint, payload.sub)) {
+    json(res, 409, { ok: false, error: "Receipt already used by another account" });
+    return;
+  }
+
+  const next = await fulfillProductPurchase(payload.sub, product, {
+    receipt,
+    source: "stripe",
+  });
+
+  json(res, 200, {
+    ok: true,
+    verified: true,
+    productId: product.id,
+    entitlements: next.entitlements,
+    save: next.save,
+    stripeSessionId: sessionId,
+  });
+}
+
 async function handleWebhook(req, res) {
   if (!requireMethod(req, res, "POST")) return;
+  const guard = applyApiProtection(req, res, {
+    rateLimit: { key: "iap-webhook", max: 120, windowMs: 60_000 },
+  });
+  if (!guard.ok) {
+    json(res, guard.status || 429, { ok: false, error: guard.error });
+    return;
+  }
+
   const secret = process.env.REVENUECAT_WEBHOOK_SECRET || "";
   const headerSecret = req.headers?.["authorization"] || req.headers?.Authorization || "";
-  if (secret && headerSecret !== `Bearer ${secret}`) {
-    json(res, 401, { ok: false, error: "Invalid webhook secret" });
+  if (secret) {
+    if (headerSecret !== `Bearer ${secret}`) {
+      auditSecurityEvent("webhook_auth_failed", {});
+      json(res, 401, { ok: false, error: "Invalid webhook secret" });
+      return;
+    }
+  } else if (process.env.NODE_ENV === "production" || process.env.VERCEL === "1") {
+    auditSecurityEvent("webhook_unprotected", {});
+    json(res, 503, { ok: false, error: "REVENUECAT_WEBHOOK_SECRET required in production" });
     return;
   }
 
@@ -107,29 +303,16 @@ async function handleWebhook(req, res) {
     return;
   }
 
-  const product = findProduct(productId);
+  const product = resolveProduct(productId);
   if (!product) {
     json(res, 200, { ok: true, ignored: true, reason: "unknown product" });
     return;
   }
 
-  const record = await getUserRecord(userId);
-  let entitlements = applyProductGrants(record.entitlements || {}, product);
-  entitlements = mergeEntitlements(record.entitlements, entitlements);
-
-  let save = record.save;
-  if (typeof product.grants?.coins === "number") {
-    const treats =
-      save?.treats && typeof save.treats === "object" ? save.treats : { coins: 80, bag: {} };
-    save = mergeSave(save, {
-      treats: {
-        ...treats,
-        coins: (Number(treats.coins) || 0) + product.grants.coins,
-      },
-    });
-  }
-
-  await patchUserRecord(userId, { entitlements, save });
+  await fulfillProductPurchase(userId, product, {
+    receipt: `rc_webhook_${event?.id || Date.now()}`,
+    source: "revenuecat_webhook",
+  });
   json(res, 200, { ok: true, userId, productId: product.id });
 }
 
@@ -137,6 +320,8 @@ async function handleWebhook(req, res) {
 const ROUTES = {
   products: handleProducts,
   verify: handleVerify,
+  checkout: handleCheckout,
+  "stripe-confirm": handleStripeConfirm,
   webhook: handleWebhook,
 };
 
