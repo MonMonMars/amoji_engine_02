@@ -1,2 +1,2 @@
 /** Single source of truth for deployed companion build id (keep HTML __amojiBuild in sync). */
-export const AMOJI_BUILD = "2026-09-20-v399-isenglish-init-order";
+export const AMOJI_BUILD = "2026-09-20-v400-wide-desktop-dock";
