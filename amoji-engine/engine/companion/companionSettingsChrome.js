@@ -59,6 +59,10 @@ export function buildSettingsChromeLabels(isEnglish = false, state = {}) {
       : speakerOn
         ? "喇叭：開"
         : "喇叭：關",
+    shopSection: en ? "Shop & services" : "商店同服務",
+    shopHint: en
+      ? "Premium, coins, and unlocks — secured checkout."
+      : "Premium、金幣同解鎖 — 安全付款。",
     soundEffects: en ? "Sound effects" : "介面音效",
     haptics: en ? "Haptic feedback" : "觸感回饋",
     advanced: en ? "Advanced" : "進階",

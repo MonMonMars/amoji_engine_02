@@ -73,6 +73,47 @@
   color: rgba(247, 241, 232, 0.62);
 }
 
+.companion-shop-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.companion-shop-item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.65rem;
+  padding: 0.55rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.companion-shop-item:last-child {
+  border-bottom: none;
+}
+
+.companion-shop-item__title {
+  font-size: 0.88rem;
+  font-weight: 650;
+}
+
+.companion-shop-item__price {
+  margin: 0.25rem 0 0;
+  font-size: 0.78rem;
+  color: var(--gold, #e8c547);
+}
+
+.companion-shop-buy {
+  flex-shrink: 0;
+  align-self: center;
+}
+
+.companion-shop-foot {
+  margin-top: 0.35rem !important;
+  font-size: 0.72rem !important;
+  opacity: 0.75;
+}
+
 .settings-card-sub,
 .settings-hint {
   margin: 0;

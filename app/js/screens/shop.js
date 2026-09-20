@@ -9,7 +9,7 @@ import {
   ensureNativePurchasesConfigured,
   purchaseNativeStoreProduct,
 } from "/amoji-engine/engine/mobile/companionNativePurchases.js";
-import { loadAuthSession } from "/amoji-engine/engine/mobile/companionMobileAuth.js";
+import { apiFetch, authHeaders, loadAuthSession } from "/amoji-engine/engine/mobile/companionMobileAuth.js";
 import { syncFromCloud } from "/amoji-engine/engine/mobile/companionCloudStorage.js";
 
 registerRoute("shop", async (ctx) => {
@@ -32,9 +32,11 @@ registerRoute("shop", async (ctx) => {
 
   let products = [];
   let revenueCatEnabled = false;
+  let stripeEnabled = false;
   try {
     const meta = await fetchIapStoreMeta({ baseUrl: ctx.baseUrl });
     products = meta.products;
+    stripeEnabled = Boolean(meta.payments?.stripe);
     revenueCatEnabled = Boolean(meta.revenueCat?.enabled && meta.revenueCat?.publicApiKey);
     if (revenueCatEnabled) {
       await ensureNativePurchasesConfigured({ baseUrl: ctx.baseUrl });
@@ -105,6 +107,22 @@ registerRoute("shop", async (ctx) => {
             transactionId: tx,
             platform: globalThis.Capacitor?.getPlatform?.() === "android" ? "android" : "ios",
           });
+        } else if (stripeEnabled) {
+          const token = loadAuthSession()?.token;
+          const checkout = await apiFetch("/api/iap/checkout", {
+            method: "POST",
+            baseUrl: ctx.baseUrl,
+            headers: authHeaders(token),
+            body: JSON.stringify({
+              productId: id,
+              returnOrigin: globalThis.location?.origin,
+              returnPath: "/app",
+            }),
+          });
+          if (checkout?.checkoutUrl) {
+            globalThis.location.href = checkout.checkoutUrl;
+            return;
+          }
         } else {
           await purchaseDevStub(id, { baseUrl: ctx.baseUrl });
         }
