@@ -20,13 +20,9 @@
   background: #030308;
 }
 
+/* Scene art lives in companion-scene-backgrounds.css (PNG/SVG per preset). */
 .theme-grok-ani .atmosphere {
-  background:
-    radial-gradient(ellipse 90% 70% at 50% 18%, rgba(139, 124, 248, 0.18), transparent 58%),
-    radial-gradient(ellipse 60% 50% at 82% 72%, rgba(94, 234, 212, 0.1), transparent 55%),
-    radial-gradient(ellipse 50% 40% at 12% 68%, rgba(244, 114, 182, 0.08), transparent 50%),
-    linear-gradient(180deg, rgba(3, 3, 10, 0.15) 0%, rgba(3, 3, 10, 0.42) 48%, rgba(2, 2, 8, 0.88) 100%),
-    url("/prototypes/assets/companion-bg-anime.png") center 20% / cover no-repeat;
+  background-color: #030308;
 }
 
 .theme-grok-ani .atmosphere::before {
@@ -47,77 +43,6 @@
 
 .theme-grok-ani .atmosphere[data-scene-environment="outdoor"]::after {
   opacity: 0.34;
-}
-
-.theme-grok-ani .atmosphere[data-scene-bg="night-city"] {
-  background:
-    radial-gradient(ellipse 90% 70% at 50% 18%, rgba(139, 124, 248, 0.18), transparent 58%),
-    radial-gradient(ellipse 60% 50% at 82% 72%, rgba(94, 234, 212, 0.1), transparent 55%),
-    radial-gradient(ellipse 50% 40% at 12% 68%, rgba(244, 114, 182, 0.08), transparent 50%),
-    linear-gradient(180deg, rgba(3, 3, 10, 0.15) 0%, rgba(3, 3, 10, 0.42) 48%, rgba(2, 2, 8, 0.88) 100%),
-    url("/prototypes/assets/companion-bg-anime.png") center 20% / cover no-repeat;
-}
-
-.theme-grok-ani .atmosphere[data-scene-bg="rooftop"] {
-  background:
-    linear-gradient(180deg, rgba(12, 16, 28, 0.1) 0%, rgba(6, 8, 14, 0.82) 100%),
-    radial-gradient(ellipse 100% 70% at 50% 15%, #5b7c9a 0%, #2a3548 45%, #0a0e16 100%);
-}
-
-.theme-grok-ani .atmosphere[data-scene-bg="park"] {
-  background:
-    linear-gradient(180deg, rgba(18, 32, 22, 0.08) 0%, rgba(8, 12, 10, 0.78) 100%),
-    radial-gradient(ellipse 90% 65% at 50% 20%, #6b9a6e 0%, #3d5c42 48%, #121a14 100%);
-}
-
-.theme-grok-ani .atmosphere[data-scene-bg="beach"] {
-  background:
-    linear-gradient(180deg, rgba(40, 28, 18, 0.06) 0%, rgba(10, 14, 22, 0.75) 100%),
-    radial-gradient(ellipse 100% 75% at 50% 18%, #7ec8e3 0%, #4a8fb8 38%, #1a2838 100%);
-}
-
-.theme-grok-ani .atmosphere[data-scene-bg="cozy-room"] {
-  background:
-    linear-gradient(180deg, rgba(28, 18, 14, 0.12) 0%, rgba(10, 8, 12, 0.88) 100%),
-    radial-gradient(ellipse 85% 70% at 50% 38%, #8b6f5c 0%, #4a3a32 52%, #141018 100%);
-}
-
-.theme-grok-ani .atmosphere[data-scene-bg="cafe"] {
-  background:
-    linear-gradient(180deg, rgba(22, 16, 12, 0.1) 0%, rgba(8, 6, 10, 0.85) 100%),
-    radial-gradient(ellipse 90% 65% at 50% 35%, #a08060 0%, #5c4838 50%, #120e0c 100%);
-}
-
-.theme-grok-ani .atmosphere[data-scene-bg="library"] {
-  background:
-    linear-gradient(180deg, rgba(16, 20, 18, 0.15) 0%, rgba(6, 8, 10, 0.9) 100%),
-    radial-gradient(ellipse 88% 68% at 50% 32%, #5a6b58 0%, #2e3830 55%, #0a0c0e 100%);
-}
-
-.theme-grok-ani .atmosphere[data-scene-bg="studio"] {
-  background:
-    linear-gradient(180deg, rgba(18, 20, 28, 0.2) 0%, rgba(8, 10, 16, 0.78) 100%),
-    radial-gradient(ellipse 90% 70% at 50% 35%, #4a5568 0%, #1a1f2b 55%, #0a0c12 100%);
-}
-
-.theme-grok-ani .atmosphere[data-scene-bg="sunset"] {
-  background:
-    linear-gradient(180deg, rgba(40, 18, 28, 0.12) 0%, rgba(10, 8, 18, 0.82) 100%),
-    radial-gradient(ellipse 100% 80% at 50% 20%, #ff8a5c 0%, #7b3f72 42%, #1a1024 100%);
-}
-
-.theme-grok-ani .atmosphere[data-scene-bg="minimal"] {
-  background:
-    linear-gradient(180deg, rgba(3, 3, 10, 0.35) 0%, rgba(2, 2, 8, 0.92) 100%),
-    #030308;
-}
-
-.theme-grok-ani .atmosphere[data-scene-bg="aurora"] {
-  background:
-    linear-gradient(180deg, rgba(3, 3, 10, 0.2) 0%, rgba(2, 2, 8, 0.88) 100%),
-    radial-gradient(ellipse 80% 60% at 30% 25%, rgba(139, 124, 248, 0.42) 0%, transparent 55%),
-    radial-gradient(ellipse 70% 55% at 72% 30%, rgba(94, 234, 212, 0.34) 0%, transparent 52%),
-    #030308;
 }
 
 .theme-grok-ani .stage::after {
