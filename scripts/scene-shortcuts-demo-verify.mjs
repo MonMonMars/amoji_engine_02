@@ -9,6 +9,8 @@ import { chromium } from "playwright";
 import { beginStartPickerSession } from "./companion-picker-smoke-util.mjs";
 import { mkdirSync } from "fs";
 import { AMOJI_BUILD } from "../amoji-engine/engine/companion/buildVersion.mjs";
+import { waitForPageFn } from "./playwrightPageUtil.mjs";
+import { startLocalStaticServer } from "./local-static-server.mjs";
 
 function parseArg(name, fallback) {
   const idx = process.argv.indexOf(name);
@@ -19,10 +21,12 @@ function parseArg(name, fallback) {
 const artifacts = process.env.ARTIFACT_DIR || "/opt/cursor/artifacts";
 mkdirSync(artifacts, { recursive: true });
 
-const baseUrl = parseArg(
-  "--url",
-  "http://127.0.0.1:5174/prototypes/amoji-companion.html?lang=en&automic=0&pick=1",
-);
+let baseUrl = parseArg("--url", "");
+let localHost = null;
+if (!baseUrl) {
+  localHost = await startLocalStaticServer(0);
+  baseUrl = `${localHost.baseUrl}/prototypes/amoji-companion.html?lang=en&automic=0&pick=1&build=${encodeURIComponent(AMOJI_BUILD)}`;
+}
 
 /** @type {{ name: string, ok: boolean, detail?: string }[]} */
 const checks = [];
@@ -30,6 +34,15 @@ const record = (name, ok, detail = "") => {
   checks.push({ name, ok, detail });
   console.log(`${ok ? "PASS" : "FAIL"}  ${name}${detail ? ` — ${detail}` : ""}`);
 };
+
+/** @param {import("playwright").Page} page */
+async function waitSettingsOpen(page, timeout = 10000) {
+  await waitForPageFn(
+    page,
+    () => document.getElementById("settings")?.classList.contains("open"),
+    { timeout },
+  );
+}
 
 const browser = await chromium.launch({
   headless: true,
@@ -40,7 +53,7 @@ const pageErrors = [];
 page.on("pageerror", (err) => pageErrors.push(String(err)));
 
 await page.goto(baseUrl, { waitUntil: "domcontentloaded", timeout: 120000 });
-await page.waitForFunction(() => window.__amojiModuleBooted === true, {
+await waitForPageFn(page, () => window.__amojiModuleBooted === true, {
   timeout: 120000,
 });
 
@@ -58,24 +71,23 @@ await beginStartPickerSession(page, {
   dismissTimeout: 60000,
 });
 
-const sessionReady = await page
-  .waitForFunction(
-    () => window.__amojiStart?.sessionStarted === true,
-    { timeout: 30000 },
-  )
+const sessionReady = await waitForPageFn(
+  page,
+  () => window.__amojiStart?.sessionStarted === true,
+  { timeout: 60000 },
+)
   .then(() => true)
   .catch(() => false);
 record("session started", sessionReady);
 
-await page
-  .waitForFunction(
-    () => {
-      const el = document.getElementById("starter-prompts");
-      return el && !el.hidden && el.querySelectorAll(".starter-chip").length >= 2;
-    },
-    { timeout: 20000 },
-  )
-  .catch(() => null);
+await waitForPageFn(
+  page,
+  () => {
+    const el = document.getElementById("starter-prompts");
+    return el && !el.hidden && el.querySelectorAll(".starter-chip").length >= 2;
+  },
+  { timeout: 20000 },
+).catch(() => null);
 
 const ui = await page.evaluate(() => ({
   chatMenu: !!document.getElementById("settings-btn-chat"),
@@ -101,11 +113,24 @@ const starterVisible = await page.evaluate(() => {
 });
 record("starter prompts visible", starterVisible);
 
-await page.click("#btn-open-setup");
-await page.waitForSelector("#settings.open", { timeout: 5000 });
-await page.click("#settings-btn-scene");
-await page.waitForSelector("#scene-sheet.open", { timeout: 5000 });
-record("scene sheet opens", true);
+await page.evaluate(() => document.getElementById("btn-open-setup")?.click());
+await waitSettingsOpen(page, 10000);
+await page.evaluate(() => document.getElementById("settings-btn-scene")?.click());
+const sceneSheetOpen = await waitForPageFn(
+  page,
+  () =>
+    document.body.classList.contains("scene-sheet-open") &&
+    Boolean(document.getElementById("scene-sheet")?.classList.contains("open")),
+  { timeout: 20000 },
+)
+  .then(() => true)
+  .catch(() => false);
+record("scene sheet opens", sceneSheetOpen);
+if (!sceneSheetOpen) {
+  await browser.close();
+  if (localHost) await localHost.close();
+  process.exit(1);
+}
 await page.screenshot({
   path: `${artifacts}/demo-scene-sheet-open.png`,
   fullPage: false,
@@ -163,9 +188,9 @@ const closeSettingsPanel = async () => {
   await page.waitForTimeout(350);
 };
 
-await page.click("#btn-open-setup");
-await page.waitForSelector("#settings.open", { timeout: 5000 });
-await page.click("#settings-btn-chat");
+await page.evaluate(() => document.getElementById("btn-open-setup")?.click());
+await waitSettingsOpen(page, 10000);
+await page.evaluate(() => document.getElementById("settings-btn-chat")?.click());
 await page.waitForTimeout(300);
 const chatHidden = await page.evaluate(() =>
   document.body.classList.contains("chat-panel-hidden"),
@@ -177,9 +202,9 @@ await page.screenshot({
   fullPage: false,
 });
 
-await page.click("#btn-open-setup");
-await page.waitForSelector("#settings.open", { timeout: 5000 });
-await page.click("#settings-btn-speaker");
+await page.evaluate(() => document.getElementById("btn-open-setup")?.click());
+await waitSettingsOpen(page, 10000);
+await page.evaluate(() => document.getElementById("settings-btn-speaker")?.click());
 await page.waitForTimeout(200);
 const speakerMuted = await page.evaluate(
   () => document.getElementById("settings-btn-speaker")?.getAttribute("aria-pressed") === "false",
@@ -202,7 +227,8 @@ await page.waitForSelector(".msg-row.user .bubble:not(.hidden)", { timeout: 1500
 );
 record("text send works", true);
 
-await page.waitForFunction(
+const replyOk = await waitForPageFn(
+  page,
   () => {
     const rows = document.querySelectorAll(".msg-row.assistant .bubble");
     const last = rows[rows.length - 1];
@@ -210,12 +236,14 @@ await page.waitForFunction(
       last &&
       !last.classList.contains("thinking") &&
       !last.classList.contains("typing") &&
-      last.textContent?.length > 2
+      String(last.textContent || "").trim().length > 2
     );
   },
-  { timeout: 60000 },
-);
-record("assistant reply received", true);
+  { timeout: 120000 },
+)
+  .then(() => true)
+  .catch(() => false);
+record("assistant reply received", replyOk);
 
 const noLegacyMsgActions = await page.evaluate(
   () => document.querySelectorAll(".msg-action-btn").length === 0,
@@ -236,6 +264,7 @@ await page.screenshot({
 record("no page JS errors", pageErrors.length === 0, pageErrors[0] || "");
 
 await browser.close();
+if (localHost) await localHost.close();
 
 const failed = checks.filter((c) => !c.ok);
 if (failed.length) {

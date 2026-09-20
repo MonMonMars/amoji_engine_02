@@ -18,6 +18,7 @@ import {
   openInSessionCompanionPicker,
   switchCompanionInSession,
 } from "./companion-picker-smoke-util.mjs";
+import { waitForPageFn } from "./playwrightPageUtil.mjs";
 
 const SESSION_ROOT = "#companion-character-picker";
 
@@ -50,21 +51,20 @@ page.on("pageerror", (e) => errors.push(e.message));
 
 await page.goto(url, { waitUntil: "domcontentloaded", timeout: 90000 });
 
-await page
-  .waitForFunction(
-    () => {
-      const splash = document.getElementById("amoji-boot-splash");
-      const picker = document.getElementById("start-character-picker");
-      return Boolean(
-        splash ||
-          (picker &&
-            (picker.classList.contains("is-open") ||
-              !picker.classList.contains("hide"))),
-      );
-    },
-    { timeout: 15000 },
-  )
-  .catch(() => null);
+await waitForPageFn(
+  page,
+  () => {
+    const splash = document.getElementById("amoji-boot-splash");
+    const picker = document.getElementById("start-character-picker");
+    return Boolean(
+      splash ||
+        (picker &&
+          (picker.classList.contains("is-open") ||
+            !picker.classList.contains("hide"))),
+    );
+  },
+  { timeout: 15000 },
+).catch(() => null);
 
 const earlyBoot = await page.evaluate(() => {
   const canvas = document.getElementById("avatar-canvas");
@@ -83,7 +83,8 @@ record(
   `opacity=${earlyBoot.canvasOpacity ?? "missing"}`,
 );
 
-await page.waitForFunction(
+await waitForPageFn(
+  page,
   () => {
     if (window.__amojiModuleBooted === true) return true;
     const btn = document.querySelector("#start-character-picker .picker-begin-btn");
@@ -95,18 +96,17 @@ await page.waitForSelector("#start-character-picker .picker-begin-btn:not([disab
   timeout: 90000,
 });
 
-await page
-  .waitForFunction(
-    () => {
-      const imgs = document.querySelectorAll(
-        "#start-character-picker .companion-card-portrait img",
-      );
-      if (!imgs.length) return false;
-      return [...imgs].every((img) => img.complete && img.naturalWidth > 0);
-    },
-    { timeout: 20000 },
-  )
-  .catch(() => null);
+await waitForPageFn(
+  page,
+  () => {
+    const imgs = document.querySelectorAll(
+      "#start-character-picker .companion-card-portrait img",
+    );
+    if (!imgs.length) return false;
+    return [...imgs].every((img) => img.complete && img.naturalWidth > 0);
+  },
+  { timeout: 20000 },
+).catch(() => null);
 
 const boot = await page.evaluate(() => {
   const picker = document.getElementById("start-character-picker");
@@ -498,7 +498,7 @@ record(
   JSON.stringify(springGravity),
 );
 
-await page.waitForFunction(() => !!document.getElementById("activity-rail"), {
+await waitForPageFn(page, () => !!document.getElementById("activity-rail"), {
   timeout: 30000,
 });
 record("activity rail mounted", true);
