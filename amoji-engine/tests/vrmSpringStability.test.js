@@ -14,6 +14,8 @@ import {
   setVrmSceneWindMode,
   getVrmSceneWindMode,
   tickOutdoorSceneWind,
+  applyOutdoorSpringWindToGravityDir,
+  OUTDOOR_WIND_SIDE_AMP,
   recenterVrmSpringBones,
   resolveSpringJointSettings,
   tuneSpringJoint,
@@ -189,6 +191,7 @@ describe("vrmSpringStability", () => {
     tuneSpringJoint(joint);
     expect(joint.settings.dragForce).toBe(OUTDOOR_DRAG_FORCE);
     expect(joint.settings.gravityPower).toBe(OUTDOOR_GRAVITY_POWER);
+    expect(joint.settings.gravityDir.y).toBeLessThan(0);
     expect(getVrmSceneWindMode()).toBe("outdoor");
   });
 
@@ -201,8 +204,25 @@ describe("vrmSpringStability", () => {
     setVrmSceneWindMode("outdoor");
     const result = tickOutdoorSceneWind(vrm, 1.2);
     expect(result.active).toBe(true);
-    expect(joint.settings.gravityDir.y).toBe(-1);
-    expect(Math.abs(joint.settings.gravityDir.x)).toBeGreaterThan(0);
+    expect(joint.settings.gravityDir.y).toBeLessThan(0);
+    expect(joint.settings.gravityDir.z).toBe(0);
+    expect(Math.abs(joint.settings.gravityDir.x)).toBeLessThan(OUTDOOR_WIND_SIDE_AMP + 0.02);
+  });
+
+  it("outdoor side wind keeps gravity pointing down (never +Y)", () => {
+    const dir = {
+      x: 0,
+      y: 1,
+      z: 0.2,
+      set(x, y, z) {
+        this.x = x;
+        this.y = y;
+        this.z = z;
+      },
+    };
+    applyOutdoorSpringWindToGravityDir(dir, 2.5, 3);
+    expect(dir.y).toBeLessThan(0);
+    expect(dir.z).toBe(0);
   });
 
   it("fails open without spring bones", () => {
