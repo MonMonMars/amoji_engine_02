@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" width="960" height="540">
+<defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#4a6a8a"/><stop offset="60%" stop-color="#283848"/><stop offset="100%" stop-color="#101820"/></linearGradient></defs>
+    <rect width="960" height="540" fill="url(#sky)"/>
+    <rect x="0" y="297" width="960" height="243" fill="#1a2028"/>
+    <rect x="0" y="280.8" width="960" height="8" fill="#3a4550"/>
+    <rect x="40" y="189" width="30" height="91.80000000000001" fill="#152028" opacity="0.9"/><rect x="130" y="189" width="45" height="91.80000000000001" fill="#152028" opacity="0.9"/><rect x="220" y="189" width="60" height="91.80000000000001" fill="#152028" opacity="0.9"/><rect x="310" y="189" width="30" height="91.80000000000001" fill="#152028" opacity="0.9"/><rect x="400" y="189" width="45" height="91.80000000000001" fill="#152028" opacity="0.9"/><rect x="490" y="189" width="60" height="91.80000000000001" fill="#152028" opacity="0.9"/><rect x="580" y="189" width="30" height="91.80000000000001" fill="#152028" opacity="0.9"/><rect x="670" y="189" width="45" height="91.80000000000001" fill="#152028" opacity="0.9"/>
+    <circle cx="192" cy="108" r="40" fill="#ffd0a0" opacity="0.35"/>
+</svg>

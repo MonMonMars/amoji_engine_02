@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" width="960" height="540">
+<defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#88b8e0"/><stop offset="100%" stop-color="#486878"/></linearGradient></defs>
+    <rect width="960" height="540" fill="url(#sky)"/>
+    <rect x="0" y="313.2" width="960" height="226.79999999999998" fill="#2a5878"/>
+    <path d="M80 313.2 L110 243 L140 313.2Z" fill="#1a2838"/><path d="M260 313.2 L290 243 L320 313.2Z" fill="#1a2838"/><path d="M440 313.2 L470 243 L500 313.2Z" fill="#1a2838"/><path d="M620 313.2 L650 243 L680 313.2Z" fill="#1a2838"/>
+    <rect x="0" y="421.2" width="960" height="118.8" fill="#182028"/>
+</svg>
