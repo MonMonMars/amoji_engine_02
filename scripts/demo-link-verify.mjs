@@ -441,13 +441,26 @@ if (useLocal) {
 }
 
 const browser = await chromium.launch({ headless: true });
-const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+const viewport = { width: 390, height: 844 };
+/** @type {string[]} */
 const pageErrors = [];
-page.on("pageerror", (err) => pageErrors.push(String(err)));
+
+function trackPageErrors(page, label) {
+  page.on("pageerror", (err) => {
+    pageErrors.push(`[${label}] ${String(err)}`);
+  });
+}
 
 try {
-  await verifySecretary(page, useLocal ? "local" : "prod");
-  await verifyFullCompanion(page, useLocal ? "local" : "prod");
+  const secretaryPage = await browser.newPage({ viewport });
+  trackPageErrors(secretaryPage, "secretary");
+  await verifySecretary(secretaryPage, useLocal ? "local" : "prod");
+  await secretaryPage.close();
+
+  const fullPage = await browser.newPage({ viewport });
+  trackPageErrors(fullPage, "full");
+  await verifyFullCompanion(fullPage, useLocal ? "local" : "prod");
+  await fullPage.close();
 } finally {
   await browser.close();
   localSrv?.close();

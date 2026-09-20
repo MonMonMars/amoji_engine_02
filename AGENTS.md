@@ -38,7 +38,7 @@ Picker-only E2E: `node scripts/companion-picker-verify.mjs` (14+ checks includin
 | Secretary (EN) | `/play?role=secretary&lang=en&pick=1&automic=0` |
 | Setup / API key | `/setup` |
 
-**Unified app:** girlfriend / boyfriend / secretary / pet are **modes inside one 3D companion** (`amoji-companion.html`). Switch via Menu → Mode. Legacy `kind=lite` redirects to `role=secretary`.
+**Unified app:** one 3D companion (`amoji-companion.html`) — girlfriend / boyfriend / secretary / pet come from **each character’s roster role** (voice + personality), not a separate mode menu. Switch character via start picker or Menu → Switch 3D companion; switch **language** via Menu → Session. Legacy `?role=` deep links still filter the roster; `kind=lite` redirects to `role=secretary`.
 
 Do **not** bookmark `/companion-full` or `/companion`. iOS Safari often caches those pathnames forever and ignores `?build=`. `/play` is a never-cached 303 onto a brand-new `/n/<timestamp>/full` path on every open, then wipes Cache Storage / service workers.
 
