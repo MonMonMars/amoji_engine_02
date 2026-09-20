@@ -183,7 +183,11 @@
   border-radius: 50%;
   pointer-events: none;
   opacity: 0;
-  transition: opacity 0.22s ease;
+  transition:
+    opacity 0.22s ease,
+    transform 0.1s cubic-bezier(0.22, 1, 0.36, 1);
+  transform: scale(var(--mini-ball-scale, var(--mic-orb-scale, 1)));
+  transform-origin: center center;
 }
 
 .mic-btn.mini-emotion-ball[data-mic-state="listening"] .companion-chip__dot-canvas,
