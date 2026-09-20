@@ -10,6 +10,7 @@ import {
   companionPreviewImgOnErrorAttr,
   wireCompanionPreviewFallback,
 } from "./companionPreviewFallback.js";
+import { formatPickerFootBuildLine } from "./companionAppAbout.mjs";
 import {
   filterPickerCharacters,
   listPickerFeatured,
@@ -548,6 +549,7 @@ export function createCompanionCharacterPicker(opts = {}) {
       <div class="picker-session-actions">
         <button type="button" class="picker-confirm-btn picker-switch-btn"></button>
         <p class="companion-picker-foot"></p>
+        <p class="companion-picker-foot-build" aria-hidden="true"></p>
       </div>
     </div>
   `;
@@ -560,6 +562,7 @@ export function createCompanionCharacterPicker(opts = {}) {
   const subEl = shell.querySelector(".companion-picker-sub");
   const gridEl = shell.querySelector(".companion-picker-grid");
   const footEl = shell.querySelector(".companion-picker-foot");
+  const footBuildEl = shell.querySelector(".companion-picker-foot-build");
   const confirmBtn = shell.querySelector(".picker-switch-btn");
   const featuredWrap = shell.querySelector(".picker-featured-wrap");
   const featuredLabel = shell.querySelector(".picker-featured-label");
@@ -576,6 +579,7 @@ export function createCompanionCharacterPicker(opts = {}) {
     if (titleEl) titleEl.textContent = copy.title;
     if (subEl) subEl.textContent = copy.sub;
     if (footEl) footEl.textContent = copy.footSession;
+    if (footBuildEl) footBuildEl.textContent = formatPickerFootBuildLine(isEnglish);
     if (confirmBtn) confirmBtn.textContent = copy.switch;
     if (featuredLabel) featuredLabel.textContent = copy.featuredLabel;
   };
@@ -922,6 +926,7 @@ export function createCompanionStartPicker(opts = {}) {
         </div>
         <button type="button" class="picker-confirm-btn picker-begin-btn"></button>
         <p class="companion-picker-foot"></p>
+        <p class="companion-picker-foot-build" aria-hidden="true"></p>
       </footer>
     </div>
   `;
@@ -934,6 +939,7 @@ export function createCompanionStartPicker(opts = {}) {
   const subEl = shell.querySelector(".companion-picker-sub");
   const gridEl = shell.querySelector(".companion-picker-grid");
   const footEl = shell.querySelector(".companion-picker-foot");
+  const footBuildEl = shell.querySelector(".companion-picker-foot-build");
   const preloadEl = shell.querySelector(".start-picker-preload");
   const preloadAnimator = wireLoadingBar(preloadEl);
   const gridWrapEl = shell.querySelector(".start-picker-grid-wrap");
@@ -977,6 +983,7 @@ export function createCompanionStartPicker(opts = {}) {
           ? copy.waiting
           : copy.footStart;
     }
+    if (footBuildEl) footBuildEl.textContent = formatPickerFootBuildLine(isEnglish);
     if (beginBtn) {
       beginBtn.textContent = starting ? copy.starting : copy.begin;
       beginBtn.disabled = starting || !pickable;

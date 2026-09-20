@@ -57,6 +57,26 @@
   gap: 0.75rem;
 }
 
+.settings-card--about .settings-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem 1rem;
+  margin-top: 0.35rem;
+}
+
+.settings-card--about .settings-links a {
+  font-size: 0.82rem;
+  font-weight: 650;
+  color: rgba(127, 212, 207, 0.92);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(127, 212, 207, 0.35);
+}
+
+.settings-card--about .settings-links a:hover {
+  color: rgba(232, 200, 114, 0.95);
+  border-bottom-color: rgba(232, 200, 114, 0.45);
+}
+
 .settings-card-head {
   display: flex;
   flex-direction: column;

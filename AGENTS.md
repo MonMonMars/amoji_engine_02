@@ -88,6 +88,8 @@ Design cues we follow (Atlus Persona / Metaphor, Platinum NieR):
 
 Body class: `companion-jp-aaa-ui` (default on `amoji-companion.html`, reinforced by `initCompanionUiEffects`).
 
+**In-app details:** Menu → **About** shows build id, roster asset revision, feature summary, privacy + fresh `/play` link. Picker footer shows build + roster count (`companionAppAbout.mjs`).
+
 ## Character picker
 
 - Start picker: fixed hero row + horizontal roster with scroll arrows (`companionScrollAffordances.js`).
