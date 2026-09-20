@@ -1,52 +1,63 @@
-# amoji_engine_02
+# Amoji Companion (`amoji_engine_02`)
 
-**FaceLive** — Cantonese realtime voice chat with Sakura avatar orchestration.
+**3D voice & text companion** — 23 legal VRM characters, anime scenes, Cantonese/English, cloud-hosted on Vercel.
 
-## Layout
+## Live demo
+
+| Link | Use |
+|------|-----|
+| **[Open /play](https://temporary-rushing-oxygen-ok5jzhd.vercel.app/play)** | Bookmark this — fresh cache-safe URL every visit |
+| [English + picker](https://temporary-rushing-oxygen-ok5jzhd.vercel.app/play?lang=en&pick=1&automic=0) | Character select + chat |
+| [粵語 + picker](https://temporary-rushing-oxygen-ok5jzhd.vercel.app/play?lang=yue&pick=1&automic=0) | 粵語 |
+| [Health / build id](https://temporary-rushing-oxygen-ok5jzhd.vercel.app/api/health) | Deploy verification JSON |
+| [Vercel dashboard](https://vercel.com/mars2350-1971/temporary-rushing-oxygen-ok5jzhd) | Deploy status |
+
+Current build id: see `amoji-engine/engine/companion/buildVersion.mjs` (`AMOJI_BUILD`).
+
+## What’s in the app
+
+- **Unified 3D app** (`prototypes/amoji-companion.html`) — girlfriend / boyfriend / secretary / pet via **character roster**, not separate apps
+- **Start picker** — AAA-style roster, scene background on picker, **Begin chat**
+- **In session** — mic + text composer, Menu (language, voice, switch companion, brain/LLM, shop)
+- **Models** — `companion-<characterId>.vrm` per selection (see Menu → **About** for build & roster revision)
+- **Mobile hub** — `/app` wraps companion in iframe shells
+
+## Repo layout
 
 | Path | Description |
-| --- | --- |
-| [`amoji-engine/`](./amoji-engine/) | Library: OpenAI Realtime GA, Face Live, always-on VAD, SenseVoice/CosyVoice worker client |
-| [`prototypes/realtime-voice-lab.html`](./prototypes/realtime-voice-lab.html) | Browser lab: Always-on, Worker, Face Live, prosody, barge-in, session archive |
+|------|-------------|
+| [`amoji-engine/`](./amoji-engine/) | Companion engine, unit tests, lab scripts |
+| [`prototypes/`](./prototypes/) | `amoji-companion.html`, CSS, VRM/png assets |
+| [`scripts/`](./scripts/) | Playwright verify, pre-delivery gate, smoke tests |
+| [`AGENTS.md`](./AGENTS.md) | Agent verify rules, demo links, Cursor Cloud notes |
+| [`DEPLOY.md`](./DEPLOY.md) | Vercel deploy |
 
-## Quick start
-
-**Online (no local PC):** open **[Amoji live](https://temporary-rushing-oxygen-ok5jzhd.vercel.app)** · [Vercel dashboard](https://vercel.com/mars2350-1971/temporary-rushing-oxygen-ok5jzhd) · [DEPLOY.md](./DEPLOY.md)
-
-**Windows local:** see [WINDOWS.md](./WINDOWS.md) — double-click `start-companion.cmd` or run `node amoji-engine\scripts\lab-serve.mjs` from CMD.
+## Verify before sharing links
 
 ```bash
-cd amoji-engine
 npm install
-npm test
-npm run build
-npm run demo:e2e
-npm run demo:facelive-smoke
+cd amoji-engine && npm ci && npm test
+
+# Full gate (local)
+npm run verify:pre-delivery
+
+# After deploy
+npm run verify:pre-delivery:prod
+
+# Quick debug trace
+npm run verify:debug
 ```
 
-Serve the **repo root** and open the lab:
-
-```text
-prototypes/realtime-voice-lab.html
-  ?worker=http://127.0.0.1:7890   # optional HTTP worker
-  ?face=ws://127.0.0.1:8765       # optional Face Live / VTS
-```
+## Local dev
 
 ```bash
-# optional local stubs
-cd amoji-engine && npm run voice-worker:mock   # :7890
-cd amoji-engine && npm run demo:dry            # mock Face Live (TS)
+cd amoji-engine && node scripts/lab-serve.mjs
+# → http://127.0.0.1:5173/play
 ```
 
-Full API + module map: [amoji-engine/README.md](./amoji-engine/README.md).
+Optional: [`prototypes/realtime-voice-lab.html`](./prototypes/realtime-voice-lab.html) for Realtime / Face Live experiments — see [amoji-engine/README.md](./amoji-engine/README.md).
 
 ## Requirements
 
 - Node.js 20+
-- OpenAI API key (only for live Realtime demos)
-- Sakura Face Live / VTube Studio API (optional)
-
-## Branch / PR
-
-- Branch: [`cursor/realtime-voice-chat-0f5c`](https://github.com/MonMonMars/amoji_engine_02/tree/cursor/realtime-voice-chat-0f5c)
-- PR: [#2](https://github.com/MonMonMars/amoji_engine_02/pull/2)
+- Legal VRM assets: `npm run postinstall` or `node amoji-engine/scripts/download-legal-vrm.mjs`
