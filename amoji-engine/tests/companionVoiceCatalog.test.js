@@ -33,6 +33,8 @@ describe("companionVoiceCatalog", () => {
     expect(resolveVoiceForCharacter("rex", "yue")).toBe("zh-HK-WanLungNeural");
     expect(resolveVoiceForCharacter("nova", "en")).toBe("en-US-JennyNeural");
     expect(resolveVoiceForCharacter("yuki", "yue")).toBe("zh-HK-HiuMaanNeural-yuki");
+    expect(resolveVoiceForCharacter("mimi", "yue")).toBe("zh-HK-HiuMaanNeural-chibi");
+    expect(resolveVoiceForCharacter("atlas", "en")).toBe("en-HK-SamNeural");
   });
 
   it("cycles Cantonese voices", () => {

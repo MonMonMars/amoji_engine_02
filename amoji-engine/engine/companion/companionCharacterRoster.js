@@ -963,7 +963,7 @@ rex: {
     accent: "#ffc978",
     badge: { yue: "★ VTuber 吉祥物", en: "★ VTuber mascot" },
     voices: {
-      yue: "zh-HK-WanLungNeural-hugo",
+      yue: "zh-HK-HiuMaanNeural-chibi",
       en: "en-HK-YanNeural",
     },
     greetingYue: "你好呀～我係米米！想抱抱未？",
