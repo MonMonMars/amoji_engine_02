@@ -665,8 +665,8 @@ export function createCompanionVoice(opts = {}) {
         URL.revokeObjectURL(objectUrl);
         if (!holdSpeaking) {
           speaking = false;
-          syncAssistantOutput();
         }
+        syncAssistantOutput();
         stopMouth({ keepTalking: holdSpeaking, keepMouth: holdSpeaking });
         resolve(result);
       };
@@ -836,8 +836,8 @@ export function createCompanionVoice(opts = {}) {
       return last;
     } finally {
       speaking = false;
-      stopMouth();
       syncAssistantOutput();
+      stopMouth();
     }
   };
 
@@ -1385,9 +1385,9 @@ export function createCompanionVoice(opts = {}) {
     } finally {
       streamSession = null;
       speaking = false;
+      syncAssistantOutput();
       stopMouth();
       if (session.capturePaused) resumeCapture();
-      syncAssistantOutput();
     }
   };
 
