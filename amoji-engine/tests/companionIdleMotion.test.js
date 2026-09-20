@@ -7,6 +7,7 @@ import {
   sampleCalmBreathIdle,
   sampleIdleBodyMotion,
   sampleIdleExpressionBlend,
+  mergePlantedAliveIdleIntoPose,
   samplePlantedAliveIdle,
   sampleSimpleBootIdleMotion,
   startIdleBeat,
@@ -113,19 +114,31 @@ describe("companionIdleMotion", () => {
     expect(Math.abs(idle.leanY) + Math.abs(idle.headZ)).toBeGreaterThan(0.06);
     expect(idle.armLiftL).toBeGreaterThan(0.08);
     expect(idle.forearmL).toBeGreaterThan(0.3);
-    expect(idle.upperLegR).toBeLessThan(0.05);
-    expect(idle.lowerLegR).toBeLessThan(0.14);
+    expect(idle.upperLegR).toBe(0);
+    expect(idle.lowerLegR).toBe(0);
   });
 
   it("plants legs while the upper body breathes and looks around", () => {
     const a = samplePlantedAliveIdle(0.5);
     const b = samplePlantedAliveIdle(2.3);
-    expect(a.lowerLegR).toBeLessThan(0.14);
-    expect(a.upperLegR).toBeLessThan(0.05);
+    expect(a.lowerLegR).toBe(0);
+    expect(a.upperLegR).toBe(0);
     expect(a.forearmL).toBeGreaterThan(0.12);
     expect(a.armLiftL).toBeGreaterThan(0.04);
     expect(Math.abs(a.headZ) + Math.abs(a.leanY) + Math.abs(a.spineX)).toBeGreaterThan(0.02);
     expect(a.headZ).not.toBe(b.headZ);
+  });
+
+  it("merges A-pose idle without procedural upper-arm lift channels", () => {
+    const base = { headX: 0, leanY: 0.01 };
+    const merged = mergePlantedAliveIdleIntoPose(base, 1.2, {
+      bind: "apose",
+    });
+    expect(merged.armLiftL ?? 0).toBe(0);
+    expect(merged.armLiftR ?? 0).toBe(0);
+    expect(merged.upperLegL ?? 0).toBe(0);
+    expect(Math.abs(merged.forearmL ?? 0)).toBeGreaterThan(0.02);
+    expect(Math.abs(merged.headX ?? 0)).toBeGreaterThan(0.005);
   });
 
   it("can force a look or breathe idle-life beat", () => {

@@ -5,6 +5,12 @@ import {
   easeInOutSine,
   idleBeatEnvelope,
 } from "./companionPoseSmoothing.js";
+import {
+  mergePoses,
+  omitPoseKeys,
+  PLANTED_IDLE_ARM_LIFT_KEYS,
+  PLANTED_IDLE_LEG_KEYS,
+} from "./companionPoseLibrary.js";
 import { REST_NEUTRAL_HAPPY } from "./companionFaceRest.js";
 import {
   idleGenderBodyProfile,
@@ -108,10 +114,10 @@ export function samplePlantedAliveIdle(elapsedSec, opts = {}) {
   const calm = sampleCalmBreathIdle(elapsedSec, opts);
   const life = sampleIdleBodyMotion(elapsedSec, opts);
   return {
-    upperLegL: calm.upperLegL,
-    upperLegR: calm.upperLegR,
-    lowerLegL: calm.lowerLegL,
-    lowerLegR: calm.lowerLegR,
+    upperLegL: 0,
+    upperLegR: 0,
+    lowerLegL: 0,
+    lowerLegR: 0,
     hipZ: calm.hipZ,
     headX: calm.headX + life.headX * 0.2,
     headZ: life.headZ * 0.28,
@@ -123,6 +129,39 @@ export function samplePlantedAliveIdle(elapsedSec, opts = {}) {
     forearmL: calm.forearmL,
     forearmR: calm.forearmR,
   };
+}
+
+/**
+ * Merge planted idle onto a base pose without double-blending limbs into bind rest.
+ * @param {Record<string, number>} base
+ * @param {number} elapsedSec
+ * @param {{ listening?: boolean, emotion?: string, gender?: string, bind?: "tpose" | "apose", weight?: number, snap?: boolean }} [opts]
+ */
+export function mergePlantedAliveIdleIntoPose(base, elapsedSec, opts = {}) {
+  const idle = samplePlantedAliveIdle(elapsedSec, opts);
+  const bind = opts.bind === "apose" ? "apose" : "tpose";
+  const snap = opts.snap === true;
+  const legFree = omitPoseKeys(idle, PLANTED_IDLE_LEG_KEYS);
+
+  if (bind === "apose") {
+    const bodyOnly = omitPoseKeys(legFree, [
+      ...PLANTED_IDLE_ARM_LIFT_KEYS,
+      "forearmL",
+      "forearmR",
+    ]);
+    const bodyWeight = snap ? 0.22 : 0.9;
+    let pose = mergePoses(base, bodyOnly, bodyWeight);
+    pose = mergePoses(
+      pose,
+      { forearmL: idle.forearmL, forearmR: idle.forearmR },
+      snap ? 0.08 : 0.12,
+    );
+    return pose;
+  }
+
+  const weight = snap ? 0.48 : Number(opts.weight ?? 0.96);
+  const tposeIdle = omitPoseKeys(idle, PLANTED_IDLE_LEG_KEYS);
+  return mergePoses(base, tposeIdle, weight);
 }
 
 /**
@@ -174,10 +213,10 @@ export function sampleIdleBodyMotion(elapsedSec, opts = {}) {
         Math.max(0, breath) * 0.05 +
         Math.sin(t * 0.84 + 1.0) * 0.055) *
       energy,
-    upperLegL: profile.legSpread,
-    upperLegR: profile.legSpread,
-    lowerLegL: 0.02,
-    lowerLegR: 0.02,
+    upperLegL: 0,
+    upperLegR: 0,
+    lowerLegL: 0,
+    lowerLegR: 0,
   };
 }
 

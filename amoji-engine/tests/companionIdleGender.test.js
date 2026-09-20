@@ -42,7 +42,7 @@ describe("companionIdleGender", () => {
     const female = sampleIdleBodyMotion(1.4, { gender: "female" });
     const male = sampleIdleBodyMotion(1.4, { gender: "male" });
     expect(Math.abs(female.headZ)).toBeGreaterThan(Math.abs(male.headZ));
-    expect(female.upperLegL).toBeLessThan(male.upperLegL);
+    expect(female.armLiftL).toBeGreaterThan(male.armLiftL);
   });
 
   it("rotates gender-specific idle life clips", () => {

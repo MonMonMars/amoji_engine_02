@@ -225,6 +225,32 @@ export const POSE_LIMB_BLEND_KEYS = Object.freeze([
   "lowerLegR",
 ]);
 
+/** Procedural idle — never merge leg flex (planted rest handles legs). */
+export const PLANTED_IDLE_LEG_KEYS = Object.freeze([
+  "upperLegL",
+  "upperLegR",
+  "lowerLegL",
+  "lowerLegR",
+]);
+
+/** Upper-arm lift channels — skip on A-pose rigs (calibrated rest only). */
+export const PLANTED_IDLE_ARM_LIFT_KEYS = Object.freeze([
+  "armLiftL",
+  "armLiftR",
+]);
+
+/**
+ * @param {Record<string, number>} pose
+ * @param {readonly string[]} keys
+ */
+export function omitPoseKeys(pose, keys) {
+  const out = { ...pose };
+  for (const key of keys) {
+    delete out[key];
+  }
+  return out;
+}
+
 /**
  * Looser limits while speaking so ChatGPT-style talk gestures read on camera.
  * @param {Record<string, number>} pose
