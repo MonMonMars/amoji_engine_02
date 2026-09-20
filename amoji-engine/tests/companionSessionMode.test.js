@@ -14,6 +14,27 @@ describe("companionSessionHref", () => {
       "/play?lang=en&pick=1&automic=0&character=nova",
     );
   });
+
+  it("preserves build cache-bust params when rewriting session href", () => {
+    globalThis.location = {
+      search: "?build=2026-09-20-v396-test&_cb=123&lang=yue",
+    };
+    expect(
+      buildSessionHref({
+        basePath: "/n/999/full",
+        lang: "yue",
+        character: "nova",
+      }),
+    ).toContain("build=2026-09-20-v396-test");
+    expect(
+      buildSessionHref({
+        basePath: "/n/999/full",
+        lang: "yue",
+        character: "nova",
+      }),
+    ).toContain("_cb=123");
+    delete globalThis.location;
+  });
 });
 
 describe("companionLocalePrefs", () => {
