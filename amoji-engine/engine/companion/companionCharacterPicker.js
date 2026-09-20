@@ -38,7 +38,7 @@ import {
 export const COMPANION_CHARACTER_PICKER_SCHEMA =
   "amoji.companionCharacterPicker.v6";
 
-export const COMPANION_START_PICKER_SCHEMA = "amoji.companionStartPicker.v10";
+export const COMPANION_START_PICKER_SCHEMA = "amoji.companionStartPicker.v11";
 
 export const PICKER_SCENE_SECTION_HTML = `
   <section class="picker-scene-section" aria-label="Background">
@@ -771,7 +771,7 @@ export function createCompanionStartPicker(opts = {}) {
 
   const shell = document.createElement("div");
   shell.className =
-    "companion-picker companion-picker--start companion-picker--v4 companion-picker--showcase companion-picker--stacked-layout hide";
+    "companion-picker companion-picker--start companion-picker--v4 companion-picker--showcase companion-picker--stacked-layout companion-picker--aaa-theme hide";
   shell.id = "start-character-picker";
   shell.setAttribute("role", "dialog");
   shell.setAttribute("aria-modal", "true");
@@ -780,6 +780,10 @@ export function createCompanionStartPicker(opts = {}) {
   shell.innerHTML = `
     <div class="companion-picker-backdrop" aria-hidden="true"></div>
     <div class="companion-picker-sheet companion-picker-sheet--start">
+      <div class="picker-aaa-layers" aria-hidden="true">
+        <div class="picker-aaa-bg"></div>
+        <div class="picker-aaa-vignette"></div>
+      </div>
       <header class="companion-picker-head">
         <div>
           <h2 class="companion-picker-title"></h2>
@@ -842,20 +846,20 @@ export function createCompanionStartPicker(opts = {}) {
     if (subEl) {
       subEl.hidden = false;
       subEl.textContent = isEnglish
-        ? `All ${fullList().length} companions · 1–4 flagship · 5+ AAA · tap to preview`
-        : `${fullList().length} 位同伴 · 1–4 旗艦 · 5+ AAA · 㩒肖像預覽`;
+        ? `${fullList().length} companions · swipe roster · tap portrait to preview`
+        : `${fullList().length} 位同伴 · 橫向滑動名單 · 㩒肖像預覽`;
     }
     if (rosterDockLabelEl) {
       rosterDockLabelEl.textContent = isEnglish
-        ? `3D models · ${fullList().length} characters`
-        : `3D 模型 · 共 ${fullList().length} 位`;
+        ? `Roster · ${fullList().length} 3D models`
+        : `名單 · 共 ${fullList().length} 個 3D 模型`;
     }
     if (rosterAaaBannerEl) {
       const aaa = fullList().filter((item) => (item.number || 0) >= 5 && (item.number || 0) <= 10);
       const names = aaa.map((item) => item.name).join(isEnglish ? ", " : "、");
       rosterAaaBannerEl.textContent = isEnglish
-        ? `#5–10 AAA: ${names} — swipe right →`
-        : `#5–10 AAA：${names} — 向右滑 →`;
+        ? `Featured AAA · ${names}`
+        : `AAA 精選 · ${names}`;
       rosterAaaBannerEl.hidden = aaa.length === 0;
     }
     if (footEl) {

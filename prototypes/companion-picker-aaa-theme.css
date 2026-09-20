@@ -1,0 +1,342 @@
+/**
+ * Character select — Japanese AAA mobile game presentation layer.
+ * Uses generated art in /prototypes/assets/picker-*.png
+ */
+
+.companion-picker--aaa-theme.companion-picker--start {
+  --picker-aaa-gold: #e8c872;
+  --picker-aaa-gold-dim: rgba(232, 200, 114, 0.45);
+  --picker-aaa-ink: #f8f4ff;
+  --picker-aaa-muted: rgba(248, 244, 255, 0.62);
+}
+
+.companion-picker--aaa-theme .companion-picker-backdrop {
+  background: rgba(2, 4, 12, 0.55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.companion-picker--aaa-theme.companion-picker--start .companion-picker-sheet {
+  position: relative;
+  isolation: isolate;
+  background: #06040e;
+  border: none;
+  box-shadow:
+    0 0 0 1px rgba(232, 200, 114, 0.12) inset,
+    0 -24px 80px rgba(0, 0, 0, 0.65);
+}
+
+.companion-picker--aaa-theme .picker-aaa-layers {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.companion-picker--aaa-theme .picker-aaa-bg {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(6, 4, 14, 0.35) 0%, rgba(6, 4, 14, 0.72) 55%, rgba(4, 3, 10, 0.94) 100%),
+    url("/prototypes/assets/picker-aaa-bg.png") center top / cover no-repeat;
+}
+
+.companion-picker--aaa-theme .picker-aaa-vignette {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 90% 55% at 50% 18%, rgba(139, 124, 248, 0.22), transparent 62%),
+    linear-gradient(180deg, transparent 40%, rgba(0, 0, 0, 0.55) 100%);
+}
+
+.companion-picker--aaa-theme .companion-picker-sheet > *:not(.picker-aaa-layers) {
+  position: relative;
+  z-index: 1;
+}
+
+.companion-picker--aaa-theme .companion-picker-head {
+  padding: max(0.85rem, env(safe-area-inset-top)) 1.15rem 0.35rem;
+  text-align: center;
+  background: linear-gradient(180deg, rgba(8, 6, 18, 0.72), transparent);
+}
+
+.companion-picker--aaa-theme .companion-picker-title {
+  margin: 0;
+  font-family: var(--font-display, system-ui, sans-serif);
+  font-size: clamp(1.35rem, 5vw, 1.65rem);
+  font-weight: 850;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  background: linear-gradient(180deg, #fff8ef 0%, var(--picker-aaa-gold) 55%, #c9a44a 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.45));
+}
+
+.companion-picker--aaa-theme .companion-picker-sub {
+  margin: 0.35rem auto 0;
+  max-width: 22rem;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: var(--picker-aaa-muted);
+  letter-spacing: 0.02em;
+}
+
+.companion-picker--aaa-theme .picker-showcase-stage {
+  padding: 0.25rem 1rem 0.15rem;
+}
+
+.companion-picker--aaa-theme.companion-picker--stacked-layout .picker-hero {
+  padding: 0.55rem 0.75rem 0.65rem;
+  border-radius: 1.15rem;
+  background: linear-gradient(
+    145deg,
+    rgba(255, 255, 255, 0.06),
+    rgba(255, 255, 255, 0.02)
+  );
+  border: 1px solid rgba(232, 200, 114, 0.18);
+  box-shadow:
+    0 16px 40px rgba(0, 0, 0, 0.35),
+    0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+}
+
+.companion-picker--aaa-theme .picker-hero-glow {
+  opacity: 0.85;
+  filter: blur(28px);
+}
+
+.companion-picker--aaa-theme .picker-hero-portrait {
+  position: relative;
+  border-radius: 1rem;
+  overflow: visible;
+  box-shadow:
+    0 20px 44px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(232, 200, 114, 0.35) inset;
+}
+
+.companion-picker--aaa-theme .picker-hero-portrait::after {
+  content: "";
+  position: absolute;
+  inset: -0.35rem;
+  background: url("/prototypes/assets/picker-hero-frame.png") center / contain no-repeat;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.companion-picker--aaa-theme .picker-hero-portrait img {
+  position: relative;
+  z-index: 1;
+  border-radius: 0.85rem;
+}
+
+.companion-picker--aaa-theme .picker-hero-kicker {
+  font-size: 0.65rem;
+  font-weight: 750;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--picker-aaa-gold);
+}
+
+.companion-picker--aaa-theme .picker-hero-name {
+  font-size: clamp(1.35rem, 5.2vw, 1.75rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--picker-aaa-ink);
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.55);
+}
+
+.companion-picker--aaa-theme .picker-hero-tagline {
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: rgba(248, 244, 255, 0.78);
+}
+
+.companion-picker--aaa-theme .picker-hero-trait {
+  font-size: 0.68rem;
+  padding: 0.22rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid rgba(232, 200, 114, 0.28);
+  background: rgba(0, 0, 0, 0.28);
+  color: rgba(255, 248, 235, 0.88);
+}
+
+.companion-picker--aaa-theme .picker-roster-dock {
+  position: relative;
+  border-top: 1px solid rgba(232, 200, 114, 0.14);
+  background:
+    linear-gradient(180deg, rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0.55)),
+    url("/prototypes/assets/picker-roster-plate.png") center / cover no-repeat;
+  padding-top: 0.55rem;
+}
+
+.companion-picker--aaa-theme .picker-roster-dock::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 1rem;
+  right: 1rem;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--picker-aaa-gold-dim) 20%,
+    var(--picker-aaa-gold-dim) 80%,
+    transparent
+  );
+  pointer-events: none;
+}
+
+.companion-picker--aaa-theme .picker-roster-dock-label {
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  color: rgba(232, 200, 114, 0.72);
+}
+
+.companion-picker--aaa-theme .picker-roster-aaa-banner {
+  margin-left: 1rem;
+  margin-right: 1rem;
+  padding: 0.38rem 0.65rem;
+  border-radius: 0.55rem;
+  font-size: 0.72rem;
+  border-left: none;
+  background: rgba(16, 185, 129, 0.14);
+  border: 1px solid rgba(52, 211, 153, 0.35);
+  color: rgba(220, 252, 231, 0.92);
+}
+
+.companion-picker--aaa-theme .companion-card--start-strip {
+  padding: 0.22rem 0.18rem 0.32rem;
+  border-radius: 0.95rem;
+  background: rgba(8, 6, 16, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.28);
+}
+
+.companion-picker--aaa-theme .companion-card--start-strip .companion-card-portrait {
+  border-radius: 0.78rem;
+  background: radial-gradient(ellipse at 50% 20%, rgba(139, 124, 248, 0.12), rgba(0, 0, 0, 0.35));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.companion-picker--aaa-theme .companion-card--start-strip .companion-card-name {
+  font-size: 0.72rem;
+  color: rgba(248, 244, 255, 0.92);
+}
+
+.companion-picker--aaa-theme .companion-card--start-strip.is-selected {
+  border-color: rgba(232, 200, 114, 0.75);
+  background: linear-gradient(
+    180deg,
+    rgba(232, 200, 114, 0.16),
+    rgba(139, 124, 248, 0.12)
+  );
+  box-shadow:
+    0 12px 28px rgba(0, 0, 0, 0.38),
+    0 0 0 1px rgba(232, 200, 114, 0.35),
+    0 0 24px rgba(139, 124, 248, 0.22);
+}
+
+.companion-picker--aaa-theme .companion-card--start-strip .companion-card-number {
+  background: rgba(0, 0, 0, 0.55);
+  border: 1px solid rgba(232, 200, 114, 0.45);
+  color: #fff8ef;
+}
+
+.companion-picker--aaa-theme .picker-background-row .picker-scene-section {
+  background: rgba(0, 0, 0, 0.38);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.companion-picker--aaa-theme .picker-scene-label {
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  color: rgba(232, 200, 114, 0.65);
+}
+
+.companion-picker--aaa-theme .picker-scene-chip {
+  border-radius: 0.75rem;
+  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.companion-picker--aaa-theme .picker-scene-chip.is-active {
+  border-color: rgba(232, 200, 114, 0.55);
+  box-shadow: 0 0 16px rgba(232, 200, 114, 0.15);
+}
+
+.companion-picker--aaa-theme .picker-footer {
+  padding: 0.5rem 1.1rem calc(0.65rem + env(safe-area-inset-bottom));
+  background: linear-gradient(180deg, rgba(4, 3, 10, 0.55), rgba(4, 3, 10, 0.96));
+  border-top: 1px solid rgba(232, 200, 114, 0.12);
+}
+
+.companion-picker--aaa-theme .picker-confirm-btn {
+  position: relative;
+  overflow: hidden;
+  border: none;
+  border-radius: 999px;
+  font-size: 0.95rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #1a1208;
+  background: linear-gradient(180deg, #fff1c9 0%, #e8c872 42%, #c9983a 100%);
+  box-shadow:
+    0 10px 28px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.35) inset,
+    0 0 24px rgba(232, 200, 114, 0.25);
+}
+
+.companion-picker--aaa-theme .picker-confirm-btn::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 35%,
+    rgba(255, 255, 255, 0.45) 50%,
+    transparent 65%
+  );
+  transform: translateX(-120%);
+  animation: picker-aaa-cta-shine 4.5s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.companion-picker--aaa-theme .picker-confirm-btn:disabled {
+  opacity: 0.55;
+  filter: grayscale(0.35);
+}
+
+.companion-picker--aaa-theme .picker-confirm-btn:disabled::after {
+  animation: none;
+}
+
+@keyframes picker-aaa-cta-shine {
+  0%,
+  72% {
+    transform: translateX(-120%);
+  }
+  100% {
+    transform: translateX(120%);
+  }
+}
+
+.companion-picker--aaa-theme .start-picker-scroll-hint {
+  font-size: 0.68rem;
+  color: rgba(248, 244, 255, 0.48);
+}
+
+.companion-picker--aaa-theme .companion-picker-foot {
+  font-size: 0.65rem;
+  color: rgba(248, 244, 255, 0.42);
+  text-align: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .companion-picker--aaa-theme .picker-confirm-btn::after {
+    animation: none;
+    display: none;
+  }
+}

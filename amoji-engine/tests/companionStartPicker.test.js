@@ -83,7 +83,11 @@ describe("companion start picker", () => {
         startedWith = id;
       },
     });
-    expect(picker.schema).toBe("amoji.companionStartPicker.v10");
+    expect(picker.schema).toBe("amoji.companionStartPicker.v11");
+    expect(picker.element.classList.contains("companion-picker--aaa-theme")).toBe(
+      true,
+    );
+    expect(picker.element.querySelector(".picker-aaa-bg")).toBeTruthy();
     expect(picker.element.querySelector(".picker-showcase-stage .picker-hero")).toBeTruthy();
     expect(picker.element.classList.contains("companion-picker--showcase")).toBe(
       true,
@@ -197,8 +201,8 @@ describe("companion start picker", () => {
     expect(picker.element.querySelector(".picker-roster-dock-label")?.textContent).toContain(
       String(CHARACTER_IDS.length),
     );
-    expect(picker.element.querySelector(".companion-picker-sub")?.textContent).toContain(
-      "1–4 flagship",
+    expect(picker.element.querySelector(".companion-picker-sub")?.textContent).toMatch(
+      /swipe roster|companions/i,
     );
     expect(
       picker.element.querySelectorAll(".companion-card--start-strip .companion-card-number").length,
