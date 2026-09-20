@@ -141,6 +141,12 @@ if (!production) {
     const local = await resolveLocalServer();
     base = local.base;
     serverChild = local.child;
+    const health = await fetch(`${base}/api/health`).then((r) => r.json());
+    if (health.build !== AMOJI_BUILD) {
+      throw new Error(
+        `verify server build mismatch (${health.build} != ${AMOJI_BUILD})`,
+      );
+    }
     steps.push({ step: "local-server", ok: true, detail: String(local.port) });
     console.log(`PASS  local-server — ${local.base}`);
   } catch (err) {
