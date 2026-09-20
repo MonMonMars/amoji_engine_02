@@ -149,6 +149,23 @@ describe("companionCharacterPicker UI", () => {
     picker.destroy();
   });
 
+  it("in-session picker closes via close button and backdrop", () => {
+    if (typeof document === "undefined") return;
+    const picker = createCompanionCharacterPicker({
+      isEnglish: true,
+      selectedId: "nova",
+      onSelect: () => {},
+    });
+    picker.open();
+    expect(picker.isOpen()).toBe(true);
+    picker.element.querySelector(".companion-picker-close")?.click();
+    expect(picker.isOpen()).toBe(false);
+    picker.open();
+    picker.element.querySelector(".companion-picker-backdrop")?.click();
+    expect(picker.isOpen()).toBe(false);
+    picker.destroy();
+  });
+
   it("in-session picker closes when confirming same character", () => {
     if (typeof document === "undefined") return;
     const picker = createCompanionCharacterPicker({

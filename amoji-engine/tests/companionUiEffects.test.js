@@ -182,6 +182,32 @@ describe("companionUiEffects", () => {
     expect(backdrop.hasAttribute("hidden")).toBe(true);
   });
 
+  it("does not re-open after close before enter animation finishes", () => {
+    vi.useFakeTimers();
+    const doc = mockDoc();
+    const panel = mockEl("div");
+    const backdrop = mockEl("div");
+
+    openUiOverlay(doc, {
+      panel,
+      backdrop,
+      bodyClass: "settings-open",
+    });
+    closeUiOverlay(doc, {
+      panel,
+      backdrop,
+      bodyClass: "settings-open",
+      hideDelay: UI_OVERLAY_CLOSE_MS,
+    });
+    doc.flushRaf();
+    doc.flushRaf();
+    expect(panel.classList.contains("open")).toBe(false);
+    expect(backdrop.classList.contains("is-open")).toBe(false);
+    vi.advanceTimersByTime(UI_OVERLAY_CLOSE_MS + 10);
+    expect(panel.classList.contains("open")).toBe(false);
+    expect(panel.hasAttribute("hidden")).toBe(true);
+  });
+
   it("animates tab panel swaps", () => {
     vi.useFakeTimers();
     const doc = mockDoc();
