@@ -184,11 +184,30 @@ export function defaultVoiceForLang(langCode, currentVoiceId) {
  *   extra?: Record<string, string>,
  * }} opts
  */
+/**
+ * Keep deploy cache-bust params when syncing session query (picker /play → /n/…).
+ * @param {URLSearchParams} q
+ * @param {string | URLSearchParams | null | undefined} [search]
+ */
+export function preserveFreshBootQueryParams(q, search) {
+  const cur = new URLSearchParams(
+    typeof search === "string"
+      ? search.replace(/^\?/, "")
+      : search?.toString?.() ||
+          String(globalThis.location?.search || "").replace(/^\?/, ""),
+  );
+  for (const key of ["build", "_cb"]) {
+    const value = cur.get(key);
+    if (value) q.set(key, value);
+  }
+}
+
 export function buildCompanionHref(opts = {}) {
   const q = new URLSearchParams();
   const langCode = companionLangCode(opts.lang);
   q.set("lang", langCode === "en" ? "en" : "yue");
   if (opts.voiceId) q.set("voice", opts.voiceId);
+  preserveFreshBootQueryParams(q, opts.search ?? globalThis.location?.search);
   if (opts.extra) {
     for (const [key, value] of Object.entries(opts.extra)) {
       if (value) q.set(key, value);

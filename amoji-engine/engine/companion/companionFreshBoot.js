@@ -440,12 +440,23 @@ export async function checkForAppUpdate(pageBuild, opts = {}) {
   const search = globalThis.location?.search || "";
   const sticky = isStickyCompanionBookmark(path);
   const forceNewOpen = Boolean(opts.forceNewOpen);
-  const buildMatches = !shouldReloadForBuild(embedded, serverBuild);
+  const queryBuild = new URLSearchParams(String(search || "").replace(/^\?/, "")).get(
+    "build",
+  );
+  const buildMatches = !shouldReloadForBuild(
+    queryBuild || embedded,
+    serverBuild,
+  );
+  if (serverBuild && pathSatisfiesBuild(path, serverBuild, search)) {
+    globalThis.__amojiActiveBuild = serverBuild;
+    if (queryBuild === serverBuild) {
+      globalThis.__amojiBuild = serverBuild;
+    }
+    return { reloaded: false, serverBuild, pageBuild: embedded };
+  }
   if (
     buildMatches &&
-    (pathSatisfiesBuild(path, serverBuild, search) ||
-      isCompanionOpenPath(path) ||
-      isStickyCompanionBookmark(path))
+    (isCompanionOpenPath(path) || isStickyCompanionBookmark(path))
   ) {
     if (serverBuild) globalThis.__amojiActiveBuild = serverBuild;
     return { reloaded: false, serverBuild, pageBuild: embedded };
@@ -570,9 +581,23 @@ export function runEarlyFreshBootCheck(pageBuild) {
 /**
  * @param {{ intervalMs?: number, fetchImpl?: typeof fetch }} [opts]
  */
+export function isCompanionPickerEntryPage(
+  search = globalThis.location?.search,
+) {
+  const params = new URLSearchParams(String(search || "").replace(/^\?/, ""));
+  return params.get("autostart") !== "1" && params.get("pick") !== "0";
+}
+
 export function startAppUpdateWatcher(opts = {}) {
   const intervalMs = opts.intervalMs ?? 180_000;
   const run = (runOpts = {}) => {
+    if (
+      isCompanionPickerEntryPage() &&
+      typeof document !== "undefined" &&
+      document.body?.classList.contains("companion-picker-open")
+    ) {
+      return;
+    }
     void checkForAppUpdate(undefined, { ...opts, ...runOpts });
   };
   run({ purgeCaches: false });
@@ -596,6 +621,20 @@ export function startAppUpdateWatcher(opts = {}) {
 if (typeof globalThis !== "undefined") {
   globalThis.__amojiImport = ami;
   if (typeof document !== "undefined") {
-    startAppUpdateWatcher();
+    const bootWatcher = () => startAppUpdateWatcher();
+    if (
+      isCompanionPickerEntryPage() &&
+      document.body?.classList.contains("companion-picker-open")
+    ) {
+      const obs = new MutationObserver(() => {
+        if (!document.body.classList.contains("companion-picker-open")) {
+          obs.disconnect();
+          bootWatcher();
+        }
+      });
+      obs.observe(document.body, { attributes: true, attributeFilter: ["class"] });
+    } else {
+      bootWatcher();
+    }
   }
 }

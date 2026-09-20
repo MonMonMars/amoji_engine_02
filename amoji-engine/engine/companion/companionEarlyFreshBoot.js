@@ -10,9 +10,21 @@
   if (!pageBuild || typeof fetch !== "function" || !window.location) return;
 
   var url = new URL(window.location.href);
+
+  function isPickerEntry() {
+    var p = new URLSearchParams(url.search);
+    return p.get("autostart") !== "1" && p.get("pick") !== "0";
+  }
+
+  /** Picker must not pathname-hop — /play → /n/<stamp> already happened once. */
+  if (isPickerEntry()) {
+    return;
+  }
+
   var requestedBuild = url.searchParams.get("build");
   if (requestedBuild) {
     window.__amojiActiveBuild = requestedBuild;
+    window.__amojiBuild = requestedBuild;
   }
 
   function parseBuildNumber(build) {
@@ -68,8 +80,25 @@
 
   function pathSatisfiesBuild(serverBuild) {
     if (hasBuildPath(serverBuild)) return true;
-    if (url.searchParams.get("build") !== serverBuild) return false;
-    return isOpenPath(url.pathname || "") || isFallbackPath();
+    var queryBuild = url.searchParams.get("build");
+    if (queryBuild === serverBuild) {
+      return (
+        isOpenPath(url.pathname || "") ||
+        isFallbackPath() ||
+        hasBuildPath(serverBuild)
+      );
+    }
+    return false;
+  }
+
+  function syncBuildQuery(serverBuild) {
+    if (!serverBuild || url.searchParams.get("build") === serverBuild) return;
+    if (!isOpenPath(url.pathname || "") && !isFallbackPath()) return;
+    try {
+      url.searchParams.set("build", serverBuild);
+      window.history.replaceState(null, "", url.toString());
+      window.__amojiActiveBuild = serverBuild;
+    } catch (e) {}
   }
 
   function purgeCaches() {
@@ -156,15 +185,15 @@
       return;
     }
     bumpRedirectGuard();
-    fetch(openPath, { method: "HEAD", cache: "no-store" })
-      .then(function (res) {
-        if (res && res.ok) {
-          go(openPath, serverBuild);
+    fetch(pinnedPath, { method: "HEAD", cache: "no-store" })
+      .then(function (res2) {
+        if (res2 && res2.ok) {
+          go(pinnedPath, serverBuild);
           return;
         }
-        return fetch(pinnedPath, { method: "HEAD", cache: "no-store" }).then(
-          function (res2) {
-            go(res2 && res2.ok ? pinnedPath : fallbackPath, serverBuild);
+        return fetch(openPath, { method: "HEAD", cache: "no-store" }).then(
+          function (res) {
+            go(res && res.ok ? openPath : fallbackPath, serverBuild);
           },
         );
       })
@@ -182,10 +211,25 @@
       .then(function (data) {
         var serverBuild = data && data.build;
         if (!serverBuild) return;
+        if (url.searchParams.get("build") === serverBuild && isOpenPath(url.pathname)) {
+          window.__amojiBuild = serverBuild;
+          window.__amojiActiveBuild = serverBuild;
+          return;
+        }
         if (
           !shouldReload(pageBuild, serverBuild) &&
           pathSatisfiesBuild(serverBuild)
         ) {
+          syncBuildQuery(serverBuild);
+          return;
+        }
+        if (
+          shouldReload(pageBuild, serverBuild) &&
+          url.searchParams.get("build") === serverBuild &&
+          (isOpenPath(url.pathname) || hasBuildPath(serverBuild))
+        ) {
+          window.__amojiBuild = serverBuild;
+          window.__amojiActiveBuild = serverBuild;
           return;
         }
         purgeCaches();

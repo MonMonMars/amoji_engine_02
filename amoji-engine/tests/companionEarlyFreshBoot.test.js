@@ -17,6 +17,11 @@ describe("companionEarlyFreshBoot", () => {
     expect(earlyBoot).not.toMatch(/visibilitychange/);
   });
 
+  it("skips pathname redirects on default character-picker entry", () => {
+    expect(earlyBoot).toMatch(/function isPickerEntry/);
+    expect(earlyBoot).toMatch(/if \(isPickerEntry\(\)\)/);
+  });
+
   it("does not force a new /n/ stamp on BFCache restore when build already matches", () => {
     expect(earlyBoot).toMatch(/addEventListener\("pageshow"/);
     expect(earlyBoot).toMatch(/ev\.persisted/);
