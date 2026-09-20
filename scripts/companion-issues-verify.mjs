@@ -240,6 +240,20 @@ async function main() {
   );
   await page.waitForTimeout(3500);
 
+  await page
+    .waitForFunction(
+      () => {
+        const manager = window.__amojiAvatar?.vrm?.springBoneManager;
+        const raw = manager?.joints || manager?._joints || manager?._sortedJoints;
+        if (!raw) return false;
+        if (typeof raw.size === "number") return raw.size > 0;
+        if (typeof raw.length === "number") return raw.length > 0;
+        return typeof raw[Symbol.iterator] === "function";
+      },
+      { timeout: 90000 },
+    )
+    .catch(() => null);
+
   const bootIntegrity = await page.evaluate(() => {
     const el = document.querySelector(".atmosphere");
     const bg = el ? getComputedStyle(el).backgroundImage : "";
