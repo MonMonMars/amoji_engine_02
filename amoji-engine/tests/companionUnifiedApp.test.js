@@ -75,6 +75,23 @@ describe("companionUnifiedApp", () => {
     ).toBe("boyfriend");
   });
 
+  it("maps legacy ?character= ids to current roster for role default", () => {
+    expect(
+      resolveRoleDefaultCharacter(
+        "chad",
+        "boyfriend",
+        new URLSearchParams("character=chad&lang=en"),
+      ),
+    ).toBe("robert");
+    expect(
+      resolveRoleDefaultCharacter(
+        "olivia",
+        "girlfriend",
+        new URLSearchParams("character=olivia&lang=en"),
+      ),
+    ).toBe("yuki");
+  });
+
   it("honors secretary role for legacy kate alias and default nova", () => {
     expect(
       resolveAppRole(

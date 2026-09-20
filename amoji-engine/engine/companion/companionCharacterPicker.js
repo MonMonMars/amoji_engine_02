@@ -4,6 +4,7 @@
 import {
   characterNumber,
   listCompanionCharacters,
+  normalizeRosterCharacterId,
 } from "./companionCharacterCatalog.js";
 import {
   companionPreviewImgOnErrorAttr,
@@ -489,7 +490,7 @@ export function createCompanionCharacterPicker(opts = {}) {
   let isEnglish = Boolean(opts.isEnglish);
   let langCode = isEnglish ? "en" : "yue";
   /** Live session character — updated by setSelected after hot-swap. */
-  let activeCharacterId = opts.selectedId || "nova";
+  let activeCharacterId = normalizeRosterCharacterId(opts.selectedId || "nova");
   let selectedId = activeCharacterId;
   let rosterProvider =
     typeof opts.rosterProvider === "function" ? opts.rosterProvider : null;
@@ -580,7 +581,7 @@ export function createCompanionCharacterPicker(opts = {}) {
   };
 
   const applySelection = (id) => {
-    selectedId = id;
+    selectedId = normalizeRosterCharacterId(id);
     renderAll();
   };
 
@@ -742,13 +743,14 @@ export function createCompanionCharacterPicker(opts = {}) {
     open: openPicker,
     close,
     setSelected(id) {
-      activeCharacterId = id;
+      const next = normalizeRosterCharacterId(id);
+      activeCharacterId = next;
       if (!open) {
-        selectedId = id;
+        selectedId = next;
         return;
       }
-      if (id === selectedId) return;
-      selectedId = id;
+      if (next === selectedId) return;
+      selectedId = next;
       renderAll();
     },
     getActiveCharacterId() {
@@ -853,7 +855,7 @@ export function createCompanionCharacterPicker(opts = {}) {
 export function createCompanionStartPicker(opts = {}) {
   let isEnglish = Boolean(opts.isEnglish);
   let langCode = isEnglish ? "en" : "yue";
-  let selectedId = opts.selectedId || "nova";
+  let selectedId = normalizeRosterCharacterId(opts.selectedId || "nova");
   let rosterProvider =
     typeof opts.rosterProvider === "function" ? opts.rosterProvider : null;
   let starting = false;
@@ -1067,15 +1069,16 @@ export function createCompanionStartPicker(opts = {}) {
 
   const applySelection = (id) => {
     if (!pickable || starting) return;
-    if (id === selectedId) {
+    const next = normalizeRosterCharacterId(id);
+    if (next === selectedId) {
       scrollSelectedIntoView();
       return;
     }
-    selectedId = id;
+    selectedId = next;
     renderAll();
     scrollSelectedIntoView();
     pulseHeroStage();
-    opts.onSelectionChange?.(id);
+    opts.onSelectionChange?.(next);
   };
 
   const focusSelectedCard = () => {
@@ -1146,16 +1149,17 @@ export function createCompanionStartPicker(opts = {}) {
     schema: COMPANION_START_PICKER_SCHEMA,
     element: shell,
     setSelected(id) {
-      if (id === selectedId) {
+      const next = normalizeRosterCharacterId(id);
+      if (next === selectedId) {
         scrollSelectedIntoView();
         return;
       }
-      selectedId = id;
+      selectedId = next;
       renderAll();
       scrollSelectedIntoView();
     },
     syncFromSession(opts = {}) {
-      const nextId = String(opts.selectedId ?? selectedId).toLowerCase();
+      const nextId = normalizeRosterCharacterId(opts.selectedId ?? selectedId);
       const nextEnglish = opts.isEnglish ?? isEnglish;
       const localeChanged = Boolean(nextEnglish) !== isEnglish;
       const idChanged = nextId !== selectedId;

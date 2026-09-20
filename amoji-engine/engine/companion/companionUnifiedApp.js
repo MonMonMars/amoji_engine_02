@@ -3,6 +3,8 @@
  */
 import {
   listCompanionCharacters,
+  normalizeRosterCharacterId,
+  resolveCharacterId,
 } from "./companionCharacterCatalog.js";
 import {
   resolveCharacterRole,
@@ -96,9 +98,14 @@ export function resolveRoleDefaultCharacter(characterId, role, params) {
     params?.get("character") ||
     params?.get("vrm") ||
     params?.get("model3d");
-  if (explicit) return String(characterId || "nova").toLowerCase();
+  if (explicit) {
+    return resolveCharacterId({
+      characterParam: params?.get("character"),
+      modelUrl: params?.get("vrm") || params?.get("model3d"),
+    });
+  }
   const preset = rolePreset(role);
-  const current = String(characterId || "").toLowerCase();
+  const current = normalizeRosterCharacterId(characterId);
   if (current && preset.characterIds.includes(current)) return current;
   return preset.defaultCharacterId;
 }

@@ -15,6 +15,8 @@ import { playCompanionCardTapFx } from "./companionUiGacha.js";
 import {
   CHARACTER_IDS,
   migrateLegacyCharacterStorage,
+  migrateLegacyCharacterUrlParam,
+  resolveCharacterId,
 } from "./companionCharacterCatalog.js";
 import { ROSTER_SCHEMA } from "./companionCharacterRoster.js";
 import { AMOJI_BUILD } from "./buildVersion.mjs";
@@ -40,12 +42,14 @@ export async function bootEarlyStartPicker(opts = {}) {
 
   const isEnglish = params.get("lang") === "en";
   migrateLegacyCharacterStorage(globalThis.localStorage);
+  migrateLegacyCharacterUrlParam();
   const appRole = resolveAppRole(params);
-  const selectedId = resolveRoleDefaultCharacter(
-    String(params.get("character") || "nova").toLowerCase(),
-    appRole,
-    params,
-  );
+  const resolvedId = resolveCharacterId({
+    characterParam: params.get("character"),
+    modelUrl: params.get("vrm") || params.get("model3d"),
+    storage: globalThis.localStorage,
+  });
+  const selectedId = resolveRoleDefaultCharacter(resolvedId, appRole, params);
   const roleCopy = pickerCopyForRole(appRole, isEnglish);
 
   const splash = document.getElementById("amoji-boot-splash");
