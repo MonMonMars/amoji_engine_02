@@ -114,8 +114,37 @@
     url.searchParams.delete("lite");
   }
 
+  var REDIRECT_GUARD = "amoji.earlyFreshBoot.redirects";
+
+  function redirectGuardAllows() {
+    try {
+      var n = parseInt(sessionStorage.getItem(REDIRECT_GUARD) || "0", 10);
+      return !Number.isFinite(n) || n < 2;
+    } catch (e) {
+      return true;
+    }
+  }
+
+  function bumpRedirectGuard() {
+    try {
+      var n = parseInt(sessionStorage.getItem(REDIRECT_GUARD) || "0", 10);
+      sessionStorage.setItem(REDIRECT_GUARD, String((Number.isFinite(n) ? n : 0) + 1));
+    } catch (e) {}
+  }
+
   function redirect(serverBuild, forceNewOpen) {
     ensureSecretaryRole();
+    url = new URL(window.location.href);
+    if (
+      !shouldReload(pageBuild, serverBuild) &&
+      pathSatisfiesBuild(serverBuild) &&
+      (isOpenPath(url.pathname) || hasBuildPath(serverBuild) || isFallbackPath())
+    ) {
+      return;
+    }
+    if (!redirectGuardAllows()) {
+      return;
+    }
     var stamp = Date.now();
     var openPath = "/n/" + stamp + "/full";
     var pinnedPath = "/c/" + encodeURIComponent(serverBuild) + "/full";
@@ -126,6 +155,7 @@
     if (stay && pathSatisfiesBuild(serverBuild) && !shouldReload(pageBuild, serverBuild)) {
       return;
     }
+    bumpRedirectGuard();
     fetch(openPath, { method: "HEAD", cache: "no-store" })
       .then(function (res) {
         if (res && res.ok) {
@@ -152,30 +182,23 @@
       .then(function (data) {
         var serverBuild = data && data.build;
         if (!serverBuild) return;
-        purgeCaches();
-        var sticky = isStickyPath(url.pathname || "");
         if (
           !shouldReload(pageBuild, serverBuild) &&
           pathSatisfiesBuild(serverBuild)
         ) {
           return;
         }
+        purgeCaches();
         redirect(serverBuild, Boolean(forceNewOpen));
       })
       .catch(function () {});
   }
 
-  purgeCaches();
   probeServerBuild(false);
 
   window.addEventListener("pageshow", function (ev) {
     if (ev && ev.persisted) {
-      purgeCaches();
-      probeServerBuild(true);
+      probeServerBuild(false);
     }
-  });
-
-  document.addEventListener("visibilitychange", function () {
-    if (document.visibilityState === "visible") purgeCaches();
   });
 })();
