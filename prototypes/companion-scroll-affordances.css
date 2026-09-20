@@ -1,0 +1,89 @@
+/**
+ * Mouse-friendly scroll arrows for horizontal roster / chip rows.
+ */
+
+.scroll-affordance-host {
+  position: relative;
+}
+
+.scroll-affordance-host > .scroll-affordance-btn {
+  position: absolute;
+  top: 50%;
+  z-index: 4;
+  transform: translateY(-50%);
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: rgba(248, 244, 255, 0.92);
+  background: rgba(8, 6, 18, 0.82);
+  border: 1px solid rgba(232, 200, 114, 0.28);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity 0.18s ease,
+    transform 0.15s ease,
+    background 0.15s ease;
+}
+
+.scroll-affordance-host:hover > .scroll-affordance-btn,
+.scroll-affordance-host:focus-within > .scroll-affordance-btn,
+.scroll-affordance-host.is-scrollable > .scroll-affordance-btn {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.scroll-affordance-host > .scroll-affordance-btn:hover,
+.scroll-affordance-host > .scroll-affordance-btn:focus-visible {
+  background: rgba(139, 124, 248, 0.22);
+  transform: translateY(-50%) scale(1.04);
+}
+
+.scroll-affordance-host > .scroll-affordance-btn:disabled {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+.scroll-affordance-btn--prev {
+  left: 0.15rem;
+}
+
+.scroll-affordance-btn--next {
+  right: 0.15rem;
+}
+
+.scroll-affordance-host--vertical > .scroll-affordance-btn {
+  left: 50%;
+  right: auto;
+  transform: translateX(-50%);
+}
+
+.scroll-affordance-host--vertical > .scroll-affordance-btn--prev {
+  top: 0.2rem;
+  transform: translateX(-50%);
+}
+
+.scroll-affordance-host--vertical > .scroll-affordance-btn--next {
+  top: auto;
+  bottom: 0.2rem;
+  transform: translateX(-50%);
+}
+
+@media (hover: none) and (pointer: coarse) {
+  .scroll-affordance-host.is-scrollable > .scroll-affordance-btn {
+    opacity: 0.88;
+    pointer-events: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scroll-affordance-host > .scroll-affordance-btn {
+    transition: none;
+  }
+}

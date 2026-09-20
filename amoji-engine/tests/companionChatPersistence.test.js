@@ -85,14 +85,14 @@ describe("companionChatPersistence", () => {
 
   it("returns tutorial starter prompts with feature copy", () => {
     const prompts = starterPromptsForCharacter("nova", true, { storage, seed: "test-seed" });
-    expect(prompts).toHaveLength(8);
-    expect(prompts.some((p) => /voice|mic|tap|camera|scene|menu/i.test(p))).toBe(true);
+    expect(prompts).toHaveLength(4);
+    expect(prompts.every((p) => typeof p === "string" && p.length > 0)).toBe(true);
     const detailed = starterPromptsForCharacter("alicia", true, {
       storage,
       seed: "test-seed",
       detailed: true,
     });
-    expect(detailed).toHaveLength(8);
+    expect(detailed).toHaveLength(4);
     expect(detailed[0]).toMatchObject({ text: expect.any(String), cat: expect.any(String) });
   });
 

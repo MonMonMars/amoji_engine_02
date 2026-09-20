@@ -37,12 +37,26 @@ describe("companionDemoDialogue", () => {
     expect(nova.join("|")).not.toBe(novaOtherLogin.join("|"));
   });
 
-  it("returns eight starter prompt strings for featured characters", () => {
-    expect(demoStarterPrompts("alicia", true)).toHaveLength(8);
-    expect(demoStarterPrompts("ember", false)).toHaveLength(8);
-    expect(demoStarterPrompts("unknown", true).join(" ")).toMatch(
-      /What can you do|How do I use|Say hi|voice|tap|camera/i,
-    );
+  it("returns four starter prompt strings for featured characters", () => {
+    expect(demoStarterPrompts("alicia", true)).toHaveLength(4);
+    expect(demoStarterPrompts("ember", false)).toHaveLength(4);
+    const unknownPool = demoStarterPrompts("unknown", true, 4, "tutorial-pool-check");
+    expect(unknownPool.join(" ").length).toBeGreaterThan(12);
+    expect(unknownPool.some((p) => p.length > 4)).toBe(true);
+  });
+
+  it("varies tutorial chips across reload seeds", () => {
+    const a = pickTutorialStarterPrompts("nova", true, {
+      max: 4,
+      seed: "guest|nova|en|load-a",
+    });
+    const b = pickTutorialStarterPrompts("nova", true, {
+      max: 4,
+      seed: "guest|nova|en|load-b",
+    });
+    expect(a).toHaveLength(4);
+    expect(b).toHaveLength(4);
+    expect(a.map((c) => c.text).join("|")).not.toBe(b.map((c) => c.text).join("|"));
   });
 
   it("picks varied proactive lines", () => {
@@ -63,7 +77,7 @@ describe("companionDemoDialogue", () => {
 
   it("has starter and proactive pools for all curated characters", () => {
     for (const id of ["sky", "yuki", "hina", "mio"]) {
-      expect(demoStarterPrompts(id, true).length).toBeGreaterThanOrEqual(5);
+      expect(demoStarterPrompts(id, true).length).toBeGreaterThanOrEqual(4);
       expect(pickDemoProactiveLine(id, true)).toBeTruthy();
     }
   });

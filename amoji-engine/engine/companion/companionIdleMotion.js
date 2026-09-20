@@ -25,7 +25,7 @@ export {
   proceduralIdleBeatPoolForGender,
 } from "./companionIdleGender.js";
 
-export const COMPANION_IDLE_MOTION_SCHEMA = "amoji.companionIdleMotion.v7";
+export const COMPANION_IDLE_MOTION_SCHEMA = "amoji.companionIdleMotion.v8";
 
 /** First seconds after avatar is visible — gentle breathe, sway, relaxed arms. */
 export const BOOT_SIMPLE_IDLE_SEC = 10;
@@ -59,10 +59,10 @@ export function sampleSimpleBootIdleMotion(elapsedSec, opts = {}) {
     forearmR:
       profile.forearmBaseR * 0.45 +
       Math.max(0, Math.sin(t * 0.58 + 0.9) * 0.04) * pulse,
-    upperLegL: profile.legSpread,
-    upperLegR: profile.legSpread,
-    lowerLegL: 0.02,
-    lowerLegR: 0.02,
+    upperLegL: 0,
+    upperLegR: 0,
+    lowerLegL: 0,
+    lowerLegR: 0,
   };
 }
 
@@ -91,10 +91,10 @@ export function sampleCalmBreathIdle(elapsedSec, opts = {}) {
     armLiftR: profile.armLiftBaseR,
     forearmL: profile.forearmBaseL * 0.42,
     forearmR: profile.forearmBaseR * 0.42,
-    upperLegL: profile.legSpread,
-    upperLegR: profile.legSpread,
-    lowerLegL: 0.02,
-    lowerLegR: 0.02,
+    upperLegL: 0,
+    upperLegR: 0,
+    lowerLegL: 0,
+    lowerLegR: 0,
   };
 }
 
@@ -115,8 +115,8 @@ export function samplePlantedAliveIdle(elapsedSec, opts = {}) {
     lowerLegR: calm.lowerLegR,
     hipZ: calm.hipZ,
     headX: calm.headX + life.headX * 0.2,
-    headZ: life.headZ * 0.42,
-    leanY: calm.leanY + life.leanY * 0.32,
+    headZ: life.headZ * 0.28,
+    leanY: calm.leanY + life.leanY * 0.18,
     spineX: calm.spineX,
     chestX: calm.chestX,
     armLiftL: calm.armLiftL + breath * 0.014,
@@ -139,7 +139,7 @@ export function sampleIdleBodyMotion(elapsedSec, opts = {}) {
   const sway = Math.sin(t * 0.58 + 0.4) * profile.swayMul;
   const shift = Math.sin(t * 0.72);
   const bob = Math.sin(t * 0.9 + 0.3);
-  const energy = (listening ? 1.1 : 1) * 1.85;
+  const energy = (listening ? 1.05 : 1) * 1.05;
   const leftFree = Math.max(0, -shift);
   const rightFree = Math.max(0, shift);
 
@@ -320,8 +320,6 @@ export function advanceIdleBeat(state, dt, nowMs, opts = {}) {
         overlay.spineX = 0.03 * wave * env;
         break;
       case "wide":
-        overlay.upperLegL = 0.06 * wave * env;
-        overlay.upperLegR = 0.06 * wave * env;
         overlay.chestX = -0.02 * wave * env;
         overlay.spineX = 0.04 * wave * env;
         overlay.armLiftL = 0.08 * wave * env;

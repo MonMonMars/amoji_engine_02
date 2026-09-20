@@ -413,17 +413,17 @@ export const TUTORIAL_STARTER_PROMPTS = Object.freeze([
   { cat: "secretary", en: "Organize my thoughts", yue: "幫我整理思路" },
 ]);
 
-/** Category order for tutorial chips — one pick per group when possible. */
+/** Main + recently shipped features first — one chip per group when possible. */
 export const TUTORIAL_STARTER_CATEGORY_ORDER = Object.freeze([
   "intro",
-  "voice",
-  "chat",
-  "poke",
-  "camera",
-  "scene",
-  "motion",
   "menu",
   "character",
+  "voice",
+  "chat",
+  "scene",
+  "poke",
+  "camera",
+  "motion",
   "secretary",
 ]);
 
@@ -476,11 +476,14 @@ export function shuffleWithRng(items, rng) {
  * @returns {{ text: string, cat: string, tutorial: boolean }[]}
  */
 export function pickTutorialStarterPrompts(characterId, isEnglish = false, opts = {}) {
-  const max = Math.max(1, opts.max ?? 8);
+  const max = Math.max(1, opts.max ?? 4);
   const lang = isEnglish ? "en" : "yue";
   const id = String(characterId || "nova").toLowerCase();
-  const dayBucket = Math.floor(Date.now() / 86400000);
-  const seedStr = `${opts.seed || "guest"}|${id}|${lang}|${dayBucket}`;
+  const loadNonce =
+    typeof performance !== "undefined"
+      ? String(performance.timeOrigin)
+      : String(Date.now());
+  const seedStr = `${opts.seed || "guest"}|${id}|${lang}|${loadNonce}`;
   const rng = createTutorialRng(hashTutorialSeed(seedStr));
 
   /** @type {{ text: string, cat: string, tutorial: boolean }[]} */
@@ -495,12 +498,18 @@ export function pickTutorialStarterPrompts(characterId, isEnglish = false, opts 
     return true;
   };
 
-  for (const cat of TUTORIAL_STARTER_CATEGORY_ORDER) {
-    if (picked.length >= max) break;
+  const tutorialBudget = Math.max(1, max - 1);
+  const categoryOrder = shuffleWithRng([...TUTORIAL_STARTER_CATEGORY_ORDER], rng);
+  let tutorialCount = 0;
+  for (const cat of categoryOrder) {
+    if (tutorialCount >= tutorialBudget) break;
     const pool = TUTORIAL_STARTER_PROMPTS.filter((p) => p.cat === cat);
     if (!pool.length) continue;
     for (const item of shuffleWithRng(pool, rng)) {
-      if (pushText(item[lang], cat, true)) break;
+      if (pushText(item[lang], cat, true)) {
+        tutorialCount += 1;
+        break;
+      }
     }
   }
 
@@ -964,7 +973,7 @@ export const DEMO_CONVERSATION_SCENES = Object.freeze([
  * @param {boolean} [isEnglish]
  * @param {number} [max]
  */
-export function demoStarterPrompts(characterId, isEnglish = false, max = 8, seed = "demo") {
+export function demoStarterPrompts(characterId, isEnglish = false, max = 4, seed = "demo") {
   return pickTutorialStarterPrompts(characterId, isEnglish, { max, seed }).map((p) => p.text);
 }
 

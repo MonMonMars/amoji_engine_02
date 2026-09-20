@@ -21,7 +21,8 @@ describe("companionPickerAaaTheme", () => {
     expect(html).toContain("amoji-title-screen");
     expect(titleCss).toContain("/prototypes/assets/title-screen-anime-bg.png");
     expect(aaaCss).toContain("/prototypes/assets/picker-aaa-bg.png");
-    expect(aaaCss).toContain("/prototypes/assets/picker-hero-frame.png");
+    expect(aaaCss).toMatch(/picker-hero-portrait[\s\S]*linear-gradient/);
+    expect(aaaCss).toMatch(/picker-hero-portrait img[\s\S]*object-fit:\s*cover/);
     expect(aaaCss).toContain("/prototypes/assets/picker-roster-plate.png");
     expect(aaaCss).toMatch(/companion-picker--aaa-theme[\s\S]*picker-confirm-btn/);
     expect(aaaCss).toMatch(/companion-picker--session[\s\S]*picker-switch-btn/);
