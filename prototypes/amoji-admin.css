@@ -1,0 +1,236 @@
+:root {
+  --admin-bg: #0c0f16;
+  --admin-card: #141a26;
+  --admin-border: rgba(255, 255, 255, 0.1);
+  --admin-text: #eef2ff;
+  --admin-muted: rgba(238, 242, 255, 0.62);
+  --admin-accent: #8b7cf8;
+  --admin-danger: #f87171;
+  --admin-ok: #4ade80;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  font-family: system-ui, -apple-system, Segoe UI, sans-serif;
+  background: radial-gradient(1200px 600px at 10% -10%, #1a1048 0%, var(--admin-bg) 55%);
+  color: var(--admin-text);
+}
+
+.admin-app {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 1.25rem;
+}
+
+.admin-card {
+  background: var(--admin-card);
+  border: 1px solid var(--admin-border);
+  border-radius: 14px;
+  padding: 1.25rem 1.35rem;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
+}
+
+.admin-login {
+  max-width: 420px;
+  margin: 12vh auto 0;
+}
+
+.admin-login form {
+  display: grid;
+  gap: 0.75rem;
+}
+
+label {
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.82rem;
+  color: var(--admin-muted);
+}
+
+input,
+select,
+textarea {
+  width: 100%;
+  border-radius: 10px;
+  border: 1px solid var(--admin-border);
+  background: #0a0e14;
+  color: var(--admin-text);
+  padding: 0.55rem 0.65rem;
+  font: inherit;
+}
+
+.admin-btn {
+  border-radius: 999px;
+  border: 1px solid var(--admin-border);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--admin-text);
+  padding: 0.45rem 0.95rem;
+  font: inherit;
+  cursor: pointer;
+}
+
+.admin-btn--primary {
+  background: linear-gradient(135deg, #8b7cf8, #5eead4);
+  color: #0a0e14;
+  border: none;
+  font-weight: 700;
+}
+
+.admin-btn--ghost {
+  background: transparent;
+}
+
+.admin-error {
+  color: var(--admin-danger);
+  font-size: 0.85rem;
+}
+
+.admin-muted {
+  color: var(--admin-muted);
+  font-size: 0.85rem;
+}
+
+.admin-shell {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.admin-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.65rem 0.9rem;
+  border-radius: 12px;
+  border: 1px solid var(--admin-border);
+  background: rgba(20, 26, 38, 0.92);
+}
+
+.admin-topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.admin-badge {
+  margin-left: 0.5rem;
+  font-size: 0.72rem;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  background: rgba(139, 124, 248, 0.2);
+  border: 1px solid rgba(139, 124, 248, 0.35);
+}
+
+.admin-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.admin-nav-btn.is-active {
+  border-color: rgba(139, 124, 248, 0.55);
+  background: rgba(139, 124, 248, 0.16);
+}
+
+.admin-main {
+  min-height: 50vh;
+}
+
+.admin-view h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1.15rem;
+}
+
+.admin-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.65rem;
+}
+
+.admin-stat {
+  padding: 0.75rem;
+  border-radius: 12px;
+  border: 1px solid var(--admin-border);
+  background: rgba(0, 0, 0, 0.22);
+}
+
+.admin-stat strong {
+  display: block;
+  font-size: 1.1rem;
+}
+
+.admin-toolbar {
+  display: flex;
+  gap: 0.55rem;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.admin-table-wrap {
+  overflow: auto;
+  border: 1px solid var(--admin-border);
+  border-radius: 12px;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+
+.admin-table th,
+.admin-table td {
+  text-align: left;
+  padding: 0.55rem 0.65rem;
+  border-bottom: 1px solid var(--admin-border);
+}
+
+.admin-table tbody tr {
+  cursor: pointer;
+}
+
+.admin-table tbody tr:hover {
+  background: rgba(139, 124, 248, 0.08);
+}
+
+.admin-form-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+fieldset {
+  border: 1px solid var(--admin-border);
+  border-radius: 12px;
+  padding: 0.75rem;
+  margin: 0;
+}
+
+legend {
+  padding: 0 0.35rem;
+  color: var(--admin-muted);
+}
+
+.admin-pre {
+  background: #0a0e14;
+  border: 1px solid var(--admin-border);
+  border-radius: 12px;
+  padding: 0.75rem;
+  overflow: auto;
+  font-size: 0.75rem;
+  max-height: 60vh;
+}
+
+.admin-nav-btn {
+  border-radius: 999px;
+  border: 1px solid var(--admin-border);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--admin-text);
+  padding: 0.38rem 0.85rem;
+  font: inherit;
+  cursor: pointer;
+}

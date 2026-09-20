@@ -3,6 +3,7 @@ import path from "node:path";
 
 export const USER_SAVE_SCHEMA = "amoji.userSave.v1";
 export const USER_SETTINGS_SCHEMA = "amoji.userSettings.v1";
+export const USER_PROFILE_SCHEMA = "amoji.userProfile.v1";
 
 const memory = globalThis.__amojiUserStore || new Map();
 globalThis.__amojiUserStore = memory;
@@ -114,7 +115,12 @@ async function writeRecord(userId, record) {
  */
 export async function getUserRecord(userId) {
   const existing = await readRecord(userId);
-  if (existing) return existing;
+  if (existing) {
+    if (!existing.profile) {
+      return patchUserRecord(userId, { profile: defaultProfile(userId) });
+    }
+    return existing;
+  }
   const created = {
     userId,
     schema: USER_SAVE_SCHEMA,
@@ -122,8 +128,115 @@ export async function getUserRecord(userId) {
     save: defaultSave(),
     settings: defaultSettings(),
     entitlements: defaultEntitlements(),
+    profile: defaultProfile(userId),
   };
   return writeRecord(userId, created);
+}
+
+export function defaultProfile(userId = "") {
+  const source = String(userId).startsWith("apple_")
+    ? "apple"
+    : String(userId).startsWith("guest_")
+      ? "guest"
+      : "unknown";
+  return {
+    schema: USER_PROFILE_SCHEMA,
+    displayName: "",
+    contactEmail: "",
+    tags: [],
+    notes: "",
+    status: "active",
+    source,
+  };
+}
+
+/**
+ * @param {Record<string, unknown>} current
+ * @param {Record<string, unknown>} incoming
+ */
+export function mergeProfile(current, incoming) {
+  const base = { ...defaultProfile(), ...(current || {}) };
+  const next = { ...base, ...(incoming || {}) };
+  if (Array.isArray(incoming?.tags)) {
+    next.tags = incoming.tags.map((t) => String(t).trim()).filter(Boolean).slice(0, 24);
+  }
+  if (typeof incoming?.status === "string") {
+    const s = incoming.status.toLowerCase();
+    next.status = s === "suspended" ? "suspended" : "active";
+  }
+  return next;
+}
+
+/**
+ * @param {string} userId
+ */
+export async function getUserRecordOrNull(userId) {
+  const id = String(userId || "").trim();
+  if (!id) return null;
+  return readRecord(id);
+}
+
+/**
+ * @param {{ limit?: number, query?: string }} [opts]
+ */
+export async function listUserSummaries(opts = {}) {
+  const limit = Math.min(500, Math.max(1, Number(opts.limit) || 100));
+  const query = String(opts.query || "").trim().toLowerCase();
+  /** @type {Map<string, Record<string, unknown>>} */
+  const ids = new Map();
+
+  for (const key of memory.keys()) {
+    ids.set(key, memory.get(key));
+  }
+
+  if (useFilesystem()) {
+    try {
+      const dir = dataDir();
+      const files = await fs.readdir(dir);
+      for (const file of files) {
+        if (!file.endsWith(".json")) continue;
+        const rawId = file.replace(/\.json$/, "");
+        const record = await readFs(rawId);
+        if (record) ids.set(String(record.userId || rawId), record);
+      }
+    } catch {
+      /* empty dir */
+    }
+  }
+
+  let rows = [...ids.entries()].map(([userId, record]) => {
+    const profile = { ...defaultProfile(userId), ...(record?.profile || {}) };
+    return {
+      userId,
+      updatedAt: record?.updatedAt || null,
+      profile: {
+        displayName: profile.displayName,
+        contactEmail: profile.contactEmail,
+        status: profile.status,
+        source: profile.source,
+        tags: profile.tags || [],
+      },
+      entitlements: {
+        premium: Boolean(record?.entitlements?.premium),
+        unlimitedChat: Boolean(record?.entitlements?.unlimitedChat),
+      },
+      settings: {
+        lang: record?.settings?.lang || "yue",
+      },
+    };
+  });
+
+  if (query) {
+    rows = rows.filter(
+      (r) =>
+        r.userId.toLowerCase().includes(query) ||
+        String(r.profile.displayName || "").toLowerCase().includes(query) ||
+        String(r.profile.contactEmail || "").toLowerCase().includes(query),
+    );
+  }
+
+  rows.sort((a, b) => String(b.updatedAt || "").localeCompare(String(a.updatedAt || "")));
+  return rows.slice(0, limit);
 }
 
 /**

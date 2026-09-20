@@ -20,6 +20,8 @@ export default function handler(_req, res) {
       privacy: "/privacy",
       authGuest: "/api/auth/guest",
       iapProducts: "/api/iap/products",
+      admin: "/admin",
+      adminApi: "/api/admin/session",
     },
   });
 }

@@ -331,6 +331,7 @@ export function rewriteCompanionServePath(pathname) {
   ) {
     return "/prototypes/amoji-companion.html";
   }
+  if (path === "/admin" || path === "/admin/") return "/prototypes/amoji-admin.html";
   if (path === "/setup") return "/prototypes/amoji-setup.html";
   if (path === "/voice-emotion-demo" || path === "/voice-demo") {
     return "/prototypes/voice-emotion-demo.html";

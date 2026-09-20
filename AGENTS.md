@@ -80,6 +80,17 @@ Companion loads `prototypes/companion-scene-backgrounds.css` (linked in `amoji-c
 - Legacy stored ids migrate via `migrateLegacyCharacterStorage()` on boot.
 - Verifier: `npm run verify:picker` (14+ checks).
 
+## Admin console (multi-level)
+
+- **UI:** `/admin` → `prototypes/amoji-admin.html`
+- **API:** `/api/admin/{action}` — `login`, `session`, `roles`, `users`, `user`, `backend`, `audit`, `accounts`
+- **Roles (low → high):** `viewer` → `support` → `operations` → `superadmin` (see `api/_lib/adminRoles.mjs`)
+- **Bootstrap env (one account):** `AMOJI_ADMIN_EMAIL`, `AMOJI_ADMIN_PASSWORD`, `AMOJI_ADMIN_ROLE` (default `superadmin`)
+- **Multi-account JSON:** `AMOJI_ADMIN_ACCOUNTS='[{"id":"a1","email":"ops@…","passwordSha256":"…","role":"operations"}]'` (or `password` in dev only)
+- Requires **`AMOJI_AUTH_SECRET`** (same HMAC as player sessions; admin tokens use schema `amoji.adminSession.v1`)
+- User records include **`profile`** (`displayName`, `contactEmail`, `tags`, `notes`, `status`) editable by role
+- Smoke: `node scripts/admin-console-verify.mjs`
+
 ## Payments & security (IAP)
 
 - **Catalog / verify:** `/api/iap/products`, `/api/iap/verify`, RevenueCat `/api/iap/webhook`

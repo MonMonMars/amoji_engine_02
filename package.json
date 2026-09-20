@@ -17,6 +17,7 @@
     "verify:pre-delivery": "node scripts/pre-delivery-verify.mjs",
     "verify:pre-delivery:prod": "PRODUCTION=1 node scripts/pre-delivery-verify.mjs",
     "verify:picker": "node scripts/companion-picker-verify.mjs",
+    "verify:admin": "node scripts/admin-console-verify.mjs",
     "scene-bg": "node scripts/generate-scene-backgrounds.mjs && node scripts/rasterize-scene-backgrounds.mjs",
     "postinstall": "node amoji-engine/scripts/download-legal-vrm.mjs",
     "inspect:vrm-face": "node scripts/inspect-vrm-face.mjs",
