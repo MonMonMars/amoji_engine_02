@@ -332,14 +332,19 @@ export function defaultVoiceForCharacter(characterId, langCode) {
   return langCode === "en" ? def.voices.en : def.voices.yue;
 }
 
+/** Male roster ids — all other roster characters are female-presenting. */
+export const MALE_CHARACTER_IDS = Object.freeze(
+  new Set(["atlas", "rex", "robert", "mikel"]),
+);
+
 /**
  * @param {string} characterId
  * @param {"yue" | "en"} [langCode]
  * @returns {"female" | "male"}
  */
-export function characterGender(characterId, langCode = "yue") {
-  const voiceId = defaultVoiceForCharacter(characterId, langCode);
-  return findVoiceProfile(voiceId)?.gender ?? "female";
+export function characterGender(characterId, _langCode = "yue") {
+  const id = String(characterId || "nova").toLowerCase();
+  return MALE_CHARACTER_IDS.has(id) ? "male" : "female";
 }
 
 /**

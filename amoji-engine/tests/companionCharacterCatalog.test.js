@@ -5,6 +5,8 @@ import {
   characterAvatarConfig,
   characterPreviewImage,
   characterGender,
+  MALE_CHARACTER_IDS,
+  defaultVoiceForCharacter,
   characterGreeting,
   characterGreetingPerformance,
   characterHungryPerformance,
@@ -12,7 +14,6 @@ import {
   characterNumber,
   characterVoiceLabel,
   COMPANION_CHARACTERS,
-  defaultVoiceForCharacter,
   getCharacter,
   aaaRosterBadge,
   GALLERY_PRIORITY_IDS,
@@ -27,6 +28,8 @@ import {
   TRIAL_CHARACTER_IDS,
   LEGACY_CHARACTER_ALIASES,
 } from "../engine/companion/companionCharacterCatalog.js";
+import { findVoiceProfile } from "../engine/companion/companionVoiceProfiles.js";
+import { resolveVoiceForCharacter } from "../engine/companion/companionVoiceCatalog.js";
 
 const ROSTER_SIZE = CHARACTER_IDS.length;
 
@@ -185,8 +188,26 @@ describe("companionCharacterCatalog v363 VTuber roster", () => {
     expect(characterGreeting("yuki", true)).toMatch(/Yuki/i);
     expect(characterGender("rex", "yue")).toBe("male");
     expect(characterGender("robert", "yue")).toBe("male");
+    expect(characterGender("mikel", "yue")).toBe("male");
+    expect(characterGender("atlas", "en")).toBe("male");
     expect(characterGender("hina", "yue")).toBe("female");
+    expect(characterGender("mimi", "yue")).toBe("female");
     expect(characterVoiceLabel("yuki", "yue", false)).toBeTruthy();
+    expect(MALE_CHARACTER_IDS.size).toBe(4);
+  });
+
+  it("matches TTS voice gender to character gender for every roster entry", () => {
+    for (const id of CHARACTER_IDS) {
+      const expected = characterGender(id, "yue");
+      for (const lang of ["yue", "en"]) {
+        const voiceId = resolveVoiceForCharacter(id, lang);
+        const profile = findVoiceProfile(voiceId);
+        expect(profile?.gender, `${id} ${lang} ${voiceId}`).toBe(expected);
+      }
+    }
+    expect(defaultVoiceForCharacter("mimi", "yue")).toBe(
+      "zh-HK-HiuMaanNeural-chibi",
+    );
   });
 
   it("exposes avatar config per character", () => {

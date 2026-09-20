@@ -1,7 +1,10 @@
 /**
  * Edge TTS voice catalog + URL/localStorage helpers for companion UIs.
  */
-import { defaultVoiceForCharacter } from "./companionCharacterCatalog.js";
+import {
+  characterGender,
+  defaultVoiceForCharacter,
+} from "./companionCharacterCatalog.js";
 import {
   EN_VOICE_PROFILES,
   findVoiceProfile,
@@ -73,7 +76,14 @@ export function resolveVoiceId(opts = {}) {
  * @param {"yue" | "en" | string | null | undefined} lang
  */
 export function resolveVoiceForCharacter(characterId, lang) {
-  return defaultVoiceForCharacter(characterId, companionLangCode(lang));
+  const langCode = companionLangCode(lang);
+  const gender = characterGender(characterId, langCode);
+  const rosterVoiceId = defaultVoiceForCharacter(characterId, langCode);
+  const rosterProfile = findVoiceProfile(rosterVoiceId);
+  if (rosterProfile?.gender === gender) return rosterVoiceId;
+  const list = voicesForLang(langCode);
+  const matched = list.find((v) => v.gender === gender);
+  return matched?.id || rosterVoiceId;
 }
 
 /**
