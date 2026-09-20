@@ -4,7 +4,10 @@
 import { AMOJI_BUILD } from "./buildVersion.mjs";
 import { normalizeUnifiedEntryParams } from "./companionUnifiedApp.js";
 
-export const COMPANION_FRESH_BOOT_SCHEMA = "amoji.companionFreshBoot.v3";
+export const COMPANION_FRESH_BOOT_SCHEMA = "amoji.companionFreshBoot.v4";
+
+/** Automatic full-page reload for deploy bumps — off (caused picker loops). */
+export const FRESH_BOOT_AUTO_RELOAD = false;
 export const FRESH_BOOT_SESSION_PREFIX = "amoji.freshBoot.v1:";
 export const FRESH_HTML_HEADERS = Object.freeze({
   "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
@@ -173,9 +176,16 @@ export function buildPlayRedirectLocation(search, opts = {}) {
   const params = normalizeUnifiedEntryParams(
     new URLSearchParams(String(search || "").replace(/^\?/, "")),
   );
-  const path = companionOpenPath("full", opts.stamp);
-  const stamp = opts.stamp ?? path.split("/")[2];
+  if (params.get("autostart") !== "1" && params.get("pick") !== "0") {
+    if (!params.get("pick")) params.set("pick", "1");
+    if (!params.get("automic")) params.set("automic", "0");
+  }
   const build = opts.build ?? AMOJI_BUILD;
+  const path =
+    opts.stamp != null
+      ? companionOpenPath("full", opts.stamp)
+      : companionBuildPath(build, "full");
+  const stamp = opts.stamp ?? path.split("/")[2] ?? String(Date.now());
   params.set("build", build);
   params.set("_cb", String(stamp));
   return `${path}?${params.toString()}`;
@@ -422,6 +432,15 @@ export async function checkForAppUpdate(pageBuild, opts = {}) {
     opts.fetchImpl ||
     (typeof globalThis.fetch === "function" ? globalThis.fetch.bind(globalThis) : null);
   const embedded = pageBuild || globalThis.__amojiBuild || "";
+  const search = globalThis.location?.search || "";
+  if (
+    opts.allowDuringPicker !== true &&
+    (isCompanionPickerEntryPage(search) ||
+      (typeof document !== "undefined" &&
+        document.body?.classList.contains("companion-picker-open")))
+  ) {
+    return { reloaded: false, serverBuild: null, pageBuild: embedded, skipped: true };
+  }
   if (!fetchImpl) {
     return { reloaded: false, serverBuild: null, pageBuild: embedded };
   }
@@ -437,7 +456,6 @@ export async function checkForAppUpdate(pageBuild, opts = {}) {
   const data = await res.json();
   const serverBuild = data?.build || null;
   const path = globalThis.location?.pathname || "";
-  const search = globalThis.location?.search || "";
   const sticky = isStickyCompanionBookmark(path);
   const forceNewOpen = Boolean(opts.forceNewOpen);
   const queryBuild = new URLSearchParams(String(search || "").replace(/^\?/, "")).get(
@@ -510,6 +528,16 @@ export async function checkForAppUpdate(pageBuild, opts = {}) {
 
   if (!serverBuild) {
     return { reloaded: false, serverBuild, pageBuild: embedded };
+  }
+
+  if (FRESH_BOOT_AUTO_RELOAD !== true) {
+    if (serverBuild) globalThis.__amojiActiveBuild = serverBuild;
+    return {
+      reloaded: false,
+      serverBuild,
+      pageBuild: embedded,
+      skipped: true,
+    };
   }
 
   markFreshBootAttempted(serverBuild);

@@ -13,21 +13,10 @@ const earlyBoot = readFileSync(
 );
 
 describe("companionEarlyFreshBoot", () => {
-  it("does not purge caches on every tab focus (picker assets stay warm)", () => {
-    expect(earlyBoot).not.toMatch(/visibilitychange/);
-  });
-
-  it("skips pathname redirects on default character-picker entry", () => {
-    expect(earlyBoot).toMatch(/function isPickerEntry/);
-    expect(earlyBoot).toMatch(/if \(isPickerEntry\(\)\)/);
-  });
-
-  it("does not force a new /n/ stamp on BFCache restore when build already matches", () => {
-    expect(earlyBoot).toMatch(/addEventListener\("pageshow"/);
-    expect(earlyBoot).toMatch(/ev\.persisted/);
-    expect(earlyBoot).toMatch(/probeServerBuild\(false\)/);
-    expect(earlyBoot).not.toMatch(/probeServerBuild\(true\)/);
-    expect(earlyBoot).toMatch(/REDIRECT_GUARD|redirectGuardAllows/);
+  it("does not fetch health or redirect (picker-stable boot)", () => {
+    expect(earlyBoot).not.toMatch(/fetch\s*\(\s*["']\/api\/health/);
+    expect(earlyBoot).not.toMatch(/location\.replace/);
+    expect(earlyBoot).toMatch(/__amojiActiveBuild/);
   });
 });
 

@@ -6,10 +6,10 @@ import { fileURLToPath } from "node:url";
 const root = join(dirname(fileURLToPath(import.meta.url)), "../..");
 
 describe("play entry static pages", () => {
-  it("play.html probes /n/ then falls back to /companion-full", () => {
+  it("play.html opens stable /c/<build>/full with /companion-full fallback", () => {
     const html = readFileSync(join(root, "play.html"), "utf8");
     expect(html).toContain("/api/health");
-    expect(html).toContain("/n/");
+    expect(html).toContain("/c/");
     expect(html).toContain("/companion-full");
   });
 
