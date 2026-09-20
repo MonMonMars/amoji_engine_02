@@ -158,7 +158,7 @@ export function initCompanionUiEffects(doc = document, opts = {}) {
     };
   }
 
-  doc.body.classList.add("ui-fx-enabled");
+  doc.body.classList.add("ui-fx-enabled", "companion-jp-aaa-ui");
   markUiFxButtons(doc.body, doc);
 
   /** @param {PointerEvent} ev */
@@ -193,7 +193,7 @@ export function initCompanionUiEffects(doc = document, opts = {}) {
   return {
     schema: COMPANION_UI_EFFECTS_SCHEMA,
     destroy() {
-      doc.body.classList.remove("ui-fx-enabled");
+      doc.body.classList.remove("ui-fx-enabled", "companion-jp-aaa-ui");
       doc.removeEventListener("pointerdown", onPointerDown);
       observer.disconnect();
     },

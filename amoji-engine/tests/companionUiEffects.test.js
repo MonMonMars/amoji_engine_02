@@ -130,6 +130,24 @@ describe("companionUiEffects", () => {
     const doc = mockDoc();
     initCompanionUiEffects(doc, { reducedMotion: true });
     expect(doc.body.classList.contains("ui-fx-enabled")).toBe(false);
+    expect(doc.body.classList.contains("companion-jp-aaa-ui")).toBe(false);
+  });
+
+  it("enables JP AAA shell class with UI FX", () => {
+    vi.stubGlobal(
+      "MutationObserver",
+      class {
+        observe() {}
+        disconnect() {}
+      },
+    );
+    const doc = mockDoc();
+    doc.body.querySelectorAll = () => [];
+    const fx = initCompanionUiEffects(doc, { reducedMotion: false });
+    expect(doc.body.classList.contains("ui-fx-enabled")).toBe(true);
+    expect(doc.body.classList.contains("companion-jp-aaa-ui")).toBe(true);
+    fx.destroy();
+    expect(doc.body.classList.contains("companion-jp-aaa-ui")).toBe(false);
   });
 
   it("plays sheet SFX when audio is bound", () => {
