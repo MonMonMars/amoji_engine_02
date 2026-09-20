@@ -137,8 +137,8 @@ describe("companionIdleMotion", () => {
     expect(merged.armLiftL ?? 0).toBe(0);
     expect(merged.armLiftR ?? 0).toBe(0);
     expect(merged.upperLegL ?? 0).toBe(0);
-    expect(Math.abs(merged.forearmL ?? 0)).toBeGreaterThan(0.02);
-    expect(Math.abs(merged.headX ?? 0)).toBeGreaterThan(0.005);
+    expect(Math.abs(merged.forearmL ?? 0)).toBeGreaterThan(0.04);
+    expect(Math.abs(merged.headX ?? 0)).toBeGreaterThan(0.012);
   });
 
   it("can force a look or breathe idle-life beat", () => {

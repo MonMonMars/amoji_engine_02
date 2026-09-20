@@ -1423,7 +1423,7 @@ export async function createVrmAvatar(opts) {
       bodyMotion.holdForLibraryMotion?.(now);
     }
     wasLibraryMotion = libraryMotion;
-    const activeMotion = vrmaPlaying || vrmaPending
+    const activeMotion = vrmaPlaying
       ? vrmaAction
       : bodyMotion.currentAction;
     try {

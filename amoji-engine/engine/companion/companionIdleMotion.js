@@ -113,16 +113,18 @@ export function sampleCalmBreathIdle(elapsedSec, opts = {}) {
 export function samplePlantedAliveIdle(elapsedSec, opts = {}) {
   const calm = sampleCalmBreathIdle(elapsedSec, opts);
   const life = sampleIdleBodyMotion(elapsedSec, opts);
+  const bind = opts.bind === "apose" ? "apose" : "tpose";
+  const lifeMul = bind === "apose" ? 0.42 : 0.28;
   return {
     upperLegL: 0,
     upperLegR: 0,
     lowerLegL: 0,
     lowerLegR: 0,
-    hipZ: calm.hipZ,
-    headX: calm.headX + life.headX * 0.2,
-    headZ: life.headZ * 0.28,
-    leanY: calm.leanY + life.leanY * 0.18,
-    spineX: calm.spineX,
+    hipZ: calm.hipZ + life.hipZ * 0.35,
+    headX: calm.headX + life.headX * lifeMul,
+    headZ: life.headZ * (bind === "apose" ? 0.52 : 0.38),
+    leanY: calm.leanY + life.leanY * (bind === "apose" ? 0.32 : 0.22),
+    spineX: calm.spineX + life.spineX * 0.12,
     chestX: calm.chestX,
     armLiftL: calm.armLiftL,
     armLiftR: calm.armLiftR,
@@ -138,8 +140,8 @@ export function samplePlantedAliveIdle(elapsedSec, opts = {}) {
  * @param {{ listening?: boolean, emotion?: string, gender?: string, bind?: "tpose" | "apose", weight?: number, snap?: boolean }} [opts]
  */
 export function mergePlantedAliveIdleIntoPose(base, elapsedSec, opts = {}) {
-  const idle = samplePlantedAliveIdle(elapsedSec, opts);
   const bind = opts.bind === "apose" ? "apose" : "tpose";
+  const idle = samplePlantedAliveIdle(elapsedSec, { ...opts, bind });
   const snap = opts.snap === true;
   const legFree = omitPoseKeys(idle, PLANTED_IDLE_LEG_KEYS);
 
@@ -149,12 +151,12 @@ export function mergePlantedAliveIdleIntoPose(base, elapsedSec, opts = {}) {
       "forearmL",
       "forearmR",
     ]);
-    const bodyWeight = snap ? 0.22 : 0.9;
+    const bodyWeight = snap ? 0.38 : 0.96;
     let pose = mergePoses(base, bodyOnly, bodyWeight);
     pose = mergePoses(
       pose,
       { forearmL: idle.forearmL, forearmR: idle.forearmR },
-      snap ? 0.08 : 0.12,
+      snap ? 0.22 : 0.42,
     );
     return pose;
   }
@@ -397,7 +399,7 @@ export function createIdleBeatState(nowMs = performance.now()) {
     beat: null,
     phase: 0,
     duration: 0,
-    nextAt: nowMs + 40 + Math.random() * 160,
+    nextAt: nowMs + 180 + Math.random() * 220,
   };
 }
 

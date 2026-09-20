@@ -446,8 +446,8 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
     const restLl = armRestRotations.leftLowerArm;
     const restRl = armRestRotations.rightLowerArm;
     const apose = isAposeBind();
-    const foreScale = apose ? 0.08 : 1;
-    const foreCap = apose ? 0.07 : 0.62;
+    const foreScale = apose ? 0.38 : 1;
+    const foreCap = apose ? 0.22 : 0.62;
     const foreL = Math.min(
       foreCap,
       Math.max(0, (pose.forearmL ?? 0) * k * foreScale),
@@ -978,7 +978,7 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
     }
     if (talking && !activeGesture && !activeAction) {
       talkArmBlend = 0.72 + energy * 0.28;
-    } else if (!talking && !thinking && !activeGesture && !activeAction) {
+    } else if (!talking && !activeGesture && !activeAction) {
       idleArms = true;
     }
     if (activeGesture) {
@@ -1089,7 +1089,7 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
   };
 
   const resetIdleLife = (now = performance.now()) => {
-    idleBeat = createIdleBeatState(now);
+    idleBeat = startIdleBeat(createIdleBeatState(now), "breathe", now, idleGender);
     return resetMotionClock(now);
   };
 
