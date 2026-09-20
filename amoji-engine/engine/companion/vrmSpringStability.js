@@ -380,6 +380,50 @@ export function tickIdleSpringRecenter(
  * does not look like wind is pushing from below.
  * @param {import('@pixiv/three-vrm').VRM | null | undefined} vrm
  */
+/**
+ * E2E / debug — after {@link stabilizeVrmSpringBones}, confirm gravity points down.
+ * Models with no hair/skirt springs (empty boneGroups) pass with count 0.
+ * @param {import('@pixiv/three-vrm').VRM | null | undefined} vrm
+ * @param {{ tune?: boolean }} [opts]
+ */
+export function auditVrmSpringGravity(vrm, opts = {}) {
+  if (opts.tune !== false) {
+    stabilizeVrmSpringBones(vrm);
+  }
+  const joints = getVrmSpringJoints(vrm);
+  if (!joints.length) {
+    return {
+      ok: true,
+      count: 0,
+      maxY: null,
+      reason: "no-spring-bones",
+    };
+  }
+  let count = 0;
+  let maxY = -Infinity;
+  for (const joint of joints) {
+    const settings = resolveSpringJointSettings(joint);
+    const dir = settings?.gravityDir;
+    if (!dir) continue;
+    count += 1;
+    maxY = Math.max(maxY, Number(dir.y) || 0);
+  }
+  if (!count) {
+    return {
+      ok: true,
+      count: 0,
+      maxY: null,
+      reason: "joints-without-gravity",
+    };
+  }
+  return {
+    ok: maxY < -0.5,
+    count,
+    maxY,
+    reason: maxY < -0.5 ? "gravity-down" : "gravity-not-down",
+  };
+}
+
 export function configureVrmSpringStability(vrm, mode = activeSceneWindMode) {
   setVrmSceneWindMode(mode);
   const joints = getVrmSpringJoints(vrm);

@@ -89,6 +89,7 @@ import {
 } from "./companionIdleMotion.js";
 import { resolveVrmLookAtAutoUpdate } from "./companionVrmLookAt.js";
 import {
+  auditVrmSpringGravity,
   configureVrmSpringStability,
   createIdleSpringRecenterState,
   recenterVrmSpringBones,
@@ -1862,6 +1863,9 @@ export async function createVrmAvatar(opts) {
         expressionCurrent: { ...expressionCurrent },
         expressionTarget: { ...expressionTarget },
       };
+    },
+    auditSpringGravity(opts) {
+      return auditVrmSpringGravity(vrm, opts);
     },
     resize,
     resetCameraView,
