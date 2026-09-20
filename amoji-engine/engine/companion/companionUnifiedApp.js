@@ -20,6 +20,10 @@ import {
 } from "../mobile/companionRolePresets.js";
 import { buildSecretaryPromptExtras } from "./secretary/secretaryPromptFragments.js";
 import { buildCareDisabledPetRoleFragment } from "./companionCareDialogue.js";
+import {
+  buildLlmContextDatabaseFragment,
+  refreshLlmContextDb,
+} from "./companionLlmContextDb.js";
 
 export const COMPANION_UNIFIED_APP_SCHEMA = "amoji.companionUnifiedApp.v1";
 
@@ -107,6 +111,9 @@ export function resolveRoleDefaultCharacter(characterId, role, params) {
  *   uiRules?: string,
  *   motionExtra?: string,
  *   storage?: Storage | null,
+ *   characterId?: string | null,
+ *   langCode?: "yue" | "en",
+ *   menuState?: Record<string, unknown>,
  * }} opts
  */
 export function buildUnifiedSessionPrompt(opts) {
@@ -117,6 +124,23 @@ export function buildUnifiedSessionPrompt(opts) {
   const parts = [opts.characterPrompt, rolePart, opts.uiRules || "", opts.motionExtra || ""];
   if (role === "secretary") {
     parts.push(buildSecretaryPromptExtras(isEnglish, { storage: opts.storage }));
+  }
+  const characterId = String(opts.characterId || "").toLowerCase();
+  if (characterId) {
+    refreshLlmContextDb({
+      characterId,
+      langCode: opts.langCode === "en" ? "en" : "yue",
+      isEnglish,
+      role,
+      storage: opts.storage,
+      menuState: opts.menuState,
+    });
+    parts.push(
+      buildLlmContextDatabaseFragment({
+        storage: opts.storage,
+        isEnglish,
+      }),
+    );
   }
   return parts.filter(Boolean).join(" ");
 }
