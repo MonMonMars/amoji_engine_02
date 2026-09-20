@@ -94,7 +94,7 @@ export function buildRosterModelsHint(isEnglish = false) {
     .map((item) => item.name)
     .join(en ? ", " : "、");
   if (en) {
-    return `${total} 3D VRM models in roster · #5–10 AAA VRoid: ${aaaNames}. Scroll the start picker strip or tap Switch companion.`;
+    return `${total} 3D VRM models · #5–10 VTuber & AAA: ${aaaNames}. Scroll the start picker or tap Switch companion.`;
   }
-  return `名單共 ${total} 個 3D VRM · #5–10 AAA VRoid：${aaaNames}。開始畫面橫向捲動名單，或按「切換同伴」。`;
+  return `名單共 ${total} 個 3D VRM · #5–10 VTuber／AAA：${aaaNames}。開始畫面橫向捲動名單，或按「切換同伴」。`;
 }

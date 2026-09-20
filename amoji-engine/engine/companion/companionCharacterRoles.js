@@ -5,7 +5,7 @@
 import { ROSTER_CHARACTER_IDS } from "./companionCharacterRoster.js";
 
 export const COMPANION_CHARACTER_ROLES_SCHEMA =
-  "amoji.companionCharacterRoles.v2";
+  "amoji.companionCharacterRoles.v3";
 
 /** @typedef {import("../mobile/companionRolePresets.js").CompanionRole} CompanionRole */
 
@@ -15,18 +15,29 @@ export const CHARACTER_COMPANION_ROLES = Object.freeze({
   kizuna: "girlfriend",
   alicia: "girlfriend",
   ember: "girlfriend",
-  sora: "girlfriend",
-  aria: "girlfriend",
+  sakura: "girlfriend",
+  celeste: "girlfriend",
   mei: "girlfriend",
   luna: "girlfriend",
   atlas: "boyfriend",
-  erika: "girlfriend",
+  yume: "girlfriend",
   sky: "girlfriend",
   yuki: "girlfriend",
   hina: "girlfriend",
   mio: "girlfriend",
   amoji: "girlfriend",
   rex: "boyfriend",
+  nana: "girlfriend",
+  sumi: "girlfriend",
+  lumi: "girlfriend",
+  vera: "girlfriend",
+  robert: "boyfriend",
+  mikel: "boyfriend",
+  mimi: "pet",
+  /** Legacy ids — same function as replacements */
+  sora: "girlfriend",
+  aria: "girlfriend",
+  erika: "girlfriend",
   shiro: "girlfriend",
   jennifer: "girlfriend",
   poly: "girlfriend",
@@ -41,7 +52,7 @@ export const ROLE_DEFAULT_CHARACTER_ID = Object.freeze({
   girlfriend: "nova",
   boyfriend: "rex",
   secretary: "nova",
-  pet: "amoji",
+  pet: "mimi",
 });
 
 /**

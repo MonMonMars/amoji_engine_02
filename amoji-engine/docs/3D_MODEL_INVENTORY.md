@@ -43,7 +43,7 @@ Examples: MetaHuman (Unreal), Mixamo, some Unreal free packs, VTubeMe free VRMs,
 | **A–E** | Bases, realistic faces, VRM/VRChat, chibi | **Yes** if license allows commercial use |
 | **F–R** | Fantasy, pets, tools, Mixamo, VRoid | Motions/tools yes; characters case-by-case |
 
-## What we ship today (v360 curated roster — 23 characters)
+## What we ship today (v363 curated roster — 23 characters)
 
 In the app: **start picker** horizontal strip or **Menu → Switch 3D companion**.  
 Settings **Brain → LLM model** is the **text AI**, not these 3D files.
@@ -54,27 +54,29 @@ Settings **Brain → LLM model** is the **text AI**, not these 3D files.
 | 2 | kizuna | Kizuna AI official VRM |
 | 3 | alicia | Alicia Solid / UniVRM |
 | 4 | ember | VTubeMe expressive VRM |
-| 5 | sora | VRoid AvatarSample C |
-| 6 | aria | VRoid AvatarSample A |
+| 5 | sakura | VTuber CC0 (Rose) |
+| 6 | celeste | VRoid AvatarSample A · AAA |
 | 7 | mei | VRoid AvatarSample B |
 | 8 | luna | VRoid Pro female |
 | 9 | atlas | VRoid Pro male |
-| 10 | erika | Industry VRM |
+| 10 | yume | AAA high-detail VRM |
 | 11 | sky | VTubeMe CC BY 4.0 |
 | 12 | yuki | 100Avatars CC0 (Olivia) |
 | 13 | hina | 100Avatars CC0 (Lydia) |
 | 14 | mio | 100Avatars CC0 (Kate) |
 | 15 | amoji | Project original |
 | 16 | rex | VTubeMe Kai |
-| 17 | shiro | 100Avatars CC0 |
-| 18 | jennifer | 100Avatars CC0 |
-| 19 | poly | 100Avatars CC0 Polydancer |
-| 20 | aesthe | 100Avatars CC0 Aesthetica |
-| 21 | chad | 100Avatars CC0 |
-| 22 | david | 100Avatars CC0 |
-| 23 | hugo | 100Avatars CC0 |
+| 17 | nana | VTuber CC0 chibi |
+| 18 | sumi | VTuber CC0 |
+| 19 | lumi | VTuber CC0 dancer |
+| 20 | vera | AAA VTuber CC0 |
+| 21 | robert | AAA VTuber male CC0 |
+| 22 | mikel | VTuber male CC0 |
+| 23 | mimi | VTuber mascot CC0 |
 
-**#5–10** are the **AAA VRoid catalog** slots (legal industry references — not Fab fan rips from inventory Q/S).
+**#5–10** are **VTuber + AAA** slots (legal CC0 / VRoid industry references — not Fab fan rips from inventory Q/S).
+
+Legacy saved ids (`sora`, `aria`, `erika`, `shiro`, `jennifer`, `poly`, `aesthe`, `chad`, `david`, `hugo`) redirect to the new roster entries above.
 
 ## Safe upgrade paths from inventory
 

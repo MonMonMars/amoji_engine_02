@@ -12,14 +12,14 @@ describe("companionCharacterRoles", () => {
   it("maps every roster character to a function", () => {
     expect(validateCharacterRoleCoverage()).toEqual([]);
     expect(Object.keys(CHARACTER_COMPANION_ROLES).sort()).toEqual(
-      [...ROSTER_CHARACTER_IDS].sort(),
+      expect.arrayContaining([...ROSTER_CHARACTER_IDS]),
     );
   });
 
   it("keeps rex as the default boyfriend pick", () => {
     expect(resolveCharacterRole("rex")).toBe("boyfriend");
-    expect(resolveCharacterRole("chad")).toBe("boyfriend");
-    expect(characterIdsForRole("boyfriend")).toEqual(["atlas", "rex", "chad", "david", "hugo"]);
+    expect(resolveCharacterRole("robert")).toBe("boyfriend");
+    expect(characterIdsForRole("boyfriend")).toEqual(["atlas", "rex", "robert", "mikel"]);
     expect(ROLE_DEFAULT_CHARACTER_ID.boyfriend).toBe("rex");
   });
 
@@ -34,20 +34,26 @@ describe("companionCharacterRoles", () => {
       "kizuna",
       "alicia",
       "ember",
-      "sora",
-      "aria",
+      "sakura",
+      "celeste",
       "mei",
       "luna",
-      "erika",
+      "yume",
       "sky",
       "yuki",
       "hina",
       "mio",
       "amoji",
-      "shiro",
-      "jennifer",
-      "poly",
-      "aesthe",
+      "nana",
+      "sumi",
+      "lumi",
+      "vera",
     ]);
+  });
+
+  it("lists mimi as pet mascot", () => {
+    expect(resolveCharacterRole("mimi")).toBe("pet");
+    expect(ROLE_DEFAULT_CHARACTER_ID.pet).toBe("mimi");
+    expect(characterIdsForRole("pet")).toEqual(["mimi"]);
   });
 });
