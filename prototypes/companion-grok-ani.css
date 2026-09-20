@@ -29,7 +29,7 @@
   content: "";
   position: absolute;
   inset: 0;
-  background: radial-gradient(ellipse 80% 60% at 50% 40%, transparent 35%, rgba(0, 0, 0, 0.72) 100%);
+  background: radial-gradient(ellipse 85% 70% at 50% 42%, transparent 42%, rgba(0, 0, 0, 0.48) 100%);
   pointer-events: none;
 }
 

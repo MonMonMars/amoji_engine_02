@@ -12,6 +12,7 @@ import {
 } from "/amoji-engine/engine/mobile/companionMobileSettings.js";
 import { syncFromCloud } from "/amoji-engine/engine/mobile/companionCloudStorage.js";
 import { bootNativeShell } from "/amoji-engine/engine/mobile/companionNativePurchases.js";
+import { maybeCompleteStripeReturn } from "/amoji-engine/engine/companion/companionWebShop.js";
 import { hapticTap } from "/amoji-engine/engine/mobile/companionMobileHaptics.js";
 import { mountConnectivityBanner } from "/amoji-engine/engine/mobile/companionMobileConnectivity.js";
 import {
@@ -119,6 +120,21 @@ async function boot() {
     await bootNativeShell({ baseUrl });
   } catch {
     /* browser / missing native plugins */
+  }
+
+  try {
+    const iapResult = await maybeCompleteStripeReturn({ baseUrl });
+    if (iapResult?.ok) {
+      const restored = await restoreSession({ baseUrl });
+      if (restored) session = restored;
+      toast(isEnglish() ? "Purchase synced!" : "購買已同步！");
+      const url = new URL(location.href);
+      url.searchParams.delete("iap");
+      url.searchParams.delete("session_id");
+      history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
+    }
+  } catch {
+    /* stripe optional */
   }
 
   const params = new URLSearchParams(location.search);
