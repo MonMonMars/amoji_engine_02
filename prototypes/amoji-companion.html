@@ -8,9 +8,9 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji · Companion</title>
     <script>
-      window.__amojiBuild = "2026-09-20-v381-unified-mode-lang";
+      window.__amojiBuild = "2026-09-20-v383-anime-title-screen";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-20-v381-unified-mode-lang"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-20-v383-anime-title-screen"></script>
     <link
       rel="prefetch"
       href="/prototypes/assets/companion-char-nova.png"
@@ -45,45 +45,6 @@
         opacity: 0.04;
       }
 
-      #amoji-boot-splash {
-        position: fixed;
-        inset: 0;
-        z-index: 11950;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: flex-end;
-        padding: 1.5rem 1rem calc(1.25rem + env(safe-area-inset-bottom));
-        background:
-          radial-gradient(ellipse 90% 60% at 50% 0%, rgba(139, 124, 248, 0.2), transparent 55%),
-          linear-gradient(180deg, #0a0c14 0%, #070a10 100%);
-        color: #f7f1e8;
-        text-align: center;
-        pointer-events: none;
-      }
-
-      #amoji-boot-splash h1 {
-        margin: 0 0 0.35rem;
-        font-size: 1.15rem;
-        font-weight: 800;
-        letter-spacing: -0.03em;
-      }
-
-      #amoji-boot-splash p {
-        margin: 0;
-        font-size: 0.78rem;
-        color: rgba(247, 241, 232, 0.62);
-      }
-
-      #amoji-boot-splash .boot-load-bar {
-        width: min(18rem, 88vw);
-        margin-top: 0.85rem;
-      }
-
-      #amoji-boot-splash .boot-load-bar .amoji-load-bar__meta {
-        justify-content: center;
-        gap: 0.45rem;
-      }
       .topbar {
         position: absolute;
         top: 0;
@@ -722,15 +683,16 @@
       media="print"
       onload="this.media='all'"
     />
-    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-20-v381-unified-mode-lang" />
-    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-20-v381-unified-mode-lang" />
-    <link rel="stylesheet" href="/prototypes/companion-mic-button.css?v=2026-09-20-v381-unified-mode-lang" />
-    <link rel="stylesheet" href="/prototypes/companion-minimal-ui.css?v=2026-09-20-v381-unified-mode-lang" />
-    <link rel="stylesheet" href="/prototypes/companion-settings-ui.css?v=2026-09-20-v381-unified-mode-lang" />
-    <link rel="stylesheet" href="/prototypes/companion-mobile-shell.css?v=2026-09-20-v381-unified-mode-lang" />
-    <link rel="stylesheet" href="/prototypes/companion-picker-v4.css?v=2026-09-20-v381-unified-mode-lang" />
-    <link rel="stylesheet" href="/prototypes/companion-picker-stacked-layout.css?v=2026-09-20-v381-unified-mode-lang" />
-    <link rel="stylesheet" href="/prototypes/companion-picker-aaa-theme.css?v=2026-09-20-v381-unified-mode-lang" />
+    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-20-v383-anime-title-screen" />
+    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-20-v383-anime-title-screen" />
+    <link rel="stylesheet" href="/prototypes/companion-mic-button.css?v=2026-09-20-v383-anime-title-screen" />
+    <link rel="stylesheet" href="/prototypes/companion-title-screen.css?v=2026-09-20-v383-anime-title-screen" />
+    <link rel="stylesheet" href="/prototypes/companion-minimal-ui.css?v=2026-09-20-v383-anime-title-screen" />
+    <link rel="stylesheet" href="/prototypes/companion-settings-ui.css?v=2026-09-20-v383-anime-title-screen" />
+    <link rel="stylesheet" href="/prototypes/companion-mobile-shell.css?v=2026-09-20-v383-anime-title-screen" />
+    <link rel="stylesheet" href="/prototypes/companion-picker-v4.css?v=2026-09-20-v383-anime-title-screen" />
+    <link rel="stylesheet" href="/prototypes/companion-picker-stacked-layout.css?v=2026-09-20-v383-anime-title-screen" />
+    <link rel="stylesheet" href="/prototypes/companion-picker-aaa-theme.css?v=2026-09-20-v383-anime-title-screen" />
     <script>
       (function () {
         var params = new URLSearchParams(location.search);
@@ -756,7 +718,7 @@
       })();
     </script>
     <script type="module">
-      import { bootEarlyStartPicker } from "/amoji-engine/engine/companion/companionEarlyStartPicker.js?v=2026-09-20-v381-unified-mode-lang";
+      import { bootEarlyStartPicker } from "/amoji-engine/engine/companion/companionEarlyStartPicker.js?v=2026-09-20-v383-anime-title-screen";
       const bootParams = new URLSearchParams(location.search);
       if (bootParams.get("autostart") !== "1" && bootParams.get("pick") !== "0") {
         globalThis.__amojiEarlyStartPickerPromise = bootEarlyStartPicker({
@@ -4822,24 +4784,24 @@
     </style>
     <link
       rel="stylesheet"
-      href="/prototypes/companion-scene-backgrounds.css?v=2026-09-20-v381-unified-mode-lang"
+      href="/prototypes/companion-scene-backgrounds.css?v=2026-09-20-v383-anime-title-screen"
     />
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-20-v381-unified-mode-lang",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-20-v383-anime-title-screen",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-20-v381-unified-mode-lang",
-          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-20-v381-unified-mode-lang"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-20-v383-anime-title-screen",
+          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-20-v383-anime-title-screen"
         }
       }
     </script>
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-20-v381-unified-mode-lang"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-20-v383-anime-title-screen"
     />
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-20-v381-unified-mode-lang"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-20-v381-unified-mode-lang"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-20-v383-anime-title-screen"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-20-v383-anime-title-screen"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;
@@ -5057,19 +5019,29 @@
   </head>
   <body class="theme-grok-ani conversation-ui composer-text-mode composer-always-visible companion-clean-ui companion-minimal-chrome">
     <!-- amoji-build: 2026-09-14-v37-companion-picker — Grok Ani–style character grid -->
-    <div id="amoji-boot-splash" aria-live="polite" aria-busy="true">
-      <h1>Choose your companion</h1>
-      <p class="boot-load-status">Loading roster…</p>
-      <div class="boot-load-bar amoji-load-bar is-loading" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="8">
-        <div class="amoji-load-bar__track">
-          <div class="amoji-load-bar__fill" style="width: 8%"></div>
-          <div class="amoji-load-bar__shine" aria-hidden="true"></div>
-        </div>
-        <div class="amoji-load-bar__meta">
-          <span class="amoji-load-bar__pct">8%</span>
-          <span class="amoji-load-bar__label">Preparing companions</span>
-        </div>
+    <div id="amoji-boot-splash" class="amoji-title-screen" aria-live="polite" aria-busy="true">
+      <div class="title-screen-bg" aria-hidden="true"></div>
+      <div class="title-screen-vignette" aria-hidden="true"></div>
+      <div class="title-screen-particles" aria-hidden="true">
+        <span></span><span></span><span></span><span></span><span></span>
       </div>
+      <div class="title-screen-content">
+        <p class="title-screen-kicker">Voice · Chat · Live 3D</p>
+        <h1 class="title-screen-logo">AMOJI</h1>
+        <p class="title-screen-tagline boot-load-status">Your companion story begins…</p>
+      </div>
+      <footer class="title-screen-footer">
+        <div class="boot-load-bar amoji-load-bar is-loading" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="8">
+          <div class="amoji-load-bar__track">
+            <div class="amoji-load-bar__fill" style="width: 8%"></div>
+            <div class="amoji-load-bar__shine" aria-hidden="true"></div>
+          </div>
+          <div class="amoji-load-bar__meta">
+            <span class="amoji-load-bar__pct">8%</span>
+            <span class="amoji-load-bar__label">Preparing companions</span>
+          </div>
+        </div>
+      </footer>
     </div>
     <noscript>
       <div
@@ -5515,6 +5487,7 @@
         llmContextDbMod,
         llmContextDbClientMod,
         localePrefsMod,
+        titleScreenMod,
       ] = await Promise.all([
         ami("../amoji-engine/engine/companion/createAvatar.js"),
         ami("../amoji-engine/engine/companion/chatLlm.js"),
@@ -5561,6 +5534,7 @@
         ami("../amoji-engine/engine/companion/companionLlmContextDb.js"),
         ami("../amoji-engine/engine/companion/companionLlmContextDbClient.js"),
         ami("../amoji-engine/engine/companion/companionLocalePrefs.js"),
+        ami("../amoji-engine/engine/companion/companionTitleScreen.js"),
       ]);
       const {
         buildUnifiedSessionPrompt,
@@ -5581,6 +5555,12 @@
         resolveCompanionLang,
         saveCompanionLang,
       } = localePrefsMod;
+      const {
+        titleScreenKicker,
+        titleScreenLogo,
+        titleScreenTagline,
+        titleScreenLoadingHint,
+      } = titleScreenMod;
       const { resolveCharacterRole } = characterRolesMod;
       const rolePickerCopy = () => pickerCopyForRole(appRole, isEnglish);
       const roleRosterProvider = (langCode) => {
@@ -6236,17 +6216,14 @@
         params.set("lang", langCode === "en" ? "en" : "yue");
       }
 
-      const bootSplashCopy = rolePickerCopy();
       const bootSplash = document.getElementById("amoji-boot-splash");
       if (bootSplash) {
-        const h1 = bootSplash.querySelector("h1");
-        const p = bootSplash.querySelector("p");
-        if (h1) h1.textContent = bootSplashCopy.title;
-        if (p) {
-          p.textContent = isEnglish
-            ? "Loading 3D companion…"
-            : "載入 3D 同伴…";
-        }
+        const kickerEl = bootSplash.querySelector(".title-screen-kicker");
+        const logoEl = bootSplash.querySelector(".title-screen-logo");
+        const taglineEl = bootSplash.querySelector(".title-screen-tagline");
+        if (kickerEl) kickerEl.textContent = titleScreenKicker(isEnglish);
+        if (logoEl) logoEl.textContent = titleScreenLogo(isEnglish);
+        if (taglineEl) taglineEl.textContent = titleScreenLoadingHint(isEnglish);
       }
       if (conversationUi) {
         document.body.classList.add("composer-text-mode", "composer-always-visible");

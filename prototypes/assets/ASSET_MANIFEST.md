@@ -1,5 +1,13 @@
 # Amoji VRM Asset Manifest
 
+## Title screen (v383)
+
+| File | Use |
+|------|-----|
+| `title-screen-anime-bg.png` | Anime game title / boot splash background |
+
+Styles: `prototypes/companion-title-screen.css`
+
 ## Character picker UI (v380)
 
 | File | Use |

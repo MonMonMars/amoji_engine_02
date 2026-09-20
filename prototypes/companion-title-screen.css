@@ -1,0 +1,226 @@
+/**
+ * Anime game title screen — first paint before character picker.
+ */
+
+#amoji-boot-splash.amoji-title-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 11950;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-end;
+  padding: 0;
+  margin: 0;
+  overflow: hidden;
+  color: #fff8f5;
+  text-align: center;
+  pointer-events: none;
+  background: #0a0612;
+}
+
+.amoji-title-screen .title-screen-bg {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(8, 4, 16, 0.15) 0%,
+      rgba(8, 4, 16, 0.35) 42%,
+      rgba(6, 3, 12, 0.82) 78%,
+      rgba(4, 2, 10, 0.94) 100%
+    ),
+    url("/prototypes/assets/title-screen-anime-bg.png") center top / cover no-repeat;
+  transform: scale(1.02);
+  animation: title-screen-ken-burns 18s ease-in-out infinite alternate;
+}
+
+.amoji-title-screen .title-screen-vignette {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 85% 45% at 50% 18%, rgba(255, 182, 220, 0.22), transparent 58%),
+    radial-gradient(ellipse 120% 80% at 50% 100%, rgba(0, 0, 0, 0.55), transparent 55%);
+  pointer-events: none;
+}
+
+.amoji-title-screen .title-screen-particles {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  opacity: 0.55;
+}
+
+.amoji-title-screen .title-screen-particles span {
+  position: absolute;
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 999px;
+  background: rgba(255, 220, 240, 0.75);
+  box-shadow: 0 0 8px rgba(255, 180, 220, 0.45);
+  animation: title-screen-petal-fall linear infinite;
+}
+
+.amoji-title-screen .title-screen-particles span:nth-child(1) {
+  left: 12%;
+  animation-duration: 11s;
+  animation-delay: 0s;
+}
+.amoji-title-screen .title-screen-particles span:nth-child(2) {
+  left: 28%;
+  animation-duration: 14s;
+  animation-delay: 1.2s;
+  width: 0.35rem;
+  height: 0.35rem;
+}
+.amoji-title-screen .title-screen-particles span:nth-child(3) {
+  left: 52%;
+  animation-duration: 10s;
+  animation-delay: 0.4s;
+}
+.amoji-title-screen .title-screen-particles span:nth-child(4) {
+  left: 71%;
+  animation-duration: 13s;
+  animation-delay: 2s;
+  width: 0.38rem;
+  height: 0.38rem;
+}
+.amoji-title-screen .title-screen-particles span:nth-child(5) {
+  left: 88%;
+  animation-duration: 12s;
+  animation-delay: 0.8s;
+}
+
+.amoji-title-screen .title-screen-content {
+  position: relative;
+  z-index: 2;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: max(2rem, env(safe-area-inset-top)) 1.25rem 1rem;
+  gap: 0.55rem;
+}
+
+.amoji-title-screen .title-screen-kicker {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: rgba(255, 240, 250, 0.72);
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.45);
+}
+
+.amoji-title-screen .title-screen-logo {
+  margin: 0;
+  font-family: var(--font-display, "Segoe UI", system-ui, sans-serif);
+  font-size: clamp(2.85rem, 14vw, 4.2rem);
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  line-height: 1;
+  text-transform: uppercase;
+  background: linear-gradient(
+    180deg,
+    #ffffff 0%,
+    #ffe4f3 38%,
+    #f9a8d4 72%,
+    #c084fc 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 4px 18px rgba(236, 72, 153, 0.35))
+    drop-shadow(0 2px 8px rgba(0, 0, 0, 0.55));
+  animation: title-screen-logo-glow 3.2s ease-in-out infinite;
+}
+
+.amoji-title-screen .title-screen-tagline {
+  margin: 0.15rem 0 0;
+  max-width: 16rem;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  font-weight: 600;
+  color: rgba(255, 248, 252, 0.82);
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+}
+
+.amoji-title-screen .title-screen-footer {
+  position: relative;
+  z-index: 2;
+  flex-shrink: 0;
+  width: 100%;
+  padding: 0.65rem 1.15rem calc(1.1rem + env(safe-area-inset-bottom));
+  background: linear-gradient(180deg, transparent, rgba(4, 2, 10, 0.72));
+}
+
+.amoji-title-screen .boot-load-bar {
+  width: min(19rem, 90vw);
+  margin: 0 auto;
+}
+
+.amoji-title-screen .boot-load-bar .amoji-load-bar__track {
+  height: 0.38rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  overflow: hidden;
+}
+
+.amoji-title-screen .boot-load-bar .amoji-load-bar__fill {
+  background: linear-gradient(90deg, #f472b6, #c084fc, #67e8f9);
+  box-shadow: 0 0 14px rgba(244, 114, 182, 0.45);
+}
+
+.amoji-title-screen .boot-load-bar .amoji-load-bar__meta {
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 0.45rem;
+  font-size: 0.72rem;
+  color: rgba(255, 248, 252, 0.62);
+}
+
+@keyframes title-screen-ken-burns {
+  0% {
+    transform: scale(1.02) translateY(0);
+  }
+  100% {
+    transform: scale(1.06) translateY(-1.5%);
+  }
+}
+
+@keyframes title-screen-logo-glow {
+  0%,
+  100% {
+    filter: drop-shadow(0 4px 18px rgba(236, 72, 153, 0.32))
+      drop-shadow(0 2px 8px rgba(0, 0, 0, 0.55));
+  }
+  50% {
+    filter: drop-shadow(0 6px 24px rgba(192, 132, 252, 0.48))
+      drop-shadow(0 2px 8px rgba(0, 0, 0, 0.55));
+  }
+}
+
+@keyframes title-screen-petal-fall {
+  0% {
+    transform: translateY(-10vh) rotate(0deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.85;
+  }
+  100% {
+    transform: translateY(110vh) rotate(320deg);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .amoji-title-screen .title-screen-bg,
+  .amoji-title-screen .title-screen-logo,
+  .amoji-title-screen .title-screen-particles span {
+    animation: none !important;
+  }
+}
