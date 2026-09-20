@@ -303,7 +303,7 @@ describe("companionFreshBoot", () => {
       stamp: 1726550000123,
     });
     expect(loc).toBe(
-      "/n/1726550000123/full?lang=en&pick=1&build=v159&_cb=1726550000123",
+      "/n/1726550000123/full?lang=en&pick=1&automic=0&build=v159&_cb=1726550000123",
     );
     expect(companionOpenPath("lite", 99)).toBe("/n/99/lite");
     expect(isCompanionOpenPath("/n/99/full")).toBe(true);
