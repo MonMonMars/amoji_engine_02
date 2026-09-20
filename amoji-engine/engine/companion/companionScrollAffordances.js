@@ -76,6 +76,12 @@ export function wireScrollAffordances(scroller, opts = {}) {
   next.addEventListener("click", () => scrollByStep(1));
 
   const sync = () => {
+    if (
+      (typeof scroller.isConnected === "boolean" && !scroller.isConnected) ||
+      (typeof host.isConnected === "boolean" && !host.isConnected)
+    ) {
+      return;
+    }
     const overflow =
       axis === "y"
         ? scroller.scrollHeight > scroller.clientHeight + 4

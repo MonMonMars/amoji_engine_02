@@ -210,6 +210,12 @@ export function openUiOverlay(doc, cfg) {
 
   scheduleFrame(doc, () => {
     scheduleFrame(doc, () => {
+      if (
+        (typeof panel.isConnected === "boolean" && !panel.isConnected) ||
+        !doc.body
+      ) {
+        return;
+      }
       backdrop?.classList.add(backdropOpenClass);
       panel.classList.add(panelOpenClass);
       panel.classList.remove("ui-overlay-entering");
@@ -255,6 +261,12 @@ export function closeUiOverlay(doc, cfg) {
   uiAudio?.haptic?.("light");
 
   viewOf(doc).setTimeout(() => {
+    if (typeof panel.isConnected === "boolean" && !panel.isConnected) {
+      doc.body?.classList.remove("ui-page-leaving");
+      if (bodyClass) doc.body?.classList.remove(bodyClass);
+      onHidden?.();
+      return;
+    }
     if (panel.classList.contains(panelOpenClass)) return;
     panel.classList.remove("ui-overlay-closing");
     if (hidePanelOnClose) panel.setAttribute("hidden", "");
