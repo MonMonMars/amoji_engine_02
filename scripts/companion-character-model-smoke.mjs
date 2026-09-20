@@ -17,13 +17,13 @@ function parseArg(name, fallback) {
 }
 
 const CHARACTERS = {
-  kizuna: { kind: "vrm3d", model: "kizuna-kamatte.vrm" },
-  kai: { kind: "vrm3d", model: "companion-kai.vrm" },
+  kizuna: { kind: "vrm3d", model: "companion-kizuna.vrm" },
+  rex: { kind: "vrm3d", model: "companion-rex.vrm" },
   alicia: { kind: "vrm3d", model: "companion-alicia.vrm" },
   nova: { kind: "vrm3d", model: "companion-nova.vrm" },
   ember: { kind: "vrm3d", model: "companion-ember.vrm" },
-  chibi: { kind: "vrm3d", model: "companion-chibi.vrm" },
-  quinn: { kind: "gltf3d", model: "companion-quinn.glb" },
+  nana: { kind: "vrm3d", model: "companion-nana.vrm" },
+  yuki: { kind: "vrm3d", model: "companion-yuki.vrm" },
 };
 
 async function main() {
@@ -73,6 +73,8 @@ async function main() {
     build: window.__amojiBuild,
     avatarKind: window.__amojiAvatarKind,
     characterId: window.localStorage?.getItem("amoji.companion.characterId"),
+    loadedModelUrl: window.__amojiLoadedModelUrl || null,
+    loadedCharacterId: window.__amojiLoadedCharacterId || null,
   }));
 
   await browser.close();

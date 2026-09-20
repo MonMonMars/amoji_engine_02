@@ -151,6 +151,16 @@ export async function createCompanionAvatar(opts) {
         "vrm",
       );
       avatar.resize?.();
+      const loadedUrl = avatar.getLoadedModelUrl?.();
+      if (characterId && loadedUrl) {
+        const { modelPathMatchesCharacterId } =
+          await import("./companionModelAssets.mjs");
+        if (!modelPathMatchesCharacterId(loadedUrl, characterId)) {
+          throw new Error(
+            `vrm-character-model-mismatch:${characterId}:${loadedUrl}`,
+          );
+        }
+      }
       emit(96, "ready");
       return { avatar, kind: "vrm3d", canvas };
     } catch (err) {

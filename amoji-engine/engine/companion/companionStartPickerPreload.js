@@ -104,7 +104,7 @@ export function attachStartPickerModelPreload(picker, opts = {}) {
       return;
     }
 
-    releaseVrmPreloadExcept(url);
+    releaseVrmPreloadExcept(fetchUrl);
 
     const cached = getPreloadedVrmPromise(fetchUrl);
     if (cached) {
@@ -189,10 +189,20 @@ export function attachStartPickerModelPreload(picker, opts = {}) {
     return result;
   });
 
+  /**
+   * Block until the roster VRM for this character is prefetched (Begin chat / switch).
+   * @param {string} characterId
+   */
+  const ensureModelReady = async (characterId) => {
+    modelJob += 1;
+    await loadSelectedModel(characterId, { background: false });
+  };
+
   const handle = {
     schema: COMPANION_START_PICKER_PRELOAD_SCHEMA,
     previewPromise,
     refreshSelectedModel,
+    ensureModelReady,
     setLocale(nextEnglish, nextLangCode) {
       isEnglish = Boolean(nextEnglish);
       langCode = nextLangCode === "en" ? "en" : "yue";
