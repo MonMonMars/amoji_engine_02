@@ -139,7 +139,7 @@ describe("companionFreshBoot", () => {
     expect(replace).not.toHaveBeenCalled();
   });
 
-  it("moves /companion-full onto a per-open /n/<stamp>/ path even when builds match", async () => {
+  it("keeps /companion-full stable when builds match (no reload loop)", async () => {
     const replace = vi.fn();
     const fetchImpl = vi.fn(async () => ({
       ok: true,
@@ -148,15 +148,17 @@ describe("companionFreshBoot", () => {
     globalThis.location = {
       href: "https://example.com/companion-full?lang=yue",
       pathname: "/companion-full",
+      search: "?lang=yue",
       replace,
     };
     globalThis.__amojiBuild = "2026-09-17-v153-repeat-issues";
+    globalThis.history = { replaceState: vi.fn() };
 
     const result = await checkForAppUpdate("2026-09-17-v153-repeat-issues", {
       fetchImpl,
     });
-    expect(result.reloaded).toBe(true);
-    expect(replace.mock.calls[0][0]).toMatch(/\/n\/\d+\/full/);
+    expect(result.reloaded).toBe(false);
+    expect(replace).not.toHaveBeenCalled();
   });
 
   it("buildPlayFallbackLocation targets /companion-full with cache bust", () => {
@@ -245,6 +247,32 @@ describe("companionFreshBoot", () => {
     });
     const path = await resolveCompanionBootPath("v154", "full", { fetchImpl });
     expect(path).toBe("/companion-full");
+  });
+
+  it("does not reload /n/<stamp>/full when build matches but ?build= is missing", async () => {
+    const replace = vi.fn();
+    const fetchImpl = vi.fn(async (url) => {
+      if (String(url).includes("/api/health")) {
+        return {
+          ok: true,
+          json: async () => ({ build: "2026-09-20-v383-anime-title-screen" }),
+        };
+      }
+      return { ok: true };
+    });
+    globalThis.location = {
+      href: "https://example.com/n/1726550000123/full?lang=en&pick=1",
+      pathname: "/n/1726550000123/full",
+      search: "?lang=en&pick=1",
+      replace,
+    };
+    globalThis.__amojiBuild = "2026-09-20-v383-anime-title-screen";
+    globalThis.history = { replaceState: vi.fn() };
+    const result = await checkForAppUpdate("2026-09-20-v383-anime-title-screen", {
+      fetchImpl,
+    });
+    expect(result.reloaded).toBe(false);
+    expect(replace).not.toHaveBeenCalled();
   });
 
   it("does not loop when unique /c/ 404s and the fallback already has ?build=", async () => {

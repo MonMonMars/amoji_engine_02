@@ -155,20 +155,18 @@
         purgeCaches();
         var sticky = isStickyPath(url.pathname || "");
         if (
-          !forceNewOpen &&
-          !sticky &&
           !shouldReload(pageBuild, serverBuild) &&
           pathSatisfiesBuild(serverBuild)
         ) {
           return;
         }
-        redirect(serverBuild, Boolean(forceNewOpen || sticky));
+        redirect(serverBuild, Boolean(forceNewOpen));
       })
       .catch(function () {});
   }
 
   purgeCaches();
-  probeServerBuild(isStickyPath(url.pathname || ""));
+  probeServerBuild(false);
 
   window.addEventListener("pageshow", function (ev) {
     if (ev && ev.persisted) {
