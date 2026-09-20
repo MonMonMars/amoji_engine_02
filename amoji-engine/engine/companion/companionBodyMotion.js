@@ -447,11 +447,22 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
     const restLl = armRestRotations.leftLowerArm;
     const restRl = armRestRotations.rightLowerArm;
     const apose = isAposeBind();
-    const foreCap = apose ? 0.32 : 0.48;
+    const foreCap = apose ? 0.44 : 0.62;
+    const liftCap = apose ? 0.05 : 0.1;
     const foreL = Math.min(foreCap, Math.max(0, (pose.forearmL ?? 0) * k));
     const foreR = Math.min(foreCap, Math.max(0, (pose.forearmR ?? 0) * k));
-    applyBoneRotation("leftUpperArm", restL);
-    applyBoneRotation("rightUpperArm", restR);
+    const liftL = Math.min(liftCap, Math.max(0, (pose.armLiftL ?? 0) * k * 0.28));
+    const liftR = Math.min(liftCap, Math.max(0, (pose.armLiftR ?? 0) * k * 0.28));
+    applyBoneRotation("leftUpperArm", {
+      x: restL.x,
+      y: restL.y + liftL * 0.04,
+      z: restDirectedLift(restL.z, liftL * (apose ? 0.1 : 0.22), 1),
+    });
+    applyBoneRotation("rightUpperArm", {
+      x: restR.x,
+      y: restR.y - liftR * 0.04,
+      z: restDirectedLift(restR.z, liftR * (apose ? 0.1 : 0.22), -1),
+    });
     applyBoneRotation("leftLowerArm", withElbowBend(restLl, foreL));
     applyBoneRotation("rightLowerArm", withElbowBend(restRl, foreR));
   };
@@ -838,35 +849,35 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
       if (!actionLoop && actionElapsed >= actionDuration) {
         finishActionStep();
       }
-    } else if (!talking && !thinking) {
+    } else if (!talking) {
       const breathe = Math.sin(elapsed * 1.05);
+      const sway = Math.sin(elapsed * 0.38 + 0.55);
       rootMotion = {
-        y: breathe * 0.014,
-        rotY: 0,
+        y: breathe * 0.034,
+        rotY: sway * 0.026,
       };
     } else {
       rootMotion = { y: 0, rotY: 0 };
     }
 
     if (!activeAction) {
-      if (thinking && !talking) {
-        const thinkMotion = sampleBodyTalkMotion(elapsed, {
-          style: companionGestureStyle("thinking"),
-          emotion: "thinking",
-          speechEnergy: 0.18,
-          includeArms: false,
-        });
-        pose = mergePoses(pose, thinkMotion.body, 0.28);
-        pose.headX = (pose.headX || 0) + Math.sin(elapsed * 0.55) * 0.024;
-        pose.headZ = (pose.headZ || 0) + Math.sin(elapsed * 0.42 + 0.8) * 0.018;
-      } else if (!talking) {
+      if (!talking) {
         const apose = isAposeBind();
         const idleMotion = samplePlantedAliveIdle(elapsed, {
           listening,
-          emotion,
+          emotion: thinking ? "neutral" : emotion,
           gender: idleGender,
         });
-        pose = mergePoses(pose, idleMotion, apose ? 0.92 : 0.96);
+        pose = mergePoses(pose, idleMotion, apose ? 0.94 : 0.98);
+        if (thinking) {
+          const thinkMotion = sampleBodyTalkMotion(elapsed, {
+            style: companionGestureStyle("thinking"),
+            emotion: "thinking",
+            speechEnergy: 0.18,
+            includeArms: false,
+          });
+          pose = mergePoses(pose, thinkMotion.body, 0.18);
+        }
         const beat = advanceIdleBeat(idleBeat, dt, now, { gender: idleGender });
         idleBeat = beat.state;
         if (beat.overlay && Object.keys(beat.overlay).length) {

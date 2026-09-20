@@ -25,7 +25,7 @@ export {
   proceduralIdleBeatPoolForGender,
 } from "./companionIdleGender.js";
 
-export const COMPANION_IDLE_MOTION_SCHEMA = "amoji.companionIdleMotion.v5";
+export const COMPANION_IDLE_MOTION_SCHEMA = "amoji.companionIdleMotion.v6";
 
 /** First seconds after avatar is visible — gentle breathe, sway, relaxed arms. */
 export const BOOT_SIMPLE_IDLE_SEC = 10;
@@ -77,7 +77,7 @@ export function sampleCalmBreathIdle(elapsedSec, opts = {}) {
   const t = elapsedSec;
   const listening = Boolean(opts.listening);
   const breath = Math.sin(t * 0.85);
-  const amp = (listening ? 1.05 : 1) * 1.55;
+  const amp = (listening ? 1.08 : 1) * 1.85;
 
   return {
     headX: breath * 0.022 * amp * profile.headMul,
@@ -111,16 +111,16 @@ export function samplePlantedAliveIdle(elapsedSec, opts = {}) {
     upperLegR: calm.upperLegR,
     lowerLegL: calm.lowerLegL,
     lowerLegR: calm.lowerLegR,
-    hipZ: calm.hipZ + (life.hipZ - calm.hipZ) * 0.28,
-    headX: life.headX * 0.85,
-    headZ: life.headZ * 0.72,
-    leanY: life.leanY * 0.5,
+    hipZ: calm.hipZ + (life.hipZ - calm.hipZ) * 0.48,
+    headX: life.headX * 0.96,
+    headZ: life.headZ * 0.9,
+    leanY: life.leanY * 0.76,
     spineX: life.spineX,
     chestX: life.chestX,
-    armLiftL: calm.armLiftL + (life.armLiftL - calm.armLiftL) * 0.22,
-    armLiftR: calm.armLiftR + (life.armLiftR - calm.armLiftR) * 0.22,
-    forearmL: calm.forearmL + (life.forearmL - calm.forearmL) * 0.42,
-    forearmR: calm.forearmR + (life.forearmR - calm.forearmR) * 0.42,
+    armLiftL: calm.armLiftL + (life.armLiftL - calm.armLiftL) * 0.42,
+    armLiftR: calm.armLiftR + (life.armLiftR - calm.armLiftR) * 0.42,
+    forearmL: calm.forearmL + (life.forearmL - calm.forearmL) * 0.62,
+    forearmR: calm.forearmR + (life.forearmR - calm.forearmR) * 0.62,
   };
 }
 
@@ -137,7 +137,7 @@ export function sampleIdleBodyMotion(elapsedSec, opts = {}) {
   const sway = Math.sin(t * 0.58 + 0.4) * profile.swayMul;
   const shift = Math.sin(t * 0.72);
   const bob = Math.sin(t * 0.9 + 0.3);
-  const energy = (listening ? 1.08 : 1) * 1.55;
+  const energy = (listening ? 1.1 : 1) * 1.85;
   const leftFree = Math.max(0, -shift);
   const rightFree = Math.max(0, shift);
 
