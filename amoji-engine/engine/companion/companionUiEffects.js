@@ -51,6 +51,27 @@ function scheduleFrame(doc, fn) {
   fn();
 }
 
+/** Cancels stale openUiOverlay rAF callbacks when close runs before enter finishes. */
+/** @type {WeakMap<HTMLElement, number>} */
+const overlayGeneration = new WeakMap();
+
+/**
+ * @param {HTMLElement} panel
+ */
+function bumpOverlayGeneration(panel) {
+  const next = (overlayGeneration.get(panel) || 0) + 1;
+  overlayGeneration.set(panel, next);
+  return next;
+}
+
+/**
+ * @param {HTMLElement} panel
+ * @param {number} generation
+ */
+function overlayGenerationMatches(panel, generation) {
+  return overlayGeneration.get(panel) === generation;
+}
+
 /**
  * @typedef {{
  *   play?: (id: string) => boolean,
@@ -199,6 +220,8 @@ export function openUiOverlay(doc, cfg) {
   } = cfg;
   if (!panel || !doc.body) return;
 
+  const openGeneration = bumpOverlayGeneration(panel);
+
   panel.removeAttribute("hidden");
   backdrop?.removeAttribute("hidden");
   panel.classList.remove("ui-overlay-closing");
@@ -210,6 +233,7 @@ export function openUiOverlay(doc, cfg) {
 
   scheduleFrame(doc, () => {
     scheduleFrame(doc, () => {
+      if (!overlayGenerationMatches(panel, openGeneration)) return;
       if (
         (typeof panel.isConnected === "boolean" && !panel.isConnected) ||
         !doc.body
@@ -251,6 +275,8 @@ export function closeUiOverlay(doc, cfg) {
   } = cfg;
   if (!panel) return;
 
+  const closeGeneration = bumpOverlayGeneration(panel);
+
   panel.classList.add("ui-overlay-closing");
   panel.classList.remove(panelOpenClass);
   backdrop?.classList.remove(backdropOpenClass);
@@ -260,6 +286,14 @@ export function closeUiOverlay(doc, cfg) {
   uiAudio?.play?.("sheet-close");
   uiAudio?.haptic?.("light");
 
+  const finishClose = () => {
+    panel.classList.remove("ui-overlay-closing", "ui-overlay-entering");
+    if (hidePanelOnClose) panel.setAttribute("hidden", "");
+    backdrop?.setAttribute("hidden", "");
+    doc.body?.classList.remove("ui-page-leaving");
+    onHidden?.();
+  };
+
   viewOf(doc).setTimeout(() => {
     if (typeof panel.isConnected === "boolean" && !panel.isConnected) {
       doc.body?.classList.remove("ui-page-leaving");
@@ -267,12 +301,21 @@ export function closeUiOverlay(doc, cfg) {
       onHidden?.();
       return;
     }
-    if (panel.classList.contains(panelOpenClass)) return;
-    panel.classList.remove("ui-overlay-closing");
-    if (hidePanelOnClose) panel.setAttribute("hidden", "");
-    backdrop?.setAttribute("hidden", "");
-    doc.body.classList.remove("ui-page-leaving");
-    onHidden?.();
+    if (!overlayGenerationMatches(panel, closeGeneration)) {
+      if (panel.classList.contains(panelOpenClass)) {
+        panel.classList.remove("ui-overlay-closing");
+        doc.body?.classList.remove("ui-page-leaving");
+        return;
+      }
+      finishClose();
+      return;
+    }
+    if (panel.classList.contains(panelOpenClass)) {
+      panel.classList.remove("ui-overlay-closing");
+      doc.body?.classList.remove("ui-page-leaving");
+      return;
+    }
+    finishClose();
   }, hideDelay);
 }
 

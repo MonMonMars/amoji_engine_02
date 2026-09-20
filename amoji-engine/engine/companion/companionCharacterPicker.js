@@ -693,25 +693,43 @@ export function createCompanionCharacterPicker(opts = {}) {
     shell.querySelector(".companion-picker-close")?.focus?.();
   };
 
+  const finalizePickerHidden = () => {
+    shell.hidden = true;
+    shell.classList.remove(
+      "is-open",
+      "ui-overlay-closing",
+      "ui-overlay-entering",
+    );
+    document.body.classList.remove("companion-picker-open");
+    opts.onClose?.();
+  };
+
   const close = () => {
+    if (!open && !shell.classList.contains("is-open")) return;
     open = false;
     closeUiOverlay(document, {
       panel: shell,
       bodyClass: "companion-picker-open",
       panelOpenClass: "is-open",
       hidePanelOnClose: false,
-      onHidden: () => {
-        shell.hidden = true;
-        opts.onClose?.();
-      },
+      onHidden: finalizePickerHidden,
     });
   };
 
-  shell.addEventListener("click", (ev) => {
+  const onPickerShellClick = (ev) => {
     const target = ev.target;
     if (target instanceof Element && target.closest("[data-picker-close]")) {
+      ev.preventDefault();
+      ev.stopPropagation();
       close();
     }
+  };
+
+  shell.addEventListener("click", onPickerShellClick);
+  shell.querySelector(".companion-picker-close")?.addEventListener("click", (ev) => {
+    ev.preventDefault();
+    ev.stopPropagation();
+    close();
   });
 
   globalThis.addEventListener?.("keydown", (ev) => {
