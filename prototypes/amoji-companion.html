@@ -8,9 +8,9 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji · Companion</title>
     <script>
-      window.__amojiBuild = "2026-09-20-v406-payments-security";
+      window.__amojiBuild = "2026-09-20-v407-beautiful-bg";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-20-v406-payments-security"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-20-v407-beautiful-bg"></script>
     <link
       rel="prefetch"
       href="/prototypes/assets/companion-char-nova.png"
@@ -683,18 +683,22 @@
       media="print"
       onload="this.media='all'"
     />
-    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-20-v406-payments-security" />
-    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-20-v406-payments-security" />
-    <link rel="stylesheet" href="/prototypes/companion-mic-button.css?v=2026-09-20-v406-payments-security" />
-    <link rel="stylesheet" href="/prototypes/companion-title-screen.css?v=2026-09-20-v406-payments-security" />
-    <link rel="stylesheet" href="/prototypes/companion-minimal-ui.css?v=2026-09-20-v406-payments-security" />
-    <link rel="stylesheet" href="/prototypes/companion-settings-ui.css?v=2026-09-20-v406-payments-security" />
-    <link rel="stylesheet" href="/prototypes/companion-mobile-shell.css?v=2026-09-20-v406-payments-security" />
-    <link rel="stylesheet" href="/prototypes/companion-picker-v4.css?v=2026-09-20-v406-payments-security" />
-    <link rel="stylesheet" href="/prototypes/companion-picker-stacked-layout.css?v=2026-09-20-v406-payments-security" />
-    <link rel="stylesheet" href="/prototypes/companion-picker-aaa-theme.css?v=2026-09-20-v406-payments-security" />
-    <link rel="stylesheet" href="/prototypes/companion-responsive-layout.css?v=2026-09-20-v406-payments-security" />
-    <link rel="stylesheet" href="/prototypes/companion-scroll-affordances.css?v=2026-09-20-v406-payments-security" />
+    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-20-v407-beautiful-bg" />
+    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-20-v407-beautiful-bg" />
+    <link rel="stylesheet" href="/prototypes/companion-mic-button.css?v=2026-09-20-v407-beautiful-bg" />
+    <link rel="stylesheet" href="/prototypes/companion-title-screen.css?v=2026-09-20-v407-beautiful-bg" />
+    <link rel="stylesheet" href="/prototypes/companion-minimal-ui.css?v=2026-09-20-v407-beautiful-bg" />
+    <link rel="stylesheet" href="/prototypes/companion-settings-ui.css?v=2026-09-20-v407-beautiful-bg" />
+    <link rel="stylesheet" href="/prototypes/companion-mobile-shell.css?v=2026-09-20-v407-beautiful-bg" />
+    <link rel="stylesheet" href="/prototypes/companion-picker-v4.css?v=2026-09-20-v407-beautiful-bg" />
+    <link rel="stylesheet" href="/prototypes/companion-picker-stacked-layout.css?v=2026-09-20-v407-beautiful-bg" />
+    <link rel="stylesheet" href="/prototypes/companion-picker-aaa-theme.css?v=2026-09-20-v407-beautiful-bg" />
+    <link rel="stylesheet" href="/prototypes/companion-responsive-layout.css?v=2026-09-20-v407-beautiful-bg" />
+    <link rel="stylesheet" href="/prototypes/companion-scroll-affordances.css?v=2026-09-20-v407-beautiful-bg" />
+    <link
+      rel="stylesheet"
+      href="/prototypes/companion-scene-backgrounds.css?v=2026-09-20-v407-beautiful-bg"
+    />
     <script>
       (function () {
         var params = new URLSearchParams(location.search);
@@ -720,7 +724,7 @@
       })();
     </script>
     <script type="module">
-      import { bootEarlyStartPicker } from "/amoji-engine/engine/companion/companionEarlyStartPicker.js?v=2026-09-20-v406-payments-security";
+      import { bootEarlyStartPicker } from "/amoji-engine/engine/companion/companionEarlyStartPicker.js?v=2026-09-20-v407-beautiful-bg";
       const bootParams = new URLSearchParams(location.search);
       if (bootParams.get("autostart") !== "1" && bootParams.get("pick") !== "0") {
         globalThis.__amojiEarlyStartPickerPromise = bootEarlyStartPicker({
@@ -786,9 +790,7 @@
         position: absolute;
         inset: 0;
         pointer-events: none;
-        background:
-          linear-gradient(180deg, rgba(7, 10, 16, 0.25) 0%, rgba(7, 10, 16, 0.55) 55%, rgba(5, 7, 12, 0.82) 100%),
-          url("/prototypes/assets/companion-bg-anime.png") center / cover no-repeat;
+        background-color: #070a10;
         z-index: 0;
       }
 
@@ -842,134 +844,6 @@
       .atmosphere[data-scene-environment="outdoor"]::after {
         opacity: 0.14;
         animation: none;
-      }
-
-      .atmosphere[data-scene-bg="rooftop"] {
-        background:
-          linear-gradient(180deg, rgba(12, 16, 28, 0.12) 0%, rgba(6, 8, 14, 0.82) 100%),
-          radial-gradient(ellipse 100% 70% at 50% 15%, #5b7c9a 0%, #2a3548 45%, #0a0e16 100%);
-      }
-
-      .atmosphere[data-scene-bg="park"] {
-        background:
-          linear-gradient(180deg, rgba(18, 32, 22, 0.1) 0%, rgba(8, 12, 10, 0.78) 100%),
-          radial-gradient(ellipse 90% 65% at 50% 20%, #6b9a6e 0%, #3d5c42 48%, #121a14 100%);
-      }
-
-      .atmosphere[data-scene-bg="beach"] {
-        background:
-          linear-gradient(180deg, rgba(40, 28, 18, 0.08) 0%, rgba(10, 14, 22, 0.75) 100%),
-          radial-gradient(ellipse 100% 75% at 50% 18%, #7ec8e3 0%, #4a8fb8 38%, #1a2838 100%);
-      }
-
-      .atmosphere[data-scene-bg="cozy-room"] {
-        background:
-          linear-gradient(180deg, rgba(28, 18, 14, 0.15) 0%, rgba(10, 8, 12, 0.88) 100%),
-          radial-gradient(ellipse 85% 70% at 50% 38%, #8b6f5c 0%, #4a3a32 52%, #141018 100%);
-      }
-
-      .atmosphere[data-scene-bg="cafe"] {
-        background:
-          linear-gradient(180deg, rgba(22, 16, 12, 0.12) 0%, rgba(8, 6, 10, 0.85) 100%),
-          radial-gradient(ellipse 90% 65% at 50% 35%, #a08060 0%, #5c4838 50%, #120e0c 100%);
-      }
-
-      .atmosphere[data-scene-bg="library"] {
-        background:
-          linear-gradient(180deg, rgba(16, 20, 18, 0.18) 0%, rgba(6, 8, 10, 0.9) 100%),
-          radial-gradient(ellipse 88% 68% at 50% 32%, #5a6b58 0%, #2e3830 55%, #0a0c0e 100%);
-      }
-
-      .atmosphere[data-scene-bg="studio"] {
-        background:
-          linear-gradient(180deg, rgba(18, 20, 28, 0.2) 0%, rgba(8, 10, 16, 0.75) 100%),
-          radial-gradient(ellipse 90% 70% at 50% 35%, #4a5568 0%, #1a1f2b 55%, #0a0c12 100%);
-      }
-
-      .atmosphere[data-scene-bg="sunset"] {
-        background:
-          linear-gradient(180deg, rgba(40, 18, 28, 0.15) 0%, rgba(10, 8, 18, 0.82) 100%),
-          radial-gradient(ellipse 100% 80% at 50% 20%, #ff8a5c 0%, #7b3f72 42%, #1a1024 100%);
-      }
-
-      .atmosphere[data-scene-bg="minimal"] {
-        background:
-          linear-gradient(180deg, rgba(7, 10, 16, 0.35) 0%, rgba(5, 7, 12, 0.92) 100%),
-          #070a10;
-      }
-
-      .atmosphere[data-scene-bg="aurora"] {
-        background:
-          linear-gradient(180deg, rgba(7, 10, 16, 0.2) 0%, rgba(5, 7, 12, 0.85) 100%),
-          radial-gradient(ellipse 80% 60% at 30% 25%, rgba(94, 234, 212, 0.35) 0%, transparent 55%),
-          radial-gradient(ellipse 70% 55% at 72% 30%, rgba(139, 124, 248, 0.32) 0%, transparent 52%),
-          #060810;
-      }
-
-      .atmosphere[data-scene-bg="rain-street"] {
-        background:
-          linear-gradient(180deg, rgba(8, 12, 22, 0.35) 0%, rgba(4, 6, 12, 0.88) 100%),
-          radial-gradient(ellipse 90% 70% at 50% 30%, #4a6a8a 0%, #1a2838 55%, #080c14 100%);
-      }
-
-      .atmosphere[data-scene-bg="cherry-blossom"] {
-        background:
-          linear-gradient(180deg, rgba(40, 22, 32, 0.12) 0%, rgba(12, 8, 14, 0.82) 100%),
-          radial-gradient(ellipse 95% 75% at 50% 22%, #f9a8d4 0%, #be7aa8 38%, #3d2840 100%);
-      }
-
-      .atmosphere[data-scene-bg="mountain"] {
-        background:
-          linear-gradient(180deg, rgba(18, 28, 38, 0.15) 0%, rgba(6, 10, 14, 0.85) 100%),
-          radial-gradient(ellipse 100% 80% at 50% 18%, #94b8d8 0%, #4a6878 42%, #141c24 100%);
-      }
-
-      .atmosphere[data-scene-bg="harbor"] {
-        background:
-          linear-gradient(180deg, rgba(12, 18, 28, 0.1) 0%, rgba(6, 8, 16, 0.82) 100%),
-          radial-gradient(ellipse 95% 72% at 50% 28%, #6a9ec8 0%, #2a4868 48%, #0c1420 100%);
-      }
-
-      .atmosphere[data-scene-bg="meadow"] {
-        background:
-          linear-gradient(180deg, rgba(28, 38, 22, 0.1) 0%, rgba(8, 12, 10, 0.78) 100%),
-          radial-gradient(ellipse 100% 75% at 50% 20%, #a8d878 0%, #5a8848 45%, #182818 100%);
-      }
-
-      .atmosphere[data-scene-bg="bedroom"] {
-        background:
-          linear-gradient(180deg, rgba(24, 18, 28, 0.18) 0%, rgba(8, 6, 12, 0.9) 100%),
-          radial-gradient(ellipse 88% 68% at 50% 38%, #9a88a8 0%, #4a3a58 55%, #120e18 100%);
-      }
-
-      .atmosphere[data-scene-bg="office"] {
-        background:
-          linear-gradient(180deg, rgba(16, 20, 28, 0.2) 0%, rgba(6, 8, 12, 0.88) 100%),
-          radial-gradient(ellipse 90% 65% at 50% 32%, #7888a0 0%, #384858 58%, #0a0e14 100%);
-      }
-
-      .atmosphere[data-scene-bg="classroom"] {
-        background:
-          linear-gradient(180deg, rgba(22, 24, 18, 0.15) 0%, rgba(8, 10, 8, 0.88) 100%),
-          radial-gradient(ellipse 92% 68% at 50% 34%, #b8a878 0%, #5a5840 55%, #141610 100%);
-      }
-
-      .atmosphere[data-scene-bg="greenhouse"] {
-        background:
-          linear-gradient(180deg, rgba(18, 28, 20, 0.12) 0%, rgba(6, 10, 8, 0.85) 100%),
-          radial-gradient(ellipse 90% 70% at 50% 30%, #88c898 0%, #3a6848 52%, #0c1410 100%);
-      }
-
-      .atmosphere[data-scene-bg="loft"] {
-        background:
-          linear-gradient(180deg, rgba(20, 16, 12, 0.14) 0%, rgba(8, 6, 8, 0.86) 100%),
-          radial-gradient(ellipse 88% 66% at 50% 36%, #c8a888 0%, #685840 54%, #14100c 100%);
-      }
-
-      .atmosphere[data-scene-bg="kitchen"] {
-        background:
-          linear-gradient(180deg, rgba(24, 18, 14, 0.16) 0%, rgba(10, 8, 8, 0.88) 100%),
-          radial-gradient(ellipse 90% 68% at 50% 35%, #d8b898 0%, #786048 52%, #181210 100%);
       }
 
       #avatar-canvas {
@@ -4805,26 +4679,22 @@
         letter-spacing: -0.02em;
       }
     </style>
-    <link
-      rel="stylesheet"
-      href="/prototypes/companion-scene-backgrounds.css?v=2026-09-20-v406-payments-security"
-    />
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-20-v406-payments-security",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-20-v407-beautiful-bg",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-20-v406-payments-security",
-          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-20-v406-payments-security"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-20-v407-beautiful-bg",
+          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-20-v407-beautiful-bg"
         }
       }
     </script>
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-20-v406-payments-security"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-20-v407-beautiful-bg"
     />
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-20-v406-payments-security"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-20-v406-payments-security"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-20-v407-beautiful-bg"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-20-v407-beautiful-bg"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;

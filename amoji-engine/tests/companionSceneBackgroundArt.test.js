@@ -10,10 +10,19 @@ const assetsDir = join(
 );
 
 describe("companion scene background art", () => {
-  it("ships SVG art for every background preset", () => {
+  it("ships SVG or PNG art for every background preset", () => {
     const missing = SCENE_BACKGROUND_PRESETS.filter(
-      (p) => !existsSync(join(assetsDir, `${p.id}.svg`)),
+      (p) =>
+        !existsSync(join(assetsDir, `${p.id}.svg`)) &&
+        !existsSync(join(assetsDir, `${p.id}.png`)),
     ).map((p) => p.id);
     expect(missing).toEqual([]);
+  });
+
+  it("ships raster PNG for every preset (HQ backgrounds)", () => {
+    const missingPng = SCENE_BACKGROUND_PRESETS.filter(
+      (p) => !existsSync(join(assetsDir, `${p.id}.png`)),
+    ).map((p) => p.id);
+    expect(missingPng).toEqual([]);
   });
 });

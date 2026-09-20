@@ -4,7 +4,7 @@
  * Default + night-city use companion-bg-anime.png in CSS (SVG still generated for swatch fallback / tests).
  * Output: prototypes/assets/scene-bg/{id}.svg, prototypes/companion-scene-backgrounds.css
  */
-import { writeFileSync, mkdirSync } from "node:fs";
+import { writeFileSync, mkdirSync, existsSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { SCENE_BACKGROUND_PRESETS } from "../amoji-engine/engine/companion/companionScenePresets.js";
@@ -27,9 +27,18 @@ const overlayGrok =
   "linear-gradient(180deg, rgba(3, 3, 10, 0.08) 0%, rgba(2, 2, 8, 0.38) 48%, rgba(2, 2, 8, 0.78) 100%)";
 
 /** @param {string} presetId */
+function sceneArtFile(presetId) {
+  if (PNG_SCENE_IDS.has(presetId)) return `${ANIME_PNG}${ART_Q}`;
+  const pngPath = join(outDir, `${presetId}.png`);
+  if (existsSync(pngPath)) {
+    return `/prototypes/assets/scene-bg/${presetId}.png${ART_Q}`;
+  }
+  return `/prototypes/assets/scene-bg/${presetId}.svg${ART_Q}`;
+}
+
+/** @param {string} presetId */
 function sceneArtUrl(presetId) {
-  if (PNG_SCENE_IDS.has(presetId)) return `url("${ANIME_PNG}${ART_Q}")`;
-  return `url("/prototypes/assets/scene-bg/${presetId}.svg${ART_Q}")`;
+  return `url("${sceneArtFile(presetId)}")`;
 }
 
 /** @param {string} presetId */
@@ -88,9 +97,7 @@ for (const preset of SCENE_BACKGROUND_PRESETS) {
     "}",
     "",
   );
-  const swatchArt = PNG_SCENE_IDS.has(preset.id)
-    ? `url("${ANIME_PNG}")`
-    : `url("/prototypes/assets/scene-bg/${preset.id}.svg")`;
+  const swatchArt = `url("${sceneArtFile(preset.id).split("?")[0]}")`;
   lines.push(
     `.scene-preset__swatch--${preset.id} {`,
     "  background-image:",
@@ -108,7 +115,7 @@ for (const preset of SCENE_BACKGROUND_PRESETS) {
   if (!SCENE_ANIME_ART[preset.id]) continue;
   const art = PNG_SCENE_IDS.has(preset.id)
     ? `url("${ANIME_PNG}") center 20% / cover no-repeat !important;`
-    : `url("/prototypes/assets/scene-bg/${preset.id}.svg") !important;`;
+    : `url("${sceneArtFile(preset.id)}") center center / cover no-repeat !important;`;
   lines.push(
     `.theme-grok-ani .atmosphere[data-scene-bg="${preset.id}"] {`,
     "  background-image:",
