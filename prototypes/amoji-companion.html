@@ -8,9 +8,9 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji · Companion</title>
     <script>
-      window.__amojiBuild = "2026-09-20-v369-mic-magic-ball";
+      window.__amojiBuild = "2026-09-20-v371-fixed-composer-scroll";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-20-v369-mic-magic-ball"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-20-v371-fixed-composer-scroll"></script>
     <link
       rel="prefetch"
       href="/prototypes/assets/companion-char-nova.png"
@@ -634,6 +634,9 @@
           max(0.4rem, env(safe-area-inset-right, 0px));
         pointer-events: auto;
         touch-action: manipulation;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
       }
       .composer {
         display: flex;
@@ -646,16 +649,25 @@
       }
       .composer textarea {
         flex: 1;
-        min-height: 2.4rem;
-        max-height: 6rem;
+        width: 100%;
+        box-sizing: border-box;
+        height: 5.25rem;
+        min-height: 5.25rem;
+        max-height: 5.25rem;
         resize: none;
         border: none;
         background: transparent;
         color: #f7f1e8;
         font: inherit;
         font-size: 0.95rem;
+        line-height: 1.35;
         outline: none;
         touch-action: manipulation;
+        overflow-x: hidden;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        word-break: break-word;
+        field-sizing: fixed;
       }
       .composer .send {
         width: 2.4rem;
@@ -710,13 +722,13 @@
       media="print"
       onload="this.media='all'"
     />
-    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-20-v369-mic-magic-ball" />
-    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-20-v369-mic-magic-ball" />
-    <link rel="stylesheet" href="/prototypes/companion-mic-button.css?v=2026-09-20-v369-mic-magic-ball" />
-    <link rel="stylesheet" href="/prototypes/companion-minimal-ui.css?v=2026-09-20-v369-mic-magic-ball" />
-    <link rel="stylesheet" href="/prototypes/companion-mobile-shell.css?v=2026-09-20-v369-mic-magic-ball" />
-    <link rel="stylesheet" href="/prototypes/companion-picker-v4.css?v=2026-09-20-v369-mic-magic-ball" />
-    <link rel="stylesheet" href="/prototypes/companion-picker-stacked-layout.css?v=2026-09-20-v369-mic-magic-ball" />
+    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-20-v371-fixed-composer-scroll" />
+    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-20-v371-fixed-composer-scroll" />
+    <link rel="stylesheet" href="/prototypes/companion-mic-button.css?v=2026-09-20-v371-fixed-composer-scroll" />
+    <link rel="stylesheet" href="/prototypes/companion-minimal-ui.css?v=2026-09-20-v371-fixed-composer-scroll" />
+    <link rel="stylesheet" href="/prototypes/companion-mobile-shell.css?v=2026-09-20-v371-fixed-composer-scroll" />
+    <link rel="stylesheet" href="/prototypes/companion-picker-v4.css?v=2026-09-20-v371-fixed-composer-scroll" />
+    <link rel="stylesheet" href="/prototypes/companion-picker-stacked-layout.css?v=2026-09-20-v371-fixed-composer-scroll" />
     <script>
       (function () {
         var params = new URLSearchParams(location.search);
@@ -742,7 +754,7 @@
       })();
     </script>
     <script type="module">
-      import { bootEarlyStartPicker } from "/amoji-engine/engine/companion/companionEarlyStartPicker.js?v=2026-09-20-v369-mic-magic-ball";
+      import { bootEarlyStartPicker } from "/amoji-engine/engine/companion/companionEarlyStartPicker.js?v=2026-09-20-v371-fixed-composer-scroll";
       const bootParams = new URLSearchParams(location.search);
       if (bootParams.get("autostart") !== "1" && bootParams.get("pick") !== "0") {
         globalThis.__amojiEarlyStartPickerPromise = bootEarlyStartPicker({
@@ -2487,6 +2499,8 @@
 
       .composer textarea {
         flex: 1;
+        width: 100%;
+        box-sizing: border-box;
         resize: none;
         border: 0;
         outline: none;
@@ -2495,9 +2509,15 @@
         font: inherit;
         font-size: 1rem;
         line-height: 1.4;
-        min-height: 1.4em;
-        max-height: 7.5rem;
+        height: 5.25rem;
+        min-height: 5.25rem;
+        max-height: 5.25rem;
         padding: 0.7rem 0.75rem;
+        overflow-x: hidden;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        word-break: break-word;
+        field-sizing: fixed;
       }
 
       .composer textarea::placeholder {
@@ -2593,7 +2613,10 @@
       body.conversation-ui.composer-always-visible .composer textarea {
         display: block !important;
         flex: 1;
-        min-height: 2.5rem;
+        height: 5.25rem;
+        min-height: 5.25rem;
+        max-height: 5.25rem;
+        overflow-y: auto;
       }
 
       body.conversation-ui.composer-always-visible .composer .send,
@@ -2605,8 +2628,10 @@
 
       body.conversation-ui.composer-always-visible .stage.mic-mode .composer,
       body.conversation-ui.composer-always-visible .composer {
-        max-width: none;
-        width: 100%;
+        max-width: min(100%, 36rem);
+        width: min(100%, 36rem);
+        margin-left: auto;
+        margin-right: auto;
         justify-content: stretch;
         gap: 0.35rem;
         padding: 0.35rem 0.35rem 0.35rem 0.55rem;
@@ -4793,24 +4818,24 @@
     </style>
     <link
       rel="stylesheet"
-      href="/prototypes/companion-scene-backgrounds.css?v=2026-09-20-v369-mic-magic-ball"
+      href="/prototypes/companion-scene-backgrounds.css?v=2026-09-20-v371-fixed-composer-scroll"
     />
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-20-v369-mic-magic-ball",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-20-v371-fixed-composer-scroll",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-20-v369-mic-magic-ball",
-          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-20-v369-mic-magic-ball"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-20-v371-fixed-composer-scroll",
+          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-20-v371-fixed-composer-scroll"
         }
       }
     </script>
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-20-v369-mic-magic-ball"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-20-v371-fixed-composer-scroll"
     />
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-20-v369-mic-magic-ball"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-20-v369-mic-magic-ball"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-20-v371-fixed-composer-scroll"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-20-v371-fixed-composer-scroll"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;
@@ -5283,7 +5308,7 @@
             <div class="composer-field">
               <textarea
                 id="input"
-                rows="1"
+                rows="3"
                 placeholder="輸入…"
                 enterkeyhint="send"
                 aria-label="Message"
@@ -7118,7 +7143,7 @@
           btn.textContent = chip.text;
           btn.addEventListener("click", () => {
             input.value = "";
-            autosize();
+            resetComposerField();
             void runTurn(chip.text);
           });
           chipsWrap.appendChild(btn);
@@ -7288,11 +7313,9 @@
         },
       });
 
-      const autosize = () => {
-        input.style.height = "auto";
-        input.style.height = `${Math.min(input.scrollHeight, 120)}px`;
+      const resetComposerField = () => {
+        input.scrollTop = 0;
       };
-      input.addEventListener("input", autosize);
 
       let lastLivePulseAt = 0;
       const applyMicMeterVisual = (level) => {
@@ -7621,7 +7644,7 @@
             interim.set(trimmed);
             if (!voice.micOn) {
               input.value = trimmed;
-              autosize();
+              resetComposerField();
             }
             return;
           }
@@ -7638,7 +7661,7 @@
             interim.clear();
             if (!voice.micOn) {
               input.value = "";
-              autosize();
+              resetComposerField();
             }
             void runTurn(trimmed, { fromMic: true });
             return;
@@ -7647,7 +7670,7 @@
             interim.clear();
             if (!voice.micOn) {
               input.value = "";
-              autosize();
+              resetComposerField();
             }
             void runTurn(trimmed, { fromMic: true });
             return;
@@ -7655,7 +7678,7 @@
           if (!voice.micOn) {
             interim.set(text);
             input.value = text;
-            autosize();
+            resetComposerField();
           }
         },
         onMicState: () => {
@@ -9331,7 +9354,7 @@
         uiAudio?.play?.("send");
         uiAudio?.haptic?.("light");
         input.value = "";
-        autosize();
+        resetComposerField();
         if (!sessionStarted) {
           if (!sessionStarting) {
             await beginStartWithCharacter(characterId);

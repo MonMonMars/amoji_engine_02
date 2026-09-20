@@ -169,6 +169,9 @@ body.companion-minimal-chrome .composer-wrap {
     max(0.35rem, env(safe-area-inset-right, 0px));
   background: none;
   box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 body.companion-minimal-chrome .stage.mic-mode .composer-wrap {
@@ -179,9 +182,11 @@ body.companion-minimal-chrome .stage.mic-mode .composer-wrap {
 body.companion-minimal-chrome.conversation-ui.composer-always-visible .stage.mic-mode .composer,
 body.companion-minimal-chrome .stage.mic-mode .composer.composer-pro,
 body.companion-minimal-chrome .composer.composer-pro {
-  width: 100% !important;
-  max-width: none !important;
+  width: min(100%, 36rem) !important;
+  max-width: min(100%, 36rem) !important;
   justify-content: stretch !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
 }
 
 body.companion-minimal-chrome.conversation-ui.composer-always-visible .stage.mic-mode .composer-wrap {
@@ -194,18 +199,20 @@ body.companion-minimal-chrome.conversation-ui.composer-always-visible .stage.mic
 }
 
 body.companion-minimal-chrome.conversation-ui.composer-always-visible .stage.mic-mode .composer {
-  max-width: none !important;
-  width: 100% !important;
+  max-width: min(100%, 36rem) !important;
+  width: min(100%, 36rem) !important;
   justify-content: stretch !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
 }
 
 body.companion-minimal-chrome .composer.composer-pro {
   display: flex;
   align-items: center;
   gap: 0.35rem;
-  width: 100%;
-  max-width: none;
-  margin: 0;
+  width: min(100%, 36rem);
+  max-width: min(100%, 36rem);
+  margin: 0 auto;
   padding: 0.35rem 0.35rem 0.35rem 0.55rem;
   border-radius: 1.75rem;
   border: 1px solid rgba(255, 255, 255, 0.14);
@@ -216,17 +223,20 @@ body.companion-minimal-chrome .composer.composer-pro {
 }
 
 body.companion-minimal-chrome .composer-field {
-  flex: 1 1 auto;
+  flex: 1 1 0%;
   min-width: 0;
-  display: flex;
-  align-items: center;
+  width: 100%;
+  display: block;
 }
 
 body.companion-minimal-chrome .composer-field textarea {
+  display: block;
   width: 100%;
-  min-height: 2.45rem;
-  max-height: 5.5rem;
-  padding: 0.55rem 0.05rem 0.55rem 0;
+  box-sizing: border-box;
+  height: 5.25rem;
+  min-height: 5.25rem;
+  max-height: 5.25rem;
+  padding: 0.55rem 0.35rem 0.55rem 0;
   border: none;
   background: transparent;
   color: var(--ink, #f4f0ff);
@@ -234,6 +244,12 @@ body.companion-minimal-chrome .composer-field textarea {
   line-height: 1.35;
   resize: none;
   outline: none;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  word-break: break-word;
+  field-sizing: fixed;
 }
 
 body.companion-minimal-chrome .composer-field textarea::placeholder {
