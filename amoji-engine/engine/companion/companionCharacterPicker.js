@@ -1306,7 +1306,7 @@ export function createCompanionStartPicker(opts = {}) {
       shell.classList.remove("hide");
       shell.classList.add("is-open");
       shell.removeAttribute("aria-hidden");
-      shell.removeAttribute("hidden");
+      shell.hidden = false;
       document.body.classList.add("companion-start-pending", "companion-picker-open");
       scrollSelectedIntoView();
       requestAnimationFrame(renderScrollHint);
@@ -1316,6 +1316,7 @@ export function createCompanionStartPicker(opts = {}) {
       shell.classList.remove("is-starting", "is-open");
       shell.classList.add("hide");
       shell.setAttribute("aria-hidden", "true");
+      shell.hidden = true;
       shell.removeAttribute("aria-busy");
       document.body.classList.remove("companion-start-pending", "companion-picker-open");
     },

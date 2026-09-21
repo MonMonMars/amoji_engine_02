@@ -29,14 +29,16 @@ body.companion-minimal-chrome .stage {
   justify-content: stretch;
 }
 
-.companion-picker.companion-picker--start.is-open .companion-picker-sheet,
-.companion-picker.companion-picker--start .companion-picker-sheet {
-  width: 100%;
-  max-width: none;
-  height: 100dvh;
-  max-height: 100dvh;
-  margin: 0;
-  border-radius: 0;
+@media (max-width: 1023px) {
+  .companion-picker.companion-picker--start.is-open .companion-picker-sheet,
+  .companion-picker.companion-picker--start.is-open:not(.hide) .companion-picker-sheet {
+    width: 100%;
+    max-width: none;
+    height: 100dvh;
+    max-height: 100dvh;
+    margin: 0;
+    border-radius: 0;
+  }
 }
 
 .companion-picker.is-open .companion-picker-backdrop {
@@ -60,6 +62,37 @@ body.companion-picker-open .composer-wrap {
   pointer-events: none !important;
   opacity: 0 !important;
   z-index: 0 !important;
+}
+
+/* In-session switch picker on wide screens — bottom sheet; keep stage + chat usable */
+@media (min-width: 1024px) {
+  body.companion-picker-open.companion-wide-layout:not(.companion-start-pending) .topbar,
+  body.companion-picker-open.companion-wide-layout:not(.companion-start-pending) .activity-rail,
+  body.companion-picker-open.companion-wide-layout:not(.companion-start-pending) .chat-shell,
+  body.companion-picker-open.companion-wide-layout:not(.companion-start-pending) .orbit-hint,
+  body.companion-picker-open.companion-wide-layout:not(.companion-start-pending) .composer-wrap {
+    visibility: visible !important;
+    pointer-events: auto !important;
+    opacity: 1 !important;
+  }
+
+  body.companion-picker-open.companion-wide-layout:not(.companion-start-pending)
+    .companion-picker--session
+    .companion-picker-backdrop {
+    background: rgba(4, 6, 12, 0.28);
+  }
+
+  body.companion-picker-open.companion-wide-layout:not(.companion-start-pending)
+    .companion-picker--session.is-open {
+    align-items: flex-end;
+    pointer-events: none;
+  }
+
+  body.companion-picker-open.companion-wide-layout:not(.companion-start-pending)
+    .companion-picker--session.is-open
+    .companion-picker-sheet {
+    pointer-events: auto;
+  }
 }
 
 .companion-picker--start .companion-picker-head {
