@@ -1,9 +1,21 @@
 import { describe, expect, it } from "vitest";
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import {
   buildCharacterSystemPrompt,
   characterAvatarConfig,
   characterTapLines,
 } from "../engine/companion/companionCharacterCatalog.js";
+
+const switchSource = readFileSync(
+  join(dirname(fileURLToPath(import.meta.url)), "../engine/companion/companionCharacterSwitch.js"),
+  "utf8",
+);
+const vrmSource = readFileSync(
+  join(dirname(fileURLToPath(import.meta.url)), "../engine/companion/vrmAvatar.js"),
+  "utf8",
+);
 
 describe("companionCharacterSwitch helpers", () => {
   it("builds per-character session bundle for hot swap", () => {
@@ -16,6 +28,17 @@ describe("companionCharacterSwitch helpers", () => {
     expect(config.avatarPrefer).toBe("vrm");
     expect(prompt).toMatch(/Kizuna/i);
     expect(lines.some((l) => /Kizuna|believe/i.test(l))).toBe(true);
+  });
+
+  it("replaces the canvas before disposing WebGL on hot swap", () => {
+    const replaceAt = switchSource.indexOf("replaceAvatarCanvas(canvas)");
+    const disposeAt = switchSource.indexOf("currentAvatar?.dispose?.()");
+    expect(replaceAt).toBeGreaterThan(0);
+    expect(disposeAt).toBeGreaterThan(replaceAt);
+  });
+
+  it("does not force WebGL context loss on avatar dispose (character switch)", () => {
+    expect(vrmSource).not.toContain("forceContextLoss");
   });
 
   it("switches voice + model config between characters", () => {

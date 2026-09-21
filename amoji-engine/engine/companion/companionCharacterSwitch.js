@@ -53,12 +53,14 @@ export async function switchCompanionCharacter(opts) {
   onStagePreview?.(previewImageUrl || config.previewImage || null);
 
   emit(12, isEnglish ? "Clearing stage…" : "清理場景…");
+  // Swap canvas before tearing down WebGL — avoids a black frame on the live stage
+  // (dispose + forceContextLoss on the visible canvas looked like a “black character”).
+  const freshCanvas = replaceAvatarCanvas(canvas);
   try {
     currentAvatar?.dispose?.();
   } catch {
     /* ignore dispose errors */
   }
-  const freshCanvas = replaceAvatarCanvas(canvas);
 
   emit(22, isEnglish ? "Downloading model…" : "下載模型中…");
   const loaded = await createCompanionAvatar({
