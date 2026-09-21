@@ -5,7 +5,7 @@
 import { ROSTER_CHARACTER_IDS } from "./companionCharacterRoster.js";
 
 export const COMPANION_CHARACTER_ROLES_SCHEMA =
-  "amoji.companionCharacterRoles.v3";
+  "amoji.companionCharacterRoles.v4-gen2";
 
 /** @typedef {import("../mobile/companionRolePresets.js").CompanionRole} CompanionRole */
 
@@ -26,14 +26,14 @@ export const CHARACTER_COMPANION_ROLES = Object.freeze({
   hina: "girlfriend",
   mio: "girlfriend",
   amoji: "girlfriend",
-  rex: "boyfriend",
-  nana: "girlfriend",
-  sumi: "girlfriend",
-  lumi: "girlfriend",
-  vera: "girlfriend",
-  robert: "boyfriend",
-  mikel: "boyfriend",
-  mimi: "pet",
+  pyre: "girlfriend",
+  pan: "pet",
+  circle: "girlfriend",
+  face: "girlfriend",
+  cool: "boyfriend",
+  samplec: "girlfriend",
+  lantern: "boyfriend",
+  drift: "girlfriend",
   /** Legacy ids — same function as replacements */
   sora: "girlfriend",
   aria: "girlfriend",
@@ -44,15 +44,23 @@ export const CHARACTER_COMPANION_ROLES = Object.freeze({
   aesthe: "girlfriend",
   chad: "boyfriend",
   david: "boyfriend",
-  hugo: "boyfriend",
+  hugo: "pet",
+  rex: "boyfriend",
+  nana: "pet",
+  sumi: "girlfriend",
+  lumi: "girlfriend",
+  vera: "girlfriend",
+  robert: "boyfriend",
+  mikel: "boyfriend",
+  mimi: "pet",
 });
 
 /** @type {Readonly<Record<CompanionRole, string>>} */
 export const ROLE_DEFAULT_CHARACTER_ID = Object.freeze({
   girlfriend: "nova",
-  boyfriend: "rex",
+  boyfriend: "cool",
   secretary: "nova",
-  pet: "mimi",
+  pet: "pan",
 });
 
 /**
@@ -78,12 +86,31 @@ export function resolveCharacterRole(characterId) {
  * @returns {CompanionRole}
  */
 export function normalizeRoleKey(role) {
-  const v = String(role || "girlfriend").toLowerCase();
-  if (v === "boyfriend" || v === "bf" || v === "male") return "boyfriend";
-  if (v === "secretary" || v === "assistant" || v === "work") return "secretary";
-  if (v === "pet" || v === "tamagotchi" || v === "animal") return "pet";
-  if (v === "girlfriend" || v === "gf" || v === "female") return "girlfriend";
+  const key = String(role || "girlfriend").toLowerCase();
+  if (key === "boyfriend" || key === "secretary" || key === "pet") {
+    return key;
+  }
   return "girlfriend";
+}
+
+/**
+ * @param {CompanionRole | string | null | undefined} role
+ * @returns {string[]}
+ */
+export function characterIdsForRole(role) {
+  const key = normalizeRoleKey(role);
+  return ROSTER_CHARACTER_IDS.filter(
+    (id) => resolveCharacterRole(id) === key,
+  );
+}
+
+/**
+ * @param {CompanionRole | string | null | undefined} role
+ * @returns {string}
+ */
+export function defaultCharacterIdForRole(role) {
+  const key = normalizeRoleKey(role);
+  return ROLE_DEFAULT_CHARACTER_ID[key] || "nova";
 }
 
 /**
@@ -105,23 +132,8 @@ export function roleFunctionBadge(role, isEnglish = false) {
 }
 
 /**
- * @param {CompanionRole | string} role
- * @returns {string[]}
- */
-export function characterIdsForRole(role) {
-  const r = normalizeRoleKey(role);
-  return ROSTER_CHARACTER_IDS.filter(
-    (id) => CHARACTER_COMPANION_ROLES[id] === r,
-  );
-}
-
-/**
- * Ensures every roster id has a mapped function.
- * @returns {string[]}
+ * @returns {string[]} roster ids missing a role mapping
  */
 export function validateCharacterRoleCoverage() {
-  const missing = ROSTER_CHARACTER_IDS.filter(
-    (id) => !CHARACTER_COMPANION_ROLES[id],
-  );
-  return missing;
+  return ROSTER_CHARACTER_IDS.filter((id) => !CHARACTER_COMPANION_ROLES[id]);
 }

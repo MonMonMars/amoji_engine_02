@@ -32,7 +32,7 @@ describe("companionBootRepair", () => {
     globalThis.document = { querySelector: () => el };
     globalThis.getComputedStyle = () => ({ backgroundImage: "none" });
     const report = repairCompanionSessionBoot();
-    expect(report.characterId).toBe("robert");
+    expect(report.characterId).toBe("lantern");
     expect(report.sceneId).toBe("cozy-room");
     expect(el.dataset.sceneBg).toBe("cozy-room");
     const saved = JSON.parse(localStorage.getItem(SCENE_STORAGE_KEY));

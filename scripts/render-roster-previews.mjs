@@ -46,14 +46,14 @@ const DEFAULT_TARGETS = [
   "hina",
   "mio",
   "amoji",
-  "rex",
-  "nana",
-  "sumi",
-  "lumi",
-  "vera",
-  "robert",
-  "mikel",
-  "mimi",
+  "pyre",
+  "pan",
+  "circle",
+  "face",
+  "cool",
+  "samplec",
+  "lantern",
+  "drift",
 ];
 
 /** Copy existing art when models share a reference portrait. */

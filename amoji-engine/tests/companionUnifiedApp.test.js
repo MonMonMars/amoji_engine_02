@@ -82,7 +82,7 @@ describe("companionUnifiedApp", () => {
         "boyfriend",
         new URLSearchParams("character=chad&lang=en"),
       ),
-    ).toBe("robert");
+    ).toBe("lantern");
     expect(
       resolveRoleDefaultCharacter(
         "olivia",

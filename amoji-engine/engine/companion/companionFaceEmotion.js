@@ -36,6 +36,7 @@ export const CHARACTER_FACE_RIG_HINTS = Object.freeze({
   sky: "arkit",
   ember: "arkit",
   nova: "arkit",
+  cool: "arkit",
   rex: "arkit",
   sora: "vrm1-anime",
   aria: "vrm1-anime",

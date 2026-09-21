@@ -12,20 +12,7 @@ const assetsDir = join(
 );
 
 /** Pairs that intentionally share the same mesh bytes (legacy alias slots). */
-const ALLOWED_DUPLICATE_GROUPS = [
-  ["chibi", "nana"],
-  ["olivia", "yuki"],
-  ["kate", "mio"],
-  ["erika", "yume"],
-  ["kai", "rex"],
-  ["hina", "lydia"],
-  ["jennifer", "sumi"],
-  ["rose", "sakura"],
-  ["lumi", "polydancer"],
-  ["luna", "vroid-female"],
-  ["avatarsample-a", "celeste"],
-  ["avatarsample-b", "mei"],
-];
+const ALLOWED_DUPLICATE_GROUPS = [];
 
 function md5File(path) {
   return createHash("md5").update(readFileSync(path)).digest("hex");

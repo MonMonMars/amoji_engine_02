@@ -1,6 +1,5 @@
 /**
  * Legacy character id → current roster id (shared by catalog + model fetch).
- * Keep in sync with LEGACY_CHARACTER_ALIASES in companionCharacterCatalog.js.
  */
 import { COMPANION_ROSTER_CHARACTERS } from "./companionCharacterRoster.js";
 
@@ -12,19 +11,28 @@ export const LEGACY_CHARACTER_ALIASES = Object.freeze({
   rose: "sakura",
   sora: "sakura",
   aria: "celeste",
-  chibi: "nana",
-  shiro: "nana",
-  jennifer: "sumi",
-  poly: "lumi",
-  polydancer: "lumi",
-  aesthe: "vera",
-  aesthetica: "vera",
-  chad: "robert",
-  david: "mikel",
-  hugo: "mimi",
-  rabbit: "mimi",
-  quinn: "mimi",
-  kai: "rex",
+  /** Gen1 slots 16–23 → Gen2 CC0 replacements */
+  rex: "cool",
+  kai: "cool",
+  nana: "pan",
+  chibi: "pan",
+  shiro: "pan",
+  sumi: "circle",
+  jennifer: "circle",
+  lumi: "drift",
+  poly: "drift",
+  polydancer: "drift",
+  vera: "face",
+  aesthe: "face",
+  aesthetica: "face",
+  robert: "lantern",
+  chad: "lantern",
+  mikel: "pyre",
+  david: "pyre",
+  mimi: "pan",
+  hugo: "pan",
+  rabbit: "pan",
+  quinn: "pan",
   girl: "amoji",
   amoji_girl: "amoji",
 });
