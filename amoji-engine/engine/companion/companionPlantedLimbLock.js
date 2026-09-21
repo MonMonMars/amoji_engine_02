@@ -73,14 +73,16 @@ export function writeHumanoidBoneRotation(humanoid, name, rot) {
  *   armRestRotations: typeof import('./companionPoseLibrary.js').VRM_ARM_REST_ROTATIONS,
  *   lockUpperArms?: boolean,
  *   lockForearms?: boolean,
+ *   legsOnly?: boolean,
  * }} opts
  */
 export function enforcePlantedLimbRotations(humanoid, opts) {
   if (!humanoid) return 0;
   const legs = opts.legRestRotations;
   const arms = opts.armRestRotations;
-  const lockArms = opts.lockUpperArms !== false;
-  const lockForearms = opts.lockForearms === true;
+  const legsOnly = opts.legsOnly === true;
+  const lockArms = !legsOnly && opts.lockUpperArms !== false;
+  const lockForearms = !legsOnly && opts.lockForearms === true;
   let n = 0;
   writeHumanoidBoneRotation(humanoid, "leftUpperLeg", legs.leftUpperLeg);
   writeHumanoidBoneRotation(humanoid, "rightUpperLeg", legs.rightUpperLeg);
@@ -89,6 +91,10 @@ export function enforcePlantedLimbRotations(humanoid, opts) {
   writeHumanoidBoneRotation(humanoid, "leftFoot", VRM_FOOT_REST_ROTATIONS.leftFoot);
   writeHumanoidBoneRotation(humanoid, "rightFoot", VRM_FOOT_REST_ROTATIONS.rightFoot);
   n += 6;
+  if (legsOnly) {
+    humanoid.update?.();
+    return n;
+  }
   if (lockArms) {
     writeHumanoidBoneRotation(humanoid, "leftShoulder", PLANTED_SHOULDER_REST);
     writeHumanoidBoneRotation(humanoid, "rightShoulder", PLANTED_SHOULDER_REST);

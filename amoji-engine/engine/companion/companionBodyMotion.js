@@ -73,7 +73,7 @@ import {
 } from "./companionPlantedLimbLock.js";
 
 export const COMPANION_BODY_SCHEMA =
-  "amoji.companionBody.v9-dual-write-planted-limbs";
+  "amoji.companionBody.v10-planted-limb-finish";
 
 /**
  * @param {import('@pixiv/three-vrm').VRMHumanoid | null | undefined} humanoid
@@ -105,6 +105,8 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
   let talkTime = 0;
   let t0 = performance.now();
   let idleBeat = createIdleBeatState(t0);
+  /** True while comb/hair/chin idle beat owns arm channels (skip arm hard-lock). */
+  let idleBeatArmsActive = false;
   /** @type {"x" | "z"} */
   let fingerFlexAxis = "z";
   /** @type {string | null} */
@@ -524,6 +526,18 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
 
   const isAposeBind = () => armBind === "apose";
 
+  const computeTalkForearmBlend = () =>
+    (isAposeBind() ? 0.42 : 0.52) + Math.max(0, talkEnergy) * 0.18;
+
+  const applyPlantedArmPresentation = () => {
+    applyPlantedUpperArmRest();
+    if (talking) {
+      applyTalkForearmsOnly(smoothedPose, computeTalkForearmBlend());
+    } else {
+      applyCalmIdleArms(smoothedPose, 1);
+    }
+  };
+
   /** Planted idle — upper arms locked to calibrated rest (no pose-channel lift). */
   const applyPlantedUpperArmRest = () => {
     const restL = armRestRotations.leftUpperArm;
@@ -894,9 +908,13 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
 
   /** Re-apply planted legs + idle arms after spring/mixer (prevents limb drift). */
   const reapplyPlantedLimbs = (opts = {}) => {
-    if (!humanoid || activeAction || activeGesture) return;
+    if (!humanoid || activeAction) return;
+    if (activeGesture === "point") return;
     const beatKey = idleBeat?.beat;
-    if (beatKey === "comb" || beatKey === "hair" || beatKey === "chin") {
+    if (
+      !talking &&
+      (beatKey === "comb" || beatKey === "hair" || beatKey === "chin")
+    ) {
       return;
     }
     if (!talking || opts.force === true) {
@@ -909,9 +927,8 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
       plantFeet: true,
       strictRest: !talking,
     });
-    if (!talking) {
-      applyPlantedUpperArmRest();
-      applyCalmIdleArms(smoothedPose, 1);
+    if (!idleBeatArmsActive) {
+      applyPlantedArmPresentation();
     }
     applyHandAndFootRest(smoothedPose, 1, talking ? 0.35 : 0, {
       strictRest: !talking,
@@ -919,9 +936,10 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
     enforcePlantedLimbRotations(humanoid, {
       legRestRotations,
       armRestRotations,
-      lockUpperArms: true,
+      lockUpperArms: !idleBeatArmsActive,
     });
     if (!talking) enforcePlantedHandRest(humanoid);
+    humanoid.update?.();
   };
 
   const applyHandRestOnly = (opts = {}) => {
@@ -969,6 +987,7 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
   const update = (dt, opts = {}) => {
     const now = opts.now ?? performance.now();
     const elapsed = (now - t0) * 0.001;
+    idleBeatArmsActive = false;
 
     let pose = buildBasePose({ listening, emotion, nuance });
     const energy = talking ? Math.max(0.2, talkEnergy) : 0;
@@ -1171,6 +1190,7 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
       idleArms = false;
       talkArmBlend = 0;
     }
+    idleBeatArmsActive = Boolean(idleBeatArms);
 
     const dampRate = poseDampingRate(Boolean(activeAction), talking);
     const plantFeet = !activeAction || pokeActive;
@@ -1298,11 +1318,33 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
     update,
     applyHandRestOnly,
     reapplyPlantedLimbs,
+    enforcePlantedLegsOnly() {
+      enforcePlantedLimbRotations(humanoid, {
+        legRestRotations,
+        armRestRotations,
+        legsOnly: true,
+      });
+    },
     enforcePlantedLimbs(opts = {}) {
+      if (activeGesture === "point") {
+        enforcePlantedLimbRotations(humanoid, {
+          legRestRotations,
+          armRestRotations,
+          legsOnly: true,
+        });
+        return;
+      }
+      const lockArms =
+        opts.lockUpperArms !== false &&
+        !idleBeatArmsActive &&
+        !activeAction;
       let lockForearms =
         opts.lockForearms === true ||
-        (opts.lockForearms !== false && !talking && !activeGesture && !activeAction);
-      // Flat forearm lock wipes micro-idle bend; apply calm bend on both bone layers first.
+        (opts.lockForearms !== false &&
+          !talking &&
+          !activeGesture &&
+          !activeAction &&
+          !idleBeatArmsActive);
       if (lockForearms && !talking) {
         applyCalmIdleArms(smoothedPose, 1);
         lockForearms = false;
@@ -1310,10 +1352,16 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
       enforcePlantedLimbRotations(humanoid, {
         legRestRotations,
         armRestRotations,
-        lockUpperArms: opts.lockUpperArms !== false,
+        lockUpperArms: lockArms,
         lockForearms,
       });
-      if (opts.hands !== false) enforcePlantedHandRest(humanoid);
+      if (lockArms && !idleBeatArmsActive) {
+        applyPlantedArmPresentation();
+      }
+      if (opts.hands !== false && !talking && !idleBeatArmsActive) {
+        enforcePlantedHandRest(humanoid);
+      }
+      humanoid.update?.();
     },
     holdForLibraryMotion,
     setFingerFlexAxis,
@@ -1350,6 +1398,9 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
     },
     get sequenceLoop() {
       return sequenceLoop;
+    },
+    get idleBeatArmsActive() {
+      return idleBeatArmsActive;
     },
     get pokeShakeActive() {
       return (
