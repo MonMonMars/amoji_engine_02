@@ -23,6 +23,7 @@ import {
   stabilizeVrmSpringBones,
   tickIdleSpringRecenter,
   installVrmSpringBoneGuard,
+  installVrmSpringUpdateWrapper,
   dampUpwardSpringTailDrift,
 } from "../engine/companion/vrmSpringStability.js";
 
@@ -255,6 +256,36 @@ describe("vrmSpringStability", () => {
     const good = auditVrmSpringGravity(vrm, { tune: true });
     expect(good.ok).toBe(true);
     expect(good.maxY).toBeLessThan(-0.5);
+  });
+
+  it("falls back to _sortedJoints when Set is empty", () => {
+    const joint = makeJoint();
+    const vrm = {
+      springBoneManager: {
+        joints: new Set(),
+        _sortedJoints: [joint],
+      },
+    };
+    expect(getVrmSpringJoints(vrm)).toEqual([joint]);
+  });
+
+  it("installVrmSpringUpdateWrapper tunes gravity before vrm.update", () => {
+    const joint = makeJoint();
+    joint.settings.gravityDir.y = 1;
+    let springCalls = 0;
+    const vrm = {
+      springBoneManager: { joints: new Set([joint]) },
+      update(delta) {
+        expect(delta).toBe(1 / 60);
+        springCalls += 1;
+      },
+    };
+    configureVrmSpringStability(vrm);
+    expect(vrm.__amojiSpringUpdateWrapped).toBe(true);
+    vrm.update(1 / 60);
+    expect(springCalls).toBe(1);
+    expect(joint.settings.gravityDir.y).toBe(-1);
+    expect(installVrmSpringUpdateWrapper(vrm).reason).toBe("already-wrapped");
   });
 
   it("installVrmSpringBoneGuard wraps manager.update once", () => {

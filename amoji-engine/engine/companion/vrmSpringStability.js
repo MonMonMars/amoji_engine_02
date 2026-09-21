@@ -7,13 +7,13 @@
  */
 import * as THREE from "three";
 
-export const VRM_SPRING_STABILITY_SCHEMA = "amoji.vrmSpringStability.v10";
+export const VRM_SPRING_STABILITY_SCHEMA = "amoji.vrmSpringStability.v11";
 
 /** High drag — stops hair/skirt tails from fluttering upward indoors. */
-export const MIN_DRAG_FORCE = 0.9985;
+export const MIN_DRAG_FORCE = 0.9992;
 /** Strong downward pull — counters VRM files that author gravityDir (0, 1, 0). */
-export const MIN_GRAVITY_POWER = 2.05;
-export const MAX_STIFFNESS = 0.085;
+export const MIN_GRAVITY_POWER = 3.05;
+export const MAX_STIFFNESS = 0.062;
 
 /**
  * Outdoor — same downward pull + drag as indoor (saved night-city users saw
@@ -45,7 +45,7 @@ export const TALK_SPRING_RECENTER_SEC = 1.85;
 export const THINK_SPRING_RECENTER_SEC = 2.2;
 
 /** World-space upward tail velocity (units/s) above which we clamp drift. */
-export const MAX_UPWARD_TAIL_VEL = 0.009;
+export const MAX_UPWARD_TAIL_VEL = 0.0035;
 
 const _tailWorld = new THREE.Vector3();
 const _prevTailWorld = new THREE.Vector3();
@@ -76,10 +76,17 @@ export function collectSpringJoints(raw) {
  */
 export function forceGravityDirDown(dir) {
   if (!dir) return dir;
-  dir.set?.(0, -1, 0);
-  dir.x = 0;
-  dir.y = -1;
-  dir.z = 0;
+  const y = Number(dir.y);
+  if (y > -0.85) {
+    dir.set?.(0, -1, 0);
+    dir.x = 0;
+    dir.y = -1;
+    dir.z = 0;
+  } else {
+    dir.x = 0;
+    dir.z = 0;
+    dir.y = Math.min(-0.85, y);
+  }
   return dir;
 }
 
@@ -270,17 +277,18 @@ export function installVrmSpringBoneGuard(vrm) {
   const nativeUpdate = manager.update.bind(manager);
   manager.update = (delta) => {
     if (delta <= 0) return;
+    enforceSpringGravityDown(vrm);
     const joints = getVrmSpringJoints(vrm);
-    joints.forEach((joint) => {
-      const settings = resolveSpringJointSettings(joint);
-      tuneSpringJointSettings(settings, activeSceneWindMode);
-    });
     nativeUpdate(delta);
+    enforceSpringGravityDown(vrm);
     dampUpwardSpringTailDrift(joints, delta, {
       maxUpVel: MAX_UPWARD_TAIL_VEL,
     });
     dampUpwardSpringTailDrift(joints, delta, {
-      maxUpVel: MAX_UPWARD_TAIL_VEL * 0.65,
+      maxUpVel: MAX_UPWARD_TAIL_VEL * 0.5,
+    });
+    dampUpwardSpringTailDrift(joints, delta, {
+      maxUpVel: MAX_UPWARD_TAIL_VEL * 0.25,
     });
   };
   manager.__amojiSpringGuardInstalled = true;
@@ -299,7 +307,29 @@ export function getVrmSpringJoints(vrm) {
     manager._joints ||
     manager.springBones ||
     manager._sortedJoints;
-  return collectSpringJoints(raw);
+  let joints = collectSpringJoints(raw);
+  if (
+    !joints.length &&
+    Array.isArray(manager._sortedJoints) &&
+    manager._sortedJoints.length
+  ) {
+    joints = manager._sortedJoints.filter(Boolean);
+  }
+  return joints;
+}
+
+/**
+ * Force-down gravity on every joint (call before/after spring sim).
+ * @param {import('@pixiv/three-vrm').VRM | null | undefined} vrm
+ */
+export function enforceSpringGravityDown(vrm) {
+  const joints = getVrmSpringJoints(vrm);
+  let tuned = 0;
+  for (const joint of joints) {
+    const settings = resolveSpringJointSettings(joint);
+    if (tuneSpringJointSettings(settings, activeSceneWindMode)) tuned += 1;
+  }
+  return { joints: joints.length, tuned };
 }
 
 /**
@@ -438,6 +468,7 @@ export function configureVrmSpringStability(vrm, mode = activeSceneWindMode) {
   }
 
   ensureVrmSpringBoneGuard(vrm);
+  installVrmSpringUpdateWrapper(vrm);
 
   const recentered = recenterVrmSpringBones(vrm, {
     retune: false,
@@ -449,4 +480,28 @@ export function configureVrmSpringStability(vrm, mode = activeSceneWindMode) {
     joints: recentered.joints ?? joints.length,
     mode,
   };
+}
+
+/**
+ * Wrap {@link VRM.update} so spring gravity is always world-down before sim
+ * (covers bootstrap loops that skip the avatar frame hook).
+ * @param {import('@pixiv/three-vrm').VRM | null | undefined} vrm
+ */
+export function installVrmSpringUpdateWrapper(vrm) {
+  if (!vrm || vrm.__amojiSpringUpdateWrapped) {
+    return { ok: true, reason: "already-wrapped" };
+  }
+  if (typeof vrm.update !== "function") {
+    return { ok: false, reason: "no-vrm-update" };
+  }
+  const nativeUpdate = vrm.update.bind(vrm);
+  vrm.update = (delta) => {
+    if (delta > 0) {
+      ensureVrmSpringBoneGuard(vrm);
+      enforceSpringGravityDown(vrm);
+    }
+    nativeUpdate(delta);
+  };
+  vrm.__amojiSpringUpdateWrapped = true;
+  return { ok: true };
 }
