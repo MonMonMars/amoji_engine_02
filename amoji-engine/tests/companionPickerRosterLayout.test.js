@@ -19,11 +19,11 @@ describe("companionPickerRosterLayout", () => {
     expect(v4Css).not.toMatch(
       /max-height:\s*620px[\s\S]*companion-picker-grid--roster[\s\S]*repeat\(4,\s*minmax\(4\.35rem,\s*1fr\)\)/,
     );
-    expect(html).toMatch(/grid-auto-columns:\s*minmax\(3\.85rem,\s*4\.25rem\)/);
+    expect(html).toMatch(/grid-auto-columns:\s*minmax\(5\.25rem,\s*5\.75rem\)/);
   });
 
   it("reserves a dedicated background row in stacked start picker", () => {
     expect(stackedCss).toMatch(/\.picker-background-row[\s\S]*z-index:\s*6/);
-    expect(stackedCss).toMatch(/companion-card-portrait[\s\S]*max-height:\s*3\.15rem/);
+    expect(stackedCss).toMatch(/companion-card-portrait[\s\S]*max-height:\s*5\.35rem/);
   });
 });

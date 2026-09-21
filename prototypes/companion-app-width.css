@@ -93,7 +93,7 @@ body.companion-picker-open .composer-wrap {
 .companion-picker--stacked-layout.companion-picker--start .picker-roster-row {
   flex: 0 0 auto;
   min-height: 0;
-  max-height: min(7.75rem, 22vh);
+  max-height: min(12.5rem, 34vh);
   overflow: hidden;
 }
 

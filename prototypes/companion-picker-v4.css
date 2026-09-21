@@ -264,8 +264,8 @@
 }
 
 .companion-picker--v4.companion-picker--start.companion-picker--simple .picker-scene-chip .scene-preset__swatch {
-  width: 2.35rem;
-  height: 2.35rem;
+  width: 3.25rem;
+  height: 3.25rem;
   aspect-ratio: auto;
   border-radius: 10px;
   border: 1px solid rgba(255, 255, 255, 0.14);
@@ -590,7 +590,7 @@
 .companion-picker--v4.companion-picker--start.companion-picker--showcase .companion-picker-grid--start.companion-picker-grid--roster {
   display: grid !important;
   grid-auto-flow: column !important;
-  grid-auto-columns: minmax(4.75rem, 5.15rem);
+  grid-auto-columns: minmax(5.65rem, 6.15rem);
   grid-template-columns: unset !important;
   gap: 0.52rem;
   overflow-x: auto !important;
@@ -627,7 +627,8 @@
 .companion-picker--v4.companion-picker--start.companion-picker--showcase .companion-card--start-strip .companion-card-portrait {
   border-radius: 0.72rem;
   aspect-ratio: 3 / 4;
-  min-height: 4.65rem;
+  min-height: 5.85rem;
+  height: 5.85rem;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -753,8 +754,8 @@
 }
 
 .companion-picker--v4.companion-picker--start.companion-picker--showcase .picker-scene-chip .scene-preset__swatch {
-  width: 2.15rem;
-  height: 2.15rem;
+  width: 3.15rem;
+  height: 3.15rem;
 }
 
 .companion-picker--v4.companion-picker--start.companion-picker--showcase .picker-footer {
@@ -974,8 +975,8 @@
 }
 
 .companion-picker--v4.companion-picker--start .picker-scene-chip .scene-preset__swatch {
-  width: 2.5rem;
-  height: 2.5rem;
+  width: 3.35rem;
+  height: 3.35rem;
   aspect-ratio: auto;
   border-radius: 10px;
 }

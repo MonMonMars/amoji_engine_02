@@ -113,7 +113,7 @@
   display: flex;
   flex-direction: column;
   min-height: 0;
-  max-height: min(7.75rem, 22vh);
+  max-height: min(12.5rem, 34vh);
   overflow: hidden;
   contain: layout paint;
 }
@@ -127,8 +127,8 @@
 
 .companion-picker--stacked-layout.companion-picker--start .start-picker-grid-wrap {
   flex: 1 1 auto;
-  min-height: 0;
-  max-height: 4.35rem;
+  min-height: 6.75rem;
+  max-height: min(8.25rem, 26vh);
   overflow: hidden;
 }
 
@@ -151,8 +151,9 @@
 }
 
 .companion-picker--stacked-layout .companion-card--start-strip .companion-card-portrait {
-  height: 3.15rem;
-  max-height: 3.15rem;
+  height: 5.35rem;
+  min-height: 5.35rem;
+  max-height: 5.35rem;
   aspect-ratio: 3 / 4;
   overflow: hidden;
 }

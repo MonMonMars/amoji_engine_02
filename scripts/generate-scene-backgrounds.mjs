@@ -9,7 +9,10 @@ import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { SCENE_BACKGROUND_PRESETS } from "../amoji-engine/engine/companion/companionScenePresets.js";
 import { PICKER_SCENE_ART_REVISION } from "../amoji-engine/engine/companion/companionPickerAssets.mjs";
-import { SCENE_ANIME_ART } from "./scene-bg-anime-art.mjs";
+import { SCENE_ANIME_ART, animeSceneFinisher } from "./scene-bg-anime-art.mjs";
+
+/** Keep shipped art that users already liked (skip SVG overwrite). */
+const PRESERVE_SCENE_SVG = new Set(["bedroom"]);
 
 const root = dirname(fileURLToPath(import.meta.url));
 const outDir = join(root, "../prototypes/assets/scene-bg");
@@ -85,12 +88,17 @@ for (const preset of SCENE_BACKGROUND_PRESETS) {
     console.warn("missing art", preset.id);
     continue;
   }
-  const body = draw(W, H);
+  const path = join(outDir, `${preset.id}.svg`);
+  if (PRESERVE_SCENE_SVG.has(preset.id) && existsSync(path)) {
+    console.log("preserve", preset.id);
+    written += 1;
+    continue;
+  }
+  const body = draw(W, H) + animeSceneFinisher(W, H);
   const svg = `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">
 ${body}
 </svg>`;
-  const path = join(outDir, `${preset.id}.svg`);
   writeFileSync(path, svg);
   written += 1;
   console.log("wrote", preset.id);

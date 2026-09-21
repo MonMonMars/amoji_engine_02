@@ -253,8 +253,9 @@
 }
 
 .companion-picker--aaa-theme .companion-card--start-strip .companion-card-portrait {
-  height: 3.85rem;
-  max-height: 3.85rem;
+  height: 5.45rem;
+  min-height: 5.45rem;
+  max-height: 5.45rem;
   overflow: hidden;
   border-radius: 0.78rem;
   background: radial-gradient(ellipse at 50% 20%, rgba(139, 124, 248, 0.12), rgba(0, 0, 0, 0.35));
@@ -362,6 +363,22 @@
 .companion-picker--aaa-theme .picker-scene-chip.is-active {
   border-color: rgba(232, 200, 114, 0.55);
   box-shadow: 0 0 16px rgba(232, 200, 114, 0.15);
+}
+
+.companion-picker--aaa-theme .picker-scene-chip {
+  min-width: 4.1rem;
+  padding: 0.38rem 0.42rem 0.42rem;
+}
+
+.companion-picker--aaa-theme .picker-scene-chip .scene-preset__swatch {
+  width: 3.45rem;
+  height: 3.45rem;
+  border-radius: 0.65rem;
+}
+
+.companion-picker--aaa-theme .picker-scene-chip__label {
+  font-size: 0.62rem;
+  max-width: 4.25rem;
 }
 
 .companion-picker--aaa-theme .picker-footer {

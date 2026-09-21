@@ -20,11 +20,17 @@ mkdirSync(pngDir, { recursive: true });
 const browser = await chromium.launch({ headless: true });
 const page = await browser.newPage({ viewport: { width: W, height: H } });
 
+const PRESERVE_SCENE_PNG = new Set(["bedroom"]);
+
 let written = 0;
 for (const preset of SCENE_BACKGROUND_PRESETS) {
   const svgPath = join(svgDir, `${preset.id}.svg`);
   if (!existsSync(svgPath)) {
     console.warn("skip (no svg)", preset.id);
+    continue;
+  }
+  if (PRESERVE_SCENE_PNG.has(preset.id) && existsSync(join(pngDir, `${preset.id}.png`))) {
+    console.log("preserve png", preset.id);
     continue;
   }
   const svg = readFileSync(svgPath, "utf8");

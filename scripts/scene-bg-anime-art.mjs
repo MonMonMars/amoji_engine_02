@@ -2,7 +2,7 @@
  * Japanese anime / VN / gacha-game style scene painters (SVG body fragments).
  * Rich layered gradients, neon, bokeh, perspective interiors, atmospheric depth.
  */
-export const SCENE_ANIME_ART_REVISION = "anime-scene-v426-hq";
+export const SCENE_ANIME_ART_REVISION = "anime-scene-v439-detail";
 
 /** @param {number} w @param {number} h */
 export function animePaintDefs(w, h) {
@@ -68,7 +68,26 @@ export function animePaintDefs(w, h) {
     <stop offset="70%" stop-color="#ffd898" stop-opacity="0.35"/>
     <stop offset="100%" stop-color="#ffd898" stop-opacity="0"/>
   </radialGradient>
+  <radialGradient id="vignette" cx="0.5" cy="0.42" r="0.78">
+    <stop offset="52%" stop-color="#000" stop-opacity="0"/>
+    <stop offset="100%" stop-color="#030508" stop-opacity="0.48"/>
+  </radialGradient>
 </defs>`;
+}
+
+/** Extra depth: dust, floor haze, vignette (appended to every regenerated scene). */
+export function animeSceneFinisher(w, h) {
+  let dust = "";
+  for (let i = 0; i < 32; i += 1) {
+    const cx = ((i * 137) % 1000) / 1000 * w;
+    const cy = ((i * 89 + 17) % 1000) / 1000 * h * 0.88;
+    const r = 0.8 + (i % 4) * 0.45;
+    dust += `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${r.toFixed(2)}" fill="#fff" opacity="${(0.035 + (i % 6) * 0.012).toFixed(3)}"/>`;
+  }
+  return `${dust}
+  <rect width="${w}" height="${h}" fill="url(#haze)" opacity="0.18"/>
+  <rect width="${w}" height="${h}" fill="url(#vignette)"/>
+  <rect x="0" y="${h * 0.88}" width="${w}" height="${h * 0.12}" fill="#000" opacity="0.22"/>`;
 }
 
 /** Anime window — city bokeh at night. */

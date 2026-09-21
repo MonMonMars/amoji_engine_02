@@ -30,15 +30,16 @@ describe("companionPortraitFraming", () => {
     expect(newCameraZ / legacyCameraZ).toBeGreaterThan(1.15);
   });
 
-  it("anchors on chest, not face", () => {
+  it("anchors on the mouth (below head bone), not the chest", () => {
     const fitted = new THREE.Box3(
       new THREE.Vector3(-0.2, 0, -0.1),
       new THREE.Vector3(0.2, 1.6, 0.1),
     );
     const head = new THREE.Vector3(0, 1.55, 0.02);
     const anchor = computeUpperBodyAnchor(fitted, head);
-    expect(anchor.y).toBeLessThan(1.45);
-    expect(anchor.y).toBeGreaterThan(0.7);
+    expect(anchor.y).toBeGreaterThan(1.38);
+    expect(anchor.y).toBeLessThan(1.52);
+    expect(anchor.x).toBeCloseTo(0, 5);
   });
 
   it("uses a portrait fov that keeps shoulders in frame", () => {

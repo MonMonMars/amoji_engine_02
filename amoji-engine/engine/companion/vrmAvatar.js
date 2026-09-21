@@ -299,7 +299,7 @@ export async function createVrmAvatar(opts) {
 
   const controls = new OrbitControls(camera, orbitElement || canvas);
   configureCompanionOrbitControls(controls);
-  controls.target.set(0, 1.15, 0);
+  controls.target.set(0, 1.42, 0);
   controls.update();
 
   const loader = new GLTFLoader();
