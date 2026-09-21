@@ -20,7 +20,7 @@ import {
 } from "./vrmMotionTransition.js";
 
 export const COMPANION_VRM_MOTION_PLAYER_SCHEMA =
-  "amoji.companionVrmMotionPlayer.v6";
+  "amoji.companionVrmMotionPlayer.v7-procedural-guard";
 
 /**
  * Ramp a VRMA clip action in from weight 0 (crossfade or fadeIn).

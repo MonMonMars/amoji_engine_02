@@ -3,7 +3,7 @@
  */
 import { POSE_LIMB_BLEND_KEYS } from "./companionPoseLibrary.js";
 
-export const COMPANION_POSE_SMOOTHING_SCHEMA = "amoji.companionPoseSmoothing.v1";
+export const COMPANION_POSE_SMOOTHING_SCHEMA = "amoji.companionPoseSmoothing.v2-limb-snap";
 
 const LIMB_BLEND_KEY_SET = new Set(POSE_LIMB_BLEND_KEYS);
 
@@ -70,11 +70,13 @@ export function idleBeatEnvelope(phase) {
  * @param {Record<string, number>} target
  * @param {number} dt seconds
  * @param {number} [rate] higher = snappier
+ * @param {{ snapLimbs?: boolean }} [opts]
  */
-export function dampPose(current, target, dt, rate = 11) {
+export function dampPose(current, target, dt, rate = 11, opts = {}) {
   const k = 1 - Math.exp(-Math.max(0, rate) * Math.max(0, dt));
   const limbRate = rate * 1.45;
   const limbK = 1 - Math.exp(-Math.max(0, limbRate) * Math.max(0, dt));
+  const snapLimbs = opts.snapLimbs === true;
   /** @type {Record<string, number>} */
   const out = { ...current };
   for (const key of POSE_CHANNELS) {
@@ -85,6 +87,10 @@ export function dampPose(current, target, dt, rate = 11) {
       : LIMB_BLEND_KEY_SET.has(key)
         ? 0
         : a;
+    if (snapLimbs && LIMB_BLEND_KEY_SET.has(key)) {
+      out[key] = b;
+      continue;
+    }
     const blendK = LIMB_BLEND_KEY_SET.has(key) ? limbK : k;
     out[key] = a + (b - a) * blendK;
   }

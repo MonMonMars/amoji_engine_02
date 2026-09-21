@@ -1544,9 +1544,21 @@ export async function createVrmAvatar(opts) {
       if (talking || eating || crossfading) {
         bodyMotion.applyHandRestOnly?.({
           talkBlend: crossfading ? 0.22 : talking ? 0.7 : eating ? 0.12 : 0,
-          blendWeight: crossfading ? 0.55 : talking ? 0.72 : 0.28,
+          blendWeight: CALM_IDLE_USES_PROCEDURAL_BODY
+            ? 1
+            : crossfading
+              ? 0.55
+              : talking
+                ? 0.72
+                : 0.28,
           now,
         });
+      } else if (
+        CALM_IDLE_USES_PROCEDURAL_BODY &&
+        !bodyMotion.currentAction &&
+        !libraryMotion
+      ) {
+        bodyMotion.reapplyPlantedLimbs?.({ now });
       }
       if (eating && treatProp.active) {
         treatProp.update(bodyMotion.getEatChewSample?.());

@@ -36,4 +36,14 @@ describe("companionPoseSmoothing", () => {
     expect(next.forearmL).toBeGreaterThan(0);
     expect(next.headX).toBeLessThan(0.02);
   });
+
+  it("snaps limb channels when planted idle (no talk/action lag)", () => {
+    const current = { forearmL: 0.42, armLiftL: 0.3, headX: 0.05 };
+    const target = { forearmL: 0.12, armLiftL: 0.04, headX: 0.02 };
+    const next = dampPose(current, target, 1 / 30, 20, { snapLimbs: true });
+    expect(next.forearmL).toBe(0.12);
+    expect(next.armLiftL).toBe(0.04);
+    expect(next.headX).toBeLessThan(0.05);
+    expect(next.headX).toBeGreaterThan(0.02);
+  });
 });

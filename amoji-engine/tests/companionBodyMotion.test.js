@@ -227,6 +227,23 @@ describe("createCompanionBodyMotion", () => {
     );
   });
 
+  it("clears talk limb channels when speech stops (no blended hang)", () => {
+    const humanoid = mockHumanoid();
+    const motion = createCompanionBodyMotion(humanoid);
+    motion.setTalking(true);
+    motion.setTalkEnergy(0.85);
+    for (let i = 0; i < 30; i += 1) motion.update(1 / 30);
+    motion.setTalking(false);
+    for (let i = 0; i < 8; i += 1) motion.update(1 / 30);
+    const leftThigh = humanoid.bones.get("leftUpperLeg").rotation.x;
+    const rightThigh = humanoid.bones.get("rightUpperLeg").rotation.x;
+    expect(leftThigh).toBeLessThan(VRM_LEG_REST_ROTATIONS.leftUpperLeg.x + 0.06);
+    expect(rightThigh).toBeLessThan(VRM_LEG_REST_ROTATIONS.rightUpperLeg.x + 0.06);
+    const lua = humanoid.bones.get("leftUpperArm").rotation;
+    const rest = VRM_ARM_REST_ROTATIONS.leftUpperArm;
+    expect(Math.abs(lua.z - rest.z)).toBeLessThan(0.12);
+  });
+
   it("bends the calibrated knee axis at rest", () => {
     const humanoid = mockHumanoid();
     const motion = createCompanionBodyMotion(humanoid);
