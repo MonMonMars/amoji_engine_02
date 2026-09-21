@@ -47,5 +47,24 @@ jobs:
       - name: Deploy note (when GitHub secrets missing)
         if: steps.vercel_deploy.outcome == 'failure'
         run: |
-          echo "GitHub Vercel deploy skipped or failed (VERCEL_TOKEN may be unset)."
+          echo "::warning::GitHub Vercel deploy skipped or failed (VERCEL_TOKEN may be unset)."
           echo "Production may still update via Vercel Git integration on push to main."
+
+      - name: Verify production build (or require Vercel secrets)
+        if: always()
+        env:
+          HAS_VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN != '' }}
+          DEPLOY_OUTCOME: ${{ steps.vercel_deploy.outcome }}
+        run: |
+          if [ "$HAS_VERCEL_TOKEN" != "true" ]; then
+            echo "::error::VERCEL_TOKEN is not set — GitHub cannot deploy to production."
+            echo "Add repo secrets: VERCEL_TOKEN, VERCEL_ORG_ID, VERCEL_PROJECT_ID (from Vercel project settings)."
+            node scripts/check-production-build.mjs --warn-only || true
+            exit 1
+          fi
+          if [ "$DEPLOY_OUTCOME" = "success" ]; then
+            echo "Vercel deploy step succeeded (health may lag ~1 min)."
+            exit 0
+          fi
+          sleep 20
+          node scripts/check-production-build.mjs
