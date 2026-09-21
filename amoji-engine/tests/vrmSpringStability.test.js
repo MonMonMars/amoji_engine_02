@@ -97,6 +97,21 @@ describe("vrmSpringStability", () => {
     expect(dir.x).toBe(0);
   });
 
+  it("flips author +Y gravity (wind from below)", () => {
+    const dir = {
+      x: 0,
+      y: 1,
+      z: 0,
+      set(x, y, z) {
+        this.x = x;
+        this.y = y;
+        this.z = z;
+      },
+    };
+    forceGravityDirDown(dir);
+    expect(dir.y).toBe(-1);
+  });
+
   it("tunes spring bone drag and gravity on Set-backed managers", () => {
     const joint = makeJoint();
     const { manager, resetCount } = makeManager([joint]);
