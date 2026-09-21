@@ -35,12 +35,8 @@ const DEFAULT_TARGETS = [
   "kizuna",
   "alicia",
   "ember",
-  "sakura",
-  "celeste",
   "mei",
-  "luna",
   "atlas",
-  "yume",
   "sky",
   "yuki",
   "hina",
@@ -64,7 +60,6 @@ const DEFAULT_TARGETS = [
 const COPY_FROM = {
   rex: "kai",
   amoji: "girl-ref",
-  luna: "vroidf",
   atlas: "vroidm",
 };
 

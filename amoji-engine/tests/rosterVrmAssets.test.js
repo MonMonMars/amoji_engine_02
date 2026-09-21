@@ -14,7 +14,7 @@ describe("rosterVrmAssets", () => {
   });
 
   it("uses companion-<id>.vrm paths", () => {
-    expect(rosterVrmBasename("sakura")).toBe("companion-sakura.vrm");
+    expect(rosterVrmBasename("mei")).toBe("companion-mei.vrm");
     expect(rosterModelUrl("kizuna")).toBe("/prototypes/assets/companion-kizuna.vrm");
   });
 });
