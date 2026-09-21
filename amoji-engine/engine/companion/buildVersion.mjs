@@ -1,2 +1,2 @@
 /** Single source of truth for deployed companion build id (keep HTML __amojiBuild in sync). */
-export const AMOJI_BUILD = "2026-09-21-v448-roster23-trim567810";
+export const AMOJI_BUILD = "2026-09-21-v449-fix-picker-loop-scenes";

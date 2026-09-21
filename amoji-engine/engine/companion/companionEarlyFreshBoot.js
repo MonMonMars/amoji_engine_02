@@ -4,7 +4,7 @@
  */
 (function () {
   var SCENE_KEY = "amoji.companion.scenePreset";
-  var SCENE_ART_V = "picker-anime-v441-ultra-detail-scenes";
+  var SCENE_ART_V = "picker-anime-v449-svg-scene-fallback";
   var LEGACY_SCENE = { minimal: "cozy-room" };
 
   function resolveSceneId(raw) {
@@ -14,10 +14,12 @@
   }
 
   function sceneArtUrl(id) {
-    if (id === "night-city") {
-      return "/prototypes/assets/companion-bg-anime.png?v=" + SCENE_ART_V;
-    }
-    return "/prototypes/assets/scene-bg/" + id + ".png?v=" + SCENE_ART_V;
+    return (
+      "/prototypes/assets/scene-bg/" +
+      id +
+      ".svg?v=" +
+      SCENE_ART_V
+    );
   }
 
   function paintAtmosphereEarly() {
@@ -91,21 +93,15 @@
       })
       .then(function (data) {
         var serverBuild = data && data.build;
-        if (!serverBuild || serverBuild === window.__amojiBuild) return;
+        if (!serverBuild) return;
+        window.__amojiActiveBuild = serverBuild;
+        if (serverBuild === window.__amojiBuild) return;
         var mPage = String(pageBuild || "").match(/-v(\d+)-/i);
         var mServer = String(serverBuild || "").match(/-v(\d+)-/i);
         var pageNum = mPage ? parseInt(mPage[1], 10) : 0;
         var serverNum = mServer ? parseInt(mServer[1], 10) : 0;
         if (pageNum > 0 && serverNum > 0 && serverNum <= pageNum) return;
-        var next = "/play?build=" + encodeURIComponent(serverBuild);
-        try {
-          var cur = new URL(window.location.href);
-          if (cur.searchParams.get("lang")) {
-            next += "&lang=" + encodeURIComponent(cur.searchParams.get("lang"));
-          }
-          next += "&pick=1&automic=0";
-        } catch (e2) {}
-        window.location.replace(next);
+        window.__amojiBuild = serverBuild;
       })
       .catch(function () {});
   } catch (e) {}

@@ -20,6 +20,7 @@ import {
   PICKER_HERO_HTML,
   PICKER_TOOLBAR_HTML,
   syncPickerCardTabIndex,
+  syncPickerGridSelection,
   updatePickerHero,
   wirePickerRosterKeyboard,
 } from "./companionPickerChrome.js";
@@ -1148,7 +1149,7 @@ export function createCompanionStartPicker(opts = {}) {
   renderAll();
   renderPreload();
   sceneSection.sync();
-  sceneSection.setBackgroundId(sceneSection.getBackgroundId());
+  sceneSection.setBackgroundId(sceneSection.getBackgroundId(), { notify: false });
   gridEl?.addEventListener("scroll", renderScrollHint, { passive: true });
   globalThis.addEventListener?.("resize", renderScrollHint);
 
@@ -1162,6 +1163,12 @@ export function createCompanionStartPicker(opts = {}) {
         return;
       }
       selectedId = next;
+      if (gridEl?.querySelector?.(".companion-card")) {
+        syncPickerGridSelection(gridEl, selectedId);
+        updatePickerHero(shell, findPickerItem(fullList(), selectedId), isEnglish);
+        scrollSelectedIntoView();
+        return;
+      }
       renderAll();
       scrollSelectedIntoView();
     },
@@ -1277,7 +1284,9 @@ export function createCompanionStartPicker(opts = {}) {
       if (ready) preloadAnimator.flush();
     },
     enablePicking(on = true) {
-      pickable = Boolean(on);
+      const next = Boolean(on);
+      if (next === pickable) return;
+      pickable = next;
       renderAll();
       paintCopy();
     },
