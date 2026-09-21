@@ -67,7 +67,8 @@ export { formatMicError, MIC_ERROR_MESSAGES, requestMicPermission };
  * SpeechSynthesisUtterance boundary events (with timed fallback).
  */
 
-export const COMPANION_VOICE_SCHEMA = "amoji.companionVoice.v1";
+export const COMPANION_VOICE_SCHEMA =
+  "amoji.companionVoice.v2-interrupt-all-speech";
 
 /** Abort slow /api/tts calls so the greeting can fall back to browser voice. */
 export const CLOUD_TTS_FETCH_TIMEOUT_MS = 12000;
@@ -1788,7 +1789,14 @@ export function createCompanionVoice(opts = {}) {
   };
 
   const interruptAssistantOutput = () => {
+    if (streamSession) {
+      streamSession.closed = true;
+      streamSession = null;
+    }
+    stopThinkingLoop();
+    stopLearnLoop();
     stopSpeak();
+    syncAssistantOutput();
     return true;
   };
 

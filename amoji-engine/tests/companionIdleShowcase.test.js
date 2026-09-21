@@ -97,8 +97,10 @@ describe("idle showcase wiring", () => {
       /onTalking: \(on\) => \{[\s\S]*emotionBallLevel = 0/,
     );
     expect(html).toMatch(
-      /onMicLevel: \(\{ level, rms \} = \{\}\) => \{[\s\S]*emotionBallLevel = Math\.max/,
+      /onMicLevel: \(\{ level, rms \} = \{\}\) => \{[\s\S]*applyMicMeterVisual\(level\)/,
     );
+    expect(html).toMatch(/stopAllSpeakingFromMic/);
+    expect(html).toMatch(/dblclick/);
     expect(html).toMatch(
       /onMouth: \(open, shape\) => \{[\s\S]*lastMouthBallLevel[\s\S]*emotionBall\.setLevel/,
     );
