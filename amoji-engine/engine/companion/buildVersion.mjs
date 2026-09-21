@@ -1,2 +1,2 @@
 /** Single source of truth for deployed companion build id (keep HTML __amojiBuild in sync). */
-export const AMOJI_BUILD = "2026-09-21-v445-chip-start-picker";
+export const AMOJI_BUILD = "2026-09-21-v446-chat-column-center";

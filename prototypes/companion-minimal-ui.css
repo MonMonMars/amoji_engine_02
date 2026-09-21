@@ -153,15 +153,9 @@ body.companion-minimal-chrome.chat-panel-hidden .chat-column {
   display: none;
 }
 
-body.companion-minimal-chrome .chat-shell {
-  width: 100%;
-  left: 0;
-  right: 0;
-}
-
 body.companion-minimal-chrome .composer-wrap {
   width: 100%;
-  max-width: none;
+  max-width: 100%;
   margin: 0;
   padding: 0 max(0.35rem, env(safe-area-inset-left, 0px))
     max(0.65rem, env(safe-area-inset-bottom))
@@ -170,27 +164,17 @@ body.companion-minimal-chrome .composer-wrap {
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: stretch;
 }
 
 body.companion-minimal-chrome .stage.mic-mode .composer-wrap {
   width: 100%;
-  max-width: none;
-}
-
-body.companion-minimal-chrome.conversation-ui.composer-always-visible .stage.mic-mode .composer,
-body.companion-minimal-chrome .stage.mic-mode .composer.composer-pro,
-body.companion-minimal-chrome .composer.composer-pro {
-  width: min(100%, 36rem) !important;
-  max-width: min(100%, 36rem) !important;
-  justify-content: stretch !important;
-  margin-left: auto !important;
-  margin-right: auto !important;
+  max-width: 100%;
 }
 
 body.companion-minimal-chrome.conversation-ui.composer-always-visible .stage.mic-mode .composer-wrap {
   width: 100%;
-  max-width: none;
+  max-width: 100%;
   padding: 0 max(0.2rem, env(safe-area-inset-left, 0px))
     max(0.65rem, env(safe-area-inset-bottom))
     max(0.2rem, env(safe-area-inset-right, 0px));

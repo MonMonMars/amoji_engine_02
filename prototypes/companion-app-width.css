@@ -3,6 +3,8 @@
  */
 :root {
   --amoji-app-max-width: 480px;
+  /** Single fixed width for transcript + composer (aligned column). */
+  --amoji-chat-column-width: var(--amoji-app-max-width);
 }
 
 body.companion-minimal-chrome .stage {

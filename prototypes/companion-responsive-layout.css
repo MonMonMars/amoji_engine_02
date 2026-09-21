@@ -21,42 +21,52 @@ body.companion-minimal-chrome .topbar-setup-btn {
   border-color: rgba(255, 255, 255, 0.16) !important;
 }
 
-/* —— Chat + composer: centered column (fixes wide Chrome right drift) —— */
-body.companion-minimal-chrome .chat-shell {
+/* —— Chat + composer: one fixed-width column, centered in the stage —— */
+body.companion-minimal-chrome .chat-shell,
+body.conversation-ui .chat-shell {
   left: 50% !important;
   right: auto !important;
   transform: translateX(-50%);
-  width: min(100%, 36rem);
-  max-width: min(100%, 36rem);
+  width: min(100%, var(--amoji-chat-column-width)) !important;
+  max-width: var(--amoji-chat-column-width) !important;
   box-sizing: border-box;
 }
 
-body.companion-minimal-chrome .chat-column {
+body.companion-minimal-chrome .chat-column,
+body.conversation-ui .chat-column {
   width: 100%;
+  max-width: 100%;
   margin-left: auto;
   margin-right: auto;
 }
 
-body.companion-minimal-chrome .composer-wrap {
+body.companion-minimal-chrome .composer-wrap,
+body.conversation-ui .composer-wrap {
   width: 100%;
+  max-width: 100%;
   margin-left: auto;
   margin-right: auto;
-  align-items: center;
+  align-items: stretch;
 }
 
 body.companion-minimal-chrome .composer.composer-pro,
 body.companion-minimal-chrome.conversation-ui.composer-always-visible .stage.mic-mode .composer,
 body.companion-minimal-chrome.conversation-ui.composer-always-visible .composer,
-body.companion-minimal-chrome .stage.mic-mode .composer.composer-pro {
+body.companion-minimal-chrome .stage.mic-mode .composer.composer-pro,
+body.conversation-ui .composer.composer-pro,
+.theme-grok-ani .composer {
   width: 100% !important;
   max-width: 100% !important;
   margin-left: auto !important;
   margin-right: auto !important;
   justify-content: stretch !important;
+  box-sizing: border-box;
 }
 
-body.companion-minimal-chrome .starter-prompts {
-  width: min(100%, 36rem);
+body.companion-minimal-chrome .starter-prompts,
+body.conversation-ui.composer-always-visible .starter-prompts {
+  width: 100%;
+  max-width: 100%;
   margin-left: auto;
   margin-right: auto;
 }
@@ -70,6 +80,7 @@ body.companion-minimal-chrome .starter-prompts {
 
 .composer-wrap {
   align-items: stretch !important;
+  max-width: 100%;
 }
 
 .starter-prompts {
@@ -125,13 +136,6 @@ body.conversation-ui .transcript {
   box-sizing: border-box;
 }
 
-body.conversation-ui.composer-always-visible .starter-prompts {
-  width: min(100%, 36rem);
-  max-width: min(100%, 36rem);
-  margin-left: auto;
-  margin-right: auto;
-}
-
 body.companion-minimal-chrome .composer-field {
   flex: 1 1 auto;
   min-width: 0;
@@ -143,18 +147,10 @@ body.companion-minimal-chrome .composer-field textarea {
   width: 100%;
 }
 
-/* Wide desktop: stage uses full viewport; UI stays in a readable center column */
+/* Wide desktop: keep the same fixed chat column width (no narrow override). */
 @media (min-width: 900px) {
-  body.companion-minimal-chrome .chat-shell {
-    width: min(100%, 28rem);
-    max-width: 28rem;
-  }
-
-  body.companion-minimal-chrome .starter-prompts {
-    width: min(100%, 28rem);
-  }
-
-  body.companion-minimal-chrome .transcript {
+  body.companion-minimal-chrome .transcript,
+  body.conversation-ui .transcript {
     max-height: min(32vh, 280px);
   }
 }
@@ -170,29 +166,28 @@ body.companion-minimal-chrome .composer-field textarea {
   }
 }
 
-/* —— Wide desktop: free the 3D stage; dock chat; compact start picker —— */
+/* —— Wide desktop: full-width stage; chat stays centered with fixed column —— */
 @media (min-width: 1024px) {
-  body.companion-wide-layout.companion-minimal-chrome .chat-shell {
-    left: auto !important;
-    right: max(1rem, env(safe-area-inset-right, 0px)) !important;
-    transform: none !important;
-    width: min(22rem, 28vw) !important;
-    max-width: 22rem !important;
-    max-height: min(38vh, 280px) !important;
-    background: linear-gradient(
-      180deg,
-      transparent 0%,
-      rgba(5, 7, 12, 0.35) 28%,
-      rgba(5, 7, 12, 0.88) 100%
-    );
+  body.companion-wide-layout.companion-minimal-chrome .stage {
+    max-width: none;
+    width: 100%;
+  }
+
+  body.companion-wide-layout.companion-minimal-chrome .chat-shell,
+  body.companion-wide-layout.conversation-ui .chat-shell {
+    left: 50% !important;
+    right: auto !important;
+    transform: translateX(-50%) !important;
+    width: min(100%, var(--amoji-chat-column-width)) !important;
+    max-width: var(--amoji-chat-column-width) !important;
   }
 
   body.companion-wide-layout.companion-minimal-chrome .chat-column {
-    max-height: min(20vh, 160px) !important;
+    max-height: min(28vh, 220px) !important;
   }
 
   body.companion-wide-layout.companion-minimal-chrome .transcript {
-    max-height: min(20vh, 160px) !important;
+    max-height: min(28vh, 220px) !important;
   }
 
   body.companion-wide-layout .starter-prompts:not([hidden]) {

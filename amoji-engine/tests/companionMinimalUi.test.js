@@ -32,7 +32,9 @@ describe("companionMinimalUi", () => {
     expect(minimalCss).toMatch(/composer-attach-btn[\s\S]*display:\s*inline-flex/);
     expect(html.indexOf('id="mic-voice-stack"')).toBeLessThan(html.indexOf('id="send"'));
     expect(minimalCss).toMatch(/companion-minimal-chrome \.composer-wrap[\s\S]*width:\s*100%/);
-    expect(minimalCss).toMatch(/companion-minimal-chrome \.composer\.composer-pro[\s\S]*36rem/);
+    expect(minimalCss).not.toMatch(
+      /companion-minimal-chrome \.chat-shell[\s\S]*left:\s*0[\s\S]*right:\s*0/,
+    );
     expect(minimalCss).toMatch(/composer-field textarea[\s\S]*overflow-y:\s*auto/);
     expect(minimalCss).toMatch(/composer-field textarea[\s\S]*height:\s*5\.25rem/);
     expect(html).not.toMatch(/scrollHeight,\s*120/);
@@ -40,7 +42,7 @@ describe("companionMinimalUi", () => {
     expect(minimalCss).not.toMatch(/companion-minimal-chrome \.chat-column[\s\S]*680px/);
     expect(html).toMatch(/\.composer \{[\s\S]*width:\s*100%/);
     expect(html).not.toMatch(/\.stage\.mic-mode \.composer[\s\S]*max-width:\s*220px/);
-    expect(minimalCss).toMatch(/companion-minimal-chrome \.composer\.composer-pro[\s\S]*max-width:\s*none/);
+    expect(minimalCss).toMatch(/companion-minimal-chrome \.composer-wrap[\s\S]*max-width:\s*100%/);
     expect(html).not.toContain('id="composer-char-btn"');
     expect(html).not.toContain('id="btn-toggle-chat"');
     expect(html).not.toContain('id="btn-talk-speed"');
