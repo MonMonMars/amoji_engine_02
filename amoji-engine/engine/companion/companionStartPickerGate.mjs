@@ -42,7 +42,7 @@ export function shouldShowStartPickerOnBoot(opts = {}) {
   const autostart = String(opts.autostart ?? "");
   const pick = String(opts.pick ?? "");
   if (autostart === "1" || pick === "0") return false;
-  const forcePick = pick === "1";
+  const forcePick = pick === "force" || pick === "always";
   const storage = opts.storage ?? globalThis.localStorage;
   if (!forcePick && hasCompletedStartPicker(storage)) return false;
   const start = opts.start;

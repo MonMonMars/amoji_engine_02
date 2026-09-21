@@ -1,29 +1,40 @@
 /**
  * Start picker — bottom sheet; 3D stage + chat stay visible (not full-screen blocking).
+ * Loads last — overrides AAA theme + v4 legacy full-viewport rules.
  */
 
-.companion-picker.companion-picker--start.is-open:not(.hide) {
-  align-items: flex-end;
-  justify-content: center;
-  pointer-events: none;
+.companion-picker.companion-picker--start.is-open:not(.hide),
+.companion-picker--v4.companion-picker--start.is-open:not(.hide),
+.companion-picker--aaa-theme.companion-picker--start.is-open:not(.hide) {
+  align-items: flex-end !important;
+  justify-content: center !important;
+  pointer-events: none !important;
   z-index: 12000;
 }
 
-.companion-picker.companion-picker--start.is-open:not(.hide) .companion-picker-backdrop {
-  pointer-events: none;
+.companion-picker.companion-picker--start.is-open:not(.hide) .companion-picker-backdrop,
+.companion-picker--v4.companion-picker--start.is-open:not(.hide) .companion-picker-backdrop,
+.companion-picker--aaa-theme.companion-picker--start.is-open:not(.hide)
+  .companion-picker-backdrop {
+  pointer-events: none !important;
   opacity: 0.35;
   background: rgba(4, 6, 12, 0.45);
 }
 
-.companion-picker.companion-picker--start.is-open:not(.hide) .companion-picker-sheet {
-  pointer-events: auto;
-  width: min(100%, 36rem);
-  max-width: 100%;
-  height: auto;
-  max-height: min(72vh, 640px);
-  margin: 0;
-  border-radius: 1.35rem 1.35rem 0 0;
+.companion-picker.companion-picker--start.is-open:not(.hide) .companion-picker-sheet,
+.companion-picker--v4.companion-picker--start.is-open:not(.hide) .companion-picker-sheet,
+.companion-picker--aaa-theme.companion-picker--v4.companion-picker--start.is-open:not(.hide)
+  .companion-picker-sheet,
+.companion-picker--aaa-theme.companion-picker--start.is-open:not(.hide) .companion-picker-sheet {
+  pointer-events: auto !important;
+  width: min(100%, 36rem) !important;
+  max-width: 100% !important;
+  height: auto !important;
+  max-height: min(72vh, 640px) !important;
+  margin: 0 auto !important;
+  border-radius: 1.35rem 1.35rem 0 0 !important;
   box-shadow: 0 -12px 48px rgba(0, 0, 0, 0.45);
+  overflow: hidden;
 }
 
 /* Do not hide main UI while choosing a character at start */
@@ -33,18 +44,24 @@ body.companion-start-picker-open .chat-shell,
 body.companion-start-picker-open .orbit-hint,
 body.companion-start-picker-open .composer-wrap,
 body.companion-start-picker-open .pet-hud,
-body.companion-start-picker-open .treat-dock {
+body.companion-start-picker-open .treat-dock,
+body.companion-start-picker-open.companion-picker-open .topbar,
+body.companion-start-picker-open.companion-picker-open .chat-shell,
+body.companion-start-picker-open.companion-picker-open .composer-wrap {
   visibility: visible !important;
   pointer-events: auto !important;
   opacity: 1 !important;
 }
 
-body.companion-start-picker-open .composer-wrap {
+body.companion-start-picker-open .composer-wrap,
+body.companion-start-picker-open.companion-picker-open .composer-wrap {
   z-index: 13001 !important;
 }
 
-body.companion-start-picker-open .stage {
+body.companion-start-picker-open .stage,
+body.companion-start-picker-open.companion-picker-open .stage {
   filter: none;
+  pointer-events: auto;
 }
 
 body.companion-start-picker-open.companion-minimal-chrome .topbar {
@@ -56,4 +73,13 @@ body.companion-start-picker-open.companion-minimal-chrome .topbar {
 body.companion-start-picker-open.companion-minimal-chrome .topbar .brand-btn,
 body.companion-start-picker-open.companion-minimal-chrome .topbar .topbar-setup-btn {
   pointer-events: auto;
+}
+
+/* After Begin — picker must not intercept clicks */
+.companion-picker.companion-picker--start.hide,
+.companion-picker.companion-picker--start[hidden],
+.companion-picker.companion-picker--start:not(.is-open) {
+  display: none !important;
+  pointer-events: none !important;
+  visibility: hidden !important;
 }
