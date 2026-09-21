@@ -1553,11 +1553,11 @@ export async function createVrmAvatar(opts) {
       }
       stabilizeVrmSpringBones(vrm);
       vrm.update(dt);
-      if (!libraryMotion && !bodyMotion.currentAction && !bodyMotion.activeGesture) {
+      if (!libraryMotion && !bodyMotion.currentAction) {
         bodyMotion.enforcePlantedLimbs?.({
           lockUpperArms: true,
           lockForearms: !talking,
-          hands: !talking && !eating,
+          hands: !talking && !eating && !bodyMotion.idleBeatArmsActive,
         });
       }
       const crossfading =
@@ -1579,10 +1579,12 @@ export async function createVrmAvatar(opts) {
       const plantedIdleFrame =
         !libraryMotion &&
         !bodyMotion.currentAction &&
-        !bodyMotion.activeGesture &&
+        bodyMotion.activeGesture !== "point" &&
         !talking &&
         !eating;
-      if (plantedIdleFrame || bodyMotion.pokeShakeActive) {
+      const pokeWhileSpeaking =
+        bodyMotion.pokeShakeActive && (talking || bodyMotion.thinking);
+      if (plantedIdleFrame || pokeWhileSpeaking) {
         bodyMotion.reapplyPlantedLimbs?.({
           now,
           force: plantedIdleFrame,
@@ -1962,6 +1964,7 @@ export async function createVrmAvatar(opts) {
         stabilizeVrmSpringBones(vrm);
         vrm.update(1 / 60);
         bodyMotion.enforcePlantedLimbs?.({ lockForearms: true });
+        bodyMotion.reapplyPlantedLimbs?.({ force: true, now: performance.now() });
         renderer.render(scene, camera);
         renderer.render(scene, camera);
       } catch {
