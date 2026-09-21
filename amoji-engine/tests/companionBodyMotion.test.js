@@ -280,6 +280,20 @@ describe("createCompanionBodyMotion", () => {
     expect(Math.abs(lua.z - rest.z)).toBeLessThan(0.12);
   });
 
+  it("clears poke limb channels when shake ends", () => {
+    const humanoid = mockHumanoid();
+    const motion = createCompanionBodyMotion(humanoid);
+    motion.setTalking(false);
+    motion.reactToPoke({ point: { x: 0.2 }, anchorX: 0 });
+    for (let i = 0; i < 24; i += 1) motion.update(1 / 30);
+    expect(motion.pokeShakeActive).toBe(false);
+    const leftThigh = humanoid.bones.get("leftUpperLeg").rotation.x;
+    expect(leftThigh).toBeLessThan(VRM_LEG_REST_ROTATIONS.leftUpperLeg.x + 0.06);
+    const lua = humanoid.bones.get("leftUpperArm").rotation;
+    const rest = VRM_ARM_REST_ROTATIONS.leftUpperArm;
+    expect(Math.abs(lua.z - rest.z)).toBeLessThan(0.08);
+  });
+
   it("bends the calibrated knee axis at rest", () => {
     const humanoid = mockHumanoid();
     const motion = createCompanionBodyMotion(humanoid);

@@ -47,6 +47,7 @@ import {
   GESTURE_DURATION_SEC,
   HEAD_GESTURE_NOD,
   mergePoses,
+  omitPoseKeys,
   POSE_LIMB_BLEND_KEYS,
   REST_POSE,
   sampleVrmTalkPose,
@@ -421,6 +422,18 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
       talkEnergy = 0;
       talkTime = 0;
       clearSmoothedLimbChannels();
+      for (const key of [
+        "upperLegL",
+        "upperLegR",
+        "lowerLegL",
+        "lowerLegR",
+        "armLiftL",
+        "armLiftR",
+        "forearmL",
+        "forearmR",
+      ]) {
+        smoothedPose[key] = 0;
+      }
     } else {
       talkTime = 0;
     }
@@ -845,7 +858,7 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
     if (beatKey === "comb" || beatKey === "hair" || beatKey === "chin") {
       return;
     }
-    if (!talking) {
+    if (!talking || opts.force === true) {
       clearSmoothedLimbChannels();
       for (const key of POSE_LIMB_BLEND_KEYS) {
         smoothedPose[key] = 0;
@@ -955,6 +968,7 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
       rootMotion = { y: 0, rotY: 0 };
       if (pokeShakeElapsed >= POKE_SHAKE_DURATION_SEC) {
         pokeShakeElapsed = -1;
+        clearSmoothedLimbChannels();
       }
     }
 
@@ -975,7 +989,7 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
             speechEnergy: 0.18,
             includeArms: false,
           });
-          pose = mergePoses(pose, thinkMotion.body, 0.18);
+          pose = mergePoses(pose, thinkMotion.body, 0.08);
         }
         const beat = advanceIdleBeat(idleBeat, dt, now, { gender: idleGender });
         idleBeat = beat.state;
@@ -1036,8 +1050,35 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
           speechEnergy: energy,
           includeArms: true,
         });
-        const talkBlend = 0.88 + energy * 0.12;
-        pose = mergePoses(pose, motion.body, talkBlend);
+        const talkBlend = 0.42 + energy * 0.18;
+        const talkBody = omitPoseKeys(motion.body, [
+          "armLiftL",
+          "armLiftR",
+          "forearmL",
+          "forearmR",
+          "upperLegL",
+          "upperLegR",
+          "lowerLegL",
+          "lowerLegR",
+        ]);
+        pose = mergePoses(pose, talkBody, talkBlend);
+        const talkArms = omitPoseKeys(motion.body, [
+          "upperLegL",
+          "upperLegR",
+          "lowerLegL",
+          "lowerLegR",
+          "headX",
+          "headY",
+          "headZ",
+          "spineX",
+          "spineY",
+          "spineZ",
+          "chestX",
+          "leanY",
+          "hipZ",
+        ]);
+        const armChannelBlend = (isAposeBind() ? 0.38 : 0.48) + energy * 0.16;
+        pose = mergePoses(pose, talkArms, armChannelBlend);
 
         const beat = Math.sin(elapsed * 7.4);
         const sway = Math.sin(elapsed * 3.6 + talkTime * 2.1);
@@ -1059,7 +1100,7 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
       actionArms = true;
     }
     if (talking && !activeGesture && !activeAction) {
-      talkArmBlend = (isAposeBind() ? 0.58 : 0.68) + energy * 0.24;
+      talkArmBlend = (isAposeBind() ? 0.42 : 0.52) + energy * 0.18;
     } else if (!talking && !activeGesture && !activeAction && !idleBeatArms) {
       idleArms = true;
     }
