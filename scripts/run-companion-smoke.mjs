@@ -43,7 +43,7 @@ try {
     await runNode("scripts/companion-issues-verify.mjs", {}, ["--url", issuesUrl]);
     await runNode("scripts/scene-shortcuts-demo-verify.mjs", {}, [
       "--url",
-      `${base}/prototypes/amoji-companion.html?lang=en&automic=0&pick=1&build=${encodeURIComponent(AMOJI_BUILD)}`,
+      `${base}/play?lang=en&automic=0&pick=1&build=${encodeURIComponent(AMOJI_BUILD)}`,
     ]);
   }
 } finally {

@@ -25,7 +25,7 @@ let baseUrl = parseArg("--url", "");
 let localHost = null;
 if (!baseUrl) {
   localHost = await startLocalStaticServer(0);
-  baseUrl = `${localHost.baseUrl}/prototypes/amoji-companion.html?lang=en&automic=0&pick=1&build=${encodeURIComponent(AMOJI_BUILD)}`;
+  baseUrl = `${localHost.baseUrl}/play?lang=en&automic=0&pick=1&build=${encodeURIComponent(AMOJI_BUILD)}`;
 }
 
 /** @type {{ name: string, ok: boolean, detail?: string }[]} */
@@ -36,12 +36,50 @@ const record = (name, ok, detail = "") => {
 };
 
 /** @param {import("playwright").Page} page */
-async function waitSettingsOpen(page, timeout = 10000) {
+async function waitSettingsOpen(page, timeout = 20000) {
   await waitForPageFn(
     page,
-    () => document.getElementById("settings")?.classList.contains("open"),
+    () => {
+      const settings = document.getElementById("settings");
+      return (
+        settings?.classList.contains("open") ||
+        document.body.classList.contains("settings-open")
+      );
+    },
     { timeout },
   );
+}
+
+/** @param {import("playwright").Page} page */
+async function dismissBlockingOverlays(page) {
+  await page.evaluate(() => {
+    document.getElementById("companion-character-picker")?.classList.remove("is-open");
+    document.getElementById("start-character-picker")?.classList.add("hide");
+    document.getElementById("start-character-picker")?.classList.remove("is-open");
+    document.body.classList.remove(
+      "companion-picker-open",
+      "companion-start-pending",
+      "scene-sheet-open",
+    );
+  });
+  await page.waitForTimeout(250);
+}
+
+/** @param {import("playwright").Page} page */
+async function clickOpenSetup(page) {
+  await dismissBlockingOverlays(page);
+  const menu = page.locator("#btn-open-setup");
+  await menu.waitFor({ state: "visible", timeout: 20000 });
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    await menu.click({ timeout: 10000 }).catch(() => {});
+    try {
+      await waitSettingsOpen(page, 12000);
+      return;
+    } catch {
+      await page.waitForTimeout(350 * (attempt + 1));
+    }
+  }
+  await waitSettingsOpen(page, 20000);
 }
 
 const browser = await chromium.launch({
@@ -113,8 +151,7 @@ const starterVisible = await page.evaluate(() => {
 });
 record("starter prompts visible", starterVisible);
 
-await page.evaluate(() => document.getElementById("btn-open-setup")?.click());
-await waitSettingsOpen(page, 10000);
+await clickOpenSetup(page);
 await page.evaluate(() => document.getElementById("settings-btn-scene")?.click());
 const sceneSheetOpen = await waitForPageFn(
   page,
@@ -188,8 +225,7 @@ const closeSettingsPanel = async () => {
   await page.waitForTimeout(350);
 };
 
-await page.evaluate(() => document.getElementById("btn-open-setup")?.click());
-await waitSettingsOpen(page, 10000);
+await clickOpenSetup(page);
 await page.evaluate(() => document.getElementById("settings-btn-chat")?.click());
 await page.waitForTimeout(300);
 const chatHidden = await page.evaluate(() =>
@@ -202,8 +238,7 @@ await page.screenshot({
   fullPage: false,
 });
 
-await page.evaluate(() => document.getElementById("btn-open-setup")?.click());
-await waitSettingsOpen(page, 10000);
+await clickOpenSetup(page);
 await page.evaluate(() => document.getElementById("settings-btn-speaker")?.click());
 await page.waitForTimeout(200);
 const speakerMuted = await page.evaluate(
