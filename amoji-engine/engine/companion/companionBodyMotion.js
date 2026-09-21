@@ -69,9 +69,11 @@ import {
 import {
   enforcePlantedHandRest,
   enforcePlantedLimbRotations,
+  writeHumanoidBoneRotation,
 } from "./companionPlantedLimbLock.js";
 
-export const COMPANION_BODY_SCHEMA = "amoji.companionBody.v8-forearm-planted-lock";
+export const COMPANION_BODY_SCHEMA =
+  "amoji.companionBody.v9-dual-write-planted-limbs";
 
 /**
  * @param {import('@pixiv/three-vrm').VRMHumanoid | null | undefined} humanoid
@@ -463,16 +465,34 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
     "rightLowerLeg",
   ]);
 
+  /** Keep raw + normalized arm/leg nodes in sync (prevents one-frame “blended” mesh). */
+  const DUAL_WRITE_LIMB_BONES = new Set([
+    ...LOWER_LIMB_BONES,
+    "leftUpperArm",
+    "rightUpperArm",
+    "leftUpperLeg",
+    "rightUpperLeg",
+    "leftFoot",
+    "rightFoot",
+    "leftShoulder",
+    "rightShoulder",
+  ]);
+
   const applyBoneRotation = (name, rot) => {
-    const b = bone(name);
-    if (!b || !rot) return;
-    let x = rot.x ?? 0;
-    let y = rot.y ?? 0;
-    let z = rot.z ?? 0;
-    // Y on elbow/knee hinges twists the mesh off the calibrated flex axis.
+    if (!humanoid || !rot) return;
+    let payload = rot;
     if (LOWER_LIMB_BONES.has(name) && rot.flexAxis !== "y") {
-      y = 0;
+      payload = { ...rot, y: 0 };
     }
+    if (DUAL_WRITE_LIMB_BONES.has(name)) {
+      writeHumanoidBoneRotation(humanoid, name, payload);
+      return;
+    }
+    const b = bone(name);
+    if (!b) return;
+    let x = payload.x ?? 0;
+    let y = payload.y ?? 0;
+    let z = payload.z ?? 0;
     if (typeof b.rotation.set === "function") {
       b.rotation.order = "XYZ";
       b.rotation.set(x, y, z);
@@ -1279,9 +1299,14 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
     applyHandRestOnly,
     reapplyPlantedLimbs,
     enforcePlantedLimbs(opts = {}) {
-      const lockForearms =
+      let lockForearms =
         opts.lockForearms === true ||
         (opts.lockForearms !== false && !talking && !activeGesture && !activeAction);
+      // Flat forearm lock wipes micro-idle bend; apply calm bend on both bone layers first.
+      if (lockForearms && !talking) {
+        applyCalmIdleArms(smoothedPose, 1);
+        lockForearms = false;
+      }
       enforcePlantedLimbRotations(humanoid, {
         legRestRotations,
         armRestRotations,
