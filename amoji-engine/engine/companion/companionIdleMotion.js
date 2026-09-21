@@ -31,7 +31,7 @@ export {
   proceduralIdleBeatPoolForGender,
 } from "./companionIdleGender.js";
 
-export const COMPANION_IDLE_MOTION_SCHEMA = "amoji.companionIdleMotion.v10-limb-snap";
+export const COMPANION_IDLE_MOTION_SCHEMA = "amoji.companionIdleMotion.v11-arm-plant-snap";
 
 /** First seconds after avatar is visible — gentle breathe, sway, relaxed arms. */
 export const BOOT_SIMPLE_IDLE_SEC = 10;
@@ -160,14 +160,8 @@ export function mergePlantedAliveIdleIntoPose(base, elapsedSec, opts = {}) {
     { forearmL: idle.forearmL, forearmR: idle.forearmR },
     foreWeight,
   );
-  if (bind === "tpose") {
-    const liftWeight = snap ? 0.12 : 0.26;
-    pose = mergePoses(
-      pose,
-      { armLiftL: idle.armLiftL, armLiftR: idle.armLiftR },
-      liftWeight,
-    );
-  }
+  // Never merge upper-arm lift channels — calibrated rest + applyCalmIdleArms
+  // already hang the mesh; extra lift reads as Mixamo forward-arm blend.
   return pose;
 }
 

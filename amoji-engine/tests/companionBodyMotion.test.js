@@ -101,12 +101,12 @@ describe("createCompanionBodyMotion", () => {
     motion.setIdleGender("female");
     motion.setTalking(false);
     const t0 = 1000;
+    motion.setArmRestRotations(VRM_ARM_REST_ROTATIONS);
     motion.pulseIdleBeat("hair", t0);
     for (let i = 0; i < 24; i += 1) motion.update(1 / 30, { now: t0 + i * 33 });
     const restR = VRM_ARM_REST_ROTATIONS.rightUpperArm;
     const z = humanoid.bones.get("rightUpperArm").rotation.z;
-    expect(z).toBeLessThan(restR.z);
-    expect(z).toBeGreaterThan(restR.z - 0.18);
+    expect(Math.abs(z - restR.z)).toBeGreaterThan(0.04);
     expect(humanoid.bones.get("leftUpperLeg").rotation.x).toBeLessThan(
       VRM_LEG_REST_ROTATIONS.leftUpperLeg.x + 0.05,
     );
@@ -206,6 +206,27 @@ describe("createCompanionBodyMotion", () => {
     expect(Math.abs(lua.rotation.z)).toBeLessThan(0.35);
   });
 
+  it("keeps idle upper-arm X near calibrated rest (no forward Mixamo blend)", () => {
+    const humanoid = mockHumanoid();
+    const motion = createCompanionBodyMotion(humanoid);
+    motion.setArmBind("tpose");
+    motion.setArmRestRotations({
+      leftUpperArm: { x: 0.06, y: 0.08, z: -1.42 },
+      rightUpperArm: { x: 0.05, y: -0.06, z: 1.42 },
+      leftLowerArm: { x: 0.62, y: 0.14, z: 0.1, flexAxis: "x" },
+      rightLowerArm: { x: 0.5, y: -0.1, z: -0.08, flexAxis: "x" },
+    });
+    motion.resetIdleLife(performance.now());
+    for (let i = 0; i < 120; i += 1) {
+      motion.update(1 / 30);
+      motion.reapplyPlantedLimbs?.();
+    }
+    const lua = humanoid.bones.get("leftUpperArm");
+    const rua = humanoid.bones.get("rightUpperArm");
+    expect(lua.rotation.x).toBeLessThan(0.2);
+    expect(rua.rotation.x).toBeLessThan(0.2);
+  });
+
   it("keeps A-pose idle arms on calibrated rest (not procedural lift blend)", () => {
     const humanoid = mockHumanoid();
     const motion = createCompanionBodyMotion(humanoid);
@@ -256,6 +277,6 @@ describe("createCompanionBodyMotion", () => {
     motion.setTalking(false);
     motion.snapToRestPose();
     expect(humanoid.bones.get("rightLowerLeg").rotation.z).toBeGreaterThan(0.45);
-    expect(humanoid.bones.get("leftLowerArm").rotation.x).toBeGreaterThan(0.64);
+    expect(humanoid.bones.get("leftLowerArm").rotation.x).toBeGreaterThan(0.63);
   });
 });

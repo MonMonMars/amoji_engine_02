@@ -1557,11 +1557,13 @@ export async function createVrmAvatar(opts) {
           now,
         });
       }
-      if (
-        CALM_IDLE_USES_PROCEDURAL_BODY &&
+      const plantedIdleFrame =
         !libraryMotion &&
-        !bodyMotion.currentAction
-      ) {
+        !bodyMotion.currentAction &&
+        !bodyMotion.activeGesture &&
+        !talking &&
+        !eating;
+      if (plantedIdleFrame) {
         bodyMotion.reapplyPlantedLimbs?.({ now });
       }
       if (eating && treatProp.active) {
