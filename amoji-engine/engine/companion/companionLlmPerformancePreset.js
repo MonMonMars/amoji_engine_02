@@ -182,6 +182,15 @@ export const CHARACTER_PERFORMANCE_STYLE = Object.freeze({
     noteYue:
       "元氣偶像 vibe：dance、cheer、celebrate 打頭陣；舞台感用 excited。",
   },
+  cool: {
+    moves: ["salute", "nod", "thumbsup", "punch", "kungfu", "shrug"],
+    moods: ["happy", "angry"],
+    nuances: ["none", "stress"],
+    noteEn:
+      "Deadpan protector: salute/nod/thumbsup; dry humor with shrug; kungfu when challenged.",
+    noteYue:
+      "冷面護住對方：salute、nod、thumbsup；毒舌用 shrug；有人挑機就 kungfu。",
+  },
   rex: {
     moves: ["salute", "nod", "thumbsup", "punch", "kungfu", "shrug"],
     moods: ["happy", "angry"],

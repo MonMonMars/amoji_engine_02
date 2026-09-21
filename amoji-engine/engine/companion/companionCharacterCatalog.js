@@ -127,14 +127,14 @@ export const GALLERY_PRIORITY_IDS = new Set([
   "hina",
   "mio",
   "amoji",
-  "rex",
-  "nana",
-  "sumi",
-  "lumi",
-  "vera",
-  "robert",
-  "mikel",
-  "mimi",
+  "pyre",
+  "pan",
+  "circle",
+  "face",
+  "cool",
+  "samplec",
+  "lantern",
+  "drift",
 ]);
 
 /** Minimum mesh triangles to treat as high-poly face roster picks. */
@@ -143,7 +143,7 @@ export const HIGH_POLY_FACE_MIN_TRIANGLES = 20000;
 /** @type {ReadonlySet<string>} */
 export const HIGH_POLY_FACE_CHARACTER_IDS = new Set([
   "kizuna",
-  "rex",
+  "samplec",
   "alicia",
   "yume",
   "ember",
@@ -360,7 +360,7 @@ export function defaultVoiceForCharacter(characterId, langCode) {
 
 /** Male roster ids — all other roster characters are female-presenting. */
 export const MALE_CHARACTER_IDS = Object.freeze(
-  new Set(["atlas", "rex", "robert", "mikel"]),
+  new Set(["atlas", "cool", "lantern"]),
 );
 
 /**

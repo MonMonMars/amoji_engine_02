@@ -30,10 +30,10 @@ describe("companionVoiceCatalog", () => {
   });
 
   it("locks voice to character gender regardless of overrides", () => {
-    expect(resolveVoiceForCharacter("rex", "yue")).toBe("zh-HK-WanLungNeural");
+    expect(resolveVoiceForCharacter("cool", "yue")).toBe("zh-HK-WanLungNeural");
     expect(resolveVoiceForCharacter("nova", "en")).toBe("en-US-JennyNeural");
     expect(resolveVoiceForCharacter("yuki", "yue")).toBe("zh-HK-HiuMaanNeural-yuki");
-    expect(resolveVoiceForCharacter("mimi", "yue")).toBe("zh-HK-HiuMaanNeural-chibi");
+    expect(resolveVoiceForCharacter("pan", "yue")).toBe("zh-HK-HiuMaanNeural-chibi");
     expect(resolveVoiceForCharacter("atlas", "en")).toBe("en-HK-SamNeural");
   });
 
@@ -86,7 +86,7 @@ describe("companionVoiceCatalog", () => {
   });
 
   it("lists Cantonese voice personas", () => {
-    expect(voicesForLang("yue").length).toBe(30);
+    expect(voicesForLang("yue").length).toBe(33);
     expect(voicesForLang("yue").map((v) => v.id)).toContain(
       "zh-HK-HiuMaanNeural-warm",
     );
