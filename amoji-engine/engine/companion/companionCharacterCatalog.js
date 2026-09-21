@@ -139,6 +139,10 @@ export const GALLERY_PRIORITY_IDS = new Set([
   "luna",
   "celeste",
   "yume",
+  "aria",
+  "noah",
+  "rika",
+  "vega",
 ]);
 
 /** Minimum mesh triangles to treat as high-poly face roster picks. */
@@ -366,7 +370,16 @@ export function defaultVoiceForCharacter(characterId, langCode) {
 
 /** Male roster ids — all other roster characters are female-presenting. */
 export const MALE_CHARACTER_IDS = Object.freeze(
-  new Set(["atlas", "knight", "samurai", "wolf", "beach", "pirate", "petal"]),
+  new Set([
+    "atlas",
+    "knight",
+    "samurai",
+    "wolf",
+    "beach",
+    "pirate",
+    "petal",
+    "noah",
+  ]),
 );
 
 /**

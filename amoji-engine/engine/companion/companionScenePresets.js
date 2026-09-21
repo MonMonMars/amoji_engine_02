@@ -7,7 +7,7 @@ import {
 } from "./companionPickerAssets.mjs";
 
 export const COMPANION_SCENE_PRESETS_SCHEMA =
-  "amoji.companionScenePresets.v10-pro-scene-expansion";
+  "amoji.companionScenePresets.v11-pro-scene-expansion";
 
 /** First-run default — warm anime interior (not flat gray studio). */
 export const DEFAULT_SCENE_BACKGROUND_ID = "cozy-room";
@@ -59,6 +59,11 @@ export const SCENE_BACKGROUND_PRESETS = Object.freeze([
   { id: "observatory", labelEn: "Observatory", labelYue: "天文台", environment: "indoor" },
   { id: "zen-garden", labelEn: "Zen garden", labelYue: "枯山水", environment: "outdoor" },
   { id: "day-skyline", labelEn: "Day skyline", labelYue: "日間天際", environment: "outdoor" },
+  { id: "neon-arcade", labelEn: "Neon arcade", labelYue: "霓虹街機", environment: "indoor" },
+  { id: "bamboo-forest", labelEn: "Bamboo forest", labelYue: "竹林", environment: "outdoor" },
+  { id: "train-platform", labelEn: "Train platform", labelYue: "月台", environment: "outdoor" },
+  { id: "spa-resort", labelEn: "Spa resort", labelYue: "溫泉度假村", environment: "indoor" },
+  { id: "penthouse-suite", labelEn: "Penthouse suite", labelYue: "頂層套房", environment: "indoor" },
 ]);
 
 /** Outdoor preset ids — keep in sync with `companionEarlyFreshBoot.js` paint helper. */

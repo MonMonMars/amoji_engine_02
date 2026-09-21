@@ -38,6 +38,10 @@ export const CHARACTER_COMPANION_ROLES = Object.freeze({
   luna: "secretary",
   celeste: "girlfriend",
   yume: "girlfriend",
+  aria: "secretary",
+  noah: "secretary",
+  rika: "girlfriend",
+  vega: "girlfriend",
   /** Gen2 ids — legacy role (resolve id via LEGACY_CHARACTER_ALIASES) */
   pyre: "girlfriend",
   pan: "pet",
@@ -49,7 +53,6 @@ export const CHARACTER_COMPANION_ROLES = Object.freeze({
   drift: "girlfriend",
   /** Legacy ids — same function as replacements */
   sora: "girlfriend",
-  aria: "girlfriend",
   erika: "girlfriend",
   shiro: "girlfriend",
   jennifer: "girlfriend",

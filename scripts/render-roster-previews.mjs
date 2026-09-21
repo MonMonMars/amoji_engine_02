@@ -54,6 +54,14 @@ const DEFAULT_TARGETS = [
   "beach",
   "pirate",
   "bunny",
+  "sakura",
+  "luna",
+  "celeste",
+  "yume",
+  "aria",
+  "noah",
+  "rika",
+  "vega",
 ];
 
 /** Copy existing art when models share a reference portrait. */
@@ -61,6 +69,10 @@ const COPY_FROM = {
   rex: "kai",
   amoji: "girl-ref",
   atlas: "vroidm",
+  aria: "mei",
+  noah: "atlas",
+  rika: "celeste",
+  vega: "yume",
 };
 
 function parseArg(name, fallback) {

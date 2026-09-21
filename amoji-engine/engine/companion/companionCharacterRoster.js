@@ -1,12 +1,13 @@
 /**
- * Curated companion roster v460 — 27 characters.
- * #1–4 flagship · #5–11 VTuber + AAA VRoid · #12–23 Gen3 · #24–27 VRoid Pro.
+ * Curated companion roster v470 — 31 characters.
+ * #1–4 flagship · #5–11 VTuber + AAA VRoid · #12–23 Gen3 · #24–31 VRoid Pro.
  */
 import { rosterModelUrl } from "./rosterVrmAssets.mjs";
 import { ROSTER_SLOTS_16_23 } from "./companionRosterSlots16.js";
 import { ROSTER_SLOTS_24_27 } from "./companionRosterPremiumSlots.js";
+import { ROSTER_SLOTS_28_31 } from "./companionRosterExpansionSlots.js";
 
-export const ROSTER_SCHEMA = "amoji.companionRoster.v460-roster27-pro";
+export const ROSTER_SCHEMA = "amoji.companionRoster.v470-roster31-pro";
 /** Flagship picks (Nova, Kizuna, Alicia, Ember) */
 export const ROSTER_LOCKED_NUMBERS = Object.freeze([1, 2, 3, 4]);
 
@@ -538,6 +539,7 @@ amoji: {
   },
   ...ROSTER_SLOTS_16_23,
   ...ROSTER_SLOTS_24_27,
+  ...ROSTER_SLOTS_28_31,
 });
 
 /** Gallery order — AAA flagship first */
@@ -569,6 +571,10 @@ export const ROSTER_CHARACTER_IDS = Object.freeze([
   "luna",
   "celeste",
   "yume",
+  "aria",
+  "noah",
+  "rika",
+  "vega",
 ]);
 
 
