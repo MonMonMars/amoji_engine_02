@@ -83,6 +83,11 @@ describe("companionMinimalUi", () => {
     expect(minimalCss).toContain(
       "body.companion-minimal-chrome.conversation-ui.composer-always-visible .composer .send",
     );
-    expect(minimalCss).toContain("grid-template-rows");
+    expect(html).toContain("companion-chat-stack.css");
+    const chatStackCss = readFileSync(
+      join(root, "prototypes/companion-chat-stack.css"),
+      "utf8",
+    );
+    expect(chatStackCss).toContain("grid-template-rows");
   });
 });

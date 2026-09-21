@@ -151,7 +151,7 @@ body.companion-minimal-chrome .composer-field textarea {
 @media (min-width: 900px) {
   body.companion-minimal-chrome .transcript,
   body.conversation-ui .transcript {
-    max-height: min(32vh, 280px);
+    max-height: none;
   }
 }
 
@@ -182,14 +182,6 @@ body.companion-minimal-chrome .composer-field textarea {
     transform: translateX(-50%) !important;
     width: min(100%, var(--amoji-chat-column-width)) !important;
     max-width: var(--amoji-chat-column-width) !important;
-  }
-
-  body.companion-wide-layout.companion-minimal-chrome .chat-column {
-    max-height: min(28vh, 220px) !important;
-  }
-
-  body.companion-wide-layout.companion-minimal-chrome .transcript {
-    max-height: min(28vh, 220px) !important;
   }
 
   body.companion-wide-layout .starter-prompts:not([hidden]) {
