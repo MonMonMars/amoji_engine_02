@@ -21,6 +21,7 @@
     "verify:roster-models": "node scripts/verify-roster-models.mjs",
     "verify:admin": "node scripts/admin-console-verify.mjs",
     "verify:debug": "node scripts/companion-diagnose.mjs",
+    "verify:production-build": "node scripts/check-production-build.mjs",
     "scene-bg": "node scripts/generate-scene-backgrounds.mjs && node scripts/rasterize-scene-backgrounds.mjs",
     "postinstall": "node amoji-engine/scripts/download-legal-vrm.mjs",
     "inspect:vrm-face": "node scripts/inspect-vrm-face.mjs",
