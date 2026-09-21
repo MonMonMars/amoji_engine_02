@@ -115,19 +115,13 @@ body.companion-minimal-chrome #settings-role-readout {
 }
 
 body.companion-minimal-chrome .chat-shell {
-  display: grid;
-  grid-template-rows: minmax(0, 1fr) auto;
-  align-items: end;
-  gap: 0.55rem;
-  max-height: min(46vh, 380px);
-  padding-bottom: 0;
   background: linear-gradient(
     180deg,
     transparent 0%,
-    transparent 42%,
-    rgba(3, 3, 10, 0.18) 58%,
-    rgba(2, 2, 8, 0.72) 82%,
-    rgba(2, 2, 8, 0.9) 100%
+    transparent 38%,
+    rgba(3, 3, 10, 0.12) 55%,
+    rgba(2, 2, 8, 0.55) 78%,
+    rgba(2, 2, 8, 0.82) 100%
   );
 }
 
@@ -137,16 +131,12 @@ body.companion-minimal-chrome .chat-column {
   margin: 0;
   padding: 0 max(0.2rem, env(safe-area-inset-left, 0px))
     0 max(0.2rem, env(safe-area-inset-right, 0px));
-  max-height: min(34vh, 260px);
   min-height: 0;
   overflow: hidden;
 }
 
 body.companion-minimal-chrome .transcript {
-  max-height: min(34vh, 260px);
-  padding: 0.25rem 0.1rem 0.65rem;
-  mask-image: linear-gradient(180deg, transparent 0%, #000 16%, #000 88%, transparent 100%);
-  -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 16%, #000 88%, transparent 100%);
+  padding: 0.25rem 0.1rem 0.5rem;
 }
 
 body.companion-minimal-chrome.chat-panel-hidden .chat-column {
@@ -439,14 +429,5 @@ body.companion-minimal-chrome .care-tools-stack.is-open {
 @media (max-width: 640px) {
   body.companion-minimal-chrome .chat-column {
     padding-top: 0;
-    max-height: min(32vh, 220px);
-  }
-
-  body.companion-minimal-chrome .transcript {
-    max-height: min(32vh, 220px);
-  }
-
-  body.companion-minimal-chrome .chat-shell {
-    max-height: min(42vh, 340px);
   }
 }

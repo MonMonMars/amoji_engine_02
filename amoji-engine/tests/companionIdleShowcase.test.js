@@ -63,7 +63,7 @@ describe("idle showcase wiring", () => {
     expect(html).toMatch(/\.chat-column \{[\s\S]*?z-index:\s*1/);
     expect(html).toMatch(/\.transcript \{[\s\S]*?z-index:\s*2/);
     expect(html).toMatch(
-      /body\.conversation-ui \.transcript \.msg-row \{[\s\S]*?z-index:\s*10051/,
+      /body\.conversation-ui \.transcript \.msg-row \{[\s\S]*?z-index:\s*1/,
     );
     expect(html).toMatch(
       /createCompanionProgressDock\(\{\s*root:\s*document\.body/,

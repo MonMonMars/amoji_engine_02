@@ -1,0 +1,137 @@
+/**
+ * Chat history stacks above the composer — scrollable transcript, nothing hidden under the text box.
+ */
+:root {
+  --amoji-chat-stack-max: min(54vh, 460px);
+  --amoji-transcript-min: 5.5rem;
+}
+
+body.companion-minimal-chrome .chat-shell,
+body.conversation-ui .chat-shell {
+  display: grid !important;
+  grid-template-rows: minmax(var(--amoji-transcript-min), 1fr) auto;
+  grid-template-areas:
+    "history"
+    "composer";
+  align-items: stretch !important;
+  justify-content: stretch !important;
+  gap: 0.45rem;
+  max-height: var(--amoji-chat-stack-max);
+  padding-top: 0.35rem;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+body.companion-minimal-chrome .chat-column,
+body.conversation-ui .chat-column {
+  grid-area: history;
+  display: flex !important;
+  flex-direction: column;
+  min-height: 0;
+  max-height: none !important;
+  flex: 1 1 auto !important;
+  margin-top: 0 !important;
+  padding-bottom: 0 !important;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+body.companion-minimal-chrome .transcript,
+body.conversation-ui .transcript {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none !important;
+  width: 100%;
+  overflow-x: hidden;
+  overflow-y: auto !important;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  pointer-events: auto !important;
+  touch-action: pan-y;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: stretch;
+  gap: 0.5rem;
+  padding: 0.2rem 0.1rem 0.5rem;
+  scroll-behavior: smooth;
+  scroll-padding-bottom: 0.65rem;
+  mask-image: linear-gradient(180deg, transparent 0%, #000 10%, #000 100%);
+  -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 10%, #000 100%);
+}
+
+body.conversation-ui .transcript .msg-row {
+  pointer-events: auto;
+}
+
+body.companion-minimal-chrome .chat-column .listen-hint,
+body.conversation-ui .chat-column .listen-hint {
+  flex: 0 0 auto;
+  margin: 0 0.15rem 0.15rem;
+  padding: 0.35rem 0.55rem;
+  border-radius: 0.75rem;
+  font-size: 0.78rem;
+  line-height: 1.4;
+  color: rgba(223, 248, 246, 0.92);
+  background: rgba(127, 212, 207, 0.12);
+  border: 1px solid rgba(127, 212, 207, 0.22);
+  pointer-events: none;
+}
+
+body.companion-minimal-chrome .chat-column .listen-hint[hidden],
+body.conversation-ui .chat-column .listen-hint[hidden] {
+  display: none !important;
+}
+
+body.companion-minimal-chrome .composer-wrap,
+body.conversation-ui .composer-wrap {
+  grid-area: composer;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 4;
+  margin-top: 0 !important;
+  background: linear-gradient(180deg, rgba(5, 7, 12, 0.55), rgba(5, 7, 12, 0.94));
+  border-radius: 1rem 1rem 0 0;
+  box-shadow: 0 -8px 28px rgba(0, 0, 0, 0.35);
+}
+
+body.companion-minimal-chrome .composer-wrap .listen-hint {
+  display: none !important;
+}
+
+@media (max-width: 640px) {
+  :root {
+    --amoji-chat-stack-max: min(50vh, 400px);
+  }
+}
+
+@media (min-width: 1024px) {
+  body.companion-wide-layout.companion-minimal-chrome .chat-column,
+  body.companion-wide-layout.companion-minimal-chrome .transcript,
+  body.companion-wide-layout.conversation-ui .transcript {
+    max-height: none !important;
+  }
+
+  body.companion-wide-layout.companion-minimal-chrome .chat-shell,
+  body.companion-wide-layout.conversation-ui .chat-shell {
+    max-height: var(--amoji-chat-stack-max);
+  }
+}
+
+.theme-grok-ani .chat-column,
+.theme-grok-ani .transcript {
+  max-height: none !important;
+}
+
+.stage.mic-mode .chat-column {
+  max-height: none !important;
+}
+
+.stage.mic-mode .transcript {
+  max-height: none !important;
+  justify-content: flex-start !important;
+}
+
+body.conversation-ui:not(.chat-panel-hidden) .chat-column {
+  margin-top: 0 !important;
+}

@@ -8,9 +8,9 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji · Companion</title>
     <script>
-      window.__amojiBuild = "2026-09-21-v486-priority-fixes-face-limbs-layout";
+      window.__amojiBuild = "2026-09-21-v487-chat-above-composer";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-21-v486-priority-fixes-face-limbs-layout"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-21-v487-chat-above-composer"></script>
     <link
       rel="prefetch"
       href="/prototypes/assets/companion-char-nova.png"
@@ -698,27 +698,28 @@
       media="print"
       onload="this.media='all'"
     />
-    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-21-v486-priority-fixes-face-limbs-layout" />
-    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-21-v486-priority-fixes-face-limbs-layout" />
-    <link rel="stylesheet" href="/prototypes/companion-mic-button.css?v=2026-09-21-v486-priority-fixes-face-limbs-layout" />
-    <link rel="stylesheet" href="/prototypes/companion-title-screen.css?v=2026-09-21-v486-priority-fixes-face-limbs-layout" />
-    <link rel="stylesheet" href="/prototypes/companion-minimal-ui.css?v=2026-09-21-v486-priority-fixes-face-limbs-layout" />
-    <link rel="stylesheet" href="/prototypes/companion-settings-ui.css?v=2026-09-21-v486-priority-fixes-face-limbs-layout" />
-    <link rel="stylesheet" href="/prototypes/companion-mobile-shell.css?v=2026-09-21-v486-priority-fixes-face-limbs-layout" />
-    <link rel="stylesheet" href="/prototypes/companion-picker-v4.css?v=2026-09-21-v486-priority-fixes-face-limbs-layout" />
-    <link rel="stylesheet" href="/prototypes/companion-picker-stacked-layout.css?v=2026-09-21-v486-priority-fixes-face-limbs-layout" />
-    <link rel="stylesheet" href="/prototypes/companion-picker-aaa-theme.css?v=2026-09-21-v486-priority-fixes-face-limbs-layout" />
-    <link rel="stylesheet" href="/prototypes/companion-jp-aaa-shell.css?v=2026-09-21-v486-priority-fixes-face-limbs-layout" />
-    <link rel="stylesheet" href="/prototypes/companion-responsive-layout.css?v=2026-09-21-v486-priority-fixes-face-limbs-layout" />
-    <link rel="stylesheet" href="/prototypes/companion-app-width.css?v=2026-09-21-v486-priority-fixes-face-limbs-layout" />
-    <link rel="stylesheet" href="/prototypes/companion-scroll-affordances.css?v=2026-09-21-v486-priority-fixes-face-limbs-layout" />
+    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-21-v487-chat-above-composer" />
+    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-21-v487-chat-above-composer" />
+    <link rel="stylesheet" href="/prototypes/companion-mic-button.css?v=2026-09-21-v487-chat-above-composer" />
+    <link rel="stylesheet" href="/prototypes/companion-title-screen.css?v=2026-09-21-v487-chat-above-composer" />
+    <link rel="stylesheet" href="/prototypes/companion-minimal-ui.css?v=2026-09-21-v487-chat-above-composer" />
+    <link rel="stylesheet" href="/prototypes/companion-settings-ui.css?v=2026-09-21-v487-chat-above-composer" />
+    <link rel="stylesheet" href="/prototypes/companion-mobile-shell.css?v=2026-09-21-v487-chat-above-composer" />
+    <link rel="stylesheet" href="/prototypes/companion-picker-v4.css?v=2026-09-21-v487-chat-above-composer" />
+    <link rel="stylesheet" href="/prototypes/companion-picker-stacked-layout.css?v=2026-09-21-v487-chat-above-composer" />
+    <link rel="stylesheet" href="/prototypes/companion-picker-aaa-theme.css?v=2026-09-21-v487-chat-above-composer" />
+    <link rel="stylesheet" href="/prototypes/companion-jp-aaa-shell.css?v=2026-09-21-v487-chat-above-composer" />
+    <link rel="stylesheet" href="/prototypes/companion-responsive-layout.css?v=2026-09-21-v487-chat-above-composer" />
+    <link rel="stylesheet" href="/prototypes/companion-chat-stack.css?v=2026-09-21-v487-chat-above-composer" />
+    <link rel="stylesheet" href="/prototypes/companion-app-width.css?v=2026-09-21-v487-chat-above-composer" />
+    <link rel="stylesheet" href="/prototypes/companion-scroll-affordances.css?v=2026-09-21-v487-chat-above-composer" />
     <link
       rel="stylesheet"
-      href="/prototypes/companion-scene-backgrounds.css?v=2026-09-21-v486-priority-fixes-face-limbs-layout"
+      href="/prototypes/companion-scene-backgrounds.css?v=2026-09-21-v487-chat-above-composer"
     />
     <link
       rel="stylesheet"
-      href="/prototypes/companion-start-picker-sheet.css?v=2026-09-21-v486-priority-fixes-face-limbs-layout"
+      href="/prototypes/companion-start-picker-sheet.css?v=2026-09-21-v487-chat-above-composer"
     />
     <script>
       (function () {
@@ -745,7 +746,7 @@
       })();
     </script>
     <script type="module">
-      import { bootEarlyStartPicker } from "/amoji-engine/engine/companion/companionEarlyStartPicker.js?v=2026-09-21-v486-priority-fixes-face-limbs-layout";
+      import { bootEarlyStartPicker } from "/amoji-engine/engine/companion/companionEarlyStartPicker.js?v=2026-09-21-v487-chat-above-composer";
       import { shouldShowStartPickerOnBoot } from "/amoji-engine/engine/companion/companionStartPickerGate.mjs";
       const bootParams = new URLSearchParams(location.search);
       if (
@@ -1186,6 +1187,7 @@
         }
       }
 
+      /* Layout: companion-chat-stack.css (history row + composer row) */
       .chat-shell {
         position: absolute;
         left: 0;
@@ -1193,33 +1195,19 @@
         bottom: 0;
         top: auto;
         z-index: 10050;
-        display: flex;
-        flex-direction: column;
-        justify-content: flex-end;
         pointer-events: none;
-        max-height: min(48vh, 420px);
-        background: linear-gradient(
-          180deg,
-          transparent 0%,
-          transparent 18%,
-          rgba(5, 7, 12, 0.22) 48%,
-          rgba(5, 7, 12, 0.82) 88%,
-          rgba(5, 7, 12, 0.94) 100%
-        );
       }
 
       .chat-column {
         position: relative;
         z-index: 1;
-        flex: 0 0 auto;
         display: flex;
         flex-direction: column;
         width: 100%;
         max-width: none;
         margin: 0;
-        padding: 0 max(0.55rem, env(safe-area-inset-right, 0px)) 0.15rem
+        padding: 0 max(0.55rem, env(safe-area-inset-right, 0px)) 0
           max(0.55rem, env(safe-area-inset-left, 0px));
-        max-height: min(36vh, 300px);
         min-height: 0;
         pointer-events: none;
         box-sizing: border-box;
@@ -1229,22 +1217,19 @@
         position: relative;
         z-index: 2;
         pointer-events: auto;
-        flex: 0 1 auto;
-        max-height: min(36vh, 300px);
+        flex: 1 1 auto;
         min-height: 0;
         overflow-y: auto;
         overflow-x: hidden;
         display: flex;
         flex-direction: column;
-        justify-content: flex-end;
+        justify-content: flex-start;
         gap: 0.55rem;
         padding: 0.35rem 0 0.5rem;
         scrollbar-width: thin;
         scroll-behavior: smooth;
-        scroll-padding-bottom: 0.5rem;
+        scroll-padding-bottom: 0.65rem;
         -webkit-overflow-scrolling: touch;
-        mask-image: linear-gradient(180deg, transparent 0%, #000 18%);
-        -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 18%);
       }
 
       .transcript:empty {
@@ -1252,12 +1237,12 @@
       }
 
       body.conversation-ui .transcript {
-        pointer-events: none;
+        pointer-events: auto;
         touch-action: pan-y;
       }
       body.conversation-ui .transcript .msg-row {
         position: relative;
-        z-index: 10051;
+        z-index: 1;
         pointer-events: auto;
       }
 
@@ -2596,9 +2581,9 @@
       }
 
       body.conversation-ui:not(.chat-panel-hidden) .chat-column {
-        flex: 0 1 auto;
-        max-height: min(38vh, 300px);
-        margin-top: auto;
+        flex: 1 1 auto;
+        max-height: none;
+        margin-top: 0;
         padding-top: 0.25rem;
         transition:
           opacity 0.28s ease,
@@ -2607,7 +2592,7 @@
       }
 
       body.conversation-ui:not(.chat-panel-hidden) .transcript {
-        max-height: min(38vh, 300px);
+        max-height: none;
       }
 
       body.conversation-ui.composer-always-visible .composer #btn-mic {
@@ -4635,19 +4620,19 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-21-v486-priority-fixes-face-limbs-layout",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-21-v487-chat-above-composer",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-21-v486-priority-fixes-face-limbs-layout",
-          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-21-v486-priority-fixes-face-limbs-layout"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-21-v487-chat-above-composer",
+          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-21-v487-chat-above-composer"
         }
       }
     </script>
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-21-v486-priority-fixes-face-limbs-layout"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-21-v487-chat-above-composer"
     />
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-21-v486-priority-fixes-face-limbs-layout"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-21-v486-priority-fixes-face-limbs-layout"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-21-v487-chat-above-composer"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-21-v487-chat-above-composer"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;
@@ -5206,11 +5191,11 @@
 
       <div class="chat-shell">
         <div class="chat-column">
-          <div class="transcript" id="transcript" aria-live="polite"></div>
+          <div class="transcript" id="transcript" aria-live="polite" aria-label="Chat history"></div>
+          <div class="listen-hint" id="listen-hint" aria-live="polite" hidden></div>
         </div>
         <div class="composer-wrap">
           <div class="starter-prompts" id="starter-prompts" hidden aria-label="Tutorial prompts"></div>
-          <div class="listen-hint" id="listen-hint" aria-live="polite" hidden></div>
           <!-- Full emotion ball stack retired — mini orb on #btn-mic is canonical in conversation UI -->
           <div class="emotion-ball-stack is-hidden" id="emotion-ball-stack" aria-hidden="true" hidden>
             <div class="emotion-ball" id="emotion-ball" data-ball-state="idle" hidden></div>
