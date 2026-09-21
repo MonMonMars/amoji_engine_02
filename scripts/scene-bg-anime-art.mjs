@@ -2,7 +2,7 @@
  * Japanese anime / VN / gacha-game style scene painters (SVG body fragments).
  * Rich layered gradients, neon, bokeh, perspective interiors, atmospheric depth.
  */
-export const SCENE_ANIME_ART_REVISION = "anime-scene-v481-redesign-cozy-bedroom";
+export const SCENE_ANIME_ART_REVISION = "anime-scene-v486-hq-atmosphere-pass";
 
 /** @param {number} w @param {number} h */
 export function animePaintDefs(w, h) {
@@ -107,7 +107,7 @@ export function animeHorizonMist(w, h, yRatio = 0.52, opacity = 0.22) {
 /** Extra depth: dust, floor haze, vignette (appended to every regenerated scene). */
 export function animeSceneFinisher(w, h) {
   let dust = "";
-  for (let i = 0; i < 28; i += 1) {
+  for (let i = 0; i < 36; i += 1) {
     const cx = ((i * 137) % 1000) / 1000 * w;
     const cy = ((i * 89 + 17) % 1000) / 1000 * h * 0.85;
     const r = 0.6 + (i % 3) * 0.35;

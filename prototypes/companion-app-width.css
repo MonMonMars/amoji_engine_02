@@ -7,10 +7,51 @@
   --amoji-chat-column-width: var(--amoji-app-max-width);
 }
 
+body.companion-minimal-chrome {
+  background: #070a10;
+}
+
 body.companion-minimal-chrome .stage {
+  position: relative;
   max-width: min(100vw, var(--amoji-app-max-width));
   margin-left: auto;
   margin-right: auto;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+
+/* Keep menus inside the stage column — not full ultrawide viewport. */
+body.companion-minimal-chrome .settings-backdrop,
+body.companion-minimal-chrome .settings,
+body.companion-minimal-chrome .scene-sheet-backdrop,
+body.companion-minimal-chrome .scene-sheet {
+  position: absolute !important;
+  left: 0;
+  right: 0;
+  width: 100%;
+  max-width: 100%;
+}
+
+body.companion-minimal-chrome .settings {
+  left: 50%;
+  right: auto;
+  transform: translate(-50%, 110%);
+  width: min(100%, var(--amoji-app-max-width));
+}
+
+body.companion-minimal-chrome .settings.open {
+  transform: translate(-50%, 0);
+}
+
+@media (min-width: 720px) {
+  body.companion-minimal-chrome .settings {
+    top: 50%;
+    bottom: auto;
+    transform: translate(-50%, -46%) scale(0.96);
+  }
+
+  body.companion-minimal-chrome .settings.open {
+    transform: translate(-50%, -50%) scale(1);
+  }
 }
 
 .companion-picker.is-open .companion-picker-sheet {

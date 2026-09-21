@@ -82,6 +82,8 @@ export async function switchCompanionCharacter(opts) {
   emit(88, isEnglish ? "Warming up…" : "熱身中…");
   loaded.avatar.setEmotion?.("neutral");
   loaded.avatar.resize?.();
+  loaded.avatar.resetCameraView?.();
+  loaded.avatar.warmPresentFrame?.();
   onStagePreview?.(null);
 
   const loadedUrl =

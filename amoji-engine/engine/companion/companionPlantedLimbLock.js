@@ -8,7 +8,7 @@ import {
 } from "./companionPoseLibrary.js";
 
 export const COMPANION_PLANTED_LIMB_LOCK_SCHEMA =
-  "amoji.companionPlantedLimbLock.v1";
+  "amoji.companionPlantedLimbLock.v2-forearm-lock";
 
 /** Bones forced to calibrated rest when feet are planted (no full-body action). */
 export const PLANTED_LOCK_BONE_NAMES = Object.freeze([
@@ -20,6 +20,8 @@ export const PLANTED_LOCK_BONE_NAMES = Object.freeze([
   "rightFoot",
   "leftUpperArm",
   "rightUpperArm",
+  "leftLowerArm",
+  "rightLowerArm",
 ]);
 
 /**
@@ -67,6 +69,7 @@ export function writeHumanoidBoneRotation(humanoid, name, rot) {
  *   legRestRotations: typeof import('./companionPoseLibrary.js').VRM_LEG_REST_ROTATIONS,
  *   armRestRotations: typeof import('./companionPoseLibrary.js').VRM_ARM_REST_ROTATIONS,
  *   lockUpperArms?: boolean,
+ *   lockForearms?: boolean,
  * }} opts
  */
 export function enforcePlantedLimbRotations(humanoid, opts) {
@@ -74,6 +77,7 @@ export function enforcePlantedLimbRotations(humanoid, opts) {
   const legs = opts.legRestRotations;
   const arms = opts.armRestRotations;
   const lockArms = opts.lockUpperArms !== false;
+  const lockForearms = opts.lockForearms === true;
   let n = 0;
   writeHumanoidBoneRotation(humanoid, "leftUpperLeg", legs.leftUpperLeg);
   writeHumanoidBoneRotation(humanoid, "rightUpperLeg", legs.rightUpperLeg);
@@ -85,6 +89,11 @@ export function enforcePlantedLimbRotations(humanoid, opts) {
   if (lockArms) {
     writeHumanoidBoneRotation(humanoid, "leftUpperArm", arms.leftUpperArm);
     writeHumanoidBoneRotation(humanoid, "rightUpperArm", arms.rightUpperArm);
+    n += 2;
+  }
+  if (lockForearms) {
+    writeHumanoidBoneRotation(humanoid, "leftLowerArm", arms.leftLowerArm);
+    writeHumanoidBoneRotation(humanoid, "rightLowerArm", arms.rightLowerArm);
     n += 2;
   }
   humanoid.update?.();

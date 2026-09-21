@@ -25,6 +25,8 @@ import {
   PORTRAIT_CAMERA_Z_SIGN,
   PORTRAIT_FOV,
   applyUserOrbitLimits,
+  correctPortraitModelYaw,
+  isHeadFacingCamera,
   portraitDistanceForHeight,
 } from "./companionPortraitFraming.js";
 import {
@@ -346,6 +348,7 @@ export async function createVrmAvatar(opts) {
   model.position.y = -box.min.y * scale;
   const baseModelY = model.position.y;
   let baseModelRotY = model.rotation.y;
+  let lastPortraitFacingFixMs = 0;
   scene.add(model);
   vrm.humanoid?.resetNormalizedPose?.();
   const bodyMotion = createCompanionBodyMotion(vrm.humanoid);
@@ -1549,13 +1552,10 @@ export async function createVrmAvatar(opts) {
       }
       stabilizeVrmSpringBones(vrm);
       vrm.update(dt);
-      if (
-        !libraryMotion &&
-        !bodyMotion.currentAction &&
-        !bodyMotion.activeGesture
-      ) {
+      if (!libraryMotion && !bodyMotion.currentAction && !bodyMotion.activeGesture) {
         bodyMotion.enforcePlantedLimbs?.({
           lockUpperArms: true,
+          lockForearms: !talking,
           hands: !talking && !eating,
         });
       }
@@ -1655,6 +1655,23 @@ export async function createVrmAvatar(opts) {
           applyOrbitFollowAnchor(controls, camera, smoothedFrameAnchor);
         }
         controls.update();
+      }
+
+      if (
+        headBone &&
+        !userOwnsCamera &&
+        !libraryMotion &&
+        !vrmaOwnsBody &&
+        now - lastPortraitFacingFixMs > 900
+      ) {
+        if (
+          !isHeadFacingCamera(headBone, camera, vrm.humanoid) &&
+          correctPortraitModelYaw(model, headBone, camera, vrm.humanoid)
+        ) {
+          baseModelRotY = model.rotation.y;
+          lastPortraitFacingFixMs = now;
+          syncLookTarget();
+        }
       }
     } catch (err) {
       console.warn("[vrm] frame update failed", err);
@@ -1809,9 +1826,7 @@ export async function createVrmAvatar(opts) {
       }
       setVrmSceneWindMode(sceneEnvironment);
       configureVrmSpringStability(vrm, sceneEnvironment);
-      if (sceneEnvironment === "indoor") {
-        recenterVrmSpringBones(vrm, { retune: true, captureInit: false });
-      }
+      recenterVrmSpringBones(vrm, { retune: true, captureInit: false });
       if ("toneMappingExposure" in renderer) {
         renderer.toneMappingExposure = rendererExposureForScene(
           sceneEnvironment,
@@ -1937,6 +1952,19 @@ export async function createVrmAvatar(opts) {
     },
     resize,
     resetCameraView,
+    warmPresentFrame() {
+      try {
+        syncLookTarget();
+        syncHumanoidPose();
+        stabilizeVrmSpringBones(vrm);
+        vrm.update(1 / 60);
+        bodyMotion.enforcePlantedLimbs?.({ lockForearms: true });
+        renderer.render(scene, camera);
+        renderer.render(scene, camera);
+      } catch {
+        /* ignore warm-up errors */
+      }
+    },
     hitTest(clientX, clientY) {
       return Boolean(avatarPointer?.hitTest?.(clientX, clientY));
     },

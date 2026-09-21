@@ -169,8 +169,10 @@ body.companion-minimal-chrome .composer-field textarea {
 /* —— Wide desktop: full-width stage; chat stays centered with fixed column —— */
 @media (min-width: 1024px) {
   body.companion-wide-layout.companion-minimal-chrome .stage {
-    max-width: none;
+    max-width: min(100vw, var(--amoji-app-max-width));
     width: 100%;
+    margin-left: auto;
+    margin-right: auto;
   }
 
   body.companion-wide-layout.companion-minimal-chrome .chat-shell,

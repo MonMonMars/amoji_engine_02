@@ -10,6 +10,7 @@ import {
   computeUpperBodyAnchor,
   detectPortraitCameraZSign,
   facingAlignmentScore,
+  correctPortraitModelYaw,
   isHeadFacingCamera,
   portraitModelYawOffset,
   portraitDistanceForHeight,
@@ -159,5 +160,20 @@ describe("companionPortraitFraming", () => {
     camera.position.set(0, 1.18, -1.3);
     expect(isHeadFacingCamera(head, camera)).toBe(false);
     expect(portraitModelYawOffset(head, camera)).toBe(Math.PI);
+  });
+
+  it("correctPortraitModelYaw rotates the model when the face points away", () => {
+    const model = new THREE.Group();
+    const head = new THREE.Object3D();
+    head.position.set(0, 1.1, 0);
+    model.add(head);
+    model.updateMatrixWorld(true);
+    head.updateMatrixWorld(true);
+    const camera = new THREE.PerspectiveCamera();
+    camera.position.set(0, 1.18, -1.4);
+    const before = model.rotation.y;
+    expect(correctPortraitModelYaw(model, head, camera)).toBe(true);
+    expect(model.rotation.y - before).toBeCloseTo(Math.PI, 3);
+    expect(isHeadFacingCamera(head, camera)).toBe(true);
   });
 });

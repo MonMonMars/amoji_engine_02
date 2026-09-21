@@ -13,7 +13,7 @@ import {
   portraitDistanceForHeight,
 } from "./companionPortraitFraming.js";
 
-export const COMPANION_CAMERA_APPLY_SCHEMA = "amoji.companionCameraApply.v3-front-yaw-guard";
+export const COMPANION_CAMERA_APPLY_SCHEMA = "amoji.companionCameraApply.v4-low-score-yaw";
 
 /** Auto follow while talking / full-body moves (~4.2/s). */
 export const AUTO_CAMERA_LERP_RATE = 4.2;
@@ -316,6 +316,26 @@ export function resolveFrontPortraitFrame(opts) {
         model.rotation.y = best.yaw;
         model.updateMatrixWorld(true);
       }
+    }
+  }
+
+  if (best && best.score < 0.12 && model && headBone) {
+    model.rotation.y = baseYaw + Math.PI;
+    model.updateMatrixWorld(true);
+    headBone.updateMatrixWorld(true);
+    const zSign = detectPortraitCameraZSign(
+      headBone,
+      anchor,
+      portraitDist,
+      humanoid,
+    );
+    const shot = buildPortraitShot(anchor, portraitDist, baseFov, zSign);
+    const score = facingAlignmentScore(headBone, shot.position, humanoid);
+    if (score > best.score) {
+      best = { score, yaw: baseYaw + Math.PI, zSign, shot, portraitDist };
+    } else {
+      model.rotation.y = best.yaw;
+      model.updateMatrixWorld(true);
     }
   }
 
