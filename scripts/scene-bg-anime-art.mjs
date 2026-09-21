@@ -2,7 +2,7 @@
  * Japanese anime / VN / gacha-game style scene painters (SVG body fragments).
  * Rich layered gradients, neon, bokeh, perspective interiors, atmospheric depth.
  */
-export const SCENE_ANIME_ART_REVISION = "anime-scene-v460-pro-expansion";
+export const SCENE_ANIME_ART_REVISION = "anime-scene-v481-redesign-cozy-bedroom";
 
 /** @param {number} w @param {number} h */
 export function animePaintDefs(w, h) {
@@ -98,6 +98,12 @@ export function animeDetailPass(w, h) {
   return `${sparkles}${flare}`;
 }
 
+/** Soft distant haze band for outdoor depth (v481 refresh). */
+export function animeHorizonMist(w, h, yRatio = 0.52, opacity = 0.22) {
+  return `<rect x="0" y="${h * yRatio}" width="${w}" height="${h * (1 - yRatio)}" fill="url(#haze)" opacity="${opacity}"/>
+  <ellipse cx="${w * 0.5}" cy="${h * yRatio}" rx="${w * 0.55}" ry="${h * 0.12}" fill="#fff" opacity="${(opacity * 0.35).toFixed(3)}"/>`;
+}
+
 /** Extra depth: dust, floor haze, vignette (appended to every regenerated scene). */
 export function animeSceneFinisher(w, h) {
   let dust = "";
@@ -164,7 +170,53 @@ export function drawCozyRoomArt(w, h) {
   <rect x="${w * 0.69}" y="${h * 0.55}" width="12" height="90" fill="#584838"/>
   <circle cx="${w * 0.88}" cy="${h * 0.32}" r="55" fill="url(#lampGlow)"/>
   <rect x="${w * 0.86}" y="${h * 0.28}" width="8" height="120" fill="#484848"/>
-  <ellipse cx="${w * 0.5}" cy="${h * 0.45}" rx="200" ry="120" fill="#fff8e8" opacity="0.08"/>`;
+  <ellipse cx="${w * 0.5}" cy="${h * 0.45}" rx="200" ry="120" fill="#fff8e8" opacity="0.08"/>
+  ${bokehLights(8, w, h)}`;
+}
+
+/**
+ * Classic warm anime bedroom — same family as cozy-room (window, fairy lights, wood floor).
+ * Restores the pre–VN-template bedroom look users had before the flat interior swap.
+ * @param {number} w @param {number} h
+ */
+export function drawBedroomArt(w, h) {
+  const wx = w * 0.55;
+  const wy = h * 0.08;
+  const ww = w * 0.38;
+  const wh = h * 0.42;
+  let fairy = "";
+  for (let i = 0; i < 18; i += 1) {
+    const fx = w * 0.1 + (i % 9) * (w * 0.09);
+    const fy = h * 0.05 + Math.floor(i / 9) * 26;
+    fairy += `<circle cx="${fx}" cy="${fy}" r="3" fill="#ffd898" opacity="0.88" filter="url(#softGlow)"/>`;
+  }
+  const plush = Array.from(
+    { length: 3 },
+    (_, i) =>
+      `<ellipse cx="${w * 0.24 + i * 28}" cy="${h * 0.6}" rx="22" ry="14" fill="${i === 1 ? "#f0a8c8" : "#d8c8f0"}" opacity="0.75"/>`,
+  ).join("");
+  return `${animePaintDefs(w, h)}
+  <rect width="${w}" height="${h}" fill="url(#wallWarm)"/>
+  <polygon points="0,${h * 0.52} 0,${h} ${w},${h} ${w},${h * 0.52} ${w * 0.82},${h * 0.58} ${w * 0.18},${h * 0.58}" fill="url(#floorWood)"/>
+  ${Array.from({ length: 16 }, (_, i) => {
+    const x1 = (i / 16) * w;
+    const x2 = w * 0.18 + (i / 16) * (w * 0.64);
+    return `<line x1="${x1}" y1="${h}" x2="${x2}" y2="${h * 0.58}" stroke="#000" stroke-opacity="0.1" stroke-width="1"/>`;
+  }).join("")}
+  ${animeWindowCityView(w, h, wx, wy, ww, wh)}
+  ${fairy}
+  <rect x="${w * 0.06}" y="${h * 0.2}" width="${w * 0.11}" height="${h * 0.34}" fill="#685848" opacity="0.55" rx="4"/>
+  ${Array.from({ length: 5 }, (_, i) => `<rect x="${w * 0.07}" y="${h * 0.22 + i * 38}" width="${w * 0.09}" height="28" fill="${i % 2 ? "#e87888" : "#88a8d8"}" opacity="0.48" rx="2"/>`).join("")}
+  <rect x="${w * 0.16}" y="${h * 0.54}" width="${w * 0.38}" height="${h * 0.26}" rx="14" fill="#b898c8" opacity="0.82"/>
+  <rect x="${w * 0.18}" y="${h * 0.5}" width="${w * 0.34}" height="22" rx="10" fill="#fff" opacity="0.14"/>
+  ${plush}
+  <rect x="${w * 0.72}" y="${h * 0.48}" width="${w * 0.08}" height="${h * 0.22}" fill="#786858" opacity="0.55" rx="3"/>
+  <circle cx="${w * 0.76}" cy="${h * 0.46}" r="8" fill="#ffe8c8" opacity="0.65"/>
+  <ellipse cx="${w * 0.68}" cy="${h * 0.74}" rx="48" ry="62" fill="#388848" opacity="0.72"/>
+  <rect x="${w * 0.655}" y="${h * 0.58}" width="10" height="82" fill="#584838"/>
+  <circle cx="${w * 0.88}" cy="${h * 0.3}" r="58" fill="url(#lampGlow)"/>
+  <rect x="${w * 0.865}" y="${h * 0.26}" width="8" height="118" fill="#484848"/>
+  <ellipse cx="${w * 0.48}" cy="${h * 0.42}" rx="210" ry="115" fill="#fff8e8" opacity="0.09"/>`;
 }
 
 /** @param {number} w @param {number} h */
@@ -294,6 +346,7 @@ export function drawNightCityArt(w, h) {
   <rect x="0" y="${h - 50}" width="${w}" height="4" fill="#48d8ff" opacity="0.25" filter="url(#neonGlow)"/>
   ${reflect}
   <rect x="0" y="${h - 52}" width="${w}" height="8" fill="#ff88cc" opacity="0.18" filter="url(#neonGlow)"/>
+  ${animeHorizonMist(w, h, 0.48, 0.12)}
   <rect width="${w}" height="${h}" fill="url(#haze)" opacity="0.35"/>`;
 }
 
@@ -314,7 +367,8 @@ export function drawRooftopArt(w, h, skyId = "skyTop") {
   <line x1="0" y1="${h * 0.52}" x2="${w}" y2="${h * 0.52}" stroke="#3a4550" stroke-width="1" opacity="0.4"/>
   ${Array.from({ length: 8 }, (_, i) => `<line x1="${i * 120}" y1="${h * 0.52}" x2="${i * 120 + 80}" y2="${h}" stroke="#252d38" stroke-width="1" opacity="0.25"/>`).join("")}
   <rect x="${w * 0.65}" y="${h * 0.38}" width="120" height="8" fill="#586878" opacity="0.6"/>
-  ${bokehLights(20, w, h)}`;
+  ${bokehLights(20, w, h)}
+  ${animeHorizonMist(w, h, 0.46, 0.16)}`;
 }
 
 export function drawParkArt(w, h) {
@@ -335,6 +389,7 @@ export function drawParkArt(w, h) {
   <path d="M${w * 0.35} ${h * 0.72} L${w * 0.42} ${h * 0.55} L${w * 0.49} ${h * 0.72} Z" fill="#8a4040" opacity="0.85"/>
   <rect x="${w * 0.41}" y="${h * 0.48}" width="4" height="28" fill="#6a3030"/>
   ${Array.from({ length: 25 }, (_, i) => `<circle cx="${(i * 53) % w}" cy="${(i * 31) % (h * 0.55)}" r="2.5" fill="#ffb8d8" opacity="0.55"/>`).join("")}
+  ${animeHorizonMist(w, h, 0.58, 0.28)}
   <rect width="${w}" height="${h}" fill="url(#haze)" opacity="0.35"/>`;
 }
 
@@ -348,7 +403,8 @@ export function drawBeachArt(w, h) {
   <path d="M0 ${h * 0.56} Q${w * 0.2} ${h * 0.52} ${w * 0.45} ${h * 0.55} T${w} ${h * 0.53} L${w} ${h * 0.62} L0 ${h * 0.64}Z" fill="#2898c8"/>
   <path d="M0 ${h * 0.58} Q${w * 0.3} ${h * 0.54} ${w * 0.6} ${h * 0.57} T${w} ${h * 0.56} L${w} ${h * 0.6} L0 ${h * 0.61}Z" fill="#48b8e8" opacity="0.55"/>
   ${Array.from({ length: 6 }, (_, i) => `<ellipse cx="${w * 0.15 + i * 140}" cy="${h * 0.54}" rx="28" ry="8" fill="#fff" opacity="0.25"/>`).join("")}
-  <ellipse cx="${w * 0.12}" cy="${h * 0.68}" rx="90" ry="25" fill="#d8b868" opacity="0.5"/>`;
+  <ellipse cx="${w * 0.12}" cy="${h * 0.68}" rx="90" ry="25" fill="#d8b868" opacity="0.5"/>
+  ${animeHorizonMist(w, h, 0.54, 0.18)}`;
 }
 
 export function drawSunsetArt(w, h) {
@@ -359,6 +415,7 @@ export function drawSunsetArt(w, h) {
   ${animeCloudLayers(w, h)}
   ${mountainLayers(w, h)}
   ${bokehLights(28, w, h)}
+  ${animeHorizonMist(w, h, 0.68, 0.32)}
   <rect x="0" y="${h * 0.72}" width="${w}" height="${h * 0.28}" fill="#0a0810"/>`;
 }
 
@@ -368,7 +425,9 @@ export function drawAuroraArt(w, h) {
   ${starField(150, w, h)}
   <path d="M0 ${h * 0.32} Q${w * 0.25} ${h * 0.08} ${w * 0.5} ${h * 0.28} T${w} ${h * 0.22} L${w} ${h * 0.55} Q${w * 0.6} ${h * 0.38} ${w * 0.3} ${h * 0.48} T0 ${h * 0.42}Z" fill="#5eead4" opacity="0.35" filter="url(#softGlow)"/>
   <path d="M0 ${h * 0.36} Q${w * 0.35} ${h * 0.14} ${w * 0.65} ${h * 0.3} L${w} ${h * 0.48} Q${w * 0.5} ${h * 0.4} 0 ${h * 0.46}Z" fill="#a78bfa" opacity="0.32" filter="url(#softGlow)"/>
-  <path d="M0 ${h * 0.4} Q${w * 0.4} ${h * 0.2} ${w * 0.75} ${h * 0.34} L${w} ${h * 0.52} Q${w * 0.45} ${h * 0.44} 0 ${h * 0.5}Z" fill="#f472b6" opacity="0.18"/>`;
+  <path d="M0 ${h * 0.4} Q${w * 0.4} ${h * 0.2} ${w * 0.75} ${h * 0.34} L${w} ${h * 0.52} Q${w * 0.45} ${h * 0.44} 0 ${h * 0.5}Z" fill="#f472b6" opacity="0.18"/>
+  ${mountainLayers(w, h)}
+  <rect x="0" y="${h * 0.72}" width="${w}" height="${h * 0.28}" fill="#060810" opacity="0.85"/>`;
 }
 
 export function drawRainStreetArt(w, h) {
@@ -395,7 +454,8 @@ export function drawRainStreetArt(w, h) {
   <rect x="0" y="${h * 0.72}" width="${w}" height="${h * 0.28}" fill="#0a1018"/>
   <rect x="0" y="${h * 0.7}" width="${w}" height="12" fill="#283848" opacity="0.6"/>
   ${rain}
-  ${bokehLights(40, w, h)}`;
+  ${bokehLights(40, w, h)}
+  <rect x="0" y="${h * 0.68}" width="${w}" height="${h * 0.04}" fill="#58d8ff" opacity="0.12" filter="url(#neonGlow)"/>`;
 }
 
 export function drawCherryBlossomArt(w, h) {
@@ -419,7 +479,8 @@ export function drawMountainArt(w, h) {
   ${mountainLayers(w, h)}
   <polygon points="${w * 0.05},${h * 0.75} ${w * 0.38},${h * 0.28} ${w * 0.55},${h * 0.75}" fill="#688898"/>
   <polygon points="${w * 0.38},${h * 0.28} ${w * 0.42},${h * 0.32} ${w * 0.4},${h * 0.28}" fill="#fff" opacity="0.9"/>
-  <ellipse cx="${w * 0.5}" cy="${h * 0.82}" rx="${w * 0.6}" ry="${h * 0.15}" fill="#487858" opacity="0.85"/>`;
+  <ellipse cx="${w * 0.5}" cy="${h * 0.82}" rx="${w * 0.6}" ry="${h * 0.15}" fill="#487858" opacity="0.85"/>
+  ${animeHorizonMist(w, h, 0.62, 0.24)}`;
 }
 
 export function drawHarborArt(w, h) {
@@ -444,7 +505,8 @@ export function drawMeadowArt(w, h) {
     const ht = 12 + (i % 5) * 8;
     return `<line x1="${x}" y1="${h * 0.75}" x2="${x - 3}" y2="${h * 0.75 - ht}" stroke="#88d858" stroke-width="1.5" opacity="0.7"/>`;
   }).join("")}
-  ${Array.from({ length: 8 }, (_, i) => `<circle cx="${80 + i * 110}" cy="${h * 0.68}" r="4" fill="#ffe878" opacity="0.8"/>`).join("")}`;
+  ${Array.from({ length: 8 }, (_, i) => `<circle cx="${80 + i * 110}" cy="${h * 0.68}" r="4" fill="#ffe878" opacity="0.8"/>`).join("")}
+  ${animeHorizonMist(w, h, 0.68, 0.26)}`;
 }
 
 /**
@@ -536,8 +598,8 @@ export function drawExecutiveLoungeArt(w, h) {
 
 export function drawHotelLobbyArt(w, h) {
   return `${animePaintDefs(w, h)}
-  <rect width="${w}" height="${h}" fill="#e8e4dc"/>
-  <polygon points="0,${h * 0.58} 0,${h} ${w},${h} ${w},${h * 0.58} ${w * 0.78},${h * 0.64} ${w * 0.22},${h * 0.64}" fill="#c8c0b0"/>
+  <rect width="${w}" height="${h}" fill="url(#wallWarm)"/>
+  <polygon points="0,${h * 0.58} 0,${h} ${w},${h} ${w},${h * 0.58} ${w * 0.78},${h * 0.64} ${w * 0.22},${h * 0.64}" fill="url(#floorWood)" opacity="0.92"/>
   ${Array.from({ length: 5 }, (_, i) => {
     const x = w * 0.12 + i * (w * 0.18);
     return `<ellipse cx="${x}" cy="${h * 0.22}" rx="28" ry="48" fill="#fff8e8" opacity="0.55" filter="url(#softGlow)"/>
@@ -588,6 +650,7 @@ export function drawZenGardenArt(w, h) {
 export function drawDaySkylineArt(w, h) {
   return `${animePaintDefs(w, h)}
   <rect width="${w}" height="${h}" fill="url(#skyDay)"/>
+  ${godRays(w, h, "#fff8e0")}
   ${animeCloudLayers(w, h)}
   ${Array.from({ length: 14 }, (_, i) => {
     const bw = 28 + (i % 5) * 14;
@@ -597,7 +660,8 @@ export function drawDaySkylineArt(w, h) {
     ${Array.from({ length: 4 }, (_, j) => `<rect x="${x + 4}" y="${h * 0.55 - bh + 12 + j * 18}" width="8" height="10" fill="#fff8d8" opacity="0.35"/>`).join("")}`;
   }).join("")}
   <rect x="0" y="${h * 0.55}" width="${w}" height="${h * 0.45}" fill="#586878" opacity="0.35"/>
-  <rect x="0" y="${h * 0.78}" width="${w}" height="${h * 0.22}" fill="#384858"/>`;
+  <rect x="0" y="${h * 0.78}" width="${w}" height="${h * 0.22}" fill="#384858"/>
+  ${animeHorizonMist(w, h, 0.52, 0.2)}`;
 }
 
 export function drawNeonArcadeArt(w, h) {
@@ -686,8 +750,7 @@ export const SCENE_ANIME_ART = {
   library: (w, h) =>
     drawVNInterior(w, h, { wall: "#d8e0d0", accent: "#4a5848", floor: "#a8b0a0", kind: "library" }),
   minimal: drawMinimalArt,
-  bedroom: (w, h) =>
-    drawVNInterior(w, h, { wall: "#d8c8e0", accent: "#685878", floor: "#b8a8c0", kind: "bedroom" }),
+  bedroom: drawBedroomArt,
   office: (w, h) =>
     drawVNInterior(w, h, { wall: "#d0d8e8", accent: "#485868", floor: "#a8b0c0", kind: "office" }),
   classroom: (w, h) =>

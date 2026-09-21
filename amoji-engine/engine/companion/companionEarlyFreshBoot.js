@@ -4,7 +4,7 @@
  */
 (function () {
   var SCENE_KEY = "amoji.companion.scenePreset";
-  var SCENE_ART_V = "picker-anime-v470-pro-expansion";
+  var SCENE_ART_V = "picker-anime-v481-scene-redesign";
   var OUTDOOR_SCENE = " night-city rooftop park beach sunset aurora rain-street cherry-blossom mountain harbor meadow zen-garden day-skyline bamboo-forest train-platform ";
   var LEGACY_SCENE = { minimal: "cozy-room" };
 
