@@ -20,9 +20,9 @@ describe("companionCharacterSwitch helpers", () => {
 
   it("switches voice + model config between characters", () => {
     const nova = characterAvatarConfig("nova", "yue");
-    const cool = characterAvatarConfig("cool", "yue");
-    expect(nova.voiceId).not.toBe(cool.voiceId);
-    expect(nova.modelUrl).not.toBe(cool.modelUrl);
-    expect(cool.modelUrl).toContain("companion-cool.vrm");
+    const wolf = characterAvatarConfig("wolf", "yue");
+    expect(nova.voiceId).not.toBe(wolf.voiceId);
+    expect(nova.modelUrl).not.toBe(wolf.modelUrl);
+    expect(wolf.modelUrl).toContain("companion-wolf.vrm");
   });
 });

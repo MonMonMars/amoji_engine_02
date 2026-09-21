@@ -91,7 +91,7 @@ export function buildSettingsChromeLabels(isEnglish = false, state = {}) {
 }
 
 /**
- * Short readout for settings — 23-model roster + AAA names (#5–10).
+ * Short readout for settings — full roster + AAA names (#5–10).
  * @param {boolean} [isEnglish]
  */
 /**

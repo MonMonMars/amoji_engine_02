@@ -5,7 +5,7 @@
 import { ROSTER_CHARACTER_IDS } from "./companionCharacterRoster.js";
 
 export const COMPANION_CHARACTER_ROLES_SCHEMA =
-  "amoji.companionCharacterRoles.v4-gen2";
+  "amoji.companionCharacterRoles.v5-gen3-r3";
 
 /** @typedef {import("../mobile/companionRolePresets.js").CompanionRole} CompanionRole */
 
@@ -26,6 +26,19 @@ export const CHARACTER_COMPANION_ROLES = Object.freeze({
   hina: "girlfriend",
   mio: "girlfriend",
   amoji: "girlfriend",
+  knight: "boyfriend",
+  samurai: "boyfriend",
+  tiger: "girlfriend",
+  leaf: "girlfriend",
+  wolf: "boyfriend",
+  fox: "pet",
+  jenny: "girlfriend",
+  weirdcat: "pet",
+  petal: "girlfriend",
+  beach: "boyfriend",
+  pirate: "boyfriend",
+  bunny: "pet",
+  /** Gen2 ids — legacy role (resolve id via LEGACY_CHARACTER_ALIASES) */
   pyre: "girlfriend",
   pan: "pet",
   circle: "girlfriend",
@@ -58,9 +71,9 @@ export const CHARACTER_COMPANION_ROLES = Object.freeze({
 /** @type {Readonly<Record<CompanionRole, string>>} */
 export const ROLE_DEFAULT_CHARACTER_ID = Object.freeze({
   girlfriend: "nova",
-  boyfriend: "cool",
+  boyfriend: "samurai",
   secretary: "nova",
-  pet: "pan",
+  pet: "bunny",
 });
 
 /**

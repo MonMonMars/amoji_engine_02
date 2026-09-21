@@ -7,7 +7,7 @@ import {
 
 describe("companionCharacterMigration", () => {
   it("maps retired roster ids to current characters", () => {
-    expect(normalizeRosterCharacterId("chad")).toBe("lantern");
+    expect(normalizeRosterCharacterId("chad")).toBe("samurai");
     expect(normalizeRosterCharacterId("olivia")).toBe("yuki");
     expect(normalizeRosterCharacterId("rose")).toBe("sakura");
   });
@@ -21,7 +21,7 @@ describe("companionCharacterMigration", () => {
       },
     };
     const next = migrateLegacyCharacterStorage(storage);
-    expect(next).toBe("lantern");
-    expect(saved).toBe("lantern");
+    expect(next).toBe("samurai");
+    expect(saved).toBe("samurai");
   });
 });

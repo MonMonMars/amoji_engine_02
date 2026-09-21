@@ -5,7 +5,7 @@
 import { rosterModelUrl } from "./rosterVrmAssets.mjs";
 import { ROSTER_SLOTS_16_23 } from "./companionRosterSlots16.js";
 
-export const ROSTER_SCHEMA = "amoji.companionRoster.v440-gen2-slots16";
+export const ROSTER_SCHEMA = "amoji.companionRoster.v447-gen3-r3-slots27";
 /** Flagship picks (Nova, Kizuna, Alicia, Ember) */
 export const ROSTER_LOCKED_NUMBERS = Object.freeze([1, 2, 3, 4]);
 
@@ -692,14 +692,18 @@ export const ROSTER_CHARACTER_IDS = Object.freeze([
   "hina",
   "mio",
   "amoji",
-  "pyre",
-  "pan",
-  "circle",
-  "face",
-  "cool",
-  "samplec",
-  "lantern",
-  "drift",
+  "knight",
+  "samurai",
+  "tiger",
+  "leaf",
+  "wolf",
+  "fox",
+  "jenny",
+  "weirdcat",
+  "petal",
+  "beach",
+  "pirate",
+  "bunny",
 ]);
 
 

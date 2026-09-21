@@ -2,7 +2,9 @@
  * Canonical on-disk VRM path per roster character id.
  * Filenames match picker ids so deploys cannot serve the wrong rig for a card.
  */
-export const ROSTER_VRM_ASSETS_SCHEMA = "amoji.rosterVrmAssets.v1";
+import { GEN3_ROSTER_SLOTS } from "./companionRosterGen3Data.mjs";
+
+export const ROSTER_VRM_ASSETS_SCHEMA = "amoji.rosterVrmAssets.v2-gen3";
 
 /** @param {string} characterId */
 export function rosterVrmBasename(characterId) {
@@ -33,24 +35,32 @@ export const LEGACY_VRM_BASENAME_ALIASES = Object.freeze({
   "companion-alicia.vrm": "alicia",
   "companion-ember.vrm": "ember",
   "companion-sky.vrm": "sky",
-  "companion-chibi.vrm": "pan",
-  "companion-jennifer.vrm": "circle",
-  "companion-polydancer.vrm": "drift",
-  "companion-aesthetica.vrm": "face",
-  "companion-rabbit.vrm": "pan",
-  "companion-chad.vrm": "lantern",
-  "companion-david.vrm": "pyre",
-  "companion-hugo.vrm": "pan",
-  "companion-shiro.vrm": "pan",
-  "companion-rex.vrm": "cool",
-  "companion-kai.vrm": "cool",
-  "companion-nana.vrm": "pan",
-  "companion-sumi.vrm": "circle",
-  "companion-lumi.vrm": "drift",
-  "companion-vera.vrm": "face",
-  "companion-robert.vrm": "lantern",
-  "companion-mikel.vrm": "pyre",
-  "companion-mimi.vrm": "pan",
+  "companion-chibi.vrm": "fox",
+  "companion-jennifer.vrm": "jenny",
+  "companion-polydancer.vrm": "tiger",
+  "companion-aesthetica.vrm": "petal",
+  "companion-rabbit.vrm": "fox",
+  "companion-chad.vrm": "samurai",
+  "companion-david.vrm": "knight",
+  "companion-hugo.vrm": "fox",
+  "companion-shiro.vrm": "fox",
+  "companion-rex.vrm": "wolf",
+  "companion-kai.vrm": "wolf",
+  "companion-nana.vrm": "fox",
+  "companion-sumi.vrm": "jenny",
+  "companion-lumi.vrm": "tiger",
+  "companion-vera.vrm": "petal",
+  "companion-robert.vrm": "samurai",
+  "companion-mikel.vrm": "knight",
+  "companion-mimi.vrm": "fox",
+  "companion-pyre.vrm": "knight",
+  "companion-pan.vrm": "fox",
+  "companion-circle.vrm": "jenny",
+  "companion-face.vrm": "petal",
+  "companion-cool.vrm": "wolf",
+  "companion-samplec.vrm": "leaf",
+  "companion-lantern.vrm": "samurai",
+  "companion-drift.vrm": "tiger",
 });
 
 /** Upstream VRM sources (refreshed on deploy when REFRESH_ROSTER_VRM=1). */
@@ -121,46 +131,11 @@ export const ROSTER_VRM_DOWNLOADS = [
   { id: "hina", url: ROSTER_VRM_SOURCE_URLS.hina, minBytes: 100_000 },
   { id: "mio", url: ROSTER_VRM_SOURCE_URLS.mio, minBytes: 100_000 },
   { id: "amoji", url: ROSTER_VRM_SOURCE_URLS.amoji, minBytes: 500_000 },
-  {
-    id: "pyre",
-    url: "https://arweave.net/Hc8Rd0EGKNHEevpm1D16BwP-LAPDS319Hvn0fualX_w",
-    minBytes: 500_000,
-  },
-  {
-    id: "pan",
-    url: "https://arweave.net/aVB6TrTpPLAoPgZIG5lWwBh4ZdMfkeXmTcU1ybgwHuE",
-    minBytes: 500_000,
-  },
-  {
-    id: "circle",
-    url: "https://arweave.net/0LR8vStpEzmWokIxQ9fnky4yYtY37xhmwFBvxxmBOXE",
-    minBytes: 500_000,
-  },
-  {
-    id: "face",
-    url: "https://arweave.net/4eYMl57GgEBFpFF6VJvrsTXLHNSKdyT4jumee0LiPwk",
-    minBytes: 500_000,
-  },
-  {
-    id: "cool",
-    url: "https://arweave.net/igaT6irIERD3pOhNF2vwFJ8he3ZAa5py9iYT_066M7M",
-    minBytes: 500_000,
-  },
-  {
-    id: "samplec",
-    url: "https://raw.githubusercontent.com/madjin/vrm-samples/master/vroid/stable/AvatarSample_C.vrm",
-    minBytes: 500_000,
-  },
-  {
-    id: "lantern",
-    url: "https://arweave.net/SpMyvJDbre5L1MwW2zPF5g0b5SdnTUPcmE7bE-uVtNk",
-    minBytes: 500_000,
-  },
-  {
-    id: "drift",
-    url: "https://arweave.net/jPOg-G0MPH55ZQmamFhT9f8cHn-hjeAQ0mRO5gWeKMQ",
-    minBytes: 500_000,
-  },
+  ...GEN3_ROSTER_SLOTS.map((slot) => ({
+    id: slot.id,
+    url: slot.vrmUrl,
+    minBytes: 400_000,
+  })),
 ];
 
 export function rosterDownloadIds() {

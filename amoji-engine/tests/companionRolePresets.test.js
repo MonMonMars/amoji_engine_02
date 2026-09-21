@@ -5,11 +5,11 @@ import {
 } from "../engine/mobile/companionRolePresets.js";
 
 describe("companionRolePresets", () => {
-  it("recommends cool for boyfriend and girlfriend roster for romance", () => {
-    expect(isCharacterRecommendedForRole("boyfriend", "cool")).toBe(true);
+  it("recommends samurai for boyfriend and girlfriend roster for romance", () => {
+    expect(isCharacterRecommendedForRole("boyfriend", "samurai")).toBe(true);
     expect(isCharacterRecommendedForRole("boyfriend", "nova")).toBe(false);
     expect(isCharacterRecommendedForRole("secretary", "nova")).toBe(false);
-    expect(rolePreset("boyfriend").defaultCharacterId).toBe("cool");
+    expect(rolePreset("boyfriend").defaultCharacterId).toBe("samurai");
     expect(rolePreset("girlfriend").characterIds).toContain("nova");
     expect(rolePreset("secretary").defaultCharacterId).toBe("nova");
   });
