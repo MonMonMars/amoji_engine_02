@@ -332,6 +332,7 @@ describe("companion start picker", () => {
     expect(picker.isOpen()).toBe(true);
     picker.dismiss();
     expect(picker.isOpen()).toBe(false);
+    expect(picker.element.hidden).toBe(true);
     expect(picker.element.isConnected).toBe(true);
     picker.show();
     expect(picker.isOpen()).toBe(true);

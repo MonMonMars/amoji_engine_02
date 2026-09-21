@@ -105,6 +105,8 @@ export async function bootEarlyStartPicker(opts = {}) {
         globalThis.__amojiStart.starting = true;
         globalThis.__amojiStart.pendingCharacterId = nextId || null;
       }
+      picker.hide();
+      globalThis.__amojiDismissStartButton?.();
       globalThis.__amojiHideLoading?.();
       if (
         globalThis.__amojiStart?.ready &&
@@ -137,7 +139,6 @@ export async function bootEarlyStartPicker(opts = {}) {
   globalThis.__amojiStartPickerPreloadJob = preloadJob;
   picker.show();
   void preloadJob.previewPromise;
-  document.body.classList.add("companion-start-pending", "companion-picker-open");
   await new Promise((resolve) => {
     requestAnimationFrame(() => requestAnimationFrame(resolve));
   });
