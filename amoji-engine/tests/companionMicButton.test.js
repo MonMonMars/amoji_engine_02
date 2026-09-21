@@ -145,6 +145,21 @@ describe("companionMicButton", () => {
     expect(el.dataset.micVisual).toBe("icon");
   });
 
+  it("pulses live activity while listening or speaking and flashes on volume", () => {
+    if (typeof document === "undefined") return;
+    const el = document.createElement("button");
+    const ui = createCompanionMicButton(el);
+    ui.setState("listening");
+    expect(el.classList.contains("mic-activity-live")).toBe(true);
+    ui.setLevel(0.55);
+    expect(el.classList.contains("mic-state-flash")).toBe(true);
+    ui.setState("idle");
+    expect(el.classList.contains("mic-activity-live")).toBe(false);
+    ui.setState("speaking");
+    expect(el.dataset.micState).toBe("speaking");
+    expect(el.classList.contains("mic-activity-live")).toBe(true);
+  });
+
   it("sets data-mic-visual and grey icon color when idle", () => {
     if (typeof document === "undefined") return;
     const el = document.createElement("button");

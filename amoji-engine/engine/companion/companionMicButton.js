@@ -1,7 +1,8 @@
 /**
  * ChatGPT-style companion mic button — emotion-linked glow, rings, and waveform.
  */
-export const COMPANION_MIC_BUTTON_SCHEMA = "amoji.companionMicButton.v6-volume-orb";
+export const COMPANION_MIC_BUTTON_SCHEMA =
+  "amoji.companionMicButton.v7-activity-flash-dblclick-stop";
 
 /** Mic orb diameter: quiet → smaller, loud → larger (live states only). */
 export const MIC_ORB_SCALE_MIN = 0.78;
@@ -292,6 +293,18 @@ export function companionMicButtonInnerHtml() {
  *   live?: boolean,
  * }} [opts]
  */
+/**
+ * Retrigger the one-shot brightness flash (debounced by caller).
+ * @param {HTMLElement | null} el
+ */
+export function triggerMicButtonActivityFlash(el) {
+  if (!el) return;
+  el.classList.remove("mic-state-flash");
+  void el.offsetWidth;
+  el.classList.add("mic-state-flash");
+  globalThis.setTimeout?.(() => el.classList.remove("mic-state-flash"), 340);
+}
+
 export function syncMicButtonGlow(el, opts = {}) {
   if (!el) return;
   const state = String(opts.state || "idle").toLowerCase();
@@ -376,6 +389,7 @@ export function createCompanionMicButton(el, opts = {}) {
   let emotion = opts.emotion || "neutral";
   let nuance = opts.nuance || "none";
   let hudLevel = 0;
+  let lastActivityFlashAt = 0;
   let theme = resolveMicButtonThemeForState("idle", { emotion, nuance });
 
   const syncHud = () => {
@@ -427,6 +441,10 @@ export function createCompanionMicButton(el, opts = {}) {
     el.classList.toggle("mic-live", state === "listening" || state === "speaking");
     el.classList.toggle("mic-off", state === "idle");
     el.classList.toggle("on", state === "listening" || state === "speaking");
+    el.classList.toggle(
+      "mic-activity-live",
+      state === "listening" || state === "speaking",
+    );
     el.setAttribute("aria-pressed", state === "listening" || state === "speaking" ? "true" : "false");
     applyStateTheme();
     syncHud();
@@ -457,6 +475,11 @@ export function createCompanionMicButton(el, opts = {}) {
       "--mic-orb-scale",
       micOrbScaleFromLevel(clamped, { live: true }).toFixed(3),
     );
+    const now = globalThis.performance?.now?.() ?? Date.now();
+    if (clamped > 0.07 && now - lastActivityFlashAt > 160) {
+      lastActivityFlashAt = now;
+      triggerMicButtonActivityFlash(el);
+    }
     syncHud();
   };
 
