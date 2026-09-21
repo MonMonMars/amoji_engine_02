@@ -82,7 +82,7 @@ describe("companionUnifiedApp", () => {
         "boyfriend",
         new URLSearchParams("character=chad&lang=en"),
       ),
-    ).toBe("samurai");
+    ).toBe("kael");
     expect(
       resolveRoleDefaultCharacter(
         "olivia",
@@ -105,9 +105,9 @@ describe("companionUnifiedApp", () => {
     ).toBe("girlfriend");
     expect(
       resolveAppRole(
-        new URLSearchParams("character=sakura&role=secretary&lang=en"),
+        new URLSearchParams("character=sienna&role=secretary&lang=en"),
         null,
-        "sakura",
+        "sienna",
       ),
     ).toBe("secretary");
   });
@@ -115,7 +115,7 @@ describe("companionUnifiedApp", () => {
   it("honors ?role=secretary for the secretary default character id", () => {
     expect(
       resolveSessionRoleFromCharacter(
-        "sakura",
+        "sienna",
         new URLSearchParams("role=secretary&lang=en"),
       ),
     ).toBe("secretary");
@@ -135,7 +135,7 @@ describe("companionUnifiedApp", () => {
 
   it("uses role default character when none picked", () => {
     expect(resolveRoleDefaultCharacter("", "secretary", new URLSearchParams())).toBe(
-      "sakura",
+      "sienna",
     );
     expect(
       resolveRoleDefaultCharacter("nova", "girlfriend", new URLSearchParams()),
@@ -148,9 +148,9 @@ describe("companionUnifiedApp", () => {
       "secretary",
       true,
     );
-    const sakura = roster.find((c) => c.id === "sakura");
-    expect(sakura?.roleBadge).toBe("Secretary");
-    expect(sakura?.companionRole).toBe("secretary");
+    const sienna = roster.find((c) => c.id === "sienna");
+    expect(sienna?.roleBadge).toBe("Secretary");
+    expect(sienna?.companionRole).toBe("secretary");
     expect(roster.find((c) => c.id === "kizuna")?.roleBadge).toBe("Girlfriend");
   });
 

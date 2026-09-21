@@ -13,9 +13,11 @@ const assetsDir = join(
 
 /** Pairs that intentionally share the same mesh bytes (legacy alias slots). */
 const ALLOWED_DUPLICATE_GROUPS = [
-  ["celeste", "vega"],
-  ["sakura", "aria"],
-  ["atlas", "noah"],
+  ["sienna", "hana"],
+  ["juno", "priya", "cyrus"],
+  ["juno", "cyrus"],
+  ["atlas", "zane"],
+  ["elio", "luna"],
 ];
 
 function md5File(path) {

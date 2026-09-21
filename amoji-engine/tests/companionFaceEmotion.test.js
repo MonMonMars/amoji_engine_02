@@ -30,12 +30,12 @@ describe("companionFaceEmotion", () => {
     expect(detectFaceRigType({ avatarKind: "procedural" })).toBe("procedural");
 
     const kai = inspectVrmBuffer(
-      readFileSync(join(assets, "companion-wolf.vrm")),
-      "companion-wolf.vrm",
+      readFileSync(join(assets, "companion-rin.vrm")),
+      "companion-rin.vrm",
     );
     expect(
       detectFaceRigType({
-        characterId: "wolf",
+        characterId: "rin",
         morphSummary: {
           morphTargetCount: kai.morphTargets,
           morphNames: kai.morphNames,

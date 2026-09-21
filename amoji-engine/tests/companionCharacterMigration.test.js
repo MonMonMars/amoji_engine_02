@@ -7,10 +7,10 @@ import {
 
 describe("companionCharacterMigration", () => {
   it("maps retired roster ids to current characters", () => {
-    expect(normalizeRosterCharacterId("chad")).toBe("samurai");
+    expect(normalizeRosterCharacterId("chad")).toBe("kael");
     expect(normalizeRosterCharacterId("olivia")).toBe("yuki");
     expect(normalizeRosterCharacterId("rose")).toBe("mei");
-    expect(normalizeRosterCharacterId("sakura")).toBe("sakura");
+    expect(normalizeRosterCharacterId("sakura")).toBe("sienna");
   });
 
   it("rewrites legacy storage to keep user selection", () => {
@@ -22,7 +22,7 @@ describe("companionCharacterMigration", () => {
       },
     };
     const next = migrateLegacyCharacterStorage(storage);
-    expect(next).toBe("samurai");
-    expect(saved).toBe("samurai");
+    expect(next).toBe("kael");
+    expect(saved).toBe("kael");
   });
 });

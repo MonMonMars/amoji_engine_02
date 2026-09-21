@@ -5,14 +5,14 @@ import {
 } from "../engine/mobile/companionRolePresets.js";
 
 describe("companionRolePresets", () => {
-  it("recommends samurai for boyfriend and girlfriend roster for romance", () => {
-    expect(isCharacterRecommendedForRole("boyfriend", "samurai")).toBe(true);
+  it("recommends kael for boyfriend and girlfriend roster for romance", () => {
+    expect(isCharacterRecommendedForRole("boyfriend", "kael")).toBe(true);
     expect(isCharacterRecommendedForRole("boyfriend", "nova")).toBe(false);
     expect(isCharacterRecommendedForRole("secretary", "nova")).toBe(false);
-    expect(isCharacterRecommendedForRole("secretary", "sakura")).toBe(true);
+    expect(isCharacterRecommendedForRole("secretary", "sienna")).toBe(true);
     expect(isCharacterRecommendedForRole("secretary", "luna")).toBe(true);
-    expect(rolePreset("boyfriend").defaultCharacterId).toBe("samurai");
+    expect(rolePreset("boyfriend").defaultCharacterId).toBe("kael");
     expect(rolePreset("girlfriend").characterIds).toContain("nova");
-    expect(rolePreset("secretary").defaultCharacterId).toBe("sakura");
+    expect(rolePreset("secretary").defaultCharacterId).toBe("sienna");
   });
 });

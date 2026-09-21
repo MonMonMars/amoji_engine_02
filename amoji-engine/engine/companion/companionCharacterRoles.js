@@ -5,7 +5,7 @@
 import { ROSTER_CHARACTER_IDS } from "./companionCharacterRoster.js";
 
 export const COMPANION_CHARACTER_ROLES_SCHEMA =
-  "amoji.companionCharacterRoles.v6-premium-pro";
+  "amoji.companionCharacterRoles.v7-replacement480";
 
 /** @typedef {import("../mobile/companionRolePresets.js").CompanionRole} CompanionRole */
 
@@ -22,6 +22,27 @@ export const CHARACTER_COMPANION_ROLES = Object.freeze({
   hina: "girlfriend",
   mio: "girlfriend",
   amoji: "girlfriend",
+  orion: "boyfriend",
+  kael: "boyfriend",
+  mira: "girlfriend",
+  sumire: "girlfriend",
+  rin: "boyfriend",
+  dex: "pet",
+  niko: "girlfriend",
+  yara: "pet",
+  thorn: "girlfriend",
+  vesper: "boyfriend",
+  ash: "boyfriend",
+  cleo: "pet",
+  sienna: "secretary",
+  luna: "secretary",
+  juno: "girlfriend",
+  elio: "girlfriend",
+  hana: "secretary",
+  zane: "secretary",
+  priya: "girlfriend",
+  cyrus: "girlfriend",
+  /** Legacy ids → replacement roster */
   knight: "boyfriend",
   samurai: "boyfriend",
   tiger: "girlfriend",
@@ -35,14 +56,12 @@ export const CHARACTER_COMPANION_ROLES = Object.freeze({
   pirate: "boyfriend",
   bunny: "pet",
   sakura: "secretary",
-  luna: "secretary",
   celeste: "girlfriend",
   yume: "girlfriend",
   aria: "secretary",
   noah: "secretary",
   rika: "girlfriend",
   vega: "girlfriend",
-  /** Gen2 ids — legacy role (resolve id via LEGACY_CHARACTER_ALIASES) */
   pyre: "girlfriend",
   pan: "pet",
   circle: "girlfriend",
@@ -51,7 +70,6 @@ export const CHARACTER_COMPANION_ROLES = Object.freeze({
   samplec: "girlfriend",
   lantern: "boyfriend",
   drift: "girlfriend",
-  /** Legacy ids — same function as replacements */
   sora: "girlfriend",
   erika: "girlfriend",
   shiro: "girlfriend",
@@ -74,9 +92,9 @@ export const CHARACTER_COMPANION_ROLES = Object.freeze({
 /** @type {Readonly<Record<CompanionRole, string>>} */
 export const ROLE_DEFAULT_CHARACTER_ID = Object.freeze({
   girlfriend: "nova",
-  boyfriend: "samurai",
-  secretary: "sakura",
-  pet: "bunny",
+  boyfriend: "kael",
+  secretary: "sienna",
+  pet: "cleo",
 });
 
 /**
@@ -127,6 +145,31 @@ export function characterIdsForRole(role) {
 export function defaultCharacterIdForRole(role) {
   const key = normalizeRoleKey(role);
   return ROLE_DEFAULT_CHARACTER_ID[key] || "nova";
+}
+
+/**
+ * @param {string | null | undefined} characterId
+ * @returns {boolean}
+ */
+export function isRosterCharacterId(characterId) {
+  const key = String(characterId || "").toLowerCase();
+  return ROSTER_CHARACTER_IDS.includes(key);
+}
+
+/**
+ * @param {string | null | undefined} characterId
+ * @returns {boolean}
+ */
+export function characterHasExplicitRole(characterId) {
+  const key = String(characterId || "").toLowerCase();
+  return Boolean(CHARACTER_COMPANION_ROLES[key]);
+}
+
+/**
+ * @returns {string[]}
+ */
+export function rosterCharacterIdsWithoutExplicitRole() {
+  return ROSTER_CHARACTER_IDS.filter((id) => !CHARACTER_COMPANION_ROLES[id]);
 }
 
 /**
