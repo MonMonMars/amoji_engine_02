@@ -18,13 +18,18 @@ describe("top-left companion chip", () => {
     );
   });
 
-  it("opens the start picker (same as boot) from the brand chip", () => {
+  it("opens start picker before session and in-session picker after live session", () => {
     expect(html).toContain('id="brand-btn"');
     expect(html).toContain('id="companion-status-line"');
     expect(html).toContain('aria-haspopup="dialog"');
     expect(html).toContain('brandBtn?.addEventListener("click"');
     expect(html).toContain("openCharacterPicker()");
-    expect(html).toContain("startPicker.show()");
+    expect(html).toContain("isLiveSession()");
+    expect(html).toMatch(
+      /if \(isLiveSession\(\)\) \{[\s\S]*characterPicker\?\.open\?\.\(\)/,
+    );
+    expect(html).toMatch(/startPicker\.show\(\)/);
+    expect(html).toContain("characterPicker?.isOpen?.()");
     expect(html).toContain("startPicker?.isOpen?.()");
   });
 });

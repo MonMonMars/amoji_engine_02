@@ -217,6 +217,27 @@ record(
   String(pickerChrome.stageMaxWidthOk),
 );
 
+await page.evaluate(async () => {
+  const imgs = Array.from(
+    document.querySelectorAll(
+      "#start-character-picker .companion-card-portrait img",
+    ),
+  );
+  await Promise.all(
+    imgs.map(
+      (img) =>
+        new Promise((resolve) => {
+          if (img.complete && img.naturalWidth > 0) {
+            resolve(undefined);
+            return;
+          }
+          img.addEventListener("load", () => resolve(undefined), { once: true });
+          img.addEventListener("error", () => resolve(undefined), { once: true });
+        }),
+    ),
+  );
+});
+
 const layout = await page.evaluate((minRoster) => {
   const footer = document.querySelector("#start-character-picker .picker-footer");
   const wrap = document.querySelector("#start-character-picker .start-picker-grid-wrap");

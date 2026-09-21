@@ -1106,7 +1106,7 @@ export function createCompanionStartPicker(opts = {}) {
       roster: fullList(),
       rosterStrip: true,
       isEnglish,
-      eagerPreview: false,
+      eagerPreview: true,
       startStrip: true,
       hideRoleStrip: true,
       disabled: starting || !pickable,
