@@ -77,6 +77,14 @@ export function collectSpringJoints(raw) {
 export function forceGravityDirDown(dir) {
   if (!dir) return dir;
   const y = Number(dir.y);
+  // Author +Y gravity reads as wind from below — flip first.
+  if (y > 0.05) {
+    dir.set?.(0, -1, 0);
+    dir.x = 0;
+    dir.y = -1;
+    dir.z = 0;
+    return dir;
+  }
   if (y > -0.85) {
     dir.set?.(0, -1, 0);
     dir.x = 0;

@@ -817,13 +817,17 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
 
   /** Re-apply planted legs + idle arms after spring/mixer (prevents limb drift). */
   const reapplyPlantedLimbs = (opts = {}) => {
-    if (!humanoid || talking || activeAction || activeGesture) return;
+    if (!humanoid || activeAction || activeGesture) return;
     applyLegPose(smoothedPose, 1, {
       plantFeet: true,
-      strictRest: true,
+      strictRest: !talking,
     });
-    applyCalmIdleArms(smoothedPose, 1);
-    applyHandAndFootRest(smoothedPose, 1, 0, { strictRest: true });
+    if (!talking) {
+      applyCalmIdleArms(smoothedPose, 1);
+    }
+    applyHandAndFootRest(smoothedPose, 1, talking ? 0.35 : 0, {
+      strictRest: !talking,
+    });
     humanoid.update?.();
   };
 

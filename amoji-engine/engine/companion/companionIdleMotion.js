@@ -114,7 +114,7 @@ export function samplePlantedAliveIdle(elapsedSec, opts = {}) {
   const calm = sampleCalmBreathIdle(elapsedSec, opts);
   const life = sampleIdleBodyMotion(elapsedSec, opts);
   const bind = opts.bind === "apose" ? "apose" : "tpose";
-  const lifeMul = bind === "apose" ? 0.42 : 0.28;
+  const lifeMul = bind === "apose" ? 0.58 : 0.46;
   return {
     upperLegL: 0,
     upperLegR: 0,
@@ -152,7 +152,7 @@ export function mergePlantedAliveIdleIntoPose(base, elapsedSec, opts = {}) {
     "forearmL",
     "forearmR",
   ]);
-  const bodyWeight = snap ? 0.38 : bind === "apose" ? 0.96 : 0.9;
+  const bodyWeight = snap ? 0.42 : bind === "apose" ? 1 : 0.94;
   let pose = mergePoses(base, bodyOnly, bodyWeight);
   const foreWeight = snap ? 0.22 : bind === "apose" ? 0.42 : 0.36;
   pose = mergePoses(
