@@ -102,7 +102,7 @@ describe("companionUnifiedApp", () => {
         null,
         "nova",
       ),
-    ).toBe("girlfriend");
+    ).toBe("secretary");
     expect(
       resolveAppRole(
         new URLSearchParams("character=sienna&role=secretary&lang=en"),
@@ -124,13 +124,13 @@ describe("companionUnifiedApp", () => {
         "nova",
         new URLSearchParams("role=secretary&lang=en"),
       ),
-    ).toBe("girlfriend");
+    ).toBe("secretary");
     expect(
       resolveSessionRoleFromCharacter(
         "ember",
         new URLSearchParams("role=secretary&lang=en"),
       ),
-    ).toBe("girlfriend");
+    ).toBe("secretary");
   });
 
   it("uses role default character when none picked", () => {
