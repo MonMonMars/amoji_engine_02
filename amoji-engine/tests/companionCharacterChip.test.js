@@ -18,11 +18,13 @@ describe("top-left companion chip", () => {
     );
   });
 
-  it("opens the character picker from the brand chip", () => {
+  it("opens the start picker (same as boot) from the brand chip", () => {
     expect(html).toContain('id="brand-btn"');
     expect(html).toContain('id="companion-status-line"');
     expect(html).toContain('aria-haspopup="dialog"');
     expect(html).toContain('brandBtn?.addEventListener("click"');
     expect(html).toContain("openCharacterPicker()");
+    expect(html).toContain("startPicker.show()");
+    expect(html).toContain("startPicker?.isOpen?.()");
   });
 });

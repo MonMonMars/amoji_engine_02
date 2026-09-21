@@ -1288,7 +1288,12 @@ export function createCompanionStartPicker(opts = {}) {
       renderAll();
       paintCopy();
     },
+    isOpen() {
+      return shell.isConnected && shell.classList.contains("is-open");
+    },
     show() {
+      const mount = opts.root || document.body;
+      if (!shell.isConnected && mount) mount.appendChild(shell);
       shell.classList.remove("hide");
       shell.classList.add("is-open");
       shell.removeAttribute("aria-hidden");
@@ -1298,15 +1303,18 @@ export function createCompanionStartPicker(opts = {}) {
       requestAnimationFrame(renderScrollHint);
     },
     hide() {
-      shell.classList.remove("is-open");
-      shell.classList.add("hide");
-      shell.setAttribute("aria-hidden", "true");
-    },
-    dismiss() {
       starting = false;
       shell.classList.remove("is-starting", "is-open");
+      shell.classList.add("hide");
+      shell.setAttribute("aria-hidden", "true");
+      shell.removeAttribute("aria-busy");
       document.body.classList.remove("companion-start-pending", "companion-picker-open");
-      shell.remove();
+    },
+    close() {
+      this.hide();
+    },
+    dismiss() {
+      this.hide();
     },
     destroy() {
       if (preloadHideTimer) globalThis.clearTimeout?.(preloadHideTimer);
