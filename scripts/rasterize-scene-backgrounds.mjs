@@ -20,7 +20,7 @@ mkdirSync(pngDir, { recursive: true });
 const browser = await chromium.launch({ headless: true });
 const page = await browser.newPage({ viewport: { width: W, height: H } });
 
-const PRESERVE_SCENE_PNG = new Set(["bedroom"]);
+const PRESERVE_SCENE_PNG = new Set();
 
 let written = 0;
 for (const preset of SCENE_BACKGROUND_PRESETS) {

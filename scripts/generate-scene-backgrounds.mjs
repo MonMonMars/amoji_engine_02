@@ -11,8 +11,8 @@ import { SCENE_BACKGROUND_PRESETS } from "../amoji-engine/engine/companion/compa
 import { PICKER_SCENE_ART_REVISION } from "../amoji-engine/engine/companion/companionPickerAssets.mjs";
 import { SCENE_ANIME_ART, animeSceneFinisher } from "./scene-bg-anime-art.mjs";
 
-/** Keep shipped art that users already liked (skip SVG overwrite). */
-const PRESERVE_SCENE_SVG = new Set(["bedroom"]);
+/** Regenerate every preset when art revision bumps (no skips). */
+const PRESERVE_SCENE_SVG = new Set();
 
 const root = dirname(fileURLToPath(import.meta.url));
 const outDir = join(root, "../prototypes/assets/scene-bg");

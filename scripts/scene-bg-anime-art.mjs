@@ -2,7 +2,7 @@
  * Japanese anime / VN / gacha-game style scene painters (SVG body fragments).
  * Rich layered gradients, neon, bokeh, perspective interiors, atmospheric depth.
  */
-export const SCENE_ANIME_ART_REVISION = "anime-scene-v439-detail";
+export const SCENE_ANIME_ART_REVISION = "anime-scene-v441-ultra-detail";
 
 /** @param {number} w @param {number} h */
 export function animePaintDefs(w, h) {
@@ -75,19 +75,42 @@ export function animePaintDefs(w, h) {
 </defs>`;
 }
 
+/** Cel-shaded rim light + soft bloom streaks (VN / gacha key art finish). */
+export function animeDetailPass(w, h) {
+  let sparkles = "";
+  for (let i = 0; i < 48; i += 1) {
+    const cx = ((i * 173) % 1000) / 1000 * w;
+    const cy = ((i * 211 + 31) % 1000) / 1000 * h;
+    const r = 0.6 + (i % 5) * 0.35;
+    sparkles += `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${r.toFixed(2)}" fill="#fff" opacity="${(0.04 + (i % 7) * 0.01).toFixed(3)}" filter="url(#softGlow)"/>`;
+  }
+  let grain = "";
+  for (let i = 0; i < 64; i += 1) {
+    const gx = ((i * 97) % 1000) / 1000 * w;
+    const gy = ((i * 53) % 1000) / 1000 * h;
+    grain += `<rect x="${gx.toFixed(1)}" y="${gy.toFixed(1)}" width="1.2" height="1.2" fill="#fff" opacity="0.018"/>`;
+  }
+  const flare = `<ellipse cx="${w * 0.82}" cy="${h * 0.14}" rx="${w * 0.22}" ry="${h * 0.08}" fill="#fff8e8" opacity="0.06" filter="url(#softGlow)"/>
+  <ellipse cx="${w * 0.18}" cy="${h * 0.22}" rx="${w * 0.12}" ry="${h * 0.05}" fill="#c8e8ff" opacity="0.05" filter="url(#softGlow)"/>`;
+  const rim = `<rect x="0" y="0" width="${w}" height="${h}" fill="none" stroke="#fff" stroke-width="2" opacity="0.04"/>
+  <rect x="2" y="2" width="${w - 4}" height="${h - 4}" fill="none" stroke="#000" stroke-width="3" opacity="0.08"/>`;
+  return `${sparkles}${grain}${flare}${rim}`;
+}
+
 /** Extra depth: dust, floor haze, vignette (appended to every regenerated scene). */
 export function animeSceneFinisher(w, h) {
   let dust = "";
-  for (let i = 0; i < 32; i += 1) {
+  for (let i = 0; i < 56; i += 1) {
     const cx = ((i * 137) % 1000) / 1000 * w;
     const cy = ((i * 89 + 17) % 1000) / 1000 * h * 0.88;
     const r = 0.8 + (i % 4) * 0.45;
     dust += `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${r.toFixed(2)}" fill="#fff" opacity="${(0.035 + (i % 6) * 0.012).toFixed(3)}"/>`;
   }
   return `${dust}
-  <rect width="${w}" height="${h}" fill="url(#haze)" opacity="0.18"/>
+  ${animeDetailPass(w, h)}
+  <rect width="${w}" height="${h}" fill="url(#haze)" opacity="0.2"/>
   <rect width="${w}" height="${h}" fill="url(#vignette)"/>
-  <rect x="0" y="${h * 0.88}" width="${w}" height="${h * 0.12}" fill="#000" opacity="0.22"/>`;
+  <rect x="0" y="${h * 0.88}" width="${w}" height="${h * 0.12}" fill="#000" opacity="0.24"/>`;
 }
 
 /** Anime window — city bokeh at night. */
@@ -223,9 +246,9 @@ export function mountainLayers(w, h) {
 /** Detailed skyline for swatch / alternate night-city art */
 export function drawNightCityArt(w, h) {
   let buildings = "";
-  for (let i = 0; i < 28; i += 1) {
+  for (let i = 0; i < 36; i += 1) {
     const bw = 18 + (i % 7) * 14;
-    const bh = 90 + (i * 47) % 280;
+    const bh = 90 + (i * 47) % 320;
     const x = -10 + i * 36;
     const y = h - 48 - bh;
     const tone = 12 + (i % 5) * 8;
@@ -246,16 +269,17 @@ export function drawNightCityArt(w, h) {
     return `<path d="M0 ${y0} Q${w * 0.5} ${y0 + 12} ${w} ${y0 - 4}" fill="none" stroke="#1a2030" stroke-width="1.2" opacity="0.5"/>`;
   }).join("");
   let reflect = "";
-  for (let i = 0; i < 28; i += 1) {
+  for (let i = 0; i < 36; i += 1) {
     const bw = 18 + (i % 7) * 14;
-    const bh = 90 + (i * 47) % 280;
+    const bh = 90 + (i * 47) % 320;
     const x = -10 + i * 36;
     const y = h - 48 + 48;
     reflect += `<rect x="${x}" y="${y - bh * 0.35}" width="${bw}" height="${bh * 0.35}" fill="#ff88cc" opacity="0.06" transform="scale(1,-1) translate(0,${-h})"/>`;
   }
   return `${animePaintDefs(w, h)}
   <rect width="${w}" height="${h}" fill="url(#skyTop)"/>
-  ${starField(120, w, h)}
+  ${starField(180, w, h)}
+  ${bokehLights(28, w, h)}
   ${godRays(w, h, "#c8b8ff")}
   ${bokehLights(45, w, h)}
   <circle cx="${w * 0.78}" cy="${h * 0.12}" r="52" fill="url(#moonGlow)" opacity="0.7"/>
@@ -444,9 +468,18 @@ export function drawVNInterior(w, h, theme) {
       <rect x="${w * 0.22}" y="${h * 0.58}" width="140" height="10" rx="2" fill="#6a5040"/>
       ${Array.from({ length: 3 }, (_, i) => `<rect x="${w * 0.25 + i * 45}" y="${h * 0.68}" width="8" height="35" fill="#584838"/>`).join("")}`
       : kind === "bedroom"
-        ? `<rect x="${w * 0.08}" y="${h * 0.58}" width="${w * 0.42}" height="${h * 0.22}" rx="12" fill="${accent}" opacity="0.55"/>
+        ? `${Array.from({ length: 10 }, (_, i) => {
+          const fx = w * 0.04 + (i % 5) * (w * 0.18);
+          const fy = h * 0.04 + Math.floor(i / 5) * 22;
+          return `<circle cx="${fx}" cy="${fy}" r="2.5" fill="#ffd8a8" opacity="0.9" filter="url(#softGlow)"/>`;
+        }).join("")}
+        <rect x="${w * 0.08}" y="${h * 0.58}" width="${w * 0.42}" height="${h * 0.22}" rx="12" fill="${accent}" opacity="0.55"/>
         <rect x="${w * 0.1}" y="${h * 0.56}" width="${w * 0.38}" height="18" rx="8" fill="#fff" opacity="0.15"/>
-        <ellipse cx="${w * 0.2}" cy="${h * 0.62}" rx="40" ry="20" fill="#fff" opacity="0.08"/>`
+        <ellipse cx="${w * 0.2}" cy="${h * 0.62}" rx="40" ry="20" fill="#fff" opacity="0.08"/>
+        <rect x="${w * 0.52}" y="${h * 0.52}" width="${w * 0.12}" height="${h * 0.28}" fill="#685878" opacity="0.5" rx="4"/>
+        ${Array.from({ length: 4 }, (_, i) => `<rect x="${w * 0.535}" y="${h * 0.54 + i * 42}" width="${w * 0.09}" height="32" fill="${i % 2 ? "#88a8d8" : "#e87898"}" opacity="0.45" rx="2"/>`).join("")}
+        <circle cx="${w * 0.78}" cy="${h * 0.48}" r="38" fill="url(#lampGlow)"/>
+        <rect x="${w * 0.76}" y="${h * 0.44}" width="6" height="80" fill="#484848"/>`
         : kind === "classroom"
           ? `<rect x="${w * 0.05}" y="${h * 0.55}" width="${w * 0.9}" height="8" fill="${accent}"/>
           ${Array.from({ length: 10 }, (_, i) => `<rect x="${w * 0.08 + i * 42}" y="${h * 0.63}" width="28" height="22" fill="#584838" opacity="0.6"/>`).join("")}`

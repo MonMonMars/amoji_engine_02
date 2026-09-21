@@ -4,7 +4,7 @@
  */
 (function () {
   var SCENE_KEY = "amoji.companion.scenePreset";
-  var SCENE_ART_V = "picker-anime-v439-detail-scenes";
+  var SCENE_ART_V = "picker-anime-v441-ultra-detail-scenes";
   var LEGACY_SCENE = { minimal: "cozy-room" };
 
   function resolveSceneId(raw) {
