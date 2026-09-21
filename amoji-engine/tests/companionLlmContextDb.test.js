@@ -24,8 +24,8 @@ describe("companionLlmContextDb", () => {
   };
 
   it("builds character record with voice, idle, and performance fields", () => {
-    const rec = buildCharacterLlmRecord("cool", "yue", false);
-    expect(rec.id).toBe("cool");
+    const rec = buildCharacterLlmRecord("wolf", "yue", false);
+    expect(rec.id).toBe("wolf");
     expect(rec.gender).toBe("male");
     expect(rec.voices.yue).toContain("WanLung");
     expect(rec.tapLines.length).toBeGreaterThan(0);

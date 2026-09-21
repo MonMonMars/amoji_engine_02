@@ -30,12 +30,12 @@ describe("companionFaceEmotion", () => {
     expect(detectFaceRigType({ avatarKind: "procedural" })).toBe("procedural");
 
     const kai = inspectVrmBuffer(
-      readFileSync(join(assets, "companion-cool.vrm")),
-      "companion-cool.vrm",
+      readFileSync(join(assets, "companion-wolf.vrm")),
+      "companion-wolf.vrm",
     );
     expect(
       detectFaceRigType({
-        characterId: "cool",
+        characterId: "wolf",
         morphSummary: {
           morphTargetCount: kai.morphTargets,
           morphNames: kai.morphNames,
@@ -43,7 +43,7 @@ describe("companionFaceEmotion", () => {
         expressionNames: kai.expressions,
         triangleCount: kai.triangles,
       }),
-    ).toBe("arkit");
+    ).toBe("vrm0-standard");
   });
 
   it("scales preset blends down for ARKit rigs and up for anime rigs", () => {

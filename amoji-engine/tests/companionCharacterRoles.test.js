@@ -16,11 +16,18 @@ describe("companionCharacterRoles", () => {
     );
   });
 
-  it("uses cool as the default boyfriend pick (Gen2 slot #20)", () => {
+  it("uses samurai as the default boyfriend pick (Gen3 slot #17)", () => {
     expect(resolveCharacterRole("rex")).toBe("boyfriend");
-    expect(resolveCharacterRole("lantern")).toBe("boyfriend");
-    expect(characterIdsForRole("boyfriend")).toEqual(["atlas", "cool", "lantern"]);
-    expect(ROLE_DEFAULT_CHARACTER_ID.boyfriend).toBe("cool");
+    expect(resolveCharacterRole("samurai")).toBe("boyfriend");
+    expect(characterIdsForRole("boyfriend")).toEqual([
+      "atlas",
+      "knight",
+      "samurai",
+      "wolf",
+      "beach",
+      "pirate",
+    ]);
+    expect(ROLE_DEFAULT_CHARACTER_ID.boyfriend).toBe("samurai");
   });
 
   it("uses nova for secretary defaults", () => {
@@ -44,17 +51,16 @@ describe("companionCharacterRoles", () => {
       "hina",
       "mio",
       "amoji",
-      "pyre",
-      "circle",
-      "face",
-      "samplec",
-      "drift",
+      "tiger",
+      "leaf",
+      "jenny",
+      "petal",
     ]);
   });
 
-  it("lists pan as pet mascot", () => {
+  it("lists fox, weirdcat, and bunny as pet mascots", () => {
     expect(resolveCharacterRole("mimi")).toBe("pet");
-    expect(ROLE_DEFAULT_CHARACTER_ID.pet).toBe("pan");
-    expect(characterIdsForRole("pet")).toEqual(["pan"]);
+    expect(ROLE_DEFAULT_CHARACTER_ID.pet).toBe("bunny");
+    expect(characterIdsForRole("pet")).toEqual(["fox", "weirdcat", "bunny"]);
   });
 });
