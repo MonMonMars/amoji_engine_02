@@ -39,6 +39,10 @@ import {
 } from "./companionScenePresets.js";
 import { wireScrollAffordances } from "./companionScrollAffordances.js";
 import { applyPickerAaaBackgroundArt } from "./companionPickerAssets.mjs";
+import {
+  clearStartPickerBodyLocks,
+  markStartPickerDismissed,
+} from "./companionStartPickerGate.mjs";
 
 export const COMPANION_CHARACTER_PICKER_SCHEMA =
   "amoji.companionCharacterPicker.v7-roster27-scenes27";
@@ -1318,7 +1322,8 @@ export function createCompanionStartPicker(opts = {}) {
       shell.setAttribute("aria-hidden", "true");
       shell.hidden = true;
       shell.removeAttribute("aria-busy");
-      document.body.classList.remove("companion-start-pending", "companion-picker-open");
+      markStartPickerDismissed(globalThis.__amojiStart);
+      clearStartPickerBodyLocks();
     },
     close() {
       this.hide();
