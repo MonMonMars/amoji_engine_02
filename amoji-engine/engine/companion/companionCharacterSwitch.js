@@ -28,6 +28,7 @@ export const COMPANION_CHARACTER_SWITCH_SCHEMA =
  *   onStagePreview?: (url: string | null) => void,
  *   onProgress?: (pct: number, label: string) => void,
  *   onCharacterTap?: () => void,
+ *   isAssistantSpeaking?: () => boolean,
  * }} opts
  */
 export async function switchCompanionCharacter(opts) {
@@ -41,6 +42,7 @@ export async function switchCompanionCharacter(opts) {
     onStagePreview,
     onProgress,
     onCharacterTap,
+    isAssistantSpeaking,
   } = opts;
   const isEnglish = langCode === "en";
   const config = characterAvatarConfig(characterId, langCode);
@@ -70,6 +72,7 @@ export async function switchCompanionCharacter(opts) {
     modelUrl: modelFetchUrl,
     prefer: config.avatarPrefer,
     onCharacterTap,
+    isAssistantSpeaking,
     onProgress: (pct, _label) => {
       const mapped = 22 + Math.round((Math.max(0, Math.min(100, pct)) / 100) * 58);
       emit(
