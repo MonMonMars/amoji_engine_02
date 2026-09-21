@@ -598,7 +598,6 @@ export async function createGltfAvatar(opts) {
       unbindOrbitSession();
       controls.dispose();
       renderer.dispose();
-      renderer.forceContextLoss?.();
     },
   };
 }

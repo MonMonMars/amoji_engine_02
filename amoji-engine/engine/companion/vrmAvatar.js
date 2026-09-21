@@ -321,9 +321,16 @@ export async function createVrmAvatar(opts) {
     if (obj.isMesh) {
       obj.castShadow = true;
       obj.receiveShadow = true;
+      obj.frustumCulled = false;
       const mats = Array.isArray(obj.material) ? obj.material : [obj.material];
       for (const m of mats) {
-        if (m?.map) m.map.colorSpace = THREE.SRGBColorSpace;
+        if (!m) continue;
+        m.visible = true;
+        if (m.map) m.map.colorSpace = THREE.SRGBColorSpace;
+        if (typeof m.envMapIntensity === "number") {
+          m.envMapIntensity = Math.max(m.envMapIntensity, 0.85);
+        }
+        m.needsUpdate = true;
       }
     }
   });
@@ -1923,7 +1930,6 @@ export async function createVrmAvatar(opts) {
       controls.dispose();
       vrm.dispose?.();
       renderer.dispose();
-      renderer.forceContextLoss?.();
     },
   };
 }
