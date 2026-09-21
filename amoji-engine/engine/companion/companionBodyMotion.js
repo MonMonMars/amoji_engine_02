@@ -66,8 +66,12 @@ import {
   pokeSideBiasFromPoint,
   samplePokeShakePose,
 } from "./companionPokeBody.js";
+import {
+  enforcePlantedHandRest,
+  enforcePlantedLimbRotations,
+} from "./companionPlantedLimbLock.js";
 
-export const COMPANION_BODY_SCHEMA = "amoji.companionBody.v6-poke-upper-shake";
+export const COMPANION_BODY_SCHEMA = "amoji.companionBody.v7-hard-planted-limbs";
 
 /**
  * @param {import('@pixiv/three-vrm').VRMHumanoid | null | undefined} humanoid
@@ -656,6 +660,19 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
     applyBoneRotation("rightLowerArm", withElbowBend(restRl, foreR));
   };
 
+  const applyTalkForearmsOnly = (pose, k) => {
+    applyPlantedUpperArmRest();
+    const restLl = armRestRotations.leftLowerArm;
+    const restRl = armRestRotations.rightLowerArm;
+    const apose = isAposeBind();
+    const foreCap = apose ? 0.24 : 0.3;
+    const safe = clampTalkArmPose(pose);
+    const foreL = Math.min(foreCap, (safe.forearmL ?? 0) * k);
+    const foreR = Math.min(foreCap, (safe.forearmR ?? 0) * k);
+    applyBoneRotation("leftLowerArm", withElbowBend(restLl, foreL));
+    applyBoneRotation("rightLowerArm", withElbowBend(restRl, foreR));
+  };
+
   const applyTalkArms = (pose, k) => {
     const safe = clampTalkArmPose(pose);
     const restL = armRestRotations.leftUpperArm;
@@ -788,7 +805,11 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
     } else if (idleArms) {
       applyCalmIdleArms(pose, k);
     } else if (talkArmBlend > 0.01) {
-      applyTalkArms(pose, talkArmBlend);
+      if (opts.plantFeet !== false && !actionArms && !allowArms && !eatArms) {
+        applyTalkForearmsOnly(pose, talkArmBlend);
+      } else {
+        applyTalkArms(pose, talkArmBlend);
+      }
     } else {
       applyArmRest(pose);
     }
@@ -875,7 +896,12 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
     applyHandAndFootRest(smoothedPose, 1, talking ? 0.35 : 0, {
       strictRest: !talking,
     });
-    humanoid.update?.();
+    enforcePlantedLimbRotations(humanoid, {
+      legRestRotations,
+      armRestRotations,
+      lockUpperArms: true,
+    });
+    if (!talking) enforcePlantedHandRest(humanoid);
   };
 
   const applyHandRestOnly = (opts = {}) => {
@@ -1062,24 +1088,14 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
           "lowerLegR",
         ]);
         pose = mergePoses(pose, talkBody, talkBlend);
-        const talkArms = omitPoseKeys(motion.body, [
-          "upperLegL",
-          "upperLegR",
-          "lowerLegL",
-          "lowerLegR",
-          "headX",
-          "headY",
-          "headZ",
-          "spineX",
-          "spineY",
-          "spineZ",
-          "chestX",
-          "leanY",
-          "hipZ",
-        ]);
-        const armChannelBlend = (isAposeBind() ? 0.38 : 0.48) + energy * 0.16;
-        pose = mergePoses(pose, talkArms, armChannelBlend);
-
+        pose = mergePoses(
+          pose,
+          {
+            forearmL: motion.body.forearmL,
+            forearmR: motion.body.forearmR,
+          },
+          (isAposeBind() ? 0.32 : 0.4) + energy * 0.14,
+        );
         const beat = Math.sin(elapsed * 7.4);
         const sway = Math.sin(elapsed * 3.6 + talkTime * 2.1);
         pose.headX = (pose.headX || 0) + beat * 0.09 * energy + sway * 0.035;
@@ -1137,10 +1153,11 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
     }
 
     const dampRate = poseDampingRate(Boolean(activeAction), talking);
+    const plantFeet = !activeAction || pokeActive;
     const plantedIdle =
       !activeAction && !talking && !activeGesture;
     smoothedPose = dampPose(smoothedPose, pose, dt, pokeActive ? 18 : dampRate, {
-      snapLimbs: plantedIdle && !pokeActive,
+      snapLimbs: plantFeet && !activeAction && !pokeActive,
     });
     smoothedRootMotion = dampRootMotion(
       smoothedRootMotion,
@@ -1153,9 +1170,7 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
         smoothedRootMotion.rotY = 0;
       }
     }
-    const plantFeet = !activeAction || pokeActive;
-    const strictLegRest =
-      (plantFeet && !activeAction && !talking && !activeGesture) || pokeActive;
+    const strictLegRest = (plantFeet && !activeAction) || pokeActive;
     if (strictLegRest) {
       for (const key of [
         "upperLegL",
@@ -1263,6 +1278,14 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
     update,
     applyHandRestOnly,
     reapplyPlantedLimbs,
+    enforcePlantedLimbs(opts = {}) {
+      enforcePlantedLimbRotations(humanoid, {
+        legRestRotations,
+        armRestRotations,
+        lockUpperArms: opts.lockUpperArms !== false,
+      });
+      if (opts.hands !== false) enforcePlantedHandRest(humanoid);
+    },
     holdForLibraryMotion,
     setFingerFlexAxis,
     get emotion() {
