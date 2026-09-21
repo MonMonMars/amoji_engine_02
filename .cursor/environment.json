@@ -1,6 +1,6 @@
 {
   "name": "Amoji Engine",
-  "install": "cd amoji-engine && npm ci && npm run build",
+  "install": "git fetch origin main && git reset --hard origin/main && cd amoji-engine && npm ci && npm run build",
   "terminals": [
     {
       "name": "lab",
