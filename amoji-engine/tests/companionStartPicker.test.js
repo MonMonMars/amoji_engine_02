@@ -320,4 +320,21 @@ describe("companion start picker", () => {
     ).toBe(true);
     picker.destroy();
   });
+
+  it("hide and dismiss keep the start picker mounted for reopen", () => {
+    if (typeof document === "undefined") return;
+    const picker = createCompanionStartPicker({
+      isEnglish: true,
+      selectedId: "nova",
+      onStart: () => {},
+    });
+    picker.show();
+    expect(picker.isOpen()).toBe(true);
+    picker.dismiss();
+    expect(picker.isOpen()).toBe(false);
+    expect(picker.element.isConnected).toBe(true);
+    picker.show();
+    expect(picker.isOpen()).toBe(true);
+    picker.destroy();
+  });
 });
