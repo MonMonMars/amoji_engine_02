@@ -22,23 +22,33 @@ body.companion-minimal-chrome .stage {
   right: 0;
 }
 
-/* Start picker: full viewport (not a bottom sheet). In-session picker keeps max width above. */
+/* Start picker: bottom sheet — stage + chat stay visible. In-session picker keeps max width above. */
 .companion-picker.companion-picker--start.is-open,
 .companion-picker.companion-picker--start {
-  align-items: stretch;
-  justify-content: stretch;
+  align-items: flex-end;
+  justify-content: center;
+  pointer-events: none;
 }
 
-@media (max-width: 1023px) {
-  .companion-picker.companion-picker--start.is-open .companion-picker-sheet,
-  .companion-picker.companion-picker--start.is-open:not(.hide) .companion-picker-sheet {
-    width: 100%;
-    max-width: none;
-    height: 100dvh;
-    max-height: 100dvh;
-    margin: 0;
-    border-radius: 0;
-  }
+.companion-picker.companion-picker--start.is-open:not(.hide) .companion-picker-sheet {
+  pointer-events: auto;
+}
+
+/* Never hide main chrome during first-run character pick */
+body.companion-start-picker-open .topbar,
+body.companion-start-picker-open .activity-rail,
+body.companion-start-picker-open .chat-shell,
+body.companion-start-picker-open .orbit-hint,
+body.companion-start-picker-open .composer-wrap,
+body.companion-start-picker-open .pet-hud,
+body.companion-start-picker-open .treat-dock {
+  visibility: visible !important;
+  pointer-events: auto !important;
+  opacity: 1 !important;
+}
+
+body.companion-start-picker-open .composer-wrap {
+  z-index: 13001 !important;
 }
 
 .companion-picker.is-open .companion-picker-backdrop {

@@ -1074,9 +1074,14 @@ export function createCompanionStartPicker(opts = {}) {
     });
   };
 
+  /** @type {(id: string) => void} */
+  let onStartHandler = (id) => {
+    opts.onStart?.(id);
+  };
+
   const beginSession = () => {
     if (!pickable || starting) return;
-    opts.onStart?.(selectedId);
+    onStartHandler(selectedId);
   };
 
   const applySelection = (id) => {
@@ -1148,6 +1153,9 @@ export function createCompanionStartPicker(opts = {}) {
   });
 
   beginBtn?.addEventListener("click", beginSession);
+  shell.querySelector(".companion-picker-backdrop")?.addEventListener("click", () => {
+    if (!starting && pickable) beginSession();
+  });
 
   paintCopy();
   renderAll();
@@ -1311,7 +1319,7 @@ export function createCompanionStartPicker(opts = {}) {
       shell.classList.add("is-open");
       shell.removeAttribute("aria-hidden");
       shell.hidden = false;
-      document.body.classList.add("companion-start-pending", "companion-picker-open");
+      document.body.classList.add("companion-start-pending", "companion-start-picker-open");
       scrollSelectedIntoView();
       requestAnimationFrame(renderScrollHint);
     },
@@ -1325,6 +1333,11 @@ export function createCompanionStartPicker(opts = {}) {
       markStartPickerDismissed(globalThis.__amojiStart);
       clearStartPickerBodyLocks();
     },
+    setOnStart(handler) {
+      if (typeof handler === "function") {
+        onStartHandler = handler;
+      }
+    },
     close() {
       this.hide();
     },
@@ -1336,7 +1349,11 @@ export function createCompanionStartPicker(opts = {}) {
       preloadHideTimer = null;
       preloadAnimator.destroy();
       unwireRosterKeys();
-      document.body.classList.remove("companion-start-pending", "companion-picker-open");
+      document.body.classList.remove(
+        "companion-start-pending",
+        "companion-start-picker-open",
+        "companion-picker-open",
+      );
       shell.remove();
     },
   };
