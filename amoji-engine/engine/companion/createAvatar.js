@@ -104,6 +104,7 @@ export function shouldSkipGltfFallback(modelUrl, prefer) {
  *   characterId?: string | null,
  *   onCharacterTap?: (info: { point?: unknown }) => void,
  *   onProgress?: (pct: number, label: string) => void,
+ *   isAssistantSpeaking?: () => boolean,
  * }} opts
  */
 export async function createCompanionAvatar(opts) {
@@ -143,6 +144,7 @@ export async function createCompanionAvatar(opts) {
           modelUrl: rosterVrmUrl,
           characterId,
           onCharacterTap: opts.onCharacterTap,
+          isAssistantSpeaking: opts.isAssistantSpeaking,
           onProgress: (ratio, label) => {
             emit(8 + Math.round(ratio * 78), label || "vrm");
           },

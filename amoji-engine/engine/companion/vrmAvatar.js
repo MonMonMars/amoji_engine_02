@@ -204,6 +204,7 @@ async function loadVrmGltf(loader, modelUrl, onProgress, characterId) {
  *   modelUrl?: string,
  *   onCharacterTap?: (info: { point: import('three').Vector3 }) => void,
  *   onProgress?: (ratio: number, label?: string) => void,
+ *   isAssistantSpeaking?: () => boolean,
  * }} opts
  */
 export async function createVrmAvatar(opts) {
@@ -1717,16 +1718,18 @@ export async function createVrmAvatar(opts) {
   raf = requestAnimationFrame(frame);
   globalThis.addEventListener?.("resize", resize);
 
-  const reactToTap = (opts = {}) => {
+  const reactToTap = (tap = {}) => {
+    const speaking = Boolean(opts.isAssistantSpeaking?.());
+    const anchorX = faceAnchor?.x ?? model.position.x;
+    bodyMotion.reactToPoke?.({
+      point: tap.point,
+      multiClick: tap.multiClick,
+      anchorX,
+    });
+    if (speaking) return emotion;
     setEmotion("happy");
     setTalkStyle("celebrate");
     clearHostedBodyMotion();
-    const anchorX = faceAnchor?.x ?? model.position.x;
-    bodyMotion.reactToPoke?.({
-      point: opts.point,
-      multiClick: opts.multiClick,
-      anchorX,
-    });
     return emotion;
   };
 
