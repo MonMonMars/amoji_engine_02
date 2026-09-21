@@ -61,6 +61,11 @@ export const SCENE_BACKGROUND_PRESETS = Object.freeze([
   { id: "day-skyline", labelEn: "Day skyline", labelYue: "日間天際", environment: "outdoor" },
 ]);
 
+/** Outdoor preset ids — keep in sync with `companionEarlyFreshBoot.js` paint helper. */
+export const OUTDOOR_SCENE_BACKGROUND_IDS = Object.freeze(
+  SCENE_BACKGROUND_PRESETS.filter((p) => p.environment === "outdoor").map((p) => p.id),
+);
+
 /** @type {ReadonlyArray<{ id: string, labelEn: string, labelYue: string, swatch?: string, characters?: string[] }>} */
 export const SCENE_OUTFIT_PRESETS = Object.freeze([
   { id: "default", labelEn: "Default look", labelYue: "原本造型", swatch: "default" },

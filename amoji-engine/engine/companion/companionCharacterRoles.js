@@ -72,7 +72,7 @@ export const CHARACTER_COMPANION_ROLES = Object.freeze({
 export const ROLE_DEFAULT_CHARACTER_ID = Object.freeze({
   girlfriend: "nova",
   boyfriend: "samurai",
-  secretary: "nova",
+  secretary: "sakura",
   pet: "bunny",
 });
 

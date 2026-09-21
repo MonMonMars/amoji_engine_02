@@ -92,13 +92,9 @@ describe("companionUnifiedApp", () => {
     ).toBe("yuki");
   });
 
-  it("honors secretary role for legacy kate alias and default nova", () => {
+  it("honors secretary tab links and character-native roles", () => {
     expect(
-      resolveAppRole(
-        new URLSearchParams("character=kate&tab=today&lang=en"),
-        null,
-        "nova",
-      ),
+      resolveAppRole(new URLSearchParams("character=kate&tab=today&lang=en")),
     ).toBe("secretary");
     expect(
       resolveAppRole(
@@ -106,16 +102,29 @@ describe("companionUnifiedApp", () => {
         null,
         "nova",
       ),
+    ).toBe("girlfriend");
+    expect(
+      resolveAppRole(
+        new URLSearchParams("character=sakura&role=secretary&lang=en"),
+        null,
+        "sakura",
+      ),
     ).toBe("secretary");
   });
 
   it("honors ?role=secretary for the secretary default character id", () => {
     expect(
       resolveSessionRoleFromCharacter(
-        "nova",
+        "sakura",
         new URLSearchParams("role=secretary&lang=en"),
       ),
     ).toBe("secretary");
+    expect(
+      resolveSessionRoleFromCharacter(
+        "nova",
+        new URLSearchParams("role=secretary&lang=en"),
+      ),
+    ).toBe("girlfriend");
     expect(
       resolveSessionRoleFromCharacter(
         "ember",
@@ -126,7 +135,7 @@ describe("companionUnifiedApp", () => {
 
   it("uses role default character when none picked", () => {
     expect(resolveRoleDefaultCharacter("", "secretary", new URLSearchParams())).toBe(
-      "nova",
+      "sakura",
     );
     expect(
       resolveRoleDefaultCharacter("nova", "girlfriend", new URLSearchParams()),
@@ -139,9 +148,9 @@ describe("companionUnifiedApp", () => {
       "secretary",
       true,
     );
-    const nova = roster.find((c) => c.id === "nova");
-    expect(nova?.roleBadge).toBe("Secretary");
-    expect(nova?.companionRole).toBe("secretary");
+    const sakura = roster.find((c) => c.id === "sakura");
+    expect(sakura?.roleBadge).toBe("Secretary");
+    expect(sakura?.companionRole).toBe("secretary");
     expect(roster.find((c) => c.id === "kizuna")?.roleBadge).toBe("Girlfriend");
   });
 

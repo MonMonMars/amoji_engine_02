@@ -3,6 +3,8 @@ import { readFileSync } from "fs";
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
 import { startAppUpdateWatcher } from "../engine/companion/companionFreshBoot.js";
+import { PICKER_SCENE_ART_REVISION } from "../engine/companion/companionPickerAssets.mjs";
+import { OUTDOOR_SCENE_BACKGROUND_IDS } from "../engine/companion/companionScenePresets.js";
 
 const earlyBoot = readFileSync(
   join(
@@ -22,6 +24,10 @@ describe("companionEarlyFreshBoot", () => {
     expect(earlyBoot).toContain("scene-bg/");
     expect(earlyBoot).toContain('".svg?v="');
     expect(earlyBoot).not.toMatch(/pick=1&automic=0/);
+    expect(earlyBoot).toContain(PICKER_SCENE_ART_REVISION);
+    for (const id of OUTDOOR_SCENE_BACKGROUND_IDS) {
+      expect(earlyBoot).toContain(id);
+    }
   });
 });
 

@@ -20,6 +20,8 @@ export const DARK_SCENE_BACKGROUND_IDS = new Set([
   "night-city",
   "aurora",
   "library",
+  "observatory",
+  "executive-lounge",
 ]);
 
 /**

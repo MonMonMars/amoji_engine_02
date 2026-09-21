@@ -69,7 +69,7 @@ describe("companionScenePresets", () => {
   });
 
   it("lists indoor and outdoor background presets", () => {
-    expect(SCENE_BACKGROUND_PRESETS.length).toBeGreaterThanOrEqual(20);
+    expect(SCENE_BACKGROUND_PRESETS.length).toBe(27);
     const outdoor = SCENE_BACKGROUND_PRESETS.filter((p) => p.environment === "outdoor");
     const indoor = SCENE_BACKGROUND_PRESETS.filter((p) => p.environment === "indoor");
     expect(outdoor.length).toBeGreaterThanOrEqual(10);
@@ -88,6 +88,9 @@ describe("companionScenePresets", () => {
     expect(resolveSceneEnvironment("beach")).toBe("outdoor");
     expect(isOutdoorSceneBackground("sunset")).toBe(true);
     expect(isOutdoorSceneBackground("cafe")).toBe(false);
+    expect(isOutdoorSceneBackground("zen-garden")).toBe(true);
+    expect(isOutdoorSceneBackground("day-skyline")).toBe(true);
+    expect(isOutdoorSceneBackground("executive-lounge")).toBe(false);
   });
 
   it("sets indoor environment on applySceneBackground", () => {

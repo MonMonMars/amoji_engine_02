@@ -246,7 +246,7 @@ export function rolePickBadge(role, isEnglish = false) {
 
 /**
  * Session role after a character is selected — honors explicit ?role= when the
- * picked id is that role's default companion (e.g. ?role=secretary + nova).
+ * picked id is that role's default companion (e.g. ?role=secretary + sakura).
  * @param {string | null | undefined} characterId
  * @param {URLSearchParams | null | undefined} [params]
  */
