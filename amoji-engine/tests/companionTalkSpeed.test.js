@@ -24,10 +24,11 @@ import {
 } from "../engine/companion/companionTtsProsody.js";
 
 describe("companionTalkSpeed", () => {
-  it("treats the established slow pace as 1× Normal", () => {
+  it("defaults to 1.5× Normal and keeps legacy 0.28 as 1×", () => {
     expect(NORMAL_TALK_SPEED_ONE_X).toBe(0.28);
-    expect(DEFAULT_TALK_SPEED).toBe(0.28);
-    expect(normalizeTalkSpeed(undefined)).toBe(0.28);
+    expect(DEFAULT_TALK_SPEED).toBe(0.42);
+    expect(normalizeTalkSpeed(undefined)).toBe(0.42);
+    expect(formatTalkSpeedLabel(DEFAULT_TALK_SPEED, true)).toBe("1.5×");
     expect(talkSpeedToDisplay(0.28)).toBe(1);
     expect(formatTalkSpeedLabel(0.28, true)).toBe("1× Normal");
     expect(formatTalkSpeedLabel(0.28, false)).toBe("1× 正常");
@@ -103,15 +104,22 @@ describe("companionTalkSpeed", () => {
     expect(talkSpeedPlaybackRatio(1)).toBe(1);
   });
 
-  it("describes default pace as normal in TTS instructions", () => {
-    const instruct = buildTtsInstruct({
+  it("describes 1× and default 1.5× in TTS instructions", () => {
+    const oneX = buildTtsInstruct({
       emotion: "neutral",
       lang: "en",
       text: "Sure, I can help with that.",
       speedMultiplier: 0.28,
     });
-    expect(instruct).toMatch(/1× normal companion pace/i);
-    expect(instruct).not.toMatch(/VERY SLOW/i);
+    expect(oneX).toMatch(/1× normal companion pace/i);
+    expect(oneX).not.toMatch(/VERY SLOW/i);
+    const defaultPace = buildTtsInstruct({
+      emotion: "neutral",
+      lang: "en",
+      text: "Sure, I can help with that.",
+      speedMultiplier: DEFAULT_TALK_SPEED,
+    });
+    expect(defaultPace).toMatch(/1\.5×/);
   });
 
   it("persists speed in storage", () => {
@@ -131,14 +139,23 @@ describe("companionTalkSpeed", () => {
   });
 
   it("includes speedMultiplier on cloud TTS body", () => {
-    const body = buildCloudTtsRequestBody({
+    const explicit = buildCloudTtsRequestBody({
       text: "Hello",
       performance: { emotion: "neutral", speedMultiplier: 0.28 },
       voice: "en-US-JennyNeural",
       lang: "en-US",
     });
-    expect(body.speedMultiplier).toBe(0.28);
-    expect(body.speed).toBeLessThan(0.45);
-    expect(body.instructions).toMatch(/1× normal companion pace/i);
+    expect(explicit.speedMultiplier).toBe(0.28);
+    expect(explicit.speed).toBeLessThan(0.45);
+    expect(explicit.instructions).toMatch(/1× normal companion pace/i);
+
+    const defaulted = buildCloudTtsRequestBody({
+      text: "Hello",
+      performance: { emotion: "neutral" },
+      voice: "en-US-JennyNeural",
+      lang: "en-US",
+    });
+    expect(defaulted.speedMultiplier).toBe(DEFAULT_TALK_SPEED);
+    expect(defaulted.instructions).toMatch(/1\.5×/);
   });
 });

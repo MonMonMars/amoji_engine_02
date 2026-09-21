@@ -725,6 +725,11 @@ export function normalizeTtsPerformance(performance, fallbackEmotion = "neutral"
     expressiveClauses:
       perf.singleUtterance === false && perf.expressiveClauses === true,
     autoExpressiveClauses: perf.autoExpressiveClauses !== false,
+    speedMultiplier: perf.speedMultiplier,
+    vocalPrefix: perf.vocalPrefix,
+    vocalization: perf.vocalization,
+    skipVocalization: perf.skipVocalization,
+    pokeReaction: perf.pokeReaction,
   };
 }
 

@@ -158,8 +158,8 @@ describe("companionTtsProsody", () => {
     expect(body.emotion).toBe("happy");
     expect(body.instructions).toContain("Voice Affect:");
     expect(body.instructions).toMatch(/Speak at |慢速講|0\.\d+x/);
-    expect(body.speedMultiplier).toBe(0.28);
-    expect(body.speed).toBeLessThan(0.45);
+    expect(body.speedMultiplier).toBe(0.42);
+    expect(body.speed).toBeLessThan(0.55);
   });
 
   it("ignores expressiveClauses unless singleUtterance is explicitly off", () => {
