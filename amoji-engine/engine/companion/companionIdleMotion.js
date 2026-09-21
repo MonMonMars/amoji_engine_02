@@ -31,7 +31,7 @@ export {
   proceduralIdleBeatPoolForGender,
 } from "./companionIdleGender.js";
 
-export const COMPANION_IDLE_MOTION_SCHEMA = "amoji.companionIdleMotion.v9-limb-blend";
+export const COMPANION_IDLE_MOTION_SCHEMA = "amoji.companionIdleMotion.v10-limb-snap";
 
 /** First seconds after avatar is visible — gentle breathe, sway, relaxed arms. */
 export const BOOT_SIMPLE_IDLE_SEC = 10;

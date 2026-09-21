@@ -47,6 +47,7 @@ import {
   GESTURE_DURATION_SEC,
   HEAD_GESTURE_NOD,
   mergePoses,
+  POSE_LIMB_BLEND_KEYS,
   REST_POSE,
   sampleVrmTalkPose,
   VRM_ARM_REST_ROTATIONS,
@@ -60,7 +61,7 @@ import {
   lockedIdleHipTilt,
 } from "./companionFootLock.js";
 
-export const COMPANION_BODY_SCHEMA = "amoji.companionBody.v3";
+export const COMPANION_BODY_SCHEMA = "amoji.companionBody.v4-limb-snap";
 
 /**
  * @param {import('@pixiv/three-vrm').VRMHumanoid | null | undefined} humanoid
@@ -227,6 +228,7 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
   const finishActionStep = () => {
     const completed = activeAction;
     resetActiveAction();
+    clearSmoothedLimbChannels();
     if (!actionQueue.length && sequenceLoop && savedSequence.length) {
       actionQueue = [...savedSequence];
     }
@@ -382,11 +384,18 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
     return input;
   };
 
+  const clearSmoothedLimbChannels = () => {
+    for (const key of POSE_LIMB_BLEND_KEYS) {
+      smoothedPose[key] = 0;
+    }
+  };
+
   const setTalking = (on) => {
     talking = Boolean(on);
     if (!talking) {
       talkEnergy = 0;
       talkTime = 0;
+      clearSmoothedLimbChannels();
     } else {
       talkTime = 0;
     }
@@ -806,6 +815,18 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
     humanoid.update?.();
   };
 
+  /** Re-apply planted legs + idle arms after spring/mixer (prevents limb drift). */
+  const reapplyPlantedLimbs = (opts = {}) => {
+    if (!humanoid || talking || activeAction || activeGesture) return;
+    applyLegPose(smoothedPose, 1, {
+      plantFeet: true,
+      strictRest: true,
+    });
+    applyCalmIdleArms(smoothedPose, 1);
+    applyHandAndFootRest(smoothedPose, 1, 0, { strictRest: true });
+    humanoid.update?.();
+  };
+
   const applyHandRestOnly = (opts = {}) => {
     const talkBlend = Number(opts.talkBlend) || 0;
     const elapsedSec =
@@ -1012,7 +1033,11 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
     }
 
     const dampRate = poseDampingRate(Boolean(activeAction), talking);
-    smoothedPose = dampPose(smoothedPose, pose, dt, dampRate);
+    const plantedIdle =
+      !activeAction && !talking && !activeGesture;
+    smoothedPose = dampPose(smoothedPose, pose, dt, dampRate, {
+      snapLimbs: plantedIdle,
+    });
     smoothedRootMotion = dampRootMotion(
       smoothedRootMotion,
       rootMotion,
@@ -1122,6 +1147,7 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
     setTalkEnergy,
     update,
     applyHandRestOnly,
+    reapplyPlantedLimbs,
     holdForLibraryMotion,
     setFingerFlexAxis,
     get emotion() {
