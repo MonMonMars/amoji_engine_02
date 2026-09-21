@@ -48,9 +48,22 @@ describe("createCompanionBodyMotion", () => {
     motion.setTalkEnergy(0.85);
     motion.setTalkStyle("celebrate");
     for (let i = 0; i < 20; i += 1) motion.update(1 / 30);
-    const rot = humanoid.bones.get("leftUpperArm").rotation;
-    const rest = VRM_ARM_REST_ROTATIONS.leftUpperArm;
-    expect(Math.abs(rot.z - rest.z)).toBeGreaterThan(0.04);
+    const upper = humanoid.bones.get("leftUpperArm").rotation;
+    const restUpper = VRM_ARM_REST_ROTATIONS.leftUpperArm;
+    expect(Math.abs(upper.z - restUpper.z)).toBeLessThan(0.04);
+    const lower = humanoid.bones.get("leftLowerArm").rotation;
+    const restLower = VRM_ARM_REST_ROTATIONS.leftLowerArm;
+    expect(Math.abs(lower.x - restLower.x)).toBeGreaterThan(0.02);
+  });
+
+  it("keeps thighs on rest while talking (no leg channel blend)", () => {
+    const humanoid = mockHumanoid();
+    const motion = createCompanionBodyMotion(humanoid);
+    motion.setTalking(true);
+    motion.setTalkEnergy(0.9);
+    for (let i = 0; i < 24; i += 1) motion.update(1 / 30);
+    const leftThigh = humanoid.bones.get("leftUpperLeg").rotation.x;
+    expect(leftThigh).toBeLessThan(VRM_LEG_REST_ROTATIONS.leftUpperLeg.x + 0.04);
   });
 
   it("applies gentle idle sway when not talking", () => {

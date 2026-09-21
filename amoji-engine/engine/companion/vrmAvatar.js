@@ -1466,6 +1466,8 @@ export async function createVrmAvatar(opts) {
       motionPlayer.isCrossfading?.()
     ) {
       clearHostedBodyMotion();
+    } else {
+      motionPlayer.forceStop?.(false);
     }
     if (motionTransitionState) motionTransitionState = null;
   };
@@ -1547,6 +1549,16 @@ export async function createVrmAvatar(opts) {
       }
       stabilizeVrmSpringBones(vrm);
       vrm.update(dt);
+      if (
+        !libraryMotion &&
+        !bodyMotion.currentAction &&
+        !bodyMotion.activeGesture
+      ) {
+        bodyMotion.enforcePlantedLimbs?.({
+          lockUpperArms: true,
+          hands: !talking && !eating,
+        });
+      }
       const crossfading =
         !CALM_IDLE_USES_PROCEDURAL_BODY &&
         Boolean(motionPlayer.isCrossfading?.());
@@ -1851,6 +1863,9 @@ export async function createVrmAvatar(opts) {
     },
     reapplyPlantedLimbs(opts) {
       return bodyMotion.reapplyPlantedLimbs?.(opts);
+    },
+    enforcePlantedLimbs(opts) {
+      return bodyMotion.enforcePlantedLimbs?.(opts);
     },
     getMotionTransitionProgress() {
       if (!motionTransitionState) return 1;
