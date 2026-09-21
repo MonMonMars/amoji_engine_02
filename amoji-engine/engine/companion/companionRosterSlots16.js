@@ -4,7 +4,7 @@
 import { rosterModelUrl } from "./rosterVrmAssets.mjs";
 import { GEN3_ROSTER_SLOTS } from "./companionRosterGen3Data.mjs";
 
-export const COMPANION_ROSTER_GEN3_SCHEMA = "amoji.companionRosterGen3.v448-roster23-trim567810";
+export const COMPANION_ROSTER_GEN3_SCHEMA = "amoji.companionRosterGen3.v460-roster27-pro";
 
 const DEFAULT_PERFORMANCE = {
   emotion: "happy",

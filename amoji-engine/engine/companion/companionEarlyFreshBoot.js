@@ -4,7 +4,8 @@
  */
 (function () {
   var SCENE_KEY = "amoji.companion.scenePreset";
-  var SCENE_ART_V = "picker-anime-v449-svg-scene-fallback";
+  var SCENE_ART_V = "picker-anime-v460-pro-expansion";
+  var OUTDOOR_SCENE = " night-city rooftop park beach sunset aurora rain-street cherry-blossom mountain harbor meadow zen-garden day-skyline ";
   var LEGACY_SCENE = { minimal: "cozy-room" };
 
   function resolveSceneId(raw) {
@@ -37,11 +38,7 @@
       el.setAttribute("data-scene-bg", id);
       el.setAttribute(
         "data-scene-environment",
-        /^(night-city|rooftop|park|beach|sunset|aurora|rain-street|cherry-blossom|mountain|harbor|meadow)$/.test(
-          id,
-        )
-          ? "outdoor"
-          : "indoor",
+        OUTDOOR_SCENE.indexOf(" " + id + " ") >= 0 ? "outdoor" : "indoor",
       );
       var art = sceneArtUrl(id);
       el.style.backgroundImage =

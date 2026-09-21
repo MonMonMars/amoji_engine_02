@@ -160,7 +160,7 @@ record("begin CTA", boot.begin);
 record("stacked start layout", boot.stackedLayout);
 record(
   "background row on start picker",
-  boot.sceneSection && boot.sceneInBackgroundRow && boot.sceneChips >= 18,
+  boot.sceneSection && boot.sceneInBackgroundRow && boot.sceneChips >= 27,
   String(boot.sceneChips),
 );
 

@@ -66,7 +66,7 @@ Programmatic helper: `formatDemoLinkBlock()` in `amoji-engine/engine/companion/d
 
 ## Scene backgrounds
 
-Regenerate all 22 anime scene PNGs + CSS after editing `scripts/scene-bg-anime-art.mjs`:
+Regenerate all **27** anime scene PNGs + CSS after editing `scripts/scene-bg-anime-art.mjs`:
 
 ```bash
 npm run scene-bg

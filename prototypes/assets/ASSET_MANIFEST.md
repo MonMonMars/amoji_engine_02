@@ -14,7 +14,7 @@ Styles: `prototypes/companion-title-screen.css`
 |------|-----|
 | `picker-aaa-bg.png` | Full-screen start picker cinematic background (v391 HQ anime) |
 | `companion-bg-anime.png` | Default / night-city stage & swatch art (HQ anime) |
-| `scene-bg/*.png` | Per-preset 1920×1080 anime backgrounds (22 scenes, v407) |
+| `scene-bg/*.png` | Per-preset 1920×1080 anime backgrounds (27 scenes, v460) |
 | `picker-hero-frame.png` | Hero portrait gold frame overlay |
 | `picker-roster-plate.png` | Horizontal roster dock glass panel |
 
@@ -31,7 +31,7 @@ See also: `amoji-engine/docs/3D_MODEL_INVENTORY.md` (how to read the external mo
 node amoji-engine/scripts/download-legal-vrm.mjs
 ```
 
-## Curated roster (v401 — 23 characters)
+## Curated roster (v460 — 27 characters)
 
 On-disk VRMs are **`companion-<characterId>.vrm`** (matches picker id — e.g. `companion-mei.vrm`).
 

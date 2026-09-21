@@ -41,7 +41,7 @@ import { wireScrollAffordances } from "./companionScrollAffordances.js";
 import { applyPickerAaaBackgroundArt } from "./companionPickerAssets.mjs";
 
 export const COMPANION_CHARACTER_PICKER_SCHEMA =
-  "amoji.companionCharacterPicker.v6";
+  "amoji.companionCharacterPicker.v7-roster27-scenes27";
 
 export const COMPANION_START_PICKER_SCHEMA = "amoji.companionStartPicker.v11";
 

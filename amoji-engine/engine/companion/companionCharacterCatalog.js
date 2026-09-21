@@ -164,6 +164,10 @@ export function isAaaRosterCharacter(id) {
 export function aaaRosterBadge(id, en = false) {
   const key = String(id || "").toLowerCase();
   if (!isAaaRosterCharacter(key)) return null;
+  const n = characterNumber(key);
+  if (n >= 24) {
+    return en ? "VRoid Pro" : "VRoid Pro";
+  }
   if (TRIAL_CHARACTER_IDS.includes(key)) {
     return en ? "AAA Pro" : "AAA 專業";
   }

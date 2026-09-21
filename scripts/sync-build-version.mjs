@@ -7,6 +7,8 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { AMOJI_BUILD } from "../amoji-engine/engine/companion/buildVersion.mjs";
+import { PICKER_SCENE_ART_REVISION } from "../amoji-engine/engine/companion/companionPickerAssets.mjs";
+import { OUTDOOR_SCENE_BACKGROUND_IDS } from "../amoji-engine/engine/companion/companionScenePresets.js";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const HTML_FILES = [
@@ -44,6 +46,26 @@ for (const file of HTML_FILES) {
     changed += 1;
     console.log(`sync-build-version: updated ${file}`);
   }
+}
+
+const earlyBootPath = join(
+  root,
+  "amoji-engine/engine/companion/companionEarlyFreshBoot.js",
+);
+let earlyBoot = readFileSync(earlyBootPath, "utf8");
+const outdoorToken = ` ${OUTDOOR_SCENE_BACKGROUND_IDS.join(" ")} `;
+const earlyBefore = earlyBoot;
+earlyBoot = earlyBoot.replace(
+  /var SCENE_ART_V = "[^"]+";/,
+  `var SCENE_ART_V = "${PICKER_SCENE_ART_REVISION}";`,
+);
+earlyBoot = earlyBoot.replace(
+  /var OUTDOOR_SCENE =\s*"[^"]*";/,
+  `var OUTDOOR_SCENE = "${outdoorToken}";`,
+);
+if (earlyBoot !== earlyBefore) {
+  writeFileSync(earlyBootPath, earlyBoot);
+  console.log(`sync-build-version: updated ${earlyBootPath}`);
 }
 
 if (changed === 0) {

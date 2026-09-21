@@ -107,7 +107,7 @@ export function initAmojiSecretaryLite(doc = document) {
   });
   globalThis.__amojiUiAudio = uiAudio;
   globalThis.__amojiUiSettings = uiSettings;
-  const secretaryCharacterId = "nova";
+  const secretaryCharacterId = "sakura";
   let voiceId = resolveVoiceForCharacter(secretaryCharacterId, langCode);
   if (params.has("voice")) {
     params.delete("voice");
