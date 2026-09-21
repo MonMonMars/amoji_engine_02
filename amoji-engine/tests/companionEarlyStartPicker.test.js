@@ -41,6 +41,15 @@ describe("companionEarlyStartPicker", () => {
     expect(picker).toBeNull();
   });
 
+  it("skips when start picker was completed in storage", async () => {
+    if (typeof localStorage === "undefined") return;
+    localStorage.setItem("amoji.companion.startPickerCompleted.v1", "1");
+    const params = new URLSearchParams("lang=en&pick=1");
+    const picker = await bootEarlyStartPicker({ params });
+    expect(picker).toBeNull();
+    localStorage.removeItem("amoji.companion.startPickerCompleted.v1");
+  });
+
   it("uses secretary title and badge when role=secretary", async () => {
     if (typeof document === "undefined") return;
     document.body.innerHTML =

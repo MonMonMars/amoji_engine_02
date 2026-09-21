@@ -41,7 +41,7 @@ function record(name, ok, detail = "") {
 }
 
 const verifyLang = parseArg("--lang", "en") === "yue" ? "yue" : "en";
-const defaultUrl = `http://127.0.0.1:5174/play?lang=${verifyLang}&pick=1&automic=0`;
+const defaultUrl = `http://127.0.0.1:5174/play?lang=${verifyLang}&pick=force&automic=0&build=${encodeURIComponent(AMOJI_BUILD)}`;
 const url = parseArg("--url", defaultUrl);
 
 const browser = await chromium.launch({ headless: true });
@@ -203,6 +203,25 @@ record(
   "composer usable during start picker (bottom sheet)",
   pickerChrome.bodyStartPickerOpen && !pickerChrome.composerHidden,
   JSON.stringify(pickerChrome),
+);
+
+const sheetLayout = await page.evaluate(() => {
+  const sheet = document.querySelector(
+    "#start-character-picker.is-open .companion-picker-sheet",
+  );
+  if (!sheet) return { ok: false, reason: "no open start sheet" };
+  const rect = sheet.getBoundingClientRect();
+  const maxOk = window.innerHeight * 0.78;
+  return {
+    ok: rect.height > 80 && rect.height <= maxOk + 4,
+    height: Math.round(rect.height),
+    viewport: window.innerHeight,
+  };
+});
+record(
+  "start picker sheet is bottom sheet (not full viewport)",
+  sheetLayout.ok,
+  JSON.stringify(sheetLayout),
 );
 record(
   "scene atmosphere uses PNG art",

@@ -27,7 +27,7 @@ describe("companionStartPickerGate", () => {
     ).toBe(true);
   });
 
-  it("skips start picker when completed flag is set unless pick=1 forces", () => {
+  it("skips start picker when completed flag is set unless pick=force", () => {
     const storage = {
       getItem: (k) =>
         k === "amoji.companion.startPickerCompleted.v1" ? "1" : null,
@@ -43,6 +43,13 @@ describe("companionStartPickerGate", () => {
     expect(
       shouldShowStartPickerOnBoot({
         pick: "1",
+        start: { tapped: false, pickerDismissed: false },
+        storage,
+      }),
+    ).toBe(false);
+    expect(
+      shouldShowStartPickerOnBoot({
+        pick: "force",
         start: { tapped: false, pickerDismissed: false },
         storage,
       }),

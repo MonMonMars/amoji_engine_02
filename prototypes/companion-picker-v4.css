@@ -1723,18 +1723,22 @@
 
 @media (min-width: 720px) {
   .companion-picker--v4.companion-picker--start .companion-picker-sheet {
-    width: 100%;
-    max-width: none;
-    height: 100dvh;
-    max-height: 100dvh;
-    margin: 0;
-    border-radius: 0;
-    border: none;
+    width: min(100%, 36rem);
+    max-width: 100%;
+    height: auto;
+    max-height: min(72vh, 640px);
+    margin: 0 auto;
+    border-radius: 1.35rem 1.35rem 0 0;
   }
 
   .companion-picker--v4.companion-picker--start {
-    align-items: stretch;
-    justify-content: stretch;
+    align-items: flex-end;
+    justify-content: center;
+    pointer-events: none;
+  }
+
+  .companion-picker--v4.companion-picker--start.is-open:not(.hide) .companion-picker-sheet {
+    pointer-events: auto;
   }
 
   .companion-picker--v4.companion-picker--start .picker-hero {
