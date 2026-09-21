@@ -8,7 +8,10 @@ import {
 } from "./companionPoseLibrary.js";
 
 export const COMPANION_PLANTED_LIMB_LOCK_SCHEMA =
-  "amoji.companionPlantedLimbLock.v2-forearm-lock";
+  "amoji.companionPlantedLimbLock.v3-dual-write-shoulders";
+
+/** Shoulders stay neutral when upper arms are planted (pose channels only hit normalized nodes). */
+export const PLANTED_SHOULDER_REST = Object.freeze({ x: 0, y: 0, z: 0 });
 
 /** Bones forced to calibrated rest when feet are planted (no full-body action). */
 export const PLANTED_LOCK_BONE_NAMES = Object.freeze([
@@ -87,9 +90,11 @@ export function enforcePlantedLimbRotations(humanoid, opts) {
   writeHumanoidBoneRotation(humanoid, "rightFoot", VRM_FOOT_REST_ROTATIONS.rightFoot);
   n += 6;
   if (lockArms) {
+    writeHumanoidBoneRotation(humanoid, "leftShoulder", PLANTED_SHOULDER_REST);
+    writeHumanoidBoneRotation(humanoid, "rightShoulder", PLANTED_SHOULDER_REST);
     writeHumanoidBoneRotation(humanoid, "leftUpperArm", arms.leftUpperArm);
     writeHumanoidBoneRotation(humanoid, "rightUpperArm", arms.rightUpperArm);
-    n += 2;
+    n += 4;
   }
   if (lockForearms) {
     writeHumanoidBoneRotation(humanoid, "leftLowerArm", arms.leftLowerArm);

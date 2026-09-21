@@ -37,6 +37,8 @@ describe("companionPlantedLimbLock", () => {
       "rightFoot",
       "leftUpperArm",
       "rightUpperArm",
+      "leftShoulder",
+      "rightShoulder",
     ]) {
       bones.set(name, {
         name,
@@ -58,5 +60,48 @@ describe("companionPlantedLimbLock", () => {
     expect(bones.get("leftUpperArm").rotation.z).toBe(
       VRM_ARM_REST_ROTATIONS.leftUpperArm.z,
     );
+    expect(bones.get("leftShoulder").rotation.z).toBe(0);
+  });
+
+  it("writes forearm lock to normalized and raw nodes", () => {
+    const norm = {
+      name: "leftLowerArm",
+      rotation: {
+        x: 0,
+        y: 0,
+        z: 0,
+        set(x, y, z) {
+          this.x = x;
+          this.y = y;
+          this.z = z;
+        },
+      },
+    };
+    const raw = {
+      name: "leftLowerArm",
+      rotation: {
+        x: 9,
+        y: 0,
+        z: 0,
+        set(x, y, z) {
+          this.x = x;
+          this.y = y;
+          this.z = z;
+        },
+      },
+    };
+    const humanoid = {
+      getNormalizedBoneNode: (n) => (n === "leftLowerArm" ? norm : null),
+      getRawBoneNode: (n) => (n === "leftLowerArm" ? raw : null),
+      update: () => {},
+    };
+    enforcePlantedLimbRotations(humanoid, {
+      legRestRotations: VRM_LEG_REST_ROTATIONS,
+      armRestRotations: VRM_ARM_REST_ROTATIONS,
+      lockUpperArms: false,
+      lockForearms: true,
+    });
+    expect(norm.rotation.x).toBe(VRM_ARM_REST_ROTATIONS.leftLowerArm.x);
+    expect(raw.rotation.x).toBe(VRM_ARM_REST_ROTATIONS.leftLowerArm.x);
   });
 });
