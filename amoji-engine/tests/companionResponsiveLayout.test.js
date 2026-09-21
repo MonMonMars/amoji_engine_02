@@ -29,4 +29,16 @@ describe("companionResponsiveLayout", () => {
       /body\.conversation-ui \.chat-column[\s\S]*safe-area-inset-left/,
     );
   });
+
+  it("centers chat shell with a fixed column width token", () => {
+    const appWidthCss = readFileSync(
+      join(root, "prototypes/companion-app-width.css"),
+      "utf8",
+    );
+    expect(appWidthCss).toContain("--amoji-chat-column-width");
+    expect(layoutCss).toMatch(
+      /\.chat-shell[\s\S]*var\(--amoji-chat-column-width\)/,
+    );
+    expect(layoutCss).toMatch(/translateX\(-50%\)/);
+  });
 });
