@@ -13,7 +13,7 @@ import {
   portraitDistanceForHeight,
 } from "./companionPortraitFraming.js";
 
-export const COMPANION_CAMERA_APPLY_SCHEMA = "amoji.companionCameraApply.v2";
+export const COMPANION_CAMERA_APPLY_SCHEMA = "amoji.companionCameraApply.v3-front-yaw-guard";
 
 /** Auto follow while talking / full-body moves (~4.2/s). */
 export const AUTO_CAMERA_LERP_RATE = 4.2;
@@ -288,6 +288,35 @@ export function resolveFrontPortraitFrame(opts) {
   if (model && best) {
     model.rotation.y = best.yaw;
     model.updateMatrixWorld(true);
+    headBone?.updateMatrixWorld(true);
+
+    const yawDelta = Math.atan2(
+      Math.sin(best.yaw - baseYaw),
+      Math.cos(best.yaw - baseYaw),
+    );
+    const yawNearBase = Math.abs(yawDelta) < 0.2;
+    const backCameraOnDefaultPose =
+      yawNearBase && best.zSign !== PORTRAIT_CAMERA_Z_SIGN;
+
+    if (backCameraOnDefaultPose && headBone) {
+      model.rotation.y = baseYaw + Math.PI;
+      model.updateMatrixWorld(true);
+      headBone.updateMatrixWorld(true);
+      const zSign = detectPortraitCameraZSign(
+        headBone,
+        anchor,
+        portraitDist,
+        humanoid,
+      );
+      const shot = buildPortraitShot(anchor, portraitDist, baseFov, zSign);
+      const score = facingAlignmentScore(headBone, shot.position, humanoid);
+      if (score + 0.02 >= best.score) {
+        best = { score, yaw: baseYaw + Math.PI, zSign, shot, portraitDist };
+      } else {
+        model.rotation.y = best.yaw;
+        model.updateMatrixWorld(true);
+      }
+    }
   }
 
   return (

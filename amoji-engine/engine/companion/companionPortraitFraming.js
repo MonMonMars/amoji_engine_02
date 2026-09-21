@@ -3,7 +3,8 @@
  */
 import * as THREE from "three";
 
-export const COMPANION_PORTRAIT_FRAMING_SCHEMA = "amoji.companionPortraitFraming.v4-lower-neck-orbit";
+export const COMPANION_PORTRAIT_FRAMING_SCHEMA =
+  "amoji.companionPortraitFraming.v5-head-aligned-eye-forward";
 
 /** Fallback lower-neck height when no head bone (ratio from feet to head). */
 export const UPPER_BODY_ANCHOR_RATIO = 0.84;
@@ -63,6 +64,8 @@ export function resolveFaceForwardHorizontal(headBone, humanoid, out = _faceForw
   const leftEye = humanoid?.getNormalizedBoneNode?.("leftEye");
   const rightEye = humanoid?.getNormalizedBoneNode?.("rightEye");
   if (leftEye && rightEye) {
+    leftEye.updateWorldMatrix(true, false);
+    rightEye.updateWorldMatrix(true, false);
     leftEye.getWorldPosition(_leftEyeScratch);
     rightEye.getWorldPosition(_rightEyeScratch);
     out
@@ -72,7 +75,15 @@ export function resolveFaceForwardHorizontal(headBone, humanoid, out = _faceForw
       .sub(_headPosScratch);
     out.y = 0;
     if (out.lengthSq() > 1e-5) {
-      return out.normalize();
+      out.normalize();
+      headBone.getWorldQuaternion(_quatScratch);
+      _faceForwardScratch.set(0, 0, 1).applyQuaternion(_quatScratch);
+      _faceForwardScratch.y = 0;
+      if (_faceForwardScratch.lengthSq() > 1e-5) {
+        _faceForwardScratch.normalize();
+        if (out.dot(_faceForwardScratch) < 0) out.negate();
+      }
+      return out;
     }
   }
 

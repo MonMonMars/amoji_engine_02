@@ -103,17 +103,17 @@ describe("companionPortraitFraming", () => {
     expect(facingAlignmentScore(head, camera.position)).toBeGreaterThan(0.5);
   });
 
-  it("resolveFaceForwardHorizontal prefers eye midpoint over head +Z", () => {
+  it("resolveFaceForwardHorizontal aligns eye midpoint forward with head +Z", () => {
     const head = new THREE.Object3D();
     head.position.set(0, 1.1, 0);
     head.rotation.y = 0;
-    head.updateMatrixWorld(true);
     const leftEye = new THREE.Object3D();
-    leftEye.position.set(-0.03, 1.12, 0.08);
+    leftEye.position.set(-0.03, 0.02, 0.08);
     const rightEye = new THREE.Object3D();
-    rightEye.position.set(0.03, 1.12, 0.08);
-    leftEye.updateMatrixWorld(true);
-    rightEye.updateMatrixWorld(true);
+    rightEye.position.set(0.03, 0.02, 0.08);
+    head.add(leftEye);
+    head.add(rightEye);
+    head.updateMatrixWorld(true);
     const humanoid = {
       getNormalizedBoneNode: (name) => {
         if (name === "leftEye") return leftEye;
@@ -123,6 +123,27 @@ describe("companionPortraitFraming", () => {
     };
     const forward = resolveFaceForwardHorizontal(head, humanoid, new THREE.Vector3());
     expect(forward?.z).toBeGreaterThan(0.9);
+  });
+
+  it("resolveFaceForwardHorizontal flips when eye midpoint sits behind the head bone", () => {
+    const head = new THREE.Object3D();
+    head.position.set(0, 1.1, 0);
+    const leftEye = new THREE.Object3D();
+    leftEye.position.set(-0.03, 0, -0.08);
+    const rightEye = new THREE.Object3D();
+    rightEye.position.set(0.03, 0, -0.08);
+    head.add(leftEye);
+    head.add(rightEye);
+    head.updateMatrixWorld(true);
+    const humanoid = {
+      getNormalizedBoneNode: (name) => {
+        if (name === "leftEye") return leftEye;
+        if (name === "rightEye") return rightEye;
+        return null;
+      },
+    };
+    const forward = resolveFaceForwardHorizontal(head, humanoid, new THREE.Vector3());
+    expect(forward?.z).toBeGreaterThan(0.5);
   });
 
   it("isHeadFacingCamera and portraitModelYawOffset agree on front vs back", () => {
