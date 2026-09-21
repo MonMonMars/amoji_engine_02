@@ -628,11 +628,14 @@ export async function createVrmAvatar(opts) {
     stabilizeVrmSpringBones(vrm);
     bodyMotion.update(1 / 60);
     syncHumanoidPose();
+    bodyMotion.reapplyPlantedLimbs?.({ now: performance.now() });
     vrm.update(1 / 60);
   }
   bodyMotion.resetMotionClock?.();
   configureVrmSpringStability(vrm, sceneEnvironment);
   recenterVrmSpringBones(vrm, { retune: true, captureInit: true });
+  clearHostedBodyMotion();
+  restoreProceduralCalmStand({ resetIdleLife: true });
   const syncPortraitFromControls = () => {
     portraitCamera.position.copy(camera.position);
     portraitCamera.target.copy(controls.target);
@@ -1553,10 +1556,11 @@ export async function createVrmAvatar(opts) {
                 : 0.28,
           now,
         });
-      } else if (
+      }
+      if (
         CALM_IDLE_USES_PROCEDURAL_BODY &&
-        !bodyMotion.currentAction &&
-        !libraryMotion
+        !libraryMotion &&
+        !bodyMotion.currentAction
       ) {
         bodyMotion.reapplyPlantedLimbs?.({ now });
       }
