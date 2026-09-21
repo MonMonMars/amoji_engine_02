@@ -55,9 +55,5 @@ export function samplePokeShakePose(elapsedSec, opts = {}) {
     headZ: (side * 0.045 + wobble * 0.05) * strength,
     leanY: (side * -0.04 + wobble * 0.032) * strength,
     hipZ: lockedIdleHipTilt(wobble * 0.022 * strength, 0.42),
-    armLiftL: (0.028 + wobble * 0.038) * strength,
-    armLiftR: (0.028 + wobble * 0.038) * strength,
-    forearmL: Math.abs(wobble) * 0.024 * strength,
-    forearmR: Math.abs(wobble) * 0.024 * strength,
   };
 }

@@ -1312,14 +1312,13 @@ export async function createVrmAvatar(opts) {
       }
       applyEmotionExpressions(emotion);
       softenTalkMouthOverrides(expr, false);
-      if (
-        !eating &&
-        (isTalkBackgroundLibraryAction(vrmaAction) ||
-          (!bodyMotion.currentAction &&
-            !bodyMotion.activeGesture &&
-            !motionPlayer.isPlaying?.()))
-      ) {
+      motionPlayer.forceStop?.(false);
+      vrmaAction = null;
+      vrmaPending = false;
+      motionTransitionState = null;
+      if (!eating) {
         restorePlantedIdle();
+        bodyMotion.reapplyPlantedLimbs?.({ force: true, now: performance.now() });
       }
     } else {
       applyEmotionExpressions(emotion);
@@ -1553,14 +1552,14 @@ export async function createVrmAvatar(opts) {
         Boolean(motionPlayer.isCrossfading?.());
       if (talking || eating || crossfading) {
         bodyMotion.applyHandRestOnly?.({
-          talkBlend: crossfading ? 0.22 : talking ? 0.7 : eating ? 0.12 : 0,
+          talkBlend: crossfading ? 0.12 : talking ? 0.35 : eating ? 0.1 : 0,
           blendWeight: CALM_IDLE_USES_PROCEDURAL_BODY
             ? 1
             : crossfading
-              ? 0.55
+              ? 0.35
               : talking
-                ? 0.72
-                : 0.28,
+                ? 0.42
+                : 0.18,
           now,
         });
       }
@@ -1570,8 +1569,11 @@ export async function createVrmAvatar(opts) {
         !bodyMotion.activeGesture &&
         !talking &&
         !eating;
-      if (plantedIdleFrame) {
-        bodyMotion.reapplyPlantedLimbs?.({ now });
+      if (plantedIdleFrame || bodyMotion.pokeShakeActive) {
+        bodyMotion.reapplyPlantedLimbs?.({
+          now,
+          force: plantedIdleFrame,
+        });
       }
       if (eating && treatProp.active) {
         treatProp.update(bodyMotion.getEatChewSample?.());
@@ -1846,6 +1848,9 @@ export async function createVrmAvatar(opts) {
     resetMotionClock(now) {
       clearHostedBodyMotion();
       return bodyMotion.resetMotionClock?.(now);
+    },
+    reapplyPlantedLimbs(opts) {
+      return bodyMotion.reapplyPlantedLimbs?.(opts);
     },
     getMotionTransitionProgress() {
       if (!motionTransitionState) return 1;
