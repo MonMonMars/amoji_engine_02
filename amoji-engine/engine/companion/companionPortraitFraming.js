@@ -4,7 +4,7 @@
 import * as THREE from "three";
 
 export const COMPANION_PORTRAIT_FRAMING_SCHEMA =
-  "amoji.companionPortraitFraming.v5-head-aligned-eye-forward";
+  "amoji.companionPortraitFraming.v6-yaw-correction";
 
 /** Fallback lower-neck height when no head bone (ratio from feet to head). */
 export const UPPER_BODY_ANCHOR_RATIO = 0.84;
@@ -159,6 +159,26 @@ export function portraitModelYawOffset(headBone, camera, humanoid) {
   if (!headBone || !camera) return 0;
   const score = facingAlignmentScore(headBone, camera.position, humanoid);
   return score > 0.15 ? 0 : Math.PI;
+}
+
+/**
+ * One-shot yaw fix when the visible face points away from the camera.
+ * @param {import('three').Object3D | null | undefined} model
+ * @param {import('three').Object3D | null | undefined} headBone
+ * @param {import('three').PerspectiveCamera | null | undefined} camera
+ * @param {import('@pixiv/three-vrm').VRMHumanoid | null | undefined} [humanoid]
+ * @param {number} [minScore]
+ */
+export function correctPortraitModelYaw(model, headBone, camera, humanoid, minScore = 0.12) {
+  if (!model || !headBone || !camera) return false;
+  const score = facingAlignmentScore(headBone, camera.position, humanoid);
+  if (score >= minScore) return false;
+  const delta = portraitModelYawOffset(headBone, camera, humanoid);
+  if (!delta) return false;
+  model.rotation.y += delta;
+  model.updateMatrixWorld(true);
+  headBone.updateMatrixWorld(true);
+  return true;
 }
 
 /**

@@ -6,7 +6,7 @@ import { rosterModelUrl } from "./rosterVrmAssets.mjs";
 import { ROSTER_REPLACEMENT_SLOTS } from "./companionRosterReplacementSlots.js";
 import { ROSTER_SLOTS_24_27 } from "./companionRosterPremiumSlots.js";
 
-export const ROSTER_SCHEMA = "amoji.companionRoster.v480-keep-1-11-25";
+export const ROSTER_SCHEMA = "amoji.companionRoster.v486-hq-roster-refresh";
 /** Flagship picks (Nova, Kizuna, Alicia, Ember) */
 export const ROSTER_LOCKED_NUMBERS = Object.freeze([1, 2, 3, 4]);
 

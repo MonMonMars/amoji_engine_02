@@ -1,12 +1,12 @@
 /** Auto-generated scene background art — run: node scripts/generate-scene-backgrounds.mjs */
-/* build: 2026-09-21-v481-scene-redesign-bedroom-restore */
+/* build: dev */
 
 .atmosphere {
   background-color: #070a10 !important;
   background-image:
     linear-gradient(180deg, rgba(8, 12, 20, 0) 0%, rgba(8, 12, 20, 0.06) 48%, rgba(4, 6, 12, 0.26) 100%),
-    url("/prototypes/assets/scene-bg/cozy-room.png?v=picker-anime-v481-scene-redesign"),
-    url("/prototypes/assets/scene-bg/cozy-room.svg?v=picker-anime-v481-scene-redesign") !important;
+    url("/prototypes/assets/scene-bg/cozy-room.png?v=picker-anime-v486-hq-atmosphere"),
+    url("/prototypes/assets/scene-bg/cozy-room.svg?v=picker-anime-v486-hq-atmosphere") !important;
   background-size: cover, cover, cover !important;
   background-position: center, center !important;
   background-repeat: no-repeat !important;
@@ -15,8 +15,8 @@
 .atmosphere[data-scene-bg="night-city"] {
   background-image:
     linear-gradient(180deg, rgba(8, 12, 20, 0) 0%, rgba(8, 12, 20, 0.06) 48%, rgba(4, 6, 12, 0.26) 100%),
-    url("/prototypes/assets/companion-bg-anime.png?v=picker-anime-v481-scene-redesign"),
-    url("/prototypes/assets/scene-bg/night-city.svg?v=picker-anime-v481-scene-redesign") !important;
+    url("/prototypes/assets/companion-bg-anime.png?v=picker-anime-v486-hq-atmosphere"),
+    url("/prototypes/assets/scene-bg/night-city.svg?v=picker-anime-v486-hq-atmosphere") !important;
   background-size: cover, cover !important;
   background-position: center, center !important;
 }
@@ -33,8 +33,8 @@
 .atmosphere[data-scene-bg="rooftop"] {
   background-image:
     linear-gradient(180deg, rgba(8, 12, 20, 0) 0%, rgba(6, 10, 18, 0.05) 52%, rgba(3, 5, 10, 0.2) 100%),
-    url("/prototypes/assets/scene-bg/rooftop.png?v=picker-anime-v481-scene-redesign"),
-    url("/prototypes/assets/scene-bg/rooftop.svg?v=picker-anime-v481-scene-redesign") !important;
+    url("/prototypes/assets/scene-bg/rooftop.png?v=picker-anime-v486-hq-atmosphere"),
+    url("/prototypes/assets/scene-bg/rooftop.svg?v=picker-anime-v486-hq-atmosphere") !important;
   background-size: cover, cover, cover !important;
   background-position: center, center !important;
 }
@@ -51,8 +51,8 @@
 .atmosphere[data-scene-bg="park"] {
   background-image:
     linear-gradient(180deg, rgba(8, 12, 20, 0) 0%, rgba(6, 10, 18, 0.05) 52%, rgba(3, 5, 10, 0.2) 100%),
-    url("/prototypes/assets/scene-bg/park.png?v=picker-anime-v481-scene-redesign"),
-    url("/prototypes/assets/scene-bg/park.svg?v=picker-anime-v481-scene-redesign") !important;
+    url("/prototypes/assets/scene-bg/park.png?v=picker-anime-v486-hq-atmosphere"),
+    url("/prototypes/assets/scene-bg/park.svg?v=picker-anime-v486-hq-atmosphere") !important;
   background-size: cover, cover, cover !important;
   background-position: center, center !important;
 }
@@ -69,8 +69,8 @@
 .atmosphere[data-scene-bg="beach"] {
   background-image:
     linear-gradient(180deg, rgba(8, 12, 20, 0) 0%, rgba(6, 10, 18, 0.05) 52%, rgba(3, 5, 10, 0.2) 100%),
-    url("/prototypes/assets/scene-bg/beach.png?v=picker-anime-v481-scene-redesign"),
-    url("/prototypes/assets/scene-bg/beach.svg?v=picker-anime-v481-scene-redesign") !important;
+    url("/prototypes/assets/scene-bg/beach.png?v=picker-anime-v486-hq-atmosphere"),
+    url("/prototypes/assets/scene-bg/beach.svg?v=picker-anime-v486-hq-atmosphere") !important;
   background-size: cover, cover, cover !important;
   background-position: center, center !important;
 }
@@ -87,8 +87,8 @@
 .atmosphere[data-scene-bg="sunset"] {
   background-image:
     linear-gradient(180deg, rgba(8, 12, 20, 0) 0%, rgba(6, 10, 18, 0.05) 52%, rgba(3, 5, 10, 0.2) 100%),
-    url("/prototypes/assets/scene-bg/sunset.png?v=picker-anime-v481-scene-redesign"),
-    url("/prototypes/assets/scene-bg/sunset.svg?v=picker-anime-v481-scene-redesign") !important;
+    url("/prototypes/assets/scene-bg/sunset.png?v=picker-anime-v486-hq-atmosphere"),
+    url("/prototypes/assets/scene-bg/sunset.svg?v=picker-anime-v486-hq-atmosphere") !important;
   background-size: cover, cover, cover !important;
   background-position: center, center !important;
 }
@@ -105,8 +105,8 @@
 .atmosphere[data-scene-bg="aurora"] {
   background-image:
     linear-gradient(180deg, rgba(8, 12, 20, 0) 0%, rgba(6, 10, 18, 0.05) 52%, rgba(3, 5, 10, 0.2) 100%),
-    url("/prototypes/assets/scene-bg/aurora.png?v=picker-anime-v481-scene-redesign"),
-    url("/prototypes/assets/scene-bg/aurora.svg?v=picker-anime-v481-scene-redesign") !important;
+    url("/prototypes/assets/scene-bg/aurora.png?v=picker-anime-v486-hq-atmosphere"),
+    url("/prototypes/assets/scene-bg/aurora.svg?v=picker-anime-v486-hq-atmosphere") !important;
   background-size: cover, cover, cover !important;
   background-position: center, center !important;
 }
@@ -123,8 +123,8 @@
 .atmosphere[data-scene-bg="rain-street"] {
   background-image:
     linear-gradient(180deg, rgba(8, 12, 20, 0) 0%, rgba(6, 10, 18, 0.05) 52%, rgba(3, 5, 10, 0.2) 100%),
-    url("/prototypes/assets/scene-bg/rain-street.png?v=picker-anime-v481-scene-redesign"),
-    url("/prototypes/assets/scene-bg/rain-street.svg?v=picker-anime-v481-scene-redesign") !important;
+    url("/prototypes/assets/scene-bg/rain-street.png?v=picker-anime-v486-hq-atmosphere"),
+    url("/prototypes/assets/scene-bg/rain-street.svg?v=picker-anime-v486-hq-atmosphere") !important;
   background-size: cover, cover, cover !important;
   background-position: center, center !important;
 }
@@ -141,8 +141,8 @@
 .atmosphere[data-scene-bg="cherry-blossom"] {
   background-image:
     linear-gradient(180deg, rgba(8, 12, 20, 0) 0%, rgba(6, 10, 18, 0.05) 52%, rgba(3, 5, 10, 0.2) 100%),
-    url("/prototypes/assets/scene-bg/cherry-blossom.png?v=picker-anime-v481-scene-redesign"),
-    url("/prototypes/assets/scene-bg/cherry-blossom.svg?v=picker-anime-v481-scene-redesign") !important;
+    url("/prototypes/assets/scene-bg/cherry-blossom.png?v=picker-anime-v486-hq-atmosphere"),
+    url("/prototypes/assets/scene-bg/cherry-blossom.svg?v=picker-anime-v486-hq-atmosphere") !important;
   background-size: cover, cover, cover !important;
   background-position: center, center !important;
 }
@@ -159,8 +159,8 @@
 .atmosphere[data-scene-bg="mountain"] {
   background-image:
     linear-gradient(180deg, rgba(8, 12, 20, 0) 0%, rgba(6, 10, 18, 0.05) 52%, rgba(3, 5, 10, 0.2) 100%),
-    url("/prototypes/assets/scene-bg/mountain.png?v=picker-anime-v481-scene-redesign"),
-    url("/prototypes/assets/scene-bg/mountain.svg?v=picker-anime-v481-scene-redesign") !important;
+    url("/prototypes/assets/scene-bg/mountain.png?v=picker-anime-v486-hq-atmosphere"),
+    url("/prototypes/assets/scene-bg/mountain.svg?v=picker-anime-v486-hq-atmosphere") !important;
   background-size: cover, cover, cover !important;
   background-position: center, center !important;
 }
@@ -177,8 +177,8 @@
 .atmosphere[data-scene-bg="harbor"] {
   background-image:
     linear-gradient(180deg, rgba(8, 12, 20, 0) 0%, rgba(6, 10, 18, 0.05) 52%, rgba(3, 5, 10, 0.2) 100%),
-    url("/prototypes/assets/scene-bg/harbor.png?v=picker-anime-v481-scene-redesign"),
-    url("/prototypes/assets/scene-bg/harbor.svg?v=picker-anime-v481-scene-redesign") !important;
+    url("/prototypes/assets/scene-bg/harbor.png?v=picker-anime-v486-hq-atmosphere"),
+    url("/prototypes/assets/scene-bg/harbor.svg?v=picker-anime-v486-hq-atmosphere") !important;
   background-size: cover, cover, cover !important;
   background-position: center, center !important;
 }
@@ -195,8 +195,8 @@
 .atmosphere[data-scene-bg="meadow"] {
   background-image:
     linear-gradient(180deg, rgba(8, 12, 20, 0) 0%, rgba(6, 10, 18, 0.05) 52%, rgba(3, 5, 10, 0.2) 100%),
-    url("/prototypes/assets/scene-bg/meadow.png?v=picker-anime-v481-scene-redesign"),
-    url("/prototypes/assets/scene-bg/meadow.svg?v=picker-anime-v481-scene-redesign") !important;
+    url("/prototypes/assets/scene-bg/meadow.png?v=picker-anime-v486-hq-atmosphere"),
+    url("/prototypes/assets/scene-bg/meadow.svg?v=picker-anime-v486-hq-atmosphere") !important;
   background-size: cover, cover, cover !important;
   background-position: center, center !important;
 }
@@ -213,8 +213,8 @@
 .atmosphere[data-scene-bg="studio"] {
   background-image:
     linear-gradient(180deg, rgba(8, 12, 20, 0) 0%, rgba(6, 10, 18, 0.05) 52%, rgba(3, 5, 10, 0.2) 100%),
-    url("/prototypes/assets/scene-bg/studio.png?v=picker-anime-v481-scene-redesign"),
-    url("/prototypes/assets/scene-bg/studio.svg?v=picker-anime-v481-scene-redesign") !important;
+    url("/prototypes/assets/scene-bg/studio.png?v=picker-anime-v486-hq-atmosphere"),
+    url("/prototypes/assets/scene-bg/studio.svg?v=picker-anime-v486-hq-atmosphere") !important;
   background-size: cover, cover, cover !important;
   background-position: center, center !important;
 }
@@ -231,8 +231,8 @@
 .atmosphere[data-scene-bg="cozy-room"] {
   background-image:
     linear-gradient(180deg, rgba(8, 12, 20, 0) 0%, rgba(6, 10, 18, 0.05) 52%, rgba(3, 5, 10, 0.2) 100%),
-    url("/prototypes/assets/scene-bg/cozy-room.png?v=picker-anime-v481-scene-redesign"),
-    url("/prototypes/assets/scene-bg/cozy-room.svg?v=picker-anime-v481-scene-redesign") !important;
+    url("/prototypes/assets/scene-bg/cozy-room.png?v=picker-anime-v486-hq-atmosphere"),
+    url("/prototypes/assets/scene-bg/cozy-room.svg?v=picker-anime-v486-hq-atmosphere") !important;
   background-size: cover, cover, cover !important;
   background-position: center, center !important;
 }
@@ -249,8 +249,8 @@
 .atmosphere[data-scene-bg="cafe"] {
   background-image:
     linear-gradient(180deg, rgba(8, 12, 20, 0) 0%, rgba(6, 10, 18, 0.05) 52%, rgba(3, 5, 10, 0.2) 100%),
-    url("/prototypes/assets/scene-bg/cafe.png?v=picker-anime-v481-scene-redesign"),
-    url("/prototypes/assets/scene-bg/cafe.svg?v=picker-anime-v481-scene-redesign") !important;
+    url("/prototypes/assets/scene-bg/cafe.png?v=picker-anime-v486-hq-atmosphere"),
+    url("/prototypes/assets/scene-bg/cafe.svg?v=picker-anime-v486-hq-atmosphere") !important;
   background-size: cover, cover, cover !important;
   background-position: center, center !important;
 }
@@ -267,8 +267,8 @@
 .atmosphere[data-scene-bg="library"] {
   background-image:
     linear-gradient(180deg, rgba(8, 12, 20, 0) 0%, rgba(6, 10, 18, 0.05) 52%, rgba(3, 5, 10, 0.2) 100%),
-    url("/prototypes/assets/scene-bg/library.png?v=picker-anime-v481-scene-redesign"),
-    url("/prototypes/assets/scene-bg/library.svg?v=picker-anime-v481-scene-redesign") !important;
+    url("/prototypes/assets/scene-bg/library.png?v=picker-anime-v486-hq-atmosphere"),
+    url("/prototypes/assets/scene-bg/library.svg?v=picker-anime-v486-hq-atmosphere") !important;
   background-size: cover, cover, cover !important;
   background-position: center, center !important;
 }
@@ -285,8 +285,8 @@
 .atmosphere[data-scene-bg="bedroom"] {
   background-image:
     linear-gradient(180deg, rgba(8, 12, 20, 0) 0%, rgba(6, 10, 18, 0.05) 52%, rgba(3, 5, 10, 0.2) 100%),
-    url("/prototypes/assets/scene-bg/bedroom.png?v=picker-anime-v481-scene-redesign"),
-    url("/prototypes/assets/scene-bg/bedroom.svg?v=picker-anime-v481-scene-redesign") !important;
+    url("/prototypes/assets/scene-bg/bedroom.png?v=picker-anime-v486-hq-atmosphere"),
+    url("/prototypes/assets/scene-bg/bedroom.svg?v=picker-anime-v486-hq-atmosphere") !important;
   background-size: cover, cover, cover !important;
   background-position: center, center !important;
 }
@@ -303,8 +303,8 @@
 .atmosphere[data-scene-bg="office"] {
   background-image:
     linear-gradient(180deg, rgba(8, 12, 20, 0) 0%, rgba(6, 10, 18, 0.05) 52%, rgba(3, 5, 10, 0.2) 100%),
-    url("/prototypes/assets/scene-bg/office.png?v=picker-anime-v481-scene-redesign"),
-    url("/prototypes/assets/scene-bg/office.svg?v=picker-anime-v481-scene-redesign") !important;
+    url("/prototypes/assets/scene-bg/office.png?v=picker-anime-v486-hq-atmosphere"),
+    url("/prototypes/assets/scene-bg/office.svg?v=picker-anime-v486-hq-atmosphere") !important;
   background-size: cover, cover, cover !important;
   background-position: center, center !important;
 }
@@ -321,8 +321,8 @@
 .atmosphere[data-scene-bg="classroom"] {
   background-image:
     linear-gradient(180deg, rgba(8, 12, 20, 0) 0%, rgba(6, 10, 18, 0.05) 52%, rgba(3, 5, 10, 0.2) 100%),
-    url("/prototypes/assets/scene-bg/classroom.png?v=picker-anime-v481-scene-redesign"),
-    url("/prototypes/assets/scene-bg/classroom.svg?v=picker-anime-v481-scene-redesign") !important;
+    url("/prototypes/assets/scene-bg/classroom.png?v=picker-anime-v486-hq-atmosphere"),
+    url("/prototypes/assets/scene-bg/classroom.svg?v=picker-anime-v486-hq-atmosphere") !important;
   background-size: cover, cover, cover !important;
   background-position: center, center !important;
 }
@@ -339,8 +339,8 @@
 .atmosphere[data-scene-bg="greenhouse"] {
   background-image:
     linear-gradient(180deg, rgba(8, 12, 20, 0) 0%, rgba(6, 10, 18, 0.05) 52%, rgba(3, 5, 10, 0.2) 100%),
-    url("/prototypes/assets/scene-bg/greenhouse.png?v=picker-anime-v481-scene-redesign"),
-    url("/prototypes/assets/scene-bg/greenhouse.svg?v=picker-anime-v481-scene-redesign") !important;
+    url("/prototypes/assets/scene-bg/greenhouse.png?v=picker-anime-v486-hq-atmosphere"),
+    url("/prototypes/assets/scene-bg/greenhouse.svg?v=picker-anime-v486-hq-atmosphere") !important;
   background-size: cover, cover, cover !important;
   background-position: center, center !important;
 }
@@ -357,8 +357,8 @@
 .atmosphere[data-scene-bg="loft"] {
   background-image:
     linear-gradient(180deg, rgba(8, 12, 20, 0) 0%, rgba(6, 10, 18, 0.05) 52%, rgba(3, 5, 10, 0.2) 100%),
-    url("/prototypes/assets/scene-bg/loft.png?v=picker-anime-v481-scene-redesign"),
-    url("/prototypes/assets/scene-bg/loft.svg?v=picker-anime-v481-scene-redesign") !important;
+    url("/prototypes/assets/scene-bg/loft.png?v=picker-anime-v486-hq-atmosphere"),
+    url("/prototypes/assets/scene-bg/loft.svg?v=picker-anime-v486-hq-atmosphere") !important;
   background-size: cover, cover, cover !important;
   background-position: center, center !important;
 }
@@ -375,8 +375,8 @@
 .atmosphere[data-scene-bg="kitchen"] {
   background-image:
     linear-gradient(180deg, rgba(8, 12, 20, 0) 0%, rgba(6, 10, 18, 0.05) 52%, rgba(3, 5, 10, 0.2) 100%),
-    url("/prototypes/assets/scene-bg/kitchen.png?v=picker-anime-v481-scene-redesign"),
-    url("/prototypes/assets/scene-bg/kitchen.svg?v=picker-anime-v481-scene-redesign") !important;
+    url("/prototypes/assets/scene-bg/kitchen.png?v=picker-anime-v486-hq-atmosphere"),
+    url("/prototypes/assets/scene-bg/kitchen.svg?v=picker-anime-v486-hq-atmosphere") !important;
   background-size: cover, cover, cover !important;
   background-position: center, center !important;
 }
@@ -393,8 +393,8 @@
 .atmosphere[data-scene-bg="executive-lounge"] {
   background-image:
     linear-gradient(180deg, rgba(8, 12, 20, 0) 0%, rgba(6, 10, 18, 0.05) 52%, rgba(3, 5, 10, 0.2) 100%),
-    url("/prototypes/assets/scene-bg/executive-lounge.png?v=picker-anime-v481-scene-redesign"),
-    url("/prototypes/assets/scene-bg/executive-lounge.svg?v=picker-anime-v481-scene-redesign") !important;
+    url("/prototypes/assets/scene-bg/executive-lounge.png?v=picker-anime-v486-hq-atmosphere"),
+    url("/prototypes/assets/scene-bg/executive-lounge.svg?v=picker-anime-v486-hq-atmosphere") !important;
   background-size: cover, cover, cover !important;
   background-position: center, center !important;
 }
@@ -411,8 +411,8 @@
 .atmosphere[data-scene-bg="hotel-lobby"] {
   background-image:
     linear-gradient(180deg, rgba(8, 12, 20, 0) 0%, rgba(6, 10, 18, 0.05) 52%, rgba(3, 5, 10, 0.2) 100%),
-    url("/prototypes/assets/scene-bg/hotel-lobby.png?v=picker-anime-v481-scene-redesign"),
-    url("/prototypes/assets/scene-bg/hotel-lobby.svg?v=picker-anime-v481-scene-redesign") !important;
+    url("/prototypes/assets/scene-bg/hotel-lobby.png?v=picker-anime-v486-hq-atmosphere"),
+    url("/prototypes/assets/scene-bg/hotel-lobby.svg?v=picker-anime-v486-hq-atmosphere") !important;
   background-size: cover, cover, cover !important;
   background-position: center, center !important;
 }
@@ -429,8 +429,8 @@
 .atmosphere[data-scene-bg="art-gallery"] {
   background-image:
     linear-gradient(180deg, rgba(8, 12, 20, 0) 0%, rgba(6, 10, 18, 0.05) 52%, rgba(3, 5, 10, 0.2) 100%),
-    url("/prototypes/assets/scene-bg/art-gallery.png?v=picker-anime-v481-scene-redesign"),
-    url("/prototypes/assets/scene-bg/art-gallery.svg?v=picker-anime-v481-scene-redesign") !important;
+    url("/prototypes/assets/scene-bg/art-gallery.png?v=picker-anime-v486-hq-atmosphere"),
+    url("/prototypes/assets/scene-bg/art-gallery.svg?v=picker-anime-v486-hq-atmosphere") !important;
   background-size: cover, cover, cover !important;
   background-position: center, center !important;
 }
@@ -447,8 +447,8 @@
 .atmosphere[data-scene-bg="observatory"] {
   background-image:
     linear-gradient(180deg, rgba(8, 12, 20, 0) 0%, rgba(6, 10, 18, 0.05) 52%, rgba(3, 5, 10, 0.2) 100%),
-    url("/prototypes/assets/scene-bg/observatory.png?v=picker-anime-v481-scene-redesign"),
-    url("/prototypes/assets/scene-bg/observatory.svg?v=picker-anime-v481-scene-redesign") !important;
+    url("/prototypes/assets/scene-bg/observatory.png?v=picker-anime-v486-hq-atmosphere"),
+    url("/prototypes/assets/scene-bg/observatory.svg?v=picker-anime-v486-hq-atmosphere") !important;
   background-size: cover, cover, cover !important;
   background-position: center, center !important;
 }
@@ -465,8 +465,8 @@
 .atmosphere[data-scene-bg="zen-garden"] {
   background-image:
     linear-gradient(180deg, rgba(8, 12, 20, 0) 0%, rgba(6, 10, 18, 0.05) 52%, rgba(3, 5, 10, 0.2) 100%),
-    url("/prototypes/assets/scene-bg/zen-garden.png?v=picker-anime-v481-scene-redesign"),
-    url("/prototypes/assets/scene-bg/zen-garden.svg?v=picker-anime-v481-scene-redesign") !important;
+    url("/prototypes/assets/scene-bg/zen-garden.png?v=picker-anime-v486-hq-atmosphere"),
+    url("/prototypes/assets/scene-bg/zen-garden.svg?v=picker-anime-v486-hq-atmosphere") !important;
   background-size: cover, cover, cover !important;
   background-position: center, center !important;
 }
@@ -483,8 +483,8 @@
 .atmosphere[data-scene-bg="day-skyline"] {
   background-image:
     linear-gradient(180deg, rgba(8, 12, 20, 0) 0%, rgba(6, 10, 18, 0.05) 52%, rgba(3, 5, 10, 0.2) 100%),
-    url("/prototypes/assets/scene-bg/day-skyline.png?v=picker-anime-v481-scene-redesign"),
-    url("/prototypes/assets/scene-bg/day-skyline.svg?v=picker-anime-v481-scene-redesign") !important;
+    url("/prototypes/assets/scene-bg/day-skyline.png?v=picker-anime-v486-hq-atmosphere"),
+    url("/prototypes/assets/scene-bg/day-skyline.svg?v=picker-anime-v486-hq-atmosphere") !important;
   background-size: cover, cover, cover !important;
   background-position: center, center !important;
 }
@@ -501,8 +501,8 @@
 .atmosphere[data-scene-bg="neon-arcade"] {
   background-image:
     linear-gradient(180deg, rgba(8, 12, 20, 0) 0%, rgba(6, 10, 18, 0.05) 52%, rgba(3, 5, 10, 0.2) 100%),
-    url("/prototypes/assets/scene-bg/neon-arcade.png?v=picker-anime-v481-scene-redesign"),
-    url("/prototypes/assets/scene-bg/neon-arcade.svg?v=picker-anime-v481-scene-redesign") !important;
+    url("/prototypes/assets/scene-bg/neon-arcade.png?v=picker-anime-v486-hq-atmosphere"),
+    url("/prototypes/assets/scene-bg/neon-arcade.svg?v=picker-anime-v486-hq-atmosphere") !important;
   background-size: cover, cover, cover !important;
   background-position: center, center !important;
 }
@@ -519,8 +519,8 @@
 .atmosphere[data-scene-bg="bamboo-forest"] {
   background-image:
     linear-gradient(180deg, rgba(8, 12, 20, 0) 0%, rgba(6, 10, 18, 0.05) 52%, rgba(3, 5, 10, 0.2) 100%),
-    url("/prototypes/assets/scene-bg/bamboo-forest.png?v=picker-anime-v481-scene-redesign"),
-    url("/prototypes/assets/scene-bg/bamboo-forest.svg?v=picker-anime-v481-scene-redesign") !important;
+    url("/prototypes/assets/scene-bg/bamboo-forest.png?v=picker-anime-v486-hq-atmosphere"),
+    url("/prototypes/assets/scene-bg/bamboo-forest.svg?v=picker-anime-v486-hq-atmosphere") !important;
   background-size: cover, cover, cover !important;
   background-position: center, center !important;
 }
@@ -537,8 +537,8 @@
 .atmosphere[data-scene-bg="train-platform"] {
   background-image:
     linear-gradient(180deg, rgba(8, 12, 20, 0) 0%, rgba(6, 10, 18, 0.05) 52%, rgba(3, 5, 10, 0.2) 100%),
-    url("/prototypes/assets/scene-bg/train-platform.png?v=picker-anime-v481-scene-redesign"),
-    url("/prototypes/assets/scene-bg/train-platform.svg?v=picker-anime-v481-scene-redesign") !important;
+    url("/prototypes/assets/scene-bg/train-platform.png?v=picker-anime-v486-hq-atmosphere"),
+    url("/prototypes/assets/scene-bg/train-platform.svg?v=picker-anime-v486-hq-atmosphere") !important;
   background-size: cover, cover, cover !important;
   background-position: center, center !important;
 }
@@ -555,8 +555,8 @@
 .atmosphere[data-scene-bg="spa-resort"] {
   background-image:
     linear-gradient(180deg, rgba(8, 12, 20, 0) 0%, rgba(6, 10, 18, 0.05) 52%, rgba(3, 5, 10, 0.2) 100%),
-    url("/prototypes/assets/scene-bg/spa-resort.png?v=picker-anime-v481-scene-redesign"),
-    url("/prototypes/assets/scene-bg/spa-resort.svg?v=picker-anime-v481-scene-redesign") !important;
+    url("/prototypes/assets/scene-bg/spa-resort.png?v=picker-anime-v486-hq-atmosphere"),
+    url("/prototypes/assets/scene-bg/spa-resort.svg?v=picker-anime-v486-hq-atmosphere") !important;
   background-size: cover, cover, cover !important;
   background-position: center, center !important;
 }
@@ -573,8 +573,8 @@
 .atmosphere[data-scene-bg="penthouse-suite"] {
   background-image:
     linear-gradient(180deg, rgba(8, 12, 20, 0) 0%, rgba(6, 10, 18, 0.05) 52%, rgba(3, 5, 10, 0.2) 100%),
-    url("/prototypes/assets/scene-bg/penthouse-suite.png?v=picker-anime-v481-scene-redesign"),
-    url("/prototypes/assets/scene-bg/penthouse-suite.svg?v=picker-anime-v481-scene-redesign") !important;
+    url("/prototypes/assets/scene-bg/penthouse-suite.png?v=picker-anime-v486-hq-atmosphere"),
+    url("/prototypes/assets/scene-bg/penthouse-suite.svg?v=picker-anime-v486-hq-atmosphere") !important;
   background-size: cover, cover, cover !important;
   background-position: center, center !important;
 }
@@ -597,185 +597,185 @@
 .theme-grok-ani .atmosphere[data-scene-bg="rooftop"] {
   background-image:
     linear-gradient(180deg, rgba(4, 4, 12, 0) 0%, rgba(2, 2, 10, 0.1) 50%, rgba(2, 2, 10, 0.36) 100%),
-    url("/prototypes/assets/scene-bg/rooftop.png?v=picker-anime-v481-scene-redesign") center center / cover no-repeat !important;
+    url("/prototypes/assets/scene-bg/rooftop.png?v=picker-anime-v486-hq-atmosphere") center center / cover no-repeat !important;
 }
 
 .theme-grok-ani .atmosphere[data-scene-bg="park"] {
   background-image:
     linear-gradient(180deg, rgba(4, 4, 12, 0) 0%, rgba(2, 2, 10, 0.1) 50%, rgba(2, 2, 10, 0.36) 100%),
-    url("/prototypes/assets/scene-bg/park.png?v=picker-anime-v481-scene-redesign") center center / cover no-repeat !important;
+    url("/prototypes/assets/scene-bg/park.png?v=picker-anime-v486-hq-atmosphere") center center / cover no-repeat !important;
 }
 
 .theme-grok-ani .atmosphere[data-scene-bg="beach"] {
   background-image:
     linear-gradient(180deg, rgba(4, 4, 12, 0) 0%, rgba(2, 2, 10, 0.1) 50%, rgba(2, 2, 10, 0.36) 100%),
-    url("/prototypes/assets/scene-bg/beach.png?v=picker-anime-v481-scene-redesign") center center / cover no-repeat !important;
+    url("/prototypes/assets/scene-bg/beach.png?v=picker-anime-v486-hq-atmosphere") center center / cover no-repeat !important;
 }
 
 .theme-grok-ani .atmosphere[data-scene-bg="sunset"] {
   background-image:
     linear-gradient(180deg, rgba(4, 4, 12, 0) 0%, rgba(2, 2, 10, 0.1) 50%, rgba(2, 2, 10, 0.36) 100%),
-    url("/prototypes/assets/scene-bg/sunset.png?v=picker-anime-v481-scene-redesign") center center / cover no-repeat !important;
+    url("/prototypes/assets/scene-bg/sunset.png?v=picker-anime-v486-hq-atmosphere") center center / cover no-repeat !important;
 }
 
 .theme-grok-ani .atmosphere[data-scene-bg="aurora"] {
   background-image:
     linear-gradient(180deg, rgba(4, 4, 12, 0) 0%, rgba(2, 2, 10, 0.1) 50%, rgba(2, 2, 10, 0.36) 100%),
-    url("/prototypes/assets/scene-bg/aurora.png?v=picker-anime-v481-scene-redesign") center center / cover no-repeat !important;
+    url("/prototypes/assets/scene-bg/aurora.png?v=picker-anime-v486-hq-atmosphere") center center / cover no-repeat !important;
 }
 
 .theme-grok-ani .atmosphere[data-scene-bg="rain-street"] {
   background-image:
     linear-gradient(180deg, rgba(4, 4, 12, 0) 0%, rgba(2, 2, 10, 0.1) 50%, rgba(2, 2, 10, 0.36) 100%),
-    url("/prototypes/assets/scene-bg/rain-street.png?v=picker-anime-v481-scene-redesign") center center / cover no-repeat !important;
+    url("/prototypes/assets/scene-bg/rain-street.png?v=picker-anime-v486-hq-atmosphere") center center / cover no-repeat !important;
 }
 
 .theme-grok-ani .atmosphere[data-scene-bg="cherry-blossom"] {
   background-image:
     linear-gradient(180deg, rgba(4, 4, 12, 0) 0%, rgba(2, 2, 10, 0.1) 50%, rgba(2, 2, 10, 0.36) 100%),
-    url("/prototypes/assets/scene-bg/cherry-blossom.png?v=picker-anime-v481-scene-redesign") center center / cover no-repeat !important;
+    url("/prototypes/assets/scene-bg/cherry-blossom.png?v=picker-anime-v486-hq-atmosphere") center center / cover no-repeat !important;
 }
 
 .theme-grok-ani .atmosphere[data-scene-bg="mountain"] {
   background-image:
     linear-gradient(180deg, rgba(4, 4, 12, 0) 0%, rgba(2, 2, 10, 0.1) 50%, rgba(2, 2, 10, 0.36) 100%),
-    url("/prototypes/assets/scene-bg/mountain.png?v=picker-anime-v481-scene-redesign") center center / cover no-repeat !important;
+    url("/prototypes/assets/scene-bg/mountain.png?v=picker-anime-v486-hq-atmosphere") center center / cover no-repeat !important;
 }
 
 .theme-grok-ani .atmosphere[data-scene-bg="harbor"] {
   background-image:
     linear-gradient(180deg, rgba(4, 4, 12, 0) 0%, rgba(2, 2, 10, 0.1) 50%, rgba(2, 2, 10, 0.36) 100%),
-    url("/prototypes/assets/scene-bg/harbor.png?v=picker-anime-v481-scene-redesign") center center / cover no-repeat !important;
+    url("/prototypes/assets/scene-bg/harbor.png?v=picker-anime-v486-hq-atmosphere") center center / cover no-repeat !important;
 }
 
 .theme-grok-ani .atmosphere[data-scene-bg="meadow"] {
   background-image:
     linear-gradient(180deg, rgba(4, 4, 12, 0) 0%, rgba(2, 2, 10, 0.1) 50%, rgba(2, 2, 10, 0.36) 100%),
-    url("/prototypes/assets/scene-bg/meadow.png?v=picker-anime-v481-scene-redesign") center center / cover no-repeat !important;
+    url("/prototypes/assets/scene-bg/meadow.png?v=picker-anime-v486-hq-atmosphere") center center / cover no-repeat !important;
 }
 
 .theme-grok-ani .atmosphere[data-scene-bg="studio"] {
   background-image:
     linear-gradient(180deg, rgba(4, 4, 12, 0) 0%, rgba(2, 2, 10, 0.1) 50%, rgba(2, 2, 10, 0.36) 100%),
-    url("/prototypes/assets/scene-bg/studio.png?v=picker-anime-v481-scene-redesign") center center / cover no-repeat !important;
+    url("/prototypes/assets/scene-bg/studio.png?v=picker-anime-v486-hq-atmosphere") center center / cover no-repeat !important;
 }
 
 .theme-grok-ani .atmosphere[data-scene-bg="cozy-room"] {
   background-image:
     linear-gradient(180deg, rgba(4, 4, 12, 0) 0%, rgba(2, 2, 10, 0.1) 50%, rgba(2, 2, 10, 0.36) 100%),
-    url("/prototypes/assets/scene-bg/cozy-room.png?v=picker-anime-v481-scene-redesign") center center / cover no-repeat !important;
+    url("/prototypes/assets/scene-bg/cozy-room.png?v=picker-anime-v486-hq-atmosphere") center center / cover no-repeat !important;
 }
 
 .theme-grok-ani .atmosphere[data-scene-bg="cafe"] {
   background-image:
     linear-gradient(180deg, rgba(4, 4, 12, 0) 0%, rgba(2, 2, 10, 0.1) 50%, rgba(2, 2, 10, 0.36) 100%),
-    url("/prototypes/assets/scene-bg/cafe.png?v=picker-anime-v481-scene-redesign") center center / cover no-repeat !important;
+    url("/prototypes/assets/scene-bg/cafe.png?v=picker-anime-v486-hq-atmosphere") center center / cover no-repeat !important;
 }
 
 .theme-grok-ani .atmosphere[data-scene-bg="library"] {
   background-image:
     linear-gradient(180deg, rgba(4, 4, 12, 0) 0%, rgba(2, 2, 10, 0.1) 50%, rgba(2, 2, 10, 0.36) 100%),
-    url("/prototypes/assets/scene-bg/library.png?v=picker-anime-v481-scene-redesign") center center / cover no-repeat !important;
+    url("/prototypes/assets/scene-bg/library.png?v=picker-anime-v486-hq-atmosphere") center center / cover no-repeat !important;
 }
 
 .theme-grok-ani .atmosphere[data-scene-bg="bedroom"] {
   background-image:
     linear-gradient(180deg, rgba(4, 4, 12, 0) 0%, rgba(2, 2, 10, 0.1) 50%, rgba(2, 2, 10, 0.36) 100%),
-    url("/prototypes/assets/scene-bg/bedroom.png?v=picker-anime-v481-scene-redesign") center center / cover no-repeat !important;
+    url("/prototypes/assets/scene-bg/bedroom.png?v=picker-anime-v486-hq-atmosphere") center center / cover no-repeat !important;
 }
 
 .theme-grok-ani .atmosphere[data-scene-bg="office"] {
   background-image:
     linear-gradient(180deg, rgba(4, 4, 12, 0) 0%, rgba(2, 2, 10, 0.1) 50%, rgba(2, 2, 10, 0.36) 100%),
-    url("/prototypes/assets/scene-bg/office.png?v=picker-anime-v481-scene-redesign") center center / cover no-repeat !important;
+    url("/prototypes/assets/scene-bg/office.png?v=picker-anime-v486-hq-atmosphere") center center / cover no-repeat !important;
 }
 
 .theme-grok-ani .atmosphere[data-scene-bg="classroom"] {
   background-image:
     linear-gradient(180deg, rgba(4, 4, 12, 0) 0%, rgba(2, 2, 10, 0.1) 50%, rgba(2, 2, 10, 0.36) 100%),
-    url("/prototypes/assets/scene-bg/classroom.png?v=picker-anime-v481-scene-redesign") center center / cover no-repeat !important;
+    url("/prototypes/assets/scene-bg/classroom.png?v=picker-anime-v486-hq-atmosphere") center center / cover no-repeat !important;
 }
 
 .theme-grok-ani .atmosphere[data-scene-bg="greenhouse"] {
   background-image:
     linear-gradient(180deg, rgba(4, 4, 12, 0) 0%, rgba(2, 2, 10, 0.1) 50%, rgba(2, 2, 10, 0.36) 100%),
-    url("/prototypes/assets/scene-bg/greenhouse.png?v=picker-anime-v481-scene-redesign") center center / cover no-repeat !important;
+    url("/prototypes/assets/scene-bg/greenhouse.png?v=picker-anime-v486-hq-atmosphere") center center / cover no-repeat !important;
 }
 
 .theme-grok-ani .atmosphere[data-scene-bg="loft"] {
   background-image:
     linear-gradient(180deg, rgba(4, 4, 12, 0) 0%, rgba(2, 2, 10, 0.1) 50%, rgba(2, 2, 10, 0.36) 100%),
-    url("/prototypes/assets/scene-bg/loft.png?v=picker-anime-v481-scene-redesign") center center / cover no-repeat !important;
+    url("/prototypes/assets/scene-bg/loft.png?v=picker-anime-v486-hq-atmosphere") center center / cover no-repeat !important;
 }
 
 .theme-grok-ani .atmosphere[data-scene-bg="kitchen"] {
   background-image:
     linear-gradient(180deg, rgba(4, 4, 12, 0) 0%, rgba(2, 2, 10, 0.1) 50%, rgba(2, 2, 10, 0.36) 100%),
-    url("/prototypes/assets/scene-bg/kitchen.png?v=picker-anime-v481-scene-redesign") center center / cover no-repeat !important;
+    url("/prototypes/assets/scene-bg/kitchen.png?v=picker-anime-v486-hq-atmosphere") center center / cover no-repeat !important;
 }
 
 .theme-grok-ani .atmosphere[data-scene-bg="executive-lounge"] {
   background-image:
     linear-gradient(180deg, rgba(4, 4, 12, 0) 0%, rgba(2, 2, 10, 0.1) 50%, rgba(2, 2, 10, 0.36) 100%),
-    url("/prototypes/assets/scene-bg/executive-lounge.png?v=picker-anime-v481-scene-redesign") center center / cover no-repeat !important;
+    url("/prototypes/assets/scene-bg/executive-lounge.png?v=picker-anime-v486-hq-atmosphere") center center / cover no-repeat !important;
 }
 
 .theme-grok-ani .atmosphere[data-scene-bg="hotel-lobby"] {
   background-image:
     linear-gradient(180deg, rgba(4, 4, 12, 0) 0%, rgba(2, 2, 10, 0.1) 50%, rgba(2, 2, 10, 0.36) 100%),
-    url("/prototypes/assets/scene-bg/hotel-lobby.png?v=picker-anime-v481-scene-redesign") center center / cover no-repeat !important;
+    url("/prototypes/assets/scene-bg/hotel-lobby.png?v=picker-anime-v486-hq-atmosphere") center center / cover no-repeat !important;
 }
 
 .theme-grok-ani .atmosphere[data-scene-bg="art-gallery"] {
   background-image:
     linear-gradient(180deg, rgba(4, 4, 12, 0) 0%, rgba(2, 2, 10, 0.1) 50%, rgba(2, 2, 10, 0.36) 100%),
-    url("/prototypes/assets/scene-bg/art-gallery.png?v=picker-anime-v481-scene-redesign") center center / cover no-repeat !important;
+    url("/prototypes/assets/scene-bg/art-gallery.png?v=picker-anime-v486-hq-atmosphere") center center / cover no-repeat !important;
 }
 
 .theme-grok-ani .atmosphere[data-scene-bg="observatory"] {
   background-image:
     linear-gradient(180deg, rgba(4, 4, 12, 0) 0%, rgba(2, 2, 10, 0.1) 50%, rgba(2, 2, 10, 0.36) 100%),
-    url("/prototypes/assets/scene-bg/observatory.png?v=picker-anime-v481-scene-redesign") center center / cover no-repeat !important;
+    url("/prototypes/assets/scene-bg/observatory.png?v=picker-anime-v486-hq-atmosphere") center center / cover no-repeat !important;
 }
 
 .theme-grok-ani .atmosphere[data-scene-bg="zen-garden"] {
   background-image:
     linear-gradient(180deg, rgba(4, 4, 12, 0) 0%, rgba(2, 2, 10, 0.1) 50%, rgba(2, 2, 10, 0.36) 100%),
-    url("/prototypes/assets/scene-bg/zen-garden.png?v=picker-anime-v481-scene-redesign") center center / cover no-repeat !important;
+    url("/prototypes/assets/scene-bg/zen-garden.png?v=picker-anime-v486-hq-atmosphere") center center / cover no-repeat !important;
 }
 
 .theme-grok-ani .atmosphere[data-scene-bg="day-skyline"] {
   background-image:
     linear-gradient(180deg, rgba(4, 4, 12, 0) 0%, rgba(2, 2, 10, 0.1) 50%, rgba(2, 2, 10, 0.36) 100%),
-    url("/prototypes/assets/scene-bg/day-skyline.png?v=picker-anime-v481-scene-redesign") center center / cover no-repeat !important;
+    url("/prototypes/assets/scene-bg/day-skyline.png?v=picker-anime-v486-hq-atmosphere") center center / cover no-repeat !important;
 }
 
 .theme-grok-ani .atmosphere[data-scene-bg="neon-arcade"] {
   background-image:
     linear-gradient(180deg, rgba(4, 4, 12, 0) 0%, rgba(2, 2, 10, 0.1) 50%, rgba(2, 2, 10, 0.36) 100%),
-    url("/prototypes/assets/scene-bg/neon-arcade.png?v=picker-anime-v481-scene-redesign") center center / cover no-repeat !important;
+    url("/prototypes/assets/scene-bg/neon-arcade.png?v=picker-anime-v486-hq-atmosphere") center center / cover no-repeat !important;
 }
 
 .theme-grok-ani .atmosphere[data-scene-bg="bamboo-forest"] {
   background-image:
     linear-gradient(180deg, rgba(4, 4, 12, 0) 0%, rgba(2, 2, 10, 0.1) 50%, rgba(2, 2, 10, 0.36) 100%),
-    url("/prototypes/assets/scene-bg/bamboo-forest.png?v=picker-anime-v481-scene-redesign") center center / cover no-repeat !important;
+    url("/prototypes/assets/scene-bg/bamboo-forest.png?v=picker-anime-v486-hq-atmosphere") center center / cover no-repeat !important;
 }
 
 .theme-grok-ani .atmosphere[data-scene-bg="train-platform"] {
   background-image:
     linear-gradient(180deg, rgba(4, 4, 12, 0) 0%, rgba(2, 2, 10, 0.1) 50%, rgba(2, 2, 10, 0.36) 100%),
-    url("/prototypes/assets/scene-bg/train-platform.png?v=picker-anime-v481-scene-redesign") center center / cover no-repeat !important;
+    url("/prototypes/assets/scene-bg/train-platform.png?v=picker-anime-v486-hq-atmosphere") center center / cover no-repeat !important;
 }
 
 .theme-grok-ani .atmosphere[data-scene-bg="spa-resort"] {
   background-image:
     linear-gradient(180deg, rgba(4, 4, 12, 0) 0%, rgba(2, 2, 10, 0.1) 50%, rgba(2, 2, 10, 0.36) 100%),
-    url("/prototypes/assets/scene-bg/spa-resort.png?v=picker-anime-v481-scene-redesign") center center / cover no-repeat !important;
+    url("/prototypes/assets/scene-bg/spa-resort.png?v=picker-anime-v486-hq-atmosphere") center center / cover no-repeat !important;
 }
 
 .theme-grok-ani .atmosphere[data-scene-bg="penthouse-suite"] {
   background-image:
     linear-gradient(180deg, rgba(4, 4, 12, 0) 0%, rgba(2, 2, 10, 0.1) 50%, rgba(2, 2, 10, 0.36) 100%),
-    url("/prototypes/assets/scene-bg/penthouse-suite.png?v=picker-anime-v481-scene-redesign") center center / cover no-repeat !important;
+    url("/prototypes/assets/scene-bg/penthouse-suite.png?v=picker-anime-v486-hq-atmosphere") center center / cover no-repeat !important;
 }

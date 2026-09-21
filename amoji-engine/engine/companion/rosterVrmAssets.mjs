@@ -10,7 +10,7 @@ const VRoidSampleC =
 const VRoidFem =
   "https://raw.githubusercontent.com/madjin/vrm-samples/master/vroid/fem_vroid.vrm";
 
-export const ROSTER_VRM_ASSETS_SCHEMA = "amoji.rosterVrmAssets.v3-replacement480";
+export const ROSTER_VRM_ASSETS_SCHEMA = "amoji.rosterVrmAssets.v4-arweave-refresh";
 
 /** @param {string} characterId */
 export function rosterVrmBasename(characterId) {

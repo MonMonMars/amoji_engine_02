@@ -7,12 +7,12 @@
  */
 import * as THREE from "three";
 
-export const VRM_SPRING_STABILITY_SCHEMA = "amoji.vrmSpringStability.v11";
+export const VRM_SPRING_STABILITY_SCHEMA = "amoji.vrmSpringStability.v12-recenter-on-scene";
 
 /** High drag — stops hair/skirt tails from fluttering upward indoors. */
 export const MIN_DRAG_FORCE = 0.9992;
 /** Strong downward pull — counters VRM files that author gravityDir (0, 1, 0). */
-export const MIN_GRAVITY_POWER = 3.05;
+export const MIN_GRAVITY_POWER = 3.18;
 export const MAX_STIFFNESS = 0.062;
 
 /**

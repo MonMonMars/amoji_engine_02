@@ -3,7 +3,7 @@
  * Slots #1–11 and #25 (Luna) stay in companionCharacterRoster / premium data.
  */
 export const REPLACEMENT_ROSTER_SCHEMA =
-  "amoji.companionRosterReplacement.v480-keep-1-11-25";
+  "amoji.companionRosterReplacement.v486-hq-roster-refresh";
 
 /** @typedef {{
  *   id: string,

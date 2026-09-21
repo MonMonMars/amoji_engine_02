@@ -71,7 +71,7 @@ import {
   enforcePlantedLimbRotations,
 } from "./companionPlantedLimbLock.js";
 
-export const COMPANION_BODY_SCHEMA = "amoji.companionBody.v7-hard-planted-limbs";
+export const COMPANION_BODY_SCHEMA = "amoji.companionBody.v8-forearm-planted-lock";
 
 /**
  * @param {import('@pixiv/three-vrm').VRMHumanoid | null | undefined} humanoid
@@ -1279,10 +1279,14 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
     applyHandRestOnly,
     reapplyPlantedLimbs,
     enforcePlantedLimbs(opts = {}) {
+      const lockForearms =
+        opts.lockForearms === true ||
+        (opts.lockForearms !== false && !talking && !activeGesture && !activeAction);
       enforcePlantedLimbRotations(humanoid, {
         legRestRotations,
         armRestRotations,
         lockUpperArms: opts.lockUpperArms !== false,
+        lockForearms,
       });
       if (opts.hands !== false) enforcePlantedHandRest(humanoid);
     },
