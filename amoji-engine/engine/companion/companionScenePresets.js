@@ -7,7 +7,7 @@ import {
 } from "./companionPickerAssets.mjs";
 
 export const COMPANION_SCENE_PRESETS_SCHEMA =
-  "amoji.companionScenePresets.v9-ultra-detail-scene-art";
+  "amoji.companionScenePresets.v10-pro-scene-expansion";
 
 /** First-run default — warm anime interior (not flat gray studio). */
 export const DEFAULT_SCENE_BACKGROUND_ID = "cozy-room";
@@ -53,6 +53,12 @@ export const SCENE_BACKGROUND_PRESETS = Object.freeze([
   { id: "greenhouse", labelEn: "Greenhouse", labelYue: "玻璃花房", environment: "indoor" },
   { id: "loft", labelEn: "Loft", labelYue: "複式 loft", environment: "indoor" },
   { id: "kitchen", labelEn: "Kitchen", labelYue: "廚房", environment: "indoor" },
+  { id: "executive-lounge", labelEn: "Executive lounge", labelYue: "行政酒廊", environment: "indoor" },
+  { id: "hotel-lobby", labelEn: "Hotel lobby", labelYue: "酒店大堂", environment: "indoor" },
+  { id: "art-gallery", labelEn: "Art gallery", labelYue: "藝術館", environment: "indoor" },
+  { id: "observatory", labelEn: "Observatory", labelYue: "天文台", environment: "indoor" },
+  { id: "zen-garden", labelEn: "Zen garden", labelYue: "枯山水", environment: "outdoor" },
+  { id: "day-skyline", labelEn: "Day skyline", labelYue: "日間天際", environment: "outdoor" },
 ]);
 
 /** @type {ReadonlyArray<{ id: string, labelEn: string, labelYue: string, swatch?: string, characters?: string[] }>} */

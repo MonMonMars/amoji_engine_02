@@ -5,7 +5,7 @@
 import { ROSTER_CHARACTER_IDS } from "./companionCharacterRoster.js";
 
 export const COMPANION_CHARACTER_ROLES_SCHEMA =
-  "amoji.companionCharacterRoles.v5-gen3-r3";
+  "amoji.companionCharacterRoles.v6-premium-pro";
 
 /** @typedef {import("../mobile/companionRolePresets.js").CompanionRole} CompanionRole */
 
@@ -34,6 +34,10 @@ export const CHARACTER_COMPANION_ROLES = Object.freeze({
   beach: "boyfriend",
   pirate: "boyfriend",
   bunny: "pet",
+  sakura: "secretary",
+  luna: "secretary",
+  celeste: "girlfriend",
+  yume: "girlfriend",
   /** Gen2 ids — legacy role (resolve id via LEGACY_CHARACTER_ALIASES) */
   pyre: "girlfriend",
   pan: "pet",

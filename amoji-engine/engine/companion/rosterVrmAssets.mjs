@@ -3,6 +3,12 @@
  * Filenames match picker ids so deploys cannot serve the wrong rig for a card.
  */
 import { GEN3_ROSTER_SLOTS } from "./companionRosterGen3Data.mjs";
+const VRoidSampleA =
+  "https://raw.githubusercontent.com/madjin/vrm-samples/master/vroid/stable/AvatarSample_A.vrm";
+const VRoidSampleC =
+  "https://raw.githubusercontent.com/madjin/vrm-samples/master/vroid/stable/AvatarSample_C.vrm";
+const VRoidFem =
+  "https://raw.githubusercontent.com/madjin/vrm-samples/master/vroid/fem_vroid.vrm";
 
 export const ROSTER_VRM_ASSETS_SCHEMA = "amoji.rosterVrmAssets.v2-gen3";
 
@@ -27,10 +33,10 @@ export const LEGACY_VRM_BASENAME_ALIASES = Object.freeze({
   "companion-vroid-female.vrm": "mei",
   "companion-vroid-male.vrm": "atlas",
   "companion-erika.vrm": "mei",
-  "companion-sakura.vrm": "mei",
-  "companion-celeste.vrm": "mei",
-  "companion-luna.vrm": "mei",
-  "companion-yume.vrm": "mei",
+  "companion-sakura.vrm": "sakura",
+  "companion-celeste.vrm": "celeste",
+  "companion-luna.vrm": "luna",
+  "companion-yume.vrm": "yume",
   "companion-olivia.vrm": "yuki",
   "companion-lydia.vrm": "hina",
   "companion-kate.vrm": "mio",
@@ -126,6 +132,10 @@ export const ROSTER_VRM_DOWNLOADS = [
     url: slot.vrmUrl,
     minBytes: 400_000,
   })),
+  { id: "sakura", url: VRoidSampleA, minBytes: 500_000 },
+  { id: "luna", url: VRoidFem, minBytes: 500_000 },
+  { id: "celeste", url: VRoidSampleC, minBytes: 500_000 },
+  { id: "yume", copyFrom: "companion-erika.vrm", minBytes: 500_000 },
 ];
 
 export function rosterDownloadIds() {

@@ -135,6 +135,10 @@ export const GALLERY_PRIORITY_IDS = new Set([
   "beach",
   "pirate",
   "bunny",
+  "sakura",
+  "luna",
+  "celeste",
+  "yume",
 ]);
 
 /** Minimum mesh triangles to treat as high-poly face roster picks. */

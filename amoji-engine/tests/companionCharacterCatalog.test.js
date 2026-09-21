@@ -58,7 +58,7 @@ describe("companionCharacterCatalog v363 VTuber roster", () => {
   });
 
   it("exposes the VTuber + AAA catalog", () => {
-    expect(ROSTER_SIZE).toBe(23);
+    expect(ROSTER_SIZE).toBe(27);
     expect(CHARACTER_IDS).toEqual([
       "nova",
       "kizuna",
@@ -72,6 +72,10 @@ describe("companionCharacterCatalog v363 VTuber roster", () => {
       "mio",
       "amoji",
       ...GEN3_SLOTS,
+      "sakura",
+      "luna",
+      "celeste",
+      "yume",
     ]);
     expect(Object.keys(COMPANION_CHARACTERS).sort()).toEqual([...CHARACTER_IDS].sort());
     expect(TRIAL_CHARACTER_IDS).toEqual(["yuki", "hina", "mio"]);
@@ -102,7 +106,7 @@ describe("companionCharacterCatalog v363 VTuber roster", () => {
   it("maps legacy roster ids to replacements", () => {
     expect(LEGACY_CHARACTER_ALIASES.sora).toBe("mei");
     expect(LEGACY_CHARACTER_ALIASES.erika).toBe("mei");
-    expect(LEGACY_CHARACTER_ALIASES.sakura).toBe("mei");
+    expect(LEGACY_CHARACTER_ALIASES.sakura).toBeUndefined();
     expect(LEGACY_CHARACTER_ALIASES.chad).toBe("samurai");
     expect(resolveCharacterId({ characterParam: "sora" })).toBe("mei");
     expect(resolveCharacterId({ characterParam: "hugo" })).toBe("fox");
@@ -140,7 +144,9 @@ describe("companionCharacterCatalog v363 VTuber roster", () => {
       "atlas",
     );
     expect(resolveCharacterId({ modelUrl: "/prototypes/assets/companion-erika.vrm" })).toBe("mei");
-    expect(resolveCharacterId({ modelUrl: "/prototypes/assets/companion-sakura.vrm" })).toBe("mei");
+    expect(resolveCharacterId({ modelUrl: "/prototypes/assets/companion-sakura.vrm" })).toBe(
+      "sakura",
+    );
   });
 
   it("assigns distinct voices per roster character", () => {
@@ -164,7 +170,8 @@ describe("companionCharacterCatalog v363 VTuber roster", () => {
     expect(nextCharacterId("ember")).toBe("mei");
     expect(nextCharacterId("mei")).toBe("atlas");
     expect(nextCharacterId("sky")).toBe("yuki");
-    expect(nextCharacterId("bunny")).toBe("nova");
+    expect(nextCharacterId("bunny")).toBe("sakura");
+    expect(nextCharacterId("yume")).toBe("nova");
   });
 
   it("exposes avatarLabel on picker list items", () => {
@@ -182,6 +189,7 @@ describe("companionCharacterCatalog v363 VTuber roster", () => {
     expect(list.find((c) => c.id === "mei")?.number).toBe(5);
     expect(list.find((c) => c.id === "atlas")?.number).toBe(6);
     expect(list.find((c) => c.id === "bunny")?.number).toBe(23);
+    expect(list.find((c) => c.id === "yume")?.number).toBe(27);
     expect(GALLERY_PRIORITY_IDS.has("amoji")).toBe(true);
     expect(GALLERY_PRIORITY_IDS.has("fox")).toBe(true);
     expect(GALLERY_PRIORITY_IDS.has("bunny")).toBe(true);
