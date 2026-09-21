@@ -112,6 +112,21 @@ describe("createCompanionBodyMotion", () => {
     );
   });
 
+  it("reactToPoke shakes upper body without root bob or leg lift", () => {
+    const humanoid = mockHumanoid();
+    const motion = createCompanionBodyMotion(humanoid);
+    motion.setTalking(false);
+    motion.reactToPoke({ point: { x: 0.15 }, anchorX: 0, multiClick: false });
+    for (let i = 0; i < 12; i += 1) motion.update(1 / 30);
+    expect(motion.pokeShakeActive).toBe(true);
+    expect(motion.getRootMotion().y).toBe(0);
+    expect(motion.getRootMotion().rotY).toBe(0);
+    const head = humanoid.bones.get("head").rotation;
+    expect(Math.abs(head.x) + Math.abs(head.z)).toBeGreaterThan(0.008);
+    const leftThigh = humanoid.bones.get("leftUpperLeg").rotation.x;
+    expect(leftThigh).toBeCloseTo(VRM_LEG_REST_ROTATIONS.leftUpperLeg.x, 1);
+  });
+
   it("keeps idle root Y planted without vertical bob", () => {
     const humanoid = mockHumanoid();
     humanoid.bones.get("leftFoot").getWorldPosition = (v) => {
