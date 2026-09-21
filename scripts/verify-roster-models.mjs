@@ -11,8 +11,8 @@ import { startLocalStaticServer } from "./local-static-server.mjs";
 import { DEMO_BASE_URL } from "../amoji-engine/engine/companion/deployUrls.mjs";
 import { runCompanionCharacterModelSmoke } from "./companion-character-model-smoke.mjs";
 
-/** Current roster samples (legacy ?character=rex maps to wolf — not a roster card id). */
-const ids = ["nova", "kizuna", "alicia", "ember", "mei", "wolf", "yuki"];
+/** Current roster samples (legacy ?character=rex maps to rin — not a roster card id). */
+const ids = ["nova", "kizuna", "alicia", "ember", "mei", "rin", "yuki"];
 
 let base = process.env.VERIFY_BASE_URL?.replace(/\/$/, "") || "";
 let host = null;

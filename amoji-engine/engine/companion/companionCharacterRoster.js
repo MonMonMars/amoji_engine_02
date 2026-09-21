@@ -1,13 +1,12 @@
 /**
- * Curated companion roster v470 — 31 characters.
- * #1–4 flagship · #5–11 VTuber + AAA VRoid · #12–23 Gen3 · #24–31 VRoid Pro.
+ * Curated companion roster v480 — 31 characters.
+ * Keep #1–11 + #25 Luna; #12–24 and #26–31 are the new replacement lineup.
  */
 import { rosterModelUrl } from "./rosterVrmAssets.mjs";
-import { ROSTER_SLOTS_16_23 } from "./companionRosterSlots16.js";
+import { ROSTER_REPLACEMENT_SLOTS } from "./companionRosterReplacementSlots.js";
 import { ROSTER_SLOTS_24_27 } from "./companionRosterPremiumSlots.js";
-import { ROSTER_SLOTS_28_31 } from "./companionRosterExpansionSlots.js";
 
-export const ROSTER_SCHEMA = "amoji.companionRoster.v470-roster31-pro";
+export const ROSTER_SCHEMA = "amoji.companionRoster.v480-keep-1-11-25";
 /** Flagship picks (Nova, Kizuna, Alicia, Ember) */
 export const ROSTER_LOCKED_NUMBERS = Object.freeze([1, 2, 3, 4]);
 
@@ -537,9 +536,8 @@ amoji: {
     ],
     avatarLabel: { yue: "VRM 動漫女孩", en: "VRM anime girl" },
   },
-  ...ROSTER_SLOTS_16_23,
+  ...ROSTER_REPLACEMENT_SLOTS,
   ...ROSTER_SLOTS_24_27,
-  ...ROSTER_SLOTS_28_31,
 });
 
 /** Gallery order — AAA flagship first */
@@ -555,26 +553,26 @@ export const ROSTER_CHARACTER_IDS = Object.freeze([
   "hina",
   "mio",
   "amoji",
-  "knight",
-  "samurai",
-  "tiger",
-  "leaf",
-  "wolf",
-  "fox",
-  "jenny",
-  "weirdcat",
-  "petal",
-  "beach",
-  "pirate",
-  "bunny",
-  "sakura",
+  "orion",
+  "kael",
+  "mira",
+  "sumire",
+  "rin",
+  "dex",
+  "niko",
+  "yara",
+  "thorn",
+  "vesper",
+  "ash",
+  "cleo",
+  "sienna",
   "luna",
-  "celeste",
-  "yume",
-  "aria",
-  "noah",
-  "rika",
-  "vega",
+  "juno",
+  "elio",
+  "hana",
+  "zane",
+  "priya",
+  "cyrus",
 ]);
 
 

@@ -123,26 +123,26 @@ export const GALLERY_PRIORITY_IDS = new Set([
   "hina",
   "mio",
   "amoji",
-  "knight",
-  "samurai",
-  "tiger",
-  "leaf",
-  "wolf",
-  "fox",
-  "jenny",
-  "weirdcat",
-  "petal",
-  "beach",
-  "pirate",
-  "bunny",
-  "sakura",
+  "orion",
+  "kael",
+  "mira",
+  "sumire",
+  "rin",
+  "dex",
+  "niko",
+  "yara",
+  "thorn",
+  "vesper",
+  "ash",
+  "cleo",
+  "sienna",
   "luna",
-  "celeste",
-  "yume",
-  "aria",
-  "noah",
-  "rika",
-  "vega",
+  "juno",
+  "elio",
+  "hana",
+  "zane",
+  "priya",
+  "cyrus",
 ]);
 
 /** Minimum mesh triangles to treat as high-poly face roster picks. */
@@ -372,13 +372,14 @@ export function defaultVoiceForCharacter(characterId, langCode) {
 export const MALE_CHARACTER_IDS = Object.freeze(
   new Set([
     "atlas",
-    "knight",
-    "samurai",
-    "wolf",
-    "beach",
-    "pirate",
-    "petal",
-    "noah",
+    "orion",
+    "kael",
+    "rin",
+    "thorn",
+    "vesper",
+    "ash",
+    "zane",
+    "cyrus",
   ]),
 );
 
@@ -388,7 +389,9 @@ export const MALE_CHARACTER_IDS = Object.freeze(
  * @returns {"female" | "male"}
  */
 export function characterGender(characterId, _langCode = "yue") {
-  const id = String(characterId || "nova").toLowerCase();
+  const id = normalizeRosterCharacterId(
+    String(characterId || "nova").toLowerCase(),
+  );
   return MALE_CHARACTER_IDS.has(id) ? "male" : "female";
 }
 

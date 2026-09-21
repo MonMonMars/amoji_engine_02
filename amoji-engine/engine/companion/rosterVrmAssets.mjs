@@ -2,7 +2,7 @@
  * Canonical on-disk VRM path per roster character id.
  * Filenames match picker ids so deploys cannot serve the wrong rig for a card.
  */
-import { GEN3_ROSTER_SLOTS } from "./companionRosterGen3Data.mjs";
+import { REPLACEMENT_ROSTER_SLOTS } from "./companionRosterReplacementData.mjs";
 const VRoidSampleA =
   "https://raw.githubusercontent.com/madjin/vrm-samples/master/vroid/stable/AvatarSample_A.vrm";
 const VRoidSampleC =
@@ -10,7 +10,7 @@ const VRoidSampleC =
 const VRoidFem =
   "https://raw.githubusercontent.com/madjin/vrm-samples/master/vroid/fem_vroid.vrm";
 
-export const ROSTER_VRM_ASSETS_SCHEMA = "amoji.rosterVrmAssets.v2-gen3";
+export const ROSTER_VRM_ASSETS_SCHEMA = "amoji.rosterVrmAssets.v3-replacement480";
 
 /** @param {string} characterId */
 export function rosterVrmBasename(characterId) {
@@ -33,10 +33,26 @@ export const LEGACY_VRM_BASENAME_ALIASES = Object.freeze({
   "companion-vroid-female.vrm": "mei",
   "companion-vroid-male.vrm": "atlas",
   "companion-erika.vrm": "mei",
-  "companion-sakura.vrm": "sakura",
-  "companion-celeste.vrm": "celeste",
+  "companion-sakura.vrm": "sienna",
+  "companion-celeste.vrm": "juno",
   "companion-luna.vrm": "luna",
-  "companion-yume.vrm": "yume",
+  "companion-yume.vrm": "elio",
+  "companion-knight.vrm": "orion",
+  "companion-samurai.vrm": "kael",
+  "companion-tiger.vrm": "mira",
+  "companion-leaf.vrm": "sumire",
+  "companion-wolf.vrm": "rin",
+  "companion-fox.vrm": "dex",
+  "companion-jenny.vrm": "niko",
+  "companion-weirdcat.vrm": "yara",
+  "companion-petal.vrm": "thorn",
+  "companion-beach.vrm": "vesper",
+  "companion-pirate.vrm": "ash",
+  "companion-bunny.vrm": "cleo",
+  "companion-aria.vrm": "hana",
+  "companion-noah.vrm": "zane",
+  "companion-rika.vrm": "priya",
+  "companion-vega.vrm": "cyrus",
   "companion-olivia.vrm": "yuki",
   "companion-lydia.vrm": "hina",
   "companion-kate.vrm": "mio",
@@ -127,27 +143,12 @@ export const ROSTER_VRM_DOWNLOADS = [
   { id: "hina", url: ROSTER_VRM_SOURCE_URLS.hina, minBytes: 100_000 },
   { id: "mio", url: ROSTER_VRM_SOURCE_URLS.mio, minBytes: 100_000 },
   { id: "amoji", url: ROSTER_VRM_SOURCE_URLS.amoji, minBytes: 500_000 },
-  ...GEN3_ROSTER_SLOTS.map((slot) => ({
+  ...REPLACEMENT_ROSTER_SLOTS.map((slot) => ({
     id: slot.id,
     url: slot.vrmUrl,
     minBytes: 400_000,
   })),
-  { id: "sakura", url: VRoidSampleA, minBytes: 500_000 },
   { id: "luna", url: VRoidFem, minBytes: 500_000 },
-  { id: "celeste", url: VRoidSampleC, minBytes: 500_000 },
-  { id: "yume", copyFrom: "companion-erika.vrm", minBytes: 500_000 },
-  { id: "aria", copyFrom: "companion-sakura.vrm", minBytes: 500_000 },
-  {
-    id: "noah",
-    url: "https://raw.githubusercontent.com/madjin/vrm-samples/master/vroid/masc_vroid.vrm",
-    minBytes: 500_000,
-  },
-  {
-    id: "rika",
-    url: VRoidSampleC,
-    minBytes: 500_000,
-  },
-  { id: "vega", copyFrom: "companion-celeste.vrm", minBytes: 500_000 },
 ];
 
 export function rosterDownloadIds() {

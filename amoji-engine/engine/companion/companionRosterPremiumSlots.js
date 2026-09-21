@@ -1,5 +1,5 @@
 /**
- * Roster slots #24–27 — premium professional VRoid picks.
+ * Roster slot #25 — Luna (premium VRoid).
  */
 import { rosterModelUrl } from "./rosterVrmAssets.mjs";
 import { PREMIUM_ROSTER_SLOTS } from "./companionRosterPremiumData.mjs";

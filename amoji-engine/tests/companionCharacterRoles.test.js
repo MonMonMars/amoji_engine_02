@@ -16,27 +16,27 @@ describe("companionCharacterRoles", () => {
     );
   });
 
-  it("uses samurai as the default boyfriend pick (Gen3 slot #17)", () => {
+  it("uses kael as the default boyfriend pick", () => {
     expect(resolveCharacterRole("rex")).toBe("boyfriend");
     expect(resolveCharacterRole("samurai")).toBe("boyfriend");
     expect(characterIdsForRole("boyfriend")).toEqual([
       "atlas",
-      "knight",
-      "samurai",
-      "wolf",
-      "beach",
-      "pirate",
+      "orion",
+      "kael",
+      "rin",
+      "vesper",
+      "ash",
     ]);
-    expect(ROLE_DEFAULT_CHARACTER_ID.boyfriend).toBe("samurai");
+    expect(ROLE_DEFAULT_CHARACTER_ID.boyfriend).toBe("kael");
   });
 
-  it("uses sakura for secretary defaults", () => {
-    expect(ROLE_DEFAULT_CHARACTER_ID.secretary).toBe("sakura");
+  it("uses sienna for secretary defaults", () => {
+    expect(ROLE_DEFAULT_CHARACTER_ID.secretary).toBe("sienna");
     expect(characterIdsForRole("secretary")).toEqual([
-      "sakura",
+      "sienna",
       "luna",
-      "aria",
-      "noah",
+      "hana",
+      "zane",
     ]);
   });
 
@@ -52,20 +52,20 @@ describe("companionCharacterRoles", () => {
       "hina",
       "mio",
       "amoji",
-      "tiger",
-      "leaf",
-      "jenny",
-      "petal",
-      "celeste",
-      "yume",
-      "rika",
-      "vega",
+      "mira",
+      "sumire",
+      "niko",
+      "thorn",
+      "juno",
+      "elio",
+      "priya",
+      "cyrus",
     ]);
   });
 
-  it("lists fox, weirdcat, and bunny as pet mascots", () => {
+  it("lists dex, yara, and cleo as pet mascots", () => {
     expect(resolveCharacterRole("mimi")).toBe("pet");
-    expect(ROLE_DEFAULT_CHARACTER_ID.pet).toBe("bunny");
-    expect(characterIdsForRole("pet")).toEqual(["fox", "weirdcat", "bunny"]);
+    expect(ROLE_DEFAULT_CHARACTER_ID.pet).toBe("cleo");
+    expect(characterIdsForRole("pet")).toEqual(["dex", "yara", "cleo"]);
   });
 });

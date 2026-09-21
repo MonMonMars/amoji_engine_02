@@ -51,7 +51,7 @@ describe("companion character picker data", () => {
 
   it("bumps picker schemas for v4 hero + confirm flow", () => {
     expect(COMPANION_CHARACTER_PICKER_SCHEMA).toBe(
-      "amoji.companionCharacterPicker.v8-roster31-scenes32",
+      "amoji.companionCharacterPicker.v9-roster480-replacement",
     );
     expect(COMPANION_START_PICKER_SCHEMA).toBe("amoji.companionStartPicker.v11");
   });

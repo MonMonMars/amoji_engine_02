@@ -68,7 +68,7 @@ describe("companionPickerChrome", () => {
   it("defaults featured banner to the full roster", () => {
     expect(listPickerFeatured(list).length).toBe(list.length);
     expect(listPickerFeatured(list).map((c) => c.id)).toContain("yuki");
-    expect(listPickerFeatured(list).map((c) => c.id)).toContain("knight");
+    expect(listPickerFeatured(list).map((c) => c.id)).toContain("orion");
   });
 
   it("syncs roving tabindex for selected card", () => {
