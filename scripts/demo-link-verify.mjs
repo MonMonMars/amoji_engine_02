@@ -54,24 +54,29 @@ function mime(p) {
   return m[extname(p)] || "application/octet-stream";
 }
 
-async function probeLocalServer(port = localPort) {
+/** @param {number} port */
+async function probeLocalServer(port) {
   try {
     const health = await fetch(`http://127.0.0.1:${port}/api/health`, {
       signal: AbortSignal.timeout(2000),
     });
-    if (health.ok) {
-      const j = await health.json();
-      if (j.build === AMOJI_BUILD) {
-        return `http://127.0.0.1:${port}`;
-      }
-    }
-    const res = await fetch(`http://127.0.0.1:${port}/prototypes/amoji-lite.html`, {
-      signal: AbortSignal.timeout(2000),
-    });
-    return res.ok ? `http://127.0.0.1:${port}` : null;
+    if (!health.ok) return null;
+    const j = await health.json();
+    return j.build === AMOJI_BUILD ? `http://127.0.0.1:${port}` : null;
   } catch {
     return null;
   }
+}
+
+/** Prefer an existing verify/lab server on the repo build; else start a fresh one. */
+async function resolveLocalBaseUrl() {
+  const preferred = Number(process.env.LOCAL_PORT || 5174);
+  for (let port = preferred; port < preferred + 16; port += 1) {
+    const found = await probeLocalServer(port);
+    if (found) return { baseUrl: found, reused: true, port };
+  }
+  const { srv, port } = await startLocalServer(0);
+  return { baseUrl: `http://127.0.0.1:${port}`, reused: false, port, srv };
 }
 
 function startLocalServer(port = localPort) {
@@ -123,7 +128,9 @@ function startLocalServer(port = localPort) {
     srv.once("error", reject);
     srv.listen(port, "127.0.0.1", () => {
       srv.off("error", reject);
-      resolve({ srv, port });
+      const addr = srv.address();
+      const boundPort = typeof addr === "object" && addr ? addr.port : port;
+      resolve({ srv, port: boundPort });
     });
   });
 }
@@ -399,15 +406,13 @@ if (useLocal) {
     baseUrl = process.env.LITE_URL.replace(/\/companion.*$/, "");
     record("local reuse (LITE_URL)", true, process.env.LITE_URL);
   } else {
-    const existing = await probeLocalServer(localPort);
-    if (existing) {
-      baseUrl = existing;
-      record("local reuse (lab-serve)", true, baseUrl);
+    const local = await resolveLocalBaseUrl();
+    baseUrl = local.baseUrl;
+    if (local.srv) localSrv = local.srv;
+    if (local.reused) {
+      record("local reuse (repo build)", true, `${baseUrl} :${local.port}`);
     } else {
-      const { srv, port } = await startLocalServer(localPort);
-      localSrv = srv;
-      baseUrl = `http://127.0.0.1:${port}`;
-      record("local static server", true, baseUrl);
+      record("local static server", true, `${baseUrl} :${local.port}`);
     }
   }
   secretaryUrl = `${baseUrl}/play?role=secretary&lang=en&pick=0&autostart=1&tab=today`;
