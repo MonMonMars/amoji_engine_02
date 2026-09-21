@@ -4,8 +4,8 @@
  * Internal scale keeps legacy TTS math (0.28 = the established VN/gacha pace).
  * UI shows relative 1× where that same 0.28 internal value is "Normal".
  */
-export const COMPANION_TALK_SPEED_SCHEMA = "amoji.companionTalkSpeed.v2";
-export const TALK_SPEED_STORAGE_KEY = "amoji.companionTalkSpeed.v4";
+export const COMPANION_TALK_SPEED_SCHEMA = "amoji.companionTalkSpeed.v3-default-1p5x";
+export const TALK_SPEED_STORAGE_KEY = "amoji.companionTalkSpeed.v5";
 const LEGACY_TALK_SPEED_KEY = "amoji.companionTalkSpeed.v2";
 const LEGACY_TALK_SPEED_KEY_V1 = "amoji.companionTalkSpeed.v1";
 
@@ -16,8 +16,16 @@ const MAX_TALK_SPEED = 0.56;
 /** Internal value that maps to user-facing 1× Normal. */
 export const NORMAL_TALK_SPEED_ONE_X = 0.28;
 
-/** Default: established companion pace (displayed as 1× Normal). */
-export const DEFAULT_TALK_SPEED = NORMAL_TALK_SPEED_ONE_X;
+/** User-facing default talking speed (1.5× the legacy 1× Normal pace). */
+export const DEFAULT_TALK_SPEED_DISPLAY = 1.5;
+
+/** Default internal speed — 1.5× Normal (0.28 × 1.5 = 0.42). */
+export const DEFAULT_TALK_SPEED = Number(
+  Math.max(
+    MIN_TALK_SPEED,
+    Math.min(MAX_TALK_SPEED, DEFAULT_TALK_SPEED_DISPLAY * NORMAL_TALK_SPEED_ONE_X),
+  ).toFixed(2),
+);
 
 /** User-facing speed steps relative to today's default 1× pace. */
 export const TALK_SPEED_DISPLAY_PRESETS = Object.freeze([0.5, 0.75, 1, 1.5, 2]);
@@ -181,6 +189,16 @@ export function loadTalkSpeed(storage = globalThis.localStorage) {
     }
   } catch {
     /* fall through to legacy */
+  }
+  try {
+    const legacyV4 = storage?.getItem?.("amoji.companionTalkSpeed.v4");
+    if (legacyV4 != null && legacyV4 !== "") {
+      const parsed = normalizeTalkSpeed(JSON.parse(legacyV4));
+      saveTalkSpeed(parsed, storage);
+      return parsed;
+    }
+  } catch {
+    /* ignore */
   }
   try {
     const legacyV3 = storage?.getItem?.("amoji.companionTalkSpeed.v3");
