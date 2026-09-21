@@ -184,6 +184,25 @@ async function verifySecretary(page, label) {
     timeout: 120000,
   }).catch(() => null);
 
+  const pickerOpen = await page.evaluate(() => {
+    const picker = document.getElementById("start-character-picker");
+    return Boolean(
+      picker &&
+        !picker.classList.contains("hide") &&
+        picker.getAttribute("aria-hidden") !== "true",
+    );
+  });
+  if (pickerOpen) {
+    await beginStartPickerSession(page, {
+      characterId: "nova",
+      cardTimeout: 90000,
+      dismissTimeout: 120000,
+    });
+    await waitForPageFn(page, () => window.__amojiStart?.sessionStarted === true, {
+      timeout: 120000,
+    }).catch(() => null);
+  }
+
   await page
     .waitForSelector("#activity-rail", { state: "attached", timeout: 30000 })
     .catch(() => null);

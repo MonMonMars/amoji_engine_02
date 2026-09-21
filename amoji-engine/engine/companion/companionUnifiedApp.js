@@ -254,11 +254,14 @@ export function resolveSessionRoleFromCharacter(characterId, params) {
   const charKey = String(characterId || "").toLowerCase();
   const urlRole = params?.get?.("role");
   const urlRoleKey = urlRole ? normalizeCompanionRole(urlRole) : null;
+  const rosterRole = resolveCharacterRole(characterId);
   const roleDefaultId = urlRoleKey
     ? String(ROLE_DEFAULT_CHARACTER_ID[urlRoleKey] || "").toLowerCase()
     : "";
   if (urlRoleKey && charKey && charKey === roleDefaultId) return urlRoleKey;
-  return resolveCharacterRole(characterId);
+  // Marketing / demo deep links: ?role=secretary&character=nova keeps secretary UX.
+  if (urlRoleKey && urlRoleKey !== rosterRole) return urlRoleKey;
+  return rosterRole;
 }
 
 /** Unified picker copy — role/personality come from each character card. */

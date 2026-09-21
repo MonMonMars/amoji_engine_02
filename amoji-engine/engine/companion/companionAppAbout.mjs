@@ -6,7 +6,7 @@ import { AMOJI_MODEL_REVISION } from "./companionCharacterMigration.mjs";
 import { CHARACTER_IDS } from "./companionCharacterCatalog.js";
 import { DEMO_BASE_URL } from "./deployUrls.mjs";
 
-export const COMPANION_APP_ABOUT_SCHEMA = "amoji.companionAppAbout.v1";
+export const COMPANION_APP_ABOUT_SCHEMA = "amoji.companionAppAbout.v2";
 
 /** @returns {string} */
 export function resolveAppBuildId() {
@@ -30,8 +30,8 @@ export function formatSettingsAboutCopy(isEnglish = false) {
       ? `Build ${build} · roster ${AMOJI_MODEL_REVISION}`
       : `版本 ${build} · 名單 ${AMOJI_MODEL_REVISION}`,
     featuresLine: en
-      ? `${roster} legal VRM companions · voice & text chat · anime scenes · 3D lip-sync`
-      : `${roster} 個合法 VRM · 語音同文字傾偈 · 動漫場景 · 3D 口型`,
+      ? `${roster} VRM companions · voice/text chat · poke & mic · secretary Today · planted idle body`
+      : `${roster} 位 VRM · 語音/文字 · 戳身/麥克風 · 秘書 Today · 穩定企喺度 idle`,
     modelHint: en
       ? "Each pick loads companion-<id>.vrm (see Menu if portrait and mesh differ on alias slots)."
       : "每次揀人會載入 companion-<id>.vrm（若卡面同模型唔同，可能係共用檔案）。",
