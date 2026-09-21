@@ -3,11 +3,13 @@
  */
 import * as THREE from "three";
 
-export const COMPANION_PORTRAIT_FRAMING_SCHEMA = "amoji.companionPortraitFraming.v2";
+export const COMPANION_PORTRAIT_FRAMING_SCHEMA = "amoji.companionPortraitFraming.v3-mouth-orbit";
 
-/** Upper-chest orbit target (ratio from feet to head). */
-export const UPPER_BODY_ANCHOR_RATIO = 0.56;
-/** How much head height influences anchor (lower = more chest framing). */
+/** Fallback mouth height when no head bone (ratio from feet to head). */
+export const UPPER_BODY_ANCHOR_RATIO = 0.88;
+/** Drop below head bone toward mouth (× fitted body height). */
+export const MOUTH_ANCHOR_HEAD_DROP = 0.075;
+/** Legacy chest blend — unused when head bone is present. */
 export const HEAD_ANCHOR_BLEND = 0.16;
 
 /** Portrait FOV — head + shoulders + torso, legs cropped below waist. */
@@ -20,8 +22,8 @@ export const PORTRAIT_DIST_MIN = 1.55;
 export const PORTRAIT_Z_DISTANCE_MUL = 1.18;
 /** Camera sits above the orbit anchor (eye-level, not upward from the waist). */
 export const PORTRAIT_CAMERA_Y_LIFT = 0.22;
-/** Orbit target nudge above anchor. */
-export const PORTRAIT_TARGET_Y_LIFT = 0.06;
+/** Orbit target nudge above anchor (mouth anchor needs little lift). */
+export const PORTRAIT_TARGET_Y_LIFT = 0.02;
 
 /**
  * User orbit polar range (radians from +Y). Tight clamps (~18°) made the
@@ -161,13 +163,13 @@ export function portraitDistanceForHeight(fittedHeight) {
  */
 export function computeUpperBodyAnchor(fitted, headWorld, out = new THREE.Vector3()) {
   const fittedSize = fitted.getSize(new THREE.Vector3());
-  const upperBodyY = fitted.min.y + fittedSize.y * UPPER_BODY_ANCHOR_RATIO;
+  const mouthFallbackY = fitted.min.y + fittedSize.y * UPPER_BODY_ANCHOR_RATIO;
   if (headWorld) {
     out.copy(headWorld);
-    out.y = out.y * HEAD_ANCHOR_BLEND + upperBodyY * (1 - HEAD_ANCHOR_BLEND);
+    out.y -= fittedSize.y * MOUTH_ANCHOR_HEAD_DROP;
   } else {
     fitted.getCenter(out);
-    out.y = upperBodyY;
+    out.y = mouthFallbackY;
   }
   return out;
 }
