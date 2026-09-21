@@ -7,7 +7,7 @@ import {
 } from "./companionPickerAssets.mjs";
 
 export const COMPANION_SCENE_PRESETS_SCHEMA =
-  "amoji.companionScenePresets.v11-pro-scene-expansion";
+  "amoji.companionScenePresets.v12-scene-redesign";
 
 /** First-run default — warm anime interior (not flat gray studio). */
 export const DEFAULT_SCENE_BACKGROUND_ID = "cozy-room";
