@@ -2,22 +2,22 @@
  * Japanese anime / VN / gacha-game style scene painters (SVG body fragments).
  * Rich layered gradients, neon, bokeh, perspective interiors, atmospheric depth.
  */
-export const SCENE_ANIME_ART_REVISION = "anime-scene-v441-ultra-detail";
+export const SCENE_ANIME_ART_REVISION = "anime-scene-v457-pro-cinematic";
 
 /** @param {number} w @param {number} h */
 export function animePaintDefs(w, h) {
   return `<defs>
   <linearGradient id="skyTop" x1="0" y1="0" x2="0" y2="1">
-    <stop offset="0%" stop-color="#1a1048"/>
-    <stop offset="35%" stop-color="#3d2878"/>
-    <stop offset="68%" stop-color="#284868"/>
-    <stop offset="100%" stop-color="#0c1420"/>
+    <stop offset="0%" stop-color="#121828"/>
+    <stop offset="32%" stop-color="#243050"/>
+    <stop offset="58%" stop-color="#2a3848"/>
+    <stop offset="100%" stop-color="#0a0e14"/>
   </linearGradient>
   <linearGradient id="skyDay" x1="0" y1="0" x2="0" y2="1">
-    <stop offset="0%" stop-color="#7ec8ff"/>
-    <stop offset="45%" stop-color="#a8d8f8"/>
-    <stop offset="78%" stop-color="#e8c878"/>
-    <stop offset="100%" stop-color="#88b868"/>
+    <stop offset="0%" stop-color="#6eb4e0"/>
+    <stop offset="38%" stop-color="#a8cce8"/>
+    <stop offset="70%" stop-color="#d8c098"/>
+    <stop offset="100%" stop-color="#6a8868"/>
   </linearGradient>
   <linearGradient id="skySunset" x1="0" y1="0" x2="0" y2="1">
     <stop offset="0%" stop-color="#ff6b4a"/>
@@ -69,8 +69,17 @@ export function animePaintDefs(w, h) {
     <stop offset="100%" stop-color="#ffd898" stop-opacity="0"/>
   </radialGradient>
   <radialGradient id="vignette" cx="0.5" cy="0.42" r="0.78">
-    <stop offset="52%" stop-color="#000" stop-opacity="0"/>
-    <stop offset="100%" stop-color="#030508" stop-opacity="0.48"/>
+    <stop offset="55%" stop-color="#000" stop-opacity="0"/>
+    <stop offset="100%" stop-color="#030508" stop-opacity="0.38"/>
+  </radialGradient>
+  <linearGradient id="filmGrade" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#283858" stop-opacity="0.14"/>
+    <stop offset="42%" stop-color="#000" stop-opacity="0"/>
+    <stop offset="100%" stop-color="#000" stop-opacity="0.32"/>
+  </linearGradient>
+  <radialGradient id="stageGlow" cx="0.5" cy="0.62" r="0.55">
+    <stop offset="0%" stop-color="#fff" stop-opacity="0.06"/>
+    <stop offset="100%" stop-color="#fff" stop-opacity="0"/>
   </radialGradient>
 </defs>`;
 }
@@ -78,39 +87,33 @@ export function animePaintDefs(w, h) {
 /** Cel-shaded rim light + soft bloom streaks (VN / gacha key art finish). */
 export function animeDetailPass(w, h) {
   let sparkles = "";
-  for (let i = 0; i < 48; i += 1) {
+  for (let i = 0; i < 22; i += 1) {
     const cx = ((i * 173) % 1000) / 1000 * w;
-    const cy = ((i * 211 + 31) % 1000) / 1000 * h;
-    const r = 0.6 + (i % 5) * 0.35;
-    sparkles += `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${r.toFixed(2)}" fill="#fff" opacity="${(0.04 + (i % 7) * 0.01).toFixed(3)}" filter="url(#softGlow)"/>`;
+    const cy = ((i * 211 + 31) % 1000) / 1000 * h * 0.72;
+    const r = 0.5 + (i % 4) * 0.28;
+    sparkles += `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${r.toFixed(2)}" fill="#fff" opacity="${(0.025 + (i % 5) * 0.008).toFixed(3)}" filter="url(#softGlow)"/>`;
   }
-  let grain = "";
-  for (let i = 0; i < 64; i += 1) {
-    const gx = ((i * 97) % 1000) / 1000 * w;
-    const gy = ((i * 53) % 1000) / 1000 * h;
-    grain += `<rect x="${gx.toFixed(1)}" y="${gy.toFixed(1)}" width="1.2" height="1.2" fill="#fff" opacity="0.018"/>`;
-  }
-  const flare = `<ellipse cx="${w * 0.82}" cy="${h * 0.14}" rx="${w * 0.22}" ry="${h * 0.08}" fill="#fff8e8" opacity="0.06" filter="url(#softGlow)"/>
-  <ellipse cx="${w * 0.18}" cy="${h * 0.22}" rx="${w * 0.12}" ry="${h * 0.05}" fill="#c8e8ff" opacity="0.05" filter="url(#softGlow)"/>`;
-  const rim = `<rect x="0" y="0" width="${w}" height="${h}" fill="none" stroke="#fff" stroke-width="2" opacity="0.04"/>
-  <rect x="2" y="2" width="${w - 4}" height="${h - 4}" fill="none" stroke="#000" stroke-width="3" opacity="0.08"/>`;
-  return `${sparkles}${grain}${flare}${rim}`;
+  const flare = `<ellipse cx="${w * 0.78}" cy="${h * 0.12}" rx="${w * 0.18}" ry="${h * 0.06}" fill="#fff8e8" opacity="0.045" filter="url(#softGlow)"/>
+  <ellipse cx="${w * 0.22}" cy="${h * 0.2}" rx="${w * 0.1}" ry="${h * 0.04}" fill="#c8e8ff" opacity="0.035" filter="url(#softGlow)"/>`;
+  return `${sparkles}${flare}`;
 }
 
 /** Extra depth: dust, floor haze, vignette (appended to every regenerated scene). */
 export function animeSceneFinisher(w, h) {
   let dust = "";
-  for (let i = 0; i < 56; i += 1) {
+  for (let i = 0; i < 28; i += 1) {
     const cx = ((i * 137) % 1000) / 1000 * w;
-    const cy = ((i * 89 + 17) % 1000) / 1000 * h * 0.88;
-    const r = 0.8 + (i % 4) * 0.45;
-    dust += `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${r.toFixed(2)}" fill="#fff" opacity="${(0.035 + (i % 6) * 0.012).toFixed(3)}"/>`;
+    const cy = ((i * 89 + 17) % 1000) / 1000 * h * 0.85;
+    const r = 0.6 + (i % 3) * 0.35;
+    dust += `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${r.toFixed(2)}" fill="#fff" opacity="${(0.022 + (i % 4) * 0.01).toFixed(3)}"/>`;
   }
   return `${dust}
   ${animeDetailPass(w, h)}
-  <rect width="${w}" height="${h}" fill="url(#haze)" opacity="0.2"/>
+  <rect width="${w}" height="${h}" fill="url(#stageGlow)"/>
+  <rect width="${w}" height="${h}" fill="url(#haze)" opacity="0.14"/>
+  <rect width="${w}" height="${h}" fill="url(#filmGrade)"/>
   <rect width="${w}" height="${h}" fill="url(#vignette)"/>
-  <rect x="0" y="${h * 0.88}" width="${w}" height="${h * 0.12}" fill="#000" opacity="0.24"/>`;
+  <rect x="0" y="${h * 0.9}" width="${w}" height="${h * 0.1}" fill="#000" opacity="0.14"/>`;
 }
 
 /** Anime window — city bokeh at night. */
@@ -167,16 +170,15 @@ export function drawCozyRoomArt(w, h) {
 /** @param {number} w @param {number} h */
 export function drawStudioArt(w, h) {
   return `${animePaintDefs(w, h)}
-  <rect width="${w}" height="${h}" fill="url(#wallCool)"/>
-  <ellipse cx="${w * 0.5}" cy="${h * 0.55}" rx="${w * 0.42}" ry="${h * 0.35}" fill="#f8f8fc"/>
-  <ellipse cx="${w * 0.5}" cy="${h * 0.58}" rx="${w * 0.38}" ry="${h * 0.28}" fill="#ffffff"/>
-  <polygon points="0,${h * 0.62} 0,${h} ${w},${h} ${w},${h * 0.62} ${w * 0.78},${h * 0.68} ${w * 0.22},${h * 0.68}" fill="#9098a8" opacity="0.85"/>
-  <rect x="${w * 0.08}" y="${h * 0.12}" width="90" height="140" fill="#fff" opacity="0.95" filter="url(#softGlow)"/>
-  <rect x="${w * 0.82}" y="${h * 0.12}" width="90" height="140" fill="#fff" opacity="0.95" filter="url(#softGlow)"/>
-  <rect x="${w * 0.35}" y="${h * 0.05}" width="120" height="80" fill="#fff" opacity="0.7" filter="url(#softGlow)"/>
-  <circle cx="${w * 0.5}" cy="${h * 0.35}" r="8" fill="#888"/>
-  <line x1="${w * 0.5}" y1="${h * 0.35}" x2="${w * 0.5}" y2="${h * 0.55}" stroke="#666" stroke-width="3"/>
-  <rect x="${w * 0.42}" y="${h * 0.72}" width="120" height="50" rx="8" fill="#686878" opacity="0.5"/>`;
+  <rect width="${w}" height="${h}" fill="#181c24"/>
+  <rect width="${w}" height="${h * 0.55}" fill="url(#wallCool)"/>
+  <ellipse cx="${w * 0.5}" cy="${h * 0.56}" rx="${w * 0.44}" ry="${h * 0.34}" fill="#eceef4"/>
+  <ellipse cx="${w * 0.5}" cy="${h * 0.58}" rx="${w * 0.36}" ry="${h * 0.26}" fill="#fafbfc"/>
+  <polygon points="0,${h * 0.64} 0,${h} ${w},${h} ${w},${h * 0.64} ${w * 0.8},${h * 0.7} ${w * 0.2},${h * 0.7}" fill="#788090" opacity="0.75"/>
+  <rect x="${w * 0.06}" y="${h * 0.1}" width="72" height="120" fill="#fff" opacity="0.88" rx="4" filter="url(#softGlow)"/>
+  <rect x="${w * 0.84}" y="${h * 0.1}" width="72" height="120" fill="#fff" opacity="0.88" rx="4" filter="url(#softGlow)"/>
+  <rect x="${w * 0.38}" y="${h * 0.06}" width="100" height="68" fill="#fff" opacity="0.55" rx="3" filter="url(#softGlow)"/>
+  <ellipse cx="${w * 0.5}" cy="${h * 0.34}" rx="140" ry="90" fill="#fff" opacity="0.07" filter="url(#softGlow)"/>`;
 }
 
 /** @param {number} n @param {number} w @param {number} h @param {number} [maxY] */
@@ -520,10 +522,11 @@ export function drawGreenhouseArt(w, h) {
 
 export function drawMinimalArt(w, h) {
   return `${animePaintDefs(w, h)}
-  <rect width="${w}" height="${h}" fill="#070a10"/>
-  <rect x="${w * 0.12}" y="${h * 0.18}" width="${w * 0.76}" height="${h * 0.58}" fill="#101820" stroke="#2a3848" stroke-width="2"/>
-  ${Array.from({ length: 5 }, (_, i) => `<line x1="${w * 0.12}" y1="${h * 0.18 + i * 50}" x2="${w * 0.88}" y2="${h * 0.18 + i * 50}" stroke="#1a2838" stroke-width="1"/>`).join("")}
-  <ellipse cx="${w * 0.5}" cy="${h * 0.45}" rx="180" ry="100" fill="#88a8ff" opacity="0.06" filter="url(#softGlow)"/>`;
+  <rect width="${w}" height="${h}" fill="#0a0c12"/>
+  <ellipse cx="${w * 0.35}" cy="${h * 0.28}" rx="${w * 0.42}" ry="${h * 0.38}" fill="#283858" opacity="0.55"/>
+  <ellipse cx="${w * 0.72}" cy="${h * 0.62}" rx="${w * 0.38}" ry="${h * 0.32}" fill="#1a2838" opacity="0.65"/>
+  <rect x="${w * 0.1}" y="${h * 0.2}" width="${w * 0.8}" height="${h * 0.52}" fill="#121820" rx="12" stroke="#2a3848" stroke-width="1" opacity="0.92"/>
+  <ellipse cx="${w * 0.5}" cy="${h * 0.48}" rx="200" ry="110" fill="#a8c0ff" opacity="0.05" filter="url(#softGlow)"/>`;
 }
 
 /** @type {Record<string, (w: number, h: number) => string>} */

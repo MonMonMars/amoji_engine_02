@@ -24,12 +24,13 @@ const ANIME_PNG_PATH = join(root, "../prototypes/assets/companion-bg-anime.png")
 const PNG_SCENE_IDS = new Set(["night-city"]);
 const ART_Q = `?v=${encodeURIComponent(PICKER_SCENE_ART_REVISION)}`;
 
+/** Cinematic grade — keeps avatar readable without muddy crush. */
 const overlayDefault =
-  "linear-gradient(180deg, rgba(7, 10, 16, 0.02) 0%, rgba(7, 10, 16, 0.12) 55%, rgba(5, 7, 12, 0.38) 100%)";
+  "linear-gradient(180deg, rgba(8, 12, 20, 0) 0%, rgba(8, 12, 20, 0.06) 48%, rgba(4, 6, 12, 0.26) 100%)";
 const overlayScene =
-  "linear-gradient(180deg, rgba(7, 10, 16, 0.01) 0%, rgba(5, 7, 12, 0.1) 52%, rgba(3, 5, 10, 0.32) 100%)";
+  "linear-gradient(180deg, rgba(8, 12, 20, 0) 0%, rgba(6, 10, 18, 0.05) 52%, rgba(3, 5, 10, 0.2) 100%)";
 const overlayGrok =
-  "linear-gradient(180deg, rgba(3, 3, 10, 0.02) 0%, rgba(2, 2, 8, 0.14) 48%, rgba(2, 2, 8, 0.42) 100%)";
+  "linear-gradient(180deg, rgba(4, 4, 12, 0) 0%, rgba(2, 2, 10, 0.1) 50%, rgba(2, 2, 10, 0.36) 100%)";
 
 /** @param {string} presetId */
 function sceneArtFile(presetId) {
@@ -142,7 +143,7 @@ for (const preset of SCENE_BACKGROUND_PRESETS) {
   lines.push(
     `.scene-preset__swatch--${preset.id} {`,
     "  background-image:",
-    "    linear-gradient(180deg, rgba(0, 0, 0, 0.08), rgba(0, 0, 0, 0.38)),",
+    "    linear-gradient(180deg, rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.28)),",
     `    ${swatchArt};`,
     "  background-size: cover;",
     "  background-position: center;",
