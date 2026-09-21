@@ -187,10 +187,7 @@ export function migrateLegacySceneStorage(storage = globalThis.localStorage) {
  */
 export function sceneBackgroundImageUrl(backgroundId) {
   const id = resolveSceneBackgroundId(backgroundId);
-  if (id === "night-city") {
-    return pickerArtFetchUrl(COMPANION_ANIME_BG_PATH);
-  }
-  return pickerArtFetchUrl(`/prototypes/assets/scene-bg/${id}.png`);
+  return pickerArtFetchUrl(`/prototypes/assets/scene-bg/${id}.svg`);
 }
 
 /**

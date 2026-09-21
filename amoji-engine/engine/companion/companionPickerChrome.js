@@ -382,3 +382,16 @@ export function syncPickerCardTabIndex(root, selectedId) {
     card.tabIndex = selected ? 0 : -1;
   });
 }
+
+/** Toggle selection chrome without rebuilding the roster grid (avoids portrait flash). */
+export function syncPickerGridSelection(root, selectedId) {
+  if (!root) return;
+  const id = String(selectedId || "").toLowerCase();
+  root.querySelectorAll?.(".companion-card").forEach((card) => {
+    if (!(card instanceof HTMLElement)) return;
+    const selected = card.dataset.characterId === id;
+    card.classList.toggle("is-selected", selected);
+    card.setAttribute("aria-selected", selected ? "true" : "false");
+    card.tabIndex = selected ? 0 : -1;
+  });
+}

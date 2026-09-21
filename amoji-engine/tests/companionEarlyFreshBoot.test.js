@@ -13,12 +13,15 @@ const earlyBoot = readFileSync(
 );
 
 describe("companionEarlyFreshBoot", () => {
-  it("redirects sticky cached pathnames to /play and can refresh stale builds", () => {
+  it("redirects sticky cached pathnames to /play without reload loops on picker", () => {
     expect(earlyBoot).toMatch(/fetch\s*\(\s*["']\/api\/health/);
     expect(earlyBoot).toMatch(/companion-full/);
     expect(earlyBoot).toMatch(/location\.replace\("\/play"/);
     expect(earlyBoot).toMatch(/__amojiActiveBuild/);
     expect(earlyBoot).toMatch(/paintAtmosphereEarly/);
+    expect(earlyBoot).toContain("scene-bg/");
+    expect(earlyBoot).toContain('".svg?v="');
+    expect(earlyBoot).not.toMatch(/pick=1&automic=0/);
   });
 });
 

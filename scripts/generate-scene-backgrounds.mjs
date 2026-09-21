@@ -19,6 +19,8 @@ const outDir = join(root, "../prototypes/assets/scene-bg");
 mkdirSync(outDir, { recursive: true });
 
 const ANIME_PNG = "/prototypes/assets/companion-bg-anime.png";
+const ANIME_PNG_PATH = join(root, "../prototypes/assets/companion-bg-anime.png");
+/** @deprecated HQ PNG when present; otherwise SVG art is used */
 const PNG_SCENE_IDS = new Set(["night-city"]);
 const ART_Q = `?v=${encodeURIComponent(PICKER_SCENE_ART_REVISION)}`;
 
@@ -31,16 +33,19 @@ const overlayGrok =
 
 /** @param {string} presetId */
 function sceneArtFile(presetId) {
-  if (PNG_SCENE_IDS.has(presetId)) return `${ANIME_PNG}${ART_Q}`;
   const pngPath = join(outDir, `${presetId}.png`);
   const svgPath = join(outDir, `${presetId}.svg`);
+  if (PNG_SCENE_IDS.has(presetId) && existsSync(ANIME_PNG_PATH)) {
+    return `${ANIME_PNG}${ART_Q}`;
+  }
   if (existsSync(pngPath)) {
     return `/prototypes/assets/scene-bg/${presetId}.png${ART_Q}`;
   }
   if (existsSync(svgPath)) {
     return `/prototypes/assets/scene-bg/${presetId}.svg${ART_Q}`;
   }
-  return `${ANIME_PNG}${ART_Q}`;
+  if (existsSync(ANIME_PNG_PATH)) return `${ANIME_PNG}${ART_Q}`;
+  return `/prototypes/assets/scene-bg/cozy-room.svg${ART_Q}`;
 }
 
 /** @param {string} presetId */
@@ -52,8 +57,8 @@ function sceneArtUrl(presetId) {
 function atmosphereArtLayers(presetId) {
   const layers = [sceneArtUrl(presetId)];
   const svgPath = join(outDir, `${presetId}.svg`);
-  const pngPath = join(outDir, `${presetId}.png`);
-  if (existsSync(pngPath) && existsSync(svgPath) && !PNG_SCENE_IDS.has(presetId)) {
+  const primary = sceneArtFile(presetId);
+  if (existsSync(svgPath) && !primary.includes(`${presetId}.svg`)) {
     layers.push(`url("/prototypes/assets/scene-bg/${presetId}.svg${ART_Q}")`);
   }
   return layers.join(",\n    ");
@@ -62,13 +67,13 @@ function atmosphereArtLayers(presetId) {
 /** @param {string} presetId */
 function atmosphereLayers(presetId) {
   const overlay = PNG_SCENE_IDS.has(presetId) || presetId === "__default__" ? overlayDefault : overlayScene;
-  const id = presetId === "__default__" ? "night-city" : presetId;
+  const id = presetId === "__default__" ? "cozy-room" : presetId;
   return `${overlay},\n    ${atmosphereArtLayers(id)} !important;`;
 }
 
 /** @param {string} presetId */
 function atmosphereSizeLayers(presetId) {
-  const id = presetId === "__default__" ? "night-city" : presetId;
+  const id = presetId === "__default__" ? "cozy-room" : presetId;
   const svgPath = join(outDir, `${id}.svg`);
   const pngPath = join(outDir, `${id}.png`);
   let layers = 2;

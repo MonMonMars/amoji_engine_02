@@ -5,10 +5,13 @@ import { AMOJI_BUILD } from "./buildVersion.mjs";
 
 export const COMPANION_PICKER_ASSETS_SCHEMA = "amoji.companionPickerAssets.v1";
 
-/** Bump when picker-aaa-bg.png or companion-bg-anime.png changes. */
-export const PICKER_SCENE_ART_REVISION = "picker-anime-v441-ultra-detail-scenes";
+/** Bump when picker AAA / scene art changes. */
+export const PICKER_SCENE_ART_REVISION = "picker-anime-v449-svg-scene-fallback";
 
 export const PICKER_AAA_BG_PATH = "/prototypes/assets/picker-aaa-bg.png";
+/** Shipped SVG cinematic plate until HQ PNG is generated. */
+export const PICKER_AAA_BG_FALLBACK_PATH =
+  "/prototypes/assets/scene-bg/cozy-room.svg";
 export const COMPANION_ANIME_BG_PATH = "/prototypes/assets/companion-bg-anime.png";
 
 /**
@@ -38,9 +41,10 @@ export function pickerAaaBgUrl(buildId) {
  */
 export function applyPickerAaaBackgroundArt(root, buildId) {
   if (!root) return;
-  const url = pickerAaaBgUrl(buildId);
+  const png = pickerAaaBgUrl(buildId);
+  const svg = pickerArtFetchUrl(PICKER_AAA_BG_FALLBACK_PATH, buildId);
   root.style.setProperty(
     "--picker-aaa-bg-image",
-    `url("${url}")`,
+    `url("${png}"), url("${svg}")`,
   );
 }
