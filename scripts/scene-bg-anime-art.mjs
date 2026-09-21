@@ -600,6 +600,63 @@ export function drawDaySkylineArt(w, h) {
   <rect x="0" y="${h * 0.78}" width="${w}" height="${h * 0.22}" fill="#384858"/>`;
 }
 
+export function drawNeonArcadeArt(w, h) {
+  return `${animePaintDefs(w, h)}
+  <rect width="${w}" height="${h}" fill="#0c0818"/>
+  ${Array.from({ length: 10 }, (_, i) => {
+    const x = w * 0.05 + i * (w * 0.09);
+    const hue = i % 3 === 0 ? "#ff68c8" : i % 3 === 1 ? "#58e8ff" : "#a878ff";
+    return `<rect x="${x}" y="${h * 0.12}" width="${w * 0.07}" height="${h * 0.42}" rx="6" fill="${hue}" opacity="0.35" filter="url(#softGlow)"/>
+    <rect x="${x + 6}" y="${h * 0.18}" width="${w * 0.07 - 12}" height="${h * 0.22}" fill="#101018" opacity="0.85"/>`;
+  }).join("")}
+  <rect x="0" y="${h * 0.58}" width="${w}" height="${h * 0.42}" fill="#181028"/>
+  <ellipse cx="${w * 0.5}" cy="${h * 0.72}" rx="${w * 0.55}" ry="${h * 0.18}" fill="#ff48a8" opacity="0.12" filter="url(#softGlow)"/>`;
+}
+
+export function drawBambooForestArt(w, h) {
+  return `${animePaintDefs(w, h)}
+  <rect width="${w}" height="${h}" fill="url(#skyDay)"/>
+  ${Array.from({ length: 14 }, (_, i) => {
+    const x = w * 0.04 + i * (w * 0.07);
+    const gh = h * (0.35 + (i % 5) * 0.08);
+    return `<rect x="${x}" y="${h - gh}" width="10" height="${gh}" fill="#488848" rx="3"/>
+    <rect x="${x - 2}" y="${h - gh + 20}" width="14" height="8" fill="#68a858" opacity="0.65"/>`;
+  }).join("")}
+  <rect x="0" y="${h * 0.72}" width="${w}" height="${h * 0.28}" fill="#88a878" opacity="0.55"/>
+  ${godRays(w, h)}`;
+}
+
+export function drawTrainPlatformArt(w, h) {
+  return `${animePaintDefs(w, h)}
+  <rect width="${w}" height="${h}" fill="#8898a8"/>
+  ${Array.from({ length: 8 }, (_, i) => `<rect x="${i * (w / 8)}" y="${h * 0.38}" width="${w / 16}" height="${h * 0.52}" fill="#687888" opacity="0.75"/>`).join("")}
+  <rect x="0" y="${h * 0.62}" width="${w}" height="8" fill="#f8f8f8" opacity="0.35"/>
+  <rect x="0" y="${h * 0.78}" width="${w}" height="${h * 0.22}" fill="#484858"/>
+  ${Array.from({ length: 6 }, (_, i) => `<circle cx="${w * 0.15 + i * 90}" cy="${h * 0.58}" r="6" fill="#fff8c8" opacity="0.55"/>`).join("")}`;
+}
+
+export function drawSpaResortArt(w, h) {
+  return drawVNInterior(w, h, {
+    wall: "#d8e8e0",
+    accent: "#68a888",
+    floor: "#b8d0c0",
+    kind: "spa",
+  });
+}
+
+export function drawPenthouseSuiteArt(w, h) {
+  return `${animePaintDefs(w, h)}
+  <rect width="${w}" height="${h}" fill="#181828"/>
+  ${starField(48, w, h, h * 0.45)}
+  ${Array.from({ length: 5 }, (_, i) => {
+    const x = w * 0.08 + i * (w * 0.18);
+    return `<rect x="${x}" y="${h * 0.22}" width="${w * 0.14}" height="${h * 0.38}" fill="#283848" opacity="0.9"/>
+    <rect x="${x + 8}" y="${h * 0.28}" width="${w * 0.14 - 16}" height="${h * 0.24}" fill="#88a8c8" opacity="0.25"/>`;
+  }).join("")}
+  <rect x="0" y="${h * 0.62}" width="${w}" height="${h * 0.38}" fill="#2a2830"/>
+  <ellipse cx="${w * 0.5}" cy="${h * 0.58}" rx="220" ry="28" fill="#fff" opacity="0.06"/>`;
+}
+
 export function drawMinimalArt(w, h) {
   return `${animePaintDefs(w, h)}
   <rect width="${w}" height="${h}" fill="#0a0c12"/>
@@ -646,4 +703,9 @@ export const SCENE_ANIME_ART = {
   observatory: drawObservatoryArt,
   "zen-garden": drawZenGardenArt,
   "day-skyline": drawDaySkylineArt,
+  "neon-arcade": drawNeonArcadeArt,
+  "bamboo-forest": drawBambooForestArt,
+  "train-platform": drawTrainPlatformArt,
+  "spa-resort": drawSpaResortArt,
+  "penthouse-suite": drawPenthouseSuiteArt,
 };

@@ -69,7 +69,7 @@ describe("companionScenePresets", () => {
   });
 
   it("lists indoor and outdoor background presets", () => {
-    expect(SCENE_BACKGROUND_PRESETS.length).toBe(27);
+    expect(SCENE_BACKGROUND_PRESETS.length).toBe(32);
     const outdoor = SCENE_BACKGROUND_PRESETS.filter((p) => p.environment === "outdoor");
     const indoor = SCENE_BACKGROUND_PRESETS.filter((p) => p.environment === "indoor");
     expect(outdoor.length).toBeGreaterThanOrEqual(10);

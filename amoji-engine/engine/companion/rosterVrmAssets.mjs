@@ -136,6 +136,18 @@ export const ROSTER_VRM_DOWNLOADS = [
   { id: "luna", url: VRoidFem, minBytes: 500_000 },
   { id: "celeste", url: VRoidSampleC, minBytes: 500_000 },
   { id: "yume", copyFrom: "companion-erika.vrm", minBytes: 500_000 },
+  { id: "aria", copyFrom: "companion-sakura.vrm", minBytes: 500_000 },
+  {
+    id: "noah",
+    url: "https://raw.githubusercontent.com/madjin/vrm-samples/master/vroid/masc_vroid.vrm",
+    minBytes: 500_000,
+  },
+  {
+    id: "rika",
+    url: VRoidSampleC,
+    minBytes: 500_000,
+  },
+  { id: "vega", copyFrom: "companion-celeste.vrm", minBytes: 500_000 },
 ];
 
 export function rosterDownloadIds() {

@@ -58,7 +58,7 @@ describe("companionCharacterCatalog v363 VTuber roster", () => {
   });
 
   it("exposes the VTuber + AAA catalog", () => {
-    expect(ROSTER_SIZE).toBe(27);
+    expect(ROSTER_SIZE).toBe(31);
     expect(CHARACTER_IDS).toEqual([
       "nova",
       "kizuna",
@@ -76,6 +76,10 @@ describe("companionCharacterCatalog v363 VTuber roster", () => {
       "luna",
       "celeste",
       "yume",
+      "aria",
+      "noah",
+      "rika",
+      "vega",
     ]);
     expect(Object.keys(COMPANION_CHARACTERS).sort()).toEqual([...CHARACTER_IDS].sort());
     expect(TRIAL_CHARACTER_IDS).toEqual(["yuki", "hina", "mio"]);
@@ -171,7 +175,8 @@ describe("companionCharacterCatalog v363 VTuber roster", () => {
     expect(nextCharacterId("mei")).toBe("atlas");
     expect(nextCharacterId("sky")).toBe("yuki");
     expect(nextCharacterId("bunny")).toBe("sakura");
-    expect(nextCharacterId("yume")).toBe("nova");
+    expect(nextCharacterId("yume")).toBe("aria");
+    expect(nextCharacterId("vega")).toBe("nova");
   });
 
   it("exposes avatarLabel on picker list items", () => {
@@ -190,6 +195,7 @@ describe("companionCharacterCatalog v363 VTuber roster", () => {
     expect(list.find((c) => c.id === "atlas")?.number).toBe(6);
     expect(list.find((c) => c.id === "bunny")?.number).toBe(23);
     expect(list.find((c) => c.id === "yume")?.number).toBe(27);
+    expect(list.find((c) => c.id === "vega")?.number).toBe(31);
     expect(GALLERY_PRIORITY_IDS.has("amoji")).toBe(true);
     expect(GALLERY_PRIORITY_IDS.has("fox")).toBe(true);
     expect(GALLERY_PRIORITY_IDS.has("bunny")).toBe(true);
@@ -214,7 +220,8 @@ describe("companionCharacterCatalog v363 VTuber roster", () => {
     expect(characterGender("hina", "yue")).toBe("female");
     expect(characterGender("fox", "yue")).toBe("female");
     expect(characterVoiceLabel("yuki", "yue", false)).toBeTruthy();
-    expect(MALE_CHARACTER_IDS.size).toBe(7);
+    expect(MALE_CHARACTER_IDS.size).toBe(8);
+    expect(characterGender("noah", "en")).toBe("male");
   });
 
   it("matches TTS voice gender to character gender for every roster entry", () => {

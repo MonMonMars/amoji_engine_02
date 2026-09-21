@@ -45,7 +45,7 @@ import {
 } from "./companionStartPickerGate.mjs";
 
 export const COMPANION_CHARACTER_PICKER_SCHEMA =
-  "amoji.companionCharacterPicker.v7-roster27-scenes27";
+  "amoji.companionCharacterPicker.v8-roster31-scenes32";
 
 export const COMPANION_START_PICKER_SCHEMA = "amoji.companionStartPicker.v11";
 
