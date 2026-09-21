@@ -4,7 +4,16 @@
 import * as THREE from "three";
 import { computeUpperBodyAnchor } from "./companionPortraitFraming.js";
 
-export const COMPANION_CAMERA_FOLLOW_SCHEMA = "amoji.companionCameraFollow.v1";
+export const COMPANION_CAMERA_FOLLOW_SCHEMA = "amoji.companionCameraFollow.v2-lower-neck";
+
+/** Neck → upper chest blend for orbit pivot (lower neck, not jaw). */
+export const LOWER_NECK_CHEST_BLEND = 0.38;
+/** Head → neck blend when chest bone is missing. */
+export const LOWER_NECK_HEAD_NECK_BLEND = 0.72;
+
+const _neckScratch = new THREE.Vector3();
+const _chestScratch = new THREE.Vector3();
+const _headScratch = new THREE.Vector3();
 
 /**
  * @param {import('@pixiv/three-vrm').VRM} vrm
@@ -14,11 +23,32 @@ export const COMPANION_CAMERA_FOLLOW_SCHEMA = "amoji.companionCameraFollow.v1";
 export function computeVrmFrameAnchor(vrm, model, out = new THREE.Vector3()) {
   model.updateWorldMatrix(true, true);
   const fitted = new THREE.Box3().setFromObject(model);
-  const head =
-    vrm.humanoid?.getNormalizedBoneNode?.("head") ||
-    vrm.humanoid?.getNormalizedBoneNode?.("neck");
-  const headPos = head ? new THREE.Vector3() : null;
-  if (head && headPos) head.getWorldPosition(headPos);
+  const humanoid = vrm.humanoid;
+  const neck = humanoid?.getNormalizedBoneNode?.("neck");
+  const head = humanoid?.getNormalizedBoneNode?.("head");
+  const chest =
+    humanoid?.getNormalizedBoneNode?.("upperChest") ||
+    humanoid?.getNormalizedBoneNode?.("chest");
+
+  if (neck) {
+    neck.getWorldPosition(_neckScratch);
+    if (chest) {
+      chest.getWorldPosition(_chestScratch);
+      out.copy(_neckScratch).lerp(_chestScratch, LOWER_NECK_CHEST_BLEND);
+      return out;
+    }
+    if (head) {
+      head.getWorldPosition(_headScratch);
+      out.copy(_headScratch).lerp(_neckScratch, LOWER_NECK_HEAD_NECK_BLEND);
+      return out;
+    }
+    out.copy(_neckScratch);
+    return out;
+  }
+
+  const headBone = head || neck;
+  const headPos = headBone ? new THREE.Vector3() : null;
+  if (headBone && headPos) headBone.getWorldPosition(headPos);
   return computeUpperBodyAnchorFromBox(fitted, headPos, out);
 }
 
