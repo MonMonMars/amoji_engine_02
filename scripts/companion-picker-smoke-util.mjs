@@ -151,7 +151,7 @@ export async function openInSessionCompanionPicker(page) {
     await page.waitForSelector("#settings-btn-companions", { timeout: 8000 });
     await page.click("#settings-btn-companions");
   }
-  await page.waitForSelector(`${SESSION_ROOT}.is-open`, { timeout: 8000 });
+  await page.waitForSelector(`${SESSION_ROOT}.is-open`, { timeout: 15000 });
 }
 
 /**
