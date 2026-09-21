@@ -141,11 +141,12 @@ describe("companionIdleMotion", () => {
     expect(Math.abs(merged.headX ?? 0)).toBeGreaterThan(0.012);
   });
 
-  it("merges T-pose idle with low-weight arm lift (no full-channel blend)", () => {
+  it("merges T-pose idle without upper-arm lift channels", () => {
     const base = { headX: 0, leanY: 0.01 };
     const merged = mergePlantedAliveIdleIntoPose(base, 1.2, { bind: "tpose" });
     expect(merged.upperLegL ?? 0).toBe(0);
-    expect(Math.abs(merged.armLiftL ?? 0)).toBeLessThan(0.12);
+    expect(merged.armLiftL ?? 0).toBe(0);
+    expect(merged.armLiftR ?? 0).toBe(0);
     expect(Math.abs(merged.forearmL ?? 0)).toBeGreaterThan(0.04);
   });
 
@@ -187,7 +188,7 @@ describe("idle body motion integration", () => {
     motion.resetMotionClock(performance.now() - 1200);
     for (let i = 0; i < 30; i += 1) motion.update(1 / 30, { now: performance.now() });
     expect(bones.get("leftLowerArm").rotation.x).toBeGreaterThan(
-      VRM_ARM_REST_ROTATIONS.leftLowerArm.x + 0.04,
+      VRM_ARM_REST_ROTATIONS.leftLowerArm.x + 0.02,
     );
   });
 

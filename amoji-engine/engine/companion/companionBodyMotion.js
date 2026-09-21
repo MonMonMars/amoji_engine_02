@@ -61,7 +61,7 @@ import {
   lockedIdleHipTilt,
 } from "./companionFootLock.js";
 
-export const COMPANION_BODY_SCHEMA = "amoji.companionBody.v4-limb-snap";
+export const COMPANION_BODY_SCHEMA = "amoji.companionBody.v5-arm-plant-snap";
 
 /**
  * @param {import('@pixiv/three-vrm').VRMHumanoid | null | undefined} humanoid
@@ -462,15 +462,29 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
 
   const isAposeBind = () => armBind === "apose";
 
-  /** Planted idle — upper arms stay on calibrated rest; forearms carry micro-life. */
-  const applyCalmIdleArms = (pose, k) => {
+  /** Planted idle — upper arms locked to calibrated rest (no pose-channel lift). */
+  const applyPlantedUpperArmRest = () => {
     const restL = armRestRotations.leftUpperArm;
     const restR = armRestRotations.rightUpperArm;
+    applyBoneRotation("leftUpperArm", {
+      x: restL.x ?? 0,
+      y: restL.y ?? 0,
+      z: restL.z ?? 0,
+    });
+    applyBoneRotation("rightUpperArm", {
+      x: restR.x ?? 0,
+      y: restR.y ?? 0,
+      z: restR.z ?? 0,
+    });
+  };
+
+  /** Planted idle — upper arms stay on calibrated rest; forearms carry micro-life. */
+  const applyCalmIdleArms = (pose, k) => {
     const restLl = armRestRotations.leftLowerArm;
     const restRl = armRestRotations.rightLowerArm;
     const apose = isAposeBind();
-    const foreScale = apose ? 0.38 : 0.72;
-    const foreCap = apose ? 0.22 : 0.48;
+    const foreScale = apose ? 0.22 : 0.38;
+    const foreCap = apose ? 0.1 : 0.22;
     const foreL = Math.min(
       foreCap,
       Math.max(0, (pose.forearmL ?? 0) * k * foreScale),
@@ -479,25 +493,7 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
       foreCap,
       Math.max(0, (pose.forearmR ?? 0) * k * foreScale),
     );
-    const liftCap = apose ? 0.06 : 0.08;
-    const liftL = Math.min(
-      liftCap,
-      Math.max(0, (pose.armLiftL ?? 0) * k * (apose ? 0.18 : 0.22)),
-    );
-    const liftR = Math.min(
-      liftCap,
-      Math.max(0, (pose.armLiftR ?? 0) * k * (apose ? 0.18 : 0.22)),
-    );
-    applyBoneRotation("leftUpperArm", {
-      x: restL.x,
-      y: restL.y,
-      z: restDirectedLift(restL.z, liftL * 0.35, 1),
-    });
-    applyBoneRotation("rightUpperArm", {
-      x: restR.x,
-      y: restR.y,
-      z: restDirectedLift(restR.z, liftR * 0.35, -1),
-    });
+    applyPlantedUpperArmRest();
     applyBoneRotation("leftLowerArm", withElbowBend(restLl, foreL));
     applyBoneRotation("rightLowerArm", withElbowBend(restRl, foreR));
   };
@@ -749,6 +745,8 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
       applyActionArms(pose, k);
     } else if (allowArms) {
       applyPointArms(pose, k);
+    } else if (opts.idleBeatArms) {
+      applyIdleArms(pose, k, { combHair: opts.idleBeatCombHair === true });
     } else if (idleArms) {
       applyCalmIdleArms(pose, k);
     } else if (talkArmBlend > 0.01) {
@@ -818,11 +816,22 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
   /** Re-apply planted legs + idle arms after spring/mixer (prevents limb drift). */
   const reapplyPlantedLimbs = (opts = {}) => {
     if (!humanoid || activeAction || activeGesture) return;
+    const beatKey = idleBeat?.beat;
+    if (beatKey === "comb" || beatKey === "hair" || beatKey === "chin") {
+      return;
+    }
+    if (!talking) {
+      clearSmoothedLimbChannels();
+      for (const key of POSE_LIMB_BLEND_KEYS) {
+        smoothedPose[key] = 0;
+      }
+    }
     applyLegPose(smoothedPose, 1, {
       plantFeet: true,
       strictRest: !talking,
     });
     if (!talking) {
+      applyPlantedUpperArmRest();
       applyCalmIdleArms(smoothedPose, 1);
     }
     applyHandAndFootRest(smoothedPose, 1, talking ? 0.35 : 0, {
@@ -912,6 +921,8 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
       rootMotion = { y: 0, rotY: 0 };
     }
 
+    let idleBeatArms = false;
+    let idleBeatCombHair = false;
     if (!activeAction) {
       if (!talking) {
         pose = mergePlantedAliveIdleIntoPose(pose, elapsed, {
@@ -945,6 +956,10 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
           const beatKey = idleBeat.beat;
           const allowBeatArms =
             beatKey === "comb" || beatKey === "hair" || beatKey === "chin";
+          if (allowBeatArms) {
+            idleBeatArms = true;
+            idleBeatCombHair = beatKey === "comb" || beatKey === "hair";
+          }
           if (!allowBeatArms) {
             for (const key of [
               "armLiftL",
@@ -1008,7 +1023,7 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
     }
     if (talking && !activeGesture && !activeAction) {
       talkArmBlend = (isAposeBind() ? 0.58 : 0.68) + energy * 0.24;
-    } else if (!talking && !activeGesture && !activeAction) {
+    } else if (!talking && !activeGesture && !activeAction && !idleBeatArms) {
       idleArms = true;
     }
     if (activeGesture) {
@@ -1071,6 +1086,8 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
       actionArms,
       eatArms,
       idleArms,
+      idleBeatArms,
+      idleBeatCombHair,
       talkArmBlend,
       bootPhase: false,
       plantFeet,
