@@ -8,9 +8,9 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji · Companion</title>
     <script>
-      window.__amojiBuild = "2026-09-21-v449-fix-picker-loop-scenes";
+      window.__amojiBuild = "2026-09-21-v450-dismiss-start-picker";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-21-v449-fix-picker-loop-scenes"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-21-v450-dismiss-start-picker"></script>
     <link
       rel="prefetch"
       href="/prototypes/assets/companion-char-nova.png"
@@ -690,23 +690,23 @@
       media="print"
       onload="this.media='all'"
     />
-    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-21-v449-fix-picker-loop-scenes" />
-    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-21-v449-fix-picker-loop-scenes" />
-    <link rel="stylesheet" href="/prototypes/companion-mic-button.css?v=2026-09-21-v449-fix-picker-loop-scenes" />
-    <link rel="stylesheet" href="/prototypes/companion-title-screen.css?v=2026-09-21-v449-fix-picker-loop-scenes" />
-    <link rel="stylesheet" href="/prototypes/companion-minimal-ui.css?v=2026-09-21-v449-fix-picker-loop-scenes" />
-    <link rel="stylesheet" href="/prototypes/companion-settings-ui.css?v=2026-09-21-v449-fix-picker-loop-scenes" />
-    <link rel="stylesheet" href="/prototypes/companion-mobile-shell.css?v=2026-09-21-v449-fix-picker-loop-scenes" />
-    <link rel="stylesheet" href="/prototypes/companion-picker-v4.css?v=2026-09-21-v449-fix-picker-loop-scenes" />
-    <link rel="stylesheet" href="/prototypes/companion-picker-stacked-layout.css?v=2026-09-21-v449-fix-picker-loop-scenes" />
-    <link rel="stylesheet" href="/prototypes/companion-picker-aaa-theme.css?v=2026-09-21-v449-fix-picker-loop-scenes" />
-    <link rel="stylesheet" href="/prototypes/companion-jp-aaa-shell.css?v=2026-09-21-v449-fix-picker-loop-scenes" />
-    <link rel="stylesheet" href="/prototypes/companion-responsive-layout.css?v=2026-09-21-v449-fix-picker-loop-scenes" />
-    <link rel="stylesheet" href="/prototypes/companion-app-width.css?v=2026-09-21-v449-fix-picker-loop-scenes" />
-    <link rel="stylesheet" href="/prototypes/companion-scroll-affordances.css?v=2026-09-21-v449-fix-picker-loop-scenes" />
+    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-21-v450-dismiss-start-picker" />
+    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-21-v450-dismiss-start-picker" />
+    <link rel="stylesheet" href="/prototypes/companion-mic-button.css?v=2026-09-21-v450-dismiss-start-picker" />
+    <link rel="stylesheet" href="/prototypes/companion-title-screen.css?v=2026-09-21-v450-dismiss-start-picker" />
+    <link rel="stylesheet" href="/prototypes/companion-minimal-ui.css?v=2026-09-21-v450-dismiss-start-picker" />
+    <link rel="stylesheet" href="/prototypes/companion-settings-ui.css?v=2026-09-21-v450-dismiss-start-picker" />
+    <link rel="stylesheet" href="/prototypes/companion-mobile-shell.css?v=2026-09-21-v450-dismiss-start-picker" />
+    <link rel="stylesheet" href="/prototypes/companion-picker-v4.css?v=2026-09-21-v450-dismiss-start-picker" />
+    <link rel="stylesheet" href="/prototypes/companion-picker-stacked-layout.css?v=2026-09-21-v450-dismiss-start-picker" />
+    <link rel="stylesheet" href="/prototypes/companion-picker-aaa-theme.css?v=2026-09-21-v450-dismiss-start-picker" />
+    <link rel="stylesheet" href="/prototypes/companion-jp-aaa-shell.css?v=2026-09-21-v450-dismiss-start-picker" />
+    <link rel="stylesheet" href="/prototypes/companion-responsive-layout.css?v=2026-09-21-v450-dismiss-start-picker" />
+    <link rel="stylesheet" href="/prototypes/companion-app-width.css?v=2026-09-21-v450-dismiss-start-picker" />
+    <link rel="stylesheet" href="/prototypes/companion-scroll-affordances.css?v=2026-09-21-v450-dismiss-start-picker" />
     <link
       rel="stylesheet"
-      href="/prototypes/companion-scene-backgrounds.css?v=2026-09-21-v449-fix-picker-loop-scenes"
+      href="/prototypes/companion-scene-backgrounds.css?v=2026-09-21-v450-dismiss-start-picker"
     />
     <script>
       (function () {
@@ -733,7 +733,7 @@
       })();
     </script>
     <script type="module">
-      import { bootEarlyStartPicker } from "/amoji-engine/engine/companion/companionEarlyStartPicker.js?v=2026-09-21-v449-fix-picker-loop-scenes";
+      import { bootEarlyStartPicker } from "/amoji-engine/engine/companion/companionEarlyStartPicker.js?v=2026-09-21-v450-dismiss-start-picker";
       const bootParams = new URLSearchParams(location.search);
       if (bootParams.get("autostart") !== "1" && bootParams.get("pick") !== "0") {
         globalThis.__amojiEarlyStartPickerPromise = bootEarlyStartPicker({
@@ -4621,19 +4621,19 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-21-v449-fix-picker-loop-scenes",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-21-v450-dismiss-start-picker",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-21-v449-fix-picker-loop-scenes",
-          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-21-v449-fix-picker-loop-scenes"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-21-v450-dismiss-start-picker",
+          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-21-v450-dismiss-start-picker"
         }
       }
     </script>
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-21-v449-fix-picker-loop-scenes"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-21-v450-dismiss-start-picker"
     />
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-21-v449-fix-picker-loop-scenes"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-21-v449-fix-picker-loop-scenes"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-21-v450-dismiss-start-picker"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-21-v450-dismiss-start-picker"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;
@@ -4687,15 +4687,6 @@
             document.body.classList.contains("companion-picker-open")
           ) {
             document.getElementById("amoji-boot-splash")?.remove();
-          }
-          if (
-            picker &&
-            !window.__amojiStart?.sessionStarted &&
-            !window.__amojiStart?.starting
-          ) {
-            picker.classList.remove("hide", "is-starting");
-            picker.removeAttribute("aria-hidden");
-            picker.removeAttribute("aria-busy");
           }
         };
         window.__amojiDismissStartButton = function () {
@@ -4805,11 +4796,11 @@
           ev?.preventDefault?.();
           ev?.stopPropagation?.();
           window.__amojiUnlockAudio();
-          window.__amojiHideLoading();
           if (window.__amojiStart.sessionStarted) return false;
           window.__amojiStart.tapped = true;
           window.__amojiStart.starting = true;
           window.__amojiStart.pendingCharacterId = characterId || null;
+          window.__amojiHideLoading();
           var picker = document.getElementById("start-character-picker");
           if (picker) {
             picker.classList.add("is-starting");
@@ -8270,16 +8261,17 @@
           brandBtn?.setAttribute("aria-expanded", "false");
           return;
         }
+        window.__amojiStart.starting = true;
         startPicker?.setStarting?.(true);
         applyCharacterSession(picked, { announce: false });
         startPicker?.setSelected?.(picked);
         releaseUnselectedCharacterCache(picked);
-        try {
-          await startPickerPreloadJob?.ensureModelReady?.(picked);
-        } catch (err) {
-          console.warn("[companion] preload selected model before begin", err);
-        }
         startSession({ characterId: picked });
+        void startPickerPreloadJob
+          ?.ensureModelReady?.(picked)
+          .catch((err) => {
+            console.warn("[companion] preload selected model after begin", err);
+          });
         if (
           !liteMode &&
           avatarLoadStarted &&
@@ -8325,6 +8317,11 @@
           },
           onStart: (nextId) => {
             window.__amojiUnlockAudio?.();
+            if (window.__amojiStart) {
+              window.__amojiStart.tapped = true;
+              window.__amojiStart.starting = true;
+              window.__amojiStart.pendingCharacterId = nextId || null;
+            }
             dismissLoading();
             if (window.__amojiStart?.ready) {
               void beginStartWithCharacter(nextId);
@@ -8380,6 +8377,11 @@
             },
             onStart: (nextId) => {
               window.__amojiUnlockAudio?.();
+              if (window.__amojiStart) {
+                window.__amojiStart.tapped = true;
+                window.__amojiStart.starting = true;
+                window.__amojiStart.pendingCharacterId = nextId || null;
+              }
               dismissLoading();
               if (window.__amojiStart?.ready) {
                 void beginStartWithCharacter(nextId);
