@@ -100,6 +100,11 @@ export async function bootEarlyStartPicker(opts = {}) {
     },
     onStart: (nextId) => {
       globalThis.__amojiUnlockAudio?.();
+      if (globalThis.__amojiStart) {
+        globalThis.__amojiStart.tapped = true;
+        globalThis.__amojiStart.starting = true;
+        globalThis.__amojiStart.pendingCharacterId = nextId || null;
+      }
       globalThis.__amojiHideLoading?.();
       if (
         globalThis.__amojiStart?.ready &&
