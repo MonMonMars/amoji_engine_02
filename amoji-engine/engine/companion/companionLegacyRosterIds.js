@@ -11,10 +11,6 @@ export const LEGACY_CHARACTER_ALIASES = Object.freeze({
   rose: "mei",
   sora: "mei",
   aria: "mei",
-  sakura: "mei",
-  celeste: "mei",
-  luna: "mei",
-  yume: "mei",
   /** Gen2 slots 16–23 → Gen3 */
   pyre: "knight",
   pan: "fox",

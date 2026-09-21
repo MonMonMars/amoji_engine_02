@@ -32,7 +32,7 @@ describe("companionCharacterRoles", () => {
 
   it("uses nova for secretary defaults", () => {
     expect(ROLE_DEFAULT_CHARACTER_ID.secretary).toBe("nova");
-    expect(characterIdsForRole("secretary")).toEqual([]);
+    expect(characterIdsForRole("secretary")).toEqual(["sakura", "luna"]);
   });
 
   it("lists girlfriend roster characters", () => {
@@ -51,6 +51,8 @@ describe("companionCharacterRoles", () => {
       "leaf",
       "jenny",
       "petal",
+      "celeste",
+      "yume",
     ]);
   });
 

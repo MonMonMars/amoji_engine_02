@@ -2,7 +2,7 @@
  * Japanese anime / VN / gacha-game style scene painters (SVG body fragments).
  * Rich layered gradients, neon, bokeh, perspective interiors, atmospheric depth.
  */
-export const SCENE_ANIME_ART_REVISION = "anime-scene-v457-pro-cinematic";
+export const SCENE_ANIME_ART_REVISION = "anime-scene-v460-pro-expansion";
 
 /** @param {number} w @param {number} h */
 export function animePaintDefs(w, h) {
@@ -485,7 +485,12 @@ export function drawVNInterior(w, h, theme) {
         : kind === "classroom"
           ? `<rect x="${w * 0.05}" y="${h * 0.55}" width="${w * 0.9}" height="8" fill="${accent}"/>
           ${Array.from({ length: 10 }, (_, i) => `<rect x="${w * 0.08 + i * 42}" y="${h * 0.63}" width="28" height="22" fill="#584838" opacity="0.6"/>`).join("")}`
-          : `<rect x="${w * 0.15}" y="${h * 0.62}" width="${w * 0.35}" height="8" fill="${accent}" opacity="0.5"/>`;
+          : kind === "executive"
+            ? `<ellipse cx="${w * 0.32}" cy="${h * 0.74}" rx="140" ry="32" fill="#3a3838" opacity="0.85"/>
+            <rect x="${w * 0.18}" y="${h * 0.64}" width="220" height="14" rx="4" fill="${accent}" opacity="0.55"/>
+            <rect x="${w * 0.58}" y="${h * 0.58}" width="${w * 0.28}" height="8" fill="${accent}" opacity="0.35"/>
+            <circle cx="${w * 0.82}" cy="${h * 0.38}" r="42" fill="url(#lampGlow)"/>`
+            : `<rect x="${w * 0.15}" y="${h * 0.62}" width="${w * 0.35}" height="8" fill="${accent}" opacity="0.5"/>`;
 
   const wallFill =
     kind === "cozy" || kind === "kitchen" || kind === "loft"
@@ -518,6 +523,81 @@ export function drawGreenhouseArt(w, h) {
   ${Array.from({ length: 12 }, (_, i) => `<ellipse cx="${40 + i * 78}" cy="${h * 0.72}" rx="45" ry="28" fill="#68c878"/>
   <ellipse cx="${55 + i * 78}" cy="${h * 0.68}" rx="22" ry="35" fill="#388848" opacity="0.6"/>`).join("")}
   ${godRays(w, h)}`;
+}
+
+export function drawExecutiveLoungeArt(w, h) {
+  return drawVNInterior(w, h, {
+    wall: "#2a2830",
+    accent: "#c8a878",
+    floor: "#1a1818",
+    kind: "executive",
+  });
+}
+
+export function drawHotelLobbyArt(w, h) {
+  return `${animePaintDefs(w, h)}
+  <rect width="${w}" height="${h}" fill="#e8e4dc"/>
+  <polygon points="0,${h * 0.58} 0,${h} ${w},${h} ${w},${h * 0.58} ${w * 0.78},${h * 0.64} ${w * 0.22},${h * 0.64}" fill="#c8c0b0"/>
+  ${Array.from({ length: 5 }, (_, i) => {
+    const x = w * 0.12 + i * (w * 0.18);
+    return `<ellipse cx="${x}" cy="${h * 0.22}" rx="28" ry="48" fill="#fff8e8" opacity="0.55" filter="url(#softGlow)"/>
+    <rect x="${x - 3}" y="${h * 0.08}" width="6" height="90" fill="#888078"/>`;
+  }).join("")}
+  <rect x="${w * 0.35}" y="${h * 0.52}" width="${w * 0.3}" height="12" rx="4" fill="#a89888"/>
+  <ellipse cx="${w * 0.5}" cy="${h * 0.48}" rx="180" ry="40" fill="#fff" opacity="0.08"/>`;
+}
+
+export function drawArtGalleryArt(w, h) {
+  return `${animePaintDefs(w, h)}
+  <rect width="${w}" height="${h}" fill="#f4f2ee"/>
+  <rect x="0" y="${h * 0.72}" width="${w}" height="${h * 0.28}" fill="#d8d4cc"/>
+  ${Array.from({ length: 6 }, (_, i) => {
+    const x = w * 0.06 + i * (w * 0.15);
+    return `<rect x="${x}" y="${h * 0.18}" width="${w * 0.11}" height="${h * 0.38}" fill="#fff" stroke="#b8b4ac" stroke-width="3"/>
+    <rect x="${x + 8}" y="${h * 0.22}" width="${w * 0.11 - 16}" height="${h * 0.28}" fill="${i % 2 ? "#88a8c8" : "#d87898"}" opacity="0.45"/>`;
+  }).join("")}
+  <ellipse cx="${w * 0.5}" cy="${h * 0.12}" rx="${w * 0.35}" ry="28" fill="#fff8e0" opacity="0.35" filter="url(#softGlow)"/>`;
+}
+
+export function drawObservatoryArt(w, h) {
+  return `${animePaintDefs(w, h)}
+  <rect width="${w}" height="${h}" fill="#0a0818"/>
+  ${starField(120, w, h, h * 0.55)}
+  <ellipse cx="${w * 0.5}" cy="${h * 0.72}" rx="${w * 0.48}" ry="${h * 0.38}" fill="#181828" opacity="0.92"/>
+  <ellipse cx="${w * 0.5}" cy="${h * 0.68}" rx="${w * 0.38}" ry="${h * 0.28}" fill="#101018"/>
+  <rect x="${w * 0.42}" y="${h * 0.55}" width="${w * 0.16}" height="${h * 0.35}" fill="#283048" opacity="0.85"/>
+  <circle cx="${w * 0.5}" cy="${h * 0.42}" r="95" fill="none" stroke="#6888c8" stroke-width="4" opacity="0.55"/>
+  <circle cx="${w * 0.5}" cy="${h * 0.42}" r="72" fill="#080810" opacity="0.8"/>
+  ${starField(36, w * 0.28, h * 0.14, h * 0.56)}`;
+}
+
+export function drawZenGardenArt(w, h) {
+  return `${animePaintDefs(w, h)}
+  <rect width="${w}" height="${h}" fill="url(#skyDay)"/>
+  ${Array.from({ length: 18 }, (_, i) => {
+    const y = h * 0.62 + (i % 6) * 8;
+    return `<path d="M0 ${y} Q${w * 0.25} ${y - 6} ${w * 0.5} ${y} T${w} ${y}" fill="none" stroke="#988878" stroke-width="1.2" opacity="0.35"/>`;
+  }).join("")}
+  <rect x="0" y="${h * 0.58}" width="${w}" height="${h * 0.42}" fill="#c8c0b0"/>
+  <rect x="${w * 0.08}" y="${h * 0.32}" width="12" height="${h * 0.26}" fill="#584838"/>
+  <rect x="${w * 0.06}" y="${h * 0.28}" width="${w * 0.08}" height="8" fill="#685848"/>
+  ${Array.from({ length: 5 }, (_, i) => `<ellipse cx="${w * 0.72 + i * 18}" cy="${h * 0.78}" rx="22" ry="14" fill="#687868" opacity="0.75"/>`).join("")}
+  <ellipse cx="${w * 0.22}" cy="${h * 0.82}" rx="55" ry="22" fill="#788878" opacity="0.65"/>`;
+}
+
+export function drawDaySkylineArt(w, h) {
+  return `${animePaintDefs(w, h)}
+  <rect width="${w}" height="${h}" fill="url(#skyDay)"/>
+  ${animeCloudLayers(w, h)}
+  ${Array.from({ length: 14 }, (_, i) => {
+    const bw = 28 + (i % 5) * 14;
+    const bh = 80 + (i % 7) * 55;
+    const x = i * (w / 14);
+    return `<rect x="${x}" y="${h * 0.55 - bh}" width="${bw}" height="${bh}" fill="#7888a0" opacity="0.82"/>
+    ${Array.from({ length: 4 }, (_, j) => `<rect x="${x + 4}" y="${h * 0.55 - bh + 12 + j * 18}" width="8" height="10" fill="#fff8d8" opacity="0.35"/>`).join("")}`;
+  }).join("")}
+  <rect x="0" y="${h * 0.55}" width="${w}" height="${h * 0.45}" fill="#586878" opacity="0.35"/>
+  <rect x="0" y="${h * 0.78}" width="${w}" height="${h * 0.22}" fill="#384858"/>`;
 }
 
 export function drawMinimalArt(w, h) {
@@ -560,4 +640,10 @@ export const SCENE_ANIME_ART = {
     drawVNInterior(w, h, { wall: "#e0c8a8", accent: "#685040", floor: "#c8a878", kind: "loft" }),
   kitchen: (w, h) =>
     drawVNInterior(w, h, { wall: "#f0e0c8", accent: "#786048", floor: "#d8c0a0", kind: "kitchen" }),
+  "executive-lounge": drawExecutiveLoungeArt,
+  "hotel-lobby": drawHotelLobbyArt,
+  "art-gallery": drawArtGalleryArt,
+  observatory: drawObservatoryArt,
+  "zen-garden": drawZenGardenArt,
+  "day-skyline": drawDaySkylineArt,
 };
