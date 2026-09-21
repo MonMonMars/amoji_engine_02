@@ -60,6 +60,8 @@ Programmatic helper: `formatDemoLinkBlock()` in `amoji-engine/engine/companion/d
 
 **Deploy caveat:** Links point at production Vercel. They reflect your changes only after the branch is merged to the deploy branch (`cursor/companion-improvements-6647` or `main`) and Vercel finishes redeploying (~1 min). Until `node scripts/demo-link-verify.mjs` exits `0`, do **not** claim production is updated — run `LOCAL=1` verifier and report deploy pending.
 
+**GitHub → Vercel (recommended):** Set repo secrets `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID` so the **Deploy to Vercel** workflow can run `vercel --prod` on every push to `main`. Check drift with `npm run verify:production-build` (compares `/api/health` to `AMOJI_BUILD`).
+
 **Cache bust:** Bookmark `/play` (not `/companion-full`). Each visit 303s to a unique `/n/<stamp>/full` pathname, sends `Clear-Site-Data: "cache"` on the HTML document only (never `"storage"`, so keys survive), and the page purges Cache Storage on open plus BFCache `pageshow`. Query `?build=` is a fallback only. Before deploy, run `node scripts/sync-build-version.mjs` so HTML `?v=` tags match `AMOJI_BUILD`.
 
 ## Scene backgrounds
