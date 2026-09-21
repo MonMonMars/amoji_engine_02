@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import * as THREE from "three";
 import {
   applyOrbitFollowAnchor,
+  computeVrmFrameAnchor,
   smoothFrameAnchor,
 } from "../engine/companion/companionCameraFollow.js";
 
@@ -30,6 +31,32 @@ describe("companionCameraFollow", () => {
     expect(smoothed.x).toBeLessThan(next.x);
     expect(smoothed.y).toBeGreaterThan(1);
     expect(smoothed.y).toBeLessThan(next.y);
+  });
+
+  it("computeVrmFrameAnchor blends neck toward chest for lower-neck pivot", () => {
+    const model = new THREE.Object3D();
+    const neck = new THREE.Object3D();
+    neck.position.set(0, 1.42, 0);
+    const chest = new THREE.Object3D();
+    chest.position.set(0, 1.28, 0);
+    model.add(neck);
+    model.add(chest);
+    model.updateMatrixWorld(true);
+
+    const vrm = {
+      humanoid: {
+        getNormalizedBoneNode: (name) => {
+          if (name === "neck") return neck;
+          if (name === "upperChest") return chest;
+          return null;
+        },
+      },
+    };
+
+    const anchor = computeVrmFrameAnchor(vrm, model);
+    expect(anchor.y).toBeGreaterThan(1.28);
+    expect(anchor.y).toBeLessThan(1.42);
+    expect(anchor.y).toBeCloseTo(1.42 + (1.28 - 1.42) * 0.38, 3);
   });
 
   it("skips when anchor already matches target", () => {
