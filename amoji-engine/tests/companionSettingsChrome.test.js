@@ -17,8 +17,8 @@ describe("companionSettingsChrome", () => {
     expect(labels.camera).toBe("Reset camera view");
     expect(labels.companionSection).toBe("Companion");
     expect(labels.talkSpeed).toMatch(/1\.6|1\.61/);
-    expect(labels.rosterModelsHint).toMatch(/27/);
-    expect(labels.rosterModelsHint).toMatch(/Sakura|Celeste|VTuber/i);
+    expect(labels.rosterModelsHint).toMatch(/23/);
+    expect(labels.rosterModelsHint).toMatch(/Mei|Atlas|VRoid/i);
     expect(labels.rosterDetailsSummary).toBe("View full 3D roster");
     expect(labels.modelLabel).toContain("LLM");
     expect(labels.roleHint).toMatch(/personality/i);

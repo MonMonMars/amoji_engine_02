@@ -41,7 +41,6 @@ export const CHARACTER_FACE_RIG_HINTS = Object.freeze({
   sora: "vrm1-anime",
   aria: "vrm1-anime",
   mei: "vrm1-anime",
-  luna: "vrm1-anime",
   erika: "vrm1-anime",
   atlas: "vrm0-standard",
 });

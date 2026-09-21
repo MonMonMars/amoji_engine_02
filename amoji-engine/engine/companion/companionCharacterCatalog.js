@@ -116,12 +116,8 @@ export const GALLERY_PRIORITY_IDS = new Set([
   "kizuna",
   "alicia",
   "ember",
-  "sakura",
-  "celeste",
   "mei",
-  "luna",
   "atlas",
-  "yume",
   "sky",
   "yuki",
   "hina",
@@ -148,7 +144,6 @@ export const HIGH_POLY_FACE_MIN_TRIANGLES = 20000;
 export const HIGH_POLY_FACE_CHARACTER_IDS = new Set([
   "kizuna",
   "alicia",
-  "yume",
   "ember",
 ]);
 

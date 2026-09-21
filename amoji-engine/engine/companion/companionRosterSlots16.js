@@ -1,10 +1,10 @@
 /**
- * Roster slots #16+ — Gen3 100Avatars R3 (CC0). Slots #1–15 in companionCharacterRoster.js.
+ * Roster slots #12+ — Gen3 100Avatars R3 (CC0). Slots #1–11 in companionCharacterRoster.js.
  */
 import { rosterModelUrl } from "./rosterVrmAssets.mjs";
 import { GEN3_ROSTER_SLOTS } from "./companionRosterGen3Data.mjs";
 
-export const COMPANION_ROSTER_GEN3_SCHEMA = "amoji.companionRosterGen3.v447-r3-slots27";
+export const COMPANION_ROSTER_GEN3_SCHEMA = "amoji.companionRosterGen3.v448-roster23-trim567810";
 
 const DEFAULT_PERFORMANCE = {
   emotion: "happy",

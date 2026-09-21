@@ -17,7 +17,7 @@ describe("companionCharacterPoke", () => {
   });
 
   it("supports Cantonese poke lines", () => {
-    const { blip, followUp } = pickCharacterPokeReaction("sakura", false);
+    const { blip, followUp } = pickCharacterPokeReaction("mei", false);
     expect(blip).toMatch(/[\u4e00-\u9fff！？～]/);
     expect(followUp).toMatch(/[\u4e00-\u9fff！？～]/);
   });

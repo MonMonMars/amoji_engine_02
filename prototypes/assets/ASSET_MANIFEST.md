@@ -33,7 +33,7 @@ node amoji-engine/scripts/download-legal-vrm.mjs
 
 ## Curated roster (v401 — 23 characters)
 
-On-disk VRMs are **`companion-<characterId>.vrm`** (matches picker id — e.g. `companion-sakura.vrm`).
+On-disk VRMs are **`companion-<characterId>.vrm`** (matches picker id — e.g. `companion-mei.vrm`).
 
 Refresh after license/source updates:
 
