@@ -50,7 +50,15 @@ async function main() {
     ready: window.__amojiStart?.ready,
     sessionStarted: window.__amojiStart?.sessionStarted,
     avatarKind: window.__amojiAvatarKind,
-    startGone: !document.getElementById("start-character-picker"),
+    startPickerDismissed: (() => {
+      const picker = document.getElementById("start-character-picker");
+      if (!picker) return true;
+      return (
+        picker.classList.contains("hide") ||
+        picker.hidden ||
+        !picker.classList.contains("is-open")
+      );
+    })(),
     canvas: (() => {
       const c = document.getElementById("avatar-canvas");
       if (!c) return null;

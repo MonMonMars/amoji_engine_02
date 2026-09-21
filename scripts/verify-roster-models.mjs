@@ -6,15 +6,13 @@
  *   LOCAL=1 npm run verify:roster-models
  *   VERIFY_BASE_URL=https://… npm run verify:roster-models
  */
-import { spawnSync } from "node:child_process";
-import { fileURLToPath } from "node:url";
-import { join, dirname } from "node:path";
 import { AMOJI_BUILD } from "../amoji-engine/engine/companion/buildVersion.mjs";
 import { startLocalStaticServer } from "./local-static-server.mjs";
 import { DEMO_BASE_URL } from "../amoji-engine/engine/companion/deployUrls.mjs";
+import { runCompanionCharacterModelSmoke } from "./companion-character-model-smoke.mjs";
 
-const root = join(dirname(fileURLToPath(import.meta.url)), "..");
-const ids = ["nova", "kizuna", "alicia", "ember", "rex", "nana", "yuki"];
+/** Current roster samples (legacy ?character=rex maps to wolf — not a roster card id). */
+const ids = ["nova", "kizuna", "alicia", "ember", "mei", "wolf", "yuki"];
 
 let base = process.env.VERIFY_BASE_URL?.replace(/\/$/, "") || "";
 let host = null;
@@ -24,60 +22,59 @@ if (!base) {
   if (local) {
     host = await startLocalStaticServer(0);
     base = host.baseUrl;
-    for (let i = 0; i < 20; i += 1) {
+    let ready = false;
+    for (let i = 0; i < 40; i += 1) {
       try {
         const h = await fetch(`${base}/api/health`, { signal: AbortSignal.timeout(3000) });
-        if (h.ok) break;
+        const page = await fetch(`${base}/prototypes/amoji-companion.html`, {
+          signal: AbortSignal.timeout(8000),
+        });
+        if (h.ok && page.ok) {
+          ready = true;
+          break;
+        }
       } catch {
         /* retry */
       }
       await new Promise((r) => setTimeout(r, 250));
+    }
+    if (!ready) {
+      console.error("FAIL  local static server did not become ready");
+      process.exit(1);
     }
   } else {
     base = DEMO_BASE_URL.replace(/\/$/, "");
   }
 }
 
-const playBase = local
-  ? `${base}/prototypes/amoji-companion.html?lang=en&pick=1&automic=0&build=${encodeURIComponent(AMOJI_BUILD)}`
-  : `${base}/play?lang=en&pick=1&automic=0&build=${encodeURIComponent(AMOJI_BUILD)}`;
+const playBase = `${base}/play?lang=en&pick=1&automic=0&build=${encodeURIComponent(AMOJI_BUILD)}`;
 
 let failed = 0;
 
 for (const id of ids) {
-  const r = spawnSync(
-    process.execPath,
-    [
-      join(root, "scripts/companion-character-model-smoke.mjs"),
-      "--url",
-      playBase,
-      "--character",
-      id,
-    ],
-    { cwd: root, encoding: "utf8", timeout: 240000 },
-  );
-  let parsed = null;
   try {
-    const raw = (r.stdout || "").trim();
-    const start = raw.indexOf("{");
-    if (start >= 0) parsed = JSON.parse(raw.slice(start));
-  } catch {
-    parsed = null;
-  }
-  const pass = r.status === 0 && parsed?.ok === true;
-  if (!pass) {
+    const parsed = await runCompanionCharacterModelSmoke({
+      baseUrl: playBase,
+      characterId: id,
+    });
+    if (parsed.ok) {
+      const url = parsed.report?.loadedModelUrl || "";
+      console.log(`PASS  ${id} — ${String(url).slice(0, 96)}`);
+    } else {
+      failed += 1;
+      console.error(
+        `FAIL  ${id} — ${JSON.stringify(parsed.report || parsed).slice(0, 160)}`,
+      );
+    }
+  } catch (err) {
     failed += 1;
-    const err =
-      (r.stderr || "").trim().split("\n").pop() ||
-      JSON.stringify(parsed?.report || parsed) ||
-      "unknown";
-    console.error(`FAIL  ${id} — ${err}`);
-  } else {
-    const url = parsed.report?.loadedModelUrl || "";
-    console.log(`PASS  ${id} — ${url.slice(0, 96)}`);
+    const msg = err?.message || String(err);
+    console.error(`FAIL  ${id} — ${msg.split("\n")[0]}`);
   }
 }
 
 if (host) await host.close();
 if (failed) process.exit(1);
-console.log(`\n✅ Roster model verify — ${ids.length - failed}/${ids.length} passed (${local ? "local" : "production"})\n`);
+console.log(
+  `\n✅ Roster model verify — ${ids.length - failed}/${ids.length} passed (${local ? "local" : "production"})\n`,
+);

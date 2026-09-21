@@ -5,8 +5,11 @@
  * Usage:
  *   node scripts/companion-character-model-smoke.mjs --url <companion-full-url> --character nova
  */
+import { pathToFileURL } from "node:url";
 import { chromium } from "playwright";
 import { beginStartPickerSession } from "./companion-picker-smoke-util.mjs";
+import { normalizeLegacyRosterCharacterId } from "../amoji-engine/engine/companion/companionLegacyRosterIds.js";
+import { rosterVrmBasename } from "../amoji-engine/engine/companion/rosterVrmAssets.mjs";
 
 function parseArg(name, fallback) {
   const idx = process.argv.indexOf(name);
@@ -16,29 +19,26 @@ function parseArg(name, fallback) {
   return fallback;
 }
 
-const CHARACTERS = {
-  kizuna: { kind: "vrm3d", model: "companion-kizuna.vrm" },
-  rex: { kind: "vrm3d", model: "companion-rex.vrm" },
-  alicia: { kind: "vrm3d", model: "companion-alicia.vrm" },
-  nova: { kind: "vrm3d", model: "companion-nova.vrm" },
-  ember: { kind: "vrm3d", model: "companion-ember.vrm" },
-  nana: { kind: "vrm3d", model: "companion-nana.vrm" },
-  yuki: { kind: "vrm3d", model: "companion-yuki.vrm" },
-};
+/**
+ * @param {string} characterId
+ */
+export function expectedForCharacter(characterId) {
+  const canonicalId = normalizeLegacyRosterCharacterId(characterId);
+  return {
+    canonicalId,
+    kind: "vrm3d",
+    model: rosterVrmBasename(canonicalId),
+  };
+}
 
-async function main() {
-  const baseUrl = parseArg(
-    "--url",
-    "http://127.0.0.1:5174/prototypes/amoji-companion.html?lang=yue",
-  );
-  const characterId = parseArg("--character", "nova");
-  const expected = CHARACTERS[characterId];
-  if (!expected) {
-    console.error(`Unknown character: ${characterId}`);
-    process.exit(2);
-  }
+/**
+ * @param {{ baseUrl: string, characterId: string }} opts
+ */
+export async function runCompanionCharacterModelSmoke(opts) {
+  const characterId = opts.characterId || "nova";
+  const expected = expectedForCharacter(characterId);
 
-  const url = new URL(baseUrl);
+  const url = new URL(opts.baseUrl);
   url.searchParams.set("character", characterId);
   url.searchParams.set("automic", "0");
 
@@ -53,36 +53,41 @@ async function main() {
     }
   });
 
-  await page.goto(url.toString(), { waitUntil: "domcontentloaded", timeout: 120000 });
-  await beginStartPickerSession(page, {
-    characterId,
-    cardTimeout: 20000,
-    dismissTimeout: 60000,
-  });
+  /** @type {Record<string, unknown>} */
+  let report = {};
+  try {
+    await page.goto(url.toString(), { waitUntil: "domcontentloaded", timeout: 120000 });
+    await beginStartPickerSession(page, {
+      characterId: expected.canonicalId,
+      cardTimeout: 20000,
+      dismissTimeout: 60000,
+    });
 
-  await page.waitForFunction(
-    () => {
-      const kind = window.__amojiAvatarKind;
-      return kind && kind !== "loading" && kind !== "webgl3d" && kind !== "canvas2d";
-    },
-    undefined,
-    { timeout: 60000 },
-  );
+    await page.waitForFunction(
+      () => {
+        const kind = window.__amojiAvatarKind;
+        return kind && kind !== "loading" && kind !== "webgl3d" && kind !== "canvas2d";
+      },
+      undefined,
+      { timeout: 60000 },
+    );
 
-  const report = await page.evaluate(() => ({
-    build: window.__amojiBuild,
-    avatarKind: window.__amojiAvatarKind,
-    characterId: window.localStorage?.getItem("amoji.companion.characterId"),
-    loadedModelUrl: window.__amojiLoadedModelUrl || null,
-    loadedCharacterId: window.__amojiLoadedCharacterId || null,
-  }));
-
-  await browser.close();
+    report = await page.evaluate(() => ({
+      build: window.__amojiBuild,
+      avatarKind: window.__amojiAvatarKind,
+      characterId: window.localStorage?.getItem("amoji.companion.characterId"),
+      loadedModelUrl: window.__amojiLoadedModelUrl || null,
+      loadedCharacterId: window.__amojiLoadedCharacterId || null,
+    }));
+  } finally {
+    await browser.close().catch(() => {});
+  }
 
   const hitExpected = loadedModels.some((u) => u.includes(expected.model));
   const urlMatches = String(report.loadedModelUrl || "").includes(expected.model);
   const idMatches =
-    report.characterId === characterId && report.loadedCharacterId === characterId;
+    report.characterId === expected.canonicalId &&
+    report.loadedCharacterId === expected.canonicalId;
 
   const ok =
     report.avatarKind === expected.kind &&
@@ -90,25 +95,32 @@ async function main() {
     urlMatches &&
     (hitExpected || urlMatches);
 
-  console.log(
-    JSON.stringify(
-      {
-        ok,
-        characterId,
-        expected,
-        report,
-        loadedModels: [...new Set(loadedModels)],
-        hitExpected,
-        hitDefaultGirl: loadedModels.some((u) => u.includes("companion-girl.vrm")),
-      },
-      null,
-      2,
-    ),
-  );
-  process.exit(ok ? 0 : 1);
+  return {
+    ok,
+    characterId,
+    expected,
+    report,
+    loadedModels: [...new Set(loadedModels)],
+    hitExpected,
+    hitDefaultGirl: loadedModels.some((u) => u.includes("companion-girl.vrm")),
+  };
 }
 
-main().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+async function main() {
+  const baseUrl = parseArg(
+    "--url",
+    "http://127.0.0.1:5174/prototypes/amoji-companion.html?lang=yue",
+  );
+  const characterId = parseArg("--character", "nova");
+  const result = await runCompanionCharacterModelSmoke({ baseUrl, characterId });
+  console.log(JSON.stringify(result, null, 2));
+  process.exit(result.ok ? 0 : 1);
+}
+
+const isCli = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
+if (isCli) {
+  main().catch((err) => {
+    console.error(err);
+    process.exit(1);
+  });
+}
