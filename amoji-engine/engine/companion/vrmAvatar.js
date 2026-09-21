@@ -1679,20 +1679,16 @@ export async function createVrmAvatar(opts) {
   raf = requestAnimationFrame(frame);
   globalThis.addEventListener?.("resize", resize);
 
-  const reactToTap = () => {
+  const reactToTap = (opts = {}) => {
     setEmotion("happy");
     setTalkStyle("celebrate");
-    if (hostedVrmaSkipsVrmBody("laugh")) {
-      playGesture("celebrate");
-    } else if (resolveOnlineMotionClipUrl("laugh")) {
-      void tryPlayVrmaAction("laugh", { loop: false });
-    } else if (resolveOnlineMotionClipUrl("clap")) {
-      void tryPlayVrmaAction("clap", { loop: false });
-    } else if (resolveOnlineMotionClipUrl("nod")) {
-      void tryPlayVrmaAction("nod", { loop: false });
-    } else {
-      playGesture("celebrate");
-    }
+    clearHostedBodyMotion();
+    const anchorX = faceAnchor?.x ?? model.position.x;
+    bodyMotion.reactToPoke?.({
+      point: opts.point,
+      multiClick: opts.multiClick,
+      anchorX,
+    });
     return emotion;
   };
 
@@ -1731,7 +1727,7 @@ export async function createVrmAvatar(opts) {
       return computeAvatarScreenBand(model, camera, r);
     },
     onPoke: ({ point, multiClick }) => {
-      reactToTap();
+      reactToTap({ point, multiClick: Boolean(multiClick) });
       opts.onCharacterTap?.({ point, multiClick: Boolean(multiClick) });
     },
   });

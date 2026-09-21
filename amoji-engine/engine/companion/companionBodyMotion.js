@@ -60,8 +60,13 @@ import {
   footPlantRootDelta,
   lockedIdleHipTilt,
 } from "./companionFootLock.js";
+import {
+  POKE_SHAKE_DURATION_SEC,
+  pokeSideBiasFromPoint,
+  samplePokeShakePose,
+} from "./companionPokeBody.js";
 
-export const COMPANION_BODY_SCHEMA = "amoji.companionBody.v5-arm-plant-snap";
+export const COMPANION_BODY_SCHEMA = "amoji.companionBody.v6-poke-upper-shake";
 
 /**
  * @param {import('@pixiv/three-vrm').VRMHumanoid | null | undefined} humanoid
@@ -84,6 +89,9 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
   let activeGesture = null;
   let gesturePhase = 0;
   let gestureDuration = 1;
+  let pokeShakeElapsed = -1;
+  /** @type {{ strength: number, sideBias: number }} */
+  let pokeShakeOpts = { strength: 1, sideBias: 0 };
   let talking = false;
   let talkEnergy = 0;
   let talkStyle = "explain";
@@ -145,6 +153,23 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
       listening = false;
     }
     return thinking;
+  };
+
+  const reactToPoke = (opts = {}) => {
+    if (
+      activeAction === "laugh" ||
+      activeAction === "celebrate" ||
+      activeAction === "jump" ||
+      activeAction === "cheer"
+    ) {
+      stopAction();
+    }
+    pokeShakeElapsed = 0;
+    pokeShakeOpts = {
+      strength: opts.multiClick ? 1.28 : 1,
+      sideBias: pokeSideBiasFromPoint(opts.point, opts.anchorX ?? 0),
+    };
+    return true;
   };
 
   const playGesture = (style) => {
@@ -888,6 +913,8 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
 
     let pose = buildBasePose({ listening, emotion, nuance });
     const energy = talking ? Math.max(0.2, talkEnergy) : 0;
+    const pokeActive =
+      pokeShakeElapsed >= 0 && pokeShakeElapsed < POKE_SHAKE_DURATION_SEC;
 
     if (activeAction) {
       actionElapsed += dt;
@@ -919,6 +946,16 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
       rootMotion = { y: 0, rotY: 0 };
     } else {
       rootMotion = { y: 0, rotY: 0 };
+    }
+
+    if (pokeActive) {
+      pokeShakeElapsed += dt;
+      const overlay = samplePokeShakePose(pokeShakeElapsed, pokeShakeOpts);
+      pose = mergePoses(pose, overlay, 1);
+      rootMotion = { y: 0, rotY: 0 };
+      if (pokeShakeElapsed >= POKE_SHAKE_DURATION_SEC) {
+        pokeShakeElapsed = -1;
+      }
     }
 
     let idleBeatArms = false;
@@ -1050,12 +1087,19 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
         allowArms = true;
       }
     }
+    if (pokeActive) {
+      allowArms = true;
+      actionArms = false;
+      eatArms = false;
+      idleArms = false;
+      talkArmBlend = 0;
+    }
 
     const dampRate = poseDampingRate(Boolean(activeAction), talking);
     const plantedIdle =
       !activeAction && !talking && !activeGesture;
-    smoothedPose = dampPose(smoothedPose, pose, dt, dampRate, {
-      snapLimbs: plantedIdle,
+    smoothedPose = dampPose(smoothedPose, pose, dt, pokeActive ? 18 : dampRate, {
+      snapLimbs: plantedIdle && !pokeActive,
     });
     smoothedRootMotion = dampRootMotion(
       smoothedRootMotion,
@@ -1068,8 +1112,9 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
         smoothedRootMotion.rotY = 0;
       }
     }
-    const plantFeet = !activeAction;
-    const strictLegRest = plantFeet && !activeAction && !talking && !activeGesture;
+    const plantFeet = !activeAction || pokeActive;
+    const strictLegRest =
+      (plantFeet && !activeAction && !talking && !activeGesture) || pokeActive;
     if (strictLegRest) {
       for (const key of [
         "upperLegL",
@@ -1103,9 +1148,16 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
       if (Math.abs(footPlantY) < 0.001) footPlantY = 0;
       smoothedRootMotion = {
         ...smoothedRootMotion,
-        y: !talking && !activeAction ? 0 : footPlantY,
+        y:
+          pokeActive || (!talking && !activeAction)
+            ? 0
+            : footPlantY,
       };
     } else {
+      footPlantY = 0;
+    }
+    if (pokeActive) {
+      smoothedRootMotion = { y: 0, rotY: 0 };
       footPlantY = 0;
     }
     return smoothedPose;
@@ -1153,6 +1205,7 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
     setThinking,
     setListening,
     playGesture,
+    reactToPoke,
     playAction,
     playActionSequence,
     stopAction,
@@ -1204,6 +1257,11 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
     },
     get sequenceLoop() {
       return sequenceLoop;
+    },
+    get pokeShakeActive() {
+      return (
+        pokeShakeElapsed >= 0 && pokeShakeElapsed < POKE_SHAKE_DURATION_SEC
+      );
     },
     getRootMotion() {
       return smoothedRootMotion;
