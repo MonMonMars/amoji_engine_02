@@ -128,7 +128,21 @@ export async function beginStartPickerSession(page, opts = {}) {
   await page.waitForFunction(
     () => {
       const picker = document.getElementById("start-character-picker");
-      return !picker || picker.classList.contains("hide");
+      const pickerHidden =
+        !picker ||
+        picker.hidden ||
+        picker.classList.contains("hide") ||
+        picker.getAttribute("aria-hidden") === "true";
+      const bodyClear = !document.body.classList.contains("companion-picker-open");
+      const comp = document.querySelector(".composer-wrap");
+      const cs = comp ? getComputedStyle(comp) : null;
+      const composerUsable =
+        comp &&
+        cs &&
+        cs.visibility !== "hidden" &&
+        Number(cs.opacity) > 0.05 &&
+        cs.pointerEvents !== "none";
+      return pickerHidden && bodyClear && composerUsable;
     },
     undefined,
     { timeout: dismissTimeout },

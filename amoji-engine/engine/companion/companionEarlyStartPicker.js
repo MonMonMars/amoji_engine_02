@@ -26,6 +26,7 @@ import {
   titleScreenLogo,
   titleScreenTagline,
 } from "./companionTitleScreen.js";
+import { dismissStartPickerDom } from "./companionStartPickerGate.mjs";
 
 export const COMPANION_EARLY_START_PICKER_SCHEMA =
   "amoji.companionEarlyStartPicker.v2";
@@ -105,8 +106,8 @@ export async function bootEarlyStartPicker(opts = {}) {
         globalThis.__amojiStart.starting = true;
         globalThis.__amojiStart.pendingCharacterId = nextId || null;
       }
-      picker.hide();
-      globalThis.__amojiDismissStartButton?.();
+      dismissStartPickerDom(picker.element, globalThis.__amojiStart);
+      globalThis.__amojiDismissStartPickerOverlay?.();
       globalThis.__amojiHideLoading?.();
       if (
         globalThis.__amojiStart?.ready &&
