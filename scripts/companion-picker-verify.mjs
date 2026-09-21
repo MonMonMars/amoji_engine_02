@@ -188,17 +188,20 @@ const pickerChrome = await page.evaluate(() => {
     atmosphereUsesPng: /\.png/i.test(bg),
     scrollArrows: arrows,
     stageMaxWidthOk: stageW <= window.innerWidth + 2 && stageW >= 280,
+    bodyStartPickerOpen: document.body.classList.contains(
+      "companion-start-picker-open",
+    ),
     bodyPickerOpen: document.body.classList.contains("companion-picker-open"),
   };
 });
 record(
-  "topbar hidden during start picker",
-  pickerChrome.bodyPickerOpen && pickerChrome.topbarHidden,
+  "topbar visible during start picker (bottom sheet)",
+  pickerChrome.bodyStartPickerOpen && !pickerChrome.topbarHidden,
   JSON.stringify(pickerChrome),
 );
 record(
-  "composer hidden during start picker",
-  pickerChrome.bodyPickerOpen && pickerChrome.composerHidden,
+  "composer usable during start picker (bottom sheet)",
+  pickerChrome.bodyStartPickerOpen && !pickerChrome.composerHidden,
   JSON.stringify(pickerChrome),
 );
 record(

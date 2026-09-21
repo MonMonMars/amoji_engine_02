@@ -1,0 +1,59 @@
+/**
+ * Start picker — bottom sheet; 3D stage + chat stay visible (not full-screen blocking).
+ */
+
+.companion-picker.companion-picker--start.is-open:not(.hide) {
+  align-items: flex-end;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 12000;
+}
+
+.companion-picker.companion-picker--start.is-open:not(.hide) .companion-picker-backdrop {
+  pointer-events: none;
+  opacity: 0.35;
+  background: rgba(4, 6, 12, 0.45);
+}
+
+.companion-picker.companion-picker--start.is-open:not(.hide) .companion-picker-sheet {
+  pointer-events: auto;
+  width: min(100%, 36rem);
+  max-width: 100%;
+  height: auto;
+  max-height: min(72vh, 640px);
+  margin: 0;
+  border-radius: 1.35rem 1.35rem 0 0;
+  box-shadow: 0 -12px 48px rgba(0, 0, 0, 0.45);
+}
+
+/* Do not hide main UI while choosing a character at start */
+body.companion-start-picker-open .topbar,
+body.companion-start-picker-open .activity-rail,
+body.companion-start-picker-open .chat-shell,
+body.companion-start-picker-open .orbit-hint,
+body.companion-start-picker-open .composer-wrap,
+body.companion-start-picker-open .pet-hud,
+body.companion-start-picker-open .treat-dock {
+  visibility: visible !important;
+  pointer-events: auto !important;
+  opacity: 1 !important;
+}
+
+body.companion-start-picker-open .composer-wrap {
+  z-index: 13001 !important;
+}
+
+body.companion-start-picker-open .stage {
+  filter: none;
+}
+
+body.companion-start-picker-open.companion-minimal-chrome .topbar {
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: none;
+}
+
+body.companion-start-picker-open.companion-minimal-chrome .topbar .brand-btn,
+body.companion-start-picker-open.companion-minimal-chrome .topbar .topbar-setup-btn {
+  pointer-events: auto;
+}

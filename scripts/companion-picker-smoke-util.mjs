@@ -133,7 +133,9 @@ export async function beginStartPickerSession(page, opts = {}) {
         picker.hidden ||
         picker.classList.contains("hide") ||
         picker.getAttribute("aria-hidden") === "true";
-      const bodyClear = !document.body.classList.contains("companion-picker-open");
+      const bodyClear =
+        !document.body.classList.contains("companion-picker-open") &&
+        !document.body.classList.contains("companion-start-picker-open");
       const comp = document.querySelector(".composer-wrap");
       const cs = comp ? getComputedStyle(comp) : null;
       const composerUsable =

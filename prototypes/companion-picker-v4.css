@@ -21,17 +21,26 @@
 }
 
 .companion-picker--v4.companion-picker--start {
-  align-items: stretch;
-  justify-content: stretch;
+  align-items: flex-end;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.companion-picker--v4.companion-picker--start.is-open:not(.hide) {
+  pointer-events: none;
+}
+
+.companion-picker--v4.companion-picker--start.is-open:not(.hide) .companion-picker-sheet {
+  pointer-events: auto;
 }
 
 .companion-picker--v4.companion-picker--start .companion-picker-sheet {
-  width: 100%;
-  max-width: none;
-  max-height: 100dvh;
-  height: 100dvh;
-  border-radius: 0;
-  border: none;
+  width: min(100%, 36rem);
+  max-width: 100%;
+  max-height: min(72vh, 640px);
+  height: auto;
+  border-radius: 1.35rem 1.35rem 0 0;
+  border: 1px solid rgba(247, 241, 232, 0.12);
   background: linear-gradient(
     180deg,
     rgba(14, 10, 28, 0.98),
@@ -893,9 +902,10 @@
 
 .companion-picker--v4.companion-picker--start .companion-picker-backdrop {
   background:
-    radial-gradient(ellipse 90% 70% at 50% 0%, rgba(139, 124, 248, 0.18), transparent 58%),
-    rgba(2, 2, 8, 0.72);
+    radial-gradient(ellipse 90% 70% at 50% 0%, rgba(139, 124, 248, 0.12), transparent 58%),
+    rgba(2, 2, 8, 0.42);
   opacity: 1;
+  pointer-events: none;
 }
 
 .companion-picker--v4.companion-picker--start.companion-picker--simple .companion-picker-sheet {

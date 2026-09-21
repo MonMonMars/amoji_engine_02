@@ -26,7 +26,10 @@ import {
   titleScreenLogo,
   titleScreenTagline,
 } from "./companionTitleScreen.js";
-import { dismissStartPickerDom } from "./companionStartPickerGate.mjs";
+import {
+  dismissStartPickerDom,
+  shouldShowStartPickerOnBoot,
+} from "./companionStartPickerGate.mjs";
 
 export const COMPANION_EARLY_START_PICKER_SCHEMA =
   "amoji.companionEarlyStartPicker.v2";
@@ -38,8 +41,12 @@ export async function bootEarlyStartPicker(opts = {}) {
   const params =
     opts.params ||
     new URLSearchParams(globalThis.location?.search || "");
-  const show =
-    params.get("autostart") !== "1" && params.get("pick") !== "0";
+  const show = shouldShowStartPickerOnBoot({
+    autostart: params.get("autostart"),
+    pick: params.get("pick"),
+    start: globalThis.__amojiStart,
+    sessionStartedLocal: false,
+  });
   if (!show) return null;
 
   const isEnglish = params.get("lang") === "en";

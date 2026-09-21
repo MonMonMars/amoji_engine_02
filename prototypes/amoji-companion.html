@@ -8,9 +8,9 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji · Companion</title>
     <script>
-      window.__amojiBuild = "2026-09-21-v463-picker-no-reopen";
+      window.__amojiBuild = "2026-09-21-v464-start-picker-sheet";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-21-v463-picker-no-reopen"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-21-v464-start-picker-sheet"></script>
     <link
       rel="prefetch"
       href="/prototypes/assets/companion-char-nova.png"
@@ -65,16 +65,20 @@
       .brand span {
         color: #7fd4cf;
       }
-      /* When start picker is open, companion-app-width.css hides chrome — do not re-show here. */
-      body.companion-start-pending:not(.companion-picker-open) .chat-shell,
-      body.companion-start-pending:not(.companion-picker-open) .topbar,
-      body.companion-start-pending:not(.companion-picker-open) .orbit-hint {
+      /* Start picker is a bottom sheet — keep stage + chat usable while picking. */
+      body.companion-start-pending .chat-shell,
+      body.companion-start-pending .topbar,
+      body.companion-start-pending .orbit-hint {
         opacity: 1;
         pointer-events: auto;
+        visibility: visible;
       }
 
-      body.companion-start-pending:not(.companion-picker-open) .composer-wrap {
+      body.companion-start-pending .composer-wrap {
         z-index: 13001;
+        visibility: visible;
+        pointer-events: auto;
+        opacity: 1;
       }
 
       body.companion-start-pending .treat-dock,
@@ -311,10 +315,14 @@
         position: fixed;
         inset: 0;
         z-index: 12000;
-        pointer-events: auto;
-        align-items: stretch;
-        justify-content: stretch;
+        pointer-events: none;
+        align-items: flex-end;
+        justify-content: center;
         transition: opacity 0.45s ease;
+      }
+
+      .companion-picker--start.is-open:not(.hide) .companion-picker-sheet {
+        pointer-events: auto;
       }
 
       .companion-picker--start.hide {
@@ -339,21 +347,19 @@
 
       .companion-picker--start .companion-picker-sheet {
         transform: translateY(0);
-        width: 100%;
-        max-width: none;
+        width: min(100%, 36rem);
+        max-width: 100%;
         margin: 0;
-        border-radius: 0;
-        border-left: none;
-        border-right: none;
-        max-height: 100dvh;
-        height: 100dvh;
+        border-radius: 1.35rem 1.35rem 0 0;
+        max-height: min(72vh, 640px);
+        height: auto;
         min-height: 0;
         overflow: hidden;
       }
 
       .companion-picker--start.companion-picker--showcase .companion-picker-sheet {
-        max-height: 100dvh;
-        height: 100dvh;
+        max-height: min(72vh, 640px);
+        height: auto;
       }
 
       .companion-picker--start.companion-picker--showcase .start-picker-grid-wrap.has-overflow::before {
@@ -692,23 +698,27 @@
       media="print"
       onload="this.media='all'"
     />
-    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-21-v463-picker-no-reopen" />
-    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-21-v463-picker-no-reopen" />
-    <link rel="stylesheet" href="/prototypes/companion-mic-button.css?v=2026-09-21-v463-picker-no-reopen" />
-    <link rel="stylesheet" href="/prototypes/companion-title-screen.css?v=2026-09-21-v463-picker-no-reopen" />
-    <link rel="stylesheet" href="/prototypes/companion-minimal-ui.css?v=2026-09-21-v463-picker-no-reopen" />
-    <link rel="stylesheet" href="/prototypes/companion-settings-ui.css?v=2026-09-21-v463-picker-no-reopen" />
-    <link rel="stylesheet" href="/prototypes/companion-mobile-shell.css?v=2026-09-21-v463-picker-no-reopen" />
-    <link rel="stylesheet" href="/prototypes/companion-picker-v4.css?v=2026-09-21-v463-picker-no-reopen" />
-    <link rel="stylesheet" href="/prototypes/companion-picker-stacked-layout.css?v=2026-09-21-v463-picker-no-reopen" />
-    <link rel="stylesheet" href="/prototypes/companion-picker-aaa-theme.css?v=2026-09-21-v463-picker-no-reopen" />
-    <link rel="stylesheet" href="/prototypes/companion-jp-aaa-shell.css?v=2026-09-21-v463-picker-no-reopen" />
-    <link rel="stylesheet" href="/prototypes/companion-responsive-layout.css?v=2026-09-21-v463-picker-no-reopen" />
-    <link rel="stylesheet" href="/prototypes/companion-app-width.css?v=2026-09-21-v463-picker-no-reopen" />
-    <link rel="stylesheet" href="/prototypes/companion-scroll-affordances.css?v=2026-09-21-v463-picker-no-reopen" />
+    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-21-v464-start-picker-sheet" />
+    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-21-v464-start-picker-sheet" />
+    <link rel="stylesheet" href="/prototypes/companion-mic-button.css?v=2026-09-21-v464-start-picker-sheet" />
+    <link rel="stylesheet" href="/prototypes/companion-title-screen.css?v=2026-09-21-v464-start-picker-sheet" />
+    <link rel="stylesheet" href="/prototypes/companion-minimal-ui.css?v=2026-09-21-v464-start-picker-sheet" />
+    <link rel="stylesheet" href="/prototypes/companion-settings-ui.css?v=2026-09-21-v464-start-picker-sheet" />
+    <link rel="stylesheet" href="/prototypes/companion-mobile-shell.css?v=2026-09-21-v464-start-picker-sheet" />
+    <link rel="stylesheet" href="/prototypes/companion-picker-v4.css?v=2026-09-21-v464-start-picker-sheet" />
+    <link rel="stylesheet" href="/prototypes/companion-picker-stacked-layout.css?v=2026-09-21-v464-start-picker-sheet" />
+    <link rel="stylesheet" href="/prototypes/companion-picker-aaa-theme.css?v=2026-09-21-v464-start-picker-sheet" />
+    <link rel="stylesheet" href="/prototypes/companion-jp-aaa-shell.css?v=2026-09-21-v464-start-picker-sheet" />
+    <link rel="stylesheet" href="/prototypes/companion-responsive-layout.css?v=2026-09-21-v464-start-picker-sheet" />
+    <link rel="stylesheet" href="/prototypes/companion-app-width.css?v=2026-09-21-v464-start-picker-sheet" />
+    <link rel="stylesheet" href="/prototypes/companion-scroll-affordances.css?v=2026-09-21-v464-start-picker-sheet" />
     <link
       rel="stylesheet"
-      href="/prototypes/companion-scene-backgrounds.css?v=2026-09-21-v463-picker-no-reopen"
+      href="/prototypes/companion-scene-backgrounds.css?v=2026-09-21-v464-start-picker-sheet"
+    />
+    <link
+      rel="stylesheet"
+      href="/prototypes/companion-start-picker-sheet.css?v=2026-09-21-v464-start-picker-sheet"
     />
     <script>
       (function () {
@@ -735,7 +745,7 @@
       })();
     </script>
     <script type="module">
-      import { bootEarlyStartPicker } from "/amoji-engine/engine/companion/companionEarlyStartPicker.js?v=2026-09-21-v463-picker-no-reopen";
+      import { bootEarlyStartPicker } from "/amoji-engine/engine/companion/companionEarlyStartPicker.js?v=2026-09-21-v464-start-picker-sheet";
       const bootParams = new URLSearchParams(location.search);
       if (bootParams.get("autostart") !== "1" && bootParams.get("pick") !== "0") {
         globalThis.__amojiEarlyStartPickerPromise = bootEarlyStartPicker({
@@ -4006,16 +4016,11 @@
         pointer-events: none;
       }
 
-      .companion-picker.companion-picker--start {
-        align-items: stretch;
-        justify-content: stretch;
-      }
-
       .companion-picker[hidden] {
         display: none !important;
       }
 
-      .companion-picker.is-open {
+      .companion-picker.companion-picker--session.is-open {
         pointer-events: auto;
       }
 
@@ -4623,19 +4628,19 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-21-v463-picker-no-reopen",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-21-v464-start-picker-sheet",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-21-v463-picker-no-reopen",
-          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-21-v463-picker-no-reopen"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-21-v464-start-picker-sheet",
+          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-21-v464-start-picker-sheet"
         }
       }
     </script>
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-21-v463-picker-no-reopen"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-21-v464-start-picker-sheet"
     />
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-21-v463-picker-no-reopen"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-21-v463-picker-no-reopen"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-21-v464-start-picker-sheet"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-21-v464-start-picker-sheet"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;
@@ -4666,6 +4671,7 @@
           }
           document.body.classList.remove(
             "companion-start-pending",
+            "companion-start-picker-open",
             "companion-picker-open",
             "ui-page-open",
             "ui-page-leaving",
@@ -5291,6 +5297,7 @@
     </div>
 
     <script type="module">
+      import { shouldShowStartPickerOnBoot } from "/amoji-engine/engine/companion/companionStartPickerGate.mjs";
       (async () => {
       try {
       const ami = globalThis.__amojiImport || ((path) => import(path));
@@ -8312,10 +8319,27 @@
         params.get("autostart") !== "1" && params.get("pick") !== "0";
       const shouldOpenStartPickerNow = () =>
         showStartPicker &&
-        !window.__amojiStart?.pickerDismissed &&
-        !window.__amojiStart?.tapped &&
-        !sessionStarted &&
-        !window.__amojiStart?.sessionStarted;
+        shouldShowStartPickerOnBoot({
+          autostart: params.get("autostart"),
+          pick: params.get("pick"),
+          start: window.__amojiStart,
+          sessionStartedLocal: sessionStarted,
+        });
+
+      const handleStartPickerBegin = (nextId) => {
+        window.__amojiUnlockAudio?.();
+        if (window.__amojiStart) {
+          window.__amojiStart.tapped = true;
+          window.__amojiStart.starting = true;
+          window.__amojiStart.pendingCharacterId = nextId || null;
+        }
+        dismissLoading();
+        if (window.__amojiStart?.ready) {
+          void beginStartWithCharacter(nextId);
+          return;
+        }
+        window.__amojiStartWithCharacter?.(nextId);
+      };
 
       const { attachStartPickerModelPreload } = startPickerPreloadMod;
       /** @type {ReturnType<typeof attachStartPickerModelPreload> | null} */
@@ -8348,23 +8372,11 @@
           onSelectionChange: () => {
             startPickerPreloadJob?.refreshSelectedModel?.();
           },
-          onStart: (nextId) => {
-            window.__amojiUnlockAudio?.();
-            if (window.__amojiStart) {
-              window.__amojiStart.tapped = true;
-              window.__amojiStart.starting = true;
-              window.__amojiStart.pendingCharacterId = nextId || null;
-            }
-            dismissLoading();
-            if (window.__amojiStart?.ready) {
-              void beginStartWithCharacter(nextId);
-              return;
-            }
-            window.__amojiStartWithCharacter?.(nextId);
-          },
+          onStart: handleStartPickerBegin,
         });
         ensureStartPickerModelPreload();
       } else {
+        startPicker.setOnStart?.(handleStartPickerBegin);
         startPicker.syncFromSession?.({
           selectedId: characterId,
           isEnglish,
@@ -8427,22 +8439,11 @@
             onSelectionChange: () => {
               startPickerPreloadJob?.refreshSelectedModel?.();
             },
-            onStart: (nextId) => {
-              window.__amojiUnlockAudio?.();
-              if (window.__amojiStart) {
-                window.__amojiStart.tapped = true;
-                window.__amojiStart.starting = true;
-                window.__amojiStart.pendingCharacterId = nextId || null;
-              }
-              dismissLoading();
-              if (window.__amojiStart?.ready) {
-                void beginStartWithCharacter(nextId);
-                return;
-              }
-              window.__amojiStartWithCharacter?.(nextId);
-            },
+            onStart: handleStartPickerBegin,
           });
           ensureStartPickerModelPreload();
+        } else {
+          startPicker.setOnStart?.(handleStartPickerBegin);
         }
         startPicker.syncFromSession?.({
           selectedId: characterId,
