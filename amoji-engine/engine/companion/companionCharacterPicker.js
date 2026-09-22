@@ -30,6 +30,7 @@ import {
   wireLoadingBar,
 } from "./companionLoadingUi.js";
 import { closeUiOverlay, openUiOverlay } from "./companionUiEffects.js";
+import { notifyCompanionMenuOverlayOpened } from "./companionMenuSpeechGate.js";
 import {
   applySceneBackground,
   loadStoredSceneBackground,
@@ -1320,6 +1321,7 @@ export function createCompanionStartPicker(opts = {}) {
       shell.removeAttribute("aria-hidden");
       shell.hidden = false;
       document.body.classList.add("companion-start-pending", "companion-start-picker-open");
+      notifyCompanionMenuOverlayOpened();
       scrollSelectedIntoView();
       requestAnimationFrame(renderScrollHint);
     },

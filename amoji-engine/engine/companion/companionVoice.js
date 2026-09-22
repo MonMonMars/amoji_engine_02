@@ -55,6 +55,7 @@ import {
   normalizeTalkSpeed,
   saveTalkSpeed,
 } from "./companionTalkSpeed.js";
+import { shouldBlockCompanionSpeech } from "./companionMenuSpeechGate.js";
 
 export { formatMicError, MIC_ERROR_MESSAGES, requestMicPermission };
 
@@ -68,7 +69,7 @@ export { formatMicError, MIC_ERROR_MESSAGES, requestMicPermission };
  */
 
 export const COMPANION_VOICE_SCHEMA =
-  "amoji.companionVoice.v2-interrupt-all-speech";
+  "amoji.companionVoice.v3-mute-during-menu";
 
 /** Abort slow /api/tts calls so the greeting can fall back to browser voice. */
 export const CLOUD_TTS_FETCH_TIMEOUT_MS = 12000;
@@ -1014,6 +1015,10 @@ export function createCompanionVoice(opts = {}) {
   const speakOnceCore = async (text, performance = "neutral") => {
     const clean = cleanSpeakText(text);
     if (!clean) return { ok: false, reason: "empty" };
+    if (shouldBlockCompanionSpeech()) {
+      stopTtsPlayback();
+      return { ok: false, reason: "menu-open", muted: true };
+    }
 
     const rawPerf =
       typeof performance === "object" && performance !== null
@@ -1315,6 +1320,10 @@ export function createCompanionVoice(opts = {}) {
    * @param {{ pauseCapture?: boolean }} [sessionOpts]
    */
   const beginStreamSpeak = (defaultPerformance = "neutral", sessionOpts = {}) => {
+    if (shouldBlockCompanionSpeech()) {
+      stopTtsPlayback();
+      return null;
+    }
     if (streamSession) {
       streamSession.closed = true;
       streamSession = null;
@@ -1345,6 +1354,10 @@ export function createCompanionVoice(opts = {}) {
   const pushStreamSpeak = (text, performance) => {
     if (!streamSession || streamSession.closed) {
       return Promise.resolve({ ok: false, reason: "no-stream-session" });
+    }
+    if (shouldBlockCompanionSpeech()) {
+      cancelStreamSpeak();
+      return Promise.resolve({ ok: false, reason: "menu-open" });
     }
     const clean = cleanSpeakText(text);
     if (!clean) return Promise.resolve({ ok: false, reason: "empty" });
@@ -1409,6 +1422,9 @@ export function createCompanionVoice(opts = {}) {
 
   /** Soft thinking phrase while LLM loads — parallel to reply queue; cancel with stopSpeak(). */
   const speakThinking = async ({ isEnglish = false, phrase: forcedPhrase } = {}) => {
+    if (shouldBlockCompanionSpeech()) {
+      return { ok: false, reason: "menu-open" };
+    }
     const picked = forcedPhrase
       ? { phrase: forcedPhrase, index: thinkingPhraseIndex }
       : pickNextThinkingPhrase(isEnglish, thinkingPhraseIndex);

@@ -1,6 +1,7 @@
 /**
  * Secretary productivity layer inside the unified 3D companion app.
  */
+import { notifyCompanionMenuOverlayOpened } from "../companionMenuSpeechGate.js";
 import { buildTodayBriefing } from "./briefing.js";
 import { parseSecretaryReply } from "./replyParser.js";
 import {
@@ -360,6 +361,7 @@ export function createCompanionSecretaryBridge(opts = {}) {
     activePanel = panelId;
     renderPanel();
     overlay.hidden = false;
+    notifyCompanionMenuOverlayOpened();
     requestAnimationFrame(() => overlay.classList.add("is-open"));
     doc.body?.classList?.add("secretary-panel-open");
   };
