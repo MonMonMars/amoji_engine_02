@@ -128,6 +128,8 @@ Body class: `companion-jp-aaa-ui` (default on `amoji-companion.html`, reinforced
 |--------|----------------|
 | `npm run verify:pre-delivery` | Unit tests + local demo + picker E2E + reported-issues E2E (49 checks) |
 | `npm run verify:pre-delivery:prod` | Same gate against live Vercel (issues E2E retries once on flake) |
+| `npm run verify:app-complete` | Sync build + unit tests + pre-delivery + FULL_SMOKE + scene shortcuts |
+| `npm run verify:app-complete:prod` | Production build match + pre-delivery:prod + roster models + mobile hub |
 | `npm run verify:production` | Production demo-link only |
 | `npm run verify:picker` | Picker v4 + in-session switch |
 | `npm run verify:scene-shortcuts` | Menu scene/chat/speaker + text chat reply |
@@ -152,7 +154,8 @@ Always pass page-function options as the **third** argument. Use `waitForPageFn(
 ### Cursor Cloud specific instructions
 
 - Recent companion UX (check when regressing): poke = body-only while TTS; planted limbs + idle face life; `?role=secretary&character=nova` deep links; secretary `?tab=today` opens after session start.
-- Before claiming a fix is live: `npm run verify:pre-delivery` locally, then `npm run verify:pre-delivery:prod` after deploy.
+- Before claiming the app is complete: `npm run verify:app-complete` locally, then `npm run verify:app-complete:prod` after deploy.
+- Quick gate only: `npm run verify:pre-delivery` / `verify:pre-delivery:prod`.
 - Production base: `https://temporary-rushing-oxygen-ok5jzhd.vercel.app` — confirm `/api/health` `build` matches `AMOJI_BUILD` in `buildVersion.mjs`.
 - Share user links as `/play?build=<AMOJI_BUILD>&pick=1&automic=0&lang=en&_cb=<timestamp>` (bookmark `/play` for cache-safe entry).
 - VRM assets: `npm run postinstall` or `node amoji-engine/scripts/download-legal-vrm.mjs` if `.vrm` files missing in CI/cloud VM.
