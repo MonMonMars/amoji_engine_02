@@ -126,7 +126,7 @@ Body class: `companion-jp-aaa-ui` (default on `amoji-companion.html`, reinforced
 
 | Script | What it covers |
 |--------|----------------|
-| `npm run verify:pre-delivery` | Unit tests + local demo + picker E2E + reported-issues E2E (52 checks) |
+| `npm run verify:pre-delivery` | Unit tests + local demo + picker E2E + reported-issues E2E (53 checks) |
 | `npm run verify:pre-delivery:prod` | Same gate against live Vercel (issues E2E retries once on flake) |
 | `npm run verify:app-complete` | Sync build + unit tests + pre-delivery + FULL_SMOKE + scene shortcuts |
 | `npm run verify:app-complete:prod` | Production build match + pre-delivery:prod + roster models + mobile hub |
