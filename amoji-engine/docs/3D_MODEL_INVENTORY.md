@@ -12,7 +12,7 @@ External research lives in spreadsheets / Fab; this doc is **what Amoji ships** 
 | **A–E** | Bases, realistic faces, VRM/VRChat, chibi | **Yes** if license allows commercial use |
 | **F–R** | Fantasy, pets, tools, Mixamo, VRoid | Motions/tools yes; characters case-by-case |
 
-## What we ship today (v460 curated roster — 27 characters)
+## What we ship today (v519 — 31 characters)
 
 In the app: **start picker** horizontal strip or **Menu → Switch 3D companion**.  
 Settings **Brain → LLM model** is the **text AI**, not these 3D files.
@@ -26,41 +26,24 @@ Settings **Brain → LLM model** is the **text AI**, not these 3D files.
 | 5 | mei | VRoid AvatarSample B · AAA |
 | 6 | atlas | VRoid Pro male |
 | 7 | sky | VTubeMe CC BY 4.0 |
-| 8 | yuki | 100Avatars CC0 (Olivia) |
-| 9 | hina | 100Avatars CC0 (Lydia) |
-| 10 | mio | 100Avatars CC0 (Kate) |
-| 11 | amoji | Project original |
-| 12 | knight | 100Avatars R3 CC0 |
-| 13 | samurai | 100Avatars R3 CC0 |
-| 14 | tiger | 100Avatars R3 CC0 |
-| 15 | leaf | 100Avatars R3 CC0 |
-| 16 | wolf | 100Avatars R3 CC0 |
-| 17 | fox | 100Avatars R3 CC0 |
-| 18 | jenny | 100Avatars R3 CC0 |
-| 19 | weirdcat | 100Avatars R3 CC0 |
-| 20 | petal | 100Avatars R3 CC0 |
-| 21 | beach | 100Avatars R3 CC0 |
-| 22 | pirate | 100Avatars R3 CC0 |
-| 23 | bunny | 100Avatars R3 CC0 |
-| 24 | sakura | VRoid AvatarSample A · Pro |
+| 8 | yuki | 100Avatars CC0 |
+| 9 | hina | 100Avatars CC0 |
+| 10 | mio | 100Avatars CC0 |
+| 11 | amoji | Pixiv VRM 1.0 sample (project mascot) |
+| 12–23 | orion…cleo | Curated CC0 / Arweave lineup (see `companionRosterReplacementData.mjs`) |
+| 24 | sienna | VRoid AvatarSample A · Pro |
 | 25 | luna | VRoid fem sample · Pro |
-| 26 | celeste | VRoid AvatarSample C · Pro |
-| 27 | yume | Curated VRM (Erika lineage) · Pro |
+| 26–31 | juno…cyrus | Unique CC0 / Arweave Pro picks (no shared AvatarSample C clones) |
 
-**#5–10** are **VTuber + AAA** slots (legal CC0 / VRoid industry references — not Fab fan rips from inventory Q/S).  
-**#24–27** are **VRoid Pro** picks for executive / concierge / creative director vibes.
-
-Legacy saved ids (`sora`, `aria`, `erika`, `rose`, `shiro`, `jennifer`, `poly`, `aesthe`, `chad`, `david`, `hugo`) redirect to current roster entries (often **mei** or Gen3 slots).
+Legacy saved ids (`knight`, `sakura`, `fox`, etc.) redirect to current roster entries — see `companionLegacyRosterIds.js`.
 
 ## Safe upgrade paths from inventory
 
 Prefer these over Q/S fan rips:
 
-- **VTubeMe Free VRM** (E) — same family as Nova/Sky/Rex
+- **VTubeMe Free VRM** (E) — same family as Nova/Sky
 - **100Avatars / CC0** — same family as Yuki/Hina/Mio
 - **VRoid Studio → original avatar** (L) — export VRM with clear Hub terms
-- **MetaHuman** (A) — photoreal tier; needs Unreal → glTF/VRM pipeline
-- **Anime Base Mesh** (A, Fab) — build **original** characters, not IP swaps
 
 Refresh on-disk models:
 
@@ -69,4 +52,5 @@ node amoji-engine/scripts/download-legal-vrm.mjs
 REFRESH_ROSTER_VRM=1 node amoji-engine/scripts/download-legal-vrm.mjs
 ```
 
-Roster source of truth: `amoji-engine/engine/companion/companionCharacterRoster.js`
+Roster source of truth: `amoji-engine/engine/companion/companionCharacterRoster.js`  
+Model cache bust: `AMOJI_MODEL_REVISION` in `companionCharacterMigration.mjs`.

@@ -3,7 +3,7 @@
  * Slots #1–11 and #25 (Luna) stay in companionCharacterRoster / premium data.
  */
 export const REPLACEMENT_ROSTER_SCHEMA =
-  "amoji.companionRosterReplacement.v486-hq-roster-refresh";
+  "amoji.companionRosterReplacement.v519-unique-pro-vrm";
 
 /** @typedef {{
  *   id: string,
@@ -297,8 +297,7 @@ export const REPLACEMENT_ROSTER_SLOTS = [
     badge: { yue: "#26 Pro 推介", en: "#26 Pro Pick" },
     voices: { yue: "zh-HK-HiuMaanNeural-elegant", en: "en-HK-YanNeural" },
     role: "girlfriend",
-    vrmUrl:
-      "https://raw.githubusercontent.com/madjin/vrm-samples/master/vroid/stable/AvatarSample_C.vrm",
+    vrmUrl: "https://arweave.net/gwG7w4bY-A5c3R6A6GOz3xBCgbPvkFQmqPIDtvnNsYI",
     greetingYue: "你好，我係朱諾。今日想傾 business 定放鬆？",
     greetingEn: "Hi, I'm Juno. Business talk or unwind today?",
     personalityYue: "你係朱諾（Juno），星級接待 vibe。精緻得體，主動問偏好。",
@@ -338,7 +337,7 @@ export const REPLACEMENT_ROSTER_SLOTS = [
     voices: { yue: "zh-HK-HiuMaanNeural-hero", en: "en-US-AriaNeural" },
     role: "secretary",
     vrmUrl:
-      "https://raw.githubusercontent.com/madjin/vrm-samples/master/vroid/stable/AvatarSample_A.vrm",
+      "https://gateway.pinata.cloud/ipfs/QmSpb8jZRtwDhpp7zjpfvU47GZyapmh8GvQApmzTxFcaLz/Avatar10_Neutral.vrm",
     greetingYue: "你好，我係花。有咩 decision 想一齊拆解？",
     greetingEn: "Hi, I'm Hana. Want to unpack a decision together?",
     personalityYue: "你係花（Hana），全球分析 vibe。SWOT、timeline、risk framing。",
@@ -378,8 +377,7 @@ export const REPLACEMENT_ROSTER_SLOTS = [
     badge: { yue: "#30 Pro 推介", en: "#30 Pro Pick" },
     voices: { yue: "zh-HK-HiuGaaiNeural-pyre", en: "en-HK-YanNeural" },
     role: "girlfriend",
-    vrmUrl:
-      "https://raw.githubusercontent.com/madjin/vrm-samples/master/vroid/stable/AvatarSample_C.vrm",
+    vrmUrl: "https://arweave.net/-eJyDjujQRvakRImdvulg-1dKQkPwMeQv-55IbKqLh4",
     greetingYue: "哈囉～我係普莉雅。今日想傾 client 定放鬆？",
     greetingEn: "Hey~ Priya here. Client work or unwind?",
     personalityYue: "你係普莉雅（Priya），客戶成功 vibe。貼心 follow-up。",
@@ -398,8 +396,7 @@ export const REPLACEMENT_ROSTER_SLOTS = [
     badge: { yue: "#31 Pro 推介", en: "#31 Pro Pick" },
     voices: { yue: "zh-HK-HiuGaaiNeural-sporty", en: "en-US-GuyNeural" },
     role: "girlfriend",
-    vrmUrl:
-      "https://raw.githubusercontent.com/madjin/vrm-samples/master/vroid/stable/AvatarSample_C.vrm",
+    vrmUrl: "https://arweave.net/RymRtrmhHx_f9ZDvtvIQb1noTHvILdjoTg5G7L2DR-8",
     greetingYue: "我係賽勒斯～有咩 brand story 想打磨？",
     greetingEn: "I'm Cyrus~ Got a brand story to sharpen?",
     personalityYue: "你係賽勒斯（Cyrus），品牌總監 vibe。tagline 同 pitch 節奏。",
