@@ -1410,7 +1410,13 @@ export async function createVrmAvatar(opts) {
         ? bodyMotion.nuance
         : "none";
     const baseBlend = buildVrmExpressionBlend(emotion, nuance);
-    if (!talking && !eating && !activeMotion) {
+    const idleFaceEligible =
+      !talking &&
+      !eating &&
+      !bodyMotion.currentAction &&
+      !bodyMotion.activeGesture &&
+      (!activeMotion || CALM_IDLE_USES_PROCEDURAL_BODY);
+    if (idleFaceEligible) {
       const idleEmotion = bodyMotion.thinking ? "neutral" : emotion;
       setExpressionTargetFromBlend(
         blendIdleExpressionLayer(

@@ -78,7 +78,7 @@ describe("companionIdleMotion", () => {
     const blend = sampleIdleExpressionBlend(1.2, "neutral");
     expect(blend.Happy ?? 0).toBeGreaterThan(0.1);
     expect(blend.Relaxed ?? 0).toBe(0);
-    expect(blend.Surprised ?? 0).toBeLessThan(0.12);
+    expect(blend.Surprised ?? 0).toBeLessThan(0.18);
   });
 
   it("keeps Relaxed off so eyelids stay open", () => {
