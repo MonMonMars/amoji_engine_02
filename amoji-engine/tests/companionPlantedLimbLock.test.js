@@ -9,19 +9,76 @@ import {
 } from "../engine/companion/companionPoseLibrary.js";
 
 describe("companionPlantedLimbLock", () => {
-  it("writes normalized and raw bone nodes", () => {
-    const norm = { name: "leftUpperLeg", rotation: { x: 0, y: 0, z: 0, set(x, y, z) {
-      this.x = x; this.y = y; this.z = z;
-    } } };
-    const raw = { name: "leftUpperLeg", rotation: { x: 9, y: 0, z: 0, set(x, y, z) {
-      this.x = x; this.y = y; this.z = z;
-    } } };
+  it("does not dual-write raw leg bones (skirt skinning)", () => {
+    const norm = {
+      name: "leftUpperLeg",
+      rotation: {
+        x: 0,
+        y: 0,
+        z: 0,
+        set(x, y, z) {
+          this.x = x;
+          this.y = y;
+          this.z = z;
+        },
+      },
+    };
+    const raw = {
+      name: "leftUpperLeg",
+      rotation: {
+        x: 9,
+        y: 0,
+        z: 0,
+        set(x, y, z) {
+          this.x = x;
+          this.y = y;
+          this.z = z;
+        },
+      },
+    };
     const humanoid = {
       getNormalizedBoneNode: (n) => (n === "leftUpperLeg" ? norm : null),
       getRawBoneNode: (n) => (n === "leftUpperLeg" ? raw : null),
       update: () => {},
     };
     writeHumanoidBoneRotation(humanoid, "leftUpperLeg", { x: 0.2, y: 0, z: 0 });
+    expect(norm.rotation.x).toBe(0.2);
+    expect(raw.rotation.x).toBe(9);
+  });
+
+  it("writes normalized and raw bone nodes for arms", () => {
+    const norm = {
+      name: "leftUpperArm",
+      rotation: {
+        x: 0,
+        y: 0,
+        z: 0,
+        set(x, y, z) {
+          this.x = x;
+          this.y = y;
+          this.z = z;
+        },
+      },
+    };
+    const raw = {
+      name: "leftUpperArm",
+      rotation: {
+        x: 9,
+        y: 0,
+        z: 0,
+        set(x, y, z) {
+          this.x = x;
+          this.y = y;
+          this.z = z;
+        },
+      },
+    };
+    const humanoid = {
+      getNormalizedBoneNode: (n) => (n === "leftUpperArm" ? norm : null),
+      getRawBoneNode: (n) => (n === "leftUpperArm" ? raw : null),
+      update: () => {},
+    };
+    writeHumanoidBoneRotation(humanoid, "leftUpperArm", { x: 0.2, y: 0, z: 0 });
     expect(norm.rotation.x).toBe(0.2);
     expect(raw.rotation.x).toBe(0.2);
   });

@@ -467,15 +467,12 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
     "rightLowerLeg",
   ]);
 
-  /** Keep raw + normalized arm/leg nodes in sync (prevents one-frame “blended” mesh). */
+  /** Dual-write arms/shoulders only — legs/feet stay normalized (skirt skinning). */
   const DUAL_WRITE_LIMB_BONES = new Set([
-    ...LOWER_LIMB_BONES,
+    "leftLowerArm",
+    "rightLowerArm",
     "leftUpperArm",
     "rightUpperArm",
-    "leftUpperLeg",
-    "rightUpperLeg",
-    "leftFoot",
-    "rightFoot",
     "leftShoulder",
     "rightShoulder",
   ]);
