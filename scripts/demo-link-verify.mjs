@@ -28,6 +28,7 @@ import {
 } from "../amoji-engine/engine/companion/deployUrls.mjs";
 import { rewriteCompanionServePath, buildPlayRedirectLocation } from "../amoji-engine/engine/companion/companionFreshBoot.js";
 import { beginStartPickerSession } from "./companion-picker-smoke-util.mjs";
+import { START_PICKER_COMPLETED_STORAGE_KEY } from "../amoji-engine/engine/companion/companionStartPickerGate.mjs";
 
 const outDir = process.env.ARTIFACT_DIR || "/opt/cursor/artifacts";
 mkdirSync(outDir, { recursive: true });
@@ -325,6 +326,73 @@ async function verifyBootPaint(page, label) {
   });
 }
 
+async function verifyReturnVisitAutoStart(page, label, entryUrl) {
+  await gotoCompanionEntry(page, entryUrl);
+  await page.evaluate((storageKey) => {
+    try {
+      localStorage.setItem(storageKey, "1");
+    } catch {
+      /* private mode */
+    }
+  }, START_PICKER_COMPLETED_STORAGE_KEY);
+  await page.reload({ waitUntil: "domcontentloaded", timeout: 90000 });
+  await waitForPageFn(page, () => window.__amojiModuleBooted === true, {
+    timeout: 120000,
+  }).catch(() => null);
+  await waitForPageFn(
+    page,
+    () => window.__amojiStart?.sessionStarted === true,
+    { timeout: 45000 },
+  ).catch(() => null);
+
+  const state = await page.evaluate(() => {
+    const picker = document.getElementById("start-character-picker");
+    const pickerOpen =
+      typeof window.__amojiIsStartPickerVisible === "function"
+        ? window.__amojiIsStartPickerVisible()
+        : Boolean(
+            picker &&
+              picker.classList.contains("is-open") &&
+              !picker.classList.contains("hide") &&
+              picker.getAttribute("aria-hidden") !== "true" &&
+              !picker.hidden,
+          );
+    return {
+      sessionStarted: window.__amojiStart?.sessionStarted === true,
+      pickerOpen,
+      splash: Boolean(document.getElementById("amoji-boot-splash")),
+      hasComposer: Boolean(document.getElementById("composer")),
+      hasTranscript: Boolean(document.getElementById("transcript")),
+      hasTopbar: Boolean(document.querySelector(".topbar")),
+    };
+  });
+
+  record(
+    `${label} return visit auto-start session`,
+    state.sessionStarted,
+    state.sessionStarted ? "sessionStarted" : "still waiting",
+  );
+  record(
+    `${label} return visit skips start picker`,
+    !state.pickerOpen,
+    state.pickerOpen ? "picker still open" : "picker hidden",
+  );
+  record(
+    `${label} return visit main chrome visible`,
+    state.hasComposer && state.hasTranscript && state.hasTopbar,
+    [
+      state.hasComposer ? "composer" : "no-composer",
+      state.hasTranscript ? "transcript" : "no-transcript",
+      state.hasTopbar ? "topbar" : "no-topbar",
+    ].join(", "),
+  );
+
+  await page.screenshot({
+    path: join(outDir, `demo-verify-return-visit-${label}.png`),
+    fullPage: true,
+  });
+}
+
 async function verifyFullCompanion(page, label) {
   await gotoCompanionEntry(page, fullUrl);
 
@@ -531,6 +599,15 @@ try {
   trackPageErrors(fullPage, "full");
   await verifyFullCompanion(fullPage, useLocal ? "local" : "prod");
   await fullPage.close();
+
+  const returnPage = await browser.newPage({ viewport });
+  trackPageErrors(returnPage, "return-visit");
+  await verifyReturnVisitAutoStart(
+    returnPage,
+    useLocal ? "local" : "prod",
+    fullUrl,
+  );
+  await returnPage.close();
 } finally {
   await browser.close();
   localSrv?.close();
