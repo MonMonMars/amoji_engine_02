@@ -48,6 +48,7 @@ import {
 import { actionLoops } from "./companionActionMotion.js";
 import { BOOT_FULL_LIBRARY_WARM_CLIP_IDS } from "./companionIdleMotionPreload.js";
 import { detectVrmIdleRestRotations } from "./companionArmRestCalibration.js";
+import { establishCalmStandFromBind } from "./companionCalmStandFoundation.js";
 import { createCompanionBodyMotion } from "./companionBodyMotion.js";
 import { auditPlantedLimbDualWrite } from "./companionPlantedLimbLock.js";
 import { characterGender } from "./companionCharacterCatalog.js";
@@ -516,15 +517,20 @@ export async function createVrmAvatar(opts) {
   const restoreProceduralCalmStand = (opts = {}) => {
     clearHostedBodyMotion();
     if (CALM_IDLE_USES_PROCEDURAL_BODY) {
+      establishCalmStandFromBind(vrm, bodyMotion, {
+        resetIdleLife: opts.resetIdleLife !== false,
+        warmFrames: Number(opts.warmFrames) || 16,
+      });
+    } else {
       vrm.humanoid?.resetNormalizedPose?.();
-    }
-    const rest = detectVrmIdleRestRotations(vrm);
-    bodyMotion.setArmRestRotations?.(rest.arms);
-    bodyMotion.setLegRestRotations?.(rest.legs);
-    bodyMotion.setArmBind?.(rest.bind);
-    bodyMotion.snapToRestPose?.();
-    if (opts.resetIdleLife !== false) {
-      bodyMotion.resetIdleLife?.();
+      const rest = detectVrmIdleRestRotations(vrm);
+      bodyMotion.setArmRestRotations?.(rest.arms);
+      bodyMotion.setLegRestRotations?.(rest.legs);
+      bodyMotion.setArmBind?.(rest.bind);
+      bodyMotion.snapToRestPose?.();
+      if (opts.resetIdleLife !== false) {
+        bodyMotion.resetIdleLife?.();
+      }
     }
     syncHumanoidPose();
     syncSpringsAfterPose();
@@ -633,27 +639,16 @@ export async function createVrmAvatar(opts) {
   /** @type {(() => import('./companionCameraApply.js').ReturnType<typeof resolveFrontPortraitFrame>) | null} */
   let applyDefaultPortraitFrame = null;
 
-  const idleRest = detectVrmIdleRestRotations(vrm);
-  bodyMotion.setArmRestRotations?.(idleRest.arms);
-  bodyMotion.setLegRestRotations?.(idleRest.legs);
-  bodyMotion.setArmBind?.(idleRest.bind);
-  bodyMotion.snapToRestPose?.();
-  syncHumanoidPose();
   configureVrmSpringStability(vrm, sceneEnvironment);
-  for (let i = 0; i < 36; i += 1) {
-    tickOutdoorSceneWind(vrm, i / 60);
-    stabilizeVrmSpringBones(vrm);
-    bodyMotion.update(1 / 60);
-    syncHumanoidPose();
-    bodyMotion.reapplyPlantedLimbs?.({ now: performance.now() });
-    vrm.update(1 / 60);
-    bodyMotion.finishPlantedLimbLockPostUpdate?.({ hands: true });
-  }
-  bodyMotion.resetMotionClock?.();
+  establishCalmStandFromBind(vrm, bodyMotion, {
+    resetIdleLife: false,
+    warmFrames: 48,
+  });
   configureVrmSpringStability(vrm, sceneEnvironment);
   recenterVrmSpringBones(vrm, { retune: true, captureInit: true });
   clearHostedBodyMotion();
-  restoreProceduralCalmStand({ resetIdleLife: true });
+  restoreProceduralCalmStand({ resetIdleLife: true, warmFrames: 20 });
+  syncSpringsAfterPose({ captureInit: true });
   const syncPortraitFromControls = () => {
     portraitCamera.position.copy(camera.position);
     portraitCamera.target.copy(controls.target);
@@ -2023,6 +2018,10 @@ export async function createVrmAvatar(opts) {
         bodyMotion.enforcePlantedLimbs?.({ lockForearms: true });
         bodyMotion.reapplyPlantedLimbs?.({ force: true, now: performance.now() });
         bodyMotion.finishPlantedLimbLockPostUpdate?.({ hands: true });
+        establishCalmStandFromBind(vrm, bodyMotion, {
+          resetIdleLife: false,
+          warmFrames: 8,
+        });
         applyDefaultPortraitFrame?.();
         syncLookTarget();
         renderer.render(scene, camera);

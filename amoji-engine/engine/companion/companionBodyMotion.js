@@ -75,7 +75,7 @@ import {
 } from "./companionPlantedLimbLock.js";
 
 export const COMPANION_BODY_SCHEMA =
-  "amoji.companionBody.v12-full-skinned-raw-sync";
+  "amoji.companionBody.v13-ground-zero-calm-stand";
 
 /**
  * @param {import('@pixiv/three-vrm').VRMHumanoid | null | undefined} humanoid
@@ -106,6 +106,8 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
   let talkStyle = "explain";
   let talkTime = 0;
   let t0 = performance.now();
+  /** Simulated motion clock — advances by `dt` so idle reads correctly under tests and rAF. */
+  let motionElapsedSec = 0;
   let idleBeat = createIdleBeatState(t0);
   /** True while comb/hair/chin idle beat owns arm channels (skip arm hard-lock). */
   let idleBeatArmsActive = false;
@@ -949,7 +951,7 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
       legRestRotations,
       armRestRotations,
       lockUpperArms: !idleBeatArmsActive,
-      lockForearms: false,
+      lockForearms: !talking && !idleBeatArmsActive,
     });
     if (!talking) enforcePlantedHandRest(humanoid);
     humanoid.update?.();
@@ -982,11 +984,13 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
     applyHandAndFootRest(smoothedPose, 1, talking ? computeTalkForearmBlend() : 0, {
       strictRest: !talking,
     });
+    const lockForearms =
+      !talking && !idleBeatArmsActive && activeAction !== "eat" && activeAction !== "drink";
     enforcePlantedLimbRotations(humanoid, {
       legRestRotations,
       armRestRotations,
       lockUpperArms: !idleBeatArmsActive,
-      lockForearms: false,
+      lockForearms,
     });
     const eatActive = activeAction === "eat" || activeAction === "drink";
     if (opts.hands !== false && !talking && !idleBeatArmsActive && !eatActive) {
@@ -1026,7 +1030,10 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
   };
 
   const holdForLibraryMotion = (now = performance.now()) => {
-    const elapsed = (now - t0) * 0.001;
+    const elapsed =
+      motionElapsedSec > 0
+        ? motionElapsedSec
+        : (now - t0) * 0.001;
     smoothedPose = buildBasePose({ listening, emotion, nuance });
     smoothedPose = mergePlantedAliveIdleIntoPose(smoothedPose, elapsed, {
       listening,
@@ -1040,8 +1047,12 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
   };
 
   const update = (dt, opts = {}) => {
-    const now = opts.now ?? performance.now();
-    const elapsed = (now - t0) * 0.001;
+    motionElapsedSec += Math.max(0, Number(dt) || 0);
+    const now =
+      opts.now != null
+        ? Number(opts.now)
+        : t0 + motionElapsedSec * 1000;
+    const elapsed = motionElapsedSec;
     idleBeatArmsActive = false;
 
     let pose = buildBasePose({ listening, emotion, nuance });
@@ -1251,7 +1262,9 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
     const plantFeet = !activeAction || pokeActive;
     const plantedIdle =
       !activeAction && !talking && !activeGesture;
-    smoothedPose = dampPose(smoothedPose, pose, dt, pokeActive ? 18 : dampRate, {
+    const limbDampRate =
+      plantedIdle && plantFeet ? Math.max(dampRate, 16) : pokeActive ? 18 : dampRate;
+    smoothedPose = dampPose(smoothedPose, pose, dt, limbDampRate, {
       snapLimbs: plantFeet && !activeAction && !pokeActive,
     });
     smoothedRootMotion = dampRootMotion(
@@ -1316,6 +1329,7 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
 
   const resetMotionClock = (now = performance.now()) => {
     t0 = now;
+    motionElapsedSec = 0;
     smoothedPose = buildBasePose({ listening, emotion, nuance });
     smoothedPose = mergePlantedAliveIdleIntoPose(smoothedPose, 0.2, {
       listening,
@@ -1478,6 +1492,15 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
         strictLegRest: true,
       });
       applyHandRestOnly({ talkBlend: 0, now: performance.now() });
+      enforcePlantedLimbRotations(humanoid, {
+        legRestRotations,
+        armRestRotations,
+        lockUpperArms: true,
+        lockForearms: false,
+      });
+      applyCalmIdleArms(smoothedPose, 1);
+      syncSkinnedLimbRawFromNormalized(humanoid);
+      humanoid?.update?.();
       return smoothedPose;
     },
     resetIdleLife,

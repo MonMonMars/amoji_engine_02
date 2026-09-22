@@ -66,10 +66,10 @@ export const REST_POSE = Object.freeze({
   chestX: -0.012,
     hipZ: 0.008,
     leanY: 0.012,
-    upperLegL: 0.02,
-    upperLegR: 0.02,
-    lowerLegL: 0.02,
-    lowerLegR: 0.02,
+    upperLegL: 0,
+    upperLegR: 0,
+    lowerLegL: 0,
+    lowerLegR: 0,
 });
 
 /** Mic on / waiting — attentive but arms stay down (humans don't raise arms to listen). */
