@@ -1,11 +1,17 @@
 {
   "name": "Amoji Engine",
   "install": "cd amoji-engine && npm ci && npm run build",
+  "ports": [
+    {
+      "name": "companion lab",
+      "port": 5173
+    }
+  ],
   "terminals": [
     {
       "name": "lab",
-      "command": "cd amoji-engine && npm run lab"
+      "command": "cd amoji-engine && npm run lab",
+      "description": "Local companion lab server (http://localhost:5173/play)."
     }
-  ],
-  "ports": [5173]
+  ]
 }
