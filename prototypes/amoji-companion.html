@@ -8,9 +8,9 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji · Companion</title>
     <script>
-      window.__amojiBuild = "2026-09-22-v522-roster-models-1-11-29";
+      window.__amojiBuild = "2026-09-22-v523-wide-menu-hide";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-22-v522-roster-models-1-11-29"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-22-v523-wide-menu-hide"></script>
     <link
       rel="prefetch"
       href="/prototypes/assets/companion-char-nova.png"
@@ -694,28 +694,28 @@
       media="print"
       onload="this.media='all'"
     />
-    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-22-v522-roster-models-1-11-29" />
-    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-22-v522-roster-models-1-11-29" />
-    <link rel="stylesheet" href="/prototypes/companion-mic-button.css?v=2026-09-22-v522-roster-models-1-11-29" />
-    <link rel="stylesheet" href="/prototypes/companion-title-screen.css?v=2026-09-22-v522-roster-models-1-11-29" />
-    <link rel="stylesheet" href="/prototypes/companion-minimal-ui.css?v=2026-09-22-v522-roster-models-1-11-29" />
-    <link rel="stylesheet" href="/prototypes/companion-settings-ui.css?v=2026-09-22-v522-roster-models-1-11-29" />
-    <link rel="stylesheet" href="/prototypes/companion-mobile-shell.css?v=2026-09-22-v522-roster-models-1-11-29" />
-    <link rel="stylesheet" href="/prototypes/companion-picker-v4.css?v=2026-09-22-v522-roster-models-1-11-29" />
-    <link rel="stylesheet" href="/prototypes/companion-picker-stacked-layout.css?v=2026-09-22-v522-roster-models-1-11-29" />
-    <link rel="stylesheet" href="/prototypes/companion-picker-aaa-theme.css?v=2026-09-22-v522-roster-models-1-11-29" />
-    <link rel="stylesheet" href="/prototypes/companion-jp-aaa-shell.css?v=2026-09-22-v522-roster-models-1-11-29" />
-    <link rel="stylesheet" href="/prototypes/companion-responsive-layout.css?v=2026-09-22-v522-roster-models-1-11-29" />
-    <link rel="stylesheet" href="/prototypes/companion-chat-stack.css?v=2026-09-22-v522-roster-models-1-11-29" />
-    <link rel="stylesheet" href="/prototypes/companion-app-width.css?v=2026-09-22-v522-roster-models-1-11-29" />
-    <link rel="stylesheet" href="/prototypes/companion-scroll-affordances.css?v=2026-09-22-v522-roster-models-1-11-29" />
+    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-22-v523-wide-menu-hide" />
+    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-22-v523-wide-menu-hide" />
+    <link rel="stylesheet" href="/prototypes/companion-mic-button.css?v=2026-09-22-v523-wide-menu-hide" />
+    <link rel="stylesheet" href="/prototypes/companion-title-screen.css?v=2026-09-22-v523-wide-menu-hide" />
+    <link rel="stylesheet" href="/prototypes/companion-minimal-ui.css?v=2026-09-22-v523-wide-menu-hide" />
+    <link rel="stylesheet" href="/prototypes/companion-settings-ui.css?v=2026-09-22-v523-wide-menu-hide" />
+    <link rel="stylesheet" href="/prototypes/companion-mobile-shell.css?v=2026-09-22-v523-wide-menu-hide" />
+    <link rel="stylesheet" href="/prototypes/companion-picker-v4.css?v=2026-09-22-v523-wide-menu-hide" />
+    <link rel="stylesheet" href="/prototypes/companion-picker-stacked-layout.css?v=2026-09-22-v523-wide-menu-hide" />
+    <link rel="stylesheet" href="/prototypes/companion-picker-aaa-theme.css?v=2026-09-22-v523-wide-menu-hide" />
+    <link rel="stylesheet" href="/prototypes/companion-jp-aaa-shell.css?v=2026-09-22-v523-wide-menu-hide" />
+    <link rel="stylesheet" href="/prototypes/companion-responsive-layout.css?v=2026-09-22-v523-wide-menu-hide" />
+    <link rel="stylesheet" href="/prototypes/companion-chat-stack.css?v=2026-09-22-v523-wide-menu-hide" />
+    <link rel="stylesheet" href="/prototypes/companion-app-width.css?v=2026-09-22-v523-wide-menu-hide" />
+    <link rel="stylesheet" href="/prototypes/companion-scroll-affordances.css?v=2026-09-22-v523-wide-menu-hide" />
     <link
       rel="stylesheet"
-      href="/prototypes/companion-scene-backgrounds.css?v=2026-09-22-v522-roster-models-1-11-29"
+      href="/prototypes/companion-scene-backgrounds.css?v=2026-09-22-v523-wide-menu-hide"
     />
     <link
       rel="stylesheet"
-      href="/prototypes/companion-start-picker-sheet.css?v=2026-09-22-v522-roster-models-1-11-29"
+      href="/prototypes/companion-start-picker-sheet.css?v=2026-09-22-v523-wide-menu-hide"
     />
     <script>
       (function () {
@@ -734,7 +734,7 @@
       })();
     </script>
     <script type="module">
-      import { bootEarlyStartPicker } from "/amoji-engine/engine/companion/companionEarlyStartPicker.js?v=2026-09-22-v522-roster-models-1-11-29";
+      import { bootEarlyStartPicker } from "/amoji-engine/engine/companion/companionEarlyStartPicker.js?v=2026-09-22-v523-wide-menu-hide";
       import {
         applyBootPickerUrlDefaults,
         shouldShowStartPickerOnBoot,
@@ -3770,7 +3770,7 @@
       }
 
       @media (min-width: 720px) {
-        .settings {
+        .settings:not([hidden]) {
           top: 50%;
           bottom: auto;
           transform: translate(-50%, -46%) scale(0.96);
@@ -3780,7 +3780,7 @@
           pointer-events: none;
         }
 
-        .settings.open {
+        .settings.open:not([hidden]) {
           transform: translate(-50%, -50%) scale(1);
           opacity: 1;
           pointer-events: auto;
@@ -4627,19 +4627,19 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-22-v522-roster-models-1-11-29",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-22-v523-wide-menu-hide",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-22-v522-roster-models-1-11-29",
-          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-22-v522-roster-models-1-11-29"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-22-v523-wide-menu-hide",
+          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-22-v523-wide-menu-hide"
         }
       }
     </script>
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-22-v522-roster-models-1-11-29"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-22-v523-wide-menu-hide"
     />
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-22-v522-roster-models-1-11-29"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-22-v522-roster-models-1-11-29"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-22-v523-wide-menu-hide"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-22-v523-wide-menu-hide"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;
@@ -6761,6 +6761,7 @@
             .then((r) => (r.ok ? r.json() : null))
             .then((status) => {
               if (status?.cloudReady || status?.openrouter?.ok) return;
+              if (isWideDesktopLayout()) return;
               openSettings();
               showToast(
                 isEnglish
@@ -6770,7 +6771,7 @@
               );
             })
             .catch(() => {
-              openSettings();
+              if (!isWideDesktopLayout()) openSettings();
             });
         }
       } else {
@@ -7315,10 +7316,12 @@
         globalThis.matchMedia?.("(min-width: 1024px)")?.matches ?? false;
 
       const syncWideLayoutChrome = () => {
-        document.body.classList.toggle(
-          "companion-wide-layout",
-          isWideDesktopLayout(),
-        );
+        const wide = isWideDesktopLayout();
+        document.body.classList.toggle("companion-wide-layout", wide);
+        if (wide) {
+          closeSettings();
+          closeSceneSheet();
+        }
       };
       syncWideLayoutChrome();
       globalThis.addEventListener?.("resize", syncWideLayoutChrome, {
