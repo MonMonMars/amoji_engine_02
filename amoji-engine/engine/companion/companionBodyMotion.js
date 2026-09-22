@@ -75,7 +75,7 @@ import {
 } from "./companionPlantedLimbLock.js";
 
 export const COMPANION_BODY_SCHEMA =
-  "amoji.companionBody.v11-post-vrm-update-limb-finish";
+  "amoji.companionBody.v12-full-skinned-raw-sync";
 
 /**
  * @param {import('@pixiv/three-vrm').VRMHumanoid | null | undefined} humanoid
@@ -952,11 +952,12 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
       lockForearms: false,
     });
     if (!talking) enforcePlantedHandRest(humanoid);
+    humanoid.update?.();
     syncSkinnedLimbRawFromNormalized(humanoid);
     humanoid.update?.();
   };
 
-  /** After vrm.update — springs/humanoid flush must not leave raw arm bones on bind pose. */
+  /** After vrm.update — springs/humanoid flush must not leave raw skinned bones on bind pose. */
   const finishPlantedLimbLockPostUpdate = (opts = {}) => {
     if (!humanoid || activeAction) return;
     if (activeGesture === "point") {
@@ -991,6 +992,7 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
     if (opts.hands !== false && !talking && !idleBeatArmsActive && !eatActive) {
       enforcePlantedHandRest(humanoid);
     }
+    humanoid.update?.();
     syncSkinnedLimbRawFromNormalized(humanoid);
     humanoid.update?.();
   };
@@ -1403,6 +1405,7 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
       if (opts.hands !== false && !talking && !idleBeatArmsActive) {
         enforcePlantedHandRest(humanoid);
       }
+      humanoid.update?.();
       syncSkinnedLimbRawFromNormalized(humanoid);
       humanoid.update?.();
     },
