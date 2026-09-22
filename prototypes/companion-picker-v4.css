@@ -790,12 +790,23 @@
     margin 0.35s ease;
 }
 
-.companion-picker--v4.companion-picker--start.companion-picker--showcase .start-picker-preload.is-ready[hidden] {
-  display: none !important;
-  max-height: 0;
+.companion-picker--v4.companion-picker--start .picker-footer-preload-slot {
+  flex-shrink: 0;
+  min-height: var(--picker-preload-slot-height, 2.45rem);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  width: 100%;
+}
+
+.companion-picker--v4.companion-picker--start .start-picker-preload.is-slot-collapsed {
   opacity: 0;
-  margin: 0;
-  overflow: hidden;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.companion-picker--v4.companion-picker--start .start-picker-preload.is-slot-collapsed .amoji-load-bar__shine {
+  animation: none;
 }
 
 .companion-picker--v4.companion-picker--start.companion-picker--showcase .picker-confirm-btn {
@@ -1506,7 +1517,8 @@
 }
 
 .companion-picker--v4.companion-picker--start .start-picker-preload[hidden] {
-  display: none !important;
+  display: flex !important;
+  flex-direction: column;
 }
 
 .companion-picker--v4 .start-picker-preload-row {

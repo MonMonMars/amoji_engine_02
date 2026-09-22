@@ -924,10 +924,12 @@ export function createCompanionStartPicker(opts = {}) {
         </div>
       </div>
       <footer class="picker-footer">
-        <div class="start-picker-preload is-loading" aria-live="polite">
-          <div class="start-picker-preload-row">
-            ${START_PICKER_PRELOAD_RING_HTML}
-            ${START_PICKER_PRELOAD_BAR_HTML}
+        <div class="picker-footer-preload-slot" aria-hidden="false">
+          <div class="start-picker-preload is-loading" aria-live="polite">
+            <div class="start-picker-preload-row">
+              ${START_PICKER_PRELOAD_RING_HTML}
+              ${START_PICKER_PRELOAD_BAR_HTML}
+            </div>
           </div>
         </div>
         <button type="button" class="picker-confirm-btn picker-begin-btn"></button>
@@ -946,6 +948,7 @@ export function createCompanionStartPicker(opts = {}) {
   const gridEl = shell.querySelector(".companion-picker-grid");
   const footEl = shell.querySelector(".companion-picker-foot");
   const footBuildEl = shell.querySelector(".companion-picker-foot-build");
+  const preloadSlotEl = shell.querySelector(".picker-footer-preload-slot");
   const preloadEl = shell.querySelector(".start-picker-preload");
   const preloadAnimator = wireLoadingBar(preloadEl);
   const gridWrapEl = shell.querySelector(".start-picker-grid-wrap");
@@ -1011,16 +1014,29 @@ export function createCompanionStartPicker(opts = {}) {
     if (!preloadEl || preloadHideTimer) return;
     preloadHideTimer = globalThis.setTimeout?.(() => {
       preloadHideTimer = null;
-      if (preloadEl?.classList.contains("is-ready")) preloadEl.hidden = true;
+      if (!preloadEl?.classList.contains("is-ready")) return;
+      preloadEl.classList.add("is-slot-collapsed");
+      preloadEl.setAttribute("aria-hidden", "true");
+      preloadSlotEl?.setAttribute("aria-hidden", "true");
     }, 1400);
   };
 
   const syncPreloadChrome = (clamped) => {
     if (!preloadEl) return;
     const ready = clamped >= 100;
+    const loading = clamped > 0 && !ready;
     preloadEl.hidden = false;
     preloadEl.classList.toggle("is-ready", ready);
-    preloadEl.classList.toggle("is-loading", clamped > 0 && !ready);
+    preloadEl.classList.toggle("is-loading", loading);
+    if (loading || !ready) {
+      if (preloadHideTimer) {
+        globalThis.clearTimeout?.(preloadHideTimer);
+        preloadHideTimer = null;
+      }
+      preloadEl.classList.remove("is-slot-collapsed");
+      preloadEl.removeAttribute("aria-hidden");
+      preloadSlotEl?.setAttribute("aria-hidden", "false");
+    }
     if (ready) schedulePreloadHide();
   };
 
