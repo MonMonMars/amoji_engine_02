@@ -195,13 +195,13 @@ const pickerChrome = await page.evaluate(() => {
   };
 });
 record(
-  "topbar visible during start picker (bottom sheet)",
-  pickerChrome.bodyStartPickerOpen && !pickerChrome.topbarHidden,
+  "topbar hidden during full-screen start picker",
+  pickerChrome.bodyStartPickerOpen && pickerChrome.topbarHidden,
   JSON.stringify(pickerChrome),
 );
 record(
-  "composer usable during start picker (bottom sheet)",
-  pickerChrome.bodyStartPickerOpen && !pickerChrome.composerHidden,
+  "composer hidden during full-screen start picker",
+  pickerChrome.bodyStartPickerOpen && pickerChrome.composerHidden,
   JSON.stringify(pickerChrome),
 );
 
@@ -211,17 +211,34 @@ const sheetLayout = await page.evaluate(() => {
   );
   if (!sheet) return { ok: false, reason: "no open start sheet" };
   const rect = sheet.getBoundingClientRect();
-  const maxOk = window.innerHeight * 0.78;
+  const minOk = window.innerHeight * 0.92;
   return {
-    ok: rect.height > 80 && rect.height <= maxOk + 4,
+    ok: rect.height >= minOk - 4,
     height: Math.round(rect.height),
     viewport: window.innerHeight,
   };
 });
 record(
-  "start picker sheet is bottom sheet (not full viewport)",
+  "start picker sheet is full viewport",
   sheetLayout.ok,
   JSON.stringify(sheetLayout),
+);
+
+const portraitFit = await page.evaluate(() => {
+  const imgs = document.querySelectorAll(
+    "#start-character-picker .companion-card-portrait img",
+  );
+  if (!imgs.length) return { ok: false, reason: "no portraits" };
+  let contain = 0;
+  for (const img of imgs) {
+    if (getComputedStyle(img).objectFit === "contain") contain += 1;
+  }
+  return { ok: contain === imgs.length, contain, total: imgs.length };
+});
+record(
+  "roster portraits use object-fit contain",
+  portraitFit.ok,
+  JSON.stringify(portraitFit),
 );
 record(
   "scene atmosphere uses PNG art",

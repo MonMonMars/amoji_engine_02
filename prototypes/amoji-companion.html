@@ -8,9 +8,9 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji · Companion</title>
     <script>
-      window.__amojiBuild = "2026-09-22-v509-admin-control";
+      window.__amojiBuild = "2026-09-22-v510-fullscreen-picker";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-22-v509-admin-control"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-22-v510-fullscreen-picker"></script>
     <link
       rel="prefetch"
       href="/prototypes/assets/companion-char-nova.png"
@@ -65,20 +65,16 @@
       .brand span {
         color: #7fd4cf;
       }
-      /* Start picker is a bottom sheet — keep stage + chat usable while picking. */
+      /* Start picker is full-screen — session chrome stays hidden until Begin. */
       body.companion-start-pending .chat-shell,
       body.companion-start-pending .topbar,
-      body.companion-start-pending .orbit-hint {
-        opacity: 1;
-        pointer-events: auto;
-        visibility: visible;
-      }
-
-      body.companion-start-pending .composer-wrap {
-        z-index: 13001;
-        visibility: visible;
-        pointer-events: auto;
-        opacity: 1;
+      body.companion-start-pending .orbit-hint,
+      body.companion-start-pending .composer-wrap,
+      body.companion-start-pending .stage,
+      body.companion-start-pending .atmosphere {
+        visibility: hidden !important;
+        pointer-events: none !important;
+        opacity: 0 !important;
       }
 
       body.companion-start-pending .treat-dock,
@@ -315,9 +311,9 @@
         position: fixed;
         inset: 0;
         z-index: 12000;
-        pointer-events: none;
-        align-items: flex-end;
-        justify-content: center;
+        pointer-events: auto;
+        align-items: stretch;
+        justify-content: stretch;
         transition: opacity 0.45s ease;
       }
 
@@ -346,20 +342,20 @@
       }
 
       .companion-picker--start .companion-picker-sheet {
-        transform: translateY(0);
-        width: min(100%, 36rem);
+        transform: none;
+        width: 100%;
         max-width: 100%;
         margin: 0;
-        border-radius: 1.35rem 1.35rem 0 0;
-        max-height: min(72vh, 640px);
-        height: auto;
-        min-height: 0;
+        border-radius: 0;
+        max-height: 100dvh;
+        height: 100dvh;
+        min-height: 100dvh;
         overflow: hidden;
       }
 
       .companion-picker--start.companion-picker--showcase .companion-picker-sheet {
-        max-height: min(72vh, 640px);
-        height: auto;
+        max-height: 100dvh;
+        height: 100dvh;
       }
 
       .companion-picker--start.companion-picker--showcase .start-picker-grid-wrap.has-overflow::before {
@@ -698,28 +694,28 @@
       media="print"
       onload="this.media='all'"
     />
-    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-22-v509-admin-control" />
-    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-22-v509-admin-control" />
-    <link rel="stylesheet" href="/prototypes/companion-mic-button.css?v=2026-09-22-v509-admin-control" />
-    <link rel="stylesheet" href="/prototypes/companion-title-screen.css?v=2026-09-22-v509-admin-control" />
-    <link rel="stylesheet" href="/prototypes/companion-minimal-ui.css?v=2026-09-22-v509-admin-control" />
-    <link rel="stylesheet" href="/prototypes/companion-settings-ui.css?v=2026-09-22-v509-admin-control" />
-    <link rel="stylesheet" href="/prototypes/companion-mobile-shell.css?v=2026-09-22-v509-admin-control" />
-    <link rel="stylesheet" href="/prototypes/companion-picker-v4.css?v=2026-09-22-v509-admin-control" />
-    <link rel="stylesheet" href="/prototypes/companion-picker-stacked-layout.css?v=2026-09-22-v509-admin-control" />
-    <link rel="stylesheet" href="/prototypes/companion-picker-aaa-theme.css?v=2026-09-22-v509-admin-control" />
-    <link rel="stylesheet" href="/prototypes/companion-jp-aaa-shell.css?v=2026-09-22-v509-admin-control" />
-    <link rel="stylesheet" href="/prototypes/companion-responsive-layout.css?v=2026-09-22-v509-admin-control" />
-    <link rel="stylesheet" href="/prototypes/companion-chat-stack.css?v=2026-09-22-v509-admin-control" />
-    <link rel="stylesheet" href="/prototypes/companion-app-width.css?v=2026-09-22-v509-admin-control" />
-    <link rel="stylesheet" href="/prototypes/companion-scroll-affordances.css?v=2026-09-22-v509-admin-control" />
+    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-22-v510-fullscreen-picker" />
+    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-22-v510-fullscreen-picker" />
+    <link rel="stylesheet" href="/prototypes/companion-mic-button.css?v=2026-09-22-v510-fullscreen-picker" />
+    <link rel="stylesheet" href="/prototypes/companion-title-screen.css?v=2026-09-22-v510-fullscreen-picker" />
+    <link rel="stylesheet" href="/prototypes/companion-minimal-ui.css?v=2026-09-22-v510-fullscreen-picker" />
+    <link rel="stylesheet" href="/prototypes/companion-settings-ui.css?v=2026-09-22-v510-fullscreen-picker" />
+    <link rel="stylesheet" href="/prototypes/companion-mobile-shell.css?v=2026-09-22-v510-fullscreen-picker" />
+    <link rel="stylesheet" href="/prototypes/companion-picker-v4.css?v=2026-09-22-v510-fullscreen-picker" />
+    <link rel="stylesheet" href="/prototypes/companion-picker-stacked-layout.css?v=2026-09-22-v510-fullscreen-picker" />
+    <link rel="stylesheet" href="/prototypes/companion-picker-aaa-theme.css?v=2026-09-22-v510-fullscreen-picker" />
+    <link rel="stylesheet" href="/prototypes/companion-jp-aaa-shell.css?v=2026-09-22-v510-fullscreen-picker" />
+    <link rel="stylesheet" href="/prototypes/companion-responsive-layout.css?v=2026-09-22-v510-fullscreen-picker" />
+    <link rel="stylesheet" href="/prototypes/companion-chat-stack.css?v=2026-09-22-v510-fullscreen-picker" />
+    <link rel="stylesheet" href="/prototypes/companion-app-width.css?v=2026-09-22-v510-fullscreen-picker" />
+    <link rel="stylesheet" href="/prototypes/companion-scroll-affordances.css?v=2026-09-22-v510-fullscreen-picker" />
     <link
       rel="stylesheet"
-      href="/prototypes/companion-scene-backgrounds.css?v=2026-09-22-v509-admin-control"
+      href="/prototypes/companion-scene-backgrounds.css?v=2026-09-22-v510-fullscreen-picker"
     />
     <link
       rel="stylesheet"
-      href="/prototypes/companion-start-picker-sheet.css?v=2026-09-22-v509-admin-control"
+      href="/prototypes/companion-start-picker-sheet.css?v=2026-09-22-v510-fullscreen-picker"
     />
     <script>
       (function () {
@@ -738,7 +734,7 @@
       })();
     </script>
     <script type="module">
-      import { bootEarlyStartPicker } from "/amoji-engine/engine/companion/companionEarlyStartPicker.js?v=2026-09-22-v509-admin-control";
+      import { bootEarlyStartPicker } from "/amoji-engine/engine/companion/companionEarlyStartPicker.js?v=2026-09-22-v510-fullscreen-picker";
       import {
         applyBootPickerUrlDefaults,
         shouldShowStartPickerOnBoot,
@@ -4272,6 +4268,12 @@
         object-position: center top;
       }
 
+      .companion-picker--start .companion-card-portrait img,
+      .companion-picker--start .picker-hero-portrait img {
+        object-fit: contain !important;
+        object-position: center center !important;
+      }
+
       .companion-card-badge {
         position: absolute;
         top: 0.45rem;
@@ -4625,19 +4627,19 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-22-v509-admin-control",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-22-v510-fullscreen-picker",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-22-v509-admin-control",
-          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-22-v509-admin-control"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-22-v510-fullscreen-picker",
+          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-22-v510-fullscreen-picker"
         }
       }
     </script>
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-22-v509-admin-control"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-22-v510-fullscreen-picker"
     />
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-22-v509-admin-control"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-22-v509-admin-control"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-22-v510-fullscreen-picker"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-22-v510-fullscreen-picker"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;
