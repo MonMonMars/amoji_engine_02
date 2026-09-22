@@ -15,7 +15,7 @@ import {
 } from "./companionPoseLibrary.js";
 
 export const COMPANION_ARM_REST_CALIBRATION_SCHEMA =
-  "amoji.companionArmRestCalibration.v3";
+  "amoji.companionArmRestCalibration.v4-per-side-upper-z";
 
 const ARM_BONES = [
   "leftUpperArm",
@@ -190,6 +190,33 @@ function measureArmDrop(humanoid, side) {
   return (shoulder.y - hand.y) / span;
 }
 
+/**
+ * T-pose rigs: pick upper-arm Z per side (global flip breaks asymmetric meshes).
+ * @param {import('@pixiv/three-vrm').VRMHumanoid} humanoid
+ * @param {import('@pixiv/three-vrm').VRM} vrm
+ * @param {"left" | "right"} side
+ */
+function pickUpperArmRestForSide(humanoid, vrm, side) {
+  const key = side === "left" ? "leftUpperArm" : "rightUpperArm";
+  const otherKey = side === "left" ? "rightUpperArm" : "leftUpperArm";
+  const standard = VRM_ARM_REST_ROTATIONS[key];
+  const flipped = { ...standard, z: -standard.z };
+  const scoreFor = (upper) => {
+    humanoid.resetNormalizedPose?.();
+    const rest = {
+      ...VRM_ARM_REST_ROTATIONS,
+      [key]: upper,
+      [otherKey]: VRM_ARM_REST_ROTATIONS[otherKey],
+    };
+    applyNamedRest(humanoid, ARM_BONES, rest);
+    flushPose(vrm);
+    return measureArmDrop(humanoid, side) ?? 0;
+  };
+  const stdDrop = scoreFor(standard);
+  const flipDrop = scoreFor(flipped);
+  return flipDrop > stdDrop + 0.04 ? flipped : standard;
+}
+
 export function detectVrmArmBind(vrm) {
   const humanoid = vrm?.humanoid;
   if (!humanoid) return "tpose";
@@ -304,34 +331,11 @@ export function detectVrmArmRestRotations(vrm) {
   /** @type {typeof VRM_ARM_REST_ROTATIONS} */
   let upperRest = VRM_APOSE_ARM_REST_ROTATIONS;
   if (bind === "tpose") {
-    const flippedZ = {
-      leftUpperArm: {
-        ...VRM_ARM_REST_ROTATIONS.leftUpperArm,
-        z: -VRM_ARM_REST_ROTATIONS.leftUpperArm.z,
-      },
-      rightUpperArm: {
-        ...VRM_ARM_REST_ROTATIONS.rightUpperArm,
-        z: -VRM_ARM_REST_ROTATIONS.rightUpperArm.z,
-      },
-      leftLowerArm: { ...VRM_ARM_REST_ROTATIONS.leftLowerArm },
-      rightLowerArm: { ...VRM_ARM_REST_ROTATIONS.rightLowerArm },
+    upperRest = {
+      ...VRM_ARM_REST_ROTATIONS,
+      leftUpperArm: pickUpperArmRestForSide(humanoid, vrm, "left"),
+      rightUpperArm: pickUpperArmRestForSide(humanoid, vrm, "right"),
     };
-
-    const armDropScore = (rest) => {
-      humanoid.resetNormalizedPose?.();
-      applyNamedRest(humanoid, ARM_BONES, rest);
-      flushPose(vrm);
-      const leftDrop = measureArmDrop(humanoid, "left");
-      const rightDrop = measureArmDrop(humanoid, "right");
-      const drops = [leftDrop, rightDrop].filter((v) => v != null);
-      if (!drops.length) return 0;
-      return drops.reduce((sum, v) => sum + v, 0) / drops.length;
-    };
-
-    const standardDrop = armDropScore(VRM_ARM_REST_ROTATIONS);
-    const flippedDrop = armDropScore(flippedZ);
-    upperRest =
-      flippedDrop > standardDrop + 0.04 ? flippedZ : VRM_ARM_REST_ROTATIONS;
   }
 
   const leftFallback =

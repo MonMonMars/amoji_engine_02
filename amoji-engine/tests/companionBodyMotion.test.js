@@ -319,6 +319,9 @@ describe("createCompanionBodyMotion", () => {
     motion.setTalking(false);
     motion.snapToRestPose();
     expect(humanoid.bones.get("rightLowerLeg").rotation.z).toBeGreaterThan(0.45);
-    expect(humanoid.bones.get("leftLowerArm").rotation.x).toBeGreaterThan(0.63);
+    expect(humanoid.bones.get("leftLowerArm").rotation.x).toBeCloseTo(
+      VRM_ARM_REST_ROTATIONS.leftLowerArm.x,
+      2,
+    );
   });
 });
