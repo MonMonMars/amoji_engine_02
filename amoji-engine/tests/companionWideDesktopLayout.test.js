@@ -19,4 +19,19 @@ describe("companion wide desktop layout", () => {
     expect(css).toMatch(/translateX\(-50%\)/);
     expect(css).toMatch(/max-height:\s*min\(68vh,\s*520px\)/);
   });
+
+  it("hides closed Menu / scene sheet on wide desktop (no ghost overlay)", () => {
+    const appWidth = readFileSync(
+      join(dirname(fileURLToPath(import.meta.url)), "../../prototypes/companion-app-width.css"),
+      "utf8",
+    );
+    expect(appWidth).toMatch(
+      /companion-wide-layout[\s\S]*\.settings:not\(\.open\)/,
+    );
+    const settingsUi = readFileSync(
+      join(dirname(fileURLToPath(import.meta.url)), "../../prototypes/companion-settings-ui.css"),
+      "utf8",
+    );
+    expect(settingsUi).toContain(".settings[hidden]");
+  });
 });
