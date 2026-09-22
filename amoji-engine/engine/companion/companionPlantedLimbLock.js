@@ -8,7 +8,7 @@ import {
 } from "./companionPoseLibrary.js";
 
 export const COMPANION_PLANTED_LIMB_LOCK_SCHEMA =
-  "amoji.companionPlantedLimbLock.v7-ground-zero-forearm-lock";
+  "amoji.companionPlantedLimbLock.v8-pre-vrm-update-forearm-lock";
 
 /** Upper-body bones that must match normalized→raw after vrm.update (ghost limb fix). */
 export const PLANTED_ARM_RAW_SYNC_BONES = Object.freeze([
