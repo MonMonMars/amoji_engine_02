@@ -26,7 +26,10 @@ import {
   PORTRAIT_FOV,
   applyUserOrbitLimits,
   correctPortraitModelYaw,
+  facingAlignmentScore,
   isHeadFacingCamera,
+  modelBodyFacingScore,
+  normalizeModelYaw,
   portraitDistanceForHeight,
 } from "./companionPortraitFraming.js";
 import {
@@ -350,6 +353,7 @@ export async function createVrmAvatar(opts) {
   const baseModelY = model.position.y;
   let baseModelRotY = model.rotation.y;
   let lastPortraitFacingFixMs = 0;
+  let portraitFacingBootFrames = 0;
   scene.add(model);
   vrm.humanoid?.resetNormalizedPose?.();
   const bodyMotion = createCompanionBodyMotion(vrm.humanoid);
@@ -707,7 +711,7 @@ export async function createVrmAvatar(opts) {
     });
     portraitDist = resolved.portraitDist;
     portraitCameraZSign = resolved.zSign;
-    baseModelRotY = model.rotation.y;
+    baseModelRotY = normalizeModelYaw(model);
     applyUserOrbitLimits(controls);
     applyPortraitShot(controls, camera, resolved.shot, { portraitDist });
     smoothedFrameAnchor.copy(faceAnchor);
@@ -723,6 +727,27 @@ export async function createVrmAvatar(opts) {
     cameraDirector.resetDialogue();
     cameraDirector.holdUserFraming(false);
     cameraDirector.setUserOrbiting(false);
+    if (
+      !isHeadFacingCamera(headBone, camera, vrm.humanoid, model) &&
+      correctPortraitModelYaw(model, headBone, camera, vrm.humanoid)
+    ) {
+      baseModelRotY = normalizeModelYaw(model);
+      const refit = resolveFrontPortraitFrame({
+        model,
+        headBone,
+        humanoid: vrm.humanoid,
+        anchor: faceAnchor,
+        fittedHeight,
+        baseFov: PORTRAIT_FOV,
+      });
+      portraitDist = refit.portraitDist;
+      portraitCameraZSign = refit.zSign;
+      applyPortraitShot(controls, camera, refit.shot, { portraitDist });
+      portraitCamera.position.copy(camera.position);
+      portraitCamera.target.copy(controls.target);
+      portraitCamera.fov = camera.fov;
+      portraitCamera.distance = portraitDist;
+    }
     syncLookTarget();
     return resolved;
   };
@@ -1668,20 +1693,26 @@ export async function createVrmAvatar(opts) {
         controls.update();
       }
 
+      portraitFacingBootFrames += 1;
+      const portraitFacingCooldownMs =
+        portraitFacingBootFrames < 180 ? 0 : 900;
       if (
         headBone &&
         !userOwnsCamera &&
         !libraryMotion &&
         !vrmaOwnsBody &&
-        now - lastPortraitFacingFixMs > 900
+        now - lastPortraitFacingFixMs >= portraitFacingCooldownMs
       ) {
         if (
-          !isHeadFacingCamera(headBone, camera, vrm.humanoid) &&
+          !isHeadFacingCamera(headBone, camera, vrm.humanoid, model) &&
           correctPortraitModelYaw(model, headBone, camera, vrm.humanoid)
         ) {
-          baseModelRotY = model.rotation.y;
+          baseModelRotY = normalizeModelYaw(model);
           lastPortraitFacingFixMs = now;
           syncLookTarget();
+          if (portraitFacingBootFrames < 180) {
+            applyDefaultPortraitFrame?.();
+          }
         }
       }
     } catch (err) {
@@ -1973,11 +2004,24 @@ export async function createVrmAvatar(opts) {
         vrm.update(1 / 60);
         bodyMotion.enforcePlantedLimbs?.({ lockForearms: true });
         bodyMotion.reapplyPlantedLimbs?.({ force: true, now: performance.now() });
+        applyDefaultPortraitFrame?.();
+        syncLookTarget();
         renderer.render(scene, camera);
         renderer.render(scene, camera);
       } catch {
         /* ignore warm-up errors */
       }
+    },
+    getPortraitFacing() {
+      return {
+        bodyScore: modelBodyFacingScore(model, camera.position),
+        headScore: headBone
+          ? facingAlignmentScore(headBone, camera.position, vrm.humanoid)
+          : 0,
+        facingCamera: isHeadFacingCamera(headBone, camera, vrm.humanoid, model),
+        modelRotY: model.rotation.y,
+        cameraZSign: portraitCameraZSign,
+      };
     },
     hitTest(clientX, clientY) {
       return Boolean(avatarPointer?.hitTest?.(clientX, clientY));

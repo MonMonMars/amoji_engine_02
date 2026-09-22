@@ -350,6 +350,16 @@ async function main() {
     JSON.stringify(bootIntegrity),
   );
 
+  const portraitFacing = await page.evaluate(() => {
+    const facing = window.__amojiAvatar?.getPortraitFacing?.();
+    return facing || { facingCamera: false, bodyScore: 0, headScore: 0 };
+  });
+  record(
+    "portrait-faces-camera",
+    Boolean(portraitFacing.facingCamera) && Number(portraitFacing.bodyScore) > 0.12,
+    JSON.stringify(portraitFacing),
+  );
+
   await page
     .waitForFunction(
       () => {
