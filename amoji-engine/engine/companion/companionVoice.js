@@ -1822,7 +1822,11 @@ export function createCompanionVoice(opts = {}) {
     return speakerOn;
   };
 
-  const stopMic = () => micCapture.stop();
+  const stopMic = (opts = {}) => {
+    micCapture.stop();
+    if (opts.stopOutput !== false) interruptAssistantOutput();
+    return micCapture.on;
+  };
 
   /** Unlock TTS after a user gesture (required by Chrome/Safari autoplay policy). */
   const primeAudio = async () => {

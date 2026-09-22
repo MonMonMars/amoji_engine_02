@@ -302,6 +302,11 @@ export function createCompanionEmotionBall(el, opts = {}) {
       reset();
       return;
     }
+    if (ctx.micOn === false) {
+      setState("idle");
+      reset();
+      return;
+    }
     const sessionState = String(ctx.sessionState || "").toLowerCase();
     if (sessionState === "thinking" || sessionState === "loading") {
       setState("thinking");
@@ -385,6 +390,10 @@ export function createCompanionEmotionBall(el, opts = {}) {
  * }} [opts]
  */
 export function resolveMiniEmotionBallState(opts = {}) {
+  if (opts.micOn === false) {
+    if (opts.textMode) return "typing";
+    return "idle";
+  }
   const session = String(opts.sessionState || "").toLowerCase();
   const voiceLive = Boolean(opts.speaking || opts.assistantActive);
   // Session UI is authoritative once back to idle — stale TTS flags must not stick "speaking".
