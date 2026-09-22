@@ -153,7 +153,7 @@ Always pass page-function options as the **third** argument. Use `waitForPageFn(
 
 ### Cursor Cloud specific instructions
 
-- Recent companion UX (check when regressing): **`pick=1` always opens character + scene picker** (even after Begin once); return visits skip picker only without `pick=1` (use `autostart=1` for instant chat); poke = body-only while TTS; secretary `?tab=today` after session start.
+- Recent companion UX (check when regressing): **`pick=1` always opens character + scene picker**; **top-left chip opens the same start picker** (not a separate session sheet); poke = body-only while TTS; secretary `?tab=today` after session start.
 - Before claiming the app is complete: `npm run verify:app-complete` locally, then `npm run verify:app-complete:prod` after deploy.
 - Quick gate only: `npm run verify:pre-delivery` / `verify:pre-delivery:prod`.
 - Production base: `https://temporary-rushing-oxygen-ok5jzhd.vercel.app` — confirm `/api/health` `build` matches `AMOJI_BUILD` in `buildVersion.mjs`.
