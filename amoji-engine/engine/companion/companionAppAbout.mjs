@@ -30,8 +30,8 @@ export function formatSettingsAboutCopy(isEnglish = false) {
       ? `Build ${build} · roster ${AMOJI_MODEL_REVISION}`
       : `版本 ${build} · 名單 ${AMOJI_MODEL_REVISION}`,
     featuresLine: en
-      ? `${roster} VRM companions · voice/text chat · poke & mic · secretary Today · planted idle body`
-      : `${roster} 位 VRM · 語音/文字 · 戳身/麥克風 · 秘書 Today · 穩定企喺度 idle`,
+      ? `${roster} VRM companions · voice/text · poke & mic · secretary Today · safe boot (picker or auto-start)`
+      : `${roster} 位 VRM · 語音/文字 · 戳身/麥克風 · 秘書 Today · 穩定開機（揀人或自動開始）`,
     modelHint: en
       ? "Each pick loads companion-<id>.vrm (see Menu if portrait and mesh differ on alias slots)."
       : "每次揀人會載入 companion-<id>.vrm（若卡面同模型唔同，可能係共用檔案）。",
