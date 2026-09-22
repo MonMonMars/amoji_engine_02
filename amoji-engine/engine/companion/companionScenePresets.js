@@ -9,8 +9,8 @@ import {
 export const COMPANION_SCENE_PRESETS_SCHEMA =
   "amoji.companionScenePresets.v12-scene-redesign";
 
-/** First-run default — warm anime interior (not flat gray studio). */
-export const DEFAULT_SCENE_BACKGROUND_ID = "cozy-room";
+/** First-run default — classic warm anime bedroom (restored v481 look). */
+export const DEFAULT_SCENE_BACKGROUND_ID = "bedroom";
 
 /** Retired flat / single-color presets → rich anime replacement. */
 export const LEGACY_FLAT_SCENE_BACKGROUND_IDS = Object.freeze({

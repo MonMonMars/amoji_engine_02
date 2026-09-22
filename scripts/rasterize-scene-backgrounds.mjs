@@ -14,11 +14,16 @@ const svgDir = join(root, "../prototypes/assets/scene-bg");
 const pngDir = svgDir;
 const W = 1920;
 const H = 1080;
+/** Supersample raster for crisp edges on high-DPI phones. */
+const DEVICE_SCALE = 2;
 
 mkdirSync(pngDir, { recursive: true });
 
 const browser = await chromium.launch({ headless: true });
-const page = await browser.newPage({ viewport: { width: W, height: H } });
+const page = await browser.newPage({
+  viewport: { width: W, height: H },
+  deviceScaleFactor: DEVICE_SCALE,
+});
 
 const PRESERVE_SCENE_PNG = new Set();
 

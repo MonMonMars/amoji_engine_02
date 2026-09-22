@@ -43,14 +43,14 @@ describe("companionScenePresets", () => {
   });
 
   it("resolves unknown background to default", () => {
-    expect(resolveSceneBackgroundId("unknown")).toBe("cozy-room");
+    expect(resolveSceneBackgroundId("unknown")).toBe("bedroom");
     expect(resolveSceneBackgroundId("studio")).toBe("studio");
     expect(resolveSceneBackgroundId("minimal")).toBe("cozy-room");
   });
 
-  it("defaults new users to cozy-room anime interior", () => {
+  it("defaults new users to bedroom anime interior", () => {
     const loaded = loadStoredSceneBackground(true);
-    expect(loaded.id).toBe("cozy-room");
+    expect(loaded.id).toBe("bedroom");
     expect(loaded.environment).toBe("indoor");
   });
 
