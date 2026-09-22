@@ -542,6 +542,22 @@ record(
   JSON.stringify(idleLimbs),
 );
 
+const limbDualWrite = await page.evaluate(async () => {
+  const avatar = window.__amojiAvatar;
+  avatar?.setTalking?.(false);
+  avatar?.stopAction?.();
+  await new Promise((r) => setTimeout(r, 600));
+  for (let i = 0; i < 8; i += 1) {
+    await new Promise((r) => requestAnimationFrame(r));
+  }
+  return avatar?.auditPlantedLimbs?.() || { ok: false, reason: "no-audit" };
+});
+record(
+  "arm raw/normalized sync (no ghost limb blend)",
+  Boolean(limbDualWrite.ok),
+  JSON.stringify(limbDualWrite),
+);
+
 const springGravity = await page.evaluate(() => {
   return (
     window.__amojiAvatar?.auditSpringGravity?.({ tune: true }) || {

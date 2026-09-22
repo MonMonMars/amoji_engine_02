@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
+  auditPlantedLimbDualWrite,
   enforcePlantedLimbRotations,
+  syncSkinnedLimbRawFromNormalized,
   writeHumanoidBoneRotation,
 } from "../engine/companion/companionPlantedLimbLock.js";
 import {
@@ -118,6 +120,44 @@ describe("companionPlantedLimbLock", () => {
       VRM_ARM_REST_ROTATIONS.leftUpperArm.z,
     );
     expect(bones.get("leftShoulder").rotation.z).toBe(0);
+  });
+
+  it("syncSkinnedLimbRawFromNormalized copies normalized arm euler to raw", () => {
+    const norm = {
+      name: "leftUpperArm",
+      rotation: {
+        x: 0.11,
+        y: 0.02,
+        z: -0.44,
+        set(x, y, z) {
+          this.x = x;
+          this.y = y;
+          this.z = z;
+        },
+      },
+    };
+    const raw = {
+      name: "leftUpperArm",
+      rotation: {
+        x: 9,
+        y: 0,
+        z: 0,
+        set(x, y, z) {
+          this.x = x;
+          this.y = y;
+          this.z = z;
+        },
+      },
+    };
+    const humanoid = {
+      getNormalizedBoneNode: (n) => (n === "leftUpperArm" ? norm : null),
+      getRawBoneNode: (n) => (n === "leftUpperArm" ? raw : null),
+      update: () => {},
+    };
+    syncSkinnedLimbRawFromNormalized(humanoid);
+    expect(raw.rotation.x).toBeCloseTo(0.11, 5);
+    expect(raw.rotation.z).toBeCloseTo(-0.44, 5);
+    expect(auditPlantedLimbDualWrite(humanoid).ok).toBe(true);
   });
 
   it("writes forearm lock to normalized and raw nodes", () => {
