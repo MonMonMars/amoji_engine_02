@@ -69,6 +69,7 @@ import {
 import {
   enforcePlantedHandRest,
   enforcePlantedLimbRotations,
+  PLANTED_ARM_RAW_SYNC_BONES,
   syncSkinnedLimbRawFromNormalized,
   writeHumanoidBoneRotation,
   PLANTED_SHOULDER_REST,
@@ -1297,6 +1298,12 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
         pose[key] = 0;
       }
     }
+    if (plantedIdle && plantFeet && !idleBeatArms) {
+      for (const key of POSE_LIMB_BLEND_KEYS) {
+        smoothedPose[key] = 0;
+        pose[key] = 0;
+      }
+    }
     applyPose(smoothedPose, 1, {
       allowArms,
       actionArms,
@@ -1309,6 +1316,16 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
       plantFeet,
       strictLegRest,
     });
+    if (plantedIdle && plantFeet && !idleBeatArms && humanoid) {
+      enforcePlantedLimbRotations(humanoid, {
+        legRestRotations,
+        armRestRotations,
+        lockUpperArms: true,
+        lockForearms: true,
+      });
+      syncSkinnedLimbRawFromNormalized(humanoid, PLANTED_ARM_RAW_SYNC_BONES);
+      humanoid.update?.();
+    }
     if (plantFeet) {
       const dy = footPlantRootDelta(bone, 0);
       footPlantY += dy;
