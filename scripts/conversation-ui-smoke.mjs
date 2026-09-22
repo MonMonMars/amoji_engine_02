@@ -56,17 +56,30 @@ if (!chrome.conversationUi || !chrome.roleSecretary) {
   process.exit(1);
 }
 
-await page.click("#btn-open-setup").catch(() => null);
-await page.waitForSelector("#settings-role-readout", { timeout: 15000 }).catch(() => null);
+const wantsTabToday = baseUrl.includes("tab=today");
+if (wantsTabToday) {
+  await waitForPageFn(
+    page,
+    () => document.querySelector(".secretary-overlay.is-open") != null,
+    { timeout: 20000 },
+  ).catch(() => null);
+}
 
-await page.click("#settings-btn-secretary-today").catch(() => null);
-await page
-  .waitForSelector(".secretary-overlay.is-open", { timeout: 15000 })
-  .catch(() => null);
-
-const panelOpen = await page.evaluate(
+let panelOpen = await page.evaluate(
   () => document.querySelector(".secretary-overlay.is-open") != null,
 );
+
+if (!panelOpen) {
+  await page.click("#btn-open-setup").catch(() => null);
+  await page.waitForSelector("#settings-role-readout", { timeout: 15000 }).catch(() => null);
+  await page.click("#settings-btn-secretary-today").catch(() => null);
+  await page
+    .waitForSelector(".secretary-overlay.is-open", { timeout: 15000 })
+    .catch(() => null);
+  panelOpen = await page.evaluate(
+    () => document.querySelector(".secretary-overlay.is-open") != null,
+  );
+}
 
 await page.screenshot({ path: join(outDir, "conversation-ui-secretary-today.png"), fullPage: true });
 
