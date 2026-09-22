@@ -50,7 +50,10 @@ import { BOOT_FULL_LIBRARY_WARM_CLIP_IDS } from "./companionIdleMotionPreload.js
 import { detectVrmIdleRestRotations } from "./companionArmRestCalibration.js";
 import { establishCalmStandFromBind } from "./companionCalmStandFoundation.js";
 import { createCompanionBodyMotion } from "./companionBodyMotion.js";
-import { auditPlantedLimbDualWrite } from "./companionPlantedLimbLock.js";
+import {
+  auditPlantedLimbDualWrite,
+  syncHumanoidSkinnedRawFromNormalized,
+} from "./companionPlantedLimbLock.js";
 import { characterGender } from "./companionCharacterCatalog.js";
 import {
   inferFingerFlexAxis,
@@ -1602,6 +1605,9 @@ export async function createVrmAvatar(opts) {
         });
       }
       syncHumanoidPose();
+      if (!libraryMotion) {
+        syncHumanoidSkinnedRawFromNormalized(vrm?.humanoid);
+      }
       stabilizeVrmSpringBones(vrm);
       vrm.update(dt);
       if (!libraryMotion && !bodyMotion.currentAction) {
