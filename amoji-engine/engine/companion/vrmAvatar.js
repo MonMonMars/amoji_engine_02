@@ -1557,8 +1557,14 @@ export async function createVrmAvatar(opts) {
         springIdleState.calmSec = 0;
         springTalkState.calmSec = 0;
       }
-      stabilizeVrmSpringBones(vrm);
-      vrm.update(dt);
+      const plantedIdleFrame =
+        !libraryMotion &&
+        !bodyMotion.currentAction &&
+        bodyMotion.activeGesture !== "point" &&
+        !talking &&
+        !eating;
+      const pokeWhileSpeaking =
+        bodyMotion.pokeShakeActive && (talking || bodyMotion.thinking);
       if (!libraryMotion && !bodyMotion.currentAction) {
         bodyMotion.enforcePlantedLimbs?.({
           lockUpperArms: true,
@@ -1566,6 +1572,15 @@ export async function createVrmAvatar(opts) {
           hands: !talking && !eating && !bodyMotion.idleBeatArmsActive,
         });
       }
+      if (plantedIdleFrame || pokeWhileSpeaking) {
+        bodyMotion.reapplyPlantedLimbs?.({
+          now,
+          force: plantedIdleFrame,
+        });
+      }
+      syncHumanoidPose();
+      stabilizeVrmSpringBones(vrm);
+      vrm.update(dt);
       const crossfading =
         !CALM_IDLE_USES_PROCEDURAL_BODY &&
         Boolean(motionPlayer.isCrossfading?.());
@@ -1581,20 +1596,7 @@ export async function createVrmAvatar(opts) {
                 : 0.18,
           now,
         });
-      }
-      const plantedIdleFrame =
-        !libraryMotion &&
-        !bodyMotion.currentAction &&
-        bodyMotion.activeGesture !== "point" &&
-        !talking &&
-        !eating;
-      const pokeWhileSpeaking =
-        bodyMotion.pokeShakeActive && (talking || bodyMotion.thinking);
-      if (plantedIdleFrame || pokeWhileSpeaking) {
-        bodyMotion.reapplyPlantedLimbs?.({
-          now,
-          force: plantedIdleFrame,
-        });
+        syncHumanoidPose();
       }
       if (eating && treatProp.active) {
         treatProp.update(bodyMotion.getEatChewSample?.());

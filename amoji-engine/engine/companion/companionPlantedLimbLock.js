@@ -8,7 +8,17 @@ import {
 } from "./companionPoseLibrary.js";
 
 export const COMPANION_PLANTED_LIMB_LOCK_SCHEMA =
-  "amoji.companionPlantedLimbLock.v3-dual-write-shoulders";
+  "amoji.companionPlantedLimbLock.v4-legs-normalized-only";
+
+/** Raw dual-write on legs twists skinned skirts — normalized only for lower body. */
+export const PLANTED_LOCK_NORMALIZED_ONLY_BONES = Object.freeze([
+  "leftUpperLeg",
+  "rightUpperLeg",
+  "leftLowerLeg",
+  "rightLowerLeg",
+  "leftFoot",
+  "rightFoot",
+]);
 
 /** Shoulders stay neutral when upper arms are planted (pose channels only hit normalized nodes). */
 export const PLANTED_SHOULDER_REST = Object.freeze({ x: 0, y: 0, z: 0 });
@@ -62,8 +72,9 @@ export function writeHumanoidBoneRotation(humanoid, name, rot) {
   if (!humanoid || !rot) return;
   const norm = humanoid.getNormalizedBoneNode?.(name);
   const raw = humanoid.getRawBoneNode?.(name);
+  const legsOnly = PLANTED_LOCK_NORMALIZED_ONLY_BONES.includes(name);
   if (norm) writeVrmBoneEuler(norm, rot);
-  if (raw && raw !== norm) writeVrmBoneEuler(raw, rot);
+  if (raw && raw !== norm && !legsOnly) writeVrmBoneEuler(raw, rot);
 }
 
 /**
