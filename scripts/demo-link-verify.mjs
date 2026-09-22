@@ -386,9 +386,62 @@ async function verifyReturnVisitAutoStart(page, label, entryUrl) {
       state.hasTopbar ? "topbar" : "no-topbar",
     ].join(", "),
   );
+  record(
+    `${label} return visit splash cleared after session`,
+    state.sessionStarted && !state.splash,
+    state.splash ? "splash still present" : "splash removed",
+  );
+  const startPending = await page.evaluate(() =>
+    document.body.classList.contains("companion-start-pending"),
+  );
+  record(
+    `${label} return visit chrome unlocked`,
+    state.sessionStarted && !startPending,
+    startPending ? "start-pending still on body" : "ok",
+  );
 
   await page.screenshot({
     path: join(outDir, `demo-verify-return-visit-${label}.png`),
+    fullPage: true,
+  });
+}
+
+async function verifyAutostartCompanion(page, label, baseUrl) {
+  const autostartUrl = `${baseUrl.replace(/\/$/, "")}/play?lang=en&pick=0&autostart=1&automic=0`;
+  await gotoCompanionEntry(page, autostartUrl);
+  await waitForPageFn(page, () => window.__amojiModuleBooted === true, {
+    timeout: 120000,
+  }).catch(() => null);
+  await waitForPageFn(
+    page,
+    () => window.__amojiStart?.sessionStarted === true,
+    { timeout: 45000 },
+  ).catch(() => null);
+
+  const state = await page.evaluate(() => ({
+    sessionStarted: window.__amojiStart?.sessionStarted === true,
+    pickerOpen:
+      typeof window.__amojiIsStartPickerVisible === "function"
+        ? window.__amojiIsStartPickerVisible()
+        : false,
+    splash: Boolean(document.getElementById("amoji-boot-splash")),
+    hasComposer: Boolean(document.getElementById("composer")),
+    startPending: document.body.classList.contains("companion-start-pending"),
+  }));
+
+  record(`${label} autostart=1 session`, state.sessionStarted);
+  record(`${label} autostart=1 skips picker`, !state.pickerOpen);
+  record(
+    `${label} autostart=1 chrome visible`,
+    state.hasComposer && state.sessionStarted && !state.startPending,
+  );
+  record(
+    `${label} autostart=1 splash cleared`,
+    state.sessionStarted && !state.splash,
+  );
+
+  await page.screenshot({
+    path: join(outDir, `demo-verify-autostart-${label}.png`),
     fullPage: true,
   });
 }
@@ -608,6 +661,15 @@ try {
     fullUrl,
   );
   await returnPage.close();
+
+  const autostartPage = await browser.newPage({ viewport });
+  trackPageErrors(autostartPage, "autostart");
+  await verifyAutostartCompanion(
+    autostartPage,
+    useLocal ? "local" : "prod",
+    baseUrl,
+  );
+  await autostartPage.close();
 } finally {
   await browser.close();
   localSrv?.close();
