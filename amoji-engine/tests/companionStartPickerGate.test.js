@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  applyBootPickerUrlDefaults,
   bootSplashGateFromDom,
   clearStartPickerBodyLocks,
   dismissStartPickerDom,
@@ -9,6 +10,14 @@ import {
 } from "../engine/companion/companionStartPickerGate.mjs";
 
 describe("companionStartPickerGate", () => {
+  it("applyBootPickerUrlDefaults adds pick=1 unless autostart or pick=0", () => {
+    expect(applyBootPickerUrlDefaults("").get("pick")).toBe("1");
+    expect(applyBootPickerUrlDefaults("").get("automic")).toBe("0");
+    expect(applyBootPickerUrlDefaults("autostart=1").get("pick")).toBe(null);
+    expect(applyBootPickerUrlDefaults("pick=0").get("pick")).toBe("0");
+    expect(applyBootPickerUrlDefaults("pick=force").get("pick")).toBe("force");
+  });
+
   it("does not re-open start picker after begin was tapped", () => {
     const start = { tapped: true, pickerDismissed: true, sessionStarted: false };
     expect(

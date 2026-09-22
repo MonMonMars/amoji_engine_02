@@ -4,6 +4,24 @@
 
 export const START_PICKER_COMPLETED_STORAGE_KEY = "amoji.companion.startPickerCompleted.v1";
 
+/**
+ * Default /play and companion entry to roster + scene picker unless explicitly skipped.
+ * @param {URLSearchParams | string | null | undefined} search
+ */
+export function applyBootPickerUrlDefaults(search) {
+  const params = new URLSearchParams(
+    search instanceof URLSearchParams
+      ? search
+      : String(search || "").replace(/^\?/, ""),
+  );
+  if (params.get("autostart") === "1" || params.get("pick") === "0") {
+    return params;
+  }
+  if (!params.get("pick")) params.set("pick", "1");
+  if (!params.get("automic")) params.set("automic", "0");
+  return params;
+}
+
 /** @param {Pick<Storage, "getItem" | "setItem"> | null | undefined} [storage] */
 export function persistStartPickerCompleted(storage = globalThis.localStorage) {
   try {

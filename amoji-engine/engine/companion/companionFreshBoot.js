@@ -3,6 +3,7 @@
  */
 import { AMOJI_BUILD } from "./buildVersion.mjs";
 import { normalizeUnifiedEntryParams } from "./companionUnifiedApp.js";
+import { applyBootPickerUrlDefaults } from "./companionStartPickerGate.mjs";
 
 export const COMPANION_FRESH_BOOT_SCHEMA = "amoji.companionFreshBoot.v4";
 
@@ -173,13 +174,11 @@ export function isVersionedCompanionPath(pathname) {
  * @param {{ build?: string, stamp?: number }} [opts]
  */
 export function buildPlayRedirectLocation(search, opts = {}) {
-  const params = normalizeUnifiedEntryParams(
-    new URLSearchParams(String(search || "").replace(/^\?/, "")),
+  const params = applyBootPickerUrlDefaults(
+    normalizeUnifiedEntryParams(
+      new URLSearchParams(String(search || "").replace(/^\?/, "")),
+    ),
   );
-  if (params.get("autostart") !== "1" && params.get("pick") !== "0") {
-    if (!params.get("pick")) params.set("pick", "1");
-    if (!params.get("automic")) params.set("automic", "0");
-  }
   const build = opts.build ?? AMOJI_BUILD;
   const stamp =
     opts.stamp ??
