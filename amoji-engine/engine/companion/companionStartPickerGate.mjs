@@ -42,9 +42,17 @@ export function shouldShowStartPickerOnBoot(opts = {}) {
   const autostart = String(opts.autostart ?? "");
   const pick = String(opts.pick ?? "");
   if (autostart === "1" || pick === "0") return false;
-  const forcePick = pick === "force" || pick === "always";
+  /** Explicit picker entry — /play adds pick=1; always show roster + scene row. */
+  const explicitPicker =
+    pick === "1" || pick === "force" || pick === "always";
+  if (explicitPicker) {
+    const start = opts.start;
+    if (start?.pickerDismissed || start?.tapped) return false;
+    if (opts.sessionStartedLocal || start?.sessionStarted) return false;
+    return true;
+  }
   const storage = opts.storage ?? globalThis.localStorage;
-  if (!forcePick && hasCompletedStartPicker(storage)) return false;
+  if (hasCompletedStartPicker(storage)) return false;
   const start = opts.start;
   if (start?.pickerDismissed || start?.tapped) return false;
   if (opts.sessionStartedLocal || start?.sessionStarted) return false;
@@ -66,8 +74,7 @@ export function shouldAutoStartCompanionSession(opts = {}) {
   const pick = String(opts.pick ?? "");
   if (opts.sessionStartedLocal || opts.start?.sessionStarted) return false;
   if (autostart === "1" || pick === "0") return true;
-  const showStartPicker = autostart !== "1" && pick !== "0";
-  if (!showStartPicker) return true;
+  if (pick === "1" || pick === "force" || pick === "always") return false;
   return !shouldShowStartPickerOnBoot(opts);
 }
 

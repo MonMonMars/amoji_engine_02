@@ -41,10 +41,28 @@ describe("companionEarlyStartPicker", () => {
     expect(picker).toBeNull();
   });
 
-  it("skips when start picker was completed in storage", async () => {
+  it("still shows picker when pick=1 even if completed in storage", async () => {
+    if (typeof localStorage === "undefined") return;
+    if (typeof document === "undefined") return;
+    document.body.innerHTML =
+      '<div id="amoji-boot-splash"><p>Loading</p></div>';
+    globalThis.__amojiStart = { ready: false, run: null };
+    globalThis.__amojiUnlockAudio = () => {};
+    globalThis.__amojiHideLoading = () => {};
+    globalThis.__amojiStartWithCharacter = () => {};
+    localStorage.setItem("amoji.companion.startPickerCompleted.v1", "1");
+    const params = new URLSearchParams("lang=en&pick=1&automic=0");
+    const picker = await bootEarlyStartPicker({ params });
+    expect(picker).toBeTruthy();
+    picker?.destroy();
+    localStorage.removeItem("amoji.companion.startPickerCompleted.v1");
+    document.body.classList.remove("companion-start-pending", "companion-picker-open");
+  });
+
+  it("skips when start picker was completed and pick is omitted", async () => {
     if (typeof localStorage === "undefined") return;
     localStorage.setItem("amoji.companion.startPickerCompleted.v1", "1");
-    const params = new URLSearchParams("lang=en&pick=1");
+    const params = new URLSearchParams("lang=en&automic=0");
     const picker = await bootEarlyStartPicker({ params });
     expect(picker).toBeNull();
     localStorage.removeItem("amoji.companion.startPickerCompleted.v1");

@@ -327,7 +327,14 @@ async function verifyBootPaint(page, label) {
 }
 
 async function verifyReturnVisitAutoStart(page, label, entryUrl) {
-  await gotoCompanionEntry(page, entryUrl);
+  /** /play adds pick=1 — instant return uses autostart=1 (no picker). */
+  const returnUrl = (() => {
+    const u = new URL(entryUrl);
+    u.searchParams.delete("pick");
+    u.searchParams.set("autostart", "1");
+    return u.toString();
+  })();
+  await gotoCompanionEntry(page, returnUrl);
   await page.evaluate((storageKey) => {
     try {
       localStorage.setItem(storageKey, "1");
@@ -375,7 +382,7 @@ async function verifyReturnVisitAutoStart(page, label, entryUrl) {
   record(
     `${label} return visit skips start picker`,
     !state.pickerOpen,
-    state.pickerOpen ? "picker still open" : "picker hidden",
+    state.pickerOpen ? "picker still open" : "picker hidden (no pick=1 in URL)",
   );
   record(
     `${label} return visit main chrome visible`,
@@ -402,6 +409,61 @@ async function verifyReturnVisitAutoStart(page, label, entryUrl) {
 
   await page.screenshot({
     path: join(outDir, `demo-verify-return-visit-${label}.png`),
+    fullPage: true,
+  });
+}
+
+async function verifyPickOneShowsPicker(page, label, entryUrl) {
+  await gotoCompanionEntry(page, entryUrl);
+  await page.evaluate((storageKey) => {
+    try {
+      localStorage.setItem(storageKey, "1");
+    } catch {
+      /* private mode */
+    }
+  }, START_PICKER_COMPLETED_STORAGE_KEY);
+  await page.reload({ waitUntil: "domcontentloaded", timeout: 90000 });
+  await waitForPageFn(
+    page,
+    () =>
+      window.__amojiIsStartPickerVisible?.() ||
+      document.getElementById("start-character-picker")?.classList.contains("is-open"),
+    { timeout: 60000 },
+  ).catch(() => null);
+
+  const state = await page.evaluate(() => {
+    const picker = document.getElementById("start-character-picker");
+    const pickerOpen =
+      typeof window.__amojiIsStartPickerVisible === "function"
+        ? window.__amojiIsStartPickerVisible()
+        : Boolean(
+            picker &&
+              picker.classList.contains("is-open") &&
+              !picker.classList.contains("hide"),
+          );
+    return {
+      pickerOpen,
+      hasSceneRow: Boolean(
+        picker?.querySelector?.(".picker-scene-row, .picker-background-row, [data-scene-bg]"),
+      ),
+      hasBegin: Boolean(picker?.querySelector?.(".picker-begin-btn")),
+      sessionStarted: window.__amojiStart?.sessionStarted === true,
+    };
+  });
+
+  record(
+    `${label} pick=1 shows character picker (completed flag)`,
+    state.pickerOpen && !state.sessionStarted,
+    state.pickerOpen ? "picker open" : "picker missing",
+  );
+  record(
+    `${label} pick=1 picker has begin CTA`,
+    state.hasBegin,
+    state.hasBegin ? "begin" : "no begin btn",
+  );
+
+  await page.screenshot({
+    path: join(outDir, `demo-verify-pick1-picker-${label}.png`),
     fullPage: true,
   });
 }
@@ -652,6 +714,15 @@ try {
   trackPageErrors(fullPage, "full");
   await verifyFullCompanion(fullPage, useLocal ? "local" : "prod");
   await fullPage.close();
+
+  const pickOnePage = await browser.newPage({ viewport });
+  trackPageErrors(pickOnePage, "pick-one");
+  await verifyPickOneShowsPicker(
+    pickOnePage,
+    useLocal ? "local" : "prod",
+    fullUrl,
+  );
+  await pickOnePage.close();
 
   const returnPage = await browser.newPage({ viewport });
   trackPageErrors(returnPage, "return-visit");
