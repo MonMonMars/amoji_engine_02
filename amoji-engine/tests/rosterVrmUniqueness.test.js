@@ -13,9 +13,6 @@ const assetsDir = join(
 
 /** Pairs that intentionally share the same mesh bytes (legacy alias slots). */
 const ALLOWED_DUPLICATE_GROUPS = [
-  ["sienna", "hana"],
-  ["juno", "priya", "cyrus"],
-  ["juno", "cyrus"],
   ["atlas", "zane"],
   ["elio", "luna"],
 ];
