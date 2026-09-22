@@ -10,10 +10,11 @@ import {
   PORTRAIT_Z_DISTANCE_MUL,
   detectPortraitCameraZSign,
   facingAlignmentScore,
+  modelBodyFacingScore,
   portraitDistanceForHeight,
 } from "./companionPortraitFraming.js";
 
-export const COMPANION_CAMERA_APPLY_SCHEMA = "amoji.companionCameraApply.v4-low-score-yaw";
+export const COMPANION_CAMERA_APPLY_SCHEMA = "amoji.companionCameraApply.v5-body-forward-score";
 
 /** Auto follow while talking / full-body moves (~4.2/s). */
 export const AUTO_CAMERA_LERP_RATE = 4.2;
@@ -268,11 +269,14 @@ export function resolveFrontPortraitFrame(opts) {
     );
     for (const sign of [zSign, zSign === 1 ? -1 : 1]) {
       const shot = buildPortraitShot(anchor, portraitDist, baseFov, sign);
-      const score = headBone
+      const headScore = headBone
         ? facingAlignmentScore(headBone, shot.position, humanoid)
         : sign === PORTRAIT_CAMERA_Z_SIGN
           ? 1
           : 0;
+      const score = model
+        ? modelBodyFacingScore(model, shot.position)
+        : headScore;
       if (!best || score > best.score) {
         best = {
           score,

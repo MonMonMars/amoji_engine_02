@@ -4,7 +4,7 @@
 import * as THREE from "three";
 
 export const COMPANION_PORTRAIT_FRAMING_SCHEMA =
-  "amoji.companionPortraitFraming.v6-yaw-correction";
+  "amoji.companionPortraitFraming.v7-body-forward";
 
 /** Fallback lower-neck height when no head bone (ratio from feet to head). */
 export const UPPER_BODY_ANCHOR_RATIO = 0.84;
@@ -75,15 +75,7 @@ export function resolveFaceForwardHorizontal(headBone, humanoid, out = _faceForw
       .sub(_headPosScratch);
     out.y = 0;
     if (out.lengthSq() > 1e-5) {
-      out.normalize();
-      headBone.getWorldQuaternion(_quatScratch);
-      _faceForwardScratch.set(0, 0, 1).applyQuaternion(_quatScratch);
-      _faceForwardScratch.y = 0;
-      if (_faceForwardScratch.lengthSq() > 1e-5) {
-        _faceForwardScratch.normalize();
-        if (out.dot(_faceForwardScratch) < 0) out.negate();
-      }
-      return out;
+      return out.normalize();
     }
   }
 
@@ -92,6 +84,46 @@ export function resolveFaceForwardHorizontal(headBone, humanoid, out = _faceForw
   out.y = 0;
   if (out.lengthSq() < 1e-6) return null;
   return out.normalize();
+}
+
+/**
+ * VRM models face +Z in bind pose; root yaw rotates this horizontal forward.
+ * @param {import('three').Object3D | null | undefined} model
+ * @param {import('three').Vector3} [out]
+ */
+export function modelBodyForwardHorizontal(model, out = _faceForwardScratch) {
+  if (!model) return null;
+  model.updateWorldMatrix(true, false);
+  out.set(0, 0, 1).transformDirection(model.matrixWorld);
+  out.y = 0;
+  if (out.lengthSq() < 1e-6) return null;
+  return out.normalize();
+}
+
+/**
+ * @param {import('three').Object3D | null | undefined} model
+ * @param {import('three').Vector3} cameraPosition
+ */
+export function modelBodyFacingScore(model, cameraPosition) {
+  if (!model || !cameraPosition) return 0;
+  const forward = modelBodyForwardHorizontal(model);
+  if (!forward) return 0;
+  model.getWorldPosition(_headPosScratch);
+  _toCameraScratch.subVectors(cameraPosition, _headPosScratch);
+  _toCameraScratch.y = 0;
+  if (_toCameraScratch.lengthSq() < 1e-6) return 0;
+  _toCameraScratch.normalize();
+  return forward.dot(_toCameraScratch);
+}
+
+/**
+ * True when the avatar root (+Z bind forward) points toward the camera.
+ * @param {import('three').Object3D | null | undefined} model
+ * @param {import('three').PerspectiveCamera | { position: import('three').Vector3 }} camera
+ */
+export function isModelBodyFacingCamera(model, camera) {
+  if (!model || !camera?.position) return true;
+  return modelBodyFacingScore(model, camera.position) > 0.12;
 }
 
 /**
@@ -144,8 +176,10 @@ export function detectPortraitCameraZSign(headBone, anchor, portraitDist, humano
  * @param {import('three').PerspectiveCamera} camera
  * @param {import('@pixiv/three-vrm').VRMHumanoid | null | undefined} [humanoid]
  */
-export function isHeadFacingCamera(headBone, camera, humanoid) {
-  if (!headBone || !camera) return true;
+export function isHeadFacingCamera(headBone, camera, humanoid, model) {
+  if (!camera) return true;
+  if (model) return isModelBodyFacingCamera(model, camera);
+  if (!headBone) return true;
   return facingAlignmentScore(headBone, camera.position, humanoid) > 0.15;
 }
 
@@ -169,15 +203,25 @@ export function portraitModelYawOffset(headBone, camera, humanoid) {
  * @param {import('@pixiv/three-vrm').VRMHumanoid | null | undefined} [humanoid]
  * @param {number} [minScore]
  */
+export function normalizeModelYaw(model) {
+  if (!model) return 0;
+  model.rotation.y = Math.atan2(
+    Math.sin(model.rotation.y),
+    Math.cos(model.rotation.y),
+  );
+  return model.rotation.y;
+}
+
 export function correctPortraitModelYaw(model, headBone, camera, humanoid, minScore = 0.12) {
-  if (!model || !headBone || !camera) return false;
-  const score = facingAlignmentScore(headBone, camera.position, humanoid);
-  if (score >= minScore) return false;
-  const delta = portraitModelYawOffset(headBone, camera, humanoid);
-  if (!delta) return false;
-  model.rotation.y += delta;
+  if (!model || !camera) return false;
+
+  const bodyScore = modelBodyFacingScore(model, camera.position);
+  if (bodyScore >= minScore) return false;
+
+  model.rotation.y += Math.PI;
+  normalizeModelYaw(model);
   model.updateMatrixWorld(true);
-  headBone.updateMatrixWorld(true);
+  headBone?.updateMatrixWorld(true);
   return true;
 }
 

@@ -15,6 +15,8 @@ import {
   portraitModelYawOffset,
   portraitDistanceForHeight,
   resolveFaceForwardHorizontal,
+  modelBodyFacingScore,
+  isModelBodyFacingCamera,
 } from "../engine/companion/companionPortraitFraming.js";
 
 describe("companionPortraitFraming", () => {
@@ -126,7 +128,7 @@ describe("companionPortraitFraming", () => {
     expect(forward?.z).toBeGreaterThan(0.9);
   });
 
-  it("resolveFaceForwardHorizontal flips when eye midpoint sits behind the head bone", () => {
+  it("resolveFaceForwardHorizontal follows eye geometry without forcing head +Z", () => {
     const head = new THREE.Object3D();
     head.position.set(0, 1.1, 0);
     const leftEye = new THREE.Object3D();
@@ -144,7 +146,22 @@ describe("companionPortraitFraming", () => {
       },
     };
     const forward = resolveFaceForwardHorizontal(head, humanoid, new THREE.Vector3());
-    expect(forward?.z).toBeGreaterThan(0.5);
+    expect(forward?.z).toBeLessThan(-0.5);
+  });
+
+  it("modelBodyFacingScore detects when the root body points away from the camera", () => {
+    const model = new THREE.Group();
+    model.rotation.y = 0;
+    model.updateMatrixWorld(true);
+    const camera = new THREE.PerspectiveCamera();
+    camera.position.set(0, 1.1, 2);
+    expect(modelBodyFacingScore(model, camera.position)).toBeGreaterThan(0.5);
+    expect(isModelBodyFacingCamera(model, camera)).toBe(true);
+
+    model.rotation.y = Math.PI;
+    model.updateMatrixWorld(true);
+    expect(modelBodyFacingScore(model, camera.position)).toBeLessThan(-0.5);
+    expect(isModelBodyFacingCamera(model, camera)).toBe(false);
   });
 
   it("isHeadFacingCamera and portraitModelYawOffset agree on front vs back", () => {
@@ -174,6 +191,21 @@ describe("companionPortraitFraming", () => {
     const before = model.rotation.y;
     expect(correctPortraitModelYaw(model, head, camera)).toBe(true);
     expect(model.rotation.y - before).toBeCloseTo(Math.PI, 3);
-    expect(isHeadFacingCamera(head, camera)).toBe(true);
+    expect(isModelBodyFacingCamera(model, camera)).toBe(true);
+  });
+
+  it("correctPortraitModelYaw flips body yaw when the root faces away", () => {
+    const model = new THREE.Group();
+    model.rotation.y = Math.PI;
+    const head = new THREE.Object3D();
+    head.position.set(0, 1.1, 0);
+    model.add(head);
+    model.updateMatrixWorld(true);
+    head.updateMatrixWorld(true);
+    const camera = new THREE.PerspectiveCamera();
+    camera.position.set(0, 1.18, 2);
+    expect(correctPortraitModelYaw(model, head, camera)).toBe(true);
+    expect(isModelBodyFacingCamera(model, camera)).toBe(true);
+    expect(Math.abs(model.rotation.y)).toBeLessThan(0.01);
   });
 });
