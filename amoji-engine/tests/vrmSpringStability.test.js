@@ -25,6 +25,8 @@ import {
   installVrmSpringBoneGuard,
   installVrmSpringUpdateWrapper,
   dampUpwardSpringTailDrift,
+  isSkirtOrHairSpringJoint,
+  alignSpringGravityWorldDown,
 } from "../engine/companion/vrmSpringStability.js";
 
 function makeJoint(overrides = {}) {
@@ -95,6 +97,43 @@ describe("vrmSpringStability", () => {
     forceGravityDirDown(dir);
     expect(dir.y).toBe(-1);
     expect(dir.x).toBe(0);
+  });
+
+  it("detects skirt/hair spring chains by bone name", () => {
+    expect(
+      isSkirtOrHairSpringJoint({
+        bone: { name: "Skirt_L_01", parent: { name: "Hips" } },
+      }),
+    ).toBe(true);
+    expect(
+      isSkirtOrHairSpringJoint({
+        bone: { name: "LeftArm", parent: { name: "Chest" } },
+      }),
+    ).toBe(false);
+  });
+
+  it("alignSpringGravityWorldDown uses model root (identity → world down)", () => {
+    const dir = {
+      x: 0,
+      y: 1,
+      z: 0,
+      set(x, y, z) {
+        this.x = x;
+        this.y = y;
+        this.z = z;
+      },
+    };
+    const joint = { settings: { gravityDir: dir } };
+    const vrm = {
+      scene: {
+        matrixWorld: {
+          elements: [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1],
+        },
+        updateWorldMatrix: () => {},
+      },
+    };
+    alignSpringGravityWorldDown(vrm, joint);
+    expect(dir.y).toBeLessThan(-0.5);
   });
 
   it("flips author +Y gravity (wind from below)", () => {

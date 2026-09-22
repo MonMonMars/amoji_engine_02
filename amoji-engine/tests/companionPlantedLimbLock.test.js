@@ -122,6 +122,43 @@ describe("companionPlantedLimbLock", () => {
     expect(bones.get("leftShoulder").rotation.z).toBe(0);
   });
 
+  it("syncSkinnedLimbRawFromNormalized copies normalized leg euler to raw (skirt weights)", () => {
+    const norm = {
+      name: "leftUpperLeg",
+      rotation: {
+        x: 0.05,
+        y: 0,
+        z: 0.01,
+        set(x, y, z) {
+          this.x = x;
+          this.y = y;
+          this.z = z;
+        },
+      },
+    };
+    const raw = {
+      name: "leftUpperLeg",
+      rotation: {
+        x: 2,
+        y: 0,
+        z: 0,
+        set(x, y, z) {
+          this.x = x;
+          this.y = y;
+          this.z = z;
+        },
+      },
+    };
+    const humanoid = {
+      getNormalizedBoneNode: (n) => (n === "leftUpperLeg" ? norm : null),
+      getRawBoneNode: (n) => (n === "leftUpperLeg" ? raw : null),
+      update: () => {},
+    };
+    syncSkinnedLimbRawFromNormalized(humanoid);
+    expect(raw.rotation.x).toBeCloseTo(0.05, 5);
+    expect(raw.rotation.z).toBeCloseTo(0.01, 5);
+  });
+
   it("syncSkinnedLimbRawFromNormalized copies normalized arm euler to raw", () => {
     const norm = {
       name: "leftUpperArm",

@@ -160,7 +160,7 @@ Always pass page-function options as the **third** argument. Use `waitForPageFn(
 
 ### Cursor Cloud specific instructions
 
-- Recent companion UX (check when regressing): **`pick=1` always opens character + scene picker**; **top-left chip opens the same start picker**; planted limbs lock **before and after** `vrm.update` (post-update syncs raw arm bones from normalized — fixes ghost/blended limbs); legs normalized-only (no raw dual-write — avoids skirt mesh blend); poke = body-only while TTS.
+- Recent companion UX (check when regressing): **`pick=1` always opens character + scene picker**; **top-left chip opens the same start picker**; planted limbs lock **before and after** `vrm.update` with **full humanoid norm→raw sync** (hips/legs/arms — fixes ghost limbs + skirt weights sliding); pose writes stay normalized-only on legs (no rest dual-write); spring gravity re-aimed to **world down** each frame + skirt/hair extra drag; poke = body-only while TTS.
 - Before claiming the app is complete: `npm run verify:app-complete` locally, then `npm run verify:app-complete:prod` after deploy.
 - Quick gate only: `npm run verify:pre-delivery` / `verify:pre-delivery:prod`.
 - Production base: `https://temporary-rushing-oxygen-ok5jzhd.vercel.app` — confirm `/api/health` `build` matches `AMOJI_BUILD` in `buildVersion.mjs`.
