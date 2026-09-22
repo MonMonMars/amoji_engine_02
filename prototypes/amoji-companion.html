@@ -8,9 +8,9 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji · Companion</title>
     <script>
-      window.__amojiBuild = "2026-09-22-v506-body-forward-portrait";
+      window.__amojiBuild = "2026-09-22-v507-start-picker-default";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-22-v506-body-forward-portrait"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-22-v507-start-picker-default"></script>
     <link
       rel="prefetch"
       href="/prototypes/assets/companion-char-nova.png"
@@ -698,32 +698,36 @@
       media="print"
       onload="this.media='all'"
     />
-    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-22-v506-body-forward-portrait" />
-    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-22-v506-body-forward-portrait" />
-    <link rel="stylesheet" href="/prototypes/companion-mic-button.css?v=2026-09-22-v506-body-forward-portrait" />
-    <link rel="stylesheet" href="/prototypes/companion-title-screen.css?v=2026-09-22-v506-body-forward-portrait" />
-    <link rel="stylesheet" href="/prototypes/companion-minimal-ui.css?v=2026-09-22-v506-body-forward-portrait" />
-    <link rel="stylesheet" href="/prototypes/companion-settings-ui.css?v=2026-09-22-v506-body-forward-portrait" />
-    <link rel="stylesheet" href="/prototypes/companion-mobile-shell.css?v=2026-09-22-v506-body-forward-portrait" />
-    <link rel="stylesheet" href="/prototypes/companion-picker-v4.css?v=2026-09-22-v506-body-forward-portrait" />
-    <link rel="stylesheet" href="/prototypes/companion-picker-stacked-layout.css?v=2026-09-22-v506-body-forward-portrait" />
-    <link rel="stylesheet" href="/prototypes/companion-picker-aaa-theme.css?v=2026-09-22-v506-body-forward-portrait" />
-    <link rel="stylesheet" href="/prototypes/companion-jp-aaa-shell.css?v=2026-09-22-v506-body-forward-portrait" />
-    <link rel="stylesheet" href="/prototypes/companion-responsive-layout.css?v=2026-09-22-v506-body-forward-portrait" />
-    <link rel="stylesheet" href="/prototypes/companion-chat-stack.css?v=2026-09-22-v506-body-forward-portrait" />
-    <link rel="stylesheet" href="/prototypes/companion-app-width.css?v=2026-09-22-v506-body-forward-portrait" />
-    <link rel="stylesheet" href="/prototypes/companion-scroll-affordances.css?v=2026-09-22-v506-body-forward-portrait" />
+    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-22-v507-start-picker-default" />
+    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-22-v507-start-picker-default" />
+    <link rel="stylesheet" href="/prototypes/companion-mic-button.css?v=2026-09-22-v507-start-picker-default" />
+    <link rel="stylesheet" href="/prototypes/companion-title-screen.css?v=2026-09-22-v507-start-picker-default" />
+    <link rel="stylesheet" href="/prototypes/companion-minimal-ui.css?v=2026-09-22-v507-start-picker-default" />
+    <link rel="stylesheet" href="/prototypes/companion-settings-ui.css?v=2026-09-22-v507-start-picker-default" />
+    <link rel="stylesheet" href="/prototypes/companion-mobile-shell.css?v=2026-09-22-v507-start-picker-default" />
+    <link rel="stylesheet" href="/prototypes/companion-picker-v4.css?v=2026-09-22-v507-start-picker-default" />
+    <link rel="stylesheet" href="/prototypes/companion-picker-stacked-layout.css?v=2026-09-22-v507-start-picker-default" />
+    <link rel="stylesheet" href="/prototypes/companion-picker-aaa-theme.css?v=2026-09-22-v507-start-picker-default" />
+    <link rel="stylesheet" href="/prototypes/companion-jp-aaa-shell.css?v=2026-09-22-v507-start-picker-default" />
+    <link rel="stylesheet" href="/prototypes/companion-responsive-layout.css?v=2026-09-22-v507-start-picker-default" />
+    <link rel="stylesheet" href="/prototypes/companion-chat-stack.css?v=2026-09-22-v507-start-picker-default" />
+    <link rel="stylesheet" href="/prototypes/companion-app-width.css?v=2026-09-22-v507-start-picker-default" />
+    <link rel="stylesheet" href="/prototypes/companion-scroll-affordances.css?v=2026-09-22-v507-start-picker-default" />
     <link
       rel="stylesheet"
-      href="/prototypes/companion-scene-backgrounds.css?v=2026-09-22-v506-body-forward-portrait"
+      href="/prototypes/companion-scene-backgrounds.css?v=2026-09-22-v507-start-picker-default"
     />
     <link
       rel="stylesheet"
-      href="/prototypes/companion-start-picker-sheet.css?v=2026-09-22-v506-body-forward-portrait"
+      href="/prototypes/companion-start-picker-sheet.css?v=2026-09-22-v507-start-picker-default"
     />
     <script>
       (function () {
         var params = new URLSearchParams(location.search);
+        if (params.get("autostart") !== "1" && params.get("pick") !== "0") {
+          if (!params.get("pick")) params.set("pick", "1");
+          if (!params.get("automic")) params.set("automic", "0");
+        }
         var legacyLite =
           /\/lite\/?$/.test(location.pathname) ||
           location.pathname === "/companion";
@@ -746,9 +750,22 @@
       })();
     </script>
     <script type="module">
-      import { bootEarlyStartPicker } from "/amoji-engine/engine/companion/companionEarlyStartPicker.js?v=2026-09-22-v506-body-forward-portrait";
-      import { shouldShowStartPickerOnBoot } from "/amoji-engine/engine/companion/companionStartPickerGate.mjs";
-      const bootParams = new URLSearchParams(location.search);
+      import { bootEarlyStartPicker } from "/amoji-engine/engine/companion/companionEarlyStartPicker.js?v=2026-09-22-v507-start-picker-default";
+      import {
+        applyBootPickerUrlDefaults,
+        shouldShowStartPickerOnBoot,
+      } from "/amoji-engine/engine/companion/companionStartPickerGate.mjs";
+      const bootParams = applyBootPickerUrlDefaults(location.search);
+      const bootQs = bootParams.toString();
+      if (
+        bootQs !== String(location.search || "").replace(/^\?/, "")
+      ) {
+        history.replaceState(
+          null,
+          "",
+          location.pathname + (bootQs ? "?" + bootQs : ""),
+        );
+      }
       if (
         shouldShowStartPickerOnBoot({
           autostart: bootParams.get("autostart"),
@@ -4620,19 +4637,19 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-22-v506-body-forward-portrait",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-22-v507-start-picker-default",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-22-v506-body-forward-portrait",
-          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-22-v506-body-forward-portrait"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-22-v507-start-picker-default",
+          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-22-v507-start-picker-default"
         }
       }
     </script>
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-22-v506-body-forward-portrait"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-22-v507-start-picker-default"
     />
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-22-v506-body-forward-portrait"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-22-v506-body-forward-portrait"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-22-v507-start-picker-default"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-22-v507-start-picker-default"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;
@@ -9870,6 +9887,12 @@
       } else if (
         !sessionStarted &&
         !sessionStarting &&
+        !shouldShowStartPickerOnBoot({
+          autostart: params.get("autostart"),
+          pick: params.get("pick"),
+          start: window.__amojiStart,
+          sessionStartedLocal: sessionStarted,
+        }) &&
         shouldAutoStartCompanionSession({
           autostart: params.get("autostart"),
           pick: params.get("pick"),
