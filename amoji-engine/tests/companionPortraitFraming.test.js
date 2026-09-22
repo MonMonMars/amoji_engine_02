@@ -12,6 +12,7 @@ import {
   facingAlignmentScore,
   correctPortraitModelYaw,
   isHeadFacingCamera,
+  portraitVisibleFacingScore,
   portraitModelYawOffset,
   portraitDistanceForHeight,
   resolveFaceForwardHorizontal,
@@ -192,6 +193,23 @@ describe("companionPortraitFraming", () => {
     expect(correctPortraitModelYaw(model, head, camera)).toBe(true);
     expect(model.rotation.y - before).toBeCloseTo(Math.PI, 3);
     expect(isModelBodyFacingCamera(model, camera)).toBe(true);
+  });
+
+  it("isHeadFacingCamera prefers face forward over body +Z bind forward", () => {
+    const model = new THREE.Group();
+    const head = new THREE.Object3D();
+    head.position.set(0, 1.1, 0);
+    head.rotation.y = Math.PI;
+    model.add(head);
+    model.updateMatrixWorld(true);
+    head.updateMatrixWorld(true);
+    const camera = new THREE.PerspectiveCamera();
+    camera.position.set(0, 1.18, 2);
+    expect(isModelBodyFacingCamera(model, camera)).toBe(true);
+    expect(isHeadFacingCamera(head, camera, null, model)).toBe(false);
+    expect(portraitVisibleFacingScore(head, camera.position, null, model)).toBeLessThan(
+      -0.2,
+    );
   });
 
   it("correctPortraitModelYaw flips body yaw when the root faces away", () => {

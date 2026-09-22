@@ -27,6 +27,26 @@ describe("companionCameraApply portrait resolve", () => {
     expect(resolved.shot.position.z).toBeGreaterThan(0);
   });
 
+  it("yaws the model when body +Z faces the camera but the head faces away", () => {
+    const model = new THREE.Group();
+    const head = new THREE.Object3D();
+    head.position.set(0, 1.1, 0);
+    head.rotation.y = Math.PI;
+    model.add(head);
+    model.updateMatrixWorld(true);
+    head.updateMatrixWorld(true);
+
+    const resolved = resolveFrontPortraitFrame({
+      model,
+      headBone: head,
+      anchor: new THREE.Vector3(0, 1.05, 0),
+      fittedHeight: 0.92,
+    });
+
+    expect(resolved.score).toBeGreaterThan(0.2);
+    expect(Math.abs(resolved.yaw - Math.PI)).toBeLessThan(0.2);
+  });
+
   it("finds a front-facing camera when the head bone faces -Z", () => {
     const model = new THREE.Group();
     const head = new THREE.Object3D();
