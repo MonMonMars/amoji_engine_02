@@ -20,6 +20,7 @@
     "verify:scene-shortcuts": "node scripts/scene-shortcuts-demo-verify.mjs",
     "verify:roster-models": "node scripts/verify-roster-models.mjs",
     "verify:admin": "node scripts/admin-console-verify.mjs",
+    "admin:bootstrap": "node scripts/bootstrap-admin-account.mjs",
     "verify:debug": "node scripts/companion-diagnose.mjs",
     "verify:production-build": "node scripts/check-production-build.mjs",
     "verify:app-complete": "node scripts/app-complete-verify.mjs",

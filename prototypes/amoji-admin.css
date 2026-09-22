@@ -111,6 +111,23 @@ textarea {
   background: rgba(20, 26, 38, 0.92);
 }
 
+.admin-topbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.admin-menu-toggle {
+  display: none;
+}
+
+.admin-app-link {
+  text-decoration: none;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
 .admin-topbar-actions {
   display: flex;
   align-items: center;
@@ -126,10 +143,39 @@ textarea {
   border: 1px solid rgba(139, 124, 248, 0.35);
 }
 
-.admin-nav {
+.admin-nav,
+.admin-control-menu {
   display: flex;
   flex-wrap: wrap;
   gap: 0.45rem;
+}
+
+@media (max-width: 720px) {
+  .admin-menu-toggle {
+    display: inline-flex;
+  }
+
+  .admin-topbar-actions .admin-app-link {
+    display: none;
+  }
+
+  .admin-control-menu {
+    display: none;
+    flex-direction: column;
+    padding: 0.65rem;
+    border-radius: 12px;
+    border: 1px solid var(--admin-border);
+    background: rgba(20, 26, 38, 0.96);
+  }
+
+  .admin-control-menu.is-open {
+    display: flex;
+  }
+
+  .admin-nav-btn {
+    width: 100%;
+    text-align: left;
+  }
 }
 
 .admin-nav-btn.is-active {
