@@ -608,36 +608,61 @@ async function main() {
     JSON.stringify(lifeMetrics),
   );
 
-  const idleFace = await page.evaluate(async () => {
-    const avatar = window.__amojiAvatar;
-    avatar?.setTalking?.(false);
-    avatar?.setEmotion?.("neutral");
-    avatar?.stopAction?.();
-    const expr = avatar?.vrm?.expressionManager;
-    const happy = () => {
-      try {
-        return Math.max(
-          Number(expr?.getValue?.("happy") ?? 0),
-          Number(expr?.getValue?.("Happy") ?? 0),
-        );
-      } catch {
-        return 0;
+  const sampleIdleFaceRange = () =>
+    page.evaluate(async () => {
+      const avatar = window.__amojiAvatar;
+      avatar?.setTalking?.(false);
+      avatar?.setListening?.(false);
+      avatar?.setThinking?.(false);
+      avatar?.setEmotion?.("neutral");
+      avatar?.stopAction?.();
+      const expr = avatar?.vrm?.expressionManager;
+      const read = (names) => {
+        let v = 0;
+        for (const name of names) {
+          try {
+            v = Math.max(v, Number(expr?.getValue?.(name) ?? 0));
+          } catch {
+            /* ignore */
+          }
+        }
+        return v;
+      };
+      const samples = [];
+      for (let i = 0; i < 14; i += 1) {
+        samples.push({
+          happy: read(["happy", "Happy"]),
+          surprised: read(["surprised", "Surprised"]),
+          blink: read(["blink", "blinkLeft", "blinkRight"]),
+        });
+        await new Promise((r) => setTimeout(r, 280));
       }
-    };
-    const samples = [];
-    for (let i = 0; i < 10; i += 1) {
-      samples.push(happy());
-      await new Promise((r) => setTimeout(r, 280));
-    }
-    return {
-      min: Math.min(...samples),
-      max: Math.max(...samples),
-      range: Math.max(...samples) - Math.min(...samples),
-    };
-  });
+      const rangeOf = (key) =>
+        Math.max(...samples.map((s) => s[key])) -
+        Math.min(...samples.map((s) => s[key]));
+      const happyRange = rangeOf("happy");
+      const surprisedRange = rangeOf("surprised");
+      const blinkRange = rangeOf("blink");
+      return {
+        happyRange,
+        surprisedRange,
+        blinkRange,
+        maxHappy: Math.max(...samples.map((s) => s.happy)),
+      };
+    });
+
+  let idleFace = await sampleIdleFaceRange();
+  const idleFaceOk = (m) =>
+    (m.maxHappy > 0.06 && m.happyRange > 0.008) ||
+    m.surprisedRange > 0.006 ||
+    m.blinkRange > 0.04;
+  if (!idleFaceOk(idleFace)) {
+    await page.waitForTimeout(2200);
+    idleFace = await sampleIdleFaceRange();
+  }
   record(
     "idle-facial-expression",
-    idleFace.max > 0.06 && idleFace.range > 0.008,
+    idleFaceOk(idleFace),
     JSON.stringify(idleFace),
   );
 

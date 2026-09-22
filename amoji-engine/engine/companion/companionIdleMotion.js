@@ -246,12 +246,12 @@ export function sampleIdleExpressionBlend(elapsedSec, emotion = "neutral") {
     blend.Sad = 0.16 + flutter * 0.04;
     blend.Surprised = 0.06 + breath * 0.05;
   } else {
-    const happyFloor = REST_NEUTRAL_HAPPY * 0.72;
+    const happyFloor = REST_NEUTRAL_HAPPY * 0.62;
     blend.Happy = Math.max(
       happyFloor,
-      0.22 + breath * 0.14 + flutter * 0.08,
+      0.2 + breath * 0.16 + flutter * 0.1,
     );
-    blend.Surprised = Math.min(0.14, 0.04 + flutter * 0.08);
+    blend.Surprised = Math.min(0.16, 0.05 + flutter * 0.1);
   }
 
   return blend;
