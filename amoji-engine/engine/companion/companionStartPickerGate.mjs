@@ -89,6 +89,43 @@ export function shouldRemoveBootSplash(opts = {}) {
 }
 
 /**
+ * DOM snapshot for inline boot splash + module boot (single policy).
+ *
+ * @param {Document | null | undefined} [doc]
+ * @param {Record<string, unknown> | null | undefined} [start]
+ */
+export function bootSplashGateFromDom(
+  doc = globalThis.document,
+  start = globalThis.__amojiStart,
+) {
+  const fallback = doc?.getElementById?.("amoji-boot-fallback");
+  const fallbackVisible = Boolean(
+    fallback &&
+      !fallback.hidden &&
+      fallback.classList.contains("show"),
+  );
+  const picker = doc?.getElementById?.("start-character-picker");
+  const pickerVisible = Boolean(
+    picker &&
+      picker.classList.contains("is-open") &&
+      !picker.classList.contains("hide") &&
+      picker.getAttribute("aria-hidden") !== "true" &&
+      !picker.hidden,
+  );
+  const body = doc?.body;
+  const pickerOpenBodyClass = Boolean(
+    body?.classList?.contains?.("companion-picker-open") ||
+      body?.classList?.contains?.("companion-start-picker-open"),
+  );
+  return shouldRemoveBootSplash({
+    sessionStarted: Boolean(start?.sessionStarted),
+    pickerVisible,
+    pickerOpenBodyClass,
+    fallbackVisible,
+  });
+}
+
+/**
  * @param {Document | null | undefined} [doc]
  */
 export function clearStartPickerBodyLocks(doc = globalThis.document) {

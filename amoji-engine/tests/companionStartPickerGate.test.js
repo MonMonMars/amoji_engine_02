@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  bootSplashGateFromDom,
   clearStartPickerBodyLocks,
   dismissStartPickerDom,
   shouldAutoStartCompanionSession,
@@ -76,6 +77,27 @@ describe("companionStartPickerGate", () => {
     expect(shouldRemoveBootSplash({ sessionStarted: false })).toBe(false);
     expect(shouldRemoveBootSplash({ pickerVisible: true })).toBe(true);
     expect(shouldRemoveBootSplash({ sessionStarted: true })).toBe(true);
+  });
+
+  it("bootSplashGateFromDom respects start-picker body class and fallback", () => {
+    if (typeof document === "undefined") return;
+    document.body.innerHTML =
+      '<div id="amoji-boot-fallback" class="show"></div><div id="start-character-picker" class="hide" hidden></div>';
+    document.body.classList.add("companion-start-picker-open");
+    expect(
+      bootSplashGateFromDom(document, { sessionStarted: false }),
+    ).toBe(true);
+    document.body.classList.remove("companion-start-picker-open");
+    expect(
+      bootSplashGateFromDom(document, { sessionStarted: false }),
+    ).toBe(true);
+    const fallback = document.getElementById("amoji-boot-fallback");
+    fallback?.classList.remove("show");
+    fallback?.setAttribute("hidden", "");
+    expect(
+      bootSplashGateFromDom(document, { sessionStarted: false }),
+    ).toBe(false);
+    document.body.innerHTML = "";
   });
 
   it("dismissStartPickerDom hides element and clears body locks", () => {
