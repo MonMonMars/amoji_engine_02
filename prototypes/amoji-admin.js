@@ -48,6 +48,23 @@ function setView(name) {
   document.querySelectorAll(".admin-nav-btn").forEach((btn) => {
     btn.classList.toggle("is-active", btn.dataset.view === name);
   });
+  closeAdminMenu();
+}
+
+function closeAdminMenu() {
+  const nav = document.getElementById("admin-nav");
+  const toggle = document.getElementById("admin-menu-toggle");
+  nav?.classList.remove("is-open");
+  toggle?.setAttribute("aria-expanded", "false");
+}
+
+function toggleAdminMenu() {
+  const nav = document.getElementById("admin-nav");
+  const toggle = document.getElementById("admin-menu-toggle");
+  if (!nav || !toggle) return;
+  const open = !nav.classList.contains("is-open");
+  nav.classList.toggle("is-open", open);
+  toggle.setAttribute("aria-expanded", open ? "true" : "false");
 }
 
 function applyPermissionUi() {
@@ -185,6 +202,10 @@ document.getElementById("logout-btn").addEventListener("click", () => {
   setToken("");
   adminSession = null;
   showLogin(true);
+});
+
+document.getElementById("admin-menu-toggle")?.addEventListener("click", () => {
+  toggleAdminMenu();
 });
 
 document.querySelectorAll(".admin-nav-btn").forEach((btn) => {

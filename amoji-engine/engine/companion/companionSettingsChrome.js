@@ -82,6 +82,7 @@ export function buildSettingsChromeLabels(isEnglish = false, state = {}) {
     secretaryToday: en ? "Today briefing" : "今日簡報",
     secretaryTasks: en ? "Task list" : "任務清單",
     labLink: en ? "Voice lab" : "語音實驗室",
+    adminConsole: en ? "Admin control panel" : "管理控制台",
     listOllama: en ? "List Ollama LLM models" : "列出 Ollama LLM 模型",
     switchCompanion: en ? "Switch 3D companion" : "切換 3D 同伴",
     saveLlm: en ? "Save LLM" : "儲存 LLM",

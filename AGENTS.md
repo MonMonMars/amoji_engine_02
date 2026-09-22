@@ -96,7 +96,9 @@ Body class: `companion-jp-aaa-ui` (default on `amoji-companion.html`, reinforced
 
 ## Admin console (multi-level)
 
-- **UI:** `/admin` → `prototypes/amoji-admin.html`
+- **UI:** `/admin` → **Admin Control** app (`prototypes/amoji-admin.html`) — control menu: Dashboard, Users, Backend, Audit, Admins
+- **From companion:** Menu → Advanced → **Admin control panel**
+- **Create account env:** `npm run admin:bootstrap` (prints `AMOJI_AUTH_SECRET`, email, password for Vercel)
 - **API:** `/api/admin/{action}` — `login`, `session`, `roles`, `users`, `user`, `backend`, `audit`, `accounts`
 - **Roles (low → high):** `viewer` → `support` → `operations` → `superadmin` (see `api/_lib/adminRoles.mjs`)
 - **Bootstrap env (one account):** `AMOJI_ADMIN_EMAIL`, `AMOJI_ADMIN_PASSWORD`, `AMOJI_ADMIN_ROLE` (default `superadmin`)

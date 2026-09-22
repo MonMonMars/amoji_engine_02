@@ -4,14 +4,14 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="robots" content="noindex, nofollow" />
-    <title>Amoji Admin</title>
-    <link rel="stylesheet" href="/prototypes/amoji-admin.css?v=admin-v1" />
+    <title>Amoji Admin Control</title>
+    <link rel="stylesheet" href="/prototypes/amoji-admin.css?v=admin-v2-control-menu" />
   </head>
   <body>
     <div id="app" class="admin-app">
       <section id="login-panel" class="admin-card admin-login">
-        <h1>Amoji Admin</h1>
-        <p class="admin-muted">Role-based control for profiles, entitlements, and backend status.</p>
+        <h1>Admin Control</h1>
+        <p class="admin-muted">Sign in to manage users, entitlements, backend status, and audit logs.</p>
         <form id="login-form">
           <label>Email <input type="email" id="login-email" autocomplete="username" required /></label>
           <label>Password <input type="password" id="login-password" autocomplete="current-password" required /></label>
@@ -22,17 +22,21 @@
 
       <div id="shell" class="admin-shell" hidden>
         <header class="admin-topbar">
-          <div>
-            <strong>Amoji Admin</strong>
+          <div class="admin-topbar-brand">
+            <button type="button" id="admin-menu-toggle" class="admin-btn admin-btn--ghost admin-menu-toggle" aria-expanded="false" aria-controls="admin-nav">
+              Menu
+            </button>
+            <strong>Admin Control</strong>
             <span id="admin-role-badge" class="admin-badge"></span>
           </div>
           <div class="admin-topbar-actions">
+            <a href="/play" class="admin-btn admin-btn--ghost admin-app-link">Companion app</a>
             <span id="admin-email" class="admin-muted"></span>
             <button type="button" id="logout-btn" class="admin-btn admin-btn--ghost">Log out</button>
           </div>
         </header>
 
-        <nav class="admin-nav" id="admin-nav">
+        <nav class="admin-nav admin-control-menu" id="admin-nav" aria-label="Admin control menu">
           <button type="button" data-view="dashboard" class="admin-nav-btn is-active">Dashboard</button>
           <button type="button" data-view="users" class="admin-nav-btn">Users</button>
           <button type="button" data-view="user-detail" class="admin-nav-btn" hidden>Profile</button>
@@ -129,6 +133,6 @@
         </main>
       </div>
     </div>
-    <script type="module" src="/prototypes/amoji-admin.js?v=admin-v1"></script>
+    <script type="module" src="/prototypes/amoji-admin.js?v=admin-v2-control-menu"></script>
   </body>
 </html>
