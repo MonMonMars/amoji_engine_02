@@ -3,6 +3,7 @@
  * Filenames match picker ids so deploys cannot serve the wrong rig for a card.
  */
 import { REPLACEMENT_ROSTER_SLOTS } from "./companionRosterReplacementData.mjs";
+import { ROSTER_REPLACED_VRM_SOURCES } from "./companionRosterModelRefreshV522.mjs";
 const VRoidSampleA =
   "https://raw.githubusercontent.com/madjin/vrm-samples/master/vroid/stable/AvatarSample_A.vrm";
 const VRoidSampleC =
@@ -10,7 +11,7 @@ const VRoidSampleC =
 const VRoidFem =
   "https://raw.githubusercontent.com/madjin/vrm-samples/master/vroid/fem_vroid.vrm";
 
-export const ROSTER_VRM_ASSETS_SCHEMA = "amoji.rosterVrmAssets.v5-unique-pro-vrm";
+export const ROSTER_VRM_ASSETS_SCHEMA = "amoji.rosterVrmAssets.v6-keep-1-11-29";
 
 /** @param {string} characterId */
 export function rosterVrmBasename(characterId) {
@@ -143,12 +144,21 @@ export const ROSTER_VRM_DOWNLOADS = [
   { id: "hina", url: ROSTER_VRM_SOURCE_URLS.hina, minBytes: 100_000 },
   { id: "mio", url: ROSTER_VRM_SOURCE_URLS.mio, minBytes: 100_000 },
   { id: "amoji", url: ROSTER_VRM_SOURCE_URLS.amoji, minBytes: 500_000 },
-  ...REPLACEMENT_ROSTER_SLOTS.map((slot) => ({
+  ...REPLACEMENT_ROSTER_SLOTS.filter((slot) => slot.id !== "zane").map((slot) => ({
     id: slot.id,
     url: slot.vrmUrl,
     minBytes: 400_000,
   })),
-  { id: "luna", url: VRoidFem, minBytes: 500_000 },
+  {
+    id: "zane",
+    url: REPLACEMENT_ROSTER_SLOTS.find((s) => s.id === "zane")?.vrmUrl,
+    minBytes: 500_000,
+  },
+  {
+    id: "luna",
+    url: ROSTER_REPLACED_VRM_SOURCES.luna.vrmUrl,
+    minBytes: 400_000,
+  },
 ];
 
 export function rosterDownloadIds() {

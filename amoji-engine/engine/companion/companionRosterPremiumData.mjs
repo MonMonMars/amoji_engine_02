@@ -1,6 +1,8 @@
 /**
- * Premium roster slot #25 only — Luna (kept per product roster policy).
+ * Premium roster slot #25 — Luna (mesh refreshed with roster v522 policy).
  */
+import { ROSTER_REPLACED_VRM_SOURCES } from "./companionRosterModelRefreshV522.mjs";
+
 export const PREMIUM_ROSTER_SLOTS = [
   {
     id: "luna",
@@ -17,6 +19,8 @@ export const PREMIUM_ROSTER_SLOTS = [
     badge: { yue: "#25 Pro 推介", en: "#25 Pro Pick" },
     voices: { yue: "zh-HK-HiuMaanNeural-sharp", en: "en-US-AriaNeural" },
     role: "secretary",
+    vrmUrl: ROSTER_REPLACED_VRM_SOURCES.luna.vrmUrl,
+    thumbUrl: ROSTER_REPLACED_VRM_SOURCES.luna.thumbUrl,
     greetingYue: "月喺度。深夜定早會 — 我都可以陪你想清楚。",
     greetingEn: "Luna here. Late night or early stand-up — I'll help you think clearly.",
     personalityYue:
