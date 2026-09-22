@@ -151,6 +151,7 @@ Always pass page-function options as the **third** argument. Use `waitForPageFn(
 
 ### Cursor Cloud specific instructions
 
+- Recent companion UX (check when regressing): poke = body-only while TTS; planted limbs + idle face life; `?role=secretary&character=nova` deep links; secretary `?tab=today` opens after session start.
 - Before claiming a fix is live: `npm run verify:pre-delivery` locally, then `npm run verify:pre-delivery:prod` after deploy.
 - Production base: `https://temporary-rushing-oxygen-ok5jzhd.vercel.app` — confirm `/api/health` `build` matches `AMOJI_BUILD` in `buildVersion.mjs`.
 - Share user links as `/play?build=<AMOJI_BUILD>&pick=1&automic=0&lang=en&_cb=<timestamp>` (bookmark `/play` for cache-safe entry).
