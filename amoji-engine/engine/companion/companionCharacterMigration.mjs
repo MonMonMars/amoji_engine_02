@@ -15,7 +15,7 @@ export const RETIRED_VRM_BASENAMES = Object.freeze([
 ]);
 
 /** Bust browser caches when roster model files change (independent of HTML build). */
-export const AMOJI_MODEL_REVISION = "roster-v519-unique-pro-vrm";
+export const AMOJI_MODEL_REVISION = "roster-v522-keep-1-11-29";
 
 /**
  * @param {string | null | undefined} url

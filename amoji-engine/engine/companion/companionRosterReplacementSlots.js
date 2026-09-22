@@ -1,11 +1,11 @@
 /**
- * Build roster character defs for slots #12–24 and #26–31.
+ * Build roster character defs for slots #12–28 and #30–31 (#29 Zane stays in roster core).
  */
 import { rosterModelUrl } from "./rosterVrmAssets.mjs";
 import { REPLACEMENT_ROSTER_SLOTS } from "./companionRosterReplacementData.mjs";
 
 export const COMPANION_ROSTER_REPLACEMENT_SCHEMA =
-  "amoji.companionRosterReplacement.v480-keep-1-11-25";
+  "amoji.companionRosterReplacement.v522-keep-1-11-29";
 
 /** @param {import("./companionRosterReplacementData.mjs").ReplacementRosterSlot} slot */
 function buildReplacementCharacterDef(slot) {
