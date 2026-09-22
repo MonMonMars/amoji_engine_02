@@ -1617,6 +1617,7 @@ export async function createVrmAvatar(opts) {
             !eating &&
             !bodyMotion.idleBeatArmsActive,
         });
+        syncHumanoidSkinnedRawFromNormalized(vrm?.humanoid);
         stabilizeVrmSpringBones(vrm);
       }
       const crossfading =
