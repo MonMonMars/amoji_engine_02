@@ -2,6 +2,7 @@
  * Button special effects + overlay/tab page transitions for companion UIs.
  */
 import { spawnUiParticles } from "./companionUiParticles.js";
+import { notifyCompanionMenuOverlayOpened } from "./companionMenuSpeechGate.js";
 
 export const COMPANION_UI_EFFECTS_SCHEMA = "amoji.companionUiEffects.v2";
 
@@ -228,6 +229,7 @@ export function openUiOverlay(doc, cfg) {
   panel.classList.add("ui-overlay-entering");
   if (bodyClass) doc.body.classList.add(bodyClass);
   doc.body.classList.add("ui-page-entering");
+  notifyCompanionMenuOverlayOpened();
   uiAudio?.play?.("sheet-open");
   uiAudio?.haptic?.("light");
 
