@@ -534,9 +534,10 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
     applyPlantedUpperArmRest();
     if (talking) {
       applyTalkForearmsOnly(smoothedPose, computeTalkForearmBlend());
-    } else {
-      applyCalmIdleArms(smoothedPose, 1);
+      return;
     }
+    applyBoneRotation("leftLowerArm", armRestRotations.leftLowerArm);
+    applyBoneRotation("rightLowerArm", armRestRotations.rightLowerArm);
   };
 
   /** Planted idle — upper arms locked to calibrated rest (no pose-channel lift). */
@@ -840,7 +841,13 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
     } else if (opts.idleBeatArms) {
       applyIdleArms(pose, k, { combHair: opts.idleBeatCombHair === true });
     } else if (idleArms) {
-      applyCalmIdleArms(pose, k);
+      if (opts.plantFeet !== false && !talking && !opts.idleBeatArms) {
+        applyPlantedUpperArmRest();
+        applyBoneRotation("leftLowerArm", armRestRotations.leftLowerArm);
+        applyBoneRotation("rightLowerArm", armRestRotations.rightLowerArm);
+      } else {
+        applyCalmIdleArms(pose, k);
+      }
     } else if (talkArmBlend > 0.01) {
       if (opts.plantFeet !== false && !actionArms && !allowArms && !eatArms) {
         applyTalkForearmsOnly(pose, talkArmBlend);
@@ -1407,11 +1414,20 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
         opts.lockUpperArms !== false &&
         !idleBeatArmsActive &&
         !activeAction;
+      const lockForearms =
+        opts.lockForearms === true
+          ? true
+          : opts.lockForearms === false
+            ? false
+            : !talking &&
+              !idleBeatArmsActive &&
+              activeAction !== "eat" &&
+              activeAction !== "drink";
       enforcePlantedLimbRotations(humanoid, {
         legRestRotations,
         armRestRotations,
         lockUpperArms: lockArms,
-        lockForearms: false,
+        lockForearms,
       });
       if (lockArms && !idleBeatArmsActive) {
         applyPlantedArmPresentation();
