@@ -171,12 +171,14 @@ body.ui-fx-enabled .treat-sheet {
     filter 0.32s ease;
 }
 
+/* Closed overlays must stay invisible — never dim the stage when [hidden] or !.open */
 body.ui-fx-enabled .settings:not(.open),
 body.ui-fx-enabled .scene-sheet:not(.open),
 body.ui-fx-enabled .setup:not(.open),
 body.ui-fx-enabled .treat-sheet:not(.is-open) {
-  opacity: 0.88;
-  filter: blur(1px);
+  opacity: 0;
+  pointer-events: none;
+  filter: none;
 }
 
 body.ui-fx-enabled .settings.open,
