@@ -486,6 +486,32 @@ async function main() {
     ),
     JSON.stringify(loadedModelAudit),
   );
+
+  const pokeProbe = await page.evaluate(() => {
+    const probe = window.__amojiPerf?.probePokeWhileSpeaking?.();
+    return probe || { missing: true };
+  });
+  record(
+    "poke-full-mode-when-idle",
+    pokeProbe.idleMode === "full",
+    pokeProbe.missing ? "probe missing" : String(pokeProbe.idleMode),
+  );
+  record(
+    "poke-body-only-while-speaking",
+    pokeProbe.speakMode === "body-only" &&
+      Number(pokeProbe.bubblesAddedWhileSpeaking) === 0,
+    pokeProbe.missing
+      ? "probe missing"
+      : JSON.stringify({
+          speakMode: pokeProbe.speakMode,
+          bubbles: pokeProbe.bubblesAddedWhileSpeaking,
+        }),
+  );
+  record(
+    "poke-no-pet-score-on-tap",
+    pokeProbe.heartsUnchangedOnTap !== false,
+    pokeProbe.missing ? "probe missing" : String(pokeProbe.heartsUnchangedOnTap),
+  );
   record(
     "nova-vrm-requested",
     loadedModels.some((u) => /companion-nova\.vrm/i.test(u)),
