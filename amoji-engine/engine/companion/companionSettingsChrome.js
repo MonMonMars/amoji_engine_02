@@ -68,11 +68,14 @@ export function buildSettingsChromeLabels(isEnglish = false, state = {}) {
     advanced: en ? "Advanced" : "進階",
     camera: en ? "Reset camera view" : "重置鏡頭視角",
     brain: en ? "Brain" : "大腦",
-    liteLink: en ? "Secretary mode" : "秘書模式",
-    roleSection: en ? "Function" : "功能",
+    plannerSection: en ? "Today & tasks" : "今日同任務",
+    plannerHint: en
+      ? "Briefing, task list, and memories — same app for every companion."
+      : "簡報、任務同記憶 — 所有同伴都用同一個 App。",
+    roleSection: en ? "Companion" : "同伴",
     roleHint: en
-      ? "Each character sets their label (girlfriend, boyfriend, secretary, pet), voice, and personality. Chat, 3D, and menu features are the same for all."
-      : "每個角色有自己嘅標籤（女朋友、男朋友、秘書、寵物）、語音同性格。傾偈、3D 同選單功能全部一樣。",
+      ? "One app for everyone. Pick a character for voice & personality; change LLM under Brain."
+      : "全部用同一個 App。揀角色就有語音同性格；大腦（LLM）喺選單改。",
     rosterModelsHint: buildRosterModelsHint(en),
     rosterDetailsSummary: en ? "View full 3D roster" : "睇完整 3D 名單",
     roleReadout: state.roleReadout || (en ? "Girlfriend" : "女朋友"),

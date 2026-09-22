@@ -10,27 +10,27 @@ import {
   pickerCopyForRole,
   rosterCharactersForPicker,
   rosterCharactersForRole,
+  stripLegacyAppModeParams,
 } from "../engine/companion/companionUnifiedApp.js";
 
 describe("companionUnifiedApp", () => {
-  it("maps legacy lite entry to secretary role on full app", () => {
+  it("strips legacy lite params without forcing a secretary role", () => {
     const params = normalizeUnifiedEntryParams(
       new URLSearchParams("kind=lite&lang=en&tab=today"),
     );
-    expect(params.get("role")).toBe("secretary");
+    expect(params.get("role")).toBeNull();
     expect(params.get("kind")).toBeNull();
     expect(params.get("lite")).toBeNull();
     expect(params.get("tab")).toBe("today");
   });
 
-  it("maps secretary tabs without explicit role", () => {
-    for (const tab of ["today", "tasks", "me"]) {
-      const params = normalizeUnifiedEntryParams(
-        new URLSearchParams(`tab=${tab}&lang=en`),
-      );
-      expect(params.get("role")).toBe("secretary");
-      expect(params.get("tab")).toBe(tab);
-    }
+  it("stripLegacyAppModeParams removes role/kind/lite from URLs", () => {
+    const params = stripLegacyAppModeParams(
+      new URLSearchParams("role=secretary&kind=lite&pick=1"),
+    );
+    expect(params.get("role")).toBeNull();
+    expect(params.get("kind")).toBeNull();
+    expect(params.get("pick")).toBe("1");
   });
 
   it("injects LLM context database when characterId is provided", () => {
@@ -52,13 +52,13 @@ describe("companionUnifiedApp", () => {
     expect(rolePickBadge("boyfriend", false)).toContain("男朋友");
   });
 
-  it("resolves role from url or storage default", () => {
+  it("ignores ?role= in the URL — character roster defines personality", () => {
     const storage = {
       getItem(key) {
         return key === "amoji.companionRole.v1" ? "boyfriend" : null;
       },
     };
-    expect(resolveAppRole(new URLSearchParams("role=secretary"))).toBe("secretary");
+    expect(resolveAppRole(new URLSearchParams("role=secretary"))).toBe("girlfriend");
     expect(resolveAppRole(new URLSearchParams(""), storage)).toBe("boyfriend");
   });
 
@@ -92,9 +92,9 @@ describe("companionUnifiedApp", () => {
     ).toBe("yuki");
   });
 
-  it("honors secretary tab links and character-native roles", () => {
+  it("uses character-native roles even when tab= or role= appear in the URL", () => {
     expect(
-      resolveAppRole(new URLSearchParams("character=kate&tab=today&lang=en")),
+      resolveAppRole(new URLSearchParams("character=sienna&tab=today&lang=en")),
     ).toBe("secretary");
     expect(
       resolveAppRole(
@@ -102,35 +102,13 @@ describe("companionUnifiedApp", () => {
         null,
         "nova",
       ),
-    ).toBe("secretary");
-    expect(
-      resolveAppRole(
-        new URLSearchParams("character=sienna&role=secretary&lang=en"),
-        null,
-        "sienna",
-      ),
-    ).toBe("secretary");
-  });
-
-  it("honors ?role=secretary for the secretary default character id", () => {
-    expect(
-      resolveSessionRoleFromCharacter(
-        "sienna",
-        new URLSearchParams("role=secretary&lang=en"),
-      ),
-    ).toBe("secretary");
+    ).toBe("girlfriend");
     expect(
       resolveSessionRoleFromCharacter(
         "nova",
         new URLSearchParams("role=secretary&lang=en"),
       ),
-    ).toBe("secretary");
-    expect(
-      resolveSessionRoleFromCharacter(
-        "ember",
-        new URLSearchParams("role=secretary&lang=en"),
-      ),
-    ).toBe("secretary");
+    ).toBe("girlfriend");
   });
 
   it("uses role default character when none picked", () => {

@@ -35,23 +35,20 @@ export const COMPANION_UNIFIED_APP_SCHEMA = "amoji.companionUnifiedApp.v1";
  */
 export function normalizeUnifiedEntryParams(params) {
   const next = new URLSearchParams(params);
-  const legacyLite =
-    next.get("kind") === "lite" || next.get("lite") === "1";
-  if (legacyLite) {
-    if (!next.get("role")) next.set("role", "secretary");
-    next.delete("kind");
-    next.delete("lite");
-  }
-  const secretaryTab = next.get("tab");
-  if (
-    (secretaryTab === "today" ||
-      secretaryTab === "tasks" ||
-      secretaryTab === "me") &&
-    !next.get("role")
-  ) {
-    next.set("role", "secretary");
-  }
+  next.delete("kind");
+  next.delete("lite");
   return next;
+}
+
+/**
+ * Legacy deep links — mode/LLM live in Menu, not the URL.
+ * @param {URLSearchParams} params
+ */
+export function stripLegacyAppModeParams(params) {
+  params.delete("role");
+  params.delete("kind");
+  params.delete("lite");
+  return params;
 }
 
 /**
@@ -78,13 +75,15 @@ export function resolveAppRole(
     normalized.get("character") ||
     normalized.get("vrm") ||
     normalized.get("model3d");
-  if (explicitChar && cid) {
-    return resolveSessionRoleFromCharacter(cid, normalized);
-  }
-  if (cid && !normalized.get("role")) return resolveCharacterRole(cid);
-  const fromUrl = normalized.get("role");
-  if (fromUrl) return normalizeCompanionRole(fromUrl);
   if (cid) return resolveCharacterRole(cid);
+  if (explicitChar) {
+    return resolveCharacterRole(
+      resolveCharacterId({
+        characterParam: normalized.get("character"),
+        modelUrl: normalized.get("vrm") || normalized.get("model3d"),
+      }),
+    );
+  }
   return loadCompanionRole(storage);
 }
 
@@ -250,18 +249,9 @@ export function rolePickBadge(role, isEnglish = false) {
  * @param {string | null | undefined} characterId
  * @param {URLSearchParams | null | undefined} [params]
  */
-export function resolveSessionRoleFromCharacter(characterId, params) {
-  const charKey = String(characterId || "").toLowerCase();
-  const urlRole = params?.get?.("role");
-  const urlRoleKey = urlRole ? normalizeCompanionRole(urlRole) : null;
-  const rosterRole = resolveCharacterRole(characterId);
-  const roleDefaultId = urlRoleKey
-    ? String(ROLE_DEFAULT_CHARACTER_ID[urlRoleKey] || "").toLowerCase()
-    : "";
-  if (urlRoleKey && charKey && charKey === roleDefaultId) return urlRoleKey;
-  // Marketing / demo deep links: ?role=secretary&character=nova keeps secretary UX.
-  if (urlRoleKey && urlRoleKey !== rosterRole) return urlRoleKey;
-  return rosterRole;
+export function resolveSessionRoleFromCharacter(characterId, _params) {
+  void _params;
+  return resolveCharacterRole(characterId);
 }
 
 /** Unified picker copy — role/personality come from each character card. */
