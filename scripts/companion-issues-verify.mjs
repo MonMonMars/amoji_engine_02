@@ -487,32 +487,46 @@ async function main() {
     JSON.stringify(loadedModelAudit),
   );
 
+  await waitForPageFn(
+    page,
+    () => window.__amojiPerf?.getPokeTapMode?.() === "full",
+    { timeout: 90000 },
+  ).catch(() => null);
+
   const pokeProbe = await page.evaluate(() => {
     const probe = window.__amojiPerf?.probePokeWhileSpeaking?.();
     return probe || { missing: true };
   });
   record(
-    "poke-full-mode-when-idle",
-    pokeProbe.idleMode === "full",
-    pokeProbe.missing ? "probe missing" : String(pokeProbe.idleMode),
+    "poke-policy-idle-full",
+    pokeProbe.policyIdle === "full",
+    pokeProbe.missing ? "probe missing" : String(pokeProbe.policyIdle),
+  );
+  record(
+    "poke-policy-busy-body-only",
+    pokeProbe.policySpeak === "body-only",
+    pokeProbe.missing ? "probe missing" : String(pokeProbe.policySpeak),
   );
   record(
     "poke-body-only-while-speaking",
-    pokeProbe.speakMode === "body-only" &&
+    pokeProbe.policySpeak === "body-only" &&
       Number(pokeProbe.bubblesAddedWhileSpeaking) === 0,
     pokeProbe.missing
       ? "probe missing"
       : JSON.stringify({
-          speakMode: pokeProbe.speakMode,
+          liveMode: pokeProbe.liveMode,
           bubbles: pokeProbe.bubblesAddedWhileSpeaking,
         }),
   );
   record(
     "poke-idle-tap-adds-voice",
-    pokeProbe.idleMode === "full" && pokeProbe.idleTapAddsVoice === true,
+    pokeProbe.liveMode === "full" && pokeProbe.idleTapAddsVoice === true,
     pokeProbe.missing
       ? "probe missing"
-      : JSON.stringify({ idleTapAddsVoice: pokeProbe.idleTapAddsVoice }),
+      : JSON.stringify({
+          liveMode: pokeProbe.liveMode,
+          idleTapAddsVoice: pokeProbe.idleTapAddsVoice,
+        }),
   );
   record(
     "nova-vrm-requested",
