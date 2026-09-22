@@ -1,7 +1,12 @@
 /**
  * Hot-swap companion character without full page reload (Grok Ani–style).
  */
-import { createCompanionAvatar, replaceAvatarCanvas } from "./createAvatar.js";
+import {
+  createCompanionAvatar,
+  replaceAvatarCanvas,
+  resolveAvatarLoadTimeoutMs,
+} from "./createAvatar.js";
+import { preloadVrmBuffer } from "./companionPreload.js";
 import {
   buildCharacterSystemPrompt,
   characterAvatarConfig,
@@ -65,12 +70,18 @@ export async function switchCompanionCharacter(opts) {
   }
 
   emit(22, isEnglish ? "Downloading model…" : "下載模型中…");
+  try {
+    await preloadVrmBuffer(modelFetchUrl);
+  } catch (preloadErr) {
+    console.warn("[companion] switch preload failed", preloadErr);
+  }
   const loaded = await createCompanionAvatar({
     canvas: freshCanvas,
     controlsElement,
     characterId,
     modelUrl: modelFetchUrl,
     prefer: config.avatarPrefer,
+    timeoutMs: resolveAvatarLoadTimeoutMs(characterId),
     onCharacterTap,
     isAssistantSpeaking,
     onProgress: (pct, _label) => {

@@ -8356,13 +8356,13 @@
         applyCharacterSession(picked, { announce: false });
         startPicker?.setSelected?.(picked);
         releaseUnselectedCharacterCache(picked);
+        try {
+          await startPickerPreloadJob?.ensureModelReady?.(picked);
+        } catch (err) {
+          console.warn("[companion] preload selected model before begin", err);
+        }
         ensureAvatarLoadForSession();
         startSession({ characterId: picked });
-        void startPickerPreloadJob
-          ?.ensureModelReady?.(picked)
-          .catch((err) => {
-            console.warn("[companion] preload selected model after begin", err);
-          });
         if (
           !liteMode &&
           avatarLoadStarted &&
@@ -9665,8 +9665,8 @@
         startPickerPreloadJob?.setLocale?.(nextEnglish, nextCode);
         if (orbitHint) {
           orbitHint.textContent = nextEnglish
-          ? "Tap or multi-click body to poke · drag to rotate · pinch to zoom · multi-click empty to reset"
-          : "點或多下點身體戳一下 · 拖曳旋轉 · 雙指縮放 · 多下點空白重置";
+          ? "One finger tap body to poke · two fingers pinch to zoom · multi-click empty to reset"
+          : "單指點身體戳一下 · 雙指縮放 · 多下點空白重置";
         }
         saveCompanionLang(nextCode, localStorage);
         input.placeholder = composerPlaceholder();

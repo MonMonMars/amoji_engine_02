@@ -64,7 +64,26 @@ async function syncRosterEntry(entry) {
 
   if (entry.copyFrom) {
     const src = path.join(ASSETS, entry.copyFrom);
-    const buf = await fs.readFile(src);
+    let buf;
+    try {
+      buf = await fs.readFile(src);
+    } catch (err) {
+      const alt = path.join(ASSETS, rosterVrmBasename(entry.id));
+      try {
+        buf = await fs.readFile(alt);
+        console.warn(
+          "copyFrom missing",
+          entry.copyFrom,
+          "— using existing",
+          outName,
+        );
+      } catch {
+        throw new Error(
+          `${entry.id}: missing ${entry.copyFrom} and ${outName}. Run npm run postinstall from repo root (git must include prototypes/assets/*.vrm).`,
+          { cause: err },
+        );
+      }
+    }
     if (buf.length < minBytes) {
       throw new Error(`${entry.copyFrom}: only ${buf.length} bytes`);
     }
