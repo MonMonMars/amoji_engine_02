@@ -80,10 +80,14 @@ describe("companionArmRestCalibration", () => {
                   v.set(pos[0], pos[1], pos[2]);
                   return;
                 }
-                const leftZ = bones.get("leftUpperArm")?.rotation?.z || 0;
-                const rightZ = bones.get("rightUpperArm")?.rotation?.z || 0;
-                const flippedPair = leftZ > 0 && rightZ < 0;
-                const dropBoost = flippedPair ? 0.52 : 0.28;
+                const dropBoost =
+                  name === "leftHand"
+                    ? upperZ > 0
+                      ? 0.52
+                      : 0.28
+                    : upperZ < 0
+                      ? 0.52
+                      : 0.28;
                 v.set(pos[0], pos[1] - dropBoost, pos[2]);
                 return;
               }
