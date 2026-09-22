@@ -48,6 +48,7 @@ import { actionLoops } from "./companionActionMotion.js";
 import { BOOT_FULL_LIBRARY_WARM_CLIP_IDS } from "./companionIdleMotionPreload.js";
 import { detectVrmIdleRestRotations } from "./companionArmRestCalibration.js";
 import { createCompanionBodyMotion } from "./companionBodyMotion.js";
+import { auditPlantedLimbDualWrite } from "./companionPlantedLimbLock.js";
 import { characterGender } from "./companionCharacterCatalog.js";
 import {
   inferFingerFlexAxis,
@@ -645,6 +646,7 @@ export async function createVrmAvatar(opts) {
     syncHumanoidPose();
     bodyMotion.reapplyPlantedLimbs?.({ now: performance.now() });
     vrm.update(1 / 60);
+    bodyMotion.finishPlantedLimbLockPostUpdate?.({ hands: true });
   }
   bodyMotion.resetMotionClock?.();
   configureVrmSpringStability(vrm, sceneEnvironment);
@@ -1606,6 +1608,14 @@ export async function createVrmAvatar(opts) {
       syncHumanoidPose();
       stabilizeVrmSpringBones(vrm);
       vrm.update(dt);
+      if (!libraryMotion && !bodyMotion.currentAction) {
+        bodyMotion.finishPlantedLimbLockPostUpdate?.({
+          hands:
+            !talking &&
+            !eating &&
+            !bodyMotion.idleBeatArmsActive,
+        });
+      }
       const crossfading =
         !CALM_IDLE_USES_PROCEDURAL_BODY &&
         Boolean(motionPlayer.isCrossfading?.());
@@ -1994,6 +2004,12 @@ export async function createVrmAvatar(opts) {
     auditSpringGravity(opts) {
       return auditVrmSpringGravity(vrm, opts);
     },
+    auditPlantedLimbs(opts = {}) {
+      return auditPlantedLimbDualWrite(
+        vrm?.humanoid,
+        Number(opts.maxDeltaRad) || 0.0025,
+      );
+    },
     resize,
     resetCameraView,
     warmPresentFrame() {
@@ -2004,6 +2020,7 @@ export async function createVrmAvatar(opts) {
         vrm.update(1 / 60);
         bodyMotion.enforcePlantedLimbs?.({ lockForearms: true });
         bodyMotion.reapplyPlantedLimbs?.({ force: true, now: performance.now() });
+        bodyMotion.finishPlantedLimbLockPostUpdate?.({ hands: true });
         applyDefaultPortraitFrame?.();
         syncLookTarget();
         renderer.render(scene, camera);

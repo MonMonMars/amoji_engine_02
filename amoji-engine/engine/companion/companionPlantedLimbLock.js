@@ -8,7 +8,19 @@ import {
 } from "./companionPoseLibrary.js";
 
 export const COMPANION_PLANTED_LIMB_LOCK_SCHEMA =
-  "amoji.companionPlantedLimbLock.v4-legs-normalized-only";
+  "amoji.companionPlantedLimbLock.v5-post-update-raw-arm-sync";
+
+/** Upper-body bones that must match normalized→raw after vrm.update (ghost limb fix). */
+export const PLANTED_ARM_RAW_SYNC_BONES = Object.freeze([
+  "leftShoulder",
+  "rightShoulder",
+  "leftUpperArm",
+  "rightUpperArm",
+  "leftLowerArm",
+  "rightLowerArm",
+  "leftHand",
+  "rightHand",
+]);
 
 /** Raw dual-write on legs twists skinned skirts — normalized only for lower body. */
 export const PLANTED_LOCK_NORMALIZED_ONLY_BONES = Object.freeze([
@@ -130,4 +142,71 @@ export function enforcePlantedHandRest(humanoid) {
   writeHumanoidBoneRotation(humanoid, "leftHand", VRM_HAND_REST_ROTATIONS.leftHand);
   writeHumanoidBoneRotation(humanoid, "rightHand", VRM_HAND_REST_ROTATIONS.rightHand);
   humanoid.update?.();
+}
+
+/**
+ * @param {{ rotation?: { x?: number, y?: number, z?: number } } | null | undefined} bone
+ */
+export function readBoneEuler(bone) {
+  if (!bone?.rotation) return null;
+  return {
+    x: Number(bone.rotation.x) || 0,
+    y: Number(bone.rotation.y) || 0,
+    z: Number(bone.rotation.z) || 0,
+  };
+}
+
+/**
+ * Copy normalized arm/hand rotations onto raw skinning bones (legs stay normalized-only).
+ * @param {import('@pixiv/three-vrm').VRMHumanoid | null | undefined} humanoid
+ * @param {readonly string[]} [boneNames]
+ */
+export function syncSkinnedLimbRawFromNormalized(
+  humanoid,
+  boneNames = PLANTED_ARM_RAW_SYNC_BONES,
+) {
+  if (!humanoid) return 0;
+  let n = 0;
+  for (const name of boneNames) {
+    if (PLANTED_LOCK_NORMALIZED_ONLY_BONES.includes(name)) continue;
+    const norm = humanoid.getNormalizedBoneNode?.(name);
+    const raw = humanoid.getRawBoneNode?.(name);
+    if (!norm?.rotation || !raw?.rotation || raw === norm) continue;
+    const euler = readBoneEuler(norm);
+    if (!euler) continue;
+    writeVrmBoneEuler(raw, euler);
+    n += 1;
+  }
+  return n;
+}
+
+/**
+ * @param {import('@pixiv/three-vrm').VRMHumanoid | null | undefined} humanoid
+ * @param {number} [maxDeltaRad]
+ */
+export function auditPlantedLimbDualWrite(humanoid, maxDeltaRad = 0.0025) {
+  if (!humanoid) {
+    return { ok: false, maxDelta: null, issues: [], reason: "no-humanoid" };
+  }
+  /** @type {{ name: string, d: number }[]} */
+  const issues = [];
+  for (const name of PLANTED_ARM_RAW_SYNC_BONES) {
+    const norm = humanoid.getNormalizedBoneNode?.(name);
+    const raw = humanoid.getRawBoneNode?.(name);
+    if (!norm || !raw || raw === norm) continue;
+    const a = readBoneEuler(norm);
+    const b = readBoneEuler(raw);
+    if (!a || !b) continue;
+    const d = Math.max(
+      Math.abs(a.x - b.x),
+      Math.abs(a.y - b.y),
+      Math.abs(a.z - b.z),
+    );
+    if (d > maxDeltaRad) issues.push({ name, d });
+  }
+  return {
+    ok: issues.length === 0,
+    maxDelta: issues.length ? Math.max(...issues.map((i) => i.d)) : 0,
+    issues,
+  };
 }

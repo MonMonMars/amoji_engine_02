@@ -69,11 +69,13 @@ import {
 import {
   enforcePlantedHandRest,
   enforcePlantedLimbRotations,
+  syncSkinnedLimbRawFromNormalized,
   writeHumanoidBoneRotation,
+  PLANTED_SHOULDER_REST,
 } from "./companionPlantedLimbLock.js";
 
 export const COMPANION_BODY_SCHEMA =
-  "amoji.companionBody.v10-planted-limb-finish";
+  "amoji.companionBody.v11-post-vrm-update-limb-finish";
 
 /**
  * @param {import('@pixiv/three-vrm').VRMHumanoid | null | undefined} humanoid
@@ -537,6 +539,8 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
 
   /** Planted idle — upper arms locked to calibrated rest (no pose-channel lift). */
   const applyPlantedUpperArmRest = () => {
+    writeHumanoidBoneRotation(humanoid, "leftShoulder", PLANTED_SHOULDER_REST);
+    writeHumanoidBoneRotation(humanoid, "rightShoulder", PLANTED_SHOULDER_REST);
     const restL = armRestRotations.leftUpperArm;
     const restR = armRestRotations.rightUpperArm;
     applyBoneRotation("leftUpperArm", {
@@ -873,10 +877,21 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
       upperChest.rotation.x = (pose.chestX || 0) * 0.42 * k;
       upperChest.rotation.y = (pose.leanY || 0) * 0.28 * k;
     }
-    if (leftShoulder) {
+    const plantedShoulders =
+      (idleArms ||
+        (talkArmBlend > 0.01 &&
+          opts.plantFeet !== false &&
+          !actionArms &&
+          !allowArms &&
+          !eatArms)) &&
+      !opts.idleBeatArms;
+    if (leftShoulder && !plantedShoulders) {
       leftShoulder.rotation.z = (pose.shoulderL || 0) * k;
+    } else if (plantedShoulders) {
+      writeHumanoidBoneRotation(humanoid, "leftShoulder", PLANTED_SHOULDER_REST);
+      writeHumanoidBoneRotation(humanoid, "rightShoulder", PLANTED_SHOULDER_REST);
     }
-    if (rightShoulder) {
+    if (rightShoulder && !plantedShoulders) {
       rightShoulder.rotation.z = -(pose.shoulderR || 0) * k;
     }
     if (leftHand && Number(pose.handWaveL)) {
@@ -934,8 +949,49 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
       legRestRotations,
       armRestRotations,
       lockUpperArms: !idleBeatArmsActive,
+      lockForearms: false,
     });
     if (!talking) enforcePlantedHandRest(humanoid);
+    syncSkinnedLimbRawFromNormalized(humanoid);
+    humanoid.update?.();
+  };
+
+  /** After vrm.update — springs/humanoid flush must not leave raw arm bones on bind pose. */
+  const finishPlantedLimbLockPostUpdate = (opts = {}) => {
+    if (!humanoid || activeAction) return;
+    if (activeGesture === "point") {
+      enforcePlantedLimbRotations(humanoid, {
+        legRestRotations,
+        armRestRotations,
+        legsOnly: true,
+      });
+      syncSkinnedLimbRawFromNormalized(humanoid);
+      humanoid.update?.();
+      return;
+    }
+    const pokeActive =
+      pokeShakeElapsed >= 0 && pokeShakeElapsed < POKE_SHAKE_DURATION_SEC;
+    applyLegPose(smoothedPose, 1, {
+      plantFeet: true,
+      strictRest: !talking && !pokeActive,
+    });
+    if (!idleBeatArmsActive) {
+      applyPlantedArmPresentation();
+    }
+    applyHandAndFootRest(smoothedPose, 1, talking ? computeTalkForearmBlend() : 0, {
+      strictRest: !talking,
+    });
+    enforcePlantedLimbRotations(humanoid, {
+      legRestRotations,
+      armRestRotations,
+      lockUpperArms: !idleBeatArmsActive,
+      lockForearms: false,
+    });
+    const eatActive = activeAction === "eat" || activeAction === "drink";
+    if (opts.hands !== false && !talking && !idleBeatArmsActive && !eatActive) {
+      enforcePlantedHandRest(humanoid);
+    }
+    syncSkinnedLimbRawFromNormalized(humanoid);
     humanoid.update?.();
   };
 
@@ -1335,22 +1391,11 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
         opts.lockUpperArms !== false &&
         !idleBeatArmsActive &&
         !activeAction;
-      let lockForearms =
-        opts.lockForearms === true ||
-        (opts.lockForearms !== false &&
-          !talking &&
-          !activeGesture &&
-          !activeAction &&
-          !idleBeatArmsActive);
-      if (lockForearms && !talking) {
-        applyCalmIdleArms(smoothedPose, 1);
-        lockForearms = false;
-      }
       enforcePlantedLimbRotations(humanoid, {
         legRestRotations,
         armRestRotations,
         lockUpperArms: lockArms,
-        lockForearms,
+        lockForearms: false,
       });
       if (lockArms && !idleBeatArmsActive) {
         applyPlantedArmPresentation();
@@ -1358,8 +1403,10 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
       if (opts.hands !== false && !talking && !idleBeatArmsActive) {
         enforcePlantedHandRest(humanoid);
       }
+      syncSkinnedLimbRawFromNormalized(humanoid);
       humanoid.update?.();
     },
+    finishPlantedLimbLockPostUpdate,
     holdForLibraryMotion,
     setFingerFlexAxis,
     get emotion() {
