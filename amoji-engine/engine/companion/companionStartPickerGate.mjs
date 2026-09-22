@@ -52,6 +52,43 @@ export function shouldShowStartPickerOnBoot(opts = {}) {
 }
 
 /**
+ * Auto-enter session when the start picker will not show (returning users, autostart).
+ * @param {{
+ *   autostart?: string | null,
+ *   pick?: string | null,
+ *   start?: Record<string, unknown> | null,
+ *   sessionStartedLocal?: boolean,
+ *   storage?: Pick<Storage, "getItem"> | null,
+ * }} opts
+ */
+export function shouldAutoStartCompanionSession(opts = {}) {
+  const autostart = String(opts.autostart ?? "");
+  const pick = String(opts.pick ?? "");
+  if (opts.sessionStartedLocal || opts.start?.sessionStarted) return false;
+  if (autostart === "1" || pick === "0") return true;
+  const showStartPicker = autostart !== "1" && pick !== "0";
+  if (!showStartPicker) return true;
+  return !shouldShowStartPickerOnBoot(opts);
+}
+
+/**
+ * @param {{
+ *   sessionStarted?: boolean,
+ *   pickerVisible?: boolean,
+ *   pickerOpenBodyClass?: boolean,
+ *   fallbackVisible?: boolean,
+ * }} opts
+ */
+export function shouldRemoveBootSplash(opts = {}) {
+  return Boolean(
+    opts.sessionStarted ||
+      opts.pickerVisible ||
+      opts.pickerOpenBodyClass ||
+      opts.fallbackVisible,
+  );
+}
+
+/**
  * @param {Document | null | undefined} [doc]
  */
 export function clearStartPickerBodyLocks(doc = globalThis.document) {
