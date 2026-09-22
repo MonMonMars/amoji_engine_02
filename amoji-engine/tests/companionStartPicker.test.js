@@ -282,7 +282,7 @@ describe("companion start picker", () => {
     picker.destroy();
   });
 
-  it("hides preload bar shortly after roster reaches 100%", () => {
+  it("collapses preload bar after roster reaches 100% but keeps footer slot height", () => {
     if (typeof document === "undefined") return;
     vi.useFakeTimers();
     const picker = createCompanionStartPicker({
@@ -291,11 +291,30 @@ describe("companion start picker", () => {
       onStart: () => {},
     });
     const preload = picker.element.querySelector(".start-picker-preload");
+    const slot = picker.element.querySelector(".picker-footer-preload-slot");
     picker.setPreloadProgress(100, "Ready to chat");
     expect(preload?.classList.contains("is-ready")).toBe(true);
     vi.advanceTimersByTime(1500);
-    expect(preload?.hidden).toBe(true);
+    expect(preload?.hidden).toBe(false);
+    expect(preload?.classList.contains("is-slot-collapsed")).toBe(true);
+    expect(slot?.getBoundingClientRect().height).toBeGreaterThan(0);
     vi.useRealTimers();
+    picker.destroy();
+  });
+
+  it("reserved preload slot keeps stable height when loading starts", () => {
+    if (typeof document === "undefined") return;
+    const picker = createCompanionStartPicker({
+      isEnglish: true,
+      selectedId: "nova",
+      onStart: () => {},
+    });
+    const slot = picker.element.querySelector(".picker-footer-preload-slot");
+    const before = slot?.getBoundingClientRect().height ?? 0;
+    picker.setPreloadProgress(42, "Loading roster… 42%");
+    const during = slot?.getBoundingClientRect().height ?? 0;
+    expect(before).toBeGreaterThan(0);
+    expect(Math.abs(during - before)).toBeLessThan(2);
     picker.destroy();
   });
 
