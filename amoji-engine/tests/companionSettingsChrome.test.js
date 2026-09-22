@@ -21,7 +21,7 @@ describe("companionSettingsChrome", () => {
     expect(labels.rosterModelsHint).toMatch(/Mei|Atlas|VRoid/i);
     expect(labels.rosterDetailsSummary).toBe("View full 3D roster");
     expect(labels.modelLabel).toContain("LLM");
-    expect(labels.roleHint).toMatch(/personality/i);
+    expect(labels.roleHint).toMatch(/One app|Brain/i);
   });
 
   it("builds Cantonese settings labels", () => {

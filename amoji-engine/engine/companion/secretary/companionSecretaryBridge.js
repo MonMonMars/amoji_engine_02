@@ -416,7 +416,7 @@ export function createCompanionSecretaryBridge(opts = {}) {
     const title = doc.getElementById("settings-secretary-title");
     if (section) section.hidden = !active;
     if (title) {
-      title.textContent = isEnglish ? "Secretary" : "秘書";
+      title.textContent = isEnglish ? "Today & tasks" : "今日同任務";
     }
     if (modeLabel) {
       modeLabel.textContent = isEnglish ? "Focus mode" : "專注模式";
@@ -427,8 +427,6 @@ export function createCompanionSecretaryBridge(opts = {}) {
     if (btnToday) btnToday.textContent = isEnglish ? "Today" : "今日";
     if (btnTasks) btnTasks.textContent = isEnglish ? "Tasks" : "任務";
     if (btnMemory) btnMemory.textContent = isEnglish ? "Memories" : "記憶";
-    const liteLink = doc.getElementById("lite-link");
-    if (liteLink) liteLink.hidden = active;
     syncSettingsModeRow();
   };
 

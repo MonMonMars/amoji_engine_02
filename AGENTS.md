@@ -37,15 +37,11 @@ Picker-only E2E: `node scripts/companion-picker-verify.mjs` (14+ checks includin
 
 | App | Path |
 |-----|------|
-| **Bookmark this** (new URL every open) | `/play` |
-| Girlfriend 3D (Cantonese) | `/play?lang=yue&pick=1&automic=0` |
-| Girlfriend 3D (English) | `/play?lang=en&pick=1&automic=0` |
-| Boyfriend 3D | `/play?role=boyfriend&lang=en&pick=1&automic=0` |
-| Secretary (Today tab, 粵) | `/play?role=secretary&tab=today&lang=yue&pick=1&automic=0` |
-| Secretary (EN) | `/play?role=secretary&lang=en&pick=1&automic=0` |
+| **One app (bookmark)** | `/play` |
+| With language | `/play?lang=en&pick=1&automic=0` or `lang=yue` |
 | Setup / API key | `/setup` |
 
-**Unified app:** one 3D companion (`amoji-companion.html`) — girlfriend / boyfriend / secretary / pet come from **each character’s roster role** (voice + personality), not a separate mode menu. Switch character via start picker or Menu → Switch 3D companion; switch **language** via Menu → Session. Legacy `?role=` deep links still filter the roster; `kind=lite` redirects to `role=secretary`.
+**Unified app:** one 3D companion — character voice/personality comes from the roster pick, not URL modes. **Menu → Brain** switches LLM; **Menu → Today & tasks** opens planner; **Menu → Session** switches language; **Switch 3D companion** changes character. `?role=` / `kind=lite` are ignored (stripped from the URL).
 
 Do **not** bookmark `/companion-full` or `/companion`. iOS Safari often caches those pathnames forever and ignores `?build=`. `/play` is a never-cached 303 onto a brand-new `/n/<timestamp>/full` path on every open, then wipes Cache Storage / service workers.
 
@@ -53,7 +49,6 @@ Do **not** bookmark `/companion-full` or `/companion`. iOS Safari often caches t
 
 - https://temporary-rushing-oxygen-ok5jzhd.vercel.app/play?lang=yue&pick=1&automic=0
 - https://temporary-rushing-oxygen-ok5jzhd.vercel.app/play?lang=en&pick=1&automic=0
-- https://temporary-rushing-oxygen-ok5jzhd.vercel.app/play?role=secretary&tab=today&lang=yue&pick=1&automic=0
 - Backup entry (same 303): https://temporary-rushing-oxygen-ok5jzhd.vercel.app/go
 
 Programmatic helper: `formatDemoLinkBlock()` in `amoji-engine/engine/companion/deployUrls.mjs`.

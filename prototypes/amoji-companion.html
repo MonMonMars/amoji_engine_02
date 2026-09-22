@@ -8,9 +8,9 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji · Companion</title>
     <script>
-      window.__amojiBuild = "2026-09-22-v507-start-picker-default";
+      window.__amojiBuild = "2026-09-22-v508-unified-one-app";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-22-v507-start-picker-default"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-22-v508-unified-one-app"></script>
     <link
       rel="prefetch"
       href="/prototypes/assets/companion-char-nova.png"
@@ -698,28 +698,28 @@
       media="print"
       onload="this.media='all'"
     />
-    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-22-v507-start-picker-default" />
-    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-22-v507-start-picker-default" />
-    <link rel="stylesheet" href="/prototypes/companion-mic-button.css?v=2026-09-22-v507-start-picker-default" />
-    <link rel="stylesheet" href="/prototypes/companion-title-screen.css?v=2026-09-22-v507-start-picker-default" />
-    <link rel="stylesheet" href="/prototypes/companion-minimal-ui.css?v=2026-09-22-v507-start-picker-default" />
-    <link rel="stylesheet" href="/prototypes/companion-settings-ui.css?v=2026-09-22-v507-start-picker-default" />
-    <link rel="stylesheet" href="/prototypes/companion-mobile-shell.css?v=2026-09-22-v507-start-picker-default" />
-    <link rel="stylesheet" href="/prototypes/companion-picker-v4.css?v=2026-09-22-v507-start-picker-default" />
-    <link rel="stylesheet" href="/prototypes/companion-picker-stacked-layout.css?v=2026-09-22-v507-start-picker-default" />
-    <link rel="stylesheet" href="/prototypes/companion-picker-aaa-theme.css?v=2026-09-22-v507-start-picker-default" />
-    <link rel="stylesheet" href="/prototypes/companion-jp-aaa-shell.css?v=2026-09-22-v507-start-picker-default" />
-    <link rel="stylesheet" href="/prototypes/companion-responsive-layout.css?v=2026-09-22-v507-start-picker-default" />
-    <link rel="stylesheet" href="/prototypes/companion-chat-stack.css?v=2026-09-22-v507-start-picker-default" />
-    <link rel="stylesheet" href="/prototypes/companion-app-width.css?v=2026-09-22-v507-start-picker-default" />
-    <link rel="stylesheet" href="/prototypes/companion-scroll-affordances.css?v=2026-09-22-v507-start-picker-default" />
+    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-22-v508-unified-one-app" />
+    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-22-v508-unified-one-app" />
+    <link rel="stylesheet" href="/prototypes/companion-mic-button.css?v=2026-09-22-v508-unified-one-app" />
+    <link rel="stylesheet" href="/prototypes/companion-title-screen.css?v=2026-09-22-v508-unified-one-app" />
+    <link rel="stylesheet" href="/prototypes/companion-minimal-ui.css?v=2026-09-22-v508-unified-one-app" />
+    <link rel="stylesheet" href="/prototypes/companion-settings-ui.css?v=2026-09-22-v508-unified-one-app" />
+    <link rel="stylesheet" href="/prototypes/companion-mobile-shell.css?v=2026-09-22-v508-unified-one-app" />
+    <link rel="stylesheet" href="/prototypes/companion-picker-v4.css?v=2026-09-22-v508-unified-one-app" />
+    <link rel="stylesheet" href="/prototypes/companion-picker-stacked-layout.css?v=2026-09-22-v508-unified-one-app" />
+    <link rel="stylesheet" href="/prototypes/companion-picker-aaa-theme.css?v=2026-09-22-v508-unified-one-app" />
+    <link rel="stylesheet" href="/prototypes/companion-jp-aaa-shell.css?v=2026-09-22-v508-unified-one-app" />
+    <link rel="stylesheet" href="/prototypes/companion-responsive-layout.css?v=2026-09-22-v508-unified-one-app" />
+    <link rel="stylesheet" href="/prototypes/companion-chat-stack.css?v=2026-09-22-v508-unified-one-app" />
+    <link rel="stylesheet" href="/prototypes/companion-app-width.css?v=2026-09-22-v508-unified-one-app" />
+    <link rel="stylesheet" href="/prototypes/companion-scroll-affordances.css?v=2026-09-22-v508-unified-one-app" />
     <link
       rel="stylesheet"
-      href="/prototypes/companion-scene-backgrounds.css?v=2026-09-22-v507-start-picker-default"
+      href="/prototypes/companion-scene-backgrounds.css?v=2026-09-22-v508-unified-one-app"
     />
     <link
       rel="stylesheet"
-      href="/prototypes/companion-start-picker-sheet.css?v=2026-09-22-v507-start-picker-default"
+      href="/prototypes/companion-start-picker-sheet.css?v=2026-09-22-v508-unified-one-app"
     />
     <script>
       (function () {
@@ -728,21 +728,9 @@
           if (!params.get("pick")) params.set("pick", "1");
           if (!params.get("automic")) params.set("automic", "0");
         }
-        var legacyLite =
-          /\/lite\/?$/.test(location.pathname) ||
-          location.pathname === "/companion";
-        if (legacyLite && !params.get("role")) params.set("role", "secretary");
-        if (
-          (params.get("kind") === "lite" || params.get("lite") === "1") &&
-          !params.get("role")
-        ) {
-          params.set("role", "secretary");
-        }
         params.delete("kind");
         params.delete("lite");
-        if (params.get("tab") === "today" && !params.get("role")) {
-          params.set("role", "secretary");
-        }
+        params.delete("role");
         var qs = params.toString();
         if (qs !== String(location.search || "").replace(/^\?/, "")) {
           history.replaceState(null, "", location.pathname + (qs ? "?" + qs : ""));
@@ -750,7 +738,7 @@
       })();
     </script>
     <script type="module">
-      import { bootEarlyStartPicker } from "/amoji-engine/engine/companion/companionEarlyStartPicker.js?v=2026-09-22-v507-start-picker-default";
+      import { bootEarlyStartPicker } from "/amoji-engine/engine/companion/companionEarlyStartPicker.js?v=2026-09-22-v508-unified-one-app";
       import {
         applyBootPickerUrlDefaults,
         shouldShowStartPickerOnBoot,
@@ -4637,19 +4625,19 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-22-v507-start-picker-default",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-22-v508-unified-one-app",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-22-v507-start-picker-default",
-          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-22-v507-start-picker-default"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-22-v508-unified-one-app",
+          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-22-v508-unified-one-app"
         }
       }
     </script>
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-22-v507-start-picker-default"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-22-v508-unified-one-app"
     />
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-22-v507-start-picker-default"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-22-v507-start-picker-default"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-22-v508-unified-one-app"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-22-v508-unified-one-app"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;
@@ -4768,7 +4756,7 @@
             document.getElementById("amoji-boot-splash")?.remove();
           } else if (!window.__amojiModuleBooted) {
             window.__amojiShowBootFallback?.(
-              "Startup is taking too long — tap reload or open Secretary mode.",
+              "Startup is taking too long — tap reload or open Menu.",
             );
           }
         }, 16000);
@@ -4796,7 +4784,7 @@
             var target = ev.target;
             if (target && target.tagName === "SCRIPT" && target.type === "module") {
               window.__amojiShowBootFallback(
-                "App modules failed to load — pick a companion or reload. Secretary: /play?role=secretary",
+                "App modules failed to load — pick a companion or reload. Secretary: /play",
                 { soft: true },
               );
               return;
@@ -4809,7 +4797,7 @@
             ) {
               if (!window.__amojiModuleBooted) {
                 window.__amojiShowBootFallback(
-                  "A script failed to load — pick a companion or reload. Secretary: /play?role=secretary",
+                  "A script failed to load — pick a companion or reload. Secretary: /play",
                   { soft: true },
                 );
               }
@@ -4820,7 +4808,7 @@
         window.addEventListener("unhandledrejection", function (ev) {
           if (!window.__amojiModuleBooted) {
             window.__amojiShowBootFallback(
-              "App failed to start — pick a companion or reload. Secretary: /play?role=secretary",
+              "App failed to start — pick a companion or reload. Secretary: /play",
               { soft: true },
             );
           }
@@ -4943,7 +4931,7 @@
       <p class="boot-fallback-msg" style="margin: 0; max-width: 22rem; line-height: 1.5">
         App modules didn't load.
       </p>
-      <a id="amoji-reload-lite" href="/play?role=secretary&pick=1&automic=0">Secretary mode (/play)</a>
+      <a id="amoji-reload-play" href="/play?pick=1&automic=0">Open companion (/play)</a>
       <a id="amoji-reload" href="javascript:location.reload()">Tap to reload 3D</a>
     </div>
     <div class="stage">
@@ -5034,7 +5022,7 @@
         <div class="settings-body">
           <section id="settings-secretary-section" class="settings-card settings-secretary-section" hidden>
             <header class="settings-card-head">
-              <h3 class="settings-card-title" id="settings-secretary-title">Secretary</h3>
+              <h3 class="settings-card-title" id="settings-secretary-title">Today &amp; tasks</h3>
             </header>
             <div class="settings-row settings-secretary-nav">
               <button type="button" class="btn-secondary" id="settings-btn-secretary-today">Today</button>
@@ -5459,7 +5447,6 @@
         roleModeHint,
         pickerCopyForRole,
         rosterCharactersForPicker,
-        applySessionRoleBadgeOverrides,
         saveCompanionRole,
         normalizeCompanionRole,
         COMPANION_ROLES,
@@ -5480,16 +5467,7 @@
       } = titleScreenMod;
       const { resolveCharacterRole } = characterRolesMod;
       const rolePickerCopy = () => pickerCopyForRole(appRole, isEnglish);
-      const roleRosterProvider = (langCode) => {
-        const roster = rosterCharactersForPicker(langCode);
-        const urlRole = params.get("role");
-        if (!urlRole) return roster;
-        return applySessionRoleBadgeOverrides(
-          roster,
-          urlRole,
-          langCode === "en",
-        );
-      };
+      const roleRosterProvider = (langCode) => rosterCharactersForPicker(langCode);
       const { createCompanionSecretaryBridge } = secretaryBridgeMod;
       const { isCompanionCareEnabledForRole } = featureFlagsMod;
       let appRole = resolveAppRole(params);
@@ -5725,7 +5703,7 @@
       /** @type {ReturnType<typeof createCompanionSecretaryBridge> | null} */
       let secretaryBridge = null;
       const openSecretaryTabFromUrl = () => {
-        if (appRole !== "secretary" || !secretaryBridge) return;
+        if (!secretaryBridge) return;
         const openTab = params.get("tab");
         if (openTab === "today" || openTab === "tasks" || openTab === "me") {
           secretaryBridge.openPanel(openTab);
@@ -6554,9 +6532,7 @@
       };
 
       const sessionHrefForState = () => {
-        const charRole = resolveCharacterRole(characterId);
         const extra = { ...(params.get("tab") ? { tab: params.get("tab") } : {}) };
-        if (appRole !== charRole) extra.role = appRole;
         return buildSessionHref({
           basePath: location.pathname,
           lang: langCode,
@@ -6571,13 +6547,10 @@
         }
         document.body.classList.add(`companion-role-${appRole}`);
         chat?.setSystemPrompt?.(buildSessionSystemPrompt(characterId, isEnglish));
-        if (appRole === "secretary" && !secretaryBridge) {
+        if (!secretaryBridge) {
           void initCompanionChrome();
-        }
-        if (secretaryBridge) {
-          secretaryBridge.enabled = appRole === "secretary";
-        } else if (appRole === "secretary") {
-          void initCompanionChrome();
+        } else if (secretaryBridge) {
+          secretaryBridge.enabled = true;
         }
         const nextCare = isCompanionCareEnabledForRole(appRole);
         if (nextCare !== careEnabled) {
@@ -6587,11 +6560,9 @@
           if (careEnabled) void initCompanionChrome();
         }
         syncPickerSessionContext?.();
-        if (appRole !== resolveCharacterRole(characterId)) {
-          params.set("role", appRole);
-        } else {
-          params.delete("role");
-        }
+        params.delete("role");
+        params.delete("kind");
+        params.delete("lite");
         history.replaceState(null, "", sessionHrefForState());
         syncSettingsChrome();
       };
@@ -7056,7 +7027,7 @@
           langCode,
           menuState: llmContextMenuState(),
           uiRules: buildUiIntentPromptFragment(english, {
-            surface: appRole === "secretary" ? "secretary" : "companion",
+            surface: "companion",
           }),
           motionExtra: motionCapabilityExtra,
           storage: localStorage,
@@ -8693,9 +8664,10 @@
           onModeChange: () => {
             chat.setSystemPrompt?.(buildSessionSystemPrompt(characterId, isEnglish));
           },
-          enabled: appRole === "secretary",
+          enabled: true,
         });
-        if (appRole === "secretary" && sessionStarted) {
+        secretaryBridge?.syncSettingsMenu?.();
+        if (sessionStarted) {
           openSecretaryTabFromUrl();
         }
         if (!careEnabled) return;
@@ -8880,9 +8852,7 @@
 
       const mergedUiHandlers = () => ({
         ...companionUiHandlers,
-        ...(appRole === "secretary" && secretaryBridge
-          ? secretaryBridge.uiHandlers
-          : {}),
+        ...(secretaryBridge ? secretaryBridge.uiHandlers : {}),
       });
 
       const applyConversationUi = async (userMsg, rawReply) => {
@@ -9067,9 +9037,7 @@
             const rawReply = buildBootChitchatReply(cleaned, { isEnglish });
             const content = applyBootChitchatPerformance(rawReply, cleaned);
             await applyConversationUi(cleaned, rawReply);
-            if (appRole === "secretary") {
-              await secretaryBridge?.applyReplyTags?.(rawReply);
-            }
+            await secretaryBridge?.applyReplyTags?.(rawReply);
             const emotion = content.emotion || "neutral";
             const finalReply = stripReplyTags(rawReply);
             assistantBubble.textContent = finalReply;
@@ -9151,9 +9119,7 @@
           waitAct?.stop();
           avatar.setThinking?.(false);
           await applyConversationUi(cleaned, result.raw || reply);
-          if (appRole === "secretary") {
-            await secretaryBridge?.applyReplyTags?.(result.raw || reply);
-          }
+          await secretaryBridge?.applyReplyTags?.(result.raw || reply);
           let content = applyReplyPerformance(
             result.raw || reply,
             result.emotion || null,
@@ -9282,11 +9248,9 @@
         }
         ensureStartPickerClosed();
 
-        if (appRole === "secretary") {
-          void initCompanionChrome?.().then?.(() => {
-            requestAnimationFrame(() => openSecretaryTabFromUrl());
-          });
-        }
+        void initCompanionChrome?.().then?.(() => {
+          requestAnimationFrame(() => openSecretaryTabFromUrl());
+        });
 
         if (!busy && !voice.micOn && !voice.speaking) status.idle();
         if (conversationUi) {
@@ -9909,19 +9873,19 @@
         window.__amojiModuleBooted = false;
         window.__amojiHideLoading?.();
         window.__amojiShowBootFallback?.(
-          "App modules failed to load — tap reload or open Secretary mode (/play?role=secretary) (" +
+          "App modules failed to load — tap reload or open Menu (/play) (" +
             (err?.message || err) +
             ")",
         );
         window.__amojiStaticFallback?.(
-          "App modules failed to load — refresh or use /play?role=secretary. (" +
+          "App modules failed to load — refresh or use /play. (" +
             (err?.message || err) +
             ")",
         );
         window.__amojiStart.ready = true;
         window.__amojiStart.run = function () {
           window.__amojiShowBootFallback?.(
-            "App modules failed — tap reload below or open /play?role=secretary.",
+            "App modules failed — tap reload below or open /play.",
           );
         };
         if (window.__amojiStart.tapped && !window.__amojiStart.sessionStarted) {

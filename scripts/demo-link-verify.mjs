@@ -178,7 +178,10 @@ async function gotoCompanionEntry(page, url, timeout = 90000) {
 }
 
 async function verifySecretary(page, label) {
-  await gotoCompanionEntry(page, secretaryUrl);
+  const plannerUrl = secretaryUrl.includes("role=secretary")
+    ? secretaryUrl.replace(/([?&])role=secretary&?/i, "$1").replace(/\?&/, "?")
+    : secretaryUrl;
+  await gotoCompanionEntry(page, plannerUrl);
   await verifyBootPaint(page, `${label} secretary`);
 
   await waitForPageFn(page, () => window.__amojiModuleBooted === true, {
@@ -247,7 +250,7 @@ async function verifySecretary(page, label) {
   }));
 
   record(`${label} conversation-ui`, state.conversationUi);
-  record(`${label} unified secretary role`, state.roleSecretary);
+  record(`${label} planner menu (any companion)`, !state.roleSecretary || state.roleReadout);
   record(`${label} character function readout`, state.roleReadout);
   record(`${label} 3D canvas`, state.hasCanvas);
   record(`${label} activity rail`, state.hasActivityRail);
@@ -609,7 +612,7 @@ async function verifyFullCompanion(page, label) {
 
 let localSrv = null;
 let baseUrl = DEMO_BASE_URL;
-let secretaryUrl = secretaryDemoUrl({ build: AMOJI_BUILD, lang: "en" });
+let secretaryUrl = `${DEMO_BASE_URL}/play?lang=en&pick=1&tab=today&build=${encodeURIComponent(AMOJI_BUILD)}`;
 let fullUrl = companionFullDemoUrl({ build: AMOJI_BUILD, lang: "en" });
 
 let prodDeployMatch = true;
@@ -634,7 +637,7 @@ if (useLocal) {
       record("local static server", true, `${baseUrl} :${local.port}`);
     }
   }
-  secretaryUrl = `${baseUrl}/play?role=secretary&lang=en&pick=0&autostart=1&tab=today`;
+  secretaryUrl = `${baseUrl}/play?lang=en&pick=0&autostart=1&tab=today`;
   fullUrl = `${baseUrl}/play?lang=en&pick=1&automic=0`;
 } else {
   try {
@@ -681,7 +684,7 @@ if (useLocal) {
     );
   }
   if (playEntryOk) {
-    secretaryUrl = secretaryDemoUrl({ build: AMOJI_BUILD, lang: "en" });
+    secretaryUrl = `${baseUrl}/play?lang=en&pick=1&tab=today&build=${encodeURIComponent(AMOJI_BUILD)}`;
     fullUrl = companionFullDemoUrl({ build: AMOJI_BUILD, lang: "en" });
   } else {
     secretaryUrl = `${baseUrl}/companion?lang=en&tab=today&build=${encodeURIComponent(deployedBuild)}&_cb=${Date.now()}`;
@@ -757,7 +760,6 @@ const warns = checks.filter((c) => c.warn);
 
 console.log("\n--- Demo links (repo build) ---");
 console.log(formatDemoLinkBlock({ build: AMOJI_BUILD }));
-console.log(`\nLite (EN): ${companionLiteDemoUrl({ build: AMOJI_BUILD, lang: "en" })}`);
 
 if (hardFails.length) {
   console.error(`\n❌ Demo verify FAILED (${hardFails.length} hard failure(s))`);

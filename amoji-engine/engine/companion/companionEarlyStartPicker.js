@@ -4,7 +4,6 @@
 import { createCompanionStartPicker } from "./companionCharacterPicker.js";
 import { attachStartPickerModelPreload } from "./companionStartPickerPreload.js";
 import {
-  applySessionRoleBadgeOverrides,
   pickerCopyForRole,
   resolveAppRole,
   resolveRoleDefaultCharacter,
@@ -96,12 +95,7 @@ export async function bootEarlyStartPicker(opts = {}) {
     selectedId,
     atmosphereEl,
     pickerCopy: roleCopy,
-    rosterProvider: (langCode) =>
-      applySessionRoleBadgeOverrides(
-        rosterCharactersForPicker(langCode),
-        appRole,
-        langCode === "en",
-      ),
+    rosterProvider: (langCode) => rosterCharactersForPicker(langCode),
     onCardTapFx: playCompanionCardTapFx,
     onSelectionChange: () => {
       void preloadJob?.refreshSelectedModel?.();

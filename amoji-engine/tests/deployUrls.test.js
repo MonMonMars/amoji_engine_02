@@ -23,8 +23,8 @@ describe("deployUrls", () => {
     const block = formatDemoLinkBlock({ build: "test-build" });
     expect(block).toContain("test-build");
     expect(block).toContain("/play");
-    expect(block).toContain("companion-full");
-    expect(block).toContain("Secretary");
+    expect(block).toMatch(/Brain|Menu/i);
+    expect(block).not.toContain("Boyfriend (EN)");
   });
 
   it("builds direct companion URLs for stale production hosts", () => {
@@ -33,17 +33,14 @@ describe("deployUrls", () => {
     expect(full).toContain("lang=en");
     expect(full).toContain("build=test-build");
     const lite = companionLiteDirectUrl({ lang: "yue", build: "test-build" });
-    expect(lite).toContain("/play?");
-    expect(lite).toContain("character=nova");
-    expect(lite).toContain("role=secretary");
-    expect(lite).toContain("lang=yue");
+    expect(lite).toContain("/companion-full");
+    expect(lite).not.toContain("role=secretary");
   });
 
-  it("builds secretary demo URL with today tab", () => {
+  it("builds planner deep link with today tab only", () => {
     const url = secretaryDemoUrl({ build: "test-build", lang: "yue" });
     expect(url).toContain("tab=today");
     expect(url).toContain("/play");
-    expect(url).toContain("character=nova");
-    expect(url).toContain("role=secretary");
+    expect(url).not.toContain("role=secretary");
   });
 });
