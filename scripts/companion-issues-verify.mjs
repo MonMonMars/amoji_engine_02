@@ -508,9 +508,11 @@ async function main() {
         }),
   );
   record(
-    "poke-no-pet-score-on-tap",
-    pokeProbe.heartsUnchangedOnTap !== false,
-    pokeProbe.missing ? "probe missing" : String(pokeProbe.heartsUnchangedOnTap),
+    "poke-idle-tap-adds-voice",
+    pokeProbe.idleMode === "full" && pokeProbe.idleTapAddsVoice === true,
+    pokeProbe.missing
+      ? "probe missing"
+      : JSON.stringify({ idleTapAddsVoice: pokeProbe.idleTapAddsVoice }),
   );
   record(
     "nova-vrm-requested",
