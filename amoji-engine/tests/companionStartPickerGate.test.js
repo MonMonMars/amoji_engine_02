@@ -29,7 +29,7 @@ describe("companionStartPickerGate", () => {
     ).toBe(true);
   });
 
-  it("skips start picker when completed flag is set unless pick=force", () => {
+  it("skips start picker when completed flag is set without explicit pick=1", () => {
     const storage = {
       getItem: (k) =>
         k === "amoji.companion.startPickerCompleted.v1" ? "1" : null,
@@ -48,7 +48,7 @@ describe("companionStartPickerGate", () => {
         start: { tapped: false, pickerDismissed: false },
         storage,
       }),
-    ).toBe(false);
+    ).toBe(true);
     expect(
       shouldShowStartPickerOnBoot({
         pick: "force",
@@ -58,7 +58,7 @@ describe("companionStartPickerGate", () => {
     ).toBe(true);
   });
 
-  it("auto-starts when picker was completed but pick=1", () => {
+  it("auto-starts when picker was completed and pick is not in URL", () => {
     const storage = {
       getItem: (k) =>
         k === "amoji.companion.startPickerCompleted.v1" ? "1" : null,
@@ -67,6 +67,13 @@ describe("companionStartPickerGate", () => {
     expect(
       shouldAutoStartCompanionSession({
         pick: "1",
+        start: { tapped: false, pickerDismissed: false },
+        storage,
+      }),
+    ).toBe(false);
+    expect(
+      shouldAutoStartCompanionSession({
+        pick: null,
         start: { tapped: false, pickerDismissed: false },
         storage,
       }),
