@@ -1,11 +1,18 @@
-import { isIosLike } from "./companionPlatform.js";
-import { resolveCharacterId } from "./companionCharacterCatalog.js";
+import {
+  HIGH_POLY_FACE_CHARACTER_IDS,
+  resolveCharacterId,
+} from "./companionCharacterCatalog.js";
 import { defaultVrmModelFetchUrl } from "./companionModelAssets.mjs";
+import { isIosLike } from "./companionPlatform.js";
+import { preloadVrmBuffer } from "./companionPreload.js";
 
-export const COMPANION_AVATAR_SCHEMA = "amoji.createAvatar.v1";
+export const COMPANION_AVATAR_SCHEMA = "amoji.createAvatar.v2-highpoly-timeout";
 
-/** Per-stage timeout so slow mobile networks do not block the whole page. */
-export const AVATAR_LOAD_TIMEOUT_MS = 22_000;
+/** Default VRM load budget (download + parse) on fast desktop networks. */
+export const AVATAR_LOAD_TIMEOUT_MS = 45_000;
+
+/** Kizuna-class HD VRM (~19MB, 70k+ tris) needs extra time on mobile / 3G. */
+export const HIGH_POLY_AVATAR_LOAD_TIMEOUT_MS = 120_000;
 
 /**
  * Replace canvas so a failed WebGL context does not block the next renderer.
@@ -67,6 +74,25 @@ export function createStubAvatar() {
  * @param {string} [label]
  * @returns {Promise<T>}
  */
+/**
+ * @param {string | null | undefined} characterId
+ * @param {number} [overrideMs]
+ */
+export function resolveAvatarLoadTimeoutMs(characterId, overrideMs) {
+  if (Number.isFinite(overrideMs) && overrideMs > 0) return overrideMs;
+  const id = String(characterId || "").toLowerCase();
+  if (HIGH_POLY_FACE_CHARACTER_IDS.has(id)) {
+    return HIGH_POLY_AVATAR_LOAD_TIMEOUT_MS;
+  }
+  if (isIosLike()) return 60_000;
+  if (typeof navigator !== "undefined") {
+    const et = navigator.connection?.effectiveType;
+    if (et === "slow-2g" || et === "2g") return 120_000;
+    if (et === "3g") return 90_000;
+  }
+  return AVATAR_LOAD_TIMEOUT_MS;
+}
+
 function withLoadTimeout(promise, ms, label = "avatar") {
   return new Promise((resolve, reject) => {
     const timer = setTimeout(
@@ -110,9 +136,10 @@ export function shouldSkipGltfFallback(modelUrl, prefer) {
 export async function createCompanionAvatar(opts) {
   const emit = (pct, label) => opts.onProgress?.(pct, label);
   emit(4, "boot");
-  const timeoutMs =
-    opts.timeoutMs ??
-    (isIosLike() ? 45_000 : AVATAR_LOAD_TIMEOUT_MS);
+  const timeoutMs = resolveAvatarLoadTimeoutMs(
+    opts.characterId,
+    opts.timeoutMs,
+  );
   const prefer = opts.prefer || "vrm";
   const modelUrl = opts.modelUrl || undefined;
   const characterId =
@@ -137,6 +164,11 @@ export async function createCompanionAvatar(opts) {
         globalThis.__amojiPreload?.getVrmModule?.() ?? import("./vrmAvatar.js");
       const { createVrmAvatar } = await vrmModule;
       emit(8, "vrm");
+      try {
+        await preloadVrmBuffer(rosterVrmUrl);
+      } catch (preloadErr) {
+        console.warn("[companion] VRM prefetch failed, loading from URL", preloadErr);
+      }
       const avatar = await withLoadTimeout(
         createVrmAvatar({
           canvas,
