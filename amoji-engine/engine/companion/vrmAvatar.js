@@ -30,6 +30,7 @@ import {
   isHeadFacingCamera,
   modelBodyFacingScore,
   normalizeModelYaw,
+  portraitVisibleFacingScore,
   portraitDistanceForHeight,
 } from "./companionPortraitFraming.js";
 import {
@@ -2037,6 +2038,12 @@ export async function createVrmAvatar(opts) {
           ? facingAlignmentScore(headBone, camera.position, vrm.humanoid)
           : 0,
         facingCamera: isHeadFacingCamera(headBone, camera, vrm.humanoid, model),
+        visibleScore: portraitVisibleFacingScore(
+          headBone,
+          camera.position,
+          vrm.humanoid,
+          model,
+        ),
         modelRotY: model.rotation.y,
         cameraZSign: portraitCameraZSign,
       };

@@ -14,7 +14,7 @@ import {
   portraitDistanceForHeight,
 } from "./companionPortraitFraming.js";
 
-export const COMPANION_CAMERA_APPLY_SCHEMA = "amoji.companionCameraApply.v5-body-forward-score";
+export const COMPANION_CAMERA_APPLY_SCHEMA = "amoji.companionCameraApply.v6-face-forward-score";
 
 /** Auto follow while talking / full-body moves (~4.2/s). */
 export const AUTO_CAMERA_LERP_RATE = 4.2;
@@ -274,9 +274,11 @@ export function resolveFrontPortraitFrame(opts) {
         : sign === PORTRAIT_CAMERA_Z_SIGN
           ? 1
           : 0;
-      const score = model
-        ? modelBodyFacingScore(model, shot.position)
-        : headScore;
+      const score = headBone
+        ? headScore
+        : model
+          ? modelBodyFacingScore(model, shot.position)
+          : headScore;
       if (!best || score > best.score) {
         best = {
           score,

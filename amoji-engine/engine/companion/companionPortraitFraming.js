@@ -4,7 +4,7 @@
 import * as THREE from "three";
 
 export const COMPANION_PORTRAIT_FRAMING_SCHEMA =
-  "amoji.companionPortraitFraming.v7-body-forward";
+  "amoji.companionPortraitFraming.v8-face-forward";
 
 /** Fallback lower-neck height when no head bone (ratio from feet to head). */
 export const UPPER_BODY_ANCHOR_RATIO = 0.84;
@@ -171,6 +171,21 @@ export function detectPortraitCameraZSign(headBone, anchor, portraitDist, humano
 }
 
 /**
+ * Visible portrait facing: prefer eye/head forward; fall back to root +Z when no head.
+ * @param {import('three').Object3D | null | undefined} headBone
+ * @param {import('three').Vector3} cameraPosition
+ * @param {import('@pixiv/three-vrm').VRMHumanoid | null | undefined} [humanoid]
+ * @param {import('three').Object3D | null | undefined} [model]
+ */
+export function portraitVisibleFacingScore(headBone, cameraPosition, humanoid, model) {
+  if (!cameraPosition) return 0;
+  if (headBone) {
+    return facingAlignmentScore(headBone, cameraPosition, humanoid);
+  }
+  return model ? modelBodyFacingScore(model, cameraPosition) : 0;
+}
+
+/**
  * True when the camera sits in front of the face (not behind the head).
  * @param {import('three').Object3D | null | undefined} headBone
  * @param {import('three').PerspectiveCamera} camera
@@ -178,9 +193,8 @@ export function detectPortraitCameraZSign(headBone, anchor, portraitDist, humano
  */
 export function isHeadFacingCamera(headBone, camera, humanoid, model) {
   if (!camera) return true;
-  if (model) return isModelBodyFacingCamera(model, camera);
-  if (!headBone) return true;
-  return facingAlignmentScore(headBone, camera.position, humanoid) > 0.15;
+  if (!headBone && !model) return true;
+  return portraitVisibleFacingScore(headBone, camera.position, humanoid, model) > 0.15;
 }
 
 /**
@@ -215,8 +229,13 @@ export function normalizeModelYaw(model) {
 export function correctPortraitModelYaw(model, headBone, camera, humanoid, minScore = 0.12) {
   if (!model || !camera) return false;
 
-  const bodyScore = modelBodyFacingScore(model, camera.position);
-  if (bodyScore >= minScore) return false;
+  const score = portraitVisibleFacingScore(
+    headBone,
+    camera.position,
+    humanoid,
+    model,
+  );
+  if (score >= minScore) return false;
 
   model.rotation.y += Math.PI;
   normalizeModelYaw(model);
