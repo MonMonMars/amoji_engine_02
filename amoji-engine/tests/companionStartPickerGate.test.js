@@ -2,7 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   clearStartPickerBodyLocks,
   dismissStartPickerDom,
-  markStartPickerDismissed,
+  shouldAutoStartCompanionSession,
+  shouldRemoveBootSplash,
   shouldShowStartPickerOnBoot,
 } from "../engine/companion/companionStartPickerGate.mjs";
 
@@ -54,6 +55,27 @@ describe("companionStartPickerGate", () => {
         storage,
       }),
     ).toBe(true);
+  });
+
+  it("auto-starts when picker was completed but pick=1", () => {
+    const storage = {
+      getItem: (k) =>
+        k === "amoji.companion.startPickerCompleted.v1" ? "1" : null,
+      setItem: () => {},
+    };
+    expect(
+      shouldAutoStartCompanionSession({
+        pick: "1",
+        start: { tapped: false, pickerDismissed: false },
+        storage,
+      }),
+    ).toBe(true);
+  });
+
+  it("does not remove boot splash until picker or session is visible", () => {
+    expect(shouldRemoveBootSplash({ sessionStarted: false })).toBe(false);
+    expect(shouldRemoveBootSplash({ pickerVisible: true })).toBe(true);
+    expect(shouldRemoveBootSplash({ sessionStarted: true })).toBe(true);
   });
 
   it("dismissStartPickerDom hides element and clears body locks", () => {
