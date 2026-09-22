@@ -192,6 +192,9 @@ async function verifySecretary(page, label) {
         picker.getAttribute("aria-hidden") !== "true",
     );
   });
+  const wantsTabToday = /(?:^|[?&])tab=today(?:&|$)/i.test(
+    String(secretaryUrl || ""),
+  );
   if (pickerOpen) {
     await beginStartPickerSession(page, {
       characterId: "nova",
@@ -201,11 +204,25 @@ async function verifySecretary(page, label) {
     await waitForPageFn(page, () => window.__amojiStart?.sessionStarted === true, {
       timeout: 120000,
     }).catch(() => null);
+    if (wantsTabToday) {
+      await waitForPageFn(
+        page,
+        () => document.querySelector(".secretary-overlay.is-open") != null,
+        { timeout: 20000 },
+      ).catch(() => null);
+    }
   }
 
   await page
     .waitForSelector("#activity-rail", { state: "attached", timeout: 30000 })
     .catch(() => null);
+
+  if (wantsTabToday) {
+    const autoTabOpen = await page.evaluate(
+      () => document.querySelector(".secretary-overlay.is-open") != null,
+    );
+    record(`${label} secretary tab auto-open`, autoTabOpen);
+  }
 
   const build = await page.evaluate(() => window.__amojiBuild);
   record(`${label} page loads`, Boolean(build), build);
