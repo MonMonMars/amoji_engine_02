@@ -2,7 +2,7 @@
  * ChatGPT-style companion mic button — emotion-linked glow, rings, and waveform.
  */
 export const COMPANION_MIC_BUTTON_SCHEMA =
-  "amoji.companionMicButton.v7-activity-flash-dblclick-stop";
+  "amoji.companionMicButton.v8-mic-off-idle-no-tts-orb";
 
 /** Mic orb diameter: quiet → smaller, loud → larger (live states only). */
 export const MIC_ORB_SCALE_MIN = 0.78;
@@ -505,13 +505,13 @@ export function createCompanionMicButton(el, opts = {}) {
       reset();
       return;
     }
-    if (ctx.speaking || ctx.assistantActive) {
-      setState("speaking");
-      return;
-    }
     if (!ctx.micOn) {
       setState("idle");
       reset();
+      return;
+    }
+    if (ctx.speaking || ctx.assistantActive) {
+      setState("speaking");
       return;
     }
     setState("listening");

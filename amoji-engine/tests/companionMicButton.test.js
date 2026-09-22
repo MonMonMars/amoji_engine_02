@@ -133,16 +133,16 @@ describe("companionMicButton", () => {
     expect(micButtonVisualForState("speaking")).toBe("cloud");
   });
 
-  it("shows speaking orb while TTS plays even when mic capture is off", () => {
+  it("shows grey mic icon when capture is off even if TTS flags are stale", () => {
     if (typeof document === "undefined") return;
     const el = document.createElement("button");
     const ui = createCompanionMicButton(el);
-    ui.sync({ micOn: false, speaking: true, assistantActive: false });
-    expect(el.dataset.micState).toBe("speaking");
-    expect(el.dataset.micVisual).toBe("cloud");
-    ui.sync({ micOn: false, speaking: false, assistantActive: false });
+    ui.sync({ micOn: false, speaking: true, assistantActive: true });
     expect(el.dataset.micState).toBe("idle");
     expect(el.dataset.micVisual).toBe("icon");
+    ui.sync({ micOn: true, speaking: true, assistantActive: false });
+    expect(el.dataset.micState).toBe("speaking");
+    expect(el.dataset.micVisual).toBe("cloud");
   });
 
   it("pulses live activity while listening or speaking and flashes on volume", () => {

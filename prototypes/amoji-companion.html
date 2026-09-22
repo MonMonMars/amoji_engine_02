@@ -6197,12 +6197,12 @@
           emotionBall.sync({
             sessionState: sessionUiState,
             micOn: voice.micOn,
-            speaking: voice.speaking,
-            assistantActive: voice.assistantOutputActive,
+            speaking: voice.micOn && voice.speaking,
+            assistantActive: voice.micOn && voice.assistantOutputActive,
             disabled: btnMic.disabled,
             emotion: currentEmotion,
             nuance: speakContent?.nuance || "none",
-            level: emotionBallLevel,
+            level: voice.micOn ? emotionBallLevel : 0,
           });
         }
         const effective =
@@ -6212,7 +6212,7 @@
         miniEmotionBall.sync({
           emotion: currentEmotion,
           nuance: speakContent?.nuance || "none",
-          level: emotionBallLevel,
+          level: voice?.micOn ? emotionBallLevel : 0,
           state: effective || "idle",
         });
       };
@@ -6234,7 +6234,8 @@
         if (
           !sessionStarted ||
           composerTextMode() ||
-          document.body.classList.contains("composer-always-visible")
+          document.body.classList.contains("composer-always-visible") ||
+          (voice && !voice.micOn)
         ) {
           emotionBall.hide();
           return;
@@ -7132,7 +7133,10 @@
         if (voice) {
           micUi.sync({
             micOn: voice.micOn,
-            speaking: voice.speaking || voice.assistantOutputActive,
+            speaking:
+              voice.micOn &&
+              (voice.speaking || voice.assistantOutputActive),
+            assistantActive: voice.micOn && voice.assistantOutputActive,
             disabled: btnMic.disabled,
           });
         } else {
@@ -7141,7 +7145,7 @@
         miniEmotionBall.sync({
           emotion,
           nuance: speakContent?.nuance || "none",
-          level: emotionBallLevel,
+          level: voice?.micOn ? emotionBallLevel : 0,
           state: effective || "idle",
         });
       };
@@ -7645,8 +7649,8 @@
       const syncMicBtn = () => {
         micUi.sync({
           micOn: voice.micOn,
-          speaking: voice.speaking,
-          assistantActive: voice.assistantOutputActive,
+          speaking: voice.micOn && voice.speaking,
+          assistantActive: voice.micOn && voice.assistantOutputActive,
           disabled: btnMic.disabled,
         });
         stage?.classList.toggle("mic-mode", conversationUi || voice.micOn);
@@ -9803,11 +9807,22 @@
           }
         } else {
           micQueue.length = 0;
+          if (activeTurn && !activeTurn.aborted) {
+            abortActiveTurn("mic-off");
+          }
           voice.stopMic();
           avatar.setListening?.(false);
+          avatar.setTalking?.(false);
+          avatar.setThinking?.(false);
+          avatar.setMouthOpen?.(0);
+          emotionBallLevel = 0;
+          emotionBall?.reset?.();
+          miniEmotionBall?.setLevel?.(0);
+          micUi.reset();
           if (!usesMinimalComposer()) addBubble("system", "Mic off");
           input.placeholder = composerPlaceholder();
           syncMicBtn();
+          syncCompanionStatusUi("idle", currentEmotion);
         }
       };
 

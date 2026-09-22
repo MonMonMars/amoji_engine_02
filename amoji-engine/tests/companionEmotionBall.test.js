@@ -241,6 +241,13 @@ describe("companionEmotionBall", () => {
     ).toBe("speaking");
     expect(
       resolveMiniEmotionBallState({
+        sessionState: "speaking",
+        speaking: true,
+        micOn: false,
+      }),
+    ).toBe("idle");
+    expect(
+      resolveMiniEmotionBallState({
         sessionState: "thinking",
         micBlocked: true,
       }),
