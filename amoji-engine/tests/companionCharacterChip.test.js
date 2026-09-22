@@ -18,18 +18,17 @@ describe("top-left companion chip", () => {
     );
   });
 
-  it("opens start picker before session and in-session picker after live session", () => {
+  it("opens the same start picker from chip before and during session", () => {
     expect(html).toContain('id="brand-btn"');
     expect(html).toContain('id="companion-status-line"');
     expect(html).toContain('aria-haspopup="dialog"');
     expect(html).toContain('brandBtn?.addEventListener("click"');
-    expect(html).toContain("openCharacterPicker()");
+    expect(html).toContain("openStartPickerOverlay");
     expect(html).toContain("isLiveSession()");
-    expect(html).toMatch(
+    expect(html).not.toMatch(
       /if \(isLiveSession\(\)\) \{[\s\S]*characterPicker\?\.open\?\.\(\)/,
     );
     expect(html).toMatch(/startPicker\.show\(\)/);
-    expect(html).toContain("characterPicker?.isOpen?.()");
     expect(html).toContain("startPicker?.isOpen?.()");
   });
 });

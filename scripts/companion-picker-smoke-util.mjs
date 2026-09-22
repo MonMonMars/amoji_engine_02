@@ -3,7 +3,8 @@
  */
 
 const START_ROOT = "#start-character-picker";
-const SESSION_ROOT = "#companion-character-picker";
+/** In-session chip opens the same start picker overlay as boot. */
+const SESSION_ROOT = "#start-character-picker";
 
 /**
  * @param {Element | null | undefined} el
@@ -168,6 +169,9 @@ export async function openInSessionCompanionPicker(page) {
     await page.click("#settings-btn-companions");
   }
   await page.waitForSelector(`${SESSION_ROOT}.is-open`, { timeout: 15000 });
+  await page.waitForSelector(`${SESSION_ROOT}.companion-picker--showcase`, {
+    timeout: 15000,
+  });
 }
 
 /**
@@ -181,12 +185,12 @@ export async function switchCompanionInSession(page, characterId, opts = {}) {
   const cardSel = `${SESSION_ROOT} [data-character-id="${characterId}"]`;
   await page.waitForSelector(cardSel, { timeout: 15000 });
   await page.click(cardSel);
-  const confirmSel = `${SESSION_ROOT} .picker-switch-btn:not([disabled])`;
+  const confirmSel = `${SESSION_ROOT} .picker-begin-btn:not([disabled])`;
   await page.waitForSelector(confirmSel, { timeout: 8000 });
   await page.click(confirmSel);
   await page.waitForFunction(
     () => {
-      const picker = document.getElementById("companion-character-picker");
+      const picker = document.getElementById("start-character-picker");
       return !picker?.classList.contains("is-open");
     },
     undefined,

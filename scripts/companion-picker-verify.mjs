@@ -20,7 +20,7 @@ import {
 } from "./companion-picker-smoke-util.mjs";
 import { waitForPageFn } from "./playwrightPageUtil.mjs";
 
-const SESSION_ROOT = "#companion-character-picker";
+const SESSION_ROOT = "#start-character-picker";
 
 function parseArg(name, fallback) {
   const idx = process.argv.indexOf(name);
@@ -548,24 +548,29 @@ record("activity rail mounted", true);
 
 await openInSessionCompanionPicker(page);
 const sessionAaa = await page.evaluate(() => {
-  const picker = document.getElementById("companion-character-picker");
+  const picker = document.getElementById("start-character-picker");
   return {
     aaa: picker?.classList.contains("companion-picker--aaa-theme"),
-    session: picker?.classList.contains("companion-picker--session"),
+    showcase: picker?.classList.contains("companion-picker--showcase"),
+    sameAsBoot: picker?.classList.contains("companion-picker--start"),
   };
 });
-record("in-session AAA theme", sessionAaa.aaa && sessionAaa.session);
+record(
+  "in-session same picker as boot",
+  sessionAaa.aaa && sessionAaa.showcase && sessionAaa.sameAsBoot,
+);
 
-const sessionFeatured = await page.evaluate(() => {
-  const picker = document.getElementById("companion-character-picker");
-  return picker?.querySelectorAll(".picker-featured-row .companion-card").length ?? 0;
+const sessionRoster = await page.evaluate(() => {
+  const picker = document.getElementById("start-character-picker");
+  return picker?.querySelectorAll(".companion-card--start-strip, .companion-picker-grid--roster [data-character-id]").length ?? 0;
 });
-record("in-session featured row (4+)", sessionFeatured >= 4, String(sessionFeatured));
+record("in-session roster strip", sessionRoster >= 8, String(sessionRoster));
 const sessionScene = await page.evaluate(() => {
-  const picker = document.getElementById("companion-character-picker");
+  const picker = document.getElementById("start-character-picker");
   return {
-    section: Boolean(picker?.querySelector(".picker-roster-panel .picker-scene-section")),
+    section: Boolean(picker?.querySelector(".picker-background-row, .picker-scene-section")),
     chips: picker?.querySelectorAll(".picker-scene-chip").length ?? 0,
+    begin: Boolean(picker?.querySelector(".picker-begin-btn")),
   };
 });
 record(
@@ -573,15 +578,16 @@ record(
   sessionScene.section && sessionScene.chips >= 8,
   String(sessionScene.chips),
 );
+record("in-session begin CTA", sessionScene.begin);
 
 await page.click(`${SESSION_ROOT} [data-character-id="ember"]`);
-await page.click(`${SESSION_ROOT} .picker-switch-btn`);
+await page.click(`${SESSION_ROOT} .picker-begin-btn`);
 await page.waitForFunction(
-  () => !document.getElementById("companion-character-picker")?.classList.contains("is-open"),
+  () => !document.getElementById("start-character-picker")?.classList.contains("is-open"),
   undefined,
   { timeout: 120000 },
 );
-record("in-session switch confirm", true);
+record("in-session begin confirm", true);
 
 await page.screenshot({
   path: join(outDir, "picker_verify_session.png"),

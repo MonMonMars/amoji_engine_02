@@ -1029,14 +1029,23 @@ async function main() {
 
   await openInSessionCompanionPicker(page);
   const inSessionPicker = await page.evaluate(() => {
-    const picker = document.getElementById("companion-character-picker");
+    const picker = document.getElementById("start-character-picker");
     return {
-      open: Boolean(picker && !picker.hidden),
+      open: Boolean(
+        picker &&
+          picker.classList.contains("is-open") &&
+          !picker.classList.contains("hide"),
+      ),
+      showcase: picker?.classList.contains("companion-picker--showcase"),
       roleBadges: picker?.querySelectorAll(".companion-card-role").length || 0,
       roleStrips: picker?.querySelectorAll(".companion-card-role-strip").length || 0,
     };
   });
-  record("in-session-picker", inSessionPicker.open);
+  record(
+    "in-session-picker",
+    inSessionPicker.open && inSessionPicker.showcase,
+    inSessionPicker.showcase ? "start picker" : "wrong picker",
+  );
   record(
     "in-session-no-role-chrome",
     inSessionPicker.roleBadges === 0 && inSessionPicker.roleStrips === 0,

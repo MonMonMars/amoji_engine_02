@@ -1323,14 +1323,16 @@ export function createCompanionStartPicker(opts = {}) {
       scrollSelectedIntoView();
       requestAnimationFrame(renderScrollHint);
     },
-    hide() {
+    hide(opts = {}) {
       starting = false;
       shell.classList.remove("is-starting", "is-open");
       shell.classList.add("hide");
       shell.setAttribute("aria-hidden", "true");
       shell.hidden = true;
       shell.removeAttribute("aria-busy");
-      markStartPickerDismissed(globalThis.__amojiStart);
+      if (opts.markDismissed !== false) {
+        markStartPickerDismissed(globalThis.__amojiStart);
+      }
       clearStartPickerBodyLocks();
     },
     setOnStart(handler) {
