@@ -20,4 +20,9 @@ describe("companion boot splash wiring", () => {
       'document.body.classList.remove("companion-start-pending")',
     );
   });
+
+  it("exposes poke-while-speaking probe on __amojiPerf", () => {
+    expect(companionHtml).toContain("probePokeWhileSpeaking");
+    expect(companionHtml).toContain("resolveCompanionPokeTapMode");
+  });
 });
