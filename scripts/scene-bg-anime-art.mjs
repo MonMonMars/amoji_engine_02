@@ -2,7 +2,7 @@
  * Japanese anime / VN / gacha-game style scene painters (SVG body fragments).
  * Rich layered gradients, neon, bokeh, perspective interiors, atmospheric depth.
  */
-export const SCENE_ANIME_ART_REVISION = "anime-scene-v486-hq-atmosphere-pass";
+export const SCENE_ANIME_ART_REVISION = "anime-scene-v512-native1080-ai-grade";
 
 /** @param {number} w @param {number} h */
 export function animePaintDefs(w, h) {
@@ -104,22 +104,45 @@ export function animeHorizonMist(w, h, yRatio = 0.52, opacity = 0.22) {
   <ellipse cx="${w * 0.5}" cy="${h * yRatio}" rx="${w * 0.55}" ry="${h * 0.12}" fill="#fff" opacity="${(opacity * 0.35).toFixed(3)}"/>`;
 }
 
-/** Extra depth: dust, floor haze, vignette (appended to every regenerated scene). */
-export function animeSceneFinisher(w, h) {
+/**
+ * Extra depth: dust, floor haze, vignette (appended to every regenerated scene).
+ * @param {number} w
+ * @param {number} h
+ * @param {"standard" | "interior" | "minimal"} [mode]
+ */
+export function animeSceneFinisher(w, h, mode = "standard") {
+  const dustCount = mode === "interior" ? 28 : 36;
   let dust = "";
-  for (let i = 0; i < 36; i += 1) {
+  for (let i = 0; i < dustCount; i += 1) {
     const cx = ((i * 137) % 1000) / 1000 * w;
     const cy = ((i * 89 + 17) % 1000) / 1000 * h * 0.85;
     const r = 0.6 + (i % 3) * 0.35;
     dust += `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${r.toFixed(2)}" fill="#fff" opacity="${(0.022 + (i % 4) * 0.01).toFixed(3)}"/>`;
   }
+  const hazeOp = mode === "interior" ? 0.08 : mode === "minimal" ? 0.06 : 0.14;
+  const gradeOp = mode === "interior" ? 0.72 : 1;
+  const vignetteOp = mode === "interior" ? 0.22 : mode === "minimal" ? 0.18 : 0.38;
+  const floorCrush = mode === "interior" ? 0.08 : 0.14;
   return `${dust}
-  ${animeDetailPass(w, h)}
+  ${mode === "minimal" ? "" : animeDetailPass(w, h)}
   <rect width="${w}" height="${h}" fill="url(#stageGlow)"/>
-  <rect width="${w}" height="${h}" fill="url(#haze)" opacity="0.14"/>
-  <rect width="${w}" height="${h}" fill="url(#filmGrade)"/>
-  <rect width="${w}" height="${h}" fill="url(#vignette)"/>
-  <rect x="0" y="${h * 0.9}" width="${w}" height="${h * 0.1}" fill="#000" opacity="0.14"/>`;
+  <rect width="${w}" height="${h}" fill="url(#haze)" opacity="${hazeOp}"/>
+  <rect width="${w}" height="${h}" fill="url(#filmGrade)" opacity="${gradeOp}"/>
+  <rect width="${w}" height="${h}" fill="url(#vignette)" opacity="${vignetteOp}"/>
+  <rect x="0" y="${h * 0.9}" width="${w}" height="${h * 0.1}" fill="#000" opacity="${floorCrush}"/>`;
+}
+
+/** Subtle wall paper grain + baseboard (interior polish). */
+export function animeInteriorWallDetail(w, h) {
+  let grain = "";
+  for (let i = 0; i < 48; i += 1) {
+    const x = ((i * 311) % 1000) / 1000 * w;
+    const y = ((i * 197) % 1000) / 1000 * h * 0.52;
+    grain += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="0.9" fill="#fff" opacity="0.018"/>`;
+  }
+  return `${grain}
+  <rect x="0" y="${h * 0.51}" width="${w}" height="6" fill="#584838" opacity="0.35"/>
+  <rect x="0" y="${h * 0.515}" width="${w}" height="2" fill="#fff" opacity="0.06"/>`;
 }
 
 /** Anime window — city bokeh at night. */
@@ -153,6 +176,7 @@ export function drawCozyRoomArt(w, h) {
   }
   return `${animePaintDefs(w, h)}
   <rect width="${w}" height="${h}" fill="url(#wallWarm)"/>
+  ${animeInteriorWallDetail(w, h)}
   <polygon points="0,${h * 0.52} 0,${h} ${w},${h} ${w},${h * 0.52} ${w * 0.82},${h * 0.58} ${w * 0.18},${h * 0.58}" fill="url(#floorWood)"/>
   ${Array.from({ length: 16 }, (_, i) => {
     const x1 = (i / 16) * w;
@@ -171,7 +195,7 @@ export function drawCozyRoomArt(w, h) {
   <circle cx="${w * 0.88}" cy="${h * 0.32}" r="55" fill="url(#lampGlow)"/>
   <rect x="${w * 0.86}" y="${h * 0.28}" width="8" height="120" fill="#484848"/>
   <ellipse cx="${w * 0.5}" cy="${h * 0.45}" rx="200" ry="120" fill="#fff8e8" opacity="0.08"/>
-  ${bokehLights(8, w, h)}`;
+  ${bokehLights(12, w, h)}`;
 }
 
 /**
@@ -197,6 +221,7 @@ export function drawBedroomArt(w, h) {
   ).join("");
   return `${animePaintDefs(w, h)}
   <rect width="${w}" height="${h}" fill="url(#wallWarm)"/>
+  ${animeInteriorWallDetail(w, h)}
   <polygon points="0,${h * 0.52} 0,${h} ${w},${h} ${w},${h * 0.52} ${w * 0.82},${h * 0.58} ${w * 0.18},${h * 0.58}" fill="url(#floorWood)"/>
   ${Array.from({ length: 16 }, (_, i) => {
     const x1 = (i / 16) * w;
@@ -209,6 +234,7 @@ export function drawBedroomArt(w, h) {
   ${Array.from({ length: 5 }, (_, i) => `<rect x="${w * 0.07}" y="${h * 0.22 + i * 38}" width="${w * 0.09}" height="28" fill="${i % 2 ? "#e87888" : "#88a8d8"}" opacity="0.48" rx="2"/>`).join("")}
   <rect x="${w * 0.16}" y="${h * 0.54}" width="${w * 0.38}" height="${h * 0.26}" rx="14" fill="#b898c8" opacity="0.82"/>
   <rect x="${w * 0.18}" y="${h * 0.5}" width="${w * 0.34}" height="22" rx="10" fill="#fff" opacity="0.14"/>
+  <rect x="${w * 0.17}" y="${h * 0.56}" width="${w * 0.36}" height="${h * 0.22}" rx="12" fill="#000" opacity="0.06"/>
   ${plush}
   <rect x="${w * 0.72}" y="${h * 0.48}" width="${w * 0.08}" height="${h * 0.22}" fill="#786858" opacity="0.55" rx="3"/>
   <circle cx="${w * 0.76}" cy="${h * 0.46}" r="8" fill="#ffe8c8" opacity="0.65"/>
@@ -216,7 +242,8 @@ export function drawBedroomArt(w, h) {
   <rect x="${w * 0.655}" y="${h * 0.58}" width="10" height="82" fill="#584838"/>
   <circle cx="${w * 0.88}" cy="${h * 0.3}" r="58" fill="url(#lampGlow)"/>
   <rect x="${w * 0.865}" y="${h * 0.26}" width="8" height="118" fill="#484848"/>
-  <ellipse cx="${w * 0.48}" cy="${h * 0.42}" rx="210" ry="115" fill="#fff8e8" opacity="0.09"/>`;
+  <ellipse cx="${w * 0.48}" cy="${h * 0.42}" rx="210" ry="115" fill="#fff8e8" opacity="0.09"/>
+  ${bokehLights(14, w, h)}`;
 }
 
 /** @param {number} w @param {number} h */

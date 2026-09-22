@@ -4,12 +4,12 @@
  */
 (function () {
   var SCENE_KEY = "amoji.companion.scenePreset";
-  var SCENE_ART_V = "picker-anime-v486-hq-atmosphere";
+  var SCENE_ART_V = "picker-anime-v512-native1080-bedroom";
   var OUTDOOR_SCENE = " night-city rooftop park beach sunset aurora rain-street cherry-blossom mountain harbor meadow zen-garden day-skyline bamboo-forest train-platform ";
   var LEGACY_SCENE = { minimal: "cozy-room" };
 
   function resolveSceneId(raw) {
-    var key = String(raw || "cozy-room").toLowerCase();
+    var key = String(raw || "bedroom").toLowerCase();
     if (LEGACY_SCENE[key]) return LEGACY_SCENE[key];
     return key;
   }
@@ -25,7 +25,7 @@
 
   function paintAtmosphereEarly() {
     try {
-      var id = "cozy-room";
+      var id = "bedroom";
       var raw = localStorage.getItem(SCENE_KEY);
       if (raw) {
         var parsed = JSON.parse(raw);

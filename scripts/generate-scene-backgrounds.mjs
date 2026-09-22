@@ -46,7 +46,7 @@ function sceneArtFile(presetId) {
     return `/prototypes/assets/scene-bg/${presetId}.svg${ART_Q}`;
   }
   if (existsSync(ANIME_PNG_PATH)) return `${ANIME_PNG}${ART_Q}`;
-  return `/prototypes/assets/scene-bg/cozy-room.svg${ART_Q}`;
+  return `/prototypes/assets/scene-bg/bedroom.svg${ART_Q}`;
 }
 
 /** @param {string} presetId */
@@ -68,13 +68,13 @@ function atmosphereArtLayers(presetId) {
 /** @param {string} presetId */
 function atmosphereLayers(presetId) {
   const overlay = PNG_SCENE_IDS.has(presetId) || presetId === "__default__" ? overlayDefault : overlayScene;
-  const id = presetId === "__default__" ? "cozy-room" : presetId;
+  const id = presetId === "__default__" ? "bedroom" : presetId;
   return `${overlay},\n    ${atmosphereArtLayers(id)} !important;`;
 }
 
 /** @param {string} presetId */
 function atmosphereSizeLayers(presetId) {
-  const id = presetId === "__default__" ? "cozy-room" : presetId;
+  const id = presetId === "__default__" ? "bedroom" : presetId;
   const svgPath = join(outDir, `${id}.svg`);
   const pngPath = join(outDir, `${id}.png`);
   let layers = 2;
@@ -84,8 +84,9 @@ function atmosphereSizeLayers(presetId) {
   return `${Array(layers).fill("cover").join(", ")} !important`;
 }
 
-const W = 960;
-const H = 540;
+/** Match companion stage PNG resolution (avoid upscaling soft 960×540 art). */
+const W = 1920;
+const H = 1080;
 
 let written = 0;
 for (const preset of SCENE_BACKGROUND_PRESETS) {
@@ -100,7 +101,13 @@ for (const preset of SCENE_BACKGROUND_PRESETS) {
     written += 1;
     continue;
   }
-  const body = draw(W, H) + animeSceneFinisher(W, H);
+  const finisherMode =
+    preset.environment === "indoor"
+      ? preset.id === "minimal"
+        ? "minimal"
+        : "interior"
+      : "standard";
+  const body = draw(W, H) + animeSceneFinisher(W, H, finisherMode);
   const svg = `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">
 ${body}

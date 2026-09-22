@@ -61,12 +61,22 @@ Programmatic helper: `formatDemoLinkBlock()` in `amoji-engine/engine/companion/d
 
 ## Scene backgrounds
 
-Regenerate all **27** anime scene PNGs + CSS after editing `scripts/scene-bg-anime-art.mjs`:
+Regenerate all anime scene PNGs + CSS after editing `scripts/scene-bg-anime-art.mjs`:
 
 ```bash
 npm run scene-bg
 node scripts/sync-build-version.mjs
 ```
+
+Optional **OpenAI** PNG pass (requires `OPENAI_API_KEY`, then refreshes CSS):
+
+```bash
+npm run scene-bg:ai
+node scripts/rasterize-scene-backgrounds.mjs   # only if AI PNGs are not 16:9
+node scripts/sync-build-version.mjs
+```
+
+SVG art is authored at **1920×1080**; PNGs rasterize at 2× device scale for sharp mobile backgrounds. Default first-run scene is **bedroom** (classic warm interior).
 
 Companion loads `prototypes/companion-scene-backgrounds.css` (linked in `amoji-companion.html` head).
 
@@ -89,7 +99,7 @@ Body class: `companion-jp-aaa-ui` (default on `amoji-companion.html`, reinforced
 
 ## Character picker
 
-- Start picker: fixed hero row + horizontal roster with scroll arrows (`companionScrollAffordances.js`).
+- Start picker: **full-screen** sheet; roster/hero portraits use **`object-fit: contain`** (no crop). Horizontal roster + scroll arrows (`companionScrollAffordances.js`).
 - Shared page width: `--amoji-app-max-width` in `prototypes/companion-app-width.css`.
 - Legacy stored ids migrate via `migrateLegacyCharacterStorage()` on boot.
 - Verifier: `npm run verify:picker` (14+ checks).
