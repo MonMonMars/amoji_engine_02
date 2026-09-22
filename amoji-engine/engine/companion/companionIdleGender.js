@@ -2,7 +2,16 @@
  * Gender-aware idle motion profiles — boys and girls use different sway,
  * stance, beat pools, and VRMA clip rotations while idle.
  */
-export const COMPANION_IDLE_GENDER_SCHEMA = "amoji.companionIdleGender.v1";
+export const COMPANION_IDLE_GENDER_SCHEMA = "amoji.companionIdleGender.v2-planted-calm-beats";
+
+/** Micro-gestures that never lift arms off the planted rest pose. */
+export const PLANTED_CALM_IDLE_BEAT_POOL = Object.freeze([
+  "look",
+  "breathe",
+  "sway",
+  "shift",
+  "tilt",
+]);
 
 /**
  * @param {string | null | undefined} gender
@@ -102,4 +111,10 @@ export function isIdleBeatAllowedForGender(beat, gender) {
 export function pickRandomProceduralIdleBeat(gender) {
   const pool = proceduralIdleBeatPoolForGender(gender);
   return pool[Math.floor(Math.random() * pool.length)] || "look";
+}
+
+/** Idle beats safe while feet/arms are hard-planted (no comb/hair/cross). */
+export function pickPlantedCalmIdleBeat() {
+  const pool = PLANTED_CALM_IDLE_BEAT_POOL;
+  return pool[Math.floor(Math.random() * pool.length)] || "breathe";
 }

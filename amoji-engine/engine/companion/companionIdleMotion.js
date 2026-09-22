@@ -16,6 +16,7 @@ import {
   idleGenderBodyProfile,
   isIdleBeatAllowedForGender,
   normalizeIdleGender,
+  pickPlantedCalmIdleBeat,
   pickRandomProceduralIdleBeat,
   PROCEDURAL_IDLE_BEAT_POOL,
   PROCEDURAL_IDLE_BEAT_POOL_FEMALE,
@@ -31,7 +32,7 @@ export {
   proceduralIdleBeatPoolForGender,
 } from "./companionIdleGender.js";
 
-export const COMPANION_IDLE_MOTION_SCHEMA = "amoji.companionIdleMotion.v11-arm-plant-snap";
+export const COMPANION_IDLE_MOTION_SCHEMA = "amoji.companionIdleMotion.v12-breath-only-planted";
 
 /** First seconds after avatar is visible — gentle breathe, sway, relaxed arms. */
 export const BOOT_SIMPLE_IDLE_SEC = 10;
@@ -84,12 +85,13 @@ export function sampleCalmBreathIdle(elapsedSec, opts = {}) {
   const listening = Boolean(opts.listening);
   const breath = Math.sin(t * 0.72);
   const breathSlow = Math.sin(t * 0.38 + 0.6) * 0.35;
+  const look = Math.sin(t * 0.46 + 0.5) * profile.swayMul;
   const amp = (listening ? 1.08 : 1) * 2.35;
 
   return {
     headX: (breath * 0.028 + breathSlow * 0.012) * amp * profile.headMul,
-    headZ: 0,
-    leanY: breathSlow * 0.008 * profile.leanMul,
+    headZ: look * 0.026 * amp * profile.headMul,
+    leanY: (breathSlow * 0.008 + look * 0.012) * profile.leanMul,
     spineX: (0.034 + breath * 0.032 * amp) * profile.spineMul,
     chestX: (-0.014 + breath * 0.028 * amp) * profile.chestMul,
     hipZ: 0.004 * profile.hipMul,
@@ -111,26 +113,7 @@ export function sampleCalmBreathIdle(elapsedSec, opts = {}) {
  * @param {{ listening?: boolean, emotion?: string }} [opts]
  */
 export function samplePlantedAliveIdle(elapsedSec, opts = {}) {
-  const calm = sampleCalmBreathIdle(elapsedSec, opts);
-  const life = sampleIdleBodyMotion(elapsedSec, opts);
-  const bind = opts.bind === "apose" ? "apose" : "tpose";
-  const lifeMul = bind === "apose" ? 0.58 : 0.46;
-  return {
-    upperLegL: 0,
-    upperLegR: 0,
-    lowerLegL: 0,
-    lowerLegR: 0,
-    hipZ: calm.hipZ + life.hipZ * 0.35,
-    headX: calm.headX + life.headX * lifeMul,
-    headZ: life.headZ * (bind === "apose" ? 0.52 : 0.38),
-    leanY: calm.leanY + life.leanY * (bind === "apose" ? 0.32 : 0.22),
-    spineX: calm.spineX + life.spineX * 0.12,
-    chestX: calm.chestX,
-    armLiftL: calm.armLiftL,
-    armLiftR: calm.armLiftR,
-    forearmL: calm.forearmL,
-    forearmR: calm.forearmR,
-  };
+  return sampleCalmBreathIdle(elapsedSec, opts);
 }
 
 /**
@@ -275,7 +258,7 @@ export function advanceIdleBeat(state, dt, nowMs, opts = {}) {
   let overlay = {};
 
   if (!beat && nowMs >= nextAt) {
-    beat = pickRandomProceduralIdleBeat(gender);
+    beat = pickPlantedCalmIdleBeat();
     phase = 0;
     duration = idleBeatDurationSec(beat);
     nextAt =
@@ -313,22 +296,16 @@ export function advanceIdleBeat(state, dt, nowMs, opts = {}) {
         overlay.hipZ = Math.sin(p * Math.PI) * 0.02 * env;
         overlay.leanY = wave * 0.06 * env;
         overlay.spineX = 0.028 * wave * env;
-        overlay.armLiftL = wave * 0.05 * env;
-        overlay.forearmL = wave * 0.06 * env;
         break;
       case "breathe":
         overlay.spineX = 0.055 * wave * env;
         overlay.chestX = 0.04 * wave * env;
         overlay.leanY = Math.sin(p * Math.PI) * 0.03 * env;
-        overlay.armLiftL = wave * 0.05 * env;
-        overlay.armLiftR = wave * 0.05 * env;
         break;
       case "sway":
         overlay.headZ = Math.sin(p * Math.PI * 2) * 0.06 * env;
         overlay.hipZ = Math.sin(p * Math.PI) * 0.016 * env;
         overlay.leanY = wave * 0.044 * env;
-        overlay.armLiftL = 0.04 + wave * 0.05 * env;
-        overlay.armLiftR = 0.04 + wave * 0.05 * env;
         break;
       case "tilt":
         overlay.hipZ = Math.sin(p * Math.PI) * 0.028 * env;
