@@ -12,7 +12,7 @@ import { DEMO_BASE_URL } from "../amoji-engine/engine/companion/deployUrls.mjs";
 import { runCompanionCharacterModelSmoke } from "./companion-character-model-smoke.mjs";
 
 /** Current roster samples (legacy ?character=rex maps to rin — not a roster card id). */
-const ids = ["nova", "kizuna", "alicia", "ember", "mei", "rin", "yuki"];
+const ids = ["nova", "kizuna", "alicia", "ember", "mei", "rin", "yuki", "shino"];
 
 let base = process.env.VERIFY_BASE_URL?.replace(/\/$/, "") || "";
 let host = null;

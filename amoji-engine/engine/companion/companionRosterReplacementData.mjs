@@ -319,7 +319,7 @@ export const REPLACEMENT_ROSTER_SLOTS = [
     voices: { yue: "zh-HK-HiuMaanNeural-ruri", en: "en-US-AriaNeural-cool" },
     role: "girlfriend",
     vrmUrl:
-      "https://raw.githubusercontent.com/madjin/vrm-samples/master/vroid/fem_vroid.vrm",
+      "https://raw.githubusercontent.com/madjin/vrm-samples/master/vroid/stable/AvatarSample_C.vrm",
     greetingYue: "哈囉～我係以理。有咩 idea 想一齊發揮？",
     greetingEn: "Hey~ I'm Elio. Got an idea we should shape together?",
     personalityYue: "你係以理（Elio），創意總監 vibe。把模糊 idea 講到具體。",

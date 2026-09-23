@@ -117,6 +117,9 @@ const boot = await page.evaluate(() => {
     showcaseLayout,
     heroStage: Boolean(picker?.querySelector(".picker-showcase-stage")),
     hero: Boolean(picker?.querySelector(".picker-hero-name")),
+    heroPreviewDuo: Boolean(picker?.querySelector(".picker-hero-preview-duo")),
+    heroScene: Boolean(picker?.querySelector(".picker-hero-scene")),
+    heroPortrait: Boolean(picker?.querySelector(".picker-hero-portrait img")),
     featured: picker?.querySelectorAll(".picker-featured-row .companion-card").length ?? 0,
     roster: picker?.querySelectorAll(".companion-picker-grid .companion-card").length ?? 0,
     stripCards: picker?.querySelectorAll(".companion-card--start-strip").length ?? 0,
@@ -141,6 +144,7 @@ record("start picker open", boot.open);
 record("showcase start layout", boot.showcaseLayout);
 record("hero stage section", boot.heroStage);
 record("hero preview", boot.hero);
+record("hero scene + portrait duo", boot.heroPreviewDuo && boot.heroScene && boot.heroPortrait);
 record("roster dock", boot.rosterDock);
 record("roster grid class", boot.horizontalRoster);
 record(
