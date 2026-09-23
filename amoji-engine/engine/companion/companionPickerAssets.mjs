@@ -6,7 +6,7 @@ import { AMOJI_BUILD } from "./buildVersion.mjs";
 export const COMPANION_PICKER_ASSETS_SCHEMA = "amoji.companionPickerAssets.v1";
 
 /** Bump when picker AAA / scene art changes. */
-export const PICKER_SCENE_ART_REVISION = "picker-anime-v513-pro-cinematic";
+export const PICKER_SCENE_ART_REVISION = "picker-anime-v530-visuals";
 
 export const PICKER_AAA_BG_PATH = "/prototypes/assets/picker-aaa-bg.png";
 /** Shipped SVG cinematic plate until HQ PNG is generated. */
