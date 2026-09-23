@@ -21,7 +21,9 @@ describe("companionPickerChrome", () => {
   const list = listCompanionCharacters("en");
 
   it("exports schema and filter ids", () => {
-    expect(COMPANION_PICKER_CHROME_SCHEMA).toBe("amoji.companionPickerChrome.v1");
+    expect(COMPANION_PICKER_CHROME_SCHEMA).toBe(
+      "amoji.companionPickerChrome.v2-hero-scene",
+    );
     expect(PICKER_FILTER_IDS).toEqual([
       "all",
       "girlfriend",
@@ -54,6 +56,8 @@ describe("companionPickerChrome", () => {
 
   it("includes hero preview markup", () => {
     expect(PICKER_HERO_HTML).toContain("picker-hero-portrait");
+    expect(PICKER_HERO_HTML).toContain("picker-hero-scene");
+    expect(PICKER_HERO_HTML).toContain("picker-hero-preview-duo");
     expect(PICKER_HERO_HTML).toContain("picker-hero-traits");
     expect(PICKER_FEATURED_ROW_HTML).toContain("picker-featured-row");
   });

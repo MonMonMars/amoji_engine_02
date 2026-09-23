@@ -154,11 +154,17 @@ body.companion-start-picker-open .scene-sheet-backdrop {
   aspect-ratio: 3 / 4;
 }
 
+.companion-picker--start .picker-hero-portrait-wrap,
+.companion-picker--start .picker-hero-scene-wrap {
+  min-height: min(32vh, 14.5rem) !important;
+  max-height: min(44vh, 19rem) !important;
+}
+
 .companion-picker--start .picker-hero-portrait {
-  width: min(52vw, 14rem) !important;
-  max-width: 14rem !important;
-  height: min(42vh, 18rem) !important;
-  max-height: min(42vh, 18rem) !important;
+  width: 100% !important;
+  max-width: none !important;
+  height: 100% !important;
+  max-height: 100% !important;
   aspect-ratio: unset !important;
 }
 

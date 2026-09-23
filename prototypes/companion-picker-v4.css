@@ -403,11 +403,11 @@
 
 .companion-picker--v4.companion-picker--start.companion-picker--showcase .picker-hero {
   width: 100%;
-  max-width: 24rem;
+  max-width: min(100%, 38rem);
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: stretch;
   text-align: center;
   grid-template-columns: unset;
   grid-template-rows: unset;
@@ -424,10 +424,24 @@
   opacity: 0.92;
 }
 
+.companion-picker--v4.companion-picker--start.companion-picker--showcase .picker-hero-preview-duo {
+  grid-template-columns: 1fr 1fr;
+  width: 100%;
+}
+
+.companion-picker--v4.companion-picker--start.companion-picker--showcase .picker-hero-portrait-wrap {
+  min-height: min(30vh, 13rem);
+}
+
+.companion-picker--v4.companion-picker--start.companion-picker--showcase .picker-hero-scene-wrap {
+  min-height: min(30vh, 13rem);
+}
+
 .companion-picker--v4.companion-picker--start.companion-picker--showcase .picker-hero-portrait {
-  width: min(46vw, 10.5rem);
-  max-width: 10.5rem;
-  aspect-ratio: 3 / 4;
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  aspect-ratio: unset;
   border-radius: 1.05rem;
   box-shadow:
     0 22px 48px rgba(0, 0, 0, 0.48),
@@ -1120,6 +1134,59 @@
 }
 
 /* —— Hero preview —— */
+.companion-picker--v4 .picker-hero-preview-duo {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.55rem;
+  width: 100%;
+}
+
+.companion-picker--v4 .picker-hero-scene-wrap {
+  position: relative;
+  min-height: 6.75rem;
+  border-radius: 0.95rem;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.companion-picker--v4 .picker-hero-scene {
+  position: absolute;
+  inset: 0;
+  background-size: cover !important;
+  background-position: center !important;
+}
+
+.companion-picker--v4 .picker-hero-scene-caption {
+  position: absolute;
+  left: 0.45rem;
+  bottom: 0.4rem;
+  z-index: 2;
+  margin: 0;
+  padding: 0.18rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: rgba(255, 248, 235, 0.92);
+  background: rgba(8, 10, 18, 0.58);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.companion-picker--v4 .picker-hero-portrait-wrap {
+  position: relative;
+  min-height: 8.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@media (min-width: 640px) {
+  .companion-picker--v4:not(.companion-picker--start) .picker-hero-preview-duo {
+    grid-template-columns: 1fr;
+  }
+}
+
 .companion-picker--v4 .picker-hero {
   position: relative;
   display: grid;

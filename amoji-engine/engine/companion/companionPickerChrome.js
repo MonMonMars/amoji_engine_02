@@ -6,8 +6,14 @@ import {
   HIGH_POLY_FACE_MIN_TRIANGLES,
 } from "./companionCharacterCatalog.js";
 import { wireCompanionPreviewFallback } from "./companionPreviewFallback.js";
+import {
+  applySceneBackground,
+  resolveSceneBackgroundId,
+  SCENE_BACKGROUND_PRESETS,
+  scenePresetLabel,
+} from "./companionScenePresets.js";
 
-export const COMPANION_PICKER_CHROME_SCHEMA = "amoji.companionPickerChrome.v1";
+export const COMPANION_PICKER_CHROME_SCHEMA = "amoji.companionPickerChrome.v2-hero-scene";
 
 /** @typedef {"all" | "girlfriend" | "boyfriend" | "secretary" | "pet" | "featured" | "hd" | "warm"} PickerFilterId */
 
@@ -236,6 +242,32 @@ export function updatePickerHero(root, item, isEnglish = false) {
 }
 
 /**
+ * Sync selected scene background into the hero stage preview (start + in-session pickers).
+ * @param {ParentNode | null | undefined} root
+ * @param {string | null | undefined} backgroundId
+ * @param {boolean} [isEnglish]
+ */
+export function updatePickerHeroBackground(root, backgroundId, isEnglish = false) {
+  if (!root) return;
+  const id = resolveSceneBackgroundId(backgroundId);
+  const sceneEl = root.querySelector?.(".picker-hero-scene");
+  if (sceneEl instanceof HTMLElement) {
+    applySceneBackground(sceneEl, id);
+  }
+  const preset = SCENE_BACKGROUND_PRESETS.find((p) => p.id === id);
+  const caption = root.querySelector?.(".picker-hero-scene-caption");
+  if (caption && preset) {
+    caption.textContent = scenePresetLabel(preset, isEnglish);
+    caption.hidden = false;
+  } else if (caption) {
+    caption.textContent = "";
+    caption.hidden = true;
+  }
+  const hero = root.querySelector?.(".picker-hero");
+  hero?.classList.toggle("has-scene-preview", Boolean(sceneEl));
+}
+
+/**
  * Build filter chip buttons HTML.
  * @param {boolean} [isEnglish]
  * @param {PickerFilterId} [active]
@@ -250,9 +282,17 @@ export function pickerFilterButtonsHtml(isEnglish = false, active = "all") {
 
 export const PICKER_HERO_HTML = `
   <section class="picker-hero" aria-live="polite">
-    <div class="picker-hero-glow" aria-hidden="true"></div>
-    <div class="picker-hero-portrait">
-      <img alt="" loading="eager" decoding="async" />
+    <div class="picker-hero-preview-duo">
+      <div class="picker-hero-scene-wrap">
+        <div class="picker-hero-scene atmosphere" aria-hidden="true"></div>
+        <p class="picker-hero-scene-caption"></p>
+      </div>
+      <div class="picker-hero-portrait-wrap">
+        <div class="picker-hero-glow" aria-hidden="true"></div>
+        <div class="picker-hero-portrait">
+          <img alt="" loading="eager" decoding="async" />
+        </div>
+      </div>
     </div>
     <div class="picker-hero-meta">
       <p class="picker-hero-kicker"></p>
