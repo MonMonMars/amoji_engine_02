@@ -4,6 +4,7 @@ import {
   browserTtsTimeoutMs,
   charToViseme,
   cloudTtsSafetyBudgetMs,
+  applyTtsPlaybackGain,
   configureCompanionAudioElement,
   estimateLipSyncMsPerChar,
   femaleVoiceLabel,
@@ -16,6 +17,7 @@ import {
   visemeAtAudioProgress,
   fetchCloudTts,
   CLOUD_TTS_FETCH_TIMEOUT_MS,
+  createCompanionVoice,
 } from "../engine/companion/companionVoice.js";
 
 describe("companionVoice", () => {
@@ -55,6 +57,13 @@ describe("companionVoice", () => {
         cloud: true,
       }),
     ).toBe("女聲·粵·曉曼");
+  });
+
+  it("applyTtsPlaybackGain mirrors volume onto Web Audio gain node", () => {
+    const audio = { volume: 1, __amojiTtsGainNode: { gain: { value: 1 } } };
+    expect(applyTtsPlaybackGain(audio, 0.58)).toBe(0.58);
+    expect(audio.volume).toBe(0.58);
+    expect(audio.__amojiTtsGainNode.gain.value).toBe(0.58);
   });
 
   it("configures audio elements for inline mobile playback", () => {
@@ -135,5 +144,26 @@ describe("companionVoice", () => {
       0.25,
       5,
     );
+  });
+
+  it("arms talk + speak expression before muted lip-sync playback", async () => {
+    const onTalking = vi.fn();
+    const onSpeakExpression = vi.fn();
+    const onSpeakProsody = vi.fn();
+    const voice = createCompanionVoice({
+      cloudTtsUrl: null,
+      onTalking,
+      onSpeakExpression,
+      onSpeakProsody,
+    });
+    voice.setSpeakerOn(false);
+    await voice.speak("Wow!", { emotion: "surprised", nuance: "excited" });
+    expect(onTalking).toHaveBeenCalledWith(true);
+    expect(onSpeakProsody).toHaveBeenCalled();
+    expect(onSpeakExpression.mock.calls.length).toBeGreaterThan(0);
+    const talkIdx = onTalking.mock.invocationCallOrder[0];
+    const prosodyIdx = onSpeakProsody.mock.invocationCallOrder[0];
+    expect(talkIdx).toBeLessThan(prosodyIdx);
+    expect(onSpeakProsody.mock.calls[0][0]?.snapStrength).toBeGreaterThan(0.2);
   });
 });

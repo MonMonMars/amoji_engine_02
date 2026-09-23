@@ -34,6 +34,7 @@ import {
 import {
   buildSpeechExpressionTimelineCached,
   expressionAtTimelineProgress,
+  speechFaceSnapStrength,
 } from "./companionSpeechFace.js";
 import { characterGender } from "./companionCharacterCatalog.js";
 import { formatReplyForDisplay } from "./companionActionMotion.js";
@@ -104,6 +105,19 @@ export function configureCompanionAudioElement(audio) {
   audio.setAttribute("webkit-playsinline", "");
   audio.playsInline = true;
   return audio;
+}
+
+/**
+ * HTMLMediaElement.volume is ignored after createMediaElementSource — mirror level on GainNode too.
+ * @param {HTMLAudioElement | null | undefined} audio
+ * @param {number} gain 0–1 linear
+ */
+export function applyTtsPlaybackGain(audio, gain) {
+  const g = Math.max(0, Math.min(1, Number(gain) || 0));
+  if (audio) audio.volume = g;
+  const node = audio?.__amojiTtsGainNode;
+  if (node?.gain) node.gain.value = g;
+  return g;
 }
 
 /**
@@ -483,7 +497,6 @@ export function createCompanionVoice(opts = {}) {
   const bindCloudTtsAnalyser = (audio) => {
     if (!audio || typeof globalThis.window === "undefined") return null;
     if (isIosLike()) return null;
-    if (audio.__amojiAnalyser) return audio.__amojiAnalyser;
     const AC = globalThis.AudioContext || globalThis.webkitAudioContext;
     if (!AC) return null;
     try {
@@ -495,9 +508,22 @@ export function createCompanionVoice(opts = {}) {
       const source =
         audio.__amojiMediaSource || ctx.createMediaElementSource(audio);
       audio.__amojiMediaSource = source;
+      const gainNode =
+        audio.__amojiTtsGainNode || ctx.createGain?.() || null;
+      if (gainNode) audio.__amojiTtsGainNode = gainNode;
+      if (audio.__amojiAnalyser) {
+        applyTtsPlaybackGain(audio, ttsPlaybackVolume());
+        return audio.__amojiAnalyser;
+      }
       const analyser = ctx.createAnalyser();
       analyser.fftSize = 256;
-      source.connect(analyser);
+      applyTtsPlaybackGain(audio, ttsPlaybackVolume());
+      if (gainNode) {
+        source.connect(gainNode);
+        gainNode.connect(analyser);
+      } else {
+        source.connect(analyser);
+      }
       analyser.connect(ctx.destination);
       audio.__amojiAnalyser = analyser;
       return analyser;
@@ -614,7 +640,8 @@ export function createCompanionVoice(opts = {}) {
     return await new Promise((resolve) => {
       const audio = configureCompanionAudioElement(getSharedAudio());
       currentCloudAudio = audio;
-      audio.volume = ttsPlaybackVolume();
+      applyTtsPlaybackGain(audio, ttsPlaybackVolume());
+      bindCloudTtsAnalyser(audio);
       audio.src = objectUrl;
       let settled = false;
       let mouthStarted = false;
@@ -708,8 +735,12 @@ export function createCompanionVoice(opts = {}) {
         );
       };
       scheduleSafety();
-      audio.onloadedmetadata = bumpSafetyFromMetadata;
+      audio.onloadedmetadata = () => {
+        bumpSafetyFromMetadata();
+        beginMouth();
+      };
       audio.ondurationchange = bumpSafetyFromMetadata;
+      audio.oncanplay = () => beginMouth();
       audio.onplaying = () => beginMouth();
       audio.ontimeupdate = () => {
         if (!mouthStarted && audio.currentTime > 0) beginMouth();
@@ -756,6 +787,7 @@ export function createCompanionVoice(opts = {}) {
 
     speaking = true;
     syncAssistantOutput();
+    opts.onTalking?.(true);
 
     /** @type {{ ok: boolean, reason?: string, voice?: string, emotion?: string, cloud?: boolean }} */
     let last = { ok: false, reason: "empty" };
@@ -777,12 +809,18 @@ export function createCompanionVoice(opts = {}) {
           : [{ text: part, ...perf }];
         for (let i = 0; i < clauses.length; i += 1) {
           const clause = clauses[i];
+          const clauseEmotion = clause.emotion || perf.emotion;
+          const clauseNuance = clause.nuance || perf.nuance;
           opts.onSpeakExpression?.({
             unit: clause.text,
-            emotion: clause.emotion || perf.emotion,
-            nuance: clause.nuance || perf.nuance,
+            emotion: clauseEmotion,
+            nuance: clauseNuance,
             talkStyle: clause.talkStyle || perf.talkStyle,
             speechEnergy: clause.speechEnergy ?? perf.speechEnergy,
+            snapStrength: speechFaceSnapStrength(clause.text, {
+              emotion: clauseEmotion,
+              nuance: clauseNuance,
+            }, { emotion: perf.emotion, nuance: perf.nuance }),
           });
           let res;
           try {
@@ -895,14 +933,15 @@ export function createCompanionVoice(opts = {}) {
 
     const emitSpeakFace = (progress) => {
       const face = expressionAtTimelineProgress(faceTimeline, progress);
-      if (!face.unit) return;
-      const sameUnit = face.unit === lastSpeakUnit;
       const sameIndex = face.index === lastSpeakIndex;
-      if (sameUnit && sameIndex) return;
-      lastSpeakUnit = face.unit;
+      const snap = Number(face.snapStrength) || 0;
+      if (sameIndex && snap < 0.35) return;
+      lastSpeakUnit = face.unit || lastSpeakUnit;
       lastSpeakIndex = face.index ?? -1;
       opts.onSpeakExpression?.(face);
-      opts.onSpeakChunk?.(face.unit, face.index ?? 0);
+      if (face.unit) {
+        opts.onSpeakChunk?.(face.unit, face.index ?? 0);
+      }
     };
 
     let boundaryWorks = false;
@@ -940,16 +979,22 @@ export function createCompanionVoice(opts = {}) {
               performance.now() - startedAt,
               durationMs,
             );
-    let lastIndex = -1;
+    let lastLipIndex = -1;
+    let lastFaceIndex = -1;
+    emitSpeakFace(0);
     mouthTimer = setInterval(() => {
-      if (boundaryWorks) return;
       const progress = getProgress();
+      const faceIdx = expressionAtTimelineProgress(faceTimeline, progress).index ?? -1;
+      if (faceIdx !== lastFaceIndex) {
+        emitSpeakFace(progress);
+        lastFaceIndex = faceIdx;
+      }
+      if (boundaryWorks) return;
       const level = audioLevel?.() ?? 0;
       const sample = visemeAtTimelineProgress(lipTimeline, progress, level);
       opts.onMouth?.(sample.open, sample.shape);
-      if (sample.index !== lastIndex) {
-        emitSpeakFace(progress);
-        lastIndex = sample.index;
+      if (sample.index !== lastLipIndex) {
+        lastLipIndex = sample.index;
       } else if (level > 0.12) {
         opts.onMouth?.(sample.open, sample.shape);
       }
@@ -1045,6 +1090,10 @@ export function createCompanionVoice(opts = {}) {
     const allowVocal =
       !rawPerf.skipVocalization &&
       !(streamActive && streamSession.vocalizationApplied);
+    speaking = true;
+    syncAssistantOutput();
+    opts.onTalking?.(true);
+
     if (allowVocal && speakerOn) {
       const merged = applyVocalPrefixToSpeech(clean, perf, { isEnglish });
       if (merged.merged) {
@@ -1058,6 +1107,10 @@ export function createCompanionVoice(opts = {}) {
           talkStyle: perf.talkStyle,
           speechEnergy: perf.speechEnergy,
           vocalization: merged.performance.vocalization,
+          snapStrength: speechFaceSnapStrength(merged.performance.vocalPrefix || speakText, {
+            emotion: perf.emotion,
+            nuance: perf.nuance,
+          }),
         });
       }
     }
@@ -1070,6 +1123,10 @@ export function createCompanionVoice(opts = {}) {
       speechEnergy: prosody.speechEnergy,
       browser: prosody.browser,
       instruct: prosody.instruct,
+      snapStrength: speechFaceSnapStrength(speakText, prosody, {
+        emotion: prosody.emotion,
+        nuance: prosody.nuance,
+      }),
     });
 
     try {
@@ -1446,7 +1503,7 @@ export function createCompanionVoice(opts = {}) {
       const objectUrl = URL.createObjectURL(blob);
       const audio = configureCompanionAudioElement(getSharedAudio());
       thinkingCloudAudio = audio;
-      audio.volume = 0.58;
+      applyTtsPlaybackGain(audio, 0.58);
       audio.src = objectUrl;
       await new Promise((resolve) => {
         const finish = () => {
@@ -1590,7 +1647,7 @@ export function createCompanionVoice(opts = {}) {
       const objectUrl = URL.createObjectURL(blob);
       const audio = configureCompanionAudioElement(getSharedAudio());
       thinkingCloudAudio = audio;
-      audio.volume = 0.62;
+      applyTtsPlaybackGain(audio, 0.62);
       audio.src = objectUrl;
       await new Promise((resolve) => {
         const finish = () => {
