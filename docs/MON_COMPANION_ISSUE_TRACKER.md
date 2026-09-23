@@ -65,7 +65,7 @@ Agents: **read this before saying “fixed.”** Update a row when status change
 
 | ID | Problem / request | Status | Evidence / fix | PR / build |
 |----|-------------------|--------|----------------|------------|
-| B1 | **Blended / ghost arms** at idle (Nova, Alicia, roster) | ⏸️ | Norm-only writes, planted limb lock, arm bind hints v550 | [#90](https://github.com/MonMonMars/amoji_engine_02/pull/90), [#76](https://github.com/MonMonMars/amoji_engine_02/pull/76), [#72](https://github.com/MonMonMars/amoji_engine_02/pull/72), [#68](https://github.com/MonMonMars/amoji_engine_02/pull/68) |
+| B1 | **Blended / ghost arms** at idle (Nova, Alicia, roster) | 🟡 | Lock forearms through TTS + post-update planted lock **v10** | **wave4 `v560`** |
 | B2 | Character **faces backward** on start | ✅ | Portrait facing score + boot refit v550/v551 | **main** v550–v551 |
 | B3 | **Double-click / reset camera** → facing wrong again | ✅ | `baseYaw`, reset + forced yaw v551 | **main** `v551` |
 | B4 | **Poke / multi-tap → blended head** | ✅ | Torso-only poke shake v551 | **main** `v551` |

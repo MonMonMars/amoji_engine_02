@@ -973,7 +973,7 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
       strictRest: !talking,
     });
     const lockForearms =
-      !talking && !idleBeatArmsActive && activeAction !== "eat" && activeAction !== "drink";
+      !idleBeatArmsActive && activeAction !== "eat" && activeAction !== "drink";
     enforcePlantedLimbRotations(humanoid, {
       legRestRotations,
       armRestRotations,
@@ -1420,8 +1420,7 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
           ? true
           : opts.lockForearms === false
             ? false
-            : !talking &&
-              !idleBeatArmsActive &&
+            : !idleBeatArmsActive &&
               activeAction !== "eat" &&
               activeAction !== "drink";
       enforcePlantedLimbRotations(humanoid, {
