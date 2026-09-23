@@ -23,7 +23,9 @@ import {
   MIN_PREVIEW_BYTES,
   isBadPreviewCapture,
 } from "../amoji-engine/engine/companion/companionPreviewAssets.mjs";
+import { beginStartPickerSession } from "./companion-picker-smoke-util.mjs";
 import { waitForPageFn } from "./playwrightPageUtil.mjs";
+import { ROSTER_REPLACED_VRM_SOURCES } from "../amoji-engine/engine/companion/companionRosterModelRefreshV522.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const outDir = join(root, "prototypes/assets");
@@ -65,10 +67,9 @@ const DEFAULT_TARGETS = [
 ];
 
 /** Copy existing art when models share a reference portrait. */
+/** Legacy alias slots only — never copy for primary roster picker cards. */
 const COPY_FROM = {
   rex: "kai",
-  amoji: "girl-ref",
-  atlas: "vroidm",
   aria: "mei",
   noah: "atlas",
   rika: "celeste",
@@ -126,63 +127,54 @@ async function waitForStageReady(page, characterId) {
   await waitForPageFn(page, () => window.__amojiStart?.ready === true, {
     timeout: 120000,
   });
-  await page.waitForFunction(
-    (id) =>
-      window.localStorage?.getItem("amoji.companion.characterId") === id &&
-      window.__amojiAvatarKind === "vrm3d" &&
-      Boolean(window.__amojiAvatar?.vrm),
+  await beginStartPickerSession(page, {
     characterId,
-    { timeout: 120000 },
+    cardTimeout: 90000,
+    dismissTimeout: 120000,
+  });
+  await page.waitForFunction(
+    () =>
+      window.__amojiAvatarKind === "vrm3d" && Boolean(window.__amojiAvatar?.vrm),
+    undefined,
+    { timeout: 90000 },
   );
   await page
     .waitForFunction(
       () => document.querySelector(".stage.avatar-ready") != null,
       undefined,
-      { timeout: 90000 },
+      { timeout: 60000 },
     )
     .catch(() => null);
-  await page.waitForTimeout(8000);
+  await page.waitForTimeout(10000);
   await hideUiForCapture(page);
-  await page.waitForTimeout(400);
+  await page.waitForTimeout(600);
 }
 
 async function captureCharacter(page, characterId, baseUrl) {
   const url = new URL(baseUrl);
   url.searchParams.set("build", AMOJI_BUILD);
-  url.searchParams.set("character", characterId);
-  url.searchParams.set("autostart", "1");
-  url.searchParams.set("pick", "0");
+  url.searchParams.delete("pick");
   url.searchParams.set("automic", "0");
-  url.searchParams.set("lang", "en");
+  if (!url.searchParams.get("lang")) url.searchParams.set("lang", "en");
 
   await page.goto(url.toString(), {
-    waitUntil: "commit",
+    waitUntil: "domcontentloaded",
     timeout: 120000,
   });
   await waitForStageReady(page, characterId);
   const out = previewPath(characterId);
-  const dataUrl = await page.evaluate(() => {
-    const canvas = document.getElementById("avatar-canvas");
-    if (!canvas) return "";
-    try {
-      return canvas.toDataURL("image/png");
-    } catch {
-      return "";
-    }
-  });
-  if (!dataUrl.startsWith("data:image/png;base64,")) {
-    throw new Error("canvas toDataURL failed");
-  }
-  const png = Buffer.from(dataUrl.slice("data:image/png;base64,".length), "base64");
-  writeFileSync(out, png);
+  const canvas = page.locator("#avatar-canvas");
+  await canvas.waitFor({ state: "visible", timeout: 15000 });
+  await canvas.screenshot({ path: out, type: "png", animations: "disabled" });
   if (isBadCapture(out)) {
+    const badBytes = statSync(out).size;
     try {
       const { unlinkSync } = await import("node:fs");
       unlinkSync(out);
     } catch {
       /* ignore */
     }
-    throw new Error(`capture too small or black loader (${statSync(out).size} bytes)`);
+    throw new Error(`capture too small or black loader (${badBytes} bytes)`);
   }
   return out;
 }
@@ -197,12 +189,15 @@ async function main() {
 
   const base = parseArg(
     "--url",
-    "https://temporary-rushing-oxygen-ok5jzhd.vercel.app/prototypes/amoji-companion.html",
+    "http://127.0.0.1:5174/play?lang=en&automic=0",
   );
 
-  const browser = await chromium.launch({ headless: true });
+  const browser = await chromium.launch({
+    headless: true,
+    args: ["--autoplay-policy=no-user-gesture-required"],
+  });
   const page = await browser.newPage({
-    viewport: { width: 720, height: 960 },
+    viewport: { width: 900, height: 1200 },
     deviceScaleFactor: 2,
   });
 

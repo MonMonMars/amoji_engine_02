@@ -28,6 +28,8 @@
     "scene-bg": "node scripts/generate-scene-backgrounds.mjs && node scripts/rasterize-scene-backgrounds.mjs",
     "scene-bg:ai": "node scripts/generate-scene-backgrounds-ai.mjs && node scripts/generate-scene-backgrounds.mjs",
     "postinstall": "node amoji-engine/scripts/download-legal-vrm.mjs",
+    "roster:sync-vrm": "node scripts/sync-roster-replaced-models.mjs",
+    "roster:previews": "node scripts/render-roster-previews.mjs --force",
     "inspect:vrm-face": "node scripts/inspect-vrm-face.mjs",
     "smoke:highpoly-face": "node amoji-engine/scripts/highpoly-face-lipsync-smoke.mjs --model kizuna-kamatte.vrm",
     "smoke:kizuna-companion": "node scripts/companion-kizuna-lipsync-smoke.mjs"
