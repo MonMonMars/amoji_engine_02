@@ -299,6 +299,74 @@ describe("companionAvatarPointer", () => {
     vi.restoreAllMocks();
   });
 
+  it("does not poke when a second finger joins (pinch zoom gesture)", () => {
+    if (typeof document === "undefined") return;
+    const mesh = new THREE.Mesh(new THREE.BoxGeometry(1, 2, 0.4));
+    mesh.position.set(0, 1, 0);
+    const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
+    camera.position.set(0, 1.2, 2.4);
+    camera.lookAt(0, 1.1, 0);
+    const surface = document.createElement("div");
+    const onPoke = vi.fn();
+    const pointer = bindCompanionAvatarPointer({
+      surface,
+      rectElement: {
+        getBoundingClientRect: () => ({
+          left: 0,
+          top: 0,
+          width: 400,
+          height: 600,
+          right: 400,
+          bottom: 600,
+          x: 0,
+          y: 0,
+          toJSON: () => ({}),
+        }),
+      },
+      camera,
+      getPokeMeshes: () => [mesh],
+      onPoke,
+    });
+    surface.dispatchEvent(
+      new PointerEvent("pointerdown", {
+        clientX: 200,
+        clientY: 220,
+        button: 0,
+        pointerId: 1,
+        bubbles: true,
+      }),
+    );
+    surface.dispatchEvent(
+      new PointerEvent("pointerdown", {
+        clientX: 260,
+        clientY: 280,
+        button: 0,
+        pointerId: 2,
+        bubbles: true,
+      }),
+    );
+    surface.dispatchEvent(
+      new PointerEvent("pointerup", {
+        clientX: 200,
+        clientY: 220,
+        button: 0,
+        pointerId: 1,
+        bubbles: true,
+      }),
+    );
+    surface.dispatchEvent(
+      new PointerEvent("pointerup", {
+        clientX: 260,
+        clientY: 280,
+        button: 0,
+        pointerId: 2,
+        bubbles: true,
+      }),
+    );
+    expect(onPoke).not.toHaveBeenCalled();
+    pointer.destroy();
+  });
+
   it("keeps orbit enabled when pointerdown misses the character", () => {
     if (typeof document === "undefined") return;
     const mesh = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.4, 0.4));

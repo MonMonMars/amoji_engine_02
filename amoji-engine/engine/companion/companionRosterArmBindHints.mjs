@@ -9,6 +9,7 @@ export const COMPANION_ROSTER_ARM_BIND_HINTS_SCHEMA =
 export const ROSTER_ARM_BIND_OVERRIDES = Object.freeze({
   nova: "apose",
   alicia: "apose",
+  shino: "apose",
 });
 
 /**

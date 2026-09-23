@@ -67,11 +67,6 @@ export const ROSTER_REPLACED_VRM_SOURCES = Object.freeze({
     vrmUrl: "https://arweave.net/k5VyFaeU0FicUnP0NE0FFeVClZfICdEiz1C9-CCNYkk",
     thumbUrl: "https://arweave.net/iebf1Z4z6mOHXeRZC1r7X4hSdmIZoncYqE_Xnbbe8YE",
   },
-  sienna: {
-    sourceName: "Crowley",
-    vrmUrl: "https://arweave.net/U5J00CQ4NHUkXH7rrM4DTt4Oi3JqkTXKzC2z4oX67qs",
-    thumbUrl: "https://arweave.net/mroYoaBTAJVTVHpL4KMIwT-jFQqbusCmhMumP42Zawc",
-  },
   luna: {
     sourceName: "Cyberpal",
     vrmUrl: "https://arweave.net/zNTLqtifNdl38MpdNXACcvSMFVu6-s7d6pJQDm7E7Us",

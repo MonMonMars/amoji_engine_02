@@ -30,10 +30,10 @@ describe("companionCharacterRoles", () => {
     expect(ROLE_DEFAULT_CHARACTER_ID.boyfriend).toBe("kael");
   });
 
-  it("uses sienna for secretary defaults", () => {
-    expect(ROLE_DEFAULT_CHARACTER_ID.secretary).toBe("sienna");
+  it("uses shino for secretary defaults", () => {
+    expect(ROLE_DEFAULT_CHARACTER_ID.secretary).toBe("shino");
     expect(characterIdsForRole("secretary")).toEqual([
-      "sienna",
+      "shino",
       "luna",
       "hana",
       "zane",

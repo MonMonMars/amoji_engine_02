@@ -34,7 +34,8 @@ export const LEGACY_VRM_BASENAME_ALIASES = Object.freeze({
   "companion-vroid-female.vrm": "mei",
   "companion-vroid-male.vrm": "atlas",
   "companion-erika.vrm": "mei",
-  "companion-sakura.vrm": "sienna",
+  "companion-sakura.vrm": "shino",
+  "companion-sienna.vrm": "shino",
   "companion-celeste.vrm": "juno",
   "companion-luna.vrm": "luna",
   "companion-yume.vrm": "elio",
@@ -147,7 +148,10 @@ export const ROSTER_VRM_DOWNLOADS = [
   ...REPLACEMENT_ROSTER_SLOTS.filter((slot) => slot.id !== "zane").map((slot) => ({
     id: slot.id,
     url: slot.vrmUrl,
-    minBytes: 400_000,
+    minBytes: slot.id === "shino" ? 10_000_000 : 400_000,
+    ...(slot.id === "shino"
+      ? { zipEntry: "Sendagaya Shino.vrm" }
+      : {}),
   })),
   {
     id: "zane",

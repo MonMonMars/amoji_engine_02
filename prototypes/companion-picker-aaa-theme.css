@@ -94,7 +94,18 @@
 
 .companion-picker--aaa-theme .picker-showcase-stage {
   padding: 0.25rem 1rem 0.15rem;
-  overflow: hidden;
+  overflow: visible;
+}
+
+.companion-picker--aaa-theme .picker-hero-scene-wrap {
+  box-shadow:
+    0 16px 36px rgba(0, 0, 0, 0.42),
+    0 0 0 1px rgba(232, 200, 114, 0.16) inset;
+}
+
+.companion-picker--aaa-theme .picker-hero-scene-caption {
+  color: var(--picker-aaa-gold, rgba(232, 200, 114, 0.95));
+  border-color: rgba(232, 200, 114, 0.28);
 }
 
 /* Start picker hero — large portrait; sizing from companion-start-picker-sheet.css */

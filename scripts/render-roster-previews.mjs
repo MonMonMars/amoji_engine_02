@@ -24,6 +24,7 @@ import { CHARACTER_IDS } from "../amoji-engine/engine/companion/companionCharact
 import {
   isBadHeroPreviewCapture,
   isBadPreviewCapture,
+  isSuspectPreviewCapture,
 } from "../amoji-engine/engine/companion/companionPreviewAssets.mjs";
 import { waitForPageFn } from "./playwrightPageUtil.mjs";
 
@@ -56,7 +57,7 @@ const DEFAULT_TARGETS = [
   "vesper",
   "ash",
   "cleo",
-  "sienna",
+  "shino",
   "luna",
   "juno",
   "elio",
@@ -185,12 +186,12 @@ async function waitForStageReady(page, characterId) {
     )
     .catch(() => null);
 
-  for (let attempt = 0; attempt < 12; attempt += 1) {
+  for (let attempt = 0; attempt < 18; attempt += 1) {
     await page.evaluate(() => {
       window.__amojiAvatar?.warmPresentFrame?.();
       window.__amojiAvatar?.resetCameraView?.();
     });
-    await page.waitForTimeout(1200);
+    await page.waitForTimeout(1500);
     const ready = await page.evaluate(() => {
       const facing = window.__amojiAvatar?.getPortraitFacing?.();
       const limbs = window.__amojiAvatar?.auditPlantedLimbs?.({
@@ -228,6 +229,10 @@ async function screenshotPortrait(page, box, kind, out) {
   if (bad) {
     const badBytes = statSync(out).size;
     throw new Error(`${kind} capture too small or black (${badBytes} bytes)`);
+  }
+  if (kind === "body" && isSuspectPreviewCapture(out)) {
+    const suspectBytes = statSync(out).size;
+    throw new Error(`${kind} capture suspect (sparse canvas, ${suspectBytes} bytes)`);
   }
 }
 
@@ -299,7 +304,7 @@ async function main() {
       }
     }
     let lastErr = null;
-    for (let attempt = 1; attempt <= 2; attempt += 1) {
+    for (let attempt = 1; attempt <= 4; attempt += 1) {
       try {
         const paths = await captureCharacter(page, id, base);
         results.push({ id, ok: true, ...paths, attempt });

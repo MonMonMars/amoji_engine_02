@@ -47,7 +47,7 @@ const REPLACEMENT_SLOTS = [
   "vesper",
   "ash",
   "cleo",
-  "sienna",
+  "shino",
   "juno",
   "elio",
   "hana",
@@ -80,7 +80,7 @@ describe("companionCharacterCatalog v363 VTuber roster", () => {
       "mio",
       "amoji",
       ...REPLACEMENT_SLOTS.slice(0, 12),
-      "sienna",
+      "shino",
       "luna",
       ...REPLACEMENT_SLOTS.slice(13),
     ]);
@@ -121,7 +121,8 @@ describe("companionCharacterCatalog v363 VTuber roster", () => {
   it("maps legacy roster ids to replacements", () => {
     expect(LEGACY_CHARACTER_ALIASES.sora).toBe("mei");
     expect(LEGACY_CHARACTER_ALIASES.erika).toBe("mei");
-    expect(LEGACY_CHARACTER_ALIASES.sakura).toBe("sienna");
+    expect(LEGACY_CHARACTER_ALIASES.sakura).toBe("shino");
+    expect(LEGACY_CHARACTER_ALIASES.sienna).toBe("shino");
     expect(LEGACY_CHARACTER_ALIASES.chad).toBe("kael");
     expect(resolveCharacterId({ characterParam: "sora" })).toBe("mei");
     expect(resolveCharacterId({ characterParam: "hugo" })).toBe("dex");
@@ -160,7 +161,7 @@ describe("companionCharacterCatalog v363 VTuber roster", () => {
     );
     expect(resolveCharacterId({ modelUrl: "/prototypes/assets/companion-erika.vrm" })).toBe("mei");
     expect(resolveCharacterId({ modelUrl: "/prototypes/assets/companion-sakura.vrm" })).toBe(
-      "sienna",
+      "shino",
     );
   });
 
@@ -185,7 +186,7 @@ describe("companionCharacterCatalog v363 VTuber roster", () => {
     expect(nextCharacterId("ember")).toBe("mei");
     expect(nextCharacterId("mei")).toBe("atlas");
     expect(nextCharacterId("sky")).toBe("yuki");
-    expect(nextCharacterId("cleo")).toBe("sienna");
+    expect(nextCharacterId("cleo")).toBe("shino");
     expect(nextCharacterId("elio")).toBe("hana");
     expect(nextCharacterId("cyrus")).toBe("nova");
   });
@@ -216,7 +217,7 @@ describe("companionCharacterCatalog v363 VTuber roster", () => {
     expect(aaaRosterBadge("yuki", true)).toBe("AAA Pro");
     expect(aaaRosterBadge("sky", true)).toBe("AAA");
     expect(aaaRosterBadge("dex", true)).toBe("AAA");
-    expect(aaaRosterBadge("sienna", true)).toBe("VRoid Pro");
+    expect(aaaRosterBadge("shino", true)).toBe("VRoid Pro");
   });
 
   it("builds character-specific prompts", () => {
