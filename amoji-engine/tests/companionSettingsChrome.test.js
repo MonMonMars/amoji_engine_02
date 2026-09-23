@@ -6,7 +6,7 @@ describe("companionSettingsChrome", () => {
     const labels = buildSettingsChromeLabels(true, {
       companionName: "Nova",
       backgroundLabel: "Sunset",
-      speed: 0.45,
+      speed: 0.42,
       chatVisible: true,
       speakerOn: true,
     });
@@ -16,7 +16,7 @@ describe("companionSettingsChrome", () => {
     expect(labels.background).toBe("Background: Sunset");
     expect(labels.camera).toBe("Reset camera view");
     expect(labels.companionSection).toBe("Companion");
-    expect(labels.talkSpeed).toMatch(/1\.6|1\.61/);
+    expect(labels.talkSpeed).toMatch(/1× Normal|Talking speed: 1×/);
     expect(labels.rosterModelsHint).toMatch(/31/);
     expect(labels.rosterModelsHint).toMatch(/Mei|Atlas|VRoid/i);
     expect(labels.rosterDetailsSummary).toBe("View full 3D roster");
