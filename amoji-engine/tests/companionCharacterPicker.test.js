@@ -53,6 +53,8 @@ describe("companion character picker data", () => {
     expect(COMPANION_CHARACTER_PICKER_SCHEMA).toBe(
       "amoji.companionCharacterPicker.v9-roster480-replacement",
     );
-    expect(COMPANION_START_PICKER_SCHEMA).toBe("amoji.companionStartPicker.v11");
+    expect(COMPANION_START_PICKER_SCHEMA).toBe(
+      "amoji.companionStartPicker.v12-hero-scene",
+    );
   });
 });

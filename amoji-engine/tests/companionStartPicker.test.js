@@ -83,7 +83,7 @@ describe("companion start picker", () => {
         startedWith = id;
       },
     });
-    expect(picker.schema).toBe("amoji.companionStartPicker.v11");
+    expect(picker.schema).toBe("amoji.companionStartPicker.v12-hero-scene");
     expect(picker.element.classList.contains("companion-picker--aaa-theme")).toBe(
       true,
     );
@@ -168,6 +168,11 @@ describe("companion start picker", () => {
     expect(
       beach?.classList.contains("is-active"),
     ).toBe(true);
+    const heroScene = picker.element.querySelector(".picker-hero-scene");
+    expect(heroScene?.getAttribute("data-scene-bg")).toBe("beach");
+    expect(
+      picker.element.querySelector(".picker-hero-scene-caption")?.textContent,
+    ).toBe("Beach");
     picker.destroy();
   });
 

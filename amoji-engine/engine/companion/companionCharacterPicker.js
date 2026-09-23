@@ -22,6 +22,7 @@ import {
   syncPickerCardTabIndex,
   syncPickerGridSelection,
   updatePickerHero,
+  updatePickerHeroBackground,
   wirePickerRosterKeyboard,
 } from "./companionPickerChrome.js";
 import {
@@ -48,7 +49,7 @@ import {
 export const COMPANION_CHARACTER_PICKER_SCHEMA =
   "amoji.companionCharacterPicker.v9-roster480-replacement";
 
-export const COMPANION_START_PICKER_SCHEMA = "amoji.companionStartPicker.v11";
+export const COMPANION_START_PICKER_SCHEMA = "amoji.companionStartPicker.v12-hero-scene";
 
 export const PICKER_SCENE_SECTION_HTML = `
   <section class="picker-scene-section" aria-label="Background">
@@ -120,6 +121,7 @@ export function wirePickerSceneSection(opts = {}) {
       sceneLabelEl.textContent = isEnglish ? "Background" : "背景";
     }
     renderPickerSceneRow();
+    updatePickerHeroBackground(opts.root, activeBackgroundId, isEnglish);
   };
 
   const applyPickerBackground = (backgroundId, syncOpts = {}) => {
@@ -129,6 +131,7 @@ export function wirePickerSceneSection(opts = {}) {
       opts.atmosphereEl || document.querySelector?.(".atmosphere") || null;
     applySceneBackground(atmosphere, backgroundId);
     persistSceneBackground(backgroundId);
+    updatePickerHeroBackground(opts.root, activeBackgroundId, isEnglish);
     if (notify) opts.onBackgroundChange?.(backgroundId);
     renderPickerSceneRow();
   };
