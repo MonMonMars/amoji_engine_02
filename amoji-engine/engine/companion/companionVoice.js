@@ -1111,6 +1111,10 @@ export function createCompanionVoice(opts = {}) {
           talkStyle: perf.talkStyle,
           speechEnergy: perf.speechEnergy,
           vocalization: merged.performance.vocalization,
+          snapStrength: speechFaceSnapStrength(merged.performance.vocalPrefix, {
+            emotion: perf.emotion,
+            nuance: perf.nuance,
+          }),
         });
       }
     }
