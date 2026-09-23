@@ -2,6 +2,8 @@
 
 Full mobile product: **title → login → hub → companion / pet / chase / shop / settings**, with backend auth, cloud save, and IAP.
 
+> B2C vs B2B strategy and GTM: [`docs/AMOJI_BUSINESS_PLAN.md`](../../docs/AMOJI_BUSINESS_PLAN.md).
+
 ## Stack
 
 | Layer | Path | Role |
