@@ -1,2 +1,2 @@
 /** Single source of truth for deployed companion build id (keep HTML __amojiBuild in sync). */
-export const AMOJI_BUILD = "2026-09-23-v552-sendagaya-shino-cc0";
+export const AMOJI_BUILD = "2026-09-23-v555-mon-companion-ship";
