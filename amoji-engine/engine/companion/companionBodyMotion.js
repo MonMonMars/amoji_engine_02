@@ -1428,6 +1428,7 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
         armRestRotations,
         lockUpperArms: lockArms,
         lockForearms,
+        lockNeck: lockArms && !talking && !listening,
       });
       if (lockArms && !idleBeatArmsActive) {
         applyPlantedArmPresentation();

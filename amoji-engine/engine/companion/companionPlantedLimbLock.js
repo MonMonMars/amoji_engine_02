@@ -8,7 +8,7 @@ import {
 } from "./companionPoseLibrary.js";
 
 export const COMPANION_PLANTED_LIMB_LOCK_SCHEMA =
-  "amoji.companionPlantedLimbLock.v10-lock-forearms-while-speaking";
+  "amoji.companionPlantedLimbLock.v11-idle-neck-rest";
 
 /** Upper-body bones that must match normalized→raw after vrm.update (ghost limb fix). */
 export const PLANTED_ARM_RAW_SYNC_BONES = Object.freeze([
@@ -150,6 +150,9 @@ export function enforcePlantedLimbRotations(humanoid, opts) {
     writeHumanoidBoneRotation(humanoid, "rightShoulder", PLANTED_SHOULDER_REST);
     writeHumanoidBoneRotation(humanoid, "leftUpperArm", arms.leftUpperArm);
     writeHumanoidBoneRotation(humanoid, "rightUpperArm", arms.rightUpperArm);
+    if (opts.lockNeck === true) {
+      writeHumanoidBoneRotation(humanoid, "neck", PLANTED_SHOULDER_REST);
+    }
     n += 4;
   }
   if (lockForearms) {
