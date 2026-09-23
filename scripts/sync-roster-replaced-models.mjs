@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /**
- * Force-download VRM + card PNG for roster slots replaced in v522 (not #1–11, not #29).
+ * Force-download VRM for roster slots replaced in v522 (not #1–11, not #29).
+ * Card PNGs must match the mesh — run `npm run roster:previews` after this (3D capture).
  */
 import fs from "node:fs/promises";
 import path from "node:path";
@@ -28,14 +29,8 @@ async function main() {
     }
     await fs.writeFile(path.join(assets, vrmName), vrmBuf);
     console.log("vrm", id, vrmName, `${Math.round(vrmBuf.length / 1024)}KB`, meta.sourceName);
-
-    if (meta.thumbUrl) {
-      const pngName = `companion-char-${id}.png`;
-      const pngBuf = await fetchBuf(meta.thumbUrl);
-      await fs.writeFile(path.join(assets, pngName), pngBuf);
-      console.log("png", pngName, `${Math.round(pngBuf.length / 1024)}KB`);
-    }
   }
+  console.log("\nNext: npm run roster:previews  (captures picker PNGs from loaded VRM)");
 }
 
 main().catch((err) => {
