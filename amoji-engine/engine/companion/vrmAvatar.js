@@ -1763,6 +1763,9 @@ export async function createVrmAvatar(opts) {
     }
   }
   restoreProceduralCalmStand();
+  applyDefaultPortraitFrame?.();
+  syncLookTarget();
+  renderer.render(scene, camera);
   raf = requestAnimationFrame(frame);
   globalThis.addEventListener?.("resize", resize);
 
