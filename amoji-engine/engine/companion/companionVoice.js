@@ -784,42 +784,49 @@ export function createCompanionVoice(opts = {}) {
             talkStyle: clause.talkStyle || perf.talkStyle,
             speechEnergy: clause.speechEnergy ?? perf.speechEnergy,
           });
-          let res;
-          try {
-            res = await fetchCloudTts(url, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(
-                buildCloudTtsRequestBody({
-                text: clause.text,
-                performance: {
-                  ...perf,
-                  emotion: clause.emotion || perf.emotion,
-                  nuance: clause.nuance || perf.nuance,
-                  talkStyle: clause.talkStyle || perf.talkStyle,
-                  speechEnergy: clause.speechEnergy ?? perf.speechEnergy,
-                },
-                voice: preset.name,
-                lang: preset.lang,
-                  characterId: activeCharacterId,
-                }),
-              ),
-            });
-          } catch (err) {
-            const reason =
-              err?.name === "AbortError"
-                ? "cloud-tts-timeout"
-                : err?.message || "cloud-tts-fetch-failed";
-            return { ok: false, reason };
+          const clauseSpeakText = cleanSpeakText(clause.text);
+          const cachedBlob = getCachedDialogueTts(
+            dialogueTtsCacheKey(preset.lang, clauseSpeakText),
+          );
+          let blob = cachedBlob;
+          if (!blob?.size) {
+            let res;
+            try {
+              res = await fetchCloudTts(url, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(
+                  buildCloudTtsRequestBody({
+                    text: clause.text,
+                    performance: {
+                      ...perf,
+                      emotion: clause.emotion || perf.emotion,
+                      nuance: clause.nuance || perf.nuance,
+                      talkStyle: clause.talkStyle || perf.talkStyle,
+                      speechEnergy: clause.speechEnergy ?? perf.speechEnergy,
+                    },
+                    voice: preset.name,
+                    lang: preset.lang,
+                    characterId: activeCharacterId,
+                  }),
+                ),
+              });
+            } catch (err) {
+              const reason =
+                err?.name === "AbortError"
+                  ? "cloud-tts-timeout"
+                  : err?.message || "cloud-tts-fetch-failed";
+              return { ok: false, reason };
+            }
+            if (!res.ok) {
+              const errText = await res.text().catch(() => "");
+              return {
+                ok: false,
+                reason: `cloud-tts-${res.status}${errText ? `: ${errText.slice(0, 80)}` : ""}`,
+              };
+            }
+            blob = await res.blob();
           }
-          if (!res.ok) {
-            const errText = await res.text().catch(() => "");
-            return {
-              ok: false,
-              reason: `cloud-tts-${res.status}${errText ? `: ${errText.slice(0, 80)}` : ""}`,
-            };
-          }
-          const blob = await res.blob();
           last = await playCloudAudioBlob(
             blob,
             clause.text,
