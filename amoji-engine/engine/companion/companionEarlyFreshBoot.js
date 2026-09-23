@@ -4,7 +4,7 @@
  */
 (function () {
   var SCENE_KEY = "amoji.companion.scenePreset";
-  var SCENE_ART_V = "picker-anime-v551-jp-game";
+  var SCENE_ART_V = "picker-anime-v559-wave3";
   var OUTDOOR_SCENE = " night-city rooftop park beach sunset aurora rain-street cherry-blossom mountain harbor meadow zen-garden day-skyline bamboo-forest train-platform ";
   var LEGACY_SCENE = { minimal: "cozy-room" };
 
@@ -14,13 +14,15 @@
     return key;
   }
 
-  function sceneArtUrl(id) {
-    return (
-      "/prototypes/assets/scene-bg/" +
-      id +
-      ".svg?v=" +
-      SCENE_ART_V
-    );
+  function scenePngArtUrl(id) {
+    if (id === "night-city") {
+      return "/prototypes/assets/companion-bg-anime.png?v=" + SCENE_ART_V;
+    }
+    return "/prototypes/assets/scene-bg/" + id + ".png?v=" + SCENE_ART_V;
+  }
+
+  function sceneSvgArtUrl(id) {
+    return "/prototypes/assets/scene-bg/" + id + ".svg?v=" + SCENE_ART_V;
   }
 
   function paintAtmosphereEarly() {
@@ -40,10 +42,13 @@
         "data-scene-environment",
         OUTDOOR_SCENE.indexOf(" " + id + " ") >= 0 ? "outdoor" : "indoor",
       );
-      var art = sceneArtUrl(id);
+      var png = scenePngArtUrl(id);
+      var svg = sceneSvgArtUrl(id);
       el.style.backgroundImage =
         'linear-gradient(180deg, rgba(7, 10, 16, 0.02) 0%, rgba(5, 7, 12, 0.12) 55%, rgba(3, 5, 10, 0.32) 100%), url("' +
-        art +
+        png +
+        '"), url("' +
+        svg +
         '")';
       el.style.backgroundSize = "cover";
       el.style.backgroundPosition = "center";
