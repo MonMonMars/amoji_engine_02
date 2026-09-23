@@ -195,7 +195,7 @@ describe("companionPortraitFraming", () => {
     expect(isModelBodyFacingCamera(model, camera)).toBe(true);
   });
 
-  it("isHeadFacingCamera prefers face forward over body +Z bind forward", () => {
+  it("isHeadFacingCamera trusts root forward when head bone points backward", () => {
     const model = new THREE.Group();
     const head = new THREE.Object3D();
     head.position.set(0, 1.1, 0);
@@ -206,9 +206,27 @@ describe("companionPortraitFraming", () => {
     const camera = new THREE.PerspectiveCamera();
     camera.position.set(0, 1.18, 2);
     expect(isModelBodyFacingCamera(model, camera)).toBe(true);
-    expect(isHeadFacingCamera(head, camera, null, model)).toBe(false);
-    expect(portraitVisibleFacingScore(head, camera.position, null, model)).toBeLessThan(
-      -0.2,
+    expect(isHeadFacingCamera(head, camera, null, model)).toBe(true);
+    expect(portraitVisibleFacingScore(head, camera.position, null, model)).toBeGreaterThan(
+      0.2,
+    );
+  });
+
+  it("portraitVisibleFacingScore prefers root forward when head bone is misleading", () => {
+    const model = new THREE.Group();
+    const head = new THREE.Object3D();
+    head.position.set(0, 1.1, 0);
+    head.rotation.y = Math.PI;
+    model.add(head);
+    model.updateMatrixWorld(true);
+    head.updateMatrixWorld(true);
+    const cameraPos = new THREE.Vector3(0, 1.18, 2);
+    const body = modelBodyFacingScore(model, cameraPos);
+    const headOnly = facingAlignmentScore(head, cameraPos);
+    expect(body).toBeGreaterThan(0.3);
+    expect(headOnly).toBeLessThan(-0.3);
+    expect(portraitVisibleFacingScore(head, cameraPos, null, model)).toBeGreaterThan(
+      0.2,
     );
   });
 

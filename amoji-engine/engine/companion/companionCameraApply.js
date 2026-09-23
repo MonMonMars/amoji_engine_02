@@ -12,9 +12,11 @@ import {
   facingAlignmentScore,
   modelBodyFacingScore,
   portraitDistanceForHeight,
+  portraitVisibleFacingScore,
 } from "./companionPortraitFraming.js";
 
-export const COMPANION_CAMERA_APPLY_SCHEMA = "amoji.companionCameraApply.v6-face-forward-score";
+export const COMPANION_CAMERA_APPLY_SCHEMA =
+  "amoji.companionCameraApply.v7-visible-facing-score";
 
 /** Auto follow while talking / full-body moves (~4.2/s). */
 export const AUTO_CAMERA_LERP_RATE = 4.2;
@@ -266,19 +268,16 @@ export function resolveFrontPortraitFrame(opts) {
       anchor,
       portraitDist,
       humanoid,
+      model,
     );
     for (const sign of [zSign, zSign === 1 ? -1 : 1]) {
       const shot = buildPortraitShot(anchor, portraitDist, baseFov, sign);
-      const headScore = headBone
-        ? facingAlignmentScore(headBone, shot.position, humanoid)
-        : sign === PORTRAIT_CAMERA_Z_SIGN
-          ? 1
-          : 0;
-      const score = headBone
-        ? headScore
-        : model
-          ? modelBodyFacingScore(model, shot.position)
-          : headScore;
+      const score = portraitVisibleFacingScore(
+        headBone,
+        shot.position,
+        humanoid,
+        model,
+      );
       if (!best || score > best.score) {
         best = {
           score,
@@ -313,9 +312,15 @@ export function resolveFrontPortraitFrame(opts) {
         anchor,
         portraitDist,
         humanoid,
+        model,
       );
       const shot = buildPortraitShot(anchor, portraitDist, baseFov, zSign);
-      const score = facingAlignmentScore(headBone, shot.position, humanoid);
+      const score = portraitVisibleFacingScore(
+        headBone,
+        shot.position,
+        humanoid,
+        model,
+      );
       if (score + 0.02 >= best.score) {
         best = { score, yaw: baseYaw + Math.PI, zSign, shot, portraitDist };
       } else {
@@ -334,9 +339,15 @@ export function resolveFrontPortraitFrame(opts) {
       anchor,
       portraitDist,
       humanoid,
+      model,
     );
     const shot = buildPortraitShot(anchor, portraitDist, baseFov, zSign);
-    const score = facingAlignmentScore(headBone, shot.position, humanoid);
+    const score = portraitVisibleFacingScore(
+      headBone,
+      shot.position,
+      humanoid,
+      model,
+    );
     if (score > best.score) {
       best = { score, yaw: baseYaw + Math.PI, zSign, shot, portraitDist };
     } else {

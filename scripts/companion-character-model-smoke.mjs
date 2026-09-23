@@ -78,6 +78,7 @@ export async function runCompanionCharacterModelSmoke(opts) {
       characterId: window.localStorage?.getItem("amoji.companion.characterId"),
       loadedModelUrl: window.__amojiLoadedModelUrl || null,
       loadedCharacterId: window.__amojiLoadedCharacterId || null,
+      portraitFacing: window.__amojiAvatar?.getPortraitFacing?.() || null,
     }));
   } finally {
     await browser.close().catch(() => {});
@@ -89,11 +90,17 @@ export async function runCompanionCharacterModelSmoke(opts) {
     report.characterId === expected.canonicalId &&
     report.loadedCharacterId === expected.canonicalId;
 
+  const facingOk =
+    !report.portraitFacing ||
+    report.portraitFacing.facingCamera !== false ||
+    (Number(report.portraitFacing.visibleScore) || 0) > 0.12;
+
   const ok =
     report.avatarKind === expected.kind &&
     idMatches &&
     urlMatches &&
-    (hitExpected || urlMatches);
+    (hitExpected || urlMatches) &&
+    facingOk;
 
   return {
     ok,
