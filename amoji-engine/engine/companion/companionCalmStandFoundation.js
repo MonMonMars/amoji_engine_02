@@ -60,7 +60,10 @@ export function establishCalmStandFromBind(vrm, bodyMotion, opts = {}) {
   }
   const now = opts.now ?? performance.now();
   vrm.humanoid.resetNormalizedPose?.();
-  const rest = detectVrmIdleRestRotations(vrm);
+  const rest = detectVrmIdleRestRotations(vrm, {
+    characterId: opts.characterId,
+    armBindHint: opts.armBindHint,
+  });
   bodyMotion.setArmRestRotations?.(rest.arms);
   bodyMotion.setLegRestRotations?.(rest.legs);
   bodyMotion.setArmBind?.(rest.bind);
