@@ -7,6 +7,8 @@ import {
   shouldAutoStartCompanionSession,
   shouldRemoveBootSplash,
   shouldShowStartPickerOnBoot,
+  shouldSuppressBootFallbackAlert,
+  isStartPickerVisibleFromDom,
 } from "../engine/companion/companionStartPickerGate.mjs";
 
 describe("companionStartPickerGate", () => {
@@ -93,6 +95,29 @@ describe("companionStartPickerGate", () => {
     expect(shouldRemoveBootSplash({ sessionStarted: false })).toBe(false);
     expect(shouldRemoveBootSplash({ pickerVisible: true })).toBe(true);
     expect(shouldRemoveBootSplash({ sessionStarted: true })).toBe(true);
+  });
+
+  it("suppresses boot fallback alerts while start picker is open", () => {
+    if (typeof document === "undefined") return;
+    document.body.innerHTML =
+      '<div id="start-character-picker" class="is-open"></div>';
+    expect(isStartPickerVisibleFromDom(document)).toBe(true);
+    expect(
+      shouldSuppressBootFallbackAlert(document, {
+        sessionStarted: false,
+        starting: false,
+      }),
+    ).toBe(true);
+    document.body.innerHTML = "";
+    document.body.classList.add("companion-start-picker-open");
+    expect(shouldSuppressBootFallbackAlert(document, {})).toBe(true);
+    document.body.classList.remove("companion-start-picker-open");
+    expect(
+      shouldSuppressBootFallbackAlert(document, {
+        starting: true,
+        sessionStarted: false,
+      }),
+    ).toBe(true);
   });
 
   it("bootSplashGateFromDom respects start-picker body class and fallback", () => {

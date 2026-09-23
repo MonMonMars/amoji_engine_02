@@ -1336,6 +1336,18 @@ export function createCompanionStartPicker(opts = {}) {
       shell.classList.add("is-open");
       shell.removeAttribute("aria-hidden");
       shell.hidden = false;
+      /* Critical paint if CSS is slow/missing — avoids full-screen black void. */
+      shell.style.position = "fixed";
+      shell.style.inset = "0";
+      shell.style.zIndex = "12000";
+      shell.style.display = "flex";
+      shell.style.flexDirection = "column";
+      const sheet = shell.querySelector(".companion-picker-sheet");
+      if (sheet && !sheet.dataset.criticalPaint) {
+        sheet.dataset.criticalPaint = "1";
+        sheet.style.backgroundColor = "#0c1018";
+        sheet.style.color = "#f7f1e8";
+      }
       document.body.classList.add("companion-start-pending", "companion-start-picker-open");
       notifyCompanionMenuOverlayOpened();
       scrollSelectedIntoView();
