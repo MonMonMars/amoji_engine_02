@@ -43,14 +43,50 @@ body.companion-minimal-chrome .settings.open {
 }
 
 @media (min-width: 720px) {
-  body.companion-minimal-chrome .settings {
+  body.companion-minimal-chrome .settings:not([hidden]) {
     top: 50%;
     bottom: auto;
     transform: translate(-50%, -46%) scale(0.96);
   }
 
-  body.companion-minimal-chrome .settings.open {
+  body.companion-minimal-chrome .settings.open:not([hidden]) {
     transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+/* Wide desktop: never leave Menu / scene sheet covering the stage (ghost overlay bug). */
+@media (min-width: 1024px) {
+  body.companion-wide-layout .settings:not(.open),
+  body.companion-wide-layout .scene-sheet:not(.open) {
+    display: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    opacity: 0 !important;
+  }
+
+  body.companion-wide-layout .settings-backdrop:not(.is-open),
+  body.companion-wide-layout .scene-sheet-backdrop:not(.is-open) {
+    display: none !important;
+    pointer-events: none !important;
+    opacity: 0 !important;
+  }
+}
+
+/* Start picker: full viewport — never show session chrome on ultrawide. */
+@media (min-width: 1024px) {
+  body.companion-start-picker-open.companion-wide-layout .topbar,
+  body.companion-start-picker-open.companion-wide-layout .activity-rail,
+  body.companion-start-picker-open.companion-wide-layout .chat-shell,
+  body.companion-start-picker-open.companion-wide-layout .orbit-hint,
+  body.companion-start-picker-open.companion-wide-layout .composer-wrap,
+  body.companion-start-picker-open.companion-wide-layout .settings,
+  body.companion-start-picker-open.companion-wide-layout .settings-backdrop,
+  body.companion-start-picker-open.companion-wide-layout .scene-sheet,
+  body.companion-start-picker-open.companion-wide-layout .scene-sheet-backdrop {
+    display: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    opacity: 0 !important;
   }
 }
 
