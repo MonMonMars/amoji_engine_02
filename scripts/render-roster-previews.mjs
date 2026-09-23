@@ -199,7 +199,8 @@ async function waitForStageReady(page, characterId) {
       });
       return (
         facing?.facingCamera === true &&
-        (Number(facing.visibleScore) || 0) > 0.1 &&
+        (Number(facing.frameScore ?? facing.visibleScore) || 0) > 0.1 &&
+        (Number(facing.headScore) || 0) > 0.08 &&
         limbs?.ok !== false
       );
     });
