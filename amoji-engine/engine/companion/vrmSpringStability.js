@@ -8,15 +8,15 @@
 import * as THREE from "three";
 
 export const VRM_SPRING_STABILITY_SCHEMA =
-  "amoji.vrmSpringStability.v14-soft-parts-calm";
+  "amoji.vrmSpringStability.v15-world-space-gravity-down";
 
 /** High drag — stops hair/skirt tails from fluttering upward indoors. */
 export const MIN_DRAG_FORCE = 0.99975;
 /** Skirt/hair/ribbon chains — extra drag so cloth does not billow or jitter. */
 export const SKIRT_HAIR_DRAG_FORCE = 0.99992;
 /** Strong downward pull — counters VRM files that author gravityDir (0, 1, 0). */
-export const MIN_GRAVITY_POWER = 3.65;
-export const SKIRT_HAIR_GRAVITY_POWER = 3.95;
+export const MIN_GRAVITY_POWER = 4.05;
+export const SKIRT_HAIR_GRAVITY_POWER = 4.45;
 export const MAX_STIFFNESS = 0.042;
 export const SKIRT_HAIR_MAX_STIFFNESS = 0.018;
 
@@ -58,9 +58,6 @@ export const MAX_UPWARD_TAIL_VEL = 0.0024;
 
 const _tailWorld = new THREE.Vector3();
 const _prevTailWorld = new THREE.Vector3();
-const _worldDown = new THREE.Vector3(0, -1, 0);
-const _centerGravity = new THREE.Vector3();
-const _invRootMatrix = new THREE.Matrix4();
 
 /**
  * @param {unknown} raw
@@ -173,41 +170,16 @@ export function tuneSkirtHairSpringSettings(settings, mode = activeSceneWindMode
 }
 
 /**
- * Spring sim uses model/center space — re-aim gravity to world-down each frame.
+ * three-vrm-springbone applies gravityDir in **world space** (after center→world
+ * on the tail). Always use world down — do not rotate into model/center space.
  * @param {import('@pixiv/three-vrm').VRM | null | undefined} vrm
  * @param {object | null | undefined} joint
  */
 export function alignSpringGravityWorldDown(vrm, joint) {
+  void vrm;
   const settings = resolveSpringJointSettings(joint);
   if (!settings?.gravityDir) return false;
-  const root = vrm?.scene;
-  if (!root?.matrixWorld) {
-    forceGravityDirDown(settings.gravityDir);
-    return true;
-  }
-  root.updateWorldMatrix(true, false);
-  _invRootMatrix.copy(root.matrixWorld).invert();
-  _centerGravity.copy(_worldDown).transformDirection(_invRootMatrix);
-  if (_centerGravity.lengthSq() < 1e-8) {
-    forceGravityDirDown(settings.gravityDir);
-    return true;
-  }
-  _centerGravity.normalize();
-  if (_centerGravity.y > -0.15) {
-    forceGravityDirDown(settings.gravityDir);
-    return true;
-  }
-  if (typeof settings.gravityDir.set === "function") {
-    settings.gravityDir.set(
-      _centerGravity.x,
-      _centerGravity.y,
-      _centerGravity.z,
-    );
-  } else {
-    settings.gravityDir.x = _centerGravity.x;
-    settings.gravityDir.y = _centerGravity.y;
-    settings.gravityDir.z = _centerGravity.z;
-  }
+  forceGravityDirDown(settings.gravityDir);
   return true;
 }
 
@@ -459,9 +431,17 @@ export function enforceSpringGravityDown(vrm) {
   let aligned = 0;
   for (const joint of joints) {
     const settings = resolveSpringJointSettings(joint);
-    if (settings?.gravityDir) {
+    if (!settings) continue;
+    if (settings.gravityDir) {
       forceGravityDirDown(settings.gravityDir);
     }
+    const minPower = isSkirtOrHairSpringJoint(joint)
+      ? SKIRT_HAIR_GRAVITY_POWER
+      : MIN_GRAVITY_POWER;
+    settings.gravityPower = Math.max(
+      minPower,
+      Math.abs(Number(settings.gravityPower) || 0),
+    );
     if (alignSpringGravityWorldDown(vrm, joint)) aligned += 1;
   }
   return { joints: joints.length, tuned: aligned };
@@ -595,6 +575,9 @@ export function auditVrmSpringGravity(vrm, opts = {}) {
 
 export function configureVrmSpringStability(vrm, mode = activeSceneWindMode) {
   setVrmSceneWindMode(mode);
+  if (vrm?.springBoneManager) {
+    delete vrm.springBoneManager.__amojiSpringParamsTuned;
+  }
   if (
     !getVrmSpringJoints(vrm).length &&
     typeof vrm?.update === "function"
