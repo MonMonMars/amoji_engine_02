@@ -17,6 +17,7 @@ import {
   visemeAtAudioProgress,
   fetchCloudTts,
   CLOUD_TTS_FETCH_TIMEOUT_MS,
+  createCompanionVoice,
 } from "../engine/companion/companionVoice.js";
 
 describe("companionVoice", () => {
@@ -143,5 +144,22 @@ describe("companionVoice", () => {
       0.25,
       5,
     );
+  });
+
+  it("arms talk + speak expression before muted lip-sync playback", async () => {
+    const onTalking = vi.fn();
+    const onSpeakExpression = vi.fn();
+    const onSpeakProsody = vi.fn();
+    const voice = createCompanionVoice({
+      cloudTtsUrl: null,
+      onTalking,
+      onSpeakExpression,
+      onSpeakProsody,
+    });
+    voice.setSpeakerOn(false);
+    await voice.speak("Wow!", { emotion: "surprised", nuance: "excited" });
+    expect(onTalking).toHaveBeenCalledWith(true);
+    expect(onSpeakProsody).toHaveBeenCalled();
+    expect(onSpeakExpression.mock.calls.length).toBeGreaterThan(0);
   });
 });
