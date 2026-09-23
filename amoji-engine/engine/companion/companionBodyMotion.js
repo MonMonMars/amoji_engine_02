@@ -1088,6 +1088,10 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
       if (pokeShakeElapsed >= POKE_SHAKE_DURATION_SEC) {
         pokeShakeElapsed = -1;
         clearSmoothedLimbChannels();
+        for (const key of POSE_LIMB_BLEND_KEYS) {
+          smoothedPose[key] = 0;
+          pose[key] = 0;
+        }
       }
     }
 
@@ -1483,6 +1487,16 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
     },
     getRootMotion() {
       return smoothedRootMotion;
+    },
+    cancelPokeShake() {
+      pokeShakeElapsed = -1;
+      clearSmoothedLimbChannels();
+      return true;
+    },
+    resetSmoothedRoot() {
+      rootMotion = { y: 0, rotY: 0 };
+      smoothedRootMotion = { y: 0, rotY: 0 };
+      return true;
     },
     snapToRestPose() {
       smoothedPose = buildBasePose({ listening, emotion, nuance });

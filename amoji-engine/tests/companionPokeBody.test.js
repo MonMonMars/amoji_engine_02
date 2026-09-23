@@ -16,7 +16,9 @@ describe("companionPokeBody", () => {
     const pose = samplePokeShakePose(0.12, { strength: 1, sideBias: 1 });
     expect(pose.upperLegL).toBeUndefined();
     expect(Math.abs(pose.spineX || 0)).toBeGreaterThan(0.01);
-    expect(Math.abs(pose.headZ || 0)).toBeGreaterThan(0.01);
+    expect(pose.headX).toBeUndefined();
+    expect(pose.headZ).toBeUndefined();
+    expect(pose.leanY).toBeUndefined();
   });
 
   it("pokeSideBiasFromPoint picks left vs right of anchor", () => {

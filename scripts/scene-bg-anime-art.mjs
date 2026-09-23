@@ -2,7 +2,7 @@
  * Japanese anime / VN / gacha-game style scene painters (SVG body fragments).
  * Rich layered gradients, neon, bokeh, perspective interiors, atmospheric depth.
  */
-export const SCENE_ANIME_ART_REVISION = "anime-scene-v513-pro-cinematic";
+export const SCENE_ANIME_ART_REVISION = "anime-scene-v551-jp-game-ui";
 
 /** @param {number} w @param {number} h */
 export function animePaintDefs(w, h) {

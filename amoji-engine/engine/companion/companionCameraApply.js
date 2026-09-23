@@ -242,6 +242,7 @@ export function applyPortraitShot(controls, camera, shot, opts = {}) {
  *   anchor: import('three').Vector3,
  *   fittedHeight: number,
  *   baseFov?: number,
+ *   baseYaw?: number,
  * }} opts
  */
 export function resolveFrontPortraitFrame(opts) {
@@ -252,7 +253,10 @@ export function resolveFrontPortraitFrame(opts) {
   const model = opts.model;
   const headBone = opts.headBone;
   const humanoid = opts.humanoid;
-  const baseYaw = model?.rotation?.y ?? 0;
+  const baseYaw =
+    typeof opts.baseYaw === "number"
+      ? opts.baseYaw
+      : (model?.rotation?.y ?? 0);
 
   /** @type {{ score: number, yaw: number, zSign: number, shot: ReturnType<typeof buildPortraitShot>, portraitDist: number } | null} */
   let best = null;
