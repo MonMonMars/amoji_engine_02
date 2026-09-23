@@ -103,9 +103,9 @@
 
 .companion-picker--stacked-layout.companion-picker--start .picker-showcase-stage {
   flex: 1 1 auto !important;
-  min-height: min(26vh, 11rem);
-  max-height: min(52vh, 28rem);
-  overflow: hidden;
+  min-height: min(32vh, 13rem);
+  max-height: min(58vh, 32rem);
+  overflow: visible;
 }
 
 .companion-picker--stacked-layout.companion-picker--start .picker-roster-row {
@@ -146,8 +146,7 @@
 }
 
 .companion-picker--stacked-layout .picker-hero-portrait {
-  max-height: min(24vh, 8.75rem);
-  overflow: hidden;
+  overflow: visible;
 }
 
 .companion-picker--stacked-layout .companion-card--start-strip .companion-card-portrait {
