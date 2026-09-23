@@ -14,6 +14,8 @@ import { CHARACTER_IDS } from "../amoji-engine/engine/companion/companionCharact
 import {
   isCompanionHeroPreviewOk,
   isCompanionPreviewOk,
+  isSuspectPreviewCapture,
+  companionPreviewPath,
 } from "../amoji-engine/engine/companion/companionPreviewAssets.mjs";
 import {
   beginStartPickerSession,
@@ -236,8 +238,22 @@ async function main() {
       ),
       roleStripCount:
         picker?.querySelectorAll(".companion-card-role-strip").length || 0,
+      heroSceneDuo: Boolean(
+        picker?.querySelector(".picker-hero-preview-duo .picker-hero-scene"),
+      ),
+      heroPortraitImg: Boolean(
+        picker?.querySelector(".picker-hero-portrait img")?.getAttribute("src"),
+      ),
     };
   });
+  const suspectPreviews = CHARACTER_IDS.filter((id) =>
+    isSuspectPreviewCapture(companionPreviewPath(id, assetsDir)),
+  );
+  record(
+    "roster-preview-no-suspect",
+    suspectPreviews.length === 0,
+    suspectPreviews.length ? suspectPreviews.join(", ") : "all ok",
+  );
   record("build-id", boot.build === AMOJI_BUILD, `${boot.build} vs ${AMOJI_BUILD}`);
   record("start-picker-open", boot.pickerOpen);
   record("picker-showcase-layout", boot.showcase && boot.heroStage && boot.rosterDock);
@@ -254,6 +270,11 @@ async function main() {
   );
   record("character-chip", boot.chip);
   record("picker-scene-background-row", boot.sceneInBackgroundRow);
+  record(
+    "picker-hero-scene-preview",
+    boot.heroSceneDuo && boot.heroPortraitImg,
+    boot.heroSceneDuo ? "duo+portrait" : "missing hero scene duo",
+  );
   record(
     "picker-no-role-strip",
     boot.roleStripCount === 0,

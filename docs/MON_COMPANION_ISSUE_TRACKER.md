@@ -1,7 +1,7 @@
 # Mon — companion problem & request tracker
 
 **Owner:** Mon (Designer)  
-**Last updated:** 2026-09-23 15:10 UTC  
+**Last updated:** 2026-09-23 16:05 UTC  
 **Production build (live):** check `curl -s https://temporary-rushing-oxygen-ok5jzhd.vercel.app/api/health` → `build` field  
 **Repo `main` build:** `amoji-engine/engine/companion/buildVersion.mjs` → `AMOJI_BUILD`  
 **App entry (bookmark):** https://temporary-rushing-oxygen-ok5jzhd.vercel.app/play  
@@ -35,6 +35,15 @@ Agents: **read this before saying “fixed.”** Update a row when status change
 
 **iOS:** bookmark **`/play` only** (not `/companion-full`).
 
+### Verify snapshot — `cursor/mon-ship-all-fixes-54db` (repo build **v557**)
+
+| Gate | Result | Notes |
+|------|--------|--------|
+| `npm run verify:pre-delivery` (local) | ✅ **5/5** | 1185 unit tests; **57/57** issues E2E (incl. hero-scene + preview quality) |
+| Companion CI [#95](https://github.com/MonMonMars/amoji_engine_02/pull/95) | ✅ green | unit-and-smoke + companion-e2e |
+| `npm run verify:pre-delivery:prod` | 🔴 expected until merge | Prod still **v551** → `build-id` fails; not a code regression |
+| `npm run verify:production-build` | 🔴 behind | Merge **#95** → Vercel → re-run prod gate |
+
 ---
 
 ## Master problem list (expanded)
@@ -47,7 +56,8 @@ Agents: **read this before saying “fixed.”** Update a row when status change
 | A2 | **Black screen** while picker or menu loads | ✅ | Boot picker paint | [#88](https://github.com/MonMonMars/amoji_engine_02/pull/88) merged |
 | A3 | **Wide desktop** — Menu blocks picker / layout | ✅ | v550 wide CSS + smoke | [#89](https://github.com/MonMonMars/amoji_engine_02/pull/89), [#90](https://github.com/MonMonMars/amoji_engine_02/pull/90) → **prod ~v551** |
 | A4 | **HQ Japanese-style scene backgrounds** not updated | ✅ | `anime-scene-v551-jp-game`, scene-bg regen | **main** `v551-facing-poke-thumbs-anime-bg` on prod |
-| A5 | **Roster card PNG ≠ loaded VRM** (wrong pose / back / blended arms on card) | 🟡 | Full 31-id capture w/ facing gate `render-roster-previews.mjs`; `roster-v556-full-capture` | [#95](https://github.com/MonMonMars/amoji_engine_02/pull/95) `v556-mon-companion-ship` |
+| A5 | **Roster card PNG ≠ loaded VRM** (wrong pose / back / blended arms on card) | 🟡 | 31-id regen + **suspect PNG gate**; **Elio** fixed (was macro flat colors on `fem_vroid`) | [#95](https://github.com/MonMonMars/amoji_engine_02/pull/95) **`v557-mon-companion-ship`** |
+| A8 | **Picker hero** — large portrait **+ scene background** preview | 🟡 | `picker-hero-preview-duo`; E2E `picker-hero-scene-preview` | [#95](https://github.com/MonMonMars/amoji_engine_02/pull/95) |
 | A6 | **Hero / picker portraits cropped** | ✅ | `object-fit: contain`, picker v4 | [#75](https://github.com/MonMonMars/amoji_engine_02/pull/75), [#89](https://github.com/MonMonMars/amoji_engine_02/pull/89) |
 | A7 | **Professional / cinematic scene backgrounds** | ✅ | Pro scene pass | [#71](https://github.com/MonMonMars/amoji_engine_02/pull/71) merged |
 
@@ -98,7 +108,8 @@ Agents: **read this before saying “fixed.”** Update a row when status change
 | ID | Problem / request | Status | Evidence / fix | PR / build |
 |----|-------------------|--------|----------------|------------|
 | F1 | **Kizuna / roster #2** model load fail | 🟡 | Fetch path / HD VRM | [#70](https://github.com/MonMonMars/amoji_engine_02/pull/70) |
-| F2 | Replace roster slots (R3 CC0), keep Elio/Yara/Cleo | 🟡 | Sendagaya **Shino** #24 (CC0) replaces Sienna | [#95](https://github.com/MonMonMars/amoji_engine_02/pull/95) |
+| F2 | Replace roster slots (R3 CC0), keep Elio/Yara/Cleo | 🟡 | **Shino** #24 (CC0); **Elio** mesh → VRoid **AvatarSample C** (fixes broken 3D + card) | [#95](https://github.com/MonMonMars/amoji_engine_02/pull/95) **`v557`** |
+| F4 | **Elio** 3D / card looked like flat color blocks | 🟡 | Root cause: `fem_vroid.vrm` + bad fit; replaced + `vrmModelBounds` + preview regen | [#95](https://github.com/MonMonMars/amoji_engine_02/pull/95) **`v557`** |
 | F3 | Unique VRM per character id (no shared mesh) | ⏸️ | `rosterVrmUniqueness.test.js` allowed dup groups | ongoing |
 
 ### G — Docs / business
@@ -106,7 +117,7 @@ Agents: **read this before saying “fixed.”** Update a row when status change
 | ID | Problem / request | Status | Evidence / fix | PR / build |
 |----|-------------------|--------|----------------|------------|
 | G1 | **B2B + B2C business plan** | 📋 | | [#87](https://github.com/MonMonMars/amoji_engine_02/pull/87) |
-| G2 | **This tracker** — expand list, mark solved/not | 🟡 | This file + AGENTS pointer | [#82](https://github.com/MonMonMars/amoji_engine_02/pull/82) |
+| G2 | **This tracker** — expand list, mark solved/not | 🟡 | Updated with v557 verify snapshot + F4/A8 | [#82](https://github.com/MonMonMars/amoji_engine_02/pull/82), **#95** |
 
 ---
 
@@ -128,6 +139,7 @@ Use this to see **what was asked** vs **what shipped**.
 | 2026-09-23 PM | **Talking loading too long** — preload starter Q+A | D7 | 🟡 [#92](https://github.com/MonMonMars/amoji_engine_02/pull/92) |
 | 2026-09-23 PM | **Two-finger scroll** on character → zoom | C1–C2 | 🟡 [#69](https://github.com/MonMonMars/amoji_engine_02/pull/69) |
 | 2026-09-23 PM | **Keep expanding problem list + solved/not** | G2 | 🟡 this update |
+| 2026-09-23 PM | **Continue check for errors + update chart** | A5, A8, F4 | Elio VRM + preview QA; **57/57** local E2E on **v557** |
 
 ---
 
@@ -156,6 +168,8 @@ After each merge batch: `npm run verify:pre-delivery:prod` → exit **0** before
 | `mouth-moves-when-talking` / ember mouth | D1 |
 | `starter-prompts-visible` | D7 |
 | `switch-character-model` | F1, A5 |
+| `picker-hero-scene-preview` | A8 |
+| `roster-preview-no-suspect` | A5, F4 |
 
 ---
 

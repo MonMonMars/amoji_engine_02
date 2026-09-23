@@ -27,6 +27,9 @@ export const TINY_BLACK_PREVIEW_BYTES = 61136;
 /** Minimum bytes for a valid 3D or art portrait PNG. */
 export const MIN_PREVIEW_BYTES = 120000;
 
+/** Full-body cards below this are often partial / empty canvas (still above MIN). */
+export const SUSPECT_PREVIEW_BYTES = 180000;
+
 /**
  * @param {string} id
  * @param {string} [assetsDir]
@@ -65,6 +68,15 @@ export function isBadPreviewCapture(filePath) {
  */
 export function isCompanionPreviewOk(id, assetsDir) {
   return !isBadPreviewCapture(companionPreviewPath(id, assetsDir));
+}
+
+/**
+ * @param {string} filePath
+ */
+export function isSuspectPreviewCapture(filePath) {
+  if (!existsSync(filePath)) return true;
+  const size = statSync(filePath).size;
+  return size > MIN_PREVIEW_BYTES && size < SUSPECT_PREVIEW_BYTES;
 }
 
 /**
