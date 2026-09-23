@@ -876,7 +876,7 @@ export async function createVrmAvatar(opts) {
     const snap = Math.max(0, Math.min(1, Number(snapStrength) || 0));
     if (snap > 0.35) {
       expressionSnapBoost = Math.max(expressionSnapBoost, snap);
-      if (talking && expr) {
+      if (expr) {
         const pull = Math.min(1, 0.42 + snap * 0.58);
         for (const preset of emotionPresetKeys()) {
           const target = expressionTarget[preset] ?? 0;
@@ -1441,9 +1441,12 @@ export async function createVrmAvatar(opts) {
         ? bodyMotion.nuance
         : "none";
     const baseBlend = buildVrmExpressionBlend(emotion, nuance);
+    const voiceDrivingMouth =
+      mouthTarget > MOUTH_CLOSE_EPS || mouthOpen > MOUTH_CLOSE_EPS;
     const idleFaceEligible =
       !talking &&
       !eating &&
+      !voiceDrivingMouth &&
       !bodyMotion.currentAction &&
       !bodyMotion.activeGesture &&
       (!activeMotion || CALM_IDLE_USES_PROCEDURAL_BODY);
@@ -1462,8 +1465,6 @@ export async function createVrmAvatar(opts) {
       });
     }
 
-    const voiceDrivingMouth =
-      mouthTarget > MOUTH_CLOSE_EPS || mouthOpen > MOUTH_CLOSE_EPS;
     const mouthActive = talking || eating || voiceDrivingMouth;
     mouthOpen += (mouthTarget - mouthOpen) * Math.min(1, dt * (mouthActive ? 52 : 22));
     if (!mouthActive && mouthOpen < 0.04) mouthOpen = 0;

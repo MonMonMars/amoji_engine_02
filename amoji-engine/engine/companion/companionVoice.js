@@ -34,6 +34,7 @@ import {
 import {
   buildSpeechExpressionTimelineCached,
   expressionAtTimelineProgress,
+  speechFaceSnapStrength,
 } from "./companionSpeechFace.js";
 import { characterGender } from "./companionCharacterCatalog.js";
 import { formatReplyForDisplay } from "./companionActionMotion.js";
@@ -786,6 +787,7 @@ export function createCompanionVoice(opts = {}) {
 
     speaking = true;
     syncAssistantOutput();
+    opts.onTalking?.(true);
 
     /** @type {{ ok: boolean, reason?: string, voice?: string, emotion?: string, cloud?: boolean }} */
     let last = { ok: false, reason: "empty" };
@@ -807,12 +809,18 @@ export function createCompanionVoice(opts = {}) {
           : [{ text: part, ...perf }];
         for (let i = 0; i < clauses.length; i += 1) {
           const clause = clauses[i];
+          const clauseEmotion = clause.emotion || perf.emotion;
+          const clauseNuance = clause.nuance || perf.nuance;
           opts.onSpeakExpression?.({
             unit: clause.text,
-            emotion: clause.emotion || perf.emotion,
-            nuance: clause.nuance || perf.nuance,
+            emotion: clauseEmotion,
+            nuance: clauseNuance,
             talkStyle: clause.talkStyle || perf.talkStyle,
             speechEnergy: clause.speechEnergy ?? perf.speechEnergy,
+            snapStrength: speechFaceSnapStrength(clause.text, {
+              emotion: clauseEmotion,
+              nuance: clauseNuance,
+            }, { emotion: perf.emotion, nuance: perf.nuance }),
           });
           let res;
           try {
@@ -925,14 +933,15 @@ export function createCompanionVoice(opts = {}) {
 
     const emitSpeakFace = (progress) => {
       const face = expressionAtTimelineProgress(faceTimeline, progress);
-      if (!face.unit) return;
-      const sameUnit = face.unit === lastSpeakUnit;
       const sameIndex = face.index === lastSpeakIndex;
-      if (sameUnit && sameIndex) return;
-      lastSpeakUnit = face.unit;
+      const snap = Number(face.snapStrength) || 0;
+      if (sameIndex && snap < 0.35) return;
+      lastSpeakUnit = face.unit || lastSpeakUnit;
       lastSpeakIndex = face.index ?? -1;
       opts.onSpeakExpression?.(face);
-      opts.onSpeakChunk?.(face.unit, face.index ?? 0);
+      if (face.unit) {
+        opts.onSpeakChunk?.(face.unit, face.index ?? 0);
+      }
     };
 
     let boundaryWorks = false;
@@ -970,16 +979,22 @@ export function createCompanionVoice(opts = {}) {
               performance.now() - startedAt,
               durationMs,
             );
-    let lastIndex = -1;
+    let lastLipIndex = -1;
+    let lastFaceIndex = -1;
+    emitSpeakFace(0);
     mouthTimer = setInterval(() => {
-      if (boundaryWorks) return;
       const progress = getProgress();
+      const faceIdx = expressionAtTimelineProgress(faceTimeline, progress).index ?? -1;
+      if (faceIdx !== lastFaceIndex) {
+        emitSpeakFace(progress);
+        lastFaceIndex = faceIdx;
+      }
+      if (boundaryWorks) return;
       const level = audioLevel?.() ?? 0;
       const sample = visemeAtTimelineProgress(lipTimeline, progress, level);
       opts.onMouth?.(sample.open, sample.shape);
-      if (sample.index !== lastIndex) {
-        emitSpeakFace(progress);
-        lastIndex = sample.index;
+      if (sample.index !== lastLipIndex) {
+        lastLipIndex = sample.index;
       } else if (level > 0.12) {
         opts.onMouth?.(sample.open, sample.shape);
       }
@@ -1101,6 +1116,9 @@ export function createCompanionVoice(opts = {}) {
       browser: prosody.browser,
       instruct: prosody.instruct,
     });
+    speaking = true;
+    syncAssistantOutput();
+    opts.onTalking?.(true);
 
     try {
       if (!speakerOn) {
