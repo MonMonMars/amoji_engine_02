@@ -10,6 +10,7 @@ describe("companionRosterArmBindHints", () => {
   it("forces A-pose bind for roster #1 Nova and #3 Alicia", () => {
     expect(rosterArmBindOverride("nova")).toBe("apose");
     expect(rosterArmBindOverride("alicia")).toBe("apose");
+    expect(rosterArmBindOverride("shino")).toBe("apose");
     expect(rosterArmBindOverride("ember")).toBeNull();
   });
 
