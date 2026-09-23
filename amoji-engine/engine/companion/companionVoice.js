@@ -1090,6 +1090,10 @@ export function createCompanionVoice(opts = {}) {
     const allowVocal =
       !rawPerf.skipVocalization &&
       !(streamActive && streamSession.vocalizationApplied);
+    speaking = true;
+    syncAssistantOutput();
+    opts.onTalking?.(true);
+
     if (allowVocal && speakerOn) {
       const merged = applyVocalPrefixToSpeech(clean, perf, { isEnglish });
       if (merged.merged) {
@@ -1103,6 +1107,10 @@ export function createCompanionVoice(opts = {}) {
           talkStyle: perf.talkStyle,
           speechEnergy: perf.speechEnergy,
           vocalization: merged.performance.vocalization,
+          snapStrength: speechFaceSnapStrength(merged.performance.vocalPrefix || speakText, {
+            emotion: perf.emotion,
+            nuance: perf.nuance,
+          }),
         });
       }
     }
@@ -1115,10 +1123,11 @@ export function createCompanionVoice(opts = {}) {
       speechEnergy: prosody.speechEnergy,
       browser: prosody.browser,
       instruct: prosody.instruct,
+      snapStrength: speechFaceSnapStrength(speakText, prosody, {
+        emotion: prosody.emotion,
+        nuance: prosody.nuance,
+      }),
     });
-    speaking = true;
-    syncAssistantOutput();
-    opts.onTalking?.(true);
 
     try {
       if (!speakerOn) {

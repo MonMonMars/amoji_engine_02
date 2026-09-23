@@ -161,5 +161,9 @@ describe("companionVoice", () => {
     expect(onTalking).toHaveBeenCalledWith(true);
     expect(onSpeakProsody).toHaveBeenCalled();
     expect(onSpeakExpression.mock.calls.length).toBeGreaterThan(0);
+    const talkIdx = onTalking.mock.invocationCallOrder[0];
+    const prosodyIdx = onSpeakProsody.mock.invocationCallOrder[0];
+    expect(talkIdx).toBeLessThan(prosodyIdx);
+    expect(onSpeakProsody.mock.calls[0][0]?.snapStrength).toBeGreaterThan(0.2);
   });
 });

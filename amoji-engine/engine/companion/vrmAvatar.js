@@ -836,11 +836,18 @@ export async function createVrmAvatar(opts) {
       faceProfile,
     );
 
-  const setExpressionTargetFromBlend = (blend) => {
+  const setExpressionTargetFromBlend = (blend, clampOpts = {}) => {
     clearExpressionTargets();
     const adapted = adaptBlendForFaceProfile(blend, faceProfile);
+    const voiceDrivingMouth =
+      mouthTarget > MOUTH_CLOSE_EPS || mouthOpen > MOUTH_CLOSE_EPS;
     const safe = clampRestFaceBlend(adapted, {
-      talking: talking || eating,
+      talking:
+        clampOpts.talking ??
+        (talking ||
+          eating ||
+          voiceDrivingMouth ||
+          (Number(clampOpts.snapStrength) || 0) > 0.35),
       hazards: faceHazards,
       caps: faceProfile.caps,
     });
@@ -872,8 +879,8 @@ export async function createVrmAvatar(opts) {
     emotion = bodyMotion.setEmotion(em);
     bodyMotion.setContentNuance(nuance);
     const blend = blendOverride || buildVrmExpressionBlend(em, nuance);
-    setExpressionTargetFromBlend(blend);
     const snap = Math.max(0, Math.min(1, Number(snapStrength) || 0));
+    setExpressionTargetFromBlend(blend, { snapStrength: snap });
     if (snap > 0.35) {
       expressionSnapBoost = Math.max(expressionSnapBoost, snap);
       if (expr) {
@@ -1461,7 +1468,7 @@ export async function createVrmAvatar(opts) {
       );
     } else {
       mergeExpressionBlendIntoTargets(baseBlend, {
-        talking: talking || eating,
+        talking: talking || eating || voiceDrivingMouth,
       });
     }
 
