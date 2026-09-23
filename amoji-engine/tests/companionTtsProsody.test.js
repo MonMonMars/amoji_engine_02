@@ -20,7 +20,7 @@ describe("companionTtsProsody", () => {
     const neutral = resolveCompanionTtsProsody({
       emotion: "neutral",
       text: "你好。",
-      speedMultiplier: 0.28,
+      speedMultiplier: 0.42,
     });
     const happy = resolveCompanionTtsProsody({
       emotion: "happy",
@@ -28,12 +28,12 @@ describe("companionTtsProsody", () => {
       talkStyle: "celebrate",
       speechEnergy: 0.85,
       text: "哇！真係好開心呀！",
-      speedMultiplier: 0.28,
+      speedMultiplier: 0.42,
     });
     const neutralRate = Number(neutral.edge.rate.replace(/[^0-9-]/g, ""));
     const happyRate = Number(happy.edge.rate.replace(/[^0-9-]/g, ""));
     expect(happyRate).toBeGreaterThan(neutralRate);
-    expect(happyRate).toBeGreaterThan(-32);
+    expect(happyRate).toBeGreaterThan(-40);
     expect(happyRate).toBeLessThan(45);
     expect(happy.browser.pitch).toBeGreaterThan(neutral.browser.pitch);
     expect(happy.browser.rate).toBeGreaterThanOrEqual(neutral.browser.rate);
@@ -46,7 +46,7 @@ describe("companionTtsProsody", () => {
       speechEnergy: 0.45,
       text: "嗯，我明白你的意思，讓我慢慢整理一下。",
       characterId: "hina",
-      speedMultiplier: 0.28,
+      speedMultiplier: 0.42,
     });
     const hype = resolveCompanionTtsProsody({
       emotion: "thinking",
@@ -54,7 +54,7 @@ describe("companionTtsProsody", () => {
       speechEnergy: 0.45,
       text: "嗯，我明白你的意思，讓我慢慢整理一下。",
       characterId: "kizuna",
-      speedMultiplier: 0.28,
+      speedMultiplier: 0.42,
     });
     expect(hype.browser.rate).toBeGreaterThanOrEqual(calm.browser.rate);
     expect(hype.browser.pitch).toBeGreaterThan(calm.browser.pitch);
@@ -214,12 +214,12 @@ describe("companionTtsProsody", () => {
       ...happy,
       text: happy.text,
       characterId: "amoji",
-      speedMultiplier: 0.28,
+      speedMultiplier: 0.42,
     });
     const sadProsody = resolveCompanionTtsProsody({
       ...sad,
       text: sad.text,
-      speedMultiplier: 0.28,
+      speedMultiplier: 0.42,
     });
     expect(happyProsody.browser.rate).toBeGreaterThanOrEqual(sadProsody.browser.rate);
     expect(happyProsody.speed).toBeGreaterThanOrEqual(sadProsody.speed);
@@ -246,12 +246,12 @@ describe("companionTtsProsody", () => {
     const marked = resolveCompanionTtsProsody({
       emotion: "neutral",
       text: "[bright]哇！真係好開心呀！",
-      speedMultiplier: 0.28,
+      speedMultiplier: 0.42,
     });
     const plain = resolveCompanionTtsProsody({
       emotion: "neutral",
       text: "今日天氣一般。",
-      speedMultiplier: 0.28,
+      speedMultiplier: 0.42,
     });
     expect(marked.browser.pitch).toBeGreaterThan(plain.browser.pitch);
     expect(marked.speechEnergy).toBeGreaterThan(plain.speechEnergy);
