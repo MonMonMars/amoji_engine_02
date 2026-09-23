@@ -1,8 +1,8 @@
 # Mon — companion problem & request tracker
 
 **Owner:** Mon (Designer)  
-**Last updated:** 2026-09-23 21:37 UTC  
-**Production build (live):** `2026-09-23-v558-mon-companion-wave2` (verified via `/api/health` + `verify:pre-delivery:prod`)  
+**Last updated:** 2026-09-23 22:01 UTC  
+**Production build (live):** `2026-09-23-v559-mon-companion-wave3` (verified via `/api/health` + `verify:pre-delivery:prod`)  
 **Repo `main` build:** `amoji-engine/engine/companion/buildVersion.mjs` → `AMOJI_BUILD`  
 **App entry (bookmark):** https://temporary-rushing-oxygen-ok5jzhd.vercel.app/play  
 
@@ -35,14 +35,14 @@ Agents: **read this before saying “fixed.”** Update a row when status change
 
 **iOS:** bookmark **`/play` only** (not `/companion-full`).
 
-### Verify snapshot — **production `v558`** (merged [#96](https://github.com/MonMonMars/amoji_engine_02/pull/96))
+### Verify snapshot — **production `v559`** (merged [#97](https://github.com/MonMonMars/amoji_engine_02/pull/97))
 
 | Gate | Result | Notes |
 |------|--------|--------|
 | `npm run verify:pre-delivery:prod` | ✅ **4/4** | **57/57** issues E2E on live Vercel |
 | `node scripts/demo-link-verify.mjs` | ✅ | Build match + boot/picker/session |
-| Companion CI [#96](https://github.com/MonMonMars/amoji_engine_02/pull/96) | ✅ | unit-and-smoke + companion-e2e |
-| Prior ship [#95](https://github.com/MonMonMars/amoji_engine_02/pull/95) | ✅ | v557 bundle (Shino, hero, TTS cutoff, zoom, previews) |
+| Companion CI [#97](https://github.com/MonMonMars/amoji_engine_02/pull/97) | ✅ | unit-and-smoke + companion-e2e |
+| Prior ships [#96](https://github.com/MonMonMars/amoji_engine_02/pull/96) / [#95](https://github.com/MonMonMars/amoji_engine_02/pull/95) | ✅ | v558 talk speed / lip timing; v557 roster hero |
 
 ---
 
@@ -52,7 +52,7 @@ Agents: **read this before saying “fixed.”** Update a row when status change
 
 | ID | Problem / request | Status | Evidence / fix | PR / build |
 |----|-------------------|--------|----------------|------------|
-| A1 | Picker / scene / roster **images look stale** (Safari cache) | 🟡 | `v559` scene + roster revision bump; early boot PNG+SVG | **wave3 `v559`** (PR pending) |
+| A1 | Picker / scene / roster **images look stale** (Safari cache) | ⏸️ | `picker-anime-v559-wave3` + roster `?v=` bump; early boot PNG+SVG; bookmark **`/play`** | **prod v559** ([#97](https://github.com/MonMonMars/amoji_engine_02/pull/97)) |
 | A2 | **Black screen** while picker or menu loads | ✅ | Boot picker paint | [#88](https://github.com/MonMonMars/amoji_engine_02/pull/88) merged |
 | A3 | **Wide desktop** — Menu blocks picker / layout | ✅ | v550 wide CSS + smoke | [#89](https://github.com/MonMonMars/amoji_engine_02/pull/89), [#90](https://github.com/MonMonMars/amoji_engine_02/pull/90) → **prod ~v551** |
 | A4 | **HQ Japanese-style scene backgrounds** not updated | ✅ | `anime-scene-v551-jp-game`, scene-bg regen | **main** `v551-facing-poke-thumbs-anime-bg` on prod |
@@ -69,7 +69,7 @@ Agents: **read this before saying “fixed.”** Update a row when status change
 | B2 | Character **faces backward** on start | ✅ | Portrait facing score + boot refit v550/v551 | **main** v550–v551 |
 | B3 | **Double-click / reset camera** → facing wrong again | ✅ | `baseYaw`, reset + forced yaw v551 | **main** `v551` |
 | B4 | **Poke / multi-tap → blended head** | ✅ | Torso-only poke shake v551 | **main** `v551` |
-| B5 | **Hair / skirt / ribbon** wind, shake, gravity wrong | ⏸️ | v557 spring pre-update pass shipped; Mon may still want [#81](https://github.com/MonMonMars/amoji_engine_02/pull/81) drag tweaks | **prod v557** + #81 |
+| B5 | **Hair / skirt / ribbon** wind, shake, gravity wrong | ⏸️ | Spring **v15** world-down gravity + stronger skirt/hair pull on **prod v559** | [#97](https://github.com/MonMonMars/amoji_engine_02/pull/97) |
 | B6 | **Skirt weights sliding** / soft parts | ⏸️ | Spring + planted limbs (AGENTS.md regression notes) | v550+ on main; verify in session |
 | B7 | **Feet planted** / ghost limbs after `vrm.update` | ⏸️ | Full humanoid norm→raw sync | **main** v550+; E2E `feet-planted` |
 
@@ -176,7 +176,7 @@ After each merge batch: `npm run verify:pre-delivery:prod` → exit **0** before
 
 ## One-line summary for Mon (2026-09-23 PM)
 
-**On live Vercel today (`v558`):** everything from **v557** (Shino, picker hero, TTS cutoff, preload, zoom, previews, Elio) plus **1× talk-speed label**, **TTS face/lip timing**, **wide ghost Menu fix** — **✅** for C4/D5; lip/emotion **⏸️** (automated mouth check passes — tell us if face still flat). **Still open:** arms (**B1**), Kizuna if you hit load errors (**F1**), Safari stale art (**A1**), spring/hair (**B5**). Bookmark **`/play`** only.
+**On live Vercel today (`v559`):** **v558** stack (talk speed 1×, lip/face timing, wide menu, v557 roster) plus **fresh scene/roster cache tags** and **spring v15** hair/skirt gravity — **✅** gates **57/57**. **⏸️:** Safari may still need a **`/play`** reopen (**A1**); lip/emotion face (**D1/D2**); live **arm blend (B1)**. Re-report any character still wrong after cache-bust open.
 
 ---
 
