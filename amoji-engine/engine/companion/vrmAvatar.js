@@ -700,6 +700,10 @@ export async function createVrmAvatar(opts) {
   guardLookAtLids(vrm);
 
   applyDefaultPortraitFrame = () => {
+    bodyMotion.cancelPokeShake?.();
+    bodyMotion.resetSmoothedRoot?.();
+    model.rotation.y = baseModelRotY;
+    model.position.y = baseModelY;
     vrm.scene?.updateMatrixWorld?.(true);
     headBone?.updateMatrixWorld?.(true);
     const fittedNow = new THREE.Box3().setFromObject(model);
@@ -712,6 +716,7 @@ export async function createVrmAvatar(opts) {
       anchor: faceAnchor,
       fittedHeight,
       baseFov: PORTRAIT_FOV,
+      baseYaw: baseModelRotY,
     });
     portraitDist = resolved.portraitDist;
     portraitCameraZSign = resolved.zSign;
@@ -743,6 +748,7 @@ export async function createVrmAvatar(opts) {
         anchor: faceAnchor,
         fittedHeight,
         baseFov: PORTRAIT_FOV,
+        baseYaw: baseModelRotY,
       });
       portraitDist = refit.portraitDist;
       portraitCameraZSign = refit.zSign;
@@ -1795,7 +1801,17 @@ export async function createVrmAvatar(opts) {
   };
 
   const resetCameraView = () => {
+    bodyMotion.cancelPokeShake?.();
+    bodyMotion.resetSmoothedRoot?.();
+    bodyMotion.reapplyPlantedLimbs?.({ force: true, now: performance.now() });
     applyDefaultPortraitFrame?.();
+    if (
+      !isHeadFacingCamera(headBone, camera, vrm.humanoid, model) &&
+      correctPortraitModelYaw(model, headBone, camera, vrm.humanoid, 0.08)
+    ) {
+      baseModelRotY = normalizeModelYaw(model);
+      applyDefaultPortraitFrame?.();
+    }
   };
 
   canvas.style.touchAction = "none";

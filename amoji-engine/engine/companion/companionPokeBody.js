@@ -47,13 +47,11 @@ export function samplePokeShakePose(elapsedSec, opts = {}) {
     Math.sin(t * 14.2) * 0.52 + Math.sin(t * 9.4 + 0.65) * 0.48;
   const jolt = Math.sin(t * 18.5) * 0.35 * Math.max(0, 1 - t * 1.6);
 
+  /* Torso only — head channels fight VRM lookAt and read as “blended head”. */
   return {
     spineX: (0.018 + wobble * 0.042 + jolt * 0.02) * strength,
     spineZ: (side * -0.022 + wobble * 0.026) * strength,
     chestX: wobble * 0.018 * strength,
-    headX: (-0.012 + wobble * 0.058 + jolt * 0.035) * strength,
-    headZ: (side * 0.045 + wobble * 0.05) * strength,
-    leanY: (side * -0.04 + wobble * 0.032) * strength,
     hipZ: lockedIdleHipTilt(wobble * 0.022 * strength, 0.42),
   };
 }

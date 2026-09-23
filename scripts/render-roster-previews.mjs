@@ -25,7 +25,6 @@ import {
   isBadHeroPreviewCapture,
   isBadPreviewCapture,
 } from "../amoji-engine/engine/companion/companionPreviewAssets.mjs";
-import { beginStartPickerSession } from "./companion-picker-smoke-util.mjs";
 import { waitForPageFn } from "./playwrightPageUtil.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -172,27 +171,42 @@ async function waitForStageReady(page, characterId) {
   await waitForPageFn(page, () => window.__amojiStart?.ready === true, {
     timeout: 120000,
   });
-  await beginStartPickerSession(page, {
-    characterId,
-    cardTimeout: 90000,
-    dismissTimeout: 120000,
-  });
   await page.waitForFunction(
     () =>
       window.__amojiAvatarKind === "vrm3d" && Boolean(window.__amojiAvatar?.vrm),
     undefined,
-    { timeout: 90000 },
+    { timeout: 120000 },
   );
   await page
     .waitForFunction(
       () => document.querySelector(".stage.avatar-ready") != null,
       undefined,
-      { timeout: 60000 },
+      { timeout: 90000 },
     )
     .catch(() => null);
-  await page.waitForTimeout(12000);
+
+  for (let attempt = 0; attempt < 12; attempt += 1) {
+    await page.evaluate(() => {
+      window.__amojiAvatar?.warmPresentFrame?.();
+      window.__amojiAvatar?.resetCameraView?.();
+    });
+    await page.waitForTimeout(1200);
+    const ready = await page.evaluate(() => {
+      const facing = window.__amojiAvatar?.getPortraitFacing?.();
+      const limbs = window.__amojiAvatar?.auditPlantedLimbs?.({
+        maxDeltaRad: 0.018,
+      });
+      return (
+        facing?.facingCamera === true &&
+        (Number(facing.visibleScore) || 0) > 0.1 &&
+        limbs?.ok !== false
+      );
+    });
+    if (ready) break;
+  }
+
   await hideUiForCapture(page);
-  await page.waitForTimeout(800);
+  await page.waitForTimeout(400);
 }
 
 /**
@@ -213,12 +227,6 @@ async function screenshotPortrait(page, box, kind, out) {
     kind === "hero" ? isBadHeroCapture(out) : isBadCardCapture(out);
   if (bad) {
     const badBytes = statSync(out).size;
-    try {
-      const { unlinkSync } = await import("node:fs");
-      unlinkSync(out);
-    } catch {
-      /* ignore */
-    }
     throw new Error(`${kind} capture too small or black (${badBytes} bytes)`);
   }
 }
@@ -226,7 +234,9 @@ async function screenshotPortrait(page, box, kind, out) {
 async function captureCharacter(page, characterId, baseUrl) {
   const url = new URL(baseUrl);
   url.searchParams.set("build", AMOJI_BUILD);
-  url.searchParams.delete("pick");
+  url.searchParams.set("pick", "0");
+  url.searchParams.set("autostart", "1");
+  url.searchParams.set("character", characterId);
   url.searchParams.set("automic", "0");
   if (!url.searchParams.get("lang")) url.searchParams.set("lang", "en");
 
