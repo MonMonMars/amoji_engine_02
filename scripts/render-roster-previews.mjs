@@ -144,9 +144,9 @@ async function waitForStageReady(page, characterId) {
       { timeout: 60000 },
     )
     .catch(() => null);
-  await page.waitForTimeout(10000);
+  await page.waitForTimeout(12000);
   await hideUiForCapture(page);
-  await page.waitForTimeout(600);
+  await page.waitForTimeout(800);
 }
 
 async function captureCharacter(page, characterId, baseUrl) {
@@ -164,7 +164,29 @@ async function captureCharacter(page, characterId, baseUrl) {
   const out = previewPath(characterId);
   const canvas = page.locator("#avatar-canvas");
   await canvas.waitFor({ state: "visible", timeout: 15000 });
-  await canvas.screenshot({ path: out, type: "png", animations: "disabled" });
+  const box = await canvas.boundingBox();
+  if (!box?.width || !box?.height) {
+    throw new Error("avatar canvas has no layout box");
+  }
+  const portraitAspect = 3 / 4;
+  let clipW = box.width * 0.9;
+  let clipH = clipW / portraitAspect;
+  if (clipH > box.height * 0.92) {
+    clipH = box.height * 0.92;
+    clipW = clipH * portraitAspect;
+  }
+  const clip = {
+    x: box.x + (box.width - clipW) / 2,
+    y: box.y + (box.height - clipH) / 2,
+    width: clipW,
+    height: clipH,
+  };
+  await page.screenshot({
+    path: out,
+    type: "png",
+    animations: "disabled",
+    clip,
+  });
   if (isBadCapture(out)) {
     const badBytes = statSync(out).size;
     try {

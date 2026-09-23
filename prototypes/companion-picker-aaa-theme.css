@@ -97,11 +97,9 @@
   overflow: hidden;
 }
 
+/* Start picker hero — large portrait; sizing from companion-start-picker-sheet.css */
 .companion-picker--aaa-theme.companion-picker--stacked-layout.companion-picker--start .picker-hero-portrait {
-  width: min(32vw, 7.25rem) !important;
-  max-width: 7.25rem !important;
-  max-height: min(22vh, 8.25rem) !important;
-  aspect-ratio: 3 / 4;
+  aspect-ratio: unset;
   flex: 0 0 auto;
 }
 
@@ -160,11 +158,12 @@
   position: relative;
   z-index: 1;
   display: block;
-  width: 100%;
-  height: 100%;
-  max-height: 100%;
-  object-fit: contain;
-  object-position: center top;
+  width: auto !important;
+  height: auto !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  object-fit: contain !important;
+  object-position: center center !important;
   border-radius: 0.92rem;
   background: #120a1e;
 }
