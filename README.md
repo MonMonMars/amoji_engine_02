@@ -30,6 +30,7 @@ Current build id: see `amoji-engine/engine/companion/buildVersion.mjs` (`AMOJI_B
 | [`prototypes/`](./prototypes/) | `amoji-companion.html`, CSS, VRM/png assets |
 | [`scripts/`](./scripts/) | Playwright verify, pre-delivery gate, smoke tests |
 | [`AGENTS.md`](./AGENTS.md) | Agent verify rules, demo links, Cursor Cloud notes |
+| [`docs/AMOJI_BUSINESS_PLAN.md`](./docs/AMOJI_BUSINESS_PLAN.md) | B2C + B2B business plan (canonical) |
 | [`DEPLOY.md`](./DEPLOY.md) | Vercel deploy |
 
 ## Verify before sharing links

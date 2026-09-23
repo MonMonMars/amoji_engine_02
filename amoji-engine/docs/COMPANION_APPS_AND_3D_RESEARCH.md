@@ -3,6 +3,8 @@
 **Build:** `2026-09-18-v214-companion-roles`  
 **Target:** AI girlfriend · boyfriend · secretary · pet — learn from market leaders, ship with **legal VRM test assets only**.
 
+> **Business plan (B2C + B2B):** Strategy, pricing lanes, GTM, and roadmap live in [`docs/AMOJI_BUSINESS_PLAN.md`](../../docs/AMOJI_BUSINESS_PLAN.md). This file stays the **market & 3D research** reference; the business plan **updates and consolidates** the product direction from here, `JAPANESE_RAISING_GAMES_RESEARCH.md`, and `MOBILE_APP_ARCHITECTURE.md`.
+
 > **Important:** We do **not** extract or redistribute 3D models from commercial apps (Replika, Nomi, iBoy, etc.). That violates their ToS and copyright. Instead we study their **product design** and use **open-licensed VRM** (VRoid samples, CC0 100Avatars) for testing.
 
 ---
