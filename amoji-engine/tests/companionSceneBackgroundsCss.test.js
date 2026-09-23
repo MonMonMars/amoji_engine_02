@@ -25,6 +25,15 @@ describe("companion scene backgrounds css", () => {
     }
   });
 
+  it("scene picker swatches use the same cache-bust tag as atmosphere PNGs", () => {
+    const css = readFileSync(cssPath, "utf8");
+    const swatchBlocks = css.match(/\.scene-preset__swatch--[\w-]+\s*\{[\s\S]*?\}/g) || [];
+    expect(swatchBlocks.length).toBeGreaterThan(10);
+    for (const block of swatchBlocks) {
+      expect(block).toContain(PICKER_SCENE_ART_REVISION);
+    }
+  });
+
   it("ships svg scene files on disk", () => {
     const dir = join(root, "prototypes/assets/scene-bg");
     const missing = SCENE_BACKGROUND_PRESETS.filter(
