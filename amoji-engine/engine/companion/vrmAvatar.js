@@ -42,6 +42,7 @@ import {
 import {
   bindOrbitControlSession,
   bindOrbitTouchGuard,
+  bindOrbitWheelZoom,
   configureCompanionOrbitControls,
   resolveOrbitDomElement,
 } from "./companionOrbitControls.js";
@@ -1821,6 +1822,7 @@ export async function createVrmAvatar(opts) {
   orbitSurface.style.webkitUserSelect = "none";
   orbitSurface.style.cursor = "grab";
   const unbindOrbitGuard = bindOrbitTouchGuard(orbitSurface);
+  const unbindOrbitWheel = bindOrbitWheelZoom(orbitSurface, controls);
   const unbindOrbitSession = bindOrbitControlSession(
     controls,
     () => {
@@ -2086,6 +2088,7 @@ export async function createVrmAvatar(opts) {
       avatarPointer?.destroy?.();
       avatarPointer = null;
       unbindOrbitGuard();
+      unbindOrbitWheel();
       unbindOrbitSession();
       controls.dispose();
       vrm.dispose?.();
