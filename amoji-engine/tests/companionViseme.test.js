@@ -57,8 +57,8 @@ describe("companionViseme", () => {
   });
 
   it("slows lip sync estimate when talk speed is lower", () => {
-    const normal = estimateLipSyncMsPerChar("你好", 0, 0.28);
-    const slow = estimateLipSyncMsPerChar("你好", 0, 0.14);
+    const normal = estimateLipSyncMsPerChar("你好", 0, 0.42);
+    const slow = estimateLipSyncMsPerChar("你好", 0, 0.21);
     expect(slow).toBeGreaterThan(normal);
   });
 
