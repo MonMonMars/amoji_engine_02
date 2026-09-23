@@ -119,6 +119,44 @@ export function shouldRemoveBootSplash(opts = {}) {
  * @param {Document | null | undefined} [doc]
  * @param {Record<string, unknown> | null | undefined} [start]
  */
+/**
+ * True when the start picker is on screen (early boot or in-session switch).
+ *
+ * @param {Document | null | undefined} [doc]
+ */
+export function isStartPickerVisibleFromDom(doc = globalThis.document) {
+  const picker = doc?.getElementById?.("start-character-picker");
+  return Boolean(
+    picker &&
+      picker.classList.contains("is-open") &&
+      !picker.classList.contains("hide") &&
+      picker.getAttribute("aria-hidden") !== "true" &&
+      !picker.hidden,
+  );
+}
+
+/**
+ * Slow-boot alerts should not cover the roster while the main module graph loads.
+ *
+ * @param {Document | null | undefined} [doc]
+ * @param {Record<string, unknown> | null | undefined} [start]
+ */
+export function shouldSuppressBootFallbackAlert(
+  doc = globalThis.document,
+  start = globalThis.__amojiStart,
+) {
+  if (isStartPickerVisibleFromDom(doc)) return true;
+  const body = doc?.body;
+  if (
+    body?.classList?.contains?.("companion-start-picker-open") ||
+    body?.classList?.contains?.("companion-picker-open")
+  ) {
+    return true;
+  }
+  if (start?.starting && !start?.sessionStarted) return true;
+  return false;
+}
+
 export function bootSplashGateFromDom(
   doc = globalThis.document,
   start = globalThis.__amojiStart,
@@ -129,14 +167,7 @@ export function bootSplashGateFromDom(
       !fallback.hidden &&
       fallback.classList.contains("show"),
   );
-  const picker = doc?.getElementById?.("start-character-picker");
-  const pickerVisible = Boolean(
-    picker &&
-      picker.classList.contains("is-open") &&
-      !picker.classList.contains("hide") &&
-      picker.getAttribute("aria-hidden") !== "true" &&
-      !picker.hidden,
-  );
+  const pickerVisible = isStartPickerVisibleFromDom(doc);
   const body = doc?.body;
   const pickerOpenBodyClass = Boolean(
     body?.classList?.contains?.("companion-picker-open") ||
