@@ -265,7 +265,7 @@ export const REPLACEMENT_ROSTER_SLOTS = [
   {
     id: "shino",
     slot: 24,
-    name: { yue: "千駄ヶ谷篠", en: "Sendagaya Shino" },
+    name: { yue: "千駄ヶ谷篠", en: "Shino" },
     tagline: {
       yue: "VRoid 官方 sample · CC0",
       en: "VRoid official sample · CC0",

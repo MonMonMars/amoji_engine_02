@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 import {
   bindOrbitControlSession,
   bindOrbitTouchGuard,
+  bindOrbitWheelZoom,
   configureCompanionOrbitControls,
   resolveOrbitDomElement,
 } from "../engine/companion/companionOrbitControls.js";
@@ -25,7 +26,7 @@ describe("companionOrbitControls", () => {
     expect(resolveOrbitDomElement({ canvas }).id).toBe("avatar-canvas");
   });
 
-  it("enables yaw and pitch rotate for mouse and one-finger touch", () => {
+  it("enables mouse drag rotate and two-finger pinch zoom on touch", () => {
     const controls = configureCompanionOrbitControls({
       enabled: false,
       enableDamping: false,
@@ -39,7 +40,44 @@ describe("companionOrbitControls", () => {
     expect(controls.minPolarAngle).toBe(ORBIT_MIN_POLAR);
     expect(controls.maxPolarAngle).toBe(ORBIT_MAX_POLAR);
     expect(controls.mouseButtons.LEFT).toBe(THREE.MOUSE.ROTATE);
-    expect(controls.touches.ONE).toBe(THREE.TOUCH.ROTATE);
+    expect(controls.touches.TWO).toBe(THREE.TOUCH.DOLLY_PAN);
+    expect(controls.touches.ONE).toBeUndefined();
+  });
+
+  it("captures wheel on the orbit surface for trackpad zoom", () => {
+    const listeners = [];
+    const el = {
+      addEventListener(type, fn, opts) {
+        listeners.push({ type, fn, opts });
+      },
+      removeEventListener(type, fn, opts) {
+        const idx = listeners.findIndex(
+          (row) => row.type === type && row.fn === fn && row.opts?.capture === opts?.capture,
+        );
+        if (idx >= 0) listeners.splice(idx, 1);
+      },
+    };
+    const controls = { enabled: true, enableZoom: true };
+    const unbind = bindOrbitWheelZoom(el, controls);
+    expect(listeners[0]?.type).toBe("wheel");
+    expect(listeners[0]?.opts?.passive).toBe(false);
+    expect(listeners[0]?.opts?.capture).toBe(true);
+    const event = {
+      cancelable: true,
+      prevented: false,
+      stopped: false,
+      preventDefault() {
+        this.prevented = true;
+      },
+      stopPropagation() {
+        this.stopped = true;
+      },
+    };
+    listeners[0].fn(event);
+    expect(event.prevented).toBe(true);
+    expect(event.stopped).toBe(true);
+    unbind();
+    expect(listeners.length).toBe(0);
   });
 
   it("guards touchmove so iOS does not steal the orbit gesture", () => {

@@ -1,9 +1,10 @@
 /**
- * Stage pointer routing — quick tap on full body = poke; drag / pinch = camera orbit only.
+ * Stage pointer routing — one-finger tap on body = poke; two-finger pinch / scroll = zoom.
  */
 import * as THREE from "three";
 
-export const COMPANION_AVATAR_POINTER_SCHEMA = "amoji.companionAvatarPointer.v4";
+export const COMPANION_AVATAR_POINTER_SCHEMA =
+  "amoji.companionAvatarPointer.v5-two-finger-zoom";
 
 export const AVATAR_TAP_MOVE_PX = 14;
 /** Fast tap — longer presses count as drag / orbit, not poke. */
@@ -209,7 +210,15 @@ export function bindCompanionAvatarPointer(opts) {
   const onPointerDown = (e) => {
     if (e.button !== 0 && e.pointerType === "mouse") return;
     activePointers.add(e.pointerId);
-    if (activePointers.size > 1) gestureHadMultiTouch = true;
+    if (activePointers.size > 1) {
+      gestureHadMultiTouch = true;
+      pendingCharacterTap = null;
+      pointerActive = false;
+      downOnCharacter = false;
+      dragged = false;
+      setCursor("grab");
+      return;
+    }
     pointerActive = true;
     downX = e.clientX;
     downY = e.clientY;

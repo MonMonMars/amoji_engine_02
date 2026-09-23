@@ -29,6 +29,7 @@ import { syncCameraRelativeStageLights } from "./companionStageLighting.js";
 import {
   bindOrbitControlSession,
   bindOrbitTouchGuard,
+  bindOrbitWheelZoom,
   configureCompanionOrbitControls,
   resolveOrbitDomElement,
 } from "./companionOrbitControls.js";
@@ -544,6 +545,7 @@ export async function createGltfAvatar(opts) {
   orbitSurface.style.webkitUserSelect = "none";
   orbitSurface.style.cursor = "grab";
   const unbindOrbitGuard = bindOrbitTouchGuard(orbitSurface);
+  const unbindOrbitWheel = bindOrbitWheelZoom(orbitSurface, controls);
   const unbindOrbitSession = bindOrbitControlSession(
     controls,
     () => {
@@ -595,6 +597,7 @@ export async function createGltfAvatar(opts) {
       cancelAnimationFrame(raf);
       globalThis.removeEventListener?.("resize", resize);
       unbindOrbitGuard();
+      unbindOrbitWheel();
       unbindOrbitSession();
       controls.dispose();
       renderer.dispose();
