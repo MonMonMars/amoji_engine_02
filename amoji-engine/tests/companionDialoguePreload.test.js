@@ -1,8 +1,10 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   collectIdleDialoguePhrases,
   collectWaitDialoguePhrases,
   dialogueTtsCacheKey,
+  getCachedDialogueTts,
+  prefetchDialogueTtsPhrases,
 } from "../engine/companion/companionDialoguePreload.js";
 
 describe("companionDialoguePreload", () => {
@@ -36,5 +38,21 @@ describe("companionDialoguePreload", () => {
     expect(phrases.some((p) => p.includes("嗯"))).toBe(true);
     expect(phrases.some((p) => p.includes("等我"))).toBe(true);
     expect(phrases.length).toBeGreaterThanOrEqual(12);
+  });
+
+  it("prefetchDialogueTtsPhrases stores blobs by speakable text", async () => {
+    const audioBlob = new Blob([new Uint8Array([1, 2, 3])], { type: "audio/mpeg" });
+    const fetchImpl = async () => ({
+      ok: true,
+      blob: async () => audioBlob,
+    });
+    const result = await prefetchDialogueTtsPhrases(["Hi there! [mood:happy]"], {
+      cloudTtsUrl: "https://example.test/tts",
+      lang: "en-US",
+      voiceName: "en-US-JennyNeural",
+      fetchImpl,
+    });
+    expect(result.ok).toBe(true);
+    expect(getCachedDialogueTts(dialogueTtsCacheKey("en-US", "Hi there!"))).toBeTruthy();
   });
 });
