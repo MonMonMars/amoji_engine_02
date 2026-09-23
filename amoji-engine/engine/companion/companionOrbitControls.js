@@ -4,7 +4,8 @@
 import * as THREE from "three";
 import { applyUserOrbitLimits } from "./companionPortraitFraming.js";
 
-export const COMPANION_ORBIT_CONTROLS_SCHEMA = "amoji.companionOrbitControls.v2";
+export const COMPANION_ORBIT_CONTROLS_SCHEMA =
+  "amoji.companionOrbitControls.v3-two-finger-zoom";
 
 /**
  * @param {{
@@ -35,20 +36,19 @@ export function configureCompanionOrbitControls(controls) {
   controls.enableDamping = true;
   controls.dampingFactor = 0.08;
   controls.rotateSpeed = 1.45;
-  controls.zoomSpeed = 1.2;
+  controls.zoomSpeed = 1.35;
   controls.mouseButtons = {
     LEFT: THREE.MOUSE.ROTATE,
     MIDDLE: THREE.MOUSE.DOLLY,
     RIGHT: THREE.MOUSE.ROTATE,
   };
-  /* One finger = orbit rotate (character or empty). Two fingers = zoom + vertical pan only. */
+  /* Touch: one finger = poke (avatar pointer). Two fingers = pinch zoom + pan on the character. */
   controls.touches = {
-    ONE: THREE.TOUCH.ROTATE,
     TWO: THREE.TOUCH.DOLLY_PAN,
   };
   controls.enablePan = true;
   controls.screenSpacePanning = true;
-  controls.panSpeed = 0.55;
+  controls.panSpeed = 0.85;
   return controls;
 }
 
@@ -64,6 +64,25 @@ export function bindOrbitTouchGuard(el) {
   el.addEventListener("touchmove", onTouchMove, { passive: false });
   return () => {
     el.removeEventListener("touchmove", onTouchMove);
+  };
+}
+
+/**
+ * Keep two-finger trackpad scroll / wheel zoom on the character stage (not the chat scroll).
+ * OrbitControls handles dolly; we only stop the event from bubbling to the page.
+ * @param {HTMLElement | null | undefined} el
+ * @param {{ enabled?: boolean, enableZoom?: boolean } | null | undefined} controls
+ */
+export function bindOrbitWheelZoom(el, controls) {
+  if (!el?.addEventListener) return () => {};
+  const onWheel = (event) => {
+    if (controls?.enabled === false || controls?.enableZoom === false) return;
+    if (event.cancelable) event.preventDefault();
+    event.stopPropagation();
+  };
+  el.addEventListener("wheel", onWheel, { passive: false, capture: true });
+  return () => {
+    el.removeEventListener("wheel", onWheel, { capture: true });
   };
 }
 
