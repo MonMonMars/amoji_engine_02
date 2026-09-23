@@ -94,7 +94,7 @@ describe("companionUnifiedApp", () => {
 
   it("uses character-native roles even when tab= or role= appear in the URL", () => {
     expect(
-      resolveAppRole(new URLSearchParams("character=sienna&tab=today&lang=en")),
+      resolveAppRole(new URLSearchParams("character=shino&tab=today&lang=en")),
     ).toBe("secretary");
     expect(
       resolveAppRole(
@@ -113,7 +113,7 @@ describe("companionUnifiedApp", () => {
 
   it("uses role default character when none picked", () => {
     expect(resolveRoleDefaultCharacter("", "secretary", new URLSearchParams())).toBe(
-      "sienna",
+      "shino",
     );
     expect(
       resolveRoleDefaultCharacter("nova", "girlfriend", new URLSearchParams()),
@@ -126,9 +126,9 @@ describe("companionUnifiedApp", () => {
       "secretary",
       true,
     );
-    const sienna = roster.find((c) => c.id === "sienna");
-    expect(sienna?.roleBadge).toBe("Secretary");
-    expect(sienna?.companionRole).toBe("secretary");
+    const shino = roster.find((c) => c.id === "shino");
+    expect(shino?.roleBadge).toBe("Secretary");
+    expect(shino?.companionRole).toBe("secretary");
     expect(roster.find((c) => c.id === "kizuna")?.roleBadge).toBe("Girlfriend");
   });
 

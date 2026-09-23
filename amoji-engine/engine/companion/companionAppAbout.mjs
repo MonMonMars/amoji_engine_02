@@ -6,7 +6,7 @@ import { AMOJI_MODEL_REVISION } from "./companionCharacterMigration.mjs";
 import { CHARACTER_IDS } from "./companionCharacterCatalog.js";
 import { DEMO_BASE_URL } from "./deployUrls.mjs";
 
-export const COMPANION_APP_ABOUT_SCHEMA = "amoji.companionAppAbout.v2";
+export const COMPANION_APP_ABOUT_SCHEMA = "amoji.companionAppAbout.v3-shino-cc0-credit";
 
 /** @returns {string} */
 export function resolveAppBuildId() {
@@ -35,6 +35,9 @@ export function formatSettingsAboutCopy(isEnglish = false) {
     modelHint: en
       ? "Each pick loads companion-<id>.vrm (see Menu if portrait and mesh differ on alias slots)."
       : "每次揀人會載入 companion-<id>.vrm（若卡面同模型唔同，可能係共用檔案）。",
+    creditsLine: en
+      ? "3D: Sendagaya Shino — VRoid Project (pixiv), CC0 1.0 official sample (#24 Shino)."
+      : "3D：千駄ヶ谷篠 — VRoid プロジェクト（pixiv）官方 CC0 sample（#24 篠）。",
     privacyLabel: en ? "Privacy policy" : "私隱政策",
     freshPlayLabel: en ? "Fresh entry (/play)" : "新開 /play",
     freshPlayUrl: `${DEMO_BASE_URL}/play?build=${encodeURIComponent(build)}&pick=1&automic=0&lang=${en ? "en" : "yue"}`,

@@ -12,10 +12,11 @@ export const RETIRED_VRM_BASENAMES = Object.freeze([
   "companion-hugo.vrm",
   "companion-shiro.vrm",
   "companion-avatarsample-c.vrm",
+  "companion-sienna.vrm",
 ]);
 
 /** Bust browser caches when roster model files change (independent of HTML build). */
-export const AMOJI_MODEL_REVISION = "roster-v530-visuals";
+export const AMOJI_MODEL_REVISION = "roster-v542-shino-cc0";
 
 /**
  * @param {string | null | undefined} url

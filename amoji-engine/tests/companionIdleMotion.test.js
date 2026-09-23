@@ -188,12 +188,13 @@ describe("idle body motion integration", () => {
     for (let i = 0; i < 240; i += 1) motion.update(1 / 30);
     motion.resetMotionClock(performance.now() - 1200);
     for (let i = 0; i < 30; i += 1) motion.update(1 / 30, { now: performance.now() });
-    expect(bones.get("leftLowerArm").rotation.x).toBeGreaterThan(
-      VRM_ARM_REST_ROTATIONS.leftLowerArm.x + 0.02,
+    expect(bones.get("leftLowerArm").rotation.x).toBeCloseTo(
+      VRM_ARM_REST_ROTATIONS.leftLowerArm.x,
+      2,
     );
   });
 
-  it("keeps bent idle arms without talking", () => {
+  it("keeps planted idle arms on calibrated rest without talking", () => {
     const bones = new Map();
     for (const name of [
       "leftUpperArm",
@@ -216,8 +217,9 @@ describe("idle body motion integration", () => {
     const rot = bones.get("leftUpperArm").rotation;
     const rest = VRM_ARM_REST_ROTATIONS.leftUpperArm;
     expect(Math.abs(rot.z - rest.z)).toBeLessThan(0.02);
-    expect(bones.get("leftLowerArm").rotation.x).toBeGreaterThan(
-      VRM_ARM_REST_ROTATIONS.leftLowerArm.x + 0.02,
+    expect(bones.get("leftLowerArm").rotation.x).toBeCloseTo(
+      VRM_ARM_REST_ROTATIONS.leftLowerArm.x,
+      2,
     );
   });
 });

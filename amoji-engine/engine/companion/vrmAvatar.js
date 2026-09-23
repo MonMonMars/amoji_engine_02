@@ -50,7 +50,10 @@ import { BOOT_FULL_LIBRARY_WARM_CLIP_IDS } from "./companionIdleMotionPreload.js
 import { detectVrmIdleRestRotations } from "./companionArmRestCalibration.js";
 import { establishCalmStandFromBind } from "./companionCalmStandFoundation.js";
 import { createCompanionBodyMotion } from "./companionBodyMotion.js";
-import { auditPlantedLimbDualWrite } from "./companionPlantedLimbLock.js";
+import {
+  auditPlantedLimbDualWrite,
+  syncHumanoidSkinnedRawFromNormalized,
+} from "./companionPlantedLimbLock.js";
 import { characterGender } from "./companionCharacterCatalog.js";
 import {
   inferFingerFlexAxis,
@@ -100,6 +103,7 @@ import {
   auditVrmSpringGravity,
   configureVrmSpringStability,
   createIdleSpringRecenterState,
+  enforceSpringGravityDown,
   recenterVrmSpringBones,
   setVrmSceneWindMode,
   stabilizeVrmSpringBones,
@@ -315,6 +319,7 @@ export async function createVrmAvatar(opts) {
   loader.register((parser) => new VRMLoaderPlugin(parser));
   const loadedModelUrl = modelUrl;
   const loadedCharacterId = String(opts.characterId || "nova").toLowerCase();
+  const idleRestOpts = { characterId: loadedCharacterId };
   const gltf = await loadVrmGltf(
     loader,
     modelUrl,
@@ -367,7 +372,7 @@ export async function createVrmAvatar(opts) {
   /** @type {"indoor" | "outdoor"} */
   let sceneEnvironment = "indoor";
   let sceneBackgroundId = null;
-  const bootIdleRest = detectVrmIdleRestRotations(vrm);
+  const bootIdleRest = detectVrmIdleRestRotations(vrm, idleRestOpts);
   bodyMotion.setArmRestRotations?.(bootIdleRest.arms);
   bodyMotion.setLegRestRotations?.(bootIdleRest.legs);
   bodyMotion.setArmBind?.(bootIdleRest.bind);
@@ -520,10 +525,11 @@ export async function createVrmAvatar(opts) {
       establishCalmStandFromBind(vrm, bodyMotion, {
         resetIdleLife: opts.resetIdleLife !== false,
         warmFrames: Number(opts.warmFrames) || 16,
+        characterId: loadedCharacterId,
       });
     } else {
       vrm.humanoid?.resetNormalizedPose?.();
-      const rest = detectVrmIdleRestRotations(vrm);
+      const rest = detectVrmIdleRestRotations(vrm, idleRestOpts);
       bodyMotion.setArmRestRotations?.(rest.arms);
       bodyMotion.setLegRestRotations?.(rest.legs);
       bodyMotion.setArmBind?.(rest.bind);
@@ -643,6 +649,7 @@ export async function createVrmAvatar(opts) {
   establishCalmStandFromBind(vrm, bodyMotion, {
     resetIdleLife: false,
     warmFrames: 48,
+    characterId: loadedCharacterId,
   });
   configureVrmSpringStability(vrm, sceneEnvironment);
   recenterVrmSpringBones(vrm, { retune: true, captureInit: true });
@@ -1602,6 +1609,10 @@ export async function createVrmAvatar(opts) {
         });
       }
       syncHumanoidPose();
+      if (!libraryMotion) {
+        syncHumanoidSkinnedRawFromNormalized(vrm?.humanoid);
+      }
+      enforceSpringGravityDown(vrm);
       stabilizeVrmSpringBones(vrm);
       vrm.update(dt);
       if (!libraryMotion && !bodyMotion.currentAction) {
@@ -1611,6 +1622,8 @@ export async function createVrmAvatar(opts) {
             !eating &&
             !bodyMotion.idleBeatArmsActive,
         });
+        syncHumanoidSkinnedRawFromNormalized(vrm?.humanoid);
+        enforceSpringGravityDown(vrm);
         stabilizeVrmSpringBones(vrm);
       }
       const crossfading =
@@ -2021,6 +2034,7 @@ export async function createVrmAvatar(opts) {
         establishCalmStandFromBind(vrm, bodyMotion, {
           resetIdleLife: false,
           warmFrames: 8,
+          characterId: loadedCharacterId,
         });
         applyDefaultPortraitFrame?.();
         syncLookTarget();
