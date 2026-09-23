@@ -65,6 +65,46 @@ body.companion-start-picker-open.companion-picker-open .composer-wrap {
   z-index: 0 !important;
 }
 
+body.companion-start-picker-open .settings,
+body.companion-start-picker-open .settings-backdrop,
+body.companion-start-picker-open .scene-sheet,
+body.companion-start-picker-open .scene-sheet-backdrop {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  opacity: 0 !important;
+  z-index: 0 !important;
+}
+
+@media (min-width: 1024px) {
+  body.companion-start-picker-open .companion-picker.companion-picker--start.is-open:not(.hide),
+  body.companion-start-picker-open .companion-picker--v4.companion-picker--start.is-open:not(.hide) {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    max-width: none !important;
+    margin: 0 !important;
+    z-index: 12050 !important;
+  }
+
+  body.companion-start-picker-open
+    .companion-picker--v4.companion-picker--start.is-open:not(.hide)
+    .companion-picker-sheet {
+    width: 100vw !important;
+    max-width: none !important;
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+  }
+
+  body.companion-start-picker-open.companion-picker--stacked-layout.companion-picker--start
+    .picker-showcase-stage {
+    min-height: min(42vh, 22rem) !important;
+    max-height: none !important;
+  }
+}
+
 .companion-picker--start .picker-main--stacked {
   min-height: 0;
   overflow: hidden;
