@@ -1,8 +1,8 @@
 # Mon — companion problem & request tracker
 
 **Owner:** Mon (Designer)  
-**Last updated:** 2026-09-23 22:27 UTC  
-**Production build (live):** `2026-09-23-v560-mon-companion-wave4` (verified via `/api/health` + `verify:pre-delivery:prod`)  
+**Last updated:** 2026-09-23 23:05 UTC  
+**Production build (live):** `2026-09-23-v561-mon-vtuber-model-cache` (verified via `/api/health` + `verify:pre-delivery:prod`)  
 **Repo `main` build:** `amoji-engine/engine/companion/buildVersion.mjs` → `AMOJI_BUILD`  
 **App entry (bookmark):** https://temporary-rushing-oxygen-ok5jzhd.vercel.app/play  
 
@@ -108,7 +108,7 @@ Agents: **read this before saying “fixed.”** Update a row when status change
 | ID | Problem / request | Status | Evidence / fix | PR / build |
 |----|-------------------|--------|----------------|------------|
 | F1 | **Kizuna / roster #2** model load fail | ✅ | `companion-kizuna.vrm` on prod; `verify:roster-models` 8/8 incl. kizuna | **prod v558** |
-| F2 | Replace roster slots (R3 CC0), keep Elio/Yara/Cleo | 🟡 | Preload cache keyed by `?v=` revision + **`v561`** roster bust (fixes stale VTuber mesh in RAM) | **#99** `v561` |
+| F2 | Replace roster slots (R3 CC0), keep Elio/Yara/Cleo | ✅ | Preload cache keyed by `?v=` revision + **`v561`** roster bust (fixes stale VTuber mesh in RAM) | [#99](https://github.com/MonMonMars/amoji_engine_02/pull/99) prod **v561** |
 | F4 | **Elio** 3D / card looked like flat color blocks | ✅ | AvatarSample C + `vrmModelBounds` + preview regen | **prod v557** |
 | F3 | Unique VRM per character id (no shared mesh) | ⏸️ | `rosterVrmUniqueness.test.js` allowed dup groups | ongoing |
 
@@ -177,7 +177,7 @@ After each merge batch: `npm run verify:pre-delivery:prod` → exit **0** before
 
 ## One-line summary for Mon (2026-09-23 PM)
 
-**On live Vercel today (`v560`):** **v559** cache/springs + **forearm lock during TTS** + **expression snap without text unit** — prod gates **57/57** after verify. **⏸️:** per-character **arm blend (B1)**, **lip/face (D1/D2)**, Safari stale art (**A1**). Bookmark **`/play`**; name the roster # if something still wrong.
+**On live Vercel today (`v561`):** **VTuber/CC0 meshes** load from fresh preload keys (no stale in-RAM VRM after roster bust) + **v560** arms/face — prod gates **57/57**. **⏸️:** per-character **arm blend (B1)**, **lip/face (D1/D2)**. Bookmark **`/play`**; name roster # if still wrong.
 
 ---
 
