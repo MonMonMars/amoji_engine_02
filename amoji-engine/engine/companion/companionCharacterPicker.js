@@ -1420,7 +1420,9 @@ export function createCompanionSwitchOverlay(opts = {}) {
       if (pctEl) pctEl.textContent = "0%";
       if (character && portraitEl && nameEl && card) {
         wireCompanionPreviewFallback(portraitEl);
-        portraitEl.src = String(character.previewImage || "");
+        portraitEl.src = String(
+          character.heroPreviewImage || character.previewImage || "",
+        );
         portraitEl.alt = String(character.name || "");
         nameEl.textContent = String(character.name || "");
         card.style.setProperty("--card-accent", character.accent || "#7fd4cf");

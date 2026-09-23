@@ -55,6 +55,7 @@ export function uniqueCharacterPreviewUrls(langCode = "yue") {
   const urls = new Set();
   for (const item of listCompanionCharacters(langCode)) {
     if (item.previewImage) urls.add(item.previewImage);
+    if (item.heroPreviewImage) urls.add(item.heroPreviewImage);
   }
   return [...urls];
 }

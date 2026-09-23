@@ -1,9 +1,12 @@
 #!/usr/bin/env node
 /**
- * Capture roster card preview PNGs from the live 3D stage (skips picker).
+ * Capture roster preview PNGs from the live 3D stage (skips picker).
+ * - companion-char-<id>.png — full-body (roster strip)
+ * - companion-char-<id>-hero.png — bust close-up (picker hero top)
+ *
  * Usage:
- *   node scripts/render-roster-previews.mjs [--url http://127.0.0.1:5178/...]
- *   node scripts/render-roster-previews.mjs --force --ids poly,jennifer
+ *   node scripts/render-roster-previews.mjs [--url http://127.0.0.1:5174/play?lang=en]
+ *   node scripts/render-roster-previews.mjs --force --ids nova,orion
  */
 import {
   copyFileSync,
@@ -19,8 +22,7 @@ import { chromium } from "playwright";
 import { AMOJI_BUILD } from "../amoji-engine/engine/companion/buildVersion.mjs";
 import { CHARACTER_IDS } from "../amoji-engine/engine/companion/companionCharacterCatalog.js";
 import {
-  BLACK_LOADER_BYTES,
-  MIN_PREVIEW_BYTES,
+  isBadHeroPreviewCapture,
   isBadPreviewCapture,
 } from "../amoji-engine/engine/companion/companionPreviewAssets.mjs";
 import { beginStartPickerSession } from "./companion-picker-smoke-util.mjs";
@@ -29,7 +31,7 @@ import { waitForPageFn } from "./playwrightPageUtil.mjs";
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const outDir = join(root, "prototypes/assets");
 
-const MIN_GOOD_BYTES = MIN_PREVIEW_BYTES;
+const PORTRAIT_ASPECT = 3 / 4;
 
 const DEFAULT_TARGETS = [
   "nova",
@@ -65,7 +67,6 @@ const DEFAULT_TARGETS = [
   "cyrus",
 ];
 
-/** Copy existing art when models share a reference portrait. */
 /** Legacy alias slots only — never copy for primary roster picker cards. */
 const COPY_FROM = {
   rex: "kai",
@@ -83,22 +84,67 @@ function parseArg(name, fallback) {
   return fallback;
 }
 
-function previewPath(id) {
+function cardPreviewPath(id) {
   return join(outDir, `companion-char-${id}.png`);
 }
 
-function isBadCapture(filePath) {
+function heroPreviewPath(id) {
+  return join(outDir, `companion-char-${id}-hero.png`);
+}
+
+function isBadCardCapture(filePath) {
   return isBadPreviewCapture(filePath);
 }
 
+function isBadHeroCapture(filePath) {
+  return isBadHeroPreviewCapture(filePath);
+}
+
+function needsCapture(id, force) {
+  if (force) return true;
+  return (
+    isBadCardCapture(cardPreviewPath(id)) || isBadHeroCapture(heroPreviewPath(id))
+  );
+}
+
+/**
+ * @param {{ x: number, y: number, width: number, height: number }} box
+ * @param {"body" | "hero"} kind
+ */
+function portraitClip(box, kind) {
+  if (kind === "hero") {
+    let clipH = box.height * 0.4;
+    let clipW = clipH * PORTRAIT_ASPECT;
+    if (clipW > box.width * 0.86) {
+      clipW = box.width * 0.86;
+      clipH = clipW / PORTRAIT_ASPECT;
+    }
+    return {
+      x: box.x + (box.width - clipW) / 2,
+      y: box.y + box.height * 0.05,
+      width: clipW,
+      height: clipH,
+    };
+  }
+  let clipW = box.width * 0.9;
+  let clipH = clipW / PORTRAIT_ASPECT;
+  if (clipH > box.height * 0.92) {
+    clipH = box.height * 0.92;
+    clipW = clipH * PORTRAIT_ASPECT;
+  }
+  return {
+    x: box.x + (box.width - clipW) / 2,
+    y: box.y + (box.height - clipH) / 2,
+    width: clipW,
+    height: clipH,
+  };
+}
+
 function copyPreview(fromId, toId) {
-  const fromPath =
-    fromId === "girl-ref"
-      ? join(outDir, "companion-girl-ref.png")
-      : previewPath(fromId);
-  const dest = previewPath(toId);
-  copyFileSync(fromPath, dest);
-  return dest;
+  copyFileSync(cardPreviewPath(fromId), cardPreviewPath(toId));
+  if (existsSync(heroPreviewPath(fromId))) {
+    copyFileSync(heroPreviewPath(fromId), heroPreviewPath(toId));
+  }
 }
 
 async function hideUiForCapture(page) {
@@ -149,6 +195,34 @@ async function waitForStageReady(page, characterId) {
   await page.waitForTimeout(800);
 }
 
+/**
+ * @param {import("playwright").Page} page
+ * @param {{ x: number, y: number, width: number, height: number }} box
+ * @param {"body" | "hero"} kind
+ * @param {string} out
+ */
+async function screenshotPortrait(page, box, kind, out) {
+  const clip = portraitClip(box, kind);
+  await page.screenshot({
+    path: out,
+    type: "png",
+    animations: "disabled",
+    clip,
+  });
+  const bad =
+    kind === "hero" ? isBadHeroCapture(out) : isBadCardCapture(out);
+  if (bad) {
+    const badBytes = statSync(out).size;
+    try {
+      const { unlinkSync } = await import("node:fs");
+      unlinkSync(out);
+    } catch {
+      /* ignore */
+    }
+    throw new Error(`${kind} capture too small or black (${badBytes} bytes)`);
+  }
+}
+
 async function captureCharacter(page, characterId, baseUrl) {
   const url = new URL(baseUrl);
   url.searchParams.set("build", AMOJI_BUILD);
@@ -161,43 +235,17 @@ async function captureCharacter(page, characterId, baseUrl) {
     timeout: 120000,
   });
   await waitForStageReady(page, characterId);
-  const out = previewPath(characterId);
   const canvas = page.locator("#avatar-canvas");
   await canvas.waitFor({ state: "visible", timeout: 15000 });
   const box = await canvas.boundingBox();
   if (!box?.width || !box?.height) {
     throw new Error("avatar canvas has no layout box");
   }
-  const portraitAspect = 3 / 4;
-  let clipW = box.width * 0.9;
-  let clipH = clipW / portraitAspect;
-  if (clipH > box.height * 0.92) {
-    clipH = box.height * 0.92;
-    clipW = clipH * portraitAspect;
-  }
-  const clip = {
-    x: box.x + (box.width - clipW) / 2,
-    y: box.y + (box.height - clipH) / 2,
-    width: clipW,
-    height: clipH,
-  };
-  await page.screenshot({
-    path: out,
-    type: "png",
-    animations: "disabled",
-    clip,
-  });
-  if (isBadCapture(out)) {
-    const badBytes = statSync(out).size;
-    try {
-      const { unlinkSync } = await import("node:fs");
-      unlinkSync(out);
-    } catch {
-      /* ignore */
-    }
-    throw new Error(`capture too small or black loader (${badBytes} bytes)`);
-  }
-  return out;
+  const cardOut = cardPreviewPath(characterId);
+  const heroOut = heroPreviewPath(characterId);
+  await screenshotPortrait(page, box, "body", cardOut);
+  await screenshotPortrait(page, box, "hero", heroOut);
+  return { cardOut, heroOut };
 }
 
 async function main() {
@@ -206,7 +254,7 @@ async function main() {
   const idsArg = parseArg("--ids", "");
   const targets = idsArg
     ? idsArg.split(",").map((s) => s.trim()).filter(Boolean)
-    : DEFAULT_TARGETS.filter((id) => force || isBadCapture(previewPath(id)));
+    : DEFAULT_TARGETS.filter((id) => needsCapture(id, force));
 
   const base = parseArg(
     "--url",
@@ -224,9 +272,8 @@ async function main() {
 
   const results = [];
   for (const id of targets) {
-    const dest = previewPath(id);
-    if (!force && existsSync(dest) && !isBadCapture(dest)) {
-      results.push({ id, ok: true, path: dest, skipped: true });
+    if (!force && !needsCapture(id, false)) {
+      results.push({ id, ok: true, skipped: true });
       console.log(`SKIP ${id} (exists)`);
       continue;
     }
@@ -234,7 +281,7 @@ async function main() {
     if (copyFrom) {
       try {
         copyPreview(copyFrom, id);
-        results.push({ id, ok: true, path: dest, copied: copyFrom });
+        results.push({ id, ok: true, copied: copyFrom });
         console.log(`COPY ${id} ← ${copyFrom}`);
         continue;
       } catch (err) {
@@ -244,9 +291,11 @@ async function main() {
     let lastErr = null;
     for (let attempt = 1; attempt <= 2; attempt += 1) {
       try {
-        const path = await captureCharacter(page, id, base);
-        results.push({ id, ok: true, path, attempt });
-        console.log(`OK   ${id} → ${path} (${statSync(path).size} bytes)`);
+        const paths = await captureCharacter(page, id, base);
+        results.push({ id, ok: true, ...paths, attempt });
+        console.log(
+          `OK   ${id} → card ${statSync(paths.cardOut).size}B, hero ${statSync(paths.heroOut).size}B`,
+        );
         lastErr = null;
         break;
       } catch (err) {
@@ -266,10 +315,10 @@ async function main() {
     JSON.stringify({ build: AMOJI_BUILD, results }, null, 2),
   );
 
-  const missing = CHARACTER_IDS.filter((id) => !existsSync(previewPath(id)));
-  if (missing.length) {
-    console.log(`Missing previews: ${missing.join(", ")}`);
-  }
+  const missingCard = CHARACTER_IDS.filter((id) => !existsSync(cardPreviewPath(id)));
+  const missingHero = CHARACTER_IDS.filter((id) => !existsSync(heroPreviewPath(id)));
+  if (missingCard.length) console.log(`Missing card previews: ${missingCard.join(", ")}`);
+  if (missingHero.length) console.log(`Missing hero previews: ${missingHero.join(", ")}`);
 
   const failed = results.filter((r) => !r.ok).length;
   process.exit(failed ? 1 : 0);

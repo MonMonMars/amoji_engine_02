@@ -11,7 +11,10 @@ import { fileURLToPath } from "node:url";
 import { AMOJI_BUILD } from "../amoji-engine/engine/companion/buildVersion.mjs";
 import { COMPANION_CARE_ENABLED } from "../amoji-engine/engine/companion/companionFeatureFlags.js";
 import { CHARACTER_IDS } from "../amoji-engine/engine/companion/companionCharacterCatalog.js";
-import { isCompanionPreviewOk } from "../amoji-engine/engine/companion/companionPreviewAssets.mjs";
+import {
+  isCompanionHeroPreviewOk,
+  isCompanionPreviewOk,
+} from "../amoji-engine/engine/companion/companionPreviewAssets.mjs";
 import {
   beginStartPickerSession,
   openInSessionCompanionPicker,
@@ -140,6 +143,16 @@ async function main() {
     badPreviewIds.length === 0,
     badPreviewIds.length
       ? `${badPreviewIds.join(", ")}`
+      : `all ${CHARACTER_IDS.length} ok`,
+  );
+  const badHeroPreviewIds = CHARACTER_IDS.filter(
+    (id) => !isCompanionHeroPreviewOk(id, assetsDir),
+  );
+  record(
+    "roster-hero-preview-files",
+    badHeroPreviewIds.length === 0,
+    badHeroPreviewIds.length
+      ? `${badHeroPreviewIds.join(", ")}`
       : `all ${CHARACTER_IDS.length} ok`,
   );
 
