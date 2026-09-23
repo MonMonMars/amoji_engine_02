@@ -9,7 +9,8 @@ import {
 import { rosterModelUrl, rosterVrmBasename } from "./rosterVrmAssets.mjs";
 import { normalizeLegacyRosterCharacterId } from "./companionLegacyRosterIds.js";
 
-export const COMPANION_MODEL_ASSETS_SCHEMA = "amoji.companionModelAssets.v1";
+export const COMPANION_MODEL_ASSETS_SCHEMA =
+  "amoji.companionModelAssets.v2-preload-revision-key";
 
 /**
  * Canonical map key (ignore ?v= cache-bust query).
@@ -19,6 +20,23 @@ export function normalizeModelCacheKey(url) {
   const raw = String(url || "").trim();
   if (!raw) return "";
   return raw.split("?")[0].split("#")[0];
+}
+
+/**
+ * In-memory VRM preload key — must include `?v=` roster revision or deploys
+ * keep serving stale ArrayBuffers for the same pathname (Mon: “not latest VTuber”).
+ * @param {string | null | undefined} url
+ */
+export function modelPreloadCacheKey(url) {
+  const raw = String(url || "").trim();
+  if (!raw) return "";
+  const noHash = raw.split("#")[0];
+  const qIdx = noHash.indexOf("?");
+  if (qIdx < 0) return noHash;
+  const path = noHash.slice(0, qIdx);
+  const params = new URLSearchParams(noHash.slice(qIdx + 1));
+  const v = params.get("v");
+  return v ? `${path}?v=${v}` : path;
 }
 
 /**

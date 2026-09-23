@@ -1,7 +1,8 @@
 /**
  * Companion preload — minimal boot (chat-first), heavy 3D assets in background.
  */
-import { normalizeModelCacheKey } from "./companionModelAssets.mjs";
+import { modelPreloadCacheKey } from "./companionModelAssets.mjs";
+import { AMOJI_MODEL_REVISION } from "./companionCharacterMigration.mjs";
 import {
   BOOT_FULL_LIBRARY_WARM_CLIP_IDS,
   BOOT_IDLE_WARM_CLIP_IDS,
@@ -9,7 +10,7 @@ import {
   startBootIdleMotionPreload,
 } from "./companionIdleMotionPreload.js";
 
-export const COMPANION_PRELOAD_SCHEMA = "amoji.companionPreload.v2";
+export const COMPANION_PRELOAD_SCHEMA = "amoji.companionPreload.v3-revision-key";
 
 export const DEFAULT_VRM_URL = "/prototypes/assets/companion-nova.vrm";
 export const DEFAULT_MOTIONS_BASIC_URL = "/api/motions?pack=basic";
@@ -31,6 +32,21 @@ function awaitWithTimeout(promise, ms, fallback) {
 
 /** @type {Map<string, Promise<ArrayBuffer>>} */
 const vrmBuffers = new Map();
+
+const VRM_PRELOAD_REVISION_KEY = "amoji.companion.vrmPreloadRevision";
+
+function ensurePreloadRevisionFresh() {
+  try {
+    const prev = sessionStorage?.getItem?.(VRM_PRELOAD_REVISION_KEY);
+    const next = String(AMOJI_MODEL_REVISION || "");
+    if (prev && next && prev !== next) {
+      vrmBuffers.clear();
+    }
+    if (next) sessionStorage?.setItem?.(VRM_PRELOAD_REVISION_KEY, next);
+  } catch {
+    /* private mode */
+  }
+}
 
 /** @type {Promise<unknown> | null} */
 let rosterPreloadPromise = null;
@@ -73,7 +89,7 @@ let gltfModulePromise = null;
  * @returns {Promise<ArrayBuffer> | null}
  */
 export function getPreloadedVrmPromise(url = DEFAULT_VRM_URL) {
-  const key = normalizeModelCacheKey(url);
+  const key = modelPreloadCacheKey(url);
   return key ? vrmBuffers.get(key) ?? null : null;
 }
 
@@ -82,8 +98,9 @@ export function getPreloadedVrmPromise(url = DEFAULT_VRM_URL) {
  * @param {typeof fetch} [fetchImpl]
  */
 export function preloadVrmBuffer(url, fetchImpl) {
+  ensurePreloadRevisionFresh();
   const fetchUrl = String(url || "").trim();
-  const cacheKey = normalizeModelCacheKey(fetchUrl);
+  const cacheKey = modelPreloadCacheKey(fetchUrl);
   if (!cacheKey) return Promise.resolve(null);
   const existing = vrmBuffers.get(cacheKey);
   if (existing) return existing;
@@ -112,7 +129,7 @@ export function preloadVrmBuffer(url, fetchImpl) {
  * @param {string | null | undefined} keepUrl
  */
 export function releaseVrmPreloadExcept(keepUrl) {
-  const keep = normalizeModelCacheKey(keepUrl);
+  const keep = modelPreloadCacheKey(keepUrl);
   for (const key of [...vrmBuffers.keys()]) {
     if (!keep || key !== keep) vrmBuffers.delete(key);
   }
@@ -122,8 +139,13 @@ export function releaseVrmPreloadExcept(keepUrl) {
  * @param {string} url
  */
 export function releaseVrmPreload(url) {
-  const key = normalizeModelCacheKey(url);
+  const key = modelPreloadCacheKey(url);
   if (key) vrmBuffers.delete(key);
+}
+
+/** Drop all in-memory VRM preload buffers (e.g. after roster revision bump). */
+export function clearVrmPreloadCache() {
+  vrmBuffers.clear();
 }
 
 /**
