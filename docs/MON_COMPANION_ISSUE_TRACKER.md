@@ -1,7 +1,7 @@
 # Mon — companion problem & request tracker
 
 **Owner:** Mon (Designer)  
-**Last updated:** 2026-09-23 16:05 UTC  
+**Last updated:** 2026-09-23 20:50 UTC  
 **Production build (live):** check `curl -s https://temporary-rushing-oxygen-ok5jzhd.vercel.app/api/health` → `build` field  
 **Repo `main` build:** `amoji-engine/engine/companion/buildVersion.mjs` → `AMOJI_BUILD`  
 **App entry (bookmark):** https://temporary-rushing-oxygen-ok5jzhd.vercel.app/play  
@@ -40,7 +40,7 @@ Agents: **read this before saying “fixed.”** Update a row when status change
 | Gate | Result | Notes |
 |------|--------|--------|
 | `npm run verify:pre-delivery` (local) | ✅ **5/5** | 1185 unit tests; **57/57** issues E2E (incl. hero-scene + preview quality) |
-| Companion CI [#95](https://github.com/MonMonMars/amoji_engine_02/pull/95) | ✅ green | unit-and-smoke + companion-e2e |
+| Companion CI [#95](https://github.com/MonMonMars/amoji_engine_02/pull/95) | 🟡 | E2E failed on Arweave **juno** 404 during `CI=true` refresh — **fixed**: keep committed VRM on fetch fail |
 | `npm run verify:pre-delivery:prod` | 🔴 expected until merge | Prod still **v551** → `build-id` fails; not a code regression |
 | `npm run verify:production-build` | 🔴 behind | Merge **#95** → Vercel → re-run prod gate |
 
