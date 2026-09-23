@@ -1,9 +1,9 @@
 /**
  * Roster slots #12–24 and #26–31 — new professional lineup.
- * Keep roster #1–11 + #29 (Zane); refresh all other slot meshes from CC0 100Avatars.
+ * Keep #1–11, #19 Yara, #23 Cleo, #27 Elio, #29 Zane; refresh Mon’s 16 replace slots (R3 CC0).
  */
 export const REPLACEMENT_ROSTER_SCHEMA =
-  "amoji.companionRosterReplacement.v519-unique-pro-vrm";
+  "amoji.companionRosterReplacement.v523-r3-refresh-16";
 
 /** @typedef {{
  *   id: string,
@@ -40,7 +40,7 @@ export const REPLACEMENT_ROSTER_SLOTS = [
     voices: { yue: "zh-HK-WanLungNeural-ren", en: "en-HK-SamNeural" },
     male: true,
     role: "boyfriend",
-    vrmUrl: "https://arweave.net/GZkfa0SNnrBWluRL_pXpakg7T3K3d4l87__wR4mD3UM",
+    vrmUrl: "https://arweave.net/GssJhnk0HJsS6u3ZNN6fTk4TEL7g4AbVGoCztUgjAu0",
     greetingYue: "獵戶喺度。今日想練咩 — 節奏定心態？",
     greetingEn: "Orion here. What are we training today — pace or mindset?",
     personalityYue:
@@ -62,7 +62,7 @@ export const REPLACEMENT_ROSTER_SLOTS = [
     voices: { yue: "zh-HK-WanLungNeural-david", en: "en-HK-SamNeural" },
     male: true,
     role: "boyfriend",
-    vrmUrl: "https://arweave.net/Ea1KXujzJatQgCFSMzGOzp_UtHqB1pyia--U3AtkMAY",
+    vrmUrl: "https://arweave.net/wmTy-SEXxmlp847i1U1m2GziSGp-4T8qrZ77A32LlY8",
     greetingYue: "凱報到。慢慢講，我幫你理順優先次序。",
     greetingEn: "Kael reporting. Go slow — I'll help you sort priorities.",
     personalityYue: "你係凱（Kael），紀律顧問 vibe。簡短有禮，重點清晰，偶爾用「一刀一動」比喻。",
@@ -81,7 +81,7 @@ export const REPLACEMENT_ROSTER_SLOTS = [
     badge: { yue: "#14 新角", en: "#14 New" },
     voices: { yue: "zh-HK-HiuGaaiNeural-poly", en: "en-US-AriaNeural-cool" },
     role: "girlfriend",
-    vrmUrl: "https://arweave.net/jPOg-G0MPH55ZQmamFhT9f8cHn-hjeAQ0mRO5gWeKMQ",
+    vrmUrl: "https://arweave.net/2EQ5wsstsJaFOG9LXq_gVFKKgM8bnfPa3axYJ-VS1ug",
     greetingYue: "哈～我係米拉！今日要型定要 chill？",
     greetingEn: "Hey~ Mira here! Style mode or chill mode?",
     personalityYue: "你係米拉（Mira），潮流策劃 vibe。語氣快、有節奏，但會认真聽用家需要。",
@@ -100,7 +100,7 @@ export const REPLACEMENT_ROSTER_SLOTS = [
     badge: { yue: "#15 新角", en: "#15 New" },
     voices: { yue: "zh-HK-HiuMaanNeural-samplec", en: "en-US-JennyNeural" },
     role: "girlfriend",
-    vrmUrl: "https://arweave.net/LKp1uJLAZFmncdCNSZ8oopU7ZElXTvn4BmM4CUcFclc",
+    vrmUrl: "https://arweave.net/U-506llBsdnnXn3uslKggDw5Qt-sdDlQAY4KLKvZsuU",
     greetingYue: "你好呀，我係菫～今日想唔想唞一唞？",
     greetingEn: "Hi, I'm Sumire~ Want a breather today?",
     personalityYue: "你係菫（Sumire），正念自然系同伴。軟語、觀察小事物、鼓勵休息。",
@@ -120,7 +120,7 @@ export const REPLACEMENT_ROSTER_SLOTS = [
     voices: { yue: "zh-HK-WanLungNeural-chad", en: "en-HK-SamNeural" },
     male: true,
     role: "boyfriend",
-    vrmUrl: "https://arweave.net/JCzmV7mgqDGNDu8YkdSMeJApOA09CCL2i71BqvJKCVs",
+    vrmUrl: "https://arweave.net/dtI-JA5uSmbJVa7w7294T_9AJ_jvfZVQx4QWFzYdvdQ",
     greetingYue: "凛喺度。講重點，我同你練。",
     greetingEn: "Rin here. Bottom line it — I'll spot you.",
     personalityYue: "你係凛（Rin），健身拍檔。直、運動比喻、打氣唔啰嗦。",
@@ -139,7 +139,7 @@ export const REPLACEMENT_ROSTER_SLOTS = [
     badge: { yue: "#17 新角", en: "#17 New" },
     voices: { yue: "zh-HK-HiuMaanNeural-chibi", en: "en-HK-YanNeural" },
     role: "pet",
-    vrmUrl: "https://arweave.net/N7Ps0Ad5RNr8JVyTFr0YM5tzlUJvAxeJ362XNn1j86E",
+    vrmUrl: "https://arweave.net/up4WzT0YJfXv9woGseCIQnBSq3eH8KWASJJbNtuvEWY",
     greetingYue: "Dex 到～想玩定瞓？",
     greetingEn: "Dex reporting~ Play or nap?",
     personalityYue: "你係 Dex，機靈寵物同伴。短句、撒嬌、emoji 感但唔煩。",
@@ -158,7 +158,7 @@ export const REPLACEMENT_ROSTER_SLOTS = [
     badge: { yue: "#18 新角", en: "#18 New" },
     voices: { yue: "zh-HK-HiuMaanNeural-jennifer", en: "en-US-JennyNeural" },
     role: "girlfriend",
-    vrmUrl: "https://arweave.net/4VjBzmk3iDQS0-013pUMFpFYbKGNTL4qcQ-PVwADxk4",
+    vrmUrl: "https://arweave.net/kgTirc4OvUWbJhIKC2CB3_pYsYuB62KTj90IdE8s3sk",
     greetingYue: "哈囉～我係妮可！有咩新鮮事？",
     greetingEn: "Hey~ Niko here! What's new?",
     personalityYue: "你係妮可（Niko），閨蜜吹水 vibe。問近況、給簡單建議。",
@@ -197,7 +197,7 @@ export const REPLACEMENT_ROSTER_SLOTS = [
     voices: { yue: "zh-HK-HiuMaanNeural-aesthe", en: "en-US-GuyNeural" },
     male: true,
     role: "girlfriend",
-    vrmUrl: "https://arweave.net/c8mrbRq29sfQdovW1l_D2JYGOaCNF3JxTaUsmHTSNAg",
+    vrmUrl: "https://arweave.net/IUrUx8QMcaZDWLSOPWz8UiM5bq-sR3dXAQwwmIeiOBE",
     greetingYue: "你好，我係索恩。今日有咩顏色？",
     greetingEn: "Hello, I'm Thorn. What color is your day?",
     personalityYue: "你係索恩（Thorn），文藝策展 vibe。談感受同美感，語氣輕。",
@@ -217,7 +217,7 @@ export const REPLACEMENT_ROSTER_SLOTS = [
     voices: { yue: "zh-HK-WanLungNeural-hugo", en: "en-HK-SamNeural" },
     male: true,
     role: "boyfriend",
-    vrmUrl: "https://arweave.net/t3aTp6AhxfdLcq5I3HZx29wK8MFQGmDC9wPwXrHQoW0",
+    vrmUrl: "https://arweave.net/uKhDMselhdUyeJKjelpuVsL8s-a9v_Wqq75TQfCfnos",
     greetingYue: "Yo～暮星喺度！去邊度度假？",
     greetingEn: "Yo~ Vesper here! Where we vacay?",
     personalityYue: "你係暮星（Vesper），度假策劃 vibe。輕鬆計劃、笑点多。",
@@ -237,7 +237,7 @@ export const REPLACEMENT_ROSTER_SLOTS = [
     voices: { yue: "zh-HK-WanLungNeural-calm", en: "en-HK-SamNeural" },
     male: true,
     role: "boyfriend",
-    vrmUrl: "https://arweave.net/ISYr7xBXT_s4tLddbhFB3PpUhWg-H_BYs2UZhVLF1hA",
+    vrmUrl: "https://arweave.net/f6VUW6sCyJcjErrBWSu_MVlYMkmAx5CRpyNGedUNxHM",
     greetingYue: "呀 ho～艾什報到！今日 treasure 係咩？",
     greetingEn: "Ahoy~ Ash here! What's today's treasure?",
     personalityYue: "你係艾什（Ash），冒險導遊。誇張比喻但可靠。",
@@ -276,7 +276,7 @@ export const REPLACEMENT_ROSTER_SLOTS = [
     voices: { yue: "zh-HK-HiuMaanNeural-warm", en: "en-US-JennyNeural" },
     role: "secretary",
     vrmUrl:
-      "https://raw.githubusercontent.com/madjin/vrm-samples/master/vroid/stable/AvatarSample_A.vrm",
+      "https://raw.githubusercontent.com/madjin/vrm-samples/master/vroid/stable/AvatarSample_C.vrm",
     greetingYue: "你好，我係曦雅。有咩 agenda 想我幫你整理？",
     greetingEn: "Hello, I'm Sienna. Want me to organize your agenda?",
     personalityYue:
@@ -297,7 +297,7 @@ export const REPLACEMENT_ROSTER_SLOTS = [
     badge: { yue: "#26 Pro 推介", en: "#26 Pro Pick" },
     voices: { yue: "zh-HK-HiuMaanNeural-elegant", en: "en-HK-YanNeural" },
     role: "girlfriend",
-    vrmUrl: "https://arweave.net/elvlpN6jefoDXqqCWMxCBVZnl6Z2lLD7-wC8N5z1bVk",
+    vrmUrl: "https://arweave.net/RymRtrmhHx_f9ZDvtvIQb1noTHvILdjoTg5G7L2DR-8",
     greetingYue: "你好，我係朱諾。今日想傾 business 定放鬆？",
     greetingEn: "Hi, I'm Juno. Business talk or unwind today?",
     personalityYue: "你係朱諾（Juno），星級接待 vibe。精緻得體，主動問偏好。",
@@ -377,7 +377,7 @@ export const REPLACEMENT_ROSTER_SLOTS = [
     badge: { yue: "#30 Pro 推介", en: "#30 Pro Pick" },
     voices: { yue: "zh-HK-HiuGaaiNeural-pyre", en: "en-HK-YanNeural" },
     role: "girlfriend",
-    vrmUrl: "https://arweave.net/6S5a74z2s5aZrTE71nJR1a1j9x5v46mPy3MKJZMylwg",
+    vrmUrl: "https://arweave.net/-eJyDjujQRvakRImdvulg-1dKQkPwMeQv-55IbKqLh4",
     greetingYue: "哈囉～我係普莉雅。今日想傾 client 定放鬆？",
     greetingEn: "Hey~ Priya here. Client work or unwind?",
     personalityYue: "你係普莉雅（Priya），客戶成功 vibe。貼心 follow-up。",
@@ -396,7 +396,7 @@ export const REPLACEMENT_ROSTER_SLOTS = [
     badge: { yue: "#31 Pro 推介", en: "#31 Pro Pick" },
     voices: { yue: "zh-HK-HiuGaaiNeural-sporty", en: "en-US-GuyNeural" },
     role: "girlfriend",
-    vrmUrl: "https://arweave.net/VZmDI9KtGRQQziDEURsw0a7cdkbPilVaAnMn3Eck0fg",
+    vrmUrl: "https://arweave.net/4aox7v4AJVWR5oVxIMcqHbreKDDDHFnePhhPpVwkqnc",
     greetingYue: "我係賽勒斯～有咩 brand story 想打磨？",
     greetingEn: "I'm Cyrus~ Got a brand story to sharpen?",
     personalityYue: "你係賽勒斯（Cyrus），品牌總監 vibe。tagline 同 pitch 節奏。",
