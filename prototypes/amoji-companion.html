@@ -8,9 +8,9 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji · Companion</title>
     <script>
-      window.__amojiBuild = "2026-09-23-v557-mon-companion-ship";
+      window.__amojiBuild = "2026-09-23-v558-mon-companion-wave2";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-23-v557-mon-companion-ship"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-23-v558-mon-companion-wave2"></script>
     <link
       rel="prefetch"
       href="/prototypes/assets/companion-char-nova.png"
@@ -694,28 +694,28 @@
       media="print"
       onload="this.media='all'"
     />
-    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-23-v557-mon-companion-ship" />
-    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-23-v557-mon-companion-ship" />
-    <link rel="stylesheet" href="/prototypes/companion-mic-button.css?v=2026-09-23-v557-mon-companion-ship" />
-    <link rel="stylesheet" href="/prototypes/companion-title-screen.css?v=2026-09-23-v557-mon-companion-ship" />
-    <link rel="stylesheet" href="/prototypes/companion-minimal-ui.css?v=2026-09-23-v557-mon-companion-ship" />
-    <link rel="stylesheet" href="/prototypes/companion-settings-ui.css?v=2026-09-23-v557-mon-companion-ship" />
-    <link rel="stylesheet" href="/prototypes/companion-mobile-shell.css?v=2026-09-23-v557-mon-companion-ship" />
-    <link rel="stylesheet" href="/prototypes/companion-picker-v4.css?v=2026-09-23-v557-mon-companion-ship" />
-    <link rel="stylesheet" href="/prototypes/companion-picker-stacked-layout.css?v=2026-09-23-v557-mon-companion-ship" />
-    <link rel="stylesheet" href="/prototypes/companion-picker-aaa-theme.css?v=2026-09-23-v557-mon-companion-ship" />
-    <link rel="stylesheet" href="/prototypes/companion-jp-aaa-shell.css?v=2026-09-23-v557-mon-companion-ship" />
-    <link rel="stylesheet" href="/prototypes/companion-responsive-layout.css?v=2026-09-23-v557-mon-companion-ship" />
-    <link rel="stylesheet" href="/prototypes/companion-chat-stack.css?v=2026-09-23-v557-mon-companion-ship" />
-    <link rel="stylesheet" href="/prototypes/companion-app-width.css?v=2026-09-23-v557-mon-companion-ship" />
-    <link rel="stylesheet" href="/prototypes/companion-scroll-affordances.css?v=2026-09-23-v557-mon-companion-ship" />
+    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-23-v558-mon-companion-wave2" />
+    <link rel="stylesheet" href="/prototypes/companion-ui-effects.css?v=2026-09-23-v558-mon-companion-wave2" />
+    <link rel="stylesheet" href="/prototypes/companion-mic-button.css?v=2026-09-23-v558-mon-companion-wave2" />
+    <link rel="stylesheet" href="/prototypes/companion-title-screen.css?v=2026-09-23-v558-mon-companion-wave2" />
+    <link rel="stylesheet" href="/prototypes/companion-minimal-ui.css?v=2026-09-23-v558-mon-companion-wave2" />
+    <link rel="stylesheet" href="/prototypes/companion-settings-ui.css?v=2026-09-23-v558-mon-companion-wave2" />
+    <link rel="stylesheet" href="/prototypes/companion-mobile-shell.css?v=2026-09-23-v558-mon-companion-wave2" />
+    <link rel="stylesheet" href="/prototypes/companion-picker-v4.css?v=2026-09-23-v558-mon-companion-wave2" />
+    <link rel="stylesheet" href="/prototypes/companion-picker-stacked-layout.css?v=2026-09-23-v558-mon-companion-wave2" />
+    <link rel="stylesheet" href="/prototypes/companion-picker-aaa-theme.css?v=2026-09-23-v558-mon-companion-wave2" />
+    <link rel="stylesheet" href="/prototypes/companion-jp-aaa-shell.css?v=2026-09-23-v558-mon-companion-wave2" />
+    <link rel="stylesheet" href="/prototypes/companion-responsive-layout.css?v=2026-09-23-v558-mon-companion-wave2" />
+    <link rel="stylesheet" href="/prototypes/companion-chat-stack.css?v=2026-09-23-v558-mon-companion-wave2" />
+    <link rel="stylesheet" href="/prototypes/companion-app-width.css?v=2026-09-23-v558-mon-companion-wave2" />
+    <link rel="stylesheet" href="/prototypes/companion-scroll-affordances.css?v=2026-09-23-v558-mon-companion-wave2" />
     <link
       rel="stylesheet"
-      href="/prototypes/companion-scene-backgrounds.css?v=2026-09-23-v557-mon-companion-ship"
+      href="/prototypes/companion-scene-backgrounds.css?v=2026-09-23-v558-mon-companion-wave2"
     />
     <link
       rel="stylesheet"
-      href="/prototypes/companion-start-picker-sheet.css?v=2026-09-23-v557-mon-companion-ship"
+      href="/prototypes/companion-start-picker-sheet.css?v=2026-09-23-v558-mon-companion-wave2"
     />
     <script>
       (function () {
@@ -734,7 +734,7 @@
       })();
     </script>
     <script type="module">
-      import { bootEarlyStartPicker } from "/amoji-engine/engine/companion/companionEarlyStartPicker.js?v=2026-09-23-v557-mon-companion-ship";
+      import { bootEarlyStartPicker } from "/amoji-engine/engine/companion/companionEarlyStartPicker.js?v=2026-09-23-v558-mon-companion-wave2";
       import {
         applyBootPickerUrlDefaults,
         shouldShowStartPickerOnBoot,
@@ -3770,7 +3770,7 @@
       }
 
       @media (min-width: 720px) {
-        .settings {
+        .settings:not([hidden]) {
           top: 50%;
           bottom: auto;
           transform: translate(-50%, -46%) scale(0.96);
@@ -3780,7 +3780,7 @@
           pointer-events: none;
         }
 
-        .settings.open {
+        .settings.open:not([hidden]) {
           transform: translate(-50%, -50%) scale(1);
           opacity: 1;
           pointer-events: auto;
@@ -4627,19 +4627,19 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-23-v557-mon-companion-ship",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-23-v558-mon-companion-wave2",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-23-v557-mon-companion-ship",
-          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-23-v557-mon-companion-ship"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-23-v558-mon-companion-wave2",
+          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-23-v558-mon-companion-wave2"
         }
       }
     </script>
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-23-v557-mon-companion-ship"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-23-v558-mon-companion-wave2"
     />
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-23-v557-mon-companion-ship"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-23-v557-mon-companion-ship"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-23-v558-mon-companion-wave2"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-23-v558-mon-companion-wave2"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;
