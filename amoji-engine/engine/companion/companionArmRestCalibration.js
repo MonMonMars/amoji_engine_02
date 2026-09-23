@@ -13,9 +13,10 @@ import {
   VRM_APOSE_ARM_REST_ROTATIONS,
   VRM_LEG_REST_ROTATIONS,
 } from "./companionPoseLibrary.js";
+import { rosterArmBindOverride } from "./companionRosterArmBindHints.mjs";
 
 export const COMPANION_ARM_REST_CALIBRATION_SCHEMA =
-  "amoji.companionArmRestCalibration.v3";
+  "amoji.companionArmRestCalibration.v5-sequential-side-bind-hints";
 
 const ARM_BONES = [
   "leftUpperArm",
@@ -190,6 +191,44 @@ function measureArmDrop(humanoid, side) {
   return (shoulder.y - hand.y) / span;
 }
 
+/**
+ * T-pose rigs: pick upper-arm Z per side (global flip breaks asymmetric meshes).
+ * @param {import('@pixiv/three-vrm').VRMHumanoid} humanoid
+ * @param {import('@pixiv/three-vrm').VRM} vrm
+ * @param {"left" | "right"} side
+ */
+function pickUpperArmRestForSide(humanoid, vrm, side, baseUpper = VRM_ARM_REST_ROTATIONS) {
+  const key = side === "left" ? "leftUpperArm" : "rightUpperArm";
+  const otherKey = side === "left" ? "rightUpperArm" : "leftUpperArm";
+  const standard = baseUpper[key] ?? VRM_ARM_REST_ROTATIONS[key];
+  const flipped = { ...standard, z: -(standard.z ?? 0) };
+  const scoreFor = (upper) => {
+    humanoid.resetNormalizedPose?.();
+    const rest = {
+      ...baseUpper,
+      [key]: upper,
+      [otherKey]: baseUpper[otherKey] ?? VRM_ARM_REST_ROTATIONS[otherKey],
+    };
+    applyNamedRest(humanoid, ARM_BONES, rest);
+    flushPose(vrm);
+    return measureArmDrop(humanoid, side) ?? 0;
+  };
+  const stdDrop = scoreFor(standard);
+  const flipDrop = scoreFor(flipped);
+  return flipDrop > stdDrop + 0.04 ? flipped : standard;
+}
+
+/**
+ * @param {import('@pixiv/three-vrm').VRM} vrm
+ * @param {{ characterId?: string | null, armBindHint?: "apose" | "tpose" | null }} [opts]
+ */
+function resolveVrmArmBind(vrm, opts = {}) {
+  const override =
+    opts.armBindHint ?? rosterArmBindOverride(opts.characterId) ?? null;
+  if (override === "apose" || override === "tpose") return override;
+  return detectVrmArmBind(vrm);
+}
+
 export function detectVrmArmBind(vrm) {
   const humanoid = vrm?.humanoid;
   if (!humanoid) return "tpose";
@@ -291,7 +330,11 @@ function detectKneeFlex(vrm, side, bend) {
  * @param {import('@pixiv/three-vrm').VRM} vrm
  * @returns {typeof VRM_ARM_REST_ROTATIONS}
  */
-export function detectVrmArmRestRotations(vrm) {
+/**
+ * @param {import('@pixiv/three-vrm').VRM} vrm
+ * @param {{ characterId?: string | null, armBindHint?: "apose" | "tpose" | null }} [opts]
+ */
+export function detectVrmArmRestRotations(vrm, opts = {}) {
   const humanoid = vrm?.humanoid;
   if (!humanoid) return VRM_ARM_REST_ROTATIONS;
 
@@ -299,39 +342,28 @@ export function detectVrmArmRestRotations(vrm) {
   const rightHand = vrmBoneNode(humanoid, "rightHand");
   if (!leftHand || !rightHand) return VRM_ARM_REST_ROTATIONS;
 
-  const bind = detectVrmArmBind(vrm);
+  const bind = resolveVrmArmBind(vrm, opts);
   const elbowBend = bind === "apose" ? ELBOW_BEND_APOSE : ELBOW_BEND_TPOSE;
   /** @type {typeof VRM_ARM_REST_ROTATIONS} */
   let upperRest = VRM_APOSE_ARM_REST_ROTATIONS;
   if (bind === "tpose") {
-    const flippedZ = {
-      leftUpperArm: {
-        ...VRM_ARM_REST_ROTATIONS.leftUpperArm,
-        z: -VRM_ARM_REST_ROTATIONS.leftUpperArm.z,
-      },
-      rightUpperArm: {
-        ...VRM_ARM_REST_ROTATIONS.rightUpperArm,
-        z: -VRM_ARM_REST_ROTATIONS.rightUpperArm.z,
-      },
-      leftLowerArm: { ...VRM_ARM_REST_ROTATIONS.leftLowerArm },
-      rightLowerArm: { ...VRM_ARM_REST_ROTATIONS.rightLowerArm },
+    const leftUpperArm = pickUpperArmRestForSide(
+      humanoid,
+      vrm,
+      "left",
+      VRM_ARM_REST_ROTATIONS,
+    );
+    const withLeft = {
+      ...VRM_ARM_REST_ROTATIONS,
+      leftUpperArm,
     };
-
-    const armDropScore = (rest) => {
-      humanoid.resetNormalizedPose?.();
-      applyNamedRest(humanoid, ARM_BONES, rest);
-      flushPose(vrm);
-      const leftDrop = measureArmDrop(humanoid, "left");
-      const rightDrop = measureArmDrop(humanoid, "right");
-      const drops = [leftDrop, rightDrop].filter((v) => v != null);
-      if (!drops.length) return 0;
-      return drops.reduce((sum, v) => sum + v, 0) / drops.length;
-    };
-
-    const standardDrop = armDropScore(VRM_ARM_REST_ROTATIONS);
-    const flippedDrop = armDropScore(flippedZ);
-    upperRest =
-      flippedDrop > standardDrop + 0.04 ? flippedZ : VRM_ARM_REST_ROTATIONS;
+    const rightUpperArm = pickUpperArmRestForSide(
+      humanoid,
+      vrm,
+      "right",
+      withLeft,
+    );
+    upperRest = { ...withLeft, rightUpperArm };
   }
 
   const leftFallback =
@@ -362,11 +394,15 @@ export function detectVrmArmRestRotations(vrm) {
 /**
  * @param {import('@pixiv/three-vrm').VRM} vrm
  */
-export function detectVrmLegRestRotations(vrm) {
+/**
+ * @param {import('@pixiv/three-vrm').VRM} vrm
+ * @param {{ characterId?: string | null, armBindHint?: "apose" | "tpose" | null }} [opts]
+ */
+export function detectVrmLegRestRotations(vrm, opts = {}) {
   const humanoid = vrm?.humanoid;
   if (!humanoid) return VRM_LEG_REST_ROTATIONS;
 
-  const bind = detectVrmArmBind(vrm);
+  const bind = resolveVrmArmBind(vrm, opts);
   const kneeBend = bind === "apose" ? KNEE_BEND_APOSE : KNEE_BEND_TPOSE;
   const leftLowerLeg = detectKneeFlex(vrm, "left", kneeBend);
   const rightLowerLeg = detectKneeFlex(vrm, "right", kneeBend);
@@ -382,10 +418,11 @@ export function detectVrmLegRestRotations(vrm) {
 
 /**
  * @param {import('@pixiv/three-vrm').VRM} vrm
+ * @param {{ characterId?: string | null, armBindHint?: "apose" | "tpose" | null }} [opts]
  */
-export function detectVrmIdleRestRotations(vrm) {
-  const bind = detectVrmArmBind(vrm);
-  const arms = detectVrmArmRestRotations(vrm);
-  const legs = detectVrmLegRestRotations(vrm);
+export function detectVrmIdleRestRotations(vrm, opts = {}) {
+  const bind = resolveVrmArmBind(vrm, opts);
+  const arms = detectVrmArmRestRotations(vrm, opts);
+  const legs = detectVrmLegRestRotations(vrm, opts);
   return Object.freeze({ bind, arms, legs });
 }
