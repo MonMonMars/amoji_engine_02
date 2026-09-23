@@ -3,6 +3,7 @@ import {
   buildCharacterSystemPrompt,
   CHARACTER_IDS,
   characterAvatarConfig,
+  characterHeroPreviewImage,
   characterPreviewImage,
   characterGender,
   MALE_CHARACTER_IDS,
@@ -102,6 +103,14 @@ describe("companionCharacterCatalog v363 VTuber roster", () => {
   it("assigns one preview path per roster id", () => {
     const paths = CHARACTER_IDS.map((id) => characterPreviewImage(id));
     expect(new Set(paths).size).toBe(CHARACTER_IDS.length);
+  });
+
+  it("assigns distinct hero close-up paths for picker top portrait", () => {
+    for (const id of CHARACTER_IDS) {
+      expect(characterHeroPreviewImage(id)).toContain("-hero.png");
+      expect(characterHeroPreviewImage(id)).not.toBe(characterPreviewImage(id));
+    }
+    expect(getCharacter("nova").heroPreviewImage).toBe(characterHeroPreviewImage("nova"));
   });
 
   it("resolves default to nova", () => {

@@ -181,8 +181,9 @@ export function updatePickerHero(root, item, isEnglish = false) {
   hero.style.setProperty("--hero-accent", accent);
   if (img) {
     wireCompanionPreviewFallback(img);
-    if (item?.previewImage) {
-      const nextSrc = item.previewImage;
+    const heroSrc = item?.heroPreviewImage || item?.previewImage;
+    if (heroSrc) {
+      const nextSrc = heroSrc;
       const currentSrc = img.getAttribute("src") || "";
       if (currentSrc !== nextSrc) {
         hero.classList.add("is-updating");

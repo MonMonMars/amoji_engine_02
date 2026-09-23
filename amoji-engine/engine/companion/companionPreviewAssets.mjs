@@ -35,6 +35,17 @@ export function companionPreviewPath(id, assetsDir = join(repoRoot, "prototypes/
   return join(assetsDir, `companion-char-${String(id || "nova").toLowerCase()}.png`);
 }
 
+/** Picker hero (top) — bust / close-up; roster strip uses {@link companionPreviewPath}. */
+export function companionHeroPreviewPath(id, assetsDir = join(repoRoot, "prototypes/assets")) {
+  return join(
+    assetsDir,
+    `companion-char-${String(id || "nova").toLowerCase()}-hero.png`,
+  );
+}
+
+/** Close-up PNGs can be slightly smaller than full-body card shots. */
+export const MIN_HERO_PREVIEW_BYTES = 72_000;
+
 /**
  * @param {string} filePath
  */
@@ -54,4 +65,21 @@ export function isBadPreviewCapture(filePath) {
  */
 export function isCompanionPreviewOk(id, assetsDir) {
   return !isBadPreviewCapture(companionPreviewPath(id, assetsDir));
+}
+
+/**
+ * @param {string} filePath
+ */
+export function isBadHeroPreviewCapture(filePath) {
+  if (!existsSync(filePath)) return true;
+  const size = statSync(filePath).size;
+  return (
+    size <= MIN_HERO_PREVIEW_BYTES ||
+    size === BLACK_LOADER_BYTES ||
+    size === TINY_BLACK_PREVIEW_BYTES
+  );
+}
+
+export function isCompanionHeroPreviewOk(id, assetsDir) {
+  return !isBadHeroPreviewCapture(companionHeroPreviewPath(id, assetsDir));
 }

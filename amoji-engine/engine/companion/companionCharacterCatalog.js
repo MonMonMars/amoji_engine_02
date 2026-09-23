@@ -110,6 +110,13 @@ export function characterPreviewImage(id) {
   return `/prototypes/assets/companion-char-${key}.png?v=${bust}`;
 }
 
+/** Start-picker hero (top) — close-up bust, not the roster strip full-body PNG. */
+export function characterHeroPreviewImage(id) {
+  const key = String(id || "nova").toLowerCase();
+  const bust = encodeURIComponent(AMOJI_MODEL_REVISION);
+  return `/prototypes/assets/companion-char-${key}-hero.png?v=${bust}`;
+}
+
 /** @type {ReadonlySet<string>} */
 export const GALLERY_PRIORITY_IDS = new Set([
   "nova",
@@ -265,6 +272,7 @@ export function getCharacter(id) {
     ...def,
     companionRole: resolveCharacterRole(def.id),
     previewImage: characterPreviewImage(def.id),
+    heroPreviewImage: characterHeroPreviewImage(def.id),
   };
 }
 
@@ -620,6 +628,7 @@ export function listCompanionCharacters(langCode = "yue") {
       tagline: en ? def.tagline.en : def.tagline.yue,
       traits: en ? def.traits.en : def.traits.yue,
       previewImage: characterPreviewImage(id),
+      heroPreviewImage: characterHeroPreviewImage(id),
       accent: def.accent,
       companionRole,
       roleLabel: roleLabel(companionRole, en),
