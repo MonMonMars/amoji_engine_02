@@ -1,7 +1,8 @@
 # Mon — companion problem & request tracker
 
 **Owner:** Mon (Designer)  
-**Last updated:** 2026-09-23 20:50 UTC  
+**Last updated:** 2026-09-23 21:05 UTC  
+**Production build (live):** `2026-09-23-v557-mon-companion-ship` (verified)  
 **Production build (live):** check `curl -s https://temporary-rushing-oxygen-ok5jzhd.vercel.app/api/health` → `build` field  
 **Repo `main` build:** `amoji-engine/engine/companion/buildVersion.mjs` → `AMOJI_BUILD`  
 **App entry (bookmark):** https://temporary-rushing-oxygen-ok5jzhd.vercel.app/play  
@@ -35,14 +36,14 @@ Agents: **read this before saying “fixed.”** Update a row when status change
 
 **iOS:** bookmark **`/play` only** (not `/companion-full`).
 
-### Verify snapshot — `cursor/mon-ship-all-fixes-54db` (repo build **v557**)
+### Verify snapshot — **production `v557`** (merged [#95](https://github.com/MonMonMars/amoji_engine_02/pull/95))
 
 | Gate | Result | Notes |
 |------|--------|--------|
-| `npm run verify:pre-delivery` (local) | ✅ **5/5** | 1185 unit tests; **57/57** issues E2E (incl. hero-scene + preview quality) |
-| Companion CI [#95](https://github.com/MonMonMars/amoji_engine_02/pull/95) | 🟡 | E2E failed on Arweave **juno** 404 during `CI=true` refresh — **fixed**: keep committed VRM on fetch fail |
-| `npm run verify:pre-delivery:prod` | 🔴 expected until merge | Prod still **v551** → `build-id` fails; not a code regression |
-| `npm run verify:production-build` | 🔴 behind | Merge **#95** → Vercel → re-run prod gate |
+| `npm run verify:pre-delivery:prod` | ✅ **4/4** | **57/57** issues E2E on live Vercel |
+| `node scripts/demo-link-verify.mjs` | ✅ | Build match + boot/picker/session |
+| Companion CI [#95](https://github.com/MonMonMars/amoji_engine_02/pull/95) | ✅ | unit-and-smoke + companion-e2e (incl. CI VRM fetch fallback) |
+| `npm run verify:production-build` | ✅ | `/api/health` = `2026-09-23-v557-mon-companion-ship` |
 
 ---
 
@@ -56,8 +57,8 @@ Agents: **read this before saying “fixed.”** Update a row when status change
 | A2 | **Black screen** while picker or menu loads | ✅ | Boot picker paint | [#88](https://github.com/MonMonMars/amoji_engine_02/pull/88) merged |
 | A3 | **Wide desktop** — Menu blocks picker / layout | ✅ | v550 wide CSS + smoke | [#89](https://github.com/MonMonMars/amoji_engine_02/pull/89), [#90](https://github.com/MonMonMars/amoji_engine_02/pull/90) → **prod ~v551** |
 | A4 | **HQ Japanese-style scene backgrounds** not updated | ✅ | `anime-scene-v551-jp-game`, scene-bg regen | **main** `v551-facing-poke-thumbs-anime-bg` on prod |
-| A5 | **Roster card PNG ≠ loaded VRM** (wrong pose / back / blended arms on card) | 🟡 | 31-id regen + **suspect PNG gate**; **Elio** fixed (was macro flat colors on `fem_vroid`) | [#95](https://github.com/MonMonMars/amoji_engine_02/pull/95) **`v557-mon-companion-ship`** |
-| A8 | **Picker hero** — large portrait **+ scene background** preview | 🟡 | `picker-hero-preview-duo`; E2E `picker-hero-scene-preview` | [#95](https://github.com/MonMonMars/amoji_engine_02/pull/95) |
+| A5 | **Roster card PNG ≠ loaded VRM** (wrong pose / back / blended arms on card) | ⏸️ | 31-id regen + suspect gate on **prod v557**; live arm blend on card may still differ (**B1**) | [#95](https://github.com/MonMonMars/amoji_engine_02/pull/95) merged |
+| A8 | **Picker hero** — large portrait **+ scene background** preview | ✅ | `picker-hero-preview-duo`; prod E2E `picker-hero-scene-preview` | **prod v557** |
 | A6 | **Hero / picker portraits cropped** | ✅ | `object-fit: contain`, picker v4 | [#75](https://github.com/MonMonMars/amoji_engine_02/pull/75), [#89](https://github.com/MonMonMars/amoji_engine_02/pull/89) |
 | A7 | **Professional / cinematic scene backgrounds** | ✅ | Pro scene pass | [#71](https://github.com/MonMonMars/amoji_engine_02/pull/71) merged |
 
@@ -69,7 +70,7 @@ Agents: **read this before saying “fixed.”** Update a row when status change
 | B2 | Character **faces backward** on start | ✅ | Portrait facing score + boot refit v550/v551 | **main** v550–v551 |
 | B3 | **Double-click / reset camera** → facing wrong again | ✅ | `baseYaw`, reset + forced yaw v551 | **main** `v551` |
 | B4 | **Poke / multi-tap → blended head** | ✅ | Torso-only poke shake v551 | **main** `v551` |
-| B5 | **Hair / skirt / ribbon** wind, shake, gravity wrong | 🟡 | Pre-update only `stabilizeVrmSpringBones`; world-down gravity v14 | [#95](https://github.com/MonMonMars/amoji_engine_02/pull/95) + [#81](https://github.com/MonMonMars/amoji_engine_02/pull/81) |
+| B5 | **Hair / skirt / ribbon** wind, shake, gravity wrong | ⏸️ | v557 spring pre-update pass shipped; Mon may still want [#81](https://github.com/MonMonMars/amoji_engine_02/pull/81) drag tweaks | **prod v557** + #81 |
 | B6 | **Skirt weights sliding** / soft parts | ⏸️ | Spring + planted limbs (AGENTS.md regression notes) | v550+ on main; verify in session |
 | B7 | **Feet planted** / ghost limbs after `vrm.update` | ⏸️ | Full humanoid norm→raw sync | **main** v550+; E2E `feet-planted` |
 
@@ -77,8 +78,8 @@ Agents: **read this before saying “fixed.”** Update a row when status change
 
 | ID | Problem / request | Status | Evidence / fix | PR / build |
 |----|-------------------|--------|----------------|------------|
-| C1 | **Two-finger pinch zoom** on character (iOS) | 🟡 | Orbit `TWO: DOLLY_PAN`; poke defers on 2nd finger | [#95](https://github.com/MonMonMars/amoji_engine_02/pull/95) bundles [#69](https://github.com/MonMonMars/amoji_engine_02/pull/69) |
-| C2 | **Two-finger scroll / trackpad** zoom on character | 🟡 | `bindOrbitWheelZoom` on orbit-hit | [#95](https://github.com/MonMonMars/amoji_engine_02/pull/95) |
+| C1 | **Two-finger pinch zoom** on character (iOS) | ✅ | Orbit `TWO: DOLLY_PAN`; poke defers on 2nd finger | **prod v557** ([#95](https://github.com/MonMonMars/amoji_engine_02/pull/95)) |
+| C2 | **Two-finger scroll / trackpad** zoom on character | ✅ | `bindOrbitWheelZoom` on orbit-hit | **prod v557** |
 | C3 | One-finger **drag to orbit** on mobile | ⏸️ | Touch ONE rotate removed so pinch works; empty-area drag may need follow-up | [#69](https://github.com/MonMonMars/amoji_engine_02/pull/69) |
 | C4 | **Wide browser ghost Menu** over stage | 🟡 | z-index / wide layout | [#74](https://github.com/MonMonMars/amoji_engine_02/pull/74) |
 
@@ -88,11 +89,11 @@ Agents: **read this before saying “fixed.”** Update a row when status change
 |----|-------------------|--------|----------------|------------|
 | D1 | **No lip sync** — mouth idle while speaking | 🟡 | Cloud analyser + lip timeline | [#78](https://github.com/MonMonMars/amoji_engine_02/pull/78), [#79](https://github.com/MonMonMars/amoji_engine_02/pull/79) |
 | D2 | **No emotion on face/voice** during TTS | 🟡 | Expression timeline + prosody | [#79](https://github.com/MonMonMars/amoji_engine_02/pull/79) |
-| D3 | **TTS stops after first few words** (sentence cut off) | 🟡 | Mic echo barge during pause; stream session timing | [#95](https://github.com/MonMonMars/amoji_engine_02/pull/95) bundles [#91](https://github.com/MonMonMars/amoji_engine_02/pull/91) |
-| D4 | **Speaker volume jump** when TTS starts | 🟡 | `applyTtsPlaybackGain` + GainNode before analyser hookup | [#95](https://github.com/MonMonMars/amoji_engine_02/pull/95) |
+| D3 | **TTS stops after first few words** (sentence cut off) | ✅ | Mic echo barge during pause; stream session timing | **prod v557** |
+| D4 | **Speaker volume jump** when TTS starts | ✅ | `applyTtsPlaybackGain` + GainNode before analyser hookup | **prod v557** |
 | D5 | **Talking speed label** should show **1×** for current pace | 🟡 | Talk speed cycle default | [#80](https://github.com/MonMonMars/amoji_engine_02/pull/80) |
 | D6 | **ChatGPT-style emotional voice** (prosody / instruct) | ⏸️ | Cloud TTS + demo page | [#62](https://github.com/MonMonMars/amoji_engine_02/pull/62), #79 |
-| D7 | **Starter chip “thinking” too long** — preload Q+A | 🟡 | Instant starter replies + TTS prefetch | [#95](https://github.com/MonMonMars/amoji_engine_02/pull/95) bundles [#92](https://github.com/MonMonMars/amoji_engine_02/pull/92) |
+| D7 | **Starter chip “thinking” too long** — preload Q+A | ✅ | Instant starter replies + TTS prefetch | **prod v557** |
 
 ### E — Chat, LLM, UX
 
@@ -109,7 +110,7 @@ Agents: **read this before saying “fixed.”** Update a row when status change
 |----|-------------------|--------|----------------|------------|
 | F1 | **Kizuna / roster #2** model load fail | 🟡 | Fetch path / HD VRM | [#70](https://github.com/MonMonMars/amoji_engine_02/pull/70) |
 | F2 | Replace roster slots (R3 CC0), keep Elio/Yara/Cleo | 🟡 | **Shino** #24 (CC0); **Elio** mesh → VRoid **AvatarSample C** (fixes broken 3D + card) | [#95](https://github.com/MonMonMars/amoji_engine_02/pull/95) **`v557`** |
-| F4 | **Elio** 3D / card looked like flat color blocks | 🟡 | Root cause: `fem_vroid.vrm` + bad fit; replaced + `vrmModelBounds` + preview regen | [#95](https://github.com/MonMonMars/amoji_engine_02/pull/95) **`v557`** |
+| F4 | **Elio** 3D / card looked like flat color blocks | ✅ | AvatarSample C + `vrmModelBounds` + preview regen | **prod v557** |
 | F3 | Unique VRM per character id (no shared mesh) | ⏸️ | `rosterVrmUniqueness.test.js` allowed dup groups | ongoing |
 
 ### G — Docs / business
@@ -140,13 +141,13 @@ Use this to see **what was asked** vs **what shipped**.
 | 2026-09-23 PM | **Two-finger scroll** on character → zoom | C1–C2 | 🟡 [#69](https://github.com/MonMonMars/amoji_engine_02/pull/69) |
 | 2026-09-23 PM | **Keep expanding problem list + solved/not** | G2 | 🟡 this update |
 | 2026-09-23 PM | **Continue check for errors + update chart** | A5, A8, F4 | Elio VRM + preview QA; **57/57** local E2E on **v557** |
+| 2026-09-23 PM | **Next** — ship to production | #95 → main | **Merged**; prod **`verify:pre-delivery:prod` 4/4** |
 
 ---
 
 ## Open PR queue (merge priority suggestion)
 
-1. **Ship bundle** [#95](https://github.com/MonMonMars/amoji_engine_02/pull/95) — Shino, picker hero+scene, D3/D4/D7, C1–C2, A5 full previews, B5 spring, `v556-mon-companion-ship`  
-2. **D1–D2, D5** [#79](https://github.com/MonMonMars/amoji_engine_02/pull/79), [#80](https://github.com/MonMonMars/amoji_engine_02/pull/80) lip/emotion/speed  
+1. **D1–D2, D5** [#79](https://github.com/MonMonMars/amoji_engine_02/pull/79), [#80](https://github.com/MonMonMars/amoji_engine_02/pull/80) lip/emotion/speed  
 3. **A1** [#77](https://github.com/MonMonMars/amoji_engine_02/pull/77) visual cache  
 4. **B1** [#76](https://github.com/MonMonMars/amoji_engine_02/pull/76) arms (if still failing after prod)  
 5. **F1, C4** [#70](https://github.com/MonMonMars/amoji_engine_02/pull/70), [#74](https://github.com/MonMonMars/amoji_engine_02/pull/74)  
