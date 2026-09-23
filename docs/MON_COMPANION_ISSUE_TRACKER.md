@@ -108,7 +108,7 @@ Agents: **read this before saying “fixed.”** Update a row when status change
 | ID | Problem / request | Status | Evidence / fix | PR / build |
 |----|-------------------|--------|----------------|------------|
 | F1 | **Kizuna / roster #2** model load fail | ✅ | `companion-kizuna.vrm` on prod; `verify:roster-models` 8/8 incl. kizuna | **prod v558** |
-| F2 | Replace roster slots (R3 CC0), keep Elio/Yara/Cleo | 🟡 | **Shino** #24 (CC0); **Elio** mesh → VRoid **AvatarSample C** (fixes broken 3D + card) | [#95](https://github.com/MonMonMars/amoji_engine_02/pull/95) **`v557`** |
+| F2 | Replace roster slots (R3 CC0), keep Elio/Yara/Cleo | 🟡 | Preload cache keyed by `?v=` revision + **`v561`** roster bust (fixes stale VTuber mesh in RAM) | **#99** `v561` |
 | F4 | **Elio** 3D / card looked like flat color blocks | ✅ | AvatarSample C + `vrmModelBounds` + preview regen | **prod v557** |
 | F3 | Unique VRM per character id (no shared mesh) | ⏸️ | `rosterVrmUniqueness.test.js` allowed dup groups | ongoing |
 
