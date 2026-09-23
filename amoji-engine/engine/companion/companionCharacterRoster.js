@@ -1,12 +1,12 @@
 /**
  * Curated companion roster — 31 characters.
- * Keep #1–11 + #29 Zane meshes; all other slots use refreshed CC0 VRMs (v522).
+ * Keep #1–11 + #19/#23/#27/#29 meshes; replace listed premium slots with CC0 R3 (v523).
  */
 import { rosterModelUrl } from "./rosterVrmAssets.mjs";
 import { ROSTER_REPLACEMENT_SLOTS } from "./companionRosterReplacementSlots.js";
 import { ROSTER_SLOTS_24_27 } from "./companionRosterPremiumSlots.js";
 
-export const ROSTER_SCHEMA = "amoji.companionRoster.v522-keep-1-11-29";
+export const ROSTER_SCHEMA = "amoji.companionRoster.v523-keep-elio-yara-cleo";
 /** Flagship picks (Nova, Kizuna, Alicia, Ember) */
 export const ROSTER_LOCKED_NUMBERS = Object.freeze([1, 2, 3, 4]);
 
