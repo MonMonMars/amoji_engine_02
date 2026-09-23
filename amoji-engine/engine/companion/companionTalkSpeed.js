@@ -1,25 +1,26 @@
 /**
  * User-adjustable companion talking speed — applies to cloud + browser TTS.
  *
- * Internal scale keeps legacy TTS math (0.28 = the established VN/gacha pace).
- * UI shows relative 1× where that same 0.28 internal value is "Normal".
+ * Internal stored values are unchanged from the established companion pace
+ * (default 0.42). User-facing 1× Normal is that same default — not the older
+ * slower 0.28 internal curve.
  */
-export const COMPANION_TALK_SPEED_SCHEMA = "amoji.companionTalkSpeed.v3-default-1p5x";
-export const TALK_SPEED_STORAGE_KEY = "amoji.companionTalkSpeed.v5";
+export const COMPANION_TALK_SPEED_SCHEMA = "amoji.companionTalkSpeed.v4-default-1x";
+export const TALK_SPEED_STORAGE_KEY = "amoji.companionTalkSpeed.v6";
 const LEGACY_TALK_SPEED_KEY = "amoji.companionTalkSpeed.v2";
 const LEGACY_TALK_SPEED_KEY_V1 = "amoji.companionTalkSpeed.v1";
 
 /** Internal stored speed = display ratio × {@link NORMAL_TALK_SPEED_ONE_X}. */
-const MIN_TALK_SPEED = 0.14;
-const MAX_TALK_SPEED = 0.56;
+const MIN_TALK_SPEED = 0.21;
+const MAX_TALK_SPEED = 0.84;
 
-/** Internal value that maps to user-facing 1× Normal. */
-export const NORMAL_TALK_SPEED_ONE_X = 0.28;
+/** Internal value that maps to user-facing 1× Normal (today's default pace). */
+export const NORMAL_TALK_SPEED_ONE_X = 0.42;
 
-/** User-facing default talking speed (1.5× the legacy 1× Normal pace). */
-export const DEFAULT_TALK_SPEED_DISPLAY = 1.5;
+/** User-facing default talking speed. */
+export const DEFAULT_TALK_SPEED_DISPLAY = 1;
 
-/** Default internal speed — 1.5× Normal (0.28 × 1.5 = 0.42). */
+/** Default internal speed — same absolute pace as before recalibration. */
 export const DEFAULT_TALK_SPEED = Number(
   Math.max(
     MIN_TALK_SPEED,
@@ -189,6 +190,16 @@ export function loadTalkSpeed(storage = globalThis.localStorage) {
     }
   } catch {
     /* fall through to legacy */
+  }
+  try {
+    const legacyV5 = storage?.getItem?.("amoji.companionTalkSpeed.v5");
+    if (legacyV5 != null && legacyV5 !== "") {
+      const parsed = normalizeTalkSpeed(JSON.parse(legacyV5));
+      saveTalkSpeed(parsed, storage);
+      return parsed;
+    }
+  } catch {
+    /* ignore */
   }
   try {
     const legacyV4 = storage?.getItem?.("amoji.companionTalkSpeed.v4");
