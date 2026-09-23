@@ -13,7 +13,7 @@ describe("companionRosterModelRefreshV522", () => {
       ),
     );
     const replaceIds = ROSTER_CHARACTER_IDS.filter((id) => !keepIds.has(id));
-    expect(replaceIds).toHaveLength(19);
+    expect(replaceIds).toHaveLength(16);
     for (const id of replaceIds) {
       expect(ROSTER_REPLACED_VRM_SOURCES[id]?.vrmUrl).toMatch(/^https:\/\//);
     }
