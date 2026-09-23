@@ -3,7 +3,7 @@
  * Keep #1–11, #19 Yara, #23 Cleo, #27 Elio, #29 Zane; refresh Mon’s 16 replace slots (R3 CC0).
  */
 export const REPLACEMENT_ROSTER_SCHEMA =
-  "amoji.companionRosterReplacement.v523-r3-refresh-16";
+  "amoji.companionRosterReplacement.v542-shino-cc0-slot24";
 
 /** @typedef {{
  *   id: string,
@@ -263,26 +263,28 @@ export const REPLACEMENT_ROSTER_SLOTS = [
     personalityEn: "You are Cleo, a cozy pet. Cute short lines — rest encouragement.",
   },
   {
-    id: "sienna",
+    id: "shino",
     slot: 24,
-    name: { yue: "曦雅", en: "Sienna" },
-    tagline: { yue: "VRoid Pro · 商務優雅", en: "VRoid Pro · polished elegance" },
+    name: { yue: "千駄ヶ谷篠", en: "Sendagaya Shino" },
+    tagline: {
+      yue: "VRoid 官方 sample · CC0",
+      en: "VRoid official sample · CC0",
+    },
     traits: {
-      yue: ["專業", "優雅", "秘書感", "清晰表達"],
-      en: ["professional", "elegant", "executive", "articulate"],
+      yue: ["官方素体", "ARKit 口型", "秘書感", "清晰"],
+      en: ["official sample", "ARKit visemes", "secretary", "articulate"],
     },
     accent: "#ffb8c8",
-    badge: { yue: "#24 Pro 推介", en: "#24 Pro Pick" },
+    badge: { yue: "#24 VRoid CC0", en: "#24 VRoid CC0" },
     voices: { yue: "zh-HK-HiuMaanNeural-warm", en: "en-US-JennyNeural" },
     role: "secretary",
-    vrmUrl:
-      "https://raw.githubusercontent.com/madjin/vrm-samples/master/vroid/stable/AvatarSample_C.vrm",
-    greetingYue: "你好，我係曦雅。有咩 agenda 想我幫你整理？",
-    greetingEn: "Hello, I'm Sienna. Want me to organize your agenda?",
+    vrmUrl: "https://opengameart.org/sites/default/files/sendagaya_shino.zip",
+    greetingYue: "你好，我係篠。有咩 agenda 想我幫你整理？",
+    greetingEn: "Hello, I'm Shino. Want me to organize your agenda?",
     personalityYue:
-      "你係曦雅（Sienna），商務優雅秘書同伴。禮貌、條理清晰、主動排優先次序。",
+      "你係千駄ヶ谷篠（Sendagaya Shino），VRoid 官方 sample 改編嘅秘書同伴。禮貌、條理清晰、主動排優先次序。",
     personalityEn:
-      "You are Sienna, a polished executive secretary. Polite, structured, proactive priorities.",
+      "You are Sendagaya Shino, a secretary companion based on the VRoid official CC0 sample. Polite, structured, proactive priorities.",
   },
   {
     id: "juno",

@@ -3,6 +3,7 @@
  * Refresh roster VRM files — one `companion-<id>.vrm` per picker character.
  * Sources: VTubeMe CC-BY, VRoid samples, ToxSam CC0 (see rosterVrmAssets.mjs).
  */
+import { execFileSync } from "node:child_process";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -31,7 +32,7 @@ async function writeVrm(destName, buf) {
 }
 
 /**
- * @param {{ id: string, url?: string, copyFrom?: string, minBytes?: number }} entry
+ * @param {{ id: string, url?: string, copyFrom?: string, minBytes?: number, zipEntry?: string }} entry
  */
 async function syncRosterEntry(entry) {
   const outName = rosterVrmBasename(entry.id);
@@ -54,7 +55,23 @@ async function syncRosterEntry(entry) {
     console.log("fetch", outName, entry.url);
     const res = await fetch(entry.url);
     if (!res.ok) throw new Error(`${outName}: HTTP ${res.status} ${entry.url}`);
-    const buf = Buffer.from(await res.arrayBuffer());
+    let buf = Buffer.from(await res.arrayBuffer());
+    const zipEntry =
+      entry.zipEntry ||
+      (entry.url.toLowerCase().includes(".zip") && entry.id === "shino"
+        ? "Sendagaya Shino.vrm"
+        : null);
+    if (zipEntry) {
+      const tmpZip = path.join(ASSETS, `.tmp-${entry.id}.zip`);
+      await fs.writeFile(tmpZip, buf);
+      try {
+        buf = execFileSync("unzip", ["-p", tmpZip, zipEntry], {
+          maxBuffer: 32 * 1024 * 1024,
+        });
+      } finally {
+        await fs.unlink(tmpZip).catch(() => {});
+      }
+    }
     if (buf.length < minBytes) {
       throw new Error(`${outName}: downloaded ${buf.length} bytes (< ${minBytes})`);
     }
