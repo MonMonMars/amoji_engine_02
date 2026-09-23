@@ -9,10 +9,10 @@ describe("companionRolePresets", () => {
     expect(isCharacterRecommendedForRole("boyfriend", "kael")).toBe(true);
     expect(isCharacterRecommendedForRole("boyfriend", "nova")).toBe(false);
     expect(isCharacterRecommendedForRole("secretary", "nova")).toBe(false);
-    expect(isCharacterRecommendedForRole("secretary", "sienna")).toBe(true);
+    expect(isCharacterRecommendedForRole("secretary", "shino")).toBe(true);
     expect(isCharacterRecommendedForRole("secretary", "luna")).toBe(true);
     expect(rolePreset("boyfriend").defaultCharacterId).toBe("kael");
     expect(rolePreset("girlfriend").characterIds).toContain("nova");
-    expect(rolePreset("secretary").defaultCharacterId).toBe("sienna");
+    expect(rolePreset("secretary").defaultCharacterId).toBe("shino");
   });
 });
