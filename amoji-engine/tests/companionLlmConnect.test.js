@@ -21,6 +21,14 @@ describe("companionLlmConnect", () => {
     expect(pickBestProviderId(ranked).id).toBe("auto");
   });
 
+  it("prefers cloud over basic when cloudReady", () => {
+    const ranked = rankAvailableProviders(
+      { hosted: true, cloudReady: true, openrouter: { ok: true } },
+      null,
+    );
+    expect(pickBestProviderId(ranked, { cloudReady: true }).id).not.toBe("basic");
+  });
+
   it("marks cloud chips unavailable without server keys", () => {
     const avail = probeProviderAvailability(
       { ollama: { ok: true, models: ["qwen3:4b"] }, groq: { ok: false } },

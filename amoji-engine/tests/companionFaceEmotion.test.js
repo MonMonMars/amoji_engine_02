@@ -43,7 +43,7 @@ describe("companionFaceEmotion", () => {
         expressionNames: kai.expressions,
         triangleCount: kai.triangles,
       }),
-    ).toBe("vrm0-standard");
+    ).toBe("minimal");
   });
 
   it("scales preset blends down for ARKit rigs and up for anime rigs", () => {
