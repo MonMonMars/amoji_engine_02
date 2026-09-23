@@ -39,7 +39,7 @@ describe("chatApiHandler cloud", () => {
     });
     expect(result.mode).toBe("online");
     expect(result.hosted).toBe(true);
-    expect(result.model).toBe("openrouter/auto");
+    expect(result.model).toBe("openrouter/free");
   });
 
   it("auto provider selects online mode on cloud when groq key is set", async () => {
@@ -123,10 +123,45 @@ describe("chatApiHandler cloud", () => {
   });
 
   it("resolves openrouter model instead of client ollama default", () => {
-    process.env.OPENROUTER_MODEL = "openrouter/auto";
-    expect(resolveOpenRouterModel("qwen3:4b", null)).toBe("openrouter/auto");
+    process.env.OPENROUTER_MODEL = "openrouter/free";
+    expect(resolveOpenRouterModel("qwen3:4b", null)).toBe("openrouter/free");
     expect(resolveOpenRouterModel("meta-llama/llama-3.2-3b-instruct", null)).toBe(
       "meta-llama/llama-3.2-3b-instruct",
     );
+  });
+
+  it("falls back to the next free OpenRouter model when the first fails", async () => {
+    process.env.OPENROUTER_API_KEY = "test-key";
+    process.env.OPENROUTER_MODEL = "openrouter/free";
+    const models = [];
+    const origFetch = globalThis.fetch;
+    globalThis.fetch = async (_url, init) => {
+      const body = JSON.parse(String(init?.body || "{}"));
+      models.push(body.model);
+      if (body.model === "openrouter/free") {
+        return {
+          ok: false,
+          json: async () => ({ error: { message: "rate limited" } }),
+        };
+      }
+      return {
+        ok: true,
+        json: async () => ({
+          choices: [{ message: { content: "PINEAPPLE" } }],
+        }),
+      };
+    };
+    try {
+      const result = await processChatRequest({
+        message: "Say PINEAPPLE",
+        providerId: "auto",
+      });
+      expect(result.mode).toBe("online");
+      expect(result.reply).toBe("PINEAPPLE");
+      expect(models[0]).toBe("openrouter/free");
+      expect(models.length).toBeGreaterThan(1);
+    } finally {
+      globalThis.fetch = origFetch;
+    }
   });
 });

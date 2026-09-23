@@ -34,8 +34,9 @@ Works now with no key — canned Cantonese replies, avatar + voice still work.
 
    | Name | Required | Where to get it |
    |------|----------|-----------------|
-   | `GROQ_API_KEY` | **Yes** (for smart chat) | [console.groq.com](https://console.groq.com) — free tier |
-   | `OPENROUTER_API_KEY` | Optional backup | [openrouter.ai/keys](https://openrouter.ai/keys) |
+   | `OPENROUTER_API_KEY` | **Recommended** (free smart chat) | [openrouter.ai/keys](https://openrouter.ai/keys) — uses `openrouter/free` by default |
+   | `GROQ_API_KEY` | Optional backup | [console.groq.com](https://console.groq.com) — free tier |
+   | `OPENROUTER_MODEL` | Optional | Override default `openrouter/free` (e.g. `google/gemma-3-12b-it:free`) |
 
 4. Click **Deploy**. Wait ~1 minute.
 
