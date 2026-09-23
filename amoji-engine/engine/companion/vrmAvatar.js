@@ -1628,7 +1628,6 @@ export async function createVrmAvatar(opts) {
             !bodyMotion.idleBeatArmsActive,
         });
         syncHumanoidSkinnedRawFromNormalized(vrm?.humanoid);
-        stabilizeVrmSpringBones(vrm);
       }
       const crossfading =
         !CALM_IDLE_USES_PROCEDURAL_BODY &&
