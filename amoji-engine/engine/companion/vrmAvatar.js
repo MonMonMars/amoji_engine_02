@@ -30,6 +30,7 @@ import {
   isHeadFacingCamera,
   modelBodyFacingScore,
   normalizeModelYaw,
+  portraitFrameResolveScore,
   portraitVisibleFacingScore,
   portraitDistanceForHeight,
 } from "./companionPortraitFraming.js";
@@ -2075,18 +2076,27 @@ export async function createVrmAvatar(opts) {
       }
     },
     getPortraitFacing() {
+      const headScore = headBone
+        ? facingAlignmentScore(headBone, camera.position, vrm.humanoid)
+        : 0;
+      const visibleScore = portraitVisibleFacingScore(
+        headBone,
+        camera.position,
+        vrm.humanoid,
+        model,
+      );
+      const frameScore = portraitFrameResolveScore(
+        headBone,
+        camera.position,
+        vrm.humanoid,
+        model,
+      );
       return {
         bodyScore: modelBodyFacingScore(model, camera.position),
-        headScore: headBone
-          ? facingAlignmentScore(headBone, camera.position, vrm.humanoid)
-          : 0,
+        headScore,
         facingCamera: isHeadFacingCamera(headBone, camera, vrm.humanoid, model),
-        visibleScore: portraitVisibleFacingScore(
-          headBone,
-          camera.position,
-          vrm.humanoid,
-          model,
-        ),
+        visibleScore,
+        frameScore,
         modelRotY: model.rotation.y,
         cameraZSign: portraitCameraZSign,
       };
