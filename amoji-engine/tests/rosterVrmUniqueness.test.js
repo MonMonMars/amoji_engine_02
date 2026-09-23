@@ -12,10 +12,7 @@ const assetsDir = join(
 );
 
 /** Pairs that intentionally share the same mesh bytes (legacy alias slots). */
-const ALLOWED_DUPLICATE_GROUPS = [
-  ["atlas", "zane"],
-  ["elio", "luna"],
-];
+const ALLOWED_DUPLICATE_GROUPS = [["atlas", "zane"]];
 
 function md5File(path) {
   return createHash("md5").update(readFileSync(path)).digest("hex");
