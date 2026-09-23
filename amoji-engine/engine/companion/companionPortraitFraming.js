@@ -4,7 +4,7 @@
 import * as THREE from "three";
 
 export const COMPANION_PORTRAIT_FRAMING_SCHEMA =
-  "amoji.companionPortraitFraming.v9-body-head-facing";
+  "amoji.companionPortraitFraming.v10-bind-head-back-view";
 
 /** Fallback lower-neck height when no head bone (ratio from feet to head). */
 export const UPPER_BODY_ANCHOR_RATIO = 0.84;
@@ -171,7 +171,7 @@ export function detectPortraitCameraZSign(
     if (!headBone && !model) {
       return sign === PORTRAIT_CAMERA_Z_SIGN ? 1 : 0;
     }
-    return portraitVisibleFacingScore(
+    return portraitFrameResolveScore(
       headBone,
       _camPosScratch,
       humanoid,
@@ -190,19 +190,58 @@ export function detectPortraitCameraZSign(
  * @param {import('@pixiv/three-vrm').VRMHumanoid | null | undefined} [humanoid]
  * @param {import('three').Object3D | null | undefined} [model]
  */
+/**
+ * Roster VRMs sometimes rotate the head bone ~π in the rig while the mesh still
+ * faces +Z — only then should we trust root forward over head forward.
+ * @param {import('three').Object3D | null | undefined} headBone
+ */
+function headBoneLikelyMisoriented(headBone) {
+  if (!headBone?.rotation) return false;
+  const y = Number(headBone.rotation.y) || 0;
+  const a = Math.abs(Math.atan2(Math.sin(y), Math.cos(y)));
+  return a > 0.65;
+}
+
+/**
+ * Bind-pose head forward away from camera while root +Z points at camera =
+ * user sees the character's back (Mon: all roster cards + stage back-facing).
+ * @param {number} body
+ * @param {number} head
+ * @param {import('three').Object3D | null | undefined} headBone
+ */
+function isBindPoseBackView(body, head, headBone) {
+  if (headBoneLikelyMisoriented(headBone)) return false;
+  return body > 0.35 && head < -0.35;
+}
+
 export function portraitVisibleFacingScore(headBone, cameraPosition, humanoid, model) {
   if (!cameraPosition) return 0;
   const body = model ? modelBodyFacingScore(model, cameraPosition) : 0;
   if (!headBone) return body;
   const head = facingAlignmentScore(headBone, cameraPosition, humanoid);
   if (!model) return head;
+
+  if (isBindPoseBackView(body, head, headBone)) {
+    return Math.min(head, -body * 0.5);
+  }
+  if (isBindPoseBackView(-body, -head, headBone)) {
+    return Math.min(-head, -Math.abs(body) * 0.5);
+  }
+
   if (head * body < 0) {
-    if (body > 0.15 && head < -0.05) return body;
+    if (body > 0.15 && head < -0.05) {
+      if (headBoneLikelyMisoriented(headBone)) return body;
+      if (head < -0.35) return head;
+      return body;
+    }
     if (head > 0.15 && body < -0.05) return head;
     return Math.abs(head) >= Math.abs(body) ? head : body;
   }
   // Normalized head +Z often disagrees with visible mesh on roster VRMs.
-  if (head < 0.06 && body > head + 0.18) return body;
+  if (head < 0.06 && body > head + 0.18) {
+    if (headBoneLikelyMisoriented(headBone)) return body;
+    return head;
+  }
   if (body < 0.06 && head > body + 0.18) return head;
   if (head < 0 && body < 0) return Math.max(head, body);
   return Math.max(head, body * 0.88);
@@ -214,10 +253,37 @@ export function portraitVisibleFacingScore(headBone, cameraPosition, humanoid, m
  * @param {import('three').PerspectiveCamera} camera
  * @param {import('@pixiv/three-vrm').VRMHumanoid | null | undefined} [humanoid]
  */
+/**
+ * Score for auto portrait yaw / camera side — prefer visible eyes when present.
+ * @param {import('three').Object3D | null | undefined} headBone
+ * @param {import('three').Vector3} cameraPosition
+ * @param {import('@pixiv/three-vrm').VRMHumanoid | null | undefined} [humanoid]
+ * @param {import('three').Object3D | null | undefined} [model]
+ */
+export function portraitFrameResolveScore(headBone, cameraPosition, humanoid, model) {
+  const visible = portraitVisibleFacingScore(
+    headBone,
+    cameraPosition,
+    humanoid,
+    model,
+  );
+  if (!headBone) return visible;
+  const head = facingAlignmentScore(headBone, cameraPosition, humanoid);
+  const hasEyes =
+    Boolean(humanoid?.getNormalizedBoneNode?.("leftEye")) &&
+    Boolean(humanoid?.getNormalizedBoneNode?.("rightEye"));
+  if (hasEyes) {
+    return visible * 0.28 + head * 0.72;
+  }
+  return visible;
+}
+
 export function isHeadFacingCamera(headBone, camera, humanoid, model) {
   if (!camera) return true;
   if (!headBone && !model) return true;
-  return portraitVisibleFacingScore(headBone, camera.position, humanoid, model) > 0.15;
+  return (
+    portraitFrameResolveScore(headBone, camera.position, humanoid, model) > 0.15
+  );
 }
 
 /**
@@ -252,7 +318,7 @@ export function normalizeModelYaw(model) {
 export function correctPortraitModelYaw(model, headBone, camera, humanoid, minScore = 0.12) {
   if (!model || !camera) return false;
 
-  const score = portraitVisibleFacingScore(
+  const score = portraitFrameResolveScore(
     headBone,
     camera.position,
     humanoid,

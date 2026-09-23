@@ -212,6 +212,21 @@ describe("companionPortraitFraming", () => {
     );
   });
 
+  it("portraitVisibleFacingScore rejects visible back when head forward opposes body (not head-bone π)", () => {
+    const model = new THREE.Group();
+    const head = new THREE.Object3D();
+    head.position.set(0, 1.1, 0);
+    head.rotation.x = Math.PI;
+    model.add(head);
+    model.updateMatrixWorld(true);
+    head.updateMatrixWorld(true);
+    const cameraPos = new THREE.Vector3(0, 1.18, 2);
+    expect(modelBodyFacingScore(model, cameraPos)).toBeGreaterThan(0.3);
+    expect(facingAlignmentScore(head, cameraPos)).toBeLessThan(-0.3);
+    expect(portraitVisibleFacingScore(head, cameraPos, null, model)).toBeLessThan(0);
+    expect(isHeadFacingCamera(head, { position: cameraPos }, null, model)).toBe(false);
+  });
+
   it("portraitVisibleFacingScore prefers root forward when head bone is misleading", () => {
     const model = new THREE.Group();
     const head = new THREE.Object3D();
