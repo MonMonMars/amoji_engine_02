@@ -155,10 +155,9 @@ body.companion-minimal-chrome .composer-field textarea {
   }
 }
 
-/* Very wide: keep picker sheet readable */
+/* Tablet+: compact in-session switch sheet; start picker stays full-screen. */
 @media (min-width: 900px) {
-  .companion-picker--start .companion-picker-sheet,
-  .companion-picker--session .companion-picker-sheet {
+  body:not(.companion-start-picker-open) .companion-picker--session .companion-picker-sheet {
     max-width: 32rem;
     margin-left: auto;
     margin-right: auto;
@@ -214,15 +213,21 @@ body.companion-minimal-chrome .composer-field textarea {
     margin-bottom: 0.1rem;
   }
 
-  .companion-picker--v4.companion-picker--start.companion-picker--stacked-layout
+  /* In-session switch only — start picker stays full-screen (companion-start-picker-sheet.css). */
+  body.companion-picker-open.companion-wide-layout:not(.companion-start-picker-open)
+    .companion-picker--v4.companion-picker--session.companion-picker--stacked-layout
     .companion-picker-sheet {
     width: min(100%, 36rem) !important;
     height: auto !important;
     max-height: min(68vh, 520px) !important;
   }
 
-  .companion-picker--v4.companion-picker--start .companion-picker-backdrop {
-    background: rgba(4, 6, 12, 0.48);
+  body.companion-start-picker-open.companion-picker--v4.companion-picker--start
+    .companion-picker-backdrop,
+  body.companion-start-picker-open
+    .companion-picker--v4.companion-picker--start
+    .companion-picker-backdrop {
+    background: rgba(4, 6, 12, 0.94);
   }
 
   body.companion-picker-open.companion-wide-layout .stage {

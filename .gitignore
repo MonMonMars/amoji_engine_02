@@ -29,3 +29,4 @@ prototypes/assets/_preview-capture-report.json
 .vercel
 .env*
 .data/
+amoji-engine/vendor/vroid/
