@@ -142,7 +142,7 @@ export const GALLERY_PRIORITY_IDS = new Set([
   "vesper",
   "ash",
   "cleo",
-  "sienna",
+  "shino",
   "luna",
   "juno",
   "elio",

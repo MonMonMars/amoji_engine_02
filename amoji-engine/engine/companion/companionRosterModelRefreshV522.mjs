@@ -58,11 +58,6 @@ export const ROSTER_REPLACED_VRM_SOURCES = Object.freeze({
     vrmUrl: "https://arweave.net/f6VUW6sCyJcjErrBWSu_MVlYMkmAx5CRpyNGedUNxHM",
     thumbUrl: "https://arweave.net/Ux83EJOk2ZN8QkhsdKm9kjkd_foX8Wmek5wBfJJWTr0",
   },
-  sienna: {
-    sourceName: "AvatarSample_C",
-    vrmUrl:
-      "https://raw.githubusercontent.com/madjin/vrm-samples/master/vroid/stable/AvatarSample_C.vrm",
-  },
   luna: {
     sourceName: "Robert",
     vrmUrl: "https://arweave.net/gwG7w4bY-A5c3R6A6GOz3xBCgbPvkFQmqPIDtvnNsYI",
@@ -88,5 +83,5 @@ export const ROSTER_REPLACED_VRM_SOURCES = Object.freeze({
 });
 
 export const ROSTER_KEEP_MODEL_NUMBERS = Object.freeze([
-  1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 19, 23, 27, 29,
+  1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 19, 23, 24, 27, 29,
 ]);

@@ -43,6 +43,7 @@ export const CHARACTER_FACE_RIG_HINTS = Object.freeze({
   mei: "vrm1-anime",
   erika: "vrm1-anime",
   atlas: "vrm0-standard",
+  shino: "arkit",
 });
 
 /**

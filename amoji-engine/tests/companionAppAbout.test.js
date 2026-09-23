@@ -18,6 +18,8 @@ describe("companionAppAbout", () => {
     expect(en.buildLine).toContain(AMOJI_BUILD);
     expect(en.featuresLine).toContain(String(CHARACTER_IDS.length));
     expect(en.freshPlayUrl).toContain("/play");
+    expect(en.creditsLine).toMatch(/Shino|篠/);
+    expect(en.creditsLine).toMatch(/CC0/i);
   });
 
   it("formatPickerFootBuildLine is bilingual", () => {

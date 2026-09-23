@@ -57,7 +57,7 @@ const DEFAULT_TARGETS = [
   "vesper",
   "ash",
   "cleo",
-  "sienna",
+  "shino",
   "luna",
   "juno",
   "elio",

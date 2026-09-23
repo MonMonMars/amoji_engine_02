@@ -565,7 +565,7 @@ export const ROSTER_CHARACTER_IDS = Object.freeze([
   "vesper",
   "ash",
   "cleo",
-  "sienna",
+  "shino",
   "luna",
   "juno",
   "elio",
