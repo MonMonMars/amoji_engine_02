@@ -103,6 +103,7 @@ import {
   auditVrmSpringGravity,
   configureVrmSpringStability,
   createIdleSpringRecenterState,
+  enforceSpringGravityDown,
   recenterVrmSpringBones,
   setVrmSceneWindMode,
   stabilizeVrmSpringBones,
@@ -1611,6 +1612,7 @@ export async function createVrmAvatar(opts) {
       if (!libraryMotion) {
         syncHumanoidSkinnedRawFromNormalized(vrm?.humanoid);
       }
+      enforceSpringGravityDown(vrm);
       stabilizeVrmSpringBones(vrm);
       vrm.update(dt);
       if (!libraryMotion && !bodyMotion.currentAction) {
@@ -1621,6 +1623,7 @@ export async function createVrmAvatar(opts) {
             !bodyMotion.idleBeatArmsActive,
         });
         syncHumanoidSkinnedRawFromNormalized(vrm?.humanoid);
+        enforceSpringGravityDown(vrm);
         stabilizeVrmSpringBones(vrm);
       }
       const crossfading =
