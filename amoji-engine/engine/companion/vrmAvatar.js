@@ -1617,7 +1617,7 @@ export async function createVrmAvatar(opts) {
       if (!libraryMotion && !bodyMotion.currentAction) {
         bodyMotion.enforcePlantedLimbs?.({
           lockUpperArms: true,
-          lockForearms: !talking,
+          lockForearms: !bodyMotion.idleBeatArmsActive,
           hands: !talking && !eating && !bodyMotion.idleBeatArmsActive,
         });
       }
