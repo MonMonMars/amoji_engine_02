@@ -25,7 +25,6 @@ import {
 } from "../amoji-engine/engine/companion/companionPreviewAssets.mjs";
 import { beginStartPickerSession } from "./companion-picker-smoke-util.mjs";
 import { waitForPageFn } from "./playwrightPageUtil.mjs";
-import { ROSTER_REPLACED_VRM_SOURCES } from "../amoji-engine/engine/companion/companionRosterModelRefreshV522.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const outDir = join(root, "prototypes/assets");

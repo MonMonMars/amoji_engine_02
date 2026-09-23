@@ -5,7 +5,7 @@
  */
 export const ROSTER_MODEL_REFRESH_SCHEMA = "amoji.rosterModelRefresh.v522-keep-1-11-29";
 
-/** @type {Record<string, { vrmUrl: string, thumbUrl?: string, sourceName: string }>} */
+/** @type {Record<string, { vrmUrl: string, thumbUrl?: string, sourceName: string }>} thumbUrl is registry art only — picker PNGs come from `npm run roster:previews`. */
 export const ROSTER_REPLACED_VRM_SOURCES = Object.freeze({
   orion: {
     sourceName: "Erika",
