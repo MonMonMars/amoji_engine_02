@@ -22,6 +22,7 @@ describe("companionEarlyFreshBoot", () => {
     expect(earlyBoot).toMatch(/__amojiActiveBuild/);
     expect(earlyBoot).toMatch(/paintAtmosphereEarly/);
     expect(earlyBoot).toContain("scene-bg/");
+    expect(earlyBoot).toContain('".png?v="');
     expect(earlyBoot).toContain('".svg?v="');
     expect(earlyBoot).not.toMatch(/pick=1&automic=0/);
     expect(earlyBoot).toContain(PICKER_SCENE_ART_REVISION);
