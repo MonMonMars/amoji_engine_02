@@ -78,8 +78,9 @@ export const ROSTER_REPLACED_VRM_SOURCES = Object.freeze({
     thumbUrl: "https://arweave.net/zFnvDH9ddSiXv4PblERFGatw8Oe7Wq9HRQ7pcIXvMSc",
   },
   elio: {
-    sourceName: "Coffee",
-    vrmUrl: "https://arweave.net/JxV2leixFtpOsscIyelJzK6OSA84hnyrWZs7LAMfU8c",
+    sourceName: "AvatarSample C",
+    vrmUrl:
+      "https://raw.githubusercontent.com/madjin/vrm-samples/master/vroid/stable/AvatarSample_C.vrm",
     thumbUrl: "https://arweave.net/bzT14eOgmZy5k9YW5fa6jBZ1J5Pfrr9OfZ1SSv77T_E",
   },
   hana: {
