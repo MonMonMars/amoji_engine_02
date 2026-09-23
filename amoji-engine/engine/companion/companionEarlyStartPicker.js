@@ -141,12 +141,33 @@ export async function bootEarlyStartPicker(opts = {}) {
   globalThis.__amojiStartPickerPreloadJob = preloadJob;
   picker.show();
   void preloadJob.previewPromise;
+
+  const waitForPickerPaint = async (maxMs = 8000) => {
+    const shell = picker.element;
+    const started = Date.now();
+    while (Date.now() - started < maxMs) {
+      const cards = shell?.querySelectorAll?.(
+        ".companion-card--start-strip, .companion-card[data-character-id]",
+      );
+      const begin = shell?.querySelector?.(".picker-begin-btn");
+      if (cards && cards.length >= 3 && begin) return true;
+      await new Promise((resolve) => {
+        requestAnimationFrame(resolve);
+      });
+    }
+    return false;
+  };
+
+  const painted = await waitForPickerPaint(8000);
   await new Promise((resolve) => {
     requestAnimationFrame(() => requestAnimationFrame(resolve));
   });
   globalThis.clearInterval?.(splashTimer);
   splashLoad.flush();
-  splash?.remove();
+  /* Keep title screen until roster paints — avoids black gap on slow JS/CSS. */
+  if (painted) {
+    splash?.remove();
+  }
   splashLoad.destroy();
 
   return picker;
