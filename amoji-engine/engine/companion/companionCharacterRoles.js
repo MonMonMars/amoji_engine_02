@@ -34,7 +34,7 @@ export const CHARACTER_COMPANION_ROLES = Object.freeze({
   vesper: "boyfriend",
   ash: "boyfriend",
   cleo: "pet",
-  sienna: "secretary",
+  shino: "secretary",
   luna: "secretary",
   juno: "girlfriend",
   elio: "girlfriend",
@@ -93,7 +93,7 @@ export const CHARACTER_COMPANION_ROLES = Object.freeze({
 export const ROLE_DEFAULT_CHARACTER_ID = Object.freeze({
   girlfriend: "nova",
   boyfriend: "kael",
-  secretary: "sienna",
+  secretary: "shino",
   pet: "cleo",
 });
 
