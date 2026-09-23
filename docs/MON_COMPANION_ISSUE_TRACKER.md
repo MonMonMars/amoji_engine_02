@@ -1,8 +1,8 @@
 # Mon — companion problem & request tracker
 
 **Owner:** Mon (Designer)  
-**Last updated:** 2026-09-23 22:01 UTC  
-**Production build (live):** `2026-09-23-v559-mon-companion-wave3` (verified via `/api/health` + `verify:pre-delivery:prod`)  
+**Last updated:** 2026-09-23 22:27 UTC  
+**Production build (live):** `2026-09-23-v560-mon-companion-wave4` (verified via `/api/health` + `verify:pre-delivery:prod`)  
 **Repo `main` build:** `amoji-engine/engine/companion/buildVersion.mjs` → `AMOJI_BUILD`  
 **App entry (bookmark):** https://temporary-rushing-oxygen-ok5jzhd.vercel.app/play  
 
@@ -35,14 +35,14 @@ Agents: **read this before saying “fixed.”** Update a row when status change
 
 **iOS:** bookmark **`/play` only** (not `/companion-full`).
 
-### Verify snapshot — **production `v559`** (merged [#97](https://github.com/MonMonMars/amoji_engine_02/pull/97))
+### Verify snapshot — **production `v560`** (merged [#98](https://github.com/MonMonMars/amoji_engine_02/pull/98))
 
 | Gate | Result | Notes |
 |------|--------|--------|
 | `npm run verify:pre-delivery:prod` | ✅ **4/4** | **57/57** issues E2E on live Vercel |
 | `node scripts/demo-link-verify.mjs` | ✅ | Build match + boot/picker/session |
-| Companion CI [#97](https://github.com/MonMonMars/amoji_engine_02/pull/97) | ✅ | unit-and-smoke + companion-e2e |
-| Prior ships [#96](https://github.com/MonMonMars/amoji_engine_02/pull/96) / [#95](https://github.com/MonMonMars/amoji_engine_02/pull/95) | ✅ | v558 talk speed / lip timing; v557 roster hero |
+| Companion CI [#98](https://github.com/MonMonMars/amoji_engine_02/pull/98) | ✅ | unit-and-smoke + companion-e2e |
+| Prior ships [#97](https://github.com/MonMonMars/amoji_engine_02/pull/97)–[#95](https://github.com/MonMonMars/amoji_engine_02/pull/95) | ✅ | v559 cache/springs; v558 voice UI; v557 roster |
 
 ---
 
@@ -65,7 +65,7 @@ Agents: **read this before saying “fixed.”** Update a row when status change
 
 | ID | Problem / request | Status | Evidence / fix | PR / build |
 |----|-------------------|--------|----------------|------------|
-| B1 | **Blended / ghost arms** at idle (Nova, Alicia, roster) | 🟡 | Lock forearms through TTS + post-update planted lock **v10** | **wave4 `v560`** |
+| B1 | **Blended / ghost arms** at idle (Nova, Alicia, roster) | ⏸️ | Forearms locked through TTS; planted lock **v10** on **prod v560** | [#98](https://github.com/MonMonMars/amoji_engine_02/pull/98) — re-report per character |
 | B2 | Character **faces backward** on start | ✅ | Portrait facing score + boot refit v550/v551 | **main** v550–v551 |
 | B3 | **Double-click / reset camera** → facing wrong again | ✅ | `baseYaw`, reset + forced yaw v551 | **main** `v551` |
 | B4 | **Poke / multi-tap → blended head** | ✅ | Torso-only poke shake v551 | **main** `v551` |
@@ -87,7 +87,7 @@ Agents: **read this before saying “fixed.”** Update a row when status change
 | ID | Problem / request | Status | Evidence / fix | PR / build |
 |----|-------------------|--------|----------------|------------|
 | D1 | **No lip sync** — mouth idle while speaking | ⏸️ | Face/lip timers decoupled; cloud `beginMouth` on metadata/canplay; E2E `mouth-moves-when-talking` pass | **prod v558** — re-report if still idle in session |
-| D2 | **No emotion on face/voice** during TTS | ⏸️ | `speechFaceSnapStrength` + expression index drive | **prod v558** — Mon may want stronger #79 prosody |
+| D2 | **No emotion on face/voice** during TTS | ⏸️ | Expression snap without speech unit; vocal `snapStrength` on **prod v560** | [#98](https://github.com/MonMonMars/amoji_engine_02/pull/98) |
 | D3 | **TTS stops after first few words** (sentence cut off) | ✅ | Mic echo barge during pause; stream session timing | **prod v557** |
 | D4 | **Speaker volume jump** when TTS starts | ✅ | `applyTtsPlaybackGain` + GainNode before analyser hookup | **prod v557** |
 | D5 | **Talking speed label** should show **1×** for current pace | ✅ | Talk speed v4 — 0.42 internal = **1× Normal** | **prod v558** ([#96](https://github.com/MonMonMars/amoji_engine_02/pull/96)) |
@@ -142,6 +142,7 @@ Use this to see **what was asked** vs **what shipped**.
 | 2026-09-23 PM | **Continue check for errors + update chart** | A5, A8, F4 | Elio VRM + preview QA; **57/57** local E2E on **v557** |
 | 2026-09-23 PM | **Next** — ship to production | #95 → main | **Merged**; prod **`verify:pre-delivery:prod` 4/4** |
 | 2026-09-23 PM | **Continue** — wave 2 (speed, lip/emotion, wide menu ghost) | D1–D2, D5, C4 | **Merged [#96](https://github.com/MonMonMars/amoji_engine_02/pull/96)**; prod **`verify:pre-delivery:prod` 4/4** |
+| 2026-09-23 PM | **Next / Continue** — waves 3–4 (cache, springs, arms, face snap) | A1, B5, B1, D2 | **Merged [#97](https://github.com/MonMonMars/amoji_engine_02/pull/97)–[#98](https://github.com/MonMonMars/amoji_engine_02/pull/98)**; prod **v560** |
 
 ---
 
@@ -176,7 +177,7 @@ After each merge batch: `npm run verify:pre-delivery:prod` → exit **0** before
 
 ## One-line summary for Mon (2026-09-23 PM)
 
-**On live Vercel today (`v559`):** **v558** stack (talk speed 1×, lip/face timing, wide menu, v557 roster) plus **fresh scene/roster cache tags** and **spring v15** hair/skirt gravity — **✅** gates **57/57**. **⏸️:** Safari may still need a **`/play`** reopen (**A1**); lip/emotion face (**D1/D2**); live **arm blend (B1)**. Re-report any character still wrong after cache-bust open.
+**On live Vercel today (`v560`):** **v559** cache/springs + **forearm lock during TTS** + **expression snap without text unit** — prod gates **57/57** after verify. **⏸️:** per-character **arm blend (B1)**, **lip/face (D1/D2)**, Safari stale art (**A1**). Bookmark **`/play`**; name the roster # if something still wrong.
 
 ---
 
