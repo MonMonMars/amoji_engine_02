@@ -1,5 +1,15 @@
 # Agent instructions
 
+## Mon’s problem list (read first for companion bugs)
+
+When Mon reports regressions, “same problems,” or asks what’s fixed vs not:
+
+1. Open **`docs/MON_COMPANION_ISSUE_TRACKER.md`** — expanded table with ✅ / 🟡 / 🔴 / ⏸️ per item, PR links, and chronological request log.
+2. Compare production build: `curl -s https://temporary-rushing-oxygen-ok5jzhd.vercel.app/api/health` vs `AMOJI_BUILD` in `buildVersion.mjs`.
+3. After a fix merges, **update the tracker row** (do not re-ask Mon to restate items already listed).
+
+E2E names for Mon-reported issues: `scripts/companion-issues-verify.mjs` (also in `npm run verify:pre-delivery`).
+
 ## Demo links — required after every update
 
 After completing code changes (commit, push, or PR), **always** end your summary with a **Demo** section containing the live links below. Use the current `AMOJI_BUILD` from `amoji-engine/engine/companion/buildVersion.mjs`.
