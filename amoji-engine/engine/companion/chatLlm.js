@@ -107,7 +107,7 @@ export function createCompanionChat(opts = {}) {
         apiKey = null;
         if (orKey) {
           useProvider = getLlmProvider("openrouter-gemma");
-          model = useProvider.model || "openrouter/auto";
+          model = useProvider.model || "openrouter/free";
           providerId = useProvider.id;
         } else if (groqKey) {
           useProvider = getLlmProvider("groq");
@@ -223,7 +223,10 @@ export function createCompanionChat(opts = {}) {
         });
         if (
           proxied.ok &&
-          (isSmartProxyMode(proxied.mode) || isHostedCompanion())
+          (isSmartProxyMode(proxied.mode) ||
+            (isHostedCompanion() &&
+              proxied.mode !== "local-fallback" &&
+              proxied.mode !== "local"))
         ) {
           const finalized = finalizeReply(proxied.reply);
           if (onToken) await emitTypewriter(finalized.reply, onToken, signal);

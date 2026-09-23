@@ -13,7 +13,11 @@ import {
   hasClientGroqKey,
   hasClientOpenRouterKey,
 } from "./companionClientKeys.js";
-import { getLlmProvider, LLM_PROVIDERS } from "./companionLlmProviders.js";
+import {
+  getLlmProvider,
+  LLM_PROVIDER_STORAGE_KEY,
+  LLM_PROVIDERS,
+} from "./companionLlmProviders.js";
 
 export const COMPANION_LLM_CONNECT_SCHEMA = "amoji.companionLlmConnect.v1";
 
@@ -129,8 +133,10 @@ export function rankAvailableProviders(status, directOllama) {
  * Pick first provider id that exists in catalog.
  * @param {{ id: string }[]} ranked
  */
-export function pickBestProviderId(ranked) {
+export function pickBestProviderId(ranked, status = null) {
+  const cloudReady = Boolean(status?.cloudReady);
   for (const entry of ranked) {
+    if (entry.id === "basic" && cloudReady) continue;
     if (LLM_PROVIDERS.some((p) => p.id === entry.id) && entry.id !== "basic") {
       return entry;
     }
@@ -153,7 +159,14 @@ export async function autoConnectLlm(opts) {
   ]);
 
   const ranked = rankAvailableProviders(status, direct);
-  const best = pickBestProviderId(ranked);
+  const stored =
+    typeof globalThis.localStorage?.getItem === "function"
+      ? globalThis.localStorage.getItem(LLM_PROVIDER_STORAGE_KEY)
+      : null;
+  if (hosted && status?.cloudReady && stored === "basic") {
+    globalThis.localStorage?.removeItem(LLM_PROVIDER_STORAGE_KEY);
+  }
+  const best = pickBestProviderId(ranked, status);
   const info = opts.chat.setProvider(best.id, { model: best.model });
 
   return {

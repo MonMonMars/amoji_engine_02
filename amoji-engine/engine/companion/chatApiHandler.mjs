@@ -18,6 +18,12 @@ import {
   fetchWebContextForChat,
   shouldTryWebSearch,
 } from "./companionWebSearch.mjs";
+import {
+  buildOpenRouterModelChain,
+  isOpenRouterAuthError,
+  OPENROUTER_DEFAULT_FREE_MODEL,
+  resolveOpenRouterPrimaryModel,
+} from "./companionOpenRouterModels.mjs";
 
 export const CHAT_API_HANDLER_SCHEMA = "amoji.chatApiHandler.v3";
 
@@ -57,10 +63,11 @@ export { isOllamaLocalModel } from "./companionModelIds.js";
  * @param {string | undefined | null} presetModel
  */
 export function resolveOpenRouterModel(requested, presetModel) {
-  const envModel = process.env.OPENROUTER_MODEL || "openrouter/auto";
-  if (requested && !isOllamaLocalModel(requested)) return requested;
-  if (presetModel && !isOllamaLocalModel(presetModel)) return presetModel;
-  return envModel;
+  return resolveOpenRouterPrimaryModel(
+    requested,
+    presetModel,
+    isOllamaLocalModel,
+  );
 }
 
 async function resolveOllamaHost() {
@@ -179,7 +186,7 @@ export async function processChatRequest(body) {
       String(body.apiKey || "").startsWith("sk-or-")
     ) {
       mode = "online";
-      model = process.env.OPENROUTER_MODEL || "openrouter/auto";
+      model = process.env.OPENROUTER_MODEL || OPENROUTER_DEFAULT_FREE_MODEL;
     } else if (
       process.env.GROQ_API_KEY ||
       String(body.apiKey || "").startsWith("gsk_")
@@ -291,32 +298,41 @@ export async function processChatRequest(body) {
     providerId !== "together" &&
     (cloud || autoProvider || providerId?.startsWith("openrouter"));
   if (wantOpenRouter && openRouterApiKey) {
-    const orModel = resolveOpenRouterModel(
+    const primaryOr = resolveOpenRouterModel(
       requestedModel,
       providerPreset?.model,
     );
-    const openrouter = await callCloudChat({
-      base: "https://openrouter.ai/api/v1",
-      apiKey: openRouterApiKey,
-      model: orModel,
-      messages,
-      // Prefer our snapshot over OpenRouter's web plugin — the plugin 4xx
-      // used to drop the whole turn onto canned local replies.
-      extraHeaders: {
-        "HTTP-Referer": process.env.OPENROUTER_REFERER || "https://amoji.app",
-        "X-Title": "Amoji Companion",
-      },
-    });
-    if (openrouter.ok) {
-      return {
-        ok: true,
-        reply: openrouter.reply,
-        mode: webSearched ? "online+web" : "online",
-        model: openrouter.model,
-        web: webSearched ? { searched: true, source: webSource } : undefined,
-      };
+    const orModels = buildOpenRouterModelChain(primaryOr);
+    let lastOrError = "";
+    for (const orModel of orModels) {
+      const openrouter = await callCloudChat({
+        base: "https://openrouter.ai/api/v1",
+        apiKey: openRouterApiKey,
+        model: orModel,
+        messages,
+        // Prefer our snapshot over OpenRouter's web plugin — the plugin 4xx
+        // used to drop the whole turn onto canned local replies.
+        extraHeaders: {
+          "HTTP-Referer": process.env.OPENROUTER_REFERER || "https://amoji.app",
+          "X-Title": "Amoji Companion",
+        },
+      });
+      if (openrouter.ok) {
+        return {
+          ok: true,
+          reply: openrouter.reply,
+          mode: webSearched ? "online+web" : "online",
+          model: openrouter.model,
+          web: webSearched ? { searched: true, source: webSource } : undefined,
+        };
+      }
+      lastOrError = String(openrouter.error || "OpenRouter error");
+      console.warn("[chat-api] OpenRouter failed", orModel, lastOrError);
+      if (isOpenRouterAuthError(lastOrError)) break;
     }
-    console.warn("[chat-api] OpenRouter failed", openrouter.error);
+    if (lastOrError) {
+      console.warn("[chat-api] OpenRouter exhausted", lastOrError);
+    }
   }
 
   const wantGroq =
@@ -419,16 +435,17 @@ export async function processChatRequest(body) {
     localCompanionReply,
   );
 
+  const hadCloudKeys =
+    Boolean(process.env.GROQ_API_KEY) ||
+    Boolean(process.env.OPENROUTER_API_KEY) ||
+    Boolean(apiKey);
+
   return {
     ok: true,
     reply: fallbackReply,
-    mode:
-      process.env.GROQ_API_KEY ||
-      process.env.OPENROUTER_API_KEY ||
-      apiKey
-        ? "local-fallback"
-        : "local",
+    mode: hadCloudKeys ? "local-fallback" : "local",
     model: null,
+    llmDegraded: hadCloudKeys,
     web: webSearched ? { searched: true, source: webSource } : undefined,
   };
 }
