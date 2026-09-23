@@ -8,7 +8,7 @@ import {
 } from "./companionPoseLibrary.js";
 
 export const COMPANION_PLANTED_LIMB_LOCK_SCHEMA =
-  "amoji.companionPlantedLimbLock.v7-ground-zero-forearm-lock";
+  "amoji.companionPlantedLimbLock.v9-norm-only-arms-sync-raw";
 
 /** Upper-body bones that must match normalized→raw after vrm.update (ghost limb fix). */
 export const PLANTED_ARM_RAW_SYNC_BONES = Object.freeze([
@@ -22,7 +22,7 @@ export const PLANTED_ARM_RAW_SYNC_BONES = Object.freeze([
   "rightHand",
 ]);
 
-/** Pose writes target normalized nodes only — never push rest Euler directly onto raw legs. */
+/** Pose writes target normalized nodes only — copy norm→raw after humanoid/spring solve. */
 export const PLANTED_LOCK_NORMALIZED_ONLY_BONES = Object.freeze([
   "leftUpperLeg",
   "rightUpperLeg",
@@ -30,6 +30,14 @@ export const PLANTED_LOCK_NORMALIZED_ONLY_BONES = Object.freeze([
   "rightLowerLeg",
   "leftFoot",
   "rightFoot",
+  "leftShoulder",
+  "rightShoulder",
+  "leftUpperArm",
+  "rightUpperArm",
+  "leftLowerArm",
+  "rightLowerArm",
+  "leftHand",
+  "rightHand",
 ]);
 
 /** Shoulders stay neutral when upper arms are planted (pose channels only hit normalized nodes). */
@@ -102,9 +110,10 @@ export function writeHumanoidBoneRotation(humanoid, name, rot) {
   if (!humanoid || !rot) return;
   const norm = humanoid.getNormalizedBoneNode?.(name);
   const raw = humanoid.getRawBoneNode?.(name);
-  const legsOnly = PLANTED_LOCK_NORMALIZED_ONLY_BONES.includes(name);
+  const normalizedOnlyWrite =
+    PLANTED_LOCK_NORMALIZED_ONLY_BONES.includes(name);
   if (norm) writeVrmBoneEuler(norm, rot);
-  if (raw && raw !== norm && !legsOnly) writeVrmBoneEuler(raw, rot);
+  if (raw && raw !== norm && !normalizedOnlyWrite) writeVrmBoneEuler(raw, rot);
 }
 
 /**
