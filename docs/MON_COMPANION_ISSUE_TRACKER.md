@@ -1,8 +1,8 @@
 # Mon — companion problem & request tracker
 
 **Owner:** Mon (Designer)  
-**Last updated:** 2026-09-23 21:14 UTC  
-**Production build (live):** `2026-09-23-v557-mon-companion-ship` (wave 2 **`v558`** on PR — deploy pending)  
+**Last updated:** 2026-09-23 21:37 UTC  
+**Production build (live):** `2026-09-23-v558-mon-companion-wave2` (verified via `/api/health` + `verify:pre-delivery:prod`)  
 **Repo `main` build:** `amoji-engine/engine/companion/buildVersion.mjs` → `AMOJI_BUILD`  
 **App entry (bookmark):** https://temporary-rushing-oxygen-ok5jzhd.vercel.app/play  
 
@@ -35,14 +35,14 @@ Agents: **read this before saying “fixed.”** Update a row when status change
 
 **iOS:** bookmark **`/play` only** (not `/companion-full`).
 
-### Verify snapshot — **production `v557`** (merged [#95](https://github.com/MonMonMars/amoji_engine_02/pull/95))
+### Verify snapshot — **production `v558`** (merged [#96](https://github.com/MonMonMars/amoji_engine_02/pull/96))
 
 | Gate | Result | Notes |
 |------|--------|--------|
 | `npm run verify:pre-delivery:prod` | ✅ **4/4** | **57/57** issues E2E on live Vercel |
 | `node scripts/demo-link-verify.mjs` | ✅ | Build match + boot/picker/session |
-| Companion CI [#95](https://github.com/MonMonMars/amoji_engine_02/pull/95) | ✅ | unit-and-smoke + companion-e2e (incl. CI VRM fetch fallback) |
-| `npm run verify:production-build` | ✅ | `/api/health` = `2026-09-23-v557-mon-companion-ship` |
+| Companion CI [#96](https://github.com/MonMonMars/amoji_engine_02/pull/96) | ✅ | unit-and-smoke + companion-e2e |
+| Prior ship [#95](https://github.com/MonMonMars/amoji_engine_02/pull/95) | ✅ | v557 bundle (Shino, hero, TTS cutoff, zoom, previews) |
 
 ---
 
@@ -80,17 +80,17 @@ Agents: **read this before saying “fixed.”** Update a row when status change
 | C1 | **Two-finger pinch zoom** on character (iOS) | ✅ | Orbit `TWO: DOLLY_PAN`; poke defers on 2nd finger | **prod v557** ([#95](https://github.com/MonMonMars/amoji_engine_02/pull/95)) |
 | C2 | **Two-finger scroll / trackpad** zoom on character | ✅ | `bindOrbitWheelZoom` on orbit-hit | **prod v557** |
 | C3 | One-finger **drag to orbit** on mobile | ⏸️ | Touch ONE rotate removed so pinch works; empty-area drag may need follow-up | [#69](https://github.com/MonMonMars/amoji_engine_02/pull/69) |
-| C4 | **Wide browser ghost Menu** over stage | 🟡 | `.settings:not([hidden])` on wide desktop inline CSS + `companion-app-width.css` | **wave2 `v558`** |
+| C4 | **Wide browser ghost Menu** over stage | ✅ | `.settings:not([hidden])` on wide desktop inline CSS + `companion-app-width.css` | **prod v558** ([#96](https://github.com/MonMonMars/amoji_engine_02/pull/96)) |
 
 ### D — Voice, TTS, lip sync, emotion
 
 | ID | Problem / request | Status | Evidence / fix | PR / build |
 |----|-------------------|--------|----------------|------------|
-| D1 | **No lip sync** — mouth idle while speaking | 🟡 | Face/lip timers decoupled; cloud `beginMouth` on metadata/canplay | **wave2 `v558`** (ports #79 lip path; prod after merge) |
-| D2 | **No emotion on face/voice** during TTS | 🟡 | `speechFaceSnapStrength` + expression index drive | **wave2 `v558`** |
+| D1 | **No lip sync** — mouth idle while speaking | ⏸️ | Face/lip timers decoupled; cloud `beginMouth` on metadata/canplay; E2E `mouth-moves-when-talking` pass | **prod v558** — re-report if still idle in session |
+| D2 | **No emotion on face/voice** during TTS | ⏸️ | `speechFaceSnapStrength` + expression index drive | **prod v558** — Mon may want stronger #79 prosody |
 | D3 | **TTS stops after first few words** (sentence cut off) | ✅ | Mic echo barge during pause; stream session timing | **prod v557** |
 | D4 | **Speaker volume jump** when TTS starts | ✅ | `applyTtsPlaybackGain` + GainNode before analyser hookup | **prod v557** |
-| D5 | **Talking speed label** should show **1×** for current pace | 🟡 | Talk speed v4 — 0.42 internal = **1× Normal** | **wave2 `v558`** ([#80](https://github.com/MonMonMars/amoji_engine_02/pull/80) port) |
+| D5 | **Talking speed label** should show **1×** for current pace | ✅ | Talk speed v4 — 0.42 internal = **1× Normal** | **prod v558** ([#96](https://github.com/MonMonMars/amoji_engine_02/pull/96)) |
 | D6 | **ChatGPT-style emotional voice** (prosody / instruct) | ⏸️ | Cloud TTS + demo page | [#62](https://github.com/MonMonMars/amoji_engine_02/pull/62), #79 |
 | D7 | **Starter chip “thinking” too long** — preload Q+A | ✅ | Instant starter replies + TTS prefetch | **prod v557** |
 
@@ -141,7 +141,7 @@ Use this to see **what was asked** vs **what shipped**.
 | 2026-09-23 PM | **Keep expanding problem list + solved/not** | G2 | 🟡 this update |
 | 2026-09-23 PM | **Continue check for errors + update chart** | A5, A8, F4 | Elio VRM + preview QA; **57/57** local E2E on **v557** |
 | 2026-09-23 PM | **Next** — ship to production | #95 → main | **Merged**; prod **`verify:pre-delivery:prod` 4/4** |
-| 2026-09-23 PM | **Continue** — wave 2 (speed, lip/emotion, wide menu ghost) | D1–D2, D5, C4 | **`v558`** branch `cursor/mon-ship-wave2-54db` |
+| 2026-09-23 PM | **Continue** — wave 2 (speed, lip/emotion, wide menu ghost) | D1–D2, D5, C4 | **Merged [#96](https://github.com/MonMonMars/amoji_engine_02/pull/96)**; prod **`verify:pre-delivery:prod` 4/4** |
 
 ---
 
@@ -176,7 +176,7 @@ After each merge batch: `npm run verify:pre-delivery:prod` → exit **0** before
 
 ## One-line summary for Mon (2026-09-23 PM)
 
-**On live Vercel today (`v557`):** Shino #24, picker hero + scene, TTS cutoff fix, starter preload, two-finger zoom, volume jump, spring pass, full roster previews, Elio mesh — **✅**. **Wave 2 (`v558`, merge pending):** talk speed shows **1×** at today’s pace, stronger TTS face/lip drive, wide desktop ghost Menu CSS. **Still open:** arms on live 3D (**B1** ⏸️), Kizuna load (**F1**), visual cache polish (**A1**), extra spring drag (**B5** / #81). Bookmark **`/play`** and hard-refresh when testing.
+**On live Vercel today (`v558`):** everything from **v557** (Shino, picker hero, TTS cutoff, preload, zoom, previews, Elio) plus **1× talk-speed label**, **TTS face/lip timing**, **wide ghost Menu fix** — **✅** for C4/D5; lip/emotion **⏸️** (automated mouth check passes — tell us if face still flat). **Still open:** arms (**B1**), Kizuna if you hit load errors (**F1**), Safari stale art (**A1**), spring/hair (**B5**). Bookmark **`/play`** only.
 
 ---
 
