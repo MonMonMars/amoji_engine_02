@@ -54,7 +54,23 @@ async function syncRosterEntry(entry) {
   if (entry.url) {
     console.log("fetch", outName, entry.url);
     const res = await fetch(entry.url);
-    if (!res.ok) throw new Error(`${outName}: HTTP ${res.status} ${entry.url}`);
+    if (!res.ok) {
+      try {
+        const stat = await fs.stat(dest);
+        if (stat.size >= minBytes) {
+          console.warn(
+            "fetch failed, keeping committed file",
+            outName,
+            `HTTP ${res.status}`,
+            `${Math.round(stat.size / 1024)}KB`,
+          );
+          return { id: entry.id, kept: true, status: res.status };
+        }
+      } catch {
+        /* no local file */
+      }
+      throw new Error(`${outName}: HTTP ${res.status} ${entry.url}`);
+    }
     let buf = Buffer.from(await res.arrayBuffer());
     const zipEntry =
       entry.zipEntry ||
