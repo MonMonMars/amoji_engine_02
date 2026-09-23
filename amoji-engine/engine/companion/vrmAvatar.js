@@ -1611,7 +1611,6 @@ export async function createVrmAvatar(opts) {
             !eating &&
             !bodyMotion.idleBeatArmsActive,
         });
-        stabilizeVrmSpringBones(vrm);
       }
       const crossfading =
         !CALM_IDLE_USES_PROCEDURAL_BODY &&
