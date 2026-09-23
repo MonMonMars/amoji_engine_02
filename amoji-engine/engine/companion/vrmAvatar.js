@@ -42,6 +42,7 @@ import {
 import {
   bindOrbitControlSession,
   bindOrbitTouchGuard,
+  bindOrbitWheelZoom,
   configureCompanionOrbitControls,
   resolveOrbitDomElement,
 } from "./companionOrbitControls.js";
@@ -112,6 +113,10 @@ import {
   TALK_SPRING_RECENTER_SEC,
 } from "./vrmSpringStability.js";
 import { applyVrmOutfitTint } from "./companionOutfitApply.js";
+import {
+  computeVrmDisplayBounds,
+  resolveVrmFitHeight,
+} from "./vrmModelBounds.js";
 import {
   hemisphereIntensityForScene,
   rendererExposureForScene,
@@ -348,10 +353,19 @@ export async function createVrmAvatar(opts) {
     }
   });
 
-  // Portrait framing — upper body / face
-  const box = new THREE.Box3().setFromObject(model);
+  // Portrait framing — upper body / face (skip stray oversized meshes in some VRMs)
+  const box = computeVrmDisplayBounds(model);
   const size = box.getSize(new THREE.Vector3());
+  size.y = Math.max(size.y, resolveVrmFitHeight(model, vrm.humanoid));
   const center = box.getCenter(new THREE.Vector3());
+  const hipsNode = vrm.humanoid?.getNormalizedBoneNode?.("hips");
+  if (hipsNode) {
+    const hipsWorld = new THREE.Vector3();
+    hipsNode.updateMatrixWorld(true);
+    hipsNode.getWorldPosition(hipsWorld);
+    center.x = hipsWorld.x;
+    center.z = hipsWorld.z;
+  }
   const scale = 0.92 / Math.max(size.y, 0.001);
   model.scale.setScalar(scale);
   model.position.x = -center.x * scale;
@@ -625,7 +639,7 @@ export async function createVrmAvatar(opts) {
   const headBone = vrm.humanoid?.getNormalizedBoneNode?.("head");
   let faceAnchor = computeVrmFrameAnchor(vrm, model);
   let portraitDist = portraitDistanceForHeight(
-    new THREE.Box3().setFromObject(model).getSize(new THREE.Vector3()).y,
+    resolveVrmFitHeight(model, vrm.humanoid),
   );
   let portraitCameraZSign = PORTRAIT_CAMERA_Z_SIGN;
   /** @type {{ position: THREE.Vector3, target: THREE.Vector3, fov: number, distance: number }} */
@@ -706,8 +720,8 @@ export async function createVrmAvatar(opts) {
     model.position.y = baseModelY;
     vrm.scene?.updateMatrixWorld?.(true);
     headBone?.updateMatrixWorld?.(true);
-    const fittedNow = new THREE.Box3().setFromObject(model);
-    const fittedHeight = fittedNow.getSize(new THREE.Vector3()).y;
+    const fittedNow = computeVrmDisplayBounds(model);
+    const fittedHeight = resolveVrmFitHeight(model, vrm.humanoid);
     faceAnchor = computeVrmFrameAnchor(vrm, model);
     const resolved = resolveFrontPortraitFrame({
       model,
@@ -1627,7 +1641,6 @@ export async function createVrmAvatar(opts) {
             !bodyMotion.idleBeatArmsActive,
         });
         syncHumanoidSkinnedRawFromNormalized(vrm?.humanoid);
-        stabilizeVrmSpringBones(vrm);
       }
       const crossfading =
         !CALM_IDLE_USES_PROCEDURAL_BODY &&
@@ -1821,6 +1834,7 @@ export async function createVrmAvatar(opts) {
   orbitSurface.style.webkitUserSelect = "none";
   orbitSurface.style.cursor = "grab";
   const unbindOrbitGuard = bindOrbitTouchGuard(orbitSurface);
+  const unbindOrbitWheel = bindOrbitWheelZoom(orbitSurface, controls);
   const unbindOrbitSession = bindOrbitControlSession(
     controls,
     () => {
@@ -2086,6 +2100,7 @@ export async function createVrmAvatar(opts) {
       avatarPointer?.destroy?.();
       avatarPointer = null;
       unbindOrbitGuard();
+      unbindOrbitWheel();
       unbindOrbitSession();
       controls.dispose();
       vrm.dispose?.();

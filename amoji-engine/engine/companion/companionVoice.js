@@ -107,6 +107,19 @@ export function configureCompanionAudioElement(audio) {
 }
 
 /**
+ * HTMLMediaElement.volume is ignored after createMediaElementSource — mirror level on GainNode too.
+ * @param {HTMLAudioElement | null | undefined} audio
+ * @param {number} gain 0–1 linear
+ */
+export function applyTtsPlaybackGain(audio, gain) {
+  const g = Math.max(0, Math.min(1, Number(gain) || 0));
+  if (audio) audio.volume = g;
+  const node = audio?.__amojiTtsGainNode;
+  if (node?.gain) node.gain.value = g;
+  return g;
+}
+
+/**
  * Synchronous audio unlock — call directly inside click/touch handlers before any await.
  * Safe to call multiple times.
  * @returns {boolean}
@@ -430,7 +443,9 @@ export function createCompanionVoice(opts = {}) {
   const micCapture = createMicCapture({
     lang: opts.lang || "zh-HK",
     cloudSttUrl: opts.cloudSttUrl || null,
-    bargeWhilePaused: true,
+    // Halt STT while capture is paused (TTS / thinking). Keeping recognition alive
+    // during pauseDepth>0 caused speaker→mic echo to barge-in and cut replies early.
+    bargeWhilePaused: false,
     shouldDetectBarge: () => isAssistantOutputActive() || keepMicDuringSpeak,
     onText: (text, isFinal) => opts.onMicText?.(text, isFinal),
     onSpeechDetected: (info) => opts.onSpeechDetected?.(info),
@@ -483,7 +498,6 @@ export function createCompanionVoice(opts = {}) {
   const bindCloudTtsAnalyser = (audio) => {
     if (!audio || typeof globalThis.window === "undefined") return null;
     if (isIosLike()) return null;
-    if (audio.__amojiAnalyser) return audio.__amojiAnalyser;
     const AC = globalThis.AudioContext || globalThis.webkitAudioContext;
     if (!AC) return null;
     try {
@@ -495,9 +509,22 @@ export function createCompanionVoice(opts = {}) {
       const source =
         audio.__amojiMediaSource || ctx.createMediaElementSource(audio);
       audio.__amojiMediaSource = source;
+      const gainNode =
+        audio.__amojiTtsGainNode || ctx.createGain?.() || null;
+      if (gainNode) audio.__amojiTtsGainNode = gainNode;
+      if (audio.__amojiAnalyser) {
+        applyTtsPlaybackGain(audio, ttsPlaybackVolume());
+        return audio.__amojiAnalyser;
+      }
       const analyser = ctx.createAnalyser();
       analyser.fftSize = 256;
-      source.connect(analyser);
+      applyTtsPlaybackGain(audio, ttsPlaybackVolume());
+      if (gainNode) {
+        source.connect(gainNode);
+        gainNode.connect(analyser);
+      } else {
+        source.connect(analyser);
+      }
       analyser.connect(ctx.destination);
       audio.__amojiAnalyser = analyser;
       return analyser;
@@ -614,7 +641,8 @@ export function createCompanionVoice(opts = {}) {
     return await new Promise((resolve) => {
       const audio = configureCompanionAudioElement(getSharedAudio());
       currentCloudAudio = audio;
-      audio.volume = ttsPlaybackVolume();
+      applyTtsPlaybackGain(audio, ttsPlaybackVolume());
+      bindCloudTtsAnalyser(audio);
       audio.src = objectUrl;
       let settled = false;
       let mouthStarted = false;
@@ -784,42 +812,49 @@ export function createCompanionVoice(opts = {}) {
             talkStyle: clause.talkStyle || perf.talkStyle,
             speechEnergy: clause.speechEnergy ?? perf.speechEnergy,
           });
-          let res;
-          try {
-            res = await fetchCloudTts(url, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(
-                buildCloudTtsRequestBody({
-                text: clause.text,
-                performance: {
-                  ...perf,
-                  emotion: clause.emotion || perf.emotion,
-                  nuance: clause.nuance || perf.nuance,
-                  talkStyle: clause.talkStyle || perf.talkStyle,
-                  speechEnergy: clause.speechEnergy ?? perf.speechEnergy,
-                },
-                voice: preset.name,
-                lang: preset.lang,
-                  characterId: activeCharacterId,
-                }),
-              ),
-            });
-          } catch (err) {
-            const reason =
-              err?.name === "AbortError"
-                ? "cloud-tts-timeout"
-                : err?.message || "cloud-tts-fetch-failed";
-            return { ok: false, reason };
+          const clauseSpeakText = cleanSpeakText(clause.text);
+          const cachedBlob = getCachedDialogueTts(
+            dialogueTtsCacheKey(preset.lang, clauseSpeakText),
+          );
+          let blob = cachedBlob;
+          if (!blob?.size) {
+            let res;
+            try {
+              res = await fetchCloudTts(url, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(
+                  buildCloudTtsRequestBody({
+                    text: clause.text,
+                    performance: {
+                      ...perf,
+                      emotion: clause.emotion || perf.emotion,
+                      nuance: clause.nuance || perf.nuance,
+                      talkStyle: clause.talkStyle || perf.talkStyle,
+                      speechEnergy: clause.speechEnergy ?? perf.speechEnergy,
+                    },
+                    voice: preset.name,
+                    lang: preset.lang,
+                    characterId: activeCharacterId,
+                  }),
+                ),
+              });
+            } catch (err) {
+              const reason =
+                err?.name === "AbortError"
+                  ? "cloud-tts-timeout"
+                  : err?.message || "cloud-tts-fetch-failed";
+              return { ok: false, reason };
+            }
+            if (!res.ok) {
+              const errText = await res.text().catch(() => "");
+              return {
+                ok: false,
+                reason: `cloud-tts-${res.status}${errText ? `: ${errText.slice(0, 80)}` : ""}`,
+              };
+            }
+            blob = await res.blob();
           }
-          if (!res.ok) {
-            const errText = await res.text().catch(() => "");
-            return {
-              ok: false,
-              reason: `cloud-tts-${res.status}${errText ? `: ${errText.slice(0, 80)}` : ""}`,
-            };
-          }
-          const blob = await res.blob();
           last = await playCloudAudioBlob(
             blob,
             clause.text,
@@ -1398,12 +1433,12 @@ export function createCompanionVoice(opts = {}) {
   const finishStreamSpeak = async () => {
     const session = streamSession;
     if (!session) return { ok: true };
-    session.closed = true;
     syncAssistantOutput();
     try {
       await speakChain;
       return { ok: true };
     } finally {
+      session.closed = true;
       streamSession = null;
       speaking = false;
       syncAssistantOutput();
@@ -1446,7 +1481,7 @@ export function createCompanionVoice(opts = {}) {
       const objectUrl = URL.createObjectURL(blob);
       const audio = configureCompanionAudioElement(getSharedAudio());
       thinkingCloudAudio = audio;
-      audio.volume = 0.58;
+      applyTtsPlaybackGain(audio, 0.58);
       audio.src = objectUrl;
       await new Promise((resolve) => {
         const finish = () => {
@@ -1590,7 +1625,7 @@ export function createCompanionVoice(opts = {}) {
       const objectUrl = URL.createObjectURL(blob);
       const audio = configureCompanionAudioElement(getSharedAudio());
       thinkingCloudAudio = audio;
-      audio.volume = 0.62;
+      applyTtsPlaybackGain(audio, 0.62);
       audio.src = objectUrl;
       await new Promise((resolve) => {
         const finish = () => {

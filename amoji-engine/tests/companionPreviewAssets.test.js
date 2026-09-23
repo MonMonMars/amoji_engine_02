@@ -8,6 +8,8 @@ import {
   companionPreviewPath,
   isBadPreviewCapture,
   isCompanionPreviewOk,
+  isSuspectPreviewCapture,
+  SUSPECT_PREVIEW_BYTES,
 } from "../engine/companion/companionPreviewAssets.mjs";
 import { CHARACTER_IDS } from "../engine/companion/companionCharacterCatalog.js";
 
@@ -28,6 +30,18 @@ describe("companionPreviewAssets", () => {
       const path = companionPreviewPath(id);
       expect(existsSync(path), `${id} missing`).toBe(true);
       expect(isCompanionPreviewOk(id), `${id} bad size ${statSync(path).size}`).toBe(true);
+    }
+  });
+
+  it("flags sparse full-body card captures below suspect threshold", () => {
+    expect(SUSPECT_PREVIEW_BYTES).toBeGreaterThan(120000);
+    const elioPath = companionPreviewPath("elio");
+    if (existsSync(elioPath)) {
+      const size = statSync(elioPath).size;
+      expect(
+        isSuspectPreviewCapture(elioPath),
+        `elio card should not be sparse (${size} bytes)`,
+      ).toBe(false);
     }
   });
 });
