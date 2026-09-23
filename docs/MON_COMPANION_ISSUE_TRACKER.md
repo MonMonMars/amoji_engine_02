@@ -2,8 +2,7 @@
 
 **Owner:** Mon (Designer)  
 **Last updated:** 2026-09-23 21:05 UTC  
-**Production build (live):** `2026-09-23-v557-mon-companion-ship` (verified)  
-**Production build (live):** check `curl -s https://temporary-rushing-oxygen-ok5jzhd.vercel.app/api/health` → `build` field  
+**Production build (live):** `2026-09-23-v557-mon-companion-ship` (verified via `/api/health` + `verify:pre-delivery:prod`)  
 **Repo `main` build:** `amoji-engine/engine/companion/buildVersion.mjs` → `AMOJI_BUILD`  
 **App entry (bookmark):** https://temporary-rushing-oxygen-ok5jzhd.vercel.app/play  
 
