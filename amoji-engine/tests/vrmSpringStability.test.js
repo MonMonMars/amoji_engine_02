@@ -190,6 +190,15 @@ describe("vrmSpringStability", () => {
     expect(initCount()).toBe(0);
   });
 
+  it("skips periodic reset when interval is zero (default)", () => {
+    const joint = makeJoint();
+    const { manager, resetCount } = makeManager([joint]);
+    const vrm = { springBoneManager: manager };
+    const state = createIdleSpringRecenterState();
+    tickIdleSpringRecenter(vrm, state, 10, true, IDLE_SPRING_RECENTER_SEC);
+    expect(resetCount()).toBe(0);
+  });
+
   it("tickIdleSpringRecenter resets after calm idle threshold", () => {
     const joint = makeJoint();
     const { manager, resetCount } = makeManager([joint]);
@@ -199,7 +208,7 @@ describe("vrmSpringStability", () => {
     expect(resetCount()).toBe(0);
     expect(state.calmSec).toBe(0);
 
-    tickIdleSpringRecenter(vrm, state, IDLE_SPRING_RECENTER_SEC, true);
+    tickIdleSpringRecenter(vrm, state, 3, true, 3);
     expect(resetCount()).toBe(1);
     expect(state.calmSec).toBe(0);
     expect(state.lastResetMs).toBeGreaterThan(0);

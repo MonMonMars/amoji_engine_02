@@ -4,6 +4,7 @@ import {
   browserTtsTimeoutMs,
   charToViseme,
   cloudTtsSafetyBudgetMs,
+  applyTtsPlaybackGain,
   configureCompanionAudioElement,
   estimateLipSyncMsPerChar,
   femaleVoiceLabel,
@@ -55,6 +56,13 @@ describe("companionVoice", () => {
         cloud: true,
       }),
     ).toBe("女聲·粵·曉曼");
+  });
+
+  it("applyTtsPlaybackGain mirrors volume onto Web Audio gain node", () => {
+    const audio = { volume: 1, __amojiTtsGainNode: { gain: { value: 1 } } };
+    expect(applyTtsPlaybackGain(audio, 0.58)).toBe(0.58);
+    expect(audio.volume).toBe(0.58);
+    expect(audio.__amojiTtsGainNode.gain.value).toBe(0.58);
   });
 
   it("configures audio elements for inline mobile playback", () => {
