@@ -4,7 +4,7 @@
 import * as THREE from "three";
 
 export const COMPANION_PORTRAIT_FRAMING_SCHEMA =
-  "amoji.companionPortraitFraming.v8-face-forward";
+  "amoji.companionPortraitFraming.v9-body-head-facing";
 
 /** Fallback lower-neck height when no head bone (ratio from feet to head). */
 export const UPPER_BODY_ANCHOR_RATIO = 0.84;
@@ -153,7 +153,13 @@ export function facingAlignmentScore(headBone, cameraPosition, humanoid) {
  * @param {number} portraitDist
  * @param {import('@pixiv/three-vrm').VRMHumanoid | null | undefined} [humanoid]
  */
-export function detectPortraitCameraZSign(headBone, anchor, portraitDist, humanoid) {
+export function detectPortraitCameraZSign(
+  headBone,
+  anchor,
+  portraitDist,
+  humanoid,
+  model = null,
+) {
   const dist = Math.max(portraitDist, PORTRAIT_DIST_MIN) * PORTRAIT_Z_DISTANCE_MUL;
 
   const scoreForSign = (sign) => {
@@ -162,8 +168,15 @@ export function detectPortraitCameraZSign(headBone, anchor, portraitDist, humano
       anchor.y + PORTRAIT_CAMERA_Y_LIFT,
       anchor.z + sign * dist,
     );
-    if (!headBone) return sign === PORTRAIT_CAMERA_Z_SIGN ? 1 : 0;
-    return facingAlignmentScore(headBone, _camPosScratch, humanoid);
+    if (!headBone && !model) {
+      return sign === PORTRAIT_CAMERA_Z_SIGN ? 1 : 0;
+    }
+    return portraitVisibleFacingScore(
+      headBone,
+      _camPosScratch,
+      humanoid,
+      model,
+    );
   };
 
   // More positive = face points toward that camera (front visible).
@@ -179,10 +192,20 @@ export function detectPortraitCameraZSign(headBone, anchor, portraitDist, humano
  */
 export function portraitVisibleFacingScore(headBone, cameraPosition, humanoid, model) {
   if (!cameraPosition) return 0;
-  if (headBone) {
-    return facingAlignmentScore(headBone, cameraPosition, humanoid);
+  const body = model ? modelBodyFacingScore(model, cameraPosition) : 0;
+  if (!headBone) return body;
+  const head = facingAlignmentScore(headBone, cameraPosition, humanoid);
+  if (!model) return head;
+  if (head * body < 0) {
+    if (body > 0.15 && head < -0.05) return body;
+    if (head > 0.15 && body < -0.05) return head;
+    return Math.abs(head) >= Math.abs(body) ? head : body;
   }
-  return model ? modelBodyFacingScore(model, cameraPosition) : 0;
+  // Normalized head +Z often disagrees with visible mesh on roster VRMs.
+  if (head < 0.06 && body > head + 0.18) return body;
+  if (body < 0.06 && head > body + 0.18) return head;
+  if (head < 0 && body < 0) return Math.max(head, body);
+  return Math.max(head, body * 0.88);
 }
 
 /**

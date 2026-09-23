@@ -27,7 +27,7 @@ describe("companionCameraApply portrait resolve", () => {
     expect(resolved.shot.position.z).toBeGreaterThan(0);
   });
 
-  it("yaws the model when body +Z faces the camera but the head faces away", () => {
+  it("keeps yaw 0 when root +Z faces the camera even if head bone is flipped", () => {
     const model = new THREE.Group();
     const head = new THREE.Object3D();
     head.position.set(0, 1.1, 0);
@@ -44,7 +44,7 @@ describe("companionCameraApply portrait resolve", () => {
     });
 
     expect(resolved.score).toBeGreaterThan(0.2);
-    expect(Math.abs(resolved.yaw - Math.PI)).toBeLessThan(0.2);
+    expect(Math.abs(resolved.yaw)).toBeLessThan(0.2);
   });
 
   it("finds a front-facing camera when the head bone faces -Z", () => {
