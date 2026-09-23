@@ -1309,15 +1309,23 @@ export async function createVrmAvatar(opts) {
     if (mouthTarget > MOUTH_CLOSE_EPS && !talking && !eating) {
       setTalking(true);
     }
-    if (mouthTarget > MOUTH_CLOSE_EPS && (talking || eating)) {
+    if (mouthTarget > MOUTH_CLOSE_EPS) {
       mouthOpen = Math.max(mouthOpen, mouthTarget * 0.62);
       mouthOpen += (mouthTarget - mouthOpen) * 0.55;
+    } else if (!talking && !eating) {
+      mouthOpen = 0;
     }
+    applyTalkMouthNow(performance.now());
     return mouthTarget;
   };
 
   const setMouthShape = (shape) => {
     mouthShape = shape ? String(shape).toLowerCase() : null;
+    if (mouthShape && mouthTarget < MOUTH_CLOSE_EPS) {
+      mouthTarget = Math.max(mouthTarget, 0.22);
+      if (!talking && !eating) setTalking(true);
+    }
+    applyTalkMouthNow(performance.now());
     return mouthShape;
   };
 
@@ -1454,8 +1462,11 @@ export async function createVrmAvatar(opts) {
       });
     }
 
-    mouthOpen += (mouthTarget - mouthOpen) * Math.min(1, dt * (talking || eating ? 52 : 22));
-    if (!talking && !eating && mouthOpen < 0.04) mouthOpen = 0;
+    const voiceDrivingMouth =
+      mouthTarget > MOUTH_CLOSE_EPS || mouthOpen > MOUTH_CLOSE_EPS;
+    const mouthActive = talking || eating || voiceDrivingMouth;
+    mouthOpen += (mouthTarget - mouthOpen) * Math.min(1, dt * (mouthActive ? 52 : 22));
+    if (!mouthActive && mouthOpen < 0.04) mouthOpen = 0;
     if (talking && mouthOpen < 0.12) {
       const pulseScale = faceProfile.talkPulseScale ?? 1;
       mouthOpen = Math.max(
@@ -1469,7 +1480,10 @@ export async function createVrmAvatar(opts) {
 
     zeroAllExpressions(expr);
     tickExpressionBlend(dt);
-    applyMouth(talkingMouthOpen(talking, mouthOpen, now, eating), now);
+    applyMouth(
+      talkingMouthOpen(mouthActive, mouthOpen, now, eating),
+      now,
+    );
 
     blinkTimer += dt;
     let blinkW = 0;
@@ -1634,6 +1648,11 @@ export async function createVrmAvatar(opts) {
         treatProp.update(bodyMotion.getEatChewSample?.());
       }
       applyTalkMouthNow(now);
+      try {
+        vrm.update(0);
+      } catch {
+        /* ignore */
+      }
 
       computeVrmFrameAnchor(vrm, model, frameAnchor);
       if (smoothedFrameAnchor.lengthSq() < 1e-6) {

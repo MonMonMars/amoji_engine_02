@@ -734,8 +734,12 @@ export function createCompanionVoice(opts = {}) {
         );
       };
       scheduleSafety();
-      audio.onloadedmetadata = bumpSafetyFromMetadata;
+      audio.onloadedmetadata = () => {
+        bumpSafetyFromMetadata();
+        beginMouth();
+      };
       audio.ondurationchange = bumpSafetyFromMetadata;
+      audio.oncanplay = () => beginMouth();
       audio.onplaying = () => beginMouth();
       audio.ontimeupdate = () => {
         if (!mouthStarted && audio.currentTime > 0) beginMouth();

@@ -29,19 +29,19 @@ describe("companionFaceEmotion", () => {
     expect(detectFaceRigType({ avatarKind: "gltf" })).toBe("gltf");
     expect(detectFaceRigType({ avatarKind: "procedural" })).toBe("procedural");
 
-    const kai = inspectVrmBuffer(
-      readFileSync(join(assets, "companion-rin.vrm")),
-      "companion-rin.vrm",
+    const alicia = inspectVrmBuffer(
+      readFileSync(join(assets, "companion-alicia.vrm")),
+      "companion-alicia.vrm",
     );
     expect(
       detectFaceRigType({
-        characterId: "rin",
+        characterId: "alicia",
         morphSummary: {
-          morphTargetCount: kai.morphTargets,
-          morphNames: kai.morphNames,
+          morphTargetCount: alicia.morphTargets,
+          morphNames: alicia.morphNames,
         },
-        expressionNames: kai.expressions,
-        triangleCount: kai.triangles,
+        expressionNames: alicia.expressions,
+        triangleCount: alicia.triangles,
       }),
     ).toBe("vrm0-standard");
   });
