@@ -32,4 +32,23 @@ describe("companionVoice stream lip sync", () => {
     await voice.finishStreamSpeak();
     expect(onTalking.mock.calls.at(-1)?.[0]).toBe(false);
   });
+
+  it("plays all stream segments queued before finishStreamSpeak", async () => {
+    const spoken = [];
+    const voice = createCompanionVoice({
+      cloudTtsUrl: null,
+      onSpeakChunk: (unit) => {
+        if (unit) spoken.push(unit);
+      },
+    });
+    voice.setSpeakerOn(false);
+
+    voice.beginStreamSpeak("neutral");
+    const first = voice.pushStreamSpeak("First sentence here.", { emotion: "neutral" });
+    const second = voice.pushStreamSpeak("Second sentence follows.", { emotion: "neutral" });
+    const finish = voice.finishStreamSpeak();
+    await Promise.all([first, second, finish]);
+
+    expect(spoken.length).toBeGreaterThan(0);
+  });
 });

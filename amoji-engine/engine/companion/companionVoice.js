@@ -430,7 +430,9 @@ export function createCompanionVoice(opts = {}) {
   const micCapture = createMicCapture({
     lang: opts.lang || "zh-HK",
     cloudSttUrl: opts.cloudSttUrl || null,
-    bargeWhilePaused: true,
+    // Halt STT while capture is paused (TTS / thinking). Keeping recognition alive
+    // during pauseDepth>0 caused speaker→mic echo to barge-in and cut replies early.
+    bargeWhilePaused: false,
     shouldDetectBarge: () => isAssistantOutputActive() || keepMicDuringSpeak,
     onText: (text, isFinal) => opts.onMicText?.(text, isFinal),
     onSpeechDetected: (info) => opts.onSpeechDetected?.(info),
@@ -1398,12 +1400,12 @@ export function createCompanionVoice(opts = {}) {
   const finishStreamSpeak = async () => {
     const session = streamSession;
     if (!session) return { ok: true };
-    session.closed = true;
     syncAssistantOutput();
     try {
       await speakChain;
       return { ok: true };
     } finally {
+      session.closed = true;
       streamSession = null;
       speaking = false;
       syncAssistantOutput();
