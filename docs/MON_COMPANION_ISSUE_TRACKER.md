@@ -1,8 +1,8 @@
 # Mon — companion problem & request tracker
 
 **Owner:** Mon (Designer)  
-**Last updated:** 2026-09-24 00:05 UTC  
-**Production build (live):** `2026-09-23-v562-mon-facing-arms-neck` (verified via `/api/health` + `verify:pre-delivery:prod`)  
+**Last updated:** 2026-09-24 00:40 UTC  
+**Production build (live):** `2026-09-24-v563-mon-orbit-zoom-rotate` (verified via `/api/health` + `verify:pre-delivery:prod`)  
 **Repo `main` build:** `amoji-engine/engine/companion/buildVersion.mjs` → `AMOJI_BUILD`  
 **App entry (bookmark):** https://temporary-rushing-oxygen-ok5jzhd.vercel.app/play  
 
@@ -94,7 +94,7 @@ Agents: **read this before saying “fixed.”** Update a row when status change
 |----|-------------------|--------|----------------|------------|
 | C1 | **Two-finger pinch zoom** on character (iOS) | ✅ | Orbit `TWO: DOLLY_PAN`; poke defers on 2nd finger | **prod v557** ([#95](https://github.com/MonMonMars/amoji_engine_02/pull/95)) |
 | C2 | **Two-finger scroll / trackpad** zoom on character | ✅ | `bindOrbitWheelZoom` on orbit-hit | **prod v557** |
-| C3 | One-finger **drag to orbit** on mobile | 🟡 | **v563** restores `TOUCH.ONE` rotate + fixes wheel zoom (OrbitControls was blocked) | branch `cursor/fix-orbit-zoom-rotate-54db` |
+| C3 | One-finger **drag to orbit** on mobile | ✅ | **v563** `TOUCH.ONE` rotate + wheel zoom fix (no stopPropagation) | [#101](https://github.com/MonMonMars/amoji_engine_02/pull/101) prod **v563** |
 | C4 | **Wide browser ghost Menu** over stage | ✅ | `.settings:not([hidden])` on wide desktop inline CSS + `companion-app-width.css` | **prod v558** ([#96](https://github.com/MonMonMars/amoji_engine_02/pull/96)) |
 
 ### D — Voice, TTS, lip sync, emotion
