@@ -95,7 +95,7 @@ body.conversation-ui.composer-always-visible .starter-prompts {
   align-items: stretch;
   overflow-x: hidden;
   overflow-y: auto;
-  max-height: min(38vh, 240px);
+  max-height: min(22vh, 132px);
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
