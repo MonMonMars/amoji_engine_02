@@ -80,7 +80,7 @@ Agents: **read this before saying “fixed.”** Update a row when status change
 
 | ID | Problem / request | Status | Evidence / fix | PR / build |
 |----|-------------------|--------|----------------|------------|
-| B1 | **Blended / ghost arms** at idle (Nova, Alicia, roster) | ⏸️ | **v562** idle **neck rest** + planted lock v11; forearms v560 | re-report if arms still ghost |
+| B1 | **Blended / ghost arms** + **T-pose** at idle / roster capture | 🟡 | **v580** `applyIdlePresentation` — calm stand + idle warm; no pre-idle `lockForearms` bind lock in warm/reset | branch `cursor/fix-idle-not-tpose-54db` |
 | B2 | Character **faces backward** on start | ✅ | Bind back-view detection + eye-weighted portrait resolve | [#100](https://github.com/MonMonMars/amoji_engine_02/pull/100) prod **v562** |
 | B3 | **Double-click / reset camera** → facing wrong again | ✅ | `baseYaw`, reset + forced yaw v551 | **main** `v551` |
 | B4 | **Poke / multi-tap → blended head** | ✅ | Torso-only poke shake v551 | **main** `v551` |
