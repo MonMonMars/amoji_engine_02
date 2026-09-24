@@ -31,7 +31,7 @@ Settings **Brain → LLM model** is the **text AI**, not these 3D files.
 | 10 | mio | 100Avatars CC0 |
 | 11 | amoji | Pixiv VRM 1.0 sample (project mascot) |
 | 12–23 | orion…cleo | Curated CC0 / Arweave lineup (see `companionRosterReplacementData.mjs`) |
-| 24 | sienna | VRoid AvatarSample A · Pro |
+| 24 | shino | Sendagaya Shino · VRoid official CC0 sample (OpenGameArt zip) |
 | 25 | luna | VRoid fem sample · Pro |
 | 26–31 | juno…cyrus | Unique CC0 / Arweave Pro picks (no shared AvatarSample C clones) |
 

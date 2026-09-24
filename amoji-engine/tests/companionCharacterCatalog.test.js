@@ -217,7 +217,7 @@ describe("companionCharacterCatalog v363 VTuber roster", () => {
     expect(aaaRosterBadge("yuki", true)).toBe("AAA Pro");
     expect(aaaRosterBadge("sky", true)).toBe("AAA");
     expect(aaaRosterBadge("dex", true)).toBe("AAA");
-    expect(aaaRosterBadge("shino", true)).toBe("VRoid Pro");
+    expect(aaaRosterBadge("shino", true)).toBe("VRoid CC0");
   });
 
   it("builds character-specific prompts", () => {

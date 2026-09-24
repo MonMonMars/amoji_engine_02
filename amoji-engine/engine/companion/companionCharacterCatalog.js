@@ -175,6 +175,9 @@ export function isAaaRosterCharacter(id) {
 export function aaaRosterBadge(id, en = false) {
   const key = String(id || "").toLowerCase();
   if (!isAaaRosterCharacter(key)) return null;
+  if (key === "shino") {
+    return en ? "VRoid CC0" : "VRoid CC0";
+  }
   const n = characterNumber(key);
   if (n >= 24) {
     return en ? "VRoid Pro" : "VRoid Pro";
