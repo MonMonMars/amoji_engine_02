@@ -2069,7 +2069,7 @@ export async function createVrmAvatar(opts) {
         applyIdlePresentation(vrm, bodyMotion, {
           resetIdleLife: false,
           fullReset: true,
-          warmFrames: 24,
+          warmFrames: 12,
           characterId: loadedCharacterId,
         });
         applyDefaultPortraitFrame?.();
