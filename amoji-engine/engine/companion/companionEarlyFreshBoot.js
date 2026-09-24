@@ -4,7 +4,7 @@
  */
 (function () {
   var SCENE_KEY = "amoji.companion.scenePreset";
-  var SCENE_ART_V = "picker-anime-v559-wave3";
+  var SCENE_ART_V = "picker-anime-v581-scene-ship";
   var OUTDOOR_SCENE = " night-city rooftop park beach sunset aurora rain-street cherry-blossom mountain harbor meadow zen-garden day-skyline bamboo-forest train-platform ";
   var LEGACY_SCENE = { minimal: "cozy-room" };
 
