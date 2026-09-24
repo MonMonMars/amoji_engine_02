@@ -48,3 +48,20 @@ export function resolveCompanionLang(params, storage = globalThis.localStorage) 
   }
   return loadCompanionLang(storage);
 }
+
+const CJK_RE = /[\u4e00-\u9fff\u3400-\u4dbf\uf900-\ufaff]/g;
+
+/**
+ * TTS locale for a spoken line — use script cues when the LLM language drifts from session UI.
+ * @param {string | null | undefined} text
+ * @param {"en" | "yue"} sessionLangCode
+ * @returns {"en" | "yue"}
+ */
+export function resolveUtteranceSpeechLang(text, sessionLangCode = "yue") {
+  const raw = String(text || "");
+  const cjk = (raw.match(CJK_RE) || []).length;
+  const latin = (raw.match(/[a-zA-Z]/g) || []).length;
+  if (cjk >= 2 && cjk >= latin) return "yue";
+  if (latin >= 2 && latin > cjk * 1.5) return "en";
+  return sessionLangCode === "en" ? "en" : "yue";
+}
