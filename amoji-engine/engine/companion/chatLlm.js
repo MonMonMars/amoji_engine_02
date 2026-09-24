@@ -29,6 +29,10 @@ import {
   buildAlwaysActionReminder,
 } from "./companionActionIntent.js";
 import { fetchWebContextForChat } from "./companionWebSearch.mjs";
+import {
+  buildSessionReplyLanguageRule,
+  normalizeReplyLangCode,
+} from "./companionSessionReplyLanguage.mjs";
 
 export const COMPANION_CHAT_SCHEMA = "amoji.companionChat.v1";
 
@@ -56,6 +60,7 @@ export function createCompanionChat(opts = {}) {
     "auto";
   let forceLocal = false;
   let systemPrompt = opts.systemPrompt || CANTONESE_COMPANION_PROMPT;
+  let replyLangCode = normalizeReplyLangCode(opts.replyLangCode || "yue");
 
   const finalizeReply = (replyText) => {
     const raw = String(replyText || "").trim();
@@ -68,7 +73,10 @@ export function createCompanionChat(opts = {}) {
     };
   };
 
-  const robot = createVoiceRobotBridge({ language: "yue" });
+  const robot = createVoiceRobotBridge({
+    language: replyLangCode === "en" ? "en" : "yue",
+    forceLanguage: replyLangCode === "en" ? "en" : "yue",
+  });
   /** @type {{ role: string, content: string }[]} */
   const history = [];
   /** @type {AbortController | null} */
@@ -166,16 +174,18 @@ export function createCompanionChat(opts = {}) {
 
     history.push({ role: "user", content: text });
     const onToken = opts.onToken;
-    const isEnglish =
-      /[a-z]/i.test(text) && !/[\u4e00-\u9fff]/.test(text);
+    const sessionIsEnglish = replyLangCode === "en";
     const actionHint = [
-      buildAlwaysActionReminder(isEnglish),
-      buildActionLlmContext(text, isEnglish),
+      buildAlwaysActionReminder(sessionIsEnglish),
+      buildActionLlmContext(text, sessionIsEnglish),
     ]
       .filter(Boolean)
       .join("\n");
+    const replyLangRule = buildSessionReplyLanguageRule(sessionIsEnglish);
     let webMeta = { searched: false, source: null };
-    let effectiveSystem = [systemPrompt, actionHint].filter(Boolean).join("\n\n");
+    let effectiveSystem = [systemPrompt, replyLangRule, actionHint]
+      .filter(Boolean)
+      .join("\n\n");
     const ensureWebSnapshot = async () => {
       if (webMeta.searched || !fetchImpl || opts.webSearch === false) return;
       try {
@@ -189,7 +199,7 @@ export function createCompanionChat(opts = {}) {
             ? "Live lookup returned nothing useful. Chat normally unless they asked for a current fact."
             : "";
         if (webBlock) {
-          effectiveSystem = [systemPrompt, actionHint, webBlock]
+          effectiveSystem = [systemPrompt, replyLangRule, actionHint, webBlock]
             .filter(Boolean)
             .join("\n\n");
         }
@@ -220,6 +230,7 @@ export function createCompanionChat(opts = {}) {
           providerId,
           signal,
           webSearch: opts.webSearch !== false,
+          replyLang: replyLangCode,
         });
         if (
           proxied.ok &&
@@ -388,6 +399,7 @@ export function createCompanionChat(opts = {}) {
           model,
           providerId,
           webSearch: opts.webSearch !== false,
+          replyLang: replyLangCode,
         });
         if (
           proxied.ok &&
@@ -491,6 +503,16 @@ export function createCompanionChat(opts = {}) {
       systemPrompt = String(next || CANTONESE_COMPANION_PROMPT);
       return systemPrompt;
     },
+    setReplyLangCode(next) {
+      replyLangCode = normalizeReplyLangCode(next);
+      const lock = replyLangCode === "en" ? "en" : "yue";
+      robot.setForceLanguage?.(lock);
+      robot.setLanguage?.(lock);
+      return replyLangCode;
+    },
+    getReplyLangCode() {
+      return replyLangCode;
+    },
     get systemPrompt() {
       return systemPrompt;
     },
@@ -593,6 +615,7 @@ async function callLocalProxy({
   providerId,
   signal = null,
   webSearch = true,
+  replyLang = "yue",
 }) {
   const hosted = isHostedCompanion();
   const proxyModel =
@@ -615,6 +638,8 @@ async function callLocalProxy({
             ? undefined
             : resolveClientApiKey(providerId) || undefined,
           webSearch,
+          replyLang: normalizeReplyLangCode(replyLang),
+          langCode: normalizeReplyLangCode(replyLang),
         }),
       },
       CHAT_FETCH_TIMEOUT_MS,

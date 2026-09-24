@@ -56,9 +56,16 @@ const LOCAL_ACTION_LINES = {
  * @param {{ role: string, content: string }[]} [history]
  * @param {string} [webContext]
  */
-export function localCompanionReply(message, history = [], webContext = "") {
+/**
+ * @param {string} message
+ * @param {{ role: string, content: string }[]} [history]
+ * @param {string} [webContext]
+ * @param {{ replyLang?: "en" | "yue" }} [opts]
+ */
+export function localCompanionReply(message, history = [], webContext = "", opts = {}) {
   const text = String(message || "").trim();
   const lower = text.toLowerCase();
+  const sessionIsEnglish = String(opts.replyLang || "").toLowerCase() === "en";
   const taggedAction = inferActionFromUserText(text);
   const webSnippet = String(webContext || "")
     .replace(/^Web search snapshot[^\n]*\n?/i, "")
@@ -70,8 +77,7 @@ export function localCompanionReply(message, history = [], webContext = "") {
     needsWebSearch(text) &&
     snapshotLooksUseful(text, webSnippet);
   if (quoteWeb) {
-    const isEnglish = /[a-z]/i.test(text) && !/[\u4e00-\u9fff]/.test(text);
-    return isEnglish
+    return sessionIsEnglish
       ? `${webSnippet} (from the web, may be incomplete) [mood:thinking]`
       : `我上網睇過：${webSnippet} [mood:thinking]`;
   }
@@ -115,10 +121,14 @@ export function localCompanionReply(message, history = [], webContext = "") {
     return "嗯…等我諗一諗先。 [action:thinking] [mood:thinking]";
   }
   if (/hello|hi|hey|你好|早晨|晚安/.test(lower)) {
-    return "嗨！ [action:wave] [mood:happy]";
+    return sessionIsEnglish
+      ? "Hey! [action:wave] [mood:happy]"
+      : "嗨！ [action:wave] [mood:happy]";
   }
   if (/你係邊個|who are you|你叫咩/.test(lower)) {
-    return "我係 Amoji 呀！ [action:wave] [mood:happy]";
+    return sessionIsEnglish
+      ? "I'm Amoji! [action:wave] [mood:happy]"
+      : "我係 Amoji 呀！ [action:wave] [mood:happy]";
   }
   if (/哇|嘩|唔信|真係/.test(text)) {
     return "嘩！真係呀？ [action:headshake] [mood:surprised]";
@@ -127,17 +137,30 @@ export function localCompanionReply(message, history = [], webContext = "") {
     return "拜拜啦～ [action:wave] [mood:happy]";
   }
 
-  const snippets = [
-    `「${text.slice(0, 24)}」——我聽到啦～ [mood:thinking]`,
-    "有意思喎！ [mood:happy]",
-    "嗯嗯，繼續講啦。 [mood:neutral]",
-    "咁呀…然後呢？ [mood:thinking] [nuance:curious]",
-    "我好奇呀，再多講少少？ [mood:happy] [nuance:curious]",
-    "明白～你而家最想傾咩？ [mood:thinking]",
-    "哈哈，我喺度等緊你下一句。 [mood:happy]",
-    "好呀好呀，我聽緊。 [mood:neutral]",
-    "嘩，咁有趣？講多啲！ [mood:surprised]",
-    "嗯…我有 follow-up 問題，得唔得？ [mood:thinking] [nuance:curious]",
-  ];
+  const snippets = sessionIsEnglish
+    ? [
+        `Got it — "${text.slice(0, 32)}" [mood:thinking]`,
+        "Interesting! [mood:happy]",
+        "Mm-hmm, keep going. [mood:neutral]",
+        "And then? [mood:thinking] [nuance:curious]",
+        "Tell me a little more? [mood:happy] [nuance:curious]",
+        "What do you want to talk about most right now? [mood:thinking]",
+        "I'm here — your turn. [mood:happy]",
+        "I'm listening. [mood:neutral]",
+        "Whoa, really? Say more! [mood:surprised]",
+        "Can I ask a follow-up? [mood:thinking] [nuance:curious]",
+      ]
+    : [
+        `「${text.slice(0, 24)}」——我聽到啦～ [mood:thinking]`,
+        "有意思喎！ [mood:happy]",
+        "嗯嗯，繼續講啦。 [mood:neutral]",
+        "咁呀…然後呢？ [mood:thinking] [nuance:curious]",
+        "我好奇呀，再多講少少？ [mood:happy] [nuance:curious]",
+        "明白～你而家最想傾咩？ [mood:thinking]",
+        "哈哈，我喺度等緊你下一句。 [mood:happy]",
+        "好呀好呀，我聽緊。 [mood:neutral]",
+        "嘩，咁有趣？講多啲！ [mood:surprised]",
+        "嗯…我有 follow-up 問題，得唔得？ [mood:thinking] [nuance:curious]",
+      ];
   return snippets[Math.floor(Math.random() * snippets.length)];
 }

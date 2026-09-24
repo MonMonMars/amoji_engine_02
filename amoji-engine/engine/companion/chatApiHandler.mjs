@@ -24,6 +24,10 @@ import {
   OPENROUTER_DEFAULT_FREE_MODEL,
   resolveOpenRouterPrimaryModel,
 } from "./companionOpenRouterModels.mjs";
+import {
+  buildSessionReplyLanguageRule,
+  replyLangFromChatBody,
+} from "./companionSessionReplyLanguage.mjs";
 
 export const CHAT_API_HANDLER_SCHEMA = "amoji.chatApiHandler.v3";
 
@@ -223,13 +227,12 @@ export async function processChatRequest(body) {
     webSource = web.source;
   }
 
-  const actionHint = buildActionLlmContext(
-    message,
-    /[a-z]/i.test(message) && !/[\u4e00-\u9fff]/.test(message),
-  );
+  const replyLang = replyLangFromChatBody(body);
+  const sessionIsEnglish = replyLang === "en";
+  const actionHint = buildActionLlmContext(message, sessionIsEnglish);
 
   const webInstruction = webContext
-    ? "Answer as the companion in the user's language. The snapshot may include Google/search results, Google News headlines, Wikipedia, weather, or a website excerpt — use what answers THIS turn. Summarize; do not recite raw search text."
+    ? `${buildSessionReplyLanguageRule(sessionIsEnglish)} The snapshot may include Google/search results, Google News headlines, Wikipedia, weather, or a website excerpt — use what answers THIS turn. Summarize; do not recite raw search text.`
     : webSearched
       ? "Live web/news lookup returned nothing useful. If they asked for news, search, or a current fact, say you could not reach the web this turn and offer to retry. Otherwise chat normally."
       : "";
@@ -261,6 +264,7 @@ export async function processChatRequest(body) {
         webContext,
         system,
         localCompanionReply,
+        replyLang,
       ),
       mode: webContext ? "local+web" : "local",
       model: null,
@@ -433,6 +437,7 @@ export async function processChatRequest(body) {
     webContext,
     system,
     localCompanionReply,
+    replyLang,
   );
 
   const hadCloudKeys =

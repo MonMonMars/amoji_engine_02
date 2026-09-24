@@ -71,6 +71,9 @@ export function pickerCopy(isEnglish = false) {
     footSession: en
       ? "Switch anytime — your chat history stays with each companion."
       : "隨時切換 — 每位同伴嘅對話記錄分開保存。",
+    langGroupLabel: en ? "Reply language" : "回覆語言",
+    langYue: en ? "Cantonese" : "粵語",
+    langEn: en ? "English" : "English",
     starting: en ? "Starting…" : "開始中…",
     waiting: en ? "Almost ready…" : "快好喇…",
     emptyResults: en
