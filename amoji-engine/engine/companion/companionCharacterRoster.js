@@ -1,5 +1,5 @@
 /**
- * Curated companion roster — 31 characters.
+ * Curated companion roster — 34 characters (Sendagaya CC0 trio after Shino).
  * Keep #1–11 + #29 Zane meshes; all other slots use refreshed CC0 VRMs (v522).
  */
 import { rosterModelUrl } from "./rosterVrmAssets.mjs";
@@ -566,6 +566,9 @@ export const ROSTER_CHARACTER_IDS = Object.freeze([
   "ash",
   "cleo",
   "shino",
+  "shibu",
+  "fumiriya",
+  "darkness_shibu",
   "luna",
   "juno",
   "elio",
