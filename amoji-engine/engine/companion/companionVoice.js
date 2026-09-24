@@ -57,6 +57,11 @@ import {
   saveTalkSpeed,
 } from "./companionTalkSpeed.js";
 import { shouldBlockCompanionSpeech } from "./companionMenuSpeechGate.js";
+import { resolveUtteranceSpeechLang } from "./companionLocalePrefs.js";
+import {
+  resolveVoiceForCharacter,
+  voicePresetById,
+} from "./companionVoiceCatalog.js";
 
 export { formatMicError, MIC_ERROR_MESSAGES, requestMicPermission };
 
@@ -552,6 +557,16 @@ export function createCompanionVoice(opts = {}) {
 
   const cloudVoicePreset = () => opts.cloudVoice || CLOUD_CANTONESE_VOICE;
 
+  const sessionSpeechLangCode = () =>
+    String(opts.lang || voice?.lang || "zh-HK").startsWith("en") ? "en" : "yue";
+
+  /** Cloud voice matching utterance script (fixes EN UI + Cantonese reply → silent TTS). */
+  const cloudVoicePresetForText = (text) => {
+    const utterLang = resolveUtteranceSpeechLang(text, sessionSpeechLangCode());
+    const voiceId = resolveVoiceForCharacter(activeCharacterId, utterLang);
+    return voicePresetById(voiceId);
+  };
+
   const ensureVoices = () =>
     new Promise((resolve) => {
       if (usingCloudTts && opts.cloudTtsUrl) {
@@ -782,7 +797,6 @@ export function createCompanionVoice(opts = {}) {
     stopCloudAudio();
     synth?.cancel();
 
-    const preset = cloudVoicePreset();
     const perf = enrichTtsPerformance(withTalkSpeed(performance), clean);
     const parts = chunkTextForCloudTts(clean);
     if (!parts.length) return { ok: false, reason: "empty" };
@@ -794,6 +808,7 @@ export function createCompanionVoice(opts = {}) {
     let last = { ok: false, reason: "empty" };
     try {
       for (const part of parts) {
+        const preset = cloudVoicePresetForText(part);
         const plan = buildExpressiveTtsPlan(
           part,
           { ...perf, lang: preset.lang, voiceId: preset.name },
@@ -1088,8 +1103,10 @@ export function createCompanionVoice(opts = {}) {
             speedMultiplier: talkSpeedMultiplier,
           };
     let perf = enrichTtsPerformance(rawPerf, clean);
-    const langCode = String(voice?.lang || opts.lang || "zh-HK");
-    const isEnglish = langCode.startsWith("en");
+    const sessionLang = sessionSpeechLangCode();
+    const utterLang = resolveUtteranceSpeechLang(clean, sessionLang);
+    const langCode = utterLang === "en" ? "en-US" : "zh-HK";
+    const isEnglish = utterLang === "en";
 
     stopThinkingAudio();
 
@@ -1157,7 +1174,7 @@ export function createCompanionVoice(opts = {}) {
         });
         if (cloudResult.ok) {
           usingCloudTts = true;
-          voice = cloudVoicePreset();
+          voice = cloudVoicePresetForText(speakText);
           return cloudResult;
         }
         usingCloudTts = false;
@@ -1193,8 +1210,17 @@ export function createCompanionVoice(opts = {}) {
 
       const browserProsody = prosody.browser;
       const utter = new SpeechSynthesisUtterance(speakText);
-      if (voice) utter.voice = voice;
-      utter.lang = voice?.lang || opts.lang || "zh-HK";
+      if (!usingCloudTts && synth) {
+        const browserPreset = cloudVoicePresetForText(speakText);
+        const gender = characterGender(activeCharacterId, utterLang);
+        voice = pickVoiceForGender(gender, synth.getVoices()) || voice;
+        utter.lang = browserPreset.lang || langCode;
+      } else if (voice) {
+        utter.voice = voice;
+        utter.lang = voice?.lang || langCode;
+      } else {
+        utter.lang = langCode;
+      }
       utter.rate = browserProsody.rate;
       utter.pitch = browserProsody.pitch;
       utter.volume = shouldPauseMicDuringTts()
