@@ -665,7 +665,7 @@ export async function createVrmAvatar(opts) {
   configureVrmSpringStability(vrm, sceneEnvironment);
   establishCalmStandFromBind(vrm, bodyMotion, {
     resetIdleLife: false,
-    warmFrames: 48,
+    warmFrames: 64,
     characterId: loadedCharacterId,
   });
   configureVrmSpringStability(vrm, sceneEnvironment);
@@ -1644,7 +1644,7 @@ export async function createVrmAvatar(opts) {
       if (!libraryMotion && !bodyMotion.currentAction) {
         bodyMotion.enforcePlantedLimbs?.({
           lockUpperArms: true,
-          lockForearms: !bodyMotion.idleBeatArmsActive,
+          lockForearms: false,
           hands: !talking && !eating && !bodyMotion.idleBeatArmsActive,
         });
       }
@@ -1843,13 +1843,14 @@ export async function createVrmAvatar(opts) {
   const resetCameraView = () => {
     bodyMotion.cancelPokeShake?.();
     bodyMotion.resetSmoothedRoot?.();
-    applyIdlePresentation(vrm, bodyMotion, {
-      resetIdleLife: false,
-      fullReset: true,
-      warmFrames: 16,
-      characterId: loadedCharacterId,
-    });
+    restoreProceduralCalmStand({ resetIdleLife: false, warmFrames: 28 });
     restoreStoredPortraitView();
+    syncHumanoidSkinnedRawFromNormalized(vrm?.humanoid);
+    vrm.humanoid?.update?.();
+    stabilizeVrmSpringBones(vrm);
+    vrm.update?.(1 / 60);
+    bodyMotion.finishPlantedLimbLockPostUpdate?.({ hands: true });
+    syncHumanoidSkinnedRawFromNormalized(vrm?.humanoid);
   };
 
   canvas.style.touchAction = "none";
