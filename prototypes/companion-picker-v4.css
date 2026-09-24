@@ -363,8 +363,20 @@
 }
 
 .companion-picker--v4.companion-picker--start.companion-picker--showcase .companion-picker-head {
-  padding: 0.72rem 1.15rem 0.28rem;
+  padding: 0.65rem 1rem 0.35rem;
   text-align: center;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.companion-picker--v4.companion-picker--start.companion-picker--showcase .companion-picker-head > div:first-child {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.companion-picker--v4.companion-picker--start.companion-picker--showcase .picker-lang-toggle {
+  flex: 0 0 auto;
 }
 
 .companion-picker--v4.companion-picker--start.companion-picker--showcase .companion-picker-title {
@@ -524,9 +536,12 @@
 }
 
 .companion-picker--v4.companion-picker--start.companion-picker--showcase .picker-roster-dock {
-  flex: 0 0 auto;
+  flex: 0 1 auto;
   display: flex;
   flex-direction: column;
+  min-height: 0;
+  max-height: min(11.75rem, 34vh);
+  overflow: hidden;
   padding: 0.42rem 0 0;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
   background: linear-gradient(
@@ -563,8 +578,10 @@
 
 .companion-picker--v4.companion-picker--start.companion-picker--showcase .start-picker-grid-wrap {
   position: relative;
-  flex: 0 0 auto;
+  flex: 1 1 auto;
   min-height: 0;
+  max-height: min(9.5rem, 28vh);
+  overflow: hidden;
   padding: 0;
   margin: 0;
 }
@@ -817,6 +834,18 @@
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
+  max-height: 0 !important;
+  margin: 0 !important;
+  overflow: hidden;
+}
+
+.companion-picker--v4.companion-picker--start
+  .picker-footer-preload-slot:has(.start-picker-preload.is-slot-collapsed) {
+  min-height: 0;
+  height: 0;
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
 }
 
 .companion-picker--v4.companion-picker--start .start-picker-preload.is-slot-collapsed .amoji-load-bar__shine {
@@ -1916,6 +1945,19 @@
 }
 
 @media (max-height: 740px) {
+  .companion-picker--v4.companion-picker--start.companion-picker--showcase .picker-showcase-stage {
+    max-height: min(36vh, 12.5rem);
+  }
+
+  .companion-picker--v4.companion-picker--start.companion-picker--showcase .picker-hero-portrait-wrap,
+  .companion-picker--v4.companion-picker--start.companion-picker--showcase .picker-hero-scene-wrap {
+    min-height: min(24vh, 9.5rem);
+  }
+
+  .companion-picker--v4.companion-picker--start.companion-picker--showcase .picker-roster-dock {
+    max-height: min(10.5rem, 30vh);
+  }
+
   .companion-picker--v4.companion-picker--start .companion-picker-head {
     padding-bottom: 0.35rem;
   }
