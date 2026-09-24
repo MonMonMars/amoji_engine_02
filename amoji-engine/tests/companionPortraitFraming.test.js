@@ -18,6 +18,7 @@ import {
   resolveFaceForwardHorizontal,
   modelBodyFacingScore,
   isModelBodyFacingCamera,
+  rosterCaptureVariantPickScore,
 } from "../engine/companion/companionPortraitFraming.js";
 
 describe("companionPortraitFraming", () => {
@@ -261,6 +262,15 @@ describe("companionPortraitFraming", () => {
     expect(isHeadFacingCamera(head, camera, null, model)).toBe(false);
     expect(correctPortraitModelYaw(model, head, camera)).toBe(true);
     expect(isModelBodyFacingCamera(model, camera)).toBe(true);
+  });
+
+  it("rosterCaptureVariantPickScore prefers inverted-body front for Yuki", () => {
+    const front = rosterCaptureVariantPickScore(-0.95, 62, "yuki");
+    const back = rosterCaptureVariantPickScore(0.95, 62, "yuki");
+    expect(front).toBeGreaterThan(back);
+    const aliciaFront = rosterCaptureVariantPickScore(0.9, 50, "alicia");
+    const aliciaBack = rosterCaptureVariantPickScore(-0.9, 50, "alicia");
+    expect(aliciaFront).toBeGreaterThan(aliciaBack);
   });
 
   it("correctPortraitModelYaw flips body yaw when the root faces away", () => {
