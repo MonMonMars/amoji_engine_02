@@ -679,6 +679,29 @@ export async function createVrmAvatar(opts) {
     portraitCamera.fov = camera.fov;
     portraitCamera.distance = camera.position.distanceTo(controls.target);
   };
+  /** User orbit reset — restore last good front portrait, do not re-guess yaw from orbit angle. */
+  const restoreStoredPortraitView = () => {
+    model.rotation.y = baseModelRotY;
+    model.position.y = baseModelY;
+    vrm.scene?.updateMatrixWorld?.(true);
+    headBone?.updateMatrixWorld?.(true);
+    camera.position.copy(defaultPortrait.position);
+    controls.target.copy(defaultPortrait.target);
+    camera.fov = defaultPortrait.fov;
+    camera.updateProjectionMatrix?.();
+    applyUserOrbitLimits(controls);
+    controls.update();
+    portraitDist = defaultPortrait.distance;
+    portraitCamera.position.copy(defaultPortrait.position);
+    portraitCamera.target.copy(defaultPortrait.target);
+    portraitCamera.fov = defaultPortrait.fov;
+    portraitCamera.distance = defaultPortrait.distance;
+    cameraResetAnim = null;
+    cameraDirector.resetDialogue();
+    cameraDirector.holdUserFraming(false);
+    cameraDirector.setUserOrbiting(false);
+    syncLookTarget();
+  };
   const cameraDirector = createCompanionCameraDirector();
   cameraDirector.resetBootGrace();
   const refreshPokeMeshes = () => collectAvatarPokeMeshes(model);
@@ -1822,18 +1845,11 @@ export async function createVrmAvatar(opts) {
     bodyMotion.resetSmoothedRoot?.();
     applyIdlePresentation(vrm, bodyMotion, {
       resetIdleLife: false,
-      fullReset: false,
+      fullReset: true,
       warmFrames: 16,
       characterId: loadedCharacterId,
     });
-    applyDefaultPortraitFrame?.();
-    if (
-      !isHeadFacingCamera(headBone, camera, vrm.humanoid, model) &&
-      correctPortraitModelYaw(model, headBone, camera, vrm.humanoid, 0.08)
-    ) {
-      baseModelRotY = normalizeModelYaw(model);
-      applyDefaultPortraitFrame?.();
-    }
+    restoreStoredPortraitView();
   };
 
   canvas.style.touchAction = "none";
