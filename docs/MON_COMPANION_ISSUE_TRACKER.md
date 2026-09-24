@@ -67,11 +67,11 @@ Agents: **read this before saying “fixed.”** Update a row when status change
 
 | ID | Problem / request | Status | Evidence / fix | PR / build |
 |----|-------------------|--------|----------------|------------|
-| A1 | Picker / scene / roster **images look stale** (Safari cache) | 🟡 | **v581** `PICKER_SCENE_ART_REVISION` → `picker-anime-v581-scene-ship`; CSS PNG `?v=` sync in `sync-build-version.mjs`; bookmark **`/play`** | branch `cursor/fix-idle-not-tpose-54db` |
+| A1 | Picker / scene / roster **images look stale** (Safari cache) | 🟡 | **v582** scene swatches + atmosphere `?v=picker-anime-v582-all-thumbs`; roster `AMOJI_MODEL_REVISION=roster-v582-all-previews`; full **31×2** PNG regen | branch `cursor/fix-idle-not-tpose-54db` |
 | A2 | **Black screen** while picker or menu loads | ✅ | Boot picker paint | [#88](https://github.com/MonMonMars/amoji_engine_02/pull/88) merged |
 | A3 | **Wide desktop** — Menu blocks picker / layout | ✅ | v550 wide CSS + smoke | [#89](https://github.com/MonMonMars/amoji_engine_02/pull/89), [#90](https://github.com/MonMonMars/amoji_engine_02/pull/90) → **prod ~v551** |
 | A4 | **HQ Japanese-style scene backgrounds** not updated | ✅ | `anime-scene-v551-jp-game`, scene-bg regen | **main** `v551-facing-poke-thumbs-anime-bg` on prod |
-| A5 | **Roster card PNG ≠ loaded VRM** (wrong pose / back / blended arms on card) | ⏸️ | **v562** regen 31 card+hero PNGs face-forward; arm pose on card may still differ (**B1**) | [#100](https://github.com/MonMonMars/amoji_engine_02/pull/100) |
+| A5 | **Roster card PNG ≠ loaded VRM** (wrong pose / back / blended arms on card) | 🟡 | **v582** full regen 31 ids (card+hero) with idle presentation + facing wait; `roster-v582-all-previews` cache bust | **#105** |
 | A8 | **Picker hero** — large portrait **+ scene background** preview | ✅ | `picker-hero-preview-duo`; prod E2E `picker-hero-scene-preview` | **prod v557** |
 | A6 | **Hero / picker portraits cropped** | ✅ | `object-fit: contain`, picker v4 | [#75](https://github.com/MonMonMars/amoji_engine_02/pull/75), [#89](https://github.com/MonMonMars/amoji_engine_02/pull/89) |
 | A7 | **Professional / cinematic scene backgrounds** | ✅ | Pro scene pass | [#71](https://github.com/MonMonMars/amoji_engine_02/pull/71) merged |
