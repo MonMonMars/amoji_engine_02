@@ -36,6 +36,8 @@ import {
   portraitDistanceForHeight,
   isPhotorealPortraitCharacter,
   rosterCaptureVariantPickScore,
+  isInvertedPortraitBodyCharacter,
+  rosterCaptureYawOverride,
 } from "./companionPortraitFraming.js";
 import {
   bindCompanionAvatarPointer,
@@ -663,6 +665,8 @@ export async function createVrmAvatar(opts) {
   /** @type {(() => import('./companionCameraApply.js').ReturnType<typeof resolveFrontPortraitFrame>) | null} */
   let applyDefaultPortraitFrame = null;
   let rosterCaptureMode = false;
+  /** @type {{ baseY: number, yawAdd: number, zSign: number } | null} */
+  let rosterCaptureLock = null;
 
   configureVrmSpringStability(vrm, sceneEnvironment);
   establishCalmStandFromBind(vrm, bodyMotion, {
@@ -720,6 +724,10 @@ export async function createVrmAvatar(opts) {
   guardLookAtLids(vrm);
 
   applyDefaultPortraitFrame = () => {
+    if (rosterCaptureMode) {
+      reapplyRosterCaptureLock();
+      return;
+    }
     bodyMotion.cancelPokeShake?.();
     bodyMotion.resetSmoothedRoot?.();
     model.rotation.y = baseModelRotY;
@@ -1724,7 +1732,7 @@ export async function createVrmAvatar(opts) {
             cameraResetAnim = null;
           }
         }
-      } else if (!userOwnsCamera && camState.autoActive) {
+      } else if (!userOwnsCamera && camState.autoActive && !rosterCaptureMode) {
         const desired = applyAutoCameraFrame(
           controls,
           camera,
@@ -1743,7 +1751,7 @@ export async function createVrmAvatar(opts) {
         portraitCamera.fov = desired.fov;
         portraitCamera.distance = desired.distance;
       } else {
-        if (!userOwnsCamera && !vrmaOwnsBody) {
+        if (!userOwnsCamera && !vrmaOwnsBody && !rosterCaptureMode) {
           applyOrbitFollowAnchor(controls, camera, smoothedFrameAnchor);
         }
         controls.update();
@@ -1755,6 +1763,7 @@ export async function createVrmAvatar(opts) {
       if (
         headBone &&
         portraitFacingBootOnly &&
+        !rosterCaptureMode &&
         !userOwnsCamera &&
         !camState.userFramingHeld &&
         !libraryMotion &&
@@ -1914,7 +1923,12 @@ export async function createVrmAvatar(opts) {
 
   function prepareRosterCapture() {
     rosterCaptureMode = true;
-    resetCameraView();
+    bodyMotion.cancelPokeShake?.();
+    bodyMotion.resetSmoothedRoot?.();
+    model.rotation.y = 0;
+    baseModelRotY = 0;
+    model.updateMatrixWorld(true);
+    headBone?.updateMatrixWorld(true);
     warmPresentFrameCore();
   }
 
@@ -2040,14 +2054,34 @@ export async function createVrmAvatar(opts) {
     portraitCameraZSign = zSign;
     syncLookTarget();
     warmPresentFrameCore();
+    rosterCaptureLock = { baseY, yawAdd, zSign };
+  }
+
+  function reapplyRosterCaptureLock() {
+    if (!rosterCaptureLock || !rosterCaptureMode) return false;
+    const { baseY, yawAdd, zSign } = rosterCaptureLock;
+    applyRosterCaptureVariant(baseY, yawAdd, zSign);
+    return true;
   }
 
   function pickBestRosterCaptureYaw() {
-    resetCameraView();
+    if (!rosterCaptureMode) {
+      resetCameraView();
+    }
     warmPresentFrameCore();
     const baseY = baseModelRotY;
+    const yawOverrideEarly = rosterCaptureYawOverride(loadedCharacterId);
+    if (yawOverrideEarly) {
+      applyRosterCaptureVariant(
+        baseY,
+        yawOverrideEarly.yawAdd,
+        yawOverrideEarly.zSign,
+      );
+      warmPresentFrameCore();
+      return 999;
+    }
     let bestScore = -1;
-    let bestYaw = baseY;
+    let bestYawAdd = 0;
     let bestZSign = portraitCameraZSign;
     const yawCandidates = [0, Math.PI];
     for (const yawAdd of yawCandidates) {
@@ -2066,42 +2100,69 @@ export async function createVrmAvatar(opts) {
         const scored = s + backHood;
         if (scored > bestScore) {
           bestScore = scored;
-          bestYaw = baseModelRotY;
+          bestYawAdd = yawAdd;
           bestZSign = zSign;
         }
       }
     }
     if (bestScore < 0) {
-      bestYaw = baseY;
+      bestYawAdd = 0;
       bestZSign = portraitCameraZSign;
     }
-    applyRosterCaptureVariant(baseY, bestYaw - baseY, bestZSign);
+    applyRosterCaptureVariant(baseY, bestYawAdd, bestZSign);
 
-    let finalizeScore = -Infinity;
-    let finalizeYaw = bestYaw;
+    let finalizeYawAdd = bestYawAdd;
     let finalizeZ = bestZSign;
-    for (const yawAdd of yawCandidates) {
-      for (const zSign of [1, -1]) {
-        applyRosterCaptureVariant(baseY, yawAdd, zSign);
-        const body = modelBodyFacingScore(model, camera.position);
-        const head = headBone
-          ? facingAlignmentScore(headBone, camera.position, vrm.humanoid)
-          : body;
-        if (Math.abs(body) < 0.22 && Math.abs(head) < 0.22) continue;
-        const contrast = measurePortraitCaptureContrast();
-        const pickScore = rosterCaptureVariantPickScore(
-          body,
-          contrast,
-          loadedCharacterId,
-        );
-        if (pickScore > finalizeScore) {
-          finalizeScore = pickScore;
-          finalizeYaw = baseModelRotY;
-          finalizeZ = zSign;
+    if (isInvertedPortraitBodyCharacter(loadedCharacterId)) {
+      let minBody = Infinity;
+      for (const yawAdd of yawCandidates) {
+        for (const zSign of [1, -1]) {
+          applyRosterCaptureVariant(baseY, yawAdd, zSign);
+          const body = modelBodyFacingScore(model, camera.position);
+          const head = headBone
+            ? facingAlignmentScore(headBone, camera.position, vrm.humanoid)
+            : body;
+          if (Math.abs(body) < 0.22 && Math.abs(head) < 0.22) continue;
+          if (body < minBody) {
+            minBody = body;
+            finalizeYawAdd = yawAdd;
+            finalizeZ = zSign;
+          }
+        }
+      }
+    } else {
+      let finalizeScore = -Infinity;
+      for (const yawAdd of yawCandidates) {
+        for (const zSign of [1, -1]) {
+          applyRosterCaptureVariant(baseY, yawAdd, zSign);
+          const body = modelBodyFacingScore(model, camera.position);
+          const head = headBone
+            ? facingAlignmentScore(headBone, camera.position, vrm.humanoid)
+            : body;
+          if (Math.abs(body) < 0.22 && Math.abs(head) < 0.22) continue;
+          const contrast = measurePortraitCaptureContrast();
+          const pickScore = rosterCaptureVariantPickScore(
+            body,
+            contrast,
+            loadedCharacterId,
+          );
+          if (pickScore > finalizeScore) {
+            finalizeScore = pickScore;
+            finalizeYawAdd = yawAdd;
+            finalizeZ = zSign;
+          }
         }
       }
     }
-    applyRosterCaptureVariant(baseY, finalizeYaw - baseY, finalizeZ);
+    applyRosterCaptureVariant(baseY, finalizeYawAdd, finalizeZ);
+    const yawOverride = rosterCaptureYawOverride(loadedCharacterId);
+    if (yawOverride) {
+      applyRosterCaptureVariant(
+        baseY,
+        yawOverride.yawAdd,
+        yawOverride.zSign,
+      );
+    }
     warmPresentFrameCore();
     return bestScore;
   }
@@ -2207,6 +2268,7 @@ export async function createVrmAvatar(opts) {
     clipW = Math.min(clipW, w - x);
     clipH = Math.min(clipH, h - y);
     if (clipW < 24 || clipH < 32) return null;
+    if (clipH < h * 0.28 || clipW < w * 0.18) return null;
     const upright = clipH >= clipW * 0.85;
     return { x, y, width: clipW, height: clipH, upright };
   }
@@ -2479,6 +2541,8 @@ export async function createVrmAvatar(opts) {
     },
     prepareRosterCapture,
     finishRosterCapture,
+    reapplyRosterCaptureLock,
+    applyRosterCaptureVariant,
     computeRosterPreviewClip,
     warmPresentFrame: warmPresentFrameCore,
     getPortraitFacing() {

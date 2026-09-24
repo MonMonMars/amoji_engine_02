@@ -12,6 +12,12 @@ export const PHOTOREAL_PORTRAIT_CHARACTER_IDS = new Set(["nova"]);
 /** Roster VRMs where visible front correlates with negative root forward vs camera. */
 export const INVERTED_PORTRAIT_BODY_FACING_IDS = new Set(["yuki", "olivia"]);
 
+/** Verified headless capture yaw/z relative to pick {@code baseY} (Olivia slot = Yuki VRM). */
+export const ROSTER_CAPTURE_YAW_OVERRIDES = {
+  yuki: { yawAdd: 0, zSign: -1 },
+  olivia: { yawAdd: 0, zSign: -1 },
+};
+
 /**
  * @param {string | null | undefined} characterId
  */
@@ -28,6 +34,15 @@ export function isInvertedPortraitBodyCharacter(characterId) {
   return INVERTED_PORTRAIT_BODY_FACING_IDS.has(
     String(characterId || "").toLowerCase(),
   );
+}
+
+/**
+ * @param {string | null | undefined} characterId
+ * @returns {{ yawAdd: number, zSign: number } | null}
+ */
+export function rosterCaptureYawOverride(characterId) {
+  const id = String(characterId || "").toLowerCase();
+  return ROSTER_CAPTURE_YAW_OVERRIDES[id] ?? null;
 }
 
 /**
