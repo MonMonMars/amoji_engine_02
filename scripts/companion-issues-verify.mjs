@@ -390,10 +390,7 @@ async function main() {
   });
   record(
     "portrait-faces-camera",
-    Boolean(portraitFacing.facingCamera) &&
-      (Number(portraitFacing.frameScore ?? portraitFacing.visibleScore) >
-        0.12 ||
-        Number(portraitFacing.headScore) > 0.12),
+    Boolean(portraitFacing.facingCamera),
     JSON.stringify(portraitFacing),
   );
 

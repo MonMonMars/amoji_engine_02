@@ -1,8 +1,8 @@
 # Mon — companion problem & request tracker
 
 **Owner:** Mon (Designer)  
-**Last updated:** 2026-09-24 00:40 UTC  
-**Production build (live):** `2026-09-24-v563-mon-orbit-zoom-rotate` (verified via `/api/health` + `verify:pre-delivery:prod`)  
+**Last updated:** 2026-09-24 02:45 UTC  
+**Production build (live):** `2026-09-24-v563-mon-orbit-zoom-rotate` — **repo** `2026-09-24-v565-mon-body-front-facing` (deploy pending)  
 **Repo `main` build:** `amoji-engine/engine/companion/buildVersion.mjs` → `AMOJI_BUILD`  
 **App entry (bookmark):** https://temporary-rushing-oxygen-ok5jzhd.vercel.app/play  
 
@@ -71,7 +71,7 @@ Agents: **read this before saying “fixed.”** Update a row when status change
 | A2 | **Black screen** while picker or menu loads | ✅ | Boot picker paint | [#88](https://github.com/MonMonMars/amoji_engine_02/pull/88) merged |
 | A3 | **Wide desktop** — Menu blocks picker / layout | ✅ | v550 wide CSS + smoke | [#89](https://github.com/MonMonMars/amoji_engine_02/pull/89), [#90](https://github.com/MonMonMars/amoji_engine_02/pull/90) → **prod ~v551** |
 | A4 | **HQ Japanese-style scene backgrounds** not updated | ✅ | `anime-scene-v551-jp-game`, scene-bg regen | **main** `v551-facing-poke-thumbs-anime-bg` on prod |
-| A5 | **Roster card PNG ≠ loaded VRM** (wrong pose / back / blended arms on card) | ⏸️ | **v562** regen 31 card+hero PNGs face-forward; arm pose on card may still differ (**B1**) | [#100](https://github.com/MonMonMars/amoji_engine_02/pull/100) |
+| A5 | **Roster card PNG ≠ loaded VRM** (wrong pose / back / blended arms on card) | ⏸️ | **v568:** roster capture keeps yaw during pick (no `applyDefaultPortraitFrame` reset); contrast + inverted-body pick (**Yuki**); regen in progress — verify desktop strip | **v568** PR |
 | A8 | **Picker hero** — large portrait **+ scene background** preview | ✅ | `picker-hero-preview-duo`; prod E2E `picker-hero-scene-preview` | **prod v557** |
 | A6 | **Hero / picker portraits cropped** | ✅ | `object-fit: contain`, picker v4 | [#75](https://github.com/MonMonMars/amoji_engine_02/pull/75), [#89](https://github.com/MonMonMars/amoji_engine_02/pull/89) |
 | A7 | **Professional / cinematic scene backgrounds** | ✅ | Pro scene pass | [#71](https://github.com/MonMonMars/amoji_engine_02/pull/71) merged |
@@ -81,7 +81,7 @@ Agents: **read this before saying “fixed.”** Update a row when status change
 | ID | Problem / request | Status | Evidence / fix | PR / build |
 |----|-------------------|--------|----------------|------------|
 | B1 | **Blended / ghost arms** at idle (Nova, Alicia, roster) | ⏸️ | **v562** idle **neck rest** + planted lock v11; forearms v560 | re-report if arms still ghost |
-| B2 | Character **faces backward** on start | ✅ | Bind back-view detection + eye-weighted portrait resolve | [#100](https://github.com/MonMonMars/amoji_engine_02/pull/100) prod **v562** |
+| B2 | Character **faces backward** on start | ⏸️ | Session **front** on Nova/Shino after v563; **picker strip** still wrong on several ids (**A5**) | [#100](https://github.com/MonMonMars/amoji_engine_02/pull/100) + **v565** |
 | B3 | **Double-click / reset camera** → facing wrong again | ✅ | `baseYaw`, reset + forced yaw v551 | **main** `v551` |
 | B4 | **Poke / multi-tap → blended head** | ✅ | Torso-only poke shake v551 | **main** `v551` |
 | B5 | **Hair / skirt / ribbon** wind, shake, gravity wrong | ⏸️ | Spring **v15** world-down gravity + stronger skirt/hair pull on **prod v559** | [#97](https://github.com/MonMonMars/amoji_engine_02/pull/97) |
@@ -93,7 +93,7 @@ Agents: **read this before saying “fixed.”** Update a row when status change
 | ID | Problem / request | Status | Evidence / fix | PR / build |
 |----|-------------------|--------|----------------|------------|
 | C1 | **Two-finger pinch zoom** on character (iOS) | ✅ | Orbit `TWO: DOLLY_PAN`; poke defers on 2nd finger | **prod v557** ([#95](https://github.com/MonMonMars/amoji_engine_02/pull/95)) |
-| C2 | **Two-finger scroll / trackpad** zoom on character | ✅ | `bindOrbitWheelZoom` on orbit-hit | **prod v557** |
+| C2 | **Two-finger scroll / trackpad** zoom on character | ✅ | **Desktop prod v563:** wheel changes stage pixels; v563 removed stopPropagation | [#101](https://github.com/MonMonMars/amoji_engine_02/pull/101) |
 | C3 | One-finger **drag to orbit** on mobile | ✅ | **v563** `TOUCH.ONE` rotate + wheel zoom fix (no stopPropagation) | [#101](https://github.com/MonMonMars/amoji_engine_02/pull/101) prod **v563** |
 | C4 | **Wide browser ghost Menu** over stage | ✅ | `.settings:not([hidden])` on wide desktop inline CSS + `companion-app-width.css` | **prod v558** ([#96](https://github.com/MonMonMars/amoji_engine_02/pull/96)) |
 
@@ -190,9 +190,31 @@ After each merge batch: `npm run verify:pre-delivery:prod` → exit **0** before
 
 ---
 
-## One-line summary for Mon (2026-09-23 PM)
+## Desktop production QA — 2026-09-24 (1440×900 Chrome, build **v563**)
 
-**On live Vercel (`v562`):** picker + stage **face camera** again; **31×2** roster PNGs recaptured; idle **neck rest** + prior arm locks. **⏸️** arm ghost (**B1**), lip/face (**D1/D2**). Bookmark **`/play`** only.
+| Check | Result | Evidence |
+|-------|--------|----------|
+| `/api/health` | ✅ **v563** | Automated |
+| `verify:pre-delivery:prod` | ✅ **57/57** | Automated |
+| Session default facing (Shino) | ✅ **Face to camera** | `/opt/cursor/artifacts/desktop-prod-shino-default-frame.png` |
+| Orbit drag / wheel zoom | ✅ Pixel change on `#orbit-hit` | `/opt/cursor/artifacts/desktop-prod-orbit-test.png` |
+| Picker roster strip PNGs | 🔴 **Many backs** | `/opt/cursor/artifacts/desktop-prod-picker-wide.png` |
+| Idle arms (Shino) | ⏸️ **T-pose / stiff** | Same session shot — **B1** |
+
+**Do not mark A5/B2 ✅ until desktop picker strip is front-facing (see v565 QA below).**
+
+## Desktop local QA — 2026-09-24 (1440×900, build **v565**)
+
+| Check | Result | Evidence |
+|-------|--------|----------|
+| Root cause | ✅ **Head-only facing bug** | `facingCamera` true while `bodyScore ≈ -1` (Alicia) — fixed in `companionPortraitFraming.js` |
+| Alicia / Mei / Ember cards | ✅ Front | e.g. `/opt/cursor/artifacts/desktop-v565-picker-wide.png` (after regen) |
+| Yuki / Kizuna cards | 🔴 Back or sideways | Per-id VRM + capture still wrong |
+| `verify:pre-delivery` | Run on PR | local gate before merge |
+
+## One-line summary for Mon (2026-09-24)
+
+**Chart was overclaiming ✅ on picker cards.** Desktop QA on prod **v563** showed many **back-facing roster PNGs** while E2E passed. **v565** fixes the logic (`facingCamera` required **torso + head**, Nova photoreal exception, capture yaw/z sweep). **Partial regen improvement** — not all 31 cards yet. **Prod still v563** until merge. **⏸️ B1** arms, **D1/D2** lip/emotion. Bookmark **`/play`**.
 
 ---
 
