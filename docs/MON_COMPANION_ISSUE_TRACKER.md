@@ -35,6 +35,13 @@ Agents: **read this before saying “fixed.”** Update a row when status change
 
 **iOS:** bookmark **`/play` only** (not `/companion-full`).
 
+### Verify snapshot — **production `v562`** (merged [#100](https://github.com/MonMonMars/amoji_engine_02/pull/100))
+
+| Gate | Result | Notes |
+|------|--------|--------|
+| `npm run verify:pre-delivery:prod` | ✅ **4/4** | **57/57** issues E2E; build match **v562** |
+| Roster PNG regen | ✅ | 31 card + 31 hero after facing fix |
+
 ### Verify snapshot — **production `v561`** (merged [#99](https://github.com/MonMonMars/amoji_engine_02/pull/99))
 
 | Gate | Result | Notes |
@@ -87,7 +94,7 @@ Agents: **read this before saying “fixed.”** Update a row when status change
 |----|-------------------|--------|----------------|------------|
 | C1 | **Two-finger pinch zoom** on character (iOS) | ✅ | Orbit `TWO: DOLLY_PAN`; poke defers on 2nd finger | **prod v557** ([#95](https://github.com/MonMonMars/amoji_engine_02/pull/95)) |
 | C2 | **Two-finger scroll / trackpad** zoom on character | ✅ | `bindOrbitWheelZoom` on orbit-hit | **prod v557** |
-| C3 | One-finger **drag to orbit** on mobile | ⏸️ | Touch ONE rotate removed so pinch works; empty-area drag may need follow-up | [#69](https://github.com/MonMonMars/amoji_engine_02/pull/69) |
+| C3 | One-finger **drag to orbit** on mobile | 🟡 | **v563** restores `TOUCH.ONE` rotate + fixes wheel zoom (OrbitControls was blocked) | branch `cursor/fix-orbit-zoom-rotate-54db` |
 | C4 | **Wide browser ghost Menu** over stage | ✅ | `.settings:not([hidden])` on wide desktop inline CSS + `companion-app-width.css` | **prod v558** ([#96](https://github.com/MonMonMars/amoji_engine_02/pull/96)) |
 
 ### D — Voice, TTS, lip sync, emotion
