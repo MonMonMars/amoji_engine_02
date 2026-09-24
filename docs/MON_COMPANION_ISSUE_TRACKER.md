@@ -1,8 +1,8 @@
 # Mon — companion problem & request tracker
 
 **Owner:** Mon (Designer)  
-**Last updated:** 2026-09-23 23:42 UTC  
-**Production build (live):** `2026-09-23-v561-mon-vtuber-model-cache` — **v562 facing fix deploy pending**  
+**Last updated:** 2026-09-24 00:05 UTC  
+**Production build (live):** `2026-09-23-v562-mon-facing-arms-neck` (verified via `/api/health` + `verify:pre-delivery:prod`)  
 **Repo `main` build:** `amoji-engine/engine/companion/buildVersion.mjs` → `AMOJI_BUILD`  
 **App entry (bookmark):** https://temporary-rushing-oxygen-ok5jzhd.vercel.app/play  
 
@@ -64,7 +64,7 @@ Agents: **read this before saying “fixed.”** Update a row when status change
 | A2 | **Black screen** while picker or menu loads | ✅ | Boot picker paint | [#88](https://github.com/MonMonMars/amoji_engine_02/pull/88) merged |
 | A3 | **Wide desktop** — Menu blocks picker / layout | ✅ | v550 wide CSS + smoke | [#89](https://github.com/MonMonMars/amoji_engine_02/pull/89), [#90](https://github.com/MonMonMars/amoji_engine_02/pull/90) → **prod ~v551** |
 | A4 | **HQ Japanese-style scene backgrounds** not updated | ✅ | `anime-scene-v551-jp-game`, scene-bg regen | **main** `v551-facing-poke-thumbs-anime-bg` on prod |
-| A5 | **Roster card PNG ≠ loaded VRM** (wrong pose / back / blended arms on card) | 🟡 | **v562** regen all 31 card+hero PNGs after facing fix | with **B2** ship |
+| A5 | **Roster card PNG ≠ loaded VRM** (wrong pose / back / blended arms on card) | ⏸️ | **v562** regen 31 card+hero PNGs face-forward; arm pose on card may still differ (**B1**) | [#100](https://github.com/MonMonMars/amoji_engine_02/pull/100) |
 | A8 | **Picker hero** — large portrait **+ scene background** preview | ✅ | `picker-hero-preview-duo`; prod E2E `picker-hero-scene-preview` | **prod v557** |
 | A6 | **Hero / picker portraits cropped** | ✅ | `object-fit: contain`, picker v4 | [#75](https://github.com/MonMonMars/amoji_engine_02/pull/75), [#89](https://github.com/MonMonMars/amoji_engine_02/pull/89) |
 | A7 | **Professional / cinematic scene backgrounds** | ✅ | Pro scene pass | [#71](https://github.com/MonMonMars/amoji_engine_02/pull/71) merged |
@@ -74,7 +74,7 @@ Agents: **read this before saying “fixed.”** Update a row when status change
 | ID | Problem / request | Status | Evidence / fix | PR / build |
 |----|-------------------|--------|----------------|------------|
 | B1 | **Blended / ghost arms** at idle (Nova, Alicia, roster) | ⏸️ | **v562** idle **neck rest** + planted lock v11; forearms v560 | re-report if arms still ghost |
-| B2 | Character **faces backward** on start | 🟡 | **v562** — bind back-view detection + eye-weighted portrait resolve (was trusting body +Z while face away) | branch `cursor/mon-facing-arms-ship-54db` |
+| B2 | Character **faces backward** on start | ✅ | Bind back-view detection + eye-weighted portrait resolve | [#100](https://github.com/MonMonMars/amoji_engine_02/pull/100) prod **v562** |
 | B3 | **Double-click / reset camera** → facing wrong again | ✅ | `baseYaw`, reset + forced yaw v551 | **main** `v551` |
 | B4 | **Poke / multi-tap → blended head** | ✅ | Torso-only poke shake v551 | **main** `v551` |
 | B5 | **Hair / skirt / ribbon** wind, shake, gravity wrong | ⏸️ | Spring **v15** world-down gravity + stronger skirt/hair pull on **prod v559** | [#97](https://github.com/MonMonMars/amoji_engine_02/pull/97) |
@@ -185,7 +185,7 @@ After each merge batch: `npm run verify:pre-delivery:prod` → exit **0** before
 
 ## One-line summary for Mon (2026-09-23 PM)
 
-**Shipping `v562`:** fixes **back-facing** roster cards + stage (portrait scoring bug since ~v551). Regenerated **31×2** preview PNGs. **Idle neck lock** for twist/wind. Prod still **v561** until merge. Bookmark **`/play`**.
+**On live Vercel (`v562`):** picker + stage **face camera** again; **31×2** roster PNGs recaptured; idle **neck rest** + prior arm locks. **⏸️** arm ghost (**B1**), lip/face (**D1/D2**). Bookmark **`/play`** only.
 
 ---
 
