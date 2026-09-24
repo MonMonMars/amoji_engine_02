@@ -14,7 +14,7 @@ describe("companionRosterModelRefreshV522", () => {
       ),
     );
     const replaceIds = ROSTER_CHARACTER_IDS.filter((id) => !keepIds.has(id));
-    expect(replaceIds).toHaveLength(19);
+    expect(replaceIds).toHaveLength(22);
     for (const id of replaceIds) {
       const refreshUrl = ROSTER_REPLACED_VRM_SOURCES[id]?.vrmUrl;
       if (refreshUrl) {

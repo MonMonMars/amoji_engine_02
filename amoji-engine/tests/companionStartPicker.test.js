@@ -72,6 +72,20 @@ describe("companion start picker", () => {
     picker.destroy();
   });
 
+  it("start picker exposes reply language toggle", () => {
+    if (typeof document === "undefined") return;
+    const picker = createCompanionStartPicker({
+      isEnglish: true,
+      selectedId: "nova",
+      onStart: () => {},
+    });
+    expect(picker.element.querySelector(".picker-lang-toggle")).toBeTruthy();
+    expect(picker.getLangCode()).toBe("en");
+    picker.setLangCode("yue");
+    expect(picker.getLangCode()).toBe("yue");
+    picker.destroy();
+  });
+
   it("v8 start picker uses showcase layout with hero stage, roster strip, and begin CTA", () => {
     expect(PICKER_HERO_HTML).toContain("picker-hero-name");
     if (typeof document === "undefined") return;

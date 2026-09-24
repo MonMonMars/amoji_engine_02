@@ -6,7 +6,8 @@
  * slower 0.28 internal curve.
  */
 export const COMPANION_TALK_SPEED_SCHEMA = "amoji.companionTalkSpeed.v4-default-1x";
-export const TALK_SPEED_STORAGE_KEY = "amoji.companionTalkSpeed.v6";
+export const TALK_SPEED_STORAGE_KEY = "amoji.companionTalkSpeed.v7";
+const LEGACY_TALK_SPEED_KEY_V6 = "amoji.companionTalkSpeed.v6";
 const LEGACY_TALK_SPEED_KEY = "amoji.companionTalkSpeed.v2";
 const LEGACY_TALK_SPEED_KEY_V1 = "amoji.companionTalkSpeed.v1";
 
@@ -182,14 +183,36 @@ export function talkSpeedButtonTitle(speed, isEnglish = false) {
 /**
  * @param {Pick<Storage, "getItem"> | null | undefined} [storage]
  */
+/**
+ * Older builds stored display "1×" as internal `1.0` (shows ~2×) or default pace as `0.84`.
+ * @param {number} internal
+ */
+function migrateMisstoredTalkSpeed(internal) {
+  const n = Number(internal);
+  if (!Number.isFinite(n)) return DEFAULT_TALK_SPEED;
+  if (n >= 0.98 && n <= 1.02) return DEFAULT_TALK_SPEED;
+  if (n >= 0.83 && n <= 0.85) return DEFAULT_TALK_SPEED;
+  return normalizeTalkSpeed(n);
+}
+
 export function loadTalkSpeed(storage = globalThis.localStorage) {
   try {
     const raw = storage?.getItem?.(TALK_SPEED_STORAGE_KEY);
     if (raw != null && raw !== "") {
-      return normalizeTalkSpeed(JSON.parse(raw));
+      return migrateMisstoredTalkSpeed(JSON.parse(raw));
     }
   } catch {
     /* fall through to legacy */
+  }
+  try {
+    const legacyV6 = storage?.getItem?.(LEGACY_TALK_SPEED_KEY_V6);
+    if (legacyV6 != null && legacyV6 !== "") {
+      const parsed = migrateMisstoredTalkSpeed(JSON.parse(legacyV6));
+      saveTalkSpeed(parsed, storage);
+      return parsed;
+    }
+  } catch {
+    /* ignore */
   }
   try {
     const legacyV5 = storage?.getItem?.("amoji.companionTalkSpeed.v5");

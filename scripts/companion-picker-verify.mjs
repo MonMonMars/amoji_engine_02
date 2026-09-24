@@ -41,7 +41,12 @@ function record(name, ok, detail = "") {
 }
 
 const verifyLang = parseArg("--lang", "en") === "yue" ? "yue" : "en";
-const defaultUrl = `http://127.0.0.1:5174/play?lang=${verifyLang}&pick=force&automic=0&build=${encodeURIComponent(AMOJI_BUILD)}`;
+const verifyBase = String(process.env.VERIFY_BASE_URL || "")
+  .trim()
+  .replace(/\/$/, "");
+const defaultPort = Number(process.env.LOCAL_PORT || 5174);
+const defaultBase = verifyBase || `http://127.0.0.1:${defaultPort}`;
+const defaultUrl = `${defaultBase}/play?lang=${verifyLang}&pick=force&automic=0&build=${encodeURIComponent(AMOJI_BUILD)}`;
 const url = parseArg("--url", defaultUrl);
 
 const browser = await chromium.launch({ headless: true });
@@ -280,6 +285,20 @@ await page.evaluate(async () => {
     ),
   );
 });
+
+await waitForPageFn(
+  page,
+  () => {
+    const pre = document.querySelector(
+      "#start-character-picker .start-picker-preload",
+    );
+    if (!pre) return true;
+    if (pre.classList.contains("is-slot-collapsed")) return true;
+    return !pre.classList.contains("is-ready");
+  },
+  { timeout: 8000 },
+).catch(() => null);
+await page.waitForTimeout(150);
 
 const layout = await page.evaluate((minRoster) => {
   const footer = document.querySelector("#start-character-picker .picker-footer");

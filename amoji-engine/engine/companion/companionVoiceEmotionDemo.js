@@ -90,7 +90,7 @@ export const EMOTION_DEMO_LINES = Object.freeze({
       speechEnergy: 0.55,
     }),
     giggle: Object.freeze({
-      text: "嘻嘻～",
+      text: "哈哈～",
       emotion: "happy",
       nuance: "shy",
       talkStyle: "soft",

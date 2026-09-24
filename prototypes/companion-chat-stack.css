@@ -64,6 +64,23 @@ body.conversation-ui .transcript .msg-row {
   pointer-events: auto;
 }
 
+body.companion-minimal-chrome .chat-column .starter-prompts,
+body.conversation-ui .chat-column .starter-prompts {
+  flex: 0 0 auto;
+  width: 100%;
+  max-width: 100%;
+  min-height: 0;
+  overflow: hidden;
+  pointer-events: auto;
+  padding: 0 0.1rem 0.25rem;
+  box-sizing: border-box;
+}
+
+body.companion-minimal-chrome .chat-column .starter-prompts[hidden],
+body.conversation-ui .chat-column .starter-prompts[hidden] {
+  display: none !important;
+}
+
 body.companion-minimal-chrome .chat-column .listen-hint,
 body.conversation-ui .chat-column .listen-hint {
   flex: 0 0 auto;

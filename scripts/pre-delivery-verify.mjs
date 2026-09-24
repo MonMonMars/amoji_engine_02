@@ -66,16 +66,19 @@ function runStepAsync(name, cmd, args, opts = {}) {
   });
 }
 
-async function probePort(port) {
+/** @returns {"match" | "wrong-build" | "free" | "busy"} */
+async function classifyVerifyPort(port) {
   try {
     const res = await fetch(`http://127.0.0.1:${port}/api/health`, {
       signal: AbortSignal.timeout(2000),
     });
-    if (!res.ok) return false;
+    if (!res.ok) return "busy";
     const j = await res.json();
-    return j.build === AMOJI_BUILD;
-  } catch {
-    return false;
+    return j.build === AMOJI_BUILD ? "match" : "wrong-build";
+  } catch (err) {
+    const msg = String(err?.message || err || "");
+    if (msg.includes("ECONNREFUSED") || msg.includes("fetch failed")) return "free";
+    return "busy";
   }
 }
 
@@ -112,14 +115,17 @@ async function startVerifyServer(port) {
 
 async function resolveLocalServer() {
   for (let port = preferredPort; port < preferredPort + 12; port += 1) {
-    if (await probePort(port)) {
+    const state = await classifyVerifyPort(port);
+    if (state === "match") {
       return { port, child: null, base: `http://127.0.0.1:${port}` };
     }
   }
   for (let port = preferredPort; port < preferredPort + 12; port += 1) {
+    const state = await classifyVerifyPort(port);
+    if (state !== "free") continue;
     try {
       const child = await startVerifyServer(port);
-      if (await probePort(port)) {
+      if ((await classifyVerifyPort(port)) === "match") {
         return { port, child, base: `http://127.0.0.1:${port}` };
       }
       child.kill("SIGTERM");
@@ -186,14 +192,24 @@ await runStepAsync("picker-e2e", "node", [
   "scripts/companion-picker-verify.mjs",
   "--url",
   playUrl,
-], { env: { ARTIFACT_DIR: artifactDir } });
+], {
+  env: {
+    ARTIFACT_DIR: artifactDir,
+    VERIFY_BASE_URL: base,
+  },
+});
 
 async function runReportedIssuesE2e() {
   const ok = await runStepAsync("reported-issues-e2e", "node", [
     "scripts/companion-issues-verify.mjs",
     "--url",
     playUrl,
-  ], { env: { ARTIFACT_DIR: artifactDir } });
+  ], {
+    env: {
+      ARTIFACT_DIR: artifactDir,
+      VERIFY_BASE_URL: base,
+    },
+  });
   if (ok || !production) return ok;
   console.log("    (production issues E2E failed once — retrying in 8s…)");
   await new Promise((r) => setTimeout(r, 8000));

@@ -122,6 +122,22 @@ describe("companionTalkSpeed", () => {
     expect(defaultPace).toMatch(/1× normal companion pace/i);
   });
 
+  it("migrates mistaken internal 1.0 or 0.84 to 1× Normal default", () => {
+    const storage = {
+      /** @type {string | null} */
+      value: null,
+      setItem(_k, v) {
+        this.value = v;
+      },
+      getItem(k) {
+        if (k === "amoji.companionTalkSpeed.v6") return "0.84";
+        return this.value;
+      },
+    };
+    expect(loadTalkSpeed(storage)).toBe(0.42);
+    expect(formatTalkSpeedLabel(0.42, true)).toBe("1× Normal");
+  });
+
   it("persists speed in storage", () => {
     const storage = {
       /** @type {string | null} */

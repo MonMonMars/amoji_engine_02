@@ -26,7 +26,7 @@ export const VOCALIZATION_TYPES = Object.freeze([
 /** @type {Record<VocalizationType, { yue: readonly string[], en: readonly string[] }>} */
 const VOCAL_LINES = Object.freeze({
   smile: Object.freeze({
-    yue: Object.freeze(["呵呵～", "嘿嘿～", "唔呵呵～"]),
+    yue: Object.freeze(["呵呵～", "哈哈～", "唔呵呵～"]),
     en: Object.freeze(["Heh～", "Mhm～", "Heh heh～"]),
   }),
   laugh: Object.freeze({
@@ -34,7 +34,7 @@ const VOCAL_LINES = Object.freeze({
     en: Object.freeze(["Ha ha～", "Haha!", "Ahaha～", "Ha ha ha!", "Ahaha you poked me!"]),
   }),
   giggle: Object.freeze({
-    yue: Object.freeze(["嘻嘻～", "嘿嘿嘻～", "唔嘻嘻～", "哎呀嘻嘻～", "唔呵呵嘻～"]),
+    yue: Object.freeze(["哈哈～", "哈哈哈！", "唔哈哈～", "哎呀哈哈～", "呵哈哈～"]),
     en: Object.freeze(["Hehe～", "Teehee～", "Ehehe～", "Hehe hehe!", "Tee hee～"]),
   }),
   um: Object.freeze({
@@ -58,7 +58,7 @@ const VOCAL_LINES = Object.freeze({
     en: Object.freeze(["Aww～", "Aw～", "Oh～"]),
   }),
   coy: Object.freeze({
-    yue: Object.freeze(["唔～", "哼～", "嘿嘿……"]),
+    yue: Object.freeze(["唔～", "哼～", "哈哈……"]),
     en: Object.freeze(["Mm～", "Heh……", "Oh my～"]),
   }),
 });

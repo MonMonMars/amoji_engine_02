@@ -110,6 +110,17 @@ export const YUE_VOICE_PROFILES = Object.freeze([
     prosodyBias: { rate: 4, pitch: 12, volume: 4 },
   },
   {
+    id: "zh-HK-HiuMaanNeural-soft",
+    edgeVoice: "zh-HK-HiuMaanNeural",
+    shortLabel: "曉曼·柔和",
+    shortLabelEn: "HiuMaan·soft",
+    lang: "zh-HK",
+    gender: "female",
+    source: "Edge TTS",
+    samplePath: "/prototypes/assets/voice-samples/hiumaan.mp3",
+    prosodyBias: { rate: -6, pitch: 4, volume: 2 },
+  },
+  {
     id: "zh-HK-HiuGaaiNeural-story",
     edgeVoice: "zh-HK-HiuGaaiNeural",
     shortLabel: "曉佳·敘事",

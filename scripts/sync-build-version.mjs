@@ -3,7 +3,7 @@
  * Sync AMOJI_BUILD into companion HTML (window.__amojiBuild + ?v= cache bust).
  * Run before deploy and in CI so demo pages always match buildVersion.mjs.
  */
-import { readFileSync, writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { AMOJI_BUILD } from "../amoji-engine/engine/companion/buildVersion.mjs";
@@ -66,6 +66,18 @@ earlyBoot = earlyBoot.replace(
 if (earlyBoot !== earlyBefore) {
   writeFileSync(earlyBootPath, earlyBoot);
   console.log(`sync-build-version: updated ${earlyBootPath}`);
+}
+
+const sceneCssPath = join(root, "prototypes/companion-scene-backgrounds.css");
+if (existsSync(sceneCssPath)) {
+  let css = readFileSync(sceneCssPath, "utf8");
+  const cssBefore = css;
+  css = css.replace(/\?v=[^")\s]+/g, `?v=${PICKER_SCENE_ART_REVISION}`);
+  css = css.replace(/\/\* build: [^*]+ \*\//, `/* build: ${AMOJI_BUILD} */`);
+  if (css !== cssBefore) {
+    writeFileSync(sceneCssPath, css);
+    console.log(`sync-build-version: updated ${sceneCssPath}`);
+  }
 }
 
 if (changed === 0) {

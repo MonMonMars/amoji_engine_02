@@ -49,7 +49,8 @@ import {
 export const COMPANION_CHARACTER_PICKER_SCHEMA =
   "amoji.companionCharacterPicker.v9-roster480-replacement";
 
-export const COMPANION_START_PICKER_SCHEMA = "amoji.companionStartPicker.v12-hero-scene";
+export const COMPANION_START_PICKER_SCHEMA =
+  "amoji.companionStartPicker.v13-reply-lang-toggle";
 
 export const PICKER_SCENE_SECTION_HTML = `
   <section class="picker-scene-section" aria-label="Background">
@@ -909,6 +910,10 @@ export function createCompanionStartPicker(opts = {}) {
           <h2 class="companion-picker-title"></h2>
           <p class="companion-picker-sub"></p>
         </div>
+        <div class="picker-lang-toggle" role="group" aria-label="">
+          <button type="button" class="picker-lang-btn" data-lang="yue"></button>
+          <button type="button" class="picker-lang-btn" data-lang="en"></button>
+        </div>
       </header>
       <div class="picker-main picker-main--stacked">
         <section class="picker-showcase-stage" aria-label="${isEnglish ? "Selected companion preview" : "已選同伴預覽"}">
@@ -957,6 +962,9 @@ export function createCompanionStartPicker(opts = {}) {
   const gridWrapEl = shell.querySelector(".start-picker-grid-wrap");
   const scrollHintEl = shell.querySelector(".start-picker-scroll-hint");
   const beginBtn = shell.querySelector(".picker-begin-btn");
+  const langToggleEl = shell.querySelector(".picker-lang-toggle");
+  const langBtnYue = shell.querySelector('.picker-lang-btn[data-lang="yue"]');
+  const langBtnEn = shell.querySelector('.picker-lang-btn[data-lang="en"]');
   const rosterDockLabelEl = shell.querySelector(".picker-roster-dock-label");
   const rosterAaaBannerEl = shell.querySelector(".picker-roster-aaa-banner");
   const sceneSection = wirePickerSceneSection({
@@ -965,6 +973,43 @@ export function createCompanionStartPicker(opts = {}) {
     atmosphereEl: opts.atmosphereEl,
     onBackgroundChange: opts.onBackgroundChange,
     canInteract: () => !starting && pickable,
+  });
+
+  const syncLangToggleUi = () => {
+    if (langToggleEl) {
+      langToggleEl.setAttribute("aria-label", copy.langGroupLabel);
+    }
+    if (langBtnYue) {
+      langBtnYue.textContent = copy.langYue;
+      langBtnYue.setAttribute("aria-pressed", langCode === "yue" ? "true" : "false");
+      langBtnYue.classList.toggle("is-active", langCode === "yue");
+    }
+    if (langBtnEn) {
+      langBtnEn.textContent = copy.langEn;
+      langBtnEn.setAttribute("aria-pressed", langCode === "en" ? "true" : "false");
+      langBtnEn.classList.toggle("is-active", langCode === "en");
+    }
+  };
+
+  const setPickerReplyLang = (nextLang, { notify = true } = {}) => {
+    const nextCode = nextLang === "en" ? "en" : "yue";
+    if (nextCode === langCode && notify) return langCode;
+    langCode = nextCode;
+    isEnglish = nextCode === "en";
+    copy = mergePickerCopy();
+    sceneSection.setLocale(isEnglish);
+    paintCopy();
+    renderAll();
+    if (notify) opts.onLangChange?.(langCode);
+  };
+
+  langBtnYue?.addEventListener("click", () => {
+    if (starting || !pickable) return;
+    setPickerReplyLang("yue");
+  });
+  langBtnEn?.addEventListener("click", () => {
+    if (starting || !pickable) return;
+    setPickerReplyLang("en");
   });
 
   const paintCopy = () => {
@@ -1004,6 +1049,7 @@ export function createCompanionStartPicker(opts = {}) {
         starting ? copy.starting : copy.begin,
       );
     }
+    syncLangToggleUi();
   };
 
   const preloadStatusLabel = (clamped) => {
@@ -1274,9 +1320,7 @@ export function createCompanionStartPicker(opts = {}) {
       if (ctx.rerenderRoster) renderAll();
     },
     setLocale(nextEnglish) {
-      isEnglish = Boolean(nextEnglish);
-      langCode = isEnglish ? "en" : "yue";
-      copy = mergePickerCopy();
+      setPickerReplyLang(nextEnglish ? "en" : "yue", { notify: false });
       shell.setAttribute(
         "aria-label",
         isEnglish ? "Choose companion" : "揀同伴",
@@ -1293,10 +1337,13 @@ export function createCompanionStartPicker(opts = {}) {
           "aria-label",
           isEnglish ? "Companion roster" : "同伴名單",
         );
-      sceneSection.setLocale(isEnglish);
-      paintCopy();
-      renderAll();
       renderPreload();
+    },
+    getLangCode() {
+      return langCode;
+    },
+    setLangCode(nextLang) {
+      setPickerReplyLang(nextLang, { notify: false });
     },
     setPreloadProgress(pct, label) {
       const n = Number(pct);

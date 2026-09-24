@@ -67,11 +67,11 @@ Agents: **read this before saying “fixed.”** Update a row when status change
 
 | ID | Problem / request | Status | Evidence / fix | PR / build |
 |----|-------------------|--------|----------------|------------|
-| A1 | Picker / scene / roster **images look stale** (Safari cache) | ⏸️ | `picker-anime-v559-wave3` + roster `?v=` bump; early boot PNG+SVG; bookmark **`/play`** | **prod v559** ([#97](https://github.com/MonMonMars/amoji_engine_02/pull/97)) |
+| A1 | Picker / scene / roster **images look stale** (Safari cache) | 🟡 | **v582** scene swatches + atmosphere `?v=picker-anime-v582-all-thumbs`; roster `AMOJI_MODEL_REVISION=roster-v582-all-previews`; full **31×2** PNG regen | branch `cursor/fix-idle-not-tpose-54db` |
 | A2 | **Black screen** while picker or menu loads | ✅ | Boot picker paint | [#88](https://github.com/MonMonMars/amoji_engine_02/pull/88) merged |
 | A3 | **Wide desktop** — Menu blocks picker / layout | ✅ | v550 wide CSS + smoke | [#89](https://github.com/MonMonMars/amoji_engine_02/pull/89), [#90](https://github.com/MonMonMars/amoji_engine_02/pull/90) → **prod ~v551** |
 | A4 | **HQ Japanese-style scene backgrounds** not updated | ✅ | `anime-scene-v551-jp-game`, scene-bg regen | **main** `v551-facing-poke-thumbs-anime-bg` on prod |
-| A5 | **Roster card PNG ≠ loaded VRM** (wrong pose / back / blended arms on card) | ⏸️ | **v562** regen 31 card+hero PNGs face-forward; arm pose on card may still differ (**B1**) | [#100](https://github.com/MonMonMars/amoji_engine_02/pull/100) |
+| A5 | **Roster card PNG ≠ loaded VRM** (wrong pose / back / blended arms on card) | 🟡 | **v582** full regen 31 ids (card+hero) with idle presentation + facing wait; `roster-v582-all-previews` cache bust | **#105** |
 | A8 | **Picker hero** — large portrait **+ scene background** preview | ✅ | `picker-hero-preview-duo`; prod E2E `picker-hero-scene-preview` | **prod v557** |
 | A6 | **Hero / picker portraits cropped** | ✅ | `object-fit: contain`, picker v4 | [#75](https://github.com/MonMonMars/amoji_engine_02/pull/75), [#89](https://github.com/MonMonMars/amoji_engine_02/pull/89) |
 | A7 | **Professional / cinematic scene backgrounds** | ✅ | Pro scene pass | [#71](https://github.com/MonMonMars/amoji_engine_02/pull/71) merged |
@@ -80,7 +80,7 @@ Agents: **read this before saying “fixed.”** Update a row when status change
 
 | ID | Problem / request | Status | Evidence / fix | PR / build |
 |----|-------------------|--------|----------------|------------|
-| B1 | **Blended / ghost arms** at idle (Nova, Alicia, roster) | ⏸️ | **v562** idle **neck rest** + planted lock v11; forearms v560 | re-report if arms still ghost |
+| B1 | **Blended / ghost arms** + **T-pose** at idle / roster capture | 🟡 | **v580** `applyIdlePresentation` — calm stand + idle warm; no pre-idle `lockForearms` bind lock in warm/reset | branch `cursor/fix-idle-not-tpose-54db` |
 | B2 | Character **faces backward** on start | ✅ | Bind back-view detection + eye-weighted portrait resolve | [#100](https://github.com/MonMonMars/amoji_engine_02/pull/100) prod **v562** |
 | B3 | **Double-click / reset camera** → facing wrong again | ✅ | `baseYaw`, reset + forced yaw v551 | **main** `v551` |
 | B4 | **Poke / multi-tap → blended head** | ✅ | Torso-only poke shake v551 | **main** `v551` |

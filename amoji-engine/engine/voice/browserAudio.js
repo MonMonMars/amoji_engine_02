@@ -336,7 +336,7 @@ export class TtsChunkPlayer {
       this.onEnd?.(chunk);
       const pauseMs = chunk.prosody?.pauseMs || chunk.pauseMs || 0;
       if (pauseMs > 0 && this._queue.length) {
-        await sleep(Math.min(pauseMs, 600));
+        await sleep(Math.min(pauseMs, 380));
       }
     }
     if (gen === this._generation) {
