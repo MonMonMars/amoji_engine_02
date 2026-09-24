@@ -67,7 +67,7 @@ Agents: **read this before saying “fixed.”** Update a row when status change
 
 | ID | Problem / request | Status | Evidence / fix | PR / build |
 |----|-------------------|--------|----------------|------------|
-| A1 | Picker / scene / roster **images look stale** (Safari cache) | ⏸️ | `picker-anime-v559-wave3` + roster `?v=` bump; early boot PNG+SVG; bookmark **`/play`** | **prod v559** ([#97](https://github.com/MonMonMars/amoji_engine_02/pull/97)) |
+| A1 | Picker / scene / roster **images look stale** (Safari cache) | 🟡 | **v581** `PICKER_SCENE_ART_REVISION` → `picker-anime-v581-scene-ship`; CSS PNG `?v=` sync in `sync-build-version.mjs`; bookmark **`/play`** | branch `cursor/fix-idle-not-tpose-54db` |
 | A2 | **Black screen** while picker or menu loads | ✅ | Boot picker paint | [#88](https://github.com/MonMonMars/amoji_engine_02/pull/88) merged |
 | A3 | **Wide desktop** — Menu blocks picker / layout | ✅ | v550 wide CSS + smoke | [#89](https://github.com/MonMonMars/amoji_engine_02/pull/89), [#90](https://github.com/MonMonMars/amoji_engine_02/pull/90) → **prod ~v551** |
 | A4 | **HQ Japanese-style scene backgrounds** not updated | ✅ | `anime-scene-v551-jp-game`, scene-bg regen | **main** `v551-facing-poke-thumbs-anime-bg` on prod |
