@@ -26,7 +26,7 @@ describe("companionOrbitControls", () => {
     expect(resolveOrbitDomElement({ canvas }).id).toBe("avatar-canvas");
   });
 
-  it("enables mouse drag rotate and two-finger pinch zoom on touch", () => {
+  it("enables mouse drag rotate, one-finger orbit, and two-finger pinch on touch", () => {
     const controls = configureCompanionOrbitControls({
       enabled: false,
       enableDamping: false,
@@ -40,8 +40,8 @@ describe("companionOrbitControls", () => {
     expect(controls.minPolarAngle).toBe(ORBIT_MIN_POLAR);
     expect(controls.maxPolarAngle).toBe(ORBIT_MAX_POLAR);
     expect(controls.mouseButtons.LEFT).toBe(THREE.MOUSE.ROTATE);
+    expect(controls.touches.ONE).toBe(THREE.TOUCH.ROTATE);
     expect(controls.touches.TWO).toBe(THREE.TOUCH.DOLLY_PAN);
-    expect(controls.touches.ONE).toBeUndefined();
   });
 
   it("captures wheel on the orbit surface for trackpad zoom", () => {
@@ -61,21 +61,16 @@ describe("companionOrbitControls", () => {
     const unbind = bindOrbitWheelZoom(el, controls);
     expect(listeners[0]?.type).toBe("wheel");
     expect(listeners[0]?.opts?.passive).toBe(false);
-    expect(listeners[0]?.opts?.capture).toBe(true);
+    expect(listeners[0]?.opts?.capture).toBe(false);
     const event = {
       cancelable: true,
       prevented: false,
-      stopped: false,
       preventDefault() {
         this.prevented = true;
-      },
-      stopPropagation() {
-        this.stopped = true;
       },
     };
     listeners[0].fn(event);
     expect(event.prevented).toBe(true);
-    expect(event.stopped).toBe(true);
     unbind();
     expect(listeners.length).toBe(0);
   });
