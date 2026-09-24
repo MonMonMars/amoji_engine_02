@@ -186,26 +186,53 @@ async function waitForStageReady(page, characterId) {
     )
     .catch(() => null);
 
+  let captureReady = false;
   for (let attempt = 0; attempt < 18; attempt += 1) {
     await page.evaluate(() => {
       window.__amojiAvatar?.warmPresentFrame?.();
       window.__amojiAvatar?.resetCameraView?.();
     });
     await page.waitForTimeout(1500);
-    const ready = await page.evaluate(() => {
-      const facing = window.__amojiAvatar?.getPortraitFacing?.();
-      const limbs = window.__amojiAvatar?.auditPlantedLimbs?.({
-        maxDeltaRad: 0.018,
-      });
-      return (
-        facing?.facingCamera === true &&
-        (Number(facing.frameScore ?? facing.visibleScore) || 0) > 0.1 &&
-        (Number(facing.headScore) || 0) > 0.08 &&
-        limbs?.ok !== false
-      );
-    });
-    if (ready) break;
+    captureReady = await page.evaluate(
+      (captureId) => {
+        const facing = window.__amojiAvatar?.getPortraitFacing?.();
+        const limbs = window.__amojiAvatar?.auditPlantedLimbs?.({
+          maxDeltaRad: 0.018,
+        });
+        const head = Number(facing?.headScore) || 0;
+        const body = Number(facing?.bodyScore) || 0;
+        const frame = Number(facing?.frameScore ?? facing?.visibleScore) || 0;
+        const torsoAway = body < -0.35;
+        const photoreal = String(captureId || "").toLowerCase() === "nova";
+        const frameOk = frame > 0.15 || (photoreal && body > 0.35);
+        const headOk = photoreal || head > 0.35;
+        return (
+          facing?.facingCamera === true &&
+          !torsoAway &&
+          frameOk &&
+          body > 0.35 &&
+          headOk &&
+          limbs?.ok !== false
+        );
+      },
+      characterId,
+    );
+    if (captureReady) break;
   }
+  if (!captureReady) {
+    console.warn(
+      `WARN ${characterId} capture gate soft-fail — best-effort yaw/z pick`,
+    );
+    await page.evaluate(() => {
+      window.__amojiAvatar?.resetCameraView?.();
+    });
+    await page.waitForTimeout(800);
+  }
+
+  await page.evaluate(() => {
+    window.__amojiAvatar?.pickBestRosterCaptureYaw?.();
+  });
+  await page.waitForTimeout(300);
 
   await hideUiForCapture(page);
   await page.waitForTimeout(400);

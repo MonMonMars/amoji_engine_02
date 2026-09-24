@@ -282,6 +282,19 @@ export function resolveFrontPortraitFrame(opts) {
         humanoid,
         model,
       );
+      const bodyAtShot = model
+        ? modelBodyFacingScore(model, shot.position)
+        : score;
+      const headAtShot = headBone
+        ? facingAlignmentScore(headBone, shot.position, humanoid)
+        : bodyAtShot;
+      const misHead =
+        typeof headBone?.rotation?.y === "number" &&
+        Math.abs(Math.atan2(Math.sin(headBone.rotation.y), Math.cos(headBone.rotation.y))) >
+          0.65;
+      const bodyOk = bodyAtShot > 0.12;
+      const headOk = misHead || headAtShot > 0.12;
+      if (!bodyOk || !headOk) continue;
       if (!best || score > best.score) {
         best = {
           score,

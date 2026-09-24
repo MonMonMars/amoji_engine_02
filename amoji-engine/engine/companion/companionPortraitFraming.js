@@ -4,7 +4,19 @@
 import * as THREE from "three";
 
 export const COMPANION_PORTRAIT_FRAMING_SCHEMA =
-  "amoji.companionPortraitFraming.v10-bind-head-back-view";
+  "amoji.companionPortraitFraming.v11-body-forward-anime";
+
+/** Look-at photoreal rigs where root +Z toward camera = visible front (head bone may read away). */
+export const PHOTOREAL_PORTRAIT_CHARACTER_IDS = new Set(["nova"]);
+
+/**
+ * @param {string | null | undefined} characterId
+ */
+export function isPhotorealPortraitCharacter(characterId) {
+  return PHOTOREAL_PORTRAIT_CHARACTER_IDS.has(
+    String(characterId || "").toLowerCase(),
+  );
+}
 
 /** Fallback lower-neck height when no head bone (ratio from feet to head). */
 export const UPPER_BODY_ANCHOR_RATIO = 0.84;
@@ -278,9 +290,28 @@ export function portraitFrameResolveScore(headBone, cameraPosition, humanoid, mo
   return visible;
 }
 
-export function isHeadFacingCamera(headBone, camera, humanoid, model) {
+export function isHeadFacingCamera(
+  headBone,
+  camera,
+  humanoid,
+  model,
+  characterId,
+) {
   if (!camera) return true;
   if (!headBone && !model) return true;
+  const body = model ? modelBodyFacingScore(model, camera.position) : 0;
+  const misHead = headBoneLikelyMisoriented(headBone);
+  const photoreal = isPhotorealPortraitCharacter(characterId);
+  if (model) {
+    if (body < 0.12) return false;
+    if (body > 0.35 && photoreal) return true;
+    if (!misHead && headBone) {
+      const head = facingAlignmentScore(headBone, camera.position, humanoid);
+      if (head < 0.12) return false;
+    } else if (misHead && body < 0.12) {
+      return false;
+    }
+  }
   return (
     portraitFrameResolveScore(headBone, camera.position, humanoid, model) > 0.15
   );
@@ -315,16 +346,40 @@ export function normalizeModelYaw(model) {
   return model.rotation.y;
 }
 
-export function correctPortraitModelYaw(model, headBone, camera, humanoid, minScore = 0.12) {
+export function correctPortraitModelYaw(
+  model,
+  headBone,
+  camera,
+  humanoid,
+  minScore = 0.12,
+  characterId,
+) {
   if (!model || !camera) return false;
 
+  const body = modelBodyFacingScore(model, camera.position);
+  const head = headBone
+    ? facingAlignmentScore(headBone, camera.position, humanoid)
+    : body;
+  const misHead = headBoneLikelyMisoriented(headBone);
+  const photoreal = isPhotorealPortraitCharacter(characterId);
   const score = portraitFrameResolveScore(
     headBone,
     camera.position,
     humanoid,
     model,
   );
-  if (score >= minScore) return false;
+  if (!photoreal && !misHead && body > minScore && head < -minScore) {
+    model.rotation.y += Math.PI;
+    normalizeModelYaw(model);
+    model.updateMatrixWorld(true);
+    headBone?.updateMatrixWorld(true);
+    return true;
+  }
+  if (misHead) {
+    if (body >= minScore) return false;
+  } else if (body >= minScore && score >= minScore) {
+    return false;
+  }
 
   model.rotation.y += Math.PI;
   normalizeModelYaw(model);

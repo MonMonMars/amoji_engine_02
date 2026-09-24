@@ -9,6 +9,7 @@ import { VRMLoaderPlugin, VRMExpressionPresetName } from "@pixiv/three-vrm";
 import {
   applyAutoCameraFrame,
   applyPortraitShot,
+  buildPortraitShot,
   CAMERA_RESET_LERP_RATE,
   lerpCameraTowardShot,
   resolveFrontPortraitFrame,
@@ -752,8 +753,21 @@ export async function createVrmAvatar(opts) {
     cameraDirector.holdUserFraming(false);
     cameraDirector.setUserOrbiting(false);
     if (
-      !isHeadFacingCamera(headBone, camera, vrm.humanoid, model) &&
-      correctPortraitModelYaw(model, headBone, camera, vrm.humanoid)
+      !isHeadFacingCamera(
+        headBone,
+        camera,
+        vrm.humanoid,
+        model,
+        loadedCharacterId,
+      ) &&
+      correctPortraitModelYaw(
+        model,
+        headBone,
+        camera,
+        vrm.humanoid,
+        0.12,
+        loadedCharacterId,
+      )
     ) {
       baseModelRotY = normalizeModelYaw(model);
       const refit = resolveFrontPortraitFrame({
@@ -1743,8 +1757,21 @@ export async function createVrmAvatar(opts) {
         now - lastPortraitFacingFixMs >= portraitFacingCooldownMs
       ) {
         if (
-          !isHeadFacingCamera(headBone, camera, vrm.humanoid, model) &&
-          correctPortraitModelYaw(model, headBone, camera, vrm.humanoid)
+          !isHeadFacingCamera(
+            headBone,
+            camera,
+            vrm.humanoid,
+            model,
+            loadedCharacterId,
+          ) &&
+          correctPortraitModelYaw(
+            model,
+            headBone,
+            camera,
+            vrm.humanoid,
+            0.12,
+            loadedCharacterId,
+          )
         ) {
           baseModelRotY = normalizeModelYaw(model);
           lastPortraitFacingFixMs = now;
@@ -1818,15 +1845,147 @@ export async function createVrmAvatar(opts) {
     bodyMotion.cancelPokeShake?.();
     bodyMotion.resetSmoothedRoot?.();
     bodyMotion.reapplyPlantedLimbs?.({ force: true, now: performance.now() });
-    applyDefaultPortraitFrame?.();
-    if (
-      !isHeadFacingCamera(headBone, camera, vrm.humanoid, model) &&
-      correctPortraitModelYaw(model, headBone, camera, vrm.humanoid, 0.08)
-    ) {
-      baseModelRotY = normalizeModelYaw(model);
+    for (let pass = 0; pass < 4; pass += 1) {
       applyDefaultPortraitFrame?.();
+      if (
+        isHeadFacingCamera(
+          headBone,
+          camera,
+          vrm.humanoid,
+          model,
+          loadedCharacterId,
+        )
+      ) {
+        break;
+      }
+      if (
+        !correctPortraitModelYaw(
+          model,
+          headBone,
+          camera,
+          vrm.humanoid,
+          0.08,
+          loadedCharacterId,
+        )
+      ) {
+        break;
+      }
+      baseModelRotY = normalizeModelYaw(model);
     }
   };
+
+  function warmPresentFrameCore() {
+    try {
+      syncLookTarget();
+      syncHumanoidPose();
+      stabilizeVrmSpringBones(vrm);
+      vrm.update(1 / 60);
+      bodyMotion.enforcePlantedLimbs?.({ lockForearms: true });
+      bodyMotion.reapplyPlantedLimbs?.({ force: true, now: performance.now() });
+      bodyMotion.finishPlantedLimbLockPostUpdate?.({ hands: true });
+      establishCalmStandFromBind(vrm, bodyMotion, {
+        resetIdleLife: false,
+        warmFrames: 8,
+        characterId: loadedCharacterId,
+      });
+      applyDefaultPortraitFrame?.();
+      syncLookTarget();
+      renderer.render(scene, camera);
+      renderer.render(scene, camera);
+    } catch {
+      /* ignore warm-up errors */
+    }
+  }
+
+  /** Edge energy in the upper portrait band — higher when eyes/face features face the camera. */
+  function measurePortraitCaptureContrast() {
+    try {
+      renderer.render(scene, camera);
+      const gl = renderer.getContext();
+      const w = canvas.width;
+      const h = canvas.height;
+      if (!gl || w < 8 || h < 8) return 0;
+      const x0 = Math.floor(w * 0.22);
+      const x1 = Math.floor(w * 0.78);
+      const y0 = Math.floor(h * 0.1);
+      const y1 = Math.floor(h * 0.58);
+      const rw = Math.max(4, x1 - x0);
+      const rh = Math.max(4, y1 - y0);
+      const buf = new Uint8Array(rw * rh * 4);
+      gl.readPixels(x0, h - y1, rw, rh, gl.RGBA, gl.UNSIGNED_BYTE, buf);
+      let sum = 0;
+      let sumSq = 0;
+      let n = 0;
+      for (let row = 0; row < rh; row += 2) {
+        for (let col = 0; col < rw; col += 2) {
+          const i = (row * rw + col) * 4;
+          const lum = buf[i] * 0.2126 + buf[i + 1] * 0.7152 + buf[i + 2] * 0.0722;
+          sum += lum;
+          sumSq += lum * lum;
+          n += 1;
+        }
+      }
+      if (!n) return 0;
+      const mean = sum / n;
+      const variance = Math.max(0, sumSq / n - mean * mean);
+      return Math.sqrt(variance);
+    } catch {
+      return 0;
+    }
+  }
+
+  function flipRosterCaptureYaw() {
+    model.rotation.y += Math.PI;
+    baseModelRotY = normalizeModelYaw(model);
+    applyDefaultPortraitFrame?.();
+    warmPresentFrameCore();
+  }
+
+  function pickBestRosterCaptureYaw() {
+    resetCameraView();
+    warmPresentFrameCore();
+    const baseY = baseModelRotY;
+    let bestScore = -1;
+    let bestYaw = baseY;
+    let bestZSign = portraitCameraZSign;
+    for (const yawAdd of [0, Math.PI]) {
+      for (const zSign of [1, -1]) {
+        model.rotation.y = baseY + yawAdd;
+        normalizeModelYaw(model);
+        model.updateMatrixWorld(true);
+        headBone?.updateMatrixWorld(true);
+        const shot = buildPortraitShot(
+          faceAnchor,
+          portraitDist,
+          camera.fov || PORTRAIT_FOV,
+          zSign,
+        );
+        applyPortraitShot(controls, camera, shot, { portraitDist });
+        portraitCameraZSign = zSign;
+        syncLookTarget();
+        warmPresentFrameCore();
+        const s = measurePortraitCaptureContrast();
+        if (s > bestScore) {
+          bestScore = s;
+          bestYaw = normalizeModelYaw(model);
+          bestZSign = zSign;
+        }
+      }
+    }
+    model.rotation.y = bestYaw;
+    baseModelRotY = bestYaw;
+    portraitCameraZSign = bestZSign;
+    const shot = buildPortraitShot(
+      faceAnchor,
+      portraitDist,
+      camera.fov || PORTRAIT_FOV,
+      bestZSign,
+    );
+    applyPortraitShot(controls, camera, shot, { portraitDist });
+    syncLookTarget();
+    warmPresentFrameCore();
+    return bestScore;
+  }
 
   canvas.style.touchAction = "none";
   const orbitSurface = orbitElement || canvas;
@@ -2053,28 +2212,10 @@ export async function createVrmAvatar(opts) {
     },
     resize,
     resetCameraView,
-    warmPresentFrame() {
-      try {
-        syncLookTarget();
-        syncHumanoidPose();
-        stabilizeVrmSpringBones(vrm);
-        vrm.update(1 / 60);
-        bodyMotion.enforcePlantedLimbs?.({ lockForearms: true });
-        bodyMotion.reapplyPlantedLimbs?.({ force: true, now: performance.now() });
-        bodyMotion.finishPlantedLimbLockPostUpdate?.({ hands: true });
-        establishCalmStandFromBind(vrm, bodyMotion, {
-          resetIdleLife: false,
-          warmFrames: 8,
-          characterId: loadedCharacterId,
-        });
-        applyDefaultPortraitFrame?.();
-        syncLookTarget();
-        renderer.render(scene, camera);
-        renderer.render(scene, camera);
-      } catch {
-        /* ignore warm-up errors */
-      }
-    },
+    measurePortraitCaptureContrast,
+    flipRosterCaptureYaw,
+    pickBestRosterCaptureYaw,
+    warmPresentFrame: warmPresentFrameCore,
     getPortraitFacing() {
       const headScore = headBone
         ? facingAlignmentScore(headBone, camera.position, vrm.humanoid)
@@ -2094,7 +2235,13 @@ export async function createVrmAvatar(opts) {
       return {
         bodyScore: modelBodyFacingScore(model, camera.position),
         headScore,
-        facingCamera: isHeadFacingCamera(headBone, camera, vrm.humanoid, model),
+        facingCamera: isHeadFacingCamera(
+          headBone,
+          camera,
+          vrm.humanoid,
+          model,
+          loadedCharacterId,
+        ),
         visibleScore,
         frameScore,
         modelRotY: model.rotation.y,

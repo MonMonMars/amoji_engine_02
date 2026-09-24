@@ -245,6 +245,24 @@ describe("companionPortraitFraming", () => {
     );
   });
 
+  it("isHeadFacingCamera is false when the head points at camera but the torso faces away", () => {
+    const model = new THREE.Group();
+    model.rotation.y = Math.PI;
+    const head = new THREE.Object3D();
+    head.position.set(0, 1.1, 0);
+    head.rotation.y = Math.PI;
+    model.add(head);
+    model.updateMatrixWorld(true);
+    head.updateMatrixWorld(true);
+    const camera = new THREE.PerspectiveCamera();
+    camera.position.set(0, 1.18, 2);
+    expect(modelBodyFacingScore(model, camera.position)).toBeLessThan(-0.5);
+    expect(facingAlignmentScore(head, camera.position)).toBeGreaterThan(0.5);
+    expect(isHeadFacingCamera(head, camera, null, model)).toBe(false);
+    expect(correctPortraitModelYaw(model, head, camera)).toBe(true);
+    expect(isModelBodyFacingCamera(model, camera)).toBe(true);
+  });
+
   it("correctPortraitModelYaw flips body yaw when the root faces away", () => {
     const model = new THREE.Group();
     model.rotation.y = Math.PI;
