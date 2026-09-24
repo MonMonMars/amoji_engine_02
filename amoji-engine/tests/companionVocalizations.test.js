@@ -58,21 +58,23 @@ describe("companionVocalizations", () => {
     expect(POKE_VOCAL_TYPES).toContain(poke.type);
     expect(poke.performance.emotion).toBe("happy");
     expect(poke.performance.pokeReaction).toBe(true);
-    expect(poke.text).toMatch(/嘻|哈|he|ha|tee/i);
+    expect(poke.text).toMatch(/哈|he|ha|tee/i);
+    expect(poke.text).not.toMatch(/嘻嘻|嘿嘿/);
   });
 
   it("mergePokeVocalIntoSpeech pauses between giggle and line", () => {
-    expect(mergePokeVocalIntoSpeech("嘻嘻～", "我喺度呀", false)).toBe("嘻嘻～，我喺度呀");
+    expect(mergePokeVocalIntoSpeech("哈哈～", "我喺度呀", false)).toBe("哈哈～，我喺度呀");
     expect(mergePokeVocalIntoSpeech("Hehe!", "I'm here", true)).toBe("Hehe!… I'm here");
   });
 
   it("returns bilingual vocal lines", () => {
-    expect(pickVocalLine("giggle", false)).toMatch(/嘻|呵|唔/);
+    expect(pickVocalLine("giggle", false)).toMatch(/哈/);
+    expect(pickVocalLine("giggle", false)).not.toMatch(/嘻嘻|嘿嘿/);
     expect(pickVocalLine("giggle", true)).toMatch(/he|tee|eh/i);
   });
 
   it("builds TTS instruct hints for vocalizations", () => {
-    expect(vocalizationInstructHint("嘻嘻～")).toMatch(/giggle/i);
+    expect(vocalizationInstructHint("哈哈～")).toMatch(/laugh|chuckle/i);
     expect(vocalizationInstructHint("Um……")).toMatch(/thinking hum/i);
     expect(vocalizationInstructHint("Hello")).toBe("");
   });
