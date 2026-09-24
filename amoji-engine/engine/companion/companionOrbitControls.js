@@ -5,7 +5,7 @@ import * as THREE from "three";
 import { applyUserOrbitLimits } from "./companionPortraitFraming.js";
 
 export const COMPANION_ORBIT_CONTROLS_SCHEMA =
-  "amoji.companionOrbitControls.v3-two-finger-zoom";
+  "amoji.companionOrbitControls.v4-wheel-and-one-finger-rotate";
 
 /**
  * @param {{
@@ -42,8 +42,9 @@ export function configureCompanionOrbitControls(controls) {
     MIDDLE: THREE.MOUSE.DOLLY,
     RIGHT: THREE.MOUSE.ROTATE,
   };
-  /* Touch: one finger = poke (avatar pointer). Two fingers = pinch zoom + pan on the character. */
+  /* Touch: one finger drag = orbit; two fingers = pinch zoom. Short tap on body = poke (avatar pointer). */
   controls.touches = {
+    ONE: THREE.TOUCH.ROTATE,
     TWO: THREE.TOUCH.DOLLY_PAN,
   };
   controls.enablePan = true;
@@ -77,12 +78,12 @@ export function bindOrbitWheelZoom(el, controls) {
   if (!el?.addEventListener) return () => {};
   const onWheel = (event) => {
     if (controls?.enabled === false || controls?.enableZoom === false) return;
+    /* preventDefault stops page/chat scroll; do NOT stopPropagation — OrbitControls dolly needs the event. */
     if (event.cancelable) event.preventDefault();
-    event.stopPropagation();
   };
-  el.addEventListener("wheel", onWheel, { passive: false, capture: true });
+  el.addEventListener("wheel", onWheel, { passive: false, capture: false });
   return () => {
-    el.removeEventListener("wheel", onWheel, { capture: true });
+    el.removeEventListener("wheel", onWheel, { capture: false });
   };
 }
 

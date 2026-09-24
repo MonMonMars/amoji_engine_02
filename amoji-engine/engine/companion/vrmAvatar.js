@@ -1731,11 +1731,13 @@ export async function createVrmAvatar(opts) {
       }
 
       portraitFacingBootFrames += 1;
-      const portraitFacingCooldownMs =
-        portraitFacingBootFrames < 180 ? 0 : 900;
+      const portraitFacingBootOnly = portraitFacingBootFrames < 90;
+      const portraitFacingCooldownMs = portraitFacingBootOnly ? 0 : 900;
       if (
         headBone &&
+        portraitFacingBootOnly &&
         !userOwnsCamera &&
+        !camState.userFramingHeld &&
         !libraryMotion &&
         !vrmaOwnsBody &&
         now - lastPortraitFacingFixMs >= portraitFacingCooldownMs
@@ -1747,9 +1749,7 @@ export async function createVrmAvatar(opts) {
           baseModelRotY = normalizeModelYaw(model);
           lastPortraitFacingFixMs = now;
           syncLookTarget();
-          if (portraitFacingBootFrames < 180) {
-            applyDefaultPortraitFrame?.();
-          }
+          applyDefaultPortraitFrame?.();
         }
       }
     } catch (err) {
