@@ -50,7 +50,10 @@ import {
 import { actionLoops } from "./companionActionMotion.js";
 import { BOOT_FULL_LIBRARY_WARM_CLIP_IDS } from "./companionIdleMotionPreload.js";
 import { detectVrmIdleRestRotations } from "./companionArmRestCalibration.js";
-import { establishCalmStandFromBind } from "./companionCalmStandFoundation.js";
+import {
+  applyIdlePresentation,
+  establishCalmStandFromBind,
+} from "./companionCalmStandFoundation.js";
 import { createCompanionBodyMotion } from "./companionBodyMotion.js";
 import {
   auditPlantedLimbDualWrite,
@@ -80,6 +83,7 @@ import {
   resolveOnlineMotionClipUrl,
 } from "./companionOnlineMotionClips.mjs";
 import { createCompanionTreatProp } from "./companionTreatProp.js";
+import { normalizeCompanionVrmStageMaterials } from "./companionVrmStageMaterials.js";
 import {
   isTalkBackgroundLibraryAction,
   isTalkLibraryLoopAction,
@@ -336,23 +340,7 @@ export async function createVrmAvatar(opts) {
   if (!vrm) throw new Error("VRM data missing from model");
 
   const model = vrm.scene;
-  model.traverse((obj) => {
-    if (obj.isMesh) {
-      obj.castShadow = true;
-      obj.receiveShadow = true;
-      obj.frustumCulled = false;
-      const mats = Array.isArray(obj.material) ? obj.material : [obj.material];
-      for (const m of mats) {
-        if (!m) continue;
-        m.visible = true;
-        if (m.map) m.map.colorSpace = THREE.SRGBColorSpace;
-        if (typeof m.envMapIntensity === "number") {
-          m.envMapIntensity = Math.max(m.envMapIntensity, 0.85);
-        }
-        m.needsUpdate = true;
-      }
-    }
-  });
+  normalizeCompanionVrmStageMaterials(model);
 
   // Portrait framing — upper body / face (skip stray oversized meshes in some VRMs)
   const box = computeVrmDisplayBounds(model);
@@ -662,7 +650,7 @@ export async function createVrmAvatar(opts) {
   configureVrmSpringStability(vrm, sceneEnvironment);
   establishCalmStandFromBind(vrm, bodyMotion, {
     resetIdleLife: false,
-    warmFrames: 48,
+    warmFrames: 64,
     characterId: loadedCharacterId,
   });
   configureVrmSpringStability(vrm, sceneEnvironment);
@@ -675,6 +663,29 @@ export async function createVrmAvatar(opts) {
     portraitCamera.target.copy(controls.target);
     portraitCamera.fov = camera.fov;
     portraitCamera.distance = camera.position.distanceTo(controls.target);
+  };
+  /** User orbit reset — restore last good front portrait, do not re-guess yaw from orbit angle. */
+  const restoreStoredPortraitView = () => {
+    model.rotation.y = baseModelRotY;
+    model.position.y = baseModelY;
+    vrm.scene?.updateMatrixWorld?.(true);
+    headBone?.updateMatrixWorld?.(true);
+    camera.position.copy(defaultPortrait.position);
+    controls.target.copy(defaultPortrait.target);
+    camera.fov = defaultPortrait.fov;
+    camera.updateProjectionMatrix?.();
+    applyUserOrbitLimits(controls);
+    controls.update();
+    portraitDist = defaultPortrait.distance;
+    portraitCamera.position.copy(defaultPortrait.position);
+    portraitCamera.target.copy(defaultPortrait.target);
+    portraitCamera.fov = defaultPortrait.fov;
+    portraitCamera.distance = defaultPortrait.distance;
+    cameraResetAnim = null;
+    cameraDirector.resetDialogue();
+    cameraDirector.holdUserFraming(false);
+    cameraDirector.setUserOrbiting(false);
+    syncLookTarget();
   };
   const cameraDirector = createCompanionCameraDirector();
   cameraDirector.resetBootGrace();
@@ -1618,7 +1629,7 @@ export async function createVrmAvatar(opts) {
       if (!libraryMotion && !bodyMotion.currentAction) {
         bodyMotion.enforcePlantedLimbs?.({
           lockUpperArms: true,
-          lockForearms: !bodyMotion.idleBeatArmsActive,
+          lockForearms: false,
           hands: !talking && !eating && !bodyMotion.idleBeatArmsActive,
         });
       }
@@ -1817,15 +1828,14 @@ export async function createVrmAvatar(opts) {
   const resetCameraView = () => {
     bodyMotion.cancelPokeShake?.();
     bodyMotion.resetSmoothedRoot?.();
-    bodyMotion.reapplyPlantedLimbs?.({ force: true, now: performance.now() });
-    applyDefaultPortraitFrame?.();
-    if (
-      !isHeadFacingCamera(headBone, camera, vrm.humanoid, model) &&
-      correctPortraitModelYaw(model, headBone, camera, vrm.humanoid, 0.08)
-    ) {
-      baseModelRotY = normalizeModelYaw(model);
-      applyDefaultPortraitFrame?.();
-    }
+    restoreProceduralCalmStand({ resetIdleLife: false, warmFrames: 28 });
+    restoreStoredPortraitView();
+    syncHumanoidSkinnedRawFromNormalized(vrm?.humanoid);
+    vrm.humanoid?.update?.();
+    stabilizeVrmSpringBones(vrm);
+    vrm.update?.(1 / 60);
+    bodyMotion.finishPlantedLimbLockPostUpdate?.({ hands: true });
+    syncHumanoidSkinnedRawFromNormalized(vrm?.humanoid);
   };
 
   canvas.style.touchAction = "none";
@@ -2058,13 +2068,10 @@ export async function createVrmAvatar(opts) {
         syncLookTarget();
         syncHumanoidPose();
         stabilizeVrmSpringBones(vrm);
-        vrm.update(1 / 60);
-        bodyMotion.enforcePlantedLimbs?.({ lockForearms: true });
-        bodyMotion.reapplyPlantedLimbs?.({ force: true, now: performance.now() });
-        bodyMotion.finishPlantedLimbLockPostUpdate?.({ hands: true });
-        establishCalmStandFromBind(vrm, bodyMotion, {
+        applyIdlePresentation(vrm, bodyMotion, {
           resetIdleLife: false,
-          warmFrames: 8,
+          fullReset: true,
+          warmFrames: 12,
           characterId: loadedCharacterId,
         });
         applyDefaultPortraitFrame?.();
@@ -2074,6 +2081,12 @@ export async function createVrmAvatar(opts) {
       } catch {
         /* ignore warm-up errors */
       }
+    },
+    applyIdlePresentation(opts = {}) {
+      return applyIdlePresentation(vrm, bodyMotion, {
+        characterId: loadedCharacterId,
+        ...opts,
+      });
     },
     getPortraitFacing() {
       const headScore = headBone

@@ -11,7 +11,7 @@ const VRoidSampleC =
 const VRoidFem =
   "https://raw.githubusercontent.com/madjin/vrm-samples/master/vroid/fem_vroid.vrm";
 
-export const ROSTER_VRM_ASSETS_SCHEMA = "amoji.rosterVrmAssets.v7-vtuber-preload-bust";
+export const ROSTER_VRM_ASSETS_SCHEMA = "amoji.rosterVrmAssets.v8-sendagaya-friends";
 
 /** @param {string} characterId */
 export function rosterVrmBasename(characterId) {
@@ -34,8 +34,8 @@ export const LEGACY_VRM_BASENAME_ALIASES = Object.freeze({
   "companion-vroid-female.vrm": "mei",
   "companion-vroid-male.vrm": "atlas",
   "companion-erika.vrm": "mei",
-  "companion-sakura.vrm": "shino",
-  "companion-sienna.vrm": "shino",
+  "companion-sakura.vrm": "shibu",
+  "companion-sienna.vrm": "fumiriya",
   "companion-celeste.vrm": "juno",
   "companion-luna.vrm": "luna",
   "companion-yume.vrm": "elio",

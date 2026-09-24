@@ -146,7 +146,7 @@ for (const preset of SCENE_BACKGROUND_PRESETS) {
     "}",
     "",
   );
-  const swatchArt = `url("${sceneArtFile(preset.id).split("?")[0]}")`;
+  const swatchArt = `url("${sceneArtFile(preset.id)}")`;
   lines.push(
     `.scene-preset__swatch--${preset.id} {`,
     "  background-image:",

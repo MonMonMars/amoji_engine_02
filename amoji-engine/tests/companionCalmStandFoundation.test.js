@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   COMPANION_CALM_STAND_FOUNDATION_SCHEMA,
+  applyIdlePresentation,
   establishCalmStandFromBind,
 } from "../engine/companion/companionCalmStandFoundation.js";
 import { PLANTED_CALM_IDLE_BEAT_POOL } from "../engine/companion/companionIdleGender.js";
@@ -13,6 +14,10 @@ describe("companionCalmStandFoundation", () => {
 
   it("establishCalmStandFromBind requires vrm humanoid and body motion", () => {
     expect(establishCalmStandFromBind(null, null).ok).toBe(false);
+  });
+
+  it("applyIdlePresentation requires vrm humanoid and body motion", () => {
+    expect(applyIdlePresentation(null, null).ok).toBe(false);
   });
 });
 

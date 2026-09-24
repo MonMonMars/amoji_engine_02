@@ -26,6 +26,7 @@ import {
   buildLlmContextDatabaseFragment,
   refreshLlmContextDb,
 } from "./companionLlmContextDb.js";
+import { buildSessionReplyLanguageRule } from "./companionSessionReplyLanguage.mjs";
 
 export const COMPANION_UNIFIED_APP_SCHEMA = "amoji.companionUnifiedApp.v1";
 
@@ -127,7 +128,13 @@ export function buildUnifiedSessionPrompt(opts) {
   const isEnglish = Boolean(opts.isEnglish);
   const rolePart =
     buildCareDisabledPetRoleFragment(role, isEnglish) || rolePromptFragment(role, isEnglish);
-  const parts = [opts.characterPrompt, rolePart, opts.uiRules || "", opts.motionExtra || ""];
+  const parts = [
+    opts.characterPrompt,
+    buildSessionReplyLanguageRule(isEnglish),
+    rolePart,
+    opts.uiRules || "",
+    opts.motionExtra || "",
+  ];
   if (role === "secretary") {
     parts.push(buildSecretaryPromptExtras(isEnglish, { storage: opts.storage }));
   }

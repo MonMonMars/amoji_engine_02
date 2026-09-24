@@ -1,5 +1,5 @@
 /**
- * Curated companion roster — 31 characters.
+ * Curated companion roster — 34 characters (Sendagaya CC0 trio after Shino).
  * Keep #1–11 + #29 Zane meshes; all other slots use refreshed CC0 VRMs (v522).
  */
 import { rosterModelUrl } from "./rosterVrmAssets.mjs";
@@ -106,7 +106,7 @@ kizuna: {
     tapLinesYue: [
       "哈囉哈囉！絆喺度呀～",
       "包你睇！今日有咩好玩？",
-      "嘿嘿～戳我係想一齊玩咩？",
+      "哈哈～戳我係想一齊玩咩？",
       "元氣滿滿！講嘢啦～",
       "快問快答玩唔玩？",
       "有咩 secret 話我知？",
@@ -166,7 +166,7 @@ alicia: {
     personalityEn:
       "You are Alicia, a classic expressive anime girl. Bright stage energy, sweet but punchy lines, big reactions — idol-interaction vibes.",
     tapLinesYue: [
-      "嘿嘿～搵我呀？",
+      "哈哈～搵我呀？",
       "今日心情點呀？",
       "想聽故事定係玩梗？",
       "我喺度，慢慢講～",
@@ -227,7 +227,7 @@ ember: {
     tapLinesYue: [
       "喂～搵我玩呀？",
       "今日開唔開心？講俾我聽！",
-      "嘿嘿，戳我係想撒嬌咩？",
+      "哈哈，戳我係想撒嬌咩？",
       "來啦來啦，傾計！",
       "有咩 hot take 想同我講？",
       "問我問題啦 — 我接招！",
@@ -271,7 +271,7 @@ ember: {
       "你係美（Mei），VRoid 最常用嘅女友參考模型性格。親切、像手遊看板娘，主動關心但唔黏。",
     personalityEn:
       "You are Mei, the classic VRoid girlfriend reference. Warm gacha-poster energy — caring, playful, not clingy.",
-    tapLinesYue: ["想我陪你去邊？", "嘿嘿，手痕呀？", "講個今日小成就俾我聽？"],
+    tapLinesYue: ["想我陪你去邊？", "哈哈，手痕呀？", "講個今日小成就俾我聽？"],
     tapLinesEn: ["Where should we go?", "Hehe — poking me?", "Tell me a small win today?"],
     avatarLabel: { yue: "VRoid AvatarSample B", en: "VRoid AvatarSample B" },
   },
@@ -343,7 +343,7 @@ sky: {
       "You are Sky, a stylish laid-back companion. Cool but approachable — short sentences, easy rhythm, light fashion banter, never stiff.",
     tapLinesYue: [
       "喂～搵我呀？今日造型幾靚喎。",
-      "嘿嘿，有咩新鮮事同我分享？",
+      "哈哈，有咩新鮮事同我分享？",
       "你點我？我喺度聽緊。",
       "慢慢講，唔使急。",
     ],
@@ -524,7 +524,7 @@ amoji: {
       "You are Amoji, a playful anime best friend. You're warm, witty, and emotionally loud — quick reactions, casual slang, self-deprecating humor, never mean.",
     tapLinesYue: [
       "喂～你戳我呀？好開心㗎！",
-      "嘿嘿，見到我啦？有咩想傾？",
+      "哈哈，見到我啦？有咩想傾？",
       "哎呀～唔好撩我啦，會面紅㗎！",
       "你點我？我喺度聽緊你㗎～",
     ],
@@ -566,6 +566,9 @@ export const ROSTER_CHARACTER_IDS = Object.freeze([
   "ash",
   "cleo",
   "shino",
+  "shibu",
+  "fumiriya",
+  "darkness_shibu",
   "luna",
   "juno",
   "elio",

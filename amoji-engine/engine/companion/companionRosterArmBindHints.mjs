@@ -10,6 +10,9 @@ export const ROSTER_ARM_BIND_OVERRIDES = Object.freeze({
   nova: "apose",
   alicia: "apose",
   shino: "apose",
+  shibu: "apose",
+  fumiriya: "apose",
+  darkness_shibu: "apose",
 });
 
 /**

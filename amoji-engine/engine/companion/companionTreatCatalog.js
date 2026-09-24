@@ -65,7 +65,7 @@ export const TREAT_ITEMS = Object.freeze([
     hearts: 18,
     name: { yue: "曲奇", en: "Cookie" },
     blurb: { yue: "脆脆小食", en: "A crunchy snack" },
-    thanks: { yue: "曲奇好脆呀，嘻嘻。", en: "That cookie was so crunchy!" },
+    thanks: { yue: "曲奇好脆呀，哈哈。", en: "That cookie was so crunchy!" },
   },
   {
     id: "milk-tea",
