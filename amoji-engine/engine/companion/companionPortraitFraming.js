@@ -4,10 +4,13 @@
 import * as THREE from "three";
 
 export const COMPANION_PORTRAIT_FRAMING_SCHEMA =
-  "amoji.companionPortraitFraming.v11-body-forward-anime";
+  "amoji.companionPortraitFraming.v12-roster-bounds-capture";
 
 /** Look-at photoreal rigs where root +Z toward camera = visible front (head bone may read away). */
 export const PHOTOREAL_PORTRAIT_CHARACTER_IDS = new Set(["nova"]);
+
+/** Roster VRMs where visible front correlates with negative root forward vs camera. */
+export const INVERTED_PORTRAIT_BODY_FACING_IDS = new Set(["yuki", "olivia"]);
 
 /**
  * @param {string | null | undefined} characterId
@@ -16,6 +19,27 @@ export function isPhotorealPortraitCharacter(characterId) {
   return PHOTOREAL_PORTRAIT_CHARACTER_IDS.has(
     String(characterId || "").toLowerCase(),
   );
+}
+
+/**
+ * @param {string | null | undefined} characterId
+ */
+export function isInvertedPortraitBodyCharacter(characterId) {
+  return INVERTED_PORTRAIT_BODY_FACING_IDS.has(
+    String(characterId || "").toLowerCase(),
+  );
+}
+
+/**
+ * @param {number} body
+ * @param {number} contrast
+ * @param {string | null | undefined} characterId
+ */
+export function rosterCaptureVariantPickScore(body, contrast, characterId) {
+  if (isInvertedPortraitBodyCharacter(characterId)) {
+    return contrast - body * 48;
+  }
+  return contrast + Math.max(0, body) * 10;
 }
 
 /** Fallback lower-neck height when no head bone (ratio from feet to head). */

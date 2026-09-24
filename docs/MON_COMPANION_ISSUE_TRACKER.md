@@ -71,7 +71,7 @@ Agents: **read this before saying “fixed.”** Update a row when status change
 | A2 | **Black screen** while picker or menu loads | ✅ | Boot picker paint | [#88](https://github.com/MonMonMars/amoji_engine_02/pull/88) merged |
 | A3 | **Wide desktop** — Menu blocks picker / layout | ✅ | v550 wide CSS + smoke | [#89](https://github.com/MonMonMars/amoji_engine_02/pull/89), [#90](https://github.com/MonMonMars/amoji_engine_02/pull/90) → **prod ~v551** |
 | A4 | **HQ Japanese-style scene backgrounds** not updated | ✅ | `anime-scene-v551-jp-game`, scene-bg regen | **main** `v551-facing-poke-thumbs-anime-bg` on prod |
-| A5 | **Roster card PNG ≠ loaded VRM** (wrong pose / back / blended arms on card) | ⏸️ | **v565:** torso must face camera (was head-only `facingCamera`); contrast yaw/z pick + regen — **Alicia/Ember/Mei OK**; **Yuki/Kizuna still back/broken** on desktop QA | **v565** PR |
+| A5 | **Roster card PNG ≠ loaded VRM** (wrong pose / back / blended arms on card) | ⏸️ | **v568:** roster capture keeps yaw during pick (no `applyDefaultPortraitFrame` reset); contrast + inverted-body pick (**Yuki**); regen in progress — verify desktop strip | **v568** PR |
 | A8 | **Picker hero** — large portrait **+ scene background** preview | ✅ | `picker-hero-preview-duo`; prod E2E `picker-hero-scene-preview` | **prod v557** |
 | A6 | **Hero / picker portraits cropped** | ✅ | `object-fit: contain`, picker v4 | [#75](https://github.com/MonMonMars/amoji_engine_02/pull/75), [#89](https://github.com/MonMonMars/amoji_engine_02/pull/89) |
 | A7 | **Professional / cinematic scene backgrounds** | ✅ | Pro scene pass | [#71](https://github.com/MonMonMars/amoji_engine_02/pull/71) merged |

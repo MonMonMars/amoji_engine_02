@@ -151,20 +151,26 @@ async function hideUiForCapture(page) {
   await page.evaluate(() => {
     document.getElementById("amoji-boot-splash")?.remove();
     document.getElementById("start-character-picker")?.remove();
-    document.querySelector(".avatar-stage-preview")?.setAttribute("hidden", "");
-    document.querySelector(".stage")?.classList.remove("has-stage-preview");
+    const hide = (sel) => {
+      for (const el of document.querySelectorAll(sel)) {
+        /** @type {HTMLElement} */ (el).style.opacity = "0";
+        /** @type {HTMLElement} */ (el).style.pointerEvents = "none";
+      }
+    };
+    hide(".transcript");
+    hide(".starter-prompts");
+    hide(".composer-shell");
+    hide(".companion-activity-rail");
+    hide(".companion-menu-fab");
+    hide(".companion-chip");
+    hide(".tutorial-try-these");
+    hide(".avatar-stage-preview");
     document.body.classList.remove(
       "companion-picker-open",
       "companion-start-pending",
       "settings-open",
       "scene-sheet-open",
     );
-    for (const el of document.querySelectorAll("body > *")) {
-      if (el.classList?.contains("stage")) continue;
-      const tag = el.tagName;
-      if (tag === "SCRIPT" || tag === "LINK" || tag === "STYLE") continue;
-      /** @type {HTMLElement} */ (el).style.visibility = "hidden";
-    }
   });
 }
 
@@ -186,53 +192,16 @@ async function waitForStageReady(page, characterId) {
     )
     .catch(() => null);
 
-  let captureReady = false;
-  for (let attempt = 0; attempt < 18; attempt += 1) {
-    await page.evaluate(() => {
-      window.__amojiAvatar?.warmPresentFrame?.();
-      window.__amojiAvatar?.resetCameraView?.();
-    });
-    await page.waitForTimeout(1500);
-    captureReady = await page.evaluate(
-      (captureId) => {
-        const facing = window.__amojiAvatar?.getPortraitFacing?.();
-        const limbs = window.__amojiAvatar?.auditPlantedLimbs?.({
-          maxDeltaRad: 0.018,
-        });
-        const head = Number(facing?.headScore) || 0;
-        const body = Number(facing?.bodyScore) || 0;
-        const frame = Number(facing?.frameScore ?? facing?.visibleScore) || 0;
-        const torsoAway = body < -0.35;
-        const photoreal = String(captureId || "").toLowerCase() === "nova";
-        const frameOk = frame > 0.15 || (photoreal && body > 0.35);
-        const headOk = photoreal || head > 0.35;
-        return (
-          facing?.facingCamera === true &&
-          !torsoAway &&
-          frameOk &&
-          body > 0.35 &&
-          headOk &&
-          limbs?.ok !== false
-        );
-      },
-      characterId,
-    );
-    if (captureReady) break;
-  }
-  if (!captureReady) {
-    console.warn(
-      `WARN ${characterId} capture gate soft-fail — best-effort yaw/z pick`,
-    );
-    await page.evaluate(() => {
-      window.__amojiAvatar?.resetCameraView?.();
-    });
-    await page.waitForTimeout(800);
-  }
+  await page.evaluate(() => {
+    window.__amojiAvatar?.warmPresentFrame?.();
+  });
+  await page.waitForTimeout(1200);
 
   await page.evaluate(() => {
+    window.__amojiAvatar?.prepareRosterCapture?.();
     window.__amojiAvatar?.pickBestRosterCaptureYaw?.();
   });
-  await page.waitForTimeout(300);
+  await page.waitForTimeout(200);
 
   await hideUiForCapture(page);
   await page.waitForTimeout(400);
@@ -245,7 +214,24 @@ async function waitForStageReady(page, characterId) {
  * @param {string} out
  */
 async function screenshotPortrait(page, box, kind, out) {
-  const clip = portraitClip(box, kind);
+  const rel = await page.evaluate(
+    (captureKind) => window.__amojiAvatar?.computeRosterPreviewClip?.(captureKind),
+    kind,
+  );
+  let clip =
+    rel?.width > 20 &&
+    rel?.height > 20 &&
+    rel?.upright !== false
+      ? {
+          x: box.x + rel.x,
+          y: box.y + rel.y,
+          width: rel.width,
+          height: rel.height,
+        }
+      : portraitClip(box, kind);
+  if (rel?.width > 20 && rel?.height > 20 && rel?.upright === false) {
+    clip = portraitClip(box, kind);
+  }
   await page.screenshot({
     path: out,
     type: "png",
@@ -288,6 +274,9 @@ async function captureCharacter(page, characterId, baseUrl) {
   const heroOut = heroPreviewPath(characterId);
   await screenshotPortrait(page, box, "body", cardOut);
   await screenshotPortrait(page, box, "hero", heroOut);
+  await page.evaluate(() => {
+    window.__amojiAvatar?.finishRosterCapture?.();
+  });
   return { cardOut, heroOut };
 }
 
@@ -306,7 +295,11 @@ async function main() {
 
   const browser = await chromium.launch({
     headless: true,
-    args: ["--autoplay-policy=no-user-gesture-required"],
+    args: [
+      "--autoplay-policy=no-user-gesture-required",
+      "--use-gl=angle",
+      "--use-angle=swiftshader",
+    ],
   });
   const page = await browser.newPage({
     viewport: { width: 900, height: 1200 },

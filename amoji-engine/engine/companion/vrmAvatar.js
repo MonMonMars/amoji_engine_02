@@ -34,6 +34,8 @@ import {
   portraitFrameResolveScore,
   portraitVisibleFacingScore,
   portraitDistanceForHeight,
+  isPhotorealPortraitCharacter,
+  rosterCaptureVariantPickScore,
 } from "./companionPortraitFraming.js";
 import {
   bindCompanionAvatarPointer,
@@ -261,6 +263,7 @@ export async function createVrmAvatar(opts) {
       canvas,
       antialias: true,
       alpha: true,
+      preserveDrawingBuffer: true,
       powerPreference: "default",
       failIfMajorPerformanceCaveat: false,
     });
@@ -659,6 +662,7 @@ export async function createVrmAvatar(opts) {
   };
   /** @type {(() => import('./companionCameraApply.js').ReturnType<typeof resolveFrontPortraitFrame>) | null} */
   let applyDefaultPortraitFrame = null;
+  let rosterCaptureMode = false;
 
   configureVrmSpringStability(vrm, sceneEnvironment);
   establishCalmStandFromBind(vrm, bodyMotion, {
@@ -753,6 +757,7 @@ export async function createVrmAvatar(opts) {
     cameraDirector.holdUserFraming(false);
     cameraDirector.setUserOrbiting(false);
     if (
+      !rosterCaptureMode &&
       !isHeadFacingCamera(
         headBone,
         camera,
@@ -1845,6 +1850,10 @@ export async function createVrmAvatar(opts) {
     bodyMotion.cancelPokeShake?.();
     bodyMotion.resetSmoothedRoot?.();
     bodyMotion.reapplyPlantedLimbs?.({ force: true, now: performance.now() });
+    if (rosterCaptureMode) {
+      warmPresentFrameCore();
+      return;
+    }
     for (let pass = 0; pass < 4; pass += 1) {
       applyDefaultPortraitFrame?.();
       if (
@@ -1883,18 +1892,90 @@ export async function createVrmAvatar(opts) {
       bodyMotion.enforcePlantedLimbs?.({ lockForearms: true });
       bodyMotion.reapplyPlantedLimbs?.({ force: true, now: performance.now() });
       bodyMotion.finishPlantedLimbLockPostUpdate?.({ hands: true });
-      establishCalmStandFromBind(vrm, bodyMotion, {
-        resetIdleLife: false,
-        warmFrames: 8,
-        characterId: loadedCharacterId,
-      });
-      applyDefaultPortraitFrame?.();
+      if (!rosterCaptureMode) {
+        establishCalmStandFromBind(vrm, bodyMotion, {
+          resetIdleLife: false,
+          warmFrames: 8,
+          characterId: loadedCharacterId,
+        });
+        applyDefaultPortraitFrame?.();
+      } else {
+        model.updateMatrixWorld(true);
+        headBone?.updateMatrixWorld(true);
+        faceAnchor = computeVrmFrameAnchor(vrm, model);
+      }
       syncLookTarget();
       renderer.render(scene, camera);
       renderer.render(scene, camera);
     } catch {
       /* ignore warm-up errors */
     }
+  }
+
+  function prepareRosterCapture() {
+    rosterCaptureMode = true;
+    resetCameraView();
+    warmPresentFrameCore();
+  }
+
+  /** Higher when the upper portrait band looks like a face (skin + eye contrast), not a hood back. */
+  function measureRosterFaceEyeScore() {
+    try {
+      renderer.render(scene, camera);
+      const gl = renderer.getContext();
+      const w = canvas.width;
+      const h = canvas.height;
+      if (!gl || w < 8 || h < 8) return 0;
+      const x0 = Math.floor(w * 0.28);
+      const x1 = Math.floor(w * 0.72);
+      const y0 = Math.floor(h * 0.08);
+      const y1 = Math.floor(h * 0.42);
+      const rw = Math.max(4, x1 - x0);
+      const rh = Math.max(4, y1 - y0);
+      const buf = new Uint8Array(rw * rh * 4);
+      gl.readPixels(x0, h - y1, rw, rh, gl.RGBA, gl.UNSIGNED_BYTE, buf);
+      let dark = 0;
+      let skin = 0;
+      let n = 0;
+      for (let row = 0; row < rh; row += 2) {
+        for (let col = 0; col < rw; col += 2) {
+          const i = (row * rw + col) * 4;
+          const lum = buf[i] * 0.2126 + buf[i + 1] * 0.7152 + buf[i + 2] * 0.0722;
+          n += 1;
+          if (lum < 92) dark += 1;
+          else if (lum > 105 && lum < 228) skin += 1;
+        }
+      }
+      if (!n) return 0;
+      const darkFrac = dark / n;
+      const skinFrac = skin / n;
+      if (darkFrac > 0.78) return 0.05;
+      return skinFrac * (1 - darkFrac * 0.65) + measurePortraitCaptureContrast() * 0.02;
+    } catch {
+      return 0;
+    }
+  }
+
+  function scoreRosterCaptureVariant() {
+    const body = modelBodyFacingScore(model, camera.position);
+    const head = headBone
+      ? facingAlignmentScore(headBone, camera.position, vrm.humanoid)
+      : body;
+    const photoreal = isPhotorealPortraitCharacter(loadedCharacterId);
+    const facingAlign = photoreal ? body : Math.min(body, head);
+    const faceEye = measureRosterFaceEyeScore();
+    const contrast = measurePortraitCaptureContrast();
+    // Pixel face band wins over bone scores (hooded rigs like Yuki report +1 while showing the back).
+    return (
+      faceEye * 12 +
+      contrast * 0.065 +
+      Math.max(0, facingAlign) * 0.75
+    );
+  }
+
+  /** True when the upper portrait band is a uniform dark hood / hair back, not a face. */
+  function rosterCaptureLooksLikeBack() {
+    return measureRosterFaceEyeScore() < 0.1;
   }
 
   /** Edge energy in the upper portrait band — higher when eyes/face features face the camera. */
@@ -1937,7 +2018,27 @@ export async function createVrmAvatar(opts) {
   function flipRosterCaptureYaw() {
     model.rotation.y += Math.PI;
     baseModelRotY = normalizeModelYaw(model);
-    applyDefaultPortraitFrame?.();
+    if (!rosterCaptureMode) {
+      applyDefaultPortraitFrame?.();
+    }
+    warmPresentFrameCore();
+  }
+
+  function applyRosterCaptureVariant(baseY, yawAdd, zSign) {
+    model.rotation.y = baseY + yawAdd;
+    baseModelRotY = normalizeModelYaw(model);
+    model.updateMatrixWorld(true);
+    headBone?.updateMatrixWorld(true);
+    faceAnchor = computeVrmFrameAnchor(vrm, model);
+    const shot = buildPortraitShot(
+      faceAnchor,
+      portraitDist,
+      camera.fov || PORTRAIT_FOV,
+      zSign,
+    );
+    applyPortraitShot(controls, camera, shot, { portraitDist });
+    portraitCameraZSign = zSign;
+    syncLookTarget();
     warmPresentFrameCore();
   }
 
@@ -1948,43 +2049,166 @@ export async function createVrmAvatar(opts) {
     let bestScore = -1;
     let bestYaw = baseY;
     let bestZSign = portraitCameraZSign;
-    for (const yawAdd of [0, Math.PI]) {
+    const yawCandidates = [0, Math.PI];
+    for (const yawAdd of yawCandidates) {
       for (const zSign of [1, -1]) {
-        model.rotation.y = baseY + yawAdd;
-        normalizeModelYaw(model);
-        model.updateMatrixWorld(true);
-        headBone?.updateMatrixWorld(true);
-        const shot = buildPortraitShot(
-          faceAnchor,
-          portraitDist,
-          camera.fov || PORTRAIT_FOV,
-          zSign,
-        );
-        applyPortraitShot(controls, camera, shot, { portraitDist });
-        portraitCameraZSign = zSign;
-        syncLookTarget();
-        warmPresentFrameCore();
-        const s = measurePortraitCaptureContrast();
-        if (s > bestScore) {
-          bestScore = s;
-          bestYaw = normalizeModelYaw(model);
+        applyRosterCaptureVariant(baseY, yawAdd, zSign);
+        const body = modelBodyFacingScore(model, camera.position);
+        const head = headBone
+          ? facingAlignmentScore(headBone, camera.position, vrm.humanoid)
+          : body;
+        if (Math.abs(body) < 0.22 && Math.abs(head) < 0.22) {
+          continue;
+        }
+        const faceEye = measureRosterFaceEyeScore();
+        const s = scoreRosterCaptureVariant();
+        const backHood = faceEye < 0.09 ? -3 : 0;
+        const scored = s + backHood;
+        if (scored > bestScore) {
+          bestScore = scored;
+          bestYaw = baseModelRotY;
           bestZSign = zSign;
         }
       }
     }
-    model.rotation.y = bestYaw;
-    baseModelRotY = bestYaw;
-    portraitCameraZSign = bestZSign;
-    const shot = buildPortraitShot(
-      faceAnchor,
-      portraitDist,
-      camera.fov || PORTRAIT_FOV,
-      bestZSign,
-    );
-    applyPortraitShot(controls, camera, shot, { portraitDist });
-    syncLookTarget();
+    if (bestScore < 0) {
+      bestYaw = baseY;
+      bestZSign = portraitCameraZSign;
+    }
+    applyRosterCaptureVariant(baseY, bestYaw - baseY, bestZSign);
+
+    let finalizeScore = -Infinity;
+    let finalizeYaw = bestYaw;
+    let finalizeZ = bestZSign;
+    for (const yawAdd of yawCandidates) {
+      for (const zSign of [1, -1]) {
+        applyRosterCaptureVariant(baseY, yawAdd, zSign);
+        const body = modelBodyFacingScore(model, camera.position);
+        const head = headBone
+          ? facingAlignmentScore(headBone, camera.position, vrm.humanoid)
+          : body;
+        if (Math.abs(body) < 0.22 && Math.abs(head) < 0.22) continue;
+        const contrast = measurePortraitCaptureContrast();
+        const pickScore = rosterCaptureVariantPickScore(
+          body,
+          contrast,
+          loadedCharacterId,
+        );
+        if (pickScore > finalizeScore) {
+          finalizeScore = pickScore;
+          finalizeYaw = baseModelRotY;
+          finalizeZ = zSign;
+        }
+      }
+    }
+    applyRosterCaptureVariant(baseY, finalizeYaw - baseY, finalizeZ);
     warmPresentFrameCore();
     return bestScore;
+  }
+
+  function finishRosterCapture() {
+    rosterCaptureMode = false;
+    applyDefaultPortraitFrame?.();
+    warmPresentFrameCore();
+  }
+
+  const PORTRAIT_CLIP_ASPECT = 3 / 4;
+  const _projScratch = new THREE.Vector3();
+
+  /**
+   * Canvas-local clip (CSS px) for roster PNG capture from projected mesh bounds.
+   * @param {"body" | "hero"} kind
+   */
+  function computeHumanoidCaptureBounds() {
+    const box = new THREE.Box3();
+    const names = [
+      "head",
+      "neck",
+      "chest",
+      "hips",
+      "leftUpperArm",
+      "rightUpperArm",
+      "leftFoot",
+      "rightFoot",
+    ];
+    for (const name of names) {
+      const bone = vrm.humanoid?.getNormalizedBoneNode?.(name);
+      if (!bone) continue;
+      bone.updateMatrixWorld(true);
+      bone.getWorldPosition(_projScratch);
+      box.expandByPoint(_projScratch);
+    }
+    if (box.isEmpty()) {
+      return computeVrmDisplayBounds(model);
+    }
+    const meshBox = computeVrmDisplayBounds(model);
+    const meshSize = meshBox.getSize(new THREE.Vector3());
+    if (meshSize.x > meshSize.y * 1.05) {
+      return box;
+    }
+    return meshBox;
+  }
+
+  function computeRosterPreviewClip(kind) {
+    renderer.render(scene, camera);
+    const box = computeHumanoidCaptureBounds();
+    if (box.isEmpty()) return null;
+
+    const w = canvas.clientWidth || canvas.width;
+    const h = canvas.clientHeight || canvas.height;
+    if (w < 8 || h < 8) return null;
+
+    let minX = Infinity;
+    let minY = Infinity;
+    let maxX = -Infinity;
+    let maxY = -Infinity;
+    const corners = [
+      [box.min.x, box.min.y, box.min.z],
+      [box.min.x, box.min.y, box.max.z],
+      [box.min.x, box.max.y, box.min.z],
+      [box.min.x, box.max.y, box.max.z],
+      [box.max.x, box.min.y, box.min.z],
+      [box.max.x, box.min.y, box.max.z],
+      [box.max.x, box.max.y, box.min.z],
+      [box.max.x, box.max.y, box.max.z],
+    ];
+    for (const [cx, cy, cz] of corners) {
+      _projScratch.set(cx, cy, cz).project(camera);
+      const px = (_projScratch.x * 0.5 + 0.5) * w;
+      const py = (-_projScratch.y * 0.5 + 0.5) * h;
+      minX = Math.min(minX, px);
+      maxX = Math.max(maxX, px);
+      minY = Math.min(minY, py);
+      maxY = Math.max(maxY, py);
+    }
+
+    const pad = kind === "hero" ? 0.06 : 0.04;
+    let clipW = (maxX - minX) * (1 + pad * 2);
+    let clipH = (maxY - minY) * (1 + pad * 2);
+    if (kind === "hero") {
+      clipH *= 0.55;
+      clipW = clipH * PORTRAIT_CLIP_ASPECT;
+    } else {
+      if (clipW / clipH > PORTRAIT_CLIP_ASPECT) {
+        clipW = clipH * PORTRAIT_CLIP_ASPECT;
+      } else {
+        clipH = clipW / PORTRAIT_CLIP_ASPECT;
+      }
+    }
+    const cx = (minX + maxX) / 2;
+    const cy =
+      kind === "hero"
+        ? minY + (maxY - minY) * 0.22
+        : (minY + maxY) / 2;
+    let x = cx - clipW / 2;
+    let y = cy - clipH / 2;
+    x = Math.max(0, Math.min(w - 4, x));
+    y = Math.max(0, Math.min(h - 4, y));
+    clipW = Math.min(clipW, w - x);
+    clipH = Math.min(clipH, h - y);
+    if (clipW < 24 || clipH < 32) return null;
+    const upright = clipH >= clipW * 0.85;
+    return { x, y, width: clipW, height: clipH, upright };
   }
 
   canvas.style.touchAction = "none";
@@ -2213,8 +2437,49 @@ export async function createVrmAvatar(opts) {
     resize,
     resetCameraView,
     measurePortraitCaptureContrast,
+    measureRosterFaceEyeScore,
+    scoreRosterCaptureVariant,
     flipRosterCaptureYaw,
     pickBestRosterCaptureYaw,
+    debugScoreRosterYawGrid() {
+      prepareRosterCapture();
+      const originY = baseModelRotY;
+      const rows = [];
+      for (const yawAdd of [0, Math.PI / 2, Math.PI, (Math.PI * 3) / 2]) {
+        for (const zSign of [1, -1]) {
+          model.rotation.y = originY + yawAdd;
+          baseModelRotY = normalizeModelYaw(model);
+          model.updateMatrixWorld(true);
+          headBone?.updateMatrixWorld(true);
+          faceAnchor = computeVrmFrameAnchor(vrm, model);
+          const shot = buildPortraitShot(
+            faceAnchor,
+            portraitDist,
+            camera.fov || PORTRAIT_FOV,
+            zSign,
+          );
+          applyPortraitShot(controls, camera, shot, { portraitDist });
+          portraitCameraZSign = zSign;
+          syncLookTarget();
+          warmPresentFrameCore();
+          rows.push({
+            yawAdd,
+            zSign,
+            faceEye: measureRosterFaceEyeScore(),
+            contrast: measurePortraitCaptureContrast(),
+            body: modelBodyFacingScore(model, camera.position),
+            head: headBone
+              ? facingAlignmentScore(headBone, camera.position, vrm.humanoid)
+              : 0,
+          });
+        }
+      }
+      pickBestRosterCaptureYaw();
+      return rows;
+    },
+    prepareRosterCapture,
+    finishRosterCapture,
+    computeRosterPreviewClip,
     warmPresentFrame: warmPresentFrameCore,
     getPortraitFacing() {
       const headScore = headBone
