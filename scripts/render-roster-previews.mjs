@@ -200,11 +200,12 @@ async function waitForStageReady(page, characterId) {
   await page.evaluate(() => {
     window.__amojiAvatar?.prepareRosterCapture?.();
     window.__amojiAvatar?.pickBestRosterCaptureYaw?.();
+    window.__amojiAvatar?.reapplyRosterCaptureLock?.();
+    window.__amojiAvatar?.warmPresentFrame?.();
   });
   await page.waitForTimeout(200);
-
   await hideUiForCapture(page);
-  await page.waitForTimeout(400);
+  await page.waitForTimeout(200);
 }
 
 /**
@@ -214,37 +215,59 @@ async function waitForStageReady(page, characterId) {
  * @param {string} out
  */
 async function screenshotPortrait(page, box, kind, out) {
-  const rel = await page.evaluate(
-    (captureKind) => window.__amojiAvatar?.computeRosterPreviewClip?.(captureKind),
-    kind,
-  );
-  let clip =
+  await page.evaluate(() => {
+    window.__amojiAvatar?.reapplyRosterCaptureLock?.();
+    window.__amojiAvatar?.warmPresentFrame?.();
+  });
+  await page.waitForTimeout(120);
+
+  const fallbackClip = portraitClip(box, kind);
+  const rel =
+    kind === "hero"
+      ? await page.evaluate(
+          (captureKind) =>
+            window.__amojiAvatar?.computeRosterPreviewClip?.(captureKind),
+          kind,
+        )
+      : null;
+  let clip = fallbackClip;
+  if (
+    kind === "hero" &&
     rel?.width > 20 &&
     rel?.height > 20 &&
     rel?.upright !== false
-      ? {
-          x: box.x + rel.x,
-          y: box.y + rel.y,
-          width: rel.width,
-          height: rel.height,
-        }
-      : portraitClip(box, kind);
-  if (rel?.width > 20 && rel?.height > 20 && rel?.upright === false) {
-    clip = portraitClip(box, kind);
+  ) {
+    clip = {
+      x: box.x + rel.x,
+      y: box.y + rel.y,
+      width: rel.width,
+      height: rel.height,
+    };
   }
-  await page.screenshot({
-    path: out,
-    type: "png",
-    animations: "disabled",
-    clip,
-  });
-  const bad =
-    kind === "hero" ? isBadHeroCapture(out) : isBadCardCapture(out);
+
+  const captureOnce = async (clipRect) => {
+    await page.screenshot({
+      path: out,
+      type: "png",
+      animations: "disabled",
+      clip: clipRect,
+    });
+  };
+
+  await page.setDefaultTimeout(90000);
+  await captureOnce(clip);
+  let bad = kind === "hero" ? isBadHeroCapture(out) : isBadCardCapture(out);
+  let suspect = kind === "body" && isSuspectPreviewCapture(out);
+  if ((bad || suspect) && clip !== fallbackClip) {
+    await captureOnce(fallbackClip);
+    bad = kind === "hero" ? isBadHeroCapture(out) : isBadCardCapture(out);
+    suspect = kind === "body" && isSuspectPreviewCapture(out);
+  }
   if (bad) {
     const badBytes = statSync(out).size;
     throw new Error(`${kind} capture too small or black (${badBytes} bytes)`);
   }
-  if (kind === "body" && isSuspectPreviewCapture(out)) {
+  if (suspect) {
     const suspectBytes = statSync(out).size;
     throw new Error(`${kind} capture suspect (sparse canvas, ${suspectBytes} bytes)`);
   }
@@ -265,7 +288,7 @@ async function captureCharacter(page, characterId, baseUrl) {
   });
   await waitForStageReady(page, characterId);
   const canvas = page.locator("#avatar-canvas");
-  await canvas.waitFor({ state: "visible", timeout: 15000 });
+  await canvas.waitFor({ state: "visible", timeout: 45000 });
   const box = await canvas.boundingBox();
   if (!box?.width || !box?.height) {
     throw new Error("avatar canvas has no layout box");
@@ -301,10 +324,10 @@ async function main() {
       "--use-angle=swiftshader",
     ],
   });
-  const page = await browser.newPage({
+  const pageOptions = {
     viewport: { width: 900, height: 1200 },
     deviceScaleFactor: 2,
-  });
+  };
 
   const results = [];
   for (const id of targets) {
@@ -326,6 +349,7 @@ async function main() {
     }
     let lastErr = null;
     for (let attempt = 1; attempt <= 4; attempt += 1) {
+      const page = await browser.newPage(pageOptions);
       try {
         const paths = await captureCharacter(page, id, base);
         results.push({ id, ok: true, ...paths, attempt });
@@ -338,6 +362,8 @@ async function main() {
         lastErr = err;
         console.log(`FAIL ${id} attempt ${attempt} — ${err?.message || err}`);
         await page.waitForTimeout(1500);
+      } finally {
+        await page.close().catch(() => null);
       }
     }
     if (lastErr) {
