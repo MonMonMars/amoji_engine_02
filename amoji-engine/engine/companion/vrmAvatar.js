@@ -50,7 +50,10 @@ import {
 import { actionLoops } from "./companionActionMotion.js";
 import { BOOT_FULL_LIBRARY_WARM_CLIP_IDS } from "./companionIdleMotionPreload.js";
 import { detectVrmIdleRestRotations } from "./companionArmRestCalibration.js";
-import { establishCalmStandFromBind } from "./companionCalmStandFoundation.js";
+import {
+  applyIdlePresentation,
+  establishCalmStandFromBind,
+} from "./companionCalmStandFoundation.js";
 import { createCompanionBodyMotion } from "./companionBodyMotion.js";
 import {
   auditPlantedLimbDualWrite,
@@ -1817,7 +1820,12 @@ export async function createVrmAvatar(opts) {
   const resetCameraView = () => {
     bodyMotion.cancelPokeShake?.();
     bodyMotion.resetSmoothedRoot?.();
-    bodyMotion.reapplyPlantedLimbs?.({ force: true, now: performance.now() });
+    applyIdlePresentation(vrm, bodyMotion, {
+      resetIdleLife: false,
+      fullReset: false,
+      warmFrames: 16,
+      characterId: loadedCharacterId,
+    });
     applyDefaultPortraitFrame?.();
     if (
       !isHeadFacingCamera(headBone, camera, vrm.humanoid, model) &&
@@ -2058,13 +2066,10 @@ export async function createVrmAvatar(opts) {
         syncLookTarget();
         syncHumanoidPose();
         stabilizeVrmSpringBones(vrm);
-        vrm.update(1 / 60);
-        bodyMotion.enforcePlantedLimbs?.({ lockForearms: true });
-        bodyMotion.reapplyPlantedLimbs?.({ force: true, now: performance.now() });
-        bodyMotion.finishPlantedLimbLockPostUpdate?.({ hands: true });
-        establishCalmStandFromBind(vrm, bodyMotion, {
+        applyIdlePresentation(vrm, bodyMotion, {
           resetIdleLife: false,
-          warmFrames: 8,
+          fullReset: true,
+          warmFrames: 24,
           characterId: loadedCharacterId,
         });
         applyDefaultPortraitFrame?.();
@@ -2074,6 +2079,12 @@ export async function createVrmAvatar(opts) {
       } catch {
         /* ignore warm-up errors */
       }
+    },
+    applyIdlePresentation(opts = {}) {
+      return applyIdlePresentation(vrm, bodyMotion, {
+        characterId: loadedCharacterId,
+        ...opts,
+      });
     },
     getPortraitFacing() {
       const headScore = headBone

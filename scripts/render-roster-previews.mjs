@@ -188,6 +188,10 @@ async function waitForStageReady(page, characterId) {
 
   for (let attempt = 0; attempt < 18; attempt += 1) {
     await page.evaluate(() => {
+      window.__amojiAvatar?.applyIdlePresentation?.({
+        fullReset: true,
+        warmFrames: 32,
+      });
       window.__amojiAvatar?.warmPresentFrame?.();
       window.__amojiAvatar?.resetCameraView?.();
     });
