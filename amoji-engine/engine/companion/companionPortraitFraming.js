@@ -14,6 +14,8 @@ export const INVERTED_PORTRAIT_BODY_FACING_IDS = new Set(["yuki", "olivia"]);
 
 /** Verified headless capture yaw/z relative to pick {@code baseY} (Olivia slot = Yuki VRM). */
 export const ROSTER_CAPTURE_YAW_OVERRIDES = {
+  /** VTubeMe photoreal: root +Z reads “front” while visible face needs camera on −Z. */
+  nova: { yawAdd: 0, zSign: -1 },
   yuki: { yawAdd: 0, zSign: -1 },
   olivia: { yawAdd: 0, zSign: -1 },
 };
