@@ -1,9 +1,9 @@
 # Mon — companion problem & request tracker
 
 **Owner:** Mon (Designer)  
-**Last updated:** 2026-09-24 08:45 UTC  
+**Last updated:** 2026-09-24 09:20 UTC  
 **Production build (live):** `2026-09-24-v563-mon-orbit-zoom-rotate`  
-**Repo build (latest agent work):** `2026-09-24-v572-mon-yue-vocal-haha` on branch `cursor/fix-en-mode-tts-chinese-54db` — **not merged to `main` / not on Vercel**  
+**Repo build (latest agent work):** `2026-09-24-v573-mon-roster-photoreal-front` on branch `cursor/fix-en-mode-tts-chinese-54db` — **not merged to `main` / not on Vercel**  
 **App entry (bookmark):** https://temporary-rushing-oxygen-ok5jzhd.vercel.app/play  
 
 Agents: **read this before saying “fixed.”** Update a row when status changes (merge + prod verify, or new user report).
@@ -49,7 +49,7 @@ Agents: **read this before saying “fixed.”** Update a row when status change
 | Check | Result (2026-09-24 08:42 UTC) |
 |-------|-------------------------------|
 | Live `/api/health` `build` | `2026-09-24-v563-mon-orbit-zoom-rotate` |
-| Repo `AMOJI_BUILD` | `2026-09-24-v572-mon-yue-vocal-haha` |
+| Repo `AMOJI_BUILD` | `2026-09-24-v573-mon-roster-photoreal-front` |
 | Match? | **No — deploy pending** |
 | Full gate (prod) | Run after merge: `npm run verify:pre-delivery:prod` |
 
@@ -67,7 +67,7 @@ Agents: **read this before saying “fixed.”** Update a row when status change
 | A2 | **Black screen** while picker or menu loads | ✅ | Boot picker paint | **prod** |
 | A3 | **Wide desktop** — Menu blocks picker / layout | ✅ | Wide CSS + smoke | **prod ~v551+** |
 | A4 | **HQ Japanese-style scene backgrounds** | ✅ | Scene-bg regen | **prod v551+** |
-| A5 | **Roster card PNG ≠ loaded VRM** (back / wrong pose on strip) | 🔴 **prod** / ⏸️ **PR** | **Prod v563:** many backs (desktop QA). **PR #102:** v570 RAF capture lock; **Yuki** regen front in lab; **full `--force` regen + desktop strip QA not done** | [#102](https://github.com/MonMonMars/amoji_engine_02/pull/102) **v570–v572** |
+| A5 | **Roster card PNG ≠ loaded VRM** (back / wrong pose on strip) | 🔴 **prod** / ⏸️ **PR** | **Prod v563:** strip mostly backs (desktop **09:19**). **Lab v573:** **Nova #1 front** after photoreal capture fix; **~60% strip still backs** until full regen finishes | [#102](https://github.com/MonMonMars/amoji_engine_02/pull/102) **v573** |
 | A6 | **Hero / picker portraits cropped** | ✅ | `object-fit: contain` | **prod** |
 | A7 | **Professional / cinematic scene backgrounds** | ✅ | Pro scene pass | **prod** |
 | A8 | **Picker hero** — portrait + scene preview | ✅ | Hero duo E2E | **prod v557+** |
@@ -175,7 +175,8 @@ Agents: **read this before saying “fixed.”** Update a row when status change
 | 2026-09-24 AM | Roster **back-facing** on desktop; verify before delivery | A5, B2 | **#102** v570 Yuki lab fix; **prod still v563** |
 | 2026-09-24 AM | **English mode** — Chinese reply, **no voice** | D8 | **#103** v571 coded, not deployed |
 | 2026-09-24 AM | **嘿嘿/嘻嘻** before speech → sounds like names; use **哈哈** | D9 | **#103** v572 coded, not deployed |
-| 2026-09-24 AM | **Chart didn’t fix** — show updated chart + what’s solved | G2 | **This doc** — prod **v563** vs repo **v572** |
+| 2026-09-24 AM | **Chart didn’t fix** — show updated chart + what’s solved | G2 | **This doc** — prod **v563** vs repo **v573** |
+| 2026-09-24 AM | **Same old problems** — double-check desktop before delivery | A5, B2, G2 | **Desktop re-QA**; prod unchanged; **v573** Nova front only (regen running) |
 
 ---
 
@@ -190,23 +191,28 @@ After merge: `npm run verify:pre-delivery:prod` → desktop picker screenshot �
 
 ---
 
-## Desktop production QA — **v563** (still current for Mon)
+## Desktop QA — **verified 2026-09-24 09:19 UTC** (before telling Mon “fixed”)
 
-| Check | Result |
-|-------|--------|
-| Session facing (e.g. Shino) | ✅ Often front |
-| Picker roster strip PNGs | 🔴 **Many backs** |
-| Idle arms | ⏸️ Stiff / T-pose reports |
-| English voice + Chinese text | 🔴 No audio (→ **D8**) |
-| Cantonese 嘿嘿/嘻嘻 prefix | 🔴 Mispronounce (→ **D9**) |
+**Screenshots:** `desktop-prod-v563-picker-yue-retest.png`, `desktop-local-v573-picker-yue.png` (plus earlier `desktop-prod-picker-yue.png`, `desktop-prod-session-facing.png`)  
+**Report:** `/opt/cursor/artifacts/DESKTOP-QA-REPORT-MON-DELIVERY.md`
 
-**Do not mark A5/B2/D8/D9 ✅ until prod build ≥ merged PR and strip/voice QA pass.**
+| Check | **Production v563** | **Local lab v573** |
+|-------|---------------------|---------------------|
+| Picker roster strip | 🔴 **Mostly backs** (Nova hero OK, strip #1 back) | ⏸️ **Nova #1 + hero front**; **many strip backs remain** |
+| Hero / card crop | 🔴 Mixed | ✅ Nova hero **front-facing** |
+| Session 3D facing | ✅ Shino **face to camera** (prior shot) | — |
+| Session arms | 🔴 **T-pose / stiff** | Nova card still **T-pose** in strip |
+| E2E `demo-link-verify` | ⚠️ Passes; **misses card backs** | Run after merge |
+
+**In progress:** full `render-roster-previews.mjs --force` on lab **v573** → `roster-regen-v573.log`
+
+**Do not mark A5/B2/D8/D9 ✅ until prod build ≥ merged PR, **all 31** regen done, desktop picker strip mostly fronts.**
 
 ---
 
 ## One-line summary for Mon (2026-09-24)
 
-**You’re still on production v563.** Most chart “fixes” are in **draft PRs #102–#103 (v570–v572)** — **not deployed**, so picker backs, arms, English voice, and 嘻嘻 prefixes **still look unfixed live**. This update adds **D8** (EN mode voice) and **D9** (哈哈 not 嘻嘻/嘿嘿). **Truly ✅ on prod today:** orbit/zoom, poke/camera reset, TTS cutoff/volume/speed, starter preload, scenes, hero preview — **not** full roster facing or session lip/emotion.
+**You’re still on production v563** — desktop **09:19** confirms **same strip backs live**. Repo **v573** fixes **Nova photoreal capture** (card + hero front in lab); **full roster regen** running. Draft **#102–#103** still **not deployed** (D8 English voice, D9 哈哈). **Truly ✅ on prod today:** orbit/zoom, poke/camera reset, TTS cutoff/volume/speed, starter preload, scenes — **not** roster strip facing, arms, lip/emotion, or EN/Yue voice fixes.
 
 ---
 

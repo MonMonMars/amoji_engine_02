@@ -1976,7 +1976,9 @@ export async function createVrmAvatar(opts) {
       ? facingAlignmentScore(headBone, camera.position, vrm.humanoid)
       : body;
     const photoreal = isPhotorealPortraitCharacter(loadedCharacterId);
-    const facingAlign = photoreal ? body : Math.min(body, head);
+    const facingAlign = photoreal
+      ? Math.max(head, body * 0.15)
+      : Math.min(body, head);
     const faceEye = measureRosterFaceEyeScore();
     const contrast = measurePortraitCaptureContrast();
     // Pixel face band wins over bone scores (hooded rigs like Yuki report +1 while showing the back).
@@ -2125,6 +2127,30 @@ export async function createVrmAvatar(opts) {
           if (Math.abs(body) < 0.22 && Math.abs(head) < 0.22) continue;
           if (body < minBody) {
             minBody = body;
+            finalizeYawAdd = yawAdd;
+            finalizeZ = zSign;
+          }
+        }
+      }
+    } else if (isPhotorealPortraitCharacter(loadedCharacterId)) {
+      let finalizeScore = -Infinity;
+      for (const yawAdd of yawCandidates) {
+        for (const zSign of [1, -1]) {
+          applyRosterCaptureVariant(baseY, yawAdd, zSign);
+          const body = modelBodyFacingScore(model, camera.position);
+          const head = headBone
+            ? facingAlignmentScore(headBone, camera.position, vrm.humanoid)
+            : body;
+          if (Math.abs(body) < 0.22 && Math.abs(head) < 0.22) continue;
+          const contrast = measurePortraitCaptureContrast();
+          const faceEye = measureRosterFaceEyeScore();
+          const pickScore =
+            Math.max(0, head) * 2.4 +
+            contrast * 0.12 +
+            Math.max(0, body) * 0.2 +
+            faceEye * 8;
+          if (pickScore > finalizeScore) {
+            finalizeScore = pickScore;
             finalizeYawAdd = yawAdd;
             finalizeZ = zSign;
           }
