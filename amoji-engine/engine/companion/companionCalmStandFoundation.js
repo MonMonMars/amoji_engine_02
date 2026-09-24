@@ -86,3 +86,51 @@ export function establishCalmStandFromBind(vrm, bodyMotion, opts = {}) {
   }
   return { ok: true, bind: rest.bind, warmFrames: warmFrames || 0 };
 }
+
+/**
+ * Present arms-down idle (never bind T-pose) for roster PNG capture or warm frames.
+ * @param {import('@pixiv/three-vrm').VRM | null | undefined} vrm
+ * @param {Parameters<typeof establishCalmStandFromBind>[1]} bodyMotion
+ * @param {{
+ *   resetIdleLife?: boolean,
+ *   fullReset?: boolean,
+ *   warmFrames?: number,
+ *   characterId?: string | null,
+ *   armBindHint?: "apose" | "tpose" | null,
+ *   now?: number,
+ * }} [opts]
+ */
+export function applyIdlePresentation(vrm, bodyMotion, opts = {}) {
+  if (!vrm?.humanoid || !bodyMotion) {
+    return { ok: false, reason: "missing-vrm-or-body" };
+  }
+  const now = opts.now ?? performance.now();
+  const warmFrames = Math.max(0, Math.min(120, Number(opts.warmFrames) || 32));
+  const fullReset = opts.fullReset !== false;
+
+  let bind = bodyMotion.armBind;
+  if (fullReset) {
+    const established = establishCalmStandFromBind(vrm, bodyMotion, {
+      resetIdleLife: opts.resetIdleLife !== false,
+      warmFrames: 0,
+      characterId: opts.characterId,
+      armBindHint: opts.armBindHint,
+      now,
+    });
+    if (!established.ok) return established;
+    bind = established.bind;
+  }
+
+  bodyMotion.snapToRestPose?.();
+  warmCalmStandPhysics(vrm, bodyMotion, { frames: warmFrames });
+  bodyMotion.snapToRestPose?.();
+  bodyMotion.reapplyPlantedLimbs?.({ force: true, now });
+  syncHumanoidSkinnedRawFromNormalized(vrm.humanoid);
+  vrm.humanoid.update?.();
+  stabilizeVrmSpringBones(vrm);
+  vrm.update?.(1 / 60);
+  bodyMotion.finishPlantedLimbLockPostUpdate?.({ hands: true });
+  syncHumanoidSkinnedRawFromNormalized(vrm.humanoid);
+  vrm.humanoid.update?.();
+  return { ok: true, bind, warmFrames, fullReset };
+}
