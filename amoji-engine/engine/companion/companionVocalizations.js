@@ -26,7 +26,7 @@ export const VOCALIZATION_TYPES = Object.freeze([
 /** @type {Record<VocalizationType, { yue: readonly string[], en: readonly string[] }>} */
 const VOCAL_LINES = Object.freeze({
   smile: Object.freeze({
-    yue: Object.freeze(["呵呵～", "嘿嘿～", "唔呵呵～"]),
+    yue: Object.freeze(["呵呵～", "哈哈～", "唔呵呵～"]),
     en: Object.freeze(["Heh～", "Mhm～", "Heh heh～"]),
   }),
   laugh: Object.freeze({
@@ -34,7 +34,7 @@ const VOCAL_LINES = Object.freeze({
     en: Object.freeze(["Ha ha～", "Haha!", "Ahaha～", "Ha ha ha!", "Ahaha you poked me!"]),
   }),
   giggle: Object.freeze({
-    yue: Object.freeze(["嘻嘻～", "嘿嘿嘻～", "唔嘻嘻～", "哎呀嘻嘻～", "唔呵呵嘻～"]),
+    yue: Object.freeze(["哈哈～", "哈哈哈！", "呵哈哈～", "哈哈～", "呵呵哈哈～"]),
     en: Object.freeze(["Hehe～", "Teehee～", "Ehehe～", "Hehe hehe!", "Tee hee～"]),
   }),
   um: Object.freeze({
@@ -58,7 +58,7 @@ const VOCAL_LINES = Object.freeze({
     en: Object.freeze(["Aww～", "Aw～", "Oh～"]),
   }),
   coy: Object.freeze({
-    yue: Object.freeze(["唔～", "哼～", "嘿嘿……"]),
+    yue: Object.freeze(["唔～", "哼～", "哈哈……"]),
     en: Object.freeze(["Mm～", "Heh……", "Oh my～"]),
   }),
 });
@@ -177,7 +177,11 @@ let lastVocalType = "";
  * @param {boolean} [isEnglish]
  */
 export function pickVocalLine(type, isEnglish = false) {
-  const bucket = VOCAL_LINES[type] || VOCAL_LINES.smile;
+  let effectiveType = type;
+  if (!isEnglish && type === "giggle") {
+    effectiveType = "laugh";
+  }
+  const bucket = VOCAL_LINES[effectiveType] || VOCAL_LINES.smile;
   const list = isEnglish ? bucket.en : bucket.yue;
   if (!list.length) return "";
   let idx = Math.floor(Math.random() * list.length);
@@ -331,12 +335,8 @@ export function pickPreSentenceVocalization(performance = {}, text, opts = {}) {
  * @param {boolean} [isEnglish]
  */
 export function pickPokeVocalization(isEnglish = false) {
-  const type = /** @type {"giggle" | "laugh"} */ (
-    weightedPick({
-      giggle: 3,
-      laugh: 2,
-    })
-  );
+  /** @type {"giggle" | "laugh"} */
+  const type = isEnglish ? weightedPick({ giggle: 3, laugh: 2 }) : "laugh";
   const vocalText = pickVocalLine(type, isEnglish);
   const base = VOCALIZATION_PERFORMANCE[type];
   return {
