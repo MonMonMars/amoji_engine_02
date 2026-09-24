@@ -1,12 +1,24 @@
 # Mon — companion problem & request tracker
 
 **Owner:** Mon (Designer)  
-**Last updated:** 2026-09-24 00:40 UTC  
-**Production build (live):** `2026-09-24-v563-mon-orbit-zoom-rotate` (verified via `/api/health` + `verify:pre-delivery:prod`)  
-**Repo `main` build:** `amoji-engine/engine/companion/buildVersion.mjs` → `AMOJI_BUILD`  
+**Last updated:** 2026-09-24 12:26 UTC  
+**Production build (live):** `2026-09-24-v563-mon-orbit-zoom-rotate`  
+**Repo build (latest agent work):** `2026-09-24-v578-mon-roster-calm-stand` on branch `cursor/fix-en-mode-tts-chinese-54db` — **not merged to `main` / not on Vercel**  
 **App entry (bookmark):** https://temporary-rushing-oxygen-ok5jzhd.vercel.app/play  
 
 Agents: **read this before saying “fixed.”** Update a row when status changes (merge + prod verify, or new user report).
+
+---
+
+## ⚠️ Why the chart still looks “not fixed” (read first)
+
+| What Mon uses | What agents ship |
+|---------------|------------------|
+| **Live Vercel** = **v563** | **v565–v572** fixes sit in **draft PRs** ([#102](https://github.com/MonMonMars/amoji_engine_02/pull/102), [#103](https://github.com/MonMonMars/amoji_engine_02/pull/103), etc.) |
+| Desktop QA **2026-09-24** showed **back-facing roster PNGs** on prod | E2E passes file-size checks; **does not** eyeball every card facing |
+| Rows marked ✅ below = **worked on prod at some snapshot** | Many are **still broken on v563** until merge + deploy |
+
+**Before telling Mon “fixed”:** merge → `npm run verify:pre-delivery:prod` exit **0** → build match → desktop picker strip spot-check.
 
 ---
 
@@ -15,49 +27,33 @@ Agents: **read this before saying “fixed.”** Update a row when status change
 | Symbol | Meaning |
 |--------|---------|
 | ✅ | **Solved on production** — merged to `main`, Vercel deployed, `node scripts/demo-link-verify.mjs` exit **0** (build match) |
-| 🟡 | **Coded, deploy pending** — fix on `main` or open PR; production build **behind** or not merged |
+| 🟡 | **Coded, deploy pending** — fix on branch/open PR; production build **behind** |
 | 🔴 | **Not solved** — no merged fix, or Mon still sees it after prod caught up |
-| ⏸️ | **Partial** — better but not done; or only fixed in one locale/character |
-| 📋 | **Docs / planning only** — no runtime fix expected |
+| ⏸️ | **Partial** — better in lab/PR but not done on prod or not all characters |
+| 📋 | **Docs / planning only** |
+
+---
+
+## At-a-glance (2026-09-24)
+
+| | Count | IDs (examples) |
+|---|------|----------------|
+| ✅ **Live on prod v563** | **14** | A2, A3, A4, A6–A8, B3–B4, C1–C4, D3–D5, D7, E1, F1–F2, F4 |
+| 🟡 **Coded, not on prod yet** | **12+** | A5, B2, B1, B5–B7, D1–D2, D6, D8–D9, E2–E4, F3, G2 + PR queue |
+| 🔴 **Still open on latest code too** | **3** | Full **A5/B2** roster strip (31 ids), **B1** arms in session, **D1/D2** lip/emotion feel |
 
 ---
 
 ## Production vs repo (check first)
 
-| Check | Command / signal |
-|-------|------------------|
-| Live build id | `curl -s …/api/health \| jq .build` |
-| Repo build id | `AMOJI_BUILD` in `buildVersion.mjs` |
-| Full gate (prod) | `npm run verify:pre-delivery:prod` |
-| Mon’s reported issues E2E | `node scripts/companion-issues-verify.mjs` (in pre-delivery) |
-
-**If live build ≠ repo build:** tell Mon **deploy pending** — do not claim production is updated.
+| Check | Result (2026-09-24 08:42 UTC) |
+|-------|-------------------------------|
+| Live `/api/health` `build` | `2026-09-24-v563-mon-orbit-zoom-rotate` |
+| Repo `AMOJI_BUILD` | `2026-09-24-v578-mon-roster-calm-stand` |
+| Match? | **No — deploy pending** |
+| Full gate (prod) | Run after merge: `npm run verify:pre-delivery:prod` |
 
 **iOS:** bookmark **`/play` only** (not `/companion-full`).
-
-### Verify snapshot — **production `v562`** (merged [#100](https://github.com/MonMonMars/amoji_engine_02/pull/100))
-
-| Gate | Result | Notes |
-|------|--------|--------|
-| `npm run verify:pre-delivery:prod` | ✅ **4/4** | **57/57** issues E2E; build match **v562** |
-| Roster PNG regen | ✅ | 31 card + 31 hero after facing fix |
-
-### Verify snapshot — **production `v561`** (merged [#99](https://github.com/MonMonMars/amoji_engine_02/pull/99))
-
-| Gate | Result | Notes |
-|------|--------|--------|
-| `npm run verify:pre-delivery:prod` | ✅ **4/4** | **57/57** issues E2E; build match **v561** |
-| `/api/health` `build` | ✅ | `2026-09-23-v561-mon-vtuber-model-cache` |
-| Companion CI [#99](https://github.com/MonMonMars/amoji_engine_02/pull/99) | ✅ | unit-and-smoke + companion-e2e |
-
-### Verify snapshot — **production `v560`** (merged [#98](https://github.com/MonMonMars/amoji_engine_02/pull/98))
-
-| Gate | Result | Notes |
-|------|--------|--------|
-| `npm run verify:pre-delivery:prod` | ✅ **4/4** | **57/57** issues E2E on live Vercel |
-| `node scripts/demo-link-verify.mjs` | ✅ | Build match + boot/picker/session |
-| Companion CI [#98](https://github.com/MonMonMars/amoji_engine_02/pull/98) | ✅ | unit-and-smoke + companion-e2e |
-| Prior ships [#97](https://github.com/MonMonMars/amoji_engine_02/pull/97)–[#95](https://github.com/MonMonMars/amoji_engine_02/pull/95) | ✅ | v559 cache/springs; v558 voice UI; v557 roster |
 
 ---
 
@@ -67,132 +63,155 @@ Agents: **read this before saying “fixed.”** Update a row when status change
 
 | ID | Problem / request | Status | Evidence / fix | PR / build |
 |----|-------------------|--------|----------------|------------|
-| A1 | Picker / scene / roster **images look stale** (Safari cache) | ⏸️ | `picker-anime-v559-wave3` + roster `?v=` bump; early boot PNG+SVG; bookmark **`/play`** | **prod v559** ([#97](https://github.com/MonMonMars/amoji_engine_02/pull/97)) |
-| A2 | **Black screen** while picker or menu loads | ✅ | Boot picker paint | [#88](https://github.com/MonMonMars/amoji_engine_02/pull/88) merged |
-| A3 | **Wide desktop** — Menu blocks picker / layout | ✅ | v550 wide CSS + smoke | [#89](https://github.com/MonMonMars/amoji_engine_02/pull/89), [#90](https://github.com/MonMonMars/amoji_engine_02/pull/90) → **prod ~v551** |
-| A4 | **HQ Japanese-style scene backgrounds** not updated | ✅ | `anime-scene-v551-jp-game`, scene-bg regen | **main** `v551-facing-poke-thumbs-anime-bg` on prod |
-| A5 | **Roster card PNG ≠ loaded VRM** (wrong pose / back / blended arms on card) | ⏸️ | **v562** regen 31 card+hero PNGs face-forward; arm pose on card may still differ (**B1**) | [#100](https://github.com/MonMonMars/amoji_engine_02/pull/100) |
-| A8 | **Picker hero** — large portrait **+ scene background** preview | ✅ | `picker-hero-preview-duo`; prod E2E `picker-hero-scene-preview` | **prod v557** |
-| A6 | **Hero / picker portraits cropped** | ✅ | `object-fit: contain`, picker v4 | [#75](https://github.com/MonMonMars/amoji_engine_02/pull/75), [#89](https://github.com/MonMonMars/amoji_engine_02/pull/89) |
-| A7 | **Professional / cinematic scene backgrounds** | ✅ | Pro scene pass | [#71](https://github.com/MonMonMars/amoji_engine_02/pull/71) merged |
+| A1 | Picker / scene / roster **images look stale** (Safari cache) | ⏸️ | `/play` cache bust; roster `?v=` — Mon may still see old PNGs on **v563** | **prod v559**; more in open PRs |
+| A2 | **Black screen** while picker or menu loads | ✅ | Boot picker paint | **prod** |
+| A3 | **Wide desktop** — Menu blocks picker / layout | ✅ | Wide CSS + smoke | **prod ~v551+** |
+| A4 | **HQ Japanese-style scene backgrounds** | ✅ | Scene-bg regen | **prod v551+** |
+| A5 | **Roster card PNG ≠ loaded VRM** (back / wrong pose on strip) | 🔴 **prod** / ⏸️ **PR** | **v578:** blind-band head pick + dual-bone π-flip + calm-stand warm; **Hina front** in lab; **Kizuna** card still corrupt (horizontal back — spring/rig); full regen running | [#103](https://github.com/MonMonMars/amoji_engine_02/pull/103) **v578** |
+| A6 | **Hero / picker portraits cropped** | ✅ | `object-fit: contain` | **prod** |
+| A7 | **Professional / cinematic scene backgrounds** | ✅ | Pro scene pass | **prod** |
+| A8 | **Picker hero** — portrait + scene preview | ✅ | Hero duo E2E | **prod v557+** |
 
 ### B — 3D body, arms, facing, springs, poke
 
 | ID | Problem / request | Status | Evidence / fix | PR / build |
 |----|-------------------|--------|----------------|------------|
-| B1 | **Blended / ghost arms** at idle (Nova, Alicia, roster) | ⏸️ | **v562** idle **neck rest** + planted lock v11; forearms v560 | re-report if arms still ghost |
-| B2 | Character **faces backward** on start | ✅ | Bind back-view detection + eye-weighted portrait resolve | [#100](https://github.com/MonMonMars/amoji_engine_02/pull/100) prod **v562** |
-| B3 | **Double-click / reset camera** → facing wrong again | ✅ | `baseYaw`, reset + forced yaw v551 | **main** `v551` |
-| B4 | **Poke / multi-tap → blended head** | ✅ | Torso-only poke shake v551 | **main** `v551` |
-| B5 | **Hair / skirt / ribbon** wind, shake, gravity wrong | ⏸️ | Spring **v15** world-down gravity + stronger skirt/hair pull on **prod v559** | [#97](https://github.com/MonMonMars/amoji_engine_02/pull/97) |
-| B6 | **Skirt weights sliding** / soft parts | ⏸️ | Spring + planted limbs (AGENTS.md regression notes) | v550+ on main; verify in session |
-| B7 | **Feet planted** / ghost limbs after `vrm.update` | ⏸️ | Full humanoid norm→raw sync | **main** v550+; E2E `feet-planted` |
+| B1 | **Blended / ghost arms** at idle | 🔴 / ⏸️ | Still reported desktop **v563** (T-pose/stiff). Fixes in **#97/#102** not on prod | Open PRs |
+| B2 | **Faces backward** (picker strip + some starts) | 🔴 **prod** / 🟡 **PR** | Session facing OK on many chars; **strip** fixed in **lab v575** PNGs — **not on Vercel** until merge | **#103 v575** |
+| B3 | **Double-click / reset camera** → facing wrong | ✅ | Reset yaw v551 | **prod** |
+| B4 | **Poke → blended head** | ✅ | Torso-only poke | **prod v551+** |
+| B5 | **Hair / skirt / ribbon** springs | ⏸️ | v559 on prod; Mon may still see drift | **prod v559** |
+| B6 | **Skirt weights sliding** | ⏸️ | Planted limbs + springs in **main** code path; verify after deploy | v550+ |
+| B7 | **Feet planted** / ghost limbs | ⏸️ | E2E `feet-planted` passes; session QA varies | v550+ |
 
 ### C — Camera & input
 
 | ID | Problem / request | Status | Evidence / fix | PR / build |
 |----|-------------------|--------|----------------|------------|
-| C1 | **Two-finger pinch zoom** on character (iOS) | ✅ | Orbit `TWO: DOLLY_PAN`; poke defers on 2nd finger | **prod v557** ([#95](https://github.com/MonMonMars/amoji_engine_02/pull/95)) |
-| C2 | **Two-finger scroll / trackpad** zoom on character | ✅ | `bindOrbitWheelZoom` on orbit-hit | **prod v557** |
-| C3 | One-finger **drag to orbit** on mobile | ✅ | **v563** `TOUCH.ONE` rotate + wheel zoom fix (no stopPropagation) | [#101](https://github.com/MonMonMars/amoji_engine_02/pull/101) prod **v563** |
-| C4 | **Wide browser ghost Menu** over stage | ✅ | `.settings:not([hidden])` on wide desktop inline CSS + `companion-app-width.css` | **prod v558** ([#96](https://github.com/MonMonMars/amoji_engine_02/pull/96)) |
+| C1 | **Two-finger pinch zoom** (iOS) | ✅ | Orbit TWO dolly | **prod v557+** |
+| C2 | **Two-finger scroll / wheel** zoom | ✅ | **v563** wheel + orbit | **prod v563** |
+| C3 | **One-finger orbit** mobile | ✅ | **v563** | **prod v563** |
+| C4 | **Wide ghost Menu** over stage | ✅ | Inline settings CSS | **prod v558+** |
 
 ### D — Voice, TTS, lip sync, emotion
 
 | ID | Problem / request | Status | Evidence / fix | PR / build |
 |----|-------------------|--------|----------------|------------|
-| D1 | **No lip sync** — mouth idle while speaking | ⏸️ | Face/lip timers decoupled; cloud `beginMouth` on metadata/canplay; E2E `mouth-moves-when-talking` pass | **prod v558** — re-report if still idle in session |
-| D2 | **No emotion on face/voice** during TTS | ⏸️ | Expression snap without speech unit; vocal `snapStrength` on **prod v560** | [#98](https://github.com/MonMonMars/amoji_engine_02/pull/98) |
-| D3 | **TTS stops after first few words** (sentence cut off) | ✅ | Mic echo barge during pause; stream session timing | **prod v557** |
-| D4 | **Speaker volume jump** when TTS starts | ✅ | `applyTtsPlaybackGain` + GainNode before analyser hookup | **prod v557** |
-| D5 | **Talking speed label** should show **1×** for current pace | ✅ | Talk speed v4 — 0.42 internal = **1× Normal** | **prod v558** ([#96](https://github.com/MonMonMars/amoji_engine_02/pull/96)) |
-| D6 | **ChatGPT-style emotional voice** (prosody / instruct) | ⏸️ | Cloud TTS + demo page | [#62](https://github.com/MonMonMars/amoji_engine_02/pull/62), #79 |
-| D7 | **Starter chip “thinking” too long** — preload Q+A | ✅ | Instant starter replies + TTS prefetch | **prod v557** |
+| D1 | **No lip sync** — mouth idle while speaking | 🔴 / ⏸️ | E2E pass; Mon still reports in session on **v563** | [#79](https://github.com/MonMonMars/amoji_engine_02/pull/79) not merged |
+| D2 | **No emotion on face/voice** during TTS | 🔴 / ⏸️ | Same | [#79](https://github.com/MonMonMars/amoji_engine_02/pull/79), [#98](https://github.com/MonMonMars/amoji_engine_02/pull/98) partial on prod |
+| D3 | **TTS stops after first few words** | ✅ | Stream + barge fix | **prod v557+** |
+| D4 | **Speaker volume jump** | ✅ | Gain staging | **prod v557+** |
+| D5 | **Talking speed shows 1×** | ✅ | Talk speed v4 | **prod v558+** |
+| D6 | **ChatGPT-style emotional voice** | ⏸️ | Cloud instruct + demo | Partial |
+| D7 | **Starter “thinking” too long** | ✅ | Instant starter | **prod v557+** |
+| D8 | **English mode:** reply **Chinese**, **no voice** | 🟡 | **#103 v571:** utterance-lang TTS routing + English-only prompts; **not on prod** | [#103](https://github.com/MonMonMars/amoji_engine_02/pull/103) |
+| D9 | **Cantonese prefix 嘿嘿/嘻嘻** — TTS sounds like **names** | 🟡 | **#103 v572:** Yue vocabs use **哈哈** only; poke uses laugh pool; **not on prod** | [#103](https://github.com/MonMonMars/amoji_engine_02/pull/103) |
 
 ### E — Chat, LLM, UX
 
 | ID | Problem / request | Status | Evidence / fix | PR / build |
 |----|-------------------|--------|----------------|------------|
-| E1 | **Free / smart online LLM** (OpenRouter) | ✅ | `/api/llm/status`, hosted chain | [#86](https://github.com/MonMonMars/amoji_engine_02/pull/86) merged |
-| E2 | **Fix all problems** ship together | ⏸️ | v550 bundle merged; follow-ups v551 + open PRs | [#90](https://github.com/MonMonMars/amoji_engine_02/pull/90), #91–#92, #69, #77–#81 |
+| E1 | **Free / smart online LLM** | ✅ | OpenRouter chain | **prod** |
+| E2 | **Fix all problems** ship together | 🔴 | Many rows still open; prod stuck **v563** | Multiple open PRs |
 | E3 | **Mini emotion ball / mic UI** polish | 🟡 | | [#67](https://github.com/MonMonMars/amoji_engine_02/pull/67) |
-| E4 | **iOS app never updates** (cache) | ⏸️ | `/play` fresh path + Clear-Site-Data | [#63](https://github.com/MonMonMars/amoji_engine_02/pull/63) + main `/play` |
+| E4 | **iOS app never updates** (cache) | ⏸️ | Use `/play` | **prod** entry |
 
 ### F — Roster & models
 
 | ID | Problem / request | Status | Evidence / fix | PR / build |
 |----|-------------------|--------|----------------|------------|
-| F1 | **Kizuna / roster #2** model load fail | ✅ | `companion-kizuna.vrm` on prod; `verify:roster-models` 8/8 incl. kizuna | **prod v558** |
-| F2 | Replace roster slots (R3 CC0), keep Elio/Yara/Cleo | ✅ | Preload cache keyed by `?v=` revision + **`v561`** roster bust (fixes stale VTuber mesh in RAM) | [#99](https://github.com/MonMonMars/amoji_engine_02/pull/99) prod **v561** |
-| F4 | **Elio** 3D / card looked like flat color blocks | ✅ | AvatarSample C + `vrmModelBounds` + preview regen | **prod v557** |
-| F3 | Unique VRM per character id (no shared mesh) | ⏸️ | `rosterVrmUniqueness.test.js` allowed dup groups | ongoing |
+| F1 | **Kizuna** model load | ✅ | Roster verify | **prod v558+** |
+| F2 | Roster slot replace (R3 CC0) | ✅ | **v561** cache bust | **prod v561+** (verify on v563) |
+| F3 | Unique VRM per id | ⏸️ | Allowed dup groups in test | ongoing |
+| F4 | **Elio** flat blocks | ✅ | Bounds + preview | **prod v557+** |
 
 ### G — Docs / business
 
 | ID | Problem / request | Status | Evidence / fix | PR / build |
 |----|-------------------|--------|----------------|------------|
 | G1 | **B2B + B2C business plan** | 📋 | | [#87](https://github.com/MonMonMars/amoji_engine_02/pull/87) |
-| G2 | **This tracker** — expand list, mark solved/not | 🟡 | Updated with v557 verify snapshot + F4/A8 | [#82](https://github.com/MonMonMars/amoji_engine_02/pull/82), **#95** |
+| G2 | **This tracker** — honest solved/not | 🟡 | **This update** (v563 vs v572 gap) | [#82](https://github.com/MonMonMars/amoji_engine_02/pull/82) |
 
 ---
 
-## Mon request log (chronological, expanded)
+## What changed in this update (solved vs not)
 
-Use this to see **what was asked** vs **what shipped**.
+### ✅ Solved **on production (v563)** — Mon should see these now
+
+| ID | What |
+|----|------|
+| A2, A3, A4, A6, A7, A8 | Picker boot, wide layout, scenes, contain crop, hero preview |
+| B3, B4 | Camera reset facing; poke body-only |
+| C1–C4 | Pinch, wheel zoom, mobile orbit, wide menu |
+| D3–D5, D7 | TTS cutoff, volume jump, 1× speed label, starter preload |
+| E1 | Hosted LLM |
+| F1, F2, F4 | Kizuna load, roster revision, Elio mesh |
+
+### 🟡 Fixed in **repo / draft PR** — **NOT live until merge**
+
+| ID | What | Where |
+|----|------|--------|
+| A5, B2 | Roster capture RAF lock, Yuki front sample, facing pick **v570** | [#102](https://github.com/MonMonMars/amoji_engine_02/pull/102) |
+| B1, B5–B7 | Arms idle rest, springs, planted limbs (partial) | [#97](https://github.com/MonMonMars/amoji_engine_02/pull/97)–[#102](https://github.com/MonMonMars/amoji_engine_02/pull/102) |
+| D8 | English session TTS when reply is Chinese | [#103](https://github.com/MonMonMars/amoji_engine_02/pull/103) **v571** |
+| D9 | 哈哈 not 嘻嘻/嘿嘿 vocal prefix (Cantonese) | [#103](https://github.com/MonMonMars/amoji_engine_02/pull/103) **v572** |
+| D1–D2 | Lip + emotion (older PRs) | [#79](https://github.com/MonMonMars/amoji_engine_02/pull/79), [#78](https://github.com/MonMonMars/amoji_engine_02/pull/78) |
+
+### 🔴 **Still not solved** (even after #102 + #103 merge — need more work)
+
+| ID | What’s left |
+|----|-------------|
+| **A5 / B2** | **All 31** roster card + hero PNGs regen + **desktop strip** front-facing QA |
+| **B1** | Ghost / stiff arms in live session (Mon desktop **v563**) |
+| **D1 / D2** | Lip sync + face emotion still feel broken in session |
+| **E2** | “Fix everything” — blocked on merge + QA above |
+
+---
+
+## Mon request log (new rows)
 
 | When | Mon said (paraphrase) | Tracker IDs | Outcome |
 |------|------------------------|-------------|---------|
-| Weeks | Visuals don’t update, lip sync, emotion, arms | A1, D1–D2, B1 | Many open PRs #77–#81 |
-| 2026-09-23 AM | Wide desktop + picker; HQ backgrounds; thumbs | A3–A6 | ✅ #90 / **prod v551** |
-| 2026-09-23 AM | **Problem chart** — what’s fixed vs not | G2 | This doc |
-| 2026-09-23 AM | **Arms blend** — fix first | B1 | ⏸️ v550; Mon still reported after → more PRs |
-| 2026-09-23 AM | **Facing backward** — fix first | B2 | ✅ v550/v551 prod |
-| 2026-09-23 AM | **Fix all** ship together | E2 | #90 merged; not all rows ✅ |
-| 2026-09-23 AM | Free LLM still works? | E1 | ✅ |
-| 2026-09-23 AM | **Same problems again** — arms, head blend, thumbs, backgrounds; facing OK then **backward on double-click** | B1, B3–B5, A4–A5 | v551 on **prod** for B3–B4, A4; B1/A5 ⏸️ |
-| 2026-09-23 PM | **TTS cuts off** first few words | D3 | 🟡 [#91](https://github.com/MonMonMars/amoji_engine_02/pull/91) |
-| 2026-09-23 PM | **Talking loading too long** — preload starter Q+A | D7 | 🟡 [#92](https://github.com/MonMonMars/amoji_engine_02/pull/92) |
-| 2026-09-23 PM | **Two-finger scroll** on character → zoom | C1–C2 | 🟡 [#69](https://github.com/MonMonMars/amoji_engine_02/pull/69) |
-| 2026-09-23 PM | **Keep expanding problem list + solved/not** | G2 | 🟡 this update |
-| 2026-09-23 PM | **Continue check for errors + update chart** | A5, A8, F4 | Elio VRM + preview QA; **57/57** local E2E on **v557** |
-| 2026-09-23 PM | **Next** — ship to production | #95 → main | **Merged**; prod **`verify:pre-delivery:prod` 4/4** |
-| 2026-09-23 PM | **Continue** — wave 2 (speed, lip/emotion, wide menu ghost) | D1–D2, D5, C4 | **Merged [#96](https://github.com/MonMonMars/amoji_engine_02/pull/96)**; prod **`verify:pre-delivery:prod` 4/4** |
-| 2026-09-23 PM | **Next / Continue** — waves 3–4 (cache, springs, arms, face snap) | A1, B5, B1, D2 | **Merged [#97](https://github.com/MonMonMars/amoji_engine_02/pull/97)–[#98](https://github.com/MonMonMars/amoji_engine_02/pull/98)**; prod **v560** |
+| 2026-09-24 AM | Roster **back-facing** on desktop; verify before delivery | A5, B2 | **#102** v570 Yuki lab fix; **prod still v563** |
+| 2026-09-24 AM | **English mode** — Chinese reply, **no voice** | D8 | **#103** v571 coded, not deployed |
+| 2026-09-24 AM | **嘿嘿/嘻嘻** before speech → sounds like names; use **哈哈** | D9 | **#103** v572 coded, not deployed |
+| 2026-09-24 AM | **Chart didn’t fix** — show updated chart + what’s solved | G2 | **This doc** — prod **v563** vs repo **v573** |
+| 2026-09-24 AM | **Same old problems** — double-check desktop before delivery | A5, B2, G2 | **Desktop re-QA**; prod unchanged; **v573** Nova front only (regen running) |
 
 ---
 
-## Open PR queue (merge priority suggestion)
+## Open PR queue (merge priority for Mon-visible fixes)
 
-1. **D1–D2, D5** [#79](https://github.com/MonMonMars/amoji_engine_02/pull/79), [#80](https://github.com/MonMonMars/amoji_engine_02/pull/80) lip/emotion/speed  
-3. **A1** [#77](https://github.com/MonMonMars/amoji_engine_02/pull/77) visual cache  
-4. **B1** [#76](https://github.com/MonMonMars/amoji_engine_02/pull/76) arms (if still failing after prod)  
-5. **F1, C4** [#70](https://github.com/MonMonMars/amoji_engine_02/pull/70), [#74](https://github.com/MonMonMars/amoji_engine_02/pull/74)  
+1. **[#102](https://github.com/MonMonMars/amoji_engine_02/pull/102)** — A5/B2 roster facing capture + regen  
+2. **[#103](https://github.com/MonMonMars/amoji_engine_02/pull/103)** — D8 English TTS + D9 哈哈 vocal  
+3. **[#79](https://github.com/MonMonMars/amoji_engine_02/pull/79)** / [#78](https://github.com/MonMonMars/amoji_engine_02/pull/78) — D1/D2 lip/emotion  
+4. **[#82](https://github.com/MonMonMars/amoji_engine_02/pull/82)** — merge tracker doc updates  
 
-After each merge batch: `npm run verify:pre-delivery:prod` → exit **0** before telling Mon it’s live.
-
----
-
-## E2E checks map (`companion-issues-verify.mjs`)
-
-| Check name | Related IDs |
-|------------|-------------|
-| `build-id` | all — prod vs repo |
-| `boot-splash-or-picker-visible` | A2 |
-| `picker-*` | A3, A6 |
-| `feet-planted` | B7 |
-| `camera-orbit-drag` | C1 |
-| `poke-body-only-while-speaking` | B4 |
-| `mouth-moves-when-talking` / ember mouth | D1 |
-| `starter-prompts-visible` | D7 |
-| `switch-character-model` | F1, A5 |
-| `picker-hero-scene-preview` | A8 |
-| `roster-preview-no-suspect` | A5, F4 |
+After merge: `npm run verify:pre-delivery:prod` → desktop picker screenshot → then ✅ rows.
 
 ---
 
-## One-line summary for Mon (2026-09-23 PM)
+## Desktop QA — **verified 2026-09-24 12:38 UTC**
 
-**On live Vercel (`v562`):** picker + stage **face camera** again; **31×2** roster PNGs recaptured; idle **neck rest** + prior arm locks. **⏸️** arm ghost (**B1**), lip/face (**D1/D2**). Bookmark **`/play`** only.
+**Screenshots:** `desktop-local-v578-picker-full-regen.png`, `desktop-prod-v563-picker-yue-retest.png`  
+**Report:** `/opt/cursor/artifacts/DESKTOP-QA-REPORT-MON-DELIVERY.md`
+
+| Check | **Production v563** | **Local lab v578** |
+|-------|---------------------|---------------------|
+| Picker roster strip | 🔴 **Mostly backs** | ⏸️ **Better but not done** — many fronts; **~12+ strip backs** remain (e.g. 2, 4, 7–11, 14–15, 26–27) |
+| Hero (large) | Mixed | 🟡 Nova + several fronts; **Kizuna #2** card corrupt |
+| Session arms | 🔴 **T-pose / stiff** | Card PNGs often **T-pose** (**B1**) |
+| Pre-delivery gate | — | ✅ `npm run verify:pre-delivery` **5/5** |
+
+**Done:** full regen ×31 on **v578** → `roster-regen-v578.log`
+
+**Do not mark A5/B2 ✅ on prod until merge + prod desktop strip mostly fronts + Kizuna card fix.**
+
+---
+
+## One-line summary for Mon (2026-09-24)
+
+**Live Vercel is still v563** (strip backs). **Repo v575** has **31 roster PNGs regen** + blind-band head pick (fixes Atlas/Nova-class backs). **Merge #103** (and roster overlap #102) to ship. **Still not on prod:** D8/D9 voice, **B1** arms, D1/D2 lip/emotion until separate PRs merge.
 
 ---
 
