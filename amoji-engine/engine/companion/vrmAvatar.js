@@ -83,6 +83,7 @@ import {
   resolveOnlineMotionClipUrl,
 } from "./companionOnlineMotionClips.mjs";
 import { createCompanionTreatProp } from "./companionTreatProp.js";
+import { normalizeCompanionVrmStageMaterials } from "./companionVrmStageMaterials.js";
 import {
   isTalkBackgroundLibraryAction,
   isTalkLibraryLoopAction,
@@ -339,23 +340,7 @@ export async function createVrmAvatar(opts) {
   if (!vrm) throw new Error("VRM data missing from model");
 
   const model = vrm.scene;
-  model.traverse((obj) => {
-    if (obj.isMesh) {
-      obj.castShadow = true;
-      obj.receiveShadow = true;
-      obj.frustumCulled = false;
-      const mats = Array.isArray(obj.material) ? obj.material : [obj.material];
-      for (const m of mats) {
-        if (!m) continue;
-        m.visible = true;
-        if (m.map) m.map.colorSpace = THREE.SRGBColorSpace;
-        if (typeof m.envMapIntensity === "number") {
-          m.envMapIntensity = Math.max(m.envMapIntensity, 0.85);
-        }
-        m.needsUpdate = true;
-      }
-    }
-  });
+  normalizeCompanionVrmStageMaterials(model);
 
   // Portrait framing — upper body / face (skip stray oversized meshes in some VRMs)
   const box = computeVrmDisplayBounds(model);

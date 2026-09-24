@@ -10,8 +10,8 @@ describe("companionCharacterMigration", () => {
     expect(normalizeRosterCharacterId("chad")).toBe("kael");
     expect(normalizeRosterCharacterId("olivia")).toBe("yuki");
     expect(normalizeRosterCharacterId("rose")).toBe("mei");
-    expect(normalizeRosterCharacterId("sakura")).toBe("shino");
-    expect(normalizeRosterCharacterId("sienna")).toBe("shino");
+    expect(normalizeRosterCharacterId("sakura")).toBe("shibu");
+    expect(normalizeRosterCharacterId("sienna")).toBe("fumiriya");
   });
 
   it("rewrites legacy storage to keep user selection", () => {
