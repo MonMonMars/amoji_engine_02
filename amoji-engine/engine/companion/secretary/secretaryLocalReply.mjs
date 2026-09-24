@@ -117,11 +117,13 @@ export function pickLocalChatReply(
   webContext,
   system,
   companionReply,
+  replyLang = "yue",
 ) {
+  const sessionIsEn = String(replyLang || "").toLowerCase() === "en";
   if (isSecretarySystemPrompt(system)) {
     return secretaryLocalReply(message, {
-      isEn: detectSecretaryLang(message, system),
+      isEn: sessionIsEn || detectSecretaryLang(message, system),
     });
   }
-  return companionReply(message, history, webContext);
+  return companionReply(message, history, webContext, { replyLang });
 }
