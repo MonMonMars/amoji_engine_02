@@ -410,7 +410,7 @@ export function buildLlmContextDatabaseFragment(opts = {}) {
   const profile = db.userProfile;
   const profileBlock = profile
     ? en
-      ? `Guest: ${profile.guest}. Locale: ${profile.locale}. Role: ${profile.roleLabel}. Active character: ${profile.activeCharacterId}.`
+      ? `Guest: ${profile.guest}. Locale: ${profile.locale}. Role: ${profile.roleLabel}. Active character: ${profile.activeCharacterId}. Reply language: English only.`
       : `訪客：${profile.guest}。語言：${profile.locale}。模式：${profile.roleLabel}。角色：${profile.activeCharacterId}。`
     : "";
 

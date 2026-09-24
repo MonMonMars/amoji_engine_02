@@ -4,6 +4,7 @@ import { resolveAppRole } from "../engine/companion/companionUnifiedApp.js";
 import {
   loadCompanionLang,
   resolveCompanionLang,
+  resolveUtteranceSpeechLang,
   saveCompanionLang,
 } from "../engine/companion/companionLocalePrefs.js";
 import { buildCharacterFunctionReadout } from "../engine/companion/companionSettingsChrome.js";
@@ -51,6 +52,14 @@ describe("companionLocalePrefs", () => {
     saveCompanionLang("en", storage);
     expect(loadCompanionLang(storage)).toBe("en");
     expect(resolveCompanionLang(new URLSearchParams(""), storage)).toBe("en");
+  });
+
+  it("resolveUtteranceSpeechLang follows script when session is English", () => {
+    expect(resolveUtteranceSpeechLang("你好呀，今日點呀？", "en")).toBe("yue");
+    expect(resolveUtteranceSpeechLang("Hey, how are you today?", "en")).toBe(
+      "en",
+    );
+    expect(resolveUtteranceSpeechLang("ok", "en")).toBe("en");
   });
 });
 
