@@ -350,7 +350,7 @@ export function buildTtsInstruct(opts = {}) {
     ? pokeReaction && (opts.vocalization === "giggle" || opts.vocalization === "laugh")
       ? isEnglish
         ? `POKE REACTION: Start with a real ${opts.vocalization} ("${vocalPrefix}") — breathy, playful, cute — SAME voice — then continue the line still smiling and amused. Never spell "haha" or "hehe" as words.`
-        : `戳一下：先 genuine ${opts.vocalization === "giggle" ? "嘻嘻" : "哈哈"}（"${vocalPrefix}"）— 俏皮可愛 — 同一個人 — 再講后面句，保持開心笑住。`
+        : `戳一下：先 genuine 哈哈（"${vocalPrefix}"）— 俏皮可愛 — 同一個人 — 再講后面句，保持開心笑住。`
       : isEnglish
         ? `Opening: "${vocalPrefix}" as a natural ${opts.vocalization || "soft"} vocal — SAME speaker, SAME voice — then flow seamlessly into the rest without resetting tone or switching persona.`
         : `開頭："${vocalPrefix}" 做自然${opts.vocalization || "軟"}聲 — 同一個人、同一把聲 — 然後順滑接落去，唔好換人換聲。`
