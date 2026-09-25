@@ -109,6 +109,9 @@ import {
   auditVrmSpringGravity,
   configureVrmSpringStability,
   createIdleSpringRecenterState,
+  dampUpwardSpringTailDrift,
+  enforceSpringGravityDown,
+  getVrmSpringJoints,
   recenterVrmSpringBones,
   setVrmSceneWindMode,
   stabilizeVrmSpringBones,
@@ -1629,7 +1632,8 @@ export async function createVrmAvatar(opts) {
       if (!libraryMotion && !bodyMotion.currentAction) {
         bodyMotion.enforcePlantedLimbs?.({
           lockUpperArms: true,
-          lockForearms: false,
+          lockForearms:
+            plantedIdleFrame && !bodyMotion.idleBeatArmsActive,
           hands: !talking && !eating && !bodyMotion.idleBeatArmsActive,
         });
       }
@@ -1645,6 +1649,10 @@ export async function createVrmAvatar(opts) {
       }
       stabilizeVrmSpringBones(vrm);
       vrm.update(dt);
+      if (dt > 0) {
+        enforceSpringGravityDown(vrm);
+        dampUpwardSpringTailDrift(getVrmSpringJoints(vrm), dt);
+      }
       if (!libraryMotion && !bodyMotion.currentAction) {
         bodyMotion.finishPlantedLimbLockPostUpdate?.({
           hands:
