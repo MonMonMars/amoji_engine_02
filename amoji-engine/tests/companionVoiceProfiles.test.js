@@ -18,7 +18,7 @@ describe("companionVoiceProfiles", () => {
   });
 
   it("lists expanded Cantonese and Hong Kong English voices", () => {
-    expect(voiceProfilesForLang("yue").length).toBe(34);
+    expect(voiceProfilesForLang("yue").length).toBe(35);
     expect(voiceProfilesForLang("en").length).toBe(12);
     expect(findVoiceProfile("openai-coral")?.openAiVoice).toBe("coral");
     expect(findVoiceProfile("en-HK-YanNeural")?.gender).toBe("female");
