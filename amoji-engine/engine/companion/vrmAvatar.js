@@ -2126,8 +2126,26 @@ export async function createVrmAvatar(opts) {
       unbindOrbitWheel();
       unbindOrbitSession();
       controls.dispose();
+      const root = vrm?.scene;
+      if (root) {
+        root.traverse((obj) => {
+          if (!obj.isMesh) return;
+          obj.geometry?.dispose?.();
+          const mats = Array.isArray(obj.material)
+            ? obj.material
+            : [obj.material];
+          for (const m of mats) {
+            if (!m) continue;
+            for (const val of Object.values(m)) {
+              if (val?.isTexture) val.dispose?.();
+            }
+            m.dispose?.();
+          }
+        });
+      }
       vrm.dispose?.();
       renderer.dispose();
+      renderer.renderLists?.dispose?.();
     },
   };
 }
