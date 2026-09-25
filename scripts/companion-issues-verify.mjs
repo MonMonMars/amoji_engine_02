@@ -1102,6 +1102,20 @@ async function main() {
     const modelsBefore = loadedModels.length;
     await switchCompanionInSession(page, "alicia");
     await waitForSessionCharacter(page, "alicia");
+    const aliciaChip = await page.evaluate(() => ({
+      brand: document.getElementById("brand-name")?.textContent?.trim(),
+      voiceNote: document.getElementById("settings-voice-note")?.textContent?.trim(),
+    }));
+    record(
+      "switch-character-chip-name",
+      /alicia/i.test(aliciaChip.brand || ""),
+      JSON.stringify(aliciaChip),
+    );
+    record(
+      "switch-character-voice-note",
+      Boolean(aliciaChip.voiceNote && /yan/i.test(aliciaChip.voiceNote)),
+      JSON.stringify(aliciaChip),
+    );
     const aliciaAudit = await readLoadedCharacterAudit(page, "alicia");
     const aliciaNetwork = loadedModels.slice(modelsBefore).some((u) => /alicia/i.test(u));
     record(
