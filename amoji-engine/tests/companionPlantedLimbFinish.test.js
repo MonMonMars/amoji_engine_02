@@ -64,6 +64,23 @@ describe("companion planted limb finish", () => {
     expect(humanoid.bones.get("leftUpperArm").rotation.x).toBe(0.9);
   });
 
+  it("reapply locks forearms to calibrated rest when idle (not talking)", () => {
+    const humanoid = mockHumanoid();
+    humanoid.bones.get("leftLowerArm").rotation.x = 1.2;
+    humanoid.bones.get("rightLowerArm").rotation.x = 1.1;
+    const motion = createCompanionBodyMotion(humanoid);
+    for (let i = 0; i < 8; i += 1) motion.update(1 / 30);
+    motion.reapplyPlantedLimbs?.({ force: true });
+    expect(humanoid.bones.get("leftLowerArm").rotation.x).toBeCloseTo(
+      VRM_ARM_REST_ROTATIONS.leftLowerArm.x,
+      2,
+    );
+    expect(humanoid.bones.get("rightLowerArm").rotation.x).toBeCloseTo(
+      VRM_ARM_REST_ROTATIONS.rightLowerArm.x,
+      2,
+    );
+  });
+
   it("reapply restores talk forearms after poke while speaking", () => {
     const humanoid = mockHumanoid();
     const motion = createCompanionBodyMotion(humanoid);
