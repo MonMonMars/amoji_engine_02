@@ -340,7 +340,9 @@ export async function createVrmAvatar(opts) {
   if (!vrm) throw new Error("VRM data missing from model");
 
   const model = vrm.scene;
-  normalizeCompanionVrmStageMaterials(model);
+  normalizeCompanionVrmStageMaterials(model, {
+    characterId: loadedCharacterId,
+  });
 
   // Portrait framing — upper body / face (skip stray oversized meshes in some VRMs)
   const box = computeVrmDisplayBounds(model);
