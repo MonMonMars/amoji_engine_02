@@ -1,11 +1,30 @@
 import { isIosLike } from "./companionPlatform.js";
-import { resolveCharacterId } from "./companionCharacterCatalog.js";
+import {
+  HIGH_POLY_FACE_CHARACTER_IDS,
+  resolveCharacterId,
+} from "./companionCharacterCatalog.js";
 import { defaultVrmModelFetchUrl } from "./companionModelAssets.mjs";
 
 export const COMPANION_AVATAR_SCHEMA = "amoji.createAvatar.v1";
 
 /** Per-stage timeout so slow mobile networks do not block the whole page. */
 export const AVATAR_LOAD_TIMEOUT_MS = 22_000;
+
+/** Kizuna / Alicia / Ember VRMs are ~8–20MB — allow extra parse time on desktop. */
+export const AVATAR_LOAD_TIMEOUT_HIGH_POLY_MS = 45_000;
+
+/**
+ * @param {string | null | undefined} characterId
+ * @returns {number}
+ */
+export function resolveAvatarLoadTimeoutMs(characterId) {
+  if (isIosLike()) return AVATAR_LOAD_TIMEOUT_HIGH_POLY_MS;
+  const id = String(characterId || "").trim().toLowerCase();
+  if (HIGH_POLY_FACE_CHARACTER_IDS.has(id)) {
+    return AVATAR_LOAD_TIMEOUT_HIGH_POLY_MS;
+  }
+  return AVATAR_LOAD_TIMEOUT_MS;
+}
 
 /**
  * Replace canvas so a failed WebGL context does not block the next renderer.
@@ -110,14 +129,13 @@ export function shouldSkipGltfFallback(modelUrl, prefer) {
 export async function createCompanionAvatar(opts) {
   const emit = (pct, label) => opts.onProgress?.(pct, label);
   emit(4, "boot");
-  const timeoutMs =
-    opts.timeoutMs ??
-    (isIosLike() ? 45_000 : AVATAR_LOAD_TIMEOUT_MS);
   const prefer = opts.prefer || "vrm";
   const modelUrl = opts.modelUrl || undefined;
   const characterId =
     opts.characterId ||
     resolveCharacterId({ modelUrl, avatarPrefer: prefer === "gltf" ? "gltf" : "vrm" });
+  const timeoutMs =
+    opts.timeoutMs ?? resolveAvatarLoadTimeoutMs(characterId);
   const rosterVrmUrl =
     modelUrl ||
     defaultVrmModelFetchUrl(characterId) ||
