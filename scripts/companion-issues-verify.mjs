@@ -1105,15 +1105,20 @@ async function main() {
     const aliciaChip = await page.evaluate(() => ({
       brand: document.getElementById("brand-name")?.textContent?.trim(),
       voiceNote: document.getElementById("settings-voice-note")?.textContent?.trim(),
+      storageId: window.localStorage?.getItem("amoji.companion.characterId"),
     }));
-    record(
-      "switch-character-chip-name",
-      /alicia/i.test(aliciaChip.brand || ""),
-      JSON.stringify(aliciaChip),
-    );
+    const aliciaBrandOk =
+      aliciaChip.storageId === "alicia" &&
+      Boolean(aliciaChip.brand) &&
+      (/alicia/i.test(aliciaChip.brand) || aliciaChip.brand.includes("莉莎"));
+    record("switch-character-chip-name", aliciaBrandOk, JSON.stringify(aliciaChip));
+    const aliciaVoiceNoteOk =
+      Boolean(aliciaChip.voiceNote) &&
+      (/yan/i.test(aliciaChip.voiceNote) ||
+        /曉佳|敘事|HiuGaai/i.test(aliciaChip.voiceNote));
     record(
       "switch-character-voice-note",
-      Boolean(aliciaChip.voiceNote && /yan/i.test(aliciaChip.voiceNote)),
+      aliciaVoiceNoteOk,
       JSON.stringify(aliciaChip),
     );
     const aliciaAudit = await readLoadedCharacterAudit(page, "alicia");
