@@ -2,7 +2,7 @@
  * Japanese anime / VN / gacha-game style scene painters (SVG body fragments).
  * Rich layered gradients, neon, bokeh, perspective interiors, atmospheric depth.
  */
-export const SCENE_ANIME_ART_REVISION = "anime-scene-v551-jp-game-ui";
+export const SCENE_ANIME_ART_REVISION = "anime-scene-v594-mon-detailed-anime";
 
 /** @param {number} w @param {number} h */
 export function animePaintDefs(w, h) {
@@ -97,16 +97,22 @@ export function animePaintDefs(w, h) {
 /** Cel-shaded rim light + soft bloom streaks (VN / gacha key art finish). */
 export function animeDetailPass(w, h) {
   let sparkles = "";
-  for (let i = 0; i < 38; i += 1) {
+  for (let i = 0; i < 58; i += 1) {
     const cx = ((i * 173) % 1000) / 1000 * w;
-    const cy = ((i * 211 + 31) % 1000) / 1000 * h * 0.72;
-    const r = 0.5 + (i % 4) * 0.28;
-    sparkles += `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${r.toFixed(2)}" fill="#fff" opacity="${(0.025 + (i % 5) * 0.008).toFixed(3)}" filter="url(#softGlow)"/>`;
+    const cy = ((i * 211 + 31) % 1000) / 1000 * h * 0.78;
+    const r = 0.45 + (i % 5) * 0.32;
+    sparkles += `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${r.toFixed(2)}" fill="#fff" opacity="${(0.028 + (i % 5) * 0.009).toFixed(3)}" filter="url(#softGlow)"/>`;
   }
-  const flare = `<ellipse cx="${w * 0.78}" cy="${h * 0.12}" rx="${w * 0.18}" ry="${h * 0.06}" fill="#fff8e8" opacity="0.055" filter="url(#softGlow)"/>
-  <ellipse cx="${w * 0.22}" cy="${h * 0.2}" rx="${w * 0.1}" ry="${h * 0.04}" fill="#c8e8ff" opacity="0.045" filter="url(#softGlow)"/>
-  <ellipse cx="${w * 0.5}" cy="${h * 0.08}" rx="${w * 0.22}" ry="${h * 0.04}" fill="#fff" opacity="0.028" filter="url(#softGlow)"/>`;
-  return `${sparkles}${flare}`;
+  let streaks = "";
+  for (let i = 0; i < 6; i += 1) {
+    const x0 = w * (0.08 + i * 0.14);
+    streaks += `<line x1="${x0.toFixed(1)}" y1="${h * 0.05}" x2="${(x0 + w * 0.06).toFixed(1)}" y2="${h * 0.22}" stroke="#fff" stroke-opacity="0.04" stroke-width="2" filter="url(#softGlow)"/>`;
+  }
+  const flare = `<ellipse cx="${w * 0.78}" cy="${h * 0.12}" rx="${w * 0.18}" ry="${h * 0.06}" fill="#fff8e8" opacity="0.065" filter="url(#softGlow)"/>
+  <ellipse cx="${w * 0.22}" cy="${h * 0.2}" rx="${w * 0.1}" ry="${h * 0.04}" fill="#c8e8ff" opacity="0.055" filter="url(#softGlow)"/>
+  <ellipse cx="${w * 0.5}" cy="${h * 0.08}" rx="${w * 0.22}" ry="${h * 0.04}" fill="#fff" opacity="0.035" filter="url(#softGlow)"/>
+  <ellipse cx="${w * 0.62}" cy="${h * 0.55}" rx="${w * 0.28}" ry="${h * 0.14}" fill="#a8c8ff" opacity="0.04" filter="url(#softGlow)"/>`;
+  return `${sparkles}${streaks}${flare}`;
 }
 
 /** Soft distant haze band for outdoor depth (v481 refresh). */
@@ -122,7 +128,7 @@ export function animeHorizonMist(w, h, yRatio = 0.52, opacity = 0.22) {
  * @param {"standard" | "interior" | "minimal"} [mode]
  */
 export function animeSceneFinisher(w, h, mode = "standard") {
-  const dustCount = mode === "interior" ? 28 : 36;
+  const dustCount = mode === "interior" ? 36 : 48;
   let dust = "";
   for (let i = 0; i < dustCount; i += 1) {
     const cx = ((i * 137) % 1000) / 1000 * w;

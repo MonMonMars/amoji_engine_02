@@ -286,6 +286,17 @@ export const YUE_VOICE_PROFILES = Object.freeze([
     prosodyBias: { rate: -4, pitch: -10, volume: -2 },
   },
   {
+    id: "zh-HK-WanLungNeural-juno",
+    edgeVoice: "zh-HK-WanLungNeural",
+    shortLabel: "雲龍·朱諾",
+    shortLabelEn: "WanLung·Juno",
+    lang: "zh-HK",
+    gender: "male",
+    source: "Edge TTS",
+    samplePath: "/prototypes/assets/voice-samples/wanlung.mp3",
+    prosodyBias: { rate: -2, pitch: -6, volume: 0 },
+  },
+  {
     id: "zh-HK-HiuMaanNeural-aesthe",
     edgeVoice: "zh-HK-HiuMaanNeural",
     shortLabel: "曉曼·雅",

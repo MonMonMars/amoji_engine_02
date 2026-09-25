@@ -55,8 +55,8 @@ export function pickerCopy(isEnglish = false) {
   return {
     title: en ? "Choose your companion" : "揀你嘅同伴",
     sub: en
-      ? "Each model has a role — girlfriend, boyfriend, secretary, or pet."
-      : "每個模型都有功能 — 女朋友、男朋友、秘書或寵物。",
+      ? "Pick a companion and scene — voice and personality match your selection."
+      : "揀同伴同場景 — 聲線同性格會跟所選角色。",
     begin: en ? "Start" : "開始",
     switch: en ? "Switch companion" : "切換同伴",
     featuredLabel: en
@@ -218,7 +218,7 @@ export function updatePickerHero(root, item, isEnglish = false) {
   }
   if (traitsEl) {
     traitsEl.replaceChildren();
-    for (const trait of (item?.traits || []).slice(0, 3)) {
+    for (const trait of (item?.traits || []).slice(0, 2)) {
       const chip = document.createElement("span");
       chip.className = "picker-hero-trait";
       chip.textContent = trait;

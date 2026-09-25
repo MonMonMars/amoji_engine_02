@@ -39,7 +39,7 @@ export const CHARACTER_COMPANION_ROLES = Object.freeze({
   fumiriya: "girlfriend",
   darkness_shibu: "girlfriend",
   luna: "secretary",
-  juno: "girlfriend",
+  juno: "boyfriend",
   elio: "girlfriend",
   hana: "secretary",
   zane: "secretary",
