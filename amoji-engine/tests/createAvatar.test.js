@@ -1,5 +1,19 @@
 import { describe, expect, it } from "vitest";
-import { shouldSkipGltfFallback } from "../engine/companion/createAvatar.js";
+import {
+  AVATAR_LOAD_TIMEOUT_HIGH_POLY_MS,
+  AVATAR_LOAD_TIMEOUT_MS,
+  resolveAvatarLoadTimeoutMs,
+  shouldSkipGltfFallback,
+} from "../engine/companion/createAvatar.js";
+
+describe("createAvatar load timeout", () => {
+  it("allows extra time for high-poly roster picks (e.g. kizuna #2)", () => {
+    expect(resolveAvatarLoadTimeoutMs("kizuna")).toBe(
+      AVATAR_LOAD_TIMEOUT_HIGH_POLY_MS,
+    );
+    expect(resolveAvatarLoadTimeoutMs("nova")).toBe(AVATAR_LOAD_TIMEOUT_MS);
+  });
+});
 
 describe("createAvatar fallback", () => {
   it("does not swap a failed VRM character for companion-girl.glb", () => {
