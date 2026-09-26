@@ -1,6 +1,8 @@
 # Handoff — Amoji companion (Mon)
 
 **Packed:** 2026-09-26  
+**Full repo zip (1.5 GB, includes `.git`, excludes `node_modules`):**  
+`/workspace/amoji_engine_02-handoff-2026-09-26.zip` (same file at `/tmp/amoji_engine_02-handoff-2026-09-26.zip`)  
 **Branch:** `cursor/mon-juno-bg-picker-54db`  
 **Repo build:** `2026-09-25-v595-mon-kizuna-begin-cap` (`amoji-engine/engine/companion/buildVersion.mjs`)
 

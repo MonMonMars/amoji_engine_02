@@ -22,6 +22,9 @@ coverage/
 .venv/
 venv/
 
+# Handoff archives (large; do not commit)
+amoji_engine_02-handoff-*.zip
+
 # Lab / local
 *.log
 .cache/
