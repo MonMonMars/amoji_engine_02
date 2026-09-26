@@ -289,6 +289,8 @@ When player picks “Study” or “Run,” show **SD/3D performing the action**
 
 ---
 
+> Consolidated GTM and dual-track (B2C + B2B) plan: [`docs/AMOJI_BUSINESS_PLAN.md`](../../docs/AMOJI_BUSINESS_PLAN.md).
+
 ## 6. Marketing strategy patterns
 
 | Pattern | Example | Amoji application |
