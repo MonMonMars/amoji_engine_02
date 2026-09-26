@@ -41,7 +41,8 @@ Agents: **read this before saying “fixed.”** Update a row when status change
 | Gate | Result | Notes |
 |------|--------|--------|
 | Unit tests | ✅ | incl. Kizuna begin cap + preload |
-| `npm run verify:pre-delivery` | ✅ 5/5 (local) | picker layout + switch locale E2E + issues |
+| `npm run verify:pre-delivery` | ✅ 5/5 (local) | Kizuna #2 picker begin + switch locale E2E |
+| PR **#112** CI (`328e1b0`) | ✅ | companion-e2e + unit-and-smoke |
 
 ### Verify snapshot — **production `v563`** (merged [#101](https://github.com/MonMonMars/amoji_engine_02/pull/101))
 

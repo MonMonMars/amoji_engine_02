@@ -20,8 +20,9 @@
 
 ## CI / deploy
 
-- PR **#112** CI was green on commit `159faf6`; later commits add v595 Kizuna cap + tracker — re-run CI after pull.
-- **Production** was still on **v589** until merge to `main` + Vercel deploy. After merge: `npm run verify:pre-delivery:prod`.
+- PR **#112** — **CI green** on `328e1b0` (unit-and-smoke + companion-e2e). PR marked **ready for review** (not draft).
+- **Production** still **v589** until **#112** merges to `main` + Vercel deploy (~1 min). Then: `npm run verify:pre-delivery:prod`.
+- **Merge step:** GitHub → merge PR **#112** → wait for Vercel → confirm `/api/health` build = `2026-09-25-v595-mon-kizuna-begin-cap`.
 
 ## Recent user reports (queue)
 
