@@ -1,8 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 import {
   attachStartPickerModelPreload,
+  MODEL_ENSURE_READY_CAP_HIGH_POLY_MS,
   normalizePickerProgressPct,
   PICKER_PREVIEW_PROGRESS_MAX,
+  resolveModelEnsureReadyCapMs,
 } from "../engine/companion/companionStartPickerPreload.js";
 import {
   START_PICKER_PRELOAD_BAR_HTML,
@@ -57,5 +59,41 @@ describe("companionStartPickerPreload", () => {
 
     await new Promise((resolve) => setTimeout(resolve, 80));
     expect(fetchImpl).toHaveBeenCalled();
+  });
+
+  it("uses a longer ensure cap for high-poly roster picks (Kizuna #2)", () => {
+    expect(resolveModelEnsureReadyCapMs("kizuna")).toBe(
+      MODEL_ENSURE_READY_CAP_HIGH_POLY_MS,
+    );
+    expect(resolveModelEnsureReadyCapMs("nova")).toBeLessThan(
+      MODEL_ENSURE_READY_CAP_HIGH_POLY_MS,
+    );
+  });
+
+  it("ensureModelReady does not block longer than the cap on slow downloads", async () => {
+    vi.useFakeTimers();
+    const fetchImpl = vi.fn(
+      () =>
+        new Promise(() => {
+          /* never resolves */
+        }),
+    );
+    const picker = {
+      element: { classList: { toggle: vi.fn() } },
+      setPreloadProgress: vi.fn(),
+      getSelectedId: () => "kizuna",
+    };
+    const job = attachStartPickerModelPreload(picker, {
+      isEnglish: true,
+      langCode: "en",
+      chatFirst: true,
+      fetchImpl,
+    });
+    await job.previewPromise;
+
+    const ready = job.ensureModelReady("kizuna");
+    await vi.advanceTimersByTimeAsync(MODEL_ENSURE_READY_CAP_HIGH_POLY_MS);
+    await expect(ready).resolves.toBeUndefined();
+    vi.useRealTimers();
   });
 });

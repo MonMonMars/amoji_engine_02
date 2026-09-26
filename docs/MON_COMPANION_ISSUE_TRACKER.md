@@ -1,9 +1,9 @@
 # Mon — companion problem & request tracker
 
 **Owner:** Mon (Designer)  
-**Last updated:** 2026-09-25 01:36 UTC  
+**Last updated:** 2026-09-25 07:05 UTC  
 **Production build (live):** check `/api/health` — often **behind** repo until PRs merge  
-**Repo `AMOJI_BUILD`:** `2026-09-25-v593-mon-idle-forearm-spring-lock` (`amoji-engine/engine/companion/buildVersion.mjs`)  
+**Repo `AMOJI_BUILD`:** `2026-09-25-v595-mon-kizuna-begin-cap` (`amoji-engine/engine/companion/buildVersion.mjs`)  
 **App entry (bookmark):** https://temporary-rushing-oxygen-ok5jzhd.vercel.app/play  
 
 Agents: **read this before saying “fixed.”** Update a row when status changes (merge + prod verify, or new user report).
@@ -36,12 +36,12 @@ Agents: **read this before saying “fixed.”** Update a row when status change
 
 **iOS:** bookmark **`/play` only** (not `/companion-full`).
 
-### Verify snapshot — **repo `v593`** (branch `cursor/fix-idle-tpose-springs-54db`)
+### Verify snapshot — **repo `v595`** (branch `cursor/mon-juno-bg-picker-54db`, PR **#112**)
 
 | Gate | Result | Notes |
 |------|--------|--------|
-| Unit tests | ✅ | planted forearm lock + spring stability |
-| `npm run verify:pre-delivery` | run before share | idle forearm lock + post-update spring damp |
+| Unit tests | ✅ | incl. Kizuna begin cap + preload |
+| `npm run verify:pre-delivery` | ✅ 5/5 (local) | picker layout + switch locale E2E + issues |
 
 ### Verify snapshot — **production `v563`** (merged [#101](https://github.com/MonMonMars/amoji_engine_02/pull/101))
 
@@ -113,7 +113,7 @@ Agents: **read this before saying “fixed.”** Update a row when status change
 
 | ID | Problem / request | Status | Evidence / fix | PR / build |
 |----|-------------------|--------|----------------|------------|
-| F1 | **Kizuna / roster #2** model load fail | ✅ | `verify:roster-models` | **v558** |
+| F1 | **Kizuna / roster #2** model load fail | 🟡 | Begin no longer blocks on full VRM prefetch (`ensureModelReady` cap **22s** high-poly); **v589** + **v595** | [#112](https://github.com/MonMonMars/amoji_engine_02/pull/112) **v595** |
 | F2 | Replace roster slots (R3 CC0) | ✅ | Cache revision **v561** | [#99](https://github.com/MonMonMars/amoji_engine_02/pull/99) |
 | F4 | **Elio** flat color blocks | ✅ | AvatarSample C + previews | **v557** |
 | F3 | Unique VRM per character id | ⏸️ | Allowed dup groups in test | ongoing |
@@ -142,6 +142,7 @@ Agents: **read this before saying “fixed.”** Update a row when status change
 
 | When | Mon said (paraphrase) | Tracker IDs | Outcome |
 |------|------------------------|-------------|---------|
+| 2026-09-25 | **Character #2** cannot load (was OK before) | F1 | **v595** capped prefetch before session start; deploy pending |
 | 2026-09-25 | Still **blended T-pose**, **wind from below**, **blended hair/skirt**; update chart; most not fixed | B1, B5, B6, E2, H2 | **v593** coded 🟡; prod still old until merge |
 | 2026-09-25 | Sendagaya lighting vs Alicia | F5 | PR **#109** 🟡 |
 | 2026-09-25 | Switch name/voice wrong; reload/memory | G1, G2 | PR **#110** 🟡 |
@@ -151,10 +152,10 @@ Agents: **read this before saying “fixed.”** Update a row when status change
 
 ## Open PR queue (merge priority suggestion)
 
-1. **B1/B5/B6** — `cursor/fix-idle-tpose-springs-54db` (**v593**)  
-2. **G1/G2** — [#110](https://github.com/MonMonMars/amoji_engine_02/pull/110) switch identity + single model  
-3. **F5** — [#109](https://github.com/MonMonMars/amoji_engine_02/pull/109) Sendagaya lighting  
-4. **A5** — roster PNG regen when session idle matches **v593**  
+1. **Ship bundle** — [#112](https://github.com/MonMonMars/amoji_engine_02/pull/112) (**v595**: Juno, scenes, picker, idle/springs, Kizuna begin cap, switch E2E)  
+2. **F5** — [#109](https://github.com/MonMonMars/amoji_engine_02/pull/109) Sendagaya lighting  
+3. **A5** — roster PNG regen when session idle matches **v595**  
+4. Close/supersede **#111** if fully contained in **#112**  
 
 After each merge: `npm run verify:pre-delivery:prod` → exit **0** before telling Mon it’s live.
 
@@ -176,7 +177,7 @@ After each merge: `npm run verify:pre-delivery:prod` → exit **0** before telli
 
 ## One-line summary for Mon (2026-09-25)
 
-**Live prod** is still on an older build (~**v563**): your **T-pose / upward wind / hair-skirt** report matches **B1/B5/B6 🔴 on prod**. **v593** on branch locks idle forearms and adds a post-spring gravity/damp pass — **deploy pending** until merged. Switch fixes are in **#110** (also pending). Bookmark **`/play`**.
+**Live prod** is still on **~v589** (check `/api/health`): **B1/B5/B6** and **F1 (#2 load)** fixes are in repo **v595** on PR **#112** — **deploy pending** until merge. Bookmark **`/play`**.
 
 ---
 
