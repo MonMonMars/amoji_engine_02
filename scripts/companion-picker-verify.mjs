@@ -490,8 +490,8 @@ if (boot.showcaseLayout || boot.stripCards > 0) {
   record("grid selection path", false, "no showcase strip or search toolbar");
 }
 await beginStartPickerSession(page, {
-  characterId: "nova",
-  dismissTimeout: 120000,
+  characterId: "kizuna",
+  dismissTimeout: 180000,
 });
 record("begin chat dismisses picker", true);
 
@@ -504,11 +504,28 @@ record("session started", true);
 
 await page
   .waitForFunction(
-    () => window.__amojiAvatarKind === "vrm3d" && window.__amojiAvatar?.vrm,
+    () =>
+      window.__amojiLoadedCharacterId === "kizuna" &&
+      window.__amojiAvatarKind === "vrm3d" &&
+      window.__amojiAvatar?.vrm,
     undefined,
-    { timeout: 120000 },
+    { timeout: 180000 },
   )
   .catch(() => null);
+const kizunaLoaded = await page.evaluate(() => ({
+  id: window.__amojiLoadedCharacterId,
+  kind: window.__amojiAvatarKind,
+  hasVrm: Boolean(window.__amojiAvatar?.vrm),
+  url: window.__amojiLoadedModelUrl,
+}));
+record(
+  "kizuna roster #2 vrm load",
+  kizunaLoaded.id === "kizuna" &&
+    kizunaLoaded.kind === "vrm3d" &&
+    kizunaLoaded.hasVrm &&
+    /companion-kizuna\.vrm/i.test(String(kizunaLoaded.url || "")),
+  JSON.stringify(kizunaLoaded),
+);
 await page.waitForTimeout(2500);
 
 const idleLimbs = await page.evaluate(async () => {

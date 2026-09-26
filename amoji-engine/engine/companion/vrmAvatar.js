@@ -109,6 +109,9 @@ import {
   auditVrmSpringGravity,
   configureVrmSpringStability,
   createIdleSpringRecenterState,
+  dampUpwardSpringTailDrift,
+  enforceSpringGravityDown,
+  getVrmSpringJoints,
   recenterVrmSpringBones,
   setVrmSceneWindMode,
   stabilizeVrmSpringBones,
@@ -1629,7 +1632,8 @@ export async function createVrmAvatar(opts) {
       if (!libraryMotion && !bodyMotion.currentAction) {
         bodyMotion.enforcePlantedLimbs?.({
           lockUpperArms: true,
-          lockForearms: false,
+          lockForearms:
+            plantedIdleFrame && !bodyMotion.idleBeatArmsActive,
           hands: !talking && !eating && !bodyMotion.idleBeatArmsActive,
         });
       }
@@ -1645,6 +1649,10 @@ export async function createVrmAvatar(opts) {
       }
       stabilizeVrmSpringBones(vrm);
       vrm.update(dt);
+      if (dt > 0) {
+        enforceSpringGravityDown(vrm);
+        dampUpwardSpringTailDrift(getVrmSpringJoints(vrm), dt);
+      }
       if (!libraryMotion && !bodyMotion.currentAction) {
         bodyMotion.finishPlantedLimbLockPostUpdate?.({
           hands:
@@ -2126,8 +2134,26 @@ export async function createVrmAvatar(opts) {
       unbindOrbitWheel();
       unbindOrbitSession();
       controls.dispose();
+      const root = vrm?.scene;
+      if (root) {
+        root.traverse((obj) => {
+          if (!obj.isMesh) return;
+          obj.geometry?.dispose?.();
+          const mats = Array.isArray(obj.material)
+            ? obj.material
+            : [obj.material];
+          for (const m of mats) {
+            if (!m) continue;
+            for (const val of Object.values(m)) {
+              if (val?.isTexture) val.dispose?.();
+            }
+            m.dispose?.();
+          }
+        });
+      }
       vrm.dispose?.();
       renderer.dispose();
+      renderer.renderLists?.dispose?.();
     },
   };
 }

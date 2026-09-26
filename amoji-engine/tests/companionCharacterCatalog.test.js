@@ -236,8 +236,11 @@ describe("companionCharacterCatalog v363 VTuber roster", () => {
     expect(characterGender("hina", "yue")).toBe("female");
     expect(characterGender("dex", "yue")).toBe("female");
     expect(characterVoiceLabel("yuki", "yue", false)).toBeTruthy();
-    expect(MALE_CHARACTER_IDS.size).toBe(9);
+    expect(MALE_CHARACTER_IDS.size).toBe(10);
     expect(characterGender("zane", "en")).toBe("male");
+    expect(characterGender("juno", "en")).toBe("male");
+    expect(getCharacter("juno").voices.en).toBe("en-HK-SamNeural");
+    expect(getCharacter("juno").voices.yue).toBe("zh-HK-WanLungNeural-juno");
   });
 
   it("matches TTS voice gender to character gender for every roster entry", () => {

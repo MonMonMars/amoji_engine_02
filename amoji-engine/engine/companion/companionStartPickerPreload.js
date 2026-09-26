@@ -2,7 +2,10 @@
  * Start-picker roster preload — chat-first: preview PNGs block the bar,
  * selected VRM loads in the background after "Ready to chat".
  */
-import { characterAvatarConfig } from "./companionCharacterCatalog.js";
+import {
+  characterAvatarConfig,
+  HIGH_POLY_FACE_CHARACTER_IDS,
+} from "./companionCharacterCatalog.js";
 import { characterModelFetchUrl } from "./companionModelAssets.mjs";
 import { startCharacterPreviewPreload } from "./companionCharacterPreload.js";
 import {
@@ -22,6 +25,22 @@ export const PICKER_PREVIEW_PROGRESS_MAX = 100;
 const SELECTION_MODEL_DEBOUNCE_MS = 450;
 /** Never block the picker on slow CDN preview PNGs. */
 const PICKER_PREVIEW_TIMEOUT_MS = 14_000;
+
+/** Cap how long Begin chat waits on VRM prefetch (Kizuna ~19MB on mobile). */
+export const MODEL_ENSURE_READY_CAP_MS = 10_000;
+export const MODEL_ENSURE_READY_CAP_HIGH_POLY_MS = 22_000;
+
+/**
+ * @param {string | null | undefined} characterId
+ * @returns {number}
+ */
+export function resolveModelEnsureReadyCapMs(characterId) {
+  const id = String(characterId || "").trim().toLowerCase();
+  if (HIGH_POLY_FACE_CHARACTER_IDS.has(id)) {
+    return MODEL_ENSURE_READY_CAP_HIGH_POLY_MS;
+  }
+  return MODEL_ENSURE_READY_CAP_MS;
+}
 
 /** @type {WeakMap<object, { refreshSelectedModel: () => void, previewPromise: Promise<unknown> }>} */
 const activeByPicker = new WeakMap();
@@ -195,7 +214,13 @@ export function attachStartPickerModelPreload(picker, opts = {}) {
    */
   const ensureModelReady = async (characterId) => {
     modelJob += 1;
-    await loadSelectedModel(characterId, { background: false });
+    const capMs = resolveModelEnsureReadyCapMs(characterId);
+    await Promise.race([
+      loadSelectedModel(characterId, { background: false }),
+      new Promise((resolve) => {
+        globalThis.setTimeout?.(resolve, capMs);
+      }),
+    ]);
   };
 
   const handle = {

@@ -6,7 +6,6 @@ import {
   buildCharacterSystemPrompt,
   characterAvatarConfig,
   characterTapLines,
-  persistCharacterId,
 } from "./companionCharacterCatalog.js";
 import {
   assertModelUrlForCharacter,
@@ -97,16 +96,6 @@ export async function switchCompanionCharacter(opts) {
       `model-mismatch: expected ${match.expectedBasename} got ${match.url}`,
     );
   }
-  persistCharacterId(characterId);
-
-  const url = new URL(globalThis.location?.href || "/");
-  url.searchParams.set("character", characterId);
-  url.searchParams.set("lang", langCode === "en" ? "en" : "yue");
-  url.searchParams.delete("vrm");
-  url.searchParams.delete("model3d");
-  url.searchParams.delete("avatar");
-  globalThis.history?.replaceState?.({}, "", `${url.pathname}${url.search}`);
-
   emit(100, isEnglish ? "Ready!" : "完成！");
 
   return {

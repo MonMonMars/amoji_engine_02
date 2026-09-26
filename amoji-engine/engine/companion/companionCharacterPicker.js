@@ -525,7 +525,7 @@ export function createCompanionCharacterPicker(opts = {}) {
 
   const shell = document.createElement("div");
   shell.className =
-    "companion-picker companion-picker--v4 companion-picker--aaa-theme companion-picker--session hide";
+    "companion-picker companion-picker--v4 companion-picker--aaa-theme companion-picker--pro-ui companion-picker--session hide";
   shell.id = "companion-character-picker";
   shell.hidden = true;
   shell.setAttribute("role", "dialog");
@@ -892,7 +892,7 @@ export function createCompanionStartPicker(opts = {}) {
 
   const shell = document.createElement("div");
   shell.className =
-    "companion-picker companion-picker--start companion-picker--v4 companion-picker--showcase companion-picker--stacked-layout companion-picker--aaa-theme hide";
+    "companion-picker companion-picker--start companion-picker--v4 companion-picker--showcase companion-picker--stacked-layout companion-picker--aaa-theme companion-picker--pro-ui hide";
   shell.id = "start-character-picker";
   shell.setAttribute("role", "dialog");
   shell.setAttribute("aria-modal", "true");

@@ -960,7 +960,7 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
       legRestRotations,
       armRestRotations,
       lockUpperArms: !idleBeatArmsActive,
-      lockForearms: false,
+      lockForearms: !talking && !idleBeatArmsActive,
     });
     if (!talking) enforcePlantedHandRest(humanoid);
     humanoid.update?.();
@@ -997,7 +997,8 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
       legRestRotations,
       armRestRotations,
       lockUpperArms: !idleBeatArmsActive,
-      lockForearms: false,
+      lockForearms:
+        !talking && !idleBeatArmsActive && !pokeActive,
     });
     const eatActive = activeAction === "eat" || activeAction === "drink";
     if (opts.hands !== false && !talking && !idleBeatArmsActive && !eatActive) {
@@ -1314,6 +1315,8 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
         pose[key] = 0;
       }
     }
+    const plantedForearmLock =
+      plantedIdle && plantFeet && !idleBeatArms && !talking;
     applyPose(smoothedPose, 1, {
       allowArms,
       actionArms,
@@ -1325,13 +1328,14 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
       bootPhase: false,
       plantFeet,
       strictLegRest,
+      plantedRestSnap: plantedForearmLock,
     });
-    if (plantedIdle && plantFeet && !idleBeatArms && humanoid) {
+    if (plantedForearmLock && humanoid) {
       enforcePlantedLimbRotations(humanoid, {
         legRestRotations,
         armRestRotations,
         lockUpperArms: true,
-        lockForearms: false,
+        lockForearms: true,
       });
       syncSkinnedLimbRawFromNormalized(humanoid, PLANTED_ARM_RAW_SYNC_BONES);
       humanoid.update?.();
