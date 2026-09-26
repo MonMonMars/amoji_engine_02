@@ -1,9 +1,9 @@
 # Handoff — Amoji companion (Mon)
 
-**Packed:** 2026-09-26  
-**Full repo zip (1.5 GB, includes `.git`, excludes `node_modules`):**  
-`/workspace/amoji_engine_02-handoff-2026-09-26.zip` (same file at `/tmp/amoji_engine_02-handoff-2026-09-26.zip`)  
-**Branch:** `cursor/mon-juno-bg-picker-54db`  
+**Packed:** 2026-09-26 (commit `eeec98a`)  
+**Full repo zip (~1.5 GB, includes `.git`, excludes `node_modules`):**  
+`/workspace/amoji_engine_02-handoff-full.zip`  
+**Branch:** `cursor/mon-juno-bg-picker-54db` (remote in sync)  
 **Repo build:** `2026-09-25-v595-mon-kizuna-begin-cap` (`amoji-engine/engine/companion/buildVersion.mjs`)
 
 ## Start here
@@ -26,8 +26,18 @@
 
 ## Recent user reports (queue)
 
-- **Character #2 (Kizuna)** — “cannot load” on device; fix: capped prefetch wait in `companionStartPickerPreload.js` before `startSession`.
+- **Character #2 (Kizuna)** — “cannot load” on **production v589**; fixes are in this branch (**v595** cap + picker E2E). **Merge #112** then retest on device.
 - **B1/B5/B6** — T-pose / spring wind on prod until v595 bundle deploys.
+
+## Unzip & run
+
+```bash
+unzip amoji_engine_02-handoff-full.zip -d amoji_engine_02
+cd amoji_engine_02
+git checkout cursor/mon-juno-bg-picker-54db
+npm install && cd amoji-engine && npm install && cd ..
+npm run verify:pre-delivery
+```
 
 ## Superseded / check before merge
 
