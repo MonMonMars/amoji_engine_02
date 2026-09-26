@@ -26,7 +26,9 @@ describe("companionCharacterRoles", () => {
       "rin",
       "vesper",
       "ash",
+      "juno",
     ]);
+    expect(resolveCharacterRole("juno")).toBe("boyfriend");
     expect(ROLE_DEFAULT_CHARACTER_ID.boyfriend).toBe("kael");
   });
 
@@ -59,7 +61,6 @@ describe("companionCharacterRoles", () => {
       "shibu",
       "fumiriya",
       "darkness_shibu",
-      "juno",
       "elio",
       "priya",
       "cyrus",

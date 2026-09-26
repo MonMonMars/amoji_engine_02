@@ -391,6 +391,7 @@ export const MALE_CHARACTER_IDS = Object.freeze(
     "ash",
     "zane",
     "cyrus",
+    "juno",
   ]),
 );
 

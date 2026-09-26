@@ -1,0 +1,202 @@
+/**
+ * Pro companion picker — breathable layout, clear hierarchy (2026 v594).
+ * Works with showcase + stacked-layout + AAA theme.
+ */
+
+.companion-picker--pro-ui.companion-picker--start .companion-picker-sheet {
+  padding: clamp(1rem, 3vw, 1.65rem) clamp(1rem, 4vw, 2rem) clamp(1.1rem, 3vw, 1.5rem);
+  gap: clamp(0.65rem, 2vh, 1.1rem);
+}
+
+.companion-picker--pro-ui .companion-picker-head {
+  gap: 1rem;
+  padding-bottom: 0.35rem;
+}
+
+.companion-picker--pro-ui .companion-picker-title {
+  font-size: clamp(1.35rem, 4.2vw, 1.75rem);
+  line-height: 1.15;
+  letter-spacing: 0.02em;
+  margin: 0 0 0.35rem;
+}
+
+.companion-picker--pro-ui .companion-picker-sub {
+  font-size: clamp(0.78rem, 2.4vw, 0.88rem);
+  line-height: 1.55;
+  max-width: 36rem;
+  margin: 0;
+  opacity: 0.88;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.companion-picker--pro-ui .picker-lang-toggle {
+  flex-shrink: 0;
+  gap: 0.35rem;
+}
+
+.companion-picker--pro-ui .picker-showcase-stage {
+  padding: 0.5rem 0.25rem 0.65rem;
+}
+
+.companion-picker--pro-ui.companion-picker--stacked-layout .picker-hero {
+  gap: 0.85rem;
+  padding: 0.55rem 0.75rem 0.65rem;
+}
+
+.companion-picker--pro-ui .picker-hero-meta {
+  gap: 0.45rem;
+}
+
+.companion-picker--pro-ui .picker-hero-name {
+  font-size: clamp(1.15rem, 3.8vw, 1.45rem);
+  line-height: 1.2;
+  letter-spacing: 0.03em;
+}
+
+.companion-picker--pro-ui .picker-hero-kicker {
+  font-size: 0.68rem;
+  letter-spacing: 0.14em;
+  opacity: 0.82;
+}
+
+.companion-picker--pro-ui .picker-hero-tagline {
+  font-size: 0.82rem;
+  line-height: 1.45;
+  max-width: 28rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.companion-picker--pro-ui .picker-hero-traits {
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  margin-top: 0.15rem;
+}
+
+.companion-picker--pro-ui .picker-hero-trait {
+  font-size: 0.68rem;
+  padding: 0.22rem 0.55rem;
+  letter-spacing: 0.04em;
+}
+
+.companion-picker--pro-ui .picker-hero-voice,
+.companion-picker--pro-ui .picker-hero-model {
+  font-size: 0.72rem;
+  line-height: 1.4;
+  opacity: 0.78;
+}
+
+.companion-picker--pro-ui .picker-roster-dock-label {
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin: 0 0 0.45rem;
+  padding: 0 0.15rem;
+  opacity: 0.75;
+}
+
+.companion-picker--pro-ui.companion-picker--stacked-layout.companion-picker--start .picker-roster-row {
+  max-height: min(12rem, 32vh);
+  padding-top: 0.45rem;
+  overflow: hidden;
+}
+
+.companion-picker--pro-ui.companion-picker--stacked-layout.companion-picker--start .start-picker-grid-wrap {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: min(8.25rem, 26vh);
+  overflow: hidden;
+}
+
+.companion-picker--pro-ui .companion-picker-grid--start.companion-picker-grid--roster {
+  gap: 0.65rem;
+  padding: 0.3rem 0.5rem 0.35rem;
+}
+
+.companion-picker--pro-ui .companion-card--start-strip {
+  min-width: 5.35rem;
+  max-width: 5.65rem;
+  padding: 0.45rem 0.35rem 0.5rem;
+  gap: 0.35rem;
+}
+
+.companion-picker--pro-ui .companion-card--start-strip .companion-card-name {
+  font-size: 0.68rem;
+  line-height: 1.25;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-align: center;
+  min-height: 2.4em;
+}
+
+.companion-picker--pro-ui .companion-card--start-strip .companion-card-role-strip {
+  font-size: 0.58rem;
+  line-height: 1.2;
+  opacity: 0.72;
+}
+
+.companion-picker--pro-ui .picker-scene-section {
+  padding: 0.55rem 0.15rem 0.35rem;
+}
+
+.companion-picker--pro-ui .picker-scene-label {
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  margin-bottom: 0.45rem;
+}
+
+.companion-picker--pro-ui .picker-scene-row {
+  gap: 0.55rem;
+  padding-bottom: 0.25rem;
+}
+
+.companion-picker--pro-ui .picker-scene-chip {
+  min-width: 4.5rem;
+  padding: 0.35rem 0.45rem 0.4rem;
+}
+
+.companion-picker--pro-ui .picker-scene-chip__label {
+  font-size: 0.62rem;
+  line-height: 1.25;
+  max-width: 4.2rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.companion-picker--pro-ui .picker-footer {
+  gap: 0.65rem;
+  padding-top: 0.55rem;
+}
+
+.companion-picker--pro-ui .companion-picker-foot {
+  font-size: 0.72rem;
+  line-height: 1.45;
+  opacity: 0.72;
+  max-width: 36rem;
+  margin: 0 auto;
+}
+
+.companion-picker--pro-ui .picker-confirm-btn {
+  min-height: 3rem;
+  font-size: 1rem;
+  letter-spacing: 0.06em;
+}
+
+@media (min-width: 720px) {
+  .companion-picker--pro-ui.companion-picker--start .picker-main--stacked {
+    max-width: var(--amoji-app-max-width, 960px);
+    margin: 0 auto;
+  }
+
+  .companion-picker--pro-ui .companion-card--start-strip {
+    min-width: 5.85rem;
+  }
+}

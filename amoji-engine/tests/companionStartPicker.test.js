@@ -221,7 +221,7 @@ describe("companion start picker", () => {
       String(CHARACTER_IDS.length),
     );
     expect(picker.element.querySelector(".companion-picker-sub")?.textContent).toMatch(
-      /swipe roster|companions/i,
+      /companion and scene|voice and personality/i,
     );
     expect(
       picker.element.querySelectorAll(".companion-card--start-strip .companion-card-number").length,
@@ -256,7 +256,7 @@ describe("companion start picker", () => {
       onStart: () => {},
     });
     expect(picker.element.querySelector(".companion-picker-sub")?.textContent).toContain(
-      `${CHARACTER_IDS.length} 位同伴`,
+      "揀同伴同場景",
     );
     picker.destroy();
   });
