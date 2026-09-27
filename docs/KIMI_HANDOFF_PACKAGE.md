@@ -11,15 +11,15 @@
 | Field | Value |
 |-------|--------|
 | **Branch** | `cursor/mon-juno-bg-picker-54db` |
-| **Commit** | `1a3ac49` (see also latest on branch) |
+| **Commit** | `e170e59` on **`main`** |
 | **Repo build** | `2026-09-25-v595-mon-kizuna-begin-cap` |
-| **Production build** | `2026-09-25-v589-mon-kizuna-start-load-fix` (**behind repo — deploy pending**) |
-| **Ship PR** | [#112](https://github.com/MonMonMars/amoji_engine_02/pull/112) — OPEN, ready for review, CI green, mergeable |
+| **Production build** | `2026-09-25-v595-mon-kizuna-begin-cap` (merged **PR #112**) |
+| **Ship PR** | [#112](https://github.com/MonMonMars/amoji_engine_02/pull/112) — **MERGED** |
 | **Owner** | Mon (Designer / Product) |
 | **Live app** | https://temporary-rushing-oxygen-ok5jzhd.vercel.app/play (bookmark **`/play` only** on iOS) |
 
-**Optional full repo zip (~1.5 GB, no `node_modules`):**  
-https://github.com/MonMonMars/amoji_engine_02/releases/download/handoff-2026-09-26-v595/amoji_engine_02-handoff-full.zip  
+**Full repo zip (~1.5 GB, includes `.git`, excludes `node_modules`):**  
+https://github.com/MonMonMars/amoji_engine_02/releases/download/handoff-2026-09-27-main-v595/amoji_engine_02-handoff-full.zip  
 
 Prefer **git clone** over zip when possible.
 
