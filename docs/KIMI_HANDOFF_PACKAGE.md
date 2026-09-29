@@ -18,10 +18,15 @@
 | **Owner** | Mon (Designer / Product) |
 | **Live app** | https://temporary-rushing-oxygen-ok5jzhd.vercel.app/play (bookmark **`/play` only** on iOS) |
 
+**Slim handoff zip (~2 MB, under 100 MB — recommended for agents):**  
+https://github.com/MonMonMars/amoji_engine_02/releases/download/handoff-slim-2026-09-29/amoji_engine_02-handoff-slim.zip  
+
+Includes source (`amoji-engine`, `prototypes` HTML/CSS/JS, `api`, `scripts`, `docs`, `AGENTS.md`) + **`docs/AMOJI_BUSINESS_PLAN.md`**. No VRM/scene binaries — run `npm run postinstall` after unzip. See `SLIM_HANDOFF_README.md` inside the zip.
+
 **Full repo zip (~1.5 GB, includes `.git`, excludes `node_modules`):**  
 https://github.com/MonMonMars/amoji_engine_02/releases/download/handoff-2026-09-27-main-v595/amoji_engine_02-handoff-full.zip  
 
-Prefer **git clone** over zip when possible.
+Prefer **git clone** or the **slim zip** over the full archive when possible.
 
 ---
 
