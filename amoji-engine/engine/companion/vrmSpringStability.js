@@ -8,17 +8,23 @@
 import * as THREE from "three";
 
 export const VRM_SPRING_STABILITY_SCHEMA =
-  "amoji.vrmSpringStability.v15-world-space-gravity-down";
+  "amoji.vrmSpringStability.v16-world-down-keeps-cloth-shape";
 
-/** High drag — stops hair/skirt tails from fluttering upward indoors. */
-export const MIN_DRAG_FORCE = 0.99975;
-/** Skirt/hair/ribbon chains — extra drag so cloth does not billow or jitter. */
-export const SKIRT_HAIR_DRAG_FORCE = 0.99992;
-/** Strong downward pull — counters VRM files that author gravityDir (0, 1, 0). */
-export const MIN_GRAVITY_POWER = 4.05;
-export const SKIRT_HAIR_GRAVITY_POWER = 4.45;
-export const MAX_STIFFNESS = 0.042;
-export const SKIRT_HAIR_MAX_STIFFNESS = 0.018;
+/**
+ * Drag damps flutter without freezing the chain.
+ * three-vrm applies `(1 - dragForce)` to inertia, then adds
+ * `gravityDir * gravityPower * delta` in world space. Drag near 1 plus
+ * gravity above ~4 yanks skirt/hair straight through the body.
+ */
+export const MIN_DRAG_FORCE = 0.72;
+/** Skirt/hair/ribbon — a bit more drag than body accessories, still mobile. */
+export const SKIRT_HAIR_DRAG_FORCE = 0.8;
+/** Downward pull that beats authored +Y gravity without spearing cloth into the legs. */
+export const MIN_GRAVITY_POWER = 1.15;
+export const SKIRT_HAIR_GRAVITY_POWER = 1.55;
+export const MAX_STIFFNESS = 0.55;
+/** Keep authored skirt/hair shape so weights do not collapse into the body. */
+export const SKIRT_HAIR_MAX_STIFFNESS = 0.42;
 
 /**
  * Outdoor — same downward pull + drag as indoor (saved night-city users saw
@@ -26,7 +32,7 @@ export const SKIRT_HAIR_MAX_STIFFNESS = 0.018;
  */
 export const OUTDOOR_DRAG_FORCE = MIN_DRAG_FORCE;
 export const OUTDOOR_GRAVITY_POWER = MIN_GRAVITY_POWER;
-export const OUTDOOR_MAX_STIFFNESS = 0.16;
+export const OUTDOOR_MAX_STIFFNESS = MAX_STIFFNESS;
 
 /** @deprecated Outdoor gravity no longer tilts — kept for tests. */
 export const OUTDOOR_WIND_SIDE_AMP = 0.06;

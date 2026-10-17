@@ -740,12 +740,13 @@ export function clampRestFaceBlend(blend, opts = {}) {
     if (key === "Relaxed") continue;
 
     const opensMouth = hazardHit(hazards?.opensMouth, key);
-    const blocksMouth = hazardHit(hazards?.blocksMouth, key);
     const closesEyes = hazardHit(hazards?.closesEyes, key);
     const isBinary = hazardHit(hazards?.binary, key);
 
     if (!talking && (opensMouth || closesEyes || isBinary)) continue;
-    if (talking && blocksMouth) continue;
+    // While speaking, keep emotion presets even when overrideMouth is "block".
+    // softenTalkMouthOverrides sets overrideMouth to none so visemes still
+    // own the jaw; skipping the preset here blanked the face for the utterance.
     if (talking && isBinary && (opensMouth || closesEyes)) continue;
     if (talking && closesEyes) continue;
 

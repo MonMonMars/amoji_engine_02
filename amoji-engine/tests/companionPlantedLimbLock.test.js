@@ -49,7 +49,7 @@ describe("companionPlantedLimbLock", () => {
     expect(raw.rotation.x).toBe(9);
   });
 
-  it("writes arm rotations to normalized only until norm→raw sync", () => {
+  it("writes arm rotations to normalized only — solver owns raw", () => {
     const norm = {
       name: "leftUpperArm",
       rotation: {
@@ -81,11 +81,18 @@ describe("companionPlantedLimbLock", () => {
       getRawBoneNode: (n) => (n === "leftUpperArm" ? raw : null),
       update: () => {},
     };
+    let updates = 0;
+    humanoid.update = () => {
+      updates += 1;
+    };
     writeHumanoidBoneRotation(humanoid, "leftUpperArm", { x: 0.2, y: 0, z: 0 });
     expect(norm.rotation.x).toBe(0.2);
     expect(raw.rotation.x).toBe(9);
     syncHumanoidSkinnedRawFromNormalized(humanoid);
-    expect(raw.rotation.x).toBe(0.2);
+    expect(raw.rotation.x).toBe(9);
+    expect(updates).toBe(1);
+    expect(auditPlantedLimbDualWrite(humanoid).ok).toBe(true);
+    expect(auditPlantedLimbDualWrite(humanoid).reason).toBe("solver-owns-raw");
   });
 
   it("enforcePlantedLimbRotations resets leg bones", () => {
@@ -125,7 +132,7 @@ describe("companionPlantedLimbLock", () => {
     expect(bones.get("leftShoulder").rotation.z).toBe(0);
   });
 
-  it("syncSkinnedLimbRawFromNormalized copies normalized leg euler to raw (skirt weights)", () => {
+  it("syncSkinnedLimbRawFromNormalized does not copy leg euler onto raw", () => {
     const norm = {
       name: "leftUpperLeg",
       rotation: {
@@ -158,11 +165,11 @@ describe("companionPlantedLimbLock", () => {
       update: () => {},
     };
     syncSkinnedLimbRawFromNormalized(humanoid);
-    expect(raw.rotation.x).toBeCloseTo(0.05, 5);
-    expect(raw.rotation.z).toBeCloseTo(0.01, 5);
+    expect(raw.rotation.x).toBe(2);
+    expect(raw.rotation.z).toBe(0);
   });
 
-  it("syncSkinnedLimbRawFromNormalized copies normalized arm euler to raw", () => {
+  it("syncSkinnedLimbRawFromNormalized leaves arm raw euler to the solver", () => {
     const norm = {
       name: "leftUpperArm",
       rotation: {
@@ -195,12 +202,12 @@ describe("companionPlantedLimbLock", () => {
       update: () => {},
     };
     syncSkinnedLimbRawFromNormalized(humanoid);
-    expect(raw.rotation.x).toBeCloseTo(0.11, 5);
-    expect(raw.rotation.z).toBeCloseTo(-0.44, 5);
+    expect(raw.rotation.x).toBe(9);
+    expect(raw.rotation.z).toBe(0);
     expect(auditPlantedLimbDualWrite(humanoid).ok).toBe(true);
   });
 
-  it("writes forearm lock to normalized then syncs raw from normalized", () => {
+  it("writes forearm lock to normalized and does not copy it onto raw", () => {
     const norm = {
       name: "leftLowerArm",
       rotation: {
@@ -241,6 +248,32 @@ describe("companionPlantedLimbLock", () => {
     expect(norm.rotation.x).toBe(VRM_ARM_REST_ROTATIONS.leftLowerArm.x);
     expect(raw.rotation.x).toBe(9);
     syncHumanoidSkinnedRawFromNormalized(humanoid);
-    expect(raw.rotation.x).toBe(VRM_ARM_REST_ROTATIONS.leftLowerArm.x);
+    expect(raw.rotation.x).toBe(9);
+  });
+
+  it("flags raw bones that still disagree with the humanoid solver", () => {
+    const raw = {
+      name: "leftUpperArm",
+      rotation: {
+        x: 9,
+        y: 0,
+        z: 0,
+        set(x, y, z) {
+          this.x = x;
+          this.y = y;
+          this.z = z;
+        },
+      },
+    };
+    const humanoid = {
+      getRawBoneNode: (n) => (n === "leftUpperArm" ? raw : null),
+      update() {
+        raw.rotation.set(0.2, 0, -1.2);
+      },
+    };
+    const audit = auditPlantedLimbDualWrite(humanoid);
+    expect(audit.ok).toBe(false);
+    expect(audit.reason).toBe("raw-drifted-from-solver");
+    expect(audit.issues[0].name).toBe("leftUpperArm");
   });
 });

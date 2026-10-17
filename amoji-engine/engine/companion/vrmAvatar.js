@@ -1299,8 +1299,13 @@ export async function createVrmAvatar(opts) {
       if (open > 0) {
         const preset = shapeToPreset(shape) || mouthPresets[0];
         if (preset) {
+          // Closed consonants stay small. Vowels are already scaled by the
+          // face profile — a high floor made every shape the same tiny open.
+          const closedShape = open < 0.1;
           const floor =
-            talking || eating ? Math.min(TALK_MOUTH_OPEN_MAX, 0.18) : 0;
+            (talking || eating) && !closedShape
+              ? Math.min(TALK_MOUTH_OPEN_MAX, 0.16)
+              : 0;
           expr.setValue(preset, Math.max(open, floor));
         }
       }
@@ -1490,9 +1495,8 @@ export async function createVrmAvatar(opts) {
         ),
       );
     } else {
-      mergeExpressionBlendIntoTargets(baseBlend, {
-        talking: talking || eating,
-      });
+      softenTalkMouthOverrides(expr, true);
+      setExpressionTargetFromBlend(baseBlend);
     }
 
     mouthOpen += (mouthTarget - mouthOpen) * Math.min(1, dt * (talking || eating ? 52 : 22));
@@ -1660,6 +1664,8 @@ export async function createVrmAvatar(opts) {
             !eating &&
             !bodyMotion.idleBeatArmsActive,
         });
+        // Solver commit only — do not copy normalized Euler onto raw bones
+        // after springs, or arms ghost and skirt/hair swing off the parent.
         syncHumanoidSkinnedRawFromNormalized(vrm?.humanoid);
       }
       const crossfading =
