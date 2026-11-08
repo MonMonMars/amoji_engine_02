@@ -86,9 +86,7 @@ export function sampleIdleExpressionBlend(elapsedSec, emotion = "neutral") {
   /** @type {Record<string, number>} */
   const blend = {};
 
-  if (e === "happy" || e === "neutral") {
-    blend.Happy = 0.04 + flutter * 0.03;
-  } else if (e === "sad") {
+  if (e === "sad") {
     blend.Sad = 0.32 + Math.sin(t * 0.52) * 0.05;
   } else if (e === "surprised") {
     blend.Surprised = 0.08 + flutter * 0.05;

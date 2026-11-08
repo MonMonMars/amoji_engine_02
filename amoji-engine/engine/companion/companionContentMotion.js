@@ -131,7 +131,6 @@ export function buildVrmExpressionBlend(emotion, nuance) {
       blend.Angry = 0.94;
       break;
     default:
-      blend.Happy = 0.06;
       break;
   }
 
