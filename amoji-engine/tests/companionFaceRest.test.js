@@ -83,14 +83,14 @@ describe("companionFaceRest", () => {
     expect(talkingMouthOpen(false, 0.9, 180, false)).toBe(0);
   });
 
-  it("drops Happy and Relaxed so idle lids stay open and the jaw stays shut", () => {
+  it("caps Happy and drops Relaxed so idle lids stay open with a soft smile", () => {
     const clamped = clampRestFaceBlend(
       { Relaxed: 0.6, Happy: 0.98, Sad: 0.2 },
       { talking: false },
     );
     expect(clamped.Relaxed).toBeUndefined();
-    expect(clamped.Happy).toBeUndefined();
-    expect(IDLE_HAPPY_MAX).toBe(0);
+    expect(clamped.Happy).toBe(IDLE_HAPPY_MAX);
+    expect(IDLE_HAPPY_MAX).toBeGreaterThan(0.2);
     expect(clamped.Sad).toBeCloseTo(0.2);
   });
 
@@ -359,7 +359,7 @@ describe("companionFaceRest", () => {
     expect(mesh.morphTargetInfluences[1]).toBeGreaterThan(0.1);
     expect(mesh.morphTargetInfluences[2]).toBe(0);
     applyTalkEmotionMorphs(root, "happy", false);
-    expect(mesh.morphTargetInfluences[0]).toBe(0);
+    expect(mesh.morphTargetInfluences[0]).toBeCloseTo(0.22);
   });
 
   it("clears emotion mouth-block overrides while talking", () => {

@@ -16,6 +16,8 @@ function parseArg(name, fallback) {
 }
 
 const CHARACTERS = {
+  kizuna: { kind: "vrm3d", model: "kizuna-kamatte.vrm" },
+  kai: { kind: "vrm3d", model: "companion-kai.vrm" },
   alicia: { kind: "vrm3d", model: "companion-alicia.vrm" },
   nova: { kind: "vrm3d", model: "companion-nova.vrm" },
   ember: { kind: "vrm3d", model: "companion-ember.vrm" },
@@ -45,7 +47,7 @@ async function main() {
   const loadedModels = [];
   page.on("request", (req) => {
     const u = req.url();
-    if (u.includes("/prototypes/assets/companion-")) {
+    if (u.includes("/prototypes/assets/") && /\.(vrm|glb)/i.test(u)) {
       loadedModels.push(u);
     }
   });

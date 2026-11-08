@@ -2,7 +2,12 @@
  * OpenAI gpt-4o-mini-tts — ChatGPT-style emotional speech via natural-language instructions.
  * @see https://developers.openai.com/api/docs/guides/text-to-speech
  */
-import { buildTtsInstruct, instructSpeakingSpeed } from "./companionTtsProsody.js";
+import {
+  buildTtsInstruct,
+  instructSpeakingSpeed,
+  MAX_CLOUD_TTS_CHARS,
+} from "./companionTtsProsody.js";
+import { resolveOpenAiVoiceFromProfile } from "./companionVoiceProfiles.js";
 
 export const OPENAI_TTS_SCHEMA = "amoji.openaiTts.v2";
 
@@ -16,22 +21,48 @@ const VOICE_MAP = Object.freeze({
   "zh-hk-wanlungneural": "ash",
   "en-us-arianeural": "marin",
   "en-us-jennyneural": "coral",
+  "en-hk-yanneural": "coral",
+  "en-hk-samneural": "ash",
   marin: "marin",
   coral: "coral",
   shimmer: "shimmer",
   sage: "sage",
   alloy: "alloy",
+  ash: "ash",
 });
+
+/**
+ * @param {string | null | undefined} voice
+ */
+export function normalizeOpenAiVoiceKey(voice) {
+  let key = String(voice || "")
+    .trim()
+    .toLowerCase();
+  key = key.replace(
+    /-(idol|warm|cool|bright|sweet|story|calm|bold|soft|fiery|chibi|hero|sunny|sporty|elegant|sharp)$/i,
+    "",
+  );
+  return key;
+}
 
 /**
  * @param {string | null | undefined} voice
  * @param {string | null | undefined} lang
  */
 export function resolveOpenAiVoice(voice, lang = "") {
-  const key = String(voice || "")
+  const fromProfile = resolveOpenAiVoiceFromProfile(voice);
+  if (fromProfile) return fromProfile;
+  const raw = String(voice || "")
     .trim()
     .toLowerCase();
+  if (raw.startsWith("openai-")) {
+    const name = raw.slice("openai-".length);
+    return VOICE_MAP[name] || name;
+  }
+  const key = normalizeOpenAiVoiceKey(voice);
   if (VOICE_MAP[key]) return VOICE_MAP[key];
+  if (/wanlung|samneural/.test(key)) return "ash";
+  if (/hiumaan|hiugaai|yanneural|jenny|aria/.test(key)) return "marin";
   const lc = String(lang || "").toLowerCase();
   if (lc === "en" || lc.startsWith("en-")) return "marin";
   return "coral";
@@ -74,7 +105,7 @@ export async function synthesizeOpenAiSpeech(text, opts = {}) {
     .replace(/[*_`#>/\\]/g, " ")
     .replace(/\s+/g, " ")
     .trim()
-    .slice(0, 500);
+    .slice(0, MAX_CLOUD_TTS_CHARS);
   if (!clean) return null;
 
   const instructions =

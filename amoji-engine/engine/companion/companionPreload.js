@@ -2,7 +2,7 @@
  * Companion preload — minimal boot (chat-first), heavy 3D assets in background.
  */
 import {
-  BOOT_IDLE_BODY_MOTION_IDS,
+  BOOT_IDLE_WARM_CLIP_IDS,
   getBootIdleMotionPreloadPromise,
   startBootIdleMotionPreload,
 } from "./companionIdleMotionPreload.js";
@@ -316,7 +316,7 @@ if (typeof globalThis !== "undefined") {
     rosterReady: rosterPreloadPromise,
     ensureRoster: ensureRosterPreloadStarted,
     getRosterProgress: () => globalThis.__amojiRosterPreloadPct ?? 0,
-    bootIdleMotionIds: BOOT_IDLE_BODY_MOTION_IDS,
+    bootIdleMotionIds: BOOT_IDLE_WARM_CLIP_IDS,
     ensureIdleMotions: startBootIdleMotionPreload,
     getIdleMotionPreload: getBootIdleMotionPreloadPromise,
     ready: boot,

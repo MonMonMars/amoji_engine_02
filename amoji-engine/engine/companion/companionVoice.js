@@ -31,9 +31,14 @@ import {
   buildExpressiveTtsPlan,
   clausePauseMs,
 } from "./companionExpressiveTts.js";
+import { expressionAtAudioProgress } from "./companionSpeechFace.js";
+import { characterGender } from "./companionCharacterCatalog.js";
+import { formatReplyForDisplay } from "./companionActionMotion.js";
 import {
   buildCloudTtsRequestBody,
+  CHATGPT_STYLE_TTS,
   enrichTtsPerformance,
+  MAX_CLOUD_TTS_CHARS,
   normalizeTtsPerformance,
   resolveCompanionTtsProsody,
 } from "./companionTtsProsody.js";
@@ -127,107 +132,21 @@ const resolveSpeakProsody = (text, performance, lang) =>
     characterId: activeCharacterId,
   });
 
-/**
- * Map a character to a viseme shape + openness for lip sync.
- * @param {string} ch
- * @returns {{ shape: string, open: number }}
- */
-export function charToViseme(ch) {
-  const c = String(ch || " ").toLowerCase();
-  if (/[\s.,!?;:'"()\-—…]/.test(c)) return { shape: "ee", open: 0.08 };
-  if (/[aeæəàáâãäå]/.test(c)) return { shape: "aa", open: 0.82 };
-  if (/[iɪyìíîï]/.test(c)) return { shape: "ih", open: 0.58 };
-  if (/[oɔòóôõö]/.test(c)) return { shape: "oh", open: 0.72 };
-  if (/[uʊwùúûü]/.test(c)) return { shape: "ou", open: 0.68 };
-  if (/[eɛèéêë]/.test(c)) return { shape: "ee", open: 0.62 };
-  if (/[mbp]/.test(c)) return { shape: "ee", open: 0.12 };
-  if (/[fv]/.test(c)) return { shape: "ih", open: 0.22 };
-  if (/[\u4e00-\u9fff\u3400-\u4dbf]/.test(c)) {
-    const mod = c.charCodeAt(0) % 5;
-    const shapes = ["aa", "ih", "oh", "ou", "ee"];
-    const opens = [0.78, 0.55, 0.7, 0.65, 0.6];
-    return { shape: shapes[mod], open: opens[mod] };
-  }
-  return { shape: "aa", open: 0.45 };
-}
+import {
+  buildLipSyncTimeline,
+  charToViseme,
+  estimateLipSyncMsPerChar,
+  lipSyncCharWeight,
+  visemeAtAudioProgress,
+} from "./companionViseme.js";
 
-/**
- * Match mouth-walk speed to real audio (or CJK vs Latin speech rate).
- * Cantonese/Chinese is ~4–6 chars/sec; a fixed 48ms/char races ahead of TTS.
- * @param {string} text
- * @param {number} [durationMs]
- */
-export function estimateLipSyncMsPerChar(text, durationMs) {
-  const clean = String(text || "");
-  const len = Math.max(1, clean.length);
-  const ms = Number(durationMs);
-  if (Number.isFinite(ms) && ms > 0) {
-    return Math.max(24, Math.min(280, ms / len));
-  }
-  const cjk = (clean.match(/[\u4e00-\u9fff\u3400-\u4dbf]/g) || []).length;
-  return cjk / len > 0.3 ? 160 : 52;
-}
-
-/**
- * Spoken duration weight for one character. Punctuation is short; CJK is a full beat.
- * @param {string} ch
- */
-export function lipSyncCharWeight(ch) {
-  const c = String(ch || "");
-  if (!c || /[\s.,!?;:'"()\-—…，。！？、；：～~]/.test(c)) return 0.22;
-  if (/[\u4e00-\u9fff\u3400-\u4dbf]/.test(c)) return 1;
-  return 0.48;
-}
-
-/**
- * @param {string} text
- * @returns {{ chars: string[], starts: number[], total: number }}
- */
-export function buildLipSyncTimeline(text) {
-  const chars = Array.from(String(text || ""));
-  const weights = chars.map((ch) => lipSyncCharWeight(ch));
-  const total = weights.reduce((sum, w) => sum + w, 0) || 1;
-  let acc = 0;
-  const starts = weights.map((w) => {
-    const start = acc / total;
-    acc += w;
-    return start;
-  });
-  return { chars, starts, total };
-}
-
-/**
- * Map 0..1 playback progress to a viseme. Used so mouth speed follows audio, not a timer.
- * @param {string} text
- * @param {number} progress
- * @param {number} [audioLevel]
- */
-export function visemeAtAudioProgress(text, progress, audioLevel = 0) {
-  const clean = String(text || "");
-  const p = Math.max(0, Math.min(1, Number(progress) || 0));
-  const level = Math.max(0, Math.min(1, Number(audioLevel) || 0));
-  if (!clean.length || p >= 0.995) {
-    return {
-      shape: "ee",
-      open: Math.min(0.08, level * 0.25),
-      index: clean.length,
-      char: "",
-    };
-  }
-  const { chars, starts } = buildLipSyncTimeline(clean);
-  let idx = 0;
-  for (let i = 0; i < starts.length; i += 1) {
-    if (starts[i] <= p) idx = i;
-    else break;
-  }
-  const ch = chars[idx] || " ";
-  const viseme = charToViseme(ch);
-  const open = Math.min(
-    1,
-    viseme.open * 0.92 + Math.max(viseme.open * 0.12, level * 0.55),
-  );
-  return { shape: viseme.shape, open, index: idx, char: ch };
-}
+export {
+  buildLipSyncTimeline,
+  charToViseme,
+  estimateLipSyncMsPerChar,
+  lipSyncCharWeight,
+  visemeAtAudioProgress,
+};
 
 /**
  * 0..1 playback fraction from an HTMLAudioElement, with elapsed fallback.
@@ -246,6 +165,36 @@ export function audioPlaybackProgress(audio, elapsedMs = 0, fallbackDurationMs =
     return Math.max(0, Math.min(1, (Number(elapsedMs) || 0) / fb));
   }
   return 0;
+}
+
+/**
+ * Generous playback budget for cloud TTS — neural voices run slower than char estimates.
+ * @param {string} text
+ * @param {number} [durationSec]
+ */
+export function cloudTtsSafetyBudgetMs(text, durationSec) {
+  const clean = String(text || "");
+  const charMs = estimateLipSyncMsPerChar(clean);
+  const dur = Number(durationSec);
+  if (Number.isFinite(dur) && dur > 0.05) {
+    return Math.min(120000, dur * 1000 + 5000);
+  }
+  return Math.min(
+    120000,
+    Math.max(15000, clean.length * charMs * 3.2 + 8000),
+  );
+}
+
+/**
+ * Browser speechSynthesis timeout — long Cantonese replies need more than 15s.
+ * @param {string} text
+ */
+export function browserTtsTimeoutMs(text) {
+  const clean = String(text || "");
+  return Math.min(
+    120000,
+    Math.max(20000, 800 + clean.length * estimateLipSyncMsPerChar(clean) * 2.8),
+  );
 }
 
 /**
@@ -272,6 +221,36 @@ export function readAnalyserMouthLevel(analyser) {
  */
 const MALE_VOICE_RE =
   /\b(male|man|boy|david|daniel|ravi|keda|alex|fred|bruce|tom|jorge|lee|james|mark|aaron|guy|richard|nathan|oliver|matthew|ryan|paul)\b/i;
+
+export function pickMaleVoice(voices) {
+  const list = (Array.isArray(voices) ? voices : []).filter((v) => {
+    if (!v || typeof v.name !== "string") return false;
+    if (v.gender === "female") return false;
+    const name = `${v.name} ${v.lang || ""}`;
+    if (/female|woman|girl/i.test(name) && !MALE_VOICE_RE.test(name)) return false;
+    return true;
+  });
+  const score = (v) => {
+    const name = `${v.name} ${v.lang || ""}`.toLowerCase();
+    let s = 0;
+    if (v.gender === "male") s += 80;
+    if (/wanlung|sam|david|guy|ryan|mark|james|paul|aaron|richard/.test(name)) s += 55;
+    if (/male|man|boy/.test(name)) s += 45;
+    if (/zh-hk|yue|cantonese|hong kong/.test(name)) s += 20;
+    if (/en-hk|en-gb|en-au|en-us/.test(name)) s += 10;
+    if (v.localService) s += 5;
+    return s;
+  };
+  return [...list].sort((a, b) => score(b) - score(a))[0] || null;
+}
+
+/**
+ * @param {"female" | "male"} gender
+ * @param {SpeechSynthesisVoice[]} voices
+ */
+export function pickVoiceForGender(gender, voices) {
+  return gender === "male" ? pickMaleVoice(voices) : pickFemaleVoice(voices);
+}
 
 export function pickFemaleVoice(voices) {
   const list = (Array.isArray(voices) ? voices : []).filter((v) => {
@@ -366,6 +345,7 @@ export const CLOUD_ENGLISH_VOICE = Object.freeze({
  *   onMicState?: (on: boolean) => void,
  *   onError?: (msg: string) => void,
  *   onSpeakChunk?: (chunk: string, charIndex: number) => void,
+ *   onSpeakExpression?: (analysis: object) => void,
  *   onAssistantOutputChange?: (active: boolean) => void,
  *   lang?: string,
  *   cloudTtsUrl?: string | null,
@@ -486,7 +466,7 @@ export function createCompanionVoice(opts = {}) {
     !keepMicDuringSpeak || shouldPauseMicDuringTts();
   /** Serialize TTS so greeting + replies do not overlap or cut each other off. */
   let speakChain = Promise.resolve();
-  /** @type {{ emotion: string, closed: boolean, capturePaused: boolean } | null} */
+  /** @type {{ performance: ReturnType<typeof normalizeTtsPerformance>, closed: boolean, capturePaused: boolean } | null} */
   let streamSession = null;
   /** @type {ReturnType<typeof setInterval> | null} */
   let mouthTimer = null;
@@ -503,7 +483,11 @@ export function createCompanionVoice(opts = {}) {
       }
       if (!synth) return resolve(null);
       const pick = () => {
-        voice = pickFemaleVoice(synth.getVoices());
+        const langCode = String(opts.lang || voice?.lang || "zh-HK").startsWith("en")
+          ? "en"
+          : "yue";
+        const gender = characterGender(activeCharacterId, langCode);
+        voice = pickVoiceForGender(gender, synth.getVoices());
         resolve(voice);
       };
       const existing = synth.getVoices();
@@ -559,7 +543,7 @@ export function createCompanionVoice(opts = {}) {
     blob,
     clean,
     emotion,
-    { holdSpeaking = false } = {},
+    { holdSpeaking = false, nuance = "none" } = {},
   ) => {
     if (!blob.size) return { ok: false, reason: "cloud-tts-empty" };
     const mime = blob.type || "";
@@ -583,7 +567,12 @@ export function createCompanionVoice(opts = {}) {
       currentCloudAudio = audio;
       audio.volume = ttsPlaybackVolume();
       audio.src = objectUrl;
+      let settled = false;
       let mouthStarted = false;
+      let safetyTimer = null;
+      let lastPlaybackSec = 0;
+      let lastProgressAt = performance.now();
+      let safetyBudgetMs = cloudTtsSafetyBudgetMs(clean, audio.duration);
       const beginMouth = () => {
         if (mouthStarted) return;
         mouthStarted = true;
@@ -598,6 +587,7 @@ export function createCompanionVoice(opts = {}) {
           audioLevel: analyser
             ? () => readAnalyserMouthLevel(analyser)
             : undefined,
+          speakFace: { emotion: emotion || "neutral", nuance: nuance || "none" },
           getProgress: () => {
             const liveMs =
               Number.isFinite(audio.duration) && audio.duration > 0
@@ -611,19 +601,72 @@ export function createCompanionVoice(opts = {}) {
           },
         });
       };
-      const finish = (result) => {
+      const finish = (result, { pauseAudio = true } = {}) => {
+        if (settled) return;
+        settled = true;
+        if (safetyTimer) clearTimeout(safetyTimer);
+        safetyTimer = null;
         if (currentCloudAudio === audio) currentCloudAudio = null;
+        if (pauseAudio) {
+          try {
+            audio.pause();
+          } catch {
+            /* ignore */
+          }
+        }
         URL.revokeObjectURL(objectUrl);
         if (!holdSpeaking) {
           speaking = false;
           syncAssistantOutput();
         }
-        stopMouth();
+        stopMouth({ keepTalking: holdSpeaking, keepMouth: holdSpeaking });
         resolve(result);
       };
+      const scheduleSafety = (budgetMs = safetyBudgetMs) => {
+        if (safetyTimer) clearTimeout(safetyTimer);
+        safetyBudgetMs = Math.min(120000, Math.max(15000, budgetMs));
+        safetyTimer = setTimeout(onSafety, safetyBudgetMs);
+      };
+      const bumpSafetyFromMetadata = () => {
+        const dur = Number(audio.duration);
+        if (!Number.isFinite(dur) || dur <= 0.05) return;
+        scheduleSafety(cloudTtsSafetyBudgetMs(clean, dur));
+      };
+      const onSafety = () => {
+        if (settled) return;
+        const dur = Number(audio.duration);
+        const stalledMs = performance.now() - lastProgressAt;
+        const nearEnd =
+          Number.isFinite(dur) && dur > 0 && audio.currentTime >= dur - 0.35;
+        if (audio.ended || nearEnd) {
+          finish({
+            ok: true,
+            voice: preset.name,
+            emotion,
+            cloud: true,
+          });
+          return;
+        }
+        // Playback still advancing — extend instead of cutting mid-sentence.
+        if (!audio.paused && stalledMs < 5000) {
+          scheduleSafety(Math.max(8000, stalledMs + 8000));
+          return;
+        }
+        finish(
+          { ok: true, voice: preset.name, emotion, cloud: true, timedOut: true },
+          { pauseAudio: true },
+        );
+      };
+      scheduleSafety();
+      audio.onloadedmetadata = bumpSafetyFromMetadata;
+      audio.ondurationchange = bumpSafetyFromMetadata;
       audio.onplaying = () => beginMouth();
       audio.ontimeupdate = () => {
         if (!mouthStarted && audio.currentTime > 0) beginMouth();
+        if (audio.currentTime > lastPlaybackSec + 0.02) {
+          lastPlaybackSec = audio.currentTime;
+          lastProgressAt = performance.now();
+        }
       };
       audio.onended = () => {
         finish({
@@ -684,6 +727,13 @@ export function createCompanionVoice(opts = {}) {
           : [{ text: part, ...perf }];
         for (let i = 0; i < clauses.length; i += 1) {
           const clause = clauses[i];
+          opts.onSpeakExpression?.({
+            unit: clause.text,
+            emotion: clause.emotion || perf.emotion,
+            nuance: clause.nuance || perf.nuance,
+            talkStyle: clause.talkStyle || perf.talkStyle,
+            speechEnergy: clause.speechEnergy ?? perf.speechEnergy,
+          });
           const res = await fetch(url, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -715,7 +765,10 @@ export function createCompanionVoice(opts = {}) {
             blob,
             clause.text,
             clause.emotion || perf.emotion,
-            { holdSpeaking: true },
+            {
+              holdSpeaking: true,
+              nuance: clause.nuance || perf.nuance,
+            },
           );
           if (!last.ok) return last;
           if (i < clauses.length - 1) {
@@ -736,15 +789,22 @@ export function createCompanionVoice(opts = {}) {
     opts.onMouth?.(open, shape);
   };
 
-  const stopMouth = ({ keepTalking = false } = {}) => {
+  const isStreamPlaybackActive = () =>
+    Boolean(streamSession && !streamSession.closed);
+
+  const stopMouth = ({ keepTalking = false, keepMouth = false } = {}) => {
     if (mouthTimer) {
       clearInterval(mouthTimer);
       mouthTimer = null;
     }
     for (const t of mouthTimeouts) clearTimeout(t);
     mouthTimeouts = [];
-    if (!keepTalking) {
+    const holdTalk = keepTalking || isStreamPlaybackActive();
+    const holdMouth = keepMouth || holdTalk;
+    if (!holdMouth) {
       opts.onMouth?.(0, null);
+    }
+    if (!holdTalk) {
       opts.onTalking?.(false);
     }
   };
@@ -756,10 +816,20 @@ export function createCompanionVoice(opts = {}) {
    * @param {{ durationMs?: number, audioLevel?: () => number, getProgress?: () => number }} [timing]
    */
   const startLipSync = (text, utter, timing = {}) => {
-    stopMouth({ keepTalking: true });
+    stopMouth({ keepTalking: true, keepMouth: true });
     opts.onTalking?.(true);
     const clean = String(text || "");
     if (!clean) return;
+    const speakFace = timing.speakFace || { emotion: "neutral", nuance: "none" };
+    let lastSpeakUnit = "";
+
+    const emitSpeakFace = (progress) => {
+      const face = expressionAtAudioProgress(clean, progress, speakFace);
+      if (!face.unit || face.unit === lastSpeakUnit) return;
+      lastSpeakUnit = face.unit;
+      opts.onSpeakExpression?.(face);
+      opts.onSpeakChunk?.(face.unit, face.index ?? 0);
+    };
 
     let boundaryWorks = false;
     if (utter && "onboundary" in utter) {
@@ -770,7 +840,11 @@ export function createCompanionVoice(opts = {}) {
         const slice = clean.slice(idx, idx + len);
         const ch = slice[0] || clean[idx] || " ";
         emitViseme(ch);
-        if (slice.trim()) opts.onSpeakChunk?.(slice, idx);
+        if (slice.trim()) {
+          const progress =
+            clean.length > 1 ? Math.min(1, idx / Math.max(1, clean.length - 1)) : 0;
+          emitSpeakFace(progress);
+        }
       };
     }
 
@@ -795,18 +869,15 @@ export function createCompanionVoice(opts = {}) {
     let lastIndex = -1;
     mouthTimer = setInterval(() => {
       if (boundaryWorks) return;
+      const progress = getProgress();
       const sample = visemeAtAudioProgress(
         clean,
-        getProgress(),
+        progress,
         audioLevel?.() ?? 0,
       );
       opts.onMouth?.(sample.open, sample.shape);
-      if (sample.index !== lastIndex && sample.char?.trim()) {
-        const chunk = clean.slice(
-          Math.max(0, sample.index - 1),
-          sample.index + 6,
-        );
-        opts.onSpeakChunk?.(chunk, sample.index);
+      if (sample.index !== lastIndex) {
+        emitSpeakFace(progress);
         lastIndex = sample.index;
       }
     }, 33);
@@ -814,7 +885,9 @@ export function createCompanionVoice(opts = {}) {
     if (!timing.getProgress) {
       mouthTimeouts.push(
         setTimeout(() => {
-          if (!boundaryWorks) opts.onMouth?.(0, null);
+          if (!boundaryWorks && !isStreamPlaybackActive()) {
+            opts.onMouth?.(0, null);
+          }
         }, Math.min(20000, durationMs + 400)),
       );
     }
@@ -829,14 +902,10 @@ export function createCompanionVoice(opts = {}) {
   };
 
   const cleanSpeakText = (text) =>
-    String(text || "")
-      .replace(/\s*\[action:\w+\]\s*/gi, " ")
-      .replace(/\s*\[mood:\w+\]\s*/gi, " ")
+    formatReplyForDisplay(String(text || ""))
       .replace(/[*_`#>/\\]/g, " ")
       .replace(/\s+/g, " ")
       .trim();
-
-  const MAX_CLOUD_TTS_CHARS = 480;
 
   /**
    * @param {string} text
@@ -874,7 +943,13 @@ export function createCompanionVoice(opts = {}) {
     const clean = cleanSpeakText(text);
     if (!clean) return { ok: false, reason: "empty" };
 
-    const perf = enrichTtsPerformance(performance, clean);
+    const rawPerf =
+      typeof performance === "object" && performance !== null
+        ? performance.singleUtterance === true
+          ? performance
+          : { ...CHATGPT_STYLE_TTS, ...performance }
+        : { ...CHATGPT_STYLE_TTS, emotion: performance || "neutral" };
+    const perf = enrichTtsPerformance(rawPerf, clean);
     const prosody = resolveSpeakProsody(
       clean,
       perf,
@@ -884,9 +959,12 @@ export function createCompanionVoice(opts = {}) {
     stopThinkingAudio();
     try {
       if (!speakerOn) {
-        startLipSync(clean);
+        startLipSync(clean, null, {
+          speakFace: { emotion: perf.emotion, nuance: perf.nuance },
+        });
         await sleep(Math.min(4200, 400 + clean.length * estimateLipSyncMsPerChar(clean)));
-        stopMouth();
+        const holdGap = isStreamPlaybackActive();
+        stopMouth({ keepTalking: holdGap, keepMouth: holdGap });
         return { ok: true, muted: true };
       }
       await ensureVoices();
@@ -913,9 +991,12 @@ export function createCompanionVoice(opts = {}) {
       }
 
       if (!synth) {
-        startLipSync(clean);
+        startLipSync(clean, null, {
+          speakFace: { emotion: perf.emotion, nuance: perf.nuance },
+        });
         await sleep(Math.min(4800, 450 + clean.length * estimateLipSyncMsPerChar(clean)));
-        stopMouth();
+        const holdGap = isStreamPlaybackActive();
+        stopMouth({ keepTalking: holdGap, keepMouth: holdGap });
         return {
           ok: false,
           reason: tryCloud ? "cloud-and-browser-tts-unavailable" : "no-speech-synthesis",
@@ -938,15 +1019,18 @@ export function createCompanionVoice(opts = {}) {
           ? browserProsody.volume * 0.4
           : browserProsody.volume;
 
-      startLipSync(clean, utter);
+      startLipSync(clean, utter, {
+        speakFace: { emotion: perf.emotion, nuance: perf.nuance },
+      });
 
-      const maxMs = Math.min(15000, 700 + clean.length * 55);
+      const maxMs = browserTtsTimeoutMs(clean);
       let settled = false;
       const finishSpeak = (result) => {
         if (settled) return result;
         settled = true;
         speaking = false;
-        stopMouth();
+        const holdGap = isStreamPlaybackActive();
+        stopMouth({ keepTalking: holdGap, keepMouth: holdGap });
         return result;
       };
       const spoken = await Promise.race([
@@ -1038,7 +1122,7 @@ export function createCompanionVoice(opts = {}) {
    * @param {string} [defaultEmotion]
    * @param {{ pauseCapture?: boolean }} [sessionOpts]
    */
-  const beginStreamSpeak = (defaultEmotion = "neutral", sessionOpts = {}) => {
+  const beginStreamSpeak = (defaultPerformance = "neutral", sessionOpts = {}) => {
     if (streamSession) {
       streamSession.closed = true;
       streamSession = null;
@@ -1047,12 +1131,15 @@ export function createCompanionVoice(opts = {}) {
     speakChain = Promise.resolve();
     const pauseMic =
       sessionOpts.pauseCapture !== false || shouldPauseMicDuringTts();
+    const perf = normalizeTtsPerformance(defaultPerformance);
     streamSession = {
-      emotion: defaultEmotion,
+      performance: { ...CHATGPT_STYLE_TTS, ...perf },
       closed: false,
       capturePaused: pauseMic,
     };
     if (pauseMic) pauseCapture();
+    speaking = true;
+    opts.onTalking?.(true);
     syncAssistantOutput();
     return streamSession;
   };
@@ -1068,19 +1155,22 @@ export function createCompanionVoice(opts = {}) {
     }
     const clean = cleanSpeakText(text);
     if (!clean) return Promise.resolve({ ok: false, reason: "empty" });
-    const perf = normalizeTtsPerformance(
-      performance,
-      streamSession.emotion || "neutral",
+    const base = streamSession.performance || { emotion: "neutral" };
+    const perf = enrichTtsPerformance(
+      {
+        ...base,
+        ...normalizeTtsPerformance(performance, base.emotion || "neutral"),
+      },
+      clean,
     );
     const next = speakChain.then(() => {
-      if (!streamSession || streamSession.closed) {
+      if (!streamSession) {
         return { ok: false, reason: "stream-closed" };
       }
       return speakOnceCore(clean, {
+        ...CHATGPT_STYLE_TTS,
         ...perf,
         text: clean,
-        singleUtterance: true,
-        expressiveClauses: false,
       });
     });
     speakChain = next.catch(() => {});
@@ -1092,12 +1182,14 @@ export function createCompanionVoice(opts = {}) {
     const session = streamSession;
     if (!session) return { ok: true };
     session.closed = true;
-    streamSession = null;
     syncAssistantOutput();
     try {
       await speakChain;
       return { ok: true };
     } finally {
+      streamSession = null;
+      speaking = false;
+      stopMouth();
       if (session.capturePaused) resumeCapture();
       syncAssistantOutput();
     }
@@ -1596,6 +1688,15 @@ export function createCompanionVoice(opts = {}) {
 
   const setCharacterId = (nextId) => {
     activeCharacterId = String(nextId || "amoji").toLowerCase();
+    if (!usingCloudTts && synth) {
+      const langCode = String(opts.lang || voice?.lang || "zh-HK").startsWith("en")
+        ? "en"
+        : "yue";
+      voice = pickVoiceForGender(
+        characterGender(activeCharacterId, langCode),
+        synth.getVoices(),
+      );
+    }
     return activeCharacterId;
   };
 

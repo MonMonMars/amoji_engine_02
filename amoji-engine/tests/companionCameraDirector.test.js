@@ -4,7 +4,13 @@ import {
   isFullBodyAction,
   wantsTalkCloseShot,
 } from "../engine/companion/companionCameraDirector.js";
-import { blendCameraShots, buildPortraitShot } from "../engine/companion/companionCameraApply.js";
+import {
+  AUTO_CAMERA_LERP_RATE,
+  blendCameraShots,
+  buildPortraitShot,
+  CAMERA_RESET_LERP_RATE,
+  lerpCameraTowardShot,
+} from "../engine/companion/companionCameraApply.js";
 import * as THREE from "three";
 
 describe("companionCameraDirector", () => {
@@ -105,6 +111,37 @@ describe("companionCameraDirector", () => {
 });
 
 describe("companionCameraApply", () => {
+  it("uses a reset lerp rate 10× slower than auto follow", () => {
+    expect(CAMERA_RESET_LERP_RATE).toBeCloseTo(AUTO_CAMERA_LERP_RATE / 10);
+    expect(CAMERA_RESET_LERP_RATE).toBeCloseTo(0.42);
+  });
+
+  it("lerps camera toward portrait shot and finishes when close enough", () => {
+    const anchor = new THREE.Vector3(0, 1.2, 0);
+    const desired = buildPortraitShot(anchor, 1.6, 34);
+    const camera = new THREE.PerspectiveCamera(34, 1, 0.1, 100);
+    camera.position.set(2.4, 0.6, -1.2);
+    camera.fov = 48;
+    camera.updateProjectionMatrix();
+    const controls = {
+      target: new THREE.Vector3(0.5, 0.4, 0.2),
+      update: () => {},
+    };
+    const startPosDelta = camera.position.distanceTo(desired.position);
+
+    let finished = false;
+    for (let i = 0; i < 2400; i += 1) {
+      finished = lerpCameraTowardShot(controls, camera, desired, 1 / 60);
+      if (finished) break;
+    }
+
+    expect(finished).toBe(true);
+    expect(camera.position.distanceTo(desired.position)).toBeLessThan(startPosDelta);
+    expect(camera.position.distanceTo(desired.position)).toBeLessThan(0.004);
+    expect(controls.target.distanceTo(desired.target)).toBeLessThan(0.004);
+    expect(Math.abs(camera.fov - desired.fov)).toBeLessThan(0.08);
+  });
+
   it("blends portrait toward full-body shot", () => {
     const anchor = new THREE.Vector3(0, 1.2, 0);
     const portrait = buildPortraitShot(anchor, 1.6, 34);

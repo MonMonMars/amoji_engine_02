@@ -4,6 +4,7 @@ import {
   cloudVoiceLabel,
   companionLangCode,
   nextVoiceId,
+  resolveVoiceForCharacter,
   resolveVoiceId,
   voiceGenderLabel,
   voicePickerButtonLabel,
@@ -20,6 +21,14 @@ describe("companionVoiceCatalog", () => {
 
   it("picks default Cantonese voice", () => {
     expect(resolveVoiceId({ lang: "yue" })).toBe("zh-HK-HiuMaanNeural");
+  });
+
+  it("locks voice to character gender regardless of overrides", () => {
+    expect(resolveVoiceForCharacter("rex", "yue")).toBe("zh-HK-WanLungNeural");
+    expect(resolveVoiceForCharacter("nova", "en")).toBe("en-US-JennyNeural");
+    expect(resolveVoiceForCharacter("robert", "yue")).toBe(
+      "zh-HK-WanLungNeural-calm",
+    );
   });
 
   it("cycles Cantonese voices", () => {

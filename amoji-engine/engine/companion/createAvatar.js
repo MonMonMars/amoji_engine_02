@@ -1,4 +1,5 @@
 import { isIosLike } from "./companionPlatform.js";
+import { resolveCharacterId } from "./companionCharacterCatalog.js";
 
 export const COMPANION_AVATAR_SCHEMA = "amoji.createAvatar.v1";
 
@@ -45,10 +46,12 @@ export function createStubAvatar() {
     playAction: noop,
     playActionSequence: noop,
     stopAction: noop,
+    applyExpressionProfile: noop,
     applyContentFromReply: () => ({ emotion: "neutral", talkStyle: "explain" }),
     setThinking: noop,
     applyStreamingContent: () => ({ emotion: "thinking", talkStyle: "thinking" }),
     prepareThinkingFromUser: () => ({ emotion: "thinking", talkStyle: "thinking" }),
+    getFaceProfile: () => null,
     resetCameraView: noop,
     hitTest: () => false,
   };
@@ -95,6 +98,7 @@ export function shouldSkipGltfFallback(modelUrl, prefer) {
  *   modelUrl?: string,
  *   prefer?: 'vrm'|'gltf'|'auto',
  *   timeoutMs?: number,
+ *   characterId?: string | null,
  *   onCharacterTap?: (info: { point?: unknown }) => void,
  *   onProgress?: (pct: number, label: string) => void,
  * }} opts
@@ -107,6 +111,9 @@ export async function createCompanionAvatar(opts) {
     (isIosLike() ? 45_000 : AVATAR_LOAD_TIMEOUT_MS);
   const prefer = opts.prefer || "vrm";
   const modelUrl = opts.modelUrl || undefined;
+  const characterId =
+    opts.characterId ||
+    resolveCharacterId({ modelUrl, avatarPrefer: prefer === "gltf" ? "gltf" : "vrm" });
   let canvas = opts.canvas;
   const controlsElement = opts.controlsElement || null;
   const wantsGltf = prefer === "gltf";
@@ -127,6 +134,7 @@ export async function createCompanionAvatar(opts) {
           canvas,
           controlsElement,
           modelUrl: modelUrl || "/prototypes/assets/companion-girl.vrm",
+          characterId,
           onCharacterTap: opts.onCharacterTap,
           onProgress: (ratio, label) => {
             emit(8 + Math.round(ratio * 78), label || "vrm");
@@ -159,6 +167,7 @@ export async function createCompanionAvatar(opts) {
         createGltfAvatar({
           canvas,
           controlsElement,
+          characterId,
           modelUrl:
             modelUrl && /\.glb($|\?)/i.test(modelUrl)
               ? modelUrl

@@ -12,7 +12,10 @@ import {
   isActionRequest,
   suggestClosestActions,
 } from "./companionActionIntent.js";
-import { analyzeCompanionReply } from "./companionContentMotion.js";
+import {
+  analyzeCompanionReply,
+  inferActionFromEmotion,
+} from "./companionContentMotion.js";
 import { resolveCloudAction } from "./motionPackData.mjs";
 
 export const COMPANION_ACTION_RESOLVE_SCHEMA = "amoji.companionActionResolve.v1";
@@ -50,6 +53,15 @@ export function resolveTurnPerformance(userText, replyText, moodHint = null) {
     if (closest?.id) {
       return { ...content, action: closest.id };
     }
+  }
+
+  if (content.gesture) {
+    return { ...content, action: content.gesture };
+  }
+
+  const emotionAction = inferActionFromEmotion(content.emotion, content.nuance);
+  if (emotionAction) {
+    return { ...content, action: emotionAction };
   }
 
   return content;

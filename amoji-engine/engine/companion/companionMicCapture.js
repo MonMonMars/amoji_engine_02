@@ -81,7 +81,6 @@ export function createMicCapture(opts = {}) {
   let cloudLoopActive = false;
   let cloudTranscribing = false;
   let cloudSpeechSignalFired = false;
-  let lastBargeEmitAt = 0;
 
   /** @type {MediaStream | null} */
   let levelStream = null;
@@ -357,27 +356,19 @@ export function createMicCapture(opts = {}) {
     let heardSpeech = false;
     let speechSince = 0;
     let speechMs = 0;
+    const cloudSpeechThreshold = 0.024;
 
     silenceTimer = setInterval(() => {
       if (!shouldListen() || !mediaRecorder) return;
       analyser.getByteTimeDomainData(buf);
       const rms = rmsFromByteTimeDomain(buf);
       emitMicLevel(rms);
-      if (rms > 0.011) {
+      if (rms > cloudSpeechThreshold) {
         heardSpeech = true;
         silentSince = Date.now();
         if (!speechSince) speechSince = Date.now();
         speechMs = Date.now() - speechSince;
-        const bargeMode = opts.shouldDetectBarge?.() === true;
-        const now = Date.now();
-        if (bargeMode && now - lastBargeEmitAt > 180) {
-          lastBargeEmitAt = now;
-          opts.onSpeechDetected?.({
-            source: "cloud-energy",
-            rms,
-            speechMs,
-          });
-        } else if (!cloudSpeechSignalFired) {
+        if (!cloudSpeechSignalFired) {
           cloudSpeechSignalFired = true;
           opts.onSpeechDetected?.({
             source: "cloud-energy",

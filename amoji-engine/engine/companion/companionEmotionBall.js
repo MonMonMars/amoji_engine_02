@@ -1,11 +1,16 @@
 /**
  * ChatGPT-style emotion orb — canvas fluid blob + spectrum + emotion/volume HUD.
  */
-import { resolveMicButtonTheme } from "./companionMicButton.js";
+import {
+  normalizeEmotionThemeKey,
+  resolveMicButtonTheme,
+} from "./companionMicButton.js";
 import {
   buildSpectrumLevels,
   clamp,
   drawEmotionOrbFrame,
+  lerpHue,
+  prefersReducedMotion,
   smoothStep,
 } from "./companionEmotionOrbCanvas.js";
 
@@ -19,6 +24,9 @@ const STATE_LABEL_EN = Object.freeze({
   thinking: "Thinking",
   speaking: "Speaking",
   disabled: "Off",
+  typing: "Typing",
+  loading: "Loading",
+  "mic-blocked": "Mic off",
 });
 
 const STATE_LABEL_YUE = Object.freeze({
@@ -27,6 +35,9 @@ const STATE_LABEL_YUE = Object.freeze({
   thinking: "諗緊",
   speaking: "講緊",
   disabled: "停用",
+  typing: "打字",
+  loading: "載入",
+  "mic-blocked": "咪停用",
 });
 
 const EMOTION_LABEL = Object.freeze({
@@ -359,29 +370,413 @@ export function createCompanionEmotionBall(el, opts = {}) {
 }
 
 /**
- * Drive the top-left chip dot like a ChatGPT mini emotion ball.
+ * Live chip state: voice/TTS wins over the text-mode "typing" idle.
+ * @param {{
+ *   sessionState?: string,
+ *   speaking?: boolean,
+ *   assistantActive?: boolean,
+ *   micOn?: boolean,
+ *   micBlocked?: boolean,
+ *   textMode?: boolean,
+ * }} [opts]
+ */
+export function resolveMiniEmotionBallState(opts = {}) {
+  const session = String(opts.sessionState || "").toLowerCase();
+  const voiceLive = Boolean(opts.speaking || opts.assistantActive);
+  // Session UI is authoritative once back to idle — stale TTS flags must not stick "speaking".
+  const staleVoice =
+    voiceLive && (session === "idle" || session === "typing" || session === "listening");
+  if (voiceLive && !staleVoice) return "speaking";
+  if (session === "thinking" || session === "loading" || session === "speaking") {
+    return session === "speaking" ? "speaking" : session;
+  }
+  if (opts.micOn || session === "listening") return "listening";
+  if (opts.micBlocked) return "mic-blocked";
+  if ((session === "idle" || !session) && opts.textMode) return "typing";
+  return session || "idle";
+}
+
+/**
+ * Localized chip title: "Speaking · Happy" / "講緊 · 開心".
+ */
+export function miniEmotionBallLabel(frame, isEnglish = false) {
+  const stateRow = isEnglish ? STATE_LABEL_EN : STATE_LABEL_YUE;
+  const emotionRow = EMOTION_LABEL[frame?.emotion] || EMOTION_LABEL.neutral;
+  const state = frame?.state || "idle";
+  const stateText = stateRow[state] || state;
+  const emotionText = isEnglish ? emotionRow.en : emotionRow.yue;
+  if (
+    frame?.emotion === "thinking" &&
+    (state === "thinking" || state === "loading")
+  ) {
+    return stateText;
+  }
+  return `${stateText} · ${emotionText}`;
+}
+
+/**
+ * Size, color, and motion for the top-left ChatGPT-style mini emotion ball.
+ * @param {{
+ *   emotion?: string,
+ *   nuance?: string,
+ *   state?: string,
+ *   level?: number,
+ *   time?: number,
+ *   reducedMotion?: boolean,
+ * }} [opts]
+ */
+export function computeMiniEmotionBallFrame(opts = {}) {
+  const emotion = normalizeEmotionThemeKey(opts.emotion);
+  const nuance = String(opts.nuance || "none").toLowerCase();
+  const state = String(opts.state || "idle").toLowerCase();
+  const time = Number(opts.time) || 0;
+  const raw = clamp(Number(opts.level) || 0, 0, 1);
+  const reducedMotion = Boolean(opts.reducedMotion);
+  const theme = resolveMicButtonTheme({ emotion, nuance });
+  const speaking = state === "speaking";
+  const listening = state === "listening";
+  const loading = state === "loading";
+  const thinking = state === "thinking" || loading;
+  const typing = state === "typing";
+  const disabled = state === "disabled" || state === "mic-blocked";
+  const live = speaking || listening;
+  const breath = reducedMotion ? 0.5 : Math.sin(time * 1.45) * 0.5 + 0.5;
+  const thinkWave = reducedMotion
+    ? 0.5
+    : Math.sin(time * (loading ? 1.15 : 2.35)) * 0.5 + 0.5;
+
+  let volume = raw;
+  if (disabled) volume = 0.03;
+  else if (speaking) volume = Math.max(raw, 0.08 + breath * 0.05);
+  else if (listening) volume = Math.max(raw, 0.14 + breath * 0.14);
+  else if (loading) volume = 0.16 + thinkWave * 0.18;
+  else if (thinking) volume = 0.22 + thinkWave * 0.32;
+  else volume = 0.12 + breath * 0.26 + raw * 0.12;
+
+  const scale = disabled
+    ? 1
+    : live
+      ? 1.02 + volume * 0.16
+      : thinking
+        ? 1.03 + volume * 0.08
+        : 1.01 + volume * 0.06;
+  const wobble = reducedMotion
+    ? 0.012
+    : disabled
+      ? 0.012
+      : live
+        ? 0.07 + volume * 0.2
+        : thinking
+          ? 0.055 + thinkWave * 0.035
+          : 0.03 + breath * 0.02;
+  const squash = reducedMotion || disabled
+    ? 1
+    : speaking
+      ? 1 + (volume - 0.5) * 0.06
+      : listening
+        ? 1 + (breath - 0.5) * 0.1
+        : thinking
+          ? 1 + (thinkWave - 0.5) * 0.08
+          : 1 + (breath - 0.5) * 0.22;
+  const spin = reducedMotion || disabled
+    ? 0
+    : thinking
+      ? time * (loading ? 0.7 : 1.35)
+      : listening
+        ? time * 0.35
+        : 0;
+  const glow = disabled
+    ? 4
+    : 6 + volume * (live ? 10 : thinking ? 7 : 5);
+  const bright = disabled
+    ? 0.78
+    : live
+      ? 0.96 + volume * 0.42
+      : thinking
+        ? 0.98 + thinkWave * 0.14
+        : 0.94 + breath * 0.1;
+
+  return {
+    emotion,
+    nuance,
+    state,
+    theme,
+    hue: theme.hue,
+    sat: disabled ? Math.min(theme.sat, 22) : theme.sat,
+    light: disabled ? Math.min(theme.light, 44) : theme.light,
+    volume,
+    scale,
+    wobble,
+    squash,
+    spin,
+    glow,
+    bright,
+    live,
+    thinking,
+    loading,
+    typing,
+    disabled,
+    reducedMotion,
+  };
+}
+
+/**
+ * Paint CSS variables from a computed mini-ball frame.
  * @param {HTMLElement | null} el
- * @param {{ emotion?: string, nuance?: string, level?: number, state?: string }} [opts]
+ * @param {ReturnType<typeof computeMiniEmotionBallFrame>} frame
+ */
+export function applyMiniEmotionBallFrame(el, frame, opts = {}) {
+  if (!el?.style || !frame) return null;
+  const isEnglish = Boolean(opts.isEnglish);
+  el.dataset.state = frame.state;
+  el.dataset.emotion = frame.emotion;
+  const bg = `hsl(${frame.hue} ${frame.sat}% ${frame.light}%)`;
+  const shadow = `0 0 ${frame.glow}px hsl(${frame.hue} ${frame.sat}% ${frame.light}% / ${0.4 + frame.volume * 0.5}), 0 0 ${frame.glow * 1.8}px hsl(${frame.hue} ${Math.max(40, frame.sat - 8)}% ${Math.min(72, frame.light + 8)}% / ${0.2 + frame.volume * 0.28})`;
+  el.style.setProperty("--mini-ball-bg", bg);
+  el.style.setProperty("--mini-ball-shadow", shadow);
+  const hasCanvas = Boolean(el.querySelector?.("canvas"));
+  el.style.setProperty(
+    "--mini-ball-scale",
+    hasCanvas ? "1" : frame.scale.toFixed(3),
+  );
+  el.style.setProperty("--mini-ball-bright", frame.bright.toFixed(3));
+  el.style.setProperty("--mini-ball-wobble", frame.wobble.toFixed(3));
+  el.style.setProperty("--mini-ball-hue", String(Math.round(frame.hue)));
+  const label = miniEmotionBallLabel(frame, isEnglish);
+  el.title = label;
+  el.dataset.ballLabel = label;
+  el.removeAttribute?.("aria-hidden");
+  if (el.getAttribute?.("role") !== "img") {
+    el.setAttribute?.("role", "img");
+  }
+  if (el.getAttribute?.("aria-label") !== label) {
+    el.setAttribute?.("aria-label", label);
+  }
+  return frame;
+}
+
+/**
+ * Paint CSS variables for the chip orb (used by the controller and tests).
+ * @param {HTMLElement | null} el
+ * @param {{ emotion?: string, nuance?: string, level?: number, state?: string, time?: number }} [opts]
  */
 export function syncMiniEmotionBall(el, opts = {}) {
   if (!el?.style) return null;
-  const theme = resolveMicButtonTheme({
-    emotion: opts.emotion,
-    nuance: opts.nuance,
+  return applyMiniEmotionBallFrame(el, computeMiniEmotionBallFrame(opts), {
+    isEnglish: Boolean(opts.isEnglish),
   });
-  const level = clamp(Number(opts.level) || 0, 0, 1);
-  const state = String(opts.state || "idle");
-  const speaking = state === "speaking" || state === "listening";
-  const scale = 1 + level * (speaking ? 1.55 : 1.12);
-  const bright = 0.92 + level * 0.45;
-  el.dataset.state = state;
-  el.dataset.emotion = String(opts.emotion || "neutral");
-  const bg = `hsl(${theme.hue} ${theme.sat}% ${theme.light}%)`;
-  const glow = 8 + level * 26;
-  const shadow = `0 0 ${glow}px hsl(${theme.hue} ${theme.sat}% ${theme.light}% / ${0.42 + level * 0.5}), 0 0 ${glow * 1.8}px hsl(${theme.hue} ${Math.max(40, theme.sat - 8)}% ${Math.min(72, theme.light + 8)}% / ${0.22 + level * 0.28})`;
-  el.style.setProperty("--mini-ball-bg", bg);
-  el.style.setProperty("--mini-ball-shadow", shadow);
-  el.style.setProperty("--mini-ball-scale", scale.toFixed(3));
-  el.style.setProperty("--mini-ball-bright", bright.toFixed(3));
-  return { ...theme, scale, level, state, bright };
+}
+
+const emptyMiniBall = () => ({
+  sync() {},
+  setState() {},
+  setEmotion() {},
+  setLevel() {},
+  destroy() {},
+  getFrame: () => computeMiniEmotionBallFrame(),
+  getState: () => "idle",
+  getVolume: () => 0,
+});
+
+/**
+ * Live controller for the top-left mini emotion ball.
+ * Color = character emotion, size = mic/mouth volume, motion = idle/think/talk.
+ * @param {HTMLElement | null} el
+ * @param {{ isEnglish?: boolean | (() => boolean) }} [opts]
+ */
+export function createMiniEmotionBall(el, opts = {}) {
+  if (!el) return emptyMiniBall();
+
+  const isEnglish = () =>
+    typeof opts.isEnglish === "function"
+      ? Boolean(opts.isEnglish())
+      : Boolean(opts.isEnglish);
+
+  el.classList.add("mini-emotion-ball");
+  let canvas = el.querySelector?.("canvas.companion-chip__dot-canvas") || null;
+  if (!canvas && typeof document !== "undefined") {
+    canvas = document.createElement("canvas");
+    canvas.className = "companion-chip__dot-canvas";
+    canvas.setAttribute("aria-hidden", "true");
+    el.appendChild(canvas);
+  }
+  const ctx = canvas?.getContext?.("2d") || null;
+
+  let emotion = "neutral";
+  let nuance = "none";
+  let state = "idle";
+  let targetVolume = 0;
+  let displayVolume = 0;
+  let rafId = 0;
+  let startTime = 0;
+  let lastFrame = computeMiniEmotionBallFrame();
+  let drawnFrame = lastFrame;
+  let displayHue = lastFrame.hue;
+  let displaySat = lastFrame.sat;
+  let displayLight = lastFrame.light;
+  let reducedMotion = prefersReducedMotion();
+  /** @type {ResizeObserver | null} */
+  let resizeObserver = null;
+  /** @type {MediaQueryList | null} */
+  let motionQuery = null;
+
+  const onMotionPreference = (event) => {
+    reducedMotion = Boolean(event?.matches);
+  };
+  try {
+    motionQuery = globalThis.matchMedia?.("(prefers-reduced-motion: reduce)") || null;
+    motionQuery?.addEventListener?.("change", onMotionPreference);
+  } catch {
+    motionQuery = null;
+  }
+
+  const resizeCanvas = () => {
+    if (!canvas || !ctx) return;
+    const dpr = Math.min(3, Math.max(1, globalThis.devicePixelRatio || 1));
+    const rect =
+      canvas.getBoundingClientRect?.() ||
+      el.getBoundingClientRect?.() ||
+      { width: 28, height: 28 };
+    const css = Math.max(28, Math.round(Math.max(rect.width || 0, rect.height || 0)));
+    canvas.width = Math.round(css * dpr);
+    canvas.height = Math.round(css * dpr);
+    if (typeof ctx.setTransform === "function") {
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+  };
+
+  const paint = (timestamp) => {
+    if (!startTime) startTime = timestamp;
+    const time = (timestamp - startTime) / 1000;
+    displayVolume = smoothStep(
+      displayVolume,
+      targetVolume,
+      lastFrame.live ? 0.42 : 0.22,
+    );
+    lastFrame = computeMiniEmotionBallFrame({
+      emotion,
+      nuance,
+      state,
+      level: displayVolume,
+      time: reducedMotion ? 0 : time,
+      reducedMotion,
+    });
+    displayHue = lerpHue(displayHue, lastFrame.hue, 0.22);
+    displaySat = smoothStep(displaySat, lastFrame.sat, 0.22);
+    displayLight = smoothStep(displayLight, lastFrame.light, 0.22);
+    const drawn = {
+      ...lastFrame,
+      hue: displayHue,
+      sat: displaySat,
+      light: displayLight,
+    };
+    drawnFrame = drawn;
+    applyMiniEmotionBallFrame(el, drawn, { isEnglish: isEnglish() });
+    if (ctx && canvas) {
+      const dpr = Math.min(3, Math.max(1, globalThis.devicePixelRatio || 1));
+      const w = (canvas.width || 36) / dpr;
+      const h = (canvas.height || 36) / dpr;
+      if (typeof ctx.setTransform === "function") {
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      }
+      const drawState = drawn.disabled ? "idle" : state;
+      drawEmotionOrbFrame(ctx, w || 36, h || 36, {
+        time: reducedMotion ? 0 : time,
+        volume: drawn.volume,
+        hue: drawn.hue,
+        sat: drawn.sat,
+        light: drawn.light,
+        state: drawState,
+        compact: true,
+        wobble: drawn.wobble,
+        squash: drawn.squash,
+        spin: drawn.spin,
+        reducedMotion,
+      });
+    }
+    rafId = typeof globalThis.requestAnimationFrame === "function"
+      ? globalThis.requestAnimationFrame(paint)
+      : 0;
+  };
+
+  const startLoop = () => {
+    if (rafId) return;
+    if (typeof document !== "undefined" && document.hidden) return;
+    resizeCanvas();
+    const raf = globalThis.requestAnimationFrame;
+    if (typeof raf === "function") {
+      rafId = raf(paint);
+    }
+  };
+
+  const stopLoop = () => {
+    if (rafId) {
+      globalThis.cancelAnimationFrame?.(rafId);
+      rafId = 0;
+    }
+    startTime = 0;
+  };
+
+  const onVisibility = () => {
+    if (typeof document !== "undefined" && document.hidden) stopLoop();
+    else startLoop();
+  };
+  if (typeof document !== "undefined" && document.addEventListener) {
+    document.addEventListener("visibilitychange", onVisibility);
+  }
+
+  const setState = (next) => {
+    state = String(next || "idle").toLowerCase();
+  };
+
+  const setEmotion = (nextEmotion, nextNuance = nuance) => {
+    emotion = String(nextEmotion || "neutral").toLowerCase();
+    nuance = String(nextNuance || "none").toLowerCase();
+  };
+
+  const setLevel = (level) => {
+    targetVolume = clamp(Number(level) || 0, 0, 1);
+  };
+
+  const sync = (ctxIn = {}) => {
+    if (ctxIn.emotion != null && ctxIn.emotion !== "") {
+      setEmotion(ctxIn.emotion, ctxIn.nuance || nuance);
+    } else if (ctxIn.nuance) {
+      nuance = String(ctxIn.nuance).toLowerCase();
+    }
+    if (ctxIn.state) setState(ctxIn.state);
+    if (ctxIn.level != null) setLevel(ctxIn.level);
+    startLoop();
+  };
+
+  if (globalThis.ResizeObserver && canvas) {
+    resizeObserver = new ResizeObserver(() => resizeCanvas());
+    resizeObserver.observe(el);
+  }
+
+  startLoop();
+
+  return {
+    schema: COMPANION_EMOTION_BALL_SCHEMA,
+    sync,
+    setState,
+    setEmotion,
+    setLevel,
+    destroy() {
+      stopLoop();
+      resizeObserver?.disconnect?.();
+      resizeObserver = null;
+      try {
+        motionQuery?.removeEventListener?.("change", onMotionPreference);
+      } catch {
+        /* ignore */
+      }
+      if (typeof document !== "undefined" && document.removeEventListener) {
+        document.removeEventListener("visibilitychange", onVisibility);
+      }
+    },
+    getFrame: () => drawnFrame,
+    getState: () => state,
+    getVolume: () => displayVolume,
+  };
 }

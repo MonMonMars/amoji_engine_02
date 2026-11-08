@@ -1,7 +1,9 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 import {
   buildFreshBootUrl,
+  buildPlayFallbackLocation,
   buildPlayRedirectLocation,
+  resolvePlayEntryLocation,
   checkForAppUpdate,
   companionBuildPath,
   companionFallbackPath,
@@ -155,6 +157,33 @@ describe("companionFreshBoot", () => {
     });
     expect(result.reloaded).toBe(true);
     expect(replace.mock.calls[0][0]).toMatch(/\/n\/\d+\/full/);
+  });
+
+  it("buildPlayFallbackLocation targets /companion-full with cache bust", () => {
+    const url = buildPlayFallbackLocation("?lang=en&pick=1", {
+      build: "2026-09-17-v174-tts-full-playback",
+      stamp: "1234567890",
+    });
+    expect(url).toContain("/companion-full?");
+    expect(url).toContain("lang=en");
+    expect(url).toContain("build=2026-09-17-v174-tts-full-playback");
+    expect(url).toContain("_cb=1234567890");
+  });
+
+  it("resolvePlayEntryLocation falls back when /play is missing", async () => {
+    const fetchImpl = vi.fn(async (url, init) => {
+      if (String(url).endsWith("/play")) {
+        return { status: 404, ok: false };
+      }
+      return { status: 404, ok: false };
+    });
+    const resolved = await resolvePlayEntryLocation("?lang=en", {
+      build: "b1",
+      origin: "https://example.com",
+      fetchImpl,
+    });
+    expect(resolved).toContain("https://example.com/companion-full");
+    expect(resolved).toContain("lang=en");
   });
 
   it("buildFreshBootUrl uses a per-open /n/<stamp>/ path", () => {

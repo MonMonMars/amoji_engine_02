@@ -12,6 +12,7 @@ import {
   preloadVrmBuffer,
   releaseVrmPreloadExcept,
 } from "../engine/companion/companionPreload.js";
+import { sortModelUrlsForPreload } from "../engine/companion/companionVrmInspect.js";
 
 describe("companionCharacterPreload", () => {
   it("lists unique VRM + GLB model urls for the full roster", () => {
@@ -21,6 +22,11 @@ describe("companionCharacterPreload", () => {
     expect(urls.every((u) => /\.(vrm|glb)($|\?)/i.test(u))).toBe(true);
     expect(urls.some((u) => u.includes("companion-quinn"))).toBe(true);
     expect(urls.some((u) => u.includes("companion-girl.glb"))).toBe(true);
+  });
+
+  it("preloads Kizuna high-poly model before other roster VRMs", () => {
+    const urls = sortModelUrlsForPreload(uniqueCharacterModelUrls("en"));
+    expect(urls[0]).toContain("kizuna-kamatte.vrm");
   });
 
   it("preloads preview images and models together", async () => {

@@ -5,9 +5,13 @@
 import { EdgeTTS } from "edge-tts-universal";
 import {
   enrichTtsPerformance,
+  MAX_CLOUD_TTS_CHARS,
   resolveCompanionTtsProsody,
 } from "./companionTtsProsody.js";
-import { resolveEdgeVoiceId } from "./companionVoiceProfiles.js";
+import {
+  isOpenAiVoiceProfile,
+  resolveEdgeVoiceId,
+} from "./companionVoiceProfiles.js";
 import { resolveOpenAiApiKey, synthesizeOpenAiSpeech } from "./openaiTts.mjs";
 
 export const TTS_HANDLER_SCHEMA = "amoji.ttsHandler.v3";
@@ -58,7 +62,7 @@ export async function synthesizeSpeech(text, opts = {}) {
     .replace(/[*_`#>/\\]/g, " ")
     .replace(/\s+/g, " ")
     .trim()
-    .slice(0, 500);
+    .slice(0, MAX_CLOUD_TTS_CHARS);
   if (!clean) {
     throw new Error("empty text");
   }
@@ -84,7 +88,9 @@ export async function synthesizeSpeech(text, opts = {}) {
   const instructions = opts.instructions || prosodyPack.instruct;
 
   const provider = String(process.env.AMOJI_TTS_PROVIDER || "auto").toLowerCase();
+  const openAiOnly = isOpenAiVoiceProfile(opts.voice);
   const tryOpenAi =
+    openAiOnly ||
     provider === "openai" ||
     (provider === "auto" && Boolean(resolveOpenAiApiKey()));
 
@@ -110,8 +116,11 @@ export async function synthesizeSpeech(text, opts = {}) {
           model: oai.model,
         };
       }
+      if (openAiOnly) {
+        throw new Error("openai-tts-unavailable");
+      }
     } catch (err) {
-      if (provider === "openai") throw err;
+      if (provider === "openai" || openAiOnly) throw err;
       console.warn("[tts] OpenAI TTS failed, using Edge fallback:", err?.message || err);
     }
   }

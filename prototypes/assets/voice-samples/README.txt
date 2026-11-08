@@ -15,5 +15,12 @@ Hong Kong English (en-HK):
 Persona profiles (same speaker, tuned prosody): see companionVoiceProfiles.js
   zh-HK-HiuGaaiNeural-idol, zh-HK-HiuMaanNeural-cool, en-US-AriaNeural-cool
 
+Emotion comparison clips (happy/sad/surprised/thinking):
+  emotion/en/*.mp3, emotion/yue/*.mp3 — regenerate with:
+  node amoji-engine/scripts/generate-voice-emotion-samples.mjs
+
+OpenAI voices (openai-coral, openai-marin, …) need OPENAI_API_KEY on the server.
+Try the interactive demo: prototypes/voice-emotion-demo.html
+
 Note: Microsoft currently ships only 3 zh-HK neural speakers. For more
 Cantonese timbres later, see CosyVoice2-Yue (HuggingFace) or WenetSpeech-Yue.

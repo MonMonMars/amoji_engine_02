@@ -6,7 +6,12 @@ import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { VRMLoaderPlugin, VRMExpressionPresetName } from "@pixiv/three-vrm";
-import { applyAutoCameraFrame } from "./companionCameraApply.js";
+import {
+  applyAutoCameraFrame,
+  buildPortraitShot,
+  CAMERA_RESET_LERP_RATE,
+  lerpCameraTowardShot,
+} from "./companionCameraApply.js";
 import {
   createCompanionCameraDirector,
 } from "./companionCameraDirector.js";
@@ -35,14 +40,31 @@ import { createCompanionBodyMotion } from "./companionBodyMotion.js";
 import { inferFingerFlexAxis } from "./companionFingerPose.js";
 import { buildVrmExpressionBlend } from "./companionContentMotion.js";
 import {
+  adaptBlendForFaceProfile,
+  buildModelFaceProfile,
+  resolveTalkEmotionMorphWeights,
+} from "./companionFaceEmotion.js";
+import {
   isOnlineIdleAction,
   isOnlineLoopingLibraryAction,
   resolveOnlineMotionClipUrl,
 } from "./companionOnlineMotionClips.mjs";
 import { createVrmMotionPlayer } from "./companionVrmMotionPlayer.js";
 import { sampleIdleExpressionBlend } from "./companionIdleMotion.js";
-import { configureVrmSpringStability } from "./vrmSpringStability.js";
+import {
+  configureVrmSpringStability,
+  createIdleSpringRecenterState,
+  recenterVrmSpringBones,
+  stabilizeVrmSpringBones,
+  tickIdleSpringRecenter,
+  THINK_SPRING_RECENTER_SEC,
+  TALK_SPRING_RECENTER_SEC,
+} from "./vrmSpringStability.js";
 import { applyVrmOutfitTint } from "./companionOutfitApply.js";
+import {
+  countMeshTriangles,
+  summarizeMorphTargets,
+} from "./companionMeshStats.js";
 import {
   applyBlinkWeight,
   applyMorphMouthOpen,
@@ -57,6 +79,7 @@ import {
   guardLookAtLids,
   inspectVrmFaceHazards,
   listExpressionNames,
+  MOUTH_CLOSE_EPS,
   resolveMouthPresets,
   sampleEatMouthPulse,
   sampleTalkMouthPulse,
@@ -260,10 +283,16 @@ export async function createVrmAvatar(opts) {
   vrm.humanoid?.resetNormalizedPose?.();
   const bodyMotion = createCompanionBodyMotion(vrm.humanoid);
   bodyMotion.setFingerFlexAxis?.(inferFingerFlexAxis(vrm.humanoid));
+  let springIdleState = createIdleSpringRecenterState();
+  let springTalkState = createIdleSpringRecenterState();
   /** @type {string | null} */
   let vrmaAction = null;
   let vrmaPending = false;
   let vrmaPlayGen = 0;
+  /** @type {string[]} */
+  let vrmaSequenceQueue = [];
+  /** @type {object | null} */
+  let vrmaSequenceOpts = null;
   const restoreAfterVrma = () => {
     if (vrmaPending) return;
     const finished = vrmaAction;
@@ -273,26 +302,44 @@ export async function createVrmAvatar(opts) {
     void resumeCalmStand();
   };
 
-  const resumeCalmStand = async () => {
-    if (bodyMotion.thinking) {
-      const ok = await tryPlayVrmaAction("thinking", {
-        loop: true,
-        emotion: "thinking",
-      });
-      if (ok) return true;
-    }
+  const restorePlantedIdle = () => {
     vrmaPlayGen += 1;
     vrmaPending = false;
     vrmaAction = null;
-    motionPlayer.stop();
+    vrmaSequenceQueue = [];
+    vrmaSequenceOpts = null;
+    motionPlayer.releasePose?.();
+    try {
+      vrm.humanoid?.resetNormalizedPose?.();
+    } catch {
+      /* ignore */
+    }
+    const rest = detectVrmIdleRestRotations(vrm);
+    bodyMotion.setArmRestRotations?.(rest.arms);
+    bodyMotion.setLegRestRotations?.(rest.legs);
+    bodyMotion.setArmBind?.(rest.bind);
     bodyMotion.snapToRestPose?.();
     syncHumanoidPose();
+    syncSpringsAfterPose();
+    springIdleState = createIdleSpringRecenterState();
+    springTalkState = createIdleSpringRecenterState();
+  };
+
+  const resumeCalmStand = async () => {
+    restorePlantedIdle();
+    bodyMotion.resetIdleLife?.();
     return false;
   };
 
   const motionPlayer = createVrmMotionPlayer({
     vrm,
     onComplete: () => {
+      if (vrmaSequenceQueue.length > 0) {
+        const next = vrmaSequenceQueue.shift();
+        void tryPlayVrmaAction(next, vrmaSequenceOpts || {});
+        return;
+      }
+      vrmaSequenceOpts = null;
       restoreAfterVrma();
     },
   });
@@ -304,6 +351,23 @@ export async function createVrmAvatar(opts) {
       console.warn("[vrm] humanoid.update failed", err);
     }
   };
+
+  const syncSpringsAfterPose = (opts = {}) => {
+    try {
+      vrm.scene?.updateMatrixWorld?.(true);
+    } catch {
+      /* ignore */
+    }
+    return recenterVrmSpringBones(vrm, {
+      retune: true,
+      captureInit: opts.captureInit,
+    });
+  };
+
+  bodyMotion.setActionCompleteHandler?.(({ sequenceDone, next }) => {
+    if (!sequenceDone || next) return;
+    restorePlantedIdle();
+  });
 
   const frameAnchor = new THREE.Vector3();
   const smoothedFrameAnchor = new THREE.Vector3();
@@ -340,6 +404,7 @@ export async function createVrmAvatar(opts) {
   const idleRest = detectVrmIdleRestRotations(vrm);
   bodyMotion.setArmRestRotations?.(idleRest.arms);
   bodyMotion.setLegRestRotations?.(idleRest.legs);
+  bodyMotion.setArmBind?.(idleRest.bind);
   bodyMotion.snapToRestPose?.();
   syncHumanoidPose();
   configureVrmSpringStability(vrm);
@@ -377,6 +442,8 @@ export async function createVrmAvatar(opts) {
   const pointer = new THREE.Vector2();
   /** @type {{ x: number, y: number } | null} */
   let pointerDown = null;
+  /** @type {{ target: THREE.Vector3, position: THREE.Vector3, fov: number } | null} */
+  let cameraResetAnim = null;
 
   // Look toward the camera in azimuth, but at eye height so lookDown
   // blendshapes cannot shut the lids on models that bind eyelids to pitch.
@@ -421,6 +488,38 @@ export async function createVrmAvatar(opts) {
   zeroHazardMorphInfluences(model);
   const blinkPresets = blinkExpressionNames(expr);
   const mouthPresets = resolveMouthPresets(expr);
+  const morphSummary = summarizeMorphTargets(model);
+  const expressionNames = listExpressionNames(expr);
+  const triangleCount = countMeshTriangles(model);
+  const faceProfile = buildModelFaceProfile({
+    expr,
+    morphSummary,
+    hazards: faceHazards,
+    expressionNames,
+    triangleCount,
+    modelUrl,
+    characterId: opts.characterId || null,
+  });
+  const faceReport = {
+    triangleCount,
+    morphTargetCount: morphSummary.morphTargetCount,
+    morphNamesSample: morphSummary.morphNames.slice(0, 16),
+    expressionNames,
+    mouthPresets: [...mouthPresets],
+    blinkPresets: [...blinkPresets],
+    hasVisemes: mouthPresets.length >= 3,
+    faceProfile: {
+      rigType: faceProfile.rigType,
+      usePresets: faceProfile.usePresets,
+      useMorphFallback: faceProfile.useMorphFallback,
+      presetScale: { ...faceProfile.presetScale },
+    },
+    hazards: {
+      opensMouth: [...(faceHazards.opensMouth || [])],
+      blocksMouth: [...(faceHazards.blocksMouth || [])],
+      closesEyes: [...(faceHazards.closesEyes || [])],
+    },
+  };
 
   let emotion = "neutral";
   let mouthOpen = 0;
@@ -450,11 +549,23 @@ export async function createVrmAvatar(opts) {
     }
   };
 
+  const resolveMorphWeights = (activeTalking = talking || eating) =>
+    resolveTalkEmotionMorphWeights(
+      emotion,
+      activeTalking,
+      bodyMotion.nuance && bodyMotion.nuance !== "none"
+        ? bodyMotion.nuance
+        : "none",
+      faceProfile,
+    );
+
   const setExpressionTargetFromBlend = (blend) => {
     clearExpressionTargets();
-    const safe = clampRestFaceBlend(blend, {
+    const adapted = adaptBlendForFaceProfile(blend, faceProfile);
+    const safe = clampRestFaceBlend(adapted, {
       talking: talking || eating,
       hazards: faceHazards,
+      caps: faceProfile.caps,
     });
     for (const [key, weight] of Object.entries(safe || {})) {
       const preset = VRM_BLEND_PRESET_MAP[key];
@@ -473,21 +584,27 @@ export async function createVrmAvatar(opts) {
     return nuance;
   };
 
-  const applyExpressionProfile = ({ emotion: em = "neutral", nuance = "none" } = {}) => {
-    const blend = buildVrmExpressionBlend(em, nuance);
+  const applyExpressionProfile = ({
+    emotion: em = "neutral",
+    nuance = "none",
+    blend: blendOverride,
+  } = {}) => {
+    emotion = bodyMotion.setEmotion(em);
+    bodyMotion.setContentNuance(nuance);
+    const blend = blendOverride || buildVrmExpressionBlend(em, nuance);
     setExpressionTargetFromBlend(blend);
     return { emotion: em, nuance, blend };
   };
 
   const tickExpressionBlend = (dt) => {
     if (!expr) return;
-    const rate = Math.min(1, dt * (talking ? 28 : 16));
+    const rate = Math.min(1, dt * (talking ? 36 : 16));
     for (const preset of emotionPresetKeys()) {
       if (talking || eating) {
         expressionTarget[preset] = capTalkingEmotionWeight(
           preset,
           expressionTarget[preset] ?? 0,
-          { talking, eating },
+          { talking, eating, caps: faceProfile.caps },
         );
       }
       const target = expressionTarget[preset] ?? 0;
@@ -599,6 +716,8 @@ export async function createVrmAvatar(opts) {
     if (!key || key === "stop") {
       vrmaPlayGen += 1;
       vrmaPending = false;
+      vrmaSequenceQueue = [];
+      vrmaSequenceOpts = null;
       motionPlayer.stop();
       vrmaAction = null;
       const ok = bodyMotion.playAction(action, {
@@ -614,70 +733,51 @@ export async function createVrmAvatar(opts) {
       return ok;
     }
 
-    if (resolveOnlineMotionClipUrl(key)) {
-      vrmaAction = key;
-      void tryPlayVrmaAction(key, opts).then((ok) => {
-        if (!ok && !vrmaPending && !motionPlayer.isPlaying?.()) {
-          vrmaAction = null;
-          bodyMotion.playAction(action, {
-            emotion: opts.emotion || emotion,
-            loop: opts.loop,
-            loopSequence: opts.loopSequence,
-            single: opts.single,
-            maxMoves: opts.maxMoves,
-          });
-          emotion = bodyMotion.emotion;
-          applyEmotionExpressions(emotion);
-        }
-      });
-      return true;
+    if (!resolveOnlineMotionClipUrl(key)) {
+      return false;
     }
 
-    const ok = bodyMotion.playAction(action, {
-      emotion: opts.emotion || emotion,
-      loop: opts.loop,
-      loopSequence: opts.loopSequence,
-      single: opts.single,
-      maxMoves: opts.maxMoves,
+    vrmaSequenceQueue = [];
+    vrmaSequenceOpts = null;
+    vrmaAction = key;
+    void tryPlayVrmaAction(key, opts).then((ok) => {
+      if (!ok && !vrmaPending && !motionPlayer.isPlaying?.()) {
+        vrmaAction = null;
+      }
     });
-    emotion = bodyMotion.emotion;
-    applyEmotionExpressions(emotion);
-    return ok;
+    return true;
   };
 
   const playActionSequence = (actions, opts = {}) => {
     const sequence = Array.isArray(actions)
       ? actions.map((id) => String(id || "").toLowerCase()).filter(Boolean)
       : [];
-    if (
-      sequence.length === 1 &&
-      resolveOnlineMotionClipUrl(sequence[0])
-    ) {
-      void tryPlayVrmaAction(sequence[0], {
-        emotion: opts.emotion || emotion,
-        loop: opts.loopSequence,
-      });
+    const online = sequence.filter((id) => resolveOnlineMotionClipUrl(id));
+    if (!online.length) return false;
+
+    vrmaPlayGen += 1;
+    vrmaSequenceOpts = {
+      emotion: opts.emotion || emotion,
+      loop: opts.loopSequence,
+    };
+    if (online.length === 1) {
+      vrmaSequenceQueue = [];
+      void tryPlayVrmaAction(online[0], vrmaSequenceOpts);
       return true;
     }
 
-    const ok = bodyMotion.playActionSequence(actions, {
-      emotion: opts.emotion || emotion,
-      loopSequence: opts.loopSequence,
-    });
+    vrmaSequenceQueue = online.slice(1);
+    void tryPlayVrmaAction(online[0], vrmaSequenceOpts);
     emotion = bodyMotion.emotion;
     applyEmotionExpressions(emotion);
-    return ok;
+    return true;
   };
 
   const stopAction = () => {
-    vrmaPlayGen += 1;
-    vrmaPending = false;
-    motionPlayer.stop();
-    vrmaAction = null;
     const ok = bodyMotion.stopAction();
     applyEmotionExpressions(emotion);
-    bodyMotion.snapToRestPose?.();
-    syncHumanoidPose();
+    restorePlantedIdle();
+    bodyMotion.resetIdleLife?.();
     return ok;
   };
   const playGestureForText = (text, opts = {}) =>
@@ -701,11 +801,14 @@ export async function createVrmAvatar(opts) {
     if (on) {
       emotion = "thinking";
       applyEmotionExpressions("thinking");
-      vrmaAction = "thinking";
-      void tryPlayVrmaAction("thinking", { loop: true, emotion: "thinking" });
-    } else if (vrmaAction === "thinking" || bodyMotion.currentAction == null) {
+      if (vrmaAction === "thinking") {
+        restorePlantedIdle();
+      }
+    } else {
       applyEmotionExpressions(emotion === "thinking" ? "neutral" : emotion);
-      void resumeCalmStand();
+      if (vrmaAction === "thinking") {
+        restorePlantedIdle();
+      }
     }
     return Boolean(on);
   };
@@ -765,13 +868,24 @@ export async function createVrmAvatar(opts) {
     expr?.update?.();
     // Visemes + jaw last so Happy/Surprised cannot freeze the mouth.
     applyMorphMouthOpen(model, shape, open);
-    applyTalkEmotionMorphs(model, emotion, talking || eating);
+    applyTalkEmotionMorphs(
+      model,
+      emotion,
+      talking || eating,
+      resolveMorphWeights(talking || eating),
+    );
     applyJawOpen(open);
     return open;
   };
 
   const setMouthOpen = (v) => {
     mouthTarget = Math.max(0, Math.min(1, Number(v) || 0));
+    if (mouthTarget > MOUTH_CLOSE_EPS && !talking && !eating) {
+      setTalking(true);
+    }
+    if (mouthTarget > 0.2 && (talking || eating)) {
+      mouthOpen = Math.max(mouthOpen, mouthTarget * 0.82);
+    }
     return mouthTarget;
   };
 
@@ -792,11 +906,19 @@ export async function createVrmAvatar(opts) {
         mouthShape = null;
         applyMouth(0);
         applyMorphMouthOpen(model, "aa", 0);
-        applyTalkEmotionMorphs(model, emotion, false);
+        applyTalkEmotionMorphs(model, emotion, false, resolveMorphWeights(false));
         applyJawOpen(0);
       }
       applyEmotionExpressions(emotion);
       softenTalkMouthOverrides(expr, false);
+      if (
+        !eating &&
+        !bodyMotion.currentAction &&
+        !bodyMotion.activeGesture &&
+        !motionPlayer.isPlaying?.()
+      ) {
+        restorePlantedIdle();
+      }
     } else {
       applyEmotionExpressions(emotion);
       if (mouthTarget < 0.2) mouthTarget = Math.max(mouthTarget, 0.55);
@@ -820,8 +942,11 @@ export async function createVrmAvatar(opts) {
     cameraDirector.notifySpeech(chunk);
     const analysis = bodyMotion.reactToSpeechChunk(chunk, opts);
     if (analysis?.expressionBlend) {
-      emotion = analysis.emotion || emotion;
-      setExpressionTargetFromBlend(analysis.expressionBlend);
+      applyExpressionProfile({
+        emotion: analysis.emotion || emotion,
+        nuance: analysis.nuance || bodyMotion.nuance || "none",
+        blend: analysis.expressionBlend,
+      });
     }
     return analysis;
   };
@@ -829,8 +954,11 @@ export async function createVrmAvatar(opts) {
   const tickFace = (dt, now, activeMotion) => {
     if (!talking && !eating && !activeMotion && !bodyMotion.thinking) {
       const idleBlend = clampRestFaceBlend(
-        sampleIdleExpressionBlend((now - t0) * 0.001, emotion),
-        { talking: false, hazards: faceHazards },
+        adaptBlendForFaceProfile(
+          sampleIdleExpressionBlend((now - t0) * 0.001, emotion),
+          faceProfile,
+        ),
+        { talking: false, hazards: faceHazards, caps: faceProfile.caps },
       );
       for (const [key, weight] of Object.entries(idleBlend)) {
         const preset = VRM_BLEND_PRESET_MAP[key];
@@ -882,7 +1010,7 @@ export async function createVrmAvatar(opts) {
       restoreAfterVrma();
     }
     const libraryMotion =
-      (vrmaPlaying || vrmaPending) &&
+      vrmaPlaying &&
       vrmaAction !== "idle" &&
       vrmaAction !== "relax";
     const activeMotion = vrmaPlaying || vrmaPending
@@ -907,6 +1035,31 @@ export async function createVrmAvatar(opts) {
       syncLookTarget();
       syncHumanoidPose();
       tickFace(dt, now, activeMotion);
+      const springEligible =
+        !libraryMotion && !activeMotion && !bodyMotion.activeGesture;
+      if (springEligible && talking) {
+        tickIdleSpringRecenter(
+          vrm,
+          springTalkState,
+          dt,
+          true,
+          TALK_SPRING_RECENTER_SEC,
+        );
+      } else if (springEligible && bodyMotion.thinking) {
+        tickIdleSpringRecenter(
+          vrm,
+          springTalkState,
+          dt,
+          true,
+          THINK_SPRING_RECENTER_SEC,
+        );
+      } else if (springEligible) {
+        tickIdleSpringRecenter(vrm, springIdleState, dt, true);
+      } else {
+        springIdleState.calmSec = 0;
+        springTalkState.calmSec = 0;
+      }
+      stabilizeVrmSpringBones(vrm);
       vrm.update(dt);
       // Fingers last — VRMA mixer and vrm.update would otherwise leave Mixamo
       // hands in a T-pose (stick-straight).
@@ -933,7 +1086,31 @@ export async function createVrmAvatar(opts) {
         camState.userOrbiting ||
         camState.userFramingHeld;
       const vrmaOwnsBody = Boolean(vrmaAction || vrmaPending);
-      if (!userOwnsCamera && camState.autoActive) {
+      if (cameraResetAnim) {
+        if (userOwnsCamera) {
+          cameraResetAnim = null;
+        } else {
+          const finished = lerpCameraTowardShot(
+            controls,
+            camera,
+            cameraResetAnim,
+            dt,
+            CAMERA_RESET_LERP_RATE,
+          );
+          syncLookTarget();
+          if (finished) {
+            defaultPortrait.position.copy(camera.position);
+            defaultPortrait.target.copy(controls.target);
+            defaultPortrait.fov = camera.fov;
+            defaultPortrait.distance = camera.position.distanceTo(controls.target);
+            portraitCamera.position.copy(camera.position);
+            portraitCamera.target.copy(controls.target);
+            portraitCamera.fov = camera.fov;
+            portraitCamera.distance = defaultPortrait.distance;
+            cameraResetAnim = null;
+          }
+        }
+      } else if (!userOwnsCamera && camState.autoActive) {
         const desired = applyAutoCameraFrame(
           controls,
           camera,
@@ -994,23 +1171,26 @@ export async function createVrmAvatar(opts) {
 
   const resetCameraView = () => {
     const fittedNow = new THREE.Box3().setFromObject(model);
-    frameFaceCamera({
-      vrm,
-      model,
-      camera,
-      controls,
-      fitted: fittedNow,
-      cameraZSign: portraitCameraZSign,
-    });
-    defaultPortrait.position.copy(camera.position);
-    defaultPortrait.target.copy(controls.target);
-    defaultPortrait.fov = camera.fov;
-    defaultPortrait.distance = camera.position.distanceTo(controls.target);
+    const fittedSize = fittedNow.getSize(new THREE.Vector3());
+    portraitDist = portraitDistanceForHeight(fittedSize.y);
+    const anchor = computeVrmFrameAnchor(vrm, model);
+    applyUserOrbitLimits(controls);
+    controls.minDistance = portraitDist * 0.55;
+    controls.maxDistance = portraitDist * 3.4;
+    const desired = buildPortraitShot(
+      anchor,
+      portraitDist,
+      PORTRAIT_FOV,
+      portraitCameraZSign,
+    );
+    cameraResetAnim = {
+      target: desired.target.clone(),
+      position: desired.position.clone(),
+      fov: desired.fov,
+    };
     cameraDirector.resetDialogue();
     cameraDirector.holdUserFraming(false);
     cameraDirector.setUserOrbiting(false);
-    syncPortraitFromControls();
-    controls.update();
   };
 
   canvas.style.touchAction = "none";
@@ -1130,23 +1310,41 @@ export async function createVrmAvatar(opts) {
     get mouthOpen() {
       return mouthOpen;
     },
+    getFaceProfile() {
+      return { ...faceProfile };
+    },
+    getFaceReport() {
+      return { ...faceReport };
+    },
     getFaceDebug() {
+      const now = performance.now();
+      const activeViseme = talkingVisemeShape(
+        now,
+        talking || eating,
+        mouthShape,
+      );
+      const activeVisemePreset = shapeToVisemePreset(activeViseme, mouthPresets);
       return {
+        ...faceReport,
         talking,
         eating,
         emotion,
+        nuance:
+          bodyMotion.nuance && bodyMotion.nuance !== "none"
+            ? bodyMotion.nuance
+            : "none",
+        faceProfile: {
+          rigType: faceProfile.rigType,
+          presetScale: { ...faceProfile.presetScale },
+          morphScale: faceProfile.morphScale,
+        },
         mouthOpen,
         mouthTarget,
         mouthShape,
-        mouthPresets: [...mouthPresets],
-        expressionNames: listExpressionNames(expr),
+        activeViseme,
+        activeVisemePreset,
         expressionCurrent: { ...expressionCurrent },
         expressionTarget: { ...expressionTarget },
-        hazards: {
-          opensMouth: [...(faceHazards.opensMouth || [])],
-          blocksMouth: [...(faceHazards.blocksMouth || [])],
-          closesEyes: [...(faceHazards.closesEyes || [])],
-        },
       };
     },
     resize,

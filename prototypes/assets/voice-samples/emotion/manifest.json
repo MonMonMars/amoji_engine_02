@@ -1,0 +1,254 @@
+[
+  {
+    "lang": "en",
+    "voiceId": "en-US-AriaNeural",
+    "mood": "happy",
+    "path": "/prototypes/assets/voice-samples/emotion/en/en-US-AriaNeural-happy.mp3",
+    "engine": "edge",
+    "openAiVoice": "en-US-AriaNeural",
+    "bytes": 16848
+  },
+  {
+    "lang": "en",
+    "voiceId": "en-US-AriaNeural",
+    "mood": "sad",
+    "path": "/prototypes/assets/voice-samples/emotion/en/en-US-AriaNeural-sad.mp3",
+    "engine": "edge",
+    "openAiVoice": "en-US-AriaNeural",
+    "bytes": 49248
+  },
+  {
+    "lang": "en",
+    "voiceId": "en-US-AriaNeural",
+    "mood": "surprised",
+    "path": "/prototypes/assets/voice-samples/emotion/en/en-US-AriaNeural-surprised.mp3",
+    "engine": "edge",
+    "openAiVoice": "en-US-AriaNeural",
+    "bytes": 12816
+  },
+  {
+    "lang": "en",
+    "voiceId": "en-US-AriaNeural",
+    "mood": "thinking",
+    "path": "/prototypes/assets/voice-samples/emotion/en/en-US-AriaNeural-thinking.mp3",
+    "engine": "edge",
+    "openAiVoice": "en-US-AriaNeural",
+    "bytes": 24480
+  },
+  {
+    "lang": "en",
+    "voiceId": "en-US-JennyNeural",
+    "mood": "happy",
+    "path": "/prototypes/assets/voice-samples/emotion/en/en-US-JennyNeural-happy.mp3",
+    "engine": "edge",
+    "openAiVoice": "en-US-JennyNeural",
+    "bytes": 16992
+  },
+  {
+    "lang": "en",
+    "voiceId": "en-US-JennyNeural",
+    "mood": "sad",
+    "path": "/prototypes/assets/voice-samples/emotion/en/en-US-JennyNeural-sad.mp3",
+    "engine": "edge",
+    "openAiVoice": "en-US-JennyNeural",
+    "bytes": 47664
+  },
+  {
+    "lang": "en",
+    "voiceId": "en-US-JennyNeural",
+    "mood": "surprised",
+    "path": "/prototypes/assets/voice-samples/emotion/en/en-US-JennyNeural-surprised.mp3",
+    "engine": "edge",
+    "openAiVoice": "en-US-JennyNeural",
+    "bytes": 12528
+  },
+  {
+    "lang": "en",
+    "voiceId": "en-US-JennyNeural",
+    "mood": "thinking",
+    "path": "/prototypes/assets/voice-samples/emotion/en/en-US-JennyNeural-thinking.mp3",
+    "engine": "edge",
+    "openAiVoice": "en-US-JennyNeural",
+    "bytes": 23184
+  },
+  {
+    "lang": "en",
+    "voiceId": "en-US-GuyNeural",
+    "mood": "happy",
+    "path": "/prototypes/assets/voice-samples/emotion/en/en-US-GuyNeural-happy.mp3",
+    "engine": "edge",
+    "openAiVoice": "en-US-GuyNeural",
+    "bytes": 15984
+  },
+  {
+    "lang": "en",
+    "voiceId": "en-US-GuyNeural",
+    "mood": "sad",
+    "path": "/prototypes/assets/voice-samples/emotion/en/en-US-GuyNeural-sad.mp3",
+    "engine": "edge",
+    "openAiVoice": "en-US-GuyNeural",
+    "bytes": 50400
+  },
+  {
+    "lang": "en",
+    "voiceId": "en-US-GuyNeural",
+    "mood": "surprised",
+    "path": "/prototypes/assets/voice-samples/emotion/en/en-US-GuyNeural-surprised.mp3",
+    "engine": "edge",
+    "openAiVoice": "en-US-GuyNeural",
+    "bytes": 12528
+  },
+  {
+    "lang": "en",
+    "voiceId": "en-US-GuyNeural",
+    "mood": "thinking",
+    "path": "/prototypes/assets/voice-samples/emotion/en/en-US-GuyNeural-thinking.mp3",
+    "engine": "edge",
+    "openAiVoice": "en-US-GuyNeural",
+    "bytes": 25056
+  },
+  {
+    "lang": "en",
+    "voiceId": "en-HK-YanNeural",
+    "mood": "happy",
+    "path": "/prototypes/assets/voice-samples/emotion/en/en-HK-YanNeural-happy.mp3",
+    "engine": "edge",
+    "openAiVoice": "en-HK-YanNeural",
+    "bytes": 18000
+  },
+  {
+    "lang": "en",
+    "voiceId": "en-HK-YanNeural",
+    "mood": "sad",
+    "path": "/prototypes/assets/voice-samples/emotion/en/en-HK-YanNeural-sad.mp3",
+    "engine": "edge",
+    "openAiVoice": "en-HK-YanNeural",
+    "bytes": 47520
+  },
+  {
+    "lang": "en",
+    "voiceId": "en-HK-YanNeural",
+    "mood": "surprised",
+    "path": "/prototypes/assets/voice-samples/emotion/en/en-HK-YanNeural-surprised.mp3",
+    "engine": "edge",
+    "openAiVoice": "en-HK-YanNeural",
+    "bytes": 13248
+  },
+  {
+    "lang": "en",
+    "voiceId": "en-HK-YanNeural",
+    "mood": "thinking",
+    "path": "/prototypes/assets/voice-samples/emotion/en/en-HK-YanNeural-thinking.mp3",
+    "engine": "edge",
+    "openAiVoice": "en-HK-YanNeural",
+    "bytes": 23472
+  },
+  {
+    "lang": "yue",
+    "voiceId": "zh-HK-HiuMaanNeural",
+    "mood": "happy",
+    "path": "/prototypes/assets/voice-samples/emotion/yue/zh-HK-HiuMaanNeural-happy.mp3",
+    "engine": "edge",
+    "openAiVoice": "zh-HK-HiuMaanNeural",
+    "bytes": 12816
+  },
+  {
+    "lang": "yue",
+    "voiceId": "zh-HK-HiuMaanNeural",
+    "mood": "sad",
+    "path": "/prototypes/assets/voice-samples/emotion/yue/zh-HK-HiuMaanNeural-sad.mp3",
+    "engine": "edge",
+    "openAiVoice": "zh-HK-HiuMaanNeural",
+    "bytes": 26496
+  },
+  {
+    "lang": "yue",
+    "voiceId": "zh-HK-HiuMaanNeural",
+    "mood": "surprised",
+    "path": "/prototypes/assets/voice-samples/emotion/yue/zh-HK-HiuMaanNeural-surprised.mp3",
+    "engine": "edge",
+    "openAiVoice": "zh-HK-HiuMaanNeural",
+    "bytes": 11808
+  },
+  {
+    "lang": "yue",
+    "voiceId": "zh-HK-HiuMaanNeural",
+    "mood": "thinking",
+    "path": "/prototypes/assets/voice-samples/emotion/yue/zh-HK-HiuMaanNeural-thinking.mp3",
+    "engine": "edge",
+    "openAiVoice": "zh-HK-HiuMaanNeural",
+    "bytes": 13248
+  },
+  {
+    "lang": "yue",
+    "voiceId": "zh-HK-HiuGaaiNeural",
+    "mood": "happy",
+    "path": "/prototypes/assets/voice-samples/emotion/yue/zh-HK-HiuGaaiNeural-happy.mp3",
+    "engine": "edge",
+    "openAiVoice": "zh-HK-HiuGaaiNeural",
+    "bytes": 13968
+  },
+  {
+    "lang": "yue",
+    "voiceId": "zh-HK-HiuGaaiNeural",
+    "mood": "sad",
+    "path": "/prototypes/assets/voice-samples/emotion/yue/zh-HK-HiuGaaiNeural-sad.mp3",
+    "engine": "edge",
+    "openAiVoice": "zh-HK-HiuGaaiNeural",
+    "bytes": 30816
+  },
+  {
+    "lang": "yue",
+    "voiceId": "zh-HK-HiuGaaiNeural",
+    "mood": "surprised",
+    "path": "/prototypes/assets/voice-samples/emotion/yue/zh-HK-HiuGaaiNeural-surprised.mp3",
+    "engine": "edge",
+    "openAiVoice": "zh-HK-HiuGaaiNeural",
+    "bytes": 11232
+  },
+  {
+    "lang": "yue",
+    "voiceId": "zh-HK-HiuGaaiNeural",
+    "mood": "thinking",
+    "path": "/prototypes/assets/voice-samples/emotion/yue/zh-HK-HiuGaaiNeural-thinking.mp3",
+    "engine": "edge",
+    "openAiVoice": "zh-HK-HiuGaaiNeural",
+    "bytes": 15264
+  },
+  {
+    "lang": "yue",
+    "voiceId": "zh-HK-WanLungNeural",
+    "mood": "happy",
+    "path": "/prototypes/assets/voice-samples/emotion/yue/zh-HK-WanLungNeural-happy.mp3",
+    "engine": "edge",
+    "openAiVoice": "zh-HK-WanLungNeural",
+    "bytes": 12816
+  },
+  {
+    "lang": "yue",
+    "voiceId": "zh-HK-WanLungNeural",
+    "mood": "sad",
+    "path": "/prototypes/assets/voice-samples/emotion/yue/zh-HK-WanLungNeural-sad.mp3",
+    "engine": "edge",
+    "openAiVoice": "zh-HK-WanLungNeural",
+    "bytes": 26208
+  },
+  {
+    "lang": "yue",
+    "voiceId": "zh-HK-WanLungNeural",
+    "mood": "surprised",
+    "path": "/prototypes/assets/voice-samples/emotion/yue/zh-HK-WanLungNeural-surprised.mp3",
+    "engine": "edge",
+    "openAiVoice": "zh-HK-WanLungNeural",
+    "bytes": 11808
+  },
+  {
+    "lang": "yue",
+    "voiceId": "zh-HK-WanLungNeural",
+    "mood": "thinking",
+    "path": "/prototypes/assets/voice-samples/emotion/yue/zh-HK-WanLungNeural-thinking.mp3",
+    "engine": "edge",
+    "openAiVoice": "zh-HK-WanLungNeural",
+    "bytes": 12960
+  }
+]

@@ -38,9 +38,10 @@ describe("idle showcase wiring", () => {
     );
   });
 
-  it("streams full sentences as single utterances and keeps the last talking face", () => {
-    expect(html).toMatch(/singleUtterance:\s*true/);
-    expect(html).not.toMatch(/expressiveClauses:\s*true/);
+  it("uses expressive clause TTS and keeps the last talking face", () => {
+    expect(html).not.toMatch(/singleUtterance:\s*true/);
+    expect(html).not.toMatch(/settings-btn-voice/);
+    expect(html).toContain("settings-voice-note");
     expect(html).not.toMatch(
       /if \(!avatar\.currentAction\) \{\s*avatar\.setEmotion\("neutral"\)/,
     );
@@ -58,8 +59,9 @@ describe("idle showcase wiring", () => {
   it("keeps conversation captions on the top chrome layer", () => {
     expect(html).not.toMatch(/\.chat-shell\s*\{[^}]*z-index:\s*90/);
     expect(html).not.toMatch(/\.chat-shell\s*\{[^}]*isolation:\s*isolate/);
-    expect(html).toMatch(/\.chat-column \{[\s\S]*?z-index:\s*10050/);
-    expect(html).toMatch(/\.transcript \{[\s\S]*?z-index:\s*10050/);
+    expect(html).toMatch(/\.chat-shell \{[\s\S]*?z-index:\s*10050/);
+    expect(html).toMatch(/\.chat-column \{[\s\S]*?z-index:\s*1/);
+    expect(html).toMatch(/\.transcript \{[\s\S]*?z-index:\s*2/);
     expect(html).toMatch(
       /body\.conversation-ui \.transcript \.msg-row \{[\s\S]*?z-index:\s*10051/,
     );
@@ -76,18 +78,37 @@ describe("idle showcase wiring", () => {
     expect(html).toMatch(/const host = document\.querySelector\("\.stage"\) \|\| document\.body/);
     expect(grokCss).not.toMatch(/\.theme-grok-ani \.chat-shell\s*\{[^}]*z-index:\s*90/);
     expect(grokCss).not.toMatch(/\.theme-grok-ani \.chat-shell\s*\{[^}]*isolation:\s*isolate/);
-    expect(grokCss).toMatch(/\.theme-grok-ani \.chat-column,[\s\S]*?z-index:\s*10050/);
+    expect(grokCss).toMatch(/\.theme-grok-ani \.chat-shell \{[\s\S]*?z-index:\s*10050/);
+    expect(grokCss).toMatch(/\.theme-grok-ani \.transcript \{[\s\S]*?z-index:\s*2/);
     expect(grokCss).toMatch(/\.theme-grok-ani \.msg-row\s*\{[\s\S]*?z-index:\s*10051/);
     expect(grokCss).toMatch(/\.theme-grok-ani \.companion-toast \{[\s\S]*?z-index:\s*70/);
   });
 
   it("drives the chip mini emotion ball from mouth and mic volume", () => {
-    expect(html).toMatch(/syncMiniEmotionBall\(statusDot/);
+    expect(html).toContain("createMiniEmotionBall");
+    expect(html).toMatch(/createMiniEmotionBall\(statusDot/);
     expect(html).toMatch(
-      /const syncEmotionBall = \(\) => \{[\s\S]*syncMiniEmotionBall\(statusDot/,
+      /const syncEmotionBall = \(\) => \{[\s\S]*miniEmotionBall\.sync\(/,
+    );
+    expect(html).toMatch(
+      /onTalking: \(on\) => \{[\s\S]*emotionBallLevel = 0/,
     );
     expect(html).toMatch(
       /onMicLevel: \(\{ level, rms \} = \{\}\) => \{[\s\S]*emotionBallLevel = Math\.max/,
     );
+    expect(html).toMatch(
+      /onMouth: \(open, shape\) => \{[\s\S]*lastMouthBallLevel[\s\S]*emotionBall\.setLevel/,
+    );
+    expect(html).toMatch(/markReplyEmotionHold/);
+    expect(html).toMatch(/REPLY_EMOTION_HOLD_MS/);
+    expect(grokCss).toContain("companion-chip__dot-canvas");
+    expect(grokCss).toMatch(/\.companion-chip__dot:has\(canvas\) \{[\s\S]*transform:\s*none/);
+    expect(grokCss).toMatch(/\.companion-chip__dot-canvas \{[\s\S]*inset:\s*0/);
+    expect(grokCss).toMatch(/\.companion-chip__dot \{[\s\S]*?overflow:\s*hidden/);
+    expect(html).toContain('role="img"');
+    expect(html).toContain("resolveMiniEmotionBallState");
+    expect(html).toMatch(/onTalking: \(on\) => \{[\s\S]*syncCompanionStatusUi\(\)/);
+    expect(grokCss).not.toMatch(/animation:\s*miniBallGlow/);
+    expect(grokCss).not.toMatch(/animation:\s*miniBallIdle/);
   });
 });

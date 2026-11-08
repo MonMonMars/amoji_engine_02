@@ -1,6 +1,11 @@
 /**
  * 2D canvas fallback — more detailed feminine anime companion.
  */
+import {
+  buildModelFaceProfile,
+  NUANCE_PROCEDURAL_MODS,
+} from "./companionFaceEmotion.js";
+
 export const FALLBACK_AVATAR_SCHEMA = "amoji.fallbackAvatar.v1";
 
 function clamp(v, lo, hi) {
@@ -14,6 +19,8 @@ export function createFallbackAvatar(opts) {
   const canvas = opts.canvas;
   const ctx = canvas.getContext("2d");
   let emotion = "neutral";
+  let nuance = "none";
+  const faceProfile = buildModelFaceProfile({ avatarKind: "procedural" });
   let mouthOpen = 0;
   let talking = false;
   let raf = 0;
@@ -160,9 +167,19 @@ export function createFallbackAvatar(opts) {
     ctx.lineTo(42, -52 - browTilt * 12);
     ctx.stroke();
 
+    const nuanceMods =
+      NUANCE_PROCEDURAL_MODS[String(nuance || "none").toLowerCase()] ||
+      NUANCE_PROCEDURAL_MODS.none;
+    const blushBoost = Number(nuanceMods.blush) || 0;
+
     // blush
-    if (emotion === "happy" || emotion === "angry" || emotion === "surprised") {
-      ctx.fillStyle = "rgba(255,143,171,0.5)";
+    if (
+      emotion === "happy" ||
+      emotion === "angry" ||
+      emotion === "surprised" ||
+      blushBoost > 0.12
+    ) {
+      ctx.fillStyle = `rgba(255,143,171,${clamp(0.5 + blushBoost * 0.45, 0.15, 0.82)})`;
       ctx.beginPath();
       ctx.ellipse(-48, -5, 15, 9, 0, 0, Math.PI * 2);
       ctx.ellipse(48, -5, 15, 9, 0, 0, Math.PI * 2);
@@ -202,8 +219,24 @@ export function createFallbackAvatar(opts) {
   return {
     schema: FALLBACK_AVATAR_SCHEMA,
     setEmotion(next) {
-      emotion = String(next || "neutral");
+      emotion = String(next || "neutral").toLowerCase();
       return emotion;
+    },
+    applyExpressionProfile({ emotion: em = "neutral", nuance: n = "none" } = {}) {
+      emotion = String(em || "neutral").toLowerCase();
+      nuance = String(n || "none").toLowerCase();
+      return { emotion, nuance };
+    },
+    getFaceProfile() {
+      return { ...faceProfile, rigType: "canvas2d" };
+    },
+    getFaceReport() {
+      return {
+        rigType: "canvas2d",
+        faceProfile: { rigType: "canvas2d", usePresets: false },
+        emotion,
+        nuance,
+      };
     },
     setMouthOpen(v) {
       mouthOpen = clamp(Number(v) || 0, 0, 1);

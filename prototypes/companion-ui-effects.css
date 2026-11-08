@@ -1,0 +1,335 @@
+/**
+ * Companion UI — button special effects + page / sheet transitions.
+ * Requires body.ui-fx-enabled (set by companionUiEffects.js).
+ */
+
+:root {
+  --ui-fx-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --ui-fx-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ui-fx-glow: rgba(127, 212, 207, 0.45);
+  --ui-fx-glow-2: rgba(139, 124, 248, 0.42);
+}
+
+/* —— Button base FX —— */
+body.ui-fx-enabled .ui-fx-btn {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    transform 0.18s var(--ui-fx-ease),
+    box-shadow 0.22s ease,
+    border-color 0.18s ease,
+    background 0.18s ease,
+    filter 0.18s ease;
+}
+
+body.ui-fx-enabled .ui-fx-btn::after {
+  content: "";
+  position: absolute;
+  inset: -40%;
+  background: linear-gradient(
+    115deg,
+    transparent 38%,
+    rgba(255, 255, 255, 0.16) 50%,
+    transparent 62%
+  );
+  transform: translateX(-120%) rotate(12deg);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+body.ui-fx-enabled .ui-fx-btn:hover::after {
+  opacity: 1;
+  animation: uiFxShimmer 0.85s var(--ui-fx-ease-out);
+}
+
+body.ui-fx-enabled .ui-fx-btn:hover:not(:disabled) {
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.06) inset,
+    0 6px 20px rgba(0, 0, 0, 0.22),
+    0 0 18px var(--ui-fx-glow);
+}
+
+body.ui-fx-enabled .ui-fx-btn.ui-fx-pressed:not(:disabled) {
+  transform: scale(0.94);
+  filter: brightness(1.06);
+}
+
+body.ui-fx-enabled .ui-fx-btn.active,
+body.ui-fx-enabled .ui-fx-btn.is-active,
+body.ui-fx-enabled .ui-fx-btn.on {
+  animation: uiFxActivePulse 2.4s ease-in-out infinite;
+}
+
+body.ui-fx-enabled .ui-fx-ripple {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 0.42) 0%,
+    rgba(127, 212, 207, 0.28) 35%,
+    transparent 70%
+  );
+  transform: scale(0);
+  animation: uiFxRipple 0.62s var(--ui-fx-ease-out) forwards;
+  z-index: 3;
+}
+
+/* Primary / send buttons — stronger glow */
+body.ui-fx-enabled .send.ui-fx-btn:hover:not(:disabled),
+body.ui-fx-enabled .topbar-btn--primary.ui-fx-btn:hover:not(:disabled),
+body.ui-fx-enabled .btn.primary.ui-fx-btn:hover:not(:disabled),
+body.ui-fx-enabled .btn.send.ui-fx-btn:hover:not(:disabled),
+body.ui-fx-enabled .start-btn.ui-fx-btn:hover:not(:disabled),
+body.ui-fx-enabled .cta-btn.ui-fx-btn:hover:not(:disabled) {
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.12) inset,
+    0 8px 24px rgba(0, 0, 0, 0.28),
+    0 0 22px rgba(127, 212, 207, 0.55),
+    0 0 36px rgba(94, 234, 212, 0.28);
+}
+
+/* Chip / preset selection sparkle */
+body.ui-fx-enabled .scene-preset.is-active.ui-fx-btn,
+body.ui-fx-enabled .llm-chip.active.ui-fx-btn,
+body.ui-fx-enabled .starter-chip.ui-fx-btn:active,
+body.ui-fx-enabled .mode-chip.active.ui-fx-btn,
+body.ui-fx-enabled .tabbar button.active.ui-fx-btn {
+  box-shadow:
+    0 0 0 1px rgba(127, 212, 207, 0.35) inset,
+    0 0 16px rgba(127, 212, 207, 0.35);
+}
+
+/* Treat FAB — orbit glow */
+body.ui-fx-enabled .treat-fab.ui-fx-btn {
+  animation: uiFxFabFloat 3.2s ease-in-out infinite;
+}
+
+body.ui-fx-enabled .treat-fab.ui-fx-btn.is-hungry {
+  animation: uiFxFabHungry 1.1s ease-in-out infinite;
+}
+
+/* Companion cards */
+body.ui-fx-enabled .companion-card.ui-fx-btn:hover {
+  transform: translateY(-3px) scale(1.01);
+}
+
+body.ui-fx-enabled .companion-card.is-selected.ui-fx-btn {
+  box-shadow:
+    0 0 0 2px rgba(127, 212, 207, 0.55),
+    0 12px 32px rgba(0, 0, 0, 0.35),
+    0 0 24px rgba(127, 212, 207, 0.32);
+}
+
+/* —— Overlay / sheet page transitions —— */
+body.ui-fx-enabled .settings-backdrop,
+body.ui-fx-enabled .scene-sheet-backdrop,
+body.ui-fx-enabled .setup-backdrop,
+body.ui-fx-enabled .companion-picker-backdrop,
+body.ui-fx-enabled .treat-sheet-backdrop {
+  transition:
+    opacity 0.36s ease,
+    backdrop-filter 0.36s ease,
+    -webkit-backdrop-filter 0.36s ease;
+}
+
+body.ui-fx-enabled .settings-backdrop.is-open,
+body.ui-fx-enabled .scene-sheet-backdrop.is-open,
+body.ui-fx-enabled .setup-backdrop.is-open,
+body.ui-fx-enabled .treat-sheet-backdrop.is-open {
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+body.ui-fx-enabled .companion-picker.is-open .companion-picker-backdrop {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+body.ui-fx-enabled .settings,
+body.ui-fx-enabled .scene-sheet,
+body.ui-fx-enabled .setup,
+body.ui-fx-enabled .companion-picker-sheet,
+body.ui-fx-enabled .treat-sheet {
+  transition:
+    transform 0.42s var(--ui-fx-ease),
+    opacity 0.32s ease,
+    filter 0.32s ease;
+}
+
+body.ui-fx-enabled .settings:not(.open),
+body.ui-fx-enabled .scene-sheet:not(.open),
+body.ui-fx-enabled .setup:not(.open),
+body.ui-fx-enabled .treat-sheet:not(.is-open) {
+  opacity: 0.88;
+  filter: blur(1px);
+}
+
+body.ui-fx-enabled .settings.open,
+body.ui-fx-enabled .scene-sheet.open,
+body.ui-fx-enabled .setup.open,
+body.ui-fx-enabled .treat-sheet.is-open,
+body.ui-fx-enabled .companion-picker.is-open .companion-picker-sheet {
+  opacity: 1;
+  filter: none;
+}
+
+body.ui-fx-enabled .settings.ui-overlay-entering,
+body.ui-fx-enabled .scene-sheet.ui-overlay-entering,
+body.ui-fx-enabled .setup.ui-overlay-entering,
+body.ui-fx-enabled .treat-sheet.ui-overlay-entering {
+  opacity: 0.6;
+  filter: blur(2px);
+}
+
+body.ui-fx-enabled .settings.ui-overlay-closing,
+body.ui-fx-enabled .scene-sheet.ui-overlay-closing,
+body.ui-fx-enabled .setup.ui-overlay-closing,
+body.ui-fx-enabled .treat-sheet.ui-overlay-closing {
+  opacity: 0.72;
+  filter: blur(1.5px);
+}
+
+/* Stagger sheet children on open */
+body.ui-fx-enabled .settings.open > *,
+body.ui-fx-enabled .scene-sheet.open > *,
+body.ui-fx-enabled .setup.open > *,
+body.ui-fx-enabled .treat-sheet.is-open > *,
+body.ui-fx-enabled .companion-picker.is-open .companion-picker-sheet > * {
+  animation: uiFxStaggerIn 0.48s var(--ui-fx-ease) backwards;
+}
+
+body.ui-fx-enabled .settings.open > *:nth-child(1),
+body.ui-fx-enabled .scene-sheet.open > *:nth-child(1),
+body.ui-fx-enabled .setup.open > *:nth-child(1) { animation-delay: 0.03s; }
+body.ui-fx-enabled .settings.open > *:nth-child(2),
+body.ui-fx-enabled .scene-sheet.open > *:nth-child(2),
+body.ui-fx-enabled .setup.open > *:nth-child(2) { animation-delay: 0.07s; }
+body.ui-fx-enabled .settings.open > *:nth-child(3),
+body.ui-fx-enabled .scene-sheet.open > *:nth-child(3),
+body.ui-fx-enabled .setup.open > *:nth-child(3) { animation-delay: 0.11s; }
+body.ui-fx-enabled .settings.open > *:nth-child(4),
+body.ui-fx-enabled .scene-sheet.open > *:nth-child(4) { animation-delay: 0.15s; }
+body.ui-fx-enabled .settings.open > *:nth-child(n + 5),
+body.ui-fx-enabled .scene-sheet.open > *:nth-child(n + 5),
+body.ui-fx-enabled .setup.open > *:nth-child(n + 5) { animation-delay: 0.19s; }
+
+/* Start picker fade */
+body.ui-fx-enabled .companion-picker--start.hide {
+  transition: opacity 0.55s var(--ui-fx-ease), transform 0.55s var(--ui-fx-ease);
+  transform: scale(0.98);
+}
+
+/* Chat panel slide */
+body.ui-fx-enabled.conversation-ui .chat-column {
+  transition:
+    opacity 0.36s var(--ui-fx-ease),
+    transform 0.36s var(--ui-fx-ease),
+    max-height 0.36s var(--ui-fx-ease);
+}
+
+body.ui-fx-enabled.conversation-ui.chat-panel-hidden .chat-column {
+  transform: translateY(14px);
+}
+
+/* Secretary lite tab panels */
+body.ui-fx-enabled .panel {
+  transition:
+    opacity 0.32s var(--ui-fx-ease),
+    transform 0.32s var(--ui-fx-ease);
+}
+
+body.ui-fx-enabled .panel.ui-tab-entering {
+  opacity: 0;
+  transform: translateY(16px) scale(0.985);
+}
+
+body.ui-fx-enabled .panel.ui-tab-active {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+body.ui-fx-enabled .panel.ui-tab-leaving {
+  opacity: 0;
+  transform: translateY(-10px) scale(0.99);
+  pointer-events: none;
+}
+
+body.ui-fx-enabled .tabbar button.active {
+  transform: translateY(-2px);
+}
+
+/* Toast pop */
+body.ui-fx-enabled .companion-toast.show {
+  animation: uiFxToastIn 0.42s var(--ui-fx-ease);
+}
+
+@keyframes uiFxRipple {
+  to {
+    transform: scale(1);
+    opacity: 0;
+  }
+}
+
+@keyframes uiFxShimmer {
+  from { transform: translateX(-120%) rotate(12deg); }
+  to { transform: translateX(120%) rotate(12deg); }
+}
+
+@keyframes uiFxActivePulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(127, 212, 207, 0.22); }
+  50% { box-shadow: 0 0 0 6px rgba(127, 212, 207, 0); }
+}
+
+@keyframes uiFxFabFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+@keyframes uiFxFabHungry {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.4); }
+  50% { transform: scale(1.04); box-shadow: 0 0 0 8px rgba(251, 191, 36, 0); }
+}
+
+@keyframes uiFxStaggerIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes uiFxToastIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 12px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body.ui-fx-enabled .ui-fx-btn::after,
+  body.ui-fx-enabled .treat-fab.ui-fx-btn,
+  body.ui-fx-enabled .ui-fx-btn.active,
+  body.ui-fx-enabled .ui-fx-btn.is-active,
+  body.ui-fx-enabled .ui-fx-btn.on {
+    animation: none;
+  }
+
+  body.ui-fx-enabled .ui-fx-btn,
+  body.ui-fx-enabled .settings,
+  body.ui-fx-enabled .scene-sheet,
+  body.ui-fx-enabled .setup,
+  body.ui-fx-enabled .panel {
+    transition: none;
+  }
+}
