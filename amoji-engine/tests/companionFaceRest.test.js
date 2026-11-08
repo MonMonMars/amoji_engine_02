@@ -11,7 +11,12 @@ import {
   inspectExpressionHazard,
   inspectVrmFaceHazards,
   mouthVisemeWeight,
+  sampleTalkMouthPulse,
   TALK_HAPPY_MAX,
+  TALK_JAW_OPEN_RAD,
+  TALK_SURPRISED_MAX,
+  talkJawRotationX,
+  talkingMouthOpen,
   zeroAllExpressions,
   zeroHazardMorphInfluences,
   zeroLookLidExpressions,
@@ -50,6 +55,18 @@ describe("companionFaceRest", () => {
     expect(mouthVisemeWeight(true, 0.6)).toBeCloseTo(0.6);
   });
 
+  it("pulses the mouth while talking and keeps it shut at rest", () => {
+    expect(sampleTalkMouthPulse(0, false)).toBe(0);
+    expect(sampleTalkMouthPulse(120, true)).toBeGreaterThan(0.2);
+    expect(sampleTalkMouthPulse(120, true)).toBeLessThanOrEqual(1);
+    expect(talkingMouthOpen(false, 0.9, 200)).toBe(0);
+    expect(talkingMouthOpen(true, 0, 200)).toBeGreaterThan(0.15);
+    expect(talkingMouthOpen(true, 0.95, 200)).toBeGreaterThan(0.7);
+    expect(talkJawRotationX(0)).toBe(0);
+    expect(talkJawRotationX(1)).toBeCloseTo(TALK_JAW_OPEN_RAD);
+    expect(talkJawRotationX(0.5)).toBeGreaterThan(0.1);
+  });
+
   it("drops Happy and Relaxed so idle lids stay open and the jaw stays shut", () => {
     const clamped = clampRestFaceBlend(
       { Relaxed: 0.6, Happy: 0.98, Sad: 0.2 },
@@ -66,7 +83,7 @@ describe("companionFaceRest", () => {
       talking: true,
     });
     expect(clamped.Happy).toBeLessThanOrEqual(TALK_HAPPY_MAX);
-    expect(clamped.Surprised).toBeLessThanOrEqual(0.28);
+    expect(clamped.Surprised).toBeLessThanOrEqual(TALK_SURPRISED_MAX);
   });
 
   it("skips rest presets that bake an open jaw or closed lids", () => {
@@ -96,6 +113,21 @@ describe("companionFaceRest", () => {
       hazards,
     });
     expect(clamped.Happy).toBeUndefined();
+  });
+
+  it("skips any talking blend that would override visemes", () => {
+    const hazards = {
+      opensMouth: new Set(["surprised", "angry"]),
+      closesEyes: new Set(),
+      binary: new Set(),
+    };
+    const clamped = clampRestFaceBlend(
+      { Surprised: 0.4, Angry: 0.5, Sad: 0.2 },
+      { talking: true, hazards },
+    );
+    expect(clamped.Surprised).toBeUndefined();
+    expect(clamped.Angry).toBeUndefined();
+    expect(clamped.Sad).toBeCloseTo(0.2);
   });
 
   it("reopens blink after a hitch that skips the old 80–160ms window", () => {
