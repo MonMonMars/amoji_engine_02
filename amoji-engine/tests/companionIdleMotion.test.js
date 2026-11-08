@@ -26,17 +26,18 @@ describe("companionIdleMotion", () => {
     expect(Object.keys(first.overlay).length).toBeGreaterThan(0);
   });
 
-  it("adds idle expression life", () => {
+  it("adds idle expression life without opening the jaw or closing eyes", () => {
     const blend = sampleIdleExpressionBlend(1.2, "neutral");
-    expect(blend.Relaxed).toBeGreaterThan(0.15);
-    expect(blend.Happy).toBeGreaterThan(0.05);
+    expect(blend.Happy).toBeGreaterThan(0.03);
+    expect(blend.Happy).toBeLessThan(0.1);
+    expect(blend.Relaxed ?? 0).toBe(0);
   });
 
-  it("ramps Relaxed in so first frame keeps eyes open", () => {
+  it("keeps Relaxed off so eyelids stay open", () => {
     const atStart = sampleIdleExpressionBlend(0, "neutral");
     const settled = sampleIdleExpressionBlend(2, "neutral");
-    expect(atStart.Relaxed).toBe(0);
-    expect(settled.Relaxed).toBeGreaterThan(0.15);
+    expect(atStart.Relaxed ?? 0).toBe(0);
+    expect(settled.Relaxed ?? 0).toBe(0);
   });
 
   it("samples simple boot idle with relaxed forearms", () => {

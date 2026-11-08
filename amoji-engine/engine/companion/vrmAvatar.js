@@ -32,6 +32,7 @@ import { createVrmMotionPlayer } from "./companionVrmMotionPlayer.js";
 import { sampleIdleExpressionBlend } from "./companionIdleMotion.js";
 import { configureVrmSpringStability } from "./vrmSpringStability.js";
 import { applyVrmOutfitTint } from "./companionOutfitApply.js";
+import { clampRestFaceBlend, mouthVisemeWeight } from "./companionFaceRest.js";
 
 export const VRM_AVATAR_SCHEMA = "amoji.vrmAvatar.v1";
 
@@ -386,7 +387,8 @@ export async function createVrmAvatar(opts) {
 
   const setExpressionTargetFromBlend = (blend) => {
     clearExpressionTargets();
-    for (const [key, weight] of Object.entries(blend || {})) {
+    const safe = clampRestFaceBlend(blend, { talking });
+    for (const [key, weight] of Object.entries(safe || {})) {
       const preset = VRM_BLEND_PRESET_MAP[key];
       if (preset && expr?.getExpression?.(preset)) {
         expressionTarget[preset] = Math.max(0, Math.min(1, Number(weight) || 0));
@@ -629,9 +631,24 @@ export async function createVrmAvatar(opts) {
     return mouthPresets[0] || null;
   };
 
+  const closeJawBone = () => {
+    const jaw = vrm.humanoid?.getNormalizedBoneNode?.("jaw");
+    if (!jaw?.rotation) return;
+    jaw.rotation.x = 0;
+    jaw.rotation.y = 0;
+    jaw.rotation.z = 0;
+  };
+
   const applyMouth = (v) => {
-    if (!expr || !mouthPresets.length) return;
+    if (!expr || !mouthPresets.length) {
+      if (v <= 0) closeJawBone();
+      return;
+    }
     for (const preset of mouthPresets) expr.setValue(preset, 0);
+    if (v <= 0) {
+      closeJawBone();
+      return;
+    }
     const preset = mouthShape ? shapeToPreset(mouthShape) : null;
     if (preset) {
       expr.setValue(preset, v);
@@ -658,7 +675,14 @@ export async function createVrmAvatar(opts) {
     talking = Boolean(on);
     bodyMotion.setTalking(talking);
     cameraDirector.setTalking(talking);
-    if (!talking) cameraDirector.resetDialogue();
+    if (!talking) {
+      cameraDirector.resetDialogue();
+      mouthTarget = 0;
+      mouthOpen = 0;
+      mouthShape = null;
+      applyMouth(0);
+      applyEmotionExpressions(emotion);
+    }
     return talking;
   };
 
@@ -746,9 +770,9 @@ export async function createVrmAvatar(opts) {
     }
 
     if (!talking && !activeMotion && !bodyMotion.thinking) {
-      const idleBlend = sampleIdleExpressionBlend(
-        (now - t0) * 0.001,
-        emotion,
+      const idleBlend = clampRestFaceBlend(
+        sampleIdleExpressionBlend((now - t0) * 0.001, emotion),
+        { talking: false },
       );
       for (const [key, weight] of Object.entries(idleBlend)) {
         const preset = VRM_BLEND_PRESET_MAP[key];
@@ -761,9 +785,10 @@ export async function createVrmAvatar(opts) {
       }
     }
 
-    mouthOpen += (mouthTarget - mouthOpen) * Math.min(1, dt * (talking ? 36 : 18));
+    mouthOpen += (mouthTarget - mouthOpen) * Math.min(1, dt * (talking ? 36 : 22));
+    if (!talking && mouthOpen < 0.04) mouthOpen = 0;
     tickExpressionBlend(dt);
-    applyMouth(mouthOpen);
+    applyMouth(mouthVisemeWeight(talking, mouthOpen));
 
     // Auto blink
     if (expr?.getExpression?.(VRMExpressionPresetName.Blink)) {
