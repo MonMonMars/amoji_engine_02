@@ -8,9 +8,9 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji · Companion</title>
     <script>
-      window.__amojiBuild = "2026-09-17-v139-loading-words";
+      window.__amojiBuild = "2026-09-17-v140-camera-rotate";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-17-v139-loading-words"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-17-v140-camera-rotate"></script>
     <link
       rel="prefetch"
       href="/prototypes/assets/companion-char-nova.png"
@@ -182,10 +182,13 @@
 
       .chat-shell {
         position: absolute;
-        inset: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        top: auto;
         display: flex;
         flex-direction: column;
-        z-index: 6;
+        z-index: auto;
         pointer-events: none;
       }
       .chat-column {
@@ -206,9 +209,10 @@
       .composer-wrap {
         position: relative;
         flex-shrink: 0;
-        z-index: 7;
+        z-index: 12;
         padding: 0 1rem max(1rem, env(safe-area-inset-bottom));
         pointer-events: auto;
+        touch-action: manipulation;
       }
       .composer {
         display: flex;
@@ -230,6 +234,7 @@
         font: inherit;
         font-size: 0.95rem;
         outline: none;
+        touch-action: manipulation;
       }
       .composer .send {
         width: 2.4rem;
@@ -290,7 +295,7 @@
       media="print"
       onload="this.media='all'"
     />
-    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-17-v139-loading-words" />
+    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-17-v140-camera-rotate" />
     <noscript>
       <link
         href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap"
@@ -327,6 +332,7 @@
         font-family: var(--font-body);
         color: var(--ink);
         background: #070a10;
+        touch-action: none;
       }
 
       .stage {
@@ -334,6 +340,7 @@
         width: 100%;
         height: 100%;
         isolation: isolate;
+        touch-action: none;
       }
 
       .atmosphere {
@@ -395,6 +402,22 @@
         user-select: none;
         -webkit-user-select: none;
         -webkit-touch-callout: none;
+      }
+
+      .orbit-hit {
+        position: absolute;
+        inset: 0;
+        z-index: 8;
+        pointer-events: auto;
+        touch-action: none;
+        user-select: none;
+        -webkit-user-select: none;
+        -webkit-touch-callout: none;
+        -webkit-user-drag: none;
+        -webkit-tap-highlight-color: transparent;
+        cursor: grab;
+        /* iOS WKWebView ignores hits on fully transparent nodes. */
+        background: rgba(0, 0, 0, 0.01);
       }
 
       .orbit-hint {
@@ -628,17 +651,21 @@
 
       .chat-shell {
         position: absolute;
-        inset: 0;
-        z-index: 6;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        top: auto;
+        z-index: auto;
         display: flex;
         flex-direction: column;
         justify-content: flex-end;
         pointer-events: none;
+        max-height: min(48vh, 420px);
         background: linear-gradient(
           180deg,
           transparent 0%,
-          transparent 52%,
-          rgba(5, 7, 12, 0.22) 68%,
+          transparent 18%,
+          rgba(5, 7, 12, 0.22) 48%,
           rgba(5, 7, 12, 0.82) 88%,
           rgba(5, 7, 12, 0.94) 100%
         );
@@ -680,11 +707,13 @@
         pointer-events: none;
       }
 
-      /* Chat bubbles stay tappable; empty transcript padding must not steal orbit drags. */
       body.conversation-ui .transcript {
         pointer-events: none;
+        touch-action: pan-y;
       }
       body.conversation-ui .transcript .msg-row {
+        position: relative;
+        z-index: 11;
         pointer-events: auto;
       }
 
@@ -908,7 +937,8 @@
         pointer-events: auto;
         padding: 0 1rem max(0.75rem, env(safe-area-inset-bottom));
         background: linear-gradient(180deg, transparent, rgba(5, 7, 12, 0.94) 35%);
-        z-index: 7;
+        z-index: 12;
+        touch-action: manipulation;
       }
 
       /* Mic mode — tall caption strip: ~5 lines, fade up / clear down */
@@ -1564,7 +1594,7 @@
         border-color: transparent !important;
         box-shadow: none !important;
         overflow: visible;
-        z-index: 10;
+        z-index: 13;
       }
 
       .stage.mic-mode #btn-mic .mic-btn__aura,
@@ -1725,7 +1755,7 @@
       }
 
       body.conversation-ui .topbar {
-        z-index: 9;
+        z-index: 12;
         pointer-events: none;
       }
 
@@ -2943,19 +2973,19 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-17-v139-loading-words",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-17-v140-camera-rotate",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-17-v139-loading-words",
-          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-17-v139-loading-words"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-17-v140-camera-rotate",
+          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-17-v140-camera-rotate"
         }
       }
     </script>
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v139-loading-words"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v140-camera-rotate"
     />
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-17-v139-loading-words"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v139-loading-words"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-17-v140-camera-rotate"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v140-camera-rotate"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;
@@ -3179,6 +3209,12 @@
     <div class="stage">
       <div class="atmosphere" aria-hidden="true"></div>
       <canvas id="avatar-canvas" aria-label="Amoji companion — drag to orbit"></canvas>
+      <div
+        class="orbit-hit"
+        id="orbit-hit"
+        aria-hidden="true"
+        title="Drag to rotate camera"
+      ></div>
       <div class="orbit-hint" id="orbit-hint">拖曳旋轉 · 雙擊重置視角 · Double-tap to reset view</div>
       <header class="topbar">
         <button
@@ -3917,6 +3953,7 @@
         stage?.classList.add("mic-mode");
       }
       let canvas = document.getElementById("avatar-canvas");
+      const orbitHit = document.getElementById("orbit-hit") || canvas;
       /** @type {ReturnType<typeof createCompanionStartPicker> | null} */
       let startPicker = null;
       const dismissLoading = () => {
@@ -4408,6 +4445,7 @@
         void prefetchBasicMotionPack({ coupled: true });
         avatarLoadPromise = createCompanionAvatar({
           canvas,
+          controlsElement: orbitHit,
           modelUrl: modelUrlForLoad || undefined,
           prefer: preferForLoad,
           onCharacterTap: () => handleCharacterTap?.(),
@@ -4663,7 +4701,8 @@
           : "拖曳旋轉 · 雙擊重置視角";
       }
       let lastCanvasTapAt = 0;
-      canvas.addEventListener("pointerup", () => {
+      const orbitSurface = orbitHit || canvas;
+      orbitSurface.addEventListener("pointerup", () => {
         const now = Date.now();
         if (now - lastCanvasTapAt < 360) {
           avatar.resetCameraView?.();
@@ -4674,7 +4713,7 @@
         }
         lastCanvasTapAt = now;
       });
-      canvas.addEventListener(
+      orbitSurface.addEventListener(
         "pointerdown",
         () => orbitHint?.classList.add("hide"),
         { once: true },
@@ -5395,6 +5434,7 @@
         try {
           const result = await switchCompanionCharacter({
             canvas,
+            controlsElement: orbitHit,
             characterId: nextId,
             langCode,
             currentAvatar: avatarKind !== "loading" ? avatar : null,
