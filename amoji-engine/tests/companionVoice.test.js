@@ -1,11 +1,16 @@
 import { describe, expect, it } from "vitest";
 import {
+  audioPlaybackProgress,
   charToViseme,
   configureCompanionAudioElement,
+  estimateLipSyncMsPerChar,
   femaleVoiceLabel,
   formatMicError,
+  lipSyncCharWeight,
   pickFemaleVoice,
+  readAnalyserMouthLevel,
   unlockAudioSync,
+  visemeAtAudioProgress,
 } from "../engine/companion/companionVoice.js";
 
 describe("companionVoice", () => {
@@ -50,5 +55,46 @@ describe("companionVoice", () => {
 
   it("unlockAudioSync is safe without window", () => {
     expect(unlockAudioSync()).toBe(false);
+  });
+
+  it("slows CJK lip-sync to spoken Cantonese pace", () => {
+    expect(estimateLipSyncMsPerChar("你好呀，今日開心嗎？")).toBeGreaterThan(120);
+    expect(estimateLipSyncMsPerChar("hello there friend")).toBeLessThan(80);
+  });
+
+  it("scales lip-sync to real audio duration", () => {
+    const ms = estimateLipSyncMsPerChar("你好呀", 600);
+    expect(ms).toBeCloseTo(200, 0);
+  });
+
+  it("readAnalyserMouthLevel is 0 without an analyser", () => {
+    expect(readAnalyserMouthLevel(null)).toBe(0);
+  });
+
+  it("weights CJK beats longer than punctuation", () => {
+    expect(lipSyncCharWeight("你")).toBeGreaterThan(lipSyncCharWeight("！"));
+    expect(lipSyncCharWeight("a")).toBeGreaterThan(lipSyncCharWeight(" "));
+  });
+
+  it("maps mouth visemes to audio progress instead of a char timer", () => {
+    const start = visemeAtAudioProgress("你好呀", 0.05);
+    const mid = visemeAtAudioProgress("你好呀", 0.5);
+    const end = visemeAtAudioProgress("你好呀", 1);
+    expect(start.index).toBe(0);
+    expect(start.char).toBe("你");
+    expect(mid.index).toBe(1);
+    expect(end.open).toBeLessThan(0.1);
+    expect(end.index).toBe(3);
+  });
+
+  it("reads playback progress from audio.currentTime", () => {
+    expect(audioPlaybackProgress({ currentTime: 0.4, duration: 2 }, 0, 0)).toBeCloseTo(
+      0.2,
+      5,
+    );
+    expect(audioPlaybackProgress({ currentTime: 0, duration: NaN }, 250, 1000)).toBeCloseTo(
+      0.25,
+      5,
+    );
   });
 });

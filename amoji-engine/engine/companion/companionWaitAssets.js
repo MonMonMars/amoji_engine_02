@@ -6,6 +6,7 @@ import {
   IDLE_SHOWCASE_POOL,
   SHOWCASE_SEQUENCE_POOL,
 } from "./companionActionChoreography.js";
+import { BOOT_IDLE_BODY_MOTION_IDS } from "./companionIdleMotionPreload.js";
 import { buildVrmExpressionBlend } from "./companionContentMotion.js";
 import {
   BUNDLED_MOTION_IDS,
@@ -64,7 +65,7 @@ export const WAIT_POSES_BY_PHASE = Object.freeze({
     "stretch",
     "nod",
   ],
-  idle: IDLE_SHOWCASE_POOL,
+  idle: BOOT_IDLE_BODY_MOTION_IDS,
   ready: ["wave", "celebrate", "nod", "cheer", "dab", "clap"],
 });
 

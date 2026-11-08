@@ -70,11 +70,30 @@ export function createCompanionWaitAct(opts = {}) {
     avatarRef?.setEmotion?.(emotion);
     avatarRef?.applyExpressionProfile?.(expression);
 
-    if (kind === "idle" || kind === "avatar-load") {
-      // Procedural sway only while loading / waiting — no VRMA arm poses at boot.
+    if (kind === "avatar-load") {
+      // Play preloaded procedural gestures as soon as the live model exists.
       avatarRef?.setThinking?.(false);
-      avatarRef?.stopAction?.();
-      opts.onPose?.("idle-procedural", phase);
+      const pose = pickWaitPose("avatar-load", poseTick);
+      lastPoseId = pose;
+      avatarRef?.playAction?.(pose, {
+        emotion,
+        loop: false,
+        single: true,
+      });
+      opts.onPose?.(pose, phase);
+      return;
+    }
+
+    if (kind === "idle") {
+      const pose = pickWaitPose("idle", poseTick);
+      lastPoseId = pose;
+      avatarRef?.setThinking?.(false);
+      avatarRef?.playAction?.(pose, {
+        emotion,
+        loop: false,
+        single: true,
+      });
+      opts.onPose?.(pose, phase);
       return;
     }
 
@@ -110,7 +129,7 @@ export function createCompanionWaitAct(opts = {}) {
     clearInterval(poseTimer);
     const interval =
       kind === "idle" || kind === "avatar-load"
-        ? Math.max(3600, Math.round(poseIntervalMs * 0.58))
+        ? Math.max(1600, Math.round(poseIntervalMs * 0.48))
         : kind === "thinking"
           ? Math.max(poseIntervalMs, 4200)
           : poseIntervalMs;
@@ -251,12 +270,13 @@ export function createCompanionWaitAct(opts = {}) {
     },
     stop() {
       if (!active) return;
+      const stoppingKind = kind;
       active = false;
       stopPoseRotation();
       stopWaitVoice();
       avatarRef?.setThinking?.(false);
       avatarRef?.stopAction?.();
-      if (kind !== "idle") opts.progress?.hide?.();
+      if (stoppingKind !== "idle") opts.progress?.hide?.();
       kind = "";
       phase = "learning";
       progress = 0;

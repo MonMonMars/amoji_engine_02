@@ -72,6 +72,19 @@ describe("companionCameraDirector", () => {
     const state = director.update(0.1);
     expect(state.autoActive).toBe(false);
   });
+
+  it("keeps the user orbit angle after drag ends until reset", () => {
+    const director = createCompanionCameraDirector();
+    director.setUserOrbiting(true);
+    director.setUserOrbiting(false);
+    const held = director.update(0.1);
+    expect(held.userFramingHeld).toBe(true);
+    expect(held.autoActive).toBe(false);
+    director.holdUserFraming(false);
+    const reset = director.update(0.1);
+    expect(reset.userFramingHeld).toBe(false);
+    expect(reset.autoActive).toBe(true);
+  });
 });
 
 describe("companionCameraApply", () => {

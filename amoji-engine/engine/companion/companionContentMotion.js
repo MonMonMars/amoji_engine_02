@@ -85,18 +85,18 @@ export function inferOneShotGesture(text, emotion, nuance) {
  */
 export function inferSpeechEnergy(text, emotion, nuance) {
   const raw = String(text || "");
-  let energy = 0.55;
-  if (emotion === "happy" || emotion === "surprised") energy += 0.22;
+  let energy = 0.72;
+  if (emotion === "happy" || emotion === "surprised") energy += 0.18;
   if (emotion === "angry") energy += 0.14;
   if (emotion === "sad" || emotion === "thinking") energy -= 0.14;
-  if (nuance === "excited") energy += 0.24;
+  if (nuance === "excited") energy += 0.2;
   if (nuance === "love") energy += 0.1;
   if (nuance === "shy" || nuance === "stress") energy -= 0.12;
   if (/!{1,}|！{1,}/.test(raw)) energy += 0.12;
   if (/[?？]/.test(raw)) energy += 0.06;
   if (/[呀啊喇喎喔呢咩~～]/.test(raw)) energy += 0.08;
   if (raw.length > 80) energy += 0.04;
-  return Math.max(0.2, Math.min(1, energy));
+  return Math.max(0.28, Math.min(1, energy));
 }
 
 /**
@@ -114,21 +114,21 @@ export function buildVrmExpressionBlend(emotion, nuance) {
 
   switch (e) {
     case "happy":
-      blend.Happy = 0.82;
-      blend.Relaxed = 0.22;
+      blend.Happy = 0.96;
+      blend.Relaxed = 0.18;
       break;
     case "thinking":
-      blend.Relaxed = 0.48;
+      blend.Relaxed = 0.42;
       break;
     case "sad":
-      blend.Sad = 0.78;
-      blend.Relaxed = 0.12;
+      blend.Sad = 0.92;
+      blend.Relaxed = 0.1;
       break;
     case "surprised":
-      blend.Surprised = 0.88;
+      blend.Surprised = 0.98;
       break;
     case "angry":
-      blend.Angry = 0.78;
+      blend.Angry = 0.94;
       break;
     default:
       break;
@@ -147,8 +147,8 @@ export function buildVrmExpressionBlend(emotion, nuance) {
       blend.Relaxed = Math.max(blend.Relaxed ?? 0.4, 0.52);
       break;
     case "excited":
-      blend.Happy = Math.max(blend.Happy ?? 0.75, 0.88);
-      blend.Surprised = Math.max(blend.Surprised ?? 0, 0.18);
+      blend.Happy = Math.max(blend.Happy ?? 0.75, 0.98);
+      blend.Surprised = Math.max(blend.Surprised ?? 0, 0.42);
       break;
     case "stress":
       blend.Sad = Math.max(blend.Sad ?? 0, 0.22);

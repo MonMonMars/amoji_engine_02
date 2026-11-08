@@ -23,16 +23,16 @@ export function sampleSimpleBootIdleMotion(elapsedSec) {
   const weight = Math.sin(t * 0.34 + 1.1);
 
   return {
-    headX: breath * 0.034 * settle,
-    headZ: (sway * 0.042 + weight * 0.018) * settle,
-    leanY: (sway * 0.05 + weight * 0.028) * settle,
-    spineX: (0.014 + breath * 0.028) * settle,
-    chestX: (-0.006 + breath * 0.018) * settle,
-    hipZ: weight * 0.034 * settle,
-    armLiftL: (0.068 + Math.sin(t * 0.55 + 0.3) * 0.028) * settle,
-    armLiftR: (0.068 + Math.sin(t * 0.5 + 1.1) * 0.028) * settle,
-    forearmL: (0.17 + Math.max(0, Math.sin(t * 0.62 + 0.2) * 0.038)) * settle,
-    forearmR: (0.17 + Math.max(0, Math.sin(t * 0.58 + 0.9) * 0.038)) * settle,
+    headX: breath * 0.072 * settle,
+    headZ: (sway * 0.09 + weight * 0.04) * settle,
+    leanY: (sway * 0.11 + weight * 0.055) * settle,
+    spineX: (0.028 + breath * 0.05) * settle,
+    chestX: (-0.01 + breath * 0.032) * settle,
+    hipZ: weight * 0.06 * settle,
+    armLiftL: (0.16 + Math.sin(t * 0.55 + 0.3) * 0.07) * settle,
+    armLiftR: (0.16 + Math.sin(t * 0.5 + 1.1) * 0.07) * settle,
+    forearmL: (0.32 + Math.max(0, Math.sin(t * 0.62 + 0.2) * 0.08)) * settle,
+    forearmR: (0.32 + Math.max(0, Math.sin(t * 0.58 + 0.9) * 0.08)) * settle,
   };
 }
 
@@ -48,24 +48,24 @@ export function sampleIdleBodyMotion(elapsedSec, opts = {}) {
   const sway = Math.sin(t * 0.58 + 0.6);
   const weight = Math.sin(t * 0.42 + 1.4);
   const bob = Math.sin(t * 0.88 + 0.3);
-  const energy = listening ? 1.08 : 1;
-  const amp = 1.05;
+  const energy = listening ? 1.12 : 1;
+  const amp = 2.35;
 
   return {
-    headX: (breath * 0.034 + Math.sin(t * 0.52) * 0.022) * energy * amp,
-    headZ: (sway * 0.048 + weight * 0.038) * energy * amp,
-    leanY: (weight * 0.072 + bob * 0.028) * energy * amp,
-    spineX: 0.016 + breath * 0.028 * energy * amp,
-    chestX: -0.008 + breath * 0.018 * energy * amp,
-    hipZ: weight * 0.058 * energy * amp,
-    armLiftL: 0.03 + Math.sin(t * 0.78 + 0.4) * 0.055 * energy * amp,
-    armLiftR: 0.03 + Math.sin(t * 0.72 + 1.1) * 0.052 * energy * amp,
-    forearmL: Math.max(0, Math.sin(t * 0.94 + 0.2) * 0.04 * energy * amp),
-    forearmR: Math.max(0, Math.sin(t * 0.88 + 0.9) * 0.038 * energy * amp),
-    upperLegL: Math.sin(t * 0.44 + 0.5) * 0.028 * energy * amp,
-    upperLegR: Math.sin(t * 0.44 + 2.0) * 0.028 * energy * amp,
-    lowerLegL: Math.max(0, Math.sin(t * 0.62) * 0.02 * energy * amp),
-    lowerLegR: Math.max(0, Math.sin(t * 0.62 + 1.2) * 0.02 * energy * amp),
+    headX: (breath * 0.07 + Math.sin(t * 0.52) * 0.04) * energy * amp,
+    headZ: (sway * 0.09 + weight * 0.06) * energy * amp,
+    leanY: (weight * 0.11 + bob * 0.045) * energy * amp,
+    spineX: 0.028 + breath * 0.05 * energy * amp,
+    chestX: -0.012 + breath * 0.032 * energy * amp,
+    hipZ: weight * 0.08 * energy * amp,
+    armLiftL: 0.08 + Math.sin(t * 0.78 + 0.4) * 0.1 * energy * amp,
+    armLiftR: 0.08 + Math.sin(t * 0.72 + 1.1) * 0.095 * energy * amp,
+    forearmL: 0.12 + Math.max(0, Math.sin(t * 0.94 + 0.2) * 0.08 * energy * amp),
+    forearmR: 0.12 + Math.max(0, Math.sin(t * 0.88 + 0.9) * 0.075 * energy * amp),
+    upperLegL: Math.sin(t * 0.44 + 0.5) * 0.04 * energy * amp,
+    upperLegR: Math.sin(t * 0.44 + 2.0) * 0.04 * energy * amp,
+    lowerLegL: Math.max(0, Math.sin(t * 0.62) * 0.03 * energy * amp),
+    lowerLegR: Math.max(0, Math.sin(t * 0.62 + 1.2) * 0.03 * energy * amp),
   };
 }
 
