@@ -132,7 +132,7 @@ Agents: **read this before saying “fixed.”** Update a row when status change
 
 | ID | Problem / request | Status | Evidence / fix | PR / build |
 |----|-------------------|--------|----------------|------------|
-| H1 | **B2B + B2C business plan** | 📋 | | [#87](https://github.com/MonMonMars/amoji_engine_02/pull/87) |
+| H1 | **B2B + B2C business plan** | 🛑 off-repo | Keep private; do not merge [#87](https://github.com/MonMonMars/amoji_engine_02/pull/87) to `main` | |
 | H2 | **This tracker** — expand list, mark solved/not | 🟡 | Updated 2026-09-25 with G* rows + Mon B1/B5/B6 report | this file |
 
 *(Legacy G1/G2 in old tracker = business/tracker; renumbered to H1/H2.)*
