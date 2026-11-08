@@ -51,7 +51,7 @@ export const REST_POSE = Object.freeze({
   headZ: 0.02,
   spineX: 0.018,
   chestX: -0.012,
-  hipZ: 0.055,
+    hipZ: 0.018,
   leanY: 0.035,
   upperLegL: 0.02,
   upperLegR: 0.06,

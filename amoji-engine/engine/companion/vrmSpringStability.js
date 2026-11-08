@@ -4,8 +4,8 @@
 
 export const VRM_SPRING_STABILITY_SCHEMA = "amoji.vrmSpringStability.v1";
 
-const MIN_DRAG_FORCE = 0.58;
-const MIN_GRAVITY_POWER = 0.04;
+const MIN_DRAG_FORCE = 0.82;
+const MIN_GRAVITY_POWER = 0.14;
 
 /**
  * Spring bones simulate after humanoid pose — stabilize drag/gravity so hair
@@ -27,7 +27,12 @@ export function configureVrmSpringStability(vrm) {
     if (settings.gravityPower < MIN_GRAVITY_POWER) {
       settings.gravityPower = MIN_GRAVITY_POWER;
     }
-    settings.gravityDir?.set?.(0, -1, 0);
+    if (settings.gravityDir) {
+      settings.gravityDir.set?.(0, -1, 0);
+      settings.gravityDir.x = 0;
+      settings.gravityDir.y = -1;
+      settings.gravityDir.z = 0;
+    }
     tuned += 1;
   }
 
