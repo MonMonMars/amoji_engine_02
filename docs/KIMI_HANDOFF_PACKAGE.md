@@ -32,28 +32,14 @@ Prefer **git clone** or the **slim zip** over the full archive when possible.
 
 ## 1. Business / product / monetization / roadmap
 
-### Canonical business plan (on branch `cursor/business-plan-b2b-b2c-54db`, PR #87 — not merged to `main`)
+**Off-repo only.** Business plan, GTM, competitor teardowns, and monetization models are **not** stored in this public GitHub repository. Request the current pack from the repo owner via private channels (local `D:\DeepSeek Harness\` archive).
 
-| Resource | URL |
-|----------|-----|
-| **Business plan (rendered)** | https://github.com/MonMonMars/amoji_engine_02/blob/cursor/business-plan-b2b-b2c-54db/docs/AMOJI_BUSINESS_PLAN.md |
-| **Raw (paste-friendly)** | https://raw.githubusercontent.com/MonMonMars/amoji_engine_02/cursor/business-plan-b2b-b2c-54db/docs/AMOJI_BUSINESS_PLAN.md |
-| **PR** | https://github.com/MonMonMars/amoji_engine_02/pull/87 |
+Do **not** merge PRs that add `AMOJI_BUSINESS_PLAN.md` or similar files to `main`. Close or repoint them to private storage.
 
-**Summary:**
-
-- **Product:** 3D VRM companion — voice, chat, emotion, anime scenes + light raising loops (pet, chase, shop).
-- **GTM:** **B2C** (web + App Store, IAP/subscription) and **B2B** (white-label `/play`, Admin Control, optional robot bridges).
-- **Edge:** Legal open VRM roster, **Cantonese-first**, in-browser 3D, dual revenue.
-- **B2C revenue:** Premium sub, coin packs, character/scene DLC, remove-ads, optional Stripe (`/api/iap/checkout`).
-- **B2B tiers:** Studio / Operations / Enterprise (see business plan §4.2).
-- **Roadmap:** Q3–Q4 2026 stable `/play` + admin; 2027 App Store, memory UI, B2B white-label (plan §8).
-
-### Supporting docs (on `main`)
+### Supporting docs (on `main` — engineering / UX only)
 
 | Topic | URL |
 |-------|-----|
-| Market & 3D / roles | https://github.com/MonMonMars/amoji_engine_02/blob/main/amoji-engine/docs/COMPANION_APPS_AND_3D_RESEARCH.md |
 | Raising-game UX | https://github.com/MonMonMars/amoji_engine_02/blob/main/amoji-engine/docs/JAPANESE_RAISING_GAMES_RESEARCH.md |
 | Mobile hub | https://github.com/MonMonMars/amoji_engine_02/blob/main/amoji-engine/docs/MOBILE_APP_ARCHITECTURE.md |
 | App Store / IAP | https://github.com/MonMonMars/amoji_engine_02/blob/main/mobile/APP_STORE_GUIDE.md |
@@ -183,7 +169,7 @@ https://github.com/MonMonMars/amoji_engine_02/pull/112
 **CI:** unit-and-smoke + companion-e2e — SUCCESS on branch head.
 
 **Likely superseded after merge:** PR #111 (idle), PR #110 (switch).  
-**Separate:** PR #109 (Sendagaya lighting), PR #87 (business plan docs).
+**Separate:** PR #109 (Sendagaya lighting). PR #87 (business plan) — **keep closed / off-repo**, do not merge.
 
 ---
 

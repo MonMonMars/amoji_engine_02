@@ -25,6 +25,10 @@ venv/
 # Handoff archives (large; do not commit)
 amoji_engine_02-handoff-*.zip
 
+# Internal product / competitor / investor material (off-repo only)
+docs/AMOJI_BUSINESS_PLAN.md
+amoji-engine/docs/COMPANION_APPS_AND_3D_RESEARCH.md
+
 # Lab / local
 *.log
 .cache/
