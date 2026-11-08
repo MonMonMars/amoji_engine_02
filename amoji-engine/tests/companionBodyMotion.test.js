@@ -9,6 +9,14 @@ function mockHumanoid() {
     "rightUpperArm",
     "leftLowerArm",
     "rightLowerArm",
+    "leftUpperLeg",
+    "rightUpperLeg",
+    "leftLowerLeg",
+    "rightLowerLeg",
+    "leftHand",
+    "rightHand",
+    "leftFoot",
+    "rightFoot",
     "head",
     "spine",
     "chest",
@@ -48,6 +56,9 @@ describe("createCompanionBodyMotion", () => {
     const rot = humanoid.bones.get("leftUpperArm").rotation;
     const rest = VRM_ARM_REST_ROTATIONS.leftUpperArm;
     expect(Math.abs(rot.z - rest.z)).toBeGreaterThan(0.008);
+    const knee = humanoid.bones.get("rightLowerLeg").rotation.x;
+    expect(knee).toBeGreaterThan(0.2);
+    expect(humanoid.bones.get("leftHand").rotation.y).not.toBe(0);
   });
 
   it("uses content-aware nod for happy laughter without arm overlay", () => {

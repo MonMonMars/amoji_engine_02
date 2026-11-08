@@ -1,6 +1,6 @@
 /**
- * Detect VRM arm-rest Z sign — some photoreal rigs (e.g. Nova) invert the
- * standard A-pose drop axis compared to anime VRM samples.
+ * Detect VRM arm-rest Z sign and elbow flex axis — photoreal rigs (e.g. Nova)
+ * often invert the A-pose drop axis and bend the elbow on Z, not X.
  */
 import * as THREE from "three";
 import { VRM_ARM_REST_ROTATIONS } from "./companionPoseLibrary.js";
@@ -14,6 +14,8 @@ const ARM_BONES = [
   "leftLowerArm",
   "rightLowerArm",
 ];
+
+const ELBOW_BEND = 0.68;
 
 /**
  * @param {import('@pixiv/three-vrm').VRMHumanoid | null | undefined} humanoid
@@ -31,6 +33,70 @@ function applyArmRest(humanoid, rest) {
 }
 
 /**
+ * @param {string} axis
+ * @param {number} signedBend
+ * @param {string} flexAxis
+ */
+function lowerArmOnAxis(axis, signedBend, flexAxis) {
+  return {
+    x: axis === "x" ? signedBend : 0.08,
+    y: axis === "y" ? signedBend : 0,
+    z: axis === "z" ? signedBend : 0.08,
+    flexAxis,
+  };
+}
+
+/**
+ * Pick the lower-arm axis that actually flexes the elbow (shortens hand–upper-arm).
+ * @param {import('@pixiv/three-vrm').VRM} vrm
+ * @param {typeof VRM_ARM_REST_ROTATIONS} upperRest
+ * @param {"left" | "right"} side
+ */
+function detectElbowFlex(vrm, upperRest, side) {
+  const humanoid = vrm.humanoid;
+  const handName = side === "left" ? "leftHand" : "rightHand";
+  const upperName = side === "left" ? "leftUpperArm" : "rightUpperArm";
+  const lowerName = side === "left" ? "leftLowerArm" : "rightLowerArm";
+  const hand = humanoid.getNormalizedBoneNode?.(handName);
+  const upper = humanoid.getNormalizedBoneNode?.(upperName);
+  if (!hand?.getWorldPosition || !upper?.getWorldPosition) {
+    return upperRest[lowerName];
+  }
+
+  const a = new THREE.Vector3();
+  const b = new THREE.Vector3();
+  const distFor = (lower) => {
+    humanoid.resetNormalizedPose?.();
+    applyArmRest(humanoid, {
+      ...upperRest,
+      [lowerName]: lower,
+    });
+    humanoid.update?.();
+    vrm.update?.(0);
+    upper.getWorldPosition(a);
+    hand.getWorldPosition(b);
+    return a.distanceTo(b);
+  };
+
+  const restDist = distFor({ x: 0, y: 0, z: 0 });
+  let bestAxis = "x";
+  let bestSign = 1;
+  let bestDist = restDist;
+  for (const axis of ["x", "y", "z"]) {
+    for (const sign of [1, -1]) {
+      const d = distFor({ x: 0, y: 0, z: 0, [axis]: 0.9 * sign });
+      if (d < bestDist - 0.025) {
+        bestDist = d;
+        bestAxis = axis;
+        bestSign = sign;
+      }
+    }
+  }
+
+  return lowerArmOnAxis(bestAxis, ELBOW_BEND * bestSign, bestAxis);
+}
+
+/**
  * @param {import('@pixiv/three-vrm').VRM} vrm
  * @returns {typeof VRM_ARM_REST_ROTATIONS}
  */
@@ -44,13 +110,11 @@ export function detectVrmArmRestRotations(vrm) {
 
   const flippedZ = Object.freeze({
     leftUpperArm: {
-      x: VRM_ARM_REST_ROTATIONS.leftUpperArm.x,
-      y: 0,
+      ...VRM_ARM_REST_ROTATIONS.leftUpperArm,
       z: -VRM_ARM_REST_ROTATIONS.leftUpperArm.z,
     },
     rightUpperArm: {
-      x: VRM_ARM_REST_ROTATIONS.rightUpperArm.x,
-      y: 0,
+      ...VRM_ARM_REST_ROTATIONS.rightUpperArm,
       z: -VRM_ARM_REST_ROTATIONS.rightUpperArm.z,
     },
     leftLowerArm: { ...VRM_ARM_REST_ROTATIONS.leftLowerArm },
@@ -71,7 +135,16 @@ export function detectVrmArmRestRotations(vrm) {
 
   const standardY = handHeight(VRM_ARM_REST_ROTATIONS);
   const flippedY = handHeight(flippedZ);
+  const upperRest =
+    flippedY < standardY - 0.04 ? flippedZ : VRM_ARM_REST_ROTATIONS;
+
+  const leftLowerArm = detectElbowFlex(vrm, upperRest, "left");
+  const rightLowerArm = detectElbowFlex(vrm, upperRest, "right");
 
   humanoid.resetNormalizedPose?.();
-  return flippedY < standardY - 0.04 ? flippedZ : VRM_ARM_REST_ROTATIONS;
+  return Object.freeze({
+    ...upperRest,
+    leftLowerArm,
+    rightLowerArm,
+  });
 }
