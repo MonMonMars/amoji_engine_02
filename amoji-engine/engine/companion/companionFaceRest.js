@@ -74,16 +74,40 @@ export function sampleTalkMouthPulse(nowMs, talking) {
 }
 
 /**
- * Combined viseme + talk pulse, 0 when idle.
+ * Chew flap while eating or drinking a treat.
+ * @param {number} nowMs
+ * @param {boolean} eating
+ */
+export function sampleEatMouthPulse(nowMs, eating) {
+  if (!eating) return 0;
+  const t = (Number(nowMs) || 0) * 0.001;
+  const chew = Math.max(0, Math.sin(t * Math.PI * 5.4));
+  const nibble = Math.max(0, Math.sin(t * Math.PI * 8.1 + 0.6));
+  return 0.1 + chew * 0.7 + nibble * 0.12;
+}
+
+/**
+ * @param {boolean} eating
+ * @param {number} [nowMs]
+ */
+export function eatingMouthOpen(eating, nowMs = 0) {
+  if (!eating) return 0;
+  return Math.max(0, Math.min(1, sampleEatMouthPulse(nowMs, true)));
+}
+
+/**
+ * Combined viseme + talk pulse, 0 when idle. Chew pulse when eating.
  * @param {boolean} talking
  * @param {number} visemeOpen
  * @param {number} [nowMs]
+ * @param {boolean} [eating]
  */
-export function talkingMouthOpen(talking, visemeOpen, nowMs = 0) {
-  if (!talking) return 0;
+export function talkingMouthOpen(talking, visemeOpen, nowMs = 0, eating = false) {
+  const eat = eatingMouthOpen(eating, nowMs);
+  if (!talking) return eat;
   const viseme = mouthVisemeWeight(true, visemeOpen);
   const pulse = sampleTalkMouthPulse(nowMs, true);
-  return Math.max(0, Math.min(1, Math.max(viseme, pulse * 0.88)));
+  return Math.max(0, Math.min(1, Math.max(viseme, pulse * 0.88, eat)));
 }
 
 /**

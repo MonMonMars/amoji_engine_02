@@ -528,7 +528,14 @@ body.conversation-ui.composer-always-visible.theme-grok-ani .composer .speaker-b
   border-color: rgba(255, 255, 255, 0.38);
 }
 
-/* —— Settings panel —— */
+.theme-grok-ani .treat-fab {
+  background: linear-gradient(135deg, rgba(244, 114, 182, 0.38), rgba(139, 124, 248, 0.32));
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.theme-grok-ani .treat-sheet {
+  background: rgba(8, 6, 18, 0.92);
+}
 .theme-grok-ani .settings {
   border-color: rgba(255, 255, 255, 0.1);
   background: rgba(8, 6, 18, 0.94);

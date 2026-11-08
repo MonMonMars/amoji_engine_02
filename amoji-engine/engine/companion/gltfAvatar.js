@@ -31,6 +31,7 @@ import {
   configureCompanionOrbitControls,
   resolveOrbitDomElement,
 } from "./companionOrbitControls.js";
+import { sampleEatMouthPulse } from "./companionFaceRest.js";
 import { sampleIdleBodyMotion } from "./companionIdleMotion.js";
 
 export const GLTF_AVATAR_SCHEMA = "amoji.gltfAvatar.v1";
@@ -269,6 +270,7 @@ export async function createGltfAvatar(opts) {
   let emotion = "neutral";
   let mouthOpen = 0;
   let talking = false;
+  let eating = false;
   let talkEnergy = 0;
   /** @type {string | null} */
   let activeGesture = null;
@@ -395,6 +397,12 @@ export async function createGltfAvatar(opts) {
     return talking;
   };
 
+  const setEating = (on) => {
+    eating = Boolean(on);
+    if (!eating && !talking) setMouthOpen(0);
+    return eating;
+  };
+
   const setTalkEnergy = (v) => {
     talkEnergy = Math.max(0, Math.min(1, Number(v) || 0));
     return talkEnergy;
@@ -501,7 +509,10 @@ export async function createGltfAvatar(opts) {
     controls.enabled = true;
     controls.update();
 
-    faceLight.intensity = 0.55 + (talking ? 0.2 : 0) + Math.sin((now - t0) * 0.002) * 0.05;
+    faceLight.intensity = 0.55 + (talking || eating ? 0.2 : 0) + Math.sin((now - t0) * 0.002) * 0.05;
+    if (eating && !talking) {
+      setMouthOpen(sampleEatMouthPulse(now, true));
+    }
     renderer.render(scene, camera);
     raf = requestAnimationFrame(frame);
   };
@@ -544,6 +555,7 @@ export async function createGltfAvatar(opts) {
     setEmotion,
     setMouthOpen,
     setTalking,
+    setEating,
     setTalkEnergy,
     playGesture,
     playGestureForText,

@@ -8,9 +8,9 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji · Companion</title>
     <script>
-      window.__amojiBuild = "2026-09-17-v148-character-numbers";
+      window.__amojiBuild = "2026-09-17-v149-food-interact";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-17-v148-character-numbers"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-17-v149-food-interact"></script>
     <link
       rel="prefetch"
       href="/prototypes/assets/companion-char-nova.png"
@@ -59,6 +59,14 @@
 
       body.companion-start-pending .composer-wrap {
         z-index: 13001;
+      }
+
+      body.companion-start-pending .treat-dock,
+      body.companion-start-pending .treat-sheet,
+      body.companion-start-pending .treat-sheet-backdrop,
+      body.companion-start-pending .treat-drop-halo,
+      body.companion-start-pending .treat-drag-ghost {
+        display: none !important;
       }
 
       .companion-picker--start {
@@ -315,7 +323,7 @@
       media="print"
       onload="this.media='all'"
     />
-    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-17-v148-character-numbers" />
+    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-17-v149-food-interact" />
     <noscript>
       <link
         href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap"
@@ -1886,6 +1894,249 @@
         pointer-events: auto;
       }
 
+      .treat-dock {
+        position: fixed;
+        z-index: 40;
+        right: max(0.7rem, env(safe-area-inset-right));
+        bottom: calc(7.1rem + env(safe-area-inset-bottom));
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 0.4rem;
+        pointer-events: none;
+      }
+
+      .treat-dock > * {
+        pointer-events: auto;
+      }
+
+      .treat-coins {
+        font-size: 0.78rem;
+        font-weight: 800;
+        padding: 0.22rem 0.55rem;
+        border-radius: 999px;
+        background: rgba(8, 6, 18, 0.72);
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        backdrop-filter: blur(12px);
+      }
+
+      .treat-fab {
+        position: relative;
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.45rem 0.7rem 0.45rem 0.5rem;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        background: linear-gradient(135deg, rgba(244, 114, 182, 0.28), rgba(139, 124, 248, 0.28));
+        color: #fff;
+        font: inherit;
+        font-weight: 800;
+        cursor: pointer;
+        box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+      }
+
+      .treat-fab__emoji {
+        font-size: 1.15rem;
+      }
+
+      .treat-bag-badge {
+        position: absolute;
+        top: -0.3rem;
+        right: -0.25rem;
+        min-width: 1.05rem;
+        height: 1.05rem;
+        padding: 0 0.22rem;
+        border-radius: 999px;
+        background: #f472b6;
+        color: #1a0812;
+        font-size: 0.62rem;
+        font-weight: 800;
+        display: grid;
+        place-items: center;
+      }
+
+      .treat-sheet-backdrop {
+        position: fixed;
+        inset: 0;
+        z-index: 11002;
+        background: rgba(0, 0, 0, 0.45);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.28s ease;
+      }
+
+      .treat-sheet-backdrop.is-open {
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      .treat-sheet {
+        position: fixed;
+        z-index: 11003;
+        left: 50%;
+        bottom: 0;
+        transform: translate(-50%, 110%);
+        width: min(100%, 440px);
+        max-height: min(68dvh, 540px);
+        overflow-y: auto;
+        padding: 0.85rem 0.95rem calc(1rem + env(safe-area-inset-bottom));
+        border-radius: 1.25rem 1.25rem 0 0;
+        background: var(--glass-strong, rgba(8, 6, 18, 0.88));
+        border: 1px solid var(--line, rgba(255, 255, 255, 0.12));
+        backdrop-filter: blur(22px);
+        display: flex;
+        flex-direction: column;
+        gap: 0.55rem;
+        transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+      }
+
+      .treat-sheet.is-open {
+        transform: translate(-50%, 0);
+      }
+
+      .treat-sheet-head {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .treat-sheet-title {
+        margin: 0;
+        font-size: 1.05rem;
+        font-weight: 800;
+      }
+
+      .treat-sheet-tabs {
+        display: flex;
+        gap: 0.3rem;
+        margin-left: auto;
+      }
+
+      .treat-tab,
+      .treat-sheet-close {
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        background: rgba(255, 255, 255, 0.06);
+        color: inherit;
+        border-radius: 999px;
+        padding: 0.22rem 0.65rem;
+        font: inherit;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      .treat-tab.is-active {
+        background: rgba(244, 114, 182, 0.28);
+        border-color: rgba(244, 114, 182, 0.5);
+      }
+
+      .treat-sheet-hint {
+        margin: 0;
+        font-size: 0.78rem;
+        opacity: 0.72;
+      }
+
+      .treat-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 0.5rem;
+      }
+
+      .treat-card {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.2rem;
+        padding: 0.65rem 0.4rem 0.5rem;
+        border-radius: 1rem;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(255, 255, 255, 0.05);
+        color: inherit;
+        font: inherit;
+        cursor: grab;
+        touch-action: none;
+      }
+
+      .treat-card--shop {
+        cursor: pointer;
+        touch-action: manipulation;
+      }
+
+      .treat-card-emoji {
+        font-size: 1.7rem;
+        line-height: 1;
+      }
+
+      .treat-card-name {
+        font-size: 0.78rem;
+        font-weight: 800;
+      }
+
+      .treat-card-price,
+      .treat-card-count,
+      .treat-card-give {
+        font-size: 0.68rem;
+        opacity: 0.8;
+      }
+
+      .treat-card-give {
+        padding: 0.12rem 0.45rem;
+        border-radius: 999px;
+        background: rgba(94, 234, 212, 0.18);
+        opacity: 1;
+      }
+
+      .treat-empty {
+        grid-column: 1 / -1;
+        margin: 0.4rem 0;
+        font-size: 0.82rem;
+        opacity: 0.7;
+        text-align: center;
+      }
+
+      .treat-drop-halo {
+        position: fixed;
+        z-index: 35;
+        left: 50%;
+        top: 38%;
+        width: min(42vw, 220px);
+        height: min(52vh, 280px);
+        transform: translate(-50%, -50%);
+        border-radius: 50%;
+        border: 2px dashed rgba(244, 114, 182, 0.0);
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+      }
+
+      .treat-drop-halo.is-visible {
+        opacity: 1;
+        border-color: rgba(244, 114, 182, 0.55);
+      }
+
+      .treat-drop-halo.is-hot {
+        border-color: rgba(94, 234, 212, 0.9);
+        box-shadow: 0 0 32px rgba(94, 234, 212, 0.35);
+      }
+
+      .treat-drag-ghost {
+        position: fixed;
+        z-index: 12050;
+        font-size: 2.4rem;
+        pointer-events: none;
+        transform: translate(-50%, -50%);
+        filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.45));
+        transition: transform 0.45s ease, opacity 0.45s ease;
+      }
+
+      body.is-treat-dragging {
+        cursor: grabbing;
+      }
+
+      body.is-treat-dragging .orbit-hit {
+        pointer-events: none;
+      }
+
       .scene-sheet-head {
         display: flex;
         align-items: center;
@@ -3015,19 +3266,19 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-17-v148-character-numbers",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-17-v149-food-interact",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-17-v148-character-numbers",
-          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-17-v148-character-numbers"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-17-v149-food-interact",
+          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-17-v149-food-interact"
         }
       }
     </script>
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v148-character-numbers"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v149-food-interact"
     />
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-17-v148-character-numbers"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v148-character-numbers"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-17-v149-food-interact"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v149-food-interact"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;
@@ -3586,6 +3837,7 @@
         scenePresetsMod,
         chatPersistenceMod,
         bootChitchatMod,
+        treatInteractMod,
       ] = await Promise.all([
         ami("../amoji-engine/engine/companion/createAvatar.js"),
         ami("../amoji-engine/engine/companion/chatLlm.js"),
@@ -3622,6 +3874,7 @@
         ami("../amoji-engine/engine/companion/companionScenePresets.js"),
         ami("../amoji-engine/engine/companion/companionChatPersistence.js"),
         ami("../amoji-engine/engine/companion/companionBootChitchat.mjs"),
+        ami("../amoji-engine/engine/companion/companionTreatInteract.js"),
       ]);
       const { buildBootChitchatReply, isBootChitchatPhase } = bootChitchatMod;
       window.__amojiModuleBooted = true;
@@ -5749,10 +6002,36 @@
       };
 
       const { createCompanionActivityRail } = activityRailMod;
+      const { createCompanionTreatDock } = treatInteractMod;
       const activityRail = createCompanionActivityRail(document, {
         isEnglish,
         mount: document.querySelector(".topbar"),
       });
+
+      const treatDock = createCompanionTreatDock({
+        root: document.body,
+        isEnglish: () => isEnglish,
+        getAvatar: () => avatar,
+        getDropRect: () => {
+          const node = canvas || document.getElementById("avatar-canvas");
+          return node?.getBoundingClientRect?.() || null;
+        },
+        onToast: (msg, kind) => showToast(msg, kind || "info"),
+        onFeed: ({ line }) => {
+          if (!line) return;
+          addBubble("assistant", line);
+          avatar.setEmotion?.("happy");
+          setEmotionPill("happy");
+          speakEmotion = "happy";
+          status.speaking();
+          armBargeIn();
+          void voice.speak(line, "happy").finally(() => {
+            disarmBargeIn();
+            if (!busy && !voice.micOn) status.idle();
+          });
+        },
+      });
+      window.__amojiTreats = treatDock;
 
       const uiContextPill = document.getElementById("ui-context-pill");
 

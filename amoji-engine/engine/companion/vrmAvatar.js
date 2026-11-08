@@ -52,6 +52,7 @@ import {
   applyRestEyeOpenMorphs,
   guardLookAtLids,
   inspectVrmFaceHazards,
+  sampleEatMouthPulse,
   sampleTalkMouthPulse,
   talkJawRotationX,
   talkingMouthOpen,
@@ -428,6 +429,7 @@ export async function createVrmAvatar(opts) {
   /** @type {string | null} */
   let mouthShape = null;
   let talking = false;
+  let eating = false;
   let t0 = performance.now();
   const clock = new THREE.Clock();
   let blinkTimer = 0;
@@ -451,7 +453,10 @@ export async function createVrmAvatar(opts) {
 
   const setExpressionTargetFromBlend = (blend) => {
     clearExpressionTargets();
-    const safe = clampRestFaceBlend(blend, { talking, hazards: faceHazards });
+    const safe = clampRestFaceBlend(blend, {
+      talking: talking || eating,
+      hazards: faceHazards,
+    });
     for (const [key, weight] of Object.entries(safe || {})) {
       const preset = VRM_BLEND_PRESET_MAP[key];
       if (preset && expr?.getExpression?.(preset)) {
@@ -479,7 +484,7 @@ export async function createVrmAvatar(opts) {
     if (!expr) return;
     const rate = Math.min(1, dt * (talking ? 28 : 16));
     for (const preset of emotionPresetKeys()) {
-      if (talking && TALK_MOUTH_BLOCK_PRESETS.has(preset)) {
+      if ((talking || eating) && TALK_MOUTH_BLOCK_PRESETS.has(preset)) {
         expressionTarget[preset] = 0;
         expressionCurrent[preset] = 0;
         expr.setValue(preset, 0);
@@ -764,7 +769,7 @@ export async function createVrmAvatar(opts) {
   };
 
   const applyTalkMouthNow = (now = performance.now()) => {
-    const open = talkingMouthOpen(talking, mouthOpen, now);
+    const open = talkingMouthOpen(talking, mouthOpen, now, eating);
     applyMouth(open);
     expr?.update?.();
     applyJawOpen(open);
@@ -787,16 +792,28 @@ export async function createVrmAvatar(opts) {
     cameraDirector.setTalking(talking);
     if (!talking) {
       cameraDirector.resetDialogue();
-      mouthTarget = 0;
-      mouthOpen = 0;
-      mouthShape = null;
-      applyMouth(0);
+      if (!eating) {
+        mouthTarget = 0;
+        mouthOpen = 0;
+        mouthShape = null;
+        applyMouth(0);
+      }
       applyEmotionExpressions(emotion);
     } else {
       applyEmotionExpressions(emotion);
       if (mouthTarget < 0.2) mouthTarget = Math.max(mouthTarget, 0.55);
     }
     return talking;
+  };
+
+  const setEating = (on) => {
+    eating = Boolean(on);
+    if (!eating && !talking) {
+      mouthTarget = 0;
+      mouthOpen = 0;
+      applyMouth(0);
+    }
+    return eating;
   };
 
   const setTalkEnergy = (v) => bodyMotion.setTalkEnergy(v);
@@ -812,7 +829,7 @@ export async function createVrmAvatar(opts) {
   };
 
   const tickFace = (dt, now, activeMotion) => {
-    if (!talking && !activeMotion && !bodyMotion.thinking) {
+    if (!talking && !eating && !activeMotion && !bodyMotion.thinking) {
       const idleBlend = clampRestFaceBlend(
         sampleIdleExpressionBlend((now - t0) * 0.001, emotion),
         { talking: false, hazards: faceHazards },
@@ -828,15 +845,18 @@ export async function createVrmAvatar(opts) {
       }
     }
 
-    mouthOpen += (mouthTarget - mouthOpen) * Math.min(1, dt * (talking ? 36 : 22));
-    if (!talking && mouthOpen < 0.04) mouthOpen = 0;
+    mouthOpen += (mouthTarget - mouthOpen) * Math.min(1, dt * (talking || eating ? 36 : 22));
+    if (!talking && !eating && mouthOpen < 0.04) mouthOpen = 0;
     if (talking && mouthOpen < 0.12) {
       mouthOpen = Math.max(mouthOpen, sampleTalkMouthPulse(now, true) * 0.7);
+    }
+    if (eating && !talking) {
+      mouthOpen = Math.max(mouthOpen, sampleEatMouthPulse(now, true) * 0.86);
     }
 
     zeroAllExpressions(expr);
     tickExpressionBlend(dt);
-    applyMouth(talkingMouthOpen(talking, mouthOpen, now));
+    applyMouth(talkingMouthOpen(talking, mouthOpen, now, eating));
 
     blinkTimer += dt;
     let blinkW = 0;
@@ -1058,6 +1078,7 @@ export async function createVrmAvatar(opts) {
     setMouthOpen,
     setMouthShape,
     setTalking,
+    setEating,
     setTalkEnergy,
     setTalkStyle,
     reactToSpeechChunk,
@@ -1073,6 +1094,9 @@ export async function createVrmAvatar(opts) {
     reactToTap,
     get emotion() {
       return emotion;
+    },
+    get eating() {
+      return eating;
     },
     get currentAction() {
       return vrmaAction || bodyMotion.currentAction;
