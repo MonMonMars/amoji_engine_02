@@ -159,10 +159,10 @@ describe("companionFaceRest", () => {
     expect(clamped.Happy).toBe(TALK_HAPPY_MAX);
   });
 
-  it("skips emotion presets that BLOCK visemes while talking", () => {
+  it("keeps emotion presets that block the mouth while talking", () => {
     const hazards = {
-      opensMouth: new Set(["surprised", "angry"]),
-      blocksMouth: new Set(["surprised", "angry"]),
+      opensMouth: new Set(["surprised", "angry", "happy"]),
+      blocksMouth: new Set(["surprised", "angry", "happy"]),
       closesEyes: new Set(),
       binary: new Set(),
     };
@@ -170,8 +170,9 @@ describe("companionFaceRest", () => {
       { Surprised: 0.4, Angry: 0.5, Sad: 0.2, Happy: 0.9 },
       { talking: true, hazards },
     );
-    expect(clamped.Surprised).toBeUndefined();
-    expect(clamped.Angry).toBeUndefined();
+    expect(clamped.Surprised).toBeLessThanOrEqual(TALK_SURPRISED_MAX);
+    expect(clamped.Surprised).toBeGreaterThan(0.15);
+    expect(clamped.Angry).toBeCloseTo(0.5);
     expect(clamped.Sad).toBeCloseTo(0.2);
     expect(clamped.Happy).toBe(TALK_HAPPY_MAX);
   });

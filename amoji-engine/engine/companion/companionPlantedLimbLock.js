@@ -1,6 +1,10 @@
 /**
  * Hard lock for planted legs + hung upper arms after springs / mixer / humanoid flush.
- * Pose channels alone are not enough — raw skinned bones can drift one frame behind.
+ *
+ * Pose writes go to normalized bones only. three-vrm `humanoid.update()` is the
+ * only legal raw-bone writer: it bakes rest compensation into the skinned
+ * quaternion. Copying normalized Euler onto raw bones drops that compensation
+ * and reads as T-pose / ghost arms and skirt weights sliding off the bind pose.
  */
 import {
   VRM_FOOT_REST_ROTATIONS,
@@ -8,9 +12,9 @@ import {
 } from "./companionPoseLibrary.js";
 
 export const COMPANION_PLANTED_LIMB_LOCK_SCHEMA =
-  "amoji.companionPlantedLimbLock.v11-idle-neck-rest";
+  "amoji.companionPlantedLimbLock.v12-solver-owns-raw";
 
-/** Upper-body bones that must match normalized→raw after vrm.update (ghost limb fix). */
+/** Upper-body bones whose raw pose must stay on the humanoid solver (no Euler copy). */
 export const PLANTED_ARM_RAW_SYNC_BONES = Object.freeze([
   "leftShoulder",
   "rightShoulder",
@@ -22,7 +26,7 @@ export const PLANTED_ARM_RAW_SYNC_BONES = Object.freeze([
   "rightHand",
 ]);
 
-/** Pose writes target normalized nodes only — copy norm→raw after humanoid/spring solve. */
+/** Pose writes target normalized nodes only — raw skinning comes from humanoid.update(). */
 export const PLANTED_LOCK_NORMALIZED_ONLY_BONES = Object.freeze([
   "leftUpperLeg",
   "rightUpperLeg",
@@ -58,8 +62,8 @@ export const PLANTED_LOCK_BONE_NAMES = Object.freeze([
 ]);
 
 /**
- * Full humanoid chain — norm→raw copy fixes ghost limbs + skirt mesh sliding on legs/hips.
- * (Do not dual-write rest Euler to raw; copy the solved normalized pose only.)
+ * Full humanoid chain checked for solver ownership.
+ * Do not copy normalized Euler onto these raw bones — that is the ghost-limb bug.
  */
 export const HUMANOID_SKINNED_RAW_SYNC_BONES = Object.freeze([
   "hips",
@@ -187,26 +191,16 @@ export function readBoneEuler(bone) {
 }
 
 /**
- * Copy normalized pose onto raw skinning bones (includes legs/hips for skirt weights).
+ * Commit normalized pose onto raw skinning bones via the VRM humanoid solver.
+ * Normalized and raw local Eulers are not the same space — do not copy them.
  * @param {import('@pixiv/three-vrm').VRMHumanoid | null | undefined} humanoid
- * @param {readonly string[]} [boneNames]
+ * @param {readonly string[]} [_boneNames] kept for call-site compatibility
  */
-export function syncSkinnedLimbRawFromNormalized(
-  humanoid,
-  boneNames = HUMANOID_SKINNED_RAW_SYNC_BONES,
-) {
+export function syncSkinnedLimbRawFromNormalized(humanoid, _boneNames) {
+  void _boneNames;
   if (!humanoid) return 0;
-  let n = 0;
-  for (const name of boneNames) {
-    const norm = humanoid.getNormalizedBoneNode?.(name);
-    const raw = humanoid.getRawBoneNode?.(name);
-    if (!norm?.rotation || !raw?.rotation || raw === norm) continue;
-    const euler = readBoneEuler(norm);
-    if (!euler) continue;
-    writeVrmBoneEuler(raw, euler);
-    n += 1;
-  }
-  return n;
+  humanoid.update?.();
+  return 0;
 }
 
 /** @param {import('@pixiv/three-vrm').VRMHumanoid | null | undefined} humanoid */
@@ -215,6 +209,8 @@ export function syncHumanoidSkinnedRawFromNormalized(humanoid) {
 }
 
 /**
+ * Raw skinning pose must already be the humanoid solver output.
+ * A second `humanoid.update()` is idempotent when nothing copied Euler onto raw.
  * @param {import('@pixiv/three-vrm').VRMHumanoid | null | undefined} humanoid
  * @param {number} [maxDeltaRad]
  */
@@ -224,13 +220,17 @@ export function auditPlantedLimbDualWrite(humanoid, maxDeltaRad = 0.0025) {
   }
   /** @type {{ name: string, d: number }[]} */
   const issues = [];
+  /** @type {Map<string, { x: number, y: number, z: number }>} */
+  const before = new Map();
   for (const name of HUMANOID_SKINNED_RAW_SYNC_BONES) {
-    const norm = humanoid.getNormalizedBoneNode?.(name);
     const raw = humanoid.getRawBoneNode?.(name);
-    if (!norm || !raw || raw === norm) continue;
-    const a = readBoneEuler(norm);
-    const b = readBoneEuler(raw);
-    if (!a || !b) continue;
+    const euler = readBoneEuler(raw);
+    if (euler) before.set(name, euler);
+  }
+  humanoid.update?.();
+  for (const [name, a] of before) {
+    const b = readBoneEuler(humanoid.getRawBoneNode?.(name));
+    if (!b) continue;
     const d = Math.max(
       Math.abs(a.x - b.x),
       Math.abs(a.y - b.y),
@@ -242,5 +242,6 @@ export function auditPlantedLimbDualWrite(humanoid, maxDeltaRad = 0.0025) {
     ok: issues.length === 0,
     maxDelta: issues.length ? Math.max(...issues.map((i) => i.d)) : 0,
     issues,
+    reason: issues.length ? "raw-drifted-from-solver" : "solver-owns-raw",
   };
 }
