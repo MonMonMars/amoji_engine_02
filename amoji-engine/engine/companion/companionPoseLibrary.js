@@ -11,31 +11,33 @@ export const COMPANION_POSE_LIBRARY_SCHEMA = "amoji.companionPoseLibrary.v1";
 
 /**
  * Normalized bone rotations that drop this VRM rig from bind T-pose to a
- * living stand: A-pose hang, elbows bent, arms slightly forward of the thighs.
+ * living stand: arms hang at the sides, elbows bent. Extra upper-arm X
+ * pitches both limbs forward (Mixamo T-pose blend) — keep it tiny.
  * (0,0,0) on upper arms is horizontal T-pose — not arms-at-sides.
  */
 export const VRM_ARM_REST_ROTATIONS = Object.freeze({
-  leftUpperArm: { x: 0.28, y: 0.1, z: -1.42 },
-  rightUpperArm: { x: 0.22, y: -0.08, z: 1.42 },
+  leftUpperArm: { x: 0.06, y: 0.08, z: -1.42 },
+  rightUpperArm: { x: 0.05, y: -0.06, z: 1.42 },
   leftLowerArm: { x: 0.62, y: 0.14, z: 0.1, flexAxis: "x" },
   rightLowerArm: { x: 0.5, y: -0.1, z: -0.08, flexAxis: "x" },
 });
 
 /**
- * Authored A-pose (VRoid / photoreal) already hangs the arms. Only nudge
- * them forward and in — a Mixamo T-pose drop on top twists elbows straight.
+ * Authored A-pose (VRoid / photoreal) already hangs the arms. Only a
+ * small in-toward-body nudge — a Mixamo T-pose drop on top twists elbows
+ * straight, and extra X blends both arms forward of the hips.
  */
 export const VRM_APOSE_ARM_REST_ROTATIONS = Object.freeze({
-  leftUpperArm: { x: 0.38, y: 0.18, z: -0.22 },
-  rightUpperArm: { x: 0.32, y: -0.16, z: 0.22 },
+  leftUpperArm: { x: 0.08, y: 0.1, z: -0.22 },
+  rightUpperArm: { x: 0.07, y: -0.08, z: 0.22 },
   leftLowerArm: { x: 0.18, y: 0.08, z: 0.08, flexAxis: "x" },
   rightLowerArm: { x: 0.16, y: -0.06, z: -0.06, flexAxis: "x" },
 });
 
-/** Planted stand — both knees softly bent, no fashion-walk free leg. */
+/** Planted stand — thighs under the hips, knees softly bent. Extra upper-leg X is a forward kick. */
 export const VRM_LEG_REST_ROTATIONS = Object.freeze({
-  leftUpperLeg: { x: 0.1, y: 0.03, z: 0.02 },
-  rightUpperLeg: { x: 0.1, y: -0.03, z: -0.02 },
+  leftUpperLeg: { x: 0.02, y: 0.02, z: 0.01 },
+  rightUpperLeg: { x: 0.02, y: -0.02, z: -0.01 },
   leftLowerLeg: { x: 0.22, y: 0, z: 0, flexAxis: "x" },
   rightLowerLeg: { x: 0.22, y: 0, z: 0, flexAxis: "x" },
 });
@@ -64,10 +66,10 @@ export const REST_POSE = Object.freeze({
   chestX: -0.012,
     hipZ: 0.008,
     leanY: 0.012,
-    upperLegL: 0.04,
-    upperLegR: 0.04,
-    lowerLegL: 0.12,
-    lowerLegR: 0.12,
+    upperLegL: 0.02,
+    upperLegR: 0.02,
+    lowerLegL: 0.1,
+    lowerLegR: 0.1,
 });
 
 /** Mic on / waiting — attentive but arms stay down (humans don't raise arms to listen). */

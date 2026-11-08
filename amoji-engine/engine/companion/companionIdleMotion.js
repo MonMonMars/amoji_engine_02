@@ -28,15 +28,15 @@ export function sampleSimpleBootIdleMotion(elapsedSec) {
     leanY: 0.03 + (sway * 0.08 + weight * 0.04) * pulse,
     spineX: 0.02 + breath * 0.038 * pulse,
     chestX: -0.01 + breath * 0.026 * pulse,
-    hipZ: 0.018 + weight * 0.012 * pulse,
+    hipZ: 0.01 + weight * 0.006 * pulse,
     armLiftL: 0.16 + Math.sin(t * 0.55 + 0.3) * 0.05 * pulse,
     armLiftR: 0.12 + Math.sin(t * 0.5 + 1.1) * 0.045 * pulse,
     forearmL: 0.4 + Math.max(0, Math.sin(t * 0.62 + 0.2) * 0.08) * pulse,
     forearmR: 0.34 + Math.max(0, Math.sin(t * 0.58 + 0.9) * 0.07) * pulse,
-    upperLegL: 0.06 + Math.max(0, -weight) * 0.05 * pulse,
-    upperLegR: 0.14 + Math.max(0, weight) * 0.07 * pulse,
-    lowerLegL: 0.16 + Math.max(0, -weight) * 0.06 * pulse,
-    lowerLegR: 0.28 + Math.max(0, weight) * 0.08 * pulse,
+    upperLegL: 0.02,
+    upperLegR: 0.02,
+    lowerLegL: 0.1,
+    lowerLegR: 0.1,
   };
 }
 
@@ -53,20 +53,20 @@ export function sampleCalmBreathIdle(elapsedSec, opts = {}) {
   const amp = listening ? 1.05 : 1;
 
   return {
-    headX: breath * 0.01 * amp,
+    headX: breath * 0.018 * amp,
     headZ: 0,
     leanY: 0,
-    spineX: 0.018 + breath * 0.01 * amp,
-    chestX: -0.01 + breath * 0.008 * amp,
-    hipZ: 0.008,
+    spineX: 0.028 + breath * 0.022 * amp,
+    chestX: -0.012 + breath * 0.018 * amp,
+    hipZ: 0.006,
     armLiftL: 0.16,
     armLiftR: 0.12,
     forearmL: 0.4,
     forearmR: 0.34,
-    upperLegL: 0.05,
-    upperLegR: 0.055,
-    lowerLegL: 0.18,
-    lowerLegR: 0.185,
+    upperLegL: 0.02,
+    upperLegR: 0.02,
+    lowerLegL: 0.1,
+    lowerLegR: 0.1,
   };
 }
 
@@ -117,17 +117,17 @@ export function sampleIdleBodyMotion(elapsedSec, opts = {}) {
     headX: (breath * 0.05 + Math.sin(t * 0.5) * 0.03) * energy,
     headZ: (sway * 0.07 + shift * 0.035) * energy,
     leanY: (shift * 0.055 + bob * 0.028) * energy,
-    spineX: 0.02 + breath * 0.042 * energy,
-    chestX: -0.01 + breath * 0.028 * energy,
-    hipZ: (0.016 + shift * 0.014) * energy,
-    armLiftL: (0.16 + breath * 0.04 + rightFree * 0.05 + Math.sin(t * 0.8 + 0.4) * 0.05) * energy,
-    armLiftR: (0.12 + breath * 0.035 + leftFree * 0.05 + Math.sin(t * 0.74 + 1.2) * 0.045) * energy,
-    forearmL: (0.38 + Math.max(0, breath) * 0.07 + Math.sin(t * 0.9 + 0.2) * 0.08) * energy,
-    forearmR: (0.32 + Math.max(0, breath) * 0.06 + Math.sin(t * 0.84 + 1.0) * 0.07) * energy,
-    upperLegL: (0.06 + leftFree * 0.08) * energy,
-    upperLegR: (0.14 + rightFree * 0.1) * energy,
-    lowerLegL: (0.16 + leftFree * 0.1) * energy,
-    lowerLegR: (0.28 + rightFree * 0.13) * energy,
+    spineX: 0.028 + breath * 0.055 * energy,
+    chestX: -0.012 + breath * 0.038 * energy,
+    hipZ: (0.01 + shift * 0.008) * energy,
+    armLiftL: (0.16 + breath * 0.05 + rightFree * 0.04 + Math.sin(t * 0.8 + 0.4) * 0.06) * energy,
+    armLiftR: (0.12 + breath * 0.045 + leftFree * 0.04 + Math.sin(t * 0.74 + 1.2) * 0.055) * energy,
+    forearmL: (0.38 + Math.max(0, breath) * 0.08 + Math.sin(t * 0.9 + 0.2) * 0.09) * energy,
+    forearmR: (0.32 + Math.max(0, breath) * 0.07 + Math.sin(t * 0.84 + 1.0) * 0.08) * energy,
+    upperLegL: 0.02,
+    upperLegR: 0.02,
+    lowerLegL: 0.1,
+    lowerLegR: 0.1,
   };
 }
 
@@ -209,16 +209,16 @@ export function advanceIdleBeat(state, dt, nowMs) {
         overlay.leanY = wave * 0.036 * env;
         break;
       case "look":
-        overlay.headZ = Math.sin(p * Math.PI) * 0.2 * env;
-        overlay.headX = wave * 0.055 * env;
-        overlay.leanY = wave * 0.04 * env;
+        overlay.headZ = Math.sin(p * Math.PI) * 0.28 * env;
+        overlay.headX = wave * 0.07 * env;
+        overlay.leanY = wave * 0.05 * env;
         break;
       case "comb":
         overlay.armLiftR = 0.98 * wave * env;
-        overlay.forearmR = 0.82 * wave * env;
-        overlay.headZ = 0.12 * wave * env;
-        overlay.headX = -0.06 * wave * env;
-        overlay.leanY = 0.045 * wave * env;
+        overlay.forearmR = 0.88 * wave * env;
+        overlay.headZ = 0.14 * wave * env;
+        overlay.headX = -0.08 * wave * env;
+        overlay.leanY = 0.05 * wave * env;
         break;
       case "shift":
         overlay.hipZ = Math.sin(p * Math.PI) * 0.02 * env;
@@ -235,11 +235,11 @@ export function advanceIdleBeat(state, dt, nowMs) {
         overlay.headZ = Math.sin(p * Math.PI * 2) * 0.038 * env;
         break;
       case "breathe":
-        overlay.spineX = 0.03 * wave * env;
-        overlay.chestX = 0.022 * wave * env;
-        overlay.leanY = Math.sin(p * Math.PI) * 0.024 * env;
-        overlay.armLiftL = wave * 0.045 * env;
-        overlay.armLiftR = wave * 0.045 * env;
+        overlay.spineX = 0.055 * wave * env;
+        overlay.chestX = 0.04 * wave * env;
+        overlay.leanY = Math.sin(p * Math.PI) * 0.03 * env;
+        overlay.armLiftL = wave * 0.05 * env;
+        overlay.armLiftR = wave * 0.05 * env;
         break;
       case "sway":
         overlay.headZ = Math.sin(p * Math.PI * 2) * 0.06 * env;

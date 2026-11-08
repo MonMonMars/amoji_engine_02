@@ -55,6 +55,21 @@ export const ACTION_COMBOS = Object.freeze({
   jumpjack: ["jumpjack", "jump", "cheer"],
 });
 
+/**
+ * Default idle life — planted breath plus one-shot social clips from the
+ * hosted VRMA library (wave=Goodbye, thinking=Thinking, stretch=Relax).
+ * Not the huge showcase pool (kungfu/zombie/dance) and not looping Relax.
+ */
+export const IDLE_LIFE_CLIP_POOL = Object.freeze([
+  "wave",
+  "thinking",
+  "nod",
+  "bow",
+  "shrug",
+  "peace",
+  "stretch",
+]);
+
 /** Large idle rotation pool — quiet companion moments between turns. */
 export const IDLE_SHOWCASE_POOL = Object.freeze([
   "wave",

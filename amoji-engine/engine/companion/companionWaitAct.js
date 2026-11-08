@@ -10,6 +10,10 @@ import {
 } from "./companionLearnDialogue.js";
 import { progressPhaseLabel } from "./companionProgressOverlay.js";
 import {
+  IDLE_LIFE_CLIP_POOL,
+  pickIdleShowcase,
+} from "./companionActionChoreography.js";
+import {
   pickWaitEmotion,
   pickWaitExpressionProfile,
   pickWaitPose,
@@ -17,6 +21,11 @@ import {
 } from "./companionWaitAssets.js";
 
 export const COMPANION_WAIT_ACT_SCHEMA = "amoji.companionWaitAct.v1";
+
+/** One-shot library clips need room to finish (wave ~1.8s, thinking ~2.4s). */
+export const IDLE_LIFE_INTERVAL_MS = 3000;
+export const AVATAR_LOAD_IDLE_INTERVAL_MS = 1100;
+const IDLE_LIFE_BEATS = Object.freeze(["look", "comb", "breathe"]);
 
 /** @typedef {'connecting'|'waking'|'searching'|'assembling'|'downloading'|'warming'|'learning'|'installing'|'settling'|'almost'|'ready'|'failed'|'thinking'|'avatar-load'|'character-switch'|'motion-pack'|'idle'} WaitPhase */
 
@@ -27,10 +36,12 @@ export { WAIT_POSES_BY_PHASE, pickWaitPose };
  *   avatar?: {
  *     playAction?: (id: string, opts?: object) => void,
  *     playActionSequence?: (ids: string[], opts?: object) => void,
-   *     setEmotion?: (e: string) => void,
-   *     applyExpressionProfile?: (profile: object) => void,
+ *     setEmotion?: (e: string) => void,
+ *     applyExpressionProfile?: (profile: object) => void,
  *     setThinking?: (on: boolean) => void,
  *     stopAction?: () => void,
+ *     resetIdleLife?: (now?: number) => void,
+ *     pulseIdleBeat?: (beat: string) => void,
  *   } | null,
  *   voice?: {
  *     startLearnLoop?: (opts?: object) => void,
@@ -67,23 +78,63 @@ export function createCompanionWaitAct(opts = {}) {
   /** @type {string | null} */
   let lastPoseId = null;
 
-  const playPose = () => {
-    if (kind === "idle" || kind === "avatar-load") {
-      // Procedural planted idle (hosted Relax.vrma is a stretch, not rest).
-      lastPoseId = "idle-stand";
-      avatarRef?.setThinking?.(false);
-      if (poseTick === 0) {
-        avatarRef?.resetIdleLife?.();
-        avatarRef?.setEmotion?.("neutral");
-        avatarRef?.applyExpressionProfile?.({
-          emotion: "neutral",
-          nuance: "none",
-        });
-      } else {
-        const beats = ["look", "comb", "breathe", "look", "nod", "comb"];
-        avatarRef?.pulseIdleBeat?.(beats[poseTick % beats.length]);
-      }
+  const playAvatarLoadIdle = () => {
+    // Procedural planted idle while the model is still loading.
+    lastPoseId = "idle-stand";
+    avatarRef?.setThinking?.(false);
+    if (poseTick === 0) {
+      avatarRef?.resetIdleLife?.();
+      avatarRef?.setEmotion?.("neutral");
+      avatarRef?.applyExpressionProfile?.({
+        emotion: "neutral",
+        nuance: "none",
+      });
+    } else {
+      const beat = IDLE_LIFE_BEATS[poseTick % IDLE_LIFE_BEATS.length];
+      avatarRef?.pulseIdleBeat?.(beat);
+    }
+    opts.onPose?.("idle-stand", phase);
+  };
+
+  const playIdleLife = () => {
+    // Planted breath as rest, then one-shot hosted clips (never loop
+    // Relax/Thinking, never setThinking — that would loop Thinking.vrma).
+    avatarRef?.setThinking?.(false);
+    avatarRef?.setEmotion?.("neutral");
+    if (poseTick === 0) {
+      avatarRef?.resetIdleLife?.();
+      avatarRef?.applyExpressionProfile?.({
+        emotion: "neutral",
+        nuance: "none",
+      });
       opts.onPose?.("idle-stand", phase);
+      return;
+    }
+
+    if (poseTick % 2 === 1) {
+      const beat = IDLE_LIFE_BEATS[Math.floor(poseTick / 2) % IDLE_LIFE_BEATS.length];
+      avatarRef?.pulseIdleBeat?.(beat);
+      opts.onPose?.("idle-stand", phase);
+      return;
+    }
+
+    const pose = pickIdleShowcase(lastPoseId, IDLE_LIFE_CLIP_POOL);
+    lastPoseId = pose;
+    avatarRef?.playAction?.(pose, {
+      emotion: "neutral",
+      loop: false,
+      single: true,
+    });
+    opts.onPose?.(pose, phase);
+  };
+
+  const playPose = () => {
+    if (kind === "avatar-load") {
+      playAvatarLoadIdle();
+      return;
+    }
+    if (kind === "idle") {
+      playIdleLife();
       return;
     }
 
@@ -123,11 +174,13 @@ export function createCompanionWaitAct(opts = {}) {
   const startPoseRotation = () => {
     clearInterval(poseTimer);
     const interval =
-      kind === "idle" || kind === "avatar-load"
-        ? 1100
-        : kind === "thinking"
-          ? Math.max(poseIntervalMs, 4200)
-          : poseIntervalMs;
+      kind === "idle"
+        ? IDLE_LIFE_INTERVAL_MS
+        : kind === "avatar-load"
+          ? AVATAR_LOAD_IDLE_INTERVAL_MS
+          : kind === "thinking"
+            ? Math.max(poseIntervalMs, 4200)
+            : poseIntervalMs;
     poseTimer = setInterval(() => {
       if (!active) return;
       poseTick += 1;

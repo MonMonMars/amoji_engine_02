@@ -17,6 +17,7 @@ export const BOOT_IDLE_BODY_MOTION_IDS = Object.freeze([
   "bow",
   "shrug",
   "peace",
+  "stretch",
 ]);
 
 /**
