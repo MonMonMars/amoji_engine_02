@@ -101,20 +101,29 @@ describe("companionTtsProsody", () => {
     expect(chunk.speechEnergy).toBeGreaterThan(0.4);
   });
 
-  it("defaults to clause-level expressive TTS", () => {
+  it("defaults to a single full-sentence utterance", () => {
     const perf = normalizeTtsPerformance({ emotion: "happy" });
-    expect(perf.expressiveClauses).toBe(true);
-    expect(perf.singleUtterance).toBe(false);
+    expect(perf.singleUtterance).toBe(true);
+    expect(perf.expressiveClauses).toBe(false);
     expect(perf.nuance).toBe("excited");
   });
 
-  it("allows a single utterance when requested", () => {
+  it("ignores expressiveClauses unless singleUtterance is explicitly off", () => {
+    const ignored = normalizeTtsPerformance({
+      emotion: "happy",
+      expressiveClauses: true,
+    });
+    expect(ignored.singleUtterance).toBe(true);
+    expect(ignored.expressiveClauses).toBe(false);
+  });
+
+  it("allows clause-level TTS when singleUtterance is off", () => {
     const perf = normalizeTtsPerformance({
       emotion: "happy",
-      singleUtterance: true,
-      expressiveClauses: false,
+      singleUtterance: false,
+      expressiveClauses: true,
     });
-    expect(perf.singleUtterance).toBe(true);
-    expect(perf.expressiveClauses).toBe(false);
+    expect(perf.singleUtterance).toBe(false);
+    expect(perf.expressiveClauses).toBe(true);
   });
 });

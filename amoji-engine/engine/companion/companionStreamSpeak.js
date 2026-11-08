@@ -12,7 +12,6 @@ const PARTIAL_MOOD_RE = /\s*\[mood:\w*$/i;
 const ACTION_TAG_RE = /\s*\[action:\w+\]\s*/gi;
 const PARTIAL_ACTION_RE = /\s*\[action:\w*$/i;
 const SENTENCE_END_RE = /[.!?。！？\n\uFF01\uFF1F]/;
-const SOFT_BREAK_RE = /[,，、;；:：]/;
 
 /**
  * @param {string | null | undefined} text
@@ -52,7 +51,8 @@ export function isSpeakableChunk(chunk, minLen = 4) {
  */
 export function createStreamSpeakPlanner(opts = {}) {
   const minLen = opts.minLen ?? 4;
-  const maxHold = opts.maxHoldChars ?? 42;
+  /** Only force-split a run-on with no punctuation; never cut a normal sentence. */
+  const maxHold = opts.maxHoldChars ?? 280;
   let spokenOffset = 0;
 
   const reset = () => {
@@ -76,10 +76,9 @@ export function createStreamSpeakPlanner(opts = {}) {
       buf += ch;
       const trimmed = buf.trim();
       const atEnd = SENTENCE_END_RE.test(ch);
-      const softBreak = SOFT_BREAK_RE.test(ch) && trimmed.length >= minLen + 2;
-      const tooLong = trimmed.length >= maxHold;
+      const tooLong = trimmed.length >= maxHold && /\s/.test(ch);
 
-      if (trimmed && (atEnd || softBreak || tooLong) && isSpeakableChunk(trimmed, minLen)) {
+      if (trimmed && (atEnd || tooLong) && isSpeakableChunk(trimmed, minLen)) {
         segments.push(trimmed);
         spokenOffset += buf.length;
         buf = "";
