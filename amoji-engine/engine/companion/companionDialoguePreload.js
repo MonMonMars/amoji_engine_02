@@ -1,7 +1,7 @@
 /**
  * Pre-synthesize wait-time dialogue for faster first spoken filler.
  */
-import { LEARN_DIALOGUE } from "./companionLearnDialogue.js";
+import { LEARN_DIALOGUE, LOADING_WAIT_WORDS } from "./companionLearnDialogue.js";
 import {
   THINKING_PHRASES_EN,
   THINKING_PHRASES_YUE,
@@ -48,8 +48,15 @@ export function collectWaitDialoguePhrases(isEnglish = false, perPhase = 2) {
   const phases = [
     "avatar-load",
     "connecting",
+    "waking",
+    "searching",
+    "assembling",
     "downloading",
+    "warming",
     "learning",
+    "installing",
+    "settling",
+    "almost",
     "thinking-wait",
   ];
   /** @type {string[]} */
@@ -60,6 +67,11 @@ export function collectWaitDialoguePhrases(isEnglish = false, perPhase = 2) {
     if (!list?.length) continue;
     for (let i = 0; i < Math.min(perPhase, list.length); i += 1) {
       phrases.push(list[i]);
+    }
+    const words = LOADING_WAIT_WORDS[phase];
+    const wordList = isEnglish ? words?.en : words?.yue;
+    if (wordList?.length) {
+      phrases.push(wordList[0]);
     }
   }
   phrases.push(...collectIdleDialoguePhrases(isEnglish));
@@ -96,7 +108,7 @@ export async function prefetchWaitDialogue(opts = {}) {
   const voiceName = opts.voiceName || (isEnglish ? "en-US-JennyNeural" : "zh-HK-HiuMaanNeural");
   const phrases = collectWaitDialoguePhrases(isEnglish, opts.perPhase ?? 2).slice(
     0,
-    opts.maxPhrases ?? 52,
+    opts.maxPhrases ?? 64,
   );
 
   inflight = (async () => {
