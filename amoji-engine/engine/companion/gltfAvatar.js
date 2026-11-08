@@ -20,6 +20,7 @@ import {
   PORTRAIT_CAMERA_Z_SIGN,
   PORTRAIT_FOV,
   applyUpperBodyPortraitFrame,
+  applyUserOrbitLimits,
   detectPortraitCameraZSign,
   isHeadFacingCamera,
   portraitDistanceForHeight,
@@ -119,11 +120,9 @@ export async function createGltfAvatar(opts) {
   const controls = new OrbitControls(camera, canvas);
   controls.enableDamping = true;
   controls.dampingFactor = 0.08;
-  controls.enablePan = false;
   controls.minDistance = 1.1;
   controls.maxDistance = 4.2;
-  controls.minPolarAngle = 0.65;
-  controls.maxPolarAngle = 1.55;
+  applyUserOrbitLimits(controls);
   controls.target.set(0, 1.15, 0);
   controls.update();
   // Unreal-like: left drag orbit, wheel zoom
@@ -136,8 +135,8 @@ export async function createGltfAvatar(opts) {
     ONE: THREE.TOUCH.ROTATE,
     TWO: THREE.TOUCH.DOLLY,
   };
-  controls.enableRotate = true;
-  controls.enableZoom = true;
+  controls.rotateSpeed = 1.35;
+  controls.zoomSpeed = 1.15;
 
   const loader = new GLTFLoader();
   const preload =
@@ -408,6 +407,7 @@ export async function createGltfAvatar(opts) {
 
   const frameAnchor = new THREE.Vector3();
   const smoothedFrameAnchor = new THREE.Vector3();
+  let orbitPointerDown = false;
   let raf = 0;
   const frame = () => {
     const dt = clock.getDelta();
@@ -499,7 +499,9 @@ export async function createGltfAvatar(opts) {
     } else {
       smoothFrameAnchor(smoothedFrameAnchor, frameAnchor, dt);
     }
-    applyOrbitFollowAnchor(controls, camera, smoothedFrameAnchor);
+    if (!orbitPointerDown) {
+      applyOrbitFollowAnchor(controls, camera, smoothedFrameAnchor);
+    }
     controls.update();
 
     faceLight.intensity = 0.55 + (talking ? 0.2 : 0) + Math.sin((now - t0) * 0.002) * 0.05;
@@ -514,11 +516,19 @@ export async function createGltfAvatar(opts) {
 
   // Prevent page scroll while orbiting on canvas
   canvas.style.touchAction = "none";
+  canvas.style.userSelect = "none";
+  canvas.style.webkitUserSelect = "none";
   canvas.style.cursor = "grab";
   canvas.addEventListener("pointerdown", () => {
+    orbitPointerDown = true;
     canvas.style.cursor = "grabbing";
   });
   canvas.addEventListener("pointerup", () => {
+    orbitPointerDown = false;
+    canvas.style.cursor = "grab";
+  });
+  canvas.addEventListener("pointercancel", () => {
+    orbitPointerDown = false;
     canvas.style.cursor = "grab";
   });
 
