@@ -16,7 +16,6 @@ import { pickLocalChatReply } from "./secretary/secretaryLocalReply.mjs";
 import { buildActionLlmContext } from "./companionActionIntent.js";
 import {
   fetchWebContextForChat,
-  needsWebSearch,
   shouldTryWebSearch,
 } from "./companionWebSearch.mjs";
 
@@ -291,7 +290,8 @@ export async function processChatRequest(body) {
       apiKey: openRouterApiKey,
       model: orModel,
       messages,
-      plugins: tryWeb ? [{ id: "web" }] : null,
+      // Prefer our snapshot over OpenRouter's web plugin — the plugin 4xx
+      // used to drop the whole turn onto canned local replies.
       extraHeaders: {
         "HTTP-Referer": process.env.OPENROUTER_REFERER || "https://amoji.app",
         "X-Title": "Amoji Companion",

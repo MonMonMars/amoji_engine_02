@@ -59,6 +59,13 @@ export function localCompanionReply(message, history = [], webContext = "") {
   const text = String(message || "").trim();
   const lower = text.toLowerCase();
   const taggedAction = inferActionFromUserText(text);
+  const webSnippet = String(webContext || "")
+    .replace(/^Web search snapshot[^\n]*\n?/i, "")
+    .trim()
+    .slice(0, 360);
+  if (webSnippet) {
+    return `${webSnippet}（網上資料，可能唔完全準） [mood:thinking]`;
+  }
 
   if (isLikelyImpossibleAction(text)) {
     const alt = suggestClosestActions(text, 1)[0];
@@ -109,14 +116,6 @@ export function localCompanionReply(message, history = [], webContext = "") {
   }
   if (/再见|拜拜|bye/.test(lower)) {
     return "拜拜啦～ [action:wave] [mood:happy]";
-  }
-
-  const webSnippet = String(webContext || "")
-    .replace(/^Web search snapshot[^\n]*\n?/i, "")
-    .trim()
-    .slice(0, 240);
-  if (webSnippet) {
-    return `${webSnippet}（網上資料，可能唔完全準） [mood:thinking]`;
   }
 
   const snippets = [
