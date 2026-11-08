@@ -202,10 +202,9 @@ export async function processChatRequest(body) {
   const webSearchEnabled = body.webSearch !== false;
   const tryWeb =
     webSearchEnabled &&
-    shouldTryWebSearch(message, { basicMode: true, force: body.forceWeb === true });
+    shouldTryWebSearch(message, { force: body.forceWeb === true });
   if (tryWeb) {
     const web = await fetchWebContextForChat(message, fetch, {
-      basicMode: true,
       force: body.forceWeb === true,
     });
     webSearched = web.searched;
@@ -219,9 +218,9 @@ export async function processChatRequest(body) {
   );
 
   const webInstruction = webContext
-    ? "Use the web snapshot below when answering. If it is empty or uncertain, say you could not verify online and answer from general knowledge."
+    ? "Answer as the companion in the user's language. Use the snapshot only when it directly answers this turn. Ignore unrelated headlines. Do not recite raw search text."
     : webSearched
-      ? "A web search was attempted but returned no useful snapshot. Say you could not verify online if the user asked for current/live facts."
+      ? "Live lookup returned nothing useful. If they asked for a current fact, say you could not check online, then keep chatting. Otherwise ignore the failed search."
       : "";
 
   const systemWithWeb = [

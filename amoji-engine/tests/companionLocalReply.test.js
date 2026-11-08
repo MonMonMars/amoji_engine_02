@@ -19,4 +19,14 @@ describe("companionLocalReply", () => {
     expect(reply).toContain("Artificial intelligence");
     expect(reply).toContain("[mood:thinking]");
   });
+
+  it("ignores leftover web dumps on small talk", () => {
+    const reply = localCompanionReply(
+      "hello",
+      [],
+      "Web search snapshot:\nTotally unrelated English headline about wheat futures.",
+    );
+    expect(reply).not.toMatch(/wheat futures/i);
+    expect(reply).toContain("[action:wave]");
+  });
 });

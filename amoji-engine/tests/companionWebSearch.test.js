@@ -14,10 +14,17 @@ import {
 describe("companionWebSearch", () => {
   it("detects search-worthy prompts", () => {
     expect(needsWebSearch("今日香港天氣點呀？")).toBe(true);
+    expect(needsWebSearch("what is AI?")).toBe(true);
+    expect(needsWebSearch("香港人口幾多")).toBe(true);
+    expect(needsWebSearch("who is Ada Lovelace")).toBe(true);
     expect(needsWebSearch("你好呀")).toBe(false);
-    expect(shouldTryWebSearch("what is AI?", { basicMode: true })).toBe(true);
-    expect(shouldTryWebSearch("香港人口幾多", { basicMode: true })).toBe(true);
+    expect(needsWebSearch("今日點呀？")).toBe(false);
+    expect(needsWebSearch("how are you")).toBe(false);
+    expect(needsWebSearch("show me kung fu")).toBe(false);
+    expect(shouldTryWebSearch("what is AI?")).toBe(true);
+    expect(shouldTryWebSearch("香港人口幾多")).toBe(true);
     expect(shouldTryWebSearch("hello", { basicMode: true })).toBe(false);
+    expect(shouldTryWebSearch("今日點呀？", { basicMode: true })).toBe(false);
   });
 
   it("extracts a weather location from Cantonese and English", () => {
@@ -80,13 +87,20 @@ describe("companionWebSearch", () => {
           }),
         };
       }
-      return { ok: false, json: async () => ({}) };
+      return {
+        ok: true,
+        json: async () => ({
+          AbstractText: "Artificial intelligence is a field of computer science.",
+          RelatedTopics: [],
+        }),
+      };
     };
     const result = await searchWeb("What is the weather in Hong Kong today?", fetchImpl);
     expect(result.ok).toBe(true);
     expect(result.source).toBe("wttr");
     expect(result.summary).toContain("27°C");
     expect(result.summary).toContain("Patchy rain nearby");
+    expect(result.summary).not.toMatch(/Artificial intelligence/i);
   });
 
   it("uses Wikipedia opensearch when DuckDuckGo is empty", async () => {
@@ -149,5 +163,39 @@ describe("companionWebSearch", () => {
     );
     expect(reply).toContain("27°C");
     expect(reply).not.toContain("[action:eat]");
+  });
+
+  it("does not search or dump headlines for casual chat", async () => {
+    let called = 0;
+    const fetchImpl = async () => {
+      called += 1;
+      throw new Error("search should not run");
+    };
+    const web = await fetchWebContextForChat("今日點呀？", fetchImpl);
+    expect(web.searched).toBe(false);
+    expect(web.context).toBe("");
+    expect(called).toBe(0);
+
+    const dumped = localCompanionReply(
+      "今日點呀？",
+      [],
+      "Optional web snapshot.\nBreaking: random English stock dump that does not belong in chat.",
+    );
+    expect(dumped).not.toMatch(/Breaking: random English stock dump/i);
+    expect(dumped).toMatch(/\[mood:/);
+  });
+
+  it("drops snapshots that do not match the query", async () => {
+    const fetchImpl = async () => ({
+      ok: true,
+      json: async () => ({
+        AbstractText: "Unrelated celebrity gossip from another topic.",
+        Answer: "",
+        RelatedTopics: [],
+      }),
+    });
+    const web = await fetchWebContextForChat("香港人口幾多", fetchImpl);
+    expect(web.searched).toBe(true);
+    expect(web.context).toBe("");
   });
 });
