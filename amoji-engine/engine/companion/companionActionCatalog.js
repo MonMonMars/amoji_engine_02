@@ -401,22 +401,28 @@ export function buildActionPromptFragment(isEnglish = false) {
   const list = PLAYABLE_ACTIONS.join(", ");
   const extensions =
     "breakdance, taiji, highfive, curtsy, tiktokdance, ballet, hiphop, macarena, floss, wiggle, superhero, handshake, fingerheart, photopose, pushup, plank, zombie, sneak, jumpjack";
+  const showcase =
+    "wave, nod, bow, clap, dance, stretch, thinking, peace, thumbsup, spin, celebrate, kungfu, taiji, breakdance, highfive, hiphop, fingerheart";
   if (isEnglish) {
     return [
       `When the user asks you to move, pose, or perform a physical action, YOU choose the motion via an action tag before the mood tag. Supported actions only: ${list}.`,
-      `Cloud-learn moves (downloaded on first use — tell the user you need a moment to learn if new): ${extensions}.`,
+      `While idle or loading you may softly cycle showcase moves (${showcase}) — when they ask "what can you do?", name 6–8 moves and offer a demo.`,
+      `Cloud-learn moves (auto-downloaded in background — mention briefly if still learning): ${extensions}.`,
+      "Match mood to motion: greet→wave, agree→nod, celebrate→cheer/dance, think→thinking, tired→stretch, shy→shy/bow.",
       "If the request is close (e.g. backflip), perform the nearest supported move (e.g. spin) and say briefly you are approximating it.",
       "If the request is impossible (fly, teleport, swim underwater), reply honestly that you cannot do it and use [action:none] — do not play a random unrelated motion.",
       "Examples: dance→[action:dance], breakdance→\"Give me a sec to learn it\" [action:breakdance], impossible fly→\"I can't fly\" [action:none] [mood:sad].",
-      "Stop commands: [action:stop].",
+      "Stop commands: [action:stop]. Multi-move: user says \"show me moves\" → chain with one tag or describe then [action:celebrate].",
     ].join(" ");
   }
   return [
     `當用家叫你做動作、擺 pose、表演時，由你決定動作 tag（放喺 mood tag 前）。只可用：${list}。`,
-    `雲端學習動作（第一次會下載 — 未學過要講需要時間學）：${extensions}。`,
+    `等緊或者載入時可以輕微做展示動作（${showcase}）— 用家問「你做咩動作」就列 6–8 個再示範。`,
+    `雲端動作（背景會自動下載 — 未學完要講一聲）：${extensions}。`,
+    "情緒配動作：打招呼→wave、同意→nod、開心→cheer/dance、諗緊→thinking、攰→stretch、害羞→shy/bow。",
     "近似就得：例如後空翻做不到可以講「我轉一圈代替」再用 [action:spin]。",
     "真係做不到（飛行、潛水、瞬移等）要坦白講做不到，用 [action:none]，唔好亂做其他動作。",
     "例子：跳舞→[action:dance]、霹靂舞→「等我學吓先」[action:breakdance]、做不到飛→「我飛唔到呀」[action:none] [mood:sad]。",
-    "停手：用家話停/唔好再動→[action:stop]。",
+    "停手：用家話停/唔好再動→[action:stop]。連續表演：用家話「表演幾個動作」可以 [action:celebrate] 或描述後再做。",
   ].join(" ");
 }

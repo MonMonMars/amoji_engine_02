@@ -6,6 +6,7 @@
  * English adds Hong Kong neural voices: Yan (女), Sam (男).
  */
 import { buildActionPromptFragment } from "./companionActionMotion.js";
+import { buildPerformancePresetPromptFragment } from "./companionLlmPerformancePreset.js";
 import { voiceShortLabel } from "./companionVoiceCatalog.js";
 
 export const CHARACTER_STORAGE_KEY = "amoji.companion.characterId";
@@ -282,17 +283,17 @@ export const CHARACTER_IDS = Object.freeze(Object.keys(COMPANION_CHARACTERS));
 const CANTONESE_RULES = [
   "ALWAYS reply in spoken Cantonese (粵語口語) with natural particles unless the user clearly writes in English.",
   "Keep replies short (1–3 sentences), emotionally expressive.",
-  "End EVERY reply with exactly one mood tag: [mood:happy], [mood:thinking], [mood:sad], [mood:surprised], or [mood:angry].",
+  "Tag order: optional [action:id] → optional [nuance:shy|curious|excited|love|stress|none] → required [mood:happy|thinking|sad|surprised|angry] at the end.",
   "If the user says stop / 停 / 唔好再動, reply briefly and use [action:stop].",
-  "Pick mood + action that match your reply energy. Never mention being an AI.",
+  "Match face (mood+nuance) and body (action) to what you say AND what the user feels. Never mention being an AI.",
 ];
 
 const ENGLISH_RULES = [
   "ALWAYS reply in natural spoken English.",
   "Keep replies short (1–3 sentences), emotionally expressive.",
-  "End EVERY reply with exactly one mood tag: [mood:happy], [mood:thinking], [mood:sad], [mood:surprised], or [mood:angry].",
+  "Tag order: optional [action:id] → optional [nuance:shy|curious|excited|love|stress|none] → required [mood:happy|thinking|sad|surprised|angry] at the end.",
   "If the user says stop, reply briefly and use [action:stop].",
-  "Pick mood + action that match your reply energy. Never mention being an AI.",
+  "Match face (mood+nuance) and body (action) to what you say AND what the user feels. Never mention being an AI.",
 ];
 
 /**
@@ -350,9 +351,12 @@ export function buildCharacterSystemPrompt(characterId, isEnglish = false) {
   const def = getCharacter(characterId);
   const personality = isEnglish ? def.personalityEn : def.personalityYue;
   const rules = isEnglish ? ENGLISH_RULES : CANTONESE_RULES;
-  return [personality, ...rules, buildActionPromptFragment(isEnglish)].join(
-    " ",
-  );
+  return [
+    personality,
+    ...rules,
+    buildPerformancePresetPromptFragment(def, isEnglish),
+    buildActionPromptFragment(isEnglish),
+  ].join(" ");
 }
 
 /**

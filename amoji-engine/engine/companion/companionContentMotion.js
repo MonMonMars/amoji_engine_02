@@ -211,7 +211,12 @@ export function analyzeStreamingReply(partialText) {
   const parsed = parseReplyMood(visible);
   const emotion =
     parsed.emotion || inferExpressionFromText(parsed.reply) || "thinking";
-  const nuance = inferContentNuance(parsed.reply);
+  const nuanceMatch = String(partialText || "").match(/\[nuance:(\w+)\]/i);
+  const taggedNuance =
+    nuanceMatch && CONTENT_NUANCES.includes(nuanceMatch[1].toLowerCase())
+      ? nuanceMatch[1].toLowerCase()
+      : null;
+  const nuance = taggedNuance || inferContentNuance(parsed.reply);
   const talkStyle = inferTalkGestureFromText(parsed.reply, { emotion });
   const actionMatch = String(partialText || "").match(/\[action:(\w+)\]/i);
   const action = actionMatch ? resolveAction(actionMatch[1]) : null;
@@ -299,7 +304,7 @@ export function analyzeCompanionReply(text, moodHint = null) {
   const reply = tagged.reply;
   const emotion =
     tagged.emotion || moodHint || inferExpressionFromText(reply) || "neutral";
-  const nuance = inferContentNuance(reply);
+  const nuance = tagged.nuance || inferContentNuance(reply);
   const talkStyle = inferTalkGestureFromText(reply, { emotion });
   const gesture = inferOneShotGesture(reply, emotion, nuance);
   const action = inferActionFromReply(String(text || ""), tagged.action);
