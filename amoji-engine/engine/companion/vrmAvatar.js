@@ -232,7 +232,6 @@ export async function createVrmAvatar(opts) {
   let baseModelRotY = model.rotation.y;
   scene.add(model);
   vrm.humanoid?.resetNormalizedPose?.();
-  configureVrmSpringStability(vrm);
   const bodyMotion = createCompanionBodyMotion(vrm.humanoid);
   /** @type {string | null} */
   let vrmaAction = null;
@@ -293,12 +292,15 @@ export async function createVrmAvatar(opts) {
 
   bodyMotion.setArmRestRotations?.(detectVrmArmRestRotations(vrm));
   bodyMotion.snapToRestPose?.();
+  syncHumanoidPose();
+  configureVrmSpringStability(vrm);
   for (let i = 0; i < 18; i += 1) {
     bodyMotion.update(1 / 60);
     syncHumanoidPose();
     vrm.update(1 / 60);
   }
   bodyMotion.resetMotionClock?.();
+  configureVrmSpringStability(vrm);
   faceLight.position.set(0.2, 1.55, portraitCameraZSign * 1.4);
   smoothedFrameAnchor.copy(faceAnchor);
   /** @type {{ position: THREE.Vector3, target: THREE.Vector3, fov: number, distance: number }} */
