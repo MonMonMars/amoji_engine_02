@@ -13,7 +13,10 @@ import {
 } from "../companionVoiceCatalog.js";
 import { buildExpressiveTtsPlan } from "../companionExpressiveTts.js";
 import { createCompanionVoicePicker } from "../companionVoicePicker.js";
-import { normalizeTtsPerformance } from "../companionTtsProsody.js";
+import {
+  buildCloudTtsRequestBody,
+  enrichTtsPerformance,
+} from "../companionTtsProsody.js";
 import { buildTodayBriefing } from "./briefing.js";
 import { extractMemoryFromMessage } from "./memoryExtract.js";
 import {
@@ -375,7 +378,7 @@ export function initAmojiSecretaryLite(doc = document) {
     if (!speakerOn || !text) return;
     setStatus(strings.statusSpeaking);
     try {
-      const perf = normalizeTtsPerformance(emotion || "neutral");
+      const perf = enrichTtsPerformance(emotion || "neutral", text);
       perf.lang = isEn ? "en" : "yue";
       const plan = buildExpressiveTtsPlan(
         text,
@@ -391,16 +394,21 @@ export function initAmojiSecretaryLite(doc = document) {
         const res = await fetch("/api/tts", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            text: clause.text,
-            emotion: clause.emotion || perf.emotion,
-            nuance: clause.nuance || perf.nuance,
-            talkStyle: clause.talkStyle || perf.talkStyle,
-            speechEnergy: clause.speechEnergy ?? perf.speechEnergy,
-            lang: isEn ? "en" : "yue",
-            voice: voiceId,
-            characterId: "rose",
-          }),
+          body: JSON.stringify(
+            buildCloudTtsRequestBody({
+              text: clause.text,
+              performance: {
+                ...perf,
+                emotion: clause.emotion || perf.emotion,
+                nuance: clause.nuance || perf.nuance,
+                talkStyle: clause.talkStyle || perf.talkStyle,
+                speechEnergy: clause.speechEnergy ?? perf.speechEnergy,
+              },
+              lang: isEn ? "en" : "yue",
+              voice: voiceId,
+              characterId: "rose",
+            }),
+          ),
         });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         bumpProbe("ttsCalls");

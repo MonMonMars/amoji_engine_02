@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildCloudTtsRequestBody,
   buildTtsInstruct,
+  enrichTtsPerformance,
+  inferSpeechEmotionFromText,
+  instructSpeakingSpeed,
   normalizeTtsPerformance,
   resolveChunkTtsPerformance,
   resolveCompanionTtsProsody,
@@ -106,6 +110,42 @@ describe("companionTtsProsody", () => {
     expect(perf.singleUtterance).toBe(true);
     expect(perf.expressiveClauses).toBe(false);
     expect(perf.nuance).toBe("excited");
+  });
+
+  it("lifts spoken emotion from an excited line even when the caller is calm", () => {
+    expect(inferSpeechEmotionFromText("哇！真係好開心呀！")).toBe("happy");
+    expect(inferSpeechEmotionFromText("今日天氣幾好")).toBe("neutral");
+    const enriched = enrichTtsPerformance({ emotion: "neutral" }, "哈哈好開心呀！");
+    expect(enriched.emotion).toBe("happy");
+    expect(enriched.nuance).toBe("excited");
+  });
+
+  it("keeps ChatGPT Advanced Voice instructions alive on calm lines", () => {
+    const instruct = buildTtsInstruct({
+      emotion: "neutral",
+      lang: "en",
+      text: "Sure, I can help with that.",
+    });
+    expect(instruct).toMatch(/ChatGPT Advanced Voice/i);
+    expect(instruct).toMatch(/Never:/i);
+    expect(instruct).toMatch(/Speak at 1\.\d+x/);
+    expect(instructSpeakingSpeed({ emotion: "happy", speechEnergy: 0.85 })).toBeGreaterThan(
+      instructSpeakingSpeed({ emotion: "sad", speechEnergy: 0.4 }),
+    );
+  });
+
+  it("sends instructions on the cloud TTS body", () => {
+    const body = buildCloudTtsRequestBody({
+      text: "你好呀！",
+      performance: { emotion: "neutral" },
+      voice: "zh-HK-HiuMaanNeural",
+      lang: "zh-HK",
+      characterId: "amoji",
+    });
+    expect(body.emotion).toBe("happy");
+    expect(body.instructions).toContain("Voice Affect:");
+    expect(body.instructions).toMatch(/Speak at /);
+    expect(body.speed).toBeGreaterThan(1);
   });
 
   it("ignores expressiveClauses unless singleUtterance is explicitly off", () => {
