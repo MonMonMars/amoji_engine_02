@@ -103,6 +103,24 @@
   -webkit-backdrop-filter: blur(18px);
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.32);
   max-width: min(72vw, 280px);
+  cursor: pointer;
+}
+
+.theme-grok-ani .companion-chip:hover,
+.theme-grok-ani .companion-chip:focus-visible {
+  border-color: rgba(127, 212, 207, 0.45);
+  background: rgba(10, 8, 22, 0.72);
+}
+
+.theme-grok-ani .companion-chip__caret {
+  width: 0.38rem;
+  height: 0.38rem;
+  margin-left: 0.05rem;
+  flex-shrink: 0;
+  border-right: 1.5px solid rgba(247, 241, 232, 0.72);
+  border-bottom: 1.5px solid rgba(247, 241, 232, 0.72);
+  transform: rotate(45deg) translateY(-0.08rem);
+  opacity: 0.8;
 }
 
 .theme-grok-ani .companion-chip__avatar {
