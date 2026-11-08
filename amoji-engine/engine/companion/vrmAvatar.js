@@ -6,6 +6,10 @@ import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { VRMLoaderPlugin, VRMExpressionPresetName } from "@pixiv/three-vrm";
+import { applyAutoCameraFrame } from "./companionCameraApply.js";
+import {
+  createCompanionCameraDirector,
+} from "./companionCameraDirector.js";
 import {
   applyOrbitFollowAnchor,
   computeVrmFrameAnchor,
@@ -243,10 +247,7 @@ export async function createVrmAvatar(opts) {
     portraitCamera.fov = camera.fov;
     portraitCamera.distance = camera.position.distanceTo(controls.target);
   };
-  let actionCamBlend = 0;
-  let userOrbiting = false;
-  const actionCamDir = new THREE.Vector3();
-  const actionCamTarget = new THREE.Vector3();
+  const cameraDirector = createCompanionCameraDirector();
   const frameAnchor = new THREE.Vector3();
   const raycaster = new THREE.Raycaster();
   const pointer = new THREE.Vector2();
@@ -265,10 +266,10 @@ export async function createVrmAvatar(opts) {
   }
 
   controls.addEventListener?.("start", () => {
-    userOrbiting = true;
+    cameraDirector.setUserOrbiting(true);
   });
   controls.addEventListener?.("end", () => {
-    userOrbiting = false;
+    cameraDirector.setUserOrbiting(false);
     syncPortraitFromControls();
   });
 
@@ -501,12 +502,15 @@ export async function createVrmAvatar(opts) {
   const setTalking = (on) => {
     talking = Boolean(on);
     bodyMotion.setTalking(talking);
+    cameraDirector.setTalking(talking);
+    if (!talking) cameraDirector.resetDialogue();
     return talking;
   };
 
   const setTalkEnergy = (v) => bodyMotion.setTalkEnergy(v);
   const setTalkStyle = (style) => bodyMotion.setTalkStyle(style);
   const reactToSpeechChunk = (chunk, opts) => {
+    cameraDirector.notifySpeech(chunk);
     const analysis = bodyMotion.reactToSpeechChunk(chunk, opts);
     if (analysis?.expressionBlend) {
       emotion = analysis.emotion || emotion;
@@ -536,32 +540,28 @@ export async function createVrmAvatar(opts) {
       applyOrbitFollowAnchor(controls, camera, frameAnchor);
       faceAnchor.copy(frameAnchor);
 
-      const wantsActionCam = Boolean(bodyMotion.currentAction);
-      const targetBlend = wantsActionCam ? 1 : 0;
-      actionCamBlend += (targetBlend - actionCamBlend) * Math.min(1, dt * 4.5);
-      if (actionCamBlend > 0.01 && !userOrbiting) {
-        const baseTarget = controls.target;
-        const baseDist = camera.position.distanceTo(baseTarget);
-        actionCamTarget.copy(baseTarget);
-        actionCamTarget.y -= actionCamBlend * 0.34;
-        actionCamDir.subVectors(camera.position, baseTarget);
-        if (actionCamDir.lengthSq() < 1e-6) {
-          actionCamDir.set(0, 0, 1);
-        } else {
-          actionCamDir.normalize();
-        }
-        const pullDist = baseDist * (1 + actionCamBlend * 0.62);
-        controls.target.copy(actionCamTarget);
-        camera.position.copy(actionCamTarget).addScaledVector(actionCamDir, pullDist);
-        camera.fov = portraitCamera.fov + actionCamBlend * 14;
-        camera.updateProjectionMatrix();
-      } else if (actionCamBlend < 0.02 && !wantsActionCam) {
-        actionCamBlend = 0;
-        camera.fov += (portraitCamera.fov - camera.fov) * Math.min(1, dt * 6);
-        camera.updateProjectionMatrix();
+      cameraDirector.setCurrentAction(bodyMotion.currentAction);
+      const camState = cameraDirector.update(dt);
+      if (camState.autoActive) {
+        const desired = applyAutoCameraFrame(
+          controls,
+          camera,
+          frameAnchor,
+          portraitDist,
+          {
+            talkCloseBlend: camState.talkCloseBlend,
+            fullBodyBlend: camState.fullBodyBlend,
+          },
+          dt,
+          defaultPortrait.fov,
+        );
+        portraitCamera.position.copy(desired.position);
+        portraitCamera.target.copy(desired.target);
+        portraitCamera.fov = desired.fov;
+        portraitCamera.distance = desired.distance;
+      } else {
+        controls.update();
       }
-
-      controls.update();
     } catch (err) {
       console.warn("[vrm] frame update failed", err);
     }
@@ -641,6 +641,8 @@ export async function createVrmAvatar(opts) {
     defaultPortrait.target.copy(controls.target);
     defaultPortrait.fov = camera.fov;
     defaultPortrait.distance = camera.position.distanceTo(controls.target);
+    cameraDirector.resetDialogue();
+    cameraDirector.setUserOrbiting(false);
     syncPortraitFromControls();
     controls.update();
   };
