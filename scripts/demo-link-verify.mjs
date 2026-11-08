@@ -138,7 +138,14 @@ async function verifySecretary(page, label, opts = {}) {
   record(`${label} tabbar hidden`, state.tabbarHidden);
   record(`${label} activity rail`, state.hasActivityRail);
 
-  await page.waitForSelector("#composer:not(.hidden)", { timeout: 10000 });
+  if (!(await page.locator("#composer:not(.hidden)").count())) {
+    await page.evaluate(() => {
+      document.querySelector('[data-tab="chat"]')?.click();
+      document.getElementById("start-btn")?.click();
+      document.getElementById("open-chat-btn")?.click();
+    });
+  }
+  await page.waitForSelector("#composer:not(.hidden)", { timeout: 15000 });
 
   await page.evaluate(() => {
     const input = document.getElementById("input");

@@ -30,6 +30,7 @@ import { resolveOnlineMotionClipUrl } from "./companionOnlineMotionClips.mjs";
 import { createVrmMotionPlayer } from "./companionVrmMotionPlayer.js";
 import { sampleIdleExpressionBlend } from "./companionIdleMotion.js";
 import { configureVrmSpringStability } from "./vrmSpringStability.js";
+import { applyVrmOutfitTint } from "./companionOutfitApply.js";
 
 export const VRM_AVATAR_SCHEMA = "amoji.vrmAvatar.v1";
 
@@ -278,7 +279,7 @@ export async function createVrmAvatar(opts) {
 
   bodyMotion.setArmRestRotations?.(detectVrmArmRestRotations(vrm));
   bodyMotion.snapToRestPose?.();
-  for (let i = 0; i < 4; i += 1) {
+  for (let i = 0; i < 18; i += 1) {
     bodyMotion.update(1 / 60);
     syncHumanoidPose();
     vrm.update(1 / 60);
@@ -832,10 +833,15 @@ export async function createVrmAvatar(opts) {
     canvas.style.cursor = hits.length ? "pointer" : "grab";
   });
 
+  const setOutfitPreset = (outfitId) => {
+    applyVrmOutfitTint(model, outfitId);
+  };
+
   return {
     schema: VRM_AVATAR_SCHEMA,
     kind: "vrm",
     vrm,
+    setOutfitPreset,
     setEmotion,
     applyExpressionProfile,
     warmExpressionPresets,

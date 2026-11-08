@@ -70,8 +70,8 @@ export function createCompanionWaitAct(opts = {}) {
     avatarRef?.setEmotion?.(emotion);
     avatarRef?.applyExpressionProfile?.(expression);
 
-    if (kind === "idle") {
-      // Idle = procedural sway only — never scripted arm-raise actions.
+    if (kind === "idle" || kind === "avatar-load") {
+      // Procedural sway only while loading / waiting — no VRMA arm poses at boot.
       avatarRef?.setThinking?.(false);
       avatarRef?.stopAction?.();
       opts.onPose?.("idle-procedural", phase);
@@ -109,7 +109,7 @@ export function createCompanionWaitAct(opts = {}) {
   const startPoseRotation = () => {
     clearInterval(poseTimer);
     const interval =
-      kind === "idle"
+      kind === "idle" || kind === "avatar-load"
         ? Math.max(3600, Math.round(poseIntervalMs * 0.58))
         : kind === "thinking"
           ? Math.max(poseIntervalMs, 4200)

@@ -8,6 +8,32 @@ import {
 
 export const COMPANION_IDLE_MOTION_SCHEMA = "amoji.companionIdleMotion.v1";
 
+/** First seconds after avatar boot — gentle breathe + relaxed arms only. */
+export const BOOT_SIMPLE_IDLE_SEC = 6;
+
+/**
+ * Very light boot idle: breathing, tiny sway, natural arm hang (no VRMA / big gestures).
+ * @param {number} elapsedSec
+ */
+export function sampleSimpleBootIdleMotion(elapsedSec) {
+  const t = elapsedSec;
+  const breath = Math.sin(t * 0.88);
+  const sway = Math.sin(t * 0.42 + 0.5);
+
+  return {
+    headX: breath * 0.022,
+    headZ: sway * 0.028,
+    leanY: sway * 0.034,
+    spineX: 0.012 + breath * 0.022,
+    chestX: -0.006 + breath * 0.014,
+    hipZ: sway * 0.02,
+    armLiftL: 0.055 + Math.sin(t * 0.55 + 0.3) * 0.018,
+    armLiftR: 0.055 + Math.sin(t * 0.5 + 1.1) * 0.018,
+    forearmL: 0.15 + Math.max(0, Math.sin(t * 0.62 + 0.2) * 0.028),
+    forearmR: 0.15 + Math.max(0, Math.sin(t * 0.58 + 0.9) * 0.028),
+  };
+}
+
 /**
  * Continuous idle body sway (not talking, not in scripted action).
  * @param {number} elapsedSec
@@ -51,19 +77,21 @@ export function sampleIdleExpressionBlend(elapsedSec, emotion = "neutral") {
   const breath = Math.sin(t * 0.52) * 0.5 + 0.5;
   const flutter = Math.sin(t * 0.29 + 1.8) * 0.5 + 0.5;
   const e = String(emotion || "neutral").toLowerCase();
+  // VRM "Relaxed" morphs droop eyelids — ramp in so the first frame stays awake.
+  const awakeRamp = Math.min(1, Math.max(0, (t - 0.12) / 1.35));
 
   /** @type {Record<string, number>} */
   const blend = {
-    Relaxed: 0.24 + breath * 0.34,
+    Relaxed: (0.24 + breath * 0.34) * awakeRamp,
   };
 
   if (e === "happy" || e === "neutral") {
     blend.Happy = 0.12 + flutter * 0.28;
   } else if (e === "thinking") {
-    blend.Relaxed = 0.34 + breath * 0.2;
+    blend.Relaxed = (0.34 + breath * 0.2) * awakeRamp;
   } else if (e === "sad") {
     blend.Sad = 0.55 + breath * 0.08;
-    blend.Relaxed = 0.25;
+    blend.Relaxed = 0.25 * awakeRamp;
   } else if (e === "surprised") {
     blend.Surprised = 0.15 + flutter * 0.12;
   }
@@ -180,6 +208,6 @@ export function createIdleBeatState(nowMs = performance.now()) {
     beat: null,
     phase: 0,
     duration: 0,
-    nextAt: nowMs + 900 + Math.random() * 1400,
+    nextAt: nowMs + 320 + Math.random() * 680,
   };
 }

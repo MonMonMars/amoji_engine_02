@@ -88,6 +88,12 @@ record("speaker shortcut", ui.speakerBtn);
 record("menu shortcut", ui.menuBtn);
 record("composer visible", ui.composer);
 
+const starterVisible = await page.evaluate(() => {
+  const el = document.getElementById("starter-prompts");
+  return !!el && !el.hidden && el.querySelectorAll(".starter-chip").length >= 2;
+});
+record("starter prompts visible", starterVisible);
+
 await page.click("#btn-open-scene");
 await page.waitForSelector("#scene-sheet.open", { timeout: 5000 });
 record("scene sheet opens", true);
@@ -102,7 +108,27 @@ const aurora = await page.evaluate(
   () => document.querySelector(".atmosphere")?.dataset?.sceneBg === "aurora",
 );
 record("aurora background applies", aurora);
+const casualOutfit = page.locator(
+  '#scene-outfit-grid .scene-preset:not([disabled]):has(.scene-preset__swatch--outfit-casual)',
+);
+if (await casualOutfit.count()) {
+  await casualOutfit.first().click();
+  await page.waitForTimeout(300);
+  const casualApplied = await page.evaluate(
+    () => document.querySelector(".stage")?.dataset?.sceneOutfit === "casual",
+  );
+  record("casual outfit applies", casualApplied);
+} else {
+  record("casual outfit applies", false, "no outfit button");
+}
+
 await page.click("#scene-sheet-close");
+
+const statusDotListening = await page.evaluate(() => {
+  const dot = document.getElementById("status-dot");
+  return dot?.dataset?.state === "typing" || dot?.dataset?.state === "listening";
+});
+record("voice status dot active", statusDotListening);
 
 await page.click("#btn-toggle-chat");
 await page.waitForTimeout(300);
@@ -138,11 +164,40 @@ await page.waitForFunction(
   () => {
     const rows = document.querySelectorAll(".msg-row.assistant .bubble");
     const last = rows[rows.length - 1];
-    return last && !last.classList.contains("thinking") && last.textContent?.length > 2;
+    return (
+      last &&
+      !last.classList.contains("thinking") &&
+      !last.classList.contains("typing") &&
+      last.textContent?.length > 2
+    );
   },
   { timeout: 60000 },
 );
 record("assistant reply received", true);
+
+await page.waitForFunction(
+  () =>
+    document.querySelectorAll(".msg-row.assistant.has-actions .msg-action-btn").length >=
+    2,
+  { timeout: 30000 },
+);
+
+const copyWorks = await page.evaluate(async () => {
+  const row = document.querySelector(".msg-row.assistant.has-actions");
+  const buttons = row ? [...row.querySelectorAll(".msg-action-btn")] : [];
+  if (buttons.length < 2) return false;
+  buttons[0].click();
+  await new Promise((r) => setTimeout(r, 120));
+  return true;
+});
+record("message actions on assistant", copyWorks);
+
+const starterHidden = await page.evaluate(() => {
+  const el = document.getElementById("starter-prompts");
+  return !!el && el.hidden;
+});
+record("starter prompts hide after chat", starterHidden);
+
 await page.screenshot({
   path: `${artifacts}/demo-chat-reply.png`,
   fullPage: false,

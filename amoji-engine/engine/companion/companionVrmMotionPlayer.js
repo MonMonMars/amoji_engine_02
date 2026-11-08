@@ -7,6 +7,7 @@ import {
   createVRMAnimationClip,
   VRMAnimationLoaderPlugin,
 } from "@pixiv/three-vrm-animation";
+import { getPreloadedIdleVrmaBuffer } from "./companionIdleMotionPreload.js";
 import { resolveOnlineMotionClipUrl } from "./companionOnlineMotionClips.mjs";
 
 export const COMPANION_VRM_MOTION_PLAYER_SCHEMA =
@@ -69,7 +70,10 @@ export function createVrmMotionPlayer(opts) {
 
     const job = (async () => {
       try {
-        const gltf = await loader.loadAsync(url);
+        const preloaded = getPreloadedIdleVrmaBuffer(url);
+        const gltf = preloaded
+          ? await loader.parseAsync(preloaded, url)
+          : await loader.loadAsync(url);
         const vrmAnimation = gltf.userData?.vrmAnimations?.[0];
         if (!vrmAnimation) return null;
         const clip = createVRMAnimationClip(vrmAnimation, vrm);

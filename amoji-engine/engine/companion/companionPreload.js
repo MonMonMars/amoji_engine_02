@@ -1,12 +1,31 @@
 /**
  * Companion preload — minimal boot (chat-first), heavy 3D assets in background.
  */
+import {
+  BOOT_IDLE_BODY_MOTION_IDS,
+  getBootIdleMotionPreloadPromise,
+  startBootIdleMotionPreload,
+} from "./companionIdleMotionPreload.js";
+
 export const COMPANION_PRELOAD_SCHEMA = "amoji.companionPreload.v2";
 
 export const DEFAULT_VRM_URL = "/prototypes/assets/companion-girl.vrm";
 export const DEFAULT_MOTIONS_BASIC_URL = "/api/motions?pack=basic";
 export const DEFAULT_MOTIONS_EXTENSIONS_URL = "/api/motions?pack=extensions";
 export const DEFAULT_MOTIONS_PREMIUM_URL = "/api/motions?pack=premium";
+
+/**
+ * @template T
+ * @param {Promise<T>} promise
+ * @param {number} ms
+ * @param {T} fallback
+ */
+function awaitWithTimeout(promise, ms, fallback) {
+  return Promise.race([
+    promise,
+    new Promise((resolve) => setTimeout(() => resolve(fallback), ms)),
+  ]);
+}
 
 /** @type {Map<string, Promise<ArrayBuffer>>} */
 const vrmBuffers = new Map();
@@ -170,12 +189,16 @@ export function startHeavyCompanionPreload(opts = {}) {
   }
 
   if (fetchImpl && !motionBasicPromise) {
-    motionBasicPromise = fetchImpl(motionsUrl, {
-      method: "GET",
-      headers: { Accept: "application/json" },
-    })
-      .then((res) => (res.ok ? res.json() : null))
-      .catch(() => null);
+    motionBasicPromise = awaitWithTimeout(
+      fetchImpl(motionsUrl, {
+        method: "GET",
+        headers: { Accept: "application/json" },
+      })
+        .then((res) => (res.ok ? res.json() : null))
+        .catch(() => null),
+      12000,
+      null,
+    );
   }
 
   if (fetchImpl && !motionExtensionsPromise) {
@@ -272,6 +295,7 @@ const shouldAutoBoot =
 const boot = shouldAutoBoot ? startMinimalCompanionPreload() : null;
 
 if (shouldAutoBoot) {
+  startBootIdleMotionPreload();
   scheduleCompanionBackgroundWork(ensureRosterPreloadStarted);
 }
 
@@ -292,6 +316,9 @@ if (typeof globalThis !== "undefined") {
     rosterReady: rosterPreloadPromise,
     ensureRoster: ensureRosterPreloadStarted,
     getRosterProgress: () => globalThis.__amojiRosterPreloadPct ?? 0,
+    bootIdleMotionIds: BOOT_IDLE_BODY_MOTION_IDS,
+    ensureIdleMotions: startBootIdleMotionPreload,
+    getIdleMotionPreload: getBootIdleMotionPreloadPromise,
     ready: boot,
   };
 }
