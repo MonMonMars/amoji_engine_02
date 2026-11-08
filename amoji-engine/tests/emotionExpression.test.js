@@ -29,6 +29,7 @@ describe("emotionExpression", () => {
     expect(inferExpressionFromText("我諗緊點解")).toBe("thinking");
     expect(inferExpressionFromText("唉，好傷心")).toBe("sad");
     expect(inferExpressionFromText("今日天氣幾好")).toBe("neutral");
+    expect(inferExpressionFromText("你好呀！")).toBe("happy");
     expect(inferExpressionFromText("哈哈！！")).toBe("happy");
     expect(inferExpressionFromText("我好嬲呀")).toBe("angry");
   });

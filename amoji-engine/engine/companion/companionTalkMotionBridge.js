@@ -24,19 +24,19 @@ export function talkGesturePoseToBody(pose, opts = {}) {
 
   /** @type {Record<string, number>} */
   const body = {
-    headX: -Number(p.bodyAngleX ?? 0) * 0.55,
-    headZ: Number(p.bodyAngleZ ?? 0) * 0.75,
-    spineX: Number(p.bodyAngleX ?? 0) * 0.35 + Number(p.breath ?? 0.35) * 0.04,
-    chestX: -Number(p.bodyAngleY ?? 0) * 0.25,
-    hipZ: Number(p.bodyAngleZ ?? 0) * 0.45,
-    leanY: Number(p.bodyAngleY ?? 0) * 0.65,
+    headX: -Number(p.bodyAngleX ?? 0) * 0.85,
+    headZ: Number(p.bodyAngleZ ?? 0) * 1.05,
+    spineX: Number(p.bodyAngleX ?? 0) * 0.48 + Number(p.breath ?? 0.35) * 0.06,
+    chestX: -Number(p.bodyAngleY ?? 0) * 0.32,
+    hipZ: Number(p.bodyAngleZ ?? 0) * 0.55,
+    leanY: Number(p.bodyAngleY ?? 0) * 0.85,
   };
 
   if (includeArms) {
-    body.armLiftL = 0.08 + armL * 0.55 + shoulderL * 0.16;
-    body.armLiftR = 0.08 + armR * 0.55 + shoulderR * 0.16;
-    body.forearmL = Number(p.armLB ?? 0.05) + Number(p.handLY ?? 0.1) * 0.55;
-    body.forearmR = Number(p.armRB ?? 0.05) + Number(p.handRY ?? 0.1) * 0.55;
+    body.armLiftL = 0.12 + armL * 0.72 + shoulderL * 0.22;
+    body.armLiftR = 0.12 + armR * 0.72 + shoulderR * 0.22;
+    body.forearmL = Number(p.armLB ?? 0.05) + Number(p.handLY ?? 0.1) * 0.7;
+    body.forearmR = Number(p.armRB ?? 0.05) + Number(p.handRY ?? 0.1) * 0.7;
     body.handWaveR = Number(p.handRX ?? 0) * 0.4;
     body.handWaveL = Number(p.handLX ?? 0) * 0.4;
   }
@@ -75,7 +75,7 @@ export function sampleBodyTalkMotion(timeSec, opts = {}) {
     style,
     emotion: opts.emotion || "neutral",
     speechEnergy: opts.speechEnergy ?? 0.5,
-    intensity: 0.78 + (opts.speechEnergy ?? 0.5) * 0.28,
+    intensity: 1.08 + (opts.speechEnergy ?? 0.5) * 0.32,
   });
   return {
     style: sample.style,

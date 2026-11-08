@@ -33,4 +33,11 @@ describe("idle showcase wiring", () => {
       /\.finally\(\(\) => \{\s*hideAvatarLoadPill\(\);\s*avatar\?\.stopAction/,
     );
   });
+
+  it("streams spoken clauses with emotion and keeps the last talking face", () => {
+    expect(html).toMatch(/expressiveClauses:\s*true/);
+    expect(html).not.toMatch(
+      /if \(!avatar\.currentAction\) \{\s*avatar\.setEmotion\("neutral"\)/,
+    );
+  });
 });
