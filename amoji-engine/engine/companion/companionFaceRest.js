@@ -7,7 +7,7 @@
  * Fcl_EYE_Close morphs are left at file defaults unless we zero them.
  */
 
-export const COMPANION_FACE_REST_SCHEMA = "amoji.companionFaceRest.v2";
+export const COMPANION_FACE_REST_SCHEMA = "amoji.companionFaceRest.v3";
 
 export const MOUTH_CLOSE_EPS = 0.035;
 /** No smile morph at rest — visemes own the jaw while talking. */
@@ -31,6 +31,8 @@ export const MOUTH_VISEME_NAMES = ["aa", "ee", "ih", "oh", "ou"];
 
 const EYE_CLOSE_RE =
   /(blink|wink|eye[_.\s-]?close|eyes[_.\s-]?close|eyelid|lidclose|close[_.\s-]?eye|fcl_eye_close|eye[_.\s-]?smile|eyesmile|squint|まばたき|目閉|瞑)/i;
+const EYE_OPEN_RE =
+  /(eye[_.\s-]?open|eyes[_.\s-]?open|wide[_.\s-]?eyes?|eyes?[_.\s-]?wide|fcl_eye_open|目開|開き)/i;
 const MOUTH_OPEN_RE =
   /(mouth[_.\s-]?open|jaw|viseme|fcl_mth_(a|i|u|e|o)|mouth[_-]?(a|i|u|e|o)\b|teeth|口開)/i;
 
@@ -233,6 +235,57 @@ export function applyBlinkWeight(expr, weight) {
   for (const name of blinkExpressionNames(expr)) {
     expr.setValue?.(name, w);
   }
+}
+
+/**
+ * Photoreal VRMs often keep lids half-shut at blink=0. Drive any dedicated
+ * eye-open morph so rest faces look awake.
+ * @param {unknown} expr
+ * @param {number} [weight]
+ */
+export function eyeOpenExpressionNames(expr) {
+  return listExpressionNames(expr).filter(
+    (name) =>
+      EYE_OPEN_RE.test(name) &&
+      !EYE_CLOSE_RE.test(name) &&
+      !MOUTH_OPEN_RE.test(name),
+  );
+}
+
+/**
+ * @param {unknown} expr
+ * @param {number} [weight]
+ */
+export function applyRestEyeOpen(expr, weight = 0.42) {
+  if (!expr) return 0;
+  const names = eyeOpenExpressionNames(expr);
+  if (!names.length) return 0;
+  const w = Math.max(0, Math.min(1, Number(weight) || 0));
+  for (const name of names) expr.setValue?.(name, w);
+  return names.length;
+}
+
+/**
+ * @param {{ traverse?: Function } | null | undefined} root
+ * @param {number} [weight]
+ */
+export function applyRestEyeOpenMorphs(root, weight = 0.42) {
+  if (!root || typeof root.traverse !== "function") return 0;
+  const w = Math.max(0, Math.min(1, Number(weight) || 0));
+  let applied = 0;
+  root.traverse((obj) => {
+    const influences = obj?.morphTargetInfluences;
+    const dict = obj?.morphTargetDictionary;
+    if (!influences || !dict) return;
+    for (const [morphName, index] of Object.entries(dict)) {
+      if (typeof index !== "number") continue;
+      if (!EYE_OPEN_RE.test(morphName)) continue;
+      if (EYE_CLOSE_RE.test(morphName) || MOUTH_OPEN_RE.test(morphName)) continue;
+      influences[index] = w;
+      applied += 1;
+    }
+  });
+  return applied;
 }
 
 /**

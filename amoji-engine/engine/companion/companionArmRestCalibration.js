@@ -32,8 +32,7 @@ const LEG_BONES = [
 ];
 
 const ELBOW_BEND = 0.92;
-const KNEE_BEND_PLANT = 0.28;
-const KNEE_BEND_FREE = 0.55;
+const KNEE_BEND_PLANT = 0.26;
 /** Hand already dropped this far from shoulder→hip means authored A-pose. */
 const APOSE_DROP_RATIO = 0.42;
 
@@ -305,7 +304,7 @@ export function detectVrmLegRestRotations(vrm) {
   if (!humanoid) return VRM_LEG_REST_ROTATIONS;
 
   const leftLowerLeg = detectKneeFlex(vrm, "left", KNEE_BEND_PLANT);
-  const rightLowerLeg = detectKneeFlex(vrm, "right", KNEE_BEND_FREE);
+  const rightLowerLeg = detectKneeFlex(vrm, "right", KNEE_BEND_PLANT);
 
   humanoid.resetNormalizedPose?.();
   return Object.freeze({

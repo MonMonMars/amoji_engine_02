@@ -1,5 +1,6 @@
 import { describe, expect, it, beforeEach, afterEach } from "vitest";
 import {
+  CLOUD_CHAT_MAX_TOKENS,
   getLlmStatusPayload,
   isCloudDeploy,
   processChatRequest,
@@ -64,6 +65,61 @@ describe("chatApiHandler cloud", () => {
     expect(isOllamaLocalModel("qwen3:4b")).toBe(true);
     expect(isOllamaLocalModel("openrouter/auto")).toBe(false);
     expect(isOllamaLocalModel("meta-llama/llama-3.2-3b-instruct")).toBe(false);
+  });
+
+  it("caps OpenRouter max_tokens so credit-limited keys can complete", async () => {
+    process.env.OPENROUTER_API_KEY = "test-key";
+    const bodies = [];
+    const origFetch = globalThis.fetch;
+    globalThis.fetch = async (_url, init) => {
+      bodies.push(JSON.parse(String(init?.body || "{}")));
+      return {
+        ok: true,
+        json: async () => ({
+          choices: [{ message: { content: "今日幾好呀，食咗飯未？" } }],
+        }),
+      };
+    };
+    try {
+      const result = await processChatRequest({
+        message: "今日點呀？",
+        providerId: "auto",
+      });
+      expect(result.mode).toBe("online");
+      expect(result.reply).toContain("今日");
+      expect(bodies[0].max_tokens).toBe(CLOUD_CHAT_MAX_TOKENS);
+      expect(bodies[0].max_tokens).toBeLessThanOrEqual(1024);
+    } finally {
+      globalThis.fetch = origFetch;
+    }
+  });
+
+  it("uses hosted OpenRouter even when the client asks for groq", async () => {
+    process.env.OPENROUTER_API_KEY = "or-server";
+    const urls = [];
+    const origFetch = globalThis.fetch;
+    globalThis.fetch = async (url, init) => {
+      urls.push(String(url));
+      const body = JSON.parse(String(init?.body || "{}"));
+      expect(body.max_tokens).toBeLessThanOrEqual(1024);
+      return {
+        ok: true,
+        json: async () => ({
+          choices: [{ message: { content: "我喺度呀！" } }],
+        }),
+      };
+    };
+    try {
+      const result = await processChatRequest({
+        message: "hi there",
+        providerId: "groq",
+        apiKey: "gsk_stale_client",
+      });
+      expect(result.mode).toBe("online");
+      expect(urls.some((u) => u.includes("openrouter.ai"))).toBe(true);
+    } finally {
+      globalThis.fetch = origFetch;
+    }
   });
 
   it("resolves openrouter model instead of client ollama default", () => {
