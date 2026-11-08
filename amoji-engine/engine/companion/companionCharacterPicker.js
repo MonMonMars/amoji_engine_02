@@ -212,55 +212,89 @@ export function createCompanionCharacterPicker(opts = {}) {
 }
 
 /**
- * Compact character grid shown before the first chat session starts.
+ * Full-screen character grid shown before the first chat session starts.
  * @param {{
  *   root?: HTMLElement | null,
  *   isEnglish?: boolean,
  *   selectedId?: string,
+ *   fullPage?: boolean,
  *   onStart?: (id: string) => void,
  * }} opts
  */
 export function createCompanionStartPicker(opts = {}) {
   const isEnglish = Boolean(opts.isEnglish);
+  const fullPage = opts.fullPage !== false;
   const langCode = isEnglish ? "en" : "yue";
   let selectedId = opts.selectedId || "amoji";
   let starting = false;
+  let preloadPct = 0;
 
   const shell = document.createElement("div");
-  shell.className = "start-character-picker";
+  shell.className = fullPage
+    ? "start-character-picker start-character-picker--full"
+    : "start-character-picker";
   shell.id = "start-character-picker";
   shell.setAttribute("role", "dialog");
+  shell.setAttribute("aria-modal", "true");
   shell.setAttribute("aria-label", isEnglish ? "Choose companion" : "揀同伴");
   shell.innerHTML = `
-    <p class="start-picker-title"></p>
-    <p class="start-picker-sub"></p>
-    <div class="start-picker-grid" role="listbox"></div>
-    <p class="start-picker-hint"></p>
+    <div class="start-picker-panel">
+      <p class="start-picker-title"></p>
+      <p class="start-picker-sub"></p>
+      <div class="start-picker-preload" aria-live="polite">
+        <div class="start-picker-preload-track" aria-hidden="true">
+          <div class="start-picker-preload-fill"></div>
+        </div>
+        <p class="start-picker-preload-label"></p>
+      </div>
+      <div class="start-picker-grid" role="listbox"></div>
+      <p class="start-picker-hint"></p>
+    </div>
   `;
 
   const mount = opts.root || document.body;
   mount.appendChild(shell);
+  document.body.classList.add("companion-start-pending");
 
   const titleEl = shell.querySelector(".start-picker-title");
   const subEl = shell.querySelector(".start-picker-sub");
   const gridEl = shell.querySelector(".start-picker-grid");
   const hintEl = shell.querySelector(".start-picker-hint");
+  const preloadEl = shell.querySelector(".start-picker-preload");
+  const preloadFill = shell.querySelector(".start-picker-preload-fill");
+  const preloadLabel = shell.querySelector(".start-picker-preload-label");
 
   const copy = () => {
     if (titleEl) {
-      titleEl.textContent = isEnglish
-        ? "Pick your companion"
-        : "揀同伴開始";
+      titleEl.textContent = isEnglish ? "Choose your companion" : "揀同伴";
     }
     if (subEl) {
       subEl.textContent = isEnglish
-        ? "Tap a character to start chatting"
+        ? "Tap a character to start"
         : "點選角色開始傾偈";
     }
     if (hintEl) {
       hintEl.textContent = isEnglish
-        ? "Voice + mic unlock on first tap"
-        : "第一次點選會開啟語音同麥克風";
+        ? "Voice and mic unlock when you pick someone"
+        : "揀好角色就會開啟語音同麥克風";
+    }
+  };
+
+  const renderPreload = () => {
+    const clamped = Math.max(0, Math.min(100, Math.round(preloadPct)));
+    if (preloadFill) preloadFill.style.width = `${clamped}%`;
+    if (preloadLabel) {
+      preloadLabel.textContent =
+        clamped >= 100
+          ? isEnglish
+            ? "Companions ready — pick one"
+            : "同伴已準備好 — 請揀一位"
+          : isEnglish
+            ? `Loading companions… ${clamped}%`
+            : `載入同伴中… ${clamped}%`;
+    }
+    if (preloadEl) {
+      preloadEl.classList.toggle("is-ready", clamped >= 100);
     }
   };
 
@@ -272,7 +306,7 @@ export function createCompanionStartPicker(opts = {}) {
       gridEl.appendChild(
         createCompanionCardButton(item, {
           selectedId,
-          compact: true,
+          compact: !fullPage,
           onClick: (id) => {
             if (starting) return;
             selectedId = id;
@@ -286,6 +320,7 @@ export function createCompanionStartPicker(opts = {}) {
 
   copy();
   renderGrid();
+  renderPreload();
 
   return {
     schema: COMPANION_START_PICKER_SCHEMA,
@@ -293,6 +328,11 @@ export function createCompanionStartPicker(opts = {}) {
     setSelected(id) {
       selectedId = id;
       renderGrid();
+    },
+    setPreloadProgress(pct, label) {
+      preloadPct = Number(pct) || 0;
+      if (label && preloadLabel) preloadLabel.textContent = label;
+      renderPreload();
     },
     setStarting(on) {
       starting = Boolean(on);
@@ -304,14 +344,15 @@ export function createCompanionStartPicker(opts = {}) {
             ? "Starting…"
             : "開始中…"
           : isEnglish
-            ? "Voice + mic unlock on first tap"
-            : "第一次點選會開啟語音同麥克風";
+            ? "Voice and mic unlock when you pick someone"
+            : "揀好角色就會開啟語音同麥克風";
       }
     },
     show() {
       shell.classList.remove("hide");
       shell.removeAttribute("aria-hidden");
       shell.removeAttribute("hidden");
+      document.body.classList.add("companion-start-pending");
     },
     hide() {
       shell.classList.add("hide");
@@ -320,9 +361,11 @@ export function createCompanionStartPicker(opts = {}) {
     dismiss() {
       starting = false;
       shell.classList.remove("is-starting");
+      document.body.classList.remove("companion-start-pending");
       shell.remove();
     },
     destroy() {
+      document.body.classList.remove("companion-start-pending");
       shell.remove();
     },
   };
