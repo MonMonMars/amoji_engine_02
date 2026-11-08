@@ -8,9 +8,9 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji · Companion</title>
     <script>
-      window.__amojiBuild = "2026-09-16-v117-expressive-tts";
+      window.__amojiBuild = "2026-09-16-v121-loading-ring";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-16-v117-expressive-tts"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-16-v121-loading-ring"></script>
     <link
       rel="prefetch"
       href="/prototypes/assets/companion-char-nova.png"
@@ -285,7 +285,7 @@
       media="print"
       onload="this.media='all'"
     />
-    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-16-v117-expressive-tts" />
+    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-16-v121-loading-ring" />
     <noscript>
       <link
         href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap"
@@ -2748,11 +2748,12 @@
 
       .companion-progress-dock {
         position: fixed;
-        left: 50%;
-        bottom: calc(5.6rem + env(safe-area-inset-bottom, 0px));
-        transform: translateX(-50%) translateY(12px);
+        right: max(0.85rem, env(safe-area-inset-right, 0px));
+        bottom: calc(5.15rem + env(safe-area-inset-bottom, 0px));
+        left: auto;
+        transform: translateY(8px);
         z-index: 9000;
-        width: min(92vw, 420px);
+        width: auto;
         opacity: 0;
         pointer-events: none;
         transition: opacity 0.28s ease, transform 0.28s ease;
@@ -2760,92 +2761,93 @@
 
       .companion-progress-dock.is-visible {
         opacity: 1;
-        transform: translateX(-50%) translateY(0);
+        transform: translateY(0);
       }
 
       .companion-progress-dock-inner {
-        padding: 0.65rem 0.85rem 0.72rem;
-        border-radius: 1rem;
-        background: rgba(10, 14, 22, 0.92);
-        border: 1px solid rgba(127, 212, 207, 0.22);
-        box-shadow: var(--shadow);
-        backdrop-filter: blur(10px);
-      }
-
-      .companion-progress-head {
+        width: 2.85rem;
+        height: 2.85rem;
+        padding: 0;
+        border-radius: 50%;
         display: flex;
         align-items: center;
-        justify-content: space-between;
-        gap: 0.5rem;
-        margin-bottom: 0.42rem;
-        font-size: 0.72rem;
-        color: var(--muted);
+        justify-content: center;
+        background: rgba(10, 14, 22, 0.5);
+        border: 1px solid rgba(127, 212, 207, 0.16);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.22);
+        backdrop-filter: blur(8px);
       }
 
-      .companion-progress-phase {
-        font-weight: 700;
-        color: var(--accent);
-        letter-spacing: 0.02em;
-        text-transform: uppercase;
+      .companion-progress-ring {
+        position: relative;
+        width: 2.45rem;
+        height: 2.45rem;
+      }
+
+      .companion-progress-ring-svg {
+        width: 100%;
+        height: 100%;
+        transform: rotate(-90deg);
+      }
+
+      .companion-progress-ring-track {
+        fill: none;
+        stroke: rgba(255, 255, 255, 0.14);
+        stroke-width: 2.6;
+      }
+
+      .companion-progress-ring-fill {
+        fill: none;
+        stroke: var(--accent);
+        stroke-width: 2.6;
+        stroke-linecap: round;
+        transition: stroke-dashoffset 0.22s ease;
+      }
+
+      .companion-progress-ring.is-indeterminate .companion-progress-ring-svg {
+        animation: companion-progress-spin 0.95s linear infinite;
+      }
+
+      .companion-progress-ring.is-indeterminate .companion-progress-ring-fill {
+        stroke-dasharray: 22 75;
+        stroke-dashoffset: 0;
+      }
+
+      @keyframes companion-progress-spin {
+        to {
+          transform: rotate(270deg);
+        }
       }
 
       .companion-progress-pct {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.56rem;
         font-weight: 800;
-        color: var(--ink);
+        color: rgba(247, 241, 232, 0.88);
         font-variant-numeric: tabular-nums;
-      }
-
-      .companion-progress-track {
-        height: 0.42rem;
-        border-radius: 999px;
-        background: rgba(255, 255, 255, 0.08);
-        overflow: hidden;
-      }
-
-      .companion-progress-fill {
-        height: 100%;
-        width: 0%;
-        border-radius: inherit;
-        background: linear-gradient(90deg, var(--accent), #5bb8d6);
-        transition: width 0.22s ease;
-      }
-
-      .companion-progress-track.is-indeterminate .companion-progress-fill {
-        animation: progress-indeterminate 1.35s ease-in-out infinite;
-      }
-
-      @keyframes progress-indeterminate {
-        0% {
-          transform: translateX(-120%);
-        }
-        100% {
-          transform: translateX(320%);
-        }
-      }
-
-      .companion-progress-label {
-        margin: 0.42rem 0 0;
-        font-size: 0.74rem;
-        line-height: 1.35;
-        color: var(--muted);
+        letter-spacing: -0.02em;
       }
     </style>
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-16-v117-expressive-tts",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-16-v121-loading-ring",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-16-v117-expressive-tts",
-          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-16-v117-expressive-tts"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-16-v121-loading-ring",
+          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-16-v121-loading-ring"
         }
       }
     </script>
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-16-v117-expressive-tts"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-16-v121-loading-ring"
     />
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-16-v117-expressive-tts"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-16-v117-expressive-tts"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-16-v121-loading-ring"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-16-v121-loading-ring"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;
@@ -4205,9 +4207,6 @@
       const avatarLoadPill = document.getElementById("avatar-load-pill");
 
       const showAvatarLoadPill = () => {
-        if (!avatarLoadPill) return;
-        avatarLoadPill.hidden = false;
-        avatarLoadPill.classList.remove("hide");
         syncCompanionStatusUi("loading", currentEmotion);
       };
 
@@ -4260,11 +4259,6 @@
                 ? `Loading 3D model… ${Math.round(pct)}%`
                 : `載入 3D 模型… ${Math.round(pct)}%`,
             });
-            if (avatarLoadPill) {
-              avatarLoadPill.innerHTML = isEnglish
-                ? `3D loading · <strong>${Math.round(pct)}%</strong> · type to chat`
-                : `3D 載入 · <strong>${Math.round(pct)}%</strong> · 可打字傾偈`;
-            }
           },
         })
           .then((loaded) => {

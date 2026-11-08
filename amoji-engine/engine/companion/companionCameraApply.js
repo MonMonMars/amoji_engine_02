@@ -16,7 +16,7 @@ export function buildPortraitShot(anchor, portraitDist, baseFov, cameraZSign = P
   const position = new THREE.Vector3(
     anchor.x,
     anchor.y + 0.08,
-    anchor.z + cameraZSign * portraitDist * 1.04,
+    anchor.z + cameraZSign * portraitDist * 1.08,
   );
   return {
     target,

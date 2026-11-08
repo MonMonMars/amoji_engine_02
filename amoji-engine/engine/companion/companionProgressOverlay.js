@@ -15,6 +15,19 @@ export function clampProgressPct(value) {
   return Math.max(0, Math.min(100, Math.round(n)));
 }
 
+/** SVG ring radius in viewBox units (36×36). */
+export const PROGRESS_RING_RADIUS = 15.5;
+export const PROGRESS_RING_CIRCUMFERENCE = 2 * Math.PI * PROGRESS_RING_RADIUS;
+
+/**
+ * @param {number} pct 0..100
+ * @param {number} [circumference]
+ */
+export function progressRingOffset(pct, circumference = PROGRESS_RING_CIRCUMFERENCE) {
+  const clamped = Math.max(0, Math.min(100, pct));
+  return circumference * (1 - clamped / 100);
+}
+
 /**
  * Bottom progress dock — visible during motion download, avatar load, thinking, etc.
  * @param {{ root?: HTMLElement | null }} [opts]
@@ -28,24 +41,27 @@ export function createCompanionProgressDock(opts = {}) {
   el.setAttribute("aria-live", "polite");
   el.innerHTML = `
     <div class="companion-progress-dock-inner">
-      <div class="companion-progress-head">
-        <span class="companion-progress-phase"></span>
+      <div class="companion-progress-ring">
+        <svg class="companion-progress-ring-svg" viewBox="0 0 36 36" aria-hidden="true">
+          <circle class="companion-progress-ring-track" cx="18" cy="18" r="${PROGRESS_RING_RADIUS}" />
+          <circle class="companion-progress-ring-fill" cx="18" cy="18" r="${PROGRESS_RING_RADIUS}" />
+        </svg>
         <span class="companion-progress-pct">0%</span>
       </div>
-      <div class="companion-progress-track" aria-hidden="true">
-        <div class="companion-progress-fill"></div>
-      </div>
-      <p class="companion-progress-label"></p>
     </div>
   `;
   root.appendChild(el);
 
-  const phaseEl = el.querySelector(".companion-progress-phase");
+  const innerEl = el.querySelector(".companion-progress-dock-inner");
+  const ringEl = el.querySelector(".companion-progress-ring");
   const pctEl = el.querySelector(".companion-progress-pct");
-  const fillEl = el.querySelector(".companion-progress-fill");
-  const labelEl = el.querySelector(".companion-progress-label");
-  const trackEl = el.querySelector(".companion-progress-track");
+  const fillEl = el.querySelector(".companion-progress-ring-fill");
   let indeterminate = false;
+
+  if (fillEl) {
+    fillEl.setAttribute("stroke-dasharray", String(PROGRESS_RING_CIRCUMFERENCE));
+    fillEl.setAttribute("stroke-dashoffset", String(PROGRESS_RING_CIRCUMFERENCE));
+  }
 
   const apply = ({
     progress = 0,
@@ -57,12 +73,17 @@ export function createCompanionProgressDock(opts = {}) {
     const pct = clampProgressPct(progress);
     if (pctEl) pctEl.textContent = indeterminate ? "…" : `${pct}%`;
     if (fillEl) {
-      fillEl.style.width = indeterminate ? "38%" : `${pct}%`;
-      fillEl.classList.toggle("is-indeterminate", indeterminate);
+      fillEl.style.strokeDashoffset = indeterminate
+        ? ""
+        : String(progressRingOffset(pct));
     }
-    if (trackEl) trackEl.classList.toggle("is-indeterminate", indeterminate);
-    if (phaseEl) phaseEl.textContent = phase || "";
-    if (labelEl) labelEl.textContent = label || "";
+    ringEl?.classList.toggle("is-indeterminate", indeterminate);
+    const hint = [phase, label].filter(Boolean).join(" — ");
+    if (innerEl) innerEl.title = hint;
+    el.setAttribute(
+      "aria-label",
+      hint || (indeterminate ? "Loading" : `Loading ${pct}%`),
+    );
     el.dataset.pct = indeterminate ? "" : String(pct);
   };
 

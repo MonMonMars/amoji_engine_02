@@ -8,8 +8,8 @@ import {
 
 export const COMPANION_IDLE_MOTION_SCHEMA = "amoji.companionIdleMotion.v1";
 
-/** First seconds after avatar boot — gentle breathe + relaxed arms only. */
-export const BOOT_SIMPLE_IDLE_SEC = 6;
+/** First seconds after avatar is visible — gentle breathe, sway, relaxed arms. */
+export const BOOT_SIMPLE_IDLE_SEC = 10;
 
 /**
  * Very light boot idle: breathing, tiny sway, natural arm hang (no VRMA / big gestures).
@@ -17,20 +17,22 @@ export const BOOT_SIMPLE_IDLE_SEC = 6;
  */
 export function sampleSimpleBootIdleMotion(elapsedSec) {
   const t = elapsedSec;
-  const breath = Math.sin(t * 0.88);
-  const sway = Math.sin(t * 0.42 + 0.5);
+  const settle = Math.min(1, elapsedSec / 0.9);
+  const breath = Math.sin(t * 0.95);
+  const sway = Math.sin(t * 0.46 + 0.5);
+  const weight = Math.sin(t * 0.34 + 1.1);
 
   return {
-    headX: breath * 0.022,
-    headZ: sway * 0.028,
-    leanY: sway * 0.034,
-    spineX: 0.012 + breath * 0.022,
-    chestX: -0.006 + breath * 0.014,
-    hipZ: sway * 0.02,
-    armLiftL: 0.055 + Math.sin(t * 0.55 + 0.3) * 0.018,
-    armLiftR: 0.055 + Math.sin(t * 0.5 + 1.1) * 0.018,
-    forearmL: 0.15 + Math.max(0, Math.sin(t * 0.62 + 0.2) * 0.028),
-    forearmR: 0.15 + Math.max(0, Math.sin(t * 0.58 + 0.9) * 0.028),
+    headX: breath * 0.034 * settle,
+    headZ: (sway * 0.042 + weight * 0.018) * settle,
+    leanY: (sway * 0.05 + weight * 0.028) * settle,
+    spineX: (0.014 + breath * 0.028) * settle,
+    chestX: (-0.006 + breath * 0.018) * settle,
+    hipZ: weight * 0.034 * settle,
+    armLiftL: (0.068 + Math.sin(t * 0.55 + 0.3) * 0.028) * settle,
+    armLiftR: (0.068 + Math.sin(t * 0.5 + 1.1) * 0.028) * settle,
+    forearmL: (0.17 + Math.max(0, Math.sin(t * 0.62 + 0.2) * 0.038)) * settle,
+    forearmR: (0.17 + Math.max(0, Math.sin(t * 0.58 + 0.9) * 0.038)) * settle,
   };
 }
 

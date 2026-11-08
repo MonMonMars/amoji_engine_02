@@ -6,14 +6,25 @@ import {
   applyUpperBodyPortraitFrame,
   computeUpperBodyAnchor,
   detectPortraitCameraZSign,
+  facingAlignmentScore,
+  isHeadFacingCamera,
+  portraitModelYawOffset,
   portraitDistanceForHeight,
+  resolveFaceForwardHorizontal,
 } from "../engine/companion/companionPortraitFraming.js";
 
 describe("companionPortraitFraming", () => {
   it("frames standard VRM height at upper-body distance", () => {
     const dist = portraitDistanceForHeight(0.92);
-    expect(dist).toBeGreaterThanOrEqual(1.12);
-    expect(dist).toBeCloseTo(1.196, 2);
+    expect(dist).toBeGreaterThanOrEqual(1.28);
+    expect(dist).toBeCloseTo(1.398, 2);
+  });
+
+  it("pulls the default portrait camera back vs legacy close framing", () => {
+    const height = 1.6;
+    const newCameraZ = portraitDistanceForHeight(height) * 1.08;
+    const legacyCameraZ = Math.max(1.12, height * 1.3) * 1.04;
+    expect(newCameraZ / legacyCameraZ).toBeGreaterThan(1.15);
   });
 
   it("anchors on chest, not face", () => {
@@ -28,8 +39,8 @@ describe("companionPortraitFraming", () => {
   });
 
   it("uses a portrait fov that keeps shoulders in frame", () => {
-    expect(PORTRAIT_FOV).toBeGreaterThanOrEqual(29);
-    expect(PORTRAIT_FOV).toBeLessThanOrEqual(32);
+    expect(PORTRAIT_FOV).toBeGreaterThanOrEqual(30);
+    expect(PORTRAIT_FOV).toBeLessThanOrEqual(34);
   });
 
   it("defaults camera Z sign to match three-vrm examples (+Z)", () => {
@@ -53,10 +64,57 @@ describe("companionPortraitFraming", () => {
     head.updateMatrixWorld(true);
     const anchor = new THREE.Vector3(0, 1.1, 0);
     const dist = portraitDistanceForHeight(0.92);
-    expect(detectPortraitCameraZSign(head, anchor, dist)).toBe(-1);
+    expect(detectPortraitCameraZSign(head, anchor, dist)).toBe(1);
 
     head.rotation.y = Math.PI;
     head.updateMatrixWorld(true);
-    expect(detectPortraitCameraZSign(head, anchor, dist)).toBe(1);
+    expect(detectPortraitCameraZSign(head, anchor, dist)).toBe(-1);
+  });
+
+  it("facingAlignmentScore is positive when the camera is in front of +Z heads", () => {
+    const head = new THREE.Object3D();
+    head.position.set(0, 1.1, 0);
+    head.rotation.y = 0;
+    head.updateMatrixWorld(true);
+    const camera = new THREE.PerspectiveCamera();
+    camera.position.set(0, 1.18, 1.3);
+    expect(facingAlignmentScore(head, camera.position)).toBeGreaterThan(0.5);
+  });
+
+  it("resolveFaceForwardHorizontal prefers eye midpoint over head +Z", () => {
+    const head = new THREE.Object3D();
+    head.position.set(0, 1.1, 0);
+    head.rotation.y = 0;
+    head.updateMatrixWorld(true);
+    const leftEye = new THREE.Object3D();
+    leftEye.position.set(-0.03, 1.12, 0.08);
+    const rightEye = new THREE.Object3D();
+    rightEye.position.set(0.03, 1.12, 0.08);
+    leftEye.updateMatrixWorld(true);
+    rightEye.updateMatrixWorld(true);
+    const humanoid = {
+      getNormalizedBoneNode: (name) => {
+        if (name === "leftEye") return leftEye;
+        if (name === "rightEye") return rightEye;
+        return null;
+      },
+    };
+    const forward = resolveFaceForwardHorizontal(head, humanoid, new THREE.Vector3());
+    expect(forward?.z).toBeGreaterThan(0.9);
+  });
+
+  it("isHeadFacingCamera and portraitModelYawOffset agree on front vs back", () => {
+    const head = new THREE.Object3D();
+    head.position.set(0, 1.1, 0);
+    head.rotation.y = 0;
+    head.updateMatrixWorld(true);
+    const camera = new THREE.PerspectiveCamera();
+    camera.position.set(0, 1.18, 1.3);
+    expect(isHeadFacingCamera(head, camera)).toBe(true);
+    expect(portraitModelYawOffset(head, camera)).toBe(0);
+
+    camera.position.set(0, 1.18, -1.3);
+    expect(isHeadFacingCamera(head, camera)).toBe(false);
+    expect(portraitModelYawOffset(head, camera)).toBe(Math.PI);
   });
 });

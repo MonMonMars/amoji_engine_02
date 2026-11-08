@@ -76,12 +76,21 @@ async function loadVrmGltf(loader, modelUrl, onProgress) {
 }
 
 /** Grok Ani–style framing: upper body visible, not extreme face close-up. */
-function frameFaceCamera({ vrm, model, camera, controls, fitted }) {
+function frameFaceCamera({
+  vrm,
+  model,
+  camera,
+  controls,
+  fitted,
+  cameraZSign: cameraZSignOverride,
+}) {
   const fittedSize = fitted.getSize(new THREE.Vector3());
   const anchor = computeVrmFrameAnchor(vrm, model);
   const head = vrm.humanoid?.getNormalizedBoneNode?.("head");
   const distGuess = portraitDistanceForHeight(fittedSize.y);
-  const cameraZSign = detectPortraitCameraZSign(head, anchor, distGuess);
+  const cameraZSign =
+    cameraZSignOverride ??
+    detectPortraitCameraZSign(head, anchor, distGuess, vrm.humanoid);
   const portraitDist = applyUpperBodyPortraitFrame({
     camera,
     controls,
@@ -260,7 +269,7 @@ export async function createVrmAvatar(opts) {
     fitted,
   });
   const headBone = vrm.humanoid?.getNormalizedBoneNode?.("head");
-  if (!isHeadFacingCamera(headBone, camera)) {
+  if (!isHeadFacingCamera(headBone, camera, vrm.humanoid)) {
     model.rotation.y += Math.PI;
     vrm.humanoid?.resetNormalizedPose?.();
     const refitted = new THREE.Box3().setFromObject(model);
@@ -284,6 +293,8 @@ export async function createVrmAvatar(opts) {
     syncHumanoidPose();
     vrm.update(1 / 60);
   }
+  bodyMotion.resetMotionClock?.();
+  t0 = performance.now();
   faceLight.position.set(0.2, 1.55, portraitCameraZSign * 1.4);
   smoothedFrameAnchor.copy(faceAnchor);
   /** @type {{ position: THREE.Vector3, target: THREE.Vector3, fov: number, distance: number }} */
@@ -306,6 +317,7 @@ export async function createVrmAvatar(opts) {
     portraitCamera.distance = camera.position.distanceTo(controls.target);
   };
   const cameraDirector = createCompanionCameraDirector();
+  cameraDirector.resetBootGrace();
   const raycaster = new THREE.Raycaster();
   const pointer = new THREE.Vector2();
   /** @type {{ x: number, y: number } | null} */
@@ -786,6 +798,7 @@ export async function createVrmAvatar(opts) {
       camera,
       controls,
       fitted: fittedNow,
+      cameraZSign: portraitCameraZSign,
     });
     defaultPortrait.position.copy(camera.position);
     defaultPortrait.target.copy(controls.target);
