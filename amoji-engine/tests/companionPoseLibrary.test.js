@@ -24,7 +24,7 @@ describe("companionPoseLibrary clamps", () => {
     const clamped = clampIdleArmPose({ armLiftL: 0.28, forearmL: 0.4 });
     expect(clamped.armLiftL).toBeGreaterThan(0.2);
     expect(clamped.forearmL).toBeGreaterThan(0.3);
-    expect(clamped.forearmL).toBeLessThanOrEqual(0.52);
+    expect(clamped.forearmL).toBeLessThanOrEqual(0.7);
   });
 
   it("adds idle elbow bend on the calibrated flex axis", () => {

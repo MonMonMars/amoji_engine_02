@@ -24,7 +24,7 @@ import {
   portraitDistanceForHeight,
 } from "./companionPortraitFraming.js";
 import { actionLoops } from "./companionActionMotion.js";
-import { detectVrmArmRestRotations } from "./companionArmRestCalibration.js";
+import { detectVrmIdleRestRotations } from "./companionArmRestCalibration.js";
 import { createCompanionBodyMotion } from "./companionBodyMotion.js";
 import { buildVrmExpressionBlend } from "./companionContentMotion.js";
 import { resolveOnlineMotionClipUrl } from "./companionOnlineMotionClips.mjs";
@@ -302,7 +302,9 @@ export async function createVrmAvatar(opts) {
     baseModelRotY = model.rotation.y;
   }
 
-  bodyMotion.setArmRestRotations?.(detectVrmArmRestRotations(vrm));
+  const idleRest = detectVrmIdleRestRotations(vrm);
+  bodyMotion.setArmRestRotations?.(idleRest.arms);
+  bodyMotion.setLegRestRotations?.(idleRest.legs);
   bodyMotion.snapToRestPose?.();
   syncHumanoidPose();
   configureVrmSpringStability(vrm);
