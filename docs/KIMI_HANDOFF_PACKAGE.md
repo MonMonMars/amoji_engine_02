@@ -18,15 +18,9 @@
 | **Owner** | Mon (Designer / Product) |
 | **Live app** | https://temporary-rushing-oxygen-ok5jzhd.vercel.app/play (bookmark **`/play` only** on iOS) |
 
-**Slim handoff zip (~2 MB, under 100 MB — recommended for agents):**  
-https://github.com/MonMonMars/amoji_engine_02/releases/download/handoff-slim-2026-09-29/amoji_engine_02-handoff-slim.zip  
+**Slim handoff zip:** legacy release assets that bundled business docs were **removed (2026-11-08)**. Use **`git clone`** of `main` or the owner’s private D: archive—do not expect business plans in GitHub release zips.
 
-Includes source (`amoji-engine`, `prototypes` HTML/CSS/JS, `api`, `scripts`, `docs`, `AGENTS.md`) + **`docs/AMOJI_BUSINESS_PLAN.md`**. No VRM/scene binaries — run `npm run postinstall` after unzip. See `SLIM_HANDOFF_README.md` inside the zip.
-
-**Full repo zip (~1.5 GB, includes `.git`, excludes `node_modules`):**  
-https://github.com/MonMonMars/amoji_engine_02/releases/download/handoff-2026-09-27-main-v595/amoji_engine_02-handoff-full.zip  
-
-Prefer **git clone** or the **slim zip** over the full archive when possible.
+**Full repo zip:** prior `handoff-*` full archives were also removed for the same reason. Prefer **shallow `git clone`** for agents.
 
 ---
 
@@ -194,7 +188,7 @@ Full table: `docs/MON_COMPANION_ISSUE_TRACKER.md`
 4. **Merge PR #112** to `main`; wait for Vercel.  
 5. `npm run verify:pre-delivery:prod` → exit **0**.  
 6. Mon retests: `/play` → picker → **#2 Kizuna** → Begin → 3D loads.  
-7. Optional: merge PR #87 (business plan); close duplicate PRs.  
+7. Keep PR #87 **closed** (business plan off-repo); close duplicate PRs.  
 
 ---
 
