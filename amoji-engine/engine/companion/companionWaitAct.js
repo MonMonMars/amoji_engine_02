@@ -69,16 +69,19 @@ export function createCompanionWaitAct(opts = {}) {
 
   const playPose = () => {
     if (kind === "idle" || kind === "avatar-load") {
-      // Hosted Relax.vrma is the living rest. Don't rotate showcase clips
-      // or flash wait-face moods on top of it.
+      // Procedural planted idle (hosted Relax.vrma is a stretch, not rest).
       lastPoseId = "idle-stand";
       avatarRef?.setThinking?.(false);
       if (poseTick === 0) {
+        avatarRef?.resetIdleLife?.();
         avatarRef?.setEmotion?.("neutral");
         avatarRef?.applyExpressionProfile?.({
           emotion: "neutral",
           nuance: "none",
         });
+      } else {
+        const beats = ["look", "comb", "breathe", "look", "nod", "comb"];
+        avatarRef?.pulseIdleBeat?.(beats[poseTick % beats.length]);
       }
       opts.onPose?.("idle-stand", phase);
       return;
@@ -121,7 +124,7 @@ export function createCompanionWaitAct(opts = {}) {
     clearInterval(poseTimer);
     const interval =
       kind === "idle" || kind === "avatar-load"
-        ? Math.max(1600, Math.round(poseIntervalMs * 0.48))
+        ? 1100
         : kind === "thinking"
           ? Math.max(poseIntervalMs, 4200)
           : poseIntervalMs;

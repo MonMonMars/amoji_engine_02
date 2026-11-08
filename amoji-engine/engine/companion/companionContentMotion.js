@@ -115,7 +115,7 @@ export function buildVrmExpressionBlend(emotion, nuance) {
 
   switch (e) {
     case "happy":
-      blend.Happy = 0.42;
+      blend.Happy = 0.55;
       break;
     case "thinking":
       break;

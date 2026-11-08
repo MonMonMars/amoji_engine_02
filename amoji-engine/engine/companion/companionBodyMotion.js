@@ -22,8 +22,12 @@ import {
 } from "./companionActionMotion.js";
 import { buildCharacterSystemPrompt } from "./companionCharacterCatalog.js";
 import {
-  sampleCalmBreathIdle,
+  samplePlantedAliveIdle,
+  advanceIdleBeat,
+  createIdleBeatState,
+  startIdleBeat,
 } from "./companionIdleMotion.js";
+import { applyFingerRestPose } from "./companionFingerPose.js";
 import {
   dampPose,
   dampRootMotion,
@@ -78,6 +82,9 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
   let talkStyle = "explain";
   let talkTime = 0;
   let t0 = performance.now();
+  let idleBeat = createIdleBeatState(t0);
+  /** @type {"x" | "z"} */
+  let fingerFlexAxis = "z";
   /** @type {string | null} */
   let activeAction = null;
   let actionPhase = 0;
@@ -546,9 +553,20 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
     applyBoneRotation("rightLowerLeg", withElbowBend(restLR, lowerR));
   };
 
-  const applyHandAndFootRest = (pose = REST_POSE, k = 1) => {
+  const applyFingerBone = (name, rot) => {
+    // Normalized bones only. Copying the same Euler onto Mixamo raw bones
+    // twists fingers along their length so they look stick-straight.
+    applyBoneRotation(name, rot);
+  };
+
+  const applyHandAndFootRest = (pose = REST_POSE, k = 1, talkBlend = 0, elapsedSec = 0) => {
     applyBoneRotation("leftHand", VRM_HAND_REST_ROTATIONS.leftHand);
     applyBoneRotation("rightHand", VRM_HAND_REST_ROTATIONS.rightHand);
+    applyFingerRestPose(applyFingerBone, {
+      talkBlend,
+      flexAxis: "z",
+      elapsedSec,
+    });
     applyLockedFootRotations(applyBoneRotation, VRM_FOOT_REST_ROTATIONS, {
       leftUpper: Math.min(0.72, (pose.upperLegL ?? REST_POSE.upperLegL ?? 0) * k),
       rightUpper: Math.min(0.72, (pose.upperLegR ?? REST_POSE.upperLegR ?? 0) * k),
@@ -604,8 +622,34 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
         : (pose.hipZ || 0) * k;
     }
     applyLegPose(pose, k);
-    applyHandAndFootRest(pose, k);
+    applyHandAndFootRest(
+      pose,
+      k,
+      talkArmBlend,
+      (performance.now() - t0) * 0.001,
+    );
     humanoid.update?.();
+  };
+
+  const applyHandRestOnly = (opts = {}) => {
+    const talkBlend = Number(opts.talkBlend) || 0;
+    const elapsedSec =
+      opts.elapsedSec != null
+        ? Number(opts.elapsedSec)
+        : opts.now != null
+          ? (Number(opts.now) - t0) * 0.001
+          : (performance.now() - t0) * 0.001;
+    applyFingerRestPose(applyFingerBone, {
+      talkBlend,
+      flexAxis: "z",
+      elapsedSec,
+    });
+    humanoid?.update?.();
+  };
+
+  const setFingerFlexAxis = (axis) => {
+    fingerFlexAxis = axis === "x" ? "x" : "z";
+    return "z";
   };
 
   const update = (dt, opts = {}) => {
@@ -655,8 +699,13 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
         pose.headX = (pose.headX || 0) + Math.sin(elapsed * 0.55) * 0.024;
         pose.headZ = (pose.headZ || 0) + Math.sin(elapsed * 0.42 + 0.8) * 0.018;
       } else if (!talking) {
-        const idleMotion = sampleCalmBreathIdle(elapsed, { listening, emotion });
+        const idleMotion = samplePlantedAliveIdle(elapsed, { listening, emotion });
         pose = mergePoses(pose, idleMotion, 0.96);
+        const beat = advanceIdleBeat(idleBeat, dt, now);
+        idleBeat = beat.state;
+        if (beat.overlay && Object.keys(beat.overlay).length) {
+          pose = mergePoses(pose, beat.overlay, 1);
+        }
       } else {
         talkTime += dt;
         const nowMs = performance.now();
@@ -773,7 +822,7 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
     smoothedPose = buildBasePose({ listening, emotion, nuance });
     smoothedPose = mergePoses(
       smoothedPose,
-      sampleCalmBreathIdle(0.2, { listening, emotion }),
+      samplePlantedAliveIdle(0.2, { listening, emotion }),
       0.96,
     );
     smoothedRootMotion = { y: 0, rotY: 0 };
@@ -787,6 +836,16 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
       plantFeet: true,
     });
     return smoothedPose;
+  };
+
+  const resetIdleLife = (now = performance.now()) => {
+    idleBeat = createIdleBeatState(now);
+    return resetMotionClock(now);
+  };
+
+  const pulseIdleBeat = (beat, now = performance.now()) => {
+    idleBeat = startIdleBeat(idleBeat, beat, now);
+    return idleBeat;
   };
 
   return {
@@ -810,6 +869,8 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
     setTalking,
     setTalkEnergy,
     update,
+    applyHandRestOnly,
+    setFingerFlexAxis,
     get emotion() {
       return emotion;
     },
@@ -841,7 +902,7 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
       smoothedPose = buildBasePose({ listening, emotion, nuance });
       smoothedPose = mergePoses(
         smoothedPose,
-        sampleCalmBreathIdle(0.2, { listening, emotion }),
+        samplePlantedAliveIdle(0.2, { listening, emotion }),
         0.96,
       );
       smoothedRootMotion = { y: 0, rotY: 0 };
@@ -856,6 +917,8 @@ export function createCompanionBodyMotion(humanoid, opts = {}) {
       });
       return smoothedPose;
     },
+    resetIdleLife,
+    pulseIdleBeat,
     resetMotionClock,
     setArmRestRotations(next) {
       if (!next) return armRestRotations;

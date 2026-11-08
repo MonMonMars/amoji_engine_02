@@ -12,6 +12,10 @@ export default function handler(_req, res) {
     routes: {
       lite: "/companion?lang=yue",
       full: "/companion-full?lang=yue",
+      uniqueFull: `/c/${AMOJI_BUILD}/full`,
+      uniqueLite: `/c/${AMOJI_BUILD}/lite`,
+      play: "/play",
+      openFull: "/n/{stamp}/full",
     },
   });
 }

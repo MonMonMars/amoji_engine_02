@@ -85,12 +85,41 @@ describe("companionWaitAct", () => {
       setThinking: vi.fn(),
       stopAction: vi.fn(),
       applyExpressionProfile: vi.fn(),
+      resetIdleLife: vi.fn(),
     };
     const wait = createCompanionWaitAct({ avatar, isEnglish: true });
     wait.start({ kind: "idle", phase: "idle", speak: false });
     expect(avatar.stopAction).not.toHaveBeenCalled();
     expect(avatar.playAction).not.toHaveBeenCalled();
+    expect(avatar.resetIdleLife).toHaveBeenCalled();
     expect(avatar.setEmotion).toHaveBeenCalledWith("neutral");
     wait.stop();
+  });
+
+  it("pulses look/comb idle life on later idle ticks without playing VRMA", () => {
+    vi.useFakeTimers();
+    const avatar = {
+      playAction: vi.fn(),
+      setEmotion: vi.fn(),
+      setThinking: vi.fn(),
+      stopAction: vi.fn(),
+      applyExpressionProfile: vi.fn(),
+      resetIdleLife: vi.fn(),
+      pulseIdleBeat: vi.fn(),
+    };
+    const wait = createCompanionWaitAct({
+      avatar,
+      isEnglish: true,
+      poseIntervalMs: 2000,
+    });
+    wait.start({ kind: "idle", phase: "idle", speak: false });
+    expect(avatar.pulseIdleBeat).not.toHaveBeenCalled();
+    vi.advanceTimersByTime(1099);
+    expect(avatar.pulseIdleBeat).not.toHaveBeenCalled();
+    vi.advanceTimersByTime(2);
+    expect(avatar.playAction).not.toHaveBeenCalled();
+    expect(avatar.pulseIdleBeat).toHaveBeenCalledWith("comb");
+    wait.stop();
+    vi.useRealTimers();
   });
 });

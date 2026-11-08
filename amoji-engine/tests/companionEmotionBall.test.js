@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   companionEmotionBallInnerHtml,
   createCompanionEmotionBall,
+  syncMiniEmotionBall,
 } from "../engine/companion/companionEmotionBall.js";
 
 /** @returns {HTMLElement} */
@@ -116,5 +117,36 @@ describe("companionEmotionBall", () => {
     expect(el.hidden).toBe(true);
     expect(el.parentElement.classList.contains("is-hidden")).toBe(true);
     vi.unstubAllGlobals();
+  });
+
+  it("drives the chip dot like a ChatGPT mini emotion ball", () => {
+    const el = mockBallEl();
+    const theme = syncMiniEmotionBall(el, {
+      emotion: "happy",
+      level: 0.8,
+      state: "speaking",
+    });
+    expect(el.dataset.state).toBe("speaking");
+    expect(el.dataset.emotion).toBe("happy");
+    expect(el.style.getPropertyValue("--mini-ball-scale")).not.toBe("");
+    expect(el.style.getPropertyValue("--mini-ball-bg")).toContain("hsl(");
+    expect(el.style.getPropertyValue("--mini-ball-bright")).not.toBe("");
+    expect(theme.scale).toBeGreaterThan(1.5);
+  });
+
+  it("grows the chip ball with speaking volume", () => {
+    const el = mockBallEl();
+    const quiet = syncMiniEmotionBall(el, {
+      emotion: "happy",
+      level: 0.1,
+      state: "speaking",
+    });
+    const loud = syncMiniEmotionBall(el, {
+      emotion: "happy",
+      level: 0.9,
+      state: "speaking",
+    });
+    expect(loud.scale).toBeGreaterThan(quiet.scale);
+    expect(loud.scale).toBeGreaterThan(2);
   });
 });

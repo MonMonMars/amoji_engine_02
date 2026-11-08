@@ -20,8 +20,9 @@ export const BOOT_IDLE_BODY_MOTION_IDS = Object.freeze([
 ]);
 
 /**
- * Shared VRMA stems (~115 KB each) used for looping idle + common social clips.
- * Relax = standing idle; Thinking = wait; Goodbye = wave; LookAround = walk/dance.
+ * Shared VRMA stems (~115 KB each) for social clips — not standing rest.
+ * Relax is a stretch (standing idle stays procedural); Thinking = wait;
+ * Goodbye = wave; LookAround = walk/dance.
  */
 export const BOOT_IDLE_VRMA_STEMS = Object.freeze([
   "Relax",

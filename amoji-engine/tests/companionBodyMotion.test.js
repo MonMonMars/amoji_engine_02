@@ -21,6 +21,8 @@ function mockHumanoid() {
     "spine",
     "chest",
     "hips",
+    "leftIndexProximal",
+    "rightIndexProximal",
   ];
   for (const name of names) {
     bones.set(name, { rotation: { x: 0.5, y: 0.5, z: 0.5 } });
@@ -65,6 +67,9 @@ describe("createCompanionBodyMotion", () => {
     expect(Math.abs(humanoid.bones.get("hips").rotation.z)).toBeLessThanOrEqual(
       0.02,
     );
+    expect(
+      Math.abs(humanoid.bones.get("leftIndexProximal").rotation.z),
+    ).toBeGreaterThan(0.5);
   });
 
   it("plants root Y so a floating foot comes back to the floor", () => {
