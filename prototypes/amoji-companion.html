@@ -8,9 +8,9 @@
     <meta http-equiv="Expires" content="0" />
     <title>Amoji · Companion</title>
     <script>
-      window.__amojiBuild = "2026-09-17-v147-talk-mouth";
+      window.__amojiBuild = "2026-09-17-v148-character-numbers";
     </script>
-    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-17-v147-talk-mouth"></script>
+    <script src="/amoji-engine/engine/companion/companionEarlyFreshBoot.js?v=2026-09-17-v148-character-numbers"></script>
     <link
       rel="prefetch"
       href="/prototypes/assets/companion-char-nova.png"
@@ -315,7 +315,7 @@
       media="print"
       onload="this.media='all'"
     />
-    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-17-v147-talk-mouth" />
+    <link rel="stylesheet" href="/prototypes/companion-grok-ani.css?v=2026-09-17-v148-character-numbers" />
     <noscript>
       <link
         href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap"
@@ -2673,6 +2673,39 @@
         font-size: 0.5rem;
       }
 
+      .companion-card-number {
+        position: absolute;
+        top: auto;
+        right: auto;
+        bottom: 0.28rem;
+        left: 0.28rem;
+        z-index: 1;
+        min-width: 1.22rem;
+        height: 1.22rem;
+        padding: 0 0.22rem;
+        border-radius: 999px;
+        display: grid;
+        place-items: center;
+        font-size: 0.62rem;
+        font-weight: 800;
+        letter-spacing: 0;
+        line-height: 1;
+        color: #fff;
+        background: rgba(6, 10, 18, 0.82);
+        border: 1px solid rgba(255, 255, 255, 0.32);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+      }
+
+      .companion-card--compact .companion-card-number {
+        top: auto;
+        right: auto;
+        bottom: 0.22rem;
+        left: 0.22rem;
+        min-width: 1.12rem;
+        height: 1.12rem;
+        font-size: 0.58rem;
+      }
+
       .companion-card-portrait {
         position: relative;
         aspect-ratio: 4 / 5;
@@ -2982,19 +3015,19 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-17-v147-talk-mouth",
+          "three": "/amoji-engine/vendor/three.module.js?v=2026-09-17-v148-character-numbers",
           "three/addons/": "/amoji-engine/vendor/three/addons/",
-          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-17-v147-talk-mouth",
-          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-17-v147-talk-mouth"
+          "@pixiv/three-vrm": "/amoji-engine/vendor/three-vrm/three-vrm.module.min.js?v=2026-09-17-v148-character-numbers",
+          "@pixiv/three-vrm-animation": "/amoji-engine/vendor/three-vrm-animation/three-vrm-animation.module.min.js?v=2026-09-17-v148-character-numbers"
         }
       }
     </script>
     <link
       rel="modulepreload"
-      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v147-talk-mouth"
+      href="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v148-character-numbers"
     />
-    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-17-v147-talk-mouth"></script>
-    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v147-talk-mouth"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionFreshBoot.js?v=2026-09-17-v148-character-numbers"></script>
+    <script type="module" src="/amoji-engine/engine/companion/companionPreload.js?v=2026-09-17-v148-character-numbers"></script>
     <script>
       (function () {
         window.__amojiModuleBooted = false;

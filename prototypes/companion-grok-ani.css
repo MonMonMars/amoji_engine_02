@@ -523,6 +523,11 @@ body.conversation-ui.composer-always-visible.theme-grok-ani .composer .speaker-b
   border-radius: 1rem;
 }
 
+.theme-grok-ani .companion-card-number {
+  background: rgba(8, 6, 20, 0.86);
+  border-color: rgba(255, 255, 255, 0.38);
+}
+
 /* —— Settings panel —— */
 .theme-grok-ani .settings {
   border-color: rgba(255, 255, 255, 0.1);
