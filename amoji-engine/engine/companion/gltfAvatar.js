@@ -548,6 +548,7 @@ export async function createGltfAvatar(opts) {
       globalThis.removeEventListener?.("resize", resize);
       controls.dispose();
       renderer.dispose();
+      renderer.forceContextLoss?.();
     },
   };
 }

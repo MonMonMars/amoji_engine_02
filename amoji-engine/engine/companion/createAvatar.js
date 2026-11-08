@@ -11,14 +11,16 @@ export const AVATAR_LOAD_TIMEOUT_MS = 22_000;
  * @returns {HTMLCanvasElement}
  */
 export function replaceAvatarCanvas(canvas) {
-  const parent = canvas?.parentNode;
-  if (!parent) return canvas;
-  const fresh = canvas.cloneNode(false);
-  fresh.id = canvas.id;
-  fresh.className = canvas.className;
-  const aria = canvas.getAttribute("aria-label");
+  const live =
+    (canvas?.id && globalThis.document?.getElementById?.(canvas.id)) || canvas;
+  const parent = live?.parentNode;
+  if (!parent) return live || canvas;
+  const fresh = live.cloneNode(false);
+  fresh.id = live.id;
+  fresh.className = live.className;
+  const aria = live.getAttribute("aria-label");
   if (aria) fresh.setAttribute("aria-label", aria);
-  parent.replaceChild(fresh, canvas);
+  parent.replaceChild(fresh, live);
   return fresh;
 }
 
