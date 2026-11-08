@@ -184,11 +184,25 @@ export function femaleVoiceLabel(voice) {
   if (voice?.cloud && /hiumaan/i.test(String(voice.name || ""))) {
     return "女聲·粵·曉曼";
   }
+  if (voice?.cloud && /yan/i.test(String(voice.name || ""))) {
+    return "Female·EN·Yan";
+  }
+  if (voice?.cloud && /sam/i.test(String(voice.name || ""))) {
+    return "Male·EN·Sam";
+  }
   if (voice?.cloud && /jenny/i.test(String(voice.name || ""))) {
     return "Female·EN·Jenny";
   }
   if (voice?.cloud && /aria|en-us/i.test(String(voice.name || ""))) {
     return "Female·EN·Aria";
+  }
+  if (voice?.cloud && /idol/i.test(String(voice.name || ""))) {
+    return "女聲·粵·曉佳·元氣";
+  }
+  if (voice?.cloud && /cool/i.test(String(voice.name || ""))) {
+    return /aria/i.test(String(voice.name || ""))
+      ? "Female·EN·Aria·cool"
+      : "女聲·粵·曉曼·酷";
   }
   if (voice?.cloud && /zh-hk|yue|cantonese/i.test(String(voice.lang || ""))) {
     return "女聲·粵";

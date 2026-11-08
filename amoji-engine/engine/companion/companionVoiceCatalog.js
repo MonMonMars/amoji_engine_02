@@ -1,69 +1,20 @@
 /**
  * Edge TTS voice catalog + URL/localStorage helpers for companion UIs.
  */
+import {
+  EN_VOICE_PROFILES,
+  findVoiceProfile,
+  resolveEdgeVoiceId,
+  voiceProfilesForLang,
+  YUE_VOICE_PROFILES,
+} from "./companionVoiceProfiles.js";
+
 export const VOICE_STORAGE_KEY = "amoji.companion.voiceId";
 
-/** @type {Readonly<Record<string, ReadonlyArray<{
- *   id: string,
- *   shortLabel: string,
- *   shortLabelEn: string,
- *   lang: string,
- *   gender: "female" | "male",
- *   source: string,
- * }>>>} */
+/** @type {Readonly<Record<string, ReadonlyArray<import("./companionVoiceProfiles.js").VoiceProfile>>>} */
 export const COMPANION_VOICES = Object.freeze({
-  yue: Object.freeze([
-    {
-      id: "zh-HK-HiuMaanNeural",
-      shortLabel: "曉曼",
-      shortLabelEn: "HiuMaan",
-      lang: "zh-HK",
-      gender: "female",
-      source: "Edge TTS",
-    },
-    {
-      id: "zh-HK-HiuGaaiNeural",
-      shortLabel: "曉佳",
-      shortLabelEn: "HiuGaai",
-      lang: "zh-HK",
-      gender: "female",
-      source: "Edge TTS",
-    },
-    {
-      id: "zh-HK-WanLungNeural",
-      shortLabel: "雲龍",
-      shortLabelEn: "WanLung",
-      lang: "zh-HK",
-      gender: "male",
-      source: "Edge TTS",
-    },
-  ]),
-  en: Object.freeze([
-    {
-      id: "en-US-AriaNeural",
-      shortLabel: "Aria",
-      shortLabelEn: "Aria",
-      lang: "en-US",
-      gender: "female",
-      source: "Edge TTS",
-    },
-    {
-      id: "en-US-JennyNeural",
-      shortLabel: "Jenny",
-      shortLabelEn: "Jenny",
-      lang: "en-US",
-      gender: "female",
-      source: "Edge TTS",
-    },
-    {
-      id: "en-US-GuyNeural",
-      shortLabel: "Guy",
-      shortLabelEn: "Guy",
-      lang: "en-US",
-      gender: "male",
-      source: "Edge TTS",
-    },
-  ]),
+  yue: YUE_VOICE_PROFILES,
+  en: EN_VOICE_PROFILES,
 });
 
 /**
@@ -79,18 +30,14 @@ export function companionLangCode(raw) {
  * @param {"yue" | "en"} langCode
  */
 export function voicesForLang(langCode) {
-  return COMPANION_VOICES[langCode] || COMPANION_VOICES.yue;
+  return voiceProfilesForLang(langCode);
 }
 
 /**
  * @param {string} voiceId
  */
 export function findVoiceEntry(voiceId) {
-  for (const list of Object.values(COMPANION_VOICES)) {
-    const hit = list.find((v) => v.id === voiceId);
-    if (hit) return hit;
-  }
-  return null;
+  return findVoiceProfile(voiceId);
 }
 
 /**

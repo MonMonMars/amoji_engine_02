@@ -22,6 +22,7 @@ describe("companionCharacterSwitch helpers", () => {
     const amoji = characterAvatarConfig("amoji", "yue");
     const rex = characterAvatarConfig("rex", "yue");
     expect(amoji.voiceId).not.toBe(rex.voiceId);
-    expect(amoji.modelUrl).toBe(rex.modelUrl);
+    expect(amoji.modelUrl).not.toBe(rex.modelUrl);
+    expect(rex.modelUrl).toContain("companion-kai.vrm");
   });
 });
