@@ -25,7 +25,8 @@ describe("companionWaitAssets", () => {
     expect(WAIT_POSES_BY_PHASE.idle).toContain("nod");
     expect(WAIT_POSES_BY_PHASE.idle).not.toContain("spin");
     expect(pickWaitPose("idle", 0)).toBeTruthy();
-    expect(pickWaitEmotion("idle", 0, "idle")).toBe("happy");
+    expect(pickWaitEmotion("idle", 0, "idle")).toBe("neutral");
+    expect(pickWaitEmotion("idle", 3, "idle")).toBe("neutral");
     expect(pickWaitEmotion("avatar-load", 1, "avatar-load")).toBeTruthy();
     const profile = pickWaitExpressionProfile("avatar-load", 0, "avatar-load");
     expect(profile.emotion).toBe("happy");

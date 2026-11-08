@@ -99,7 +99,7 @@ export const WAIT_EMOTIONS_BY_PHASE = Object.freeze({
   "avatar-load": ["happy", "neutral", "surprised", "happy", "neutral"],
   "character-switch": ["happy", "thinking", "surprised"],
   "motion-pack": ["thinking", "happy", "neutral", "surprised"],
-  idle: ["happy", "neutral", "thinking", "surprised", "sad", "angry"],
+  idle: ["neutral"],
   ready: ["happy", "surprised", "neutral"],
 });
 
@@ -180,14 +180,7 @@ export const WAIT_EXPRESSION_BY_PHASE = Object.freeze({
     { emotion: "happy", nuance: "excited" },
     { emotion: "neutral", nuance: "none" },
   ],
-  idle: [
-    { emotion: "happy", nuance: "none" },
-    { emotion: "neutral", nuance: "shy" },
-    { emotion: "happy", nuance: "love" },
-    { emotion: "thinking", nuance: "curious" },
-    { emotion: "surprised", nuance: "excited" },
-    { emotion: "happy", nuance: "excited" },
-  ],
+  idle: [{ emotion: "neutral", nuance: "none" }],
   ready: [
     { emotion: "happy", nuance: "excited" },
     { emotion: "surprised", nuance: "excited" },

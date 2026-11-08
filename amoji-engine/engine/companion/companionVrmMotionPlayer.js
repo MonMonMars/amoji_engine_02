@@ -8,7 +8,11 @@ import {
   VRMAnimationLoaderPlugin,
 } from "@pixiv/three-vrm-animation";
 import { getPreloadedIdleVrmaBuffer } from "./companionIdleMotionPreload.js";
-import { resolveOnlineMotionClipUrl } from "./companionOnlineMotionClips.mjs";
+import {
+  isOnlineLoopingLibraryAction,
+  ONLINE_IDLE_ACTION,
+  resolveOnlineMotionClipUrl,
+} from "./companionOnlineMotionClips.mjs";
 
 export const COMPANION_VRM_MOTION_PLAYER_SCHEMA =
   "amoji.companionVrmMotionPlayer.v1";
@@ -39,8 +43,9 @@ export function createVrmMotionPlayer(opts) {
   /** @type {Map<string, Promise<THREE.AnimationClip | null>>} */
   const inflight = new Map();
 
-  const releasePose = () => {
+  const haltAction = (resetPose) => {
     if (clipAction) {
+      clipAction.fadeOut(0.12);
       clipAction.stop();
       clipAction.reset();
       clipAction = null;
@@ -49,7 +54,13 @@ export function createVrmMotionPlayer(opts) {
       mixer.stopAllAction();
     }
     activeActionId = null;
-    vrm.humanoid?.resetNormalizedPose?.();
+    if (resetPose) {
+      vrm.humanoid?.resetNormalizedPose?.();
+    }
+  };
+
+  const releasePose = () => {
+    haltAction(true);
   };
 
   const ensureMixer = () => {
@@ -57,7 +68,7 @@ export function createVrmMotionPlayer(opts) {
       mixer = new THREE.AnimationMixer(vrm.scene);
       mixer.addEventListener("finished", () => {
         const completed = activeActionId;
-        releasePose();
+        haltAction(false);
         opts.onComplete?.(completed);
       });
     }
@@ -93,7 +104,7 @@ export function createVrmMotionPlayer(opts) {
   };
 
   const stop = () => {
-    releasePose();
+    haltAction(false);
   };
 
   /**
@@ -105,23 +116,32 @@ export function createVrmMotionPlayer(opts) {
     const url = resolveClipUrl(id);
     if (!url) return false;
 
+    const loop = Boolean(
+      playOpts.loop ?? isOnlineLoopingLibraryAction(id),
+    );
+    if (loop && activeActionId === id && clipAction?.isRunning?.()) {
+      return true;
+    }
+
     const clip = await loadClip(url);
     if (!clip) return false;
 
-    stop();
+    haltAction(false);
     const mx = ensureMixer();
     clipAction = mx.clipAction(clip);
     clipAction.reset();
     clipAction.setLoop(
-      playOpts.loop ? THREE.LoopRepeat : THREE.LoopOnce,
-      playOpts.loop ? Infinity : 1,
+      loop ? THREE.LoopRepeat : THREE.LoopOnce,
+      loop ? Infinity : 1,
     );
-    clipAction.clampWhenFinished = false;
-    clipAction.fadeIn(0.12);
+    clipAction.clampWhenFinished = !loop;
+    clipAction.fadeIn(0.2);
     clipAction.play();
     activeActionId = id;
     return true;
   };
+
+  const playIdle = async () => play(ONLINE_IDLE_ACTION, { loop: true });
 
   const update = (dt) => {
     mixer?.update(dt);
@@ -136,11 +156,15 @@ export function createVrmMotionPlayer(opts) {
   return {
     schema: COMPANION_VRM_MOTION_PLAYER_SCHEMA,
     play,
+    playIdle,
     stop,
     update,
     warmClip,
     isPlaying() {
       return Boolean(activeActionId && clipAction?.isRunning?.());
+    },
+    isIdle() {
+      return isOnlineLoopingLibraryAction(activeActionId) && Boolean(clipAction?.isRunning?.());
     },
     releasePose,
     get activeActionId() {

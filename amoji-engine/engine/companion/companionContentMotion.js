@@ -115,20 +115,18 @@ export function buildVrmExpressionBlend(emotion, nuance) {
 
   switch (e) {
     case "happy":
-      blend.Happy = 0.98;
+      blend.Happy = 0.42;
       break;
     case "thinking":
-      blend.Surprised = 0.1;
       break;
     case "sad":
-      blend.Sad = 0.92;
+      blend.Sad = 0.55;
       break;
     case "surprised":
-      blend.Surprised = 0.98;
-      blend.Happy = 0.35;
+      blend.Surprised = 0.38;
       break;
     case "angry":
-      blend.Angry = 0.94;
+      blend.Angry = 0.62;
       break;
     default:
       break;
@@ -136,21 +134,19 @@ export function buildVrmExpressionBlend(emotion, nuance) {
 
   switch (n) {
     case "shy":
-      blend.Happy = Math.min(blend.Happy ?? 0.35, 0.28);
+      blend.Happy = Math.min(blend.Happy ?? 0.22, 0.22);
       break;
     case "love":
-      blend.Happy = Math.max(blend.Happy ?? 0.7, 0.72);
+      blend.Happy = Math.max(blend.Happy ?? 0.36, 0.4);
       break;
     case "curious":
-      blend.Surprised = Math.max(blend.Surprised ?? 0, 0.12);
       break;
     case "excited":
-      blend.Happy = Math.max(blend.Happy ?? 0.75, 0.92);
-      blend.Surprised = Math.max(blend.Surprised ?? 0, 0.18);
+      blend.Happy = Math.max(blend.Happy ?? 0.4, 0.5);
       break;
     case "stress":
       blend.Sad = Math.max(blend.Sad ?? 0, 0.22);
-      blend.Angry = Math.max(blend.Angry ?? 0, 0.15);
+      blend.Angry = Math.max(blend.Angry ?? 0, 0.12);
       break;
     default:
       break;
@@ -300,16 +296,9 @@ export function analyzeCompanionReply(text, moodHint = null) {
   const tagged = parseReplyTags(String(text || ""));
   const reply = tagged.reply;
   const inferred = inferExpressionFromText(reply);
-  const emotion =
-    tagged.emotion || moodHint || inferred || "happy";
-  let nuance = tagged.nuance || inferContentNuance(reply);
-  if (
-    nuance === "none" &&
-    (emotion === "happy" || emotion === "surprised") &&
-    /[!！呀啊喇喎哈哈]/.test(reply)
-  ) {
-    nuance = "excited";
-  }
+  const inferredMood = inferred && inferred !== "neutral" ? inferred : null;
+  const emotion = tagged.emotion || inferredMood || moodHint || "neutral";
+  const nuance = tagged.nuance || inferContentNuance(reply);
   const talkStyle = inferTalkGestureFromText(reply, { emotion });
   const gesture = inferOneShotGesture(reply, emotion, nuance);
   const action = inferActionFromReply(String(text || ""), tagged.action);

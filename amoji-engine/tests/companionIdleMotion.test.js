@@ -3,6 +3,7 @@ import {
   advanceIdleBeat,
   BOOT_SIMPLE_IDLE_SEC,
   createIdleBeatState,
+  sampleCalmBreathIdle,
   sampleIdleBodyMotion,
   sampleIdleExpressionBlend,
   sampleSimpleBootIdleMotion,
@@ -49,6 +50,16 @@ describe("companionIdleMotion", () => {
     expect(boot.lowerLegR).toBeGreaterThan(0.2);
   });
 
+  it("samples a planted calm-breath idle without limb sway", () => {
+    const a = sampleCalmBreathIdle(0.4);
+    const b = sampleCalmBreathIdle(2.1);
+    expect(a.leanY).toBe(0);
+    expect(a.headZ).toBe(0);
+    expect(a.forearmL).toBeGreaterThan(0.32);
+    expect(a.lowerLegR).toBeGreaterThan(0.2);
+    expect(a.spineX).not.toBe(b.spineX);
+  });
+
   it("keeps standing idle large enough to read in a portrait crop", () => {
     const idle = sampleIdleBodyMotion(1.4);
     expect(Math.abs(idle.leanY) + Math.abs(idle.headZ)).toBeGreaterThan(0.08);
@@ -59,7 +70,7 @@ describe("companionIdleMotion", () => {
 });
 
 describe("idle body motion integration", () => {
-  it("resetMotionClock restarts boot idle from visible frame", () => {
+  it("resetMotionClock restores a planted bent-limb idle", () => {
     const bones = new Map();
     for (const name of ["leftUpperArm", "rightUpperArm", "leftLowerArm", "rightLowerArm"]) {
       bones.set(name, { rotation: { x: 0, y: 0, z: 0 } });
@@ -70,14 +81,14 @@ describe("idle body motion integration", () => {
     const motion = createCompanionBodyMotion(humanoid);
     motion.setTalking(false);
     for (let i = 0; i < 240; i += 1) motion.update(1 / 30);
-    const before = bones.get("leftLowerArm").rotation.x;
     motion.resetMotionClock(performance.now() - 1200);
     for (let i = 0; i < 30; i += 1) motion.update(1 / 30, { now: performance.now() });
-    const after = bones.get("leftLowerArm").rotation.x;
-    expect(Math.abs(after - before)).toBeGreaterThan(0.004);
+    expect(bones.get("leftLowerArm").rotation.x).toBeGreaterThan(
+      VRM_ARM_REST_ROTATIONS.leftLowerArm.x + 0.12,
+    );
   });
 
-  it("moves arms while idle without talking", () => {
+  it("keeps bent idle arms without talking", () => {
     const bones = new Map();
     for (const name of [
       "leftUpperArm",
